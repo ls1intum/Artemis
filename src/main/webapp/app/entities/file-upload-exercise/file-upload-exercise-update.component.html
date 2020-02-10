@@ -8,6 +8,7 @@
                 Create a new File Upload Exercise
             </h2>
             <div>
+                <jhi-alert></jhi-alert>
                 <jhi-alert-error></jhi-alert-error>
                 <div class="form-group" [hidden]="!fileUploadExercise.id">
                     <label for="id" jhiTranslate="global.field.id">ID</label>
@@ -77,17 +78,6 @@
                     />
                 </div>
                 <div class="form-group">
-                    <label class="form-control-label" jhiTranslate="artemisApp.exercise.course" for="field_course">Course</label>
-                    <select class="form-control" id="field_course" name="course" [(ngModel)]="fileUploadExercise.course">
-                        <option [ngValue]="null"></option>
-                        <option
-                            [ngValue]="course.id === fileUploadExercise.course?.id ? fileUploadExercise.course : course"
-                            *ngFor="let course of courses; trackBy: trackCourseById"
-                            >{{ course.title }}</option
-                        >
-                    </select>
-                </div>
-                <div class="form-group">
                     <label class="form-control-label" jhiTranslate="artemisApp.fileUploadExercise.filePattern" for="field_filePattern">File Pattern </label>
                     <fa-icon
                         [icon]="'question-circle'"
@@ -107,6 +97,7 @@
                         [editorMode]="EditorMode.LATEX"
                     ></jhi-markdown-editor>
                 </div>
+                <!-- TODO we want to have a file upload here and store a PDF, not a text. We could allow to add text in the sample_solution_explanation field -->
                 <div class="form-group" id="field_sampleSolution">
                     <label class="form-control-label" jhiTranslate="artemisApp.exercise.sampleSolution" for="field_sampleSolution">Sample Solution</label>
                     <jhi-markdown-editor
@@ -118,7 +109,7 @@
                 </div>
                 <div class="form-group" id="field_gradingInstructions">
                     <label class="form-control-label" jhiTranslate="artemisApp.exercise.gradingInstructions" for="field_gradingInstructions">Grading instructions</label>
-                    <jhi-edit-structured-grading-instructions></jhi-edit-structured-grading-instructions>
+                    <jhi-edit-structured-grading-instruction></jhi-edit-structured-grading-instruction>
                 </div>
             </div>
             <div>

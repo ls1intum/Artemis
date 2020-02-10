@@ -51,10 +51,10 @@
             "solutionResult": "Ergebnis Lösung",
             "structureTestOracle": "Oracle Strukturtest aktualisieren",
             "structureTestOracleWarning": "Diese Aktion extrahiert die Struktur-Tests des Test-Repositories and speichert sie in der Datei test.json. ACHTUNG: Hierdurch gehen alle nicht committeten Änderungen aus dem Online-Editor verloren!",
-            "squashTemplateCommits": "Template Commits zusammenführen",
-            "squashTemplateCommitsWarning": "Diese Aktion führt alle Commits im Template-Repository in einen Commit zusammen. ACHTUNG: Hierdurch gehen alle nicht committeten Änderungen aus dem Online-Editor verloren!",
-            "squashTemplateCommitsError": "Template Repository Commits konnten nicht zusammengeführt werden.",
-            "squashTemplateCommitsSuccess": "Template Repository Commits wurden zusammengeführt.",
+            "combineTemplateCommits": "Template Commits zusammenführen",
+            "combineTemplateCommitsWarning": "Diese Aktion führt alle Commits im Template-Repository in einen Commit zusammen. ACHTUNG: Hierdurch gehen alle nicht committeten Änderungen aus dem Online-Editor verloren!",
+            "combineTemplateCommitsError": "Template Repository Commits konnten nicht zusammengeführt werden.",
+            "combineTemplateCommitsSuccess": "Template Repository Commits wurden zusammengeführt.",
             "editable": {
                 "unsaved": "Ungespeichert.",
                 "unsavedTooltip": "Es gibt ungespeicherte Änderungen in der Aufgabenstellung.",
@@ -114,7 +114,7 @@
                 "filterLateSubmissions": "Verspätete Abgaben herausfiltern",
                 "filterLateSubmissionsDate": "Datum zum Filtern verspäteter Abgaben (standardmäßig Abgabedatum der Aufgabe)",
                 "addStudentName": "Name der Studenten zum Projekt hinzufügen (erlaubt es mehrere Projekte gleichzeitig in Eclipse zu importieren)",
-                "squashAfterInstructor": "Alle Änderungen des Studenten in einem Commit zusammenfassen (um das Review zu vereinfachen)",
+                "combineStudentCommits": "Alle Änderungen des Studenten in einem Commit zusammenfassen (um das Review zu vereinfachen)",
                 "normalizeCodeStyle": "Code-Style normalisieren (Zeilenumbrüche, Kodierung)",
                 "successMessage": "Die Repositories wurden erfolgreich exportiert. Die generierte Zip-Datei wird jetzt heruntergeladen."
             },
@@ -177,6 +177,9 @@
                 "testRepoTooltip": "Das Repository, welches alle Tests beinhaltet",
                 "templateBuildPlanTooltip": "Der Build Plan der Vorlage. Lässt alle Tests über die Vorlage der Aufgabe laufen. Dient als Kontrollreferenz, für welche alle Tests fehlschlagen müssen",
                 "solutionBuildPlanTooltip": "Der Build Plan der Lösung der Aufgabe. Lässt alle Tests über die Lösung der Aufgabe laufen. Dient als Kontrollreferenz, für welche alle Tests erfolgreich sein müssen"
+            },
+            "intellij": {
+                "openEditor": "Editor Öffnen"
             }
         },
         "error": {

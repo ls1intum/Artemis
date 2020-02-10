@@ -6,7 +6,6 @@ import java.util.List;
 import javax.validation.constraints.NotNull;
 
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
@@ -16,7 +15,6 @@ import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.web.rest.dto.TutorLeaderboardDTO;
 
 @Service
-@Transactional(readOnly = true)
 public class TutorLeaderboardService {
 
     private final TutorLeaderboardAssessmentViewRepository tutorLeaderboardAssessmentViewRepository;

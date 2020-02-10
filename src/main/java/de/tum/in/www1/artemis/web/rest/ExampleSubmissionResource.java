@@ -1,3 +1,4 @@
+
 package de.tum.in.www1.artemis.web.rest;
 
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
@@ -131,7 +132,7 @@ public class ExampleSubmissionResource {
         log.debug("REST request to delete ExampleSubmission : {}", id);
         Optional<ExampleSubmission> exampleSubmission = exampleSubmissionService.getWithEagerExercise(id);
 
-        if (!exampleSubmission.isPresent()) {
+        if (exampleSubmission.isEmpty()) {
             throw new EntityNotFoundException("ExampleSubmission with " + id + " was not found!");
         }
 

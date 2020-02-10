@@ -1,8 +1,9 @@
 import { Injectable, Injector } from '@angular/core';
-import { WindowRef } from 'app/core';
+import { WindowRef } from 'app/core/websocket/window.service';
 import { BehaviorSubject, Observable } from 'rxjs';
-import { IntelliJState, JavaDowncallBridge, JavaUpcallBridge } from 'app/intellij/intellij';
+import { ExerciseView, IntelliJState, JavaDowncallBridge, JavaUpcallBridge } from 'app/intellij/intellij';
 import { Router } from '@angular/router';
+import { REPOSITORY } from 'app/code-editor/instructor/code-editor-instructor-base-container.component';
 
 /**
  * This is the main interface between an IDE (e.g. IntelliJ) and this webapp. If a student has the Orion plugin
@@ -28,7 +29,7 @@ export class JavaBridgeService implements JavaDowncallBridge, JavaUpcallBridge {
 
     static initBridge(bridge: JavaBridgeService, win: WindowRef) {
         win.nativeWindow.javaDowncallBridge = bridge;
-        bridge.intellijState = { opened: -1, cloning: false, building: false };
+        bridge.intellijState = { opened: -1, inInstructorView: false, cloning: false, building: false };
         bridge.intellijStateSubject = new BehaviorSubject<IntelliJState>(bridge.intellijState);
     }
 
@@ -56,12 +57,10 @@ export class JavaBridgeService implements JavaDowncallBridge, JavaUpcallBridge {
      * "Imports" a project/exercise by cloning th repository on the local machine of the user and opening the new project.
      *
      * @param repository The full URL of the repository of a programming exercise
-     * @param exerciseName The name of the programming exercise
-     * @param exerciseId The ID of the exercise
-     * @param courseId THe ID of the course of the exercise
+     * @param exerciseJson The exercise formatted as JSON string for which the repository should get cloned.
      */
-    clone(repository: string, exerciseName: string, exerciseId: number, courseId: number) {
-        this.window.nativeWindow.intellij.clone(repository, exerciseName, exerciseId, courseId);
+    clone(repository: string, exerciseJson: string) {
+        this.window.nativeWindow.intellij.clone(repository, exerciseJson);
     }
 
     /**
@@ -95,8 +94,11 @@ export class JavaBridgeService implements JavaDowncallBridge, JavaUpcallBridge {
      * Gets called by the IDE. Informs the Angular app about a newly opened exercise.
      *
      * @param opened The ID of the exercise that was opened by the user.
+     * @param The ExerciseView which is currently open in IntelliJ (instructor vs. student)
      */
-    onExerciseOpened(opened: number): void {
+    onExerciseOpened(opened: number, view: string): void {
+        const inInstructorView = view === ExerciseView.INSTRUCTOR;
+        this.setIDEStateParameter({ inInstructorView });
         this.setIDEStateParameter({ opened });
     }
 
@@ -166,5 +168,41 @@ export class JavaBridgeService implements JavaDowncallBridge, JavaUpcallBridge {
      */
     startedBuildInIntelliJ(courseId: number, exerciseId: number) {
         this.router.navigateByUrl(`/overview/${courseId}/exercises/${exerciseId}`, { queryParams: { withIdeSubmit: true } });
+    }
+
+    /**
+     * Edit the given exercise in IntelliJ as an instructor. This will trigger the import of the exercise
+     * (if it is not already imported) and opens the created project afterwards.
+     *
+     * @param exerciseJson The exercise to be imported as a JSON string
+     */
+    editExercise(exerciseJson: string): void {
+        this.setIDEStateParameter({ cloning: true });
+        this.window.nativeWindow.intellij.editExercise(exerciseJson);
+    }
+
+    /**
+     * Builds the selected repository and runs all tests locally in the IDE. This will not send or commit any files
+     * to the remote repositories.
+     */
+    buildAndTestInstructorRepository(): void {
+        this.window.nativeWindow.intellij.buildAndTestInstructorRepository();
+    }
+
+    /**
+     * Selects an instructor repository in IntelliJ. The selected repository will be used for all future actions
+     * that reference an instructor repo s.a. submitting the code.
+     *
+     * @param repository The repository to be selected for all future interactions
+     */
+    selectInstructorRepository(repository: REPOSITORY): void {
+        this.window.nativeWindow.intellij.selectInstructorRepository(repository);
+    }
+
+    /**
+     * Submits the selected repository in IntelliJ by adding and committing all changes and pushing them to the remote.
+     */
+    submitInstructorRepository(): void {
+        this.window.nativeWindow.intellij.submitInstructorRepository();
     }
 }

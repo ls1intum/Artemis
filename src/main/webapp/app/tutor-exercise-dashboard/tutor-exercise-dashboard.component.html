@@ -13,6 +13,10 @@
                 [tutorParticipation]="tutorParticipation"
                 [numberOfParticipations]="numberOfSubmissions"
                 [numberOfAssessments]="numberOfAssessments"
+                [numberOfComplaints]="numberOfComplaints"
+                [numberOfOpenComplaints]="numberOfOpenComplaints"
+                [numberOfMoreFeedbackRequests]="numberOfMoreFeedbackRequests"
+                [numberOfOpenMoreFeedbackRequests]="numberOfOpenMoreFeedbackRequests"
             >
             </jhi-tutor-participation-graph>
         </div>
@@ -194,7 +198,7 @@
                             <td>{{ i + 1 }}</td>
                             <td>{{ submission.submissionDate | date: 'MMM d, y HH:mm:ss' }}</td>
                             <td>
-                                <jhi-updating-result [participation]="submission.participation"></jhi-updating-result>
+                                <jhi-result [participation]="submission.participation"></jhi-result>
                             </td>
                             <td>
                                 {{ calculateStatus(submission) }}
@@ -225,14 +229,10 @@
                                     </ng-template>
                                 </ng-container>
                                 <ng-template #programmingAssessment>
-                                    <jhi-programming-assessment-repo-export
-                                        [exerciseId]="exercise.id"
-                                        [singleStudentMode]="true"
-                                        [participationIdList]="submission.participation.id"
-                                    ></jhi-programming-assessment-repo-export>
                                     <jhi-programming-assessment-manual-result
                                         [participationId]="submission.participation.id"
                                         [latestResult]="submission.result"
+                                        [exercise]="exercise"
                                         (onResultModified)="loadAll()"
                                     ></jhi-programming-assessment-manual-result>
                                 </ng-template>
@@ -256,14 +256,10 @@
                                     <fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>{{ 'artemisApp.tutorExerciseDashboard.startAssessment' | translate }}
                                 </button>
                                 <ng-template #programmingAssessment>
-                                    <jhi-programming-assessment-repo-export
-                                        [exerciseId]="exercise.id"
-                                        [singleStudentMode]="true"
-                                        [participationIdList]="unassessedSubmission.participation.id"
-                                    ></jhi-programming-assessment-repo-export>
                                     <jhi-programming-assessment-manual-result
                                         [participationId]="unassessedSubmission.participation.id"
                                         [latestResult]="unassessedSubmission.result"
+                                        [exercise]="exercise"
                                         (onResultModified)="loadAll()"
                                     ></jhi-programming-assessment-manual-result>
                                 </ng-template>
@@ -273,6 +269,7 @@
                 </table>
 
                 <ng-template #noSubmissions>
+                    <jhi-assessment-warning [exercise]="exercise"></jhi-assessment-warning>
                     <div class="alert alert-info">
                         {{ 'artemisApp.tutorExerciseDashboard.noSubmissions' | translate }}
                     </div>
@@ -322,8 +319,11 @@
                     </table>
 
                     <ng-template #noComplaints>
-                        <div class="alert alert-info">
+                        <div *ngIf="numberOfTutorComplaints === 0" class="alert alert-info">
                             {{ 'artemisApp.tutorExerciseDashboard.noComplaints' | translate }}
+                        </div>
+                        <div *ngIf="numberOfTutorComplaints !== 0" class="alert alert-info">
+                            {{ 'artemisApp.tutorExerciseDashboard.noComplaintsDisplayed' | translate }}
                         </div>
                     </ng-template>
                 </div>
@@ -381,8 +381,11 @@
                     </table>
 
                     <ng-template #noComplaints>
-                        <div class="alert alert-info">
+                        <div *ngIf="numberOfMoreFeedbackRequests === 0" class="alert alert-info">
                             {{ 'artemisApp.tutorExerciseDashboard.noMoreFeedbackRequests' | translate }}
+                        </div>
+                        <div *ngIf="numberOfMoreFeedbackRequests !== 0" class="alert alert-info">
+                            {{ 'artemisApp.tutorExerciseDashboard.noMoreFeedbackRequestsDisplayed' | translate }}
                         </div>
                     </ng-template>
                 </div>

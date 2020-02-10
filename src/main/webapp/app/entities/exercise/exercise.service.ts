@@ -55,14 +55,6 @@ export class ExerciseService {
             .map((res: EntityResponseType) => this.checkPermission(res));
     }
 
-    delete(exerciseId: number): Observable<HttpResponse<void>> {
-        return this.http.delete<void>(`${this.resourceUrl}/${exerciseId}`, { observe: 'response' });
-    }
-
-    archive(exerciseId: number): Observable<HttpResponse<Blob>> {
-        return this.http.get(`${this.resourceUrl}/${exerciseId}/archive`, { observe: 'response', responseType: 'blob' });
-    }
-
     cleanup(exerciseId: number, deleteRepositories: boolean): Observable<HttpResponse<void>> {
         const params = new HttpParams().set('deleteRepositories', deleteRepositories.toString());
         return this.http.delete<void>(`${this.resourceUrl}/${exerciseId}/cleanup`, { params, observe: 'response' });

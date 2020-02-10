@@ -9,20 +9,13 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
+import org.springframework.util.LinkedMultiValueMap;
 
+import de.tum.in.www1.artemis.domain.ExampleSubmission;
 import de.tum.in.www1.artemis.domain.Feedback;
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.User;
@@ -33,6 +26,7 @@ import de.tum.in.www1.artemis.domain.modeling.ModelAssessmentConflict;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.service.ExampleSubmissionService;
 import de.tum.in.www1.artemis.service.ModelingSubmissionService;
 import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.service.compass.CompassService;
@@ -40,12 +34,9 @@ import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.RequestUtilService;
 
-@ExtendWith(SpringExtension.class)
-@SpringBootTest
-@AutoConfigureMockMvc
-@AutoConfigureTestDatabase
-@ActiveProfiles("artemis")
-public class ModelingAssessmentIntegrationTest {
+public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationTest {
+
+    public static final String API_MODELING_SUBMISSIONS = "/api/modeling-submissions/";
 
     @Autowired
     CourseRepository courseRepo;
@@ -78,6 +69,9 @@ public class ModelingAssessmentIntegrationTest {
     ParticipationService participationService;
 
     @Autowired
+    ExampleSubmissionService exampleSubmissionService;
+
+    @Autowired
     CompassService compassService;
 
     private ModelingExercise classExercise;
@@ -92,14 +86,17 @@ public class ModelingAssessmentIntegrationTest {
 
     private Result modelingAssessment;
 
+    private String validModel;
+
     @BeforeEach
     public void initTestCase() throws Exception {
-        database.addUsers(6, 1, 0);
+        database.addUsers(6, 2, 1);
         database.addCourseWithDifferentModelingExercises();
         classExercise = (ModelingExercise) exerciseRepo.findAll().get(0);
         activityExercise = (ModelingExercise) exerciseRepo.findAll().get(1);
         objectExercise = (ModelingExercise) exerciseRepo.findAll().get(2);
         useCaseExercise = (ModelingExercise) exerciseRepo.findAll().get(3);
+        validModel = database.loadFileFromResources("test-data/model-submission/model.54727.json");
     }
 
     @AfterEach
@@ -109,12 +106,12 @@ public class ModelingAssessmentIntegrationTest {
 
     @Test
     @WithMockUser(username = "student1")
-    public void getAssessmentBySubmissionId() throws Exception {
+    public void testGetAssessmentBySubmissionId() throws Exception {
         saveModelingSubmissionAndAssessment(true);
         List<Feedback> feedback = database.loadAssessmentFomResources("test-data/model-assessment/assessment.54727.v2.json");
         database.updateAssessmentDueDate(classExercise.getId(), ZonedDateTime.now().minusHours(1));
 
-        Result result = request.get("/api/modeling-submissions/" + modelingSubmission.getId() + "/result", HttpStatus.OK, Result.class);
+        Result result = request.get(API_MODELING_SUBMISSIONS + modelingSubmission.getId() + "/result", HttpStatus.OK, Result.class);
 
         checkAssessmentFinished(result, null);
         checkFeedbackCorrectlyStored(feedback, result.getFeedbacks(), FeedbackType.MANUAL);
@@ -122,37 +119,57 @@ public class ModelingAssessmentIntegrationTest {
 
     @Test
     @WithMockUser(username = "student1")
-    public void getAssessmentBySubmissionId_assessmentNotFinished_forbidden() throws Exception {
-        saveModelingSubmissionAndAssessment(false);
-        database.updateAssessmentDueDate(classExercise.getId(), ZonedDateTime.now().minusHours(1));
-
-        request.get("/api/modeling-submissions/" + modelingSubmission.getId() + "/result", HttpStatus.FORBIDDEN, Result.class);
+    public void testGetAssessmentBySubmissionId_notFound() throws Exception {
+        saveModelingSubmission();
+        request.get(API_MODELING_SUBMISSIONS + modelingSubmission.getId() + "/result", HttpStatus.NOT_FOUND, Result.class);
     }
 
     @Test
     @WithMockUser(username = "student1")
-    public void getAssessmentBySubmissionId_assessmentDueDateNotOver_forbidden() throws Exception {
+    public void testGetAssessmentBySubmissionId_assessmentNotFinished_forbidden() throws Exception {
+        saveModelingSubmissionAndAssessment(false);
+        database.updateAssessmentDueDate(classExercise.getId(), ZonedDateTime.now().minusHours(1));
+
+        request.get(API_MODELING_SUBMISSIONS + modelingSubmission.getId() + "/result", HttpStatus.FORBIDDEN, Result.class);
+    }
+
+    @Test
+    @WithMockUser(username = "student1")
+    public void testGetAssessmentBySubmissionId_assessmentDueDateNotOver_forbidden() throws Exception {
         saveModelingSubmissionAndAssessment(true);
 
-        request.get("/api/modeling-submissions/" + modelingSubmission.getId() + "/result", HttpStatus.FORBIDDEN, Result.class);
+        request.get(API_MODELING_SUBMISSIONS + modelingSubmission.getId() + "/result", HttpStatus.FORBIDDEN, Result.class);
     }
 
     @Test
     @WithMockUser(username = "student2")
-    public void getAssessmentBySubmissionId_studentNotOwnerOfSubmission_forbidden() throws Exception {
+    public void testGetAssessmentBySubmissionId_studentNotOwnerOfSubmission_forbidden() throws Exception {
         saveModelingSubmissionAndAssessment(true);
         database.updateAssessmentDueDate(classExercise.getId(), ZonedDateTime.now().minusHours(1));
 
-        request.get("/api/modeling-submissions/" + modelingSubmission.getId() + "/result", HttpStatus.FORBIDDEN, Result.class);
+        request.get(API_MODELING_SUBMISSIONS + modelingSubmission.getId() + "/result", HttpStatus.FORBIDDEN, Result.class);
+    }
+
+    @Test()
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void testGetExampleAssessment() throws Exception {
+        ExampleSubmission storedExampleSubmission = database.addExampleSubmission(database.generateExampleSubmission(validModel, classExercise, true, true));
+        List<Feedback> feedbackList = database.loadAssessmentFomResources("test-data/model-assessment/assessment.54727.json");
+        Result storedResult = request.putWithResponseBody("/api/modeling-submissions/" + storedExampleSubmission.getId() + "/exampleAssessment", feedbackList, Result.class,
+                HttpStatus.OK);
+        assertThat(storedResult.isExampleResult()).as("stored result is flagged as example result").isTrue();
+        assertThat(exampleSubmissionService.findById(storedExampleSubmission.getId())).isPresent();
+        request.get("/api/exercise/" + classExercise.getId() + "/submission/" + storedExampleSubmission.getSubmission().getId() + "/modelingExampleAssessment", HttpStatus.OK,
+                Result.class);
     }
 
     @Test
     @WithMockUser(username = "student1")
-    public void manualAssessmentSubmitAsStudent() throws Exception {
+    public void testManualAssessmentSubmitAsStudent() throws Exception {
         ModelingSubmission submission = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.54727.json", "student1");
 
         List<Feedback> feedbacks = database.loadAssessmentFomResources("test-data/model-assessment/assessment.54727.json");
-        request.put("/api/modeling-submissions/" + submission.getId() + "/feedback?submit=true", feedbacks, HttpStatus.FORBIDDEN);
+        request.put(API_MODELING_SUBMISSIONS + submission.getId() + "/feedback?submit=true", feedbacks, HttpStatus.FORBIDDEN);
 
         Optional<Result> storedResult = resultRepo.findDistinctBySubmissionId(submission.getId());
         assertThat(storedResult).as("result is not saved").isNotPresent();
@@ -160,57 +177,60 @@ public class ModelingAssessmentIntegrationTest {
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void manualAssessmentSave() throws Exception {
+    public void testManualAssessmentSave() throws Exception {
         User assessor = database.getUserByLogin("tutor1");
         ModelingSubmission submission = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.54727.json", "student1");
 
         List<Feedback> feedbacks = database.loadAssessmentFomResources("test-data/model-assessment/assessment.54727.json");
-        request.put("/api/modeling-submissions/" + submission.getId() + "/feedback", feedbacks, HttpStatus.OK);
+        request.put(API_MODELING_SUBMISSIONS + submission.getId() + "/feedback", feedbacks, HttpStatus.OK);
 
         ModelingSubmission storedSubmission = modelingSubmissionRepo.findById(submission.getId()).get();
         Result storedResult = resultRepo.findByIdWithEagerFeedbacksAndAssessor(storedSubmission.getResult().getId()).get();
         checkFeedbackCorrectlyStored(feedbacks, storedResult.getFeedbacks(), FeedbackType.MANUAL);
         checkAssessmentNotFinished(storedResult, assessor);
+        assertThat(storedResult.getParticipation()).isNotNull();
     }
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void manualAssessmentSubmit_classDiagram() throws Exception {
+    public void testManualAssessmentSubmit_classDiagram() throws Exception {
         User assessor = database.getUserByLogin("tutor1");
         ModelingSubmission submission = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.54727.json", "student1");
 
         List<Feedback> feedbacks = database.loadAssessmentFomResources("test-data/model-assessment/assessment.54727.json");
-        request.put("/api/modeling-submissions/" + submission.getId() + "/feedback?submit=true", feedbacks, HttpStatus.OK);
+        request.put(API_MODELING_SUBMISSIONS + submission.getId() + "/feedback?submit=true", feedbacks, HttpStatus.OK);
 
         ModelingSubmission storedSubmission = modelingSubmissionRepo.findById(submission.getId()).get();
         Result storedResult = resultRepo.findByIdWithEagerFeedbacksAndAssessor(storedSubmission.getResult().getId()).get();
         checkFeedbackCorrectlyStored(feedbacks, storedResult.getFeedbacks(), FeedbackType.MANUAL);
         checkAssessmentFinished(storedResult, assessor);
+        assertThat(storedResult.getParticipation()).isNotNull();
     }
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void manualAssessmentSubmit_activityDiagram() throws Exception {
+    public void testManualAssessmentSubmit_activityDiagram() throws Exception {
         User assessor = database.getUserByLogin("tutor1");
         ModelingSubmission submission = database.addModelingSubmissionFromResources(activityExercise, "test-data/model-submission/example-activity-diagram.json", "student1");
 
         List<Feedback> feedbacks = database.loadAssessmentFomResources("test-data/model-assessment/example-activity-assessment.json");
-        request.put("/api/modeling-submissions/" + submission.getId() + "/feedback?submit=true", feedbacks, HttpStatus.OK);
+        request.put(API_MODELING_SUBMISSIONS + submission.getId() + "/feedback?submit=true", feedbacks, HttpStatus.OK);
 
         ModelingSubmission storedSubmission = modelingSubmissionRepo.findById(submission.getId()).get();
         Result storedResult = resultRepo.findByIdWithEagerFeedbacksAndAssessor(storedSubmission.getResult().getId()).get();
         checkFeedbackCorrectlyStored(feedbacks, storedResult.getFeedbacks(), FeedbackType.MANUAL);
         checkAssessmentFinished(storedResult, assessor);
+        assertThat(storedResult.getParticipation()).isNotNull();
     }
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void manualAssessmentSubmit_objectDiagram() throws Exception {
+    public void testManualAssessmentSubmit_objectDiagram() throws Exception {
         User assessor = database.getUserByLogin("tutor1");
         ModelingSubmission submission = database.addModelingSubmissionFromResources(objectExercise, "test-data/model-submission/object-model.json", "student1");
 
         List<Feedback> feedbacks = database.loadAssessmentFomResources("test-data/model-assessment/object-assessment.json");
-        request.put("/api/modeling-submissions/" + submission.getId() + "/feedback?submit=true", feedbacks, HttpStatus.OK);
+        request.put(API_MODELING_SUBMISSIONS + submission.getId() + "/feedback?submit=true", feedbacks, HttpStatus.OK);
 
         ModelingSubmission storedSubmission = modelingSubmissionRepo.findById(submission.getId()).get();
         Result storedResult = resultRepo.findByIdWithEagerFeedbacksAndAssessor(storedSubmission.getResult().getId()).get();
@@ -220,27 +240,28 @@ public class ModelingAssessmentIntegrationTest {
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void manualAssessmentSubmit_useCaseDiagram() throws Exception {
+    public void testManualAssessmentSubmit_useCaseDiagram() throws Exception {
         User assessor = database.getUserByLogin("tutor1");
         ModelingSubmission submission = database.addModelingSubmissionFromResources(useCaseExercise, "test-data/model-submission/use-case-model.json", "student1");
 
         List<Feedback> feedbacks = database.loadAssessmentFomResources("test-data/model-assessment/use-case-assessment.json");
-        request.put("/api/modeling-submissions/" + submission.getId() + "/feedback?submit=true", feedbacks, HttpStatus.OK);
+        request.put(API_MODELING_SUBMISSIONS + submission.getId() + "/feedback?submit=true", feedbacks, HttpStatus.OK);
 
         ModelingSubmission storedSubmission = modelingSubmissionRepo.findById(submission.getId()).get();
         Result storedResult = resultRepo.findByIdWithEagerFeedbacksAndAssessor(storedSubmission.getResult().getId()).get();
         checkFeedbackCorrectlyStored(feedbacks, storedResult.getFeedbacks(), FeedbackType.MANUAL);
         checkAssessmentFinished(storedResult, assessor);
+        assertThat(storedResult.getParticipation()).isNotNull();
     }
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void manualAssessmentSaveAndSubmit() throws Exception {
+    public void testManualAssessmentSaveAndSubmit() throws Exception {
         User assessor = database.getUserByLogin("tutor1");
         ModelingSubmission submission = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.54727.json", "student1");
 
         List<Feedback> feedbacks = database.loadAssessmentFomResources("test-data/model-assessment/assessment.54727.json");
-        request.put("/api/modeling-submissions/" + submission.getId() + "/feedback", feedbacks, HttpStatus.OK);
+        request.put(API_MODELING_SUBMISSIONS + submission.getId() + "/feedback", feedbacks, HttpStatus.OK);
 
         ModelingSubmission storedSubmission = modelingSubmissionRepo.findById(submission.getId()).get();
         Result storedResult = resultRepo.findByIdWithEagerFeedbacksAndAssessor(storedSubmission.getResult().getId()).get();
@@ -248,18 +269,19 @@ public class ModelingAssessmentIntegrationTest {
         checkAssessmentNotFinished(storedResult, assessor);
 
         feedbacks = database.loadAssessmentFomResources("test-data/model-assessment/assessment.54727.v2.json");
-        request.put("/api/modeling-submissions/" + submission.getId() + "/feedback?submit=true", feedbacks, HttpStatus.OK);
+        request.put(API_MODELING_SUBMISSIONS + submission.getId() + "/feedback?submit=true", feedbacks, HttpStatus.OK);
 
         storedSubmission = modelingSubmissionRepo.findById(submission.getId()).get();
         storedResult = resultRepo.findByIdWithEagerFeedbacksAndAssessor(storedSubmission.getResult().getId()).get();
         checkFeedbackCorrectlyStored(feedbacks, storedResult.getFeedbacks(), FeedbackType.MANUAL);
         checkAssessmentFinished(storedResult, assessor);
+        assertThat(storedResult.getParticipation()).isNotNull();
     }
 
     // region Automatic Assessment Tests
     @Test
     @WithMockUser(username = "student2")
-    public void automaticAssessmentUponModelSubmission_identicalModel() throws Exception {
+    public void testAutomaticAssessmentUponModelSubmission_identicalModel() throws Exception {
         saveModelingSubmissionAndAssessment(true);
         database.addParticipationForExercise(classExercise, "student2");
 
@@ -275,7 +297,7 @@ public class ModelingAssessmentIntegrationTest {
 
     @Test
     @WithMockUser(username = "student2")
-    public void automaticAssessmentUponModelSubmission_activityDiagram_identicalModel() throws Exception {
+    public void testAutomaticAssessmentUponModelSubmission_activityDiagram_identicalModel() throws Exception {
         saveModelingSubmissionAndAssessment_activityDiagram(true);
         database.addParticipationForExercise(activityExercise, "student2");
 
@@ -291,7 +313,7 @@ public class ModelingAssessmentIntegrationTest {
 
     @Test
     @WithMockUser(username = "student2")
-    public void automaticAssessmentUponModelSubmission_partialModel() throws Exception {
+    public void testAutomaticAssessmentUponModelSubmission_partialModel() throws Exception {
         saveModelingSubmissionAndAssessment(true);
         database.addParticipationForExercise(classExercise, "student2");
 
@@ -310,7 +332,7 @@ public class ModelingAssessmentIntegrationTest {
 
     @Test
     @WithMockUser(username = "student2")
-    public void automaticAssessmentUponModelSubmission_partialModelExists() throws Exception {
+    public void testAutomaticAssessmentUponModelSubmission_partialModelExists() throws Exception {
         modelingSubmission = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.54727.partial.json", "student1");
         modelingAssessment = database.addModelingAssessmentForSubmission(classExercise, modelingSubmission, "test-data/model-assessment/assessment.54727.partial.json", "tutor1",
                 true);
@@ -328,7 +350,7 @@ public class ModelingAssessmentIntegrationTest {
 
     @Test
     @WithMockUser(username = "student2")
-    public void automaticAssessmentUponModelSubmission_noSimilarity() throws Exception {
+    public void testAutomaticAssessmentUponModelSubmission_noSimilarity() throws Exception {
         modelingSubmission = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.54745.json", "student1");
         database.addModelingAssessmentForSubmission(classExercise, modelingSubmission, "test-data/model-assessment/assessment.54745.json", "tutor1", true);
         database.addParticipationForExercise(classExercise, "student2");
@@ -345,7 +367,7 @@ public class ModelingAssessmentIntegrationTest {
 
     @Test
     @WithMockUser(username = "student2")
-    public void automaticAssessmentUponModelSubmission_similarElementsWithinModel() throws Exception {
+    public void testAutomaticAssessmentUponModelSubmission_similarElementsWithinModel() throws Exception {
         modelingSubmission = ModelFactory.generateModelingSubmission(database.loadFileFromResources("test-data/model-submission/model.inheritance.json"), true);
         modelingSubmission = database.addModelingSubmission(classExercise, modelingSubmission, "student1");
         modelingAssessment = database.addModelingAssessmentForSubmission(classExercise, modelingSubmission, "test-data/model-assessment/assessment.inheritance.json", "tutor1",
@@ -364,7 +386,7 @@ public class ModelingAssessmentIntegrationTest {
 
     @Test
     @WithMockUser(username = "student2")
-    public void automaticAssessmentUponModelSubmission_noResultInDatabase() throws Exception {
+    public void testAutomaticAssessmentUponModelSubmission_noResultInDatabase() throws Exception {
         saveModelingSubmissionAndAssessment(true);
         database.addParticipationForExercise(classExercise, "student2");
 
@@ -378,7 +400,7 @@ public class ModelingAssessmentIntegrationTest {
 
     @Test
     @WithMockUser(username = "student2")
-    public void noAutomaticAssessmentUponModelSave() throws Exception {
+    public void testNoAutomaticAssessmentUponModelSave() throws Exception {
         saveModelingSubmissionAndAssessment(true);
 
         database.addParticipationForExercise(classExercise, "student2");
@@ -403,7 +425,7 @@ public class ModelingAssessmentIntegrationTest {
         ModelingSubmission submission5 = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.one-element.json", "student5");
         ModelingSubmission submissionToCheck = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.one-element.json", "student6");
 
-        request.put("/api/modeling-submissions/" + submission1.getId() + "/feedback?submit=true&ignoreConflicts=true",
+        request.put(API_MODELING_SUBMISSIONS + submission1.getId() + "/feedback?submit=true&ignoreConflicts=true",
                 Collections.singletonList(feedbackTwentyPoints.text("wrong text")), HttpStatus.OK);
 
         Result automaticResult = compassService.getAutomaticResultForSubmission(submissionToCheck.getId(), classExercise.getId());
@@ -412,29 +434,29 @@ public class ModelingAssessmentIntegrationTest {
         assertThat(automaticResult.getFeedbacks().get(0).getCredits()).as("credits of element are correct").isEqualTo(20);
         assertThat(automaticResult.getFeedbacks().get(0).getText()).as("feedback text of element is correct").isEqualTo("wrong text");
 
-        request.put("/api/modeling-submissions/" + submission2.getId() + "/feedback?submit=true&ignoreConflicts=true",
+        request.put(API_MODELING_SUBMISSIONS + submission2.getId() + "/feedback?submit=true&ignoreConflicts=true",
                 Collections.singletonList(feedbackOnePoint.text("long feedback text")), HttpStatus.OK);
 
         automaticResult = compassService.getAutomaticResultForSubmission(submissionToCheck.getId(), classExercise.getId());
         assertThat(automaticResult).as("automatic result was created").isNotNull();
         assertThat(automaticResult.getFeedbacks().size()).as("element is not assessed automatically").isEqualTo(0);
 
-        request.put("/api/modeling-submissions/" + submission3.getId() + "/feedback?submit=true&ignoreConflicts=true",
-                Collections.singletonList(feedbackOnePoint.text("short text")), HttpStatus.OK);
+        request.put(API_MODELING_SUBMISSIONS + submission3.getId() + "/feedback?submit=true&ignoreConflicts=true", Collections.singletonList(feedbackOnePoint.text("short text")),
+                HttpStatus.OK);
 
         automaticResult = compassService.getAutomaticResultForSubmission(submissionToCheck.getId(), classExercise.getId());
         assertThat(automaticResult).as("automatic result was created").isNotNull();
         assertThat(automaticResult.getFeedbacks().size()).as("element is not assessed automatically").isEqualTo(0);
 
-        request.put("/api/modeling-submissions/" + submission4.getId() + "/feedback?submit=true&ignoreConflicts=true",
+        request.put(API_MODELING_SUBMISSIONS + submission4.getId() + "/feedback?submit=true&ignoreConflicts=true",
                 Collections.singletonList(feedbackOnePoint.text("very long feedback text")), HttpStatus.OK);
 
         automaticResult = compassService.getAutomaticResultForSubmission(submissionToCheck.getId(), classExercise.getId());
         assertThat(automaticResult).as("automatic result was created").isNotNull();
         assertThat(automaticResult.getFeedbacks().size()).as("element is not assessed automatically").isEqualTo(0);
 
-        request.put("/api/modeling-submissions/" + submission5.getId() + "/feedback?submit=true&ignoreConflicts=true",
-                Collections.singletonList(feedbackOnePoint.text("medium text")), HttpStatus.OK);
+        request.put(API_MODELING_SUBMISSIONS + submission5.getId() + "/feedback?submit=true&ignoreConflicts=true", Collections.singletonList(feedbackOnePoint.text("medium text")),
+                HttpStatus.OK);
 
         automaticResult = compassService.getAutomaticResultForSubmission(submissionToCheck.getId(), classExercise.getId());
         assertThat(automaticResult).as("automatic result was created").isNotNull();
@@ -452,7 +474,7 @@ public class ModelingAssessmentIntegrationTest {
         ModelingSubmission submission3 = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.one-element.json", "student3");
         ModelingSubmission submissionToCheck = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.one-element.json", "student4");
 
-        request.put("/api/modeling-submissions/" + submission1.getId() + "/feedback?submit=true&ignoreConflicts=true",
+        request.put(API_MODELING_SUBMISSIONS + submission1.getId() + "/feedback?submit=true&ignoreConflicts=true",
                 Collections.singletonList(feedbackOnePoint.text("feedback text")), HttpStatus.OK);
 
         Result automaticResult = compassService.getAutomaticResultForSubmission(submissionToCheck.getId(), classExercise.getId());
@@ -460,7 +482,7 @@ public class ModelingAssessmentIntegrationTest {
         assertThat(automaticResult.getFeedbacks().size()).as("element is assessed automatically").isEqualTo(1);
         assertThat(automaticResult.getFeedbacks().get(0).getText()).as("feedback text of element is correct").isEqualTo("feedback text");
 
-        request.put("/api/modeling-submissions/" + submission2.getId() + "/feedback?submit=true&ignoreConflicts=true", Collections.singletonList(feedbackOnePoint.text("short")),
+        request.put(API_MODELING_SUBMISSIONS + submission2.getId() + "/feedback?submit=true&ignoreConflicts=true", Collections.singletonList(feedbackOnePoint.text("short")),
                 HttpStatus.OK);
 
         automaticResult = compassService.getAutomaticResultForSubmission(submissionToCheck.getId(), classExercise.getId());
@@ -468,7 +490,7 @@ public class ModelingAssessmentIntegrationTest {
         assertThat(automaticResult.getFeedbacks().size()).as("element is assessed automatically").isEqualTo(1);
         assertThat(automaticResult.getFeedbacks().get(0).getText()).as("feedback text of element is correct").isEqualTo("feedback text");
 
-        request.put("/api/modeling-submissions/" + submission3.getId() + "/feedback?submit=true&ignoreConflicts=true",
+        request.put(API_MODELING_SUBMISSIONS + submission3.getId() + "/feedback?submit=true&ignoreConflicts=true",
                 Collections.singletonList(feedbackOnePoint.text("very long feedback text")), HttpStatus.OK);
 
         automaticResult = compassService.getAutomaticResultForSubmission(submissionToCheck.getId(), classExercise.getId());
@@ -479,12 +501,12 @@ public class ModelingAssessmentIntegrationTest {
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void automaticAssessmentUponAssessmentSubmission() throws Exception {
+    public void testAutomaticAssessmentUponAssessmentSubmission() throws Exception {
         ModelingSubmission submission1 = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.54727.json", "student1");
         ModelingSubmission submission2 = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.54727.cpy.json", "student2");
         List<Feedback> feedbacks = database.loadAssessmentFomResources("test-data/model-assessment/assessment.54727.json");
 
-        request.put("/api/modeling-submissions/" + submission1.getId() + "/feedback?submit=true", feedbacks, HttpStatus.OK);
+        request.put(API_MODELING_SUBMISSIONS + submission1.getId() + "/feedback?submit=true", feedbacks, HttpStatus.OK);
 
         Result storedResultOfSubmission2 = compassService.getAutomaticResultForSubmission(submission2.getId(), classExercise.getId());
         assertThat(storedResultOfSubmission2).as("automatic result is created").isNotNull();
@@ -494,12 +516,12 @@ public class ModelingAssessmentIntegrationTest {
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void automaticAssessmentUponAssessmentSubmission_noResultInDatabase() throws Exception {
+    public void testAutomaticAssessmentUponAssessmentSubmission_noResultInDatabase() throws Exception {
         ModelingSubmission submission1 = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.54727.json", "student1");
         ModelingSubmission submission2 = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.54727.cpy.json", "student2");
         List<Feedback> feedbacks = database.loadAssessmentFomResources("test-data/model-assessment/assessment.54727.json");
 
-        request.put("/api/modeling-submissions/" + submission1.getId() + "/feedback?submit=true", feedbacks, HttpStatus.OK);
+        request.put(API_MODELING_SUBMISSIONS + submission1.getId() + "/feedback?submit=true", feedbacks, HttpStatus.OK);
 
         Optional<Result> automaticResult = resultRepo.findDistinctWithFeedbackBySubmissionId(submission2.getId());
         assertThat(automaticResult).as("automatic result not stored in database").isNotPresent();
@@ -507,12 +529,12 @@ public class ModelingAssessmentIntegrationTest {
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void noAutomaticAssessmentUponAssessmentSave() throws Exception {
+    public void testNoAutomaticAssessmentUponAssessmentSave() throws Exception {
         ModelingSubmission submission1 = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.54727.json", "student1");
         ModelingSubmission submission2 = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.54727.cpy.json", "student2");
         List<Feedback> feedbacks = database.loadAssessmentFomResources("test-data/model-assessment/assessment.54727.json");
 
-        request.put("/api/modeling-submissions/" + submission1.getId() + "/feedback", feedbacks, HttpStatus.OK);
+        request.put(API_MODELING_SUBMISSIONS + submission1.getId() + "/feedback", feedbacks, HttpStatus.OK);
 
         Result storedResultOfSubmission2 = compassService.getAutomaticResultForSubmission(submission2.getId(), classExercise.getId());
         assertThat(storedResultOfSubmission2).as("no automatic result has been created").isNull();
@@ -527,13 +549,13 @@ public class ModelingAssessmentIntegrationTest {
         ModelingSubmission submission2 = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.different-context.json", "student2");
         ModelingSubmission submissionToCheck = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.different-context.json", "student3");
 
-        request.put("/api/modeling-submissions/" + submission1.getId() + "/feedback?submit=true&ignoreConflicts=true", assessment1, HttpStatus.OK);
+        request.put(API_MODELING_SUBMISSIONS + submission1.getId() + "/feedback?submit=true&ignoreConflicts=true", assessment1, HttpStatus.OK);
 
         Result automaticResult = compassService.getAutomaticResultForSubmission(submissionToCheck.getId(), classExercise.getId());
         assertThat(automaticResult).as("automatic result was created").isNotNull();
         assertThat(automaticResult.getFeedbacks().size()).as("all elements got assessed automatically").isEqualTo(4);
 
-        request.put("/api/modeling-submissions/" + submission2.getId() + "/feedback?submit=true&ignoreConflicts=true", assessment2, HttpStatus.OK);
+        request.put(API_MODELING_SUBMISSIONS + submission2.getId() + "/feedback?submit=true&ignoreConflicts=true", assessment2, HttpStatus.OK);
 
         automaticResult = compassService.getAutomaticResultForSubmission(submissionToCheck.getId(), classExercise.getId());
         assertThat(automaticResult).as("automatic result was created").isNotNull();
@@ -542,7 +564,7 @@ public class ModelingAssessmentIntegrationTest {
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void overrideAutomaticAssessment() throws Exception {
+    public void testOverrideAutomaticAssessment() throws Exception {
         modelingSubmission = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.54727.partial.json", "student1");
         modelingAssessment = database.addModelingAssessmentForSubmission(classExercise, modelingSubmission, "test-data/model-assessment/assessment.54727.partial.json", "tutor1",
                 true);
@@ -561,7 +583,7 @@ public class ModelingAssessmentIntegrationTest {
         List<Feedback> overrideFeedback = new ArrayList<>(existingFeedback);
         overrideFeedback.addAll(newFeedback);
 
-        Result storedResult = request.putWithResponseBody("/api/modeling-submissions/" + modelingSubmission.getId() + "/feedback", overrideFeedback, Result.class, HttpStatus.OK);
+        Result storedResult = request.putWithResponseBody(API_MODELING_SUBMISSIONS + modelingSubmission.getId() + "/feedback", overrideFeedback, Result.class, HttpStatus.OK);
 
         List<Feedback> manualFeedback = new ArrayList<>();
         List<Feedback> automaticFeedback = new ArrayList<>();
@@ -585,15 +607,15 @@ public class ModelingAssessmentIntegrationTest {
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void overrideAutomaticAssessment_existingManualAssessmentDoesNotChange() throws Exception {
+    public void testOverrideAutomaticAssessment_existingManualAssessmentDoesNotChange() throws Exception {
         Feedback originalFeedback = new Feedback().credits(1.0).text("some feedback text").reference("Class:6aba5764-d102-4740-9675-b2bd0a4f2123");
         Feedback changedFeedback = new Feedback().credits(2.0).text("another text").reference("Class:6aba5764-d102-4740-9675-b2bd0a4f2123");
         modelingSubmission = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.one-element.json", "student1");
         ModelingSubmission modelingSubmission2 = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.one-element.json", "student2");
-        request.put("/api/modeling-submissions/" + modelingSubmission.getId() + "/feedback?submit=true&ignoreConflicts=true", Collections.singletonList(originalFeedback),
+        request.put(API_MODELING_SUBMISSIONS + modelingSubmission.getId() + "/feedback?submit=true&ignoreConflicts=true", Collections.singletonList(originalFeedback),
                 HttpStatus.OK);
 
-        request.put("/api/modeling-submissions/" + modelingSubmission2.getId() + "/feedback?submit=true&ignoreConflicts=true", Collections.singletonList(changedFeedback),
+        request.put(API_MODELING_SUBMISSIONS + modelingSubmission2.getId() + "/feedback?submit=true&ignoreConflicts=true", Collections.singletonList(changedFeedback),
                 HttpStatus.OK);
 
         modelingAssessment = resultRepo.findDistinctWithFeedbackBySubmissionId(modelingSubmission2.getId()).get();
@@ -606,16 +628,16 @@ public class ModelingAssessmentIntegrationTest {
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void overrideSubmittedManualAssessment_noConflict() throws Exception {
+    public void testOverrideSubmittedManualAssessment_noConflict() throws Exception {
         Feedback originalFeedback = new Feedback().credits(1.0).text("some feedback text").reference("Class:6aba5764-d102-4740-9675-b2bd0a4f2123");
         modelingSubmission = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.one-element.json", "student1");
         ModelingSubmission modelingSubmission2 = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.one-element.json", "student2");
-        request.put("/api/modeling-submissions/" + modelingSubmission.getId() + "/feedback?submit=true&ignoreConflicts=true", Collections.singletonList(originalFeedback),
+        request.put(API_MODELING_SUBMISSIONS + modelingSubmission.getId() + "/feedback?submit=true&ignoreConflicts=true", Collections.singletonList(originalFeedback),
                 HttpStatus.OK);
 
         Result originalResult = resultRepo.findDistinctWithFeedbackBySubmissionId(modelingSubmission.getId()).get();
         Feedback changedFeedback = originalResult.getFeedbacks().get(0).credits(2.0).text("another text");
-        request.put("/api/modeling-submissions/" + modelingSubmission.getId() + "/feedback?submit=true&ignoreConflicts=true", Collections.singletonList(changedFeedback),
+        request.put(API_MODELING_SUBMISSIONS + modelingSubmission.getId() + "/feedback?submit=true&ignoreConflicts=true", Collections.singletonList(changedFeedback),
                 HttpStatus.OK);
 
         modelingAssessment = resultRepo.findDistinctWithFeedbackBySubmissionId(modelingSubmission.getId()).get();
@@ -629,19 +651,19 @@ public class ModelingAssessmentIntegrationTest {
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void overrideSubmittedManualAssessment_conflict() throws Exception {
+    public void testOverrideSubmittedManualAssessment_conflict() throws Exception {
         Feedback originalFeedback = new Feedback().credits(1.0).text("some feedback text").reference("Class:6aba5764-d102-4740-9675-b2bd0a4f2123");
         modelingSubmission = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.one-element.json", "student1");
         ModelingSubmission modelingSubmission2 = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.one-element.json", "student2");
         ModelingSubmission modelingSubmission3 = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.one-element.json", "student3");
-        request.put("/api/modeling-submissions/" + modelingSubmission.getId() + "/feedback?submit=true&ignoreConflicts=true", Collections.singletonList(originalFeedback),
+        request.put(API_MODELING_SUBMISSIONS + modelingSubmission.getId() + "/feedback?submit=true&ignoreConflicts=true", Collections.singletonList(originalFeedback),
                 HttpStatus.OK);
-        request.put("/api/modeling-submissions/" + modelingSubmission2.getId() + "/feedback?submit=true&ignoreConflicts=true", Collections.singletonList(originalFeedback),
+        request.put(API_MODELING_SUBMISSIONS + modelingSubmission2.getId() + "/feedback?submit=true&ignoreConflicts=true", Collections.singletonList(originalFeedback),
                 HttpStatus.OK);
 
         Result originalResult = resultRepo.findDistinctWithFeedbackBySubmissionId(modelingSubmission.getId()).get();
         Feedback changedFeedback = originalResult.getFeedbacks().get(0).credits(2.0).text("another text");
-        request.put("/api/modeling-submissions/" + modelingSubmission.getId() + "/feedback?submit=true&ignoreConflicts=true", Collections.singletonList(changedFeedback),
+        request.put(API_MODELING_SUBMISSIONS + modelingSubmission.getId() + "/feedback?submit=true&ignoreConflicts=true", Collections.singletonList(changedFeedback),
                 HttpStatus.OK);
 
         modelingAssessment = resultRepo.findDistinctWithFeedbackBySubmissionId(modelingSubmission.getId()).get();
@@ -674,7 +696,7 @@ public class ModelingAssessmentIntegrationTest {
         ModelingSubmission submission2 = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.conflict.2.json", "student2");
         causeConflict("tutor1", submission1, submission2);
         List<Feedback> feedbacks = database.loadAssessmentFomResources("test-data/model-assessment/assessment.conflict.2.update.json");
-        List<ModelAssessmentConflict> conflicts = request.putWithResponseBodyList("/api/modeling-submissions/" + submission2.getId() + "/feedback?submit=true", feedbacks,
+        List<ModelAssessmentConflict> conflicts = request.putWithResponseBodyList(API_MODELING_SUBMISSIONS + submission2.getId() + "/feedback?submit=true", feedbacks,
                 ModelAssessmentConflict.class, HttpStatus.CONFLICT);
         assertThat(conflicts.size()).as("1 Conflict got resolved").isEqualTo(2);
         conflicts.forEach(conflict -> {
@@ -686,8 +708,8 @@ public class ModelingAssessmentIntegrationTest {
         User assessor = database.getUserByLogin(assessorName);
         List<Feedback> feedbacks1 = database.loadAssessmentFomResources("test-data/model-assessment/assessment.conflict.1.json");
         List<Feedback> feedbacks2 = database.loadAssessmentFomResources("test-data/model-assessment/assessment.conflict.2.json");
-        request.put("/api/modeling-submissions/" + submission1.getId() + "/feedback?submit=true", feedbacks1, HttpStatus.OK);
-        List<ModelAssessmentConflict> conflicts = request.putWithResponseBodyList("/api/modeling-submissions/" + submission2.getId() + "/feedback?submit=true", feedbacks2,
+        request.put(API_MODELING_SUBMISSIONS + submission1.getId() + "/feedback?submit=true", feedbacks1, HttpStatus.OK);
+        List<ModelAssessmentConflict> conflicts = request.putWithResponseBodyList(API_MODELING_SUBMISSIONS + submission2.getId() + "/feedback?submit=true", feedbacks2,
                 ModelAssessmentConflict.class, HttpStatus.CONFLICT);
         ModelingSubmission stored2ndSubmission = modelingSubmissionRepo.findById(submission2.getId()).get();
         Result stored2ndResult = resultRepo.findByIdWithEagerFeedbacks(stored2ndSubmission.getResult().getId()).get();
@@ -742,6 +764,11 @@ public class ModelingAssessmentIntegrationTest {
         assertThat(storedResult.getAssessmentType()).as("result type is AUTOMATIC").isEqualTo(AssessmentType.AUTOMATIC);
     }
 
+    private void saveModelingSubmission() throws Exception {
+        modelingSubmission = ModelFactory.generateModelingSubmission(database.loadFileFromResources("test-data/model-submission/model.54727.json"), true);
+        modelingSubmission = database.addModelingSubmission(classExercise, modelingSubmission, "student1");
+    }
+
     private void saveModelingSubmissionAndAssessment(boolean submitAssessment) throws Exception {
         modelingSubmission = ModelFactory.generateModelingSubmission(database.loadFileFromResources("test-data/model-submission/model.54727.json"), true);
         modelingSubmission = database.addModelingSubmission(classExercise, modelingSubmission, "student1");
@@ -754,5 +781,146 @@ public class ModelingAssessmentIntegrationTest {
         modelingSubmission = database.addModelingSubmission(activityExercise, modelingSubmission, "student1");
         modelingAssessment = database.addModelingAssessmentForSubmission(activityExercise, modelingSubmission, "test-data/model-assessment/example-activity-assessment.json",
                 "tutor1", submitAssessment);
+    }
+
+    private void cancelAssessment(HttpStatus expectedStatus) throws Exception {
+        modelingSubmission = ModelFactory.generateModelingSubmission(database.loadFileFromResources("test-data/model-submission/example-activity-diagram.json"), true);
+        modelingSubmission = database.addModelingSubmission(activityExercise, modelingSubmission, "student1");
+        modelingAssessment = database.addModelingAssessmentForSubmission(activityExercise, modelingSubmission, "test-data/model-assessment/example-activity-assessment.json",
+                "tutor1", false);
+        request.put(API_MODELING_SUBMISSIONS + modelingSubmission.getId() + "/cancel-assessment", null, expectedStatus);
+    }
+
+    @Test
+    @WithMockUser(value = "student1", roles = "USER")
+    public void cancelOwnAssessmentAsStudent() throws Exception {
+        cancelAssessment(HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void cancelOwnAssessmentAsTutor() throws Exception {
+        cancelAssessment(HttpStatus.OK);
+    }
+
+    @Test
+    @WithMockUser(value = "tutor2", roles = "TA")
+    public void cancelAssessmentOfOtherTutorAsTutor() throws Exception {
+        cancelAssessment(HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void cancelAssessmentOfOtherTutorAsInstructor() throws Exception {
+        cancelAssessment(HttpStatus.OK);
+    }
+
+    @Test
+    @WithMockUser(value = "tutor2", roles = "TA")
+    public void testOverrideAssessment_saveOtherTutorForbidden() throws Exception {
+        overrideAssessment("student1", "tutor1", HttpStatus.FORBIDDEN, "false", true);
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void testOverrideAssessment_saveInstructorPossible() throws Exception {
+        overrideAssessment("student1", "tutor1", HttpStatus.OK, "false", true);
+    }
+
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void testOverrideAssessment_saveSameTutorPossible() throws Exception {
+        overrideAssessment("student1", "tutor1", HttpStatus.OK, "false", true);
+    }
+
+    @Test
+    @WithMockUser(value = "tutor2", roles = "TA")
+    public void testOverrideAssessment_submitOtherTutorForbidden() throws Exception {
+        overrideAssessment("student1", "tutor1", HttpStatus.FORBIDDEN, "true", true);
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void testOverrideAssessment_submitInstructorPossible() throws Exception {
+        overrideAssessment("student1", "tutor1", HttpStatus.OK, "true", true);
+    }
+
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void testOverrideAssessment_submitSameTutorPossible() throws Exception {
+        overrideAssessment("student1", "tutor1", HttpStatus.OK, "true", true);
+    }
+
+    @Test
+    @WithMockUser(value = "tutor2", roles = "TA")
+    public void testOverrideAssessment_saveOtherTutorAfterAssessmentDueDateForbidden() throws Exception {
+        assessmentDueDatePassed();
+        overrideAssessment("student1", "tutor1", HttpStatus.FORBIDDEN, "false", true);
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void testOverrideAssessment_saveInstructorAfterAssessmentDueDatePossible() throws Exception {
+        assessmentDueDatePassed();
+        overrideAssessment("student1", "tutor1", HttpStatus.OK, "false", true);
+    }
+
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void testOverrideAssessment_saveSameTutorAfterAssessmentDueDateForbidden() throws Exception {
+        assessmentDueDatePassed();
+        overrideAssessment("student1", "tutor1", HttpStatus.FORBIDDEN, "false", true);
+    }
+
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void testOverrideAssessment_saveSameTutorAfterAssessmentDueDatePossible() throws Exception {
+        assessmentDueDatePassed();
+        // should be possible because the original result was not yet submitted
+        overrideAssessment("student1", "tutor1", HttpStatus.OK, "false", false);
+    }
+
+    @Test
+    @WithMockUser(value = "tutor2", roles = "TA")
+    public void testOverrideAssessment_submitOtherTutorAfterAssessmentDueDateForbidden() throws Exception {
+        assessmentDueDatePassed();
+        overrideAssessment("student1", "tutor1", HttpStatus.FORBIDDEN, "true", true);
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void testOverrideAssessment_submitInstructorAfterAssessmentDueDatePossible() throws Exception {
+        assessmentDueDatePassed();
+        overrideAssessment("student1", "tutor1", HttpStatus.OK, "true", true);
+    }
+
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void testOverrideAssessment_submitSameTutorAfterAssessmentDueDateForbidden() throws Exception {
+        assessmentDueDatePassed();
+        overrideAssessment("student1", "tutor1", HttpStatus.FORBIDDEN, "true", true);
+    }
+
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void testOverrideAssessment_submitSameTutorAfterAssessmentDueDatePossible() throws Exception {
+        assessmentDueDatePassed();
+        // should be possible because the original result was not yet submitted
+        overrideAssessment("student1", "tutor1", HttpStatus.OK, "true", false);
+    }
+
+    private void assessmentDueDatePassed() {
+        database.updateAssessmentDueDate(classExercise.getId(), ZonedDateTime.now().minusSeconds(10));
+    }
+
+    private void overrideAssessment(String student, String originalAssessor, HttpStatus httpStatus, String submit, boolean originalAssessmentSubmitted) throws Exception {
+        ModelingSubmission submission = ModelFactory.generateModelingSubmission(database.loadFileFromResources("test-data/model-submission/model.54727.json"), true);
+        submission = database.addModelingSubmissionWithResultAndAssessor(classExercise, submission, student, originalAssessor);
+        submission.getResult().setCompletionDate(originalAssessmentSubmitted ? ZonedDateTime.now() : null);
+        resultRepo.save(submission.getResult());
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("submit", submit);
+        List<Feedback> feedbacks = database.loadAssessmentFomResources("test-data/model-assessment/assessment.54727.json");
+        request.putWithResponseBodyAndParams(API_MODELING_SUBMISSIONS + submission.getId() + "/feedback", feedbacks, Result.class, httpStatus, params);
     }
 }

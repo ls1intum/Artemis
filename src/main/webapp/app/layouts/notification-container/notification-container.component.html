@@ -26,7 +26,7 @@
                     </h5>
                     <div class="notification-description mb-1">{{ notification.text }}</div>
                     <div class="notification-info">
-                        {{ notification.notificationDate | date: 'dd/MM/yy HH:mm' }} by <span *ngIf="notification.author; else noAuthor">{{ notification.author.firstName }}</span>
+                        {{ notification.notificationDate | date: 'dd/MM/yy HH:mm' }} by <span *ngIf="notification.author; else noAuthor">{{ notification.author.name }}</span>
                     </div>
                     <ng-template #noAuthor>
                         <span jhiTranslate="global.title"></span>

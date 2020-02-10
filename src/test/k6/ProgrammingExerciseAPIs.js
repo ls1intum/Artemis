@@ -9,7 +9,8 @@ export const options = {
     iterations: __ENV.ITERATIONS,
     vus: __ENV.ITERATIONS,
     rps: 4,
-    setupTimeout: '90s'
+    setupTimeout: '90s',
+    teardownTimeout: '90s'
 };
 
 const adminUsername = __ENV.ADMIN_USERNAME;

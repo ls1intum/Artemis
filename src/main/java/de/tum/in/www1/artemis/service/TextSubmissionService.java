@@ -9,7 +9,6 @@ import java.util.Random;
 import java.util.stream.Collectors;
 
 import org.springframework.http.HttpStatus;
-import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
@@ -37,18 +36,15 @@ public class TextSubmissionService extends SubmissionService {
 
     private final Optional<TextAssessmentQueueService> textAssessmentQueueService;
 
-    private final SimpMessageSendingOperations messagingTemplate;
-
     public TextSubmissionService(TextSubmissionRepository textSubmissionRepository, SubmissionRepository submissionRepository,
             StudentParticipationRepository studentParticipationRepository, ParticipationService participationService, ResultRepository resultRepository, UserService userService,
-            Optional<TextAssessmentQueueService> textAssessmentQueueService, SimpMessageSendingOperations messagingTemplate, AuthorizationCheckService authCheckService) {
+            Optional<TextAssessmentQueueService> textAssessmentQueueService, AuthorizationCheckService authCheckService) {
         super(submissionRepository, userService, authCheckService);
         this.textSubmissionRepository = textSubmissionRepository;
         this.studentParticipationRepository = studentParticipationRepository;
         this.participationService = participationService;
         this.resultRepository = resultRepository;
         this.textAssessmentQueueService = textAssessmentQueueService;
-        this.messagingTemplate = messagingTemplate;
     }
 
     /**
@@ -100,15 +96,12 @@ public class TextSubmissionService extends SubmissionService {
 
         if (textSubmission.isSubmitted()) {
             participation.setInitializationState(InitializationState.FINISHED);
-
-            messagingTemplate.convertAndSendToUser(participation.getStudent().getLogin(), "/topic/exercise/" + participation.getExercise().getId() + "/participation",
-                    participation);
         }
         StudentParticipation savedParticipation = studentParticipationRepository.save(participation);
         if (textSubmission.getId() == null) {
-            Optional<TextSubmission> optionalTextSubmission = savedParticipation.findLatestTextSubmission();
+            Optional<Submission> optionalTextSubmission = savedParticipation.findLatestSubmission();
             if (optionalTextSubmission.isPresent()) {
-                textSubmission = optionalTextSubmission.get();
+                textSubmission = (TextSubmission) optionalTextSubmission.get();
             }
         }
 
@@ -148,14 +141,16 @@ public class TextSubmissionService extends SubmissionService {
         if (textExercise.isAutomaticAssessmentEnabled() && textAssessmentQueueService.isPresent()) {
             return textAssessmentQueueService.get().getProposedTextSubmission(textExercise);
         }
-        Random r = new Random();
-        List<TextSubmission> submissionsWithoutResult = participationService.findByExerciseIdWithLatestSubmissionWithoutManualResults(textExercise.getId()).stream()
-                .map(StudentParticipation::findLatestTextSubmission).filter(Optional::isPresent).map(Optional::get).collect(Collectors.toList());
+        Random random = new Random();
+        var participations = participationService.findByExerciseIdWithLatestSubmissionWithoutManualResults(textExercise.getId());
+        var submissionsWithoutResult = participations.stream().map(StudentParticipation::findLatestSubmission).filter(Optional::isPresent).map(Optional::get)
+                .collect(Collectors.toList());
 
         if (submissionsWithoutResult.isEmpty()) {
             return Optional.empty();
         }
-        return Optional.of(submissionsWithoutResult.get(r.nextInt(submissionsWithoutResult.size())));
+        var submissionWithoutResult = (TextSubmission) submissionsWithoutResult.get(random.nextInt(submissionsWithoutResult.size()));
+        return Optional.of(submissionWithoutResult);
     }
 
     /**
@@ -206,11 +201,11 @@ public class TextSubmissionService extends SubmissionService {
      * @return a list of text submissions for the given exercise id
      */
     public List<TextSubmission> getTextSubmissionsByExerciseId(Long exerciseId, boolean submittedOnly) {
-        List<StudentParticipation> participations = studentParticipationRepository.findAllByExerciseIdWithEagerSubmissionsAndEagerResultsAndEagerAssessor(exerciseId);
+        List<StudentParticipation> participations = studentParticipationRepository.findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseId(exerciseId);
         List<TextSubmission> textSubmissions = new ArrayList<>();
 
         for (StudentParticipation participation : participations) {
-            Optional<TextSubmission> optionalTextSubmission = participation.findLatestTextSubmission();
+            Optional<Submission> optionalTextSubmission = participation.findLatestSubmission();
 
             if (optionalTextSubmission.isEmpty()) {
                 continue;
@@ -220,14 +215,19 @@ public class TextSubmissionService extends SubmissionService {
                 continue;
             }
 
-            textSubmissions.add(optionalTextSubmission.get());
+            textSubmissions.add((TextSubmission) optionalTextSubmission.get());
         }
         return textSubmissions;
     }
 
-    public TextSubmission findOneWithEagerResultAndAssessor(Long id) {
-        return textSubmissionRepository.findByIdWithEagerResultAndAssessor(id)
-                .orElseThrow(() -> new EntityNotFoundException("Text submission with id \"" + id + "\" does not exist"));
+    public TextSubmission findOneWithEagerResultAndAssessor(Long submissionId) {
+        return textSubmissionRepository.findByIdWithEagerResultAndAssessor(submissionId)
+                .orElseThrow(() -> new EntityNotFoundException("Text submission with id \"" + submissionId + "\" does not exist"));
+    }
+
+    public TextSubmission findOneWithEagerResultAndFeedback(Long submissionId) {
+        return textSubmissionRepository.findByIdWithEagerResultAndFeedback(submissionId)
+                .orElseThrow(() -> new EntityNotFoundException("Text submission with id \"" + submissionId + "\" does not exist"));
     }
 
     /**

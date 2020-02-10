@@ -3,7 +3,7 @@ import { NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
 
 import { ArtemisSharedModule } from '../shared';
-import { CourseComponent, CourseService } from '../entities/course';
+import { CourseComponent } from '../entities/course';
 import { JhiAlertService } from 'ng-jhipster';
 import { ArtemisResultModule } from '../entities/result';
 import { HomeComponent } from '../home';
@@ -32,7 +32,7 @@ const ENTITY_STATES = [...exampleModelingSubmissionRoute];
     declarations: [ExampleModelingSubmissionComponent],
     exports: [],
     entryComponents: [HomeComponent, CourseComponent, JhiMainComponent],
-    providers: [CourseService, JhiAlertService],
+    providers: [JhiAlertService],
     schemas: [],
 })
 export class ArtemisExampleModelingSubmissionModule {}

@@ -43,7 +43,9 @@ export class ModelingExerciseDetailComponent implements OnInit, OnDestroy {
             this.problemStatement = this.artemisMarkdown.safeHtmlForMarkdown(this.modelingExercise.problemStatement);
             this.gradingInstructions = this.artemisMarkdown.safeHtmlForMarkdown(this.modelingExercise.gradingInstructions);
             this.sampleSolution = this.artemisMarkdown.safeHtmlForMarkdown(this.modelingExercise.sampleSolutionExplanation);
-            this.sampleSolutionUML = JSON.parse(this.modelingExercise.sampleSolutionModel);
+            if (this.modelingExercise.sampleSolutionModel && this.modelingExercise.sampleSolutionModel !== '') {
+                this.sampleSolutionUML = JSON.parse(this.modelingExercise.sampleSolutionModel);
+            }
         });
     }
 

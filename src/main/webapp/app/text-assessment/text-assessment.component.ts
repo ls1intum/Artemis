@@ -16,7 +16,7 @@ import { Feedback } from 'app/entities/feedback';
 import { StudentParticipation } from 'app/entities/participation';
 import Interactable from '@interactjs/core/Interactable';
 import interact from 'interactjs';
-import { WindowRef } from 'app/core';
+import { WindowRef } from 'app/core/websocket/window.service';
 import { ArtemisMarkdown } from 'app/components/util/markdown.service';
 import { Complaint, ComplaintType } from 'app/entities/complaint';
 import { ComplaintResponse } from 'app/entities/complaint-response';
@@ -129,7 +129,7 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
                         } else if (error.error && error.error.errorKey === 'lockedSubmissionsLimitReached') {
                             this.goToExerciseDashboard();
                         } else {
-                            this.onError(error.message);
+                            this.onError(error);
                         }
                         this.busy = false;
                     },
@@ -138,7 +138,7 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
                 const submissionId = Number(submissionValue);
                 this.assessmentsService.getFeedbackDataForExerciseSubmission(submissionId).subscribe(
                     participation => this.receiveParticipation(participation),
-                    (error: HttpErrorResponse) => this.onError(error.message),
+                    (error: HttpErrorResponse) => this.onError(error),
                 );
             }
         });
@@ -241,7 +241,7 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
                 this.updateParticipationWithResult();
                 this.jhiAlertService.success('artemisApp.textAssessment.saveSuccessful');
             },
-            (error: HttpErrorResponse) => this.onError(`artemisApp.${error.error.entityName}.${error.error.message}`),
+            (error: HttpErrorResponse) => this.onError(error),
         );
     }
 
@@ -262,7 +262,7 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
                 this.updateParticipationWithResult();
                 this.jhiAlertService.success('artemisApp.textAssessment.submitSuccessful');
             },
-            (error: HttpErrorResponse) => this.onError(`artemisApp.${error.error.entityName}.${error.error.message}`),
+            (error: HttpErrorResponse) => this.onError(error),
         );
     }
 
@@ -296,7 +296,7 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
                         // there are no unassessed submission, nothing we have to worry about
                         this.jhiAlertService.error('artemisApp.tutorExerciseDashboard.noSubmissions');
                     } else {
-                        this.onError(error.message);
+                        this.onError(error);
                     }
                 },
             );
@@ -311,7 +311,7 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
                 this.loadFeedbacks(response.body!.feedbacks || []);
                 this.validateAssessment();
             },
-            (error: HttpErrorResponse) => this.onError(error.message),
+            (error: HttpErrorResponse) => this.onError(error),
         );
     }
 
@@ -380,8 +380,8 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
                 }
                 this.complaint = res.body;
             },
-            (err: HttpErrorResponse) => {
-                this.onError(err.message);
+            (error: HttpErrorResponse) => {
+                this.onError(error);
             },
         );
     }
@@ -477,7 +477,7 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
             return;
         }
 
-        this.assessmentsService.updateAfterComplaint(this.assessments, complaintResponse, this.exercise.id, this.result.id).subscribe(
+        this.assessmentsService.updateAssessmentAfterComplaint(this.assessments, complaintResponse, this.submission.id).subscribe(
             response => {
                 this.result = response.body!;
                 this.updateParticipationWithResult();
@@ -491,8 +491,10 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
         );
     }
 
-    private onError(error: string) {
-        console.error(error);
-        this.jhiAlertService.error(error, null, undefined);
+    private onError(error: HttpErrorResponse) {
+        const errorMessage = error.headers.get('X-artemisApp-message')!;
+        // TODO: this is a workaround to avoid translation not found issues. Provide proper translations
+        const jhiAlert = this.jhiAlertService.error(errorMessage);
+        jhiAlert.msg = errorMessage;
     }
 }

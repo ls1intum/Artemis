@@ -20,6 +20,7 @@ import org.springframework.web.multipart.MultipartFile;
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.exception.EmptyFileException;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
@@ -100,7 +101,7 @@ public class FileUploadSubmissionResource {
         // Check the pattern
         final var splittedFileName = file.getOriginalFilename().split("\\.");
         final var fileSuffix = splittedFileName[splittedFileName.length - 1].toLowerCase();
-        final var filePattern = String.join("|", exercise.getFilePattern().toLowerCase().replace(" ", "").split(","));
+        final var filePattern = String.join("|", exercise.getFilePattern().toLowerCase().replaceAll("\\s", "").split(","));
         if (!fileSuffix.matches(filePattern)) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .headers(HeaderUtil.createAlert(applicationName, "The uploaded file has the wrong type!", "fileUploadSubmissionIllegalFileType")).build();
@@ -111,8 +112,14 @@ public class FileUploadSubmissionResource {
             submission = fileUploadSubmissionService.handleFileUploadSubmission(fileUploadSubmission, file, exercise, principal);
         }
         catch (IOException e) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, "fileUploadSubmission", "fileUploadSubmissionCantStore",
-                    "The uploaded file could not be saved on the server")).build();
+            return ResponseEntity.badRequest()
+                    .headers(HeaderUtil.createFailureAlert(applicationName, true, "fileUploadSubmission", "cantSaveFile", "The uploaded file could not be saved on the server"))
+                    .build();
+        }
+
+        catch (EmptyFileException e) {
+            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, "fileUploadSubmission", "emptyFile", "The uploaded file is empty"))
+                    .build();
         }
 
         this.fileUploadSubmissionService.hideDetails(submission, user);
@@ -158,7 +165,7 @@ public class FileUploadSubmissionResource {
     public ResponseEntity<List<FileUploadSubmission>> getAllFileUploadSubmissions(@PathVariable Long exerciseId, @RequestParam(defaultValue = "false") boolean submittedOnly,
             @RequestParam(defaultValue = "false") boolean assessedByTutor) {
         log.debug("REST request to get all file upload submissions");
-        final Exercise exercise = exerciseService.findOne(exerciseId);
+        final Exercise exercise = exerciseService.findOneWithAdditionalElements(exerciseId);
         final User user = userService.getUserWithGroupsAndAuthorities();
 
         if (assessedByTutor) {
@@ -205,7 +212,7 @@ public class FileUploadSubmissionResource {
     public ResponseEntity<FileUploadSubmission> getFileUploadSubmissionWithoutAssessment(@PathVariable Long exerciseId,
             @RequestParam(value = "lock", defaultValue = "false") boolean lockSubmission) {
         log.debug("REST request to get a file upload submission without assessment");
-        final Exercise fileUploadExercise = exerciseService.findOne(exerciseId);
+        final Exercise fileUploadExercise = exerciseService.findOneWithAdditionalElements(exerciseId);
         final User user = userService.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(fileUploadExercise, user)) {
             return forbidden();
@@ -280,16 +287,16 @@ public class FileUploadSubmissionResource {
             return forbidden();
         }
 
-        Optional<FileUploadSubmission> optionalFileUploadSubmission = participation.findLatestFileUploadSubmission();
+        Optional<Submission> optionalSubmission = participation.findLatestSubmission();
         FileUploadSubmission fileUploadSubmission;
-        if (!optionalFileUploadSubmission.isPresent()) {
+        if (optionalSubmission.isEmpty()) {
             // this should never happen as the submission is initialized along with the participation when the exercise is started
             fileUploadSubmission = new FileUploadSubmission();
             fileUploadSubmission.setParticipation(participation);
         }
         else {
             // only try to get and set the file upload if the fileUploadSubmission existed before
-            fileUploadSubmission = optionalFileUploadSubmission.get();
+            fileUploadSubmission = (FileUploadSubmission) optionalSubmission.get();
         }
 
         // make sure only the latest submission and latest result is sent to the client
@@ -317,12 +324,6 @@ public class FileUploadSubmissionResource {
 
         // fetch course from database to make sure client didn't change groups
         Course course = courseService.findOne(fileUploadExercise.getCourse().getId());
-        if (course == null) {
-            return ResponseEntity.badRequest()
-                    .headers(
-                            HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "courseNotFound", "The course belonging to this file upload exercise does not exist"))
-                    .body(null);
-        }
         if (!authCheckService.isAtLeastStudentInCourse(course, userService.getUserWithGroupsAndAuthorities())) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }

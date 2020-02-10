@@ -256,7 +256,7 @@ public class ProgrammingSubmissionResource {
         if (participationIds.isEmpty()) {
             return badRequest();
         }
-        ProgrammingExercise programmingExercise = programmingExerciseService.findById(exerciseId);
+        ProgrammingExercise programmingExercise = programmingExerciseService.findWithTemplateParticipationAndSolutionParticipationById(exerciseId);
         if (programmingExercise == null) {
             return notFound();
         }
@@ -343,7 +343,7 @@ public class ProgrammingSubmissionResource {
     public ResponseEntity<List<ProgrammingSubmission>> getAllProgrammingSubmissions(@PathVariable Long exerciseId, @RequestParam(defaultValue = "false") boolean submittedOnly,
             @RequestParam(defaultValue = "false") boolean assessedByTutor) {
         log.debug("REST request to get all programming submissions");
-        Exercise exercise = exerciseService.findOne(exerciseId);
+        Exercise exercise = exerciseService.findOneWithAdditionalElements(exerciseId);
 
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
             throw new AccessForbiddenException("You are not allowed to access this resource");
@@ -371,7 +371,7 @@ public class ProgrammingSubmissionResource {
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<ProgrammingSubmission> getProgrammingSubmissionWithoutAssessment(@PathVariable Long exerciseId) {
         log.debug("REST request to get a programming submission without assessment");
-        final ProgrammingExercise programmingExercise = programmingExerciseService.findById(exerciseId);
+        final ProgrammingExercise programmingExercise = programmingExerciseService.findWithTemplateParticipationAndSolutionParticipationById(exerciseId);
         final User user = userService.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(programmingExercise, user)) {
             return forbidden();

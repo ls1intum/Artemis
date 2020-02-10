@@ -6,10 +6,7 @@ import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.TutorParticipationStatus;
@@ -23,7 +20,6 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
  * Service Implementation for managing TutorParticipation.
  */
 @Service
-@Transactional
 public class TutorParticipationService {
 
     private final Logger log = LoggerFactory.getLogger(TutorParticipationService.class);
@@ -32,22 +28,16 @@ public class TutorParticipationService {
 
     private final static String ENTITY_NAME = "TutorParticipation";
 
-    @Value("${server.url}")
-    private String ARTEMIS_BASE_URL;
-
     private final TutorParticipationRepository tutorParticipationRepository;
-
-    private final UserService userService;
 
     private final ExampleSubmissionService exampleSubmissionService;
 
     private static final float scoreRangePercentage = 10;
 
-    public TutorParticipationService(TutorParticipationRepository tutorParticipationRepository, ExampleSubmissionRepository exampleSubmissionRepository, UserService userService,
+    public TutorParticipationService(TutorParticipationRepository tutorParticipationRepository, ExampleSubmissionRepository exampleSubmissionRepository,
             ExampleSubmissionService exampleSubmissionService) {
         this.tutorParticipationRepository = tutorParticipationRepository;
         this.exampleSubmissionRepository = exampleSubmissionRepository;
-        this.userService = userService;
         this.exampleSubmissionService = exampleSubmissionService;
     }
 
@@ -57,7 +47,6 @@ public class TutorParticipationService {
      * @param tutorParticipation the entity to save
      * @return the persisted entity
      */
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public TutorParticipation save(TutorParticipation tutorParticipation) {
         log.debug("Request to save TutorParticipation : {}", tutorParticipation);
         return tutorParticipationRepository.saveAndFlush(tutorParticipation);
@@ -69,12 +58,9 @@ public class TutorParticipationService {
      * @param id the id of the entity
      * @return the entity
      */
-    @Transactional(readOnly = true)
     public TutorParticipation findOne(Long id) {
         log.debug("Request to get TutorParticipation : {}", id);
-
         Optional<TutorParticipation> tutorParticipation = tutorParticipationRepository.findById(id);
-
         return tutorParticipation.orElse(null);
     }
 
@@ -86,7 +72,6 @@ public class TutorParticipationService {
      * @param tutor    the tutor of who we want to retrieve the participation
      * @return a tutor participation object for the pair (exercise, tutor) passed as argument
      */
-    @Transactional(readOnly = true)
     public TutorParticipation findByExerciseAndTutor(Exercise exercise, User tutor) {
         TutorParticipation participation = tutorParticipationRepository.findByAssessedExerciseAndTutor(exercise, tutor);
 
@@ -94,11 +79,17 @@ public class TutorParticipationService {
             participation = new TutorParticipation();
             participation.setStatus(TutorParticipationStatus.NOT_PARTICIPATED);
         }
-        else {
-            participation.getTrainedExampleSubmissions().size();    // Load trained example submissions
-        }
-
         return participation;
+    }
+
+    /**
+     * Checks if the tutor participation for the given values already exists to prevent duplicated values in the database
+     * @param assessedExerciseId the exercise we want to retrieve the tutor participation
+     * @param tutorId the tutor of who we want to retrieve the participation
+     * @return true if the tutor participation exists, false otherwise
+     */
+    public Boolean existsByAssessedExerciseIdAndTutorId(Long assessedExerciseId, Long tutorId) {
+        return tutorParticipationRepository.existsByAssessedExerciseIdAndTutorId(assessedExerciseId, tutorId);
     }
 
     /**
@@ -114,9 +105,9 @@ public class TutorParticipationService {
     public TutorParticipation createNewParticipation(Exercise exercise, User tutor) {
         TutorParticipation tutorParticipation = new TutorParticipation();
 
-        List<ExampleSubmission> exampleSubmissions = exampleSubmissionRepository.findAllByExerciseId(exercise.getId());
+        Long exampleSubmissionsCount = exampleSubmissionRepository.countAllByExerciseId(exercise.getId());
 
-        if (exampleSubmissions.size() == 0) {
+        if (exampleSubmissionsCount == 0) {
             tutorParticipation.setStatus(TutorParticipationStatus.TRAINED);
         }
         else {
@@ -136,16 +127,8 @@ public class TutorParticipationService {
      * @param user   - the tutor who is querying the service
      * @return a list of tutor participation for the course
      */
-    @Transactional(readOnly = true)
     public List<TutorParticipation> findAllByCourseAndTutor(Course course, User user) {
-        List<TutorParticipation> tutorParticipations = tutorParticipationRepository.findAllByAssessedExercise_Course_IdAndTutor_Id(course.getId(), user.getId());
-
-        for (TutorParticipation tutorParticipation : tutorParticipations) {
-            tutorParticipation.setAssessedExercise(tutorParticipation.getAssessedExercise());
-            tutorParticipation.getTrainedExampleSubmissions().size();
-        }
-
-        return tutorParticipations;
+        return tutorParticipationRepository.findAllByAssessedExercise_Course_IdAndTutor_Id(course.getId(), user.getId());
     }
 
     /**
@@ -154,18 +137,17 @@ public class TutorParticipationService {
      *
      * @param exercise          - the exercise we are referring to
      * @param exampleSubmission - the example submission to add
+     * @param user              - the user who invokes this request
      * @return the updated tutor participation
      * @throws EntityNotFoundException if example submission or tutor participation is not found
      * @throws BadRequestAlertException if tutor didn't review the instructions before assessing example submissions
      */
-    public TutorParticipation addExampleSubmission(Exercise exercise, ExampleSubmission exampleSubmission) throws EntityNotFoundException, BadRequestAlertException {
-        User user = userService.getUserWithGroupsAndAuthorities();
-
+    public TutorParticipation addExampleSubmission(Exercise exercise, ExampleSubmission exampleSubmission, User user) throws EntityNotFoundException, BadRequestAlertException {
         TutorParticipation existingTutorParticipation = this.findByExerciseAndTutor(exercise, user);
         // Do not trust the user input
-        Optional<ExampleSubmission> exampleSubmissionFromDatabase = exampleSubmissionService.get(exampleSubmission.getId());
+        Optional<ExampleSubmission> exampleSubmissionFromDatabase = exampleSubmissionService.findByIdWithEagerTutorParticipations(exampleSubmission.getId());
 
-        if (existingTutorParticipation == null || !exampleSubmissionFromDatabase.isPresent()) {
+        if (existingTutorParticipation == null || exampleSubmissionFromDatabase.isEmpty()) {
             throw new EntityNotFoundException("There isn't such example submission, or there isn't any tutor participation for this exercise");
         }
 
@@ -225,7 +207,7 @@ public class TutorParticipationService {
 
         existingTutorParticipation = existingTutorParticipation.addTrainedExampleSubmissions(originalExampleSubmission);
         exampleSubmissionService.save(originalExampleSubmission);
-        this.save(existingTutorParticipation);
+        existingTutorParticipation = save(existingTutorParticipation);
 
         return existingTutorParticipation;
     }

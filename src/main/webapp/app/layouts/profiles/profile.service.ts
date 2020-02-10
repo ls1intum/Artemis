@@ -5,8 +5,8 @@ import { SERVER_API_URL } from 'app/app.constants';
 import { ProfileInfo } from './profile-info.model';
 import { BehaviorSubject } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { FeatureToggleService } from 'app/feature-toggle';
 import * as _ from 'lodash';
+import { FeatureToggleService } from 'app/feature-toggle/feature-toggle.service';
 
 @Injectable({ providedIn: 'root' })
 export class ProfileService {
@@ -43,6 +43,9 @@ export class ProfileService {
                         }
                         profileInfo.sentry = data.sentry;
                         profileInfo.features = data.features;
+                        profileInfo.buildPlanURLTemplate = data.buildPlanURLTemplate;
+                        profileInfo.imprint = data.imprint;
+                        profileInfo.contact = data.contact;
 
                         return profileInfo;
                     }),

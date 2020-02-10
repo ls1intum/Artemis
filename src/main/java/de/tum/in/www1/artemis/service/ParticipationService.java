@@ -1,6 +1,6 @@
+
 package de.tum.in.www1.artemis.service;
 
-import static de.tum.in.www1.artemis.config.Constants.PROGRAMMING_SUBMISSION_RESOURCE_API_PATH;
 import static de.tum.in.www1.artemis.domain.enumeration.InitializationState.*;
 
 import java.time.ZonedDateTime;
@@ -10,8 +10,6 @@ import java.util.stream.Collectors;
 import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,6 +23,7 @@ import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.*;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
+import de.tum.in.www1.artemis.exception.VersionControlException;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
@@ -39,9 +38,6 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 public class ParticipationService {
 
     private final Logger log = LoggerFactory.getLogger(ParticipationService.class);
-
-    @Value("${server.url}")
-    private String ARTEMIS_BASE_URL;
 
     private final ParticipationRepository participationRepository;
 
@@ -67,13 +63,11 @@ public class ParticipationService {
 
     private final UserService userService;
 
-    private final Optional<GitService> gitService;
+    private final GitService gitService;
 
     private final Optional<ContinuousIntegrationService> continuousIntegrationService;
 
     private final Optional<VersionControlService> versionControlService;
-
-    private final SimpMessageSendingOperations messagingTemplate;
 
     private final ConflictingResultService conflictingResultService;
 
@@ -84,9 +78,8 @@ public class ParticipationService {
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, ParticipationRepository participationRepository,
             StudentParticipationRepository studentParticipationRepository, ExerciseRepository exerciseRepository, ResultRepository resultRepository,
             SubmissionRepository submissionRepository, ComplaintResponseRepository complaintResponseRepository, ComplaintRepository complaintRepository,
-            QuizSubmissionService quizSubmissionService, UserService userService, Optional<GitService> gitService,
-            Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService,
-            SimpMessageSendingOperations messagingTemplate, ConflictingResultService conflictingResultService, AuthorizationCheckService authCheckService) {
+            QuizSubmissionService quizSubmissionService, UserService userService, GitService gitService, Optional<ContinuousIntegrationService> continuousIntegrationService,
+            Optional<VersionControlService> versionControlService, ConflictingResultService conflictingResultService, AuthorizationCheckService authCheckService) {
         this.participationRepository = participationRepository;
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
         this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
@@ -102,7 +95,6 @@ public class ParticipationService {
         this.gitService = gitService;
         this.continuousIntegrationService = continuousIntegrationService;
         this.versionControlService = versionControlService;
-        this.messagingTemplate = messagingTemplate;
         this.conflictingResultService = conflictingResultService;
         this.authCheckService = authCheckService;
     }
@@ -182,13 +174,13 @@ public class ParticipationService {
      * repository / build plan related stuff for programming exercises. In the case of modeling or text exercises, it also initializes and stores the corresponding submission.
      *
      * @param exercise the exercise which is started
-     * @param username the name of the user who starts the exercise
+     * @param user the user who starts the exercise
      * @return the participation connecting the given exercise and user
      */
-    public StudentParticipation startExercise(Exercise exercise, String username) {
+    public StudentParticipation startExercise(Exercise exercise, User user) {
         // common for all exercises
         // Check if participation already exists
-        Optional<StudentParticipation> optionalStudentParticipation = findOneByExerciseIdAndStudentLoginAnyState(exercise.getId(), username);
+        Optional<StudentParticipation> optionalStudentParticipation = findOneByExerciseIdAndStudentLoginAnyState(exercise.getId(), user.getLogin());
         StudentParticipation participation;
         if (optionalStudentParticipation.isEmpty()) {
             // create a new participation only if no participation can be found
@@ -200,11 +192,8 @@ public class ParticipationService {
             }
             participation.setInitializationState(UNINITIALIZED);
             participation.setExercise(exercise);
+            participation.setStudent(user);
 
-            Optional<User> user = userService.getUserByLogin(username);
-            if (user.isPresent()) {
-                participation.setStudent(user.get());
-            }
             participation = save(participation);
         }
         else {
@@ -241,15 +230,88 @@ public class ParticipationService {
 
             if (optionalStudentParticipation.isEmpty() || !submissionRepository.existsByParticipationId(participation.getId())) {
                 // initialize a modeling, text or file upload submission (depending on the exercise type), it will not do anything in the case of a quiz exercise
-                initializeSubmission(participation, exercise);
+                initializeSubmission(participation, exercise, null);
+            }
+        }
+        participation = save(participation);
+
+        return participation;
+    }
+
+    /**
+     * This method checks whether a participation exists for a given exercise and user. If not, it creates such a participation with initialization state FINISHED.
+     * If the participation had to be newly created or there were no submissions yet for the existing participation, a new submission is created with the given submission type.
+     * For external submissions, the submission is assumed to be submitted immediately upon creation.
+     *
+     * @param exercise the exercise for which to create a participation and submission
+     * @param user the user for which to create a participation and submission
+     * @param submissionType the type of submission to create if none exist yet
+     * @return the participation connecting the given exercise and user
+     */
+    public StudentParticipation createParticipationWithEmptySubmissionIfNotExisting(Exercise exercise, User user, SubmissionType submissionType) {
+        Optional<StudentParticipation> optionalStudentParticipation = findOneByExerciseIdAndStudentLoginAnyState(exercise.getId(), user.getLogin());
+        StudentParticipation participation;
+        if (optionalStudentParticipation.isEmpty()) {
+            // create a new participation only if no participation can be found
+            if (exercise instanceof ProgrammingExercise) {
+                participation = new ProgrammingExerciseStudentParticipation();
+            }
+            else {
+                participation = new StudentParticipation();
+            }
+            participation.setInitializationState(UNINITIALIZED);
+            participation.setInitializationDate(ZonedDateTime.now());
+            participation.setExercise(exercise);
+            participation.setStudent(user);
+
+            participation = save(participation);
+        }
+        else {
+            participation = optionalStudentParticipation.get();
+        }
+
+        // setup repository in case of programming exercise
+        if (exercise instanceof ProgrammingExercise) {
+            ProgrammingExercise programmingExercise = (ProgrammingExercise) exercise;
+            ProgrammingExerciseStudentParticipation programmingParticipation = (ProgrammingExerciseStudentParticipation) participation;
+            // Note: we need a repository, otherwise the student cannot click resume.
+            programmingParticipation = copyRepository(programmingParticipation);
+            programmingParticipation = configureRepository(programmingParticipation);
+            programmingParticipation = configureRepositoryWebHook(programmingParticipation);
+            participation = programmingParticipation;
+            if (programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate() != null || programmingExercise.getAssessmentType() != AssessmentType.AUTOMATIC) {
+                // restrict access for the student
+                try {
+                    versionControlService.get().setRepositoryPermissionsToReadOnly(programmingParticipation.getRepositoryUrlAsUrl(), programmingExercise.getProjectKey(),
+                            programmingParticipation.getStudent().getLogin());
+                }
+                catch (VersionControlException e) {
+                    log.error("Removing write permissions failed for programming exercise with id " + programmingExercise.getId() + " for student repository with participation id "
+                            + programmingParticipation.getId() + ": " + e.getMessage());
+                }
             }
         }
 
+        participation.setInitializationState(FINISHED);
         participation = save(participation);
 
-        if (optionalStudentParticipation.isEmpty()) {
-            // only send a new participation to the client over websocket
-            messagingTemplate.convertAndSendToUser(username, "/topic/exercise/" + exercise.getId() + "/participation", participation);
+        // Take the latest submission or initialize a new empty submission
+        participation = (StudentParticipation) findOneWithEagerSubmissions(participation.getId());
+        Optional<Submission> optionalSubmission = participation.findLatestSubmission();
+        Submission submission;
+        if (optionalSubmission.isPresent()) {
+            submission = optionalSubmission.get();
+        }
+        else {
+            submission = initializeSubmission(participation, exercise, submissionType).get();
+            participation = save(participation);
+        }
+
+        // If the submission has not yet been submitted, submit it now
+        if (!submission.isSubmitted()) {
+            submission.setSubmitted(true);
+            submission.setSubmissionDate(ZonedDateTime.now());
+            submissionRepository.save(submission);
         }
 
         return participation;
@@ -259,16 +321,20 @@ public class ParticipationService {
      * Initializes a new text, modeling or file upload submission (depending on the type of the given exercise), connects it with the given participation and stores it in the
      * database.
      *
-     * @param participation the participation for which the submission should be initialized
-     * @param exercise      the corresponding exercise, should be either a text, modeling or file upload exercise, otherwise it will instantly return and not do anything
+     * @param participation                 the participation for which the submission should be initialized
+     * @param exercise                      the corresponding exercise, should be either a text, modeling or file upload exercise, otherwise it will instantly return and not do anything
+     * @param submissionType                type for the submission to be initialized
      */
-    private void initializeSubmission(Participation participation, Exercise exercise) {
-        if (exercise instanceof ProgrammingExercise || exercise instanceof QuizExercise) {
-            return;
+    private Optional<Submission> initializeSubmission(Participation participation, Exercise exercise, SubmissionType submissionType) {
+        if (exercise instanceof QuizExercise) {
+            return Optional.empty();
         }
 
         Submission submission;
-        if (exercise instanceof ModelingExercise) {
+        if (exercise instanceof ProgrammingExercise) {
+            submission = new ProgrammingSubmission();
+        }
+        else if (exercise instanceof ModelingExercise) {
             submission = new ModelingSubmission();
         }
         else if (exercise instanceof TextExercise) {
@@ -278,9 +344,11 @@ public class ParticipationService {
             submission = new FileUploadSubmission();
         }
 
+        submission.setType(submissionType);
         submission.setParticipation(participation);
         submissionRepository.save(submission);
         participation.addSubmissions(submission);
+        return Optional.of(submission);
     }
 
     /**
@@ -457,8 +525,7 @@ public class ParticipationService {
 
     private ProgrammingExerciseStudentParticipation configureRepositoryWebHook(ProgrammingExerciseStudentParticipation participation) {
         if (!participation.getInitializationState().hasCompletedState(InitializationState.INITIALIZED)) {
-            versionControlService.get().addWebHook(participation.getRepositoryUrlAsUrl(), ARTEMIS_BASE_URL + PROGRAMMING_SUBMISSION_RESOURCE_API_PATH + participation.getId(),
-                    "Artemis WebHook");
+            versionControlService.get().addWebHookForParticipation(participation);
         }
         return participation;
     }
@@ -742,7 +809,8 @@ public class ParticipationService {
     public void cleanupBuildPlan(ProgrammingExerciseStudentParticipation participation) {
         // ignore participations without build plan id
         if (participation.getBuildPlanId() != null) {
-            continuousIntegrationService.get().deleteBuildPlan(participation.getBuildPlanId());
+            final var projectKey = ((ProgrammingExercise) participation.getExercise()).getProjectKey();
+            continuousIntegrationService.get().deleteBuildPlan(projectKey, participation.getBuildPlanId());
             participation.setInitializationState(INACTIVE);
             participation.setBuildPlanId(null);
             save(participation);
@@ -772,7 +840,7 @@ public class ParticipationService {
      * @param deleteBuildPlan  determines whether the corresponding build plan should be deleted as well
      * @param deleteRepository determines whether the corresponding repository should be deleted as well
      */
-    @Transactional(noRollbackFor = { Throwable.class })
+    @Transactional
     public void delete(Long participationId, boolean deleteBuildPlan, boolean deleteRepository) {
         StudentParticipation participation = studentParticipationRepository.findWithEagerSubmissionsAndResultsById(participationId).get();
         log.debug("Request to delete Participation : {}", participation);
@@ -780,7 +848,8 @@ public class ParticipationService {
         if (participation instanceof ProgrammingExerciseStudentParticipation) {
             ProgrammingExerciseStudentParticipation programmingExerciseParticipation = (ProgrammingExerciseStudentParticipation) participation;
             if (deleteBuildPlan && programmingExerciseParticipation.getBuildPlanId() != null) {
-                continuousIntegrationService.get().deleteBuildPlan(programmingExerciseParticipation.getBuildPlanId());
+                final var projectKey = programmingExerciseParticipation.getProgrammingExercise().getProjectKey();
+                continuousIntegrationService.get().deleteBuildPlan(projectKey, programmingExerciseParticipation.getBuildPlanId());
             }
             if (deleteRepository && programmingExerciseParticipation.getRepositoryUrl() != null) {
                 try {
@@ -794,7 +863,7 @@ public class ParticipationService {
             // delete local repository cache
             try {
                 if (programmingExerciseParticipation.getRepositoryUrlAsUrl() != null) {
-                    gitService.get().deleteLocalRepository(programmingExerciseParticipation);
+                    gitService.deleteLocalRepository(programmingExerciseParticipation);
                 }
             }
             catch (Exception ex) {

@@ -45,7 +45,7 @@ public class TutorGroupResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping("/tutor-groups")
-    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN')")
     public ResponseEntity<TutorGroup> createTutorGroup(@RequestBody TutorGroup tutorGroup) throws URISyntaxException {
         log.debug("REST request to save TutorGroup : {}", tutorGroup);
         if (tutorGroup.getId() != null) {
@@ -65,7 +65,7 @@ public class TutorGroupResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PutMapping("/tutor-groups")
-    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN')")
     public ResponseEntity<TutorGroup> updateTutorGroup(@RequestBody TutorGroup tutorGroup) throws URISyntaxException {
         log.debug("REST request to update TutorGroup : {}", tutorGroup);
         if (tutorGroup.getId() == null) {
@@ -82,7 +82,7 @@ public class TutorGroupResource {
      * @return the ResponseEntity with status 200 (OK) and with body the tutorGroup, or with status 404 (Not Found)
      */
     @GetMapping("/tutor-groups/{id}")
-    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN')")
     public ResponseEntity<TutorGroup> getTutorGroup(@PathVariable Long id) {
         log.debug("REST request to get TutorGroup : {}", id);
         Optional<TutorGroup> tutorGroup = tutorGroupRepository.findOneWithEagerRelationships(id);
@@ -96,7 +96,7 @@ public class TutorGroupResource {
      * @return the ResponseEntity with status 200 (OK)
      */
     @DeleteMapping("/tutor-groups/{id}")
-    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN')")
     public ResponseEntity<Void> deleteTutorGroup(@PathVariable Long id) {
         log.debug("REST request to delete TutorGroup : {}", id);
         tutorGroupRepository.deleteById(id);

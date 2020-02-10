@@ -1,89 +1,77 @@
 package de.tum.in.www1.artemis.service;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.*;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipOutputStream;
 
-import org.eclipse.jgit.api.errors.GitAPIException;
-import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.Pageable;
+import org.springframework.boot.actuate.audit.AuditEvent;
+import org.springframework.boot.actuate.audit.AuditEventRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
-import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
-import de.tum.in.www1.artemis.domain.participation.TemplateProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
-import de.tum.in.www1.artemis.exception.GitException;
+import de.tum.in.www1.artemis.repository.ComplaintRepository;
+import de.tum.in.www1.artemis.repository.ComplaintResponseRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
-import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
-import de.tum.in.www1.artemis.service.connectors.GitService;
-import de.tum.in.www1.artemis.service.connectors.VersionControlService;
+import de.tum.in.www1.artemis.repository.TutorParticipationRepository;
 import de.tum.in.www1.artemis.service.scheduled.QuizScheduleService;
+import de.tum.in.www1.artemis.service.util.HibernateUtils;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
  * Service Implementation for managing Exercise.
  */
 @Service
-@Transactional
 public class ExerciseService {
 
     private final Logger log = LoggerFactory.getLogger(ExerciseService.class);
 
     private final ExerciseRepository exerciseRepository;
 
-    private final UserService userService;
+    private final TutorParticipationRepository tutorParticipationRepository;
 
     private final ParticipationService participationService;
 
     private final AuthorizationCheckService authCheckService;
 
-    private final Optional<ContinuousIntegrationService> continuousIntegrationService;
-
-    private final Optional<VersionControlService> versionControlService;
-
-    private final Optional<GitService> gitService;
-
-    private final Optional<ProgrammingExerciseService> programmingExerciseService;
+    private final ProgrammingExerciseService programmingExerciseService;
 
     private final QuizStatisticService quizStatisticService;
 
     private final QuizScheduleService quizScheduleService;
 
-    private final FileService fileService;
+    private final ExampleSubmissionService exampleSubmissionService;
 
-    public ExerciseService(ExerciseRepository exerciseRepository, UserService userService, ParticipationService participationService, AuthorizationCheckService authCheckService,
-            Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService, Optional<GitService> gitService,
-            Optional<ProgrammingExerciseService> programmingExerciseService, QuizStatisticService quizStatisticService, QuizScheduleService quizScheduleService,
-            FileService fileService) {
+    private final AuditEventRepository auditEventRepository;
+
+    private final ComplaintRepository complaintRepository;
+
+    private final ComplaintResponseRepository complaintResponseRepository;
+
+    public ExerciseService(ExerciseRepository exerciseRepository, ParticipationService participationService, AuthorizationCheckService authCheckService,
+            ProgrammingExerciseService programmingExerciseService, QuizStatisticService quizStatisticService, QuizScheduleService quizScheduleService,
+            TutorParticipationRepository tutorParticipationRepository, ExampleSubmissionService exampleSubmissionService, AuditEventRepository auditEventRepository,
+            ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository) {
         this.exerciseRepository = exerciseRepository;
-        this.userService = userService;
         this.participationService = participationService;
         this.authCheckService = authCheckService;
-        this.continuousIntegrationService = continuousIntegrationService;
-        this.versionControlService = versionControlService;
-        this.gitService = gitService;
         this.programmingExerciseService = programmingExerciseService;
         this.quizStatisticService = quizStatisticService;
         this.quizScheduleService = quizScheduleService;
-        this.fileService = fileService;
+        this.tutorParticipationRepository = tutorParticipationRepository;
+        this.exampleSubmissionService = exampleSubmissionService;
+        this.auditEventRepository = auditEventRepository;
+        this.complaintRepository = complaintRepository;
+        this.complaintResponseRepository = complaintResponseRepository;
     }
 
     /**
@@ -98,57 +86,32 @@ public class ExerciseService {
     }
 
     /**
-     * Get all the exercises.
-     *
-     * @param pageable the pagination information
-     * @return the list of entities
-     */
-    @Transactional(readOnly = true)
-    public Page<Exercise> findAll(Pageable pageable) {
-        log.debug("Request to get all Exercises");
-        List<Exercise> result = exerciseRepository.findAll();
-        User user = userService.getUserWithGroupsAndAuthorities();
-        Stream<Exercise> userExercises = result.stream().filter(exercise -> authCheckService.isAllowedToSeeExercise(exercise, user));
-        List<Exercise> filteredExercises = userExercises.collect(Collectors.toList());
-        return new PageImpl<>(userExercises.collect(Collectors.toList()), pageable, filteredExercises.size());
-    }
-
-    /**
      * Get all exercises for a given course including their categories.
      *
      * @param course for return of exercises in course
-     * @param user the user who requests the exercises in the client. Is used to determine, if the user is allowed to see the exercises
-     *             (only TAs, instructors and admins in this case)
-     * @return the list of exercises for the given course and user. This list can be empty, but should not be null
+     * @return the set of categories of all exercises in this course
      */
-    public List<Exercise> findAllExercisesForCourseWithCategories(Course course, User user) {
-        List<Exercise> exercises = new ArrayList<>();
-        if (authCheckService.isAdmin() || authCheckService.isInstructorInCourse(course, user) || authCheckService.isTeachingAssistantInCourse(course, user)) {
-            // user can see this exercise
-            exercises = exerciseRepository.findAllByCourseIdWithEagerCategories(course.getId());
-        }
-        return exercises;
+    public Set<String> findAllExerciseCategoriesForCourse(Course course) {
+        return exerciseRepository.findAllCategoryNames(course.getId());
     }
 
     /**
      * Finds all Exercises for a given Course
      *
      * @param course corresponding course
-     * @param withLtiOutcomeUrlExisting check if only exercises with an exisitng LTI Outcome URL should be returned
      * @param user the user entity
      * @return a List of all Exercises for the given course
      */
-    @Transactional(readOnly = true)
-    public List<Exercise> findAllForCourse(Course course, boolean withLtiOutcomeUrlExisting, User user) {
+    public List<Exercise> findAllForCourse(Course course, User user) {
         List<Exercise> exercises = null;
-        if (authCheckService.isAdmin() || authCheckService.isInstructorInCourse(course, user) || authCheckService.isTeachingAssistantInCourse(course, user)) {
+        if (authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
             // user can see this exercise
             exercises = exerciseRepository.findByCourseId(course.getId());
         }
         else if (authCheckService.isStudentInCourse(course, user)) {
 
-            if (course.isOnlineCourse() && withLtiOutcomeUrlExisting) {
-                // students in only courses can only see exercises where the lti outcome url exists, otherwise the result cannot be reported later on
+            if (course.isOnlineCourse()) {
+                // students in online courses can only see exercises where the lti outcome url exists, otherwise the result cannot be reported later on
                 exercises = exerciseRepository.findByCourseIdWhereLtiOutcomeUrlExists(course.getId(), user.getLogin());
             }
             else {
@@ -156,16 +119,17 @@ public class ExerciseService {
             }
 
             // user is student for this course and might not have the right to see it so we have to filter
-
             // filter out exercises that are not released (or explicitly made visible to students) yet
             exercises = exercises.stream().filter(Exercise::isVisibleToStudents).collect(Collectors.toList());
         }
 
         // filter out questions and all statistical information about the quizPointStatistic from quizExercises (so users can't see which answer options are correct)
-        for (Exercise exercise : exercises) {
-            if (exercise instanceof QuizExercise) {
-                QuizExercise quizExercise = (QuizExercise) exercise;
-                quizExercise.filterSensitiveInformation();
+        if (exercises != null) {
+            for (Exercise exercise : exercises) {
+                if (exercise instanceof QuizExercise) {
+                    QuizExercise quizExercise = (QuizExercise) exercise;
+                    quizExercise.filterSensitiveInformation();
+                }
             }
         }
 
@@ -173,57 +137,35 @@ public class ExerciseService {
     }
 
     /**
-     * Get one exercise by exerciseId.
+     * Get one exercise by exerciseId with additional details such as quiz questions and statistics or template / solution participation
+     * NOTE: prefer #findOne if you don't need these additional details
      *
      * @param exerciseId the exerciseId of the entity
      * @return the entity
      */
-    @Transactional(readOnly = true)
     public Exercise findOne(Long exerciseId) {
         Optional<Exercise> exercise = exerciseRepository.findById(exerciseId);
         if (exercise.isEmpty()) {
             throw new EntityNotFoundException("Exercise with exerciseId " + exerciseId + " does not exist!");
         }
-        updateExerciseElementsAfterDatabaseFetch(exercise.get());
         return exercise.get();
     }
 
     /**
-     * Get one exercise by exerciseId with its categories
+     * Get one exercise by exerciseId with additional details such as quiz questions and statistics or template / solution participation
+     * NOTE: prefer #findOne if you don't need these additional details
      *
      * @param exerciseId the exerciseId of the entity
      * @return the entity
      */
     @Transactional(readOnly = true)
-    public Exercise findOneWithCategories(Long exerciseId) {
-        Optional<Exercise> exercise = exerciseRepository.findByIdWithEagerCategories(exerciseId);
-        if (exercise.isEmpty()) {
+    // TODO: redesign this method, the caller should specify which exact elements should be loaded from the database
+    public Exercise findOneWithAdditionalElements(Long exerciseId) {
+        Optional<Exercise> optionalExercise = exerciseRepository.findById(exerciseId);
+        if (optionalExercise.isEmpty()) {
             throw new EntityNotFoundException("Exercise with exerciseId " + exerciseId + " does not exist!");
         }
-        updateExerciseElementsAfterDatabaseFetch(exercise.get());
-        return exercise.get();
-    }
-
-    /**
-     * Find exercise by exerciseId and load participations in this exercise.
-     *
-     * @param exerciseId the exerciseId of the exercise entity
-     * @return the exercise entity
-     */
-    @Transactional(readOnly = true)
-    public Exercise findOneLoadParticipations(Long exerciseId) {
-        log.debug("Request to find Exercise with participations loaded: {}", exerciseId);
-        Optional<Exercise> exercise = exerciseRepository.findByIdWithEagerParticipations(exerciseId);
-
-        if (exercise.isEmpty()) {
-            throw new EntityNotFoundException("Exercise with exerciseId " + exerciseId + " does not exist!");
-        }
-        updateExerciseElementsAfterDatabaseFetch(exercise.get());
-        return exercise.get();
-    }
-
-    // TODO this is not a nice solution, we unproxy elements and potentially hide them again afterwards.
-    private void updateExerciseElementsAfterDatabaseFetch(Exercise exercise) {
+        Exercise exercise = optionalExercise.get();
         if (exercise instanceof QuizExercise) {
             QuizExercise quizExercise = (QuizExercise) exercise;
             // eagerly load questions and statistic
@@ -233,17 +175,48 @@ public class ExerciseService {
         else if (exercise instanceof ProgrammingExercise) {
             ProgrammingExercise programmingExercise = (ProgrammingExercise) exercise;
             // eagerly load templateParticipation and solutionParticipation
-            programmingExercise.setTemplateParticipation((TemplateProgrammingExerciseParticipation) Hibernate.unproxy(programmingExercise.getTemplateParticipation()));
-            programmingExercise.setSolutionParticipation((SolutionProgrammingExerciseParticipation) Hibernate.unproxy(programmingExercise.getSolutionParticipation()));
+            programmingExercise.setTemplateParticipation(HibernateUtils.unproxy(programmingExercise.getTemplateParticipation()));
+            programmingExercise.setSolutionParticipation(HibernateUtils.unproxy(programmingExercise.getSolutionParticipation()));
         }
+        return exercise;
     }
 
     /**
-     * Resets an Exercise by deleting all its Participations
+     * Get one exercise by exerciseId with its categories
      *
-     * @param exercise which shold be resetted
+     * @param exerciseId the exerciseId of the entity
+     * @return the entity
      */
-    @Transactional(noRollbackFor = { Throwable.class })
+    public Exercise findOneWithCategories(Long exerciseId) {
+        Optional<Exercise> exercise = exerciseRepository.findByIdWithEagerCategories(exerciseId);
+        if (exercise.isEmpty()) {
+            throw new EntityNotFoundException("Exercise with exerciseId " + exerciseId + " does not exist!");
+        }
+        return exercise.get();
+    }
+
+    /**
+     * Find exercise by exerciseId and load participations in this exercise.
+     *
+     * @param exerciseId the exerciseId of the exercise entity
+     * @return the exercise entity
+     */
+    public Exercise findOneWithStudentParticipations(Long exerciseId) {
+        log.debug("Request to find Exercise with participations loaded: {}", exerciseId);
+        Optional<Exercise> exercise = exerciseRepository.findByIdWithEagerParticipations(exerciseId);
+
+        if (exercise.isEmpty()) {
+            throw new EntityNotFoundException("Exercise with exerciseId " + exerciseId + " does not exist!");
+        }
+        return exercise.get();
+    }
+
+    /**
+     * Resets an Exercise by deleting all its participations
+     *
+     * @param exercise which should be resetted
+     */
+    @Transactional
     public void reset(Exercise exercise) {
         log.debug("Request reset Exercise : {}", exercise.getId());
 
@@ -253,7 +226,7 @@ public class ExerciseService {
         if (exercise instanceof QuizExercise) {
 
             // refetch exercise to make sure we have an updated version
-            exercise = findOneLoadParticipations(exercise.getId());
+            exercise = findOneWithAdditionalElements(exercise.getId());
 
             // for quizzes we need to delete the statistics and we need to reset the quiz to its original state
             QuizExercise quizExercise = (QuizExercise) exercise;
@@ -279,18 +252,28 @@ public class ExerciseService {
     /**
      * Delete the exercise by id and all its participations.
      *
-     * @param exercise                     the exercise to be deleted
-     * @param deleteStudentReposBuildPlans whether the student repos and build plans should be deleted
-     * @param deleteBaseReposBuildPlans    whether the template and solution repos and build plans should be deleted
+     * @param exerciseId                   the exercise to be deleted
+     * @param deleteStudentReposBuildPlans whether the student repos and build plans should be deleted (can be true for programming exercises and should be false for all other exercise types)
+     * @param deleteBaseReposBuildPlans    whether the template and solution repos and build plans should be deleted (can be true for programming exercises and should be false for all other exercise types)
      */
     @Transactional
-    public void delete(Exercise exercise, boolean deleteStudentReposBuildPlans, boolean deleteBaseReposBuildPlans) {
-        log.info("ExerciseService.Request to delete Exercise : {}", exercise.getTitle());
+    public void delete(long exerciseId, boolean deleteStudentReposBuildPlans, boolean deleteBaseReposBuildPlans) {
+        // Delete has a transactional mechanism. Therefore, all lazy objects that are deleted below, should be fetched when needed.
+        final var exercise = findOne(exerciseId);
         // delete all participations belonging to this quiz
         participationService.deleteAllByExerciseId(exercise.getId(), deleteStudentReposBuildPlans, deleteStudentReposBuildPlans);
+        // clean up the many to many relationship to avoid problems when deleting the entities but not the relationship table
+        // to avoid a ConcurrentModificationException, we need to use a copy of the set
+        var exampleSubmissions = new HashSet<ExampleSubmission>(exercise.getExampleSubmissions());
+        for (ExampleSubmission exampleSubmission : exampleSubmissions) {
+            exampleSubmissionService.deleteById(exampleSubmission.getId());
+        }
+        // make sure tutor participations are deleted before the exercise is deleted
+        tutorParticipationRepository.deleteAllByAssessedExerciseId(exercise.getId());
+
         // Programming exercises have some special stuff that needs to be cleaned up (solution/template participation, build plans, etc.).
         if (exercise instanceof ProgrammingExercise) {
-            programmingExerciseService.get().delete(exercise.getId(), deleteBaseReposBuildPlans);
+            programmingExerciseService.delete(exercise.getId(), deleteBaseReposBuildPlans);
         }
         else {
             exerciseRepository.delete(exercise);
@@ -298,14 +281,13 @@ public class ExerciseService {
     }
 
     /**
-     * Delete build plans (except BASE) and optionally git repositories of all exercise participations.
+     * Delete student build plans (except BASE/SOLUTION) and optionally git repositories of all exercise student participations.
      *
-     * @param id id of the exercise for which build plans in respective participations are deleted
+     * @param exerciseId programming exercise for which build plans in respective student participations are deleted
      * @param deleteRepositories if true, the repositories gets deleted
      */
-    @Transactional(noRollbackFor = { Throwable.class })
-    public void cleanup(Long id, boolean deleteRepositories) {
-        Exercise exercise = findOneLoadParticipations(id);
+    public void cleanup(Long exerciseId, boolean deleteRepositories) {
+        Exercise exercise = findOneWithStudentParticipations(exerciseId);
         log.info("Request to cleanup all participations for Exercise : {}", exercise.getTitle());
 
         if (exercise instanceof ProgrammingExercise) {
@@ -323,122 +305,35 @@ public class ExerciseService {
 
         }
         else {
-            log.warn("Exercise with id {} is not an instance of ProgrammingExercise. Ignoring the request to cleanup repositories and build plan", id);
+            log.warn("Exercise with exerciseId {} is not an instance of ProgrammingExercise. Ignoring the request to cleanup repositories and build plan", exerciseId);
         }
     }
 
-    /**
-     * Archives all all participations repositories for a given exerciseID,
-     * if the exercise is a ProgrammingExercise
-     *
-     * @param id the exerciseID of the exercise which will be archived
-     * @return the archive File
-     */
-    // does not delete anything
-    @Transactional(readOnly = true)
-    public java.io.File archive(Long id) {
-        Exercise exercise = findOneLoadParticipations(id);
-        log.info("Request to archive all participations repositories for Exercise : {}", exercise.getTitle());
-        List<Path> zippedRepoFiles = new ArrayList<>();
-        Path finalZipFilePath = null;
-        if (exercise instanceof ProgrammingExercise) {
-            exercise.getStudentParticipations().forEach(participation -> {
-                ProgrammingExerciseStudentParticipation studentParticipation = (ProgrammingExerciseStudentParticipation) participation;
-                try {
-                    if (studentParticipation.getRepositoryUrl() != null) {     // ignore participations without repository URL and without student
-                        // 1. clone the repository
-                        Repository repo = gitService.get().getOrCheckoutRepository(studentParticipation);
-                        // 2. zip repository and collect the zip file
-                        log.debug("Create temporary zip file for repository " + repo.getLocalPath().toString());
-                        Path zippedRepoFile = gitService.get().zipRepository(repo);
-                        zippedRepoFiles.add(zippedRepoFile);
-                        // 3. delete the locally cloned repo again
-                        gitService.get().deleteLocalRepository(studentParticipation);
-                    }
-                }
-                catch (IOException | GitException | GitAPIException | InterruptedException ex) {
-                    log.error("Archiving and deleting the repository " + studentParticipation.getRepositoryUrlAsUrl() + " did not work as expected: " + ex);
-                }
-            });
-
-            if (!exercise.getStudentParticipations().isEmpty() && !zippedRepoFiles.isEmpty()) {
-                try {
-                    // create a large zip file with all zipped repos and provide it for download
-                    log.info("Create zip file for all repositories");
-                    String exerciseName = exercise.getShortName() != null ? exercise.getShortName() : exercise.getTitle().replaceAll("\\s", "");
-                    finalZipFilePath = Paths.get(zippedRepoFiles.get(0).getParent().toString(), exercise.getCourse().getShortName() + "-" + exerciseName + ".zip");
-                    createZipFile(finalZipFilePath, zippedRepoFiles);
-                    scheduleForDeletion(finalZipFilePath, 15);
-
-                    log.info("Delete all temporary zip repo files");
-                    // delete the temporary zipped repo files
-                    for (Path zippedRepoFile : zippedRepoFiles) {
-                        Files.delete(zippedRepoFile);
-                    }
-                }
-                catch (IOException ex) {
-                    log.error("Archiving and deleting the local repositories did not work as expected");
-                }
-            }
-            else {
-                log.info("The zip file could not be created. Ignoring the request to archive repositories", id);
-                return null;
-            }
-        }
-        else {
-            log.info("Exercise with id {} is not an instance of ProgrammingExercise. Ignoring the request to archive repositories", id);
-            return null;
-        }
-        return new java.io.File(finalZipFilePath.toString());
+    public void logDeletion(Exercise exercise, Course course, User user) {
+        var auditEvent = new AuditEvent(user.getLogin(), Constants.DELETE_EXERCISE, "exercise=" + exercise.getTitle(), "course=" + course.getTitle());
+        auditEventRepository.add(auditEvent);
+        log.info("User " + user.getLogin() + " has requested to delete {} {} with id {}", exercise.getClass().getSimpleName(), exercise.getTitle(), exercise.getId());
     }
 
     /**
-     * Create a zipfile of the given paths and save it in the zipFilePath
+     * Calculates the number of unevaluated complaints and feedback requests for tutor dashboard participation graph
      *
-     * @param zipFilePath path where the zipfile should be saved
-     * @param paths the paths that should be zipped
-     * @throws IOException if an error occured while zipping
+     * @param exercise the exercise for which the number of unevaluated complaints should be calculated
      */
-    public void createZipFile(Path zipFilePath, List<Path> paths) throws IOException {
-        try (ZipOutputStream zipOutputStream = new ZipOutputStream(Files.newOutputStream(zipFilePath))) {
-            paths.stream().filter(path -> !Files.isDirectory(path)).forEach(path -> {
-                ZipEntry zipEntry = new ZipEntry(path.toString());
-                try {
-                    zipOutputStream.putNextEntry(zipEntry);
-                    Files.copy(path, zipOutputStream);
-                    zipOutputStream.closeEntry();
-                }
-                catch (Exception e) {
-                    log.error("Create zip file error", e);
-                }
-            });
-        }
-    }
+    public void calculateNrOfOpenComplaints(Exercise exercise) {
 
-    private Map<Path, ScheduledFuture> futures = new HashMap<>();
+        long numberOfComplaints = complaintRepository.countByResult_Participation_Exercise_IdAndComplaintType(exercise.getId(), ComplaintType.COMPLAINT);
+        long numberOfComplaintResponses = complaintResponseRepository.countByComplaint_Result_Participation_Exercise_Id_AndComplaint_ComplaintType(exercise.getId(),
+                ComplaintType.COMPLAINT);
 
-    private ScheduledExecutorService executor = Executors.newScheduledThreadPool(Runtime.getRuntime().availableProcessors());
+        exercise.setNumberOfOpenComplaints(numberOfComplaints - numberOfComplaintResponses);
+        exercise.setNumberOfComplaints(numberOfComplaints);
 
-    private static final TimeUnit MINUTES = TimeUnit.MINUTES; // your time unit
+        long numberOfMoreFeedbackRequests = complaintRepository.countByResult_Participation_Exercise_IdAndComplaintType(exercise.getId(), ComplaintType.MORE_FEEDBACK);
+        long numberOfMoreFeedbackComplaintResponses = complaintResponseRepository.countByComplaint_Result_Participation_Exercise_Id_AndComplaint_ComplaintType(exercise.getId(),
+                ComplaintType.MORE_FEEDBACK);
 
-    /**
-     * Schedule the deletion of the given path with a given delay
-     *
-     * @param path The path that should be deleted
-     * @param delayInMinutes The delay in minutes after which the path should be deleted
-     */
-    public void scheduleForDeletion(Path path, long delayInMinutes) {
-        ScheduledFuture future = executor.schedule(() -> {
-            try {
-                log.info("Delete file " + path);
-                Files.delete(path);
-                futures.remove(path);
-            }
-            catch (IOException e) {
-                log.error("Deleting the file " + path + " did not work", e);
-            }
-        }, delayInMinutes, MINUTES);
-
-        futures.put(path, future);
+        exercise.setNumberOfOpenMoreFeedbackRequests(numberOfMoreFeedbackRequests - numberOfMoreFeedbackComplaintResponses);
+        exercise.setNumberOfMoreFeedbackRequests(numberOfMoreFeedbackRequests);
     }
 }

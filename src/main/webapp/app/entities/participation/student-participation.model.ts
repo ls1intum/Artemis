@@ -1,4 +1,4 @@
-import { User } from 'app/core';
+import { User } from 'app/core/user/user.model';
 import { Exercise } from '../exercise';
 import { Participation, ParticipationType } from 'app/entities/participation/participation.model';
 

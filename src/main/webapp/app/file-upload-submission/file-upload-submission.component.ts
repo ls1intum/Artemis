@@ -16,6 +16,8 @@ import { MAX_SUBMISSION_FILE_SIZE } from 'app/shared/constants/input.constants';
 import { FileUploadAssessmentsService } from 'app/entities/file-upload-assessment/file-upload-assessment.service';
 import { ButtonType } from 'app/shared/components';
 import { omit } from 'lodash';
+import { ParticipationWebsocketService } from 'app/entities/participation/participation-websocket.service';
+import { participationStatus } from 'app/entities/exercise';
 
 @Component({
     templateUrl: './file-upload-submission.component.html',
@@ -50,6 +52,7 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
         private location: Location,
         private translateService: TranslateService,
         private fileService: FileService,
+        private participationWebsocketService: ParticipationWebsocketService,
         private fileUploadAssessmentService: FileUploadAssessmentsService,
     ) {
         translateService.get('artemisApp.fileUploadSubmission.confirmSubmission').subscribe(text => (this.submissionConfirmationText = text));
@@ -77,6 +80,8 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
                 this.submission = submission;
                 this.result = submission.result;
                 this.fileUploadExercise = this.participation.exercise as FileUploadExercise;
+                this.fileUploadExercise.studentParticipations = [this.participation];
+                this.fileUploadExercise.participationStatus = participationStatus(this.fileUploadExercise);
 
                 // checks if the student started the exercise after the due date
                 this.isLate =
@@ -121,6 +126,9 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
         this.fileUploadSubmissionService.update(this.submission!, this.fileUploadExercise.id, file).subscribe(
             response => {
                 this.submission = response.body!;
+                // reconnect so that the submission status is displayed correctly in the result.component
+                this.submission.participation.submissions = [this.submission];
+                this.participationWebsocketService.addParticipation(this.submission.participation as StudentParticipation, this.fileUploadExercise);
                 this.result = this.submission.result;
                 this.setSubmittedFile();
                 if (this.isActive) {
@@ -128,15 +136,18 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
                 } else {
                     this.jhiAlertService.warning('artemisApp.fileUploadExercise.submitDeadlineMissed');
                 }
+                this.isSaving = false;
             },
-            () => {
+            (error: HttpErrorResponse) => {
                 this.submission!.submitted = false;
-                this.jhiAlertService.error('artemisApp.fileUploadSubmission.fileUploadError', { fileName: file['name'] });
+                const serverError = error.headers.get('X-artemisApp-error');
+                if (serverError) {
+                    this.jhiAlertService.error(serverError, { fileName: file['name'] });
+                } else {
+                    this.jhiAlertService.error('artemisApp.fileUploadSubmission.fileUploadError', { fileName: file['name'] });
+                }
                 this.fileInput.nativeElement.value = '';
                 this.submissionFile = null;
-                this.submission!.filePath = null;
-            },
-            () => {
                 this.isSaving = false;
             },
         );

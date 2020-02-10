@@ -1,9 +1,9 @@
 import { Component, OnInit } from '@angular/core';
 import { SafeHtml } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
-import { CourseService } from '../entities/course';
+import { CourseService } from 'app/entities/course/course.service';
 import { JhiAlertService } from 'ng-jhipster';
-import { User } from '../core';
+import { User } from 'app/core/user/user.model';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Exercise, ExerciseService, ExerciseType } from 'app/entities/exercise';
 import { TutorParticipation, TutorParticipationStatus } from 'app/entities/tutor-participation';
@@ -28,7 +28,7 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise/programmi
 import { ProgrammingSubmissionService } from 'app/programming-submission/programming-submission.service';
 import { Result } from 'app/entities/result/result.model';
 import { ProgrammingAssessmentManualResultDialogComponent } from 'app/programming-assessment/manual-result/programming-assessment-manual-result-dialog.component';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { AccountService } from 'app/core/auth/account.service';
 import { cloneDeep } from 'lodash';
 
@@ -55,8 +55,10 @@ export class TutorExerciseDashboardComponent implements OnInit {
     numberOfSubmissions = 0;
     numberOfAssessments = 0;
     numberOfComplaints = 0;
+    numberOfOpenComplaints = 0;
     numberOfTutorComplaints = 0;
     numberOfMoreFeedbackRequests = 0;
+    numberOfOpenMoreFeedbackRequests = 0;
     numberOfTutorMoreFeedbackRequests = 0;
     totalAssessmentPercentage = 0;
     tutorAssessmentPercentage = 0;
@@ -192,7 +194,9 @@ export class TutorExerciseDashboardComponent implements OnInit {
                 this.numberOfSubmissions = this.statsForDashboard.numberOfSubmissions;
                 this.numberOfAssessments = this.statsForDashboard.numberOfAssessments;
                 this.numberOfComplaints = this.statsForDashboard.numberOfComplaints;
+                this.numberOfOpenComplaints = this.statsForDashboard.numberOfOpenComplaints;
                 this.numberOfMoreFeedbackRequests = this.statsForDashboard.numberOfMoreFeedbackRequests;
+                this.numberOfOpenMoreFeedbackRequests = this.statsForDashboard.numberOfOpenMoreFeedbackRequests;
                 const tutorLeaderboardEntry = this.statsForDashboard.tutorLeaderboardEntries.find(entry => entry.userId === this.tutor!.id);
                 if (tutorLeaderboardEntry) {
                     this.numberOfTutorAssessments = tutorLeaderboardEntry.numberOfAssessments;
@@ -371,11 +375,15 @@ export class TutorExerciseDashboardComponent implements OnInit {
     }
 
     private openManualResultDialog(result: Result) {
-        const modalRef = this.modalService.open(ProgrammingAssessmentManualResultDialogComponent, { keyboard: true, size: 'lg' });
+        const modalRef: NgbModalRef = this.modalService.open(ProgrammingAssessmentManualResultDialogComponent, { keyboard: true, size: 'lg', backdrop: 'static' });
         modalRef.componentInstance.participationId = result.participation!.id;
         modalRef.componentInstance.result = cloneDeep(result);
+        modalRef.componentInstance.exercise = this.exercise;
         modalRef.componentInstance.onResultModified.subscribe(() => this.loadAll());
-        modalRef.result.then(() => this.loadAll());
+        modalRef.result.then(
+            _ => this.loadAll(),
+            () => {},
+        );
         return;
     }
 
@@ -387,7 +395,7 @@ export class TutorExerciseDashboardComponent implements OnInit {
         if (this.exercise.type === ExerciseType.PROGRAMMING) {
             this.openManualResultDialog(complaint.result);
         } else {
-            this.openAssessmentEditor(complaint.result.participation!.id, false);
+            this.openAssessmentEditor(complaint.result.submission!.id, false);
         }
     }
 

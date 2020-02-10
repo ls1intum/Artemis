@@ -14,7 +14,7 @@ import org.springframework.stereotype.Service;
 @Profile("ldap")
 public class LdapUserService {
 
-    @Value("${artemis.ldap.base}")
+    @Value("${artemis.user-management.ldap.base}")
     private String ldapBase;
 
     @Autowired

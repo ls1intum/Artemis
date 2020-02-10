@@ -3,23 +3,28 @@ package de.tum.in.www1.artemis.service;
 import java.time.ZonedDateTime;
 import java.util.List;
 
+import javax.validation.constraints.NotNull;
+
+import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
-import de.tum.in.www1.artemis.repository.ComplaintRepository;
-import de.tum.in.www1.artemis.repository.ResultRepository;
-import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
+import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
 
-abstract class AssessmentService {
+@Service
+public class AssessmentService {
 
     private final ComplaintResponseService complaintResponseService;
 
     private final ComplaintRepository complaintRepository;
+
+    protected final FeedbackRepository feedbackRepository;
 
     protected final ResultRepository resultRepository;
 
@@ -27,16 +32,18 @@ abstract class AssessmentService {
 
     private final ResultService resultService;
 
-    private final AuthorizationCheckService authCheckService;
+    private final SubmissionRepository submissionRepository;
 
-    public AssessmentService(ComplaintResponseService complaintResponseService, ComplaintRepository complaintRepository, ResultRepository resultRepository,
-            StudentParticipationRepository studentParticipationRepository, ResultService resultService, AuthorizationCheckService authCheckService) {
+    public AssessmentService(ComplaintResponseService complaintResponseService, ComplaintRepository complaintRepository, FeedbackRepository feedbackRepository,
+            ResultRepository resultRepository, StudentParticipationRepository studentParticipationRepository, ResultService resultService,
+            SubmissionRepository submissionRepository) {
         this.complaintResponseService = complaintResponseService;
         this.complaintRepository = complaintRepository;
+        this.feedbackRepository = feedbackRepository;
         this.resultRepository = resultRepository;
         this.studentParticipationRepository = studentParticipationRepository;
         this.resultService = resultService;
-        this.authCheckService = authCheckService;
+        this.submissionRepository = submissionRepository;
     }
 
     Result submitResult(Result result, Exercise exercise, Double calculatedScore) {
@@ -55,9 +62,11 @@ abstract class AssessmentService {
      * complaint. The original Result gets stored in the 'resultBeforeComplaint' field of the ComplaintResponse for future lookup.
      *
      * @param originalResult   the original assessment that was complained about
+     * @param exercise         the exercise to which the result belongs
      * @param assessmentUpdate the assessment update containing a ComplaintResponse and the updated Feedback list
      * @return the updated Result
      */
+    // NOTE: transactional makes sense here because we change multiple objects in the database and the changes might be invalid in case, one save operation fails
     @Transactional
     public Result updateAssessmentAfterComplaint(Result originalResult, Exercise exercise, AssessmentUpdate assessmentUpdate) {
         if (assessmentUpdate.getFeedbacks() == null || assessmentUpdate.getComplaintResponse() == null) {
@@ -79,6 +88,7 @@ abstract class AssessmentService {
         // Update the result that was complained about with the new feedback
         originalResult.updateAllFeedbackItems(assessmentUpdate.getFeedbacks());
         if (!(exercise instanceof ProgrammingExercise)) {
+            // tutors can define the manual result string and score in programming exercises, therefore we must not update these values here!
             originalResult.evaluateFeedback(exercise.getMaxScore());
         }
         // Note: This also saves the feedback objects in the database because of the 'cascade =
@@ -87,19 +97,55 @@ abstract class AssessmentService {
     }
 
     /**
+     * checks if the user can override an already submitted result. This is only possible if the same tutor overrides before the assessment due date
+     * or if an instructor overrides it.
+     *
+     * If the result does not yet exist or is not yet submitted, this method returns true
+     *
+     * @param existingResult the existing result in case the result is updated (submitted or overridden)
+     * @param exercise the exercise to which the submission and result belong and which potentially includes an assessment due date
+     * @param user the user who initiates a request
+     * @param isAtLeastInstructor whether the given user is an instructor for the given exercise
+     * @return true of the the given user can override a potentially existing result
+     */
+    public boolean isAllowedToOverrideExistingResult(@NotNull Result existingResult, Exercise exercise, User user, boolean isAtLeastInstructor) {
+        // if the assessor is null, the user is allowed to save / submit / override the existing result
+        final var isAssessor = existingResult.getAssessor() == null || user.equals(existingResult.getAssessor());
+        if (existingResult.getCompletionDate() == null) {
+            // if the result exists, but was not yet submitted (i.e. completionDate not set), the tutor and the instructor can override, independent of the assessment due date
+            return isAssessor || isAtLeastInstructor;
+        }
+        // if the result was already submitted, the tutor can only override before a potentially existing assessment due date
+        var assessmentDueDate = exercise.getAssessmentDueDate();
+        final var isBeforeAssessmentDueDate = assessmentDueDate != null && ZonedDateTime.now().isBefore(assessmentDueDate);
+        return (isAssessor && isBeforeAssessmentDueDate) || isAtLeastInstructor;
+    }
+
+    /**
      * Cancel an assessment of a given submission for the current user, i.e. delete the corresponding result / release the lock. Then the submission is available for assessment
      * again.
      *
      * @param submission the submission for which the current assessment should be canceled
      */
-    @Transactional
+    @Transactional // NOTE: As we use delete methods with underscores, we need a transactional context here!
     public void cancelAssessmentOfSubmission(Submission submission) {
         StudentParticipation participation = studentParticipationRepository.findByIdWithEagerResults(submission.getParticipation().getId())
                 .orElseThrow(() -> new BadRequestAlertException("Participation could not be found", "participation", "notfound"));
         Result result = submission.getResult();
         participation.removeResult(result);
-        studentParticipationRepository.save(participation);
+        feedbackRepository.deleteByResult_Id(result.getId());
         resultRepository.deleteById(result.getId());
+    }
+
+    /**
+     * Finds the example result for the given submission ID. The submission has to be an example submission
+     *
+     * @param submissionId The ID of the submission for which the result should be fetched
+     * @return The example result, which is linked to the submission
+     */
+    public Submission getSubmissionOfExampleSubmissionWithResult(long submissionId) {
+        return submissionRepository.findSubmissionWithExampleSubmissionByIdWithEagerResult(submissionId)
+                .orElseThrow(() -> new EntityNotFoundException("Example Submission with id \"" + submissionId + "\" does not exist"));
     }
 
     /**
@@ -114,17 +160,18 @@ abstract class AssessmentService {
         }
     }
 
-    /**
-     * Tutors are not allowed to override an assessment after the assessment due date. Instructors can submit assessments at any time.
-     */
-    void checkAssessmentDueDate(Exercise exercise) {
-        if (exercise.isAssessmentDueDateOver() && !authCheckService.isAtLeastInstructorForExercise(exercise)) {
-            throw new BadRequestAlertException("The assessment due date is already over.", "assessment", "assessmentDueDateOver");
-        }
-    }
-
     private double calculateTotalScore(Double calculatedScore, Double maxScore) {
         double totalScore = Math.max(0, calculatedScore);
         return (maxScore == null) ? totalScore : Math.min(totalScore, maxScore);
+    }
+
+    /**
+     * Helper function to calculate the total score of a feedback list. It loops through all assessed model elements and sums the credits up.
+     *
+     * @param assessments the List of Feedback
+     * @return the total score
+     */
+    protected Double calculateTotalScore(List<Feedback> assessments) {
+        return assessments.stream().mapToDouble(Feedback::getCredits).sum();
     }
 }

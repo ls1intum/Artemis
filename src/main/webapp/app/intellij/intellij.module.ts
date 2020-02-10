@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { IntellijButtonComponent } from 'app/intellij/intellij-button/intellij-button.component';
 import { MomentModule } from 'ngx-moment';
 import { JavaBridgeService } from 'app/intellij/java-bridge.service';
-import { WindowRef } from 'app/core';
+import { WindowRef } from 'app/core/websocket/window.service';
 import { ModalConfirmAutofocusComponent } from './modal-confirm-autofocus/modal-confirm-autofocus.component';
 import { TranslateModule } from '@ngx-translate/core';
 import { IdeFilterDirective } from './ide-filter.directive';
@@ -20,6 +20,6 @@ export function initJavaBridge(bridge: JavaBridgeService, win: WindowRef) {
     entryComponents: [ModalConfirmAutofocusComponent],
     imports: [CommonModule, ArtemisSharedModule, MomentModule, TranslateModule, FeatureToggleModule],
     exports: [IntellijButtonComponent, IdeFilterDirective],
-    providers: [JavaBridgeService, { provide: APP_INITIALIZER, useFactory: initJavaBridge, deps: [JavaBridgeService, WindowRef], multi: true }, IdeBuildAndTestService],
+    providers: [{ provide: APP_INITIALIZER, useFactory: initJavaBridge, deps: [JavaBridgeService, WindowRef], multi: true }, IdeBuildAndTestService],
 })
 export class IntellijModule {}

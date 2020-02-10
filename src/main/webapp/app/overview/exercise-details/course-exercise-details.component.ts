@@ -2,13 +2,15 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Location } from '@angular/common';
 import { HttpResponse } from '@angular/common/http';
 import { Exercise, ExerciseCategory, ExerciseService, ExerciseType, participationStatus } from 'app/entities/exercise';
-import { CourseService } from 'app/entities/course';
+import { CourseService } from 'app/entities/course/course.service';
 import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs/Subscription';
 import { Result } from 'app/entities/result';
 import * as moment from 'moment';
-import { User } from 'app/core';
-import { InitializationState, Participation, ParticipationService, ParticipationWebsocketService, StudentParticipation } from 'app/entities/participation';
+import { User } from 'app/core/user/user.model';
+import { InitializationState, Participation, ProgrammingExerciseStudentParticipation, StudentParticipation } from 'app/entities/participation';
+import { ParticipationService } from 'app/entities/participation/participation.service';
+import { ParticipationWebsocketService } from 'app/entities/participation/participation-websocket.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { programmingExerciseFail, programmingExerciseSuccess } from 'app/guided-tour/tours/course-exercise-detail-tour';
@@ -16,6 +18,11 @@ import { SourceTreeService } from 'app/components/util/sourceTree.service';
 import { CourseScoreCalculationService } from 'app/overview';
 import { AssessmentType } from 'app/entities/assessment-type';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { ProgrammingExercise } from 'app/entities/programming-exercise';
+import { take, tap } from 'rxjs/operators';
+import { ProfileInfo } from 'app/layouts';
+import { createBuildPlanUrl } from 'app/entities/programming-exercise/utils/build-plan-link.directive';
+import { ProfileService } from 'app/layouts/profiles/profile.service';
 
 const MAX_RESULT_HISTORY_LENGTH = 5;
 
@@ -57,6 +64,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         private sourceTreeService: SourceTreeService,
         private courseServer: CourseService,
         private route: ActivatedRoute,
+        private profileService: ProfileService,
         private guidedTourService: GuidedTourService,
     ) {}
 
@@ -83,6 +91,15 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         });
     }
 
+    ngOnDestroy() {
+        if (this.participationUpdateListener) {
+            this.participationUpdateListener.unsubscribe();
+            if (this.studentParticipation) {
+                this.participationWebsocketService.unsubscribeForLatestResultOfParticipation(this.studentParticipation.id, this.exercise!);
+            }
+        }
+    }
+
     loadExercise() {
         this.exercise = null;
         this.studentParticipation = this.participationWebsocketService.getParticipationForExercise(this.exerciseId);
@@ -92,17 +109,9 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         // * the student questions
         // * the hints
         // --> The retrieved data then needs to be passed correctly into the sub components
-        if (this.studentParticipation) {
-            // we only need to update the exercise itself, because we have already have the latest participation
-            this.exerciseService.find(this.exerciseId).subscribe((exerciseResponse: HttpResponse<Exercise>) => {
-                this.handleNewExercise(exerciseResponse.body!);
-            });
-        } else {
-            // we do not have a participation, so we need to load it with the exercise
-            this.exerciseService.getExerciseDetails(this.exerciseId).subscribe((exerciseResponse: HttpResponse<Exercise>) => {
-                this.handleNewExercise(exerciseResponse.body!);
-            });
-        }
+        this.exerciseService.getExerciseDetails(this.exerciseId).subscribe((exerciseResponse: HttpResponse<Exercise>) => {
+            this.handleNewExercise(exerciseResponse.body!);
+        });
     }
 
     handleNewExercise(newExercise: Exercise) {
@@ -141,12 +150,6 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     private sortParticipationsFinishedFirst(participations: StudentParticipation[]) {
         if (participations && participations.length > 1) {
             participations.sort((a, b) => (b.initializationState === InitializationState.FINISHED ? 1 : -1));
-        }
-    }
-
-    ngOnDestroy() {
-        if (this.participationUpdateListener) {
-            this.participationUpdateListener.unsubscribe();
         }
     }
 
@@ -194,8 +197,6 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
                     this.guidedTourService.enableTourForExercise(this.exercise, programmingExerciseFail);
                 }
             }
-        } else {
-            this.participationWebsocketService.addExerciseForNewParticipation(this.exercise!.id);
         }
         this.participationUpdateListener = this.participationWebsocketService.subscribeForParticipationChanges().subscribe((changedParticipation: StudentParticipation) => {
             if (changedParticipation && this.exercise && changedParticipation.exercise.id === this.exercise.id) {
@@ -271,5 +272,26 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
             latestResult.participation = this.studentParticipation;
         }
         return latestResult;
+    }
+
+    publishBuildPlanUrl(): boolean {
+        return (this.exercise as ProgrammingExercise).publishBuildPlanUrl;
+    }
+
+    buildPlanActive(): boolean {
+        return (
+            !!this.exercise &&
+            this.exercise.studentParticipations &&
+            this.exercise.studentParticipations.length > 0 &&
+            this.exercise.studentParticipations[0].initializationState !== InitializationState.INACTIVE
+        );
+    }
+
+    projectKey(): string {
+        return (this.exercise as ProgrammingExercise).projectKey!;
+    }
+
+    buildPlanId(participation: Participation): string {
+        return (participation! as ProgrammingExerciseStudentParticipation).buildPlanId;
     }
 }

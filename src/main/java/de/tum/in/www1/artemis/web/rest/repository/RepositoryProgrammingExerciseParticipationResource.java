@@ -4,10 +4,7 @@ import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 
 import java.io.IOException;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -34,7 +31,7 @@ import de.tum.in.www1.artemis.web.rest.dto.RepositoryStatusDTO;
  * Executes repository actions on repositories related to the participation id transmitted. Available to the owner of the participation, TAs/Instructors of the exercise and Admins.
  */
 @RestController
-@RequestMapping({ "/api", "/api_basic" })
+@RequestMapping("/api")
 @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
 public class RepositoryProgrammingExerciseParticipationResource extends RepositoryResource {
 
@@ -42,7 +39,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
 
     private final ProgrammingExerciseService programmingExerciseService;
 
-    public RepositoryProgrammingExerciseParticipationResource(UserService userService, AuthorizationCheckService authCheckService, Optional<GitService> gitService,
+    public RepositoryProgrammingExerciseParticipationResource(UserService userService, AuthorizationCheckService authCheckService, GitService gitService,
             Optional<ContinuousIntegrationService> continuousIntegrationService, RepositoryService repositoryService, ProgrammingExerciseParticipationService participationService,
             ProgrammingExerciseService programmingExerciseService) {
         super(userService, authCheckService, gitService, continuousIntegrationService, repositoryService);
@@ -67,7 +64,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
             throw new IllegalAccessException();
         }
         URL repositoryUrl = ((ProgrammingExerciseParticipation) participation).getRepositoryUrlAsUrl();
-        return gitService.get().getOrCheckoutRepository(repositoryUrl, pullOnGet);
+        return gitService.getOrCheckoutRepository(repositoryUrl, pullOnGet);
     }
 
     @Override
@@ -90,7 +87,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
 
     @Override
     @GetMapping(value = "/repository/{participationId}/files", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<HashMap<String, FileType>> getFiles(@PathVariable Long participationId) {
+    public ResponseEntity<Map<String, FileType>> getFiles(@PathVariable Long participationId) {
         return super.getFiles(participationId);
     }
 
@@ -183,7 +180,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
             return ResponseEntity.ok(new ArrayList<>());
         }
 
-        List<BuildLogEntry> logs = continuousIntegrationService.get().getLatestBuildLogs(participation.getBuildPlanId());
+        List<BuildLogEntry> logs = continuousIntegrationService.get().getLatestBuildLogs(participation.getProgrammingExercise().getProjectKey(), participation.getBuildPlanId());
 
         return new ResponseEntity<>(logs, HttpStatus.OK);
     }

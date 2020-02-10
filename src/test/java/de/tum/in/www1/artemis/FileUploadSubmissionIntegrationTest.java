@@ -2,22 +2,18 @@ package de.tum.in.www1.artemis;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.List;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpStatus;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import de.tum.in.www1.artemis.domain.Feedback;
 import de.tum.in.www1.artemis.domain.FileUploadExercise;
@@ -31,12 +27,7 @@ import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.RequestUtilService;
 
-@ExtendWith(SpringExtension.class)
-@SpringBootTest
-@AutoConfigureMockMvc
-@AutoConfigureTestDatabase
-@ActiveProfiles("artemis")
-public class FileUploadSubmissionIntegrationTest {
+public class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrationTest {
 
     @Autowired
     CourseRepository courseRepo;
@@ -106,7 +97,18 @@ public class FileUploadSubmissionIntegrationTest {
         String publicFilePath = fileService.publicPathForActualPath(actualFilePath, returnedSubmission.getId());
         assertThat(returnedSubmission).as("submission correctly posted").isNotNull();
         assertThat(returnedSubmission.getFilePath()).isEqualTo(publicFilePath);
+        var fileBytes = Files.readAllBytes(Path.of(actualFilePath));
+        assertThat(fileBytes.length > 0).as("Stored file has content").isTrue();
         checkDetailsHidden(returnedSubmission, true);
+    }
+
+    @Test
+    @WithMockUser(value = "student3")
+    public void submitFileUploadSubmission_emptyFileContent() throws Exception {
+        FileUploadSubmission submission = ModelFactory.generateFileUploadSubmission(false);
+        var file = new MockMultipartFile("file", "file.png", "application/json", (byte[]) null);
+        request.postWithMultipartFile("/api/exercises/" + fileUploadExercise.getId() + "/file-upload-submissions", submission, "submission", file, FileUploadSubmission.class,
+                HttpStatus.BAD_REQUEST);
     }
 
     @Test

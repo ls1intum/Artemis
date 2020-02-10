@@ -32,8 +32,6 @@ public class QuizExerciseService {
 
     private final ShortAnswerMappingRepository shortAnswerMappingRepository;
 
-    private final ParticipationService participationService;
-
     private final AuthorizationCheckService authCheckService;
 
     private final ResultRepository resultRepository;
@@ -47,14 +45,13 @@ public class QuizExerciseService {
     private final ObjectMapper objectMapper;
 
     public QuizExerciseService(UserService userService, QuizExerciseRepository quizExerciseRepository, DragAndDropMappingRepository dragAndDropMappingRepository,
-            ShortAnswerMappingRepository shortAnswerMappingRepository, ParticipationService participationService, AuthorizationCheckService authCheckService,
-            ResultRepository resultRepository, QuizSubmissionRepository quizSubmissionRepository, SimpMessageSendingOperations messagingTemplate,
+            ShortAnswerMappingRepository shortAnswerMappingRepository, AuthorizationCheckService authCheckService, ResultRepository resultRepository,
+            QuizSubmissionRepository quizSubmissionRepository, SimpMessageSendingOperations messagingTemplate,
             MappingJackson2HttpMessageConverter mappingJackson2HttpMessageConverter) {
         this.userService = userService;
         this.quizExerciseRepository = quizExerciseRepository;
         this.dragAndDropMappingRepository = dragAndDropMappingRepository;
         this.shortAnswerMappingRepository = shortAnswerMappingRepository;
-        this.participationService = participationService;
         this.authCheckService = authCheckService;
         this.resultRepository = resultRepository;
         this.quizSubmissionRepository = quizSubmissionRepository;
@@ -265,18 +262,6 @@ public class QuizExerciseService {
     }
 
     /**
-     * Delete the quiz exercise by id.
-     *
-     * @param id the id of the entity
-     */
-    public void delete(Long id) {
-        log.debug("Request to delete Exercise : {}", id);
-        // delete all participations belonging to this quiz
-        participationService.deleteAllByExerciseId(id, false, false);
-        quizExerciseRepository.deleteById(id);
-    }
-
-    /**
      * adjust existing results if an answer or and question was deleted and recalculate the scores
      *
      * @param quizExercise the changed quizExercise.
@@ -341,16 +326,6 @@ public class QuizExerciseService {
     }
 
     /**
-     * Check if the current user is allowed to see the given exercise
-     * 
-     * @param quizExercise the exercise to check permissions for
-     * @return true, if the user has the required permissions, false otherwise
-     */
-    public boolean userIsAllowedToSeeExercise(QuizExercise quizExercise) {
-        return authCheckService.isAllowedToSeeExercise(quizExercise, null);
-    }
-
-    /**
      * get the view for students in the given quiz
      * 
      * @param quizExercise the quiz to get the view for
@@ -394,7 +369,7 @@ public class QuizExerciseService {
                 }
             }
 
-            // replace drop location
+            // drop location index
             DropLocation dropLocation = mapping.getDropLocation();
             boolean dropLocationFound = false;
             for (DropLocation questionDropLocation : dragAndDropQuestion.getDropLocations()) {

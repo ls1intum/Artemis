@@ -8,15 +8,9 @@ import java.util.Optional;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
@@ -27,12 +21,7 @@ import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.RequestUtilService;
 
-@ExtendWith(SpringExtension.class)
-@SpringBootTest
-@AutoConfigureMockMvc
-@AutoConfigureTestDatabase
-@ActiveProfiles("artemis")
-public class ParticipationIntegrationTest {
+public class ParticipationIntegrationTest extends AbstractSpringIntegrationTest {
 
     @Autowired
     CourseRepository courseRepo;
@@ -67,10 +56,17 @@ public class ParticipationIntegrationTest {
     @BeforeEach
     public void initTestCase() {
         database.addUsers(2, 2, 2);
-        database.addCourseWithModelingAndTextExercise();
-        course = courseRepo.findAll().get(0);
-        modelingExercise = (ModelingExercise) exerciseRepo.findAll().get(0);
-        textExercise = (TextExercise) exerciseRepo.findAll().get(1);
+        course = database.addCourseWithModelingAndTextExercise();
+        for (Exercise exercise : course.getExercises()) {
+            if (exercise instanceof ModelingExercise) {
+                modelingExercise = (ModelingExercise) exercise;
+            }
+            if (exercise instanceof TextExercise) {
+                textExercise = (TextExercise) exercise;
+            }
+        }
+        modelingExercise.setTitle("UML Class Diagram");
+        exerciseRepo.save(modelingExercise);
     }
 
     @AfterEach
@@ -191,14 +187,26 @@ public class ParticipationIntegrationTest {
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void deleteParticipation_forbidden_student() throws Exception {
-        request.delete("/api/participations/" + 1, HttpStatus.FORBIDDEN);
+    public void deleteParticipation_student() throws Exception {
+        // Allow students to delete their own participation if it belongs to a guided tour
+        StudentParticipation studentParticipation = database.addParticipationForExercise(modelingExercise, "student1");
+        request.delete("/api/guided-tour/participations/" + studentParticipation.getId(), HttpStatus.OK);
+
+        // Returns forbidden if users do not delete their own participation
+        StudentParticipation studentParticipation2 = database.addParticipationForExercise(modelingExercise, "student2");
+        request.delete("/api/guided-tour/participations/" + studentParticipation2.getId(), HttpStatus.FORBIDDEN);
     }
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void deleteParticipation_forbidden_tutor() throws Exception {
-        request.delete("/api/participations/" + 1, HttpStatus.FORBIDDEN);
+    public void deleteParticipation_tutor() throws Exception {
+        // Allow tutors to delete their own participation if it belongs to a guided tour
+        StudentParticipation studentParticipation = database.addParticipationForExercise(modelingExercise, "tutor1");
+        request.delete("/api/guided-tour/participations/" + studentParticipation.getId(), HttpStatus.OK);
+
+        // Returns forbidden if tutors do not delete their own participation
+        StudentParticipation studentParticipation2 = database.addParticipationForExercise(modelingExercise, "student1");
+        request.delete("/api/guided-tour/participations/" + studentParticipation2.getId(), HttpStatus.FORBIDDEN);
     }
 
     @Test

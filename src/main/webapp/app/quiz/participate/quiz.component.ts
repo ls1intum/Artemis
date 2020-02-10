@@ -7,7 +7,8 @@ import { Subscription } from 'rxjs/Subscription';
 import { ActivatedRoute } from '@angular/router';
 import { JhiAlertService } from 'ng-jhipster';
 import { QuizSubmission, QuizSubmissionService } from '../../entities/quiz-submission';
-import { ParticipationService, ParticipationWebsocketService } from '../../entities/participation';
+import { ParticipationService } from 'app/entities/participation/participation.service';
+import { ParticipationWebsocketService } from 'app/entities/participation/participation-websocket.service';
 import { Result } from 'app/entities/result';
 import { DragAndDropQuestion } from 'app/entities/drag-and-drop-question';
 import { MultipleChoiceQuestion } from 'app/entities/multiple-choice-question';
@@ -92,7 +93,7 @@ export class QuizComponent implements OnInit, OnDestroy {
      * Websocket channels
      */
     submissionChannel: string;
-    participationChannel: Subscription;
+    participationChannel: string;
     quizExerciseChannel: string;
     onConnected: () => void;
     onDisconnected: () => void;
@@ -165,7 +166,7 @@ export class QuizComponent implements OnInit, OnDestroy {
             this.jhiWebsocketService.unsubscribe('/user' + this.submissionChannel);
         }
         if (this.participationChannel) {
-            this.participationChannel.unsubscribe();
+            this.jhiWebsocketService.unsubscribe(this.participationChannel);
         }
         if (this.quizExerciseChannel) {
             this.jhiWebsocketService.unsubscribe(this.quizExerciseChannel);
@@ -319,8 +320,11 @@ export class QuizComponent implements OnInit, OnDestroy {
         }
 
         if (!this.participationChannel) {
-            this.participationWebsocketService.addExerciseForNewParticipation(this.quizId);
-            this.participationChannel = this.participationWebsocketService.subscribeForParticipationChanges().subscribe((changedParticipation: StudentParticipation) => {
+            this.participationChannel = '/user/topic/quizExercise/' + this.quizId + '/participation';
+            // TODO: subscribe for new results instead if this is what we are actually interested in
+            // participation channel => react to new results
+            this.jhiWebsocketService.subscribe(this.participationChannel);
+            this.jhiWebsocketService.receive(this.participationChannel).subscribe((changedParticipation: StudentParticipation) => {
                 if (changedParticipation && this.quizExercise && changedParticipation.exercise.id === this.quizExercise.id) {
                     if (this.waitingForQuizStart) {
                         // only apply completely if quiz hasn't started to prevent jumping ui during participation
@@ -897,7 +901,7 @@ export class QuizComponent implements OnInit, OnDestroy {
             switch (this.mode) {
                 case 'practice':
                     if (!this.submission.id) {
-                        this.quizSubmissionService.submitForPractice(this.submission, 1, this.quizId).subscribe(
+                        this.quizSubmissionService.submitForPractice(this.submission, this.quizId).subscribe(
                             (response: HttpResponse<Result>) => {
                                 this.onSubmitPracticeOrPreviewSuccess(response.body!);
                             },
@@ -907,7 +911,7 @@ export class QuizComponent implements OnInit, OnDestroy {
                     break;
                 case 'preview':
                     if (!this.submission.id) {
-                        this.quizSubmissionService.submitForPreview(this.submission, 1, this.quizId).subscribe(
+                        this.quizSubmissionService.submitForPreview(this.submission, this.quizId).subscribe(
                             (response: HttpResponse<Result>) => {
                                 this.onSubmitPracticeOrPreviewSuccess(response.body!);
                             },

@@ -11,7 +11,8 @@ import org.hibernate.Hibernate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.participation.*;
 import de.tum.in.www1.artemis.repository.ParticipationRepository;
@@ -127,8 +128,8 @@ public class ProgrammingExerciseParticipationService {
         return studentParticipationRepository.findByExerciseIdAndParticipationIds(exerciseId, participationIds);
     }
 
-    public Optional<ProgrammingExerciseStudentParticipation> findStudentParticipationWithLatestResultAndFeedbacks(Long participationId) {
-        return studentParticipationRepository.findByIdWithLatestResultAndFeedbacks(participationId);
+    public Optional<ProgrammingExerciseStudentParticipation> findStudentParticipationWithLatestResultAndFeedbacksAndRelatedSubmissions(Long participationId) {
+        return studentParticipationRepository.findByIdWithLatestResultAndFeedbacksAndRelatedSubmissions(participationId);
     }
 
     /**

@@ -1,4 +1,4 @@
-import { AfterViewInit, ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
+import { AfterViewInit, ChangeDetectorRef, Component, OnDestroy, OnInit, ViewEncapsulation } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -10,7 +10,7 @@ import * as $ from 'jquery';
 import { Interactable } from '@interactjs/types/types';
 import { Location } from '@angular/common';
 import { FileUploadAssessmentsService } from 'app/entities/file-upload-assessment/file-upload-assessment.service';
-import { WindowRef } from 'app/core';
+import { WindowRef } from 'app/core/websocket/window.service';
 import { StudentParticipation } from 'app/entities/participation';
 import { Result, ResultService } from 'app/entities/result';
 import { Feedback } from 'app/entities/feedback';
@@ -27,6 +27,7 @@ import { AccountService } from 'app/core/auth/account.service';
     providers: [FileUploadAssessmentsService, WindowRef],
     templateUrl: './file-upload-assessment.component.html',
     styleUrls: ['./file-upload-assessment.component.scss'],
+    encapsulation: ViewEncapsulation.None,
 })
 export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnDestroy {
     text: string;
@@ -303,6 +304,7 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
                 },
             );
     }
+
     onSubmitAssessment() {
         this.validateAssessment();
         if (!this.assessmentsAreValid) {
@@ -451,8 +453,8 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
             .updateAssessmentAfterComplaint(this.assessments, complaintResponse, this.submission.id)
             .pipe(finalize(() => (this.isLoading = false)))
             .subscribe(
-                result => {
-                    this.result = result;
+                response => {
+                    this.result = response.body!;
                     this.updateParticipationWithResult();
                     this.jhiAlertService.clear();
                     this.jhiAlertService.success('artemisApp.assessment.messages.updateAfterComplaintSuccessful');

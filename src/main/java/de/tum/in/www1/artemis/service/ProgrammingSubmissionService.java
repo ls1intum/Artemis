@@ -25,10 +25,7 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.participation.*;
-import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
-import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
-import de.tum.in.www1.artemis.repository.ResultRepository;
-import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
+import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
@@ -38,7 +35,7 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.websocket.programmingSubmission.BuildTriggerWebsocketError;
 
 @Service
-public class ProgrammingSubmissionService {
+public class ProgrammingSubmissionService extends SubmissionService {
 
     private final Logger log = LoggerFactory.getLogger(ProgrammingSubmissionService.class);
 
@@ -48,9 +45,11 @@ public class ProgrammingSubmissionService {
     @Value("${artemis.git.email}")
     private String ARTEMIS_GIT_EMAIL;
 
-    private final ProgrammingExerciseService programmingExerciseService;
+    private final ProgrammingExerciseRepository programmingExerciseRepository;
 
     private final ProgrammingSubmissionRepository programmingSubmissionRepository;
+
+    private final ResultRepository resultRepository;
 
     private final ParticipationService participationService;
 
@@ -70,16 +69,14 @@ public class ProgrammingSubmissionService {
 
     private final StudentParticipationRepository studentParticipationRepository;
 
-    private final SubmissionService submissionService;
-
-    public ProgrammingSubmissionService(ProgrammingSubmissionRepository programmingSubmissionRepository, ProgrammingExerciseService programmingExerciseService,
-            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, GroupNotificationService groupNotificationService,
-            WebsocketMessagingService websocketMessagingService, Optional<VersionControlService> versionControlService,
+    public ProgrammingSubmissionService(ProgrammingSubmissionRepository programmingSubmissionRepository, ProgrammingExerciseRepository programmingExerciseRepository,
+            GroupNotificationService groupNotificationService, SubmissionRepository submissionRepository, UserService userService, AuthorizationCheckService authCheckService,
+            WebsocketMessagingService websocketMessagingService, Optional<VersionControlService> versionControlService, ResultRepository resultRepository,
             Optional<ContinuousIntegrationService> continuousIntegrationService, ParticipationService participationService, SimpMessageSendingOperations messagingTemplate,
-            ProgrammingExerciseParticipationService programmingExerciseParticipationService, GitService gitService, ResultRepository resultRepository,
-            StudentParticipationRepository studentParticipationRepository, SubmissionService submissionService) {
+            ProgrammingExerciseParticipationService programmingExerciseParticipationService, GitService gitService, StudentParticipationRepository studentParticipationRepository) {
+        super(submissionRepository, userService, authCheckService);
         this.programmingSubmissionRepository = programmingSubmissionRepository;
-        this.programmingExerciseService = programmingExerciseService;
+        this.programmingExerciseRepository = programmingExerciseRepository;
         this.groupNotificationService = groupNotificationService;
         this.websocketMessagingService = websocketMessagingService;
         this.versionControlService = versionControlService;
@@ -89,7 +86,7 @@ public class ProgrammingSubmissionService {
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.gitService = gitService;
         this.studentParticipationRepository = studentParticipationRepository;
-        this.submissionService = submissionService;
+        this.resultRepository = resultRepository;
     }
 
     /**
@@ -184,9 +181,6 @@ public class ProgrammingSubmissionService {
      */
     public Optional<ProgrammingSubmission> getLatestPendingSubmission(Long participationId, boolean filterGraded) throws EntityNotFoundException, IllegalArgumentException {
         Participation participation = participationService.findOne(participationId);
-        if (participation == null) {
-            throw new EntityNotFoundException("Participation with id " + participationId + " could not be retrieved!");
-        }
         if (!(participation instanceof ProgrammingExerciseParticipation)) {
             throw new IllegalArgumentException("Participation with id " + participationId + " is not a programming exercise participation!");
         }
@@ -236,10 +230,11 @@ public class ProgrammingSubmissionService {
     public void triggerInstructorBuildForExercise(@PathVariable Long exerciseId) throws EntityNotFoundException {
         // Async can't access the authentication object. We need to do any security checks before this point.
         SecurityUtils.setAuthorizationObject();
-        ProgrammingExercise programmingExercise = programmingExerciseService.findById(exerciseId);
-        if (programmingExercise == null) {
+        Optional<ProgrammingExercise> optionalProgrammingExercise = programmingExerciseRepository.findWithTemplateParticipationAndSolutionParticipationById(exerciseId);
+        if (optionalProgrammingExercise.isEmpty()) {
             throw new EntityNotFoundException("Programming exercise with id " + exerciseId + " not found.");
         }
+        var programmingExercise = optionalProgrammingExercise.get();
         log.info("Trigger instructor build for all participations in exercise {} with id {}", programmingExercise.getTitle(), programmingExercise.getId());
 
         // Let the instructor know that a build run was triggered.
@@ -311,7 +306,9 @@ public class ProgrammingSubmissionService {
             lastCommitHash = gitService.getLastCommitHash(repoUrl);
         }
         catch (EntityNotFoundException ex) {
-            throw new IllegalStateException("Last commit hash for participation " + participation.getId() + " could not be retrieved");
+            var message = "Last commit hash for participation " + participation.getId() + " could not be retrieved due to exception: " + ex.getMessage();
+            log.warn(message);
+            throw new IllegalStateException(message);
         }
         return lastCommitHash;
     }
@@ -343,8 +340,11 @@ public class ProgrammingSubmissionService {
                 .findSolutionParticipationByProgrammingExerciseId(programmingExerciseId);
         // If no commitHash is provided, use the last commitHash for the test repository.
         if (commitHash == null) {
-            ProgrammingExercise programmingExercise = programmingExerciseService.findById(programmingExerciseId);
-            commitHash = getLastCommitHashForTestRepository(programmingExercise);
+            Optional<ProgrammingExercise> programmingExercise = programmingExerciseRepository.findWithTemplateParticipationAndSolutionParticipationById(programmingExerciseId);
+            if (programmingExercise.isEmpty()) {
+                throw new EntityNotFoundException("Programming exercise with id " + programmingExerciseId + " not found.");
+            }
+            commitHash = getLastCommitHashForTestRepository(programmingExercise.get());
         }
         return createSubmissionWithCommitHashAndSubmissionType(solutionParticipation, commitHash, SubmissionType.TEST);
     }
@@ -494,15 +494,20 @@ public class ProgrammingSubmissionService {
      * @throws EntityNotFoundException if the programming exercise does not exist.
      */
     public ProgrammingExercise setTestCasesChanged(Long programmingExerciseId, boolean testCasesChanged) throws EntityNotFoundException {
-        ProgrammingExercise programmingExercise = programmingExerciseService.findById(programmingExerciseId);
+        Optional<ProgrammingExercise> optionalProgrammingExercise = programmingExerciseRepository.findWithTemplateParticipationAndSolutionParticipationById(programmingExerciseId);
+        if (optionalProgrammingExercise.isEmpty()) {
+            throw new EntityNotFoundException("Programming exercise with id " + programmingExerciseId + " not found.");
+        }
+        var programmingExercise = optionalProgrammingExercise.get();
 
         // If the programming exercise is not released / has no results, there is no point in setting the dirty flag. It is only relevant when there are student submissions that
         // should get an updated result.
-        if (testCasesChanged == programmingExercise.getTestCasesChanged() || !programmingExerciseService.hasAtLeastOneStudentResult(programmingExercise)) {
+
+        if (testCasesChanged == programmingExercise.getTestCasesChanged() || !resultRepository.existsByParticipation_ExerciseId(programmingExercise.getId())) {
             return programmingExercise;
         }
         programmingExercise.setTestCasesChanged(testCasesChanged);
-        ProgrammingExercise updatedProgrammingExercise = programmingExerciseService.save(programmingExercise);
+        ProgrammingExercise updatedProgrammingExercise = programmingExerciseRepository.save(programmingExercise);
         // Send a websocket message about the new state to the client.
         websocketMessagingService.sendMessage(getProgrammingExerciseTestCaseChangedTopic(programmingExerciseId), testCasesChanged);
         // Send a notification to the client to inform the instructor about the test case update.
@@ -561,7 +566,7 @@ public class ProgrammingSubmissionService {
      * @return a list of programming submissions for the given exercise id
      */
     public List<ProgrammingSubmission> getProgrammingSubmissions(long exerciseId, boolean submittedOnly) {
-        List<StudentParticipation> participations = studentParticipationRepository.findAllByExerciseIdWithEagerSubmissionsAndEagerResultsAndEagerAssessor(exerciseId);
+        List<StudentParticipation> participations = studentParticipationRepository.findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseId(exerciseId);
         List<ProgrammingSubmission> submissions = new ArrayList<>();
         participations.stream().peek(participation -> participation.getExercise().setStudentParticipations(null)).map(StudentParticipation::findLatestSubmission)
                 // filter out non submitted submissions if the flag is set to true
@@ -597,11 +602,7 @@ public class ProgrammingSubmissionService {
      * @return the programming submission with the given id
      */
     public ProgrammingSubmission findByIdWithEagerResultAndFeedback(long submissionId) {
-        return programmingSubmissionRepository.findByIdWithEagerResultAndFeedback(submissionId)
+        return programmingSubmissionRepository.findWithEagerResultAssessorFeedbackById(submissionId)
                 .orElseThrow(() -> new EntityNotFoundException("Programming submission with id \"" + submissionId + "\" does not exist"));
-    }
-
-    public void hideDetails(ProgrammingSubmission submission, User user) {
-        submissionService.hideDetails(submission, user);
     }
 }

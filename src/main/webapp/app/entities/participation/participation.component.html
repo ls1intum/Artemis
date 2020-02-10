@@ -1,8 +1,20 @@
 <div>
     <div class="d-flex">
-        <h2>
-            <span>{{ exercise?.title }} - </span>{{ filteredParticipationsSize }} <span jhiTranslate="artemisApp.participation.home.title">Participations</span>
-        </h2>
+        <div class="mb-3">
+            <h2>
+                <span>{{ exercise?.title }} - </span>{{ filteredParticipationsSize }} <span jhiTranslate="artemisApp.participation.home.title">Participations</span>
+            </h2>
+            <div *ngIf="exercise?.type === ExerciseType.PROGRAMMING" class="d-flex align-items-center mt-2">
+                <label class="radio-inline mb-0 d-flex align-items-center">
+                    <input type="radio" [ngModel]="participationCriteria.filterProp" (click)="updateParticipationFilter(FilterProp.ALL)" [value]="FilterProp.ALL" />
+                    <span class="ml-1">{{ 'artemisApp.exercise.showAll' | translate }}</span>
+                </label>
+                <label class="radio-inline ml-2 mb-0 d-flex align-items-center">
+                    <input type="radio" [ngModel]="participationCriteria.filterProp" (click)="updateParticipationFilter(FilterProp.FAILED)" [value]="FilterProp.FAILED" />
+                    <span class="ml-1">{{ 'artemisApp.exercise.showFailed' | translate }}</span>
+                </label>
+            </div>
+        </div>
         <jhi-programming-exercise-instructor-submission-state
             class="ml-auto"
             *ngIf="exercise?.isAtLeastInstructor && exercise?.type === ExerciseType.PROGRAMMING"
@@ -10,17 +22,18 @@
         ></jhi-programming-exercise-instructor-submission-state>
     </div>
     <jhi-alert></jhi-alert>
-    <div class="row"></div>
-    <br />
     <jhi-data-table
         [isLoading]="isLoading"
         entityType="participation"
         [allEntities]="participations"
         entitiesPerPageTranslation="artemisApp.exercise.resultsPerPage"
+        showAllEntitiesTranslation="artemisApp.exercise.showAllResults"
         searchPlaceholderTranslation="artemisApp.exercise.searchForStudents"
         [searchFields]="['student.login', 'student.name']"
         [searchTextFromEntity]="searchTextFromParticipation"
         [searchResultFormatter]="searchResultFormatter"
+        [customFilterKey]="participationCriteria.filterProp"
+        [customFilter]="filterParticipationByProp"
         (entitiesSizeChange)="handleParticipationsSizeChange($event)"
     >
         <ng-template let-settings="settings" let-controls="controls">
@@ -71,7 +84,7 @@
                     </ng-template>
                 </ngx-datatable-column>
 
-                <ngx-datatable-column prop="buildPlanId" *ngIf="exercise?.type === ExerciseType.PROGRAMMING" [minWidth]="100">
+                <ngx-datatable-column *ngIf="exercise?.type === ExerciseType.PROGRAMMING" [minWidth]="100">
                     <ng-template ngx-datatable-header-template>
                         <span class="datatable-header-cell-wrapper" (click)="controls.onSort('buildPlanId')">
                             <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.participation.buildPlanId">
@@ -80,10 +93,10 @@
                             <fa-icon [icon]="controls.iconForSortPropField('buildPlanId')"></fa-icon>
                         </span>
                     </ng-template>
-                    <ng-template ngx-datatable-cell-template let-value="value">
-                        <span *ngIf="value !== null">
-                            <a href="https://bamboobruegge.in.tum.de/browse/{{ value }}" target="_blank" rel="noopener noreferrer">
-                                {{ value }}
+                    <ng-template ngx-datatable-cell-template let-value="row">
+                        <span *ngIf="value.buildPlanId !== null">
+                            <a jhiBuildPlanLink [buildPlanId]="value.buildPlanId" [projectKey]="value.exercise.projectKey">
+                                {{ value.buildPlanId }}
                             </a>
                         </span>
                     </ng-template>
@@ -119,15 +132,15 @@
 
                 <ngx-datatable-column prop="student" [minWidth]="120">
                     <ng-template ngx-datatable-header-template>
-                        <span class="datatable-header-cell-wrapper" (click)="controls.onSort('student.firstName')">
+                        <span class="datatable-header-cell-wrapper" (click)="controls.onSort('student.name')">
                             <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.participation.student">
                                 Student
                             </span>
-                            <fa-icon [icon]="controls.iconForSortPropField('student.firstName')"></fa-icon>
+                            <fa-icon [icon]="controls.iconForSortPropField('student.name')"></fa-icon>
                         </span>
                     </ng-template>
                     <ng-template ngx-datatable-cell-template let-value="value">
-                        <a routerLink="/admin/user-management/{{ value?.login }}/view"> {{ value?.firstName }} {{ value?.lastName }} </a>
+                        <a routerLink="/admin/user-management/{{ value?.login }}/view"> {{ value?.name }} </a>
                     </ng-template>
                 </ngx-datatable-column>
 
@@ -150,7 +163,6 @@
                         <div class="text-right">
                             <div class="btn-group">
                                 <ng-container *ngIf="exercise?.type === ExerciseType.PROGRAMMING && exercise.isAtLeastInstructor">
-                                    <!-- TODO: In case the last result is manuel, we should warn the user that a manual result would be overridden when clicking the button -->
                                     <jhi-programming-exercise-instructor-trigger-build-button
                                         *ngIf="hasLoadedPendingSubmissions; else triggerLoading"
                                         [exercise]="exercise"

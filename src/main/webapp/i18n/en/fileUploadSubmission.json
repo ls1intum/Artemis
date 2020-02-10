@@ -15,6 +15,7 @@
             "detail": {
                 "title": "File Upload Submission"
             },
+            "view": "View submission",
             "filePath": "File Path",
             "feedbackResult": "You received {{ credits }} credit(s)",
             "feedbackResultDetail": "with the following feedback: {{ detailText }}",

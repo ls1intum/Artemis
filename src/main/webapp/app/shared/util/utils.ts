@@ -17,3 +17,22 @@ export const cartesianProduct = (a: any[], b: any[], ...c: any[][]): any[] => {
     const fab = cartesianConcatHelper(a, b);
     return cartesianProduct(fab, b2, ...c2);
 };
+
+/**
+ * https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Errors/Cyclic_object_value
+ * Stringify a circular JSON structure by omitting keys that would close a circle
+ *
+ * @param val The object you want to stringify
+ */
+export const stringifyCircular = (val: any): string => {
+    const seen = new WeakSet();
+    return JSON.stringify(val, (key, value) => {
+        if (typeof value === 'object' && value !== null) {
+            if (seen.has(value)) {
+                return;
+            }
+            seen.add(value);
+        }
+        return value;
+    });
+};

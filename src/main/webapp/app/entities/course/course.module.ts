@@ -8,13 +8,14 @@ import { ArtemisModelingExerciseModule } from '../modeling-exercise/modeling-exe
 import { ArtemisFileUploadExerciseModule } from '../file-upload-exercise/file-upload-exercise.module';
 import { ArtemisProgrammingExerciseModule } from '../programming-exercise/programming-exercise.module';
 
-import { CourseComponent, CourseDetailComponent, CourseExerciseService, CourseExercisesOverviewComponent, courseRoute, CourseService, CourseUpdateComponent } from './';
+import { CourseComponent, CourseDetailComponent, CourseExercisesOverviewComponent, courseRoute, CourseUpdateComponent } from './';
 import { CourseExerciseCardComponent } from 'app/entities/course/course-exercise-card.component';
 import { FormDateTimePickerModule } from 'app/shared/date-time-picker/date-time-picker.module';
 import { ArtemisColorSelectorModule } from 'app/components/color-selector/color-selector.module';
 import { ImageCropperModule } from 'ngx-image-cropper';
 import { SortByModule } from 'app/components/pipes';
 import { MomentModule } from 'ngx-moment';
+import { IntellijModule } from 'app/intellij/intellij.module';
 
 const ENTITY_STATES = [...courseRoute];
 
@@ -33,9 +34,9 @@ const ENTITY_STATES = [...courseRoute];
         ArtemisColorSelectorModule,
         ImageCropperModule,
         MomentModule,
+        IntellijModule,
     ],
     declarations: [CourseComponent, CourseDetailComponent, CourseUpdateComponent, CourseExerciseCardComponent, CourseExercisesOverviewComponent],
     entryComponents: [CourseComponent, CourseUpdateComponent, CourseExerciseCardComponent],
-    providers: [CourseService, CourseExerciseService],
 })
 export class ArtemisCourseModule {}

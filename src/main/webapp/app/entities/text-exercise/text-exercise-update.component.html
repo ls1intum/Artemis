@@ -72,15 +72,6 @@
                 [(ngModel)]="textExercise.maxScore"
             />
         </div>
-        <div class="form-group">
-            <label class="form-control-label" jhiTranslate="artemisApp.exercise.course" for="field_course">Course</label>
-            <select class="form-control" id="field_course" name="course" [(ngModel)]="textExercise.course">
-                <option [ngValue]="null"></option>
-                <option [ngValue]="course.id === textExercise.course?.id ? textExercise.course : course" *ngFor="let course of courses; trackBy: trackCourseById">{{
-                    course.title
-                }}</option>
-            </select>
-        </div>
         <div class="form-group" *jhiHasAnyAuthority="['ROLE_ADMIN']">
             <div class="form-check custom-control custom-checkbox">
                 <input
@@ -115,7 +106,7 @@
         </div>
         <div class="form-group" id="field_gradingInstructions">
             <label class="form-control-label" jhiTranslate="artemisApp.exercise.gradingInstructions" for="field_gradingInstructions">Grading instructions</label>
-            <jhi-edit-structured-grading-instructions></jhi-edit-structured-grading-instructions>
+            <jhi-edit-structured-grading-instruction></jhi-edit-structured-grading-instruction>
         </div>
         <div class="form-group">
             <span jhiTranslate="artemisApp.textExercise.exampleSubmissions">Example submissions</span>
@@ -127,11 +118,16 @@
                     </button>
                     <fa-icon
                         *ngIf="exampleSubmission.usedForTutorial"
-                        icon="'chalkboard-teacher'"
+                        [icon]="'chalkboard-teacher'"
                         style="margin-left: 10px"
                         [title]="'artemisApp.exampleSubmission.usedForTutorial' | translate"
                     ></fa-icon>
-                    <fa-icon *ngIf="exampleSubmission.submission?.result?.exampleResult" icon="check-circle" style="margin-left: 10px" title="An assessment is available"></fa-icon>
+                    <fa-icon
+                        *ngIf="exampleSubmission.submission?.result?.exampleResult"
+                        [icon]="'check-circle'"
+                        style="margin-left: 10px"
+                        title="An assessment is available"
+                    ></fa-icon>
                     <button class="btn btn-danger" (click)="deleteExampleSubmission(exampleSubmission.id, i)">
                         <fa-icon [icon]="'ban'"></fa-icon>
                     </button>

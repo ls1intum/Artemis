@@ -19,12 +19,4 @@ public interface ContinuousIntegrationUpdateService {
      * @param triggeredBy      Optional list of repositories that should trigger the new build plan. If empty, no triggers get overwritten
      */
     void updatePlanRepository(String projectKey, String planKey, String ciRepositoryName, String repoProjectKey, String repoName, Optional<List<String>> triggeredBy);
-
-    /**
-     * Triggers an build (if needed)
-     *
-     * @param buildPlanId  The build plan id.
-     * @param initialBuild Whether the build should be the initial build (might change if the build is actually triggered).
-     */
-    void triggerUpdate(String buildPlanId, boolean initialBuild);
 }

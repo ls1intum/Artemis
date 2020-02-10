@@ -7,7 +7,6 @@ import { Attachment } from 'app/entities/attachment';
 import { StudentQuestion } from 'app/entities/student-question';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { AssessmentType } from 'app/entities/assessment-type';
-import { StructuredGradingInstructionsModel } from 'app/structured-grading-instructions/structured-grading-instructions.model';
 
 export const enum DifficultyLevel {
     EASY = 'EASY',
@@ -71,7 +70,9 @@ export abstract class Exercise implements BaseEntity {
     public numberOfParticipations?: number;
     public numberOfAssessments?: number;
     public numberOfComplaints?: number;
+    public numberOfOpenComplaints?: number;
     public numberOfMoreFeedbackRequests?: number;
+    public numberOfOpenMoreFeedbackRequests?: number;
 
     // helper attributes
     public isAtLeastTutor = false; // default value

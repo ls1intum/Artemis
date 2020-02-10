@@ -21,12 +21,13 @@ import javax.annotation.Nullable;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.HiddenFileFilter;
-import org.eclipse.jgit.api.*;
+import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.api.PullResult;
+import org.eclipse.jgit.api.ResetCommand;
+import org.eclipse.jgit.api.Status;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.JGitInternalException;
-import org.eclipse.jgit.errors.IllegalTodoFileModification;
 import org.eclipse.jgit.lib.ObjectId;
-import org.eclipse.jgit.lib.RebaseTodoLine;
 import org.eclipse.jgit.lib.Ref;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.filter.CommitTimeRevFilter;
@@ -41,6 +42,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.exception.GitException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
@@ -52,7 +54,7 @@ public class GitService {
     @Value("${artemis.version-control.user}")
     private String GIT_USER;
 
-    @Value("${artemis.version-control.secret}")
+    @Value("${artemis.version-control.password}")
     private String GIT_PASSWORD;
 
     @Value("${artemis.repo-clone-path}")
@@ -185,7 +187,7 @@ public class GitService {
      * @param localPath to git repo on server.
      * @return the git repository in the localPath or null if it does not exist on the server.
      */
-    private Repository getRepositoryByLocalPath(Path localPath) {
+    public Repository getRepositoryByLocalPath(Path localPath) {
         // Check if there is a folder with the provided path of the git repository.
         if (!Files.exists(localPath)) {
             // In this case we should remove the repository if cached, because it can't exist anymore.
@@ -292,20 +294,18 @@ public class GitService {
      * Pulls from remote repository. Does not throw any exceptions when pulling, e.g. CheckoutConflictException or WrongRepositoryStateException.
      *
      * @param repo Local Repository Object.
-     * @return The PullResult which contains FetchResult and MergeResult.
      */
-    public PullResult pullIgnoreConflicts(Repository repo) {
+    public void pullIgnoreConflicts(Repository repo) {
         try {
             Git git = new Git(repo);
             // flush cache of files
             repo.setContent(null);
-            return git.pull().setCredentialsProvider(new UsernamePasswordCredentialsProvider(GIT_USER, GIT_PASSWORD)).call();
+            git.pull().setCredentialsProvider(new UsernamePasswordCredentialsProvider(GIT_USER, GIT_PASSWORD)).call();
         }
         catch (GitAPIException ex) {
             log.error("Cannot pull the repo " + repo.getLocalPath() + " due to the following exception: " + ex);
             // TODO: we should send this error to the client and let the user handle it there, e.g. by choosing to reset the repository
         }
-        return null;
     }
 
     /**
@@ -444,16 +444,16 @@ public class GitService {
     }
 
     /**
-     * Stager Task #6: Combine commits Combine/Squash all commits after last instructor commit
+     * Stager Task #6: Combine all commits after last instructor commit
      *
      * @param repository Local Repository Object.
-     * @param exercise   ProgrammingExercise associated with this repo.
+     * @param programmingExercise   ProgrammingExercise associated with this repo.
      */
-    public void squashAfterInstructor(Repository repository, ProgrammingExercise exercise) {
+    public void combineAllStudentCommits(Repository repository, ProgrammingExercise programmingExercise) {
         try {
             Git studentGit = new Git(repository);
             // Get last commit hash from template repo
-            ObjectId latestHash = getLastCommitHash(exercise.getTemplateRepositoryUrlAsUrl());
+            ObjectId latestHash = getLastCommitHash(programmingExercise.getTemplateRepositoryUrlAsUrl());
 
             if (latestHash == null) {
                 // Template Repository is somehow empty. Should never happen
@@ -467,38 +467,19 @@ public class GitService {
             // checkout own local "diff" branch
             studentGit.checkout().setCreateBranch(true).setName("diff").call();
 
-            // merge commits into one commit
-            studentGit.rebase().setUpstream(latestHash).runInteractively(new RebaseCommand.InteractiveHandler() {
-
-                @Override
-                public void prepareSteps(List<RebaseTodoLine> steps) {
-                    try {
-                        // flag all commits to "squash"
-                        for (RebaseTodoLine step : steps) {
-                            step.setAction(RebaseTodoLine.Action.SQUASH);
-                        }
-                        // flag latest commit to "pick"
-                        steps.get(0).setAction(RebaseTodoLine.Action.PICK);
-                    }
-                    catch (IllegalTodoFileModification illegalTodoFileModification) {
-                        log.error("Cannot modify commits in " + repository.getLocalPath() + " due to the following exception: " + illegalTodoFileModification);
-                    }
-                }
-
-                @Override
-                public String modifyCommitMessage(String oldCommitMsg) {
-                    // reuse old commit messages
-                    return oldCommitMsg;
-                }
-            }).call();
+            studentGit.reset().setMode(ResetCommand.ResetType.SOFT).setRef(latestHash.getName()).call();
+            studentGit.add().addFilepattern(".").call();
+            var student = ((StudentParticipation) repository.getParticipation()).getStudent();
+            var name = student != null ? student.getName() : ARTEMIS_GIT_NAME;
+            var email = student != null ? student.getEmail() : ARTEMIS_GIT_EMAIL;
+            studentGit.commit().setMessage("All student changes in one commit").setCommitter(name, email).call();
 
             // if repo is not closed, it causes weird IO issues when trying to delete the repo again
             // java.io.IOException: Unable to delete file: ...\.git\objects\pack\...
             repository.close();
-
         }
         catch (EntityNotFoundException | GitAPIException | JGitInternalException ex) {
-            log.warn("Cannot rebase the repo " + repository.getLocalPath() + " due to the following exception: " + ex.getMessage());
+            log.warn("Cannot reset the repo " + repository.getLocalPath() + " due to the following exception: " + ex.getMessage());
         }
     }
 
@@ -508,11 +489,11 @@ public class GitService {
      * @param repo Local Repository Object.
      * @return Collection of File objects
      */
-    public HashMap<File, FileType> listFilesAndFolders(Repository repo) {
+    public Map<File, FileType> listFilesAndFolders(Repository repo) {
         // Check if list of files is already cached
         if (repo.getContent() == null) {
             Iterator<java.io.File> itr = FileUtils.iterateFilesAndDirs(repo.getLocalPath().toFile(), HiddenFileFilter.VISIBLE, HiddenFileFilter.VISIBLE);
-            HashMap<File, FileType> files = new HashMap<>();
+            Map<File, FileType> files = new HashMap<>();
 
             while (itr.hasNext()) {
                 File nextFile = new File(itr.next(), repo);
@@ -583,19 +564,19 @@ public class GitService {
     }
 
     /**
-     * Squashes all commits in the selected repo into the first commit, keeping its commit message. Executes a hard reset to remote before the squash to avoid conflicts.
+     * Combines all commits in the selected repo into the first commit, keeping its commit message. Executes a hard reset to remote before the combine to avoid conflicts.
      * 
-     * @param repo to squash commits for
+     * @param repo to combine commits for
      * @throws GitAPIException       on io errors or git exceptions.
      * @throws IllegalStateException if there is no commit in the git repository.
      */
-    public void squashAllCommitsIntoInitialCommit(Repository repo) throws IllegalStateException, GitAPIException {
+    public void combineAllCommitsIntoInitialCommit(Repository repo) throws IllegalStateException, GitAPIException {
         Git git = new Git(repo);
         try {
             resetToOriginMaster(repo);
             List<RevCommit> commits = StreamSupport.stream(git.log().call().spliterator(), false).collect(Collectors.toList());
             RevCommit firstCommit = commits.get(commits.size() - 1);
-            // If there is a first commit, squash all other commits into it.
+            // If there is a first commit, combine all other commits into it.
             if (firstCommit != null) {
                 git.reset().setMode(ResetCommand.ResetType.SOFT).setRef(firstCommit.getId().getName()).call();
                 git.add().addFilepattern(".").call();
@@ -610,10 +591,10 @@ public class GitService {
         }
         // This exception occurrs when there was no change to the repo and a commit is done, so it is ignored.
         catch (JGitInternalException ex) {
-            log.debug("Did not squash the repository {} as there were no changes to commit.", repo);
+            log.debug("Did not combine the repository {} as there were no changes to commit.", repo);
         }
         catch (GitAPIException ex) {
-            log.error("Could not squash repository {} due to exception: {}", repo, ex);
+            log.error("Could not combine repository {} due to exception: {}", repo, ex);
             throw (ex);
         }
     }

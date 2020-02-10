@@ -29,6 +29,7 @@
                 "updateAfterComplaintFailed": "Updating the assessment failed."
             },
             "dashboard": {
+                "warning": "Warning: the due date is not over yet and students are still allowed to submit their solutions. Please do not start with the assessment yet!",
                 "empty": "No Submissions for this exercise!",
                 "loading": "Loading..",
                 "columns": {
@@ -45,7 +46,12 @@
                 "minutes": "minutes",
                 "actions": {
                     "open": "Open assessment",
+                    "cancel": "Cancel assessment",
                     "assess": "Assess Submission"
+                },
+                "filters": {
+                    "showAll": "Show all",
+                    "showLocked": "Show locked"
                 }
             }
         }

@@ -16,7 +16,6 @@ export const programmingExerciseFail: GuidedTour = {
         }),
         new TextTourStep({
             highlightSelector: 'jhi-programming-exercise-instructions-task-status .text-danger.test-status--linked',
-            clickEventListenerSelector: 'body',
             headlineTranslateKey: 'tour.programmingExercise.testFailure.headline',
             contentTranslateKey: 'tour.programmingExercise.testFailure.content',
             highlightPadding: 5,

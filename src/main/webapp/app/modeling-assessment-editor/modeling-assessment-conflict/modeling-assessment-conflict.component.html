@@ -30,8 +30,8 @@
                 [model]="conflictingModel"
                 [feedbacks]="conflictingResult.result.feedbacks"
                 title="{{ 'modelingAssessmentEditor.conflictingAssessmentTitle' | translate: { count: currentConflict.resultsInConflict.length } }} {{
-                    conflictingResult.result.assessor.firstName
-                }} {{ conflictingResult.result.assessor.lastName }}"
+                    conflictingResult.result.assessor.name
+                }}"
                 [highlightedElements]="conflictingModelHighlightedElements"
                 [centeredElementId]="conflictingResult.modelElementId"
                 [readOnly]="true"

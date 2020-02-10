@@ -1,5 +1,6 @@
 import { ShortAnswerQuestion } from '../short-answer-question';
 import { BaseEntity } from 'app/shared';
+import { generate } from 'app/quiz/edit/temp-id';
 
 export class ShortAnswerSolution implements BaseEntity {
     public id: number;
@@ -12,5 +13,7 @@ export class ShortAnswerSolution implements BaseEntity {
     public posY: number;
     public tempID: number;
 
-    constructor() {}
+    constructor() {
+        this.tempID = generate();
+    }
 }

@@ -32,8 +32,6 @@ public final class Constants {
 
     public static final String FILEPATH_ID_PLACHEOLDER = "PLACEHOLDER_FOR_ID";
 
-    public static final String FILEPATH_COMPASS = "compass";
-
     public static final String PARTICIPATION_TOPIC_ROOT = "/topic/participation/";
 
     public static final String NEW_RESULT_RESOURCE_PATH = "/programming-exercises/new-result";
@@ -48,11 +46,19 @@ public final class Constants {
 
     public static final String PROGRAMMING_SUBMISSION_RESOURCE_API_PATH = "/api" + PROGRAMMING_SUBMISSION_RESOURCE_PATH;
 
+    public static final String SYSTEM_NOTIFICATIONS_RESOURCE_PATH = "/system-notifications/";
+
+    public static final String SYSTEM_NOTIFICATIONS_RESOURCE_PATH_ACTIVE_API_PATH = "/api" + SYSTEM_NOTIFICATIONS_RESOURCE_PATH + "active-notification";
+
     public static final String PROGRAMMING_SUBMISSION_TOPIC = "/newSubmission";
 
     public static final String SHORT_NAME_REGEX = "^[a-zA-Z][a-zA-Z0-9]*";
 
     public static final Pattern SHORT_NAME_PATTERN = Pattern.compile(SHORT_NAME_REGEX);
+
+    public static final String FILE_ENDING_REGEX = "^[a-zA-Z0-9]{1,5}";
+
+    public static final Pattern FILE_ENDING_PATTERN = Pattern.compile(FILE_ENDING_REGEX);
 
     public static final String TUM_USERNAME_REGEX = "^([a-z]{2}\\d{2}[a-z]{3})";
 
@@ -100,6 +106,16 @@ public final class Constants {
     public static final int EXTERNAL_SYSTEM_REQUEST_BATCH_WAIT_TIME_MS = 10 * 1000; // 10s
 
     public static final String SETUP_COMMIT_MESSAGE = "Setup";
+
+    public static final String REGISTER_FOR_COURSE = "REGISTER_FOR_COURSE";
+
+    public static final String DELETE_EXERCISE = "DELETE_EXERCISE";
+
+    public static final String DELETE_COURSE = "DELETE_COURSE";
+
+    public static final String DELETE_PARTICIPATION = "DELETE_PARTICIPATION";
+
+    public static final String INFO_BUILD_PLAN_URL_DETAIL = "buildPlanURLTemplate";
 
     private Constants() {
     }

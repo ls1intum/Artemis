@@ -177,6 +177,7 @@
             "download": "Download",
             "edit": "Edit",
             "editInEditor": "Edit in editor",
+            "editInIntelliJ": "Edit in IntelliJ",
             "editEntity": "Edit {{entity}}",
             "editLink": "Edit Link",
             "generate": "Generate",
@@ -214,7 +215,8 @@
             "registerForCourse": "Register For Course",
             "exercise": "Exercises",
             "scores": "Scores",
-            "manageHints": "Manage Hints"
+            "manageHints": "Manage Hints",
+            "addExternalSubmission": "Add External Submission"
         },
         "detail": {
             "field": "Field",

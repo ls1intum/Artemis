@@ -1,6 +1,6 @@
 import { AfterViewInit, Component, ElementRef, EventEmitter, Input, Output, ViewChild } from '@angular/core';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { WindowRef } from 'app/core';
+import { WindowRef } from 'app/core/websocket/window.service';
 import { FileType } from 'app/entities/ace-editor/file-change.model';
 
 @Component({

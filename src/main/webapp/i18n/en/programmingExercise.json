@@ -51,10 +51,10 @@
             "solutionResult": "Solution Result",
             "structureTestOracle": "Update Structure Test Oracle",
             "structureTestOracleWarning": "This action extracts all structural tests from the test repository and saves them in the test.json file. ATTENTION: This way all uncommitted changes from the online-editor will be lost!",
-            "squashTemplateCommits": "Squash Template Commits",
-            "squashTemplateCommitsWarning": "This action squashes all commits in the template repository into one commit. ATTENTION: This way all uncommitted changes from the online-editor will be lost!",
-            "squashTemplateCommitsError": "Template repository commits could not be squashed.",
-            "squashTemplateCommitsSuccess": "Template repository commits have been successfully squashed.",
+            "combineTemplateCommits": "Combine Template Commits",
+            "combineTemplateCommitsWarning": "This action combines all commits in the template repository into one commit. ATTENTION: This way all uncommitted changes from the online-editor will be lost!",
+            "combineTemplateCommitsError": "Template repository commits could not be combined.",
+            "combineTemplateCommitsSuccess": "Template repository commits have been successfully combined.",
             "editable": {
                 "unsaved": "Unsaved.",
                 "unsavedTooltip": "There are unsaved changes in the problem statement.",
@@ -114,7 +114,7 @@
                 "filterLateSubmissions": "Filter late submissions",
                 "filterLateSubmissionsDate": "Date for filter late submissions (defaults to exercise due date if not set)",
                 "addStudentName": "Add student name to project (allows to import multiple projects into Eclipse at the same time)",
-                "squashAfterInstructor": "Squash all student changes into one commit (to simplify the review)",
+                "combineStudentCommits": "Combine all student changes into one commit (to simplify the review)",
                 "normalizeCodeStyle": "Normalize code style (line endings, encoding)",
                 "successMessage": "Export of repos was successful. The exported zip file with all repositories is currently being downloaded."
             },
@@ -177,6 +177,9 @@
                 "testRepoTooltip": "The repository, which contains all tests",
                 "templateBuildPlanTooltip": "The build plan of the template. Runs all tests on the template of the exercise. Used as a reference, for which all tests have to fail",
                 "solutionBuildPlanTooltip": "The build plan of the solution. Runs all tests on the solution of the exercise. Used as a reference, for which all tests have to succeed"
+            },
+            "intellij": {
+                "openEditor": "Open Editor"
             }
         },
         "error": {

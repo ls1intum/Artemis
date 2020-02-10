@@ -10,32 +10,30 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
 import de.tum.in.www1.artemis.repository.ExampleSubmissionRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
-import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.SubmissionRepository;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @Service
-@Transactional
 public class ExampleSubmissionService {
 
     private final ExampleSubmissionRepository exampleSubmissionRepository;
 
     private final SubmissionRepository submissionRepository;
 
-    private final ResultRepository resultRepository;
-
     private final ExerciseRepository exerciseRepository;
 
-    public ExampleSubmissionService(ExampleSubmissionRepository exampleSubmissionRepository, SubmissionRepository submissionRepository, ResultRepository resultRepository,
-            ExerciseRepository exerciseRepository) {
+    public ExampleSubmissionService(ExampleSubmissionRepository exampleSubmissionRepository, SubmissionRepository submissionRepository, ExerciseRepository exerciseRepository) {
         this.exampleSubmissionRepository = exampleSubmissionRepository;
         this.submissionRepository = submissionRepository;
-        this.resultRepository = resultRepository;
         this.exerciseRepository = exerciseRepository;
     }
 
-    public Optional<ExampleSubmission> get(long id) {
-        return exampleSubmissionRepository.findById(id);
+    public Optional<ExampleSubmission> findById(Long exampleSubmissionId) {
+        return exampleSubmissionRepository.findById(exampleSubmissionId);
+    }
+
+    public Optional<ExampleSubmission> findByIdWithEagerTutorParticipations(Long exampleSubmissionId) {
+        return exampleSubmissionRepository.findByIdWithEagerTutorParticipations(exampleSubmissionId);
     }
 
     /**
@@ -65,8 +63,8 @@ public class ExampleSubmissionService {
      * @return list of feedback for an example submission
      */
     public List<Feedback> getFeedbackForExampleSubmission(Long exampleSubmissionId) {
-        ExampleSubmission exampleSubmission = this.exampleSubmissionRepository.getOne(exampleSubmissionId);
-        Submission submission = exampleSubmission.getSubmission();
+        Optional<ExampleSubmission> exampleSubmission = this.exampleSubmissionRepository.findByIdWithEagerResultAndFeedback(exampleSubmissionId);
+        Submission submission = exampleSubmission.get().getSubmission();
 
         if (submission == null) {
             return null;
@@ -79,7 +77,6 @@ public class ExampleSubmissionService {
             return null;
         }
 
-        // TODO: create different return for different type of exercises, this is for text exercises
         return result.getFeedbacks();
     }
 
@@ -101,11 +98,9 @@ public class ExampleSubmissionService {
      * Deletes a ExampleSubmission with the given ID, cleans up the tutor participations, removes the result and the submission
      * @param exampleSubmissionId the ID of the ExampleSubmission which should be deleted
      */
+    @Transactional
     public void deleteById(long exampleSubmissionId) {
-        // Note: as we access all lazy elements (i.e. proxies) of the example submission (tutor participations, submission and result) in the same transaction in which we
-        // retrieved the example submission, Hibernate will take care to lazy load the proxies and we don't need to fetch them here.
-        // While it might be faster, it makes the code more complex in this case and deletion is a rare case which does not need to fully performance optimized
-        Optional<ExampleSubmission> optionalExampleSubmission = exampleSubmissionRepository.findById(exampleSubmissionId);
+        Optional<ExampleSubmission> optionalExampleSubmission = exampleSubmissionRepository.findByIdWithEagerTutorParticipations(exampleSubmissionId);
 
         if (optionalExampleSubmission.isPresent()) {
             ExampleSubmission exampleSubmission = optionalExampleSubmission.get();
@@ -115,18 +110,14 @@ public class ExampleSubmissionService {
             }
 
             Long exerciseId = exampleSubmission.getExercise().getId();
-            Optional<Exercise> exerciseWithExampleSubmission = exerciseRepository.findById(exerciseId);
+            Optional<Exercise> exerciseWithExampleSubmission = exerciseRepository.findByIdWithEagerExampleSubmissions(exerciseId);
 
             // Remove the reference to the exercise when the example submission is deleted
-            exerciseWithExampleSubmission.ifPresent(exercise -> exercise.removeExampleSubmission(exampleSubmission));
+            exerciseWithExampleSubmission.ifPresent(exercise -> {
+                exercise.removeExampleSubmission(exampleSubmission);
+            });
 
-            if (exampleSubmission.getSubmission() != null) {
-                if (exampleSubmission.getSubmission().getResult() != null) {
-                    resultRepository.delete(exampleSubmission.getSubmission().getResult());
-                }
-                submissionRepository.delete(exampleSubmission.getSubmission());
-            }
-
+            // due to Cascase.Remove this will also remove the submission and the result in case they exist
             exampleSubmissionRepository.delete(exampleSubmission);
         }
     }

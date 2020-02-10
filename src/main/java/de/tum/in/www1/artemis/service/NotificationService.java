@@ -4,19 +4,14 @@ import java.util.List;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.repository.GroupNotificationRepository;
 import de.tum.in.www1.artemis.repository.NotificationRepository;
 
 @Service
-@Transactional
 public class NotificationService {
-
-    private final SimpMessageSendingOperations messagingTemplate;
 
     private NotificationRepository notificationRepository;
 
@@ -26,22 +21,18 @@ public class NotificationService {
 
     private GroupNotificationService groupNotificationService;
 
-    public NotificationService(SimpMessageSendingOperations messagingTemplate, NotificationRepository notificationRepository,
-            GroupNotificationRepository groupNotificationRepository, SingleUserNotificationService singleUserNotificationService,
-            GroupNotificationService groupNotificationService) {
-        this.messagingTemplate = messagingTemplate;
+    public NotificationService(NotificationRepository notificationRepository, GroupNotificationRepository groupNotificationRepository,
+            SingleUserNotificationService singleUserNotificationService, GroupNotificationService groupNotificationService) {
         this.notificationRepository = notificationRepository;
         this.groupNotificationRepository = groupNotificationRepository;
         this.singleUserNotificationService = singleUserNotificationService;
         this.groupNotificationService = groupNotificationService;
     }
 
-    @Transactional(readOnly = true)
     public Page<Notification> findAllExceptSystem(User currentUser, Pageable pageable) {
         return notificationRepository.findAllNotificationsForRecipientWithLogin(currentUser.getGroups(), pageable, currentUser.getLogin());
     }
 
-    @Transactional(readOnly = true)
     public List<Notification> findAllRecentExceptSystem(User currentUser) {
         List<Notification> groupNotifications = groupNotificationService.findAllRecentNewNotificationsForCurrentUser(currentUser);
         List<Notification> userNotifications = singleUserNotificationService.findAllRecentNewNotificationsForRecipientWithLogin(currentUser.getLogin());

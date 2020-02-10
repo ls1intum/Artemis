@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 
-import { User } from 'app/core';
+import { User } from 'app/core/user/user.model';
 import { UserService } from 'app/core/user/user.service';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
 
@@ -30,6 +30,12 @@ export class UserManagementUpdateComponent implements OnInit {
             this.authorities = authorities;
         });
         this.languages = this.languageHelper.getAll();
+        // Empty array for new user
+        if (!this.user.id) {
+            this.user.groups = [];
+        }
+        // Set password to null. ==> If it still is null on save, it won't be changed for existing users. It will be random for new users
+        this.user.password = null;
     }
 
     /**
@@ -71,5 +77,13 @@ export class UserManagementUpdateComponent implements OnInit {
      */
     private onSaveError() {
         this.isSaving = false;
+    }
+
+    shouldRandomizePassword(useRandomPassword: any) {
+        if (useRandomPassword) {
+            this.user.password = null;
+        } else {
+            this.user.password = '';
+        }
     }
 }

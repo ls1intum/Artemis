@@ -13,23 +13,12 @@ import javax.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
-import de.tum.in.www1.artemis.domain.AssessmentUpdate;
-import de.tum.in.www1.artemis.domain.Exercise;
-import de.tum.in.www1.artemis.domain.Feedback;
-import de.tum.in.www1.artemis.domain.Result;
-import de.tum.in.www1.artemis.domain.TextBlock;
-import de.tum.in.www1.artemis.domain.TextExercise;
-import de.tum.in.www1.artemis.domain.TextSubmission;
-import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.ResultRepository;
@@ -69,17 +58,15 @@ public class TextAssessmentResource extends AssessmentResource {
 
     private final TextSubmissionRepository textSubmissionRepository;
 
-    private final ResultRepository resultRepository;
-
     private final WebsocketMessagingService messagingService;
 
     private final Optional<AutomaticTextFeedbackService> automaticTextFeedbackService;
 
     public TextAssessmentResource(AuthorizationCheckService authCheckService, ResultService resultService, TextAssessmentService textAssessmentService,
             TextBlockService textBlockService, TextBlockRepository textBlockRepository, TextExerciseService textExerciseService, TextSubmissionRepository textSubmissionRepository,
-            ResultRepository resultRepository, UserService userService, TextSubmissionService textSubmissionService, WebsocketMessagingService messagingService,
-            Optional<AutomaticTextFeedbackService> automaticTextFeedbackService) {
-        super(authCheckService, userService);
+            UserService userService, TextSubmissionService textSubmissionService, WebsocketMessagingService messagingService, ExerciseService exerciseService,
+            Optional<AutomaticTextFeedbackService> automaticTextFeedbackService, ResultRepository resultRepository) {
+        super(authCheckService, userService, exerciseService, textSubmissionService, textAssessmentService, resultRepository);
 
         this.resultService = resultService;
         this.textAssessmentService = textAssessmentService;
@@ -87,7 +74,6 @@ public class TextAssessmentResource extends AssessmentResource {
         this.textBlockRepository = textBlockRepository;
         this.textExerciseService = textExerciseService;
         this.textSubmissionRepository = textSubmissionRepository;
-        this.resultRepository = resultRepository;
         this.textSubmissionService = textSubmissionService;
         this.messagingService = messagingService;
         this.automaticTextFeedbackService = automaticTextFeedbackService;
@@ -107,6 +93,11 @@ public class TextAssessmentResource extends AssessmentResource {
         User user = userService.getUserWithGroupsAndAuthorities();
         TextExercise textExercise = textExerciseService.findOne(exerciseId);
         checkTextExerciseForRequest(textExercise, user);
+
+        final var isAtLeastInstructor = authCheckService.isAtLeastInstructorForExercise(textExercise);
+        if (!isAllowedToOverrideExistingResult(resultId, textExercise, user, isAtLeastInstructor)) {
+            return forbidden("assessment", "assessmentSaveNotAllowed", "The user is not allowed to override the assessment");
+        }
 
         Result result = textAssessmentService.saveAssessment(resultId, textAssessments, textExercise);
 
@@ -133,6 +124,11 @@ public class TextAssessmentResource extends AssessmentResource {
         TextExercise textExercise = textExerciseService.findOne(exerciseId);
         checkTextExerciseForRequest(textExercise, user);
 
+        final var isAtLeastInstructor = authCheckService.isAtLeastInstructorForExercise(textExercise);
+        if (!isAllowedToOverrideExistingResult(resultId, textExercise, user, isAtLeastInstructor)) {
+            return forbidden("assessment", "assessmentSaveNotAllowed", "The user is not allowed to override the assessment");
+        }
+
         Result result = textAssessmentService.submitAssessment(resultId, textExercise, textAssessments);
         StudentParticipation studentParticipation = (StudentParticipation) result.getParticipation();
         if (studentParticipation.getExercise().getAssessmentDueDate() == null || studentParticipation.getExercise().getAssessmentDueDate().isBefore(ZonedDateTime.now())) {
@@ -148,25 +144,29 @@ public class TextAssessmentResource extends AssessmentResource {
     }
 
     /**
-     * Updates a Assessment to a TextExercise if the student complaints
+     * Update an assessment after a complaint was accepted.
      *
-     * @param exerciseId the exerciseId of the exercise which will be corrected
-     * @param resultId the resultId the assessment belongs to
-     * @param assessmentUpdate the update of the Assessment
-     * @return 200 Ok if successful with the updated result as a body, but sensitive information are filtered out
+     * @param submissionId     the id of the submission for which the assessment should be updated
+     * @param assessmentUpdate the assessment update containing the new feedback items and the response to the complaint
+     * @return the updated result
      */
-    @PutMapping("/exercise/{exerciseId}/result/{resultId}/after-complaint")
+    @ResponseStatus(HttpStatus.OK)
+    @PutMapping("/text-submissions/{submissionId}/assessment-after-complaint")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Result> updateTextAssessmentAfterComplaint(@PathVariable Long exerciseId, @PathVariable Long resultId, @RequestBody AssessmentUpdate assessmentUpdate) {
+    public ResponseEntity<Result> updateTextAssessmentAfterComplaint(@PathVariable Long submissionId, @RequestBody AssessmentUpdate assessmentUpdate) {
+        log.debug("REST request to update the assessment of submission {} after complaint.", submissionId);
         User user = userService.getUserWithGroupsAndAuthorities();
+        TextSubmission textSubmission = textSubmissionService.findOneWithEagerResultAndFeedback(submissionId);
+        StudentParticipation studentParticipation = (StudentParticipation) textSubmission.getParticipation();
+        long exerciseId = studentParticipation.getExercise().getId();
         TextExercise textExercise = textExerciseService.findOne(exerciseId);
-        checkTextExerciseForRequest(textExercise, user);
-        Result originalResult = resultService.findOneWithEagerFeedbacks(resultId);
-        Result result = textAssessmentService.updateAssessmentAfterComplaint(originalResult, textExercise, assessmentUpdate);
+        checkAuthorization(textExercise, user);
+        Result result = textAssessmentService.updateAssessmentAfterComplaint(textSubmission.getResult(), textExercise, assessmentUpdate);
 
-        if (result.getParticipation() != null && result.getParticipation() instanceof StudentParticipation
-                && !authCheckService.isAtLeastInstructorForExercise(textExercise, user)) {
-            ((StudentParticipation) result.getParticipation()).filterSensitiveInformation();
+        // TODO: in case of automatic assessment, we might want to update the assessment engine
+
+        if (result.getParticipation() != null && result.getParticipation() instanceof StudentParticipation && !authCheckService.isAtLeastInstructorForExercise(textExercise)) {
+            ((StudentParticipation) result.getParticipation()).setStudent(null);
         }
 
         return ResponseEntity.ok(result);
@@ -182,22 +182,8 @@ public class TextAssessmentResource extends AssessmentResource {
      */
     @PutMapping("/exercise/{exerciseId}/submission/{submissionId}/cancel-assessment")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity cancelAssessment(@PathVariable Long exerciseId, @PathVariable Long submissionId) {
-        log.debug("REST request to cancel assessment of submission: {}", submissionId);
-        User user = userService.getUserWithGroupsAndAuthorities();
-        TextExercise textExercise = textExerciseService.findOne(exerciseId);
-        checkTextExerciseForRequest(textExercise, user);
-        TextSubmission submission = textSubmissionService.findOneWithEagerResultAndAssessor(submissionId);
-        if (submission.getResult() == null) {
-            // if there is no result everything is fine
-            return ResponseEntity.ok().build();
-        }
-        if (!userService.getUser().getId().equals(submission.getResult().getAssessor().getId())) {
-            // you cannot cancel the assessment of other tutors
-            return forbidden();
-        }
-        textAssessmentService.cancelAssessmentOfSubmission(submission);
-        return ResponseEntity.ok().build();
+    public ResponseEntity<Void> cancelAssessment(@PathVariable Long exerciseId, @PathVariable Long submissionId) {
+        return super.cancelAssessment(submissionId);
     }
 
     /**
@@ -286,7 +272,7 @@ public class TextAssessmentResource extends AssessmentResource {
             result = new Result();
             result.setParticipation(participation);
             result.setSubmission(textSubmission);
-            resultService.createNewManualResult(result, false);
+            resultService.createNewRatedManualResult(result, false);
         }
 
         // Set Submissions and Results of Participation to include requested only
@@ -317,47 +303,29 @@ public class TextAssessmentResource extends AssessmentResource {
      * Retrieve the result of an example assessment, only if the user is an instructor or if the submission is used for tutorial purposes.
      *
      * @param exerciseId   the id of the exercise
-     * @param submissionId the id of the submission
-     * @return the result linked to the submission
+     * @param submissionId the id of the submission which must be connected to an example submission
+     * @return the example result linked to the submission
      */
-    @GetMapping("/exercise/{exerciseId}/submission/{submissionId}/exampleAssessment")
+    // TODO: we should move this method up because it is independent of the exercise type
+    @GetMapping("/exercise/{exerciseId}/submission/{submissionId}/example-result")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Result> getExampleAssessmentForTutor(@PathVariable Long exerciseId, @PathVariable Long submissionId) {
+    public ResponseEntity<Result> getExampleResultForTutor(@PathVariable long exerciseId, @PathVariable long submissionId) {
         User user = userService.getUserWithGroupsAndAuthorities();
         log.debug("REST request to get example assessment for tutors text assessment: {}", submissionId);
-        Optional<TextSubmission> textSubmission = textSubmissionRepository.findById(submissionId);
-        TextExercise textExercise = textExerciseService.findOne(exerciseId);
-        if (textSubmission.isEmpty()) {
-            return ResponseEntity.badRequest()
-                    .headers(HeaderUtil.createFailureAlert(applicationName, true, "textSubmission", "textSubmissionNotFound", "No Submission was found for the given ID."))
-                    .body(null);
-        }
-
-        // If the user is not an instructor, and this is not an example submission used for tutorial,
-        // do not provide the results
-        boolean isAtLeastInstructor = authCheckService.isAtLeastInstructorForExercise(textExercise, user);
-        if (!textSubmission.get().isExampleSubmission() && !isAtLeastInstructor) {
-            return forbidden();
-        }
+        final var textExercise = textExerciseService.findOne(exerciseId);
 
         // If the user is not at least a tutor for this exercise, return error
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(textExercise, user)) {
             return forbidden();
         }
+        Submission submission = textAssessmentService.getSubmissionOfExampleSubmissionWithResult(submissionId);
 
-        Optional<Result> databaseResult = this.resultRepository.findDistinctBySubmissionId(submissionId);
-        Result result = databaseResult.orElseGet(() -> {
-            Result newResult = new Result();
-            newResult.setSubmission(textSubmission.get());
-            newResult.setExampleResult(true);
-            resultService.createNewManualResult(newResult, false);
-            return newResult;
-        });
-
-        List<Feedback> assessments = textAssessmentService.getAssessmentsForResult(result);
-        result.setFeedbacks(assessments);
-
-        return ResponseEntity.ok(result);
+        // If the user is not an instructor, and this is not an example submission used for tutorial, do not provide the results
+        boolean isAtLeastInstructor = authCheckService.isAtLeastInstructorForExercise(textExercise, user);
+        if (!submission.isExampleSubmission() && !isAtLeastInstructor) {
+            return forbidden();
+        }
+        return ResponseEntity.ok(submission.getResult());
     }
 
     @Override

@@ -1,9 +1,9 @@
 import { Component, HostBinding, Input, OnInit } from '@angular/core';
 import { Exercise, ExerciseType, isStartExerciseAvailable, ParticipationStatus, participationStatus } from 'app/entities/exercise';
 import { QuizExercise } from 'app/entities/quiz-exercise';
-import { Participation, ProgrammingExerciseStudentParticipation } from 'app/entities/participation';
+import { InitializationState, Participation, ProgrammingExerciseStudentParticipation } from 'app/entities/participation';
 import * as moment from 'moment';
-import { CourseExerciseService } from 'app/entities/course';
+import { CourseExerciseService } from 'app/entities/course/course.service';
 import { Router } from '@angular/router';
 import { JhiAlertService } from 'ng-jhipster';
 import { ProgrammingExercise } from 'app/entities/programming-exercise';
@@ -11,6 +11,7 @@ import { HttpClient } from '@angular/common/http';
 import { AccountService } from 'app/core/auth/account.service';
 import { SourceTreeService } from 'app/components/util/sourceTree.service';
 import { FeatureToggle } from 'app/feature-toggle';
+import { Result } from 'app/entities/result';
 
 @Component({
     selector: 'jhi-exercise-details-student-actions',
@@ -72,10 +73,6 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
 
     isOnlineEditorAllowed(): boolean {
         return (this.exercise as ProgrammingExercise).allowOnlineEditor;
-    }
-
-    publishBuildPlanUrl(): boolean {
-        return (this.exercise as ProgrammingExercise).publishBuildPlanUrl;
     }
 
     onCopyFailure() {

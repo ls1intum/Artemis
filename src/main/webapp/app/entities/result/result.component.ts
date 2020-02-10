@@ -1,5 +1,6 @@
 import { Component, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
-import { getExercise, isModelingOrTextOrFileUpload, isParticipationInDueTime, isProgrammingOrQuiz, Participation, ParticipationService } from 'app/entities/participation';
+import { getExercise, isModelingOrTextOrFileUpload, isParticipationInDueTime, isProgrammingOrQuiz, Participation } from 'app/entities/participation';
+import { ParticipationService } from 'app/entities/participation/participation.service';
 import { initializedResultWithScore } from 'app/entities/result/result-utils';
 import { Result, ResultDetailComponent, ResultService } from '.';
 import { RepositoryService } from 'app/entities/repository/repository.service';
@@ -12,6 +13,8 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise/programmi
 import * as moment from 'moment';
 import { isProgrammingExerciseStudentParticipation, isResultPreliminary } from 'app/entities/programming-exercise/utils/programming-exercise.utils';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { ProgrammingSubmission } from 'app/entities/programming-submission';
+import { Submission, SubmissionExerciseType } from 'app/entities/submission';
 
 enum ResultTemplateStatus {
     IS_BUILDING = 'IS_BUILDING',
@@ -49,6 +52,7 @@ export class ResultComponent implements OnInit, OnChanges {
     resultIconClass: string[];
     resultString: string;
     templateStatus: ResultTemplateStatus;
+    submission: Submission | null;
 
     resultTooltip: string;
 
@@ -89,6 +93,9 @@ export class ResultComponent implements OnInit, OnChanges {
         // make sure this.participation is initialized in case it was not passed
         if (!this.participation && this.result && this.result.participation) {
             this.participation = this.result.participation;
+        }
+        if (this.result) {
+            this.submission = this.result.submission;
         }
         this.evaluate();
     }
@@ -148,6 +155,7 @@ export class ResultComponent implements OnInit, OnChanges {
                 return ResultTemplateStatus.SUBMITTED;
             } else if (initializedResultWithScore(this.result) && (!assessmentDueDate || assessmentDueDate.isBefore())) {
                 // Submission is not in due time of exercise, has a result with score and there is no assessmentDueDate for the exercise or it lies in the past.
+                // TODO handle external submissions with new status "External"
                 return ResultTemplateStatus.LATE;
             } else {
                 // Submission is not in due time of exercise and there is actually no feedback for the submission or the feedback should not be displayed yet.
@@ -177,7 +185,7 @@ export class ResultComponent implements OnInit, OnChanges {
     }
 
     buildResultString() {
-        if (this.result!.resultString === 'No tests found') {
+        if (this.submission && this.submission.submissionExerciseType === SubmissionExerciseType.PROGRAMMING && (this.submission as ProgrammingSubmission).buildFailed) {
             return this.translate.instant('artemisApp.editor.buildFailed');
             // Only show the 'preliminary' string for programming student participation results and if the buildAndTestAfterDueDate has not passed.
         } else if (
@@ -203,7 +211,7 @@ export class ResultComponent implements OnInit, OnChanges {
     }
 
     getHasFeedback() {
-        if (this.result!.resultString === 'No tests found') {
+        if (this.submission && this.submission.submissionExerciseType === SubmissionExerciseType.PROGRAMMING && (this.submission as ProgrammingSubmission).buildFailed) {
             return true;
         } else if (this.result!.hasFeedback === null) {
             return false;
@@ -226,6 +234,15 @@ export class ResultComponent implements OnInit, OnChanges {
         if (exercise) {
             modalRef.componentInstance.exerciseType = exercise.type;
         }
+    }
+
+    hasBuildArtifact() {
+        if (this.result && this.submission instanceof ProgrammingSubmission) {
+            const submission = this.submission as ProgrammingSubmission;
+            return submission.buildArtifact;
+        }
+
+        return false;
     }
 
     downloadBuildResult(participationId: number) {

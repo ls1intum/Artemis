@@ -5,16 +5,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.junit.jupiter.api.*;
-import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import de.tum.in.www1.artemis.domain.GuidedTourSetting;
 import de.tum.in.www1.artemis.domain.User;
@@ -22,12 +18,7 @@ import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.RequestUtilService;
 
-@ExtendWith(SpringExtension.class)
-@SpringBootTest
-@AutoConfigureMockMvc
-@AutoConfigureTestDatabase
-@ActiveProfiles("artemis")
-public class GuidedTourSettingResourceTest {
+public class GuidedTourSettingResourceTest extends AbstractSpringIntegrationTest {
 
     @Autowired
     ExerciseRepository exerciseRepo;
@@ -48,17 +39,7 @@ public class GuidedTourSettingResourceTest {
         database.resetDatabase();
     }
 
-    @Test
-    @WithMockUser(value = "student1")
-    public void guidedTourSettingsIsInitiallyNull() throws Exception {
-        User user = request.get("/api/account", HttpStatus.OK, User.class);
-        assertThat(user.getGuidedTourSettings().isEmpty()).isTrue();
-    }
-
-    @Test
-    @WithMockUser(value = "student1")
-    @SuppressWarnings("unchecked")
-    public void updateGuidedTourSettings() throws Exception {
+    public Set<GuidedTourSetting> createGuidedTourSettings() {
         Set<GuidedTourSetting> guidedTourSettingSet = new HashSet<>();
 
         GuidedTourSetting guidedTourSetting1 = new GuidedTourSetting();
@@ -73,7 +54,21 @@ public class GuidedTourSettingResourceTest {
 
         guidedTourSettingSet.add(guidedTourSetting1);
         guidedTourSettingSet.add(guidedTourSetting2);
-        Set<GuidedTourSetting> serverGuidedTourSettings = request.putWithResponseBody("/api/guided-tour-settings", guidedTourSettingSet, Set.class, HttpStatus.OK);
+        return guidedTourSettingSet;
+    }
+
+    @Test
+    @WithMockUser(value = "student1")
+    public void guidedTourSettingsIsInitiallyNull() throws Exception {
+        User user = request.get("/api/account", HttpStatus.OK, User.class);
+        assertThat(user.getGuidedTourSettings().isEmpty()).isTrue();
+    }
+
+    @Test
+    @WithMockUser(value = "student1")
+    public void updateGuidedTourSettings() throws Exception {
+        Set<GuidedTourSetting> guidedTourSettingSet = this.createGuidedTourSettings();
+        Set serverGuidedTourSettings = request.putWithResponseBody("/api/guided-tour-settings", guidedTourSettingSet, Set.class, HttpStatus.OK);
         assertThat(serverGuidedTourSettings).isNotNull();
         assertThat(serverGuidedTourSettings.isEmpty()).isFalse();
         assertThat(serverGuidedTourSettings.size()).isEqualTo(2);
@@ -82,5 +77,18 @@ public class GuidedTourSettingResourceTest {
         assertThat(user.getGuidedTourSettings()).isNotNull();
         assertThat(user.getGuidedTourSettings().isEmpty()).isFalse();
         assertThat(user.getGuidedTourSettings().size()).isEqualTo(2);
+    }
+
+    @Test
+    @WithMockUser(value = "student1")
+    public void deleteGuidedTourSetting() throws Exception {
+        Set<GuidedTourSetting> guidedTourSettingSet = this.createGuidedTourSettings();
+        request.putWithResponseBody("/api/guided-tour-settings", guidedTourSettingSet, Set.class, HttpStatus.OK);
+        request.delete("/api/guided-tour-settings/new_tour", HttpStatus.OK);
+
+        User user = request.get("/api/account", HttpStatus.OK, User.class);
+        assertThat(user.getGuidedTourSettings()).isNotNull();
+        assertThat(user.getGuidedTourSettings().isEmpty()).isFalse();
+        assertThat(user.getGuidedTourSettings().size()).isEqualTo(1);
     }
 }

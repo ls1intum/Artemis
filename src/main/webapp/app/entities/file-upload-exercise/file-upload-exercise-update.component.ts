@@ -5,7 +5,8 @@ import { Observable } from 'rxjs';
 import { JhiAlertService } from 'ng-jhipster';
 import { FileUploadExerciseService } from './file-upload-exercise.service';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise/file-upload-exercise.model';
-import { Course, CourseService } from 'app/entities/course';
+import { Course } from 'app/entities/course';
+import { CourseService } from 'app/entities/course/course.service';
 import { ExerciseCategory, ExerciseService } from 'app/entities/exercise';
 import { EditorMode } from 'app/markdown-editor';
 import { KatexCommand } from 'app/markdown-editor/commands';
@@ -103,7 +104,7 @@ export class FileUploadExerciseUpdateComponent implements OnInit {
     private subscribeToSaveResponse(result: Observable<HttpResponse<FileUploadExercise>>) {
         result.subscribe(
             (res: HttpResponse<FileUploadExercise>) => this.onSaveSuccess(),
-            (res: HttpErrorResponse) => this.onSaveError(),
+            (res: HttpErrorResponse) => this.onSaveError(res),
         );
     }
 
@@ -121,9 +122,14 @@ export class FileUploadExerciseUpdateComponent implements OnInit {
         this.previousState();
     }
 
-    private onSaveError() {
+    private onSaveError(error: HttpErrorResponse) {
+        const errorMessage = error.headers.get('X-artemisApp-alert')!;
+        // TODO: this is a workaround to avoid translation not found issues. Provide proper translations
+        const jhiAlert = this.jhiAlertService.error(errorMessage);
+        jhiAlert.msg = errorMessage;
         this.isSaving = false;
     }
+
     private onError(error: HttpErrorResponse) {
         this.jhiAlertService.error(error.message);
     }

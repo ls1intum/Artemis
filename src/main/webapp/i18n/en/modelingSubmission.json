@@ -15,6 +15,7 @@
             "detail": {
                 "title": "Modeling Submission"
             },
+            "view": "View submission",
             "model": "Model",
             "explanationText": "Explanation Text",
             "modelingEditor": "Modeling Editor",

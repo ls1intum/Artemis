@@ -141,11 +141,6 @@ public class TextSubmissionResource {
 
         // fetch course from database to make sure client didn't change groups
         Course course = courseService.findOne(textExercise.getCourse().getId());
-        if (course == null) {
-            return ResponseEntity.badRequest()
-                    .headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "courseNotFound", "The course belonging to this text exercise does not exist"))
-                    .body(null);
-        }
 
         User user = userService.getUserWithGroupsAndAuthorities();
         if (!authorizationCheckService.isAtLeastStudentInCourse(course, user)) {
@@ -215,7 +210,7 @@ public class TextSubmissionResource {
     @Transactional(readOnly = true)
     public ResponseEntity<TextSubmission> getTextSubmissionWithoutAssessment(@PathVariable Long exerciseId) {
         log.debug("REST request to get a text submission without assessment");
-        Exercise exercise = exerciseService.findOne(exerciseId);
+        Exercise exercise = exerciseService.findOneWithAdditionalElements(exerciseId);
 
         if (!authorizationCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
             return forbidden();

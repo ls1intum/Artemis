@@ -12,17 +12,17 @@ export type ResultResponseType = HttpResponse<Result>;
 export class QuizSubmissionService {
     constructor(private http: HttpClient) {}
 
-    submitForPractice(quizSubmission: QuizSubmission, courseId: number, exerciseId: number): Observable<ResultResponseType> {
+    submitForPractice(quizSubmission: QuizSubmission, exerciseId: number): Observable<ResultResponseType> {
         const copy = this.convert(quizSubmission);
         return this.http
-            .post<Result>(`api/courses/${courseId}/exercises/${exerciseId}/submissions/practice`, copy, { observe: 'response' })
+            .post<Result>(`api/exercises/${exerciseId}/submissions/practice`, copy, { observe: 'response' })
             .map((res: ResultResponseType) => this.convertResponse(res));
     }
 
-    submitForPreview(quizSubmission: QuizSubmission, courseId: number, exerciseId: number): Observable<ResultResponseType> {
+    submitForPreview(quizSubmission: QuizSubmission, exerciseId: number): Observable<ResultResponseType> {
         const copy = this.convert(quizSubmission);
         return this.http
-            .post<Result>(`api/courses/${courseId}/exercises/${exerciseId}/submissions/preview`, copy, { observe: 'response' })
+            .post<Result>(`api/exercises/${exerciseId}/submissions/preview`, copy, { observe: 'response' })
             .map((res: ResultResponseType) => this.convertResponse(res));
     }
 

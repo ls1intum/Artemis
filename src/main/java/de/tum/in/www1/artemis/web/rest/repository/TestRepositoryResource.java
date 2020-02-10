@@ -2,7 +2,7 @@ package de.tum.in.www1.artemis.web.rest.repository;
 
 import java.io.IOException;
 import java.net.URL;
-import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 
 import javax.servlet.http.HttpServletRequest;
@@ -22,7 +22,6 @@ import de.tum.in.www1.artemis.service.RepositoryService;
 import de.tum.in.www1.artemis.service.UserService;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
-import de.tum.in.www1.artemis.service.connectors.VersionControlService;
 import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
 import de.tum.in.www1.artemis.web.rest.dto.FileMove;
@@ -32,26 +31,22 @@ import de.tum.in.www1.artemis.web.rest.dto.RepositoryStatusDTO;
  * Executes requested actions on the test repository of a programming exercise. Only available to TAs, Instructors and Admins.
  */
 @RestController
-@RequestMapping({ "/api", "/api_basic" })
+@RequestMapping("/api")
 @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
 public class TestRepositoryResource extends RepositoryResource {
 
     private final ExerciseService exerciseService;
 
-    private final Optional<VersionControlService> versionControlService;
-
-    public TestRepositoryResource(UserService userService, AuthorizationCheckService authCheckService, Optional<GitService> gitService,
-            Optional<ContinuousIntegrationService> continuousIntegrationService, RepositoryService repositoryService, ExerciseService exerciseService,
-            Optional<VersionControlService> versionControlService) {
+    public TestRepositoryResource(UserService userService, AuthorizationCheckService authCheckService, GitService gitService,
+            Optional<ContinuousIntegrationService> continuousIntegrationService, RepositoryService repositoryService, ExerciseService exerciseService) {
         super(userService, authCheckService, gitService, continuousIntegrationService, repositoryService);
         this.exerciseService = exerciseService;
-        this.versionControlService = versionControlService;
     }
 
     @Override
     Repository getRepository(Long exerciseId, RepositoryActionType repositoryActionType, boolean pullOnGet)
             throws IOException, IllegalAccessException, InterruptedException, GitAPIException {
-        final var exercise = (ProgrammingExercise) exerciseService.findOne(exerciseId);
+        final var exercise = (ProgrammingExercise) exerciseService.findOneWithAdditionalElements(exerciseId);
         final var repoUrl = exercise.getTestRepositoryUrlAsUrl();
 
         return repositoryService.checkoutRepositoryByName(exercise, repoUrl, pullOnGet);
@@ -59,19 +54,19 @@ public class TestRepositoryResource extends RepositoryResource {
 
     @Override
     URL getRepositoryUrl(Long exerciseId) {
-        ProgrammingExercise exercise = (ProgrammingExercise) exerciseService.findOne(exerciseId);
+        ProgrammingExercise exercise = (ProgrammingExercise) exerciseService.findOneWithAdditionalElements(exerciseId);
         return exercise.getTestRepositoryUrlAsUrl();
     }
 
     @Override
     boolean canAccessRepository(Long exerciseId) {
-        ProgrammingExercise exercise = (ProgrammingExercise) exerciseService.findOne(exerciseId);
+        ProgrammingExercise exercise = (ProgrammingExercise) exerciseService.findOneWithAdditionalElements(exerciseId);
         return authCheckService.isAtLeastInstructorInCourse(exercise.getCourse(), userService.getUserWithGroupsAndAuthorities());
     }
 
     @Override
     @GetMapping(value = "/test-repository/{exerciseId}/files", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<HashMap<String, FileType>> getFiles(@PathVariable Long exerciseId) {
+    public ResponseEntity<Map<String, FileType>> getFiles(@PathVariable Long exerciseId) {
         return super.getFiles(exerciseId);
     }
 

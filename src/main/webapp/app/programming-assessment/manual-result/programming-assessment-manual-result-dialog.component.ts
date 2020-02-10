@@ -8,7 +8,6 @@ import { JhiAlertService, JhiEventManager } from 'ng-jhipster';
 import { HttpResponse, HttpErrorResponse } from '@angular/common/http';
 import * as moment from 'moment';
 import { Observable, of } from 'rxjs';
-import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ParticipationService } from 'app/entities/participation/participation.service';
 import { catchError, tap, filter } from 'rxjs/operators';
 import { ProgrammingAssessmentManualResultService } from 'app/programming-assessment/manual-result/programming-assessment-manual-result.service';
@@ -17,6 +16,9 @@ import { Complaint, ComplaintType } from 'app/entities/complaint/complaint.model
 import { ComplaintService } from 'app/entities/complaint/complaint.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { ComplaintResponse } from 'app/entities/complaint-response/complaint-response.model';
+import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation';
+import { ProgrammingExercise } from 'app/entities/programming-exercise';
+import { User } from 'app/core/user/user.model';
 
 @Component({
     selector: 'jhi-exercise-scores-result-dialog',
@@ -28,15 +30,19 @@ export class ProgrammingAssessmentManualResultDialogComponent implements OnInit 
 
     @Input() participationId: number;
     @Input() result: Result;
+    @Input() exercise: ProgrammingExercise;
     @Output() onResultModified = new EventEmitter<Result>();
 
-    participation: StudentParticipation;
+    participation: ProgrammingExerciseStudentParticipation;
     feedbacks: Feedback[] = [];
     isLoading = false;
     isSaving = false;
     isOpenForSubmission = false;
-    userId: number;
+    user: User;
     isAssessor: boolean;
+    canOverride = false;
+    isAtLeastInstructor = false;
+
     complaint: Complaint;
     resultModified: boolean;
 
@@ -55,19 +61,19 @@ export class ProgrammingAssessmentManualResultDialogComponent implements OnInit 
 
     ngOnInit() {
         // If there already is a manual result, update it instead of creating a new one.
-        if (this.result) {
-            this.initializeForResultUpdate();
-            return;
-        }
-        this.initializeForResultCreation();
+        this.accountService.identity().then(user => {
+            // Used to check if the assessor is the current user
+            this.user = user!;
+            if (this.result) {
+                this.initializeForResultUpdate();
+            } else {
+                this.initializeForResultCreation();
+            }
+            this.checkPermissions();
+        });
     }
 
     initializeForResultUpdate() {
-        // Used to check if the assessor is the current user
-        this.accountService.identity().then(user => {
-            this.userId = user!.id!;
-            this.isAssessor = this.result.assessor && this.result.assessor.id === this.userId;
-        });
         if (this.result.feedbacks) {
             this.feedbacks = this.result.feedbacks;
         } else {
@@ -84,13 +90,29 @@ export class ProgrammingAssessmentManualResultDialogComponent implements OnInit 
         if (this.result.hasComplaint) {
             this.getComplaint(this.result.id);
         }
-        this.participation = this.result.participation! as StudentParticipation;
+        this.participation = this.result.participation! as ProgrammingExerciseStudentParticipation;
     }
 
     initializeForResultCreation() {
         this.isLoading = true;
         this.result = this.manualResultService.generateInitialManualResult();
+        this.result.assessor = this.user;
+        // TODO: is this call really necessary?
         this.getParticipation();
+    }
+
+    private checkPermissions(): void {
+        this.isAssessor = this.result.assessor && this.result.assessor.id === this.user.id;
+        this.isAtLeastInstructor =
+            this.exercise && this.exercise.course
+                ? this.accountService.isAtLeastInstructorInCourse(this.exercise.course)
+                : this.accountService.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR']);
+        // NOTE: the following line deviates intentionally from other exercises because currently we do not use assessmentDueDate
+        // and tutors should be able to override the created results when the assessmentDueDate is not set (also see ResultResource.isAllowedToOverrideExistingResult)
+        // TODO: make it consistent with other exercises in the future
+        const isBeforeAssessmentDueDate = this.exercise && (!this.exercise.assessmentDueDate || moment().isBefore(this.exercise.assessmentDueDate));
+        // tutors are allowed to override one of their assessments before the assessment due date, instructors can override any assessment at any time
+        this.canOverride = (this.isAssessor && isBeforeAssessmentDueDate) || this.isAtLeastInstructor;
     }
 
     getParticipation() {
@@ -98,7 +120,7 @@ export class ProgrammingAssessmentManualResultDialogComponent implements OnInit 
             .find(this.participationId)
             .pipe(
                 tap(({ body: participation }) => {
-                    this.participation = participation!;
+                    this.participation = participation! as ProgrammingExerciseStudentParticipation;
                     this.result.participation = this.participation;
                     this.isOpenForSubmission = this.participation.exercise.dueDate === null || this.participation.exercise.dueDate.isAfter(moment());
                 }),
@@ -194,5 +216,22 @@ export class ProgrammingAssessmentManualResultDialogComponent implements OnInit 
                 this.jhiAlertService.error('artemisApp.assessment.messages.updateAfterComplaintFailed');
             },
         );
+    }
+
+    /**
+     * the dialog is readonly, if it is not writable
+     */
+    readOnly() {
+        return !this.writable();
+    }
+
+    /**
+     * the dialog is writable if the user can override the result
+     * or if there is a complaint that was not yet accepted or rejected
+     */
+    writable() {
+        // TODO: this is still not ideal and we should either distinguish between tutors and instructors here or allow to override accepted / rejected complaints
+        // at the moment instructors can still edit already accepted / rejected complaints because the first condition is true, however we do not yet allow to override complaints
+        return this.canOverride || (this.complaint !== undefined && this.complaint.accepted === undefined);
     }
 }

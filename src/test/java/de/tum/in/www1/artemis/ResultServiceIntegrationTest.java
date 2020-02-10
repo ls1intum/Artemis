@@ -1,10 +1,14 @@
 package de.tum.in.www1.artemis;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.when;
 
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -12,47 +16,32 @@ import org.eclipse.jgit.lib.ObjectId;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.ArgumentMatchers;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
+import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
-import de.tum.in.www1.artemis.domain.participation.TemplateProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
+import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.ProgrammingExerciseTestCaseService;
 import de.tum.in.www1.artemis.service.ResultService;
-import de.tum.in.www1.artemis.service.connectors.BambooService;
-import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.RequestUtilService;
 
-@ExtendWith(SpringExtension.class)
-@SpringBootTest
-@AutoConfigureMockMvc
-@AutoConfigureTestDatabase
-@ActiveProfiles("artemis, bamboo")
-public class ResultServiceIntegrationTest {
-
-    @MockBean
-    BambooService continuousIntegrationServiceMock;
+public class ResultServiceIntegrationTest extends AbstractSpringIntegrationTest {
 
     @Autowired
     ResultService resultService;
@@ -67,7 +56,16 @@ public class ResultServiceIntegrationTest {
     SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseRepository;
 
     @Autowired
-    private ModelingExerciseRepository modelingExerciseRepository;
+    ModelingExerciseRepository modelingExerciseRepository;
+
+    @Autowired
+    QuizExerciseRepository quizExerciseRepository;
+
+    @Autowired
+    FileUploadExerciseRepository fileUploadExerciseRepository;
+
+    @Autowired
+    TextExerciseRepository textExerciseRepository;
 
     @Autowired
     UserRepository userRepo;
@@ -81,14 +79,13 @@ public class ResultServiceIntegrationTest {
     @Autowired
     ResultRepository resultRepository;
 
-    @MockBean
-    GitService gitService;
+    private Course course;
 
     private ProgrammingExercise programmingExercise;
 
-    private SolutionProgrammingExerciseParticipation solutionParticipation;
+    private ModelingExercise modelingExercise;
 
-    private TemplateProgrammingExerciseParticipation templateParticipation;
+    private SolutionProgrammingExerciseParticipation solutionParticipation;
 
     private ProgrammingExerciseStudentParticipation programmingExerciseStudentParticipation;
 
@@ -96,16 +93,15 @@ public class ResultServiceIntegrationTest {
 
     @BeforeEach
     public void reset() {
-        database.addUsers(2, 2, 2);
-        database.addCourseWithOneProgrammingExercise();
+        database.addUsers(10, 2, 2);
+        course = database.addCourseWithOneProgrammingExercise();
         programmingExercise = programmingExerciseRepository.findAll().get(0);
         // This is done to avoid an unproxy issue in the processNewResult method of the ResultService.
         solutionParticipation = solutionProgrammingExerciseRepository.findWithEagerResultsAndSubmissionsByProgrammingExerciseId(programmingExercise.getId()).get();
-        templateParticipation = programmingExercise.getTemplateParticipation();
         programmingExerciseStudentParticipation = database.addStudentParticipationForProgrammingExercise(programmingExercise, "student1");
 
         database.addCourseWithOneModelingExercise();
-        ModelingExercise modelingExercise = modelingExerciseRepository.findAll().get(0);
+        modelingExercise = modelingExerciseRepository.findAll().get(0);
         studentParticipation = database.addParticipationForExercise(modelingExercise, "student2");
     }
 
@@ -137,7 +133,7 @@ public class ResultServiceIntegrationTest {
 
         Object requestDummy = new Object();
 
-        when(continuousIntegrationServiceMock.onBuildCompletedNew(solutionParticipation, requestDummy)).thenReturn(result);
+        doReturn(result).when(continuousIntegrationService).onBuildCompletedNew(solutionParticipation, requestDummy);
         resultService.processNewProgrammingExerciseResult(solutionParticipation, requestDummy);
 
         Set<ProgrammingExerciseTestCase> testCases = programmingExerciseTestCaseService.findByExerciseId(programmingExercise.getId());
@@ -195,7 +191,7 @@ public class ResultServiceIntegrationTest {
     }
 
     @Test
-    @WithMockUser(value = "student1", roles = "INSTRUCTOR")
+    @WithMockUser(value = "student1", roles = "USER")
     public void programmingExerciseManualResultUpdate_noManualReviewsAllowed_forbidden() throws Exception {
         final var result = ModelFactory.generateResult(true, 1);
         result.setParticipation(programmingExerciseStudentParticipation);
@@ -205,7 +201,7 @@ public class ResultServiceIntegrationTest {
     }
 
     @Test
-    @WithMockUser(value = "student1", roles = "INSTRUCTOR")
+    @WithMockUser(value = "student1", roles = "USER")
     public void programmingExerciseManualResultNew_noManualReviewsAllowed_forbidden() throws Exception {
         ProgrammingSubmission programmingSubmission = (ProgrammingSubmission) new ProgrammingSubmission().commitHash("abc").submitted(true).submissionDate(ZonedDateTime.now());
         final var result = ModelFactory.generateResult(true, 1);
@@ -336,5 +332,131 @@ public class ResultServiceIntegrationTest {
         assertThat(response.getSubmission()).isEqualTo(result.getSubmission());
         assertThat(response.getParticipation()).isEqualTo(result.getParticipation());
         assertThat(response.getFeedbacks().size()).isEqualTo(result.getFeedbacks().size());
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void testGetResultForProgrammingExercise() throws Exception {
+        var now = ZonedDateTime.now();
+
+        for (int i = 1; i <= 10; i++) {
+            ProgrammingSubmission programmingSubmission = new ProgrammingSubmission();
+            programmingSubmission.submitted(true);
+            programmingSubmission.submissionDate(now.minusHours(3));
+            database.addSubmission(programmingExercise, programmingSubmission, "student" + i);
+            if (i % 3 == 0) {
+                database.addResultToSubmission(programmingSubmission, AssessmentType.AUTOMATIC, null, 10L, true);
+            }
+            else if (i % 4 == 0) {
+                database.addResultToSubmission(programmingSubmission, AssessmentType.AUTOMATIC, null, 20L, true);
+            }
+        }
+
+        List<Result> results = request.getList("/api/exercises/" + programmingExercise.getId() + "/results", HttpStatus.OK, Result.class);
+        assertThat(results).hasSize(5);
+        // TODO: check additional values
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void testGetResultForQuizExercise() throws Exception {
+        var now = ZonedDateTime.now();
+
+        QuizExercise quizExercise = database.createQuiz(course, now.minusMinutes(5), now.minusMinutes(2));
+        quizExerciseRepository.save(quizExercise);
+
+        for (int i = 1; i <= 10; i++) {
+            QuizSubmission quizSubmission = new QuizSubmission();
+            quizSubmission.setScoreInPoints(2.0);
+            quizSubmission.submitted(true);
+            quizSubmission.submissionDate(now.minusHours(3));
+            database.addSubmission(quizExercise, quizSubmission, "student" + i);
+            if (i % 3 == 0) {
+                database.addResultToSubmission(quizSubmission, AssessmentType.AUTOMATIC, null, 10L, true);
+            }
+            else if (i % 4 == 0) {
+                database.addResultToSubmission(quizSubmission, AssessmentType.AUTOMATIC, null, 20L, true);
+            }
+        }
+
+        List<Result> results = request.getList("/api/exercises/" + quizExercise.getId() + "/results", HttpStatus.OK, Result.class);
+        assertThat(results).hasSize(5);
+        // TODO: check additional values
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void testGetResultForModelingExercise() throws Exception {
+        var now = ZonedDateTime.now();
+        for (int i = 1; i <= 10; i++) {
+            ModelingSubmission modelingSubmission = new ModelingSubmission();
+            modelingSubmission.model("Text");
+            modelingSubmission.submitted(true);
+            modelingSubmission.submissionDate(now.minusHours(3));
+            database.addSubmission(modelingExercise, modelingSubmission, "student" + i);
+            if (i % 3 == 0) {
+                database.addResultToSubmission(modelingSubmission, AssessmentType.MANUAL, database.getUserByLogin("instructor1"), 10L, true);
+            }
+            else if (i % 4 == 0) {
+                database.addResultToSubmission(modelingSubmission, AssessmentType.SEMI_AUTOMATIC, database.getUserByLogin("instructor1"), 20L, true);
+            }
+        }
+
+        List<Result> results = request.getList("/api/exercises/" + modelingExercise.getId() + "/results", HttpStatus.OK, Result.class);
+        assertThat(results).hasSize(5);
+        // TODO: check additional values
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void testGetResultForTextExercise() throws Exception {
+        var now = ZonedDateTime.now();
+        TextExercise textExercise = ModelFactory.generateTextExercise(now.minusDays(1), now.minusHours(2), now.minusHours(1), course);
+        course.addExercises(textExercise);
+        textExerciseRepository.save(textExercise);
+
+        for (int i = 1; i <= 10; i++) {
+            TextSubmission textSubmission = new TextSubmission();
+            textSubmission.text("Text");
+            textSubmission.submitted(true);
+            textSubmission.submissionDate(now.minusHours(3));
+            database.addSubmission(textExercise, textSubmission, "student" + i);
+            if (i % 3 == 0) {
+                database.addResultToSubmission(textSubmission, AssessmentType.MANUAL, database.getUserByLogin("instructor1"), 10L, true);
+            }
+            else if (i % 4 == 0) {
+                database.addResultToSubmission(textSubmission, AssessmentType.SEMI_AUTOMATIC, database.getUserByLogin("instructor1"), 20L, true);
+            }
+        }
+
+        List<Result> results = request.getList("/api/exercises/" + textExercise.getId() + "/results", HttpStatus.OK, Result.class);
+        assertThat(results).hasSize(5);
+        // TODO: check additional values
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void testGetResultForFileUploadExercise() throws Exception {
+        var now = ZonedDateTime.now();
+        FileUploadExercise fileUploadExercise = ModelFactory.generateFileUploadExercise(now.minusDays(1), now.minusHours(2), now.minusHours(1), "pdf", course);
+        course.addExercises(fileUploadExercise);
+        fileUploadExerciseRepository.save(fileUploadExercise);
+
+        for (int i = 1; i <= 10; i++) {
+            FileUploadSubmission fileUploadSubmission = new FileUploadSubmission();
+            fileUploadSubmission.submitted(true);
+            fileUploadSubmission.submissionDate(now.minusHours(3));
+            database.addSubmission(fileUploadExercise, fileUploadSubmission, "student" + i);
+            if (i % 3 == 0) {
+                database.addResultToSubmission(fileUploadSubmission, AssessmentType.MANUAL, database.getUserByLogin("instructor1"), 10L, true);
+            }
+            else if (i % 4 == 0) {
+                database.addResultToSubmission(fileUploadSubmission, AssessmentType.MANUAL, database.getUserByLogin("instructor1"), 20L, true);
+            }
+        }
+
+        List<Result> results = request.getList("/api/exercises/" + fileUploadExercise.getId() + "/results", HttpStatus.OK, Result.class);
+        assertThat(results).hasSize(5);
+        // TODO: check additional values
     }
 }

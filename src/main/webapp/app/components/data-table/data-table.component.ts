@@ -4,8 +4,9 @@ import { Observable } from 'rxjs';
 import { ColumnMode, SortType } from '@swimlane/ngx-datatable';
 import { SortByPipe } from 'app/components/pipes';
 import { compose, filter } from 'lodash/fp';
-import { get } from 'lodash';
+import { get, isNumber } from 'lodash';
 import { BaseEntity } from 'app/shared';
+import { LocalStorageService } from 'ngx-webstorage';
 
 enum SortOrder {
     ASC = 'asc',
@@ -28,6 +29,8 @@ type SortProp = {
     order: SortOrder;
 };
 
+type PagingValue = number | 'all';
+
 const entityToString = (entity: BaseEntity) => entity.id.toString();
 
 @Component({
@@ -48,6 +51,7 @@ export class DataTableComponent implements OnInit, OnChanges {
      * @property entityType Entity identifier (e.g. 'result' or 'participation') used as a key to differentiate from other tables
      * @property allEntities List of all entities that should be displayed in the table (one entity per row)
      * @property entitiesPerPageTranslation Translation string that has the variable { number } in it (e.g. 'artemisApp.exercise.resultsPerPage')
+     * @property showAllEntitiesTranslation Translation string if all entities should be displayed (e.g. 'artemisApp.exercise.showAll')
      * @property searchPlaceholderTranslation Translation string that is used for the placeholder in the search input field
      * @property searchFields Fields of entity whose values will be compared to the user's search string (allows nested attributes, e.g. ['student.login', 'student.name'])
      * @function searchTextFromEntity Function that takes an entity and returns a text that is inserted into the search input field when clicking on an autocomplete suggestion
@@ -59,6 +63,7 @@ export class DataTableComponent implements OnInit, OnChanges {
     @Input() entityType = 'entity';
     @Input() allEntities: BaseEntity[] = [];
     @Input() entitiesPerPageTranslation: string;
+    @Input() showAllEntitiesTranslation: string;
     @Input() searchPlaceholderTranslation: string;
     @Input() searchFields: string[] = [];
     @Input() searchTextFromEntity: (entity: BaseEntity) => string = entityToString;
@@ -75,24 +80,24 @@ export class DataTableComponent implements OnInit, OnChanges {
      * @property PAGING_VALUES Possible values for the number of entities shown per page of the table
      * @property DEFAULT_PAGING_VALUE Default number of entities shown per page if the user has no value set for this yet in local storage
      */
-    readonly PAGING_VALUES = [10, 20, 50, 100, 200, 500, 1000, 2000];
+    readonly PAGING_VALUES: PagingValue[] = [10, 20, 50, 100, 200, 500, 1000, 'all'];
     readonly DEFAULT_PAGING_VALUE = 50;
 
     /**
      * @property isRendering Rendering state of the table (used for conditional display of the loading indicator)
      * @property entities (Sorted) List of entities that are shown in the table (is a subset of allEntities after filters were applied)
-     * @property entitiesPerPage Current number of entities displayed per page (can be changed and saved to local storage by the user)
+     * @property pagingValue Current number (or 'all') of entities displayed per page (can be changed and saved to local storage by the user)
      * @property entityCriteria Contains a list of search terms
      */
     isRendering: boolean;
     entities: BaseEntity[];
-    entitiesPerPage: number;
+    pagingValue: PagingValue;
     entityCriteria: {
         textSearch: string[];
         sortProp: SortProp;
     };
 
-    constructor(private sortByPipe: SortByPipe) {
+    constructor(private sortByPipe: SortByPipe, private localStorage: LocalStorageService) {
         this.entities = [];
         this.entityCriteria = {
             textSearch: [],
@@ -101,7 +106,7 @@ export class DataTableComponent implements OnInit, OnChanges {
     }
 
     ngOnInit() {
-        this.entitiesPerPage = this.getCachedEntitiesPerPage();
+        this.pagingValue = this.getCachedEntitiesPerPage();
 
         // explicitly bind these callbacks to their current context
         // so that they can be used from child components
@@ -127,7 +132,7 @@ export class DataTableComponent implements OnInit, OnChanges {
     get context() {
         return {
             settings: {
-                limit: this.entitiesPerPage,
+                limit: this.pageLimit,
                 sortType: SortType.multi,
                 columnMode: ColumnMode.force,
                 headerHeight: 50,
@@ -153,6 +158,22 @@ export class DataTableComponent implements OnInit, OnChanges {
     }
 
     /**
+     * Number of entities displayed per page. Can be undefined to show all entities without pagination.
+     */
+    get pageLimit() {
+        return isNumber(this.pagingValue) ? this.pagingValue : undefined;
+    }
+
+    /**
+     * Returns the translation based on whether a limited number of entities is displayed or all
+     *
+     * @param quantifier Number of entities per page or 'all'
+     */
+    perPageTranslation(quantifier: PagingValue) {
+        return isNumber(quantifier) ? this.entitiesPerPageTranslation : this.showAllEntitiesTranslation;
+    }
+
+    /**
      * Key that is used for storing this "items per page" setting in local storage
      */
     private get perPageCacheKey() {
@@ -163,8 +184,14 @@ export class DataTableComponent implements OnInit, OnChanges {
      * Get "items per page" setting from local storage. If it does not exist, use the default.
      */
     private getCachedEntitiesPerPage = () => {
-        const cachedValue = localStorage.getItem(this.perPageCacheKey);
-        return cachedValue ? parseInt(cachedValue, 10) : this.DEFAULT_PAGING_VALUE;
+        const cachedValue = this.localStorage.retrieve(this.perPageCacheKey);
+        if (cachedValue) {
+            const parsedValue = parseInt(cachedValue, 10) || cachedValue;
+            if (this.PAGING_VALUES.includes(parsedValue as any)) {
+                return parsedValue as PagingValue;
+            }
+        }
+        return this.DEFAULT_PAGING_VALUE;
     };
 
     /**
@@ -176,10 +203,10 @@ export class DataTableComponent implements OnInit, OnChanges {
     setEntitiesPerPage = (paging: number) => {
         this.isRendering = true;
         setTimeout(() => {
-            this.entitiesPerPage = paging;
+            this.pagingValue = paging;
             this.isRendering = false;
         }, 500);
-        localStorage.setItem(this.perPageCacheKey, paging.toString());
+        this.localStorage.store(this.perPageCacheKey, paging.toString());
     };
 
     /**
@@ -192,7 +219,8 @@ export class DataTableComponent implements OnInit, OnChanges {
             filter(this.customFilter),
         )(this.allEntities);
         this.entities = this.sortByPipe.transform(filteredEntities, this.entityCriteria.sortProp.field, this.entityCriteria.sortProp.order === SortOrder.ASC);
-        this.entitiesSizeChange.emit(this.entities.length);
+        // defer execution of change emit to prevent ExpressionChangedAfterItHasBeenCheckedError, see explanation at https://blog.angular-university.io/angular-debugging/
+        setTimeout(() => this.entitiesSizeChange.emit(this.entities.length));
     }
 
     /**
@@ -226,11 +254,24 @@ export class DataTableComponent implements OnInit, OnChanges {
 
     /**
      * Performs a case-insensitive search of "word" inside of "text".
+     * If "word" consists of multiple segments separated by a space, each one of them must appear in "text".
+     * This relaxation has the benefit that searching for "Max Mustermann" will still find "Max Gregor Mustermann".
+     * Additionally, the wildcard symbols "*" and "?" are supported.
      *
      * @param text string that is searched for param "word"
      */
     private foundIn = (text: string) => (word: string) => {
-        return word && text.toLowerCase().includes(word.toLowerCase());
+        const segments = word.toLowerCase().split(' ');
+        return (
+            text &&
+            word &&
+            segments.every(segment => {
+                const regex = segment
+                    .replace(/\*/g, '.*') // multiple characters
+                    .replace(/\?/g, '.'); // single character
+                return new RegExp(regex).test(text.toLowerCase());
+            })
+        );
     };
 
     /**

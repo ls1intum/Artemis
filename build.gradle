@@ -1,4 +1,3 @@
-import org.gradle.internal.os.OperatingSystem
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 import org.gradle.api.tasks.testing.logging.TestLogEvent
 
@@ -26,19 +25,19 @@ plugins {
     id "idea"
     id "jacoco"
     id "org.springframework.boot"
-    id "com.google.cloud.tools.jib" version "1.8.0"
+    id "com.google.cloud.tools.jib" version "2.0.0"
     id "com.gorylenko.gradle-git-properties"
     id "com.github.node-gradle.node"
     id "net.ltgt.apt-eclipse"
     id "net.ltgt.apt-idea"
     id "net.ltgt.apt"
     //jhipster-needle-gradle-plugins - JHipster will add additional gradle plugins here
-    id "com.diffplug.gradle.spotless" version "3.26.1"
+    id "com.diffplug.gradle.spotless" version "3.27.1"
     id "com.github.spotbugs" version "3.0.0"
 }
 
 group = "de.tum.in.www1.artemis"
-version = "3.9.6"
+version = "3.10.2"
 description = "Interactive Learning with Individual Feedback"
 
 sourceCompatibility=12
@@ -64,6 +63,8 @@ if (project.hasProperty("zipkin")) {
 if (project.hasProperty("war")) {
     apply from: "gradle/war.gradle"
 }
+
+apply plugin: "jacoco"
 
 idea {
     module {
@@ -98,26 +99,6 @@ tasks.withType(com.github.spotbugs.SpotBugsTask) {
     }
 }
 
-// See https://virgo47.wordpress.com/2018/09/14/classpath-too-long-with-spring-boot-and-gradle/ for details
-// https://github.com/jhipster/generator-jhipster/issues/9713
-if (OperatingSystem.current().isWindows()) {
-    task classpathJar(type: Jar) {
-        inputs.files sourceSets.main.runtimeClasspath
-
-        archiveName = "runboot-classpath.jar"
-        doFirst {
-            manifest {
-                def classpath = sourceSets.main.runtimeClasspath.files
-                attributes "Class-Path": classpath.collect {f -> f.toURI().toString()}.join(" ")
-            }
-        }
-    }
-
-    bootRun {
-        classpath = classpathJar.outputs.files
-    }
-}
-
 defaultTasks "bootRun"
 
 springBoot {
@@ -142,6 +123,8 @@ task integrationTest(type: Test) {
     include "**/*IT*", "**/*IntTest*"
     exclude "**/*CucumberIT*"
 
+    maxHeapSize = '2048m'
+    jvmArgs '-XX:MaxPermSize=256m'
     // uncomment if the tests reports are not generated
     // see https://github.com/jhipster/generator-jhipster/pull/2771 and https://github.com/jhipster/generator-jhipster/pull/4484
     // ignoreFailures true
@@ -159,6 +142,19 @@ task integrationTestReport(type: TestReport) {
     reportOn integrationTest
 }
 
+jacocoTestCoverageVerification {
+    violationRules {
+        rule {
+            limit {
+                counter = 'LINE'
+                value = 'COVEREDRATIO'
+                minimum = 0.50
+            }
+        }
+    }
+}
+check.dependsOn jacocoTestCoverageVerification
+
 if (!project.hasProperty("runList")) {
     project.ext.runList = "main"
 }
@@ -175,10 +171,11 @@ repositories {
 }
 
 dependencies {
-
+    implementation 'com.offbytwo.jenkins:jenkins-client:0.3.8'
+    implementation group: 'org.gitlab4j', name: 'gitlab4j-api', version: '4.14.15'
     implementation fileTree(dir: "libs", include: "*.jar")
     // https://mvnrepository.com/artifact/org.eclipse.jgit/org.eclipse.jgit
-    implementation "org.eclipse.jgit:org.eclipse.jgit:5.5.1.201910021850-r"
+    implementation "org.eclipse.jgit:org.eclipse.jgit:5.6.0.201912101111-r"
     // https://mvnrepository.com/artifact/net.sourceforge.plantuml/plantuml
     implementation "net.sourceforge.plantuml:plantuml:8059"
     implementation "org.imsglobal:basiclti-util:1.2.0"
@@ -186,25 +183,25 @@ dependencies {
     implementation "me.xdrop:fuzzywuzzy:1.2.0"
     implementation "com.atlassian.bamboo:bamboo-specs:6.10.3"
     implementation "com.thoughtworks.qdox:qdox:2.0.0"
-    implementation "io.sentry:sentry-spring:1.7.28"
-    implementation "io.sentry:sentry-logback:1.7.28"
+    implementation "io.sentry:sentry-spring:1.7.30"
+    implementation "io.sentry:sentry-logback:1.7.30"
 
     // import JHipster dependencies BOM
     implementation platform("io.github.jhipster:jhipster-dependencies:${jhipster_dependencies_version}" )
 
     implementation "io.github.jhipster:jhipster-framework"
     implementation "org.springframework.boot:spring-boot-starter-cache"
-    implementation "io.micrometer:micrometer-registry-prometheus:1.3.2"
+    implementation "io.micrometer:micrometer-registry-prometheus:1.3.3"
     implementation "net.logstash.logback:logstash-logback-encoder:6.3"
-    implementation "com.fasterxml.jackson.datatype:jackson-datatype-hppc:2.10.1"
-    implementation "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.10.1"
-    implementation "com.fasterxml.jackson.datatype:jackson-datatype-hibernate5:2.10.1"
-    implementation "com.fasterxml.jackson.core:jackson-annotations:2.10.1"
-    implementation "com.fasterxml.jackson.core:jackson-databind:2.10.1"
-    implementation "com.fasterxml.jackson.module:jackson-module-afterburner:2.10.1"
+    implementation "com.fasterxml.jackson.datatype:jackson-datatype-hppc:2.10.2"
+    implementation "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.10.2"
+    implementation "com.fasterxml.jackson.datatype:jackson-datatype-hibernate5:2.10.2"
+    implementation "com.fasterxml.jackson.core:jackson-annotations:2.10.2"
+    implementation "com.fasterxml.jackson.core:jackson-databind:2.10.2"
+    implementation "com.fasterxml.jackson.module:jackson-module-afterburner:2.10.2"
     implementation "javax.cache:cache-api:1.1.1"
     implementation "org.hibernate:hibernate-core"
-    implementation "com.zaxxer:HikariCP:3.4.1"
+    implementation "com.zaxxer:HikariCP:3.4.2"
     implementation "org.apache.commons:commons-lang3:3.9"
     implementation "org.apache.commons:commons-text:1.8"
     implementation "commons-io:commons-io"
@@ -212,7 +209,7 @@ dependencies {
     implementation "org.ehcache:ehcache"
     implementation "org.hibernate:hibernate-jcache"
     implementation "org.hibernate:hibernate-entitymanager"
-    implementation "org.hibernate.validator:hibernate-validator"
+    implementation "org.hibernate.validator:hibernate-validator:6.1.1.Final"
     implementation "org.liquibase:liquibase-core"
     implementation "org.springframework.boot:spring-boot-loader-tools"
     implementation "org.springframework.boot:spring-boot-starter-mail"
@@ -229,20 +226,20 @@ dependencies {
     implementation "org.springframework.boot:spring-boot-starter-thymeleaf"
 
     implementation "org.springframework.ldap:spring-ldap-core"
-    implementation "org.springframework.data:spring-data-ldap:2.2.3.RELEASE"
+    implementation "org.springframework.data:spring-data-ldap:2.2.4.RELEASE"
 
     implementation "org.springframework.security:spring-security-config"
     implementation "org.springframework.security:spring-security-data"
     implementation "org.springframework.security:spring-security-web"
     implementation "org.springframework.security:spring-security-messaging"
-    implementation "io.jsonwebtoken:jjwt-api"
+    implementation "io.jsonwebtoken:jjwt-api:0.11.0"
     runtimeOnly "io.jsonwebtoken:jjwt-impl"
     runtimeOnly "io.jsonwebtoken:jjwt-jackson"
     implementation ("io.springfox:springfox-swagger2") {
         exclude module: "mapstruct"
     }
     implementation "io.springfox:springfox-bean-validators"
-    implementation "mysql:mysql-connector-java:8.0.18"
+    implementation "mysql:mysql-connector-java:8.0.19"
     implementation "org.mapstruct:mapstruct:${mapstruct_version}"
 
     implementation "org.zalando:problem-spring-web:0.25.2"
@@ -260,17 +257,20 @@ dependencies {
     }
     testImplementation "org.springframework.security:spring-security-test"
     testImplementation "org.springframework.boot:spring-boot-test"
-    testImplementation "org.assertj:assertj-core:3.14.0"
+    testImplementation "org.assertj:assertj-core:3.15.0"
     testImplementation "org.junit.jupiter:junit-jupiter-api:5.5.2"
     testImplementation "org.junit.jupiter:junit-jupiter-params:5.5.2"
     testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:5.5.2"
-    testImplementation 'com.tngtech.archunit:archunit-junit5-api:0.12.0'
-    testRuntimeOnly 'com.tngtech.archunit:archunit-junit5-engine:0.12.0'
-    testImplementation "org.mockito:mockito-core:3.2.0"
-    testImplementation "org.mockito:mockito-junit-jupiter:3.2.0"
-    testImplementation "org.hamcrest:hamcrest-library"
+    testImplementation 'com.tngtech.archunit:archunit-junit5-api:0.13.1'
+    testRuntimeOnly 'com.tngtech.archunit:archunit-junit5-engine:0.13.1'
+    testImplementation "org.mockito:mockito-core:3.2.4"
+    testImplementation "org.mockito:mockito-junit-jupiter:3.2.4"
+    testImplementation "org.hamcrest:hamcrest-library:2.2"
     testImplementation "com.h2database:h2:1.4.200"
-    testImplementation "org.awaitility:awaitility:4.0.1"
+    testImplementation "org.awaitility:awaitility:4.0.2"
+
+    // Java's lightweight JSON library needed for the internals of the MockRestServiceServer
+    testImplementation group: 'org.json', name: 'json', version: '20190722'
     //jhipster-needle-gradle-dependency - JHipster will add additional dependencies here
 }
 
@@ -319,7 +319,7 @@ tasks.withType(Test) {
 }
 
 wrapper {
-    gradleVersion = "6.0.1"
+    gradleVersion = "6.1.1"
 }
 
 task stage(dependsOn: "bootWar") {
@@ -332,6 +332,11 @@ if (project.hasProperty("nodeInstall")) {
         yarnVersion = "${yarn_version}"
         download = true
     }
+}
+
+gitProperties {
+    failOnNoGitDirectory = false
+    keys = ["git.branch", "git.commit.id.abbrev", "git.commit.id.describe"]
 }
 
 // Command to execute the JavaDoc checkstyle verification ./gradlew checkstyleMain
@@ -351,11 +356,12 @@ task buildJarForDocker (type: Exec) {
 
 // Available commands:
 //
-// 1) Build production:             ./gradlew -Pprod -Pwar clean bootWar
-// 2) Execute tests:                ./gradlew executeTests
-// 3) Check Java code format:       ./gradlew spotlessCheck
-// 4) Apply Java code formatter:    ./gradlew spotlessApply
-// 5) Find dependency updates:      ./gradlew dependencyUpdates
-// 6) Check JavaDoc:                ./gradlew checkstyleMain
-// 7) Generate Liquibase diff:      ./gradlew liquibaseDiffChangelog
-// 8) Clear Liquibase checksums:    ./gradlew liquibaseClearChecksums
+// 1) Build production:                             ./gradlew -Pprod -Pwar clean bootWar
+// 2) Execute tests with code coverage report:      ./gradlew executeTests jacocoTestReport -x yarn_install -x webpack -x generateGitProperties
+// 3) Check Java code format:                       ./gradlew spotlessCheck
+// 4) Apply Java code formatter:                    ./gradlew spotlessApply
+// 5) Find dependency updates:                      ./gradlew dependencyUpdates
+// 6) Check JavaDoc:                                ./gradlew checkstyleMain
+// 7) Generate Liquibase diff:                      ./gradlew liquibaseDiffChangelog
+// 8) Clear Liquibase checksums:                    ./gradlew liquibaseClearChecksums
+// 9) Enforce code coverage verification:           ./gradlew jacocoTestCoverageVerification

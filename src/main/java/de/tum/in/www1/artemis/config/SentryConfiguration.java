@@ -8,12 +8,14 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.web.servlet.ServletContextInitializer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 import org.springframework.web.servlet.HandlerExceptionResolver;
 
 import io.sentry.Sentry;
 import io.sentry.SentryClient;
 
 @Configuration
+@Profile("prod")
 public class SentryConfiguration {
 
     private final Logger log = LoggerFactory.getLogger(SentryConfiguration.class);
@@ -57,8 +59,10 @@ public class SentryConfiguration {
             return "prod";
         case "https://artemistest.ase.in.tum.de":
             return "test";
+        case "https://artemistest2.ase.in.tum.de":
+            return "test";
         case "https://vmbruegge60.in.tum.de":
-            return "e2e";
+            return "test";
         default:
             return "local";
         }

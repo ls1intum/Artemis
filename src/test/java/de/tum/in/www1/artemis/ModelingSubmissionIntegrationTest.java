@@ -10,30 +10,25 @@ import java.util.List;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
 
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.TextExercise;
+import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.enumeration.DiagramType;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.ParticipationService;
-import de.tum.in.www1.artemis.util.*;
+import de.tum.in.www1.artemis.service.compass.CompassService;
+import de.tum.in.www1.artemis.util.DatabaseUtilService;
+import de.tum.in.www1.artemis.util.ModelFactory;
+import de.tum.in.www1.artemis.util.RequestUtilService;
 
-@ExtendWith(SpringExtension.class)
-@SpringBootTest
-@AutoConfigureMockMvc
-@AutoConfigureTestDatabase
-@ActiveProfiles("artemis")
-public class ModelingSubmissionIntegrationTest {
+public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationTest {
 
     @Autowired
     CourseRepository courseRepo;
@@ -43,6 +38,9 @@ public class ModelingSubmissionIntegrationTest {
 
     @Autowired
     UserRepository userRepo;
+
+    @Autowired
+    StudentParticipationRepository studentParticipationRepository;
 
     @Autowired
     RequestUtilService request;
@@ -58,6 +56,9 @@ public class ModelingSubmissionIntegrationTest {
 
     @Autowired
     ModelingSubmissionRepository modelingSubmissionRepo;
+
+    @Autowired
+    CompassService compassService;
 
     private ModelingExercise classExercise;
 
@@ -79,6 +80,8 @@ public class ModelingSubmissionIntegrationTest {
 
     private String validModel;
 
+    private TextExercise textExercise;
+
     @BeforeEach
     public void initTestCase() throws Exception {
         database.addUsers(3, 1, 1);
@@ -95,11 +98,22 @@ public class ModelingSubmissionIntegrationTest {
         validModel = database.loadFileFromResources("test-data/model-submission/model.54727.json");
         submittedSubmission = generateSubmittedSubmission();
         unsubmittedSubmission = generateUnsubmittedSubmission();
+
+        database.addCourseWithOneTextExercise();
+        textExercise = (TextExercise) exerciseRepo.findAll().get(5);
     }
 
     @AfterEach
     public void tearDown() {
         database.resetDatabase();
+    }
+
+    @Test
+    @WithMockUser(value = "student1")
+    public void createModelingSubmission_badRequest() throws Exception {
+        ModelingSubmission submission = ModelFactory.generateModelingSubmission(validModel, true);
+        modelingSubmissionRepo.save(submission);
+        request.postWithResponseBody("/api/exercises/" + classExercise.getId() + "/modeling-submissions", submission, ModelingSubmission.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -170,7 +184,7 @@ public class ModelingSubmissionIntegrationTest {
 
     @Test
     @WithMockUser(value = "student2")
-    public void updateModelSubmissionAfterSubmit() throws Exception {
+    public void updateModelSubmission() throws Exception {
         database.addParticipationForExercise(classExercise, "student2");
         ModelingSubmission submission = ModelFactory.generateModelingSubmission(emptyModel, true);
         ModelingSubmission returnedSubmission = performInitialModelSubmission(classExercise.getId(), submission);
@@ -180,6 +194,17 @@ public class ModelingSubmissionIntegrationTest {
         request.putWithResponseBody("/api/exercises/" + classExercise.getId() + "/modeling-submissions", submission, ModelingSubmission.class, HttpStatus.OK);
 
         database.checkModelingSubmissionCorrectlyStored(returnedSubmission.getId(), emptyModel);
+
+        submission = ModelFactory.generateModelingSubmission(validModel, true);
+        modelingSubmissionRepo.save(submission);
+
+        returnedSubmission = request.putWithResponseBody("/api/exercises/" + classExercise.getId() + "/modeling-submissions", submission, ModelingSubmission.class, HttpStatus.OK);
+        StudentParticipation studentParticipation = (StudentParticipation) returnedSubmission.getParticipation();
+        assertThat(studentParticipation.getResults()).as("do not send old results to the client").isEmpty();
+        assertThat(studentParticipation.getSubmissions()).as("do not send old submissions to the client").isEmpty();
+        assertThat(studentParticipation.getStudent()).as("sensitive information (student) is hidden").isNull();
+        assertThat(studentParticipation.getExercise().getGradingInstructions()).as("sensitive information (grading instructions) is hidden").isNull();
+        assertThat(returnedSubmission.getResult()).as("sensitive information (exercise result) is hidden").isNull();
     }
 
     @Test
@@ -209,6 +234,18 @@ public class ModelingSubmissionIntegrationTest {
         List<ModelingSubmission> submissions = request.getList("/api/exercises/" + classExercise.getId() + "/modeling-submissions", HttpStatus.OK, ModelingSubmission.class);
 
         assertThat(submissions).as("contains both submissions").containsExactlyInAnyOrder(submission1, submission2);
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void getAllSubmissionsOfExercise_assessedByTutor() throws Exception {
+        List<ModelingSubmission> submissions = request.getList("/api/exercises/" + classExercise.getId() + "/modeling-submissions?assessedByTutor=true", HttpStatus.OK,
+                ModelingSubmission.class);
+        assertThat(submissions).as("does not have a modeling submission assessed by the tutor").isEmpty();
+
+        database.addModelingSubmissionWithFinishedResultAndAssessor(classExercise, submittedSubmission, "student1", "tutor1");
+        submissions = request.getList("/api/exercises/" + classExercise.getId() + "/modeling-submissions?assessedByTutor=true", HttpStatus.OK, ModelingSubmission.class);
+        assertThat(submissions).as("has a modeling submission assessed by the tutor").hasSizeGreaterThanOrEqualTo(1);
     }
 
     @Test
@@ -375,23 +412,16 @@ public class ModelingSubmissionIntegrationTest {
 
     @Test
     @WithMockUser(value = "tutor1", roles = "TA")
-    public void getNextOptimalModelSubmission() throws Exception {
-        ModelingSubmission submission = ModelFactory.generateModelingSubmission(validModel, true);
-        submission = database.addModelingSubmission(classExercise, submission, "student1");
+    public void getAllModelingSubmissions() throws Exception {
+        createNineLockedSubmissionsForDifferentExercisesAndUsers("tutor1");
+        ModelingSubmission newSubmission = ModelFactory.generateModelingSubmission(validModel, true);
+        database.addModelingSubmission(useCaseExercise, newSubmission, "student1");
+        database.updateExerciseDueDate(useCaseExercise.getId(), ZonedDateTime.now().minusHours(1));
 
-        List<Long> optimalSubmissionIds = request.getList("/api/exercises/" + classExercise.getId() + "/optimal-model-submissions", HttpStatus.OK, Long.class);
-
-        assertThat(optimalSubmissionIds).as("optimal submission was found").containsExactly(submission.getId());
-    }
-
-    @Test
-    @WithMockUser(value = "tutor1", roles = "TA")
-    public void getNextOptimalModelSubmission_lockLimitReached() throws Exception {
-        createTenLockedSubmissionsForDifferentExercisesAndUsers("tutor1");
-        ModelingSubmission submission = ModelFactory.generateModelingSubmission(validModel, true);
-        database.addModelingSubmission(useCaseExercise, submission, "student2");
-
-        request.getList("/api/exercises/" + classExercise.getId() + "/optimal-model-submissions", HttpStatus.BAD_REQUEST, Long.class);
+        ModelingSubmission storedSubmission = request.get("/api/exercises/" + useCaseExercise.getId() + "/modeling-submission-without-assessment?lock=true", HttpStatus.OK,
+                ModelingSubmission.class);
+        assertThat(storedSubmission).as("submission was found").isNotNull();
+        request.get("/api/exercises/" + useCaseExercise.getId() + "/modeling-submission-without-assessment", HttpStatus.BAD_REQUEST, ModelingSubmission.class);
     }
 
     @Test
@@ -408,6 +438,85 @@ public class ModelingSubmissionIntegrationTest {
         assertThat(receivedSubmission).as("submission was found").isEqualToIgnoringGivenFields(submission, "result");
         assertThat(receivedSubmission.getResult()).as("result is set").isNotNull();
         assertThat(receivedSubmission.getResult().getAssessor()).as("assessor is hidden").isNull();
+
+        // students can only see their own models
+        submission = ModelFactory.generateModelingSubmission(validModel, true);
+        submission = database.addModelingSubmission(classExercise, submission, "student2");
+        request.get("/api/modeling-editor/" + submission.getParticipation().getId(), HttpStatus.FORBIDDEN, ModelingSubmission.class);
+    }
+
+    @Test
+    @WithMockUser(value = "student1")
+    public void getSubmissionForModelingEditor_badRequest() throws Exception {
+        User user = database.getUserByLogin("student1");
+        StudentParticipation participation = new StudentParticipation();
+        participation.setStudent(user);
+        participation.setExercise(null);
+        StudentParticipation studentParticipation = studentParticipationRepository.save(participation);
+        request.get("/api/modeling-editor/" + studentParticipation.getId(), HttpStatus.BAD_REQUEST, ModelingSubmission.class);
+
+        participation.setExercise(textExercise);
+        studentParticipation = studentParticipationRepository.save(participation);
+        request.get("/api/modeling-editor/" + studentParticipation.getId(), HttpStatus.BAD_REQUEST, ModelingSubmission.class);
+    }
+
+    @Test
+    @WithMockUser(value = "student1")
+    public void getSubmissionForModelingEditor_emptySubmission() throws Exception {
+        StudentParticipation studentParticipation = database.addParticipationForExercise(classExercise, "student1");
+        assertThat(studentParticipation.getSubmissions()).isEmpty();
+        ModelingSubmission returnedSubmission = request.get("/api/modeling-editor/" + studentParticipation.getId(), HttpStatus.OK, ModelingSubmission.class);
+        assertThat(returnedSubmission).as("new submission is created").isNotNull();
+    }
+
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void getNextOptimalModelSubmission() throws Exception {
+        ModelingSubmission submission = ModelFactory.generateModelingSubmission(validModel, true);
+        submission = database.addModelingSubmission(classExercise, submission, "student1");
+
+        List<Long> optimalSubmissionIds = request.getList("/api/exercises/" + classExercise.getId() + "/optimal-model-submissions", HttpStatus.OK, Long.class);
+
+        assertThat(optimalSubmissionIds).as("optimal submission was found").containsExactly(submission.getId());
+
+        classExercise.setDiagramType(DiagramType.CommunicationDiagram);
+        exerciseRepo.save(classExercise);
+        database.addModelingSubmission(classExercise, submission, "student1");
+        request.getList("/api/exercises/" + classExercise.getId() + "/optimal-model-submissions", HttpStatus.OK, Long.class);
+    }
+
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void getNextOptimalModelSubmission_lockLimitReached() throws Exception {
+        createTenLockedSubmissionsForDifferentExercisesAndUsers("tutor1");
+        ModelingSubmission submission = ModelFactory.generateModelingSubmission(validModel, true);
+        database.addModelingSubmission(useCaseExercise, submission, "student2");
+
+        request.getList("/api/exercises/" + classExercise.getId() + "/optimal-model-submissions", HttpStatus.BAD_REQUEST, Long.class);
+    }
+
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void deleteNextOptimalModelSubmission() throws Exception {
+        ModelingSubmission submission = ModelFactory.generateModelingSubmission(validModel, true);
+        database.addModelingSubmission(classExercise, submission, "student1");
+        database.updateExerciseDueDate(classExercise.getId(), ZonedDateTime.now().minusHours(1));
+
+        request.get("/api/exercises/" + classExercise.getId() + "/modeling-submission-without-assessment", HttpStatus.OK, ModelingSubmission.class);
+        assertThat(compassService.getCalculationEngineModelsWaitingForAssessment(classExercise.getId())).hasSize(1);
+
+        request.delete("/api/exercises/" + classExercise.getId() + "/optimal-model-submissions", HttpStatus.NO_CONTENT);
+        assertThat(compassService.getCalculationEngineModelsWaitingForAssessment(classExercise.getId())).isEmpty();
+    }
+
+    @Test
+    @WithMockUser(value = "student1")
+    public void getSubmissionForModelingEditor_unfinishedAssessment() throws Exception {
+        StudentParticipation studentParticipation = database.addParticipationForExercise(classExercise, "student1");
+        database.addModelingSubmissionWithEmptyResult(classExercise, "", "student1");
+
+        ModelingSubmission returnedSubmission = request.get("/api/modeling-editor/" + studentParticipation.getId(), HttpStatus.OK, ModelingSubmission.class);
+        assertThat(returnedSubmission.getResult()).as("the result is not sent to the client if the assessment is not finished").isNull();
     }
 
     @Test

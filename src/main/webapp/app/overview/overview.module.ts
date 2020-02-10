@@ -15,7 +15,6 @@ import {
     CourseLectureDetailsComponent,
     CourseLecturesComponent,
     CourseOverviewComponent,
-    CourseScoreCalculationService,
     CourseStatisticsComponent,
     ExerciseActionButtonComponent,
     ExerciseDetailsStudentActionsComponent,
@@ -32,6 +31,7 @@ import { ArtemisCourseRegistrationSelector } from 'app/components/course-registr
 import { IntellijModule } from 'app/intellij/intellij.module';
 import { ArtemisComplaintsModule } from 'app/complaints';
 import { FeatureToggleModule } from 'app/feature-toggle/feature-toggle.module';
+import { ProgrammingExerciseUtilsModule } from 'app/entities/programming-exercise/utils/programming-exercise-utils.module';
 
 const ENTITY_STATES = [...OVERVIEW_ROUTES];
 
@@ -51,6 +51,7 @@ const ENTITY_STATES = [...OVERVIEW_ROUTES];
         IntellijModule,
         ArtemisComplaintsModule,
         FeatureToggleModule,
+        ProgrammingExerciseUtilsModule,
     ],
     declarations: [
         OverviewComponent,
@@ -69,6 +70,5 @@ const ENTITY_STATES = [...OVERVIEW_ROUTES];
     ],
     entryComponents: [],
     exports: [ExerciseActionButtonComponent],
-    providers: [CourseScoreCalculationService],
 })
 export class ArtemisOverviewModule {}

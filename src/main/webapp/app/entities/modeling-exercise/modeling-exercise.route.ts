@@ -1,11 +1,12 @@
 import { ActivatedRouteSnapshot, Resolve, RouterStateSnapshot, Routes } from '@angular/router';
 
-import { UserRouteAccessService } from '../../core';
+import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { ModelingExerciseComponent } from './modeling-exercise.component';
 import { ModelingExerciseDetailComponent } from './modeling-exercise-detail.component';
 import { ModelingExerciseUpdateComponent } from 'app/entities/modeling-exercise/modeling-exercise-update.component';
 import { Injectable } from '@angular/core';
-import { Course, CourseService } from 'app/entities/course';
+import { Course } from 'app/entities/course';
+import { CourseService } from 'app/entities/course/course.service';
 import { ModelingExerciseService } from 'app/entities/modeling-exercise/modeling-exercise.service';
 import { ModelingExercise } from 'app/entities/modeling-exercise/modeling-exercise.model';
 import { HttpResponse } from '@angular/common/http';

@@ -1,4 +1,4 @@
-import { User } from 'app/core';
+import { User } from 'app/core/user/user.model';
 import { BaseEntity } from 'app/shared';
 import { Feedback } from '../feedback';
 import { Submission } from '../submission';
@@ -11,12 +11,12 @@ export class Result implements BaseEntity {
     public resultString: string;
     public completionDate: Moment | null;
     public successful = false; // default value
-    public buildArtifact = false; // default value (whether the result includes a build artifact or not, only used in programming exercises)
     public hasFeedback: boolean;
     public score: number;
     public assessmentType: AssessmentType;
     public rated: boolean;
     public hasComplaint: boolean;
+    public exampleResult: boolean;
 
     public submission: Submission | null;
     public assessor: User;

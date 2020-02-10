@@ -7,7 +7,6 @@ import { DragItem } from 'app/entities/drag-item';
 import { DropLocation } from 'app/entities/drop-location';
 import { QuizExercise, QuizExerciseService } from 'app/entities/quiz-exercise';
 import { ScoringType } from 'app/entities/quiz-question';
-import { generate } from 'app/quiz/edit/temp-id';
 import { convertRenderedSVGToPNG } from './svg-renderer';
 import { FileUploaderService } from 'app/shared';
 
@@ -156,7 +155,6 @@ async function generateDragAndDropItemForElement(element: UMLModelElement, model
     const imageUploadResponse = await fileUploaderService.uploadFile(image, `element-${element.id}.png`);
 
     const dragItem = new DragItem();
-    dragItem.tempID = generate();
     dragItem.pictureFilePath = imageUploadResponse.path;
     const dropLocation = computeDropLocation(renderedElement.clip, model.size);
 
@@ -173,7 +171,6 @@ async function generateDragAndDropItemForElement(element: UMLModelElement, model
  */
 async function generateDragAndDropItemForText(element: UMLModelElement, model: UMLModel): Promise<DragAndDropMapping> {
     const dragItem = new DragItem();
-    dragItem.tempID = generate();
     dragItem.text = element.name;
     const dropLocation = computeDropLocation(element.bounds, model.size);
 
@@ -207,7 +204,6 @@ async function generateDragAndDropItemForRelationship(element: UMLModelElement, 
     const imageUploadResponse = await fileUploaderService.uploadFile(image, `relationship-${element.id}.png`);
 
     const dragItem = new DragItem();
-    dragItem.tempID = generate();
     dragItem.pictureFilePath = imageUploadResponse.path;
     const dropLocation = computeDropLocation(renderedElement.clip, model.size);
 
@@ -227,7 +223,6 @@ async function generateDragAndDropItemForRelationship(element: UMLModelElement, 
  */
 function computeDropLocation(elementLocation: { x: number; y: number; width: number; height: number }, totalSize: { width: number; height: number }): DropLocation {
     const dropLocation = new DropLocation();
-    dropLocation.tempID = generate();
     dropLocation.posX = Math.ceil((elementLocation.x / totalSize.width) * MAX_SIZE_UNIT);
     dropLocation.posY = Math.ceil((elementLocation.y / totalSize.height) * MAX_SIZE_UNIT);
     dropLocation.width = Math.floor((elementLocation.width / totalSize.width) * MAX_SIZE_UNIT);

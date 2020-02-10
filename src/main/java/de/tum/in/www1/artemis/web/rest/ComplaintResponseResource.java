@@ -20,6 +20,7 @@ import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.ComplaintResponseRepository;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.ComplaintResponseService;
+import de.tum.in.www1.artemis.service.UserService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
@@ -47,11 +48,14 @@ public class ComplaintResponseResource {
 
     private final AuthorizationCheckService authorizationCheckService;
 
+    private final UserService userService;
+
     public ComplaintResponseResource(ComplaintResponseRepository complaintResponseRepository, ComplaintResponseService complaintResponseService,
-            AuthorizationCheckService authorizationCheckService) {
+            AuthorizationCheckService authorizationCheckService, UserService userService) {
         this.complaintResponseRepository = complaintResponseRepository;
         this.complaintResponseService = complaintResponseService;
         this.authorizationCheckService = authorizationCheckService;
+        this.userService = userService;
     }
 
     /**
@@ -78,65 +82,54 @@ public class ComplaintResponseResource {
     }
 
     /**
-     * GET /complaint-responses/:id : get the "id" complaint response.
-     *
-     * @param id the id of the complaint response to retrieve
-     * @param principal the user who called the method
-     * @return the ResponseEntity with status 200 (OK) and with body the complaint response, or with status 404 (Not Found)
-     */
-    @GetMapping("/complaint-responses/{id}")
-    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<ComplaintResponse> getComplaintResponse(@PathVariable long id, Principal principal) {
-        log.debug("REST request to get ComplaintResponse : {}", id);
-        Optional<ComplaintResponse> complaintResponse = complaintResponseRepository.findById(id);
-
-        return handleComplaintResponse(id, principal, complaintResponse);
-    }
-
-    /**
      * Get /complaint-responses/complaint/:id get a complaint response associated with the complaint "id"
      *
      * @param complaintId the id of the complaint for which we want to find a linked response
      * @param principal the user who called the method
      * @return the ResponseEntity with status 200 (OK) and with body the complaint response, or with status 404 (Not Found)
      */
+    // TODO: change URL to /complaint-responses?complaintId={complaintId}
     @GetMapping("/complaint-responses/complaint/{complaintId}")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<ComplaintResponse> getComplaintResponseByComplaintId(@PathVariable long complaintId, Principal principal) {
         log.debug("REST request to get ComplaintResponse associated to complaint : {}", complaintId);
         Optional<ComplaintResponse> complaintResponse = complaintResponseRepository.findByComplaint_Id(complaintId);
-
         return handleComplaintResponse(complaintId, principal, complaintResponse);
     }
 
-    private ResponseEntity<ComplaintResponse> handleComplaintResponse(long complaintId, Principal principal, Optional<ComplaintResponse> complaintResponse) {
-        if (complaintResponse.isEmpty()) {
+    private ResponseEntity<ComplaintResponse> handleComplaintResponse(long complaintId, Principal principal, Optional<ComplaintResponse> optionalComplaintResponse) {
+        if (optionalComplaintResponse.isEmpty()) {
             throw new EntityNotFoundException("ComplaintResponse with " + complaintId + " was not found!");
         }
-
-        canUserReadComplaintResponse(complaintResponse.get(), principal.getName());
-
-        StudentParticipation studentParticipation = (StudentParticipation) complaintResponse.get().getComplaint().getResult().getParticipation();
-        Exercise exercise = studentParticipation.getExercise();
-
-        if (!authorizationCheckService.isAtLeastInstructorForExercise(exercise)) {
-            complaintResponse.get().getComplaint().setStudent(null);
-        }
-
-        if (!authorizationCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
-            complaintResponse.get().setReviewer(null);
-        }
-
-        return ResponseUtil.wrapOrNotFound(complaintResponse);
-    }
-
-    private void canUserReadComplaintResponse(ComplaintResponse complaintResponse, String username) {
+        var user = userService.getUserWithGroupsAndAuthorities();
+        var complaintResponse = optionalComplaintResponse.get();
         // All tutors and higher can see this, and also the students who first open the complaint
         User originalAuthor = complaintResponse.getComplaint().getStudent();
         StudentParticipation studentParticipation = (StudentParticipation) complaintResponse.getComplaint().getResult().getParticipation();
         Exercise exercise = studentParticipation.getExercise();
-        if (!authorizationCheckService.isAtLeastTeachingAssistantForExercise(exercise) && originalAuthor.getLogin() != null && !originalAuthor.getLogin().equals(username)) {
+        var atLeastTA = authorizationCheckService.isAtLeastTeachingAssistantForExercise(exercise, user);
+        if (!atLeastTA && originalAuthor.getLogin() != null && !originalAuthor.getLogin().equals(principal.getName())) {
             throw new AccessForbiddenException("Insufficient permission for this complaint response");
         }
+
+        if (!authorizationCheckService.isAtLeastInstructorForExercise(exercise, user)) {
+            complaintResponse.getComplaint().setStudent(null);
+        }
+
+        if (!atLeastTA) {
+            complaintResponse.setReviewer(null);
+        }
+
+        if (originalAuthor.getLogin() != null && originalAuthor.getLogin().equals(principal.getName())) {
+            // hide complaint completely if the user is the student who created the complaint
+            complaintResponse.setComplaint(null);
+        }
+        else {
+            // hide unnecessary information
+            complaintResponse.getComplaint().setResultBeforeComplaint(null);
+            complaintResponse.getComplaint().getResult().setParticipation(null);
+            complaintResponse.getComplaint().getResult().setSubmission(null);
+        }
+        return ResponseUtil.wrapOrNotFound(optionalComplaintResponse);
     }
 }

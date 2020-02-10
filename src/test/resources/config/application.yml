@@ -1,48 +1,17 @@
-artemis:
-    version: #project.version#
-    repo-clone-path: ./repos/
-    encryption-password: <encrypt-password>     # arbitrary password for encrypting database values
-    jira:
-        url: https://jira.ase.in.tum.de
-        user: <username>    # e.g. ga12abc
-        password: <password>
-        admin-group-name: tumuser
-    version-control:
-        url: https://bitbucket.ase.in.tum.de
-        user: <username>    # e.g. ga12abc
-        secret: <password>
-    bamboo:
-        url: https://bamboobruegge.in.tum.de
-        user: <username>    # e.g. ga12abc
-        password: <password>
-        vcs-application-link-name: LS1 Bitbucket Server
-        empty-commit-necessary: true
-        authentication-token: <secrettoken>
-    lti:
-        id: artemis_lti
-        oauth-key: artemis_lti_key
-        oauth-secret: <secret>    # only important for online courses on the edX platform, can typically be ignored
-        user-prefix: edx_
-        user-group-name: edx
-    git:
-        name: Artemis
-        email: artemis@in.tum.de
-    automatic-text:
-        embedding-url: http://localhost:8000/embed
-        embedding-chunk-size: 50
-        clustering-url: http://localhost:8000/cluster
-        secret: null
 logging:
     level:
         ROOT: INFO
         de.tum.in.www1.artemis: DEBUG
         io.github.jhipster: INFO
-
 spring:
-    profiles:
-        active: bamboo
     application:
         name: Artemis
+    jmx:
+        enabled: false
+    data:
+        jpa:
+            repositories:
+                bootstrap-mode: deferred
     devtools:
         restart:
             enabled: false
@@ -51,6 +20,8 @@ spring:
     jackson:
         serialization:
             indent-output: true
+    jpa:
+        open-in-view: false
     liquibase:
         contexts: tests
         enabled: false
@@ -65,17 +36,10 @@ spring:
         favicon:
             enabled: false
     thymeleaf:
-        cache: false
         mode: HTML
     sleuth:
         sampler:
             probability: 1 # report 100% of traces
-    zipkin: # Use the "zipkin" Maven profile to have the Spring Cloud Zipkin dependencies
-        base-url: http://localhost:9411
-        enabled: false
-        locator:
-            discovery:
-                enabled: true
 
 server:
     port: 8080
@@ -87,6 +51,16 @@ info:
     display-ribbon-on-profiles: "dev"
     sentry:
         dsn: https://8c6b41ec2d4245e8bd3ec9541d53f625@sentry.io/1440029
+    guided-tour:
+        courseShortName: 'artemistutorial'
+        tours:
+            -   cancel_tour: ''
+            -   code_editor_tour: 'test'
+            -   course_overview_tour: ''
+            -   course_exercise_overview_tour: 'test'
+            -   modeling_tour: 'UML Class Diagram'
+            -   programming_exercise_fail_tour: 'test'
+            -   programming_exercise_success_tour: 'test'
 
 jhipster:
     clientApp:

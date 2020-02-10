@@ -4,7 +4,7 @@ import { Router } from '@angular/router';
 import { EMPTY, from } from 'rxjs';
 import { catchError, switchMap, tap } from 'rxjs/operators';
 
-import { AuthServerProvider, Credentials } from 'app/core';
+import { AuthServerProvider, Credentials } from 'app/core/auth/auth-jwt.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 

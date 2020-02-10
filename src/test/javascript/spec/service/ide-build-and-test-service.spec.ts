@@ -1,7 +1,7 @@
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
-import { ProgrammingSubmissionService } from 'app/programming-submission';
-import { ParticipationWebsocketService } from 'app/entities/participation';
+import { ProgrammingSubmissionService } from 'app/programming-submission/programming-submission.service';
+import { ParticipationWebsocketService } from 'app/entities/participation/participation-websocket.service';
 import { JavaBridgeService } from 'app/intellij/java-bridge.service';
 import { CodeEditorBuildLogService } from 'app/code-editor';
 import { SinonSpy, SinonStub, spy, stub } from 'sinon';

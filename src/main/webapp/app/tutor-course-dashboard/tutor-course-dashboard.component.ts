@@ -1,12 +1,13 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, Input } from '@angular/core';
 import { partition } from 'lodash';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Course, CourseService } from '../entities/course';
+import { Course } from '../entities/course';
+import { CourseService } from 'app/entities/course/course.service';
 import { JhiAlertService } from 'ng-jhipster';
-import { User } from '../core';
+import { User } from 'app/core/user/user.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { HttpResponse } from '@angular/common/http';
-import { Exercise, getIcon, getIconTooltip } from 'app/entities/exercise';
+import { Exercise, getIcon, getIconTooltip } from 'app/entities/exercise/exercise.model';
 import { StatsForDashboard } from 'app/instructor-course-dashboard/stats-for-dashboard.model';
 
 @Component({
@@ -24,8 +25,10 @@ export class TutorCourseDashboardComponent implements OnInit {
     numberOfAssessments = 0;
     numberOfTutorAssessments = 0;
     numberOfComplaints = 0;
+    numberOfOpenComplaints = 0;
     numberOfTutorComplaints = 0;
     numberOfMoreFeedbackRequests = 0;
+    numberOfOpenMoreFeedbackRequests = 0;
     numberOfTutorMoreFeedbackRequests = 0;
     totalAssessmentPercentage = 0;
     showFinishedExercises = false;
@@ -62,8 +65,13 @@ export class TutorCourseDashboardComponent implements OnInit {
                 this.course.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.course);
 
                 if (this.course.exercises && this.course.exercises.length > 0) {
-                    // TODO: I think we should use a different criterion how to filter finished exercises.
-                    const [finishedExercises, unfinishedExercises] = partition(this.course.exercises, exercise => exercise.numberOfAssessments === exercise.numberOfParticipations);
+                    const [finishedExercises, unfinishedExercises] = partition(
+                        this.course.exercises,
+                        exercise =>
+                            exercise.numberOfAssessments === exercise.numberOfParticipations &&
+                            exercise.numberOfOpenComplaints === 0 &&
+                            exercise.numberOfOpenMoreFeedbackRequests === 0,
+                    );
                     this.finishedExercises = finishedExercises;
                     this.unfinishedExercises = unfinishedExercises;
                     // sort exercises by type to get a better overview in the dashboard
@@ -79,7 +87,9 @@ export class TutorCourseDashboardComponent implements OnInit {
                 this.numberOfSubmissions = this.stats.numberOfSubmissions;
                 this.numberOfAssessments = this.stats.numberOfAssessments;
                 this.numberOfComplaints = this.stats.numberOfComplaints;
+                this.numberOfOpenComplaints = this.stats.numberOfOpenComplaints;
                 this.numberOfMoreFeedbackRequests = this.stats.numberOfMoreFeedbackRequests;
+                this.numberOfOpenMoreFeedbackRequests = this.stats.numberOfOpenMoreFeedbackRequests;
                 const tutorLeaderboardEntry = this.stats.tutorLeaderboardEntries.find(entry => entry.userId === this.tutor.id);
                 if (tutorLeaderboardEntry) {
                     this.numberOfTutorAssessments = tutorLeaderboardEntry.numberOfAssessments;

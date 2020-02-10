@@ -102,6 +102,9 @@
                 "templateSuccess": "The Template Repository fulfills no test case.",
                 "templateInfo": "No result found for the Template Repository.",
                 "exerciseHasNoIssues": "No issues were identified in the repositories."
+            },
+            "intellij": {
+                "testLocally": "Test Locally"
             }
         }
     }

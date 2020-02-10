@@ -11,6 +11,7 @@ import { FeatureToggle } from 'app/feature-toggle';
             [disabled]="!exerciseId"
             [btnType]="ButtonType.INFO"
             [btnSize]="ButtonSize.SMALL"
+            [shouldSubmit]="false"
             [featureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
             [icon]="'download'"
             [title]="'instructorDashboard.exportRepos.title'"

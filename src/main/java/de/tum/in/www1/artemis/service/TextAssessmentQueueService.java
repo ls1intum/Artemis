@@ -7,9 +7,12 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.TextBlock;
+import de.tum.in.www1.artemis.domain.TextCluster;
+import de.tum.in.www1.artemis.domain.TextExercise;
+import de.tum.in.www1.artemis.domain.TextSubmission;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
-import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.repository.TextClusterRepository;
 
 @Service
@@ -54,7 +57,7 @@ public class TextAssessmentQueueService {
         if (textSubmissionList.isEmpty()) {
             return Optional.empty();
         }
-        HashMap<TextBlock, Double> smallerClusterMap = calculateSmallerClusterPercentageBatch(textSubmissionList);
+        Map<TextBlock, Double> smallerClusterMap = calculateSmallerClusterPercentageBatch(textSubmissionList);
         Optional<TextSubmission> best = textSubmissionList.stream().filter(textSubmission -> languages == null || languages.contains(textSubmission.getLanguage()))
                 .max(Comparator.comparingDouble(textSubmission -> calculateInformationGain(textSubmission, smallerClusterMap)));
         return best;
@@ -68,7 +71,7 @@ public class TextAssessmentQueueService {
      * @param smallerClusterMap Map of TextBlocks to percentage of smaller clusters the TextBlock Cluster
      * @return information gain for the TextSubmission
      */
-    private double calculateInformationGain(TextSubmission textSubmission, HashMap<TextBlock, Double> smallerClusterMap) {
+    private double calculateInformationGain(TextSubmission textSubmission, Map<TextBlock, Double> smallerClusterMap) {
         List<TextBlock> textBlocks = textSubmission.getBlocks();
         double totalScore = 0.0;
         for (TextBlock textBlock : textBlocks) {
@@ -119,19 +122,19 @@ public class TextAssessmentQueueService {
      * All TextSubmissions must have the same exercise
      * @param textSubmissionList for which the smaller clusters should be calculated
      * @throws IllegalArgumentException if not all TextSubmissions are from the same exercise
-     * @return return a HashMap where the textBlock is the key and smaller cluster percentage is the value
-     * If a textBlock has no cluster or is already assessable, it isn't in the HashMap
+     * @return return a map where the textBlock is the key and smaller cluster percentage is the value
+     * If a textBlock has no cluster or is already assessable, it isn't in the map
      */
-    public HashMap<TextBlock, Double> calculateSmallerClusterPercentageBatch(List<TextSubmission> textSubmissionList) {
-        HashMap<TextBlock, Double> result = new HashMap<>();
+    public Map<TextBlock, Double> calculateSmallerClusterPercentageBatch(List<TextSubmission> textSubmissionList) {
+        Map<TextBlock, Double> result = new HashMap<>();
         if (textSubmissionList.isEmpty()) {
             return result;
         }
-        StudentParticipation studentParticipation = (StudentParticipation) textSubmissionList.get(0).getParticipation();
-        TextExercise currentExercise = (TextExercise) studentParticipation.getExercise();
+        Participation participation = textSubmissionList.get(0).getParticipation();
+        TextExercise currentExercise = (TextExercise) participation.getExercise();
         List<TextCluster> clusters = textClusterRepository.findAllByExercise(currentExercise);
 
-        if (textSubmissionList.stream().map(submission -> ((StudentParticipation) submission.getParticipation()).getExercise()).anyMatch(elem -> elem != currentExercise)) {
+        if (textSubmissionList.stream().map(submission -> submission.getParticipation().getExercise()).anyMatch(elem -> elem != currentExercise)) {
             throw new IllegalArgumentException("All TextSubmissions have to be from the same Exercise");
         }
         textSubmissionList.forEach(textSubmission -> {

@@ -50,11 +50,11 @@ import { ArtemisHeaderExercisePageWithDetailsModule } from 'app/exercise-headers
 import { ArtemisListOfComplaintsModule } from 'app/list-of-complaints';
 import { QuizExerciseExportComponent } from 'app/entities/quiz-exercise/quiz-exercise-export.component';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
-import { StructuredGradingInstructionsModule } from 'app/structured-grading-instructions/structured-grading-instructions.module';
+import { StructuredGradingInstructionModule } from 'app/structured-grading-instruction/structured-grading-instruction.module';
 
 @NgModule({
     imports: [
-        StructuredGradingInstructionsModule,
+        StructuredGradingInstructionModule,
         BrowserModule,
         BrowserAnimationsModule,
         ArtemisSharedModule,

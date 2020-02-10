@@ -7,7 +7,8 @@ import { JhiAlertService, JhiEventManager } from 'ng-jhipster';
 
 import { TextExercise } from './text-exercise.model';
 import { TextExerciseService } from './text-exercise.service';
-import { Course, CourseService } from '../course';
+import { Course } from '../course';
+import { CourseService } from 'app/entities/course/course.service';
 
 import { ExerciseCategory, ExerciseService } from 'app/entities/exercise';
 import { ExampleSubmissionService } from 'app/entities/example-submission/example-submission.service';

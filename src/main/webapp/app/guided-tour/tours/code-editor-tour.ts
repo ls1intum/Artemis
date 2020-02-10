@@ -15,7 +15,6 @@ export const codeEditorTour: GuidedTour = {
         }),
         new TextTourStep({
             highlightSelector: '.list-group-item.file-item:not(.node-selected)',
-            clickEventListenerSelector: '.ace_text-layer',
             headlineTranslateKey: 'tour.programmingExercise.codeEditor.exerciseFile.headline',
             contentTranslateKey: 'tour.programmingExercise.codeEditor.exerciseFile.content',
             highlightPadding: 5,
@@ -41,7 +40,6 @@ export const codeEditorTour: GuidedTour = {
         }),
         new TextTourStep({
             highlightSelector: '#submit_button',
-            clickEventListenerSelector: 'jhi-result',
             headlineTranslateKey: 'tour.programmingExercise.codeEditor.submitChanges.headline',
             contentTranslateKey: 'tour.programmingExercise.codeEditor.submitChanges.content',
             hintTranslateKey: 'tour.programmingExercise.codeEditor.submitChanges.hint',
@@ -70,7 +68,6 @@ export const codeEditorTour: GuidedTour = {
         }),
         new TextTourStep({
             highlightSelector: 'jhi-updating-result .text-danger .result',
-            clickEventListenerSelector: 'body',
             headlineTranslateKey: 'tour.programmingExercise.buildStatus.headline',
             contentTranslateKey: 'tour.programmingExercise.buildStatus.content',
             hintTranslateKey: 'tour.programmingExercise.buildStatus.hint',
