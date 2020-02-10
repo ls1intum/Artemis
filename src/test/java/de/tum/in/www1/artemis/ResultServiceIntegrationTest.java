@@ -636,6 +636,15 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationTest 
                 HttpStatus.BAD_REQUEST);
     }
 
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void createResultForExternalSubmission_dueDateNotPassed() throws Exception {
+        Result result = new Result();
+        result.setRated(false);
+        request.postWithResponseBody("/api/exercises/" + modelingExercise.getId() + "/external-submission-results?studentLogin=student1", result, Result.class,
+                HttpStatus.BAD_REQUEST);
+    }
+
     private ProgrammingExerciseStudentParticipation setParticipationForProgrammingExercise(AssessmentType assessmentType) {
         programmingExercise.setDueDate(ZonedDateTime.now().minusDays(1));
         programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().minusDays(1));
