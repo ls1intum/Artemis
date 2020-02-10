@@ -8,7 +8,7 @@ import { filter, flatMap, map, switchMap } from 'rxjs/operators';
 import { debounceTime, distinctUntilChanged } from 'rxjs/internal/operators';
 import { SERVER_API_URL } from 'app/app.constants';
 import { GuidedTourMapping, GuidedTourSetting } from 'app/guided-tour/guided-tour-setting.model';
-import { GuidedTourState, Orientation, OrientationConfiguration, UserInteractionEvent } from './guided-tour.constants';
+import { GuidedTourState, Orientation, OrientationConfiguration, UserInteractionEvent, ResetParticipation } from './guided-tour.constants';
 import { User } from 'app/core/user/user.model';
 import { TextTourStep, TourStep, UserInterActionTourStep, VideoTourStep } from 'app/guided-tour/guided-tour-step.model';
 import { GuidedTour } from 'app/guided-tour/guided-tour.model';
@@ -736,45 +736,79 @@ export class GuidedTourService {
     /** Resets participation and enables the restart of the current tour */
     public restartTour() {
         /** Reset exercise participation */
-        if (this.currentExercise && this.currentExercise.exampleSubmissions && this.currentExercise.exampleSubmissions.length !== 0) {
-            this.restartIsLoading = true;
-            this.tutorParticipationService
-                .deleteTutorParticipationForGuidedTour(this.currentExercise)
-                .pipe(
-                    map(() => {
-                        this.deleteGuidedTourSetting(this.availableTourForComponent!.settingsKey);
-                    }),
-                )
-                .subscribe(() => {
-                    this.router.navigateByUrl('/course').then(() => {
-                        this.restartIsLoading = false;
-                    });
-                });
-        } else if (this.currentCourse && this.currentExercise) {
-            this.restartIsLoading = true;
-            const isProgrammingExercise = this.currentExercise.type === ExerciseType.PROGRAMMING;
-            this.participationService
-                .findParticipation(this.currentExercise.id)
-                .pipe(
-                    map((response: HttpResponse<StudentParticipation>) => response.body!),
-                    flatMap(participation =>
-                        this.participationService.deleteForGuidedTour(participation.id, { deleteBuildPlan: isProgrammingExercise, deleteRepository: isProgrammingExercise }),
-                    ),
-                    switchMap(() => this.deleteGuidedTourSetting(this.availableTourForComponent!.settingsKey)),
-                )
-                .subscribe(
-                    () => {
-                        this.navigateToCourseOverview(this.currentCourse!.id);
-                    },
-                    () => {
-                        // start tour in case the participation was deleted otherwise
-                        this.restartIsLoading = false;
-                        this.startTour();
-                    },
-                );
+        if (this.currentCourse && this.currentExercise && this.availableTourForComponent) {
+            switch (this.availableTourForComponent.resetParticipation) {
+                case ResetParticipation.EXERCISE_PARTICIPATION:
+                    this.resetExerciseParticipation(this.currentCourse, this.currentExercise, this.availableTourForComponent.settingsKey);
+                    break;
+                case ResetParticipation.TUTOR_ASSESSMENT:
+                    this.resetTutorParticipation(this.currentExercise, this.availableTourForComponent.settingsKey);
+                    break;
+                case ResetParticipation.NONE:
+                    this.startTour();
+                    break;
+            }
         } else {
             this.startTour();
         }
+    }
+
+    /**
+     *
+     * @param course
+     * @param exercise
+     * @param settingsKey
+     */
+    private resetExerciseParticipation(course: Course, exercise: Exercise, settingsKey: string) {
+        this.restartIsLoading = true;
+        const isProgrammingExercise = exercise.type === ExerciseType.PROGRAMMING;
+        this.participationService
+            .findParticipation(exercise.id)
+            .pipe(
+                map((response: HttpResponse<StudentParticipation>) => response.body!),
+                flatMap(participation =>
+                    this.participationService.deleteForGuidedTour(participation.id, { deleteBuildPlan: isProgrammingExercise, deleteRepository: isProgrammingExercise }),
+                ),
+                switchMap(() => this.deleteGuidedTourSetting(settingsKey)),
+            )
+            .subscribe(
+                () => {
+                    this.navigateToCourseOverview(course.id);
+                },
+                () => {
+                    // start tour in case the participation was deleted otherwise
+                    this.restartIsLoading = false;
+                    this.startTour();
+                },
+            );
+    }
+
+    /**
+     *
+     * @param exercise
+     * @param settingsKey
+     */
+    private resetTutorParticipation(exercise: Exercise, settingsKey: string) {
+        this.restartIsLoading = true;
+        this.tutorParticipationService
+            .deleteTutorParticipationForGuidedTour(exercise)
+            .pipe(
+                map(() => {
+                    this.deleteGuidedTourSetting(settingsKey);
+                }),
+            )
+            .subscribe(() => {
+                this.navigateToCourseAdministration(exercise);
+            });
+    }
+
+    /**
+     * Navigate to course administration after resetting an exercise tutor participation
+     */
+    private navigateToCourseAdministration(exercise: Exercise) {
+        this.router.navigateByUrl('/course').then(() => {
+            this.restartIsLoading = false;
+        });
     }
 
     /**
@@ -1041,8 +1075,20 @@ export class GuidedTourService {
             return null;
         }
 
-        this.enableTour(guidedTour, init);
-        this.currentCourse = courseForTour;
+        if (this.guidedTourMapping!.tours[guidedTour.settingsKey] === '') {
+            this.currentCourse = courseForTour;
+            this.enableTour(guidedTour, init);
+        } else {
+            this.courseService.findWithExercises(courseForTour.id).subscribe(courseWithExercises => {
+                const exercises = courseWithExercises.body!.exercises;
+                const exerciseForTour = exercises.find(exercise => this.isGuidedTourAvailableForExercise(exercise, guidedTour));
+
+                this.currentCourse = courseForTour;
+                this.currentExercise = exerciseForTour ? exerciseForTour : null;
+                this.enableTour(guidedTour, init);
+            });
+        }
+
         return courseForTour;
     }
 
@@ -1060,6 +1106,7 @@ export class GuidedTourService {
         this.enableTour(guidedTour, init);
         this.currentExercise = exercise;
         this.currentCourse = exercise.course;
+
         return exercise;
     }
 

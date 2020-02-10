@@ -1,10 +1,11 @@
 import { GuidedTour } from 'app/guided-tour/guided-tour.model';
 import { AssessmentTaskTourStep, TextTourStep, UserInterActionTourStep } from 'app/guided-tour/guided-tour-step.model';
-import { Orientation, UserInteractionEvent } from 'app/guided-tour/guided-tour.constants';
+import { Orientation, ResetParticipation, UserInteractionEvent } from 'app/guided-tour/guided-tour.constants';
 import { AssessmentObject, GuidedTourAssessmentTask } from 'app/guided-tour/guided-tour-task.model';
 
 export const tutorAssessmentTour: GuidedTour = {
     settingsKey: 'tutor_assessment_tour',
+    resetParticipation: ResetParticipation.TUTOR_ASSESSMENT,
     steps: [
         new UserInterActionTourStep({
             highlightSelector: '.tutor-dashboard.guided-tour',

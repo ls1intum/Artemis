@@ -15,7 +15,7 @@ import { NavbarComponent } from 'app/layouts';
 import { SERVER_API_URL } from 'app/app.constants';
 import { GuidedTour } from 'app/guided-tour/guided-tour.model';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
-import { GuidedTourState, Orientation, UserInteractionEvent } from 'app/guided-tour/guided-tour.constants';
+import { GuidedTourState, Orientation, ResetParticipation, UserInteractionEvent } from 'app/guided-tour/guided-tour.constants';
 import { GuidedTourComponent } from 'app/guided-tour/guided-tour.component';
 import { MockCookieService, MockSyncStorage } from '../mocks';
 import { GuidedTourMapping, GuidedTourSetting } from 'app/guided-tour/guided-tour-setting.model';
@@ -24,7 +24,7 @@ import { MockAccountService } from '../mocks/mock-account.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { DeviceDetectorService } from 'ngx-device-detector';
 import { Course } from 'app/entities/course/course.model';
-import { Exercise, ExerciseType } from 'app/entities/exercise';
+import { Exercise, ExerciseService, ExerciseType } from 'app/entities/exercise';
 import { MockTranslateService } from '../mocks/mock-translate.service';
 import { GuidedTourModelingTask, personUML } from 'app/guided-tour/guided-tour-task.model';
 import { completedTour } from 'app/guided-tour/tours/general-tour';
@@ -32,6 +32,7 @@ import { InitializationState, StudentParticipation } from 'app/entities/particip
 import { SinonStub, stub } from 'sinon';
 import { HttpResponse } from '@angular/common/http';
 import { ParticipationService } from 'app/entities/participation/participation.service';
+import { CourseService } from 'app/entities/course/course.service';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -39,6 +40,7 @@ const expect = chai.expect;
 describe('GuidedTourService', () => {
     const tour: GuidedTour = {
         settingsKey: 'tour',
+        resetParticipation: ResetParticipation.EXERCISE_PARTICIPATION,
         steps: [
             new TextTourStep({ highlightSelector: '.random-selector', headlineTranslateKey: '', contentTranslateKey: '' }),
             new TextTourStep({ headlineTranslateKey: '', contentTranslateKey: '', orientation: Orientation.TOPLEFT }),
@@ -47,6 +49,7 @@ describe('GuidedTourService', () => {
 
     const tourWithUserInteraction: GuidedTour = {
         settingsKey: 'tour_user_interaction',
+        resetParticipation: ResetParticipation.EXERCISE_PARTICIPATION,
         steps: [
             new UserInterActionTourStep({
                 highlightSelector: '.random-selector',
@@ -60,6 +63,7 @@ describe('GuidedTourService', () => {
 
     const tourWithCourseAndExercise: GuidedTour = {
         settingsKey: 'tour_with_course_and_exercise',
+        resetParticipation: ResetParticipation.EXERCISE_PARTICIPATION,
         steps: [
             new TextTourStep({ headlineTranslateKey: '', contentTranslateKey: '' }),
             new TextTourStep({ headlineTranslateKey: '', contentTranslateKey: '', orientation: Orientation.TOPLEFT }),
@@ -68,6 +72,7 @@ describe('GuidedTourService', () => {
 
     const tourWithModelingTask: GuidedTour = {
         settingsKey: 'tour_modeling_task',
+        resetParticipation: ResetParticipation.EXERCISE_PARTICIPATION,
         steps: [
             new ModelingTaskTourStep({
                 headlineTranslateKey: '',
@@ -128,6 +133,7 @@ describe('GuidedTourService', () => {
         let router: Router;
         let guidedTourService: GuidedTourService;
         let participationService: ParticipationService;
+        let courseService: CourseService;
 
         let findParticipationStub: SinonStub;
         let deleteParticipationStub: SinonStub;
@@ -169,6 +175,7 @@ describe('GuidedTourService', () => {
                     router = TestBed.get(Router);
                     guidedTourService = TestBed.get(GuidedTourService);
                     participationService = TestBed.get(ParticipationService);
+                    courseService = TestBed.get(CourseService);
 
                     findParticipationStub = stub(participationService, 'findParticipation');
                     deleteParticipationStub = stub(participationService, 'deleteForGuidedTour');
@@ -289,15 +296,29 @@ describe('GuidedTourService', () => {
             });
 
             it('should start the tour for the matching course title', () => {
-                let courses = [course1];
+                spyOn(courseService, 'findWithExercises').and.returnValue(of({ body: course1 } as HttpResponse<any>));
+                const courses = [course1];
+
+                // enable tour for matching course title
+                guidedTourService.enableTourForCourseOverview(courses, tourWithCourseAndExercise, true);
+                expect(guidedTourService.currentTour).to.equal(tourWithCourseAndExercise);
+                expect(guidedTourService['currentCourse']).to.equal(course1);
+                expect(guidedTourService['currentExercise']).to.equal(exercise1);
+                resetCurrentTour();
+
+                const tourWithoutExerciseMapping = { courseShortName: 'tutorial', tours: { tour_with_course_and_exercise: '' } } as GuidedTourMapping;
+                guidedTourService.guidedTourMapping = tourWithoutExerciseMapping;
+
                 // enable tour for matching course title
                 guidedTourService.enableTourForCourseOverview(courses, tourWithCourseAndExercise, true);
                 expect(guidedTourService.currentTour).to.equal(tourWithCourseAndExercise);
                 expect(guidedTourService['currentCourse']).to.equal(course1);
                 expect(guidedTourService['currentExercise']).to.be.null;
                 resetCurrentTour();
+            });
 
-                courses = [course2];
+            it('should disable the tour for not matching course title', () => {
+                const courses = [course2];
                 // disable tour for not matching titles
                 guidedTourService.enableTourForCourseOverview(courses, tourWithCourseAndExercise, true);
                 currentCourseAndExerciseNull();

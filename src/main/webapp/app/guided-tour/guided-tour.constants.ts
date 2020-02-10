@@ -46,3 +46,9 @@ export enum Direction {
     VERTICAL = 'vertical',
     HORIZONTAL = 'horizontal',
 }
+
+export enum ResetParticipation {
+    EXERCISE_PARTICIPATION = 'exercise-participation',
+    TUTOR_ASSESSMENT = 'tutor-assessment',
+    NONE = 'none',
+}
