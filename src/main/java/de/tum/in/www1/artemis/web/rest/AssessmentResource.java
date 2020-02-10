@@ -95,7 +95,7 @@ public abstract class AssessmentResource {
      * @return true of the the given user can override a potentially existing result
      */
     protected boolean isAllowedToOverrideExistingResult(long resultId, Exercise exercise, User user, boolean isAtLeastInstructor) {
-        final var existingResult = resultRepository.findByIdWithEagerFeedbacksAndAssessor(resultId);
+        final var existingResult = resultRepository.findWithEagerSubmissionAndFeedbackAndAssessorById(resultId);
         if (existingResult.isEmpty()) {
             // if there is no result yet, we can always save, submit and potentially "override"
             return true;
