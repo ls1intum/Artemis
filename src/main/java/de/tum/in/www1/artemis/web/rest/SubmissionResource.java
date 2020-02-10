@@ -65,6 +65,7 @@ public class SubmissionResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping("/submissions")
+    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Submission> createSubmission(@RequestBody Submission submission) throws URISyntaxException {
         log.debug("REST request to save Submission : {}", submission);
         if (submission.getId() != null) {
@@ -84,6 +85,7 @@ public class SubmissionResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PutMapping("/submissions")
+    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Submission> updateSubmission(@RequestBody Submission submission) throws URISyntaxException {
         log.debug("REST request to update Submission : {}", submission);
         if (submission.getId() == null) {
@@ -99,6 +101,7 @@ public class SubmissionResource {
      * @return the ResponseEntity with status 200 (OK) and the list of submissions in body
      */
     @GetMapping("/submissions")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public List<Submission> getAllSubmissions() {
         log.debug("REST request to get all Submissions");
         return submissionRepository.findAll();
@@ -111,6 +114,7 @@ public class SubmissionResource {
      * @return the ResponseEntity with status 200 (OK) and with body the submission, or with status 404 (Not Found)
      */
     @GetMapping("/submissions/{id}")
+    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Submission> getSubmission(@PathVariable Long id) {
         log.debug("REST request to get Submission : {}", id);
         Optional<Submission> submission = submissionRepository.findById(id);
