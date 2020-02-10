@@ -291,7 +291,6 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationTest 
     @WithMockUser(value = "tutor1", roles = "TA")
     public void createManualProgrammingExerciseResult_manualResultsNotAllowed() throws Exception {
         var participation = setParticipationForProgrammingExercise(AssessmentType.AUTOMATIC);
-
         Result result = ModelFactory.generateResult(true, 200).resultString("Good effort!");
         List<Feedback> feedbacks = ModelFactory.generateFeedback().stream().peek(feedback -> feedback.setText("Good work here")).collect(Collectors.toList());
         result.setFeedbacks(feedbacks);
@@ -301,6 +300,45 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationTest 
         when(gitService.getLastCommitHash(ArgumentMatchers.any())).thenReturn(ObjectId.fromString(dummyHash));
 
         request.postWithResponseBody("/api/participations/" + participation.getId() + "/manual-results", result, Result.class, HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void createManualProgrammingExerciseResult_resultExists() throws Exception {
+        var participation = setParticipationForProgrammingExercise(AssessmentType.SEMI_AUTOMATIC);
+        Result result = ModelFactory.generateResult(true, 200).resultString("Good effort!");
+        List<Feedback> feedbacks = ModelFactory.generateFeedback().stream().peek(feedback -> feedback.setText("Good work here")).collect(Collectors.toList());
+        result.setFeedbacks(feedbacks);
+        result.setParticipation(participation);
+        result = resultRepository.save(result);
+
+        String dummyHash = "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d";
+        when(gitService.getLastCommitHash(ArgumentMatchers.any())).thenReturn(ObjectId.fromString(dummyHash));
+
+        request.postWithResponseBody("/api/participations/" + participation.getId() + "/manual-results", result, Result.class, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void createManualProgrammingExerciseResult_resultPropertyMissing() throws Exception {
+        var participation = setParticipationForProgrammingExercise(AssessmentType.SEMI_AUTOMATIC);
+        Result result = new Result();
+
+        String dummyHash = "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d";
+        when(gitService.getLastCommitHash(ArgumentMatchers.any())).thenReturn(ObjectId.fromString(dummyHash));
+
+        // Result string is missing
+        request.postWithResponseBody("/api/participations/" + participation.getId() + "/manual-results", result, Result.class, HttpStatus.BAD_REQUEST);
+
+        // Result score is missing
+        result.setResultString("Good work here");
+        request.postWithResponseBody("/api/participations/" + participation.getId() + "/manual-results", result, Result.class, HttpStatus.BAD_REQUEST);
+
+        // Feedbacks have empty text
+        result.setScore(100L);
+        List<Feedback> feedbacks = ModelFactory.generateFeedback();
+        result.setFeedbacks(feedbacks);
+        request.postWithResponseBody("/api/participations/" + participation.getId() + "/manual-results", result, Result.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -487,7 +525,7 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationTest 
 
     @Test
     @WithMockUser(value = "tutor1", roles = "TA")
-    public void testGetResult() throws Exception {
+    public void getResult() throws Exception {
         Result result = database.addResultToParticipation(studentParticipation);
         result = database.addFeedbacksToResult(result);
         Result returnedResult = request.get("/api/results/" + result.getId(), HttpStatus.OK, Result.class);
@@ -497,14 +535,14 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationTest 
 
     @Test
     @WithMockUser(value = "student1", roles = "USER")
-    public void testGetResult_asStudent() throws Exception {
+    public void getResult_asStudent() throws Exception {
         Result result = database.addResultToParticipation(studentParticipation);
         request.get("/api/results/" + result.getId(), HttpStatus.FORBIDDEN, Result.class);
     }
 
     @Test
     @WithMockUser(value = "tutor1", roles = "TA")
-    public void testGetLatestResultWithFeedbacks() throws Exception {
+    public void getLatestResultWithFeedbacks() throws Exception {
         Result result = database.addResultToParticipation(studentParticipation);
         result.setCompletionDate(ZonedDateTime.now().minusHours(10));
         Result latestResult = database.addResultToParticipation(studentParticipation);
@@ -518,7 +556,7 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationTest 
 
     @Test
     @WithMockUser(value = "student1", roles = "USER")
-    public void testGetLatestResultWithFeedbacks_asStudent() throws Exception {
+    public void getLatestResultWithFeedbacks_asStudent() throws Exception {
         Result result = database.addResultToParticipation(studentParticipation);
         result = database.addFeedbacksToResult(result);
         request.get("/api/participations/" + studentParticipation.getId() + "/latest-result", HttpStatus.FORBIDDEN, Result.class);
@@ -526,7 +564,7 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationTest 
 
     @Test
     @WithMockUser(value = "tutor1", roles = "TA")
-    public void testDeleteResult() throws Exception {
+    public void deleteResult() throws Exception {
         Result result = database.addResultToParticipation(studentParticipation);
         result = database.addFeedbacksToResult(result);
         request.delete("/api/results/" + result.getId(), HttpStatus.OK);
@@ -536,7 +574,7 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationTest 
 
     @Test
     @WithMockUser(value = "tutor1", roles = "TA")
-    public void testGetResultForSubmission() throws Exception {
+    public void getResultForSubmission() throws Exception {
         var now = ZonedDateTime.now();
         TextExercise textExercise = ModelFactory.generateTextExercise(now.minusDays(1), now.minusHours(2), now.minusHours(1), course);
         course.addExercises(textExercise);
@@ -550,7 +588,7 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationTest 
 
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
-    public void testCreateExampleResult() throws Exception {
+    public void createExampleResult() throws Exception {
         course.addExercises(modelingExercise);
         modelingExerciseRepository.save(modelingExercise);
         var modelingSubmission = database.addSubmission(modelingExercise, new ModelingSubmission(), "student1");
@@ -563,7 +601,7 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationTest 
 
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
-    public void testCreateResultForExternalSubmission() throws Exception {
+    public void createResultForExternalSubmission() throws Exception {
         var now = ZonedDateTime.now();
         var modelingExercise = ModelFactory.generateModelingExercise(now.minusDays(1), now.minusHours(2), now.minusHours(1), DiagramType.ClassDiagram, course);
         course.addExercises(modelingExercise);
@@ -575,7 +613,7 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationTest 
 
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
-    public void testCreateResultForExternalSubmission_quizExercise() throws Exception {
+    public void createResultForExternalSubmission_quizExercise() throws Exception {
         var now = ZonedDateTime.now();
         var quizExercise = ModelFactory.generateQuizExercise(now.minusDays(1), now.minusHours(2), course);
         course.addExercises(quizExercise);
@@ -587,7 +625,7 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationTest 
 
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
-    public void testCreateResultForExternalSubmission_studentNotInTheCourse() throws Exception {
+    public void createResultForExternalSubmission_studentNotInTheCourse() throws Exception {
         var now = ZonedDateTime.now();
         var modelingExercise = ModelFactory.generateModelingExercise(now.minusDays(1), now.minusHours(2), now.minusHours(1), DiagramType.ClassDiagram, course);
         course.addExercises(modelingExercise);
