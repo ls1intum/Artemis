@@ -1,16 +1,19 @@
-import { Component, Input, Output, EventEmitter } from '@angular/core';
+import { Component, Input, Output, EventEmitter, ViewChild, ElementRef } from '@angular/core';
 import { Course } from 'app/entities/course';
 import { Observable, of } from 'rxjs';
 import { User } from 'app/core/user/user.model';
 import { debounceTime, distinctUntilChanged, map, switchMap, tap, catchError } from 'rxjs/operators';
 import { UserService } from 'app/core/user/user.service';
 import { Exercise } from 'app/entities/exercise';
+import { get } from 'lodash';
 
 @Component({
     selector: 'jhi-team-student-search',
     templateUrl: './team-student-search.component.html',
 })
 export class TeamStudentSearchComponent {
+    @ViewChild('ngbTypeahead', { static: false }) ngbTypeahead: ElementRef;
+
     @Input() course: Course;
     @Input() exercise: Exercise;
 
@@ -58,7 +61,20 @@ export class TeamStudentSearchComponent {
                         }),
                     );
             }),
+            tap(users => {
+                setTimeout(() => {
+                    for (let i = 0; i < this.typeaheadButtons.length; i++) {
+                        if (users[i].assignedToTeam) {
+                            this.typeaheadButtons[i].setAttribute('disabled', '');
+                        }
+                    }
+                });
+            }),
             tap(() => this.searching.emit(false)),
         );
     };
+
+    private get typeaheadButtons() {
+        return get(this.ngbTypeahead, 'nativeElement.nextSibling.children', []);
+    }
 }
