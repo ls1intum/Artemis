@@ -76,6 +76,15 @@ export function isElementInViewPortHorizontally(orientation: Orientation, left: 
 }
 
 /**
+ * Determines if the given tour step url matches with the current router url
+ * @param pageUrl   current page url
+ * @param tourStepUrl   tour step url as string
+ */
+export function determineUrlMatching(pageUrl: string, tourStepUrl: string) {
+    return pageUrl.match(tourStepUrl.slice(0, tourStepUrl.indexOf('?')));
+}
+
+/**
  * Helper function to retrieve the parameters of a URL string
  * @param url   url as string
  */

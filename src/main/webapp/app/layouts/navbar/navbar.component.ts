@@ -114,7 +114,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
      * Determine the label for initiating the guided tour based on the last seen tour step
      */
     guidedTourInitLabel(): string {
-        switch (this.guidedTourService.getLastSeenTourStepIndex()) {
+        switch (this.guidedTourService.getLastSeenTourStepForInit()) {
             case -1: {
                 return 'global.menu.restartTutorial';
             }
