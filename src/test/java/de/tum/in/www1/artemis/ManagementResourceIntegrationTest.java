@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis;
 
 import static org.mockito.Mockito.verify;
 
+import java.time.LocalDate;
 import java.util.HashMap;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -41,5 +42,12 @@ public class ManagementResourceIntegrationTest extends AbstractSpringIntegration
     @WithMockUser(username = "admin", roles = "ADMIN")
     public void getAllAuditEvents() throws Exception {
         var auditEvents = request.getList("/management/audits", HttpStatus.OK, AuditEvent.class);
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    public void getAllAuditEventsByDate() throws Exception {
+        LocalDate date = LocalDate.now();
+        var auditEvents = request.getList("/management/audits?fromDate=2020-01-20&toDate=" + date.toString(), HttpStatus.OK, AuditEvent.class);
     }
 }
