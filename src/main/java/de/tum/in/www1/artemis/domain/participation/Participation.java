@@ -262,7 +262,7 @@ public abstract class Participation implements Serializable, ParticipationInterf
     @Override
     public String toString() {
         return "Participation{" + "id=" + id + ", initializationState=" + initializationState + ", initializationDate=" + initializationDate + ", results=" + results
-                + ", submissions=" + submissions + '}';
+                + ", submissions=" + submissions + ", submissionCount=" + submissionCount + "}";
     }
 
     /**
