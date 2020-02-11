@@ -1,5 +1,5 @@
 import { GuidedTour } from 'app/guided-tour/guided-tour.model';
-import { TextTourStep } from 'app/guided-tour/guided-tour-step.model';
+import { TextTourStep, UserInterActionTourStep } from 'app/guided-tour/guided-tour-step.model';
 import { Orientation, UserInteractionEvent } from 'app/guided-tour/guided-tour.constants';
 import { clickOnElement } from 'app/guided-tour/guided-tour.utils';
 
@@ -14,7 +14,7 @@ export const programmingExerciseFail: GuidedTour = {
             orientation: Orientation.RIGHT,
             skipStepIfNoSelector: true,
         }),
-        new TextTourStep({
+        new UserInterActionTourStep({
             highlightSelector: 'jhi-programming-exercise-instructions-task-status .text-danger.test-status--linked',
             headlineTranslateKey: 'tour.programmingExercise.testFailure.headline',
             contentTranslateKey: 'tour.programmingExercise.testFailure.content',
