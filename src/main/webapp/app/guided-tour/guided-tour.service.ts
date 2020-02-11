@@ -504,7 +504,10 @@ export class GuidedTourService {
         /** If the user has seen the tour already, then set the last seen tour step to -1
          *  to enable the restart of the tour instead of just starting it
          */
-        return lastSeenTourStep && lastSeenTourStep !== 0 ? lastSeenTourStep : -1;
+        if (lastSeenTourStep && this.availableTourForComponent.steps[lastSeenTourStep]) {
+            return lastSeenTourStep !== 0 ? lastSeenTourStep : -1;
+        }
+        return 0;
     }
 
     /**
