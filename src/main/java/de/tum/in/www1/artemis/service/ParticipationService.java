@@ -1019,7 +1019,10 @@ public class ParticipationService {
      * @return the number of submissions per participation in the given exercise
      */
     public Map<Long, Integer> countSubmissionsPerParticipationByExerciseId(long exerciseId) {
-        List<long[]> submissionCountTuples = studentParticipationRepository.countSubmissionsPerParticipationByExerciseId(exerciseId);
-        return submissionCountTuples.stream().collect(Collectors.toMap(t -> t[0], t -> Math.toIntExact(t[1])));
+        List<long[]> participationIdAndSubmissionCountPairs = studentParticipationRepository.countSubmissionsPerParticipationByExerciseId(exerciseId);
+        // convert List<[participationId, submissionCount]> into Map<participationId -> submissionCount>
+        return participationIdAndSubmissionCountPairs.stream().collect(Collectors.toMap(participationIdAndSubmissionCountPair -> participationIdAndSubmissionCountPair[0], // participationId
+                participationIdAndSubmissionCountPair -> Math.toIntExact(participationIdAndSubmissionCountPair[1]) // submissionCount
+        ));
     }
 }
