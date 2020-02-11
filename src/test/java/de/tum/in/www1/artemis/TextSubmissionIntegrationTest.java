@@ -16,11 +16,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import de.tum.in.www1.artemis.domain.Exercise;
-import de.tum.in.www1.artemis.domain.TextBlock;
-import de.tum.in.www1.artemis.domain.TextExercise;
-import de.tum.in.www1.artemis.domain.TextSubmission;
-import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
@@ -241,6 +237,20 @@ public class TextSubmissionIntegrationTest extends AbstractSpringIntegrationTest
         participationRepository.save(afterDueDateParticipation);
 
         request.put("/api/exercises/" + textExerciseBeforeDueDate.getId() + "/text-submissions", textSubmission, HttpStatus.OK);
+    }
+
+    @Test
+    @WithMockUser(value = "student1", roles = "USER")
+    public void submitExercise_submissionIsAlreadyCreated_badRequest() throws Exception {
+        textSubmission = submissionRepository.save(textSubmission);
+        request.post("/api/exercises/" + textExerciseBeforeDueDate.getId() + "/text-submissions", textSubmission, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(value = "student1", roles = "USER")
+    public void submitExercise_noExercise_badRequest() throws Exception {
+        var fakeExerciseId = textExerciseBeforeDueDate.getId() + 100L;
+        request.post("/api/exercises/" + fakeExerciseId + "/text-submissions", textSubmission, HttpStatus.NOT_FOUND);
     }
 
     @Test
