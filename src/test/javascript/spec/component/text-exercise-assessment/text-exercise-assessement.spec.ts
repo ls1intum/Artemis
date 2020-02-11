@@ -8,14 +8,14 @@ import * as moment from 'moment';
 import { SinonStub, stub } from 'sinon';
 import { ArtemisTestModule } from '../../test.module';
 import { MockSyncStorage } from '../../mocks';
-import { ResultComponent } from 'app/entities/result';
+import { Result, ResultComponent } from 'app/entities/result';
 import { MockComponent } from 'ng-mocks';
 import { ArtemisSharedModule } from 'app/shared';
 import { ExerciseType } from 'app/entities/exercise';
 import { MockAlertService } from '../../helpers/mock-alert.service';
 import { JhiAlertService } from 'ng-jhipster';
-import { Router } from '@angular/router';
-import { of } from 'rxjs';
+import { ActivatedRoute, Router } from '@angular/router';
+import { of, throwError } from 'rxjs';
 import { TextAssessmentComponent } from 'app/text-assessment/text-assessment.component';
 import { TextSubmission, TextSubmissionService } from 'app/entities/text-submission';
 import { TextExercise } from 'app/entities/text-exercise';
@@ -33,6 +33,9 @@ import { SubmissionExerciseType, SubmissionType } from 'app/entities/submission'
 import { ComplaintService } from 'app/entities/complaint/complaint.service';
 import { MockComplaintService } from '../../mocks/mock-complaint.service';
 import { TranslateModule } from '@ngx-translate/core';
+import { MockActivatedRoute } from '../../helpers/mock-route.service';
+import { Participation, StudentParticipation } from 'app/entities/participation';
+import { AssessmentType } from 'app/entities/assessment-type';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -46,7 +49,7 @@ describe('TextAssessmentComponent', () => {
     let router: Router;
     let location: Location;
 
-    const exercise = { id: 20, type: ExerciseType.TEXT } as TextExercise;
+    const exercise = { id: 20, type: ExerciseType.TEXT, assessmentType: AssessmentType.MANUAL } as TextExercise;
 
     beforeEach(async () => {
         return TestBed.configureTestingModule({
@@ -66,6 +69,7 @@ describe('TextAssessmentComponent', () => {
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: ComplaintService, useClass: MockComplaintService },
+                { provide: ActivatedRoute, useValue: new MockActivatedRoute({ exerciseId: 1, submissionId: 'new' }) },
             ],
         })
             .overrideModule(ArtemisTestModule, { set: { declarations: [], exports: [] } })
@@ -91,9 +95,13 @@ describe('TextAssessmentComponent', () => {
     it(
         'AssessNextButton should be visible, the method assessNextOptimal should be invoked ' + 'and the url should change after clicking on the button',
         fakeAsync(() => {
+            getTextSubmissionForExerciseWithoutAssessmentStub.returns(throwError({ status: 404 }));
             // set all attributes for comp
             comp.ngOnInit();
             tick();
+
+            // not found state is correctly set on the component
+            expect(comp.notFound).to.be.true;
 
             comp.userId = 99;
             comp.submission = {
@@ -139,4 +147,28 @@ describe('TextAssessmentComponent', () => {
             flush();
         }),
     );
+
+    it('Should set the result and participation properly for new submission', fakeAsync(() => {
+        const result = { hasComplaint: false } as Result;
+        const participation = new StudentParticipation() as Participation;
+        participation.exercise = exercise;
+        const submission = {
+            submissionExerciseType: SubmissionExerciseType.TEXT,
+            id: 2278,
+            submitted: true,
+            type: SubmissionType.MANUAL,
+            submissionDate: moment('2019-07-09T10:47:33.244Z'),
+            text: 'asdfasdfasdfasdf',
+            participation,
+            result,
+        } as TextSubmission;
+        getTextSubmissionForExerciseWithoutAssessmentStub.returns(of(submission));
+        comp.ngOnInit();
+        tick();
+        expect(comp.submission).to.be.deep.equal(submission);
+        expect(comp.result).to.be.deep.equal(result);
+        expect(comp.exercise).to.be.deep.equal(exercise);
+        expect(comp.participation).to.be.deep.equal(participation);
+        expect(comp.isAtLeastInstructor).to.be.true;
+    }));
 });
