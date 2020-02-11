@@ -1018,7 +1018,7 @@ public class ParticipationService {
      * @param exerciseId the id of the exercise for which to consider participations
      * @return the number of submissions per participation in the given exercise
      */
-    public Map<Long, Integer> countSubmissionsPerParticipationByExerciseId(Long exerciseId) {
+    public Map<Long, Integer> countSubmissionsPerParticipationByExerciseId(long exerciseId) {
         List<long[]> submissionCountResults = studentParticipationRepository.countSubmissionsPerParticipationByExerciseId(exerciseId);
         Map<Long, Integer> map = new HashMap<Long, Integer>();
         submissionCountResults.forEach(submissionCountResult -> {
