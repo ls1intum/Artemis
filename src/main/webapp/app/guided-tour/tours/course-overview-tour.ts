@@ -1,6 +1,6 @@
 import { Orientation, UserInteractionEvent } from 'app/guided-tour/guided-tour.constants';
 import { GuidedTour } from 'app/guided-tour/guided-tour.model';
-import { ImageTourStep, TextTourStep } from 'app/guided-tour/guided-tour-step.model';
+import { ImageTourStep, TextTourStep, UserInterActionTourStep } from 'app/guided-tour/guided-tour-step.model';
 
 /**
  * This constant contains the guided tour configuration and steps for the course overview page
@@ -44,7 +44,7 @@ export const courseOverviewTour: GuidedTour = {
             orientation: Orientation.BOTTOMRIGHT,
             highlightPadding: 10,
         }),
-        new TextTourStep({
+        new UserInterActionTourStep({
             highlightSelector: '#account-menu',
             headlineTranslateKey: 'tour.courseOverview.accountMenuClick.headline',
             contentTranslateKey: 'tour.courseOverview.accountMenuClick.content',
@@ -71,24 +71,6 @@ export const courseOverviewTour: GuidedTour = {
             headlineTranslateKey: 'tour.courseOverview.courseFooter.headline',
             contentTranslateKey: 'tour.courseOverview.courseFooter.content',
             orientation: Orientation.TOPLEFT,
-        }),
-        // disabled
-        new TextTourStep({
-            highlightSelector: '.card.guided-tour',
-            headlineTranslateKey: 'tour.courseOverview.courseClick.headline',
-            contentTranslateKey: 'tour.courseOverview.courseClick.content',
-            orientation: Orientation.RIGHT,
-            userInteractionEvent: UserInteractionEvent.CLICK,
-            disableStep: true,
-        }),
-        // disabled
-        new TextTourStep({
-            highlightSelector: 'jhi-course-registration-selector button',
-            headlineTranslateKey: 'tour.courseOverview.register.headline',
-            contentTranslateKey: 'tour.courseOverview.register.content',
-            orientation: Orientation.LEFT,
-            highlightPadding: 10,
-            disableStep: true,
         }),
         new TextTourStep({
             highlightSelector: '.footer .col-sm-6',
