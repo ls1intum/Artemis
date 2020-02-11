@@ -1,5 +1,5 @@
 import { GuidedTour } from 'app/guided-tour/guided-tour.model';
-import { ImageTourStep, ModelingTaskTourStep, TextTourStep } from 'app/guided-tour/guided-tour-step.model';
+import { ImageTourStep, ModelingTaskTourStep, TextTourStep, UserInterActionTourStep } from 'app/guided-tour/guided-tour-step.model';
 import { Orientation, UserInteractionEvent } from 'app/guided-tour/guided-tour.constants';
 import { associationUML, GuidedTourModelingTask, personUML, studentUML } from 'app/guided-tour/guided-tour-task.model';
 
@@ -47,7 +47,7 @@ export const modelingTour: GuidedTour = {
             userInteractionEvent: UserInteractionEvent.MODELING,
             modelingTask: new GuidedTourModelingTask(associationUML.name, 'tour.modelingExercise.executeTasks.association'),
         }),
-        new TextTourStep({
+        new UserInterActionTourStep({
             highlightSelector: 'jhi-modeling-submission .submission-button',
             headlineTranslateKey: 'tour.modelingExercise.submit.headline',
             contentTranslateKey: 'tour.modelingExercise.submit.content',
