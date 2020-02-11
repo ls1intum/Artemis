@@ -352,6 +352,28 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationTest {
     }
 
     @Test
+    @WithMockUser(username = "ab123cd")
+    public void testRegisterForCourse_notMeetsDate() throws Exception {
+        jiraRequestMockProvider.enableMockingOfRequests();
+        User student = ModelFactory.generateActivatedUser("ab123cd");
+        userRepo.save(student);
+
+        ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(5);
+        ZonedDateTime futureTimestamp = ZonedDateTime.now().plusDays(5);
+        Course notYetStartedCourse = ModelFactory.generateCourse(null, futureTimestamp, futureTimestamp, new HashSet<>(), "testcourse1", "tutor", "instructor");
+        Course finishedCourse = ModelFactory.generateCourse(null, pastTimestamp, pastTimestamp, new HashSet<>(), "testcourse2", "tutor", "instructor");
+        notYetStartedCourse.setRegistrationEnabled(true);
+
+        notYetStartedCourse = courseRepo.save(notYetStartedCourse);
+        finishedCourse = courseRepo.save(finishedCourse);
+        jiraRequestMockProvider.mockAddUserToGroup(Set.of(notYetStartedCourse.getStudentGroupName()));
+        jiraRequestMockProvider.mockAddUserToGroup(Set.of(finishedCourse.getStudentGroupName()));
+
+        request.post("/api/courses/" + notYetStartedCourse.getId() + "/register", User.class, HttpStatus.BAD_REQUEST);
+        request.post("/api/courses/" + finishedCourse.getId() + "/register", User.class, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     public void updateCourse_withExternalUserManagement_vcsUserManagementHasNotBeenCalled() throws Exception {
         var course = ModelFactory.generateCourse(1L, null, null, new HashSet<>(), "tumuser", "tutor", "instructor");
