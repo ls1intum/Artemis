@@ -81,13 +81,34 @@ export function isElementInViewPortHorizontally(orientation: Orientation, left: 
  * @param tourStepUrl   tour step url as string
  */
 export function determineUrlMatching(pageUrl: string, tourStepUrl: string) {
-    return pageUrl.match(tourStepUrl.slice(0, tourStepUrl.indexOf('?')));
+    if (tourStepUrl.indexOf('?') !== -1) {
+        return pageUrl.match(tourStepUrl.slice(0, tourStepUrl.indexOf('?')));
+    } else {
+        return pageUrl.match(tourStepUrl);
+    }
 }
 
 /**
  * Helper function to retrieve the parameters of a URL string
  * @param url   url as string
  */
-export function getUrlParams(url: string) {
-    return url.slice(url.indexOf('?'), url.length);
+export function getUrlParams(url: string): string {
+    if (url.indexOf('?') !== -1) {
+        return url.slice(url.indexOf('?'), url.length);
+    } else {
+        return '';
+    }
+}
+
+/**
+ * Checks if the page url matches with the matching url result
+ * @param pageUrl
+ * @param matchingUrl
+ */
+export function checkPageUrlEnding(pageUrl: string, matchingUrl: string): boolean {
+    let tempPageUrl = pageUrl;
+    if (pageUrl.indexOf('?') !== -1) {
+        tempPageUrl = pageUrl.slice(0, pageUrl.indexOf('?'));
+    }
+    return tempPageUrl.endsWith(matchingUrl);
 }

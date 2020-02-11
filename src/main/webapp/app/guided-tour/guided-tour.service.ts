@@ -15,7 +15,7 @@ import { GuidedTour } from 'app/guided-tour/guided-tour.model';
 import { DeviceDetectorService } from 'ngx-device-detector';
 import { Exercise, ExerciseType } from 'app/entities/exercise/exercise.model';
 import { Course } from 'app/entities/course/course.model';
-import { clickOnElement, determineUrlMatching, getUrlParams } from 'app/guided-tour/guided-tour.utils';
+import { checkPageUrlEnding, clickOnElement, determineUrlMatching, getUrlParams } from 'app/guided-tour/guided-tour.utils';
 import { cancelTour, completedTour } from 'app/guided-tour/tours/general-tour';
 import { AccountService } from 'app/core/auth/account.service';
 import { ProfileService } from 'app/layouts/profiles/profile.service';
@@ -498,16 +498,25 @@ export class GuidedTourService {
             return 0;
         }
 
-        const isMultiPage = this.availableTourForComponent.steps.filter(tourStep => tourStep.pageUrl).length > 0;
-        const lastSeenTourStep = isMultiPage ? this.determineTourStepForComponent() : this.getLastSeenTourStepIndex();
+        let lastSeenTourStep = this.isMultiPageTour() ? this.determineTourStepForComponent() : this.getLastSeenTourStepIndex();
 
         /** If the user has seen the tour already, then set the last seen tour step to -1
          *  to enable the restart of the tour instead of just starting it
          */
-        if (lastSeenTourStep && this.availableTourForComponent.steps[lastSeenTourStep]) {
-            return lastSeenTourStep !== 0 ? lastSeenTourStep : -1;
+        // We need the !== null check because in case lastSeenTourStep is 0, the condition will be seen as false
+        if (lastSeenTourStep !== null) {
+            lastSeenTourStep = this.availableTourForComponent.steps[lastSeenTourStep] ? lastSeenTourStep : 0;
+            return lastSeenTourStep === 0 ? -1 : lastSeenTourStep;
+        } else {
+            return 0;
         }
-        return 0;
+    }
+
+    private isMultiPageTour() {
+        if (!this.availableTourForComponent) {
+            return false;
+        }
+        return this.availableTourForComponent.steps.filter(tourStep => tourStep.pageUrl).length > 0;
     }
 
     /**
@@ -526,7 +535,7 @@ export class GuidedTourService {
         // Find steps with a pageUrl attribute that matches the current router url
         const stepsForComponent = this.availableTourForComponent!.steps.filter(tourStep => {
             const match = tourStep.pageUrl ? determineUrlMatching(this.router.url, tourStep.pageUrl) : [];
-            if (match && match.input && tourStep.pageUrl && this.router.url.endsWith(match.input)) {
+            if (match && tourStep.pageUrl && checkPageUrlEnding(this.router.url, match[0])) {
                 return match;
             }
         });
@@ -714,7 +723,7 @@ export class GuidedTourService {
      * Start or restart the guided tour based on the last seen tour step
      */
     public initGuidedTour(): void {
-        switch (this.getLastSeenTourStepIndex()) {
+        switch (this.getLastSeenTourStepForInit()) {
             case -1: {
                 this.restartTour();
                 break;
@@ -737,7 +746,7 @@ export class GuidedTourService {
 
         // Filter tour steps according to permissions
         this.currentTour.steps = this.getFilteredTourSteps();
-        this.currentTourStepIndex = this.getLastSeenTourStepForInit();
+        this.currentTourStepIndex = this.isMultiPageTour() ? this.getLastSeenTourStepForInit() : this.getLastSeenTourStepForInit() - 1;
 
         // Proceed with tour if it has tour steps and the tour display is allowed for current window size
         if (this.currentTour.steps.length > 0 && this.tourAllowedForWindowSize()) {
@@ -822,6 +831,7 @@ export class GuidedTourService {
             };
         } else {
             this.router.navigateByUrl(url).then();
+            this['restartIsLoading'] = false;
         }
     }
 
