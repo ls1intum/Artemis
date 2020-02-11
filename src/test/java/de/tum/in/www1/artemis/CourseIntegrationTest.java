@@ -95,6 +95,32 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationTest {
     }
 
     @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    public void testCreateCourseWithWrongShortName() throws Exception {
+        Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>());
+        course.setShortName("`badName~");
+        request.post("/api/courses", course, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    public void testUpdateCourseWithWrongShortName() throws Exception {
+        Course course = ModelFactory.generateCourse(1L, null, null, new HashSet<>());
+        course.setShortName("`badName~");
+        courseRepo.save(course);
+        request.put("/api/courses", course, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    public void testUpdateCourseWithoutId() throws Exception {
+        Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>());
+        request.put("/api/courses", course, HttpStatus.CREATED);
+        List<Course> repoContent = courseRepo.findAll();
+        assertThat(repoContent.size()).as("Course got stored").isEqualTo(1);
+    }
+
+    @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testEditCourseWithPermission() throws Exception {
 
