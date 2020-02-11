@@ -233,8 +233,8 @@ dependencies {
     implementation "org.springframework.security:spring-security-web"
     implementation "org.springframework.security:spring-security-messaging"
     implementation "io.jsonwebtoken:jjwt-api:0.11.0"
-    runtimeOnly "io.jsonwebtoken:jjwt-impl"
-    runtimeOnly "io.jsonwebtoken:jjwt-jackson"
+    runtimeOnly "io.jsonwebtoken:jjwt-impl:0.11.0"
+    runtimeOnly "io.jsonwebtoken:jjwt-jackson:0.11.0"
     implementation ("io.springfox:springfox-swagger2") {
         exclude module: "mapstruct"
     }
