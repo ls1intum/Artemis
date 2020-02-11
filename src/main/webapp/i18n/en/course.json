@@ -23,6 +23,7 @@
             "color": "Color",
             "courseIcon": "Course Icon",
             "shortName": "Short Name",
+            "maxComplaints": "Maximum Amount of Complaints",
             "studentGroupName": "Student Group",
             "teachingAssistantGroupName": "Tutor Group",
             "instructorGroupName": "Instructor Group",

@@ -9,6 +9,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -74,6 +75,23 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationTest {
         course = ModelFactory.generateCourse(1L, null, null, new HashSet<>());
         request.post("/api/courses", course, HttpStatus.BAD_REQUEST);
         assertThat(courseRepo.findAll()).as("Course has not been stored").contains(repoContent.toArray(new Course[0]));
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    public void testCreateCourseWithMaxComplaints() throws Exception {
+        //Generate POST Request Body with 5 Max Complaints
+        Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>(), "tumuser", "tutor", "instructor", 5);
+        request.post("/api/courses", course, HttpStatus.CREATED);
+        //Because the courseId is automatically generated we cannot use the findById method to retrieve the saved course.
+        //TODO: Feedback needed. Surely there must be a better way to check than this (?)
+        List<Course> repoContent = courseRepo.findAll();
+        boolean rightValueExists = false;
+        for (Course element : repoContent) {
+            if (element.getMaxComplaints() == 5)
+                rightValueExists = true;
+        }
+        assertThat(rightValueExists).isTrue();
     }
 
     @Test

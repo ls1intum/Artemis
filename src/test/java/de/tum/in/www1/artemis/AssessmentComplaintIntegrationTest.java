@@ -73,7 +73,8 @@ public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegratio
     @BeforeEach
     public void initTestCase() throws Exception {
         database.addUsers(2, 2, 1);
-        database.addCourseWithOneModelingExercise();
+        //Initialize with 5 max complaints
+        database.addCourseWithOneModellingExereciseSetMaxComplaints();
         modelingExercise = (ModelingExercise) exerciseRepo.findAll().get(0);
         saveModelingSubmissionAndAssessment();
         complaint = new Complaint().result(modelingAssessment).complaintText("This is not fair").complaintType(ComplaintType.COMPLAINT);
@@ -104,8 +105,21 @@ public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegratio
 
     @Test
     @WithMockUser(username = "student1")
-    public void submitComplaintAboutModelingAssessment_complaintLimitReached() throws Exception {
+    public void submitComplaintAboutModellingAssessment_complaintLimitNotReached() throws Exception {
+        // 3 complaints are allowed because the mock object is now initialized with 5 max complaints
         database.addComplaints("student1", modelingAssessment.getParticipation(), 3, ComplaintType.COMPLAINT);
+
+        request.post("/api/complaints", complaint, HttpStatus.CREATED);
+
+        assertThat(complaintRepo.findByResult_Id(modelingAssessment.getId())).as("complaint is saved").isPresent();
+        Result storedResult = resultRepo.findByIdWithEagerFeedbacksAndAssessor(modelingAssessment.getId()).get();
+        assertThat(storedResult.hasComplaint()).as("hasComplaint flag of result is true").isTrue();
+    }
+
+    @Test
+    @WithMockUser(username = "student1")
+    public void submitComplaintAboutModelingAssessment_complaintLimitReached() throws Exception {
+        database.addComplaints("student1", modelingAssessment.getParticipation(), 5, ComplaintType.COMPLAINT);
 
         request.post("/api/complaints", complaint, HttpStatus.BAD_REQUEST);
 

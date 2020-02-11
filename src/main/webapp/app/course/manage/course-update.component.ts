@@ -59,6 +59,7 @@ export class CourseUpdateComponent implements OnInit {
                 validators: [Validators.required, Validators.minLength(3), regexValidator(this.shortNamePattern)],
                 updateOn: 'blur',
             }),
+            maxComplaints: new FormControl(this.course.maxComplaints),
             studentGroupName: new FormControl(this.course.studentGroupName, [Validators.required]),
             teachingAssistantGroupName: new FormControl(this.course.teachingAssistantGroupName),
             instructorGroupName: new FormControl(this.course.instructorGroupName, [Validators.required]),

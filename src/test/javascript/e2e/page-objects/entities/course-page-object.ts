@@ -33,6 +33,7 @@ export class NewCoursePage {
     upload = element(by.className('icon-upload'));
     title = element(by.id('field_title'));
     shortName = element(by.id('field_shortName'));
+    maxComplaints = element(by.id('field_maxComplaints'));
     studentGroupName = element(by.id('field_studentGroupName'));
     instructorGroupName = element(by.id('field_instructorGroupName'));
     tutorGroupName = element(by.id('field_teachingAssistantGroupName'));
@@ -43,6 +44,10 @@ export class NewCoursePage {
 
     async setShortName(shortName: string) {
         await this.shortName.sendKeys(shortName);
+    }
+
+    async setMaxComplaints(maxComplaints: number) {
+        await this.maxComplaints.sendKeys(maxComplaints);
     }
 
     async browseCourseIcon() {

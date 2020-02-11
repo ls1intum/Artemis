@@ -35,10 +35,13 @@ public class ComplaintService {
 
     private ResultService resultService;
 
-    public ComplaintService(ComplaintRepository complaintRepository, ResultRepository resultRepository, ResultService resultService) {
+    private CourseService courseService;
+
+    public ComplaintService(ComplaintRepository complaintRepository, ResultRepository resultRepository, ResultService resultService, CourseService courseService) {
         this.complaintRepository = complaintRepository;
         this.resultRepository = resultRepository;
         this.resultService = resultService;
+        this.courseService = courseService;
     }
 
     /**
@@ -56,9 +59,12 @@ public class ComplaintService {
         User student = studentParticipation.getStudent();
         Long courseId = studentParticipation.getExercise().getCourse().getId();
 
+        //Retrieve course to get manually set Max Complaint Number per Student
+        Course course = courseService.findOne(courseId);
+
         long numberOfUnacceptedComplaints = countUnacceptedComplaintsByStudentIdAndCourseId(student.getId(), courseId);
-        if (numberOfUnacceptedComplaints >= MAX_COMPLAINT_NUMBER_PER_STUDENT && complaint.getComplaintType() == ComplaintType.COMPLAINT) {
-            throw new BadRequestAlertException("You cannot have more than " + MAX_COMPLAINT_NUMBER_PER_STUDENT + " open or rejected complaints at the same time.", ENTITY_NAME,
+        if (numberOfUnacceptedComplaints >= course.getMaxComplaints() && complaint.getComplaintType() == ComplaintType.COMPLAINT) {
+            throw new BadRequestAlertException("You cannot have more than " + course.getMaxComplaints() + " open or rejected complaints at the same time.", ENTITY_NAME,
                     "toomanycomplaints");
         }
         if (!isTimeOfComplaintValid(originalResult, studentParticipation.getExercise())) {
