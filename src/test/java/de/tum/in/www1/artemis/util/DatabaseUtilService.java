@@ -268,6 +268,19 @@ public class DatabaseUtilService {
         assertThat(ta.getId()).as("Teaching assistant has been created").isNotNull();
     }
 
+    public Lecture createCourseWithLecture(boolean saveLecture) {
+        Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "instructor");
+
+        Lecture lecture = new Lecture();
+        lecture.setDescription("Test Lecture");
+        lecture.setCourse(course);
+        courseRepo.save(course);
+        if (saveLecture) {
+            lectureRepo.save(lecture);
+        }
+        return lecture;
+    }
+
     public List<Course> createCoursesWithExercisesAndLectures() throws Exception {
         ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(5);
         ZonedDateTime futureTimestamp = ZonedDateTime.now().plusDays(5);

@@ -218,7 +218,7 @@ public class ParticipationResource {
             if (participation != null) {
                 addLatestResultToParticipation(participation);
                 participation.getExercise().filterSensitiveInformation();
-                return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, participation.getStudent().getFirstName()))
+                return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, participation.getStudent().getName()))
                         .body(participation);
             }
         }
@@ -281,7 +281,7 @@ public class ParticipationResource {
         }
 
         Participation result = participationService.save(participation);
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, participation.getStudent().getFirstName())).body(result);
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, participation.getStudent().getName())).body(result);
     }
 
     /**
@@ -600,13 +600,14 @@ public class ParticipationResource {
 
         checkAccessPermissionAtLeastInstructor(participation, user);
 
-        String username = participation.getStudent().getFirstName();
-        var auditEvent = new AuditEvent(user.getLogin(), Constants.DELETE_PARTICIPATION, "participation=" + participation.getId());
+        String name = participation.getStudent().getName();
+        var logMessage = "Delete Participation " + participationId + " of exercise " + participation.getExercise().getTitle() + " for " + name + ", deleteBuildPlan: "
+                + deleteBuildPlan + ", deleteRepository: " + deleteRepository + " by " + principal.getName();
+        var auditEvent = new AuditEvent(user.getLogin(), Constants.DELETE_PARTICIPATION, logMessage);
         auditEventRepository.add(auditEvent);
-        log.info("Delete Participation {} of exercise {} for {}, deleteBuildPlan: {}, deleteRepository: {} by {}", participationId, participation.getExercise().getTitle(),
-                username, deleteBuildPlan, deleteRepository, principal.getName());
+        log.info(logMessage);
         participationService.delete(participationId, deleteBuildPlan, deleteRepository);
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, "participation", username)).build();
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, "participation", name)).build();
     }
 
     /**
@@ -642,13 +643,14 @@ public class ParticipationResource {
             return forbidden();
         }
 
-        String username = participation.getStudent().getFirstName();
-        var auditEvent = new AuditEvent(user.getLogin(), Constants.DELETE_PARTICIPATION, "participation=" + participation.getId());
+        String name = participation.getStudent().getName();
+        var logMessage = "Delete Participation " + participationId + " of exercise " + participation.getExercise().getTitle() + " for " + name + ", deleteBuildPlan: "
+                + deleteBuildPlan + ", deleteRepository: " + deleteRepository + " by " + principal.getName();
+        var auditEvent = new AuditEvent(user.getLogin(), Constants.DELETE_PARTICIPATION, logMessage);
         auditEventRepository.add(auditEvent);
-        log.info("Delete Participation {} of exercise {} for {}, deleteBuildPlan: {}, deleteRepository: {} by {}", participationId, participation.getExercise().getTitle(),
-                username, deleteBuildPlan, deleteRepository, principal.getName());
+        log.info(logMessage);
         participationService.delete(participationId, deleteBuildPlan, deleteRepository);
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, "participation", username)).build();
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, "participation", name)).build();
     }
 
     /**
