@@ -2,7 +2,7 @@ import { Component, OnInit, ViewChild, Input } from '@angular/core';
 import { CreditsCommand, DomainCommand, FeedbackCommand, GradingCriteriaCommand, InstructionCommand, UsageCountCommand } from 'app/markdown-editor/domainCommands';
 import { KatexCommand } from 'app/markdown-editor/commands';
 import { MarkdownEditorComponent } from 'app/markdown-editor';
-import { StructuredGradingInstructionModel } from 'app/structured-grading-instruction/structured-grading-instruction.model';
+import { GradingInstruction } from 'app/structured-grading-instruction/grading-instruction.model';
 
 @Component({
     selector: 'jhi-edit-structured-grading-instruction',
@@ -16,7 +16,7 @@ export class EditStructuredGradingInstructionComponent implements OnInit {
     private markdownEditor: MarkdownEditorComponent;
 
     @Input()
-    instruction: StructuredGradingInstructionModel;
+    instruction: GradingInstruction;
 
     katexCommand = new KatexCommand();
     gradingCriteriaCommand = new GradingCriteriaCommand();

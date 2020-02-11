@@ -1,6 +1,6 @@
 import { Component, OnInit, ViewChildren, QueryList } from '@angular/core';
 import { EditStructuredGradingInstructionComponent } from 'app/structured-grading-instruction/edit-structured-grading-instruction/edit-structured-grading-instruction.component';
-import { StructuredGradingInstructionModel } from 'app/structured-grading-instruction/structured-grading-instruction.model';
+import { GradingInstruction } from 'app/structured-grading-instruction/grading-instruction.model';
 
 @Component({
     selector: 'jhi-grading-instruction-detail',
@@ -17,7 +17,7 @@ export class GradingInstructionDetailComponent implements OnInit {
     }
 
     addGradingInstruction() {
-        const instruction = new StructuredGradingInstructionModel();
+        const instruction = new GradingInstruction();
         instruction.credit = 0;
         instruction.instructionDescription = 'Add grading instruction here (only visible for tutors)';
         instruction.feedback = 'Add feedback for students here (visible for students)';
