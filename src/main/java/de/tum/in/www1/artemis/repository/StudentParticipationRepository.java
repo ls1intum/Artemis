@@ -115,7 +115,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
      * Count the number of submissions for each participation in a given exercise.
      *
      * @param exerciseId the id of the exercise for which to consider participations
-     * @return the number of submissions per participation
+     * @return Tuples of participation ids and number of submissions per participation
      */
     @Query("select participation.id, count(submissions) from StudentParticipation participation left join participation.submissions submissions where participation.exercise.id = :#{#exerciseId} group by participation.id")
     List<long[]> countSubmissionsPerParticipationByExerciseId(@Param("exerciseId") long exerciseId);
