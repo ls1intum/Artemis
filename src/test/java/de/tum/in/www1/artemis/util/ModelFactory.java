@@ -5,6 +5,7 @@ import java.util.*;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.*;
+import de.tum.in.www1.artemis.domain.modeling.ApollonDiagram;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
@@ -309,5 +310,12 @@ public class ModelFactory {
         systemNotification.setExpireDate(expireDate);
         systemNotification.setNotificationDate(notificationDate);
         return systemNotification;
+    }
+
+    public static ApollonDiagram generateApollonDiagram(DiagramType diagramType, String title) {
+        ApollonDiagram apollonDiagram = new ApollonDiagram();
+        apollonDiagram.setDiagramType(diagramType);
+        apollonDiagram.setTitle(title);
+        return apollonDiagram;
     }
 }
