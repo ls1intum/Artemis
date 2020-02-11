@@ -121,6 +121,13 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationTest {
     }
 
     @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    public void testUpdateCourseIsEmpty() throws Exception {
+        Course course = ModelFactory.generateCourse(1L, null, null, new HashSet<>());
+        request.put("/api/courses", course, HttpStatus.NOT_FOUND);
+    }
+
+    @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testEditCourseWithPermission() throws Exception {
 
