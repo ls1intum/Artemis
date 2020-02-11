@@ -199,6 +199,16 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationTest {
     }
 
     @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void testGetCoursesWithoutActiveExercises() throws Exception {
+        Course course = ModelFactory.generateCourse(1L, null, null, new HashSet<>(), "tumuser", "tutor", "instructor");
+        courseRepo.save(course);
+        List<Course> courses = request.getList("/api/courses/for-dashboard", HttpStatus.OK, Course.class);
+        assertThat(courses.size()).as("Only one course is returned").isEqualTo(1);
+        assertThat(courses.stream().findFirst().get().getExercises().size()).as("Course doesn't have any exercises").isEqualTo(0);
+    }
+
+    @Test
     @WithMockUser(username = "student1")
     public void testGetCoursesToRegister() throws Exception {
         ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(5);
