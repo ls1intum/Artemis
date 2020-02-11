@@ -310,7 +310,7 @@ export class ExampleTextSubmissionComponent implements OnInit, AfterViewInit {
         this.totalScore = credits.reduce((a, b) => a! + b!, 0)!;
         this.assessmentsAreValid = true;
         this.invalidError = null;
-        if (this.guidedTourService.currentTour) {
+        if (this.guidedTourService.currentTour && this.toComplete) {
             this.guidedTourService.updateAssessmentResult(this.assessments.length, this.totalScore);
         }
     }

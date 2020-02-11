@@ -6,7 +6,7 @@ export interface GuidedTour {
     settingsKey: string;
     /** Steps fo the tour */
     steps: TourStep[];
-    /** */
+    /** Defines the reset participation type for the guided tour */
     resetParticipation: ResetParticipation;
     /** The given function will be called when tour is skipped */
     skipCallback?: (stepSkippedOn: number) => void;

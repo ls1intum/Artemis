@@ -7,6 +7,7 @@ import { SERVER_API_URL } from 'app/app.constants';
 import { ExampleSubmission } from 'app/entities/example-submission/example-submission.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { Exercise } from 'app/entities/exercise';
+import { Course } from 'app/entities/course/course.model';
 
 export type EntityResponseType = HttpResponse<TutorParticipation>;
 export type EntityArrayResponseType = HttpResponse<TutorParticipation[]>;
@@ -49,8 +50,8 @@ export class TutorParticipationService {
      * Deletes the tutor participation of the current user for the guided tour
      * @param exercise  exercise with tutor participation
      */
-    deleteTutorParticipationForGuidedTour(exercise: Exercise) {
-        if (exercise.course && this.accountService.isAtLeastTutorInCourse(exercise.course)) {
+    deleteTutorParticipationForGuidedTour(course: Course, exercise: Exercise) {
+        if (course && this.accountService.isAtLeastTutorInCourse(course)) {
             return this.http.delete<void>(`api/guided-tour/exercises/${exercise.id}/exampleSubmission`);
         }
         return new Observable();

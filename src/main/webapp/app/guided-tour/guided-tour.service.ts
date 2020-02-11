@@ -8,7 +8,7 @@ import { filter, flatMap, map, switchMap } from 'rxjs/operators';
 import { debounceTime, distinctUntilChanged } from 'rxjs/internal/operators';
 import { SERVER_API_URL } from 'app/app.constants';
 import { GuidedTourMapping, GuidedTourSetting } from 'app/guided-tour/guided-tour-setting.model';
-import { GuidedTourState, Orientation, OrientationConfiguration, UserInteractionEvent, ResetParticipation } from './guided-tour.constants';
+import { GuidedTourState, Orientation, OrientationConfiguration, ResetParticipation, UserInteractionEvent } from './guided-tour.constants';
 import { User } from 'app/core/user/user.model';
 import { TextTourStep, TourStep, UserInterActionTourStep, VideoTourStep } from 'app/guided-tour/guided-tour-step.model';
 import { GuidedTour } from 'app/guided-tour/guided-tour.model';
@@ -559,6 +559,7 @@ export class GuidedTourService {
         this.currentTour = null;
         this.currentTourStepIndex = 0;
         this.guidedTourCurrentStepSubject.next(null);
+        this.assessmentObject = new AssessmentObject(0, 0);
     }
 
     /**
@@ -624,6 +625,10 @@ export class GuidedTourService {
                             this.enableNextStepClick();
                         }
                     });
+            } else if (userInteraction === UserInteractionEvent.ASSESS_SUBMISSION) {
+                if (this.isAssessmentCorrect()) {
+                    this.enableNextStepClick();
+                }
             }
         }
     }
@@ -735,14 +740,43 @@ export class GuidedTourService {
 
     /** Resets participation and enables the restart of the current tour */
     public restartTour() {
-        /** Reset exercise participation */
         if (this.currentCourse && this.currentExercise && this.availableTourForComponent) {
             switch (this.availableTourForComponent.resetParticipation) {
+                // Reset exercise participation
                 case ResetParticipation.EXERCISE_PARTICIPATION:
-                    this.resetExerciseParticipation(this.currentCourse, this.currentExercise, this.availableTourForComponent.settingsKey);
+                    this.restartIsLoading = true;
+                    const isProgrammingExercise = this.currentExercise.type === ExerciseType.PROGRAMMING;
+                    this.participationService
+                        .findParticipation(this.currentExercise.id)
+                        .pipe(
+                            map((response: HttpResponse<StudentParticipation>) => response.body!),
+                            flatMap(participation =>
+                                this.participationService.deleteForGuidedTour(participation.id, {
+                                    deleteBuildPlan: isProgrammingExercise,
+                                    deleteRepository: isProgrammingExercise,
+                                }),
+                            ),
+                            switchMap(() => this.deleteGuidedTourSetting(this.availableTourForComponent!.settingsKey)),
+                        )
+                        .subscribe(
+                            () => {
+                                this.navigateToUrlAfterRestart(`/overview/${this.currentCourse!.id}/exercises`);
+                            },
+                            () => {
+                                // start tour in case the participation was deleted otherwise
+                                this.restartIsLoading = false;
+                                this.startTour();
+                            },
+                        );
                     break;
+                // Reset tutor assessment participation
                 case ResetParticipation.TUTOR_ASSESSMENT:
-                    this.resetTutorParticipation(this.currentExercise, this.availableTourForComponent.settingsKey);
+                    this.restartIsLoading = true;
+                    this.tutorParticipationService.deleteTutorParticipationForGuidedTour(this.currentCourse, this.currentExercise).subscribe(() => {
+                        this.deleteGuidedTourSetting(this.availableTourForComponent!.settingsKey).subscribe(() => {
+                            this.navigateToUrlAfterRestart('/course');
+                        });
+                    });
                     break;
                 case ResetParticipation.NONE:
                     this.startTour();
@@ -754,68 +788,10 @@ export class GuidedTourService {
     }
 
     /**
-     *
-     * @param course
-     * @param exercise
-     * @param settingsKey
+     * Navigate to page after resetting a guided tour participation
      */
-    private resetExerciseParticipation(course: Course, exercise: Exercise, settingsKey: string) {
-        this.restartIsLoading = true;
-        const isProgrammingExercise = exercise.type === ExerciseType.PROGRAMMING;
-        this.participationService
-            .findParticipation(exercise.id)
-            .pipe(
-                map((response: HttpResponse<StudentParticipation>) => response.body!),
-                flatMap(participation =>
-                    this.participationService.deleteForGuidedTour(participation.id, { deleteBuildPlan: isProgrammingExercise, deleteRepository: isProgrammingExercise }),
-                ),
-                switchMap(() => this.deleteGuidedTourSetting(settingsKey)),
-            )
-            .subscribe(
-                () => {
-                    this.navigateToCourseOverview(course.id);
-                },
-                () => {
-                    // start tour in case the participation was deleted otherwise
-                    this.restartIsLoading = false;
-                    this.startTour();
-                },
-            );
-    }
-
-    /**
-     *
-     * @param exercise
-     * @param settingsKey
-     */
-    private resetTutorParticipation(exercise: Exercise, settingsKey: string) {
-        this.restartIsLoading = true;
-        this.tutorParticipationService
-            .deleteTutorParticipationForGuidedTour(exercise)
-            .pipe(
-                map(() => {
-                    this.deleteGuidedTourSetting(settingsKey);
-                }),
-            )
-            .subscribe(() => {
-                this.navigateToCourseAdministration(exercise);
-            });
-    }
-
-    /**
-     * Navigate to course administration after resetting an exercise tutor participation
-     */
-    private navigateToCourseAdministration(exercise: Exercise) {
-        this.router.navigateByUrl('/course').then(() => {
-            this.restartIsLoading = false;
-        });
-    }
-
-    /**
-     * Navigate to course overview after resetting an exercise participation
-     */
-    private navigateToCourseOverview(courseId: number) {
-        this.router.navigateByUrl(`/overview/${courseId}/exercises`).then(() => {
+    private navigateToUrlAfterRestart(url: string) {
+        this.router.navigateByUrl(url).then(() => {
             location.reload();
         });
 
@@ -1244,9 +1220,6 @@ export class GuidedTourService {
      * @param totalScore    current total score of the assessment
      */
     public updateAssessmentResult(assessments: number, totalScore: number) {
-        if (!this.currentStep || !this.currentStep.assessmentTask) {
-            return;
-        }
         this.assessmentObject.assessments = assessments;
         this.assessmentObject.totalScore = totalScore;
 
@@ -1259,12 +1232,16 @@ export class GuidedTourService {
      * Returns true if the number of assessments and its total score match with the given assessment task object
      */
     private isAssessmentCorrect(): boolean {
-        const numberOfAssessmentsCorrect = this.assessmentObject.assessments === this.currentStep.assessmentTask.assessmentObject.assessments;
-        const totalScoreCorrect = this.assessmentObject.totalScore === this.currentStep.assessmentTask.assessmentObject.totalScore;
+        if (this.currentStep.assessmentTask) {
+            const numberOfAssessmentsCorrect = this.assessmentObject.assessments === this.currentStep.assessmentTask.assessmentObject.assessments;
+            const totalScoreCorrect = this.assessmentObject.totalScore === this.currentStep.assessmentTask.assessmentObject.totalScore;
 
-        if (this.currentStep.assessmentTask.assessmentObject.totalScore === 0) {
-            return numberOfAssessmentsCorrect;
+            if (this.currentStep.assessmentTask.assessmentObject.totalScore === 0) {
+                return numberOfAssessmentsCorrect;
+            }
+            return numberOfAssessmentsCorrect && totalScoreCorrect;
+        } else {
+            return false;
         }
-        return numberOfAssessmentsCorrect && totalScoreCorrect;
     }
 }

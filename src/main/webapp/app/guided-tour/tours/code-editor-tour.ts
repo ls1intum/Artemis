@@ -75,6 +75,7 @@ export const codeEditorTour: GuidedTour = {
             orientation: Orientation.BOTTOMRIGHT,
             userInteractionEvent: UserInteractionEvent.CLICK,
             skipStepIfNoSelector: true,
+            triggerNextStep: true,
         }),
         new TextTourStep({
             highlightSelector: '.modal-body pre',
