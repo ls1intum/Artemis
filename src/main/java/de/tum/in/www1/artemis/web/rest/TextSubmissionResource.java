@@ -107,9 +107,11 @@ public class TextSubmissionResource {
     private ResponseEntity<TextSubmission> handleTextSubmission(Long exerciseId, Principal principal, TextSubmission textSubmission) {
         final User user = userService.getUserWithGroupsAndAuthorities();
         final TextExercise textExercise = textExerciseService.findOne(exerciseId);
-        final ResponseEntity<TextSubmission> responseFailure = this.checkExerciseValidity(textExercise);
-        if (responseFailure != null) {
-            return responseFailure;
+
+        // fetch course from database to make sure client didn't change groups
+        final Course course = courseService.findOne(textExercise.getCourse().getId());
+        if (!authorizationCheckService.isAtLeastStudentInCourse(course, user)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
 
         textSubmission = textSubmissionService.handleTextSubmission(textSubmission, textExercise, principal);
@@ -129,18 +131,6 @@ public class TextSubmissionResource {
         log.debug("REST request to get TextSubmission : {}", id);
         Optional<TextSubmission> textSubmission = textSubmissionRepository.findById(id);
         return ResponseUtil.wrapOrNotFound(textSubmission);
-    }
-
-    private ResponseEntity<TextSubmission> checkExerciseValidity(TextExercise textExercise) {
-        // fetch course from database to make sure client didn't change groups
-        Course course = courseService.findOne(textExercise.getCourse().getId());
-
-        User user = userService.getUserWithGroupsAndAuthorities();
-        if (!authorizationCheckService.isAtLeastStudentInCourse(course, user)) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-        }
-
-        return null;
     }
 
     /**
