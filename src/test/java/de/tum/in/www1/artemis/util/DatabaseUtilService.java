@@ -394,11 +394,15 @@ public class DatabaseUtilService {
         submissionRepository.save(textSubmission);
 
         if (hasComplaint) {
-            StudentParticipation participation4 = ModelFactory.generateStudentParticipation(InitializationState.INITIALIZED, modelingExercise, user);
+            StudentParticipation participation4 = ModelFactory.generateStudentParticipation(InitializationState.FINISHED, modelingExercise, user);
             participation4 = participationRepo.save(participation4);
             result1.assessor(getUserByLogin("tutor1")).completionDate(ZonedDateTime.now()).participation(participation4);
             resultRepo.save(result1);
             addComplaintOnResult(user, result1, ComplaintType.COMPLAINT);
+
+            result3.assessor(getUserByLogin("tutor1")).completionDate(ZonedDateTime.now()).participation(participation2);
+            resultRepo.save(result3);
+            addComplaintOnResult(user, result3, ComplaintType.MORE_FEEDBACK);
         }
 
         return Arrays.asList(course1, course2);
