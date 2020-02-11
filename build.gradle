@@ -315,6 +315,9 @@ tasks.withType(Test) {
                 println("\n" + ("-" * repeatLength) + "\n" + startItem + output + endItem + "\n" + ("-" * repeatLength))
             }
         }
+
+        outputs.upToDateWhen {false}
+        showStandardStreams = true
     }
 }
 
