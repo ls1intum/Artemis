@@ -15,7 +15,7 @@ import { GuidedTour } from 'app/guided-tour/guided-tour.model';
 import { DeviceDetectorService } from 'ngx-device-detector';
 import { Exercise, ExerciseType } from 'app/entities/exercise/exercise.model';
 import { Course } from 'app/entities/course/course.model';
-import { clickOnElement } from 'app/guided-tour/guided-tour.utils';
+import { clickOnElement, getUrlParams } from 'app/guided-tour/guided-tour.utils';
 import { cancelTour, completedTour } from 'app/guided-tour/tours/general-tour';
 import { AccountService } from 'app/core/auth/account.service';
 import { ProfileService } from 'app/layouts/profiles/profile.service';
@@ -475,9 +475,8 @@ export class GuidedTourService {
 
     /**
      * Get the last step that the user visited during the given tour
-     * @param init  true if the last seen tour step for initiating a tour should be returned
      */
-    public getLastSeenTourStepIndex(init?: boolean): number {
+    public getLastSeenTourStepIndex(): number {
         if (!this.availableTourForComponent) {
             return 0;
         }
@@ -487,8 +486,10 @@ export class GuidedTourService {
             return 0;
         }
 
+        const isMultiPage = this.availableTourForComponent.steps.filter(tourStep => tourStep.pageUrl).length > 0;
+
         if (this.hasValidTourStepNumber(tourSettings)) {
-            const lastSeenTourStep = init ? this.determineTourStepForComponent() : tourSettings[0].guidedTourStep;
+            const lastSeenTourStep = isMultiPage ? this.determineTourStepForComponent() : tourSettings[0].guidedTourStep;
             /** If the user has seen the tour already, then set the last seen tour step to -1
              *  to enable the restart of the tour instead of just starting it
              */
@@ -511,14 +512,22 @@ export class GuidedTourService {
      * This method determines the right starting tour step for multi-page guided tours
      */
     private determineTourStepForComponent(): number | null {
-        const stepForComponent = this.availableTourForComponent!.steps.filter(tourStep => {
-            const match = tourStep.pageUrl ? (this.router.url.match(tourStep.pageUrl) as RegExpMatchArray) : [];
-            if (match && tourStep.pageUrl && this.router.url.endsWith(match[0])) {
+        // Find steps with a pageUrl attribute that matches the current router url
+        const stepsForComponent = this.availableTourForComponent!.steps.filter(tourStep => {
+            const match = tourStep.pageUrl ? (this.router.url.match(tourStep.pageUrl.slice(0, tourStep.pageUrl.indexOf('?'))) as RegExpMatchArray) : [];
+            if (match && match.input && tourStep.pageUrl && this.router.url.endsWith(match.input)) {
                 return match;
             }
         });
-        if (stepForComponent) {
-            return this.availableTourForComponent!.steps.indexOf(stepForComponent[0]);
+
+        if (stepsForComponent) {
+            const stepForComponent = stepsForComponent.find(step => {
+                if (step.pageUrl) {
+                    // Since we could not include the params in the URL matching we have to do a final check here
+                    return getUrlParams(step.pageUrl) === getUrlParams(this.router.url);
+                }
+            });
+            return stepForComponent ? this.availableTourForComponent!.steps.indexOf(stepForComponent) : null;
         }
         return null;
     }
@@ -694,7 +703,7 @@ export class GuidedTourService {
      * Start or restart the guided tour based on the last seen tour step
      */
     public initGuidedTour(): void {
-        switch (this.getLastSeenTourStepIndex(true)) {
+        switch (this.getLastSeenTourStepIndex()) {
             case -1: {
                 this.restartTour();
                 break;
@@ -717,7 +726,7 @@ export class GuidedTourService {
 
         // Filter tour steps according to permissions
         this.currentTour.steps = this.getFilteredTourSteps();
-        this.currentTourStepIndex = this.getLastSeenTourStepIndex(true);
+        this.currentTourStepIndex = this.getLastSeenTourStepIndex();
 
         // Proceed with tour if it has tour steps and the tour display is allowed for current window size
         if (this.currentTour.steps.length > 0 && this.tourAllowedForWindowSize()) {

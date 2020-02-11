@@ -74,3 +74,11 @@ export function isElementInViewPortHorizontally(orientation: Orientation, left: 
     }
     return elementInViewPort;
 }
+
+/**
+ * Helper function to retrieve the parameters of a URL string
+ * @param url   url as string
+ */
+export function getUrlParams(url: string) {
+    return url.slice(url.indexOf('?'), url.length);
+}
