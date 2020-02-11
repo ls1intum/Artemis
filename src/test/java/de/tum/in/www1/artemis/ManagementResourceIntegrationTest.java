@@ -7,6 +7,7 @@ import java.util.HashMap;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.actuate.audit.AuditEvent;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
@@ -34,5 +35,11 @@ public class ManagementResourceIntegrationTest extends AbstractSpringIntegration
         features.put(Feature.PROGRAMMING_EXERCISES, false);
         request.put("/api/management/feature-toggle", features, HttpStatus.OK);
         verify(this.websocketMessagingService).sendMessage("/topic/management/feature-toggles", Feature.enabledFeatures());
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    public void getAllAuditEvents() throws Exception {
+        var auditEvents = request.getList("/management/audits", HttpStatus.OK, AuditEvent.class);
     }
 }
