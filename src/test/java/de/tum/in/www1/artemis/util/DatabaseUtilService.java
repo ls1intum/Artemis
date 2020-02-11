@@ -282,6 +282,10 @@ public class DatabaseUtilService {
     }
 
     public List<Course> createCoursesWithExercisesAndLectures() throws Exception {
+        return createCoursesWithExercisesAndLectures(false);
+    }
+
+    public List<Course> createCoursesWithExercisesAndLectures(boolean hasComplaint) throws Exception {
         ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(5);
         ZonedDateTime futureTimestamp = ZonedDateTime.now().plusDays(5);
         ZonedDateTime futureFutureTimestamp = ZonedDateTime.now().plusDays(8);
@@ -368,8 +372,6 @@ public class DatabaseUtilService {
         Result result1 = ModelFactory.generateResult(true, 10);
         Result result2 = ModelFactory.generateResult(true, 12);
         Result result3 = ModelFactory.generateResult(false, 0);
-        result1.assessor(getUserByLogin("tutor1"));
-        result1.completionDate(ZonedDateTime.now());
 
         result1 = resultRepo.save(result1);
         result2 = resultRepo.save(result2);
@@ -383,9 +385,6 @@ public class DatabaseUtilService {
         participation2 = participationRepo.save(participation2);
         participation3 = participationRepo.save(participation3);
 
-        result1.setParticipation(participation1);
-        resultRepo.save(result1);
-
         modelingSubmission1.setParticipation(participation1);
         textSubmission.setParticipation(participation1);
         modelingSubmission2.setParticipation(participation3);
@@ -393,7 +392,15 @@ public class DatabaseUtilService {
         submissionRepository.save(modelingSubmission1);
         submissionRepository.save(modelingSubmission2);
         submissionRepository.save(textSubmission);
-        addComplaintOnResult(user, result1, ComplaintType.COMPLAINT);
+
+        if (hasComplaint) {
+            StudentParticipation participation4 = ModelFactory.generateStudentParticipation(InitializationState.INITIALIZED, modelingExercise, user);
+            participation4 = participationRepo.save(participation4);
+            result1.assessor(getUserByLogin("tutor1")).completionDate(ZonedDateTime.now()).participation(participation4);
+            resultRepo.save(result1);
+            addComplaintOnResult(user, result1, ComplaintType.COMPLAINT);
+        }
+
         return Arrays.asList(course1, course2);
     }
 
@@ -994,7 +1001,7 @@ public class DatabaseUtilService {
     }
 
     public void addComplaintOnResult(User student, Result result, ComplaintType complaintType) {
-        Complaint complaint = new Complaint().student(student).result(result).complaintType(complaintType);
+        var complaint = new Complaint().student(student).result(result).complaintType(complaintType);
         complaintRepo.save(complaint);
     }
 
