@@ -46,10 +46,6 @@ export class NewCoursePage {
         await this.shortName.sendKeys(shortName);
     }
 
-    async setMaxComplaints(maxComplaints: number) {
-        await this.maxComplaints.sendKeys(maxComplaints);
-    }
-
     async browseCourseIcon() {
         let path = require('path');
         let fileToUpload = '../entities/tum-logo.png';

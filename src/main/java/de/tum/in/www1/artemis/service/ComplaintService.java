@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.service;
 
-import static de.tum.in.www1.artemis.config.Constants.MAX_COMPLAINT_NUMBER_PER_STUDENT;
 import static de.tum.in.www1.artemis.config.Constants.MAX_COMPLAINT_TIME_WEEKS;
 
 import java.security.Principal;
