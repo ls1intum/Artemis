@@ -359,7 +359,7 @@ public class ResultResource {
                 continue;
             }
 
-            relevantSubmissionWithResult.getResult().setSubmissionCount(participation.getSubmissions().size());
+            participation.setSubmissionCount(participation.getSubmissions().size());
             if (withSubmissions) {
                 relevantSubmissionWithResult.getResult().setSubmission(relevantSubmissionWithResult);
             }

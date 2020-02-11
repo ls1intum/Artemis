@@ -18,6 +18,7 @@ import { FeatureToggle } from 'app/feature-toggle';
 enum FilterProp {
     ALL = 'all',
     FAILED = 'failed',
+    NO_SUBMISSIONS = 'no-submissions',
 }
 
 @Component({
@@ -115,6 +116,8 @@ export class ParticipationComponent implements OnInit, OnDestroy {
         switch (this.participationCriteria.filterProp) {
             case FilterProp.FAILED:
                 return this.hasFailedSubmission(participation);
+            case FilterProp.NO_SUBMISSIONS:
+                return participation.submissionCount === 0;
             case FilterProp.ALL:
             default:
                 return true;
