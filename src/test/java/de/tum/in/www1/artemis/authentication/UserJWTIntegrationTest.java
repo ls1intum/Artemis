@@ -11,6 +11,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithAnonymousUser;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.TestPropertySource;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationTest;
 import de.tum.in.www1.artemis.domain.User;
@@ -23,7 +24,8 @@ import de.tum.in.www1.artemis.util.RequestUtilService;
 import de.tum.in.www1.artemis.web.rest.UserJWTController;
 import de.tum.in.www1.artemis.web.rest.vm.LoginVM;
 
-@ActiveProfiles({ "artemis" })
+@ActiveProfiles("artemis")
+@TestPropertySource(properties = "artemis.user-management.use-external=false")
 public class UserJWTIntegrationTest extends AbstractSpringIntegrationTest {
 
     private static final String USERNAME = "student2";
