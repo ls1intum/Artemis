@@ -202,7 +202,7 @@ public class ModelFactory {
 
     public static Course generateCourse(Long id, ZonedDateTime startDate, ZonedDateTime endDate, Set<Exercise> exercises, String studentGroupName,
             String teachingAssistantGroupName, String instructorGroupName) {
-        return generateCourse(id, startDate, endDate, exercises, studentGroupName, teachingAssistantGroupName, instructorGroupName, 3);
+        return generateCourse(id, startDate, endDate, exercises, studentGroupName, teachingAssistantGroupName, instructorGroupName, 5);
     }
 
     public static Course generateCourse(Long id, ZonedDateTime startDate, ZonedDateTime endDate, Set<Exercise> exercises, String studentGroupName,

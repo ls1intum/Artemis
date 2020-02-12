@@ -74,7 +74,7 @@ public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegratio
     public void initTestCase() throws Exception {
         database.addUsers(2, 2, 1);
         //Initialize with 5 max complaints
-        database.addCourseWithOneModellingExereciseSetMaxComplaints();
+        database.addCourseWithOneModelingExercise();
         modelingExercise = (ModelingExercise) exerciseRepo.findAll().get(0);
         saveModelingSubmissionAndAssessment();
         complaint = new Complaint().result(modelingAssessment).complaintText("This is not fair").complaintType(ComplaintType.COMPLAINT);

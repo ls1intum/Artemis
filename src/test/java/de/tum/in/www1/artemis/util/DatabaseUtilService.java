@@ -538,20 +538,6 @@ public class DatabaseUtilService {
         assertThat(modelingExercise.getPresentationScoreEnabled()).as("presentation score is enabled").isTrue();
     }
 
-    public void addCourseWithOneModellingExereciseSetMaxComplaints() {
-        long currentCourseRepoSize = courseRepo.count();
-        long currentExerciseRepoSize = exerciseRepo.count();
-        Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "instructor", 5);
-        ModelingExercise modelingExercise = ModelFactory.generateModelingExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, DiagramType.ClassDiagram, course);
-        course.addExercises(modelingExercise);
-        course = courseRepo.save(course);
-        modelingExercise = exerciseRepo.save(modelingExercise);
-        assertThat(exerciseRepo.count()).as("one exercise got stored").isEqualTo(currentExerciseRepoSize + 1L);
-        assertThat(courseRepo.count()).as("a course got stored").isEqualTo(currentCourseRepoSize + 1L);
-        assertThat(course.getExercises()).as("course contains the exercise").containsExactlyInAnyOrder(modelingExercise);
-        assertThat(modelingExercise.getPresentationScoreEnabled()).as("presentation score is enabled").isTrue();
-    }
-
     public Course addCourseWithOneTextExercise() {
         Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "instructor");
         TextExercise textExercise = ModelFactory.generateTextExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, course);
