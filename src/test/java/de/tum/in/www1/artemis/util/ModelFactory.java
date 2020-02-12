@@ -218,7 +218,6 @@ public class ModelFactory {
         course.setInstructorGroupName(instructorGroupName);
         course.setStartDate(startDate);
         course.setEndDate(endDate);
-        course.setMaxComplaints(5);
         course.setExercises(exercises);
         course.setOnlineCourse(false);
         course.setPresentationScore(2);

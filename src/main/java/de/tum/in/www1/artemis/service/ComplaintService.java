@@ -1,5 +1,8 @@
 package de.tum.in.www1.artemis.service;
 
+import static de.tum.in.www1.artemis.config.Constants.MAX_COMPLAINT_NUMBER_PER_STUDENT;
+import static de.tum.in.www1.artemis.config.Constants.MAX_COMPLAINT_TIME_WEEKS;
+
 import static de.tum.in.www1.artemis.config.Constants.MAX_COMPLAINT_TIME_WEEKS;
 
 import java.security.Principal;
@@ -60,9 +63,16 @@ public class ComplaintService {
 
         //Retrieve course to get manually set Max Complaint Number per Student
         Course course = courseService.findOne(courseId);
+        int maxComplaints;
+
+        //Value may not exist in DB
+        if (course.getMaxComplaints() == null)
+            maxComplaints = (int) MAX_COMPLAINT_NUMBER_PER_STUDENT;
+        else
+            maxComplaints = course.getMaxComplaints();
 
         long numberOfUnacceptedComplaints = countUnacceptedComplaintsByStudentIdAndCourseId(student.getId(), courseId);
-        if (numberOfUnacceptedComplaints >= course.getMaxComplaints() && complaint.getComplaintType() == ComplaintType.COMPLAINT) {
+        if (numberOfUnacceptedComplaints >= maxComplaints && complaint.getComplaintType() == ComplaintType.COMPLAINT) {
             throw new BadRequestAlertException("You cannot have more than " + course.getMaxComplaints() + " open or rejected complaints at the same time.", ENTITY_NAME,
                     "toomanycomplaints");
         }
