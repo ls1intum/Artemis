@@ -14,17 +14,6 @@ import * as ace from 'brace';
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
 import { ArtemisTestModule } from '../../test.module';
-import {
-    MockActivatedRoute,
-    MockCodeEditorBuildLogService,
-    MockCodeEditorRepositoryFileService,
-    MockCodeEditorRepositoryService,
-    MockCodeEditorSessionService,
-    MockExerciseHintService,
-    MockParticipationWebsocketService,
-    MockResultService,
-    MockSyncStorage,
-} from '../../mocks';
 import { ParticipationWebsocketService } from 'app/entities/participation/participation-websocket.service';
 import { ProgrammingExerciseParticipationService } from 'app/entities/programming-exercise/services/programming-exercise-participation.service';
 import { DeleteFileChange, FileType } from 'app/entities/ace-editor/file-change.model';
@@ -58,6 +47,15 @@ import { DomainService } from 'app/code-editor/service/code-editor-domain.servic
 import { ArtemisCodeEditorModule } from 'app/code-editor/code-editor.module';
 import { ProgrammingSubmission } from 'app/entities/programming-submission/programming-submission.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise/programming-exercise.model';
+import { MockActivatedRoute } from '../../mocks/mock-activated.route';
+import { MockParticipationWebsocketService } from '../../mocks/mock-participation-websocket.service';
+import { MockSyncStorage } from '../../mocks/mock-sync.storage';
+import { MockResultService } from '../../mocks/mock-result.service';
+import { MockCodeEditorRepositoryService } from '../../mocks/mock-code-editor-repository.service';
+import { MockExerciseHintService } from '../../mocks/mock-exercise-hint.service';
+import { MockCodeEditorRepositoryFileService } from '../../mocks/mock-code-editor-repository-file.service';
+import { MockCodeEditorSessionService } from '../../mocks/mock-code-editor-session.service';
+import { MockCodeEditorBuildLogService } from '../../mocks/mock-code-editor-build-log.service';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -109,6 +107,8 @@ describe('CodeEditorStudentIntegration', () => {
                 WindowRef,
                 ChangeDetectorRef,
                 DeviceDetectorService,
+                DomainService,
+                CodeEditorConflictStateService,
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: ActivatedRoute, useClass: MockActivatedRoute },
                 { provide: JhiWebsocketService, useClass: MockWebsocketService },

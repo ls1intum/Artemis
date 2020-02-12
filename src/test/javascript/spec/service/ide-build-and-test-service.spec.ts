@@ -4,7 +4,6 @@ import { IProgrammingSubmissionService } from 'app/programming-submission/progra
 import { IParticipationWebsocketService } from 'app/entities/participation/participation-websocket.service';
 import { SinonSpy, SinonStub, spy, stub } from 'sinon';
 import { MockProgrammingSubmissionService } from '../mocks/mock-programming-submission.service';
-import { MockCodeEditorBuildLogService, MockParticipationWebsocketService } from '../mocks';
 import { MockJavaBridgeService } from '../mocks/mock-java-bridge.service';
 import { IdeBuildAndTestService } from 'app/intellij/ide-build-and-test.service';
 import { Result } from 'app/entities/result/result.model';
@@ -13,6 +12,8 @@ import { Feedback } from 'app/entities/feedback/feedback.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise/programming-exercise.model';
 import { IJavaBridgeService } from 'app/intellij/intellij';
 import { IBuildLogService } from 'app/programming-assessment/build-logs/build-log.service';
+import { MockParticipationWebsocketService } from '../mocks/mock-participation-websocket.service';
+import { MockCodeEditorBuildLogService } from '../mocks/mock-code-editor-build-log.service';
 
 chai.use(sinonChai);
 const expect = chai.expect;

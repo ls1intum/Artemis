@@ -14,7 +14,7 @@ import { BehaviorSubject } from 'rxjs';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { RouterTestingModule } from '@angular/router/testing';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { MockSyncStorage } from '../../mocks';
+import { MockSyncStorage } from '../../mocks/mock-sync.storage';
 import { MockComponent } from 'ng-mocks';
 import { TextResultComponent } from 'app/text-editor/text-result/text-result.component';
 import { ComplaintInteractionsComponent } from 'app/complaints/complaint-interactions.component';

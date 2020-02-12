@@ -12,14 +12,13 @@ import { CodeEditorActionsComponent } from 'app/code-editor/actions/code-editor-
 import { CodeEditorFileBrowserFolderComponent } from 'app/code-editor/file-browser/code-editor-file-browser-folder.component';
 import { CodeEditorAceComponent } from 'app/code-editor/ace/code-editor-ace.component';
 import { CodeEditorFileBrowserDeleteComponent } from 'app/code-editor/file-browser/code-editor-file-browser-delete';
-import { CodeEditorConflictStateService } from 'app/code-editor/service/code-editor-conflict-state.service';
 import { CodeEditorInstructionsComponent } from 'app/code-editor/instructions/code-editor-instructions.component';
 import { CodeEditorResolveConflictModalComponent } from 'app/code-editor/actions/code-editor-resolve-conflict-modal.component';
 import { CodeEditorStudentContainerComponent } from 'app/code-editor/code-editor-student-container.component';
 import { ExerciseHintStudentDialogComponent } from 'app/entities/exercise-hint/exercise-hint-student-dialog.component';
 import { CodeEditorSubmissionService } from 'app/code-editor/service/code-editor-submission.service';
 import { ArtemisProgrammingExerciseInstructionsEditorModule } from 'app/entities/programming-exercise/instructions/instructions-editor/programming-exercise-instructions-editor.module';
-import { CodeEditorBuildLogService, CodeEditorRepositoryFileService, CodeEditorRepositoryService } from 'app/code-editor/service/code-editor-repository.service';
+import { CodeEditorBuildLogService } from 'app/code-editor/service/code-editor-repository.service';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { CodeEditorSessionService } from 'app/code-editor/service/code-editor-session.service';
 import { DomainService } from 'app/code-editor/service/code-editor-domain.service';
@@ -82,17 +81,6 @@ const ENTITY_STATES = [...codeEditorRoute];
         ExerciseHintStudentDialogComponent,
         CodeEditorResolveConflictModalComponent,
     ],
-    providers: [
-        JhiAlertService,
-        DomainService,
-        CodeEditorRepositoryService,
-        CodeEditorRepositoryFileService,
-        CodeEditorBuildLogService,
-        CodeEditorSessionService,
-        CodeEditorFileService,
-        CodeEditorGridService,
-        CodeEditorConflictStateService,
-        CodeEditorSubmissionService,
-    ],
+    providers: [JhiAlertService],
 })
 export class ArtemisCodeEditorModule {}

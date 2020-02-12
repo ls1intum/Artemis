@@ -15,7 +15,6 @@ import { ParticipationWebsocketService } from 'app/entities/participation/partic
 import { MockResultService } from '../../mocks/mock-result.service';
 import { MockRepositoryFileService } from '../../mocks/mock-repository-file.service';
 import { problemStatement, problemStatementBubbleSortFailsHtml, problemStatementBubbleSortNotExecutedHtml } from '../../sample/problemStatement.json';
-import { MockExerciseHintService, MockParticipationWebsocketService, MockSyncStorage } from '../../mocks';
 import { MockNgbModalService } from '../../mocks/mock-ngb-modal.service';
 import { ProgrammingExerciseInstructionStepWizardComponent } from 'app/entities/programming-exercise/instructions/instructions-render/step-wizard/programming-exercise-instruction-step-wizard.component';
 import { ProgrammingExerciseInstructionService } from 'app/entities/programming-exercise/instructions/instructions-render/service/programming-exercise-instruction.service';
@@ -38,6 +37,9 @@ import { Feedback } from 'app/entities/feedback/feedback.model';
 import { ProgrammingExerciseInstructionComponent } from 'app/entities/programming-exercise/instructions/instructions-render/programming-exercise-instruction.component';
 import { ProgrammingExercise } from 'app/entities/programming-exercise/programming-exercise.model';
 import { ResultDetailComponent } from 'app/entities/result/result-detail.component';
+import { MockSyncStorage } from '../../mocks/mock-sync.storage';
+import { MockParticipationWebsocketService } from '../../mocks/mock-participation-websocket.service';
+import { MockExerciseHintService } from '../../mocks/mock-exercise-hint.service';
 
 chai.use(sinonChai);
 const expect = chai.expect;

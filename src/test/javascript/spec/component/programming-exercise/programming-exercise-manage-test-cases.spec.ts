@@ -13,7 +13,7 @@ import { JhiAlertService } from 'ng-jhipster';
 import * as chai from 'chai';
 import { ArtemisTestModule } from '../../test.module';
 import { TranslateModule } from '@ngx-translate/core';
-import { MockActivatedRoute, MockCookieService, MockProgrammingExerciseService, MockSyncStorage } from '../../mocks';
+import { MockSyncStorage } from '../../mocks/mock-sync.storage';
 import { MockProgrammingExerciseTestCaseService } from '../../mocks/mock-programming-exercise-test-case.service';
 import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise/programming-exercise-test-case.model';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
@@ -29,6 +29,9 @@ import { EditableField, ProgrammingExerciseManageTestCasesComponent } from 'app/
 import { ProgrammingExerciseService, ProgrammingExerciseTestCaseStateDTO } from 'app/entities/programming-exercise/services/programming-exercise.service';
 import { ProgrammingExercise } from 'app/entities/programming-exercise/programming-exercise.model';
 import { ProgrammingExerciseTestCaseService } from 'app/entities/programming-exercise/services/programming-exercise-test-case.service';
+import { MockActivatedRoute } from '../../mocks/mock-activated.route';
+import { MockCookieService } from '../../mocks/mock-cookie.service';
+import { MockProgrammingExerciseService } from '../../mocks/mock-programming-exercise.service';
 
 chai.use(sinonChai);
 const expect = chai.expect;

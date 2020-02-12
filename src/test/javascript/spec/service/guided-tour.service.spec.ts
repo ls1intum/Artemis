@@ -16,7 +16,6 @@ import { GuidedTour } from 'app/guided-tour/guided-tour.model';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { GuidedTourState, Orientation, UserInteractionEvent } from 'app/guided-tour/guided-tour.constants';
 import { GuidedTourComponent } from 'app/guided-tour/guided-tour.component';
-import { MockCookieService, MockSyncStorage } from '../mocks';
 import { GuidedTourMapping, GuidedTourSetting } from 'app/guided-tour/guided-tour-setting.model';
 import { ModelingTaskTourStep, TextTourStep } from 'app/guided-tour/guided-tour-step.model';
 import { MockAccountService } from '../mocks/mock-account.service';
@@ -33,6 +32,8 @@ import { Exercise, ExerciseType } from 'app/entities/exercise/exercise.model';
 import { InitializationState } from 'app/entities/participation/participation.model';
 import { NavbarComponent } from 'app/layouts/navbar/navbar.component';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { MockSyncStorage } from '../mocks/mock-sync.storage';
+import { MockCookieService } from '../mocks/mock-cookie.service';
 
 chai.use(sinonChai);
 const expect = chai.expect;

@@ -12,7 +12,7 @@ import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { ActivatedRoute } from '@angular/router';
 import { By } from '@angular/platform-browser';
 import { Course } from 'app/entities/course/course.model';
-import { MockSyncStorage } from '../../../mocks';
+import { MockSyncStorage } from '../../../mocks/mock-sync.storage';
 import { Result } from 'app/entities/result/result.model';
 import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
 import { ProgrammingSubmission } from 'app/entities/programming-submission/programming-submission.model';

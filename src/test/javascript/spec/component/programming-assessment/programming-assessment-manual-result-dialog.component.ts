@@ -9,7 +9,9 @@ import { SinonStub, stub } from 'sinon';
 import { of } from 'rxjs';
 import { ArtemisTestModule } from '../../test.module';
 import { ParticipationWebsocketService } from 'app/entities/participation/participation-websocket.service';
-import { MockExerciseHintService, MockNgbModalService, MockParticipationWebsocketService, MockRepositoryFileService, MockResultService, MockSyncStorage } from '../../mocks';
+import { MockResultService } from '../../mocks/mock-result.service';
+import { MockSyncStorage } from '../../mocks/mock-sync.storage';
+import { MockParticipationWebsocketService } from '../../mocks/mock-participation-websocket.service';
 import { MockProgrammingExerciseParticipationService } from '../../mocks/mock-programming-exercise-participation.service';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { BuildLogService } from 'app/programming-assessment/build-logs/build-log.service';
@@ -34,6 +36,9 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise/programmi
 import { Complaint } from 'app/entities/complaint/complaint.model';
 import { ComplaintService } from 'app/entities/complaint/complaint.service';
 import { ExerciseHintService } from 'app/entities/exercise-hint/exercise-hint.service';
+import { MockRepositoryFileService } from '../../mocks/mock-repository-file.service';
+import { MockExerciseHintService } from '../../mocks/mock-exercise-hint.service';
+import { MockNgbModalService } from '../../mocks/mock-ngb-modal.service';
 
 chai.use(sinonChai);
 const expect = chai.expect;

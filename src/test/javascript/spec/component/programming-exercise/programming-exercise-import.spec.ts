@@ -6,7 +6,6 @@ import { DebugElement } from '@angular/core';
 import { Course } from 'app/entities/course/course.model';
 import { TranslateModule } from '@ngx-translate/core';
 import { ArtemisTestModule } from '../../test.module';
-import { MockProgrammingExercisePagingService } from '../../mocks';
 import { SinonStub, stub } from 'sinon';
 import { Subject } from 'rxjs';
 import { SortByModule } from 'app/components/pipes/sort-by.module';
@@ -19,6 +18,7 @@ import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
 import { ProgrammingExercise, ProgrammingLanguage } from 'app/entities/programming-exercise/programming-exercise.model';
 import { SearchResult } from 'app/components/table/pageable-table';
 import { ButtonComponent } from 'app/shared/components/button.component';
+import { MockProgrammingExercisePagingService } from '../../mocks/mock-programming-exercise-paging.service';
 
 chai.use(sinonChai);
 const expect = chai.expect;

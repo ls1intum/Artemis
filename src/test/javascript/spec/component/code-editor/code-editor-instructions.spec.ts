@@ -9,7 +9,6 @@ import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
 import { AceEditorModule } from 'ng2-ace-editor';
 import { ArtemisTestModule } from '../../test.module';
-import { MockCodeEditorRepositoryFileService } from '../../mocks';
 import { MockCodeEditorGridService } from '../../mocks/mock-code-editor-grid.service';
 import { CodeEditorRepositoryFileService } from 'app/code-editor/service/code-editor-repository.service';
 import { CodeEditorGridService } from 'app/code-editor/service/code-editor-grid.service';
@@ -18,6 +17,7 @@ import { ProgrammingExerciseInstructionComponent } from 'app/entities/programmin
 import { ProgrammingExercise } from 'app/entities/programming-exercise/programming-exercise.model';
 import { ProgrammingExerciseEditableInstructionComponent } from 'app/entities/programming-exercise/instructions/instructions-editor/programming-exercise-editable-instruction.component';
 import { ArtemisMarkdownEditorModule } from 'app/markdown-editor/markdown-editor.module';
+import { MockCodeEditorRepositoryFileService } from '../../mocks/mock-code-editor-repository-file.service';
 
 chai.use(sinonChai);
 const expect = chai.expect;

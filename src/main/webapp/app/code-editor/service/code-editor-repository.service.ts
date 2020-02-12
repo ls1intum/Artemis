@@ -10,6 +10,17 @@ import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { CommitState } from 'app/code-editor/model/commit-state.model';
 import { DomainChange, DomainDependentEndpoint, DomainService } from 'app/code-editor/service/code-editor-domain.service';
 
+export interface ICodeEditorRepositoryFileService {
+    getRepositoryContent: () => Observable<{ [fileName: string]: FileType }>;
+    getFile: (fileName: string) => Observable<{ fileContent: string }>;
+    createFile: (fileName: string) => Observable<void>;
+    createFolder: (folderName: string) => Observable<void>;
+    updateFileContent: (fileName: string, fileContent: string) => Observable<Object>;
+    updateFiles: (fileUpdates: Array<{ fileName: string; fileContent: string }>) => Observable<{ [fileName: string]: string | null }>;
+    renameFile: (filePath: string, newFileName: string) => Observable<void>;
+    deleteFile: (filePath: string) => Observable<void>;
+}
+
 export enum DomainType {
     PARTICIPATION = 'PARTICIPATION',
     TEST_REPOSITORY = 'TEST_REPOSITORY',
@@ -30,17 +41,6 @@ type FileSubmissionError = { error: RepositoryError; participationId: number; fi
 const checkIfSubmissionIsError = (toBeDetermined: FileSubmission | FileSubmissionError): toBeDetermined is FileSubmissionError => {
     return !!(toBeDetermined as FileSubmissionError).error;
 };
-
-export interface ICodeEditorRepositoryFileService {
-    getRepositoryContent: () => Observable<{ [fileName: string]: FileType }>;
-    getFile: (fileName: string) => Observable<{ fileContent: string }>;
-    createFile: (fileName: string) => Observable<void>;
-    createFolder: (folderName: string) => Observable<void>;
-    updateFileContent: (fileName: string, fileContent: string) => Observable<Object>;
-    updateFiles: (fileUpdates: Array<{ fileName: string; fileContent: string }>) => Observable<{ [fileName: string]: string | null }>;
-    renameFile: (filePath: string, newFileName: string) => Observable<void>;
-    deleteFile: (filePath: string) => Observable<void>;
-}
 
 export interface ICodeEditorRepositoryService {
     getStatus: () => Observable<{ repositoryStatus: string }>;

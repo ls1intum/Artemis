@@ -13,19 +13,6 @@ import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
 import * as ace from 'brace';
 import { ArtemisTestModule } from '../../test.module';
-import {
-    MockActivatedRoute,
-    MockCodeEditorBuildLogService,
-    MockCodeEditorRepositoryFileService,
-    MockCodeEditorRepositoryService,
-    MockCodeEditorSessionService,
-    MockExerciseHintService,
-    MockParticipationService,
-    MockParticipationWebsocketService,
-    MockProgrammingExerciseService,
-    MockResultService,
-    MockSyncStorage,
-} from '../../mocks';
 import { ProgrammingExerciseParticipationService } from 'app/entities/programming-exercise/services/programming-exercise-participation.service';
 import { ProgrammingExerciseService } from 'app/entities/programming-exercise/services/programming-exercise.service';
 import { FileType } from 'app/entities/ace-editor/file-change.model';
@@ -51,6 +38,17 @@ import { ParticipationService } from 'app/entities/participation/participation.s
 import { ProgrammingExercise } from 'app/entities/programming-exercise/programming-exercise.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { SolutionProgrammingExerciseParticipation } from 'app/entities/participation/solution-programming-exercise-participation.model';
+import { MockActivatedRoute } from '../../mocks/mock-activated.route';
+import { MockSyncStorage } from '../../mocks/mock-sync.storage';
+import { MockResultService } from '../../mocks/mock-result.service';
+import { MockCodeEditorRepositoryService } from '../../mocks/mock-code-editor-repository.service';
+import { MockCodeEditorBuildLogService } from '../../mocks/mock-code-editor-build-log.service';
+import { MockCodeEditorRepositoryFileService } from '../../mocks/mock-code-editor-repository-file.service';
+import { MockCodeEditorSessionService } from '../../mocks/mock-code-editor-session.service';
+import { MockParticipationWebsocketService } from '../../mocks/mock-participation-websocket.service';
+import { MockParticipationService } from '../../mocks/mock-participation.service';
+import { MockProgrammingExerciseService } from '../../mocks/mock-programming-exercise.service';
+import { MockExerciseHintService } from '../../mocks/mock-exercise-hint.service';
 
 chai.use(sinonChai);
 const expect = chai.expect;

@@ -13,7 +13,7 @@ import { MockJavaBridgeService } from '../../../mocks/mock-java-bridge.service';
 import { MockCourseExerciseService } from '../../../mocks/mock-course-exercise.service';
 import { JhiAlertService } from 'ng-jhipster';
 import { MockAlertService } from '../../../helpers/mock-alert.service';
-import { MockParticipationWebsocketService } from '../../../mocks';
+import { MockParticipationWebsocketService } from '../../../mocks/mock-participation-websocket.service';
 import { Result } from 'app/entities/result/result.model';
 import { DeviceDetectorService } from 'ngx-device-detector';
 import { of } from 'rxjs';

@@ -12,7 +12,6 @@ import { BehaviorSubject, of } from 'rxjs';
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
 import { ArtemisTestModule } from '../../test.module';
-import { MockParticipationWebsocketService, MockSyncStorage } from '../../mocks';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { ParticipationWebsocketService } from 'app/entities/participation/participation-websocket.service';
 import { MockAccountService } from '../../mocks/mock-account.service';
@@ -24,6 +23,8 @@ import { UpdatingResultComponent } from 'app/entities/result/updating-result.com
 import { ResultComponent } from 'app/entities/result/result.component';
 import { CodeEditorFileService } from 'app/code-editor/service/code-editor-file.service';
 import { Result } from 'app/entities/result/result.model';
+import { MockParticipationWebsocketService } from '../../mocks/mock-participation-websocket.service';
+import { MockSyncStorage } from '../../mocks/mock-sync.storage';
 
 chai.use(sinonChai);
 const expect = chai.expect;

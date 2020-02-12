@@ -13,7 +13,6 @@ import { TreeviewItem, TreeviewModule } from 'ngx-treeview';
 import { SinonStub, spy, stub } from 'sinon';
 import { Observable, Subject } from 'rxjs';
 import { ArtemisTestModule } from '../../test.module';
-import { MockCodeEditorConflictStateService, MockCodeEditorRepositoryFileService, MockCodeEditorRepositoryService, MockCookieService, MockSyncStorage } from '../../mocks';
 import { FileType } from 'app/entities/ace-editor/file-change.model';
 import { triggerChanges } from '../../utils/general.utils';
 import { DeviceDetectorService } from 'ngx-device-detector';
@@ -26,6 +25,11 @@ import { CodeEditorFileBrowserCreateNodeComponent } from 'app/code-editor/file-b
 import { CodeEditorFileBrowserFileComponent } from 'app/code-editor/file-browser/code-editor-file-browser-file.component';
 import { CodeEditorFileBrowserComponent } from 'app/code-editor/file-browser/code-editor-file-browser.component';
 import { CodeEditorStatusComponent } from 'app/code-editor/status/code-editor-status.component';
+import { MockCodeEditorRepositoryService } from '../../mocks/mock-code-editor-repository.service';
+import { MockCodeEditorRepositoryFileService } from '../../mocks/mock-code-editor-repository-file.service';
+import { MockCodeEditorConflictStateService } from '../../mocks/mock-code-editor-conflict-state.service';
+import { MockSyncStorage } from '../../mocks/mock-sync.storage';
+import { MockCookieService } from '../../mocks/mock-cookie.service';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -678,7 +682,7 @@ describe('CodeEditorFileBrowserComponent', () => {
 
         // Wait for focus of input element
         tick();
-        let focusedElement = debugElement.query(By.css(':focus')).nativeElement;
+        const focusedElement = debugElement.query(By.css(':focus')).nativeElement;
         expect(renamingInput.nativeElement).to.deep.equal(focusedElement);
 
         renamingInput.nativeElement.dispatchEvent(new Event('focusout'));
