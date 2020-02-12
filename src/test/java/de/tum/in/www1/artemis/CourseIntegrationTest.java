@@ -84,14 +84,8 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationTest {
         Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>(), "tumuser", "tutor", "instructor", 5);
         request.post("/api/courses", course, HttpStatus.CREATED);
         //Because the courseId is automatically generated we cannot use the findById method to retrieve the saved course.
-        //TODO: Feedback needed. Surely there must be a better way to check than this (?)
-        List<Course> repoContent = courseRepo.findAll();
-        boolean rightValueExists = false;
-        for (Course element : repoContent) {
-            if (element.getMaxComplaints() == 5)
-                rightValueExists = true;
-        }
-        assertThat(rightValueExists).isTrue();
+        Course getFromRepo = courseRepo.findAll().get(0);
+        assertThat(getFromRepo.getMaxComplaints()).as("Course has right maxComplaints Value").isEqualTo(5);
     }
 
     @Test
