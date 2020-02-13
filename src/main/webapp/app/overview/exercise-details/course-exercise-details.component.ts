@@ -24,6 +24,8 @@ import { participationStatus } from 'app/exercises/shared/exercise/exercise-util
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { take } from 'rxjs/operators';
+import { Course } from 'app/entities/course.model';
 
 const MAX_RESULT_HISTORY_LENGTH = 5;
 
@@ -42,6 +44,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     private currentUser: User;
     private exerciseId: number;
     public courseId: number;
+    public course: Course | null;
     private subscription: Subscription;
     public exercise: Exercise | null;
     public showMoreResults = false;
@@ -75,6 +78,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
             const didCourseChange = this.courseId !== parseInt(params['courseId'], 10);
             this.exerciseId = parseInt(params['exerciseId'], 10);
             this.courseId = parseInt(params['courseId'], 10);
+            this.getCourse(this.courseId);
             this.accountService.identity().then((user: User) => {
                 this.currentUser = user;
             });
@@ -99,6 +103,19 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
                 this.participationWebsocketService.unsubscribeForLatestResultOfParticipation(this.studentParticipation.id, this.exercise!);
             }
         }
+    }
+
+    /**
+     * Assigns the attribute course to be able to access the attribute qnaEnabled
+     */
+    getCourse(courseId: number) {
+        // We do not want to subscribe but instead just take the value at initialization
+        this.courseService
+            .find(courseId)
+            .pipe(take(1))
+            .subscribe((courseResponse: HttpResponse<Course>) => {
+                this.course = courseResponse.body;
+            });
     }
 
     loadExercise() {

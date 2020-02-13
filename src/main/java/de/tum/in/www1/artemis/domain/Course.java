@@ -91,6 +91,10 @@ public class Course implements Serializable {
     @JsonView(QuizView.Before.class)
     private Integer maxComplaintTimeWeeks;
 
+    @Column(name = "qna_enabled")
+    @JsonView(QuizView.Before.class)
+    private Boolean qnaEnabled;
+
     @Column(name = "color")
     private String color;
 
@@ -267,6 +271,19 @@ public class Course implements Serializable {
 
     public void setMaxComplaintTimeWeeks(Integer maxComplaintTimeWeeks) {
         this.maxComplaintTimeWeeks = maxComplaintTimeWeeks;
+    }
+
+    public Boolean getQnaEnabled() {
+        return qnaEnabled;
+    }
+
+    public Course qnaEnabled(Boolean qnaEnabled) {
+        this.qnaEnabled = qnaEnabled;
+        return this;
+    }
+
+    public void setQnaEnabled(Boolean qnaEnabled) {
+        this.qnaEnabled = qnaEnabled;
     }
 
     public String getColor() {

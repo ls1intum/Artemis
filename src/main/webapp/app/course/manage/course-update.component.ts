@@ -66,6 +66,7 @@ export class CourseUpdateComponent implements OnInit {
             maxComplaintTimeWeeks: new FormControl(this.course.maxComplaintTimeWeeks, {
                 validators: [Validators.required, Validators.min(1)],
             }),
+            qnaEnabled: new FormControl(this.course.qnaEnabled),
             studentGroupName: new FormControl(this.course.studentGroupName, [Validators.required]),
             teachingAssistantGroupName: new FormControl(this.course.teachingAssistantGroupName),
             instructorGroupName: new FormControl(this.course.instructorGroupName, [Validators.required]),
