@@ -19,7 +19,8 @@ export class Course implements BaseEntity {
     public onlineCourse = false; // default value
     public registrationEnabled = false; // default value
     public presentationScore = 0; // default value
-    public maxComplaints: number = 3; // default value
+    public maxComplaints = 3; // default value
+    public maxComplaintTimeWeeks = 1; // default value
 
     public exercises: Exercise[];
     public lectures: Lecture[];

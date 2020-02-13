@@ -24,6 +24,7 @@
             "courseIcon": "Course Icon",
             "shortName": "Short Name",
             "maxComplaints": "Maximum Amount of Complaints",
+            "maxComplaintTimeWeeks": "Deadline for complaints in weeks after result date",
             "studentGroupName": "Student Group",
             "teachingAssistantGroupName": "Tutor Group",
             "instructorGroupName": "Instructor Group",

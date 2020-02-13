@@ -79,13 +79,14 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationTest {
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
-    public void testCreateCourseWithMaxComplaints() throws Exception {
-        //Generate POST Request Body with 5 Max Complaints
-        Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>(), "tumuser", "tutor", "instructor", 5);
+    public void testCreateCourseWithMaxComplaintsAndTime() throws Exception {
+        //Generate POST Request Body with 5 Max Complaints and 2 weeks complaint deadline
+        Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>(), "tumuser", "tutor", "instructor", 5, 2);
         request.post("/api/courses", course, HttpStatus.CREATED);
         //Because the courseId is automatically generated we cannot use the findById method to retrieve the saved course.
         Course getFromRepo = courseRepo.findAll().get(0);
         assertThat(getFromRepo.getMaxComplaints()).as("Course has right maxComplaints Value").isEqualTo(5);
+        assertThat(getFromRepo.getMaxComplaintTimeWeeks()).as("Course has right maxComplaintTimeWeeks Value").isEqualTo(2);
     }
 
     @Test

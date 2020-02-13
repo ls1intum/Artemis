@@ -24,6 +24,7 @@
             "courseIcon": "Kursicon",
             "shortName": "Kurzname",
             "maxComplaints": "Maximale Anzahl von Beschwerden",
+            "maxComplaintTimeWeeks": "Beschwerdefrist in Wochen nach dem Ergebnis",
             "studentGroupName": "Studenten Gruppe",
             "teachingAssistantGroupName": "Tutor Gruppe",
             "instructorGroupName": "Instructor Gruppe",

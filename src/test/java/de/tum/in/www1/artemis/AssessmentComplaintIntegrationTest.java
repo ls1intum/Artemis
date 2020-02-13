@@ -73,7 +73,7 @@ public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegratio
     @BeforeEach
     public void initTestCase() throws Exception {
         database.addUsers(2, 2, 1);
-        //Initialize with 5 max complaints
+        //Initialize with 5 max complaints and 2 weeks max complaint deadline
         database.addCourseWithOneModelingExercise();
         modelingExercise = (ModelingExercise) exerciseRepo.findAll().get(0);
         saveModelingSubmissionAndAssessment();
@@ -147,9 +147,24 @@ public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegratio
 
     @Test
     @WithMockUser(username = "student1")
+    public void submitComplaintAboutModelingAssessment_validDeadline() throws Exception {
+        //Mock object initialized with 2 weeks deadline. One week after result date is fine.
+        database.updateAssessmentDueDate(modelingExercise.getId(), ZonedDateTime.now().minusWeeks(Constants.MAX_COMPLAINT_TIME_WEEKS));
+        database.updateResultCompletionDate(modelingAssessment.getId(), ZonedDateTime.now().minusWeeks(Constants.MAX_COMPLAINT_TIME_WEEKS));
+
+        request.post("/api/complaints", complaint, HttpStatus.CREATED);
+
+        assertThat(complaintRepo.findByResult_Id(modelingAssessment.getId())).as("complaint is saved").isPresent();
+        Result storedResult = resultRepo.findByIdWithEagerFeedbacksAndAssessor(modelingAssessment.getId()).get();
+        assertThat(storedResult.hasComplaint()).as("hasComplaint flag of result is true").isTrue();
+    }
+
+    @Test
+    @WithMockUser(username = "student1")
     public void submitComplaintAboutModelingAssessment_assessmentTooOld() throws Exception {
-        database.updateAssessmentDueDate(modelingExercise.getId(), ZonedDateTime.now().minusWeeks(Constants.MAX_COMPLAINT_TIME_WEEKS + 1));
-        database.updateResultCompletionDate(modelingAssessment.getId(), ZonedDateTime.now().minusWeeks(Constants.MAX_COMPLAINT_TIME_WEEKS + 1));
+        //3 weeks is already past the deadline
+        database.updateAssessmentDueDate(modelingExercise.getId(), ZonedDateTime.now().minusWeeks(Constants.MAX_COMPLAINT_TIME_WEEKS + 2));
+        database.updateResultCompletionDate(modelingAssessment.getId(), ZonedDateTime.now().minusWeeks(Constants.MAX_COMPLAINT_TIME_WEEKS + 2));
 
         request.post("/api/complaints", complaint, HttpStatus.BAD_REQUEST);
 

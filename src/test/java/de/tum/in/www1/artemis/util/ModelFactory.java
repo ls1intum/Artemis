@@ -202,17 +202,18 @@ public class ModelFactory {
 
     public static Course generateCourse(Long id, ZonedDateTime startDate, ZonedDateTime endDate, Set<Exercise> exercises, String studentGroupName,
             String teachingAssistantGroupName, String instructorGroupName) {
-        return generateCourse(id, startDate, endDate, exercises, studentGroupName, teachingAssistantGroupName, instructorGroupName, 5);
+        return generateCourse(id, startDate, endDate, exercises, studentGroupName, teachingAssistantGroupName, instructorGroupName, 5, 1);
     }
 
     public static Course generateCourse(Long id, ZonedDateTime startDate, ZonedDateTime endDate, Set<Exercise> exercises, String studentGroupName,
-                                        String teachingAssistantGroupName, String instructorGroupName, Integer maxComplaints) {
+                                        String teachingAssistantGroupName, String instructorGroupName, Integer maxComplaints, Integer maxComplaintTimeWeeks) {
         Course course = new Course();
         course.setId(id);
         course.setTitle(UUID.randomUUID().toString());
         course.setDescription(UUID.randomUUID().toString());
         course.setShortName("t" + UUID.randomUUID().toString().substring(0, 3));
         course.setMaxComplaints(maxComplaints);
+        course.setMaxComplaintTimeWeeks(maxComplaintTimeWeeks);
         course.setStudentGroupName(studentGroupName);
         course.setTeachingAssistantGroupName(teachingAssistantGroupName);
         course.setInstructorGroupName(instructorGroupName);
