@@ -9,7 +9,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -80,16 +79,16 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationTest {
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     public void testCreateCourseWithOptions() throws Exception {
-        //Generate POST Request Body with maxComplaints = 5, maxComplaintTimeWeeks = 2, qnaEnabled = false
+        // Generate POST Request Body with maxComplaints = 5, maxComplaintTimeWeeks = 2, qnaEnabled = false
         Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>(), "tumuser", "tutor", "instructor", 5, 2, false);
         request.post("/api/courses", course, HttpStatus.CREATED);
-        //Because the courseId is automatically generated we cannot use the findById method to retrieve the saved course.
+        // Because the courseId is automatically generated we cannot use the findById method to retrieve the saved course.
         Course getFromRepo = courseRepo.findAll().get(0);
         assertThat(getFromRepo.getMaxComplaints()).as("Course has right maxComplaints Value").isEqualTo(5);
         assertThat(getFromRepo.getMaxComplaintTimeWeeks()).as("Course has right maxComplaintTimeWeeks Value").isEqualTo(2);
         assertThat(getFromRepo.getQnaEnabled()).as("Course has right qnaEnabled Value").isFalse();
 
-        //Test edit course
+        // Test edit course
         course.setId(getFromRepo.getId());
         course.setMaxComplaints(1);
         course.setMaxComplaintTimeWeeks(1);

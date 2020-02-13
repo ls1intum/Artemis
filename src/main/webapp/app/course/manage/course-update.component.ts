@@ -60,7 +60,7 @@ export class CourseUpdateComponent implements OnInit {
                 updateOn: 'blur',
             }),
             maxComplaints: new FormControl(this.course.maxComplaints, {
-                //TODO: allow 0 (no complaints) ?
+                // TODO: allow 0 (no complaints) ?
                 validators: [Validators.required, Validators.min(0)],
             }),
             maxComplaintTimeWeeks: new FormControl(this.course.maxComplaintTimeWeeks, {

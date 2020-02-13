@@ -59,11 +59,11 @@ public class ComplaintService {
         User student = studentParticipation.getStudent();
         Long courseId = studentParticipation.getExercise().getCourse().getId();
 
-        //Retrieve course to get Max Complaint Number and Max Complaint Time per Student
+        // Retrieve course to get Max Complaint Number and Max Complaint Time per Student
         Course course = courseService.findOne(courseId);
         int maxComplaints;
 
-        //Value may not exist in DB
+        // Value may not exist in DB
         if (course.getMaxComplaints() == null)
             maxComplaints = (int) MAX_COMPLAINT_NUMBER_PER_STUDENT;
         else
@@ -189,7 +189,7 @@ public class ComplaintService {
     private boolean isTimeOfComplaintValid(Result result, Exercise exercise, Course course) {
         int maxComplaintTimeWeeks;
 
-        //Value may not exist in DB
+        // Value may not exist in DB
         if (course.getMaxComplaintTimeWeeks() == null)
             maxComplaintTimeWeeks = MAX_COMPLAINT_TIME_WEEKS;
         else

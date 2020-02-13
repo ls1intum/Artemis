@@ -73,7 +73,7 @@ public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegratio
     @BeforeEach
     public void initTestCase() throws Exception {
         database.addUsers(2, 2, 1);
-        //Initialize with 5 max complaints and 2 weeks max complaint deadline
+        // Initialize with 5 max complaints and 2 weeks max complaint deadline
         database.addCourseWithOneModelingExercise();
         modelingExercise = (ModelingExercise) exerciseRepo.findAll().get(0);
         saveModelingSubmissionAndAssessment();
@@ -148,7 +148,7 @@ public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegratio
     @Test
     @WithMockUser(username = "student1")
     public void submitComplaintAboutModelingAssessment_validDeadline() throws Exception {
-        //Mock object initialized with 2 weeks deadline. One week after result date is fine.
+        // Mock object initialized with 2 weeks deadline. One week after result date is fine.
         database.updateAssessmentDueDate(modelingExercise.getId(), ZonedDateTime.now().minusWeeks(Constants.MAX_COMPLAINT_TIME_WEEKS));
         database.updateResultCompletionDate(modelingAssessment.getId(), ZonedDateTime.now().minusWeeks(Constants.MAX_COMPLAINT_TIME_WEEKS));
 
@@ -162,7 +162,7 @@ public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegratio
     @Test
     @WithMockUser(username = "student1")
     public void submitComplaintAboutModelingAssessment_assessmentTooOld() throws Exception {
-        //3 weeks is already past the deadline
+        // 3 weeks is already past the deadline
         database.updateAssessmentDueDate(modelingExercise.getId(), ZonedDateTime.now().minusWeeks(Constants.MAX_COMPLAINT_TIME_WEEKS + 2));
         database.updateResultCompletionDate(modelingAssessment.getId(), ZonedDateTime.now().minusWeeks(Constants.MAX_COMPLAINT_TIME_WEEKS + 2));
 

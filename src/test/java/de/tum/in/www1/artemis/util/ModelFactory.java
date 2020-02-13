@@ -206,7 +206,7 @@ public class ModelFactory {
     }
 
     public static Course generateCourse(Long id, ZonedDateTime startDate, ZonedDateTime endDate, Set<Exercise> exercises, String studentGroupName,
-                                        String teachingAssistantGroupName, String instructorGroupName, Integer maxComplaints, Integer maxComplaintTimeWeeks, Boolean qnaEnabled) {
+            String teachingAssistantGroupName, String instructorGroupName, Integer maxComplaints, Integer maxComplaintTimeWeeks, Boolean qnaEnabled) {
         Course course = new Course();
         course.setId(id);
         course.setTitle(UUID.randomUUID().toString());
