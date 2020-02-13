@@ -7,6 +7,7 @@ import { Attachment } from 'app/entities/attachment';
 import { StudentQuestion } from 'app/entities/student-question';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { AssessmentType } from 'app/entities/assessment-type';
+import { GradingCriterion } from 'app/structured-grading-criterion/grading-criterion.model';
 
 export const enum DifficultyLevel {
     EASY = 'EASY',
@@ -66,6 +67,7 @@ export abstract class Exercise implements BaseEntity {
     public exampleSubmissions: ExampleSubmission[];
     public attachments: Attachment[];
     public studentQuestions: StudentQuestion[];
+    public gradingCriteria: GradingCriterion[];
 
     public numberOfParticipations?: number;
     public numberOfAssessments?: number;

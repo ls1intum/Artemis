@@ -8,5 +8,4 @@ export class GradingInstruction implements BaseEntity {
     public instructionDescription: string;
     public feedback: string;
     public usageCount?: number;
-    public criterion: GradingCriterion;
 }

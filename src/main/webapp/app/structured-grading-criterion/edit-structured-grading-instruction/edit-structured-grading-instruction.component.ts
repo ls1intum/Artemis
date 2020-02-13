@@ -2,7 +2,8 @@ import { Component, OnInit, ViewChild, Input } from '@angular/core';
 import { CreditsCommand, DomainCommand, FeedbackCommand, GradingCriteriaCommand, InstructionCommand, UsageCountCommand } from 'app/markdown-editor/domainCommands';
 import { KatexCommand } from 'app/markdown-editor/commands';
 import { MarkdownEditorComponent } from 'app/markdown-editor';
-import { GradingInstruction } from 'app/structured-grading-instruction/grading-instruction.model';
+import { Exercise } from 'app/entities/exercise';
+import { GradingCriterion } from 'app/structured-grading-criterion/grading-criterion.model';
 
 @Component({
     selector: 'jhi-edit-structured-grading-instruction',
@@ -14,9 +15,10 @@ export class EditStructuredGradingInstructionComponent implements OnInit {
     questionEditorText = '';
     @ViewChild('markdownEditor', { static: false })
     private markdownEditor: MarkdownEditorComponent;
+    private criteria: GradingCriterion[];
 
     @Input()
-    instruction: GradingInstruction;
+    exercise: Exercise;
 
     katexCommand = new KatexCommand();
     gradingCriteriaCommand = new GradingCriteriaCommand();
@@ -29,7 +31,7 @@ export class EditStructuredGradingInstructionComponent implements OnInit {
     constructor() {}
 
     ngOnInit() {
-        this.questionEditorText = this.generateMarkdown();
+        //  this.questionEditorText = this.generateMarkdown();
     }
     credits = new Array();
     instructions = new Array();
@@ -38,7 +40,7 @@ export class EditStructuredGradingInstructionComponent implements OnInit {
     /**
      * @function generateMarkdown
      * @desc Generate the markdown text for this grading instruction
-     */
+
     generateMarkdown(): string {
         const markdownText =
             CreditsCommand.identifier +
@@ -58,7 +60,7 @@ export class EditStructuredGradingInstructionComponent implements OnInit {
             UsageCountCommand.text;
         return markdownText;
     }
-
+     */
     prepareForSave(): void {
         this.markdownEditor.parse();
     }
@@ -70,7 +72,6 @@ export class EditStructuredGradingInstructionComponent implements OnInit {
      * @param domainCommands containing tuples of [text, domainCommandIdentifiers]
      */
     domainCommandsFound(domainCommands: [string, DomainCommand][]): void {
-        console.log(this.instruction);
         this.credits = [];
         this.instructions = [];
         this.feedback = [];

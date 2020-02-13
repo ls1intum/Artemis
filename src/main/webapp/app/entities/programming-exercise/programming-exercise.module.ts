@@ -32,7 +32,7 @@ import { ProgrammingExerciseImportComponent } from 'app/entities/programming-exe
 import { programmingExerciseRoute } from 'app/entities/programming-exercise/programming-exercise.route';
 import { ProgrammingExerciseUtilsModule } from 'app/entities/programming-exercise/utils/programming-exercise-utils.module';
 import { ArtemisAssessmentSharedModule } from 'app/assessment-shared/assessment-shared.module';
-import { StructuredGradingInstructionModule } from 'app/structured-grading-instruction/structured-grading-instruction.module';
+import { StructuredGradingCriterionModule } from 'app/structured-grading-criterion/structured-grading-criterion.module';
 
 const ENTITY_STATES = [...programmingExerciseRoute];
 
@@ -60,7 +60,7 @@ const ENTITY_STATES = [...programmingExerciseRoute];
         AssessmentInstructionsModule,
         FeatureToggleModule,
         ArtemisProgrammingAssessmentModule,
-        StructuredGradingInstructionModule,
+        StructuredGradingCriterionModule,
         IntellijModule,
         ProgrammingExerciseUtilsModule,
         ArtemisAssessmentSharedModule,

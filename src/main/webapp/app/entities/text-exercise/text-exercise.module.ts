@@ -12,7 +12,7 @@ import { DeleteDialogComponent } from 'app/shared/delete-dialog/delete-dialog.co
 import { ArtemisPresentationScoreModule } from 'app/components/exercise/presentation-score/presentation-score.module';
 import { AssessmentInstructionsModule } from 'app/assessment-instructions/assessment-instructions.module';
 import { ArtemisAssessmentSharedModule } from 'app/assessment-shared/assessment-shared.module';
-import { StructuredGradingInstructionModule } from 'app/structured-grading-instruction/structured-grading-instruction.module';
+import { StructuredGradingCriterionModule } from 'app/structured-grading-criterion/structured-grading-criterion.module';
 
 const ENTITY_STATES = [...textExerciseRoute];
 
@@ -27,7 +27,7 @@ const ENTITY_STATES = [...textExerciseRoute];
         ArtemisMarkdownEditorModule,
         ArtemisPresentationScoreModule,
         AssessmentInstructionsModule,
-        StructuredGradingInstructionModule,
+        StructuredGradingCriterionModule,
         ArtemisAssessmentSharedModule,
     ],
     declarations: [TextExerciseComponent, TextExerciseDetailComponent, TextExerciseUpdateComponent],

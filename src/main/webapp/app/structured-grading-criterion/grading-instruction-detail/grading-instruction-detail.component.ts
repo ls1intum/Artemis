@@ -1,6 +1,6 @@
 import { Component, OnInit, ViewChildren, QueryList } from '@angular/core';
-import { EditStructuredGradingInstructionComponent } from 'app/structured-grading-instruction/edit-structured-grading-instruction/edit-structured-grading-instruction.component';
 import { GradingInstruction } from 'app/structured-grading-instruction/grading-instruction.model';
+import { EditStructuredGradingInstructionComponent } from 'app/structured-grading-criterion/edit-structured-grading-instruction/edit-structured-grading-instruction.component';
 
 @Component({
     selector: 'jhi-grading-instruction-detail',
