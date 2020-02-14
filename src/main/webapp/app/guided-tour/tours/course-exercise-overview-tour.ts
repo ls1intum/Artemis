@@ -1,6 +1,6 @@
 import { GuidedTour } from 'app/guided-tour/guided-tour.model';
 import { Orientation, UserInteractionEvent } from 'app/guided-tour/guided-tour.constants';
-import { TextTourStep, VideoTourStep } from 'app/guided-tour/guided-tour-step.model';
+import { TextTourStep, UserInterActionTourStep, VideoTourStep } from 'app/guided-tour/guided-tour-step.model';
 
 export const courseExerciseOverviewTour: GuidedTour = {
     settingsKey: 'course_exercise_overview_tour',
@@ -20,13 +20,6 @@ export const courseExerciseOverviewTour: GuidedTour = {
             highlightSelector: '.tab-item.exercises',
             headlineTranslateKey: 'tour.courseExerciseOverview.exercises.headline',
             contentTranslateKey: 'tour.courseExerciseOverview.exercises.content',
-            highlightPadding: 10,
-            orientation: Orientation.RIGHT,
-        }),
-        new TextTourStep({
-            highlightSelector: '.tab-item.lectures',
-            headlineTranslateKey: 'tour.courseExerciseOverview.lectures.headline',
-            contentTranslateKey: 'tour.courseExerciseOverview.lectures.content',
             highlightPadding: 10,
             orientation: Orientation.RIGHT,
         }),
@@ -79,7 +72,7 @@ export const courseExerciseOverviewTour: GuidedTour = {
             highlightPadding: 10,
             orientation: Orientation.LEFT,
         }),
-        new TextTourStep({
+        new UserInterActionTourStep({
             highlightSelector: '.guided-tour .start-exercise div',
             headlineTranslateKey: 'tour.courseExerciseOverview.startExercise.headline',
             contentTranslateKey: 'tour.courseExerciseOverview.startExercise.content',
