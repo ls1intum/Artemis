@@ -61,9 +61,11 @@ public class ModelingExerciseResource {
 
     private final CompassService compassService;
 
+    private final GradingCriterionService gradingCriterionService;
+
     public ModelingExerciseResource(ModelingExerciseRepository modelingExerciseRepository, UserService userService, AuthorizationCheckService authCheckService,
             CourseService courseService, ModelingExerciseService modelingExerciseService, GroupNotificationService groupNotificationService, CompassService compassService,
-            ExerciseService exerciseService) {
+            ExerciseService exerciseService, GradingCriterionService gradingCriterionService) {
         this.modelingExerciseRepository = modelingExerciseRepository;
         this.modelingExerciseService = modelingExerciseService;
         this.userService = userService;
@@ -72,6 +74,7 @@ public class ModelingExerciseResource {
         this.compassService = compassService;
         this.groupNotificationService = groupNotificationService;
         this.exerciseService = exerciseService;
+        this.gradingCriterionService = gradingCriterionService;
     }
 
     // TODO: most of these calls should be done in the context of a course
@@ -226,6 +229,8 @@ public class ModelingExerciseResource {
         log.debug("REST request to get ModelingExercise : {}", exerciseId);
         // TODO CZ: provide separate endpoint GET /modeling-exercises/{id}/withExampleSubmissions and load exercise without example submissions here
         Optional<ModelingExercise> modelingExercise = modelingExerciseRepository.findByIdWithEagerExampleSubmissions(exerciseId);
+        List<GradingCriterion> gradingCriteria = gradingCriterionService.findByExerciseIdWithEagerGradingCriteria(exerciseId);
+        modelingExercise.ifPresent(exercise -> exercise.setGradingCriteria(gradingCriteria));
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(modelingExercise)) {
             return forbidden();
         }

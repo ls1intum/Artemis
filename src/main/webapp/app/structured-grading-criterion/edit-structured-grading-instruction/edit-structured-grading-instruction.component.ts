@@ -1,9 +1,11 @@
 import { Component, OnInit, ViewChild, Input } from '@angular/core';
+import { Subscription } from 'rxjs/Subscription';
 import { CreditsCommand, DomainCommand, FeedbackCommand, GradingCriteriaCommand, InstructionCommand, UsageCountCommand } from 'app/markdown-editor/domainCommands';
 import { KatexCommand } from 'app/markdown-editor/commands';
 import { MarkdownEditorComponent } from 'app/markdown-editor';
-import { Exercise } from 'app/entities/exercise';
 import { GradingCriterion } from 'app/structured-grading-criterion/grading-criterion.model';
+import { Exercise, ExerciseService } from 'app/entities/exercise';
+import { ActivatedRoute } from '@angular/router';
 
 @Component({
     selector: 'jhi-edit-structured-grading-instruction',
@@ -11,14 +13,16 @@ import { GradingCriterion } from 'app/structured-grading-criterion/grading-crite
     styleUrls: ['./edit-structured-grading-instruction.scss'],
 })
 export class EditStructuredGradingInstructionComponent implements OnInit {
+    paramSub: Subscription;
     /** Ace Editor configuration constants **/
     questionEditorText = '';
     @ViewChild('markdownEditor', { static: false })
     private markdownEditor: MarkdownEditorComponent;
     private criteria: GradingCriterion[];
-
     @Input()
     exercise: Exercise;
+    isLoading: boolean;
+    hasLoadedPendingSubmissions = false;
 
     katexCommand = new KatexCommand();
     gradingCriteriaCommand = new GradingCriteriaCommand();
@@ -28,7 +32,7 @@ export class EditStructuredGradingInstructionComponent implements OnInit {
     usageCountCommand = new UsageCountCommand();
 
     domainCommands: DomainCommand[] = [this.katexCommand, this.creditsCommand, this.instructionCommand, this.feedbackCommand, this.usageCountCommand, this.gradingCriteriaCommand];
-    constructor() {}
+    constructor(private route: ActivatedRoute, private exerciseService: ExerciseService) {}
 
     ngOnInit() {
         //  this.questionEditorText = this.generateMarkdown();
@@ -61,10 +65,10 @@ export class EditStructuredGradingInstructionComponent implements OnInit {
         return markdownText;
     }
      */
+
     prepareForSave(): void {
         this.markdownEditor.parse();
     }
-
     /**
      * @function domainCommandsFound
      * @desc 1. Gets a tuple of text and domainCommandIdentifiers and assigns text values according to the domainCommandIdentifiers

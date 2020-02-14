@@ -65,10 +65,13 @@ public class TextExerciseResource {
 
     private final Optional<TextClusteringScheduleService> textClusteringScheduleService;
 
+    private final GradingCriterionService gradingCriterionService;
+
     public TextExerciseResource(TextExerciseRepository textExerciseRepository, TextExerciseService textExerciseService, TextAssessmentService textAssessmentService,
             UserService userService, AuthorizationCheckService authCheckService, CourseService courseService, ParticipationService participationService,
             ResultRepository resultRepository, GroupNotificationService groupNotificationService, ExampleSubmissionRepository exampleSubmissionRepository,
-            Optional<TextClusteringScheduleService> textClusteringScheduleService, ExerciseService exerciseService, GradingCriterionRepository gradingCriterionRepository) {
+            Optional<TextClusteringScheduleService> textClusteringScheduleService, ExerciseService exerciseService, GradingCriterionRepository gradingCriterionRepository,
+            GradingCriterionService gradingCriterionService) {
         this.textAssessmentService = textAssessmentService;
         this.textExerciseService = textExerciseService;
         this.textExerciseRepository = textExerciseRepository;
@@ -82,6 +85,7 @@ public class TextExerciseResource {
         this.textClusteringScheduleService = textClusteringScheduleService;
         this.exerciseService = exerciseService;
         this.gradingCriterionRepository = gradingCriterionRepository;
+        this.gradingCriterionService = gradingCriterionService;
     }
 
     /**
@@ -190,6 +194,9 @@ public class TextExerciseResource {
             // not required in the returned json body
             exercise.setStudentParticipations(null);
             exercise.setCourse(null);
+            List<GradingCriterion> gradingCriteria = gradingCriterionService.findByExerciseIdWithEagerGradingCriteria(exercise.getId());
+            exercise.setGradingCriteria(gradingCriteria);
+
         }
 
         return ResponseEntity.ok().body(exercises);
@@ -211,7 +218,8 @@ public class TextExerciseResource {
         }
 
         Set<ExampleSubmission> exampleSubmissions = new HashSet<>(this.exampleSubmissionRepository.findAllByExerciseId(exerciseId));
-
+        List<GradingCriterion> gradingCriteria = gradingCriterionService.findByExerciseIdWithEagerGradingCriteria(exerciseId);
+        optionalTextExercise.ifPresent(textExercise -> textExercise.setGradingCriteria(gradingCriteria));
         optionalTextExercise.ifPresent(textExercise -> textExercise.setExampleSubmissions(exampleSubmissions));
 
         return ResponseUtil.wrapOrNotFound(optionalTextExercise);

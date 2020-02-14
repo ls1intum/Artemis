@@ -23,6 +23,7 @@ import { take, tap } from 'rxjs/operators';
 import { ProfileInfo } from 'app/layouts';
 import { createBuildPlanUrl } from 'app/entities/programming-exercise/utils/build-plan-link.directive';
 import { ProfileService } from 'app/layouts/profiles/profile.service';
+import { GradingCriterion } from 'app/structured-grading-criterion/grading-criterion.model';
 
 const MAX_RESULT_HISTORY_LENGTH = 5;
 
@@ -49,6 +50,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     private participationUpdateListener: Subscription;
     studentParticipation: StudentParticipation | null;
     isAfterAssessmentDueDate: boolean;
+    public gradingCriteria: GradingCriterion[];
 
     showWelcomeAlert = false;
 

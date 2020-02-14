@@ -111,6 +111,8 @@ public class ExerciseResource {
 
         User user = userService.getUserWithGroupsAndAuthorities();
         Exercise exercise = exerciseService.findOneWithCategories(exerciseId);
+        List<GradingCriterion> gradingCriteria = gradingCriterionService.findByExerciseIdWithEagerGradingCriteria(exercise.getId());
+        exercise.setGradingCriteria(gradingCriteria);
 
         if (!authCheckService.isAllowedToSeeExercise(exercise, user)) {
             return forbidden();
