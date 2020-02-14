@@ -15,7 +15,7 @@ import * as ace from 'brace';
 import { ArtemisTestModule } from '../../test.module';
 import { ProgrammingExerciseParticipationService } from 'app/entities/programming-exercise/services/programming-exercise-participation.service';
 import { ProgrammingExerciseService } from 'app/entities/programming-exercise/services/programming-exercise.service';
-import { FileType } from 'app/entities/ace-editor/file-change.model';
+import { FileType } from 'app/code-editor/model/file-change.model';
 import { MockAccountService } from '../../mocks/mock-account.service';
 import { MockRouter } from '../../mocks/mock-router.service';
 import { problemStatement } from '../../sample/problemStatement.json';
@@ -142,7 +142,7 @@ describe('CodeEditorInstructorIntegration', () => {
 
                 checkIfRepositoryIsCleanSubject = new Subject<{ isClean: boolean }>();
                 getRepositoryContentSubject = new Subject<{ [fileName: string]: FileType }>();
-                subscribeForLatestResultOfParticipationSubject = new BehaviorSubject<Result>(new Result());
+                subscribeForLatestResultOfParticipationSubject = new BehaviorSubject<Result>(null);
                 findWithParticipationsSubject = new Subject<{ body: ProgrammingExercise }>();
 
                 routeSubject = new Subject<Params>();
@@ -183,7 +183,7 @@ describe('CodeEditorInstructorIntegration', () => {
         findWithParticipationsStub.restore();
         getLatestResultWithFeedbacksStub.restore();
 
-        subscribeForLatestResultOfParticipationSubject = new BehaviorSubject<Result>(new Result());
+        subscribeForLatestResultOfParticipationSubject = new BehaviorSubject<Result>(null);
         subscribeForLatestResultOfParticipationStub.returns(subscribeForLatestResultOfParticipationSubject);
 
         routeSubject = new Subject<Params>();

@@ -1,4 +1,4 @@
-import { DeleteFileChange, FileChange, RenameFileChange } from 'app/entities/ace-editor/file-change.model';
+import { DeleteFileChange, FileChange, RenameFileChange } from 'app/code-editor/model/file-change.model';
 import { compose, filter, fromPairs, map, toPairs } from 'lodash/fp';
 import { isEmpty as _isEmpty } from 'lodash';
 import { Injectable } from '@angular/core';

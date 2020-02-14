@@ -13,7 +13,7 @@ import { TreeviewItem, TreeviewModule } from 'ngx-treeview';
 import { SinonStub, spy, stub } from 'sinon';
 import { Observable, Subject } from 'rxjs';
 import { ArtemisTestModule } from '../../test.module';
-import { FileType } from 'app/entities/ace-editor/file-change.model';
+import { FileType } from 'app/code-editor/model/file-change.model';
 import { triggerChanges } from '../../utils/general.utils';
 import { DeviceDetectorService } from 'ngx-device-detector';
 import { CommitState } from 'app/code-editor/model/commit-state.model';

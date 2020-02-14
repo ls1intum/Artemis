@@ -1,6 +1,6 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { DeleteFileChange, FileType } from 'app/entities/ace-editor/file-change.model';
+import { DeleteFileChange, FileType } from 'app/code-editor/model/file-change.model';
 import { CodeEditorRepositoryFileService } from 'app/code-editor/service/code-editor-repository.service';
 import { IFileDeleteDelegate } from 'app/code-editor/file-browser/code-editor-file-browser-on-file-delete-delegate';
 

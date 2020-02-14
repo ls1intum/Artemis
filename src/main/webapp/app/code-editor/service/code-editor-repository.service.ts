@@ -3,7 +3,7 @@ import { Injectable, OnDestroy } from '@angular/core';
 import { of, pipe, Subject, throwError, UnaryFunction } from 'rxjs';
 import { catchError, map, tap } from 'rxjs/operators';
 import { Observable } from 'rxjs/Observable';
-import { FileType } from 'app/entities/ace-editor/file-change.model';
+import { FileType } from 'app/code-editor/model/file-change.model';
 import { CodeEditorConflictStateService, GitConflictState } from 'app/code-editor/service/code-editor-conflict-state.service';
 import { BuildLogService } from 'app/programming-assessment/build-logs/build-log.service';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
@@ -19,6 +19,13 @@ export interface ICodeEditorRepositoryFileService {
     updateFiles: (fileUpdates: Array<{ fileName: string; fileContent: string }>) => Observable<{ [fileName: string]: string | null }>;
     renameFile: (filePath: string, newFileName: string) => Observable<void>;
     deleteFile: (filePath: string) => Observable<void>;
+}
+
+export interface ICodeEditorRepositoryService {
+    getStatus: () => Observable<{ repositoryStatus: string }>;
+    commit: () => Observable<void>;
+    pull: () => Observable<void>;
+    resetRepository: () => Observable<void>;
 }
 
 export enum DomainType {
@@ -41,13 +48,6 @@ type FileSubmissionError = { error: RepositoryError; participationId: number; fi
 const checkIfSubmissionIsError = (toBeDetermined: FileSubmission | FileSubmissionError): toBeDetermined is FileSubmissionError => {
     return !!(toBeDetermined as FileSubmissionError).error;
 };
-
-export interface ICodeEditorRepositoryService {
-    getStatus: () => Observable<{ repositoryStatus: string }>;
-    commit: () => Observable<void>;
-    pull: () => Observable<void>;
-    resetRepository: () => Observable<void>;
-}
 
 // TODO: The Repository & RepositoryFile services should be merged into 1 service, this would make handling errors easier.
 /**

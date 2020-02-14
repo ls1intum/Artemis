@@ -10,7 +10,7 @@ import { CommitState } from 'app/code-editor/model/commit-state.model';
 import { CodeEditorSessionService } from 'app/code-editor/service/code-editor-session.service';
 import { CodeEditorGridComponent } from 'app/code-editor/layout/code-editor-grid.component';
 import { AnnotationArray } from 'app/entities/ace-editor/annotation.model';
-import { CreateFileChange, DeleteFileChange, FileChange, FileType, RenameFileChange } from 'app/entities/ace-editor/file-change.model';
+import { CreateFileChange, DeleteFileChange, FileChange, FileType, RenameFileChange } from 'app/code-editor/model/file-change.model';
 import { EditorState } from 'app/code-editor/model/editor-state.model';
 import { ParticipationService } from 'app/entities/participation/participation.service';
 import { JhiAlertService } from 'ng-jhipster';

@@ -1,9 +1,3 @@
-export enum FileChangeType {
-    CREATE = 'CREATE',
-    DELETE = 'DELETE',
-    RENAME = 'RENAME',
-}
-
 export enum FileType {
     FILE = 'FILE',
     FOLDER = 'FOLDER',

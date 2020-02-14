@@ -8,7 +8,7 @@ import Interactable from '@interactjs/core/Interactable';
 import interact from 'interactjs';
 import { textFileExtensions } from './text-files.json';
 import { WindowRef } from 'app/core/websocket/window.service';
-import { CreateFileChange, FileChange, FileType, RenameFileChange } from 'app/entities/ace-editor/file-change.model';
+import { CreateFileChange, FileChange, FileType, RenameFileChange } from 'app/code-editor/model/file-change.model';
 import { CodeEditorFileService } from 'app/code-editor/service/code-editor-file.service';
 import { CommitState } from 'app/code-editor/model/commit-state.model';
 import { CodeEditorConflictStateService, GitConflictState } from 'app/code-editor/service/code-editor-conflict-state.service';

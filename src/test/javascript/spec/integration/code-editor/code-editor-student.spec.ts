@@ -16,7 +16,7 @@ import * as sinonChai from 'sinon-chai';
 import { ArtemisTestModule } from '../../test.module';
 import { ParticipationWebsocketService } from 'app/entities/participation/participation-websocket.service';
 import { ProgrammingExerciseParticipationService } from 'app/entities/programming-exercise/services/programming-exercise-participation.service';
-import { DeleteFileChange, FileType } from 'app/entities/ace-editor/file-change.model';
+import { DeleteFileChange, FileType } from 'app/code-editor/model/file-change.model';
 import { buildLogs, extractedBuildLogErrors } from '../../sample/build-logs';
 import { problemStatement } from '../../sample/problemStatement.json';
 import { MockAccountService } from '../../mocks/mock-account.service';

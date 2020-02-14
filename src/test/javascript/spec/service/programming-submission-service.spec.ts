@@ -26,7 +26,7 @@ const expect = chai.expect;
 
 describe('ProgrammingSubmissionService', () => {
     let websocketService: MockWebsocketService;
-    let http: MockHttpService;
+    let httpService: MockHttpService;
     let participationWebsocketService: IParticipationWebsocketService;
     let alertService: MockAlertService;
     let submissionService: IProgrammingSubmissionService;
@@ -48,11 +48,11 @@ describe('ProgrammingSubmissionService', () => {
 
     beforeEach(() => {
         websocketService = new MockWebsocketService();
-        http = new MockHttpService();
+        httpService = new MockHttpService();
         participationWebsocketService = new MockParticipationWebsocketService();
         alertService = new MockAlertService();
 
-        httpGetStub = stub(http, 'get');
+        httpGetStub = stub(httpService, 'get');
         wsSubscribeStub = stub(websocketService, 'subscribe');
         wsSubmissionSubject = new Subject<Submission | null>();
         wsReceiveStub = stub(websocketService, 'receive').returns(wsSubmissionSubject);
@@ -60,7 +60,7 @@ describe('ProgrammingSubmissionService', () => {
         participationWsLatestResultStub = stub(participationWebsocketService, 'subscribeForLatestResultOfParticipation').returns(wsLatestResultSubject as any);
 
         // @ts-ignore
-        submissionService = new ProgrammingSubmissionService(websocketService, http, participationWebsocketService, alertService);
+        submissionService = new ProgrammingSubmissionService(websocketService, httpService, participationWebsocketService, alertService);
     });
 
     afterEach(() => {
@@ -87,7 +87,7 @@ describe('ProgrammingSubmissionService', () => {
         expect(subscribeForNewResultSpy).to.not.have.been.called;
     });
 
-    it('should query http endpoint and setup the websocket subscriptions if no subject is cached for the provided participation', async () => {
+    it('should query httpService endpoint and setup the websocket subscriptions if no subject is cached for the provided participation', async () => {
         httpGetStub.returns(of(currentSubmission));
         const submission = await new Promise(resolve => submissionService.getLatestPendingSubmissionByParticipationId(participationId, 10).subscribe(s => resolve(s)));
         expect(submission).to.deep.equal({ submissionState: ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION, submission: currentSubmission, participationId });
