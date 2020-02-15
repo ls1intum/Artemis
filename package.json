@@ -18,6 +18,7 @@
         "@angular/compiler": "9.0.1",
         "@angular/core": "9.0.1",
         "@angular/forms": "9.0.1",
+        "@angular/localize": "9.0.1",
         "@angular/platform-browser": "9.0.1",
         "@angular/platform-browser-dynamic": "9.0.1",
         "@angular/router": "9.0.1",
