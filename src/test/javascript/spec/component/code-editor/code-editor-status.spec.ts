@@ -5,9 +5,8 @@ import * as chai from 'chai';
 import { ArtemisTestModule } from '../../test.module';
 import { TranslateModule } from '@ngx-translate/core';
 import { By } from '@angular/platform-browser';
-import { CommitState } from 'app/code-editor/model/commit-state.model';
-import { EditorState } from 'app/code-editor/model/editor-state.model';
 import { CodeEditorStatusComponent } from 'app/code-editor/status/code-editor-status.component';
+import { CommitState, EditorState } from 'app/code-editor/model/code-editor.model';
 
 const expect = chai.expect;
 

@@ -3,12 +3,12 @@ import { Injectable, OnDestroy } from '@angular/core';
 import { of, pipe, Subject, throwError, UnaryFunction } from 'rxjs';
 import { catchError, map, tap } from 'rxjs/operators';
 import { Observable } from 'rxjs/Observable';
-import { FileType } from 'app/code-editor/model/file-change.model';
-import { CodeEditorConflictStateService, GitConflictState } from 'app/code-editor/service/code-editor-conflict-state.service';
+import { CommitState, DomainChange, DomainType, FileSubmission, FileSubmissionError, FileType, GitConflictState, RepositoryError } from 'app/code-editor/model/code-editor.model';
+import { CodeEditorConflictStateService } from 'app/code-editor/service/code-editor-conflict-state.service';
 import { BuildLogService } from 'app/programming-assessment/build-logs/build-log.service';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
-import { CommitState } from 'app/code-editor/model/commit-state.model';
-import { DomainChange, DomainDependentEndpoint, DomainService } from 'app/code-editor/service/code-editor-domain.service';
+import { DomainService } from 'app/code-editor/service/code-editor-domain.service';
+import { DomainDependentEndpointService } from 'app/code-editor/service/code-editor-domain-dependent-endpoint.service';
 
 export interface ICodeEditorRepositoryFileService {
     getRepositoryContent: () => Observable<{ [fileName: string]: FileType }>;
@@ -27,19 +27,6 @@ export interface ICodeEditorRepositoryService {
     pull: () => Observable<void>;
     resetRepository: () => Observable<void>;
 }
-
-export enum DomainType {
-    PARTICIPATION = 'PARTICIPATION',
-    TEST_REPOSITORY = 'TEST_REPOSITORY',
-}
-
-export enum RepositoryError {
-    CHECKOUT_CONFLICT = 'checkoutConflict',
-}
-
-type FileSubmission = { [fileName: string]: string | null };
-
-type FileSubmissionError = { error: RepositoryError; participationId: number; fileName: string };
 
 /**
  * Type guard for checking if the file submission received through the websocket is an error object.
@@ -67,7 +54,7 @@ const handleErrorResponse = <T>(conflictService: CodeEditorConflictStateService)
     );
 
 @Injectable({ providedIn: 'root' })
-export class CodeEditorRepositoryService extends DomainDependentEndpoint implements ICodeEditorRepositoryService {
+export class CodeEditorRepositoryService extends DomainDependentEndpointService implements ICodeEditorRepositoryService {
     constructor(http: HttpClient, jhiWebsocketService: JhiWebsocketService, domainService: DomainService, private conflictService: CodeEditorConflictStateService) {
         super(http, jhiWebsocketService, domainService);
     }
@@ -101,7 +88,7 @@ export class CodeEditorRepositoryService extends DomainDependentEndpoint impleme
 }
 
 @Injectable({ providedIn: 'root' })
-export class CodeEditorBuildLogService extends DomainDependentEndpoint {
+export class CodeEditorBuildLogService extends DomainDependentEndpointService {
     constructor(private buildLogService: BuildLogService, http: HttpClient, jhiWebsocketService: JhiWebsocketService, domainService: DomainService) {
         super(http, jhiWebsocketService, domainService);
     }
@@ -117,7 +104,7 @@ export class CodeEditorBuildLogService extends DomainDependentEndpoint {
 }
 
 @Injectable({ providedIn: 'root' })
-export class CodeEditorRepositoryFileService extends DomainDependentEndpoint implements ICodeEditorRepositoryFileService, OnDestroy {
+export class CodeEditorRepositoryFileService extends DomainDependentEndpointService implements ICodeEditorRepositoryFileService, OnDestroy {
     private fileUpdateSubject = new Subject<FileSubmission>();
     private fileUpdateUrl: string;
 

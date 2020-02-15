@@ -10,16 +10,16 @@ import { ParticipationService } from 'app/entities/participation/participation.s
 import { Participation } from 'app/entities/participation/participation.model';
 import { ButtonSize } from 'app/shared/components/button.component';
 import { CodeEditorSessionService } from 'app/code-editor/service/code-editor-session.service';
-import { DomainChange, DomainService } from 'app/code-editor/service/code-editor-domain.service';
+import { DomainService } from 'app/code-editor/service/code-editor-domain.service';
 import { CodeEditorFileService } from 'app/code-editor/service/code-editor-file.service';
 import { TemplateProgrammingExerciseParticipation } from 'app/entities/participation/template-programming-exercise-participation.model';
 import { ProgrammingExerciseParticipationService } from 'app/entities/programming-exercise/services/programming-exercise-participation.service';
 import { ExerciseType } from 'app/entities/exercise/exercise.model';
-import { DomainType } from 'app/code-editor/service/code-editor-repository.service';
 import { ProgrammingExerciseService } from 'app/entities/programming-exercise/services/programming-exercise.service';
 import { ProgrammingExercise } from 'app/entities/programming-exercise/programming-exercise.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { SolutionProgrammingExerciseParticipation } from 'app/entities/participation/solution-programming-exercise-participation.model';
+import { DomainChange, DomainType } from 'app/code-editor/model/code-editor.model';
 
 export enum REPOSITORY {
     ASSIGNMENT = 'ASSIGNMENT',

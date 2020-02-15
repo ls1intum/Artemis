@@ -12,12 +12,11 @@ import { fromEvent, of, Subscription } from 'rxjs';
 import { catchError, tap } from 'rxjs/operators';
 import { WindowRef } from 'app/core/websocket/window.service';
 import * as ace from 'brace';
-import { CreateFileChange, DeleteFileChange, FileChange, RenameFileChange } from 'app/code-editor/model/file-change.model';
+import { CommitState, CreateFileChange, DeleteFileChange, FileChange, RenameFileChange, ResizeType } from 'app/code-editor/model/code-editor.model';
 import { CodeEditorFileService } from 'app/code-editor/service/code-editor-file.service';
 import { AnnotationArray } from 'app/entities/ace-editor/annotation.model';
-import { CommitState } from 'app/code-editor/model/commit-state.model';
 import { CodeEditorRepositoryFileService } from 'app/code-editor/service/code-editor-repository.service';
-import { CodeEditorGridService, ResizeType } from 'app/code-editor/service/code-editor-grid.service';
+import { CodeEditorGridService } from 'app/code-editor/service/code-editor-grid.service';
 import { RepositoryFileService } from 'app/entities/repository/repository.service';
 import { TextChange } from 'app/entities/ace-editor/text-change.model';
 

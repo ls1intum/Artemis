@@ -1454,17 +1454,10 @@
     tree-kill "1.2.2"
     webpack-sources "1.4.3"
 
-"@nguniversal/common@9.0.0":
-  version "9.0.0"
-  resolved "https://registry.yarnpkg.com/@nguniversal/common/-/common-9.0.0.tgz#11e8f050b4add11dc808d62726ce77b58e6a105b"
-  integrity sha512-tiTklXiXqRad2fvcH4Rar8AofHeiBNkYuwXobGxnC9Xzmc2gG9DaNF5hC8wxT2FkbYAS1+NA/bpS4R7t6DfYfw==
-
-"@nguniversal/express-engine@9.0.0":
-  version "9.0.0"
-  resolved "https://registry.yarnpkg.com/@nguniversal/express-engine/-/express-engine-9.0.0.tgz#06badf0ac8e2a1d9d210d8077a1e5ae3539ae593"
-  integrity sha512-2HOzC7Jb9kxAskXkvH6BO+u3PqmCCkNjoZBpwrM4zoXjuVdlwSl7YAXLpg24pXhYmto7m7j7P+lvpRXYxV2Zjw==
-  dependencies:
-    "@nguniversal/common" "9.0.0"
+"@nguniversal/express-engine@8.2.6":
+  version "8.2.6"
+  resolved "https://registry.yarnpkg.com/@nguniversal/express-engine/-/express-engine-8.2.6.tgz#3930551727b5be1256f0aefa1ffd3c37cb420f9f"
+  integrity sha512-IKUKTpesgjYyB0Xg+fFhSbwbGBJhG0Wfn8MkQAi9RgSi8QsrSMkI3oUXc86Z7fpQL55D/ZIH7PekoC0Fmh/kxA==
 
 "@ngx-translate/core@12.1.1":
   version "12.1.1"

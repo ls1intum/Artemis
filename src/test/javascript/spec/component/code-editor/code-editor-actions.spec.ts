@@ -19,14 +19,13 @@ import { MockFeatureToggleService } from '../../mocks/mock-feature-toggle-servic
 
 import { cartesianProduct } from 'app/shared/util/utils';
 import { MockSyncStorage } from '../../mocks/mock-sync.storage';
-import { CommitState } from 'app/code-editor/model/commit-state.model';
-import { EditorState } from 'app/code-editor/model/editor-state.model';
 import { CodeEditorConflictStateService } from 'app/code-editor/service/code-editor-conflict-state.service';
 import { CodeEditorActionsComponent } from 'app/code-editor/actions/code-editor-actions.component';
 import { MockCodeEditorConflictStateService } from '../../mocks/mock-code-editor-conflict-state.service';
 import { MockCodeEditorRepositoryFileService } from '../../mocks/mock-code-editor-repository-file.service';
 import { MockCodeEditorRepositoryService } from '../../mocks/mock-code-editor-repository.service';
 import { MockCookieService } from '../../mocks/mock-cookie.service';
+import { CommitState, EditorState } from 'app/code-editor/model/code-editor.model';
 
 chai.use(sinonChai);
 const expect = chai.expect;

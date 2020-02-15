@@ -10,7 +10,7 @@ import { TreeviewModule } from 'ngx-treeview';
 import { SinonStub, spy, stub } from 'sinon';
 import { Subject } from 'rxjs';
 import { ArtemisTestModule } from '../../test.module';
-import { CreateFileChange, FileType, RenameFileChange } from 'app/code-editor/model/file-change.model';
+import { CreateFileChange, FileType, RenameFileChange } from 'app/code-editor/model/code-editor.model';
 import { triggerChanges } from '../../utils/general.utils';
 import { AnnotationArray } from 'app/entities/ace-editor/annotation.model';
 import { CodeEditorRepositoryFileService } from 'app/code-editor/service/code-editor-repository.service';

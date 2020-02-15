@@ -4,12 +4,11 @@ import { catchError, switchMap, tap } from 'rxjs/operators';
 import { Observable, of, Subscription, throwError } from 'rxjs';
 import { isEmpty as _isEmpty } from 'lodash';
 import { CodeEditorSubmissionService } from 'app/code-editor/service/code-editor-submission.service';
-import { CodeEditorConflictStateService, GitConflictState } from 'app/code-editor/service/code-editor-conflict-state.service';
+import { CodeEditorConflictStateService } from 'app/code-editor/service/code-editor-conflict-state.service';
 import { CodeEditorResolveConflictModalComponent } from 'app/code-editor/actions/code-editor-resolve-conflict-modal.component';
-import { CommitState } from 'app/code-editor/model/commit-state.model';
 import { FeatureToggle } from 'app/feature-toggle/feature-toggle.service';
-import { EditorState } from 'app/code-editor/model/editor-state.model';
 import { CodeEditorRepositoryFileService, CodeEditorRepositoryService } from 'app/code-editor/service/code-editor-repository.service';
+import { CommitState, EditorState, GitConflictState } from 'app/code-editor/model/code-editor.model';
 
 @Component({
     selector: 'jhi-code-editor-actions',

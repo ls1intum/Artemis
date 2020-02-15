@@ -1,7 +1,8 @@
 import { Component } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { CodeEditorRepositoryFileService, CodeEditorRepositoryService } from 'app/code-editor/service/code-editor-repository.service';
-import { CodeEditorConflictStateService, GitConflictState } from 'app/code-editor/service/code-editor-conflict-state.service';
+import { CodeEditorConflictStateService } from 'app/code-editor/service/code-editor-conflict-state.service';
+import { GitConflictState } from 'app/code-editor/model/code-editor.model';
 
 @Component({
     selector: 'jhi-code-editor-resolve-conflict-modal',

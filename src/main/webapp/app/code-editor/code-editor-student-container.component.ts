@@ -22,11 +22,11 @@ import { ExerciseType } from 'app/entities/exercise/exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { Result } from 'app/entities/result/result.model';
 import { CodeEditorContainer } from 'app/code-editor/code-editor-mode-container.component';
-import { DomainType } from 'app/code-editor/service/code-editor-repository.service';
 import { Feedback } from 'app/entities/feedback/feedback.model';
 import { CodeEditorInstructionsComponent } from 'app/code-editor/instructions/code-editor-instructions.component';
 import { CodeEditorFileBrowserComponent } from 'app/code-editor/file-browser/code-editor-file-browser.component';
 import { ProgrammingExercise } from 'app/entities/programming-exercise/programming-exercise.model';
+import { DomainType } from 'app/code-editor/model/code-editor.model';
 
 @Component({
     selector: 'jhi-code-editor-student',

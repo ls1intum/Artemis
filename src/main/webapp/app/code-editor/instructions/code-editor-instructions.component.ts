@@ -5,10 +5,11 @@ import { Subscription } from 'rxjs';
 import { ArtemisMarkdown } from 'app/components/util/markdown.service';
 import { WindowRef } from 'app/core/websocket/window.service';
 import { Participation } from 'app/entities/participation/participation.model';
-import { CodeEditorGridService, ResizeType } from 'app/code-editor/service/code-editor-grid.service';
+import { CodeEditorGridService } from 'app/code-editor/service/code-editor-grid.service';
 import { ProgrammingExerciseInstructionComponent } from 'app/entities/programming-exercise/instructions/instructions-render/programming-exercise-instruction.component';
 import { ProgrammingExercise } from 'app/entities/programming-exercise/programming-exercise.model';
 import { ProgrammingExerciseEditableInstructionComponent } from 'app/entities/programming-exercise/instructions/instructions-editor/programming-exercise-editable-instruction.component';
+import { ResizeType } from 'app/code-editor/model/code-editor.model';
 
 @Component({
     selector: 'jhi-code-editor-instructions',

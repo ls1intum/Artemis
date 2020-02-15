@@ -16,7 +16,7 @@ import * as sinonChai from 'sinon-chai';
 import { ArtemisTestModule } from '../../test.module';
 import { ParticipationWebsocketService } from 'app/entities/participation/participation-websocket.service';
 import { ProgrammingExerciseParticipationService } from 'app/entities/programming-exercise/services/programming-exercise-participation.service';
-import { DeleteFileChange, FileType } from 'app/code-editor/model/file-change.model';
+import { CommitState, DeleteFileChange, DomainType, EditorState, FileType, GitConflictState } from 'app/code-editor/model/code-editor.model';
 import { buildLogs, extractedBuildLogErrors } from '../../sample/build-logs';
 import { problemStatement } from '../../sample/problemStatement.json';
 import { MockAccountService } from '../../mocks/mock-account.service';
@@ -32,16 +32,14 @@ import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { MockWebsocketService } from '../../mocks/mock-websocket.service';
 import { Participation } from 'app/entities/participation/participation.model';
 import { BuildLogEntryArray } from 'app/entities/build-log/build-log.model';
-import { CodeEditorConflictStateService, GitConflictState } from 'app/code-editor/service/code-editor-conflict-state.service';
+import { CodeEditorConflictStateService } from 'app/code-editor/service/code-editor-conflict-state.service';
 import { ResultService } from 'app/entities/result/result.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { Result } from 'app/entities/result/result.model';
-import { CodeEditorBuildLogService, CodeEditorRepositoryFileService, CodeEditorRepositoryService, DomainType } from 'app/code-editor/service/code-editor-repository.service';
+import { CodeEditorBuildLogService, CodeEditorRepositoryFileService, CodeEditorRepositoryService } from 'app/code-editor/service/code-editor-repository.service';
 import { Feedback } from 'app/entities/feedback/feedback.model';
-import { EditorState } from 'app/code-editor/model/editor-state.model';
 import { CodeEditorStudentContainerComponent } from 'app/code-editor/code-editor-student-container.component';
 import { ExerciseHintService, IExerciseHintService } from 'app/entities/exercise-hint/exercise-hint.service';
-import { CommitState } from 'app/code-editor/model/commit-state.model';
 import { CodeEditorSessionService } from 'app/code-editor/service/code-editor-session.service';
 import { DomainService } from 'app/code-editor/service/code-editor-domain.service';
 import { ArtemisCodeEditorModule } from 'app/code-editor/code-editor.module';
@@ -56,6 +54,7 @@ import { MockExerciseHintService } from '../../mocks/mock-exercise-hint.service'
 import { MockCodeEditorRepositoryFileService } from '../../mocks/mock-code-editor-repository-file.service';
 import { MockCodeEditorSessionService } from '../../mocks/mock-code-editor-session.service';
 import { MockCodeEditorBuildLogService } from '../../mocks/mock-code-editor-build-log.service';
+import { DomainDependentService } from 'app/code-editor/service/code-editor-domain-dependent.service';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -107,7 +106,6 @@ describe('CodeEditorStudentIntegration', () => {
                 WindowRef,
                 ChangeDetectorRef,
                 DeviceDetectorService,
-                DomainService,
                 CodeEditorConflictStateService,
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: ActivatedRoute, useClass: MockActivatedRoute },
