@@ -17,7 +17,7 @@ import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { GuidedTourState, Orientation, UserInteractionEvent } from 'app/guided-tour/guided-tour.constants';
 import { GuidedTourComponent } from 'app/guided-tour/guided-tour.component';
 import { GuidedTourMapping, GuidedTourSetting } from 'app/guided-tour/guided-tour-setting.model';
-import { ModelingTaskTourStep, TextTourStep } from 'app/guided-tour/guided-tour-step.model';
+import { ModelingTaskTourStep, TextTourStep, UserInterActionTourStep } from 'app/guided-tour/guided-tour-step.model';
 import { MockAccountService } from '../mocks/mock-account.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { DeviceDetectorService } from 'ngx-device-detector';
@@ -50,7 +50,12 @@ describe('GuidedTourService', () => {
     const tourWithUserInteraction: GuidedTour = {
         settingsKey: 'tour_user_interaction',
         steps: [
-            new TextTourStep({ highlightSelector: '.random-selector', headlineTranslateKey: '', contentTranslateKey: '', userInteractionEvent: UserInteractionEvent.CLICK }),
+            new UserInterActionTourStep({
+                highlightSelector: '.random-selector',
+                headlineTranslateKey: '',
+                contentTranslateKey: '',
+                userInteractionEvent: UserInteractionEvent.CLICK,
+            }),
             new TextTourStep({ headlineTranslateKey: '', contentTranslateKey: '', orientation: Orientation.TOPLEFT }),
         ],
     };
@@ -65,7 +70,14 @@ describe('GuidedTourService', () => {
 
     const tourWithModelingTask: GuidedTour = {
         settingsKey: 'tour_modeling_task',
-        steps: [new ModelingTaskTourStep({ headlineTranslateKey: '', contentTranslateKey: '', modelingTask: new GuidedTourModelingTask(personUML.name, '') })],
+        steps: [
+            new ModelingTaskTourStep({
+                headlineTranslateKey: '',
+                contentTranslateKey: '',
+                modelingTask: new GuidedTourModelingTask(personUML.name, ''),
+                userInteractionEvent: UserInteractionEvent.MODELING,
+            }),
+        ],
     };
 
     describe('Service method', () => {

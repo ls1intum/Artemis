@@ -159,15 +159,22 @@
                     </ng-template>
                 </ngx-datatable-column>
 
-                <ngx-datatable-column prop="submissionCount" [resizeable]="false" [sortable]="true" [minWidth]="110" [width]="120">
+                <ngx-datatable-column prop="participation" [resizeable]="false" [sortable]="true" [minWidth]="110" [width]="120">
                     <ng-template ngx-datatable-header-template>
-                        <span class="datatable-header-cell-wrapper" (click)="controls.onSort('submissionCount')">
+                        <span class="datatable-header-cell-wrapper d-inline-block w-100 text-center" (click)="controls.onSort('participation.submissionCount')">
                             <span class="datatable-header-cell-label bold">{{ 'artemisApp.exercise.submissionCount' | translate }}</span>
-                            <fa-icon [icon]="controls.iconForSortPropField('submissionCount')"></fa-icon>
+                            <fa-icon [icon]="controls.iconForSortPropField('participation.submissionCount')"></fa-icon>
                         </span>
                     </ng-template>
                     <ng-template ngx-datatable-cell-template let-value="value">
-                        {{ value }}
+                        <div class="text-center">
+                            <a *ngIf="exercise.isAtLeastInstructor; else displayTextOnly" routerLink="/participation/{{ value.id }}/submissions">
+                                {{ value.submissionCount }}
+                            </a>
+                            <ng-template #displayTextOnly>
+                                {{ value.submissionCount }}
+                            </ng-template>
+                        </div>
                     </ng-template>
                 </ngx-datatable-column>
 

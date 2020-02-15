@@ -10,7 +10,7 @@ import { SERVER_API_URL } from 'app/app.constants';
 import { GuidedTourMapping, GuidedTourSetting } from 'app/guided-tour/guided-tour-setting.model';
 import { GuidedTourState, Orientation, OrientationConfiguration, UserInteractionEvent } from './guided-tour.constants';
 import { User } from 'app/core/user/user.model';
-import { TextTourStep, TourStep, VideoTourStep } from 'app/guided-tour/guided-tour-step.model';
+import { TextTourStep, TourStep, UserInterActionTourStep, VideoTourStep } from 'app/guided-tour/guided-tour-step.model';
 import { GuidedTour } from 'app/guided-tour/guided-tour.model';
 import { DeviceDetectorService } from 'ngx-device-detector';
 import { Exercise, ExerciseType } from 'app/entities/exercise/exercise.model';
@@ -109,14 +109,10 @@ export class GuidedTourService {
             .pipe(debounceTime(200))
             .subscribe(() => {
                 if (this.currentTour && this.deviceService.isDesktop()) {
+                    // Show resize tour step if the window size falls below the defined minimum tour size, except for VideoTourSteps
                     if (this.tourMinimumScreenSize >= window.innerWidth && !(this.currentTour.steps[this.currentTourStepIndex] instanceof VideoTourStep)) {
                         this.onResizeMessage = true;
-                        this.guidedTourCurrentStepSubject.next(
-                            new TextTourStep({
-                                headlineTranslateKey: 'tour.resize.headline',
-                                contentTranslateKey: 'tour.resize.content',
-                            }),
-                        );
+                        this.guidedTourCurrentStepSubject.next(new TextTourStep({ headlineTranslateKey: 'tour.resize.headline', contentTranslateKey: 'tour.resize.content' }));
                     } else {
                         if (this.onResizeMessage) {
                             this.onResizeMessage = false;
@@ -254,6 +250,7 @@ export class GuidedTourService {
             if (previousStep.action) {
                 previousStep.action();
             }
+            // Usually an action is opening something so we need to give it time to render.
             setTimeout(() => {
                 this.setPreparedTourStep();
             });
@@ -446,6 +443,7 @@ export class GuidedTourService {
      * Enable a smooth user interaction
      * @param targetNode an HTMLElement of which DOM changes should be observed
      * @param userInteraction the user interaction to complete the tour step
+     * @param modelingTask the modeling task identifier
      */
     public enableUserInteraction(targetNode: HTMLElement, userInteraction: UserInteractionEvent, modelingTask?: string): void {
         this.isUserInteractionFinishedSubject.next(false);
@@ -454,7 +452,7 @@ export class GuidedTourService {
             return;
         }
 
-        const currentStep = this.currentTour.steps[this.currentTourStepIndex];
+        const currentStep = this.currentTour.steps[this.currentTourStepIndex] as UserInterActionTourStep;
 
         if (userInteraction === UserInteractionEvent.WAIT_FOR_SELECTOR) {
             const nextStep = this.currentTour.steps[this.currentTourStepIndex + 1];
@@ -763,7 +761,7 @@ export class GuidedTourService {
     private setPreparedTourStep(): void {
         const preparedTourStep = this.getPreparedTourStep();
         if (preparedTourStep) {
-            this.guidedTourCurrentStepSubject.next(this.getPreparedTourStep());
+            this.guidedTourCurrentStepSubject.next(preparedTourStep);
         } else {
             this.nextStep();
         }
@@ -869,7 +867,6 @@ export class GuidedTourService {
             const hasStartedOrFinishedTour = this.checkTourState(guidedTour);
             // Only start tour automatically if the user has never seen it before
             if (!hasStartedOrFinishedTour) {
-                this.currentTour = this.availableTourForComponent;
                 this.startTour();
             }
         }, 500);
@@ -881,12 +878,10 @@ export class GuidedTourService {
      * @param guidedTour that should be enabled
      */
     public enableTourForCourseExerciseComponent(course: Course | null, guidedTour: GuidedTour): Exercise | null {
-        if (!course || !course.exercises || !this.guidedTourMapping) {
+        if (!course || !course.exercises || !this.isGuidedTourAvailableForCourse(course)) {
             return null;
         }
-        if (!this.isGuidedTourAvailableForCourse(course)) {
-            return null;
-        }
+
         const exerciseForGuidedTour = course.exercises.find(exercise => this.isGuidedTourAvailableForExercise(exercise, guidedTour));
         if (exerciseForGuidedTour) {
             this.enableTour(guidedTour);
@@ -903,9 +898,6 @@ export class GuidedTourService {
      * @param guidedTour that should be enabled
      */
     public enableTourForCourseOverview(courses: Course[], guidedTour: GuidedTour): Course | null {
-        if (!this.guidedTourMapping) {
-            return null;
-        }
         const courseForTour = courses.find(course => this.isGuidedTourAvailableForCourse(course));
         if (courseForTour) {
             this.enableTour(guidedTour);
@@ -920,14 +912,14 @@ export class GuidedTourService {
      * @param exercise which can contain the needed exercise for the tour
      * @param guidedTour that should be enabled
      */
-    public enableTourForExercise(exercise: Exercise, guidedTour: GuidedTour) {
-        if (!exercise.course) {
-            return;
-        }
-        if (this.isGuidedTourAvailableForExercise(exercise, guidedTour)) {
+    public enableTourForExercise(exercise: Exercise, guidedTour: GuidedTour): Exercise | null {
+        if (!exercise.course || !this.isGuidedTourAvailableForExercise(exercise, guidedTour)) {
+            return null;
+        } else {
             this.enableTour(guidedTour);
             this.currentExercise = exercise;
             this.currentCourse = exercise.course;
+            return exercise;
         }
     }
 
@@ -956,6 +948,7 @@ export class GuidedTourService {
 
         let exerciseMatches: boolean;
         let settingsKey = '';
+
         if (guidedTour) {
             settingsKey = guidedTour.settingsKey;
         } else {
