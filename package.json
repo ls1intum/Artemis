@@ -27,7 +27,7 @@
         "@fortawesome/free-solid-svg-icons": "5.12.1",
         "@ls1intum/apollon": "2.0.6",
         "@ng-bootstrap/ng-bootstrap": "5.3.0",
-        "@nguniversal/express-engine": "9.0.0",
+        "@nguniversal/express-engine": "8.2.6",
         "@ngx-translate/core": "12.1.1",
         "@ngx-translate/http-loader": "4.0.0",
         "@sentry/browser": "5.12.1",
