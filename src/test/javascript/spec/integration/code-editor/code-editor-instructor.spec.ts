@@ -89,7 +89,7 @@ describe('CodeEditorInstructorIntegration', () => {
 
     let checkIfRepositoryIsCleanSubject: Subject<{ isClean: boolean }>;
     let getRepositoryContentSubject: Subject<{ [fileName: string]: FileType }>;
-    let subscribeForLatestResultOfParticipationSubject: BehaviorSubject<Result>;
+    let subscribeForLatestResultOfParticipationSubject: BehaviorSubject<Result | null>;
     let findWithParticipationsSubject: Subject<{ body: ProgrammingExercise }>;
     let routeSubject: Subject<Params>;
 
@@ -145,7 +145,7 @@ describe('CodeEditorInstructorIntegration', () => {
 
                 checkIfRepositoryIsCleanSubject = new Subject<{ isClean: boolean }>();
                 getRepositoryContentSubject = new Subject<{ [fileName: string]: FileType }>();
-                subscribeForLatestResultOfParticipationSubject = new BehaviorSubject<Result>(null);
+                subscribeForLatestResultOfParticipationSubject = new BehaviorSubject<Result | null>(null);
                 findWithParticipationsSubject = new Subject<{ body: ProgrammingExercise }>();
 
                 routeSubject = new Subject<Params>();
@@ -186,7 +186,7 @@ describe('CodeEditorInstructorIntegration', () => {
         findWithParticipationsStub.restore();
         getLatestResultWithFeedbacksStub.restore();
 
-        subscribeForLatestResultOfParticipationSubject = new BehaviorSubject<Result>(null);
+        subscribeForLatestResultOfParticipationSubject = new BehaviorSubject<Result | null>(null);
         subscribeForLatestResultOfParticipationStub.returns(subscribeForLatestResultOfParticipationSubject);
 
         routeSubject = new Subject<Params>();

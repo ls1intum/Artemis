@@ -15,7 +15,6 @@ import { SortByPipe } from 'app/components/pipes/sort-by.pipe';
 import { ArtemisResultModule } from 'app/entities/result/result.module';
 import { SortByModule } from 'app/components/pipes/sort-by.module';
 import { FormDateTimePickerModule } from 'app/shared/date-time-picker/date-time-picker.module';
-import { ExerciseScoresPopupService } from 'app/scores/exercise-scores-popup.service';
 
 const ENTITY_STATES = [
     {
@@ -46,6 +45,6 @@ const ENTITY_STATES = [
     ],
     declarations: [ExerciseScoresComponent],
     entryComponents: [ExerciseScoresComponent],
-    providers: [ExerciseScoresPopupService, SortByPipe],
+    providers: [SortByPipe],
 })
 export class ArtemisExerciseScoresModule {}

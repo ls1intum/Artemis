@@ -6,7 +6,7 @@ import { ArtemisTestModule } from '../../../test.module';
 import { AuditsComponent } from 'app/admin/audits/audits.component';
 import { AuditsService } from 'app/admin/audits/audits.service';
 import { Audit } from 'app/admin/audits/audit.model';
-import { ITEMS_PER_PAGE } from 'app/shared';
+import { ITEMS_PER_PAGE } from 'app/shared/constants/pagination.constants';
 
 function build2DigitsDatePart(datePart: number) {
     return `0${datePart}`.slice(-2);
@@ -74,7 +74,6 @@ describe('Component Tests', () => {
                 expect(comp.itemsPerPage).toBe(ITEMS_PER_PAGE);
                 expect(comp.page).toBe(10);
                 expect(comp.reverse).toBeFalsy();
-                expect(comp.predicate).toBe('id');
             });
         });
 
@@ -98,35 +97,6 @@ describe('Component Tests', () => {
                 // THEN
                 expect(service.query).toHaveBeenCalled();
                 expect(comp.audits[0]).toEqual(jasmine.objectContaining(audit));
-            });
-        });
-
-        describe('Create sort object', () => {
-            it('Should sort only by id asc', () => {
-                // GIVEN
-                comp.predicate = 'id';
-                comp.reverse = false;
-
-                // WHEN
-                const sort = comp.sort();
-
-                // THEN
-                expect(sort.length).toEqual(1);
-                expect(sort[0]).toEqual('id,desc');
-            });
-
-            it('Should sort by timestamp asc then by id', () => {
-                // GIVEN
-                comp.predicate = 'timestamp';
-                comp.reverse = true;
-
-                // WHEN
-                const sort = comp.sort();
-
-                // THEN
-                expect(sort.length).toEqual(2);
-                expect(sort[0]).toEqual('timestamp,asc');
-                expect(sort[1]).toEqual('id');
             });
         });
     });
