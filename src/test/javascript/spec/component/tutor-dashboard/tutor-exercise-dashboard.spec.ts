@@ -103,7 +103,7 @@ describe('TutorExerciseDashboardComponent', () => {
             .then(() => {
                 fixture = TestBed.createComponent(TutorExerciseDashboardComponent);
                 comp = fixture.componentInstance;
-                modelingSubmissionService = TestBed.get(ModelingSubmissionService);
+                modelingSubmissionService = TestBed.inject(ModelingSubmissionService);
 
                 comp.exerciseId = exercise.id;
 

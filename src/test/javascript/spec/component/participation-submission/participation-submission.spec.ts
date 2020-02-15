@@ -84,7 +84,7 @@ describe('ParticipationSubmissionComponent', () => {
                 debugElement = fixture.debugElement;
                 router = debugElement.injector.get(Router);
                 location = debugElement.injector.get(Location);
-                submissionService = TestBed.get(SubmissionService);
+                submissionService = TestBed.inject(SubmissionService);
                 findAllSubmissionsOfParticipationStub = stub(submissionService, 'findAllSubmissionsOfParticipation');
                 router.initialNavigation();
             });

@@ -6,7 +6,7 @@ import { Router } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { Observable, of } from 'rxjs';
-import { CookieService } from 'ngx-cookie';
+import { CookieService } from 'ngx-cookie-service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { TranslateService } from '@ngx-translate/core';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
@@ -85,8 +85,8 @@ describe('GuidedTourService', () => {
                 .overrideModule(ArtemisTestModule, { set: { declarations: [], exports: [] } })
                 .compileComponents();
 
-            service = TestBed.get(GuidedTourService);
-            httpMock = TestBed.get(HttpTestingController);
+            service = TestBed.inject(GuidedTourService);
+            httpMock = TestBed.inject(HttpTestingController);
         });
 
         afterEach(() => {
@@ -156,9 +156,9 @@ describe('GuidedTourService', () => {
                     const navBarComponentFixture = TestBed.createComponent(NavbarComponent);
                     const navBarComponent = navBarComponentFixture.componentInstance;
 
-                    router = TestBed.get(Router);
-                    guidedTourService = TestBed.get(GuidedTourService);
-                    participationService = TestBed.get(ParticipationService);
+                    router = TestBed.inject(Router);
+                    guidedTourService = TestBed.inject(GuidedTourService);
+                    participationService = TestBed.inject(ParticipationService);
 
                     findParticipationStub = stub(participationService, 'findParticipation');
                     deleteParticipationStub = stub(participationService, 'deleteForGuidedTour');

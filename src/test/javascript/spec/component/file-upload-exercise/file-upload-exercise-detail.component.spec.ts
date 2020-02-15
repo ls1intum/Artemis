@@ -18,9 +18,9 @@ import { RouterTestingModule } from '@angular/router/testing';
 import { TranslateModule } from '@ngx-translate/core';
 import { ArtemisAssessmentSharedModule } from 'app/assessment-shared/assessment-shared.module';
 import { MockSyncStorage } from '../../mocks/mock-sync.storage';
-import { MockCookieService } from '../../mocks/mock-cookie.service.ts';
+import { MockCookieService } from '../../mocks/mock-cookie.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { CookieService } from 'ngx-cookie';
+import { CookieService } from 'ngx-cookie-service';
 import { FileUploadExerciseService } from 'app/entities/file-upload-exercise/file-upload-exercise.service';
 
 chai.use(sinonChai);

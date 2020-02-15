@@ -37,7 +37,7 @@ describe('ParticipationComponent', () => {
             .then(() => {
                 componentFixture = TestBed.createComponent(ParticipationComponent);
                 component = componentFixture.componentInstance;
-                service = TestBed.get(ParticipationService);
+                service = TestBed.inject(ParticipationService);
             });
     });
 

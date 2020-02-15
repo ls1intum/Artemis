@@ -78,7 +78,7 @@ describe('TextAssessmentComponent', () => {
                 debugElement = fixture.debugElement;
                 router = debugElement.injector.get(Router);
                 location = debugElement.injector.get(Location);
-                textSubmissionService = TestBed.get(TextSubmissionService);
+                textSubmissionService = TestBed.inject(TextSubmissionService);
                 getTextSubmissionForExerciseWithoutAssessmentStub = stub(textSubmissionService, 'getTextSubmissionForExerciseWithoutAssessment');
 
                 router.initialNavigation();

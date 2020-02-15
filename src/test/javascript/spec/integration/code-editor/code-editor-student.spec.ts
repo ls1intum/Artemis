@@ -129,7 +129,7 @@ describe('CodeEditorStudentIntegration', () => {
                 containerFixture = TestBed.createComponent(CodeEditorStudentContainerComponent);
                 container = containerFixture.componentInstance;
                 containerDebugElement = containerFixture.debugElement;
-                guidedTourService = TestBed.get(GuidedTourService);
+                guidedTourService = TestBed.inject(GuidedTourService);
 
                 codeEditorRepositoryService = containerDebugElement.injector.get(CodeEditorRepositoryService);
                 codeEditorRepositoryFileService = containerDebugElement.injector.get(CodeEditorRepositoryFileService);

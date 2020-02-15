@@ -120,7 +120,7 @@ describe('LectureAttachmentsComponent', () => {
             .then(() => {
                 fixture = TestBed.createComponent(LectureAttachmentsComponent);
                 comp = fixture.componentInstance;
-                fileUploaderService = TestBed.get(FileUploaderService);
+                fileUploaderService = TestBed.inject(FileUploaderService);
             });
     });
 

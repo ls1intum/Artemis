@@ -8,7 +8,7 @@ import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { of, Subject } from 'rxjs';
 import { ActivatedRoute, Params } from '@angular/router';
 import { SinonSpy, SinonStub, spy, stub } from 'sinon';
-import { CookieService } from 'ngx-cookie';
+import { CookieService } from 'ngx-cookie-service';
 import { JhiAlertService } from 'ng-jhipster';
 import * as chai from 'chai';
 import { ArtemisTestModule } from '../../test.module';

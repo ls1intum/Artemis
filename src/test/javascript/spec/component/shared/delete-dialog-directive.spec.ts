@@ -36,7 +36,7 @@ describe('DeleteDialogDirective', () => {
 
     beforeEach(async () => {
         return TestBed.configureTestingModule({
-            imports: [TranslateModule.forRoot(), ArtemisTestModule, FormsModule, NgJhipsterModule, NgbModule],
+            imports: [ArtemisTestModule, TranslateModule.forRoot(), FormsModule, NgJhipsterModule, NgbModule],
             declarations: [TestComponent, DeleteButtonDirective, DeleteDialogComponent, JhiAlertComponent],
             providers: [JhiLanguageHelper, JhiAlertService],
         })
@@ -45,8 +45,8 @@ describe('DeleteDialogDirective', () => {
                 fixture = TestBed.createComponent(TestComponent);
                 comp = fixture.componentInstance;
                 debugElement = fixture.debugElement;
-                deleteDialogService = TestBed.get(DeleteDialogService);
-                translateService = TestBed.get(TranslateService);
+                deleteDialogService = TestBed.inject(DeleteDialogService);
+                translateService = TestBed.inject(TranslateService);
             });
     });
 

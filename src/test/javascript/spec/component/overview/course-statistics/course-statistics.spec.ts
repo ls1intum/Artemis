@@ -185,7 +185,7 @@ describe('CourseStatisticsComponent', () => {
             .then(() => {
                 fixture = TestBed.createComponent(CourseStatisticsComponent);
                 comp = fixture.componentInstance;
-                courseScoreCalculationService = TestBed.get(CourseScoreCalculationService);
+                courseScoreCalculationService = TestBed.inject(CourseScoreCalculationService);
             });
     });
 

@@ -83,7 +83,7 @@ describe('FileUploadAssessmentComponent', () => {
                 debugElement = fixture.debugElement;
                 router = debugElement.injector.get(Router);
                 location = debugElement.injector.get(Location);
-                fileUploadSubmissionService = TestBed.get(FileUploadSubmissionService);
+                fileUploadSubmissionService = TestBed.inject(FileUploadSubmissionService);
                 getFileUploadSubmissionForExerciseWithoutAssessmentStub = stub(fileUploadSubmissionService, 'getFileUploadSubmissionForExerciseWithoutAssessment');
 
                 router.initialNavigation();

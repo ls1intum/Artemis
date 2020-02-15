@@ -10,7 +10,7 @@ import { MockSyncStorage } from '../../mocks/mock-sync.storage';
 import { MockParticipationWebsocketService } from '../../mocks/mock-participation-websocket.service';
 import { MockCookieService } from '../../mocks/mock-cookie.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { CookieService } from 'ngx-cookie';
+import { CookieService } from 'ngx-cookie-service';
 import { TranslateModule } from '@ngx-translate/core';
 import { RouterTestingModule } from '@angular/router/testing';
 import { modelingSubmissionRoute } from 'app/modeling-submission/modeling-submission.route';

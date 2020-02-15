@@ -19,14 +19,13 @@ import { fas } from '@fortawesome/free-solid-svg-icons';
 import locale from '@angular/common/locales/en';
 import { fontAwesomeIcons } from 'app/core/icons/font-awesome-icons';
 import { MissingTranslationHandler, TranslateLoader, TranslateModule } from '@ngx-translate/core';
-import { CookieModule } from 'ngx-cookie';
 import { SentryErrorHandler } from 'app/sentry/sentry.error-handler';
 import { RepositoryInterceptor } from 'app/entities/repository/repository.service';
+import { CookieService } from 'ngx-cookie-service';
 
 @NgModule({
     imports: [
         HttpClientModule,
-        CookieModule.forRoot(),
         NgxWebstorageModule.forRoot({ prefix: 'jhi', separator: '-' }),
         DeviceDetectorModule,
         /**
@@ -67,6 +66,7 @@ import { RepositoryInterceptor } from 'app/entities/repository/repository.servic
         { provide: ErrorHandler, useClass: SentryErrorHandler },
         DatePipe,
         DifferencePipe,
+        CookieService,
         /**
          * @description Interceptor declarations:
          * Interceptors are located at 'blocks/interceptor/.

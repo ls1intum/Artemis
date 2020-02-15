@@ -12,7 +12,7 @@ import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../mocks/mock-account.service';
 import { RouterTestingModule } from '@angular/router/testing';
-import { CookieService } from 'ngx-cookie';
+import { CookieService } from 'ngx-cookie-service';
 import { DeviceDetectorService } from 'ngx-device-detector';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { Mutable } from '../helpers/mutable';
@@ -55,7 +55,7 @@ describe('UserRouteAccessService', () => {
             .overrideTemplate(CourseExerciseDetailsComponent, '')
             .compileComponents()
             .then(() => {
-                service = TestBed.get(UserRouteAccessService);
+                service = TestBed.inject(UserRouteAccessService);
                 fixture = TestBed.createComponent(CourseExerciseDetailsComponent);
                 comp = fixture.componentInstance;
             });

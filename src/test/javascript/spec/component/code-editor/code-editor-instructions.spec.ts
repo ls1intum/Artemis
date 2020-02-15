@@ -29,7 +29,7 @@ describe('CodeEditorInstructionsComponent', () => {
 
     beforeEach(async () => {
         return TestBed.configureTestingModule({
-            imports: [TranslateModule.forRoot(), AceEditorModule, ArtemisMarkdownEditorModule, ArtemisTestModule, NgbModule],
+            imports: [ArtemisTestModule, TranslateModule.forRoot(), AceEditorModule, ArtemisMarkdownEditorModule, NgbModule],
             declarations: [CodeEditorInstructionsComponent, MockComponent(ProgrammingExerciseInstructionComponent), MockComponent(ProgrammingExerciseEditableInstructionComponent)],
             providers: [
                 WindowRef,

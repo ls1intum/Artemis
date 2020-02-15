@@ -4,7 +4,7 @@ import { DebugElement, NO_ERRORS_SCHEMA } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
-import { CookieService } from 'ngx-cookie';
+import { CookieService } from 'ngx-cookie-service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { of } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
@@ -92,8 +92,8 @@ describe('GuidedTourComponent', () => {
                 guidedTourComponentFixture = TestBed.createComponent(GuidedTourComponent);
                 guidedTourComponent = guidedTourComponentFixture.componentInstance;
                 guidedTourDebugElement = guidedTourComponentFixture.debugElement;
-                guidedTourService = TestBed.get(GuidedTourService);
-                router = TestBed.get(Router);
+                guidedTourService = TestBed.inject(GuidedTourService);
+                router = TestBed.inject(Router);
             });
     });
 

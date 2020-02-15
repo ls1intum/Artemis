@@ -7,6 +7,7 @@ import { AceEditorModule } from 'ng2-ace-editor';
 import { BoldCommand } from 'app/markdown-editor/commands/bold.command';
 import { MarkdownEditorComponent } from 'app/markdown-editor/markdown-editor.component';
 import { ArtemisMarkdownEditorModule } from 'app/markdown-editor/markdown-editor.module';
+import { ArtemisTestModule } from '../../test.module';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -17,7 +18,7 @@ describe('BoldCommand', () => {
 
     beforeEach(async () => {
         return TestBed.configureTestingModule({
-            imports: [TranslateModule.forRoot(), AceEditorModule, ArtemisMarkdownEditorModule],
+            imports: [ArtemisTestModule, TranslateModule.forRoot(), AceEditorModule, ArtemisMarkdownEditorModule],
         })
             .compileComponents()
             .then(() => {

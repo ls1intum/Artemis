@@ -39,7 +39,7 @@ describe('AssessmentHeaderComponent', () => {
     });
 
     it('should display alerts', () => {
-        const alertService = TestBed.get(JhiAlertService);
+        const alertService = TestBed.inject(JhiAlertService);
         alertService.success('test-alert-string');
         fixture.detectChanges();
 

@@ -35,7 +35,7 @@ describe('DeleteDialogComponent', () => {
                 fixture = TestBed.createComponent(DeleteDialogComponent);
                 comp = fixture.componentInstance;
                 debugElement = fixture.debugElement;
-                ngbActiveModal = TestBed.get(NgbActiveModal);
+                ngbActiveModal = TestBed.inject(NgbActiveModal);
             });
     });
 

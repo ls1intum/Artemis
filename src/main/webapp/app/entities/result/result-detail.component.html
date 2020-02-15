@@ -7,7 +7,7 @@
     Loading state
 -->
     <div *ngIf="isLoading; else feedbackContainer" class="text-muted d-flex justify-content-center" id="result-detail-spinner">
-        <fa-icon [spin]="true" size="lg" icon="circle-notch"></fa-icon>
+        <fa-icon [spin]="true" size="lg" [icon]="'circle-notch'"></fa-icon>
     </div>
     <!--
     Feedbacks container

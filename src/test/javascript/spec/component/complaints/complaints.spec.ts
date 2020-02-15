@@ -5,13 +5,14 @@ import { ComplaintService } from 'app/entities/complaint/complaint.service';
 import { MockComplaintResponse, MockComplaintService } from '../../mocks/mock-complaint.service';
 import { MockAlertService } from '../../helpers/mock-alert.service';
 import { JhiAlertService } from 'ng-jhipster';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { MomentModule } from 'ngx-moment';
 import { ClipboardModule } from 'ngx-clipboard';
 import { DebugElement } from '@angular/core';
 import { HttpClientModule } from '@angular/common/http';
 import { TranslateModule } from '@ngx-translate/core';
 import { ComplaintsComponent } from 'app/complaints/complaints.component';
+import { ArtemisTestModule } from '../../test.module';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
 
 const expect = chai.expect;
 describe('ComplaintsComponent', () => {
@@ -21,7 +22,7 @@ describe('ComplaintsComponent', () => {
 
     beforeEach(async(() => {
         TestBed.configureTestingModule({
-            imports: [BrowserModule, ArtemisSharedModule, MomentModule, ClipboardModule, HttpClientModule, TranslateModule.forRoot()],
+            imports: [TranslateModule.forRoot(), ArtemisTestModule, ArtemisSharedModule, MomentModule],
             declarations: [ComplaintsComponent],
             providers: [
                 {
@@ -34,6 +35,7 @@ describe('ComplaintsComponent', () => {
                 },
             ],
         })
+            .overrideModule(ArtemisTestModule, { set: { declarations: [], exports: [] } })
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(ComplaintsComponent);

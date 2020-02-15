@@ -95,8 +95,8 @@ describe('FileUploadSubmissionComponent', () => {
                 router = debugElement.injector.get(Router);
                 location = debugElement.injector.get(Location);
                 router.initialNavigation();
-                fileUploaderService = TestBed.get(FileUploaderService);
-                jhiAlertService = TestBed.get(JhiAlertService);
+                fileUploaderService = TestBed.inject(FileUploaderService);
+                jhiAlertService = TestBed.inject(JhiAlertService);
                 fileUploadSubmissionService = debugElement.injector.get(FileUploadSubmissionService);
             });
     });

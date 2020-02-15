@@ -26,8 +26,8 @@ describe('Delete Dialog Service', () => {
             providers: [DeleteDialogService, JhiAlertService],
         });
 
-        service = TestBed.get(DeleteDialogService);
-        modalService = TestBed.get(NgbModal);
+        service = TestBed.inject(DeleteDialogService);
+        modalService = TestBed.inject(NgbModal);
     });
 
     it('should open delete dialog', () => {
