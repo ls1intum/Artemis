@@ -12,7 +12,7 @@ import { User } from 'app/core/user/user.model';
 import { cloneDeep, omit, isEmpty } from 'lodash';
 import { TeamAssignmentConfig } from 'app/entities/team-assignment-config/team-assignment-config.model';
 import { Subject } from 'rxjs';
-import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
+import { debounceTime, distinctUntilChanged, switchMap } from 'rxjs/operators';
 
 @Component({
     selector: 'jhi-team-update-dialog',
@@ -163,8 +163,13 @@ export class TeamUpdateDialogComponent implements OnInit {
     }
 
     private shortNameValidation(shortName$: Subject<string>) {
-        shortName$.pipe(debounceTime(500), distinctUntilChanged()).subscribe(shortName => {
-            this.teamService.existsByShortName(shortName).subscribe(
+        shortName$
+            .pipe(
+                debounceTime(500),
+                distinctUntilChanged(),
+                switchMap(shortName => this.teamService.existsByShortName(shortName)),
+            )
+            .subscribe(
                 alreadyTakenResponse => {
                     const alreadyTaken = alreadyTakenResponse.body;
                     const errors = alreadyTaken
@@ -174,6 +179,5 @@ export class TeamUpdateDialogComponent implements OnInit {
                 },
                 () => {},
             );
-        });
     }
 }
