@@ -76,6 +76,7 @@
             "duration": "Dauer",
             "showBuildFailed": "Nur fehlgeschlagene Builds anzeigen",
             "showFailed": "Nur fehlgeschlagene Einreichungen (ohne Ergebnis) anzeigen",
+            "showNoSubmissions": "Nur ohne Einreichungen anzeigen",
             "showUnsuccessful": "Nur unerfolgreiche anzeigen",
             "showSuccessful": "Nur erfolgreiche anzeigen",
             "showManual": "Nur manuelle anzeigen",

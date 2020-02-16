@@ -42,6 +42,9 @@ export abstract class Participation implements BaseEntity {
     public exercise?: Exercise;
     public type: ParticipationType;
 
+    // transient
+    public submissionCount?: number;
+
     constructor(type: ParticipationType) {
         this.type = type;
     }
