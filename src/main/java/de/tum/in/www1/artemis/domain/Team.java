@@ -34,6 +34,9 @@ public class Team implements Serializable {
     @Column(name = "name")
     private String name;
 
+    @Column(name = "short_name")
+    private String shortName;
+
     @Column(name = "image")
     private String image;
 
@@ -66,6 +69,19 @@ public class Team implements Serializable {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public String getShortName() {
+        return shortName;
+    }
+
+    public Team shortName(String shortName) {
+        this.shortName = shortName;
+        return this;
+    }
+
+    public void setShortName(String shortName) {
+        this.shortName = shortName;
     }
 
     public String getImage() {
@@ -143,6 +159,6 @@ public class Team implements Serializable {
 
     @Override
     public String toString() {
-        return "Team{" + "id=" + getId() + ", name='" + getName() + "'" + ", image='" + getImage() + "'" + "}";
+        return "Team{" + "id=" + getId() + ", name='" + getName() + "'" + ", shortName='" + getShortName() + "'" + ", image='" + getImage() + "'" + "}";
     }
 }

@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnInit, ViewEncapsulation } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { HttpResponse, HttpErrorResponse } from '@angular/common/http';
@@ -14,6 +14,7 @@ import { cloneDeep } from 'lodash';
     selector: 'jhi-team-update-dialog',
     templateUrl: './team-update-dialog.component.html',
     styleUrls: ['./team-update-dialog.component.scss'],
+    encapsulation: ViewEncapsulation.None,
 })
 export class TeamUpdateDialogComponent implements OnInit {
     @Input() team: Team;
@@ -21,13 +22,12 @@ export class TeamUpdateDialogComponent implements OnInit {
 
     pendingTeam: Team;
     isSaving = false;
-
     searchingStudents = false;
     searchingStudentsFailed = false;
-
     studentTeamConflicts = [];
-
     ignoreTeamSizeRecommendation = false;
+
+    shortNamePattern = '^[a-zA-Z][a-zA-Z0-9]*'; // must start with a letter and cannot contain special characters
 
     constructor(private participationService: ParticipationService, private teamService: TeamService, private activeModal: NgbActiveModal, private datePipe: DatePipe) {}
 

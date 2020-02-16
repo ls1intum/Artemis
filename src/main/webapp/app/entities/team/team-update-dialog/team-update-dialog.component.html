@@ -12,15 +12,40 @@
         <jhi-alert-error></jhi-alert-error>
         <jhi-alert></jhi-alert>
         <div class="form-group">
-            <h4 class="control-label" jhiTranslate="artemisApp.team.name">Name</h4>
-            <input type="text" required class="form-control" name="teamName" id="teamName" [(ngModel)]="pendingTeam.name" #teamName="ngModel" />
-            <span class="text-danger" *ngIf="teamName?.errors?.required && (teamName?.dirty || teamName?.touched)" jhiTranslate="artemisApp.team.nameRequired">
-                Name is required.
-            </span>
+            <label class="label-narrow" jhiTranslate="artemisApp.team.name.label" for="teamName">Name</label>
+            <input type="text" required class="form-control" name="name" id="teamName" [(ngModel)]="pendingTeam.name" #name="ngModel" />
+            <ng-container *ngFor="let e of name.errors! | keyvalue">
+                <div class="form-control-error text-danger" *ngIf="name.invalid && (name.dirty || name.touched)">
+                    <span [jhiTranslate]="'artemisApp.team.name' + '.' + e.key"></span>
+                </div>
+            </ng-container>
         </div>
         <div class="form-group">
-            <div class="d-flex align-items-end mb-2">
-                <h4 class="control-label mb-0 mr-2" jhiTranslate="artemisApp.team.students">Students</h4>
+            <div>
+                <label class="label-narrow" jhiTranslate="artemisApp.team.shortName.label" for="teamShortName">Name</label>
+                <jhi-help-icon placement="right" text="artemisApp.team.shortName.tooltip"></jhi-help-icon>
+            </div>
+            <input
+                type="text"
+                required
+                class="form-control"
+                name="shortName"
+                id="teamShortName"
+                minlength="3"
+                [pattern]="shortNamePattern"
+                [(ngModel)]="pendingTeam.shortName"
+                [readonly]="pendingTeam.id"
+                #shortName="ngModel"
+            />
+            <ng-container *ngFor="let e of shortName.errors! | keyvalue | removekeys: ['required']">
+                <div class="form-control-error text-danger" *ngIf="shortName.invalid && (shortName.dirty || shortName.touched)">
+                    <span [jhiTranslate]="'artemisApp.team.shortName' + '.' + e.key"></span>
+                </div>
+            </ng-container>
+        </div>
+        <div class="form-group">
+            <div class="d-flex align-items-end">
+                <label class="label-narrow mr-2" jhiTranslate="artemisApp.team.students">Students</label>
                 <fa-icon class="student-search-searching" [icon]="'spinner'" [spin]="true" *ngIf="searchingStudents"></fa-icon>
                 <span *ngIf="searchingStudentsFailed" class="student-search-failed text-muted" jhiTranslate="artemisApp.team.studentSearch.failed">
                     Search failed. Please try again.

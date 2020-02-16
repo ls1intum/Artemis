@@ -15,8 +15,16 @@
             "detail": {
                 "title": "Team"
             },
-            "name": "Name",
-            "nameRequired": "Name is required.",
+            "name": {
+                "label": "Name",
+                "required": "Name is required."
+            },
+            "shortName": {
+                "label": "Short Name",
+                "tooltip": "The short name of the team can NOT be edited after creating the team! It is used as a unique identifier for the repositories and build plans.",
+                "pattern": "The short name must start with a letter and cannot contain special characters.",
+                "minlength": "The short name must be at least 3 characters long!"
+            },
             "image": "Image",
             "students": "Students",
             "addStudentToTeam": "Add a student to the team (by searching for login or name)",

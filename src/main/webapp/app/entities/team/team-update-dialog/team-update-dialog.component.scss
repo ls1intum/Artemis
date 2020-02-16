@@ -3,6 +3,14 @@
 $error-text-color: $danger;
 $error-bg-color: #f8d7da;
 
+.form-control-error {
+    margin-top: 0.35rem;
+
+    & + & {
+        margin-top: 0;
+    }
+}
+
 .student-search-searching {
     position: relative;
     top: 1px;

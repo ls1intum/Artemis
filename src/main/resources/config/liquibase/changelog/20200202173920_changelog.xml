@@ -13,6 +13,7 @@
             </column>
             <column name="exercise_id" type="BIGINT"/>
             <column name="name" type="varchar(255)"/>
+            <column name="short_name" type="varchar(255)"/>
             <column name="image" type="varchar(255)"/>
         </createTable>
         <createTable tableName="team_student">

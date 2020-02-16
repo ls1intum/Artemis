@@ -15,8 +15,16 @@
             "detail": {
                 "title": "Team"
             },
-            "name": "Name",
-            "nameRequired": "Name ist erforderlich.",
+            "name": {
+                "label": "Name",
+                "required": "Name ist erforderlich."
+            },
+            "shortName": {
+                "label": "Kurzname",
+                "tooltip": "Der Kurzname des Teams kann NICHT im Nachhinein bearbeitet werden! Er wird als eindeutiger Schlüssel für die Repositories und Build Pläne verwendet.",
+                "pattern": "Der Kurzname muss mit einem Buchstaben beginnen und darf keine Sonderzeichen beinhalten.",
+                "minlength": "Der Kurzname muss mindestens 3 Zeichen lang sein!"
+            },
             "image": "Bild",
             "students": "Studenten",
             "addStudentToTeam": "Studenten zum Team hinzufügen (nach Login oder Name suchen)",
