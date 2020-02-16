@@ -1,4 +1,5 @@
-import { Component, Input, OnInit, ViewEncapsulation } from '@angular/core';
+import { Component, Input, OnInit, ViewEncapsulation, ViewChild } from '@angular/core';
+import { NgForm } from '@angular/forms';
 import { DatePipe } from '@angular/common';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { HttpResponse, HttpErrorResponse } from '@angular/common/http';
@@ -17,6 +18,8 @@ import { cloneDeep } from 'lodash';
     encapsulation: ViewEncapsulation.None,
 })
 export class TeamUpdateDialogComponent implements OnInit {
+    @ViewChild('editForm', { static: false }) editForm: NgForm;
+
     @Input() team: Team;
     @Input() exercise: Exercise;
 
@@ -33,6 +36,24 @@ export class TeamUpdateDialogComponent implements OnInit {
 
     ngOnInit(): void {
         this.pendingTeam = cloneDeep(this.team);
+    }
+
+    onTeamShortNameChanged(shortName: string) {
+        // automatically convert shortName to lowercase characters
+        this.pendingTeam.shortName = shortName.toLowerCase();
+    }
+
+    onTeamNameChanged(name: string) {
+        if (this.shortNameReadOnly) {
+            return;
+        }
+        // automatically set the shortName based on the name (stripping all non-alphanumeric characters)
+        this.pendingTeam.shortName = name.replace(/[^0-9a-z]/gi, '').toLowerCase();
+        this.editForm.control.get('shortName')!.markAsTouched();
+    }
+
+    get shortNameReadOnly() {
+        return !!this.pendingTeam.id;
     }
 
     get config() {
