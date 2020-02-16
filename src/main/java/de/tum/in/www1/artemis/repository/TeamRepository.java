@@ -19,6 +19,8 @@ public interface TeamRepository extends JpaRepository<Team, Long> {
 
     Set<Team> findAllByExerciseId(@Param("exerciseId") Long exerciseId);
 
+    Optional<Team> findOneByShortName(@Param("shortName") String shortName);
+
     @Query(value = "select team from Team team left join team.students student where team.exercise.id = :#{#exerciseId} and student.id = :#{#userId}")
     Optional<Team> findOneByExerciseIdAndUserId(@Param("exerciseId") Long exerciseId, @Param("userId") Long userId);
 

@@ -34,6 +34,10 @@ export class TeamService implements ITeamService {
         return this.http.put<Team>(this.resourceUrl, team, { observe: 'response' });
     }
 
+    existsByShortName(shortName: string): Observable<HttpResponse<boolean>> {
+        return this.http.get<boolean>(`${this.resourceUrl}?shortName=${shortName}`, { observe: 'response' });
+    }
+
     find(id: number): Observable<TeamResponse> {
         return this.http.get<Team>(`${this.resourceUrl}/${id}`, { observe: 'response' });
     }

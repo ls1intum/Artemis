@@ -1,5 +1,5 @@
 import { Component, Input, OnInit, ViewEncapsulation, ViewChild } from '@angular/core';
-import { NgForm } from '@angular/forms';
+import { NgForm, AbstractControl } from '@angular/forms';
 import { DatePipe } from '@angular/common';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { HttpResponse, HttpErrorResponse } from '@angular/common/http';
@@ -9,7 +9,10 @@ import { Exercise } from 'app/entities/exercise';
 import { TeamService } from 'app/entities/team/team.service';
 import { Team } from 'app/entities/team/team.model';
 import { User } from 'app/core/user/user.model';
-import { cloneDeep } from 'lodash';
+import { cloneDeep, omit, isEmpty } from 'lodash';
+import { TeamAssignmentConfig } from 'app/entities/team-assignment-config/team-assignment-config.model';
+import { Subject } from 'rxjs';
+import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 
 @Component({
     selector: 'jhi-team-update-dialog',
@@ -30,54 +33,64 @@ export class TeamUpdateDialogComponent implements OnInit {
     studentTeamConflicts = [];
     ignoreTeamSizeRecommendation = false;
 
-    shortNamePattern = '^[a-zA-Z][a-zA-Z0-9]*'; // must start with a letter and cannot contain special characters
+    private shortNameValidator = new Subject<string>();
+    readonly shortNameAlreadyTakenErrorCode = 'alreadyTaken';
+    readonly shortNamePattern = '^[a-zA-Z][a-zA-Z0-9]*'; // must start with a letter and cannot contain special characters
 
     constructor(private participationService: ParticipationService, private teamService: TeamService, private activeModal: NgbActiveModal, private datePipe: DatePipe) {}
 
     ngOnInit(): void {
         this.pendingTeam = cloneDeep(this.team);
+        this.shortNameValidation(this.shortNameValidator);
     }
 
     onTeamShortNameChanged(shortName: string) {
         // automatically convert shortName to lowercase characters
         this.pendingTeam.shortName = shortName.toLowerCase();
+
+        // check that no other team already uses this short name
+        this.shortNameValidator.next(shortName);
     }
 
     onTeamNameChanged(name: string) {
-        if (this.shortNameReadOnly) {
-            return;
+        if (!this.shortNameReadOnly) {
+            // automatically set the shortName based on the name (stripping all non-alphanumeric characters)
+            const shortName = name.replace(/[^0-9a-z]/gi, '');
+            this.onTeamShortNameChanged(shortName);
+            this.shortNameControl.markAsTouched();
         }
-        // automatically set the shortName based on the name (stripping all non-alphanumeric characters)
-        this.pendingTeam.shortName = name.replace(/[^0-9a-z]/gi, '').toLowerCase();
-        this.editForm.control.get('shortName')!.markAsTouched();
     }
 
-    get shortNameReadOnly() {
+    get shortNameReadOnly(): boolean {
         return !!this.pendingTeam.id;
     }
 
-    get config() {
+    get shortNameControl(): AbstractControl {
+        return this.editForm.control.get('shortName')!;
+    }
+
+    get config(): TeamAssignmentConfig {
         return this.exercise.teamAssignmentConfig!;
     }
 
-    get showIgnoreTeamSizeRecommendationOption() {
+    get showIgnoreTeamSizeRecommendationOption(): boolean {
         return !this.recommendedTeamSize;
     }
 
-    get teamSizeViolationUnconfirmed() {
+    get teamSizeViolationUnconfirmed(): boolean {
         return this.showIgnoreTeamSizeRecommendationOption && !this.ignoreTeamSizeRecommendation;
     }
 
-    private get recommendedTeamSize() {
+    private get recommendedTeamSize(): boolean {
         const pendingTeamSize = this.pendingTeam.students.length;
         return pendingTeamSize >= this.config.minTeamSize && pendingTeamSize <= this.config.maxTeamSize;
     }
 
-    hasConflictingTeam(student: User) {
+    hasConflictingTeam(student: User): boolean {
         return this.findStudentTeamConflict(student) !== undefined;
     }
 
-    getConflictingTeam(student: User) {
+    getConflictingTeam(student: User): string | null {
         const conflict = this.findStudentTeamConflict(student);
         return conflict ? conflict['teamId'] : null;
     }
@@ -86,7 +99,7 @@ export class TeamUpdateDialogComponent implements OnInit {
         return this.studentTeamConflicts.find(c => c['studentLogin'] === student.login);
     }
 
-    private isStudentAlreadyInPendingTeam(student: User) {
+    private isStudentAlreadyInPendingTeam(student: User): boolean {
         return this.pendingTeam.students.find(s => s.id === student.id) !== undefined;
     }
 
@@ -147,5 +160,20 @@ export class TeamUpdateDialogComponent implements OnInit {
             default:
                 break;
         }
+    }
+
+    private shortNameValidation(shortName$: Subject<string>) {
+        shortName$.pipe(debounceTime(500), distinctUntilChanged()).subscribe(shortName => {
+            this.teamService.existsByShortName(shortName).subscribe(
+                alreadyTakenResponse => {
+                    const alreadyTaken = alreadyTakenResponse.body;
+                    const errors = alreadyTaken
+                        ? { ...this.shortNameControl.errors, [this.shortNameAlreadyTakenErrorCode]: alreadyTaken }
+                        : omit(this.shortNameControl.errors, this.shortNameAlreadyTakenErrorCode);
+                    this.shortNameControl.setErrors(isEmpty(errors) ? null : errors);
+                },
+                () => {},
+            );
+        });
     }
 }

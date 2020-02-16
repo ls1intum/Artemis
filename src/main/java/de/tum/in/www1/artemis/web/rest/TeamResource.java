@@ -109,6 +109,19 @@ public class TeamResource {
     }
 
     /**
+     * GET /teams?shortName={shortName} : get boolean flag whether team with shortName exists
+     *
+     * @param shortName the shortName of the team to check for existence
+     * @return Response with status 200 (OK) and boolean flag in the body
+     */
+    @GetMapping("/teams")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<Boolean> existsTeamByShortName(@RequestParam("shortName") String shortName) {
+        log.debug("REST request to check Team existence by shortName : {}", shortName);
+        return ResponseEntity.ok().body(teamRepository.findOneByShortName(shortName).isPresent());
+    }
+
+    /**
      * GET /teams/:id : get the "id" team.
      *
      * @param id the id of the team to retrieve

@@ -23,7 +23,8 @@
                 "label": "Short Name",
                 "tooltip": "The short name of the team can NOT be edited after creating the team! It is used as a unique identifier for the repositories and build plans.",
                 "pattern": "The short name must start with a letter and cannot contain special characters.",
-                "minlength": "The short name must be at least 3 characters long."
+                "minlength": "The short name must be at least 3 characters long.",
+                "alreadyTaken": "This short name is already taken by another team."
             },
             "image": "Image",
             "students": "Students",

@@ -23,7 +23,8 @@
                 "label": "Kurzname",
                 "tooltip": "Der Kurzname des Teams kann NICHT im Nachhinein bearbeitet werden! Er wird als eindeutiger Schlüssel für die Repositories und Build Pläne verwendet.",
                 "pattern": "Der Kurzname muss mit einem Buchstaben beginnen und darf keine Sonderzeichen beinhalten.",
-                "minlength": "Der Kurzname muss mindestens 3 Zeichen lang sein."
+                "minlength": "Der Kurzname muss mindestens 3 Zeichen lang sein.",
+                "alreadyTaken": "Dieser Kurzname ist bereits an ein anderes Team vergeben."
             },
             "image": "Bild",
             "students": "Studenten",
