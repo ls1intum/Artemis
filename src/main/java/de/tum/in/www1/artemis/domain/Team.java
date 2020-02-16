@@ -34,7 +34,7 @@ public class Team implements Serializable {
     @Column(name = "name")
     private String name;
 
-    @Column(name = "short_name")
+    @Column(name = "short_name", unique = true)
     private String shortName;
 
     @Column(name = "image")
