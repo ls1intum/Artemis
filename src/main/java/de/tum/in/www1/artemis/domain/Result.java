@@ -18,7 +18,6 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonView;
 import com.google.common.base.Strings;
 
@@ -117,22 +116,6 @@ public class Result implements Serializable {
 
     @Column(name = "example_result")
     private Boolean exampleResult;
-
-    /**
-     * This property stores the total number of results in the participation this result belongs to. Not stored in the database, computed dynamically and used in showing statistics
-     * to the user in the exercise view.
-     */
-    @Transient
-    @JsonProperty
-    private Integer submissionCount;
-
-    public Integer getSubmissionCount() {
-        return submissionCount;
-    }
-
-    public void setSubmissionCount(Integer submissionCount) {
-        this.submissionCount = submissionCount;
-    }
 
     // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
     public Long getId() {
@@ -533,8 +516,7 @@ public class Result implements Serializable {
     public String toString() {
         return "Result{" + "id=" + id + ", resultString='" + resultString + '\'' + ", completionDate=" + completionDate + ", successful=" + successful + ", score=" + score
                 + ", rated=" + rated + ", hasFeedback=" + hasFeedback + ", submission=" + submission + ", feedbacks=" + feedbacks + ", participation=" + participation
-                + ", assessor=" + assessor + ", assessmentType=" + assessmentType + ", hasComplaint=" + hasComplaint + ", exampleResult=" + exampleResult + ", submissionCount="
-                + submissionCount + '}';
+                + ", assessor=" + assessor + ", assessmentType=" + assessmentType + ", hasComplaint=" + hasComplaint + ", exampleResult=" + exampleResult + '}';
     }
 
     /**
