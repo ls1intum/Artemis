@@ -102,7 +102,7 @@ public class QuizSubmissionResource {
                     .body(null);
         }
 
-        StudentParticipation participation = participationService.startExercise(quizExercise, user);
+        StudentParticipation participation = (StudentParticipation) participationService.startExercise(quizExercise, user);
         participation.setExercise(quizExercise);
 
         // update and save submission

@@ -562,7 +562,8 @@ public class ResultResource {
         }
 
         // Create a participation and a submitted empty submission if they do not exist yet
-        StudentParticipation participation = participationService.createParticipationWithEmptySubmissionIfNotExisting(exercise, student.get(), SubmissionType.EXTERNAL);
+        StudentParticipation participation = (StudentParticipation) participationService.createParticipationWithEmptySubmissionIfNotExisting(exercise, student.get(),
+                SubmissionType.EXTERNAL);
         Submission submission = participationService.findOneWithEagerSubmissions(participation.getId()).findLatestSubmission().get();
         result.setParticipation(participation);
         result.setSubmission(submission);
