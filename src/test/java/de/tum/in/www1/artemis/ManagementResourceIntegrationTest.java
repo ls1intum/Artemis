@@ -7,6 +7,7 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.util.HashMap;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -39,6 +40,11 @@ public class ManagementResourceIntegrationTest extends AbstractSpringIntegration
     @BeforeEach
     public void initTestCase() {
         database.addUsers(2, 2, 2);
+    }
+
+    @AfterEach
+    public void tearDown() {
+        database.resetDatabase();
     }
 
     @Test
