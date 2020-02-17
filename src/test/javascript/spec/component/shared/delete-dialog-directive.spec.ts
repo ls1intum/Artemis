@@ -6,7 +6,7 @@ import * as sinonChai from 'sinon-chai';
 import { ArtemisTestModule } from '../../test.module';
 import { By } from '@angular/platform-browser';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
-import { AlertService, NgJhipsterModule } from 'ng-jhipster';
+import { JhiAlertService, NgJhipsterModule } from 'ng-jhipster';
 import { FormsModule } from '@angular/forms';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import * as sinon from 'sinon';
@@ -38,7 +38,7 @@ describe('DeleteDialogDirective', () => {
         return TestBed.configureTestingModule({
             imports: [ArtemisTestModule, TranslateModule.forRoot(), FormsModule, NgJhipsterModule, NgbModule],
             declarations: [TestComponent, DeleteButtonDirective, DeleteDialogComponent, JhiAlertComponent],
-            providers: [JhiLanguageHelper, AlertService],
+            providers: [JhiLanguageHelper, JhiAlertService],
         })
             .compileComponents()
             .then(() => {
