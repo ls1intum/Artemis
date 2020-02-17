@@ -3,7 +3,7 @@ import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs/Observable';
 
 import { QuizSubmission } from './quiz-submission.model';
-import { Result } from '../../entities/result';
+import { Result } from 'app/entities/result/result.model';
 
 export type EntityResponseType = HttpResponse<QuizSubmission>;
 export type ResultResponseType = HttpResponse<Result>;

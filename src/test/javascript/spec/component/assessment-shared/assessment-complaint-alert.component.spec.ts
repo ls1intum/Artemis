@@ -3,8 +3,8 @@ import { TranslateModule } from '@ngx-translate/core';
 
 import { AssessmentComplaintAlertComponent } from 'app/assessment-shared/assessment-complaint-alert/assessment-complaint-alert.component';
 import { ArtemisTestModule } from '../../test.module';
-import { ArtemisSharedModule } from 'app/shared';
-import { Complaint, ComplaintType } from 'app/entities/complaint';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
+import { Complaint, ComplaintType } from 'app/entities/complaint/complaint.model';
 
 describe('AssessmentComplaintAlertComponent', () => {
     let component: AssessmentComplaintAlertComponent;

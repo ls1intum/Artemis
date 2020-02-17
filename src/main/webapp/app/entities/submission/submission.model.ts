@@ -1,8 +1,8 @@
-import { BaseEntity } from 'app/shared';
-import { Result } from '../result';
-import { Participation } from '../participation';
+import { BaseEntity } from 'app/shared/model/base-entity';
 import { Moment } from 'moment';
-import { Language } from 'app/entities/tutor-group';
+import { Participation } from 'app/entities/participation/participation.model';
+import { Language } from 'app/entities/tutor-group/tutor-group.model';
+import { Result } from 'app/entities/result/result.model';
 
 export const enum SubmissionType {
     MANUAL = 'MANUAL',

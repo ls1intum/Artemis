@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { DifficultyLevel, Exercise } from 'app/entities/exercise';
+import { DifficultyLevel, Exercise } from 'app/entities/exercise/exercise.model';
 
 @Component({
     selector: 'jhi-difficulty-picker',

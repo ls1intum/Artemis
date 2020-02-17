@@ -1,24 +1,25 @@
 import { CodeEditorContainer } from 'app/code-editor/code-editor-mode-container.component';
 import { OnDestroy, OnInit } from '@angular/core';
-import { ExerciseType } from 'app/entities/exercise';
 import { Observable, Subscription, throwError } from 'rxjs';
-import { ProgrammingExercise } from 'app/entities/programming-exercise';
-import { ProgrammingExerciseParticipationService } from 'app/entities/programming-exercise/services/programming-exercise-participation.service';
-import { ProgrammingExerciseService } from 'app/entities/programming-exercise/services/programming-exercise.service';
-import {
-    Participation,
-    ProgrammingExerciseStudentParticipation,
-    SolutionProgrammingExerciseParticipation,
-    TemplateProgrammingExerciseParticipation,
-} from 'app/entities/participation';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CourseExerciseService } from 'app/entities/course/course.service';
-import { CodeEditorFileService, CodeEditorSessionService, DomainChange, DomainService, DomainType } from 'app/code-editor/service';
 import { TranslateService } from '@ngx-translate/core';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/alert/alert.service';
 import { catchError, filter, map, tap } from 'rxjs/operators';
-import { ButtonSize } from 'app/shared/components';
 import { ParticipationService } from 'app/entities/participation/participation.service';
+import { Participation } from 'app/entities/participation/participation.model';
+import { ButtonSize } from 'app/shared/components/button.component';
+import { CodeEditorSessionService } from 'app/code-editor/service/code-editor-session.service';
+import { DomainService } from 'app/code-editor/service/code-editor-domain.service';
+import { CodeEditorFileService } from 'app/code-editor/service/code-editor-file.service';
+import { TemplateProgrammingExerciseParticipation } from 'app/entities/participation/template-programming-exercise-participation.model';
+import { ProgrammingExerciseParticipationService } from 'app/entities/programming-exercise/services/programming-exercise-participation.service';
+import { ExerciseType } from 'app/entities/exercise/exercise.model';
+import { ProgrammingExerciseService } from 'app/entities/programming-exercise/services/programming-exercise.service';
+import { ProgrammingExercise } from 'app/entities/programming-exercise/programming-exercise.model';
+import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
+import { SolutionProgrammingExerciseParticipation } from 'app/entities/participation/solution-programming-exercise-participation.model';
+import { DomainChange, DomainType } from 'app/code-editor/model/code-editor.model';
 
 export enum REPOSITORY {
     ASSIGNMENT = 'ASSIGNMENT',
@@ -71,7 +72,7 @@ export abstract class CodeEditorInstructorBaseContainerComponent extends CodeEdi
         participationService: ParticipationService,
         translateService: TranslateService,
         route: ActivatedRoute,
-        jhiAlertService: JhiAlertService,
+        jhiAlertService: AlertService,
         sessionService: CodeEditorSessionService,
         fileService: CodeEditorFileService,
     ) {

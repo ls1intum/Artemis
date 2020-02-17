@@ -1,5 +1,5 @@
-import { Component, OnInit, Input, Output, EventEmitter } from '@angular/core';
-import { Feedback } from 'app/entities/feedback';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Feedback } from 'app/entities/feedback/feedback.model';
 
 @Component({
     selector: 'jhi-assessment-general-feedback',

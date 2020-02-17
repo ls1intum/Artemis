@@ -3,13 +3,13 @@ import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { DeleteDialogComponent } from 'app/shared/delete-dialog/delete-dialog.component';
 import { DeleteDialogData } from 'app/shared/delete-dialog/delete-dialog.model';
 import { from } from 'rxjs';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/alert/alert.service';
 
 @Injectable({ providedIn: 'root' })
 export class DeleteDialogService {
     modalRef: NgbModalRef | null;
 
-    constructor(private modalService: NgbModal, public jhiAlertService: JhiAlertService) {}
+    constructor(private modalService: NgbModal, public jhiAlertService: AlertService) {}
 
     /**
      * Opens delete dialog

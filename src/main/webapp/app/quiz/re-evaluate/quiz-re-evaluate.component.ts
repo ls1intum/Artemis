@@ -1,13 +1,16 @@
 import { Component, OnChanges, OnDestroy, OnInit, SimpleChanges, ViewEncapsulation } from '@angular/core';
-import { Duration, Option, QuizExercise, QuizExercisePopupService, QuizExerciseService } from '../../entities/quiz-exercise';
 import { Subscription } from 'rxjs/Subscription';
 import { ActivatedRoute, Router } from '@angular/router';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { QuizQuestion, QuizQuestionType } from '../../entities/quiz-question';
 import { QuizReEvaluateWarningComponent } from './quiz-re-evaluate-warning.component';
 import { HttpResponse } from '@angular/common/http';
 import { Location } from '@angular/common';
 import * as moment from 'moment';
+import { QuizExercisePopupService } from 'app/entities/quiz-exercise/quiz-exercise-popup.service';
+import { QuizQuestion, QuizQuestionType } from 'app/entities/quiz-question/quiz-question.model';
+import { QuizExerciseService } from 'app/entities/quiz-exercise/quiz-exercise.service';
+import { Duration, Option } from 'app/entities/quiz-exercise/quiz-exercise-interfaces';
+import { QuizExercise } from 'app/entities/quiz-exercise/quiz-exercise.model';
 
 @Component({
     selector: 'jhi-quiz-re-evaluate',

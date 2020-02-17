@@ -5,13 +5,13 @@ import { ModelingExerciseComponent } from './modeling-exercise.component';
 import { ModelingExerciseDetailComponent } from './modeling-exercise-detail.component';
 import { ModelingExerciseUpdateComponent } from 'app/entities/modeling-exercise/modeling-exercise-update.component';
 import { Injectable } from '@angular/core';
-import { Course } from 'app/entities/course';
 import { CourseService } from 'app/entities/course/course.service';
 import { ModelingExerciseService } from 'app/entities/modeling-exercise/modeling-exercise.service';
 import { ModelingExercise } from 'app/entities/modeling-exercise/modeling-exercise.model';
 import { HttpResponse } from '@angular/common/http';
 import { filter, map } from 'rxjs/operators';
 import { Observable } from 'rxjs';
+import { Course } from 'app/entities/course/course.model';
 
 @Injectable({ providedIn: 'root' })
 export class ModelingExerciseResolver implements Resolve<ModelingExercise> {

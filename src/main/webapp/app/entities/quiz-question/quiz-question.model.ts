@@ -1,7 +1,7 @@
-import { BaseEntity } from 'app/shared';
-import { QuizQuestionStatistic } from '../quiz-question-statistic';
-import { Exercise } from '../exercise';
+import { BaseEntity } from 'app/shared/model/base-entity';
 import { SafeHtml } from '@angular/platform-browser';
+import { Exercise } from 'app/entities/exercise/exercise.model';
+import { QuizQuestionStatistic } from 'app/entities/quiz-question-statistic/quiz-question-statistic.model';
 
 export const enum ScoringType {
     ALL_OR_NOTHING = 'ALL_OR_NOTHING',

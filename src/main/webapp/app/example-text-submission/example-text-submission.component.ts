@@ -1,31 +1,32 @@
 import * as $ from 'jquery';
-
 import { AfterViewInit, Component, OnInit, ViewEncapsulation } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Location } from '@angular/common';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/alert/alert.service';
 import { WindowRef } from 'app/core/websocket/window.service';
-import { ExampleSubmission } from 'app/entities/example-submission/example-submission.model';
-import { ExerciseService } from 'app/entities/exercise';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { TextSubmission, TextSubmissionService } from 'app/entities/text-submission';
 import { ExampleSubmissionService } from 'app/entities/example-submission/example-submission.service';
-import { Feedback } from 'app/entities/feedback';
 import { TextAssessmentsService } from 'app/entities/text-assessments/text-assessments.service';
-import { Result, ResultService } from 'app/entities/result';
 import { HighlightColors } from 'app/text-assessment/highlight-colors';
-import { TextExercise } from 'app/entities/text-exercise';
 import { TutorParticipationService } from 'app/tutor-exercise-dashboard/tutor-participation.service';
-import { TutorParticipation } from 'app/entities/tutor-participation';
 import { ArtemisMarkdown } from 'app/components/util/markdown.service';
 import Interactable from '@interactjs/core/Interactable';
 import interact from 'interactjs';
 import { AccountService } from 'app/core/auth/account.service';
+import { TextSubmissionService } from 'app/entities/text-submission/text-submission.service';
+import { ExampleSubmission } from 'app/entities/example-submission/example-submission.model';
+import { Feedback } from 'app/entities/feedback/feedback.model';
+import { ExerciseService } from 'app/entities/exercise/exercise.service';
+import { ResultService } from 'app/entities/result/result.service';
+import { TextExercise } from 'app/entities/text-exercise/text-exercise.model';
+import { TutorParticipation } from 'app/entities/tutor-participation/tutor-participation.model';
+import { TextSubmission } from 'app/entities/text-submission/text-submission.model';
+import { Result } from 'app/entities/result/result.model';
 
 @Component({
     selector: 'jhi-example-text-submission',
     templateUrl: './example-text-submission.component.html',
-    providers: [JhiAlertService],
+    providers: [],
     styleUrls: ['./example-text-submission.component.scss'],
     encapsulation: ViewEncapsulation.None,
 })
@@ -61,7 +62,7 @@ export class ExampleTextSubmissionComponent implements OnInit, AfterViewInit {
         private exampleSubmissionService: ExampleSubmissionService,
         private assessmentsService: TextAssessmentsService,
         private tutorParticipationService: TutorParticipationService,
-        private jhiAlertService: JhiAlertService,
+        private jhiAlertService: AlertService,
         private accountService: AccountService,
         private route: ActivatedRoute,
         private router: Router,

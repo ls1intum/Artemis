@@ -1,8 +1,8 @@
 import { BehaviorSubject } from 'rxjs';
-import { Participation } from 'app/entities/participation';
+import { Participation } from 'app/entities/participation/participation.model';
 import { IParticipationWebsocketService } from 'app/entities/participation/participation-websocket.service';
-import { Exercise } from 'app/entities/exercise';
-import { Result } from 'app/entities/result';
+import { Exercise } from 'app/entities/exercise/exercise.model';
+import { Result } from 'app/entities/result/result.model';
 
 export class MockParticipationWebsocketService implements IParticipationWebsocketService {
     addParticipation = (participation: Participation, exercise?: Exercise) => {};

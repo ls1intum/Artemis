@@ -7,33 +7,34 @@ import * as sinonChai from 'sinon-chai';
 import * as moment from 'moment';
 import { SinonStub, stub } from 'sinon';
 import { ArtemisTestModule } from '../../test.module';
-import { MockSyncStorage } from '../../mocks';
-import { ArtemisResultModule, UpdatingResultComponent } from 'app/entities/result';
+import { MockSyncStorage } from '../../mocks/mock-sync.storage';
 import { MockComponent } from 'ng-mocks';
-import { ArtemisSharedModule } from 'app/shared';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { MockAlertService } from '../../helpers/mock-alert.service';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/alert/alert.service';
 import { Router } from '@angular/router';
 import { of } from 'rxjs';
-import { TextSubmission } from 'app/entities/text-submission';
 import { TextAssessmentEditorComponent } from 'app/text-assessment/text-assessment-editor/text-assessment-editor.component';
 import { ResizableInstructionsComponent } from 'app/text-assessment/resizable-instructions/resizable-instructions.component';
 import { AssessmentDetailComponent } from 'app/assessment-shared/assessment-detail/assessment-detail.component';
-import { ComplaintsForTutorComponent } from 'app/complaints-for-tutor';
 import { DebugElement } from '@angular/core';
 import { By } from '@angular/platform-browser';
 import { MockAccountService } from '../../mocks/mock-account.service';
 import { Location } from '@angular/common';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { SubmissionExerciseType, SubmissionType } from 'app/entities/submission';
 import { ComplaintService } from 'app/entities/complaint/complaint.service';
 import { ParticipationSubmissionComponent } from 'app/entities/participation-submission/participation-submission.component';
 import { SubmissionService } from 'app/entities/submission/submission.service';
 import { MockComplaintService } from '../../mocks/mock-complaint.service';
 import { NgxDatatableModule } from '@swimlane/ngx-datatable';
-import { participationSubmissionRoute } from 'app/entities/participation-submission';
 import { TranslateModule } from '@ngx-translate/core';
-import { StudentParticipation } from 'app/entities/participation';
+import { participationSubmissionRoute } from 'app/entities/participation-submission/participation-submission.route';
+import { ComplaintsForTutorComponent } from 'app/complaints-for-tutor/complaints-for-tutor.component';
+import { UpdatingResultComponent } from 'app/entities/result/updating-result.component';
+import { ArtemisResultModule } from 'app/entities/result/result.module';
+import { SubmissionExerciseType, SubmissionType } from 'app/entities/submission/submission.model';
+import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { TextSubmission } from 'app/entities/text-submission/text-submission.model';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -67,7 +68,7 @@ describe('ParticipationSubmissionComponent', () => {
             ],
             providers: [
                 JhiLanguageHelper,
-                { provide: JhiAlertService, useClass: MockAlertService },
+                { provide: AlertService, useClass: MockAlertService },
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
@@ -83,7 +84,7 @@ describe('ParticipationSubmissionComponent', () => {
                 debugElement = fixture.debugElement;
                 router = debugElement.injector.get(Router);
                 location = debugElement.injector.get(Location);
-                submissionService = TestBed.get(SubmissionService);
+                submissionService = TestBed.inject(SubmissionService);
                 findAllSubmissionsOfParticipationStub = stub(submissionService, 'findAllSubmissionsOfParticipation');
                 router.initialNavigation();
             });

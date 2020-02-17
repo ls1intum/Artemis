@@ -38,6 +38,7 @@ export class ParticipationSubmissionDeleteDialogComponent implements OnInit {
     selector: 'jhi-participation-submission-delete-popup',
     template: '',
 })
+// TODO: replace this with our new delete dialog
 export class ParticipationSubmissionDeletePopupComponent implements OnInit, OnDestroy {
     routeSub: Subscription;
     constructor(private route: ActivatedRoute, private participationSubmissionPopupService: ParticipationSubmissionPopupService) {}

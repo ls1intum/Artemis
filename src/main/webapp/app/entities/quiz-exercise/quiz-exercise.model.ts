@@ -1,8 +1,8 @@
-import { QuizQuestion } from '../quiz-question';
-import { QuizPointStatistic } from '../quiz-point-statistic';
-import { Exercise, ExerciseType } from '../exercise';
 import { Moment } from 'moment';
-import { Course } from '../course';
+import { Exercise, ExerciseType } from 'app/entities/exercise/exercise.model';
+import { QuizPointStatistic } from 'app/entities/quiz-point-statistic/quiz-point-statistic.model';
+import { QuizQuestion } from 'app/entities/quiz-question/quiz-question.model';
+import { Course } from 'app/entities/course/course.model';
 
 export class QuizExercise extends Exercise {
     public id: number;

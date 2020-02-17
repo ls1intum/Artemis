@@ -1,6 +1,7 @@
 import { Component, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
 import * as moment from 'moment';
-import { Exercise, ExerciseCategory, ExerciseService, getIcon } from 'app/entities/exercise';
+import { Exercise, ExerciseCategory, getIcon } from 'app/entities/exercise/exercise.model';
+import { ExerciseService } from 'app/entities/exercise/exercise.service';
 
 @Component({
     selector: 'jhi-header-exercise-page-with-details',

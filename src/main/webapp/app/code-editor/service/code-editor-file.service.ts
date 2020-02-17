@@ -1,6 +1,7 @@
-import { DeleteFileChange, FileChange, RenameFileChange } from 'app/entities/ace-editor/file-change.model';
+import { DeleteFileChange, FileChange, RenameFileChange } from 'app/code-editor/model/code-editor.model';
 import { compose, filter, fromPairs, map, toPairs } from 'lodash/fp';
 import { isEmpty as _isEmpty } from 'lodash';
+import { Injectable } from '@angular/core';
 
 /**
  * Updates references to files based on FileChanges.
@@ -10,6 +11,7 @@ import { isEmpty as _isEmpty } from 'lodash';
  * - fileChange: RenameFileChange(file, file3)
  * => file refs: {file3: any, file2: any}
  */
+@Injectable({ providedIn: 'root' })
 export class CodeEditorFileService {
     /**
      * Update multiple references at once.

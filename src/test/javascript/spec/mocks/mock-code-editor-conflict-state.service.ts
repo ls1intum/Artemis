@@ -1,5 +1,6 @@
-import { GitConflictState, IConflictStateService } from 'app/code-editor';
 import { of } from 'rxjs';
+import { IConflictStateService } from 'app/code-editor/service/code-editor-conflict-state.service';
+import { GitConflictState } from 'app/code-editor/model/code-editor.model';
 
 export class MockCodeEditorConflictStateService implements IConflictStateService {
     subscribeConflictState = () => of(GitConflictState.OK);
