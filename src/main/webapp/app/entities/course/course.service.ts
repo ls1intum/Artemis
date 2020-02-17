@@ -19,7 +19,6 @@ import { StatsForDashboard } from 'app/instructor-course-dashboard/stats-for-das
 import { AgentParticipation } from 'app/entities/participation/agent-participation.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { ParticipationWebsocketService } from 'app/entities/participation/participation-websocket.service';
-import { StudentParticipation } from 'app/entities/participation';
 
 export type EntityResponseType = HttpResponse<Course>;
 export type EntityArrayResponseType = HttpResponse<Course[]>;
@@ -297,11 +296,7 @@ export class CourseExerciseService {
                 exercise.releaseDate = exercise.releaseDate ? moment(exercise.releaseDate) : null;
                 exercise.agentParticipations = [participation];
             }
-            if (participation instanceof StudentParticipation) {
-                this.participationWebsocketService.addParticipation(participation);
-            } else {
-                // TODO: handle generic agent
-            }
+            this.participationWebsocketService.addParticipation(participation);
         }
         return participation;
     }

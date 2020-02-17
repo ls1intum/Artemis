@@ -8,7 +8,7 @@ import { Subscription } from 'rxjs/Subscription';
 import { Result } from 'app/entities/result';
 import * as moment from 'moment';
 import { User } from 'app/core/user/user.model';
-import { InitializationState, Participation, ProgrammingExerciseStudentParticipation, StudentParticipation } from 'app/entities/participation';
+import { InitializationState, Participation, ProgrammingExerciseAgentParticipation, AgentParticipation } from 'app/entities/participation';
 import { ParticipationService } from 'app/entities/participation/participation.service';
 import { ParticipationWebsocketService } from 'app/entities/participation/participation-websocket.service';
 import { AccountService } from 'app/core/auth/account.service';
@@ -19,9 +19,6 @@ import { CourseScoreCalculationService } from 'app/overview';
 import { AssessmentType } from 'app/entities/assessment-type';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { ProgrammingExercise } from 'app/entities/programming-exercise';
-import { take, tap } from 'rxjs/operators';
-import { ProfileInfo } from 'app/layouts';
-import { createBuildPlanUrl } from 'app/entities/programming-exercise/utils/build-plan-link.directive';
 import { ProfileService } from 'app/layouts/profiles/profile.service';
 
 const MAX_RESULT_HISTORY_LENGTH = 5;
@@ -47,7 +44,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     public sortedHistoryResult: Result[]; // might be a subset of the actual results in combinedParticipation.results
     public exerciseCategories: ExerciseCategory[];
     private participationUpdateListener: Subscription;
-    studentParticipation: StudentParticipation | null;
+    agentParticipation: AgentParticipation | null;
     isAfterAssessmentDueDate: boolean;
 
     showWelcomeAlert = false;
@@ -94,15 +91,15 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     ngOnDestroy() {
         if (this.participationUpdateListener) {
             this.participationUpdateListener.unsubscribe();
-            if (this.studentParticipation) {
-                this.participationWebsocketService.unsubscribeForLatestResultOfParticipation(this.studentParticipation.id, this.exercise!);
+            if (this.agentParticipation) {
+                this.participationWebsocketService.unsubscribeForLatestResultOfParticipation(this.agentParticipation.id, this.exercise!);
             }
         }
     }
 
     loadExercise() {
         this.exercise = null;
-        this.studentParticipation = this.participationWebsocketService.getParticipationForExercise(this.exerciseId);
+        this.agentParticipation = this.participationWebsocketService.getParticipationForExercise(this.exerciseId);
         // TODO: we should refactor this because we are sending multiple requests to the server. It would be better to create a new REST call for exercise details including:
         // * the exercise (without the course, no template / solution participations)
         // * all submissions (with their result) of the user (to be displayed in the result history)
@@ -116,7 +113,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
 
     handleNewExercise(newExercise: Exercise) {
         this.exercise = newExercise;
-        this.exercise.studentParticipations = this.filterParticipations(this.exercise.studentParticipations)!;
+        this.exercise.agentParticipations = this.filterParticipations(this.exercise.agentParticipations)!;
         this.mergeResultsAndSubmissionsForParticipations();
         this.exercise.participationStatus = participationStatus(this.exercise);
         this.isAfterAssessmentDueDate = !this.exercise.assessmentDueDate || moment().isAfter(this.exercise.assessmentDueDate);
@@ -128,11 +125,11 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
      * Filter for participations that belong to the current user only. Additionally, we make sure that all results that are not finished (i.e. completionDate is not set) are
      * removed from the participations. We also sort the participations so that FINISHED participations come first.
      */
-    private filterParticipations(participations: StudentParticipation[]): StudentParticipation[] | null {
+    private filterParticipations(participations: AgentParticipation[]): AgentParticipation[] | null {
         if (!participations) {
             return null;
         }
-        const filteredParticipations = participations.filter((participation: StudentParticipation) => participation.student && participation.student.id === this.currentUser.id);
+        const filteredParticipations = participations.filter((participation: AgentParticipation) => participation.getAgent() && participation.getAgent().holds(this.currentUser));
         filteredParticipations.forEach((participation: Participation) => {
             if (participation.results) {
                 participation.results = participation.results.filter((result: Result) => result.completionDate);
@@ -147,18 +144,18 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
      *
      * Note, that this function directly operates on the array passed as argument and does not return anything.
      */
-    private sortParticipationsFinishedFirst(participations: StudentParticipation[]) {
+    private sortParticipationsFinishedFirst(participations: AgentParticipation[]) {
         if (participations && participations.length > 1) {
             participations.sort((a, b) => (b.initializationState === InitializationState.FINISHED ? 1 : -1));
         }
     }
 
     sortResults() {
-        if (this.studentParticipation && this.hasResults) {
-            this.studentParticipation.results = this.studentParticipation.results.sort(this.resultSortFunction);
-            const sortedResultLength = this.studentParticipation.results.length;
+        if (this.agentParticipation && this.hasResults) {
+            this.agentParticipation.results = this.agentParticipation.results.sort(this.resultSortFunction);
+            const sortedResultLength = this.agentParticipation.results.length;
             const startingElement = Math.max(sortedResultLength - MAX_RESULT_HISTORY_LENGTH, 0);
-            this.sortedHistoryResult = this.studentParticipation.results.slice(startingElement, sortedResultLength);
+            this.sortedHistoryResult = this.agentParticipation.results.slice(startingElement, sortedResultLength);
         }
     }
 
@@ -169,25 +166,25 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     };
 
     mergeResultsAndSubmissionsForParticipations() {
-        // if there are new student participation(s) from the server, we need to update this.studentParticipation
+        // if there are new student participation(s) from the server, we need to update this.agentParticipation
         if (this.exercise) {
-            if (this.exercise.studentParticipations && this.exercise.studentParticipations.length > 0) {
-                this.studentParticipation = this.participationService.mergeStudentParticipations(this.exercise.studentParticipations);
+            if (this.exercise.agentParticipations && this.exercise.agentParticipations.length > 0) {
+                this.agentParticipation = this.participationService.mergeAgentParticipations(this.exercise.agentParticipations);
                 this.sortResults();
-                // Add exercise to studentParticipation, as the result component is dependent on its existence.
-                if (this.studentParticipation && this.studentParticipation.exercise == null) {
-                    this.studentParticipation.exercise = this.exercise;
+                // Add exercise to agentParticipation, as the result component is dependent on its existence.
+                if (this.agentParticipation && this.agentParticipation.exercise == null) {
+                    this.agentParticipation.exercise = this.exercise;
                 }
-            } else if (this.studentParticipation) {
+            } else if (this.agentParticipation) {
                 // otherwise we make sure that the student participation in exercise is correct
-                this.exercise.studentParticipations = [this.studentParticipation];
+                this.exercise.agentParticipations = [this.agentParticipation];
             }
         }
     }
 
     subscribeForNewResults() {
-        if (this.exercise && this.exercise.studentParticipations && this.exercise.studentParticipations.length > 0) {
-            this.exercise.studentParticipations.forEach(participation => {
+        if (this.exercise && this.exercise.agentParticipations && this.exercise.agentParticipations.length > 0) {
+            this.exercise.agentParticipations.forEach(participation => {
                 this.participationWebsocketService.addParticipation(participation, this.exercise!);
             });
             if (this.currentResult) {
@@ -198,11 +195,11 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
                 }
             }
         }
-        this.participationUpdateListener = this.participationWebsocketService.subscribeForParticipationChanges().subscribe((changedParticipation: StudentParticipation) => {
+        this.participationUpdateListener = this.participationWebsocketService.subscribeForParticipationChanges().subscribe((changedParticipation: AgentParticipation) => {
             if (changedParticipation && this.exercise && changedParticipation.exercise.id === this.exercise.id) {
-                this.exercise.studentParticipations =
-                    this.exercise.studentParticipations && this.exercise.studentParticipations.length > 0
-                        ? this.exercise.studentParticipations.map(el => {
+                this.exercise.agentParticipations =
+                    this.exercise.agentParticipations && this.exercise.agentParticipations.length > 0
+                        ? this.exercise.agentParticipations.map(el => {
                               return el.id === changedParticipation.id ? changedParticipation : el;
                           })
                         : [changedParticipation];
@@ -224,7 +221,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     }
 
     get hasMoreResults(): boolean {
-        return this.studentParticipation !== null && this.studentParticipation.results.length > MAX_RESULT_HISTORY_LENGTH;
+        return this.agentParticipation !== null && this.agentParticipation.results.length > MAX_RESULT_HISTORY_LENGTH;
     }
 
     get exerciseRouterLink(): string | null {
@@ -247,10 +244,10 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     }
 
     get hasResults(): boolean {
-        if (!this.studentParticipation) {
+        if (!this.agentParticipation) {
             return false;
         }
-        return this.studentParticipation.results && this.studentParticipation.results.length > 0;
+        return this.agentParticipation.results && this.agentParticipation.results.length > 0;
     }
 
     /**
@@ -258,18 +255,18 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
      * For other exercise types it returns a rated result.
      */
     get currentResult(): Result | null {
-        if (!this.studentParticipation || !this.hasResults) {
+        if (!this.agentParticipation || !this.hasResults) {
             return null;
         }
 
         if (this.exercise!.type === ExerciseType.MODELING || this.exercise!.type === ExerciseType.TEXT) {
-            return this.studentParticipation.results.find((result: Result) => !!result.completionDate) || null;
+            return this.agentParticipation.results.find((result: Result) => !!result.completionDate) || null;
         }
 
-        const ratedResults = this.studentParticipation.results.filter((result: Result) => result.rated).sort(this.resultSortFunction);
+        const ratedResults = this.agentParticipation.results.filter((result: Result) => result.rated).sort(this.resultSortFunction);
         const latestResult = ratedResults.length ? ratedResults[ratedResults.length - 1] : null;
         if (latestResult) {
-            latestResult.participation = this.studentParticipation;
+            latestResult.participation = this.agentParticipation;
         }
         return latestResult;
     }
@@ -281,9 +278,9 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     buildPlanActive(): boolean {
         return (
             !!this.exercise &&
-            this.exercise.studentParticipations &&
-            this.exercise.studentParticipations.length > 0 &&
-            this.exercise.studentParticipations[0].initializationState !== InitializationState.INACTIVE
+            this.exercise.agentParticipations &&
+            this.exercise.agentParticipations.length > 0 &&
+            this.exercise.agentParticipations[0].initializationState !== InitializationState.INACTIVE
         );
     }
 
@@ -292,6 +289,6 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     }
 
     buildPlanId(participation: Participation): string {
-        return (participation! as ProgrammingExerciseStudentParticipation).buildPlanId;
+        return (participation! as ProgrammingExerciseAgentParticipation).buildPlanId;
     }
 }

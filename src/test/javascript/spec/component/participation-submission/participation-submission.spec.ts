@@ -33,7 +33,7 @@ import { MockComplaintService } from '../../mocks/mock-complaint.service';
 import { NgxDatatableModule } from '@swimlane/ngx-datatable';
 import { participationSubmissionRoute } from 'app/entities/participation-submission';
 import { TranslateModule } from '@ngx-translate/core';
-import { StudentParticipation } from 'app/entities/participation';
+import { AgentParticipation } from 'app/entities/participation';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -95,7 +95,7 @@ describe('ParticipationSubmissionComponent', () => {
 
     it('Submissions are correctly loaded from server', fakeAsync(() => {
         // set all attributes for comp
-        const participation = new StudentParticipation();
+        const participation = new AgentParticipation();
         participation.id = 1;
         const submissions = [
             {

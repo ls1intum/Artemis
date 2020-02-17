@@ -38,8 +38,8 @@ export const hasExerciseDueDatePassed = (exercise: Exercise): boolean => {
  * @param exercise
  * @return {boolean}
  */
-export const hasStudentParticipations = (exercise: Exercise) => {
-    return exercise.studentParticipations && exercise.studentParticipations.length > 0;
+export const hasAgentParticipations = (exercise: Exercise) => {
+    return exercise.agentParticipations && exercise.agentParticipations.length > 0;
 };
 
 /**
@@ -55,7 +55,7 @@ export const participationStatus = (exercise: Exercise): ParticipationStatus => 
     }
 
     // Evaluate the participation status for modeling, text and file upload exercises if the exercise has participations.
-    if ([ExerciseType.MODELING, ExerciseType.TEXT, ExerciseType.FILE_UPLOAD].includes(exercise.type) && hasStudentParticipations(exercise)) {
+    if ([ExerciseType.MODELING, ExerciseType.TEXT, ExerciseType.FILE_UPLOAD].includes(exercise.type) && hasAgentParticipations(exercise)) {
         return participationStatusForModelingTextFileUploadExercise(exercise);
     }
 
@@ -68,13 +68,13 @@ export const participationStatus = (exercise: Exercise): ParticipationStatus => 
     ];
 
     // The following evaluations are relevant for programming exercises in general and for modeling, text and file upload exercises that don't have participations.
-    if (!hasStudentParticipations(exercise) || programmingExerciseStates.includes(exercise.studentParticipations[0].initializationState)) {
+    if (!hasAgentParticipations(exercise) || programmingExerciseStates.includes(exercise.agentParticipations[0].initializationState)) {
         if (exercise.type === ExerciseType.PROGRAMMING && !isStartExerciseAvailable(exercise as ProgrammingExercise)) {
             return ParticipationStatus.EXERCISE_MISSED;
         } else {
             return ParticipationStatus.UNINITIALIZED;
         }
-    } else if (exercise.studentParticipations[0].initializationState === InitializationState.INITIALIZED) {
+    } else if (exercise.agentParticipations[0].initializationState === InitializationState.INITIALIZED) {
         return ParticipationStatus.INITIALIZED;
     }
     return ParticipationStatus.INACTIVE;
@@ -104,16 +104,16 @@ const participationStatusForQuizExercise = (exercise: Exercise): ParticipationSt
     const quizExercise = exercise as QuizExercise;
     if ((!quizExercise.isPlannedToStart || moment(quizExercise.releaseDate!).isAfter(moment())) && quizExercise.visibleToStudents) {
         return ParticipationStatus.QUIZ_NOT_STARTED;
-    } else if (!hasStudentParticipations(exercise) && (!quizExercise.isPlannedToStart || moment(quizExercise.dueDate!).isAfter(moment())) && quizExercise.visibleToStudents) {
+    } else if (!hasAgentParticipations(exercise) && (!quizExercise.isPlannedToStart || moment(quizExercise.dueDate!).isAfter(moment())) && quizExercise.visibleToStudents) {
         return ParticipationStatus.QUIZ_UNINITIALIZED;
-    } else if (!hasStudentParticipations(exercise)) {
+    } else if (!hasAgentParticipations(exercise)) {
         return ParticipationStatus.QUIZ_NOT_PARTICIPATED;
-    } else if (exercise.studentParticipations[0].initializationState === InitializationState.INITIALIZED && moment(exercise.dueDate!).isAfter(moment())) {
+    } else if (exercise.agentParticipations[0].initializationState === InitializationState.INITIALIZED && moment(exercise.dueDate!).isAfter(moment())) {
         return ParticipationStatus.QUIZ_ACTIVE;
-    } else if (exercise.studentParticipations[0].initializationState === InitializationState.FINISHED && moment(exercise.dueDate!).isAfter(moment())) {
+    } else if (exercise.agentParticipations[0].initializationState === InitializationState.FINISHED && moment(exercise.dueDate!).isAfter(moment())) {
         return ParticipationStatus.QUIZ_SUBMITTED;
     } else {
-        return !hasResults(exercise.studentParticipations[0]) ? ParticipationStatus.QUIZ_NOT_PARTICIPATED : ParticipationStatus.QUIZ_FINISHED;
+        return !hasResults(exercise.agentParticipations[0]) ? ParticipationStatus.QUIZ_NOT_PARTICIPATED : ParticipationStatus.QUIZ_FINISHED;
     }
 };
 
@@ -124,7 +124,7 @@ const participationStatusForQuizExercise = (exercise: Exercise): ParticipationSt
  * @return {ParticipationStatus}
  */
 const participationStatusForModelingTextFileUploadExercise = (exercise: Exercise): ParticipationStatus => {
-    const participation = exercise.studentParticipations[0];
+    const participation = exercise.agentParticipations[0];
 
     // An exercise is active (EXERCISE_ACTIVE) if it is initialized and has not passed its due date. The more detailed evaluation of active exercises takes place in the result component.
     // An exercise was missed (EXERCISE_MISSED) if it is initialized and has passed its due date (due date lies in the past).

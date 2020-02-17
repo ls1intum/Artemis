@@ -67,7 +67,7 @@ export class CodeEditorInstructorContainerComponent extends CodeEditorInstructor
     }
 
     selectAssignmentParticipation() {
-        this.router.navigateByUrl(`/code-editor/${this.exercise.id}/admin/${this.exercise.studentParticipations[0].id}`);
+        this.router.navigateByUrl(`/code-editor/${this.exercise.id}/admin/${this.exercise.agentParticipations[0].id}`);
     }
 
     selectTestRepository() {

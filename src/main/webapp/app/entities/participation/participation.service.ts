@@ -8,12 +8,16 @@ import { createRequestOption } from 'app/shared';
 import { Result } from 'app/entities/result';
 import { Submission } from 'app/entities/submission';
 import { Exercise } from 'app/entities/exercise';
-import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
+import { ProgrammingExerciseAgentParticipation } from 'app/entities/participation/programming-exercise-agent-participation.model';
 import { ParticipationType } from 'app/entities/participation/participation.model';
+import { AgentParticipation } from 'app/entities/participation/agent-participation.model';
+import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { TeamParticipation } from 'app/entities/participation/team-participation.model';
+import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
+import { ProgrammingExerciseTeamParticipation } from 'app/entities/participation/programming-exercise-team-participation.model';
 
-export type EntityResponseType = HttpResponse<StudentParticipation>;
-export type EntityArrayResponseType = HttpResponse<StudentParticipation[]>;
+export type EntityResponseType = HttpResponse<AgentParticipation>;
+export type EntityArrayResponseType = HttpResponse<AgentParticipation[]>;
 
 @Injectable({ providedIn: 'root' })
 export class ParticipationService {
@@ -21,29 +25,29 @@ export class ParticipationService {
 
     constructor(private http: HttpClient) {}
 
-    create(participation: StudentParticipation): Observable<EntityResponseType> {
+    create(participation: AgentParticipation): Observable<EntityResponseType> {
         const copy = this.convertDateFromClient(participation);
         return this.http
-            .post<StudentParticipation>(this.resourceUrl, copy, { observe: 'response' })
+            .post<AgentParticipation>(this.resourceUrl, copy, { observe: 'response' })
             .map((res: EntityResponseType) => this.convertDateFromServer(res));
     }
 
-    update(participation: StudentParticipation): Observable<EntityResponseType> {
+    update(participation: AgentParticipation): Observable<EntityResponseType> {
         const copy = this.convertDateFromClient(participation);
         return this.http
-            .put<StudentParticipation>(this.resourceUrl, copy, { observe: 'response' })
+            .put<AgentParticipation>(this.resourceUrl, copy, { observe: 'response' })
             .map((res: EntityResponseType) => this.convertDateFromServer(res));
     }
 
     find(participationId: number): Observable<EntityResponseType> {
         return this.http
-            .get<StudentParticipation>(`${this.resourceUrl}/${participationId}`, { observe: 'response' })
+            .get<AgentParticipation>(`${this.resourceUrl}/${participationId}`, { observe: 'response' })
             .map((res: EntityResponseType) => this.convertDateFromServer(res));
     }
 
     findWithLatestResult(participationId: number): Observable<EntityResponseType> {
         return this.http
-            .get<StudentParticipation>(`${this.resourceUrl}/${participationId}/withLatestResult`, { observe: 'response' })
+            .get<AgentParticipation>(`${this.resourceUrl}/${participationId}/withLatestResult`, { observe: 'response' })
             .map((res: EntityResponseType) => this.convertDateFromServer(res));
     }
 
@@ -52,7 +56,7 @@ export class ParticipationService {
      */
     findParticipation(exerciseId: number): Observable<EntityResponseType | null> {
         return this.http
-            .get<StudentParticipation>(SERVER_API_URL + `api/exercises/${exerciseId}/participation`, { observe: 'response' })
+            .get<AgentParticipation>(SERVER_API_URL + `api/exercises/${exerciseId}/participation`, { observe: 'response' })
             .map((res: EntityResponseType) => {
                 if (typeof res === 'undefined' || res === null) {
                     return null;
@@ -64,7 +68,7 @@ export class ParticipationService {
     findAllParticipationsByExercise(exerciseId: number, withLatestResult = false): Observable<EntityArrayResponseType> {
         const options = createRequestOption({ withLatestResult });
         return this.http
-            .get<StudentParticipation[]>(SERVER_API_URL + `api/exercise/${exerciseId}/participations`, {
+            .get<AgentParticipation[]>(SERVER_API_URL + `api/exercise/${exerciseId}/participations`, {
                 params: options,
                 observe: 'response',
             })
@@ -81,10 +85,10 @@ export class ParticipationService {
         return this.http.delete<void>(`api/guided-tour/participations/${participationId}`, { params: options, observe: 'response' });
     }
 
-    cleanupBuildPlan(participation: StudentParticipation): Observable<EntityResponseType> {
+    cleanupBuildPlan(participation: AgentParticipation): Observable<EntityResponseType> {
         const copy = this.convertDateFromClient(participation);
         return this.http
-            .put<StudentParticipation>(`${this.resourceUrl}/${participation.id}/cleanupBuildPlan`, copy, { observe: 'response' })
+            .put<AgentParticipation>(`${this.resourceUrl}/${participation.id}/cleanupBuildPlan`, copy, { observe: 'response' })
             .map((res: EntityResponseType) => this.convertDateFromServer(res));
     }
 
@@ -94,8 +98,8 @@ export class ParticipationService {
         });
     }
 
-    protected convertDateFromClient(participation: StudentParticipation): StudentParticipation {
-        const copy: StudentParticipation = Object.assign({}, participation, {
+    protected convertDateFromClient(participation: AgentParticipation): AgentParticipation {
+        const copy: AgentParticipation = Object.assign({}, participation, {
             initializationDate: participation.initializationDate != null && moment(participation.initializationDate).isValid() ? participation.initializationDate.toJSON() : null,
         });
         return copy;
@@ -113,7 +117,7 @@ export class ParticipationService {
 
     protected convertDateArrayFromServer(res: EntityArrayResponseType): EntityArrayResponseType {
         if (res.body) {
-            res.body.forEach((participation: StudentParticipation) => {
+            res.body.forEach((participation: AgentParticipation) => {
                 this.convertParticipationDateFromServer(participation);
             });
         }
@@ -128,17 +132,17 @@ export class ParticipationService {
         return exercise;
     }
 
-    protected convertParticipationDateFromServer(participation: StudentParticipation) {
+    protected convertParticipationDateFromServer(participation: AgentParticipation) {
         participation.initializationDate = participation.initializationDate != null ? moment(participation.initializationDate) : null;
         participation.results = this.convertResultsDateFromServer(participation.results);
         participation.submissions = this.convertSubmissionsDateFromServer(participation.submissions);
         return participation;
     }
 
-    public convertParticipationsDateFromServer(participations: StudentParticipation[]) {
-        const convertedParticipations: StudentParticipation[] = [];
+    public convertParticipationsDateFromServer(participations: AgentParticipation[]) {
+        const convertedParticipations: AgentParticipation[] = [];
         if (participations != null && participations.length > 0) {
-            participations.forEach((participation: StudentParticipation) => {
+            participations.forEach((participation: AgentParticipation) => {
                 convertedParticipations.push(this.convertParticipationDateFromServer(participation));
             });
         }
@@ -169,21 +173,34 @@ export class ParticipationService {
         return convertedSubmissions;
     }
 
-    public mergeStudentParticipations(participations: StudentParticipation[]): StudentParticipation | null {
+    public mergeAgentParticipations(participations: AgentParticipation[]): AgentParticipation | null {
         if (participations && participations.length > 0) {
             if (participations[0].type === ParticipationType.STUDENT) {
                 const combinedParticipation = new StudentParticipation();
                 this.mergeResultsAndSubmissions(combinedParticipation, participations);
                 return combinedParticipation;
-            } else if (participations[0].type === ParticipationType.PROGRAMMING) {
+            } else if (participations[0].type === ParticipationType.TEAM) {
+                const combinedParticipation = new TeamParticipation();
+                this.mergeResultsAndSubmissions(combinedParticipation, participations);
+                return combinedParticipation;
+            } else if (participations[0].type === ParticipationType.PROGRAMMING_STUDENT) {
                 return this.mergeProgrammingParticipations(participations as ProgrammingExerciseStudentParticipation[]);
+            } else if (participations[0].type === ParticipationType.PROGRAMMING_TEAM) {
+                return this.mergeProgrammingParticipations(participations as ProgrammingExerciseTeamParticipation[]);
             }
         }
         return null;
     }
 
-    private mergeProgrammingParticipations(participations: ProgrammingExerciseStudentParticipation[]): ProgrammingExerciseStudentParticipation {
-        const combinedParticipation = new ProgrammingExerciseStudentParticipation();
+    private mergeProgrammingParticipations(participations: ProgrammingExerciseAgentParticipation[]): ProgrammingExerciseAgentParticipation {
+        let combinedParticipation;
+        if (participations[0].type === ParticipationType.PROGRAMMING_STUDENT) {
+            combinedParticipation = new ProgrammingExerciseStudentParticipation();
+        } else if (participations[0].type === ParticipationType.PROGRAMMING_TEAM) {
+            combinedParticipation = new ProgrammingExerciseTeamParticipation();
+        } else {
+            throw new Error('Unknown programming exercise agent participation type.');
+        }
         if (participations && participations.length > 0) {
             combinedParticipation.repositoryUrl = participations[0].repositoryUrl;
             combinedParticipation.buildPlanId = participations[0].buildPlanId;
@@ -192,12 +209,12 @@ export class ParticipationService {
         return combinedParticipation;
     }
 
-    private mergeResultsAndSubmissions(combinedParticipation: StudentParticipation, participations: StudentParticipation[]) {
+    private mergeResultsAndSubmissions(combinedParticipation: AgentParticipation, participations: AgentParticipation[]) {
         combinedParticipation.id = participations[0].id;
         combinedParticipation.initializationState = participations[0].initializationState;
         combinedParticipation.initializationDate = participations[0].initializationDate;
         combinedParticipation.presentationScore = participations[0].presentationScore;
-        combinedParticipation.student = participations[0].student;
+        combinedParticipation.setAgent(participations[0].getAgent());
         combinedParticipation.exercise = participations[0].exercise;
 
         participations.forEach(participation => {

@@ -13,7 +13,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { Result, ResultService } from 'app/entities/result';
 import { TextAssessmentsService } from 'app/entities/text-assessments/text-assessments.service';
 import { Feedback } from 'app/entities/feedback';
-import { StudentParticipation } from 'app/entities/participation';
+import { AgentParticipation } from 'app/entities/participation';
 import Interactable from '@interactjs/core/Interactable';
 import interact from 'interactjs';
 import { WindowRef } from 'app/core/websocket/window.service';
@@ -36,7 +36,7 @@ import { AccountService } from 'app/core/auth/account.service';
 })
 export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit {
     text: string;
-    participation: StudentParticipation;
+    participation: AgentParticipation;
     submission: TextSubmission;
     unassessedSubmission: TextSubmission;
     result: Result;
@@ -350,7 +350,7 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
         this.changeDetectorRef.detectChanges();
     }
 
-    private receiveParticipation(participation: StudentParticipation): void {
+    private receiveParticipation(participation: AgentParticipation): void {
         this.participation = participation;
         this.submission = <TextSubmission>this.participation.submissions[0];
         this.exercise = <TextExercise>this.participation.exercise;

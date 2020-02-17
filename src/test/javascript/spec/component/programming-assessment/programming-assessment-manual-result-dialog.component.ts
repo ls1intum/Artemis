@@ -8,7 +8,7 @@ import * as sinonChai from 'sinon-chai';
 import { SinonStub, stub } from 'sinon';
 import { of } from 'rxjs';
 import { ArtemisTestModule } from '../../test.module';
-import { StudentParticipation } from 'src/main/webapp/app/entities/participation';
+import { AgentParticipation } from 'src/main/webapp/app/entities/participation';
 import { ParticipationWebsocketService } from 'app/entities/participation/participation-websocket.service';
 import { ResultService } from 'src/main/webapp/app/entities/result';
 import { Feedback } from 'src/main/webapp/app/entities/feedback';
@@ -52,7 +52,7 @@ describe('ProgrammingAssessmentManualResultDialogComponent', () => {
     const user = <User>{ id: 1 };
     const result = <any>{
         feedbacks: [new Feedback()],
-        participation: new StudentParticipation(),
+        participation: new AgentParticipation(),
         score: 80,
         successful: true,
         submission: new ProgrammingSubmission(),

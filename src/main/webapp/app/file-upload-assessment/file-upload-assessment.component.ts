@@ -11,7 +11,7 @@ import { Interactable } from '@interactjs/types/types';
 import { Location } from '@angular/common';
 import { FileUploadAssessmentsService } from 'app/entities/file-upload-assessment/file-upload-assessment.service';
 import { WindowRef } from 'app/core/websocket/window.service';
-import { StudentParticipation } from 'app/entities/participation';
+import { AgentParticipation } from 'app/entities/participation';
 import { Result, ResultService } from 'app/entities/result';
 import { Feedback } from 'app/entities/feedback';
 import { Complaint, ComplaintService, ComplaintType } from 'app/entities/complaint';
@@ -31,7 +31,7 @@ import { AccountService } from 'app/core/auth/account.service';
 })
 export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnDestroy {
     text: string;
-    participation: StudentParticipation;
+    participation: AgentParticipation;
     submission: FileUploadSubmission;
     unassessedSubmission: FileUploadSubmission;
     result: Result;
@@ -157,7 +157,7 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
 
     private initializePropertiesFromSubmission(submission: FileUploadSubmission): void {
         this.submission = submission;
-        this.participation = this.submission.participation as StudentParticipation;
+        this.participation = this.submission.participation as AgentParticipation;
         this.exercise = this.participation.exercise as FileUploadExercise;
         this.result = this.submission.result;
         if (this.result.hasComplaint) {

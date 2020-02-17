@@ -13,7 +13,7 @@ import { TranslateModule } from '@ngx-translate/core';
 import { RouterTestingModule } from '@angular/router/testing';
 import { modelingSubmissionRoute } from 'app/modeling-submission/modeling-submission.route';
 import { ActivatedRoute } from '@angular/router';
-import { StudentParticipation } from 'app/entities/participation';
+import { AgentParticipation } from 'app/entities/participation';
 import { ParticipationWebsocketService } from 'app/entities/participation/participation-websocket.service';
 import { ModelingExercise } from 'app/entities/modeling-exercise';
 import { DebugElement } from '@angular/core';
@@ -46,7 +46,7 @@ describe('Component Tests', () => {
         let service: ModelingSubmissionService;
 
         const route = ({ params: of({ participationId: 123 }) } as any) as ActivatedRoute;
-        const participation = new StudentParticipation();
+        const participation = new AgentParticipation();
         participation.exercise = new ModelingExercise('ClassDiagram');
         const submission = <ModelingSubmission>(<unknown>{ id: 20, submitted: true, participation });
         const result = { id: 1 } as Result;
@@ -120,7 +120,7 @@ describe('Component Tests', () => {
 
         it('should not allow to submit after the deadline if the initialization date is before the due date', () => {
             submission.participation.initializationDate = moment().subtract(2, 'days');
-            (<StudentParticipation>submission.participation).exercise.dueDate = moment().subtract(1, 'days');
+            (<AgentParticipation>submission.participation).exercise.dueDate = moment().subtract(1, 'days');
             sinon.replace(service, 'getDataForModelingEditor', sinon.fake.returns(of(submission)));
 
             fixture.detectChanges();
@@ -132,7 +132,7 @@ describe('Component Tests', () => {
 
         it('should allow to submit after the deadline if the initialization date is after the due date', () => {
             submission.participation.initializationDate = moment().add(1, 'days');
-            (<StudentParticipation>submission.participation).exercise.dueDate = moment();
+            (<AgentParticipation>submission.participation).exercise.dueDate = moment();
             sinon.replace(service, 'getDataForModelingEditor', sinon.fake.returns(of(submission)));
 
             fixture.detectChanges();
@@ -155,7 +155,7 @@ describe('Component Tests', () => {
         });
 
         it('should get inactive as soon as the due date passes the current date', () => {
-            (<StudentParticipation>submission.participation).exercise.dueDate = moment().add(1, 'days');
+            (<AgentParticipation>submission.participation).exercise.dueDate = moment().add(1, 'days');
             sinon.replace(service, 'getDataForModelingEditor', sinon.fake.returns(of(submission)));
 
             fixture.detectChanges();

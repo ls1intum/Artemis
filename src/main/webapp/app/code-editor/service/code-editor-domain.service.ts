@@ -5,10 +5,10 @@ import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject, Observable, Subscription } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
 import { DomainParticipationChange, DomainType } from 'app/code-editor/service';
-import { SolutionProgrammingExerciseParticipation, StudentParticipation, TemplateProgrammingExerciseParticipation } from 'app/entities/participation';
+import { SolutionProgrammingExerciseParticipation, AgentParticipation, TemplateProgrammingExerciseParticipation } from 'app/entities/participation';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 
-export type DomainParticipationChange = [DomainType.PARTICIPATION, StudentParticipation | TemplateProgrammingExerciseParticipation | SolutionProgrammingExerciseParticipation];
+export type DomainParticipationChange = [DomainType.PARTICIPATION, AgentParticipation | TemplateProgrammingExerciseParticipation | SolutionProgrammingExerciseParticipation];
 export type DomainTestRepositoryChange = [DomainType.TEST_REPOSITORY, ProgrammingExercise];
 export type DomainChange = DomainParticipationChange | DomainTestRepositoryChange;
 

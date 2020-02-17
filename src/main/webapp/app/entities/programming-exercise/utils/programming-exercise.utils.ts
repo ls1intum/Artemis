@@ -43,8 +43,8 @@ export const isResultPreliminary = (result: Result, programmingExercise: Program
     return !!programmingExercise.buildAndTestStudentSubmissionsAfterDueDate && referenceDate.isBefore(moment(programmingExercise.buildAndTestStudentSubmissionsAfterDueDate));
 };
 
-export const isProgrammingExerciseStudentParticipation = (participation: Participation) => {
-    return participation && participation.type === ParticipationType.PROGRAMMING;
+export const isProgrammingExerciseAgentParticipation = (participation: Participation) => {
+    return participation && [ParticipationType.PROGRAMMING_STUDENT, ParticipationType.PROGRAMMING_TEAM].includes(participation.type);
 };
 
 /**

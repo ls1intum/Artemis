@@ -11,7 +11,6 @@ import { CourseService } from 'app/entities/course/course.service';
 import { Result, ResultService } from 'app/entities/result';
 import { SourceTreeService } from 'app/components/util/sourceTree.service';
 import { ModelingAssessmentService } from 'app/entities/modeling-assessment';
-import { ProgrammingExerciseStudentParticipation, StudentParticipation } from 'app/entities/participation';
 import { take, tap } from 'rxjs/operators';
 import { of, zip } from 'rxjs';
 import { AssessmentType } from 'app/entities/assessment-type';
@@ -21,6 +20,8 @@ import { ProfileService } from 'app/layouts/profiles/profile.service';
 import { ProgrammingExercise } from 'app/entities/programming-exercise';
 import { SubmissionExerciseType } from 'app/entities/submission';
 import { ProgrammingSubmission } from 'app/entities/programming-submission';
+import { AgentParticipation } from 'app/entities/participation/agent-participation.model';
+import { ProgrammingExerciseAgentParticipation } from 'app/entities/participation/programming-exercise-agent-participation.model';
 
 enum FilterProp {
     ALL = 'all',
@@ -111,7 +112,7 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
                 tap((res: HttpResponse<Result[]>) => {
                     this.results = res.body!.map(result => {
                         result.participation!.results = [result];
-                        (result.participation! as StudentParticipation).exercise = this.exercise;
+                        (result.participation! as AgentParticipation).exercise = this.exercise;
                         result.durationInMinutes = this.durationInMinutes(
                             result.completionDate!,
                             result.participation!.initializationDate ? result.participation!.initializationDate : this.exercise.releaseDate!,
@@ -167,7 +168,7 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
     }
 
     buildPlanId(result: Result): string {
-        return (result.participation! as ProgrammingExerciseStudentParticipation).buildPlanId;
+        return (result.participation! as ProgrammingExerciseAgentParticipation).buildPlanId;
     }
 
     projectKey(): string {
@@ -175,16 +176,16 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
     }
 
     goToRepository(result: Result) {
-        window.open((result.participation! as ProgrammingExerciseStudentParticipation).repositoryUrl);
+        window.open((result.participation! as ProgrammingExerciseAgentParticipation).repositoryUrl);
     }
 
     exportNames() {
         if (this.results.length > 0) {
             const rows: string[] = [];
             this.results.forEach((result, index) => {
-                const studentParticipation = result.participation! as StudentParticipation;
-                const studentName = studentParticipation.student.name!;
-                rows.push(index === 0 ? 'data:text/csv;charset=utf-8,' + studentName : studentName);
+                const agentParticipation = result.participation! as AgentParticipation;
+                const agentName = agentParticipation.getAgent().getName();
+                rows.push(index === 0 ? 'data:text/csv;charset=utf-8,' + agentName : agentName);
             });
             const csvContent = rows.join('\n');
             const encodedUri = encodeURI(csvContent);
@@ -200,9 +201,9 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
         if (this.results.length > 0) {
             const rows: string[] = [];
             this.results.forEach((result, index) => {
-                const studentParticipation = result.participation! as StudentParticipation;
-                const studentName = studentParticipation.student.name!;
-                const studentId = studentParticipation.student.login;
+                const agentParticipation = result.participation! as AgentParticipation;
+                const agentName = agentParticipation.getAgent().getName();
+                const agentId = agentParticipation.getAgent().getUsername();
                 const score = result.score;
 
                 if (index === 0) {
@@ -213,10 +214,10 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
                     }
                 }
                 if (this.exercise.type !== ExerciseType.PROGRAMMING) {
-                    rows.push(studentName + ', ' + studentId + ', ' + score);
+                    rows.push(agentName + ', ' + agentId + ', ' + score);
                 } else {
-                    const repoLink = (studentParticipation as ProgrammingExerciseStudentParticipation).repositoryUrl;
-                    rows.push(studentName + ', ' + studentId + ', ' + score + ', ' + repoLink);
+                    const repoLink = (agentParticipation as ProgrammingExerciseAgentParticipation).repositoryUrl;
+                    rows.push(agentName + ', ' + agentId + ', ' + score + ', ' + repoLink);
                 }
             });
             const csvContent = rows.join('\n');
@@ -235,9 +236,9 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
      * @param result
      */
     searchResultFormatter = (result: Result) => {
-        const login = (result.participation as StudentParticipation).student.login;
-        const name = (result.participation as StudentParticipation).student.name;
-        return `${login} (${name})`;
+        const username = (result.participation as AgentParticipation).getAgent().getUsername();
+        const name = (result.participation as AgentParticipation).getAgent().getName();
+        return `${username} (${name})`;
     };
 
     /**
@@ -247,7 +248,7 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
      * @param result
      */
     searchTextFromResult = (result: Result): string => {
-        return (result.participation as StudentParticipation).student.login || '';
+        return (result.participation as AgentParticipation).getAgent().getUsername();
     };
 
     refresh() {

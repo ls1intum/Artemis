@@ -19,7 +19,7 @@ import { clickOnElement } from 'app/guided-tour/guided-tour.utils';
 import { cancelTour, completedTour } from 'app/guided-tour/tours/general-tour';
 import { AccountService } from 'app/core/auth/account.service';
 import { ProfileService } from 'app/layouts/profiles/profile.service';
-import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { AgentParticipation } from 'app/entities/participation/agent-participation.model';
 import { ParticipationService } from 'app/entities/participation/participation.service';
 
 export type EntityResponseType = HttpResponse<GuidedTourSetting[]>;
@@ -621,7 +621,7 @@ export class GuidedTourService {
             this.participationService
                 .findParticipation(this.currentExercise.id)
                 .pipe(
-                    map((response: HttpResponse<StudentParticipation>) => response.body!),
+                    map((response: HttpResponse<AgentParticipation>) => response.body!),
                     flatMap(participation =>
                         this.participationService.deleteForGuidedTour(participation.id, { deleteBuildPlan: isProgrammingExercise, deleteRepository: isProgrammingExercise }),
                     ),

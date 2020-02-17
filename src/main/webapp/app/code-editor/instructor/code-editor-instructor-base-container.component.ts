@@ -7,7 +7,7 @@ import { ProgrammingExerciseParticipationService } from 'app/entities/programmin
 import { ProgrammingExerciseService } from 'app/entities/programming-exercise/services/programming-exercise.service';
 import {
     Participation,
-    ProgrammingExerciseStudentParticipation,
+    ProgrammingExerciseAgentParticipation,
     SolutionProgrammingExerciseParticipation,
     TemplateProgrammingExerciseParticipation,
 } from 'app/entities/participation';
@@ -50,7 +50,7 @@ export abstract class CodeEditorInstructorBaseContainerComponent extends CodeEdi
     // Contains all participations (template, solution, assignment)
     exercise: ProgrammingExercise;
     // Can only be null when the test repository is selected.
-    selectedParticipation: TemplateProgrammingExerciseParticipation | SolutionProgrammingExerciseParticipation | ProgrammingExerciseStudentParticipation | null;
+    selectedParticipation: TemplateProgrammingExerciseParticipation | SolutionProgrammingExerciseParticipation | ProgrammingExerciseAgentParticipation | null;
     // Stores which repository is selected atm.
     // Needs to be set additionally to selectedParticipation as the test repository does not have a participation
     selectedRepository: REPOSITORY;
@@ -143,10 +143,10 @@ export abstract class CodeEditorInstructorBaseContainerComponent extends CodeEdi
         const availableParticipations = [
             this.exercise.templateParticipation,
             this.exercise.solutionParticipation,
-            this.exercise.studentParticipations && this.exercise.studentParticipations.length ? this.exercise.studentParticipations[0] : undefined,
+            this.exercise.agentParticipations && this.exercise.agentParticipations.length ? this.exercise.agentParticipations[0] : undefined,
         ].filter(Boolean);
-        const selectedParticipation = availableParticipations.find(({ id }: ProgrammingExerciseStudentParticipation) => id === preferredParticipationId);
-        return [selectedParticipation, ...availableParticipations].filter(Boolean).find(({ repositoryUrl }: ProgrammingExerciseStudentParticipation) => !!repositoryUrl);
+        const selectedParticipation = availableParticipations.find(({ id }: ProgrammingExerciseAgentParticipation) => id === preferredParticipationId);
+        return [selectedParticipation, ...availableParticipations].filter(Boolean).find(({ repositoryUrl }: ProgrammingExerciseAgentParticipation) => !!repositoryUrl);
     }
 
     /**
@@ -191,9 +191,9 @@ export abstract class CodeEditorInstructorBaseContainerComponent extends CodeEdi
             this.selectedRepository = REPOSITORY.SOLUTION;
             this.selectedParticipation = this.exercise.solutionParticipation;
             this.selectedParticipation.programmingExercise = exercise;
-        } else if (this.exercise.studentParticipations.length && participationId === this.exercise.studentParticipations[0].id) {
+        } else if (this.exercise.agentParticipations.length && participationId === this.exercise.agentParticipations[0].id) {
             this.selectedRepository = REPOSITORY.ASSIGNMENT;
-            this.selectedParticipation = this.exercise.studentParticipations[0] as ProgrammingExerciseStudentParticipation;
+            this.selectedParticipation = this.exercise.agentParticipations[0] as ProgrammingExerciseAgentParticipation;
             this.selectedParticipation.exercise = exercise;
         } else {
             this.onError('participationNotFound');
@@ -201,7 +201,7 @@ export abstract class CodeEditorInstructorBaseContainerComponent extends CodeEdi
     }
 
     repositoryUrl(participation: Participation) {
-        return (participation as ProgrammingExerciseStudentParticipation).repositoryUrl;
+        return (participation as ProgrammingExerciseAgentParticipation).repositoryUrl;
     }
 
     /**
@@ -226,9 +226,9 @@ export abstract class CodeEditorInstructorBaseContainerComponent extends CodeEdi
         } else if (participationId === this.exercise.solutionParticipation.id) {
             this.exercise.solutionParticipation.programmingExercise = this.exercise;
             this.domainService.setDomain([DomainType.PARTICIPATION, this.exercise.solutionParticipation]);
-        } else if (this.exercise.studentParticipations.length && participationId === this.exercise.studentParticipations[0].id) {
-            this.exercise.studentParticipations[0].exercise = this.exercise;
-            this.domainService.setDomain([DomainType.PARTICIPATION, this.exercise.studentParticipations[0]]);
+        } else if (this.exercise.agentParticipations.length && participationId === this.exercise.agentParticipations[0].id) {
+            this.exercise.agentParticipations[0].exercise = this.exercise;
+            this.domainService.setDomain([DomainType.PARTICIPATION, this.exercise.agentParticipations[0]]);
         } else {
             this.onError('participationNotFound');
         }
@@ -252,7 +252,7 @@ export abstract class CodeEditorInstructorBaseContainerComponent extends CodeEdi
             .pipe(
                 catchError(() => throwError('participationCouldNotBeCreated')),
                 tap(participation => {
-                    this.exercise.studentParticipations = [participation];
+                    this.exercise.agentParticipations = [participation];
                     this.loadingState = LOADING_STATE.CLEAR;
                 }),
             )
@@ -271,8 +271,8 @@ export abstract class CodeEditorInstructorBaseContainerComponent extends CodeEdi
         if (this.selectedRepository === REPOSITORY.ASSIGNMENT) {
             this.selectTemplateParticipation();
         }
-        const assignmentParticipationId = this.exercise.studentParticipations[0].id;
-        this.exercise.studentParticipations = [];
+        const assignmentParticipationId = this.exercise.agentParticipations[0].id;
+        this.exercise.agentParticipations = [];
         this.participationService
             .delete(assignmentParticipationId, { deleteBuildPlan: true, deleteRepository: true })
             .pipe(

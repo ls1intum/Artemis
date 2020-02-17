@@ -1,6 +1,6 @@
 import { Component, HostBinding, Input, OnInit } from '@angular/core';
 import { Exercise, isStartExerciseAvailable, ParticipationStatus } from 'app/entities/exercise';
-import { InitializationState, Participation, ProgrammingExerciseStudentParticipation } from 'app/entities/participation';
+import { InitializationState, Participation, ProgrammingExerciseAgentParticipation } from 'app/entities/participation';
 import { CourseExerciseService } from 'app/entities/course/course.service';
 import { JhiAlertService } from 'ng-jhipster';
 import { SourceTreeService } from 'app/components/util/sourceTree.service';
@@ -59,7 +59,7 @@ export class ProgrammingExerciseStudentIdeActionsComponent implements OnInit {
     participationStatus(): ParticipationStatus {
         if (!this.hasParticipations()) {
             return ParticipationStatus.UNINITIALIZED;
-        } else if (this.exercise.studentParticipations[0].initializationState === InitializationState.INITIALIZED) {
+        } else if (this.exercise.agentParticipations[0].initializationState === InitializationState.INITIALIZED) {
             return ParticipationStatus.INITIALIZED;
         }
         return ParticipationStatus.INACTIVE;
@@ -79,7 +79,7 @@ export class ProgrammingExerciseStudentIdeActionsComponent implements OnInit {
      * @return True, if the exercise has any participation, false otherwise
      */
     hasParticipations(): boolean {
-        return this.exercise.studentParticipations && this.exercise.studentParticipations.length > 0;
+        return this.exercise.agentParticipations && this.exercise.agentParticipations.length > 0;
     }
 
     /**
@@ -89,7 +89,7 @@ export class ProgrammingExerciseStudentIdeActionsComponent implements OnInit {
      * @return The URL of the remote repository in which the user's code referring the the current exercise is stored.
      */
     repositoryUrl(participation: Participation) {
-        return (participation as ProgrammingExerciseStudentParticipation).repositoryUrl;
+        return (participation as ProgrammingExerciseAgentParticipation).repositoryUrl;
     }
 
     /**
@@ -104,7 +104,7 @@ export class ProgrammingExerciseStudentIdeActionsComponent implements OnInit {
             .subscribe(
                 participation => {
                     if (participation) {
-                        this.exercise.studentParticipations = [participation];
+                        this.exercise.agentParticipations = [participation];
                         this.exercise.participationStatus = this.participationStatus();
                     }
                     this.jhiAlertService.success('artemisApp.exercise.personalRepository');
@@ -120,7 +120,7 @@ export class ProgrammingExerciseStudentIdeActionsComponent implements OnInit {
      * Imports the current exercise in the user's IDE and triggers the opening of the new project in the IDE
      */
     importIntoIntelliJ() {
-        const repo = this.repositoryUrl(this.exercise.studentParticipations[0]);
+        const repo = this.repositoryUrl(this.exercise.agentParticipations[0]);
         this.javaBridge.clone(repo, stringifyCircular(this.exercise));
     }
 
@@ -145,6 +145,6 @@ export class ProgrammingExerciseStudentIdeActionsComponent implements OnInit {
     }
 
     private hasInitializedParticipation(): boolean {
-        return this.exercise.studentParticipations && this.participationStatus() === this.INITIALIZED && this.exercise.studentParticipations.length > 0;
+        return this.exercise.agentParticipations && this.participationStatus() === this.INITIALIZED && this.exercise.agentParticipations.length > 0;
     }
 }

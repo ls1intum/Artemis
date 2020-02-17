@@ -37,7 +37,7 @@ describe('IdeBuildAndTestService', () => {
         { id: 3, positive: true, detailText: 'cde' },
     ] as [Feedback];
     const result = { id: 1 } as Result;
-    const exercise = { id: 42, studentParticipations: [{ id: 32 }] } as ProgrammingExercise;
+    const exercise = { id: 42, agentParticipations: [{ id: 32 }] } as ProgrammingExercise;
 
     beforeEach(() => {
         submissionService = new MockProgrammingSubmissionService();
@@ -73,7 +73,7 @@ describe('IdeBuildAndTestService', () => {
 
         ideBuildAndTestService.listenOnBuildOutputAndForwardChanges(exercise);
 
-        expect(participationSubscriptionStub).to.have.been.calledOnceWithExactly(exercise.studentParticipations[0].id);
+        expect(participationSubscriptionStub).to.have.been.calledOnceWithExactly(exercise.agentParticipations[0].id);
         expect(onBuildStartedSpy).to.have.been.called.calledOnce;
         expect(onTestResultSpy).to.have.been.calledTwice;
         expect(onBuildFinishedSpy).to.have.been.calledOnce;
@@ -90,7 +90,7 @@ describe('IdeBuildAndTestService', () => {
 
         ideBuildAndTestService.listenOnBuildOutputAndForwardChanges(exercise);
 
-        expect(participationSubscriptionStub).to.have.been.calledOnceWithExactly(exercise.studentParticipations[0].id);
+        expect(participationSubscriptionStub).to.have.been.calledOnceWithExactly(exercise.agentParticipations[0].id);
         expect(onBuildStartedSpy).to.have.been.called.calledOnce;
         expect(onTestResultSpy).to.have.been.calledTwice;
         expect(onBuildFinishedSpy).to.have.been.calledOnce;
@@ -114,7 +114,7 @@ describe('IdeBuildAndTestService', () => {
 
         ideBuildAndTestService.listenOnBuildOutputAndForwardChanges(exercise);
 
-        expect(participationSubscriptionStub).to.have.been.calledOnceWithExactly(exercise.studentParticipations[0].id);
+        expect(participationSubscriptionStub).to.have.been.calledOnceWithExactly(exercise.agentParticipations[0].id);
         expect(onBuildStartedSpy).to.have.been.called.calledOnce;
         expect(onTestResultSpy).to.not.have.been.called;
         expect(onBuildFinishedSpy).to.not.have.been.called;

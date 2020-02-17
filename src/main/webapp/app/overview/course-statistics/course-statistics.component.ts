@@ -272,7 +272,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
                     };
                 }
 
-                exercise.studentParticipations.forEach(participation => {
+                exercise.agentParticipations.forEach(participation => {
                     if (participation.results && participation.results.length > 0) {
                         const participationResult = this.courseCalculationService.getResultForParticipation(participation, exercise.dueDate!);
                         if (participationResult && participationResult.rated) {
@@ -320,7 +320,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
                         }
                     }
                 });
-                if (!exercise.studentParticipations || exercise.studentParticipations.length === 0) {
+                if (!exercise.agentParticipations || exercise.agentParticipations.length === 0) {
                     groupedExercises[index] = this.createPlaceholderChartElement(groupedExercises[index], exercise.title, 'exerciseNotParticipated', false);
                 }
                 groupedExercises[index].relativeScore = this.relativeScores[exercise.type];

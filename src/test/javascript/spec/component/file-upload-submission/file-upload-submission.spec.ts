@@ -27,7 +27,7 @@ import { MomentModule } from 'ngx-moment';
 import { ArtemisComplaintsModule } from 'app/complaints';
 import { FileUploadSubmissionService } from 'app/entities/file-upload-submission';
 import { createFileUploadSubmission, MockFileUploadSubmissionService } from '../../mocks/mock-file-upload-submission.service';
-import { StudentParticipation } from 'app/entities/participation';
+import { AgentParticipation } from 'app/entities/participation';
 import { ParticipationWebsocketService } from 'app/entities/participation/participation-websocket.service';
 import { fileUploadExercise } from '../../mocks/mock-file-upload-exercise.service';
 import { MAX_SUBMISSION_FILE_SIZE } from 'app/shared/constants/input.constants';
@@ -219,7 +219,7 @@ describe('FileUploadSubmissionComponent', () => {
     it('should not allow to submit after the deadline if the initialization date is before the due date', fakeAsync(() => {
         const submission = createFileUploadSubmission();
         submission.participation.initializationDate = moment().subtract(2, 'days');
-        (<StudentParticipation>submission.participation).exercise.dueDate = moment().subtract(1, 'days');
+        (<AgentParticipation>submission.participation).exercise.dueDate = moment().subtract(1, 'days');
         stub(fileUploadSubmissionService, 'getDataForFileUploadEditor').returns(of(submission));
         comp.submissionFile = new File([''], 'exampleSubmission.png');
 
@@ -234,7 +234,7 @@ describe('FileUploadSubmissionComponent', () => {
     it('should allow to submit after the deadline if the initialization date is after the due date', fakeAsync(() => {
         const submission = createFileUploadSubmission();
         submission.participation.initializationDate = moment().add(1, 'days');
-        (<StudentParticipation>submission.participation).exercise.dueDate = moment();
+        (<AgentParticipation>submission.participation).exercise.dueDate = moment();
         stub(fileUploadSubmissionService, 'getDataForFileUploadEditor').returns(of(submission));
         comp.submissionFile = new File([''], 'exampleSubmission.png');
 
@@ -264,7 +264,7 @@ describe('FileUploadSubmissionComponent', () => {
 
     it('should get inactive as soon as the due date passes the current date', fakeAsync(() => {
         const submission = createFileUploadSubmission();
-        (<StudentParticipation>submission.participation).exercise.dueDate = moment().add(1, 'days');
+        (<AgentParticipation>submission.participation).exercise.dueDate = moment().add(1, 'days');
         stub(fileUploadSubmissionService, 'getDataForFileUploadEditor').returns(of(submission));
         comp.submissionFile = new File([''], 'exampleSubmission.png');
 

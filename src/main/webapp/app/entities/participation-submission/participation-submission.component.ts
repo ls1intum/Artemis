@@ -6,9 +6,9 @@ import { JhiEventManager } from 'ng-jhipster';
 import { Subscription } from 'rxjs/Subscription';
 import { catchError, map } from 'rxjs/operators';
 import { of } from 'rxjs';
-import { StudentParticipation } from 'app/entities/participation';
 import { ParticipationService } from 'app/entities/participation/participation.service';
 import { Submission } from 'app/entities/submission';
+import { AgentParticipation } from 'app/entities/participation/agent-participation.model';
 
 @Component({
     selector: 'jhi-participation-submission',
@@ -16,7 +16,7 @@ import { Submission } from 'app/entities/submission';
 })
 export class ParticipationSubmissionComponent implements OnInit {
     @Input() participationId: number;
-    participation: StudentParticipation;
+    participation: AgentParticipation;
     submissions: Submission[];
     eventSubscriber: Subscription;
     isLoading = true;

@@ -7,7 +7,7 @@ import { JhiAlertService } from 'ng-jhipster';
 import { Result, ResultService } from 'app/entities/result';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise';
 import * as moment from 'moment';
-import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { AgentParticipation } from 'app/entities/participation/agent-participation.model';
 import { FileUploadSubmission } from 'app/entities/file-upload-submission';
 import { FileUploadSubmissionService } from 'app/entities/file-upload-submission/file-upload-submission.service';
 import { FileUploaderService } from 'app/shared/http/file-uploader.service';
@@ -28,7 +28,7 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
     submittedFileName: string;
     submittedFileExtension: string;
     fileUploadExercise: FileUploadExercise;
-    participation: StudentParticipation;
+    participation: AgentParticipation;
     result: Result;
     submissionFile: File | null;
     // indicates if the assessment due date is in the past. the assessment will not be loaded and displayed to the student if it is not.
@@ -72,7 +72,7 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
                 if (submission.result) {
                     submission.participation.results = [submission.result];
                 }
-                this.participation = <StudentParticipation>submission.participation;
+                this.participation = <AgentParticipation>submission.participation;
 
                 // reconnect participation <--> submission
                 this.participation.submissions = [<FileUploadSubmission>omit(submission, 'participation')];
@@ -80,7 +80,7 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
                 this.submission = submission;
                 this.result = submission.result;
                 this.fileUploadExercise = this.participation.exercise as FileUploadExercise;
-                this.fileUploadExercise.studentParticipations = [this.participation];
+                this.fileUploadExercise.agentParticipations = [this.participation];
                 this.fileUploadExercise.participationStatus = participationStatus(this.fileUploadExercise);
 
                 // checks if the student started the exercise after the due date
@@ -128,7 +128,7 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
                 this.submission = response.body!;
                 // reconnect so that the submission status is displayed correctly in the result.component
                 this.submission.participation.submissions = [this.submission];
-                this.participationWebsocketService.addParticipation(this.submission.participation as StudentParticipation, this.fileUploadExercise);
+                this.participationWebsocketService.addParticipation(this.submission.participation as AgentParticipation, this.fileUploadExercise);
                 this.result = this.submission.result;
                 this.setSubmittedFile();
                 if (this.isActive) {

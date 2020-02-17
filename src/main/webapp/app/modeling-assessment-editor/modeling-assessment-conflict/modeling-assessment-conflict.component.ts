@@ -10,7 +10,7 @@ import { ModelingExercise } from 'app/entities/modeling-exercise';
 import { Feedback, FeedbackHighlightColor } from 'app/entities/feedback';
 import { ConflictResolutionState } from 'app/modeling-assessment-editor/conflict-resolution-state.enum';
 import { ModelingAssessmentService } from 'app/entities/modeling-assessment';
-import { StudentParticipation } from 'app/entities/participation';
+import { AgentParticipation } from 'app/entities/participation';
 import { AccountService } from 'app/core/auth/account.service';
 
 @Component({
@@ -53,8 +53,8 @@ export class ModelingAssessmentConflictComponent implements OnInit, AfterViewIni
                 this.initComponent();
                 const result = this.currentConflict.causingConflictingResult.result;
                 this.model = JSON.parse((result.submission as ModelingSubmission).model);
-                const studentParticipation = result.participation! as StudentParticipation;
-                this.modelingExercise = studentParticipation.exercise as ModelingExercise;
+                const agentParticipation = result.participation! as AgentParticipation;
+                this.modelingExercise = agentParticipation.exercise as ModelingExercise;
             } else {
                 this.conflicts = undefined;
                 this.jhiAlertService.error('modelingAssessmentEditor.messages.noConflicts');

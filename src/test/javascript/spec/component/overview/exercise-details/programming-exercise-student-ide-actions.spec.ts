@@ -6,7 +6,7 @@ import { JavaBridgeService } from 'app/intellij/java-bridge.service';
 import { CourseExerciseService } from 'app/entities/course/course.service';
 import { SinonSpy, SinonStub, spy, stub } from 'sinon';
 import { Exercise, ParticipationStatus } from 'app/entities/exercise';
-import { InitializationState, ProgrammingExerciseStudentParticipation, StudentParticipation } from 'app/entities/participation';
+import { InitializationState, ProgrammingExerciseAgentParticipation, AgentParticipation } from 'app/entities/participation';
 import { ArtemisTestModule } from '../../../test.module';
 import { TranslateModule } from '@ngx-translate/core';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
@@ -113,9 +113,9 @@ describe('ProgrammingExerciseStudentIdeActionsComponent', () => {
     }));
 
     it('should reflect the correct participation state', fakeAsync(() => {
-        const inactivePart = { id: 2, initializationState: InitializationState.INACTIVE } as StudentParticipation;
-        const initPart = { id: 2, initializationState: InitializationState.INITIALIZED } as StudentParticipation;
-        const participationSubject = new Subject<StudentParticipation>();
+        const inactivePart = { id: 2, initializationState: InitializationState.INACTIVE } as AgentParticipation;
+        const initPart = { id: 2, initializationState: InitializationState.INITIALIZED } as AgentParticipation;
+        const participationSubject = new Subject<AgentParticipation>();
         const stateObservable = new BehaviorSubject(ideState);
         comp.exercise = exercise;
         startExerciseStub.returns(participationSubject);
@@ -140,9 +140,9 @@ describe('ProgrammingExerciseStudentIdeActionsComponent', () => {
     }));
 
     it('should clone the correct repository in the IDE', () => {
-        const participation = { id: 123, repositoryUrl: 'testUrl' } as ProgrammingExerciseStudentParticipation;
+        const participation = { id: 123, repositoryUrl: 'testUrl' } as ProgrammingExerciseAgentParticipation;
         const progExercise = { id: 42, title: 'Test Title' } as Exercise;
-        progExercise.studentParticipations = [participation];
+        progExercise.agentParticipations = [participation];
         const exerciseJson = stringifyCircular(progExercise);
         comp.exercise = progExercise;
         comp.courseId = 456;

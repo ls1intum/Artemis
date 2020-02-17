@@ -137,8 +137,8 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
      * @param exercise The exercise which should get checked
      */
     private needsWork(exercise: Exercise): boolean {
-        const notFullPoints = exercise.studentParticipations.some(participation => participation.results && participation.results.some(result => result.score !== 100));
-        const notStartedYet = exercise.studentParticipations.every(participation => !participation.results.length);
+        const notFullPoints = exercise.agentParticipations.some(participation => participation.results && participation.results.some(result => result.score !== 100));
+        const notStartedYet = exercise.agentParticipations.every(participation => !participation.results.length);
         return notFullPoints || notStartedYet;
     }
 

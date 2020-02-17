@@ -7,9 +7,10 @@ import { CourseService } from 'app/entities/course/course.service';
 import { Exercise, ExerciseType } from '../entities/exercise';
 import { User } from 'app/core/user/user.model';
 import * as moment from 'moment';
-import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { AgentParticipation } from 'app/entities/participation/agent-participation.model';
 import { ExportToCsv } from 'export-to-csv';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
+import { ParticipationType, StudentParticipation } from 'app/entities/participation';
 
 const PRESENTATION_SCORE_KEY = 'Presentation Score';
 const NAME_KEY = 'Name';
@@ -32,7 +33,7 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
     readonly exerciseTypes = [ExerciseType.QUIZ, ExerciseType.PROGRAMMING, ExerciseType.MODELING, ExerciseType.TEXT, ExerciseType.FILE_UPLOAD];
 
     course: Course;
-    participations: StudentParticipation[] = [];
+    participations: AgentParticipation[] = [];
     exercises: Exercise[] = [];
     students: Student[] = [];
 
@@ -130,7 +131,12 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
     calculatePointsPerStudent() {
         const studentsMap = new Map<number, Student>();
 
-        for (const participation of this.participations) {
+        // TODO: Do we need to consider team participations here? Probably yes, but how? Needs to be evaluated.
+        const studentParticipations = this.participations.filter(participation =>
+            [ParticipationType.STUDENT, ParticipationType.PROGRAMMING_STUDENT].includes(participation.type),
+        ) as StudentParticipation[];
+
+        for (const participation of studentParticipations) {
             if (participation.results != null && participation.results.length > 0) {
                 for (const result of participation.results) {
                     // reconnect
@@ -436,7 +442,7 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
 
 class Student {
     user: User;
-    participations: StudentParticipation[] = [];
+    participations: AgentParticipation[] = [];
     presentationScore = 0;
     numberOfParticipatedExercises = 0;
     numberOfSuccessfulExercises = 0;

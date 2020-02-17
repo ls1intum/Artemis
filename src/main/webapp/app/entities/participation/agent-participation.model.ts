@@ -8,4 +8,6 @@ export interface AgentParticipation extends Participation {
     getExercise(): Exercise;
 
     getAgent(): Agent;
+
+    setAgent(agent: Agent): void;
 }

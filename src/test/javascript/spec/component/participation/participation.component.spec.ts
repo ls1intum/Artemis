@@ -6,7 +6,7 @@ import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { ArtemisTestModule } from '../../test.module';
 import { ArtemisSharedModule } from 'app/shared';
 import { MockSyncStorage, MockActivatedRoute } from '../../mocks';
-import { StudentParticipation } from 'app/entities/participation';
+import { AgentParticipation } from 'app/entities/participation';
 import { ParticipationService } from 'app/entities/participation/participation.service';
 import { ParticipationComponent } from 'app/entities/participation/participation.component';
 import { Course } from 'app/entities/course';
@@ -78,7 +78,7 @@ describe('ParticipationComponent', () => {
         const participation = {
             student: { id: 1 },
             exercise: exercise1,
-        } as StudentParticipation;
+        } as AgentParticipation;
 
         it('should add a presentation score if the feature is enabled', () => {
             component.exercise = exercise1;

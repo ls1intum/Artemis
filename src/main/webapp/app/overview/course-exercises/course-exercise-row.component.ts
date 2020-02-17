@@ -2,7 +2,7 @@ import { Component, HostBinding, Input, OnDestroy, OnInit } from '@angular/core'
 import { Exercise, ExerciseCategory, ExerciseService, ExerciseType, getIcon, getIconTooltip, ParticipationStatus, participationStatus } from 'app/entities/exercise';
 import { JhiAlertService } from 'ng-jhipster';
 import { QuizExercise } from 'app/entities/quiz-exercise';
-import { StudentParticipation } from 'app/entities/participation';
+import { AgentParticipation } from 'app/entities/participation';
 import { ParticipationService } from 'app/entities/participation/participation.service';
 import { ParticipationWebsocketService } from 'app/entities/participation/participation-websocket.service';
 import * as moment from 'moment';
@@ -54,13 +54,13 @@ export class CourseExerciseRowComponent implements OnInit, OnDestroy {
     ngOnInit() {
         const cachedParticipation = this.participationWebsocketService.getParticipationForExercise(this.exercise.id);
         if (cachedParticipation) {
-            this.exercise.studentParticipations = [cachedParticipation];
+            this.exercise.agentParticipations = [cachedParticipation];
         }
-        this.participationUpdateListener = this.participationWebsocketService.subscribeForParticipationChanges().subscribe((changedParticipation: StudentParticipation) => {
+        this.participationUpdateListener = this.participationWebsocketService.subscribeForParticipationChanges().subscribe((changedParticipation: AgentParticipation) => {
             if (changedParticipation && this.exercise && changedParticipation.exercise.id === this.exercise.id) {
-                this.exercise.studentParticipations =
-                    this.exercise.studentParticipations && this.exercise.studentParticipations.length > 0
-                        ? this.exercise.studentParticipations.map(el => {
+                this.exercise.agentParticipations =
+                    this.exercise.agentParticipations && this.exercise.agentParticipations.length > 0
+                        ? this.exercise.agentParticipations.map(el => {
                               return el.id === changedParticipation.id ? changedParticipation : el;
                           })
                         : [changedParticipation];
@@ -68,8 +68,8 @@ export class CourseExerciseRowComponent implements OnInit, OnDestroy {
             }
         });
         this.exercise.participationStatus = participationStatus(this.exercise);
-        if (this.exercise.studentParticipations && this.exercise.studentParticipations.length > 0) {
-            this.exercise.studentParticipations[0].exercise = this.exercise;
+        if (this.exercise.agentParticipations && this.exercise.agentParticipations.length > 0) {
+            this.exercise.agentParticipations[0].exercise = this.exercise;
         }
         this.exercise.isAtLeastTutor = this.accountService.isAtLeastTutorInCourse(this.course);
         this.exercise.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.course);

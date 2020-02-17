@@ -1,7 +1,9 @@
 import { Account } from 'app/core/user/account.model';
+import { Agent } from 'app/entities/participation/agent.model';
 import { Moment } from 'moment';
+import { Team } from 'app/entities/team/team.model';
 
-export class User extends Account {
+export class User extends Account implements Agent {
     public id: number | null;
     public groups: string[] | null;
     public createdBy: string | null;
@@ -39,7 +41,6 @@ export class User extends Account {
             langKey || undefined,
             lastName || undefined,
             login || undefined,
-            username || undefined,
             imageUrl || undefined,
         );
         this.id = id ? id : null;
@@ -50,5 +51,23 @@ export class User extends Account {
         this.lastModifiedDate = lastModifiedDate ? lastModifiedDate : null;
         this.lastNotificationRead = lastNotificationRead ? lastNotificationRead : null;
         this.password = password ? password : null;
+    }
+
+    public getName(): string {
+        return `${this.firstName} ${this.lastName}`;
+    }
+
+    public getUsername(): string {
+        return this.login || '';
+    }
+
+    public holds(agent: Agent): boolean {
+        if (agent instanceof User) {
+            return this.login === agent.login;
+        } else if (agent instanceof Team) {
+            return false;
+        } else {
+            throw new Error('Unknown agent type.');
+        }
     }
 }

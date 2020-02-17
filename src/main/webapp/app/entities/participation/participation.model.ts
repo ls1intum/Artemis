@@ -3,14 +3,12 @@ import { Result } from '../result';
 import { Submission } from '../submission';
 import { Moment } from 'moment';
 import { Exercise } from 'app/entities/exercise';
-import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
-import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { ProgrammingExerciseAgentParticipation } from 'app/entities/participation/programming-exercise-agent-participation.model';
+import { AgentParticipation } from 'app/entities/participation/agent-participation.model';
 import { SolutionProgrammingExerciseParticipation } from 'app/entities/participation/solution-programming-exercise-participation.model';
 import { TemplateProgrammingExerciseParticipation } from 'app/entities/participation/template-programming-exercise-participation.model';
 import { TeamParticipation } from 'app/entities/participation/team-participation.model';
 import { ProgrammingExerciseTeamParticipation } from 'app/entities/participation/programming-exercise-team-participation.model';
-import { ProgrammingExerciseAgentParticipation } from 'app/entities/participation/programming-exercise-agent-participation.model';
-import { AgentParticipation } from 'app/entities/participation/agent-participation.model';
 
 export const enum InitializationState {
     UNINITIALIZED = 'UNINITIALIZED',
@@ -57,13 +55,13 @@ export abstract class Participation implements BaseEntity {
 export const getExercise = (participation: Participation): Exercise => {
     switch (participation.type) {
         case ParticipationType.PROGRAMMING_STUDENT:
-            return (participation as ProgrammingExerciseStudentParticipation).exercise;
+            return (participation as ProgrammingExerciseAgentParticipation).exercise;
         case ParticipationType.PROGRAMMING_TEAM:
             return (participation as ProgrammingExerciseTeamParticipation).exercise;
         case ParticipationType.PROGRAMMING_AGENT:
             return (participation as ProgrammingExerciseAgentParticipation).exercise;
         case ParticipationType.STUDENT:
-            return (participation as StudentParticipation).exercise;
+            return (participation as AgentParticipation).exercise;
         case ParticipationType.TEAM:
             return (participation as TeamParticipation).exercise;
         case ParticipationType.AGENT:

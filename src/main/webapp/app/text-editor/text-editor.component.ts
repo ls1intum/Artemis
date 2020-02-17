@@ -13,7 +13,7 @@ import { TextEditorService } from 'app/text-editor/text-editor.service';
 import * as moment from 'moment';
 import { ArtemisMarkdown } from 'app/components/util/markdown.service';
 import { Feedback } from 'app/entities/feedback';
-import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { AgentParticipation } from 'app/entities/participation/agent-participation.model';
 import { ComponentCanDeactivate } from 'app/shared';
 import { Observable } from 'rxjs/Observable';
 import { ButtonType } from 'app/shared/components';
@@ -26,7 +26,7 @@ import { participationStatus } from 'app/entities/exercise';
 export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeactivate {
     readonly ButtonType = ButtonType;
     textExercise: TextExercise;
-    participation: StudentParticipation;
+    participation: AgentParticipation;
     result: Result;
     submission: TextSubmission;
     isSaving: boolean;
@@ -60,10 +60,10 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
         }
 
         this.textService.get(participationId).subscribe(
-            (data: StudentParticipation) => {
+            (data: AgentParticipation) => {
                 this.participation = data;
                 this.textExercise = this.participation.exercise as TextExercise;
-                this.textExercise.studentParticipations = [this.participation];
+                this.textExercise.agentParticipations = [this.participation];
                 this.textExercise.participationStatus = participationStatus(this.textExercise);
                 this.checkIfSubmitAlwaysEnabled();
                 this.isAfterAssessmentDueDate = !this.textExercise.assessmentDueDate || moment().isAfter(this.textExercise.assessmentDueDate);
@@ -96,7 +96,7 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
                     this.submission = response.body!;
                     // reconnect so that the submission status is displayed correctly in the result.component
                     this.submission.participation.submissions = [this.submission];
-                    this.participationWebsocketService.addParticipation(this.submission.participation as StudentParticipation, this.textExercise);
+                    this.participationWebsocketService.addParticipation(this.submission.participation as AgentParticipation, this.textExercise);
                 });
             }
         }
@@ -179,7 +179,7 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
                 this.submission = response.body!;
                 // reconnect so that the submission status is displayed correctly in the result.component
                 this.submission.participation.submissions = [this.submission];
-                this.participationWebsocketService.addParticipation(this.submission.participation as StudentParticipation, this.textExercise);
+                this.participationWebsocketService.addParticipation(this.submission.participation as AgentParticipation, this.textExercise);
                 this.result = this.submission.result;
                 this.isSaving = false;
 

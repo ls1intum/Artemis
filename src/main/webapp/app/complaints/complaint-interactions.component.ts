@@ -2,7 +2,7 @@ import { Component, Input, OnInit } from '@angular/core';
 import { Result, ResultService } from 'app/entities/result';
 import { ComplaintService, ComplaintType } from 'app/entities/complaint';
 import { Exercise } from 'app/entities/exercise';
-import { StudentParticipation } from 'app/entities/participation';
+import { AgentParticipation } from 'app/entities/participation';
 import * as moment from 'moment';
 import { MAX_COMPLAINT_TIME_WEEKS } from 'app/complaints/complaint.constants';
 
@@ -12,7 +12,7 @@ import { MAX_COMPLAINT_TIME_WEEKS } from 'app/complaints/complaint.constants';
 })
 export class ComplaintInteractionsComponent implements OnInit {
     @Input() exercise: Exercise;
-    @Input() participation: StudentParticipation;
+    @Input() participation: AgentParticipation;
     @Input() result: Result;
 
     showRequestMoreFeedbackForm = false;

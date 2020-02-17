@@ -1,10 +1,10 @@
 import { of } from 'rxjs';
-import { StudentParticipation } from 'app/entities/participation';
+import { AgentParticipation } from 'app/entities/participation';
 import { fileUploadExercise } from './mock-file-upload-exercise.service';
 import { FileUploadSubmission } from 'app/entities/file-upload-submission';
 import { Result } from 'app/entities/result';
 
-export const fileUploadParticipation = new StudentParticipation();
+export const fileUploadParticipation = new AgentParticipation();
 fileUploadParticipation.exercise = fileUploadExercise;
 fileUploadParticipation.id = 1;
 

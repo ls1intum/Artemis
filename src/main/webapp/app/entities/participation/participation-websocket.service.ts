@@ -4,7 +4,7 @@ import { switchMap, tap } from 'rxjs/operators';
 import { Participation } from './participation.model';
 import { Result } from 'app/entities/result';
 import { Exercise } from 'app/entities/exercise';
-import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { AgentParticipation } from 'app/entities/participation/agent-participation.model';
 import { ParticipationService } from 'app/entities/participation/participation.service';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import * as moment from 'moment';
@@ -15,7 +15,7 @@ const PARTICIPATION_WEBSOCKET = 'participation_';
 
 export interface IParticipationWebsocketService {
     addParticipation: (participation: Participation, exercise?: Exercise) => void;
-    getParticipationForExercise: (exerciseId: number) => StudentParticipation | null;
+    getParticipationForExercise: (exerciseId: number) => AgentParticipation | null;
     subscribeForParticipationChanges: () => BehaviorSubject<Participation | null>;
     subscribeForLatestResultOfParticipation: (participationId: number) => BehaviorSubject<Result | null>;
     unsubscribeForLatestResultOfParticipation: (participationId: number, exercise: Exercise) => void;
@@ -23,7 +23,7 @@ export interface IParticipationWebsocketService {
 
 @Injectable({ providedIn: 'root' })
 export class ParticipationWebsocketService implements IParticipationWebsocketService {
-    cachedParticipations: Map<number /* ID of participation */, StudentParticipation> = new Map<number, StudentParticipation>();
+    cachedParticipations: Map<number /* ID of participation */, AgentParticipation> = new Map<number, AgentParticipation>();
     openWebsocketSubscriptions: Map<string /* results_{participationId} OR participation_{exerciseId} */, string /* url of websocket connection */> = new Map<string, string>();
     resultObservables: Map<number /* ID of participation */, BehaviorSubject<Result | null>> = new Map<number, BehaviorSubject<Result>>();
     participationObservable: BehaviorSubject<Participation | null> | null;
@@ -35,7 +35,7 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
         participations.forEach(participation => {
             this.removeParticipation(participation.id, participation.exercise.id);
         });
-        this.cachedParticipations = new Map<number, StudentParticipation>();
+        this.cachedParticipations = new Map<number, AgentParticipation>();
         this.resultObservables = new Map<number, BehaviorSubject<Result>>();
         this.participationObservable = null;
     }
@@ -74,7 +74,7 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
         const cachedParticipation = this.cachedParticipations.get(result.participation!.id);
         if (cachedParticipation) {
             // create a clone
-            this.cachedParticipations.set(result.participation!.id, { ...cachedParticipation, results: [...(cachedParticipation.results || []), result] } as StudentParticipation);
+            this.cachedParticipations.set(result.participation!.id, { ...cachedParticipation, results: [...(cachedParticipation.results || []), result] } as AgentParticipation);
             return of(this.cachedParticipations.get(result.participation!.id));
         }
         return of();
@@ -87,9 +87,9 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
      * @param newParticipation The new participation for the cached data maps
      * @param exercise (optional) The exercise that the participation belongs to. Only needed if exercise is missing in participation.
      */
-    public addParticipation = (newParticipation: StudentParticipation, exercise?: Exercise) => {
+    public addParticipation = (newParticipation: AgentParticipation, exercise?: Exercise) => {
         // The participation needs to be cloned so that the original object is not modified
-        const participation = { ...newParticipation } as StudentParticipation;
+        const participation = { ...newParticipation } as AgentParticipation;
         if (!participation.exercise && !exercise) {
             throw new Error('a link from the participation to the exercise is required. Please attach it manually or add exercise as function input');
         }
@@ -102,7 +102,7 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
      * Returns all participations for all exercises. The participation objects include the exercise data and all results.
      * @return array of Participations
      */
-    private getAllParticipations(): StudentParticipation[] {
+    private getAllParticipations(): AgentParticipation[] {
         return [...this.cachedParticipations.values()];
     }
 
@@ -112,7 +112,7 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
      * @param exerciseId ID of the exercise that the participations belong to.
      * @return the cached student participation for the exercise or null
      */
-    public getParticipationForExercise(exerciseId: number): StudentParticipation | null {
+    public getParticipationForExercise(exerciseId: number): AgentParticipation | null {
         const participationsForExercise = [...this.cachedParticipations.values()].filter(participation => {
             return participation.exercise.id === exerciseId;
         });
@@ -120,7 +120,7 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
             return participationsForExercise[0];
         }
         if (participationsForExercise && participationsForExercise.length > 1) {
-            return this.participationService.mergeStudentParticipations(participationsForExercise);
+            return this.participationService.mergeAgentParticipations(participationsForExercise);
         }
         return null;
     }

@@ -1,3 +1,7 @@
 export interface Agent {
-    username: string | null;
+    getName(): string;
+
+    getUsername(): string;
+
+    holds(agent: Agent): boolean;
 }

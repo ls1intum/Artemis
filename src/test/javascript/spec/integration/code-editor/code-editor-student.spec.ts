@@ -40,7 +40,7 @@ import {
     MockSyncStorage,
 } from '../../mocks';
 import { Result, ResultService } from 'app/entities/result';
-import { Participation, StudentParticipation } from 'app/entities/participation';
+import { Participation, AgentParticipation } from 'app/entities/participation';
 import { ParticipationWebsocketService } from 'app/entities/participation/participation-websocket.service';
 import { ProgrammingExercise } from 'app/entities/programming-exercise';
 import { ProgrammingExerciseParticipationService } from 'app/entities/programming-exercise/services/programming-exercise-participation.service';
@@ -89,7 +89,7 @@ describe('CodeEditorStudentIntegration', () => {
     let getFileStub: SinonStub;
     let saveFilesStub: SinonStub;
     let commitStub: SinonStub;
-    let getStudentParticipationWithLatestResultStub: SinonStub;
+    let getAgentParticipationWithLatestResultStub: SinonStub;
     let getLatestPendingSubmissionStub: SinonStub;
     let getHintsForExerciseStub: SinonStub;
     let guidedTourService: GuidedTourService;
@@ -164,7 +164,7 @@ describe('CodeEditorStudentIntegration', () => {
                 getFileStub = stub(codeEditorRepositoryFileService, 'getFile');
                 saveFilesStub = stub(codeEditorRepositoryFileService, 'updateFiles');
                 commitStub = stub(codeEditorRepositoryService, 'commit');
-                getStudentParticipationWithLatestResultStub = stub(programmingExerciseParticipationService, 'getStudentParticipationWithLatestResult');
+                getAgentParticipationWithLatestResultStub = stub(programmingExerciseParticipationService, 'getAgentParticipationWithLatestResult');
                 getLatestPendingSubmissionStub = stub(submissionService, 'getLatestPendingSubmissionByParticipationId').returns(getLatestPendingSubmissionSubject);
                 getHintsForExerciseStub = stub(exerciseHintService, 'findByExerciseId').returns(of({ body: exerciseHints }) as Observable<HttpResponse<ExerciseHint[]>>);
             });
@@ -179,7 +179,7 @@ describe('CodeEditorStudentIntegration', () => {
         getFileStub.restore();
         saveFilesStub.restore();
         commitStub.restore();
-        getStudentParticipationWithLatestResultStub.restore();
+        getAgentParticipationWithLatestResultStub.restore();
 
         subscribeForLatestResultOfParticipationSubject = new BehaviorSubject<Result>(null);
         subscribeForLatestResultOfParticipationStub.returns(subscribeForLatestResultOfParticipationSubject);
@@ -281,7 +281,7 @@ describe('CodeEditorStudentIntegration', () => {
 
     it('should not load files and render other components correctly if the repository status cannot be retrieved', (done: any) => {
         const exercise = { id: 1, problemStatement, course: { id: 2 } };
-        const participation = { id: 2, exercise, results: [result] } as StudentParticipation;
+        const participation = { id: 2, exercise, results: [result] } as AgentParticipation;
         const commitState = CommitState.UNDEFINED;
         const isCleanSubject = new Subject();
         const getBuildLogsSubject = new Subject();
@@ -540,7 +540,7 @@ describe('CodeEditorStudentIntegration', () => {
         const feedbacks = [{ id: 2 }] as Feedback[];
         const findWithLatestResultSubject = new Subject<Participation>();
         const getFeedbackDetailsForResultSubject = new Subject<{ body: Feedback[] }>();
-        getStudentParticipationWithLatestResultStub.returns(findWithLatestResultSubject);
+        getAgentParticipationWithLatestResultStub.returns(findWithLatestResultSubject);
         getFeedbackDetailsForResultStub.returns(getFeedbackDetailsForResultSubject);
 
         routeSubject.next({ participationId: 1 });
@@ -550,7 +550,7 @@ describe('CodeEditorStudentIntegration', () => {
         findWithLatestResultSubject.next(participation);
         getFeedbackDetailsForResultSubject.next({ body: feedbacks });
 
-        expect(getStudentParticipationWithLatestResultStub).to.have.been.calledOnceWithExactly(participation.id);
+        expect(getAgentParticipationWithLatestResultStub).to.have.been.calledOnceWithExactly(participation.id);
         expect(getFeedbackDetailsForResultStub).to.have.been.calledOnceWithExactly(result.id);
         expect(container.loadingParticipation).to.be.false;
         expect(container.participationCouldNotBeFetched).to.be.false;
@@ -568,7 +568,7 @@ describe('CodeEditorStudentIntegration', () => {
         const findWithLatestResultSubject = new Subject<Participation>();
         const getFeedbackDetailsForResultSubject = new Subject<{ body: Feedback[] }>();
         const isCleanSubject = new Subject();
-        getStudentParticipationWithLatestResultStub.returns(findWithLatestResultSubject);
+        getAgentParticipationWithLatestResultStub.returns(findWithLatestResultSubject);
         getFeedbackDetailsForResultStub.returns(getFeedbackDetailsForResultSubject);
         checkIfRepositoryIsCleanStub.returns(isCleanSubject);
 
@@ -589,7 +589,7 @@ describe('CodeEditorStudentIntegration', () => {
     it('should abort initialization and show error state if participation cannot be retrieved', () => {
         container.ngOnInit();
         const findWithLatestResultSubject = new Subject<{ body: Participation }>();
-        getStudentParticipationWithLatestResultStub.returns(findWithLatestResultSubject);
+        getAgentParticipationWithLatestResultStub.returns(findWithLatestResultSubject);
 
         routeSubject.next({ participationId: 1 });
 
@@ -615,7 +615,7 @@ describe('CodeEditorStudentIntegration', () => {
         const findWithLatestResultSubject = new Subject<Participation>();
         const getFeedbackDetailsForResultSubject = new Subject<{ body: Feedback[] }>();
         const isCleanSubject = new Subject();
-        getStudentParticipationWithLatestResultStub.returns(findWithLatestResultSubject);
+        getAgentParticipationWithLatestResultStub.returns(findWithLatestResultSubject);
         checkIfRepositoryIsCleanStub.returns(isCleanSubject);
         getFeedbackDetailsForResultStub.returns(getFeedbackDetailsForResultSubject);
         getRepositoryContentStub.returns(of([]));

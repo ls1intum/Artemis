@@ -1,7 +1,7 @@
 import { Component, HostBinding, Input, OnInit } from '@angular/core';
 import { Exercise, ExerciseType, isStartExerciseAvailable, ParticipationStatus, participationStatus } from 'app/entities/exercise';
 import { QuizExercise } from 'app/entities/quiz-exercise';
-import { InitializationState, Participation, ProgrammingExerciseStudentParticipation } from 'app/entities/participation';
+import { InitializationState, Participation, ProgrammingExerciseAgentParticipation } from 'app/entities/participation';
 import * as moment from 'moment';
 import { CourseExerciseService } from 'app/entities/course/course.service';
 import { Router } from '@angular/router';
@@ -56,7 +56,7 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
     }
 
     repositoryUrl(participation: Participation) {
-        return (participation as ProgrammingExerciseStudentParticipation).repositoryUrl;
+        return (participation as ProgrammingExerciseAgentParticipation).repositoryUrl;
     }
 
     isPracticeModeAvailable(): boolean {
@@ -99,7 +99,7 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
             .subscribe(
                 participation => {
                     if (participation) {
-                        this.exercise.studentParticipations = [participation];
+                        this.exercise.agentParticipations = [participation];
                         this.exercise.participationStatus = participationStatus(this.exercise);
                     }
                     if (this.exercise.type === ExerciseType.PROGRAMMING) {
@@ -126,8 +126,8 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
                 participation => {
                     if (participation) {
                         // Otherwise the client would think that all results are loaded, but there would not be any (=> no graded result).
-                        participation.results = this.exercise.studentParticipations[0] ? this.exercise.studentParticipations[0].results : [];
-                        this.exercise.studentParticipations = [participation];
+                        participation.results = this.exercise.agentParticipations[0] ? this.exercise.agentParticipations[0].results : [];
+                        this.exercise.agentParticipations = [participation];
                         this.exercise.participationStatus = participationStatus(this.exercise);
                     }
                 },

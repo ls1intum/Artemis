@@ -36,7 +36,7 @@ export class IdeBuildAndTestService {
      * @param exercise The exercise for which a build should get triggered
      */
     buildAndTestExercise(exercise: ProgrammingExercise) {
-        const participationId = exercise.studentParticipations[0].id;
+        const participationId = exercise.agentParticipations[0].id;
         // Trigger a build for the current participation
         this.submissionService.triggerBuild(participationId).subscribe();
 
@@ -50,7 +50,7 @@ export class IdeBuildAndTestService {
      * @param participation The (optional) participation to subscribe to. The default is the first student participation
      */
     listenOnBuildOutputAndForwardChanges(exercise: ProgrammingExercise, participation: Participation | null = null): Observable<void> {
-        const participationId = participation ? participation.id : exercise.studentParticipations[0].id;
+        const participationId = participation ? participation.id : exercise.agentParticipations[0].id;
         this.javaBridge.onBuildStarted();
 
         // Listen for the new result on the websocket

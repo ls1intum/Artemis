@@ -10,7 +10,7 @@ import { createRequestOption } from 'app/shared';
 import { SubmissionType } from 'app/entities/submission';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { Exercise, ExerciseType } from 'app/entities/exercise/exercise.model';
-import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation';
+import { ProgrammingExerciseAgentParticipation } from 'app/entities/participation';
 
 export enum ProgrammingSubmissionState {
     // The last submission of participation has a result.
@@ -256,7 +256,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
     /**
      * Notifies both the exercise and participation specific subscribers about a new SubmissionState.
      *
-     * @param participationId id of ProgrammingExerciseStudentParticipation
+     * @param participationId id of ProgrammingExerciseAgentParticipation
      * @param exerciseId id of ProgrammingExercise
      * @param newSubmissionState to inform subscribers about.
      */
@@ -300,18 +300,18 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
                     return false;
                 }
                 // We can't process exercises without participations.
-                if (!exercise.studentParticipations || !exercise.studentParticipations.length) {
+                if (!exercise.agentParticipations || !exercise.agentParticipations.length) {
                     return false;
                 }
                 // If we already have a value cached for the participation we don't override it.
-                if (!forceCacheOverride && !!this.submissionSubjects[exercise.studentParticipations[0].id]) {
+                if (!forceCacheOverride && !!this.submissionSubjects[exercise.agentParticipations[0].id]) {
                     return false;
                 }
                 // Without submissions we can't determine if the latest submission is pending.
-                return !!exercise.studentParticipations[0].submissions && !!exercise.studentParticipations[0].submissions.length;
+                return !!exercise.agentParticipations[0].submissions && !!exercise.agentParticipations[0].submissions.length;
             })
             .forEach(exercise => {
-                const participation = exercise.studentParticipations[0] as ProgrammingExerciseStudentParticipation;
+                const participation = exercise.agentParticipations[0] as ProgrammingExerciseAgentParticipation;
                 const latestSubmission = participation.submissions.reduce((current, next) => (current.id > next.id ? current : next)) as ProgrammingSubmission;
                 const latestResult: Result | null =
                     participation.results && participation.results.length ? participation.results.reduce((current, next) => (current.id > next.id ? current : next)) : null;
@@ -336,7 +336,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
      *
      * This method will execute a REST call to the server so that the subscriber will always receive the latest information from the server.
      *
-     * @param participationId id of ProgrammingExerciseStudentParticipation
+     * @param participationId id of ProgrammingExerciseAgentParticipation
      * @param exerciseId id of ProgrammingExercise
      */
     public getLatestPendingSubmissionByParticipationId = (participationId: number, exerciseId: number, forceCacheOverride = false) => {

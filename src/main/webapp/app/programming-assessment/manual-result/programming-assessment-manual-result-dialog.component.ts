@@ -16,7 +16,7 @@ import { Complaint, ComplaintType } from 'app/entities/complaint/complaint.model
 import { ComplaintService } from 'app/entities/complaint/complaint.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { ComplaintResponse } from 'app/entities/complaint-response/complaint-response.model';
-import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation';
+import { ProgrammingExerciseAgentParticipation } from 'app/entities/participation';
 import { ProgrammingExercise } from 'app/entities/programming-exercise';
 import { User } from 'app/core/user/user.model';
 
@@ -33,7 +33,7 @@ export class ProgrammingAssessmentManualResultDialogComponent implements OnInit 
     @Input() exercise: ProgrammingExercise;
     @Output() onResultModified = new EventEmitter<Result>();
 
-    participation: ProgrammingExerciseStudentParticipation;
+    participation: ProgrammingExerciseAgentParticipation;
     feedbacks: Feedback[] = [];
     isLoading = false;
     isSaving = false;
@@ -90,7 +90,7 @@ export class ProgrammingAssessmentManualResultDialogComponent implements OnInit 
         if (this.result.hasComplaint) {
             this.getComplaint(this.result.id);
         }
-        this.participation = this.result.participation! as ProgrammingExerciseStudentParticipation;
+        this.participation = this.result.participation! as ProgrammingExerciseAgentParticipation;
     }
 
     initializeForResultCreation() {
@@ -120,7 +120,7 @@ export class ProgrammingAssessmentManualResultDialogComponent implements OnInit 
             .find(this.participationId)
             .pipe(
                 tap(({ body: participation }) => {
-                    this.participation = participation! as ProgrammingExerciseStudentParticipation;
+                    this.participation = participation! as ProgrammingExerciseAgentParticipation;
                     this.result.participation = this.participation;
                     this.isOpenForSubmission = this.participation.exercise.dueDate === null || this.participation.exercise.dueDate.isAfter(moment());
                 }),

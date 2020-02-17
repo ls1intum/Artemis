@@ -7,7 +7,7 @@ import { ParticipationService } from './participation.service';
 import { ActivatedRoute } from '@angular/router';
 import { areManualResultsAllowed, Exercise, ExerciseType } from '../exercise';
 import { ExerciseService } from 'app/entities/exercise';
-import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { AgentParticipation } from 'app/entities/participation/agent-participation.model';
 import { ExerciseSubmissionState, ProgrammingSubmissionService, ProgrammingSubmissionState } from 'app/programming-submission/programming-submission.service';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -33,7 +33,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
     readonly ActionType = ActionType;
     readonly FeatureToggle = FeatureToggle;
 
-    participations: StudentParticipation[] = [];
+    participations: AgentParticipation[] = [];
     filteredParticipationsSize = 0;
     eventSubscriber: Subscription;
     paramSub: Subscription;
@@ -148,7 +148,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
         return this.exercise.isAtLeastTutor && this.exercise.course.presentationScore !== 0 && this.exercise.presentationScoreEnabled;
     }
 
-    addPresentation(participation: StudentParticipation) {
+    addPresentation(participation: AgentParticipation) {
         if (!this.presentationScoreEnabled) {
             return;
         }
@@ -161,7 +161,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
         );
     }
 
-    removePresentation(participation: StudentParticipation) {
+    removePresentation(participation: AgentParticipation) {
         if (!this.presentationScoreEnabled) {
             return;
         }
@@ -197,7 +197,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
      * Cleans programming exercise participation
      * @param programmingExerciseParticipation the id of the participation that we want to delete
      */
-    cleanupProgrammingExerciseParticipation(programmingExerciseParticipation: StudentParticipation) {
+    cleanupProgrammingExerciseParticipation(programmingExerciseParticipation: AgentParticipation) {
         this.participationService.cleanupBuildPlan(programmingExerciseParticipation).subscribe(
             () => {
                 this.eventManager.broadcast({
@@ -224,18 +224,18 @@ export class ParticipationComponent implements OnInit, OnDestroy {
      *
      * @param participation
      */
-    searchResultFormatter = (participation: StudentParticipation) => {
-        const { login, name } = participation.student;
-        return `${login} (${name})`;
+    searchResultFormatter = (participation: AgentParticipation) => {
+        const agent = participation.getAgent();
+        return `${agent.getUsername()} (${agent.getName()})`;
     };
 
     /**
      * Converts a participation object to a string that can be searched for. This is
      * used by the autocomplete select inside the data table.
      *
-     * @param participation Student participation
+     * @param participation Agent participation
      */
-    searchTextFromParticipation = (participation: StudentParticipation): string => {
-        return participation.student.login || '';
+    searchTextFromParticipation = (participation: AgentParticipation): string => {
+        return participation.getAgent().getUsername();
     };
 }

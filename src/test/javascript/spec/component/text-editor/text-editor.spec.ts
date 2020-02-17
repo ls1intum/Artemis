@@ -4,7 +4,7 @@ import { DebugElement } from '@angular/core';
 import * as moment from 'moment';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { TextExercise } from 'app/entities/text-exercise';
-import { StudentParticipation } from 'app/entities/participation';
+import { AgentParticipation } from 'app/entities/participation';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { Result, SubmissionResultStatusComponent } from 'app/entities/result';
 import { JhiAlertService } from 'ng-jhipster';
@@ -38,7 +38,7 @@ describe('TableEditableFieldComponent', () => {
 
     const route = { snapshot: { paramMap: convertToParamMap({ participationId: 42 }) } } as ActivatedRoute;
     const textExercise = { id: 1 } as TextExercise;
-    const participation = { id: 42, exercise: textExercise } as StudentParticipation;
+    const participation = { id: 42, exercise: textExercise } as AgentParticipation;
     const result = { id: 1 } as Result;
 
     beforeEach(async () => {
@@ -76,7 +76,7 @@ describe('TableEditableFieldComponent', () => {
     });
 
     it('should not allow to submit after the deadline if there is no due date', fakeAsync(() => {
-        const participationSubject = new BehaviorSubject<StudentParticipation>(participation);
+        const participationSubject = new BehaviorSubject<AgentParticipation>(participation);
         getTextForParticipationStub.returns(participationSubject);
         comp.textExercise = textExercise;
 
@@ -90,7 +90,7 @@ describe('TableEditableFieldComponent', () => {
     it('should not allow to submit after the deadline if the initialization date is before the due date', fakeAsync(() => {
         participation.initializationDate = moment();
         textExercise.dueDate = moment().add(1, 'days');
-        const participationSubject = new BehaviorSubject<StudentParticipation>(participation);
+        const participationSubject = new BehaviorSubject<AgentParticipation>(participation);
         getTextForParticipationStub.returns(participationSubject);
         comp.textExercise = textExercise;
 
@@ -103,7 +103,7 @@ describe('TableEditableFieldComponent', () => {
     it('should allow to submit after the deadline if the initilization date is after the due date', fakeAsync(() => {
         participation.initializationDate = moment().add(1, 'days');
         textExercise.dueDate = moment();
-        const participationSubject = new BehaviorSubject<StudentParticipation>(participation);
+        const participationSubject = new BehaviorSubject<AgentParticipation>(participation);
         getTextForParticipationStub.returns(participationSubject);
         comp.textExercise = textExercise;
 
@@ -114,7 +114,7 @@ describe('TableEditableFieldComponent', () => {
     }));
 
     it('should not be always active if there is a result and no due date', fakeAsync(() => {
-        const participationSubject = new BehaviorSubject<StudentParticipation>(participation);
+        const participationSubject = new BehaviorSubject<AgentParticipation>(participation);
         getTextForParticipationStub.returns(participationSubject);
         comp.result = result;
         comp.textExercise = textExercise;
@@ -126,7 +126,7 @@ describe('TableEditableFieldComponent', () => {
     }));
 
     it('should be always active if there is no result and the initialization date is after the due date', fakeAsync(() => {
-        const participationSubject = new BehaviorSubject<StudentParticipation>(participation);
+        const participationSubject = new BehaviorSubject<AgentParticipation>(participation);
         getTextForParticipationStub.returns(participationSubject);
         comp.textExercise = textExercise;
         comp.textExercise.dueDate = moment();
@@ -139,7 +139,7 @@ describe('TableEditableFieldComponent', () => {
     }));
 
     it('should get inactive as soon as the due date passes the current date', fakeAsync(() => {
-        const participationSubject = new BehaviorSubject<StudentParticipation>(participation);
+        const participationSubject = new BehaviorSubject<AgentParticipation>(participation);
         getTextForParticipationStub.returns(participationSubject);
         textExercise.dueDate = moment().add(1, 'days');
         participation.initializationDate = moment();

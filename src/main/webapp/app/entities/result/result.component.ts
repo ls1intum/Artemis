@@ -11,7 +11,7 @@ import { MIN_POINTS_GREEN, MIN_POINTS_ORANGE } from 'app/app.constants';
 import { TranslateService } from '@ngx-translate/core';
 import { ProgrammingExercise } from 'app/entities/programming-exercise/programming-exercise.model';
 import * as moment from 'moment';
-import { isProgrammingExerciseStudentParticipation, isResultPreliminary } from 'app/entities/programming-exercise/utils/programming-exercise.utils';
+import { isProgrammingExerciseAgentParticipation, isResultPreliminary } from 'app/entities/programming-exercise/utils/programming-exercise.utils';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { ProgrammingSubmission } from 'app/entities/programming-submission';
 import { Submission, SubmissionExerciseType } from 'app/entities/submission';
@@ -190,7 +190,7 @@ export class ResultComponent implements OnInit, OnChanges {
             // Only show the 'preliminary' string for programming student participation results and if the buildAndTestAfterDueDate has not passed.
         } else if (
             this.participation &&
-            isProgrammingExerciseStudentParticipation(this.participation) &&
+            isProgrammingExerciseAgentParticipation(this.participation) &&
             isResultPreliminary(this.result!, getExercise(this.participation) as ProgrammingExercise)
         ) {
             const preliminary = this.translate.instant('artemisApp.result.preliminary');
@@ -203,7 +203,7 @@ export class ResultComponent implements OnInit, OnChanges {
         // Only show the 'preliminary' tooltip for programming student participation results and if the buildAndTestAfterDueDate has not passed.
         if (
             this.participation &&
-            isProgrammingExerciseStudentParticipation(this.participation) &&
+            isProgrammingExerciseAgentParticipation(this.participation) &&
             isResultPreliminary(this.result!, getExercise(this.participation) as ProgrammingExercise)
         ) {
             return this.translate.instant('artemisApp.result.preliminaryTooltip');

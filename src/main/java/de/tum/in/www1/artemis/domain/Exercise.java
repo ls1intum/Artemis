@@ -427,6 +427,10 @@ public abstract class Exercise implements Serializable {
         this.teamParticipations = participations;
     }
 
+    public Set<? extends AgentParticipation> getAgentParticipations() {
+        return isTeamMode() ? teamParticipations : studentParticipations;
+    }
+
     public Course getCourse() {
         return course;
     }

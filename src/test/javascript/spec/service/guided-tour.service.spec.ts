@@ -28,7 +28,7 @@ import { Exercise, ExerciseType } from 'app/entities/exercise';
 import { MockTranslateService } from '../mocks/mock-translate.service';
 import { GuidedTourModelingTask, personUML } from 'app/guided-tour/guided-tour-task.model';
 import { completedTour } from 'app/guided-tour/tours/general-tour';
-import { InitializationState, StudentParticipation } from 'app/entities/participation';
+import { InitializationState, AgentParticipation } from 'app/entities/participation';
 import { SinonStub, stub } from 'sinon';
 import { HttpResponse } from '@angular/common/http';
 import { ParticipationService } from 'app/entities/participation/participation.service';
@@ -359,15 +359,15 @@ describe('GuidedTourService', () => {
             });
 
             describe('Tour with student participation', () => {
-                const studentParticipation1 = { id: 1, student: { id: 1 }, exercise: exercise1, initializationState: InitializationState.INITIALIZED } as StudentParticipation;
-                const studentParticipation2 = { id: 2, student: { id: 1 }, exercise: exercise3, initializationState: InitializationState.INITIALIZED } as StudentParticipation;
-                const httpResponse1 = { body: studentParticipation1 } as HttpResponse<StudentParticipation>;
-                const httpResponse2 = { body: studentParticipation2 } as HttpResponse<StudentParticipation>;
+                const agentParticipation1 = { id: 1, student: { id: 1 }, exercise: exercise1, initializationState: InitializationState.INITIALIZED } as AgentParticipation;
+                const agentParticipation2 = { id: 2, student: { id: 1 }, exercise: exercise3, initializationState: InitializationState.INITIALIZED } as AgentParticipation;
+                const httpResponse1 = { body: agentParticipation1 } as HttpResponse<AgentParticipation>;
+                const httpResponse2 = { body: agentParticipation2 } as HttpResponse<AgentParticipation>;
                 const exercise4 = { id: 4, title: 'git', type: ExerciseType.MODELING } as Exercise;
 
-                function prepareParticipation(exercise: Exercise, studentParticipation: StudentParticipation, httpResponse: HttpResponse<StudentParticipation>) {
+                function prepareParticipation(exercise: Exercise, agentParticipation: AgentParticipation, httpResponse: HttpResponse<AgentParticipation>) {
                     exercise.course = course1;
-                    exercise.studentParticipations = [studentParticipation];
+                    exercise.agentParticipations = [agentParticipation];
                     findParticipationStub.reset();
                     deleteParticipationStub.reset();
                     deleteGuidedTourSettingStub.reset();
@@ -380,7 +380,7 @@ describe('GuidedTourService', () => {
                 it('should find and delete the student participation for exercise', () => {
                     course1.exercises.push(exercise4);
 
-                    prepareParticipation(exercise1, studentParticipation1, httpResponse1);
+                    prepareParticipation(exercise1, agentParticipation1, httpResponse1);
                     guidedTourService.enableTourForExercise(exercise1, tourWithCourseAndExercise);
                     guidedTourService.restartTour();
                     expect(findParticipationStub).to.have.been.calledOnceWithExactly(1);
@@ -388,7 +388,7 @@ describe('GuidedTourService', () => {
                     expect(deleteGuidedTourSettingStub).to.have.been.calledOnceWith('tour_with_course_and_exercise');
                     expect(navigationStub).to.have.been.calledOnceWith('/overview/1/exercises');
 
-                    prepareParticipation(exercise4, studentParticipation2, httpResponse2);
+                    prepareParticipation(exercise4, agentParticipation2, httpResponse2);
                     guidedTourService.enableTourForExercise(exercise4, tourWithCourseAndExercise);
                     guidedTourService.restartTour();
                     expect(findParticipationStub).to.have.been.calledOnceWithExactly(4);

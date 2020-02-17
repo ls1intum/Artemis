@@ -8,7 +8,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { Observable } from 'rxjs';
 import { ExerciseType } from 'app/entities/exercise/exercise.model';
 import * as moment from 'moment';
-import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { AgentParticipation } from 'app/entities/participation/agent-participation.model';
 import { ProgrammingAssessmentManualResultDialogComponent } from 'app/programming-assessment/manual-result/programming-assessment-manual-result-dialog.component';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { cloneDeep } from 'lodash';
@@ -90,8 +90,8 @@ export class ListOfComplaintsComponent implements OnInit {
             return;
         }
 
-        const studentParticipation = complaint.result.participation as StudentParticipation;
-        const exercise = studentParticipation.exercise;
+        const agentParticipation = complaint.result.participation as AgentParticipation;
+        const exercise = agentParticipation.exercise;
         const submissionId = complaint.result.submission.id;
 
         if (!exercise || !exercise.type || !submissionId) {
@@ -107,7 +107,7 @@ export class ListOfComplaintsComponent implements OnInit {
             route = `/file-upload-exercise/${exercise.id}/submission/${submissionId}/assessment`;
         } else if (exercise.type === ExerciseType.PROGRAMMING) {
             const modalRef: NgbModalRef = this.modalService.open(ProgrammingAssessmentManualResultDialogComponent, { keyboard: true, size: 'lg', backdrop: 'static' });
-            modalRef.componentInstance.participationId = studentParticipation.id;
+            modalRef.componentInstance.participationId = agentParticipation.id;
             modalRef.componentInstance.exercise = exercise;
             modalRef.componentInstance.result = cloneDeep(complaint.result);
             modalRef.componentInstance.onResultModified.subscribe(() => this.loadComplaints());

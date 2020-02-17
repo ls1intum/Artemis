@@ -5,7 +5,7 @@ import { map, tap } from 'rxjs/operators';
 import { DomainChange, DomainDependent, DomainService } from 'app/code-editor/service/code-editor-domain.service';
 import { ProgrammingSubmissionService, ProgrammingSubmissionState } from 'app/programming-submission/programming-submission.service';
 import { DomainType } from 'app/code-editor/service/code-editor-repository.service';
-import { SolutionProgrammingExerciseParticipation, StudentParticipation } from 'app/entities/participation';
+import { SolutionProgrammingExerciseParticipation, AgentParticipation } from 'app/entities/participation';
 
 /**
  * Wrapper service for using the currently selected participation id in the code-editor for retrieving the submission state.
@@ -36,8 +36,8 @@ export class CodeEditorSubmissionService extends DomainDependent implements OnDe
         if (domainType === DomainType.PARTICIPATION) {
             this.participationId = domainValue.id;
             // There is no differentiation between the participation types atm. This could be implemented in the domain service, but this would make the implementation more complicated, too.
-            this.exerciseId = (domainValue as StudentParticipation).exercise
-                ? (domainValue as StudentParticipation).exercise.id
+            this.exerciseId = (domainValue as AgentParticipation).exercise
+                ? (domainValue as AgentParticipation).exercise.id
                 : (domainValue as SolutionProgrammingExerciseParticipation).programmingExercise.id;
             this.submissionSubscription = this.submissionService
                 .getLatestPendingSubmissionByParticipationId(this.participationId, this.exerciseId, true)

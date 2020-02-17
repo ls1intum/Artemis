@@ -38,7 +38,7 @@ import {
 import { Result, ResultService } from 'app/entities/result';
 import {
     ParticipationService,
-    ProgrammingExerciseStudentParticipation,
+    ProgrammingExerciseAgentParticipation,
     SolutionProgrammingExerciseParticipation,
     TemplateProgrammingExerciseParticipation,
 } from 'app/entities/participation';
@@ -211,11 +211,11 @@ describe('CodeEditorInstructorIntegration', () => {
         const exercise = {
             id: 1,
             problemStatement,
-            studentParticipations: [{ id: 2, repositoryUrl: 'test' }],
+            agentParticipations: [{ id: 2, repositoryUrl: 'test' }],
             templateParticipation: { id: 3, repositoryUrl: 'test2', results: [{ id: 9, successful: true }] },
             solutionParticipation: { id: 4, repositoryUrl: 'test3' },
         } as ProgrammingExercise;
-        exercise.studentParticipations = exercise.studentParticipations.map(p => ({ ...p, exercise }));
+        exercise.agentParticipations = exercise.agentParticipations.map(p => ({ ...p, exercise }));
         exercise.templateParticipation = { ...exercise.templateParticipation, programmingExercise: exercise };
         exercise.solutionParticipation = { ...exercise.solutionParticipation, programmingExercise: exercise };
 
@@ -271,7 +271,7 @@ describe('CodeEditorInstructorIntegration', () => {
     });
 
     it('should go into error state when loading the exercise failed', () => {
-        const exercise = { id: 1, studentParticipations: [{ id: 2 }], templateParticipation: { id: 3 }, solutionParticipation: { id: 4 } } as ProgrammingExercise;
+        const exercise = { id: 1, agentParticipations: [{ id: 2 }], templateParticipation: { id: 3 }, solutionParticipation: { id: 4 } } as ProgrammingExercise;
         const setDomainSpy = spy(domainService, 'setDomain');
         container.ngOnInit();
         routeSubject.next({ exerciseId: 1 });
@@ -294,7 +294,7 @@ describe('CodeEditorInstructorIntegration', () => {
         const exercise = {
             id: 1,
             problemStatement,
-            studentParticipations: [{ id: 2 }],
+            agentParticipations: [{ id: 2 }],
             templateParticipation: { id: 3 },
             solutionParticipation: { id: 4 },
         } as ProgrammingExercise;
@@ -337,7 +337,7 @@ describe('CodeEditorInstructorIntegration', () => {
         exercise.templateParticipation = { id: 3, repositoryUrl: 'test2', programmingExercise: exercise } as TemplateProgrammingExerciseParticipation;
         exercise.solutionParticipation = { id: 4, repositoryUrl: 'test3', programmingExercise: exercise } as SolutionProgrammingExerciseParticipation;
         // @ts-ignore
-        exercise.studentParticipations = [{ id: 2, repositoryUrl: 'test', exercise } as ProgrammingExerciseStudentParticipation];
+        exercise.agentParticipations = [{ id: 2, repositoryUrl: 'test', exercise } as ProgrammingExerciseAgentParticipation];
 
         const setDomainSpy = spy(domainService, 'setDomain');
 
@@ -351,15 +351,15 @@ describe('CodeEditorInstructorIntegration', () => {
         containerFixture.detectChanges();
 
         expect(container.selectedRepository).to.equal(container.REPOSITORY.ASSIGNMENT);
-        expect(container.selectedParticipation).to.deep.equal(exercise.studentParticipations[0]);
+        expect(container.selectedParticipation).to.deep.equal(exercise.agentParticipations[0]);
         expect(container.grid).to.exist;
         expect(container.fileBrowser).to.exist;
         expect(container.actions).to.exist;
         expect(container.instructions).to.exist;
         expect(container.resultComp).to.exist;
         expect(container.buildOutput).to.exist;
-        expect(container.buildOutput.participation).to.deep.equal(exercise.studentParticipations[0]);
-        expect(container.instructions.participation).to.deep.equal(exercise.studentParticipations[0]);
+        expect(container.buildOutput.participation).to.deep.equal(exercise.agentParticipations[0]);
+        expect(container.instructions.participation).to.deep.equal(exercise.agentParticipations[0]);
 
         // New select solution repository
         // @ts-ignore
@@ -381,7 +381,7 @@ describe('CodeEditorInstructorIntegration', () => {
 
         expect(findWithParticipationsStub).to.have.been.calledOnceWithExactly(exercise.id);
         expect(setDomainSpy).to.have.been.calledTwice;
-        expect(setDomainSpy).to.have.been.calledWith([DomainType.PARTICIPATION, exercise.studentParticipations[0]]);
+        expect(setDomainSpy).to.have.been.calledWith([DomainType.PARTICIPATION, exercise.agentParticipations[0]]);
         expect(setDomainSpy).to.have.been.calledWith([DomainType.PARTICIPATION, exercise.solutionParticipation]);
     });
 
@@ -392,7 +392,7 @@ describe('CodeEditorInstructorIntegration', () => {
             problemStatement,
         } as ProgrammingExercise;
         // @ts-ignore
-        exercise.studentParticipations = [{ id: 2, repositoryUrl: 'test', exercise } as ProgrammingExerciseStudentParticipation];
+        exercise.agentParticipations = [{ id: 2, repositoryUrl: 'test', exercise } as ProgrammingExerciseAgentParticipation];
         exercise.templateParticipation = { id: 3, programmingExercise: exercise } as TemplateProgrammingExerciseParticipation;
         exercise.solutionParticipation = { id: 4, repositoryUrl: 'test3', programmingExercise: exercise } as SolutionProgrammingExerciseParticipation;
 

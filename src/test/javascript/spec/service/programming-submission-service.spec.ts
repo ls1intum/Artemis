@@ -17,7 +17,7 @@ import { IParticipationWebsocketService } from 'app/entities/participation/parti
 import { MockAlertService } from '../mocks/mock-alert.service';
 import { Submission } from 'app/entities/submission';
 import { Result } from 'app/entities/result';
-import { StudentParticipation } from 'app/entities/participation';
+import { AgentParticipation } from 'app/entities/participation';
 import { SERVER_API_URL } from 'app/app.constants';
 import { ProgrammingSubmission } from 'app/entities/programming-submission';
 
@@ -176,10 +176,10 @@ describe('ProgrammingSubmissionService', () => {
 
     it('should fetch the latest pending submissions for all participations of an exercise if preloadLatestPendingSubmissionsForExercise is called', async () => {
         const exerciseId = 3;
-        const participation1 = { id: 2 } as StudentParticipation;
-        const participation2 = { id: 3 } as StudentParticipation;
+        const participation1 = { id: 2 } as AgentParticipation;
+        const participation2 = { id: 3 } as AgentParticipation;
         // This participation will not be cached.
-        const participation3 = { id: 4 } as StudentParticipation;
+        const participation3 = { id: 4 } as AgentParticipation;
         let submissionState, submission;
 
         const pendingSubmissions = { [participation1.id]: currentSubmission, [participation2.id]: currentSubmission2 };

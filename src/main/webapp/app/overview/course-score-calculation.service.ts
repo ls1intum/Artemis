@@ -7,7 +7,7 @@ import { Participation } from '../entities/participation';
 
 import * as moment from 'moment';
 import { Moment } from 'moment';
-import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { AgentParticipation } from 'app/entities/participation/agent-participation.model';
 
 export const ABSOLUTE_SCORE = 'absoluteScore';
 export const RELATIVE_SCORE = 'relativeScore';
@@ -85,8 +85,8 @@ export class CourseScoreCalculationService {
     }
 
     getParticipationForExercise(exercise: Exercise): Participation | null {
-        if (exercise.studentParticipations != null && exercise.studentParticipations.length > 0) {
-            const exerciseParticipation: StudentParticipation = exercise.studentParticipations[0];
+        if (exercise.agentParticipations != null && exercise.agentParticipations.length > 0) {
+            const exerciseParticipation: AgentParticipation = exercise.agentParticipations[0];
             return CourseScoreCalculationService.convertDateForParticipationFromServer(exerciseParticipation);
         } else {
             return null;

@@ -3,11 +3,11 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { SERVER_API_URL } from 'app/app.constants';
 import { Result } from 'app/entities/result';
-import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation';
+import { ProgrammingExerciseAgentParticipation } from 'app/entities/participation';
 
 export interface IProgrammingExerciseParticipationService {
     getLatestResultWithFeedback: (participationId: number) => Observable<Result | null>;
-    getStudentParticipationWithLatestResult: (participationId: number) => Observable<ProgrammingExerciseStudentParticipation>;
+    getAgentParticipationWithLatestResult: (participationId: number) => Observable<ProgrammingExerciseAgentParticipation>;
     checkIfParticipationHasResult: (participationId: number) => Observable<boolean>;
 }
 
@@ -21,8 +21,8 @@ export class ProgrammingExerciseParticipationService implements IProgrammingExer
         return this.http.get<Result | null>(this.resourceUrl + participationId + '/latest-result-with-feedbacks');
     }
 
-    getStudentParticipationWithLatestResult(participationId: number) {
-        return this.http.get<ProgrammingExerciseStudentParticipation>(this.resourceUrl + participationId + '/student-participation-with-latest-result-and-feedbacks');
+    getAgentParticipationWithLatestResult(participationId: number) {
+        return this.http.get<ProgrammingExerciseAgentParticipation>(this.resourceUrl + participationId + '/student-participation-with-latest-result-and-feedbacks');
     }
 
     checkIfParticipationHasResult(participationId: number): Observable<boolean> {

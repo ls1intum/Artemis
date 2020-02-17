@@ -19,7 +19,7 @@ import { Result } from 'app/entities/result';
 import { DeviceDetectorService } from 'ngx-device-detector';
 import { Exercise, ExerciseType, ParticipationStatus } from 'app/entities/exercise';
 import { of } from 'rxjs';
-import { InitializationState, StudentParticipation } from 'app/entities/participation';
+import { InitializationState, AgentParticipation } from 'app/entities/participation';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../../mocks/mock-account.service';
 import * as moment from 'moment';
@@ -139,13 +139,13 @@ describe('CourseExerciseRowComponent', () => {
     it('Participation status of programming exercise should evaluate to INITIALIZED', () => {
         setupExercise(ExerciseType.PROGRAMMING, moment());
 
-        const studentParticipation = {
+        const agentParticipation = {
             id: 1,
             initializationState: InitializationState.INITIALIZED,
-        } as StudentParticipation;
-        comp.exercise.studentParticipations = [studentParticipation];
+        } as AgentParticipation;
+        comp.exercise.agentParticipations = [agentParticipation];
 
-        getAllParticipationsStub.returns(studentParticipation);
+        getAllParticipationsStub.returns(agentParticipation);
         comp.ngOnInit();
 
         expect(comp.exercise.participationStatus).to.equal(ParticipationStatus.INITIALIZED);
@@ -154,13 +154,13 @@ describe('CourseExerciseRowComponent', () => {
     it('Participation status of programming exercise should evaluate to INACTIVE', () => {
         setupExercise(ExerciseType.PROGRAMMING, moment());
 
-        const studentParticipation = {
+        const agentParticipation = {
             id: 1,
             initializationState: InitializationState.UNINITIALIZED,
-        } as StudentParticipation;
-        comp.exercise.studentParticipations = [studentParticipation];
+        } as AgentParticipation;
+        comp.exercise.agentParticipations = [agentParticipation];
 
-        getAllParticipationsStub.returns(of(studentParticipation));
+        getAllParticipationsStub.returns(of(agentParticipation));
         comp.ngOnInit();
 
         expect(comp.exercise.participationStatus).to.equal(ParticipationStatus.INACTIVE);
@@ -185,18 +185,18 @@ describe('CourseExerciseRowComponent', () => {
         } as QuizExercise;
 
         if (hasParticipations) {
-            const studentParticipation = {
+            const agentParticipation = {
                 id: 1,
                 initializationState,
-            } as StudentParticipation;
+            } as AgentParticipation;
 
             if (hasResults) {
-                studentParticipation.results = [{ id: 1 } as Result];
+                agentParticipation.results = [{ id: 1 } as Result];
             }
 
-            comp.exercise.studentParticipations = [studentParticipation];
+            comp.exercise.agentParticipations = [agentParticipation];
 
-            getAllParticipationsStub.returns(studentParticipation);
+            getAllParticipationsStub.returns(agentParticipation);
         }
 
         comp.ngOnInit();
@@ -206,13 +206,13 @@ describe('CourseExerciseRowComponent', () => {
         const dueDate = inDueDate ? moment().add(3, 'days') : moment().subtract(3, 'days');
         setupExercise(exerciseType, dueDate);
 
-        const studentParticipation = {
+        const agentParticipation = {
             id: 1,
             initializationState,
-        } as StudentParticipation;
-        comp.exercise.studentParticipations = [studentParticipation];
+        } as AgentParticipation;
+        comp.exercise.agentParticipations = [agentParticipation];
 
-        getAllParticipationsStub.returns(studentParticipation);
+        getAllParticipationsStub.returns(agentParticipation);
         comp.ngOnInit();
     };
 

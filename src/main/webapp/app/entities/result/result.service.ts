@@ -9,7 +9,7 @@ import { isMoment } from 'moment';
 import { Result } from './result.model';
 import { createRequestOption } from 'app/shared';
 import { Feedback } from 'app/entities/feedback';
-import { StudentParticipation } from 'app/entities/participation';
+import { AgentParticipation } from 'app/entities/participation';
 import { ExerciseService } from 'app/entities/exercise';
 
 export type EntityResponseType = HttpResponse<Result>;
@@ -97,7 +97,7 @@ export class ResultService implements IResultService {
         if (res.body) {
             res.body.forEach((result: Result) => {
                 result.completionDate = result.completionDate != null ? moment(result.completionDate) : null;
-                result.participation = this.convertParticipationDateFromServer(result.participation! as StudentParticipation);
+                result.participation = this.convertParticipationDateFromServer(result.participation! as AgentParticipation);
             });
         }
         return res;
@@ -106,12 +106,12 @@ export class ResultService implements IResultService {
     public convertDateFromServer(res: EntityResponseType): EntityResponseType {
         if (res.body) {
             res.body.completionDate = res.body.completionDate != null ? moment(res.body.completionDate) : null;
-            res.body.participation = this.convertParticipationDateFromServer(res.body.participation! as StudentParticipation);
+            res.body.participation = this.convertParticipationDateFromServer(res.body.participation! as AgentParticipation);
         }
         return res;
     }
 
-    convertParticipationDateFromServer(participation: StudentParticipation) {
+    convertParticipationDateFromServer(participation: AgentParticipation) {
         if (participation) {
             participation.initializationDate = participation.initializationDate != null ? moment(participation.initializationDate) : null;
             if (participation.exercise) {

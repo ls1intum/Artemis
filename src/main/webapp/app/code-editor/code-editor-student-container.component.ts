@@ -3,7 +3,7 @@ import { Observable } from 'rxjs';
 import { Subscription } from 'rxjs/Subscription';
 import { catchError, flatMap, map, tap } from 'rxjs/operators';
 import * as moment from 'moment';
-import { StudentParticipation } from 'app/entities/participation';
+import { AgentParticipation } from 'app/entities/participation';
 import { ParticipationService } from 'app/entities/participation/participation.service';
 import { CodeEditorContainer } from './';
 import { TranslateService } from '@ngx-translate/core';
@@ -40,7 +40,7 @@ export class CodeEditorStudentContainerComponent extends CodeEditorContainer imp
     PROGRAMMING = ExerciseType.PROGRAMMING;
 
     paramSub: Subscription;
-    participation: StudentParticipation;
+    participation: AgentParticipation;
     exercise: ProgrammingExercise;
 
     // Fatal error state: when the participation can't be retrieved, the code editor is unusable for the student
@@ -106,9 +106,9 @@ export class CodeEditorStudentContainerComponent extends CodeEditorContainer imp
      * Load the participation from server with the latest result.
      * @param participationId
      */
-    loadParticipationWithLatestResult(participationId: number): Observable<StudentParticipation | null> {
-        return this.programmingExerciseParticipationService.getStudentParticipationWithLatestResult(participationId).pipe(
-            flatMap((participation: StudentParticipation) =>
+    loadParticipationWithLatestResult(participationId: number): Observable<AgentParticipation | null> {
+        return this.programmingExerciseParticipationService.getAgentParticipationWithLatestResult(participationId).pipe(
+            flatMap((participation: AgentParticipation) =>
                 participation.results && participation.results.length
                     ? this.loadResultDetails(participation.results[0]).pipe(
                           map(feedback => {
