@@ -1,12 +1,11 @@
 import { NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
-
-import { ArtemisSharedModule } from '../shared';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
-import { HomeComponent } from '../home';
-import { JhiMainComponent } from '../layouts';
 import { ModelingStatisticsComponent } from './modeling-statistics.component';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
+import { JhiMainComponent } from 'app/layouts/main/main.component';
+import { HomeComponent } from 'app/home/home.component';
 
 const ENTITY_STATES = [
     {

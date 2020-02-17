@@ -1,23 +1,25 @@
 import { Injectable, OnDestroy } from '@angular/core';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/alert/alert.service';
 import { Subject, Subscription } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
-import { DomainChange, DomainDependent, DomainService } from 'app/code-editor/service/code-editor-domain.service';
+import { DomainService } from 'app/code-editor/service/code-editor-domain.service';
 import { ProgrammingSubmissionService, ProgrammingSubmissionState } from 'app/programming-submission/programming-submission.service';
-import { DomainType } from 'app/code-editor/service/code-editor-repository.service';
-import { SolutionProgrammingExerciseParticipation, StudentParticipation } from 'app/entities/participation';
+import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { SolutionProgrammingExerciseParticipation } from 'app/entities/participation/solution-programming-exercise-participation.model';
+import { DomainChange, DomainType } from 'app/code-editor/model/code-editor.model';
+import { DomainDependentService } from 'app/code-editor/service/code-editor-domain-dependent.service';
 
 /**
  * Wrapper service for using the currently selected participation id in the code-editor for retrieving the submission state.
  */
 @Injectable({ providedIn: 'root' })
-export class CodeEditorSubmissionService extends DomainDependent implements OnDestroy {
+export class CodeEditorSubmissionService extends DomainDependentService implements OnDestroy {
     private participationId: number | null;
     private exerciseId: number | null;
     private isBuildingSubject = new Subject<boolean>();
     private submissionSubscription: Subscription;
 
-    constructor(domainService: DomainService, private submissionService: ProgrammingSubmissionService, private alertService: JhiAlertService) {
+    constructor(domainService: DomainService, private submissionService: ProgrammingSubmissionService, private alertService: AlertService) {
         super(domainService);
         this.initDomainSubscription();
     }

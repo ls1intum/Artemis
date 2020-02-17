@@ -1,20 +1,21 @@
 import { ChangeDetectorRef, Component, ElementRef, EventEmitter, HostListener, Input, OnChanges, OnInit, Output, SimpleChanges, ViewChild, ViewEncapsulation } from '@angular/core';
-import { DragAndDropQuestion } from 'app/entities/drag-and-drop-question';
 import { ArtemisMarkdown } from 'app/components/util/markdown.service';
 import { DragAndDropQuestionUtil } from 'app/components/util/drag-and-drop-question-util.service';
 import { FileUploaderService } from 'app/shared/http/file-uploader.service';
-import { DropLocation } from 'app/entities/drop-location';
-import { DragItem } from 'app/entities/drag-item';
-import { DragAndDropMapping } from 'app/entities/drag-and-drop-mapping';
 import { DragAndDropMouseEvent } from 'app/entities/drag-item/drag-and-drop-mouse-event.class';
 import { DragState } from 'app/entities/drag-item/drag-state.enum';
 import * as $ from 'jquery';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import * as TempID from 'app/quiz/edit/temp-id';
-import { DomainCommand, ExplanationCommand, HintCommand } from 'app/markdown-editor/domainCommands';
-import { MarkdownEditorComponent } from 'app/markdown-editor';
 import { EditQuizQuestion } from 'app/quiz/edit/edit-quiz-question.interface';
 import { resizeImage } from 'app/utils/drag-and-drop.utils';
+import { HintCommand } from 'app/markdown-editor/domainCommands/hint.command';
+import { ExplanationCommand } from 'app/markdown-editor/domainCommands/explanation.command';
+import { DragAndDropMapping } from 'app/entities/drag-and-drop-mapping/drag-and-drop-mapping.model';
+import { DragAndDropQuestion } from 'app/entities/drag-and-drop-question/drag-and-drop-question.model';
+import { MarkdownEditorComponent } from 'app/markdown-editor/markdown-editor.component';
+import { DragItem } from 'app/entities/drag-item/drag-item.model';
+import { DropLocation } from 'app/entities/drop-location/drop-location.model';
+import { DomainCommand } from 'app/markdown-editor/domainCommands/domainCommand';
 
 @Component({
     selector: 'jhi-edit-drag-and-drop-question',

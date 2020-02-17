@@ -3,13 +3,12 @@ import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import * as moment from 'moment';
 import { map } from 'rxjs/operators';
-
 import { SERVER_API_URL } from 'app/app.constants';
-import { createRequestOption } from 'app/shared';
+import { createRequestOption } from 'app/shared/util/request-util';
 import { Router } from '@angular/router';
 import { SystemNotification } from 'app/entities/system-notification/system-notification.model';
 import { AccountService } from 'app/core/auth/account.service';
-import { NotificationService } from 'app/entities/notification';
+import { NotificationService } from 'app/entities/notification/notification.service';
 
 type EntityResponseType = HttpResponse<SystemNotification>;
 type EntityArrayResponseType = HttpResponse<SystemNotification[]>;

@@ -6,13 +6,15 @@ import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
 import { TreeviewModule } from 'ngx-treeview';
 import { ArtemisTestModule } from '../../test.module';
-import { ArtemisSharedModule } from 'app/shared';
-import { Lecture, LectureAttachmentsComponent } from 'app/entities/lecture';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { ActivatedRoute } from '@angular/router';
 import { FormDateTimePickerModule } from 'app/shared/date-time-picker/date-time-picker.module';
-import { Attachment, AttachmentService } from 'app/entities/attachment';
 import { By } from '@angular/platform-browser';
 import { FileUploaderService } from 'app/shared/http/file-uploader.service';
+import { Lecture } from 'app/entities/lecture/lecture.model';
+import { Attachment } from 'app/entities/attachment/attachment.model';
+import { LectureAttachmentsComponent } from 'app/entities/lecture/lecture-attachments.component';
+import { AttachmentService } from 'app/entities/attachment/attachment.service';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -118,7 +120,7 @@ describe('LectureAttachmentsComponent', () => {
             .then(() => {
                 fixture = TestBed.createComponent(LectureAttachmentsComponent);
                 comp = fixture.componentInstance;
-                fileUploaderService = TestBed.get(FileUploaderService);
+                fileUploaderService = TestBed.inject(FileUploaderService);
             });
     });
 
@@ -139,7 +141,7 @@ describe('LectureAttachmentsComponent', () => {
         const uploadAttachmentButton = fixture.debugElement.query(By.css('#upload-attachment'));
         expect(uploadAttachmentButton).to.exist;
         expect(comp.attachmentToBeCreated).to.exist;
-        comp.attachmentToBeCreated.name = 'Test File Name';
+        comp.attachmentToBeCreated!.name = 'Test File Name';
         spyOn(fileUploaderService, 'uploadFile').and.returnValue(Promise.resolve({ path: 'test' }));
         uploadAttachmentButton.nativeElement.click();
 
@@ -162,7 +164,7 @@ describe('LectureAttachmentsComponent', () => {
         const uploadAttachmentButton = fixture.debugElement.query(By.css('#upload-attachment'));
         expect(uploadAttachmentButton).to.exist;
         expect(comp.attachmentToBeCreated).to.exist;
-        comp.attachmentToBeCreated.name = 'Test File Name';
+        comp.attachmentToBeCreated!.name = 'Test File Name';
         uploadAttachmentButton.nativeElement.click();
         tick();
         fixture.detectChanges();

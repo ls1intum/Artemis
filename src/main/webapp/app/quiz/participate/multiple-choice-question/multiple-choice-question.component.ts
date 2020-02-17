@@ -1,10 +1,10 @@
 import { Component, EventEmitter, Input, Output, ViewEncapsulation } from '@angular/core';
-import { ArtemisMarkdown } from '../../../components/util/markdown.service';
-import { MultipleChoiceQuestion } from '../../../entities/multiple-choice-question';
-import { AnswerOption } from '../../../entities/answer-option';
-import { Result } from 'app/entities/result';
-import { QuizExercise } from 'app/entities/quiz-exercise';
-import { RenderedQuizQuestionMarkDownElement } from 'app/entities/quiz-question';
+import { ArtemisMarkdown } from 'app/components/util/markdown.service';
+import { AnswerOption } from 'app/entities/answer-option/answer-option.model';
+import { MultipleChoiceQuestion } from 'app/entities/multiple-choice-question/multiple-choice-question.model';
+import { RenderedQuizQuestionMarkDownElement } from 'app/entities/quiz-question/quiz-question.model';
+import { Result } from 'app/entities/result/result.model';
+import { QuizExercise } from 'app/entities/quiz-exercise/quiz-exercise.model';
 
 @Component({
     selector: 'jhi-multiple-choice-question',

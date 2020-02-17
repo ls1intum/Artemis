@@ -2,10 +2,9 @@ import { HttpClient, HttpEvent, HttpHandler, HttpInterceptor, HttpParams, HttpRe
 import { Injectable } from '@angular/core';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { Observable } from 'rxjs/Observable';
-
-import { BuildLogEntry } from '../../entities/build-log';
-import { SERVER_API_URL } from '../../app.constants';
-import { FileType } from '../ace-editor/file-change.model';
+import { FileType } from '../../code-editor/model/code-editor.model';
+import { BuildLogEntry } from 'app/entities/build-log/build-log.model';
+import { SERVER_API_URL } from 'app/app.constants';
 
 @Injectable({ providedIn: 'root' })
 export class RepositoryService {

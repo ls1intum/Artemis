@@ -1,12 +1,13 @@
 import { Component, OnInit } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { JhiEventManager } from 'ng-jhipster';
-import { QuizExercise, QuizExerciseService } from '../../entities/quiz-exercise';
 import { QuizReEvaluateService } from './quiz-re-evaluate.service';
-import { QuizQuestion, QuizQuestionType } from '../../entities/quiz-question';
-import { MultipleChoiceQuestion } from '../../entities/multiple-choice-question';
-import { DragAndDropQuestion } from '../../entities/drag-and-drop-question';
-import { ShortAnswerQuestion } from '../../entities/short-answer-question';
+import { ShortAnswerQuestion } from 'app/entities/short-answer-question/short-answer-question.model';
+import { QuizExerciseService } from 'app/entities/quiz-exercise/quiz-exercise.service';
+import { QuizQuestion, QuizQuestionType } from 'app/entities/quiz-question/quiz-question.model';
+import { DragAndDropQuestion } from 'app/entities/drag-and-drop-question/drag-and-drop-question.model';
+import { MultipleChoiceQuestion } from 'app/entities/multiple-choice-question/multiple-choice-question.model';
+import { QuizExercise } from 'app/entities/quiz-exercise/quiz-exercise.model';
 
 @Component({
     selector: 'jhi-quiz-re-evaluate-warning',

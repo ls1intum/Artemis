@@ -3,21 +3,23 @@ import { Location } from '@angular/common';
 import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
-import { JhiAlertService } from 'ng-jhipster';
-import { Result, ResultService } from 'app/entities/result';
-import { FileUploadExercise } from 'app/entities/file-upload-exercise';
+import { AlertService } from 'app/core/alert/alert.service';
 import * as moment from 'moment';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { FileUploadSubmission } from 'app/entities/file-upload-submission';
 import { FileUploadSubmissionService } from 'app/entities/file-upload-submission/file-upload-submission.service';
 import { FileUploaderService } from 'app/shared/http/file-uploader.service';
-import { ComponentCanDeactivate, FileService } from 'app/shared';
 import { MAX_SUBMISSION_FILE_SIZE } from 'app/shared/constants/input.constants';
 import { FileUploadAssessmentsService } from 'app/entities/file-upload-assessment/file-upload-assessment.service';
-import { ButtonType } from 'app/shared/components';
 import { omit } from 'lodash';
 import { ParticipationWebsocketService } from 'app/entities/participation/participation-websocket.service';
-import { participationStatus } from 'app/entities/exercise';
+import { FileUploadExercise } from 'app/entities/file-upload-exercise/file-upload-exercise.model';
+import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
+import { FileService } from 'app/shared/http/file.service';
+import { ResultService } from 'app/entities/result/result.service';
+import { FileUploadSubmission } from 'app/entities/file-upload-submission/file-upload-submission.model';
+import { participationStatus } from 'app/entities/exercise/exercise-utils';
+import { ButtonType } from 'app/shared/components/button.component';
+import { Result } from 'app/entities/result/result.model';
 
 @Component({
     templateUrl: './file-upload-submission.component.html',
@@ -48,7 +50,7 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
         private fileUploadSubmissionService: FileUploadSubmissionService,
         private fileUploaderService: FileUploaderService,
         private resultService: ResultService,
-        private jhiAlertService: JhiAlertService,
+        private jhiAlertService: AlertService,
         private location: Location,
         private translateService: TranslateService,
         private fileService: FileService,

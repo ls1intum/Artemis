@@ -1,7 +1,8 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs/Subscription';
-import { SystemNotification, SystemNotificationService } from 'app/entities/system-notification';
+import { SystemNotification } from 'app/entities/system-notification/system-notification.model';
+import { SystemNotificationService } from 'app/entities/system-notification/system-notification.service';
 
 @Component({
     selector: 'jhi-notification-mgmt-detail',

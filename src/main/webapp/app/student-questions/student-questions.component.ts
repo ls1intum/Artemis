@@ -1,12 +1,14 @@
 import { Component, Input, OnDestroy, OnInit } from '@angular/core';
-import { Exercise, ExerciseService } from 'app/entities/exercise';
-import { StudentQuestion, StudentQuestionService } from 'app/entities/student-question';
 import { User } from 'app/core/user/user.model';
 import * as moment from 'moment';
 import { HttpResponse } from '@angular/common/http';
 import { QuestionActionName, StudentQuestionAction } from 'app/student-questions/student-question-row.component';
-import { Lecture } from 'app/entities/lecture';
+import { Lecture } from 'app/entities/lecture/lecture.model';
 import { AccountService } from 'app/core/auth/account.service';
+import { StudentQuestion } from 'app/entities/student-question/student-question.model';
+import { StudentQuestionService } from 'app/entities/student-question/student-question.service';
+import { Exercise } from 'app/entities/exercise/exercise.model';
+import { ExerciseService } from 'app/entities/exercise/exercise.service';
 
 @Component({
     selector: 'jhi-student-questions',

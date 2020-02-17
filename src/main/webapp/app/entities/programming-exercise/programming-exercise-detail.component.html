@@ -137,7 +137,7 @@
                         <jhi-programming-exercise-instructor-status
                             *ngIf="programmingExercise.templateParticipation.results?.length"
                             class="repository-status-icon mr-2"
-                            [participationType]="ParticipationType.TEMPLATE"
+                            [participationType]="ProgrammingExerciseParticipationType.TEMPLATE"
                             [participation]="programmingExercise.templateParticipation"
                             [exercise]="programmingExercise"
                         ></jhi-programming-exercise-instructor-status>
@@ -162,7 +162,7 @@
                         <jhi-programming-exercise-instructor-status
                             *ngIf="programmingExercise.solutionParticipation.results?.length"
                             class="repository-status-icon mr-2"
-                            [participationType]="ParticipationType.SOLUTION"
+                            [participationType]="ProgrammingExerciseParticipationType.SOLUTION"
                             [participation]="programmingExercise.solutionParticipation"
                             [exercise]="programmingExercise"
                         ></jhi-programming-exercise-instructor-status>

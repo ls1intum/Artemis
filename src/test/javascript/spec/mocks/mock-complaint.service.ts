@@ -1,8 +1,8 @@
 import { EntityResponseType, IComplaintService } from 'app/entities/complaint/complaint.service';
-import { Complaint, ComplaintType } from 'app/entities/complaint';
 import { User } from 'app/core/user/user.model';
-import { Result } from 'app/entities/result';
+import { Result } from 'app/entities/result/result.model';
 import { Observable, of } from 'rxjs';
+import { Complaint, ComplaintType } from 'app/entities/complaint/complaint.model';
 
 export const MockComplaintResponse: any = {
     body: {

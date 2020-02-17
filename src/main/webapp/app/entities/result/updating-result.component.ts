@@ -2,15 +2,16 @@ import { Component, Input, OnChanges, OnDestroy, SimpleChanges } from '@angular/
 import { orderBy as _orderBy } from 'lodash';
 import { Subscription } from 'rxjs';
 import { filter, map, tap } from 'rxjs/operators';
-import { hasParticipationChanged, StudentParticipation } from 'app/entities/participation';
 import { ParticipationWebsocketService } from 'app/entities/participation/participation-websocket.service';
-import { Result, ResultService } from '.';
 import { RepositoryService } from 'app/entities/repository/repository.service';
-
 import * as moment from 'moment';
-import { Exercise, ExerciseType } from 'app/entities/exercise';
 import { ProgrammingSubmissionService, ProgrammingSubmissionState } from 'app/programming-submission/programming-submission.service';
-import { SubmissionType } from 'app/entities/submission';
+import { Exercise, ExerciseType } from 'app/entities/exercise/exercise.model';
+import { ResultService } from 'app/entities/result/result.service';
+import { SubmissionType } from 'app/entities/submission/submission.model';
+import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { hasParticipationChanged } from 'app/entities/participation/participation-utils';
+import { Result } from 'app/entities/result/result.model';
 
 /**
  * A component that wraps the result component, updating its result on every websocket result event for the logged in user.
