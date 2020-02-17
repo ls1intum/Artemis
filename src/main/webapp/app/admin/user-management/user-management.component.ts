@@ -1,15 +1,15 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { HttpErrorResponse, HttpHeaders, HttpResponse } from '@angular/common/http';
 import { ActivatedRoute, Router } from '@angular/router';
-import { JhiAlertService, JhiEventManager, JhiParseLinks } from 'ng-jhipster';
+import { JhiEventManager, JhiParseLinks } from 'ng-jhipster';
 import { Subscription } from 'rxjs/Subscription';
-
-import { ITEMS_PER_PAGE } from 'app/shared';
 import { onError } from 'app/utils/global.utils';
 import { User } from 'app/core/user/user.model';
 import { UserService } from 'app/core/user/user.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { Subject } from 'rxjs';
+import { ITEMS_PER_PAGE } from 'app/shared/constants/pagination.constants';
+import { AlertService } from 'app/core/alert/alert.service';
 
 @Component({
     selector: 'jhi-user-management',
@@ -34,7 +34,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
 
     constructor(
         private userService: UserService,
-        private alertService: JhiAlertService,
+        private alertService: AlertService,
         private accountService: AccountService,
         private parseLinks: JhiParseLinks,
         private activatedRoute: ActivatedRoute,

@@ -2,11 +2,11 @@ import { Component } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { ProgrammingExerciseTriggerBuildButtonComponent } from './programming-exercise-trigger-build-button.component';
 import { ProgrammingSubmissionService } from 'app/programming-submission/programming-submission.service';
-import { SubmissionType } from 'app/entities/submission';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { ConfirmAutofocusModalComponent } from 'app/shared/components';
 import { ParticipationWebsocketService } from 'app/entities/participation/participation-websocket.service';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/alert/alert.service';
+import { SubmissionType } from 'app/entities/submission/submission.model';
+import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-button.component';
 
 @Component({
     selector: 'jhi-programming-exercise-instructor-trigger-build-button',
@@ -15,7 +15,7 @@ import { JhiAlertService } from 'ng-jhipster';
 export class ProgrammingExerciseInstructorTriggerBuildButtonComponent extends ProgrammingExerciseTriggerBuildButtonComponent {
     constructor(
         submissionService: ProgrammingSubmissionService,
-        alertService: JhiAlertService,
+        alertService: AlertService,
         participationWebsocketService: ParticipationWebsocketService,
         private translateService: TranslateService,
         private modalService: NgbModal,

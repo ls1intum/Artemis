@@ -3,27 +3,30 @@ import { Observable } from 'rxjs';
 import { Subscription } from 'rxjs/Subscription';
 import { catchError, flatMap, map, tap } from 'rxjs/operators';
 import * as moment from 'moment';
-import { StudentParticipation } from 'app/entities/participation';
 import { ParticipationService } from 'app/entities/participation/participation.service';
-import { CodeEditorContainer } from './';
 import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute } from '@angular/router';
-import { Result, ResultService } from 'app/entities/result';
-import { Feedback } from 'app/entities/feedback';
-
-import { JhiAlertService } from 'ng-jhipster';
-import { CodeEditorFileService, CodeEditorSessionService, DomainService, DomainType } from 'app/code-editor/service';
-import { ProgrammingExercise } from 'app/entities/programming-exercise';
+import { AlertService } from 'app/core/alert/alert.service';
 import { ProgrammingExerciseParticipationService } from 'app/entities/programming-exercise/services/programming-exercise-participation.service';
-import { CodeEditorFileBrowserComponent } from 'app/code-editor/file-browser';
-import { CodeEditorActionsComponent } from 'app/code-editor/actions';
-import { CodeEditorBuildOutputComponent } from 'app/code-editor/build-output';
-import { CodeEditorInstructionsComponent } from 'app/code-editor/instructions';
-import { CodeEditorAceComponent } from 'app/code-editor/ace';
-import { ExerciseType } from 'app/entities/exercise';
-import { ButtonSize } from 'app/shared/components';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { codeEditorTour } from 'app/guided-tour/tours/code-editor-tour';
+import { CodeEditorBuildOutputComponent } from 'app/code-editor/build-output/code-editor-build-output.component';
+import { ButtonSize } from 'app/shared/components/button.component';
+import { CodeEditorSessionService } from 'app/code-editor/service/code-editor-session.service';
+import { ResultService } from 'app/entities/result/result.service';
+import { DomainService } from 'app/code-editor/service/code-editor-domain.service';
+import { CodeEditorFileService } from 'app/code-editor/service/code-editor-file.service';
+import { CodeEditorActionsComponent } from 'app/code-editor/actions/code-editor-actions.component';
+import { CodeEditorAceComponent } from 'app/code-editor/ace/code-editor-ace.component';
+import { ExerciseType } from 'app/entities/exercise/exercise.model';
+import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { Result } from 'app/entities/result/result.model';
+import { CodeEditorContainer } from 'app/code-editor/code-editor-mode-container.component';
+import { Feedback } from 'app/entities/feedback/feedback.model';
+import { CodeEditorInstructionsComponent } from 'app/code-editor/instructions/code-editor-instructions.component';
+import { CodeEditorFileBrowserComponent } from 'app/code-editor/file-browser/code-editor-file-browser.component';
+import { ProgrammingExercise } from 'app/entities/programming-exercise/programming-exercise.model';
+import { DomainType } from 'app/code-editor/model/code-editor.model';
 
 @Component({
     selector: 'jhi-code-editor-student',
@@ -56,7 +59,7 @@ export class CodeEditorStudentContainerComponent extends CodeEditorContainer imp
         participationService: ParticipationService,
         translateService: TranslateService,
         route: ActivatedRoute,
-        jhiAlertService: JhiAlertService,
+        jhiAlertService: AlertService,
         sessionService: CodeEditorSessionService,
         fileService: CodeEditorFileService,
     ) {

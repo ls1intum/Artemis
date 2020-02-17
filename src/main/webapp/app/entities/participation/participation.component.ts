@@ -1,19 +1,20 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Subscription } from 'rxjs/Subscription';
-import { JhiAlertService, JhiEventManager } from 'ng-jhipster';
-
+import { JhiEventManager } from 'ng-jhipster';
 import { Participation } from './participation.model';
 import { ParticipationService } from './participation.service';
 import { ActivatedRoute } from '@angular/router';
-import { areManualResultsAllowed, Exercise, ExerciseType } from '../exercise';
-import { ExerciseService } from 'app/entities/exercise';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ExerciseSubmissionState, ProgrammingSubmissionService, ProgrammingSubmissionState } from 'app/programming-submission/programming-submission.service';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Subject } from 'rxjs';
 import { tap } from 'rxjs/operators';
-import { FeatureToggle } from 'app/feature-toggle';
+import { Exercise, ExerciseType } from 'app/entities/exercise/exercise.model';
+import { areManualResultsAllowed } from 'app/entities/exercise/exercise-utils';
+import { FeatureToggle } from 'app/feature-toggle/feature-toggle.service';
+import { ExerciseService } from 'app/entities/exercise/exercise.service';
+import { AlertService } from 'app/core/alert/alert.service';
 
 enum FilterProp {
     ALL = 'all',
@@ -57,7 +58,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
     constructor(
         private route: ActivatedRoute,
         private participationService: ParticipationService,
-        private jhiAlertService: JhiAlertService,
+        private jhiAlertService: AlertService,
         private eventManager: JhiEventManager,
         private exerciseService: ExerciseService,
         private programmingSubmissionService: ProgrammingSubmissionService,

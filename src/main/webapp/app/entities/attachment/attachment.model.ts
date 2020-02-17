@@ -1,7 +1,7 @@
 import { Moment } from 'moment';
-import { BaseEntity } from 'app/shared';
-import { Exercise } from 'app/entities/exercise';
-import { Lecture } from 'app/entities/lecture';
+import { BaseEntity } from 'app/shared/model/base-entity';
+import { Lecture } from 'app/entities/lecture/lecture.model';
+import { Exercise } from 'app/entities/exercise/exercise.model';
 
 export const enum AttachmentType {
     FILE = 'FILE',

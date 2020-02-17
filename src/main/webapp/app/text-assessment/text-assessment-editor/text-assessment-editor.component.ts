@@ -1,6 +1,6 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { SelectionRectangle, TextSelectEvent } from './text-select.directive';
-import { Feedback } from 'app/entities/feedback';
+import { Feedback } from 'app/entities/feedback/feedback.model';
 import { TextBlock } from 'app/entities/text-block/text-block.model';
 
 @Component({

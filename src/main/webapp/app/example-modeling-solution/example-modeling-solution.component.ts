@@ -1,13 +1,14 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { SafeHtml } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/alert/alert.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { ModelingExercise, ModelingExerciseService } from 'app/entities/modeling-exercise';
-import { ModelingEditorComponent } from 'app/modeling-editor';
 import { UMLModel } from '@ls1intum/apollon';
 import { ArtemisMarkdown } from 'app/components/util/markdown.service';
+import { ModelingEditorComponent } from 'app/modeling-editor/modeling-editor.component';
+import { ModelingExercise } from 'app/entities/modeling-exercise/modeling-exercise.model';
+import { ModelingExerciseService } from 'app/entities/modeling-exercise/modeling-exercise.service';
 
 @Component({
     selector: 'jhi-example-modeling-solution',
@@ -26,7 +27,7 @@ export class ExampleModelingSolutionComponent implements OnInit {
 
     constructor(
         private exerciseService: ModelingExerciseService,
-        private jhiAlertService: JhiAlertService,
+        private jhiAlertService: AlertService,
         private accountService: AccountService,
         private route: ActivatedRoute,
         private router: Router,

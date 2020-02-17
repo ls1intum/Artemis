@@ -1,14 +1,14 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { Course } from 'app/entities/course';
+import { Course } from 'app/entities/course/course.model';
 import { CourseService } from 'app/entities/course/course.service';
 import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs/Subscription';
 import { LangChangeEvent, TranslateService } from '@ngx-translate/core';
 import { HttpResponse } from '@angular/common/http';
 import * as moment from 'moment';
-import { ExerciseService } from 'app/entities/exercise';
-import { Lecture } from 'app/entities/lecture';
-import { CourseScoreCalculationService } from 'app/overview';
+import { Lecture } from 'app/entities/lecture/lecture.model';
+import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
+import { ExerciseService } from 'app/entities/exercise/exercise.service';
 
 @Component({
     selector: 'jhi-course-lectures',

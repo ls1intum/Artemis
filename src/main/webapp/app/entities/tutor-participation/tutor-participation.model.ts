@@ -1,7 +1,7 @@
-import { Exercise } from '../exercise';
 import { User } from 'app/core/user/user.model';
-import { ExampleSubmission } from '../example-submission/example-submission.model';
-import { BaseEntity } from 'app/shared';
+import { BaseEntity } from 'app/shared/model/base-entity';
+import { Exercise } from 'app/entities/exercise/exercise.model';
+import { ExampleSubmission } from 'app/entities/example-submission/example-submission.model';
 
 export const enum TutorParticipationStatus {
     NOT_PARTICIPATED = 'NOT_PARTICIPATED',

@@ -5,7 +5,7 @@ import { NgbActiveModal, NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstra
 import { JhiEventManager } from 'ng-jhipster';
 
 import { TutorGroupService } from './tutor-group.service';
-import { TutorGroup } from 'app/entities/tutor-group';
+import { TutorGroup } from 'app/entities/tutor-group/tutor-group.model';
 
 @Component({
     selector: 'jhi-tutor-group-delete-dialog',
