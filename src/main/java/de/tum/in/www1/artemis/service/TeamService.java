@@ -25,6 +25,10 @@ public class TeamService {
         this.authCheckService = authCheckService;
     }
 
+    public boolean isAssignedToTeam(Exercise exercise, User user) {
+        return teamRepository.findOneByExerciseIdAndUserId(exercise.getId(), user.getId()).isPresent();
+    }
+
     public Team save(Exercise exercise, Team team) {
         // verify that students are not assigned yet to another team for this exercise
         List<Pair<User, Team>> conflicts = findStudentTeamConflicts(exercise, team);

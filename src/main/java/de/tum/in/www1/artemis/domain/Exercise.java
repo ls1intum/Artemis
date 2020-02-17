@@ -18,6 +18,7 @@ import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.domain.participation.TeamParticipation;
 import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
@@ -120,6 +121,11 @@ public abstract class Exercise implements Serializable {
     @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
     @JsonIgnoreProperties("exercise")
     private Set<StudentParticipation> studentParticipations = new HashSet<>();
+
+    @OneToMany(mappedBy = "exercise", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
+    @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
+    @JsonIgnoreProperties("exercise")
+    private Set<TeamParticipation> teamParticipations = new HashSet<>();
 
     @OneToMany(mappedBy = "assessedExercise", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
@@ -395,8 +401,33 @@ public abstract class Exercise implements Serializable {
         return this;
     }
 
-    public void setStudentParticipations(Set<StudentParticipation> studentParticipations) {
-        this.studentParticipations = studentParticipations;
+    public void setStudentParticipations(Set<StudentParticipation> participations) {
+        this.studentParticipations = participations;
+    }
+
+    public Set<TeamParticipation> getTeamParticipations() {
+        return teamParticipations;
+    }
+
+    public Exercise teamParticipations(Set<TeamParticipation> participations) {
+        this.teamParticipations = participations;
+        return this;
+    }
+
+    public Exercise addTeamParticipation(TeamParticipation participation) {
+        this.teamParticipations.add(participation);
+        participation.setExercise(this);
+        return this;
+    }
+
+    public Exercise removeTeamParticipation(TeamParticipation participation) {
+        this.teamParticipations.remove(participation);
+        participation.setExercise(null);
+        return this;
+    }
+
+    public void setTeamParticipations(Set<TeamParticipation> participations) {
+        this.teamParticipations = participations;
     }
 
     public Course getCourse() {

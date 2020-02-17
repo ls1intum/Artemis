@@ -84,10 +84,13 @@ public class ParticipationResource {
 
     private final GuidedTourConfiguration guidedTourConfiguration;
 
+    private final TeamService teamService;
+
     public ParticipationResource(ParticipationService participationService, ProgrammingExerciseParticipationService programmingExerciseParticipationService,
             CourseService courseService, QuizExerciseService quizExerciseService, ExerciseService exerciseService, AuthorizationCheckService authCheckService,
             Optional<ContinuousIntegrationService> continuousIntegrationService, AuthorizationCheckService authorizationCheckService, TextSubmissionService textSubmissionService,
-            ResultService resultService, UserService userService, AuditEventRepository auditEventRepository, GuidedTourConfiguration guidedTourConfiguration) {
+            ResultService resultService, UserService userService, AuditEventRepository auditEventRepository, GuidedTourConfiguration guidedTourConfiguration,
+            TeamService teamService) {
         this.participationService = participationService;
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.quizExerciseService = quizExerciseService;
@@ -101,6 +104,7 @@ public class ParticipationResource {
         this.userService = userService;
         this.auditEventRepository = auditEventRepository;
         this.guidedTourConfiguration = guidedTourConfiguration;
+        this.teamService = teamService;
     }
 
     /**
@@ -164,6 +168,11 @@ public class ParticipationResource {
                     && (pExercise.getBuildAndTestStudentSubmissionsAfterDueDate() != null || pExercise.getAssessmentType() != AssessmentType.AUTOMATIC))) {
                 return forbidden();
             }
+        }
+
+        // users cannot start a team-based exercise if they have not been assigned to a team yet
+        if (exercise.isTeamMode() && !teamService.isAssignedToTeam(exercise, user)) {
+            return forbidden();
         }
 
         StudentParticipation participation = participationService.startExercise(exercise, user);
