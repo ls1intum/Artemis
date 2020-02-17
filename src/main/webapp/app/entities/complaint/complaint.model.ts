@@ -1,7 +1,7 @@
 import { Moment } from 'moment';
-import { Result } from '../result';
 import { User } from 'app/core/user/user.model';
-import { BaseEntity } from 'app/shared';
+import { BaseEntity } from 'app/shared/model/base-entity';
+import { Result } from 'app/entities/result/result.model';
 
 export enum ComplaintType {
     COMPLAINT = 'COMPLAINT',

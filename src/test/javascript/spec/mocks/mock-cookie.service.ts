@@ -1,4 +1,4 @@
-import { CookieOptions, ICookieService } from 'ngx-cookie';
+import { CookieOptions, ICookieService } from 'ngx-cookie-service';
 
 export class MockCookieService implements ICookieService {
     get(key: string): string {
@@ -6,11 +6,11 @@ export class MockCookieService implements ICookieService {
     }
 
     getAll(): Object {
-        return undefined;
+        return {};
     }
 
     getObject(key: string): Object {
-        return undefined;
+        return {};
     }
 
     put(key: string, value: string, options?: CookieOptions): void {}

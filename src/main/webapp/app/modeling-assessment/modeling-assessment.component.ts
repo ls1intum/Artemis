@@ -1,8 +1,8 @@
 import { AfterViewInit, Component, ElementRef, EventEmitter, Input, OnChanges, OnDestroy, Output, Renderer2, SimpleChanges, ViewChild } from '@angular/core';
 import { ApollonEditor, ApollonMode, Assessment, Selection, UMLDiagramType, UMLElementType, UMLModel, UMLRelationshipType } from '@ls1intum/apollon';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/alert/alert.service';
 import interact from 'interactjs';
-import { Feedback } from 'app/entities/feedback';
+import { Feedback } from 'app/entities/feedback/feedback.model';
 import * as $ from 'jquery';
 
 @Component({
@@ -31,7 +31,7 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
     @Output() feedbackChanged = new EventEmitter<Feedback[]>();
     @Output() selectionChanged = new EventEmitter<Selection>();
 
-    constructor(private jhiAlertService: JhiAlertService, private renderer: Renderer2) {}
+    constructor(private jhiAlertService: AlertService, private renderer: Renderer2) {}
 
     ngAfterViewInit(): void {
         this.initializeApollonEditor();

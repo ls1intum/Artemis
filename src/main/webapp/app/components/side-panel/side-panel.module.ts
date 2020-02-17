@@ -1,6 +1,6 @@
 import { NgModule } from '@angular/core';
 
-import { ArtemisSharedModule } from 'app/shared';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { SidePanelComponent } from './side-panel.component';
 
 @NgModule({

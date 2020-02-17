@@ -2,11 +2,11 @@ import { Injectable } from '@angular/core';
 import { SERVER_API_URL } from 'app/app.constants';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { Result } from 'app/entities/result';
-import { Feedback } from 'app/entities/feedback';
-import { ComplaintResponse } from 'app/entities/complaint-response';
 import { buildUrlWithParams } from 'app/utils/global.utils';
 import * as moment from 'moment';
+import { ComplaintResponse } from 'app/entities/complaint-response/complaint-response.model';
+import { Feedback } from 'app/entities/feedback/feedback.model';
+import { Result } from 'app/entities/result/result.model';
 
 export type EntityResponseType = HttpResponse<Result>;
 

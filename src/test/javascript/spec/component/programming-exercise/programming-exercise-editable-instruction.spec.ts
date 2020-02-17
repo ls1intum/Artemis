@@ -9,21 +9,22 @@ import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
 import { SinonSpy, SinonStub, spy, stub } from 'sinon';
 import { ArtemisTestModule } from '../../test.module';
-import { Participation, TemplateProgrammingExerciseParticipation } from 'src/main/webapp/app/entities/participation';
 import { ParticipationWebsocketService } from 'app/entities/participation/participation-websocket.service';
-import { Result, ResultService } from 'src/main/webapp/app/entities/result';
-import { MockResultService } from '../../mocks';
-import { ProgrammingExercise } from 'src/main/webapp/app/entities/programming-exercise';
-import { MockParticipationWebsocketService } from '../../mocks';
+import { MockResultService } from '../../mocks/mock-result.service';
+import { MockParticipationWebsocketService } from '../../mocks/mock-participation-websocket.service';
 import { MarkdownEditorComponent } from 'app/markdown-editor/markdown-editor.component';
 import { MockProgrammingExerciseTestCaseService } from '../../mocks/mock-programming-exercise-test-case.service';
 import { ArtemisProgrammingExerciseInstructionsEditorModule } from 'app/entities/programming-exercise/instructions/instructions-editor/programming-exercise-instructions-editor.module';
-import {
-    ProgrammingExerciseEditableInstructionComponent,
-    ProgrammingExerciseInstructionAnalysisComponent,
-} from 'app/entities/programming-exercise/instructions/instructions-editor';
 import { triggerChanges } from '../../utils/general.utils';
-import { ProgrammingExerciseParticipationService, ProgrammingExerciseTestCaseService } from 'app/entities/programming-exercise/services';
+import { Participation } from 'app/entities/participation/participation.model';
+import { ResultService } from 'app/entities/result/result.service';
+import { TemplateProgrammingExerciseParticipation } from 'app/entities/participation/template-programming-exercise-participation.model';
+import { ProgrammingExerciseParticipationService } from 'app/entities/programming-exercise/services/programming-exercise-participation.service';
+import { ProgrammingExerciseTestCaseService } from 'app/entities/programming-exercise/services/programming-exercise-test-case.service';
+import { Result } from 'app/entities/result/result.model';
+import { ProgrammingExercise } from 'app/entities/programming-exercise/programming-exercise.model';
+import { ProgrammingExerciseInstructionAnalysisComponent } from 'app/entities/programming-exercise/instructions/instructions-editor/analysis/programming-exercise-instruction-analysis.component';
+import { ProgrammingExerciseEditableInstructionComponent } from 'app/entities/programming-exercise/instructions/instructions-editor/programming-exercise-editable-instruction.component';
 
 chai.use(sinonChai);
 const expect = chai.expect;

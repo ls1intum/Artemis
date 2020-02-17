@@ -1,13 +1,9 @@
 import * as chai from 'chai';
-import { TextEditorComponent, textEditorRoute } from 'app/text-editor';
 import { DebugElement } from '@angular/core';
 import * as moment from 'moment';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
-import { TextExercise } from 'app/entities/text-exercise';
-import { StudentParticipation } from 'app/entities/participation';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
-import { Result, SubmissionResultStatusComponent } from 'app/entities/result';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/alert/alert.service';
 import { ArtemisTestModule } from '../../test.module';
 import { TranslateModule } from '@ngx-translate/core';
 import { MockTextEditorService } from '../../mocks/mock-text-editor.service';
@@ -15,15 +11,21 @@ import { SinonStub, stub } from 'sinon';
 import * as sinonChai from 'sinon-chai';
 import { TextEditorService } from 'app/text-editor/text-editor.service';
 import { BehaviorSubject } from 'rxjs';
-import { ArtemisSharedModule } from 'app/shared';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { RouterTestingModule } from '@angular/router/testing';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { MockSyncStorage } from '../../mocks';
+import { MockSyncStorage } from '../../mocks/mock-sync.storage';
 import { MockComponent } from 'ng-mocks';
-import { ButtonComponent } from 'app/shared/components';
 import { TextResultComponent } from 'app/text-editor/text-result/text-result.component';
-import { ComplaintsComponent } from 'app/complaints';
 import { ComplaintInteractionsComponent } from 'app/complaints/complaint-interactions.component';
+import { SubmissionResultStatusComponent } from 'app/entities/result/submission-result-status.component';
+import { TextEditorComponent } from 'app/text-editor/text-editor.component';
+import { textEditorRoute } from 'app/text-editor/text-editor.route';
+import { TextExercise } from 'app/entities/text-exercise/text-exercise.model';
+import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { ButtonComponent } from 'app/shared/components/button.component';
+import { Result } from 'app/entities/result/result.model';
+import { ComplaintsComponent } from 'app/complaints/complaints.component';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -53,7 +55,7 @@ describe('TableEditableFieldComponent', () => {
                 MockComponent(ComplaintInteractionsComponent),
             ],
             providers: [
-                JhiAlertService,
+                AlertService,
                 { provide: ActivatedRoute, useValue: route },
                 { provide: TextEditorService, useClass: MockTextEditorService },
                 { provide: LocalStorageService, useClass: MockSyncStorage },

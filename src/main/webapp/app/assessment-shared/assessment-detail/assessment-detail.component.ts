@@ -1,7 +1,7 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { HighlightColors } from 'app/text-assessment/highlight-colors';
-import { Feedback, FeedbackType } from 'app/entities/feedback';
 import { TextBlock } from 'app/entities/text-block/text-block.model';
+import { Feedback, FeedbackType } from 'app/entities/feedback/feedback.model';
 
 @Component({
     selector: 'jhi-assessment-detail',

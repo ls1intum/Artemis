@@ -1,4 +1,4 @@
-import { FeatureToggle } from 'app/feature-toggle';
+import { FeatureToggle } from 'app/feature-toggle/feature-toggle.service';
 import { of } from 'rxjs';
 
 export class MockFeatureToggleService {

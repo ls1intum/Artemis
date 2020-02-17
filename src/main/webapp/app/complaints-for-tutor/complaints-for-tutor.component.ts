@@ -1,15 +1,15 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/alert/alert.service';
 import { ComplaintService } from 'app/entities/complaint/complaint.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ComplaintResponseService } from 'app/entities/complaint-response/complaint-response.service';
-import { ComplaintResponse } from 'app/entities/complaint-response';
-import { Complaint, ComplaintType } from 'app/entities/complaint';
+import { ComplaintResponse } from 'app/entities/complaint-response/complaint-response.model';
+import { Complaint, ComplaintType } from 'app/entities/complaint/complaint.model';
 
 @Component({
     selector: 'jhi-complaints-for-tutor-form',
     templateUrl: './complaints-for-tutor.component.html',
-    providers: [JhiAlertService],
+    providers: [],
 })
 export class ComplaintsForTutorComponent implements OnInit {
     @Input() complaint: Complaint;
@@ -22,7 +22,7 @@ export class ComplaintsForTutorComponent implements OnInit {
     complaintResponse: ComplaintResponse = new ComplaintResponse();
     ComplaintType = ComplaintType;
 
-    constructor(private complaintService: ComplaintService, private jhiAlertService: JhiAlertService, private complaintResponseService: ComplaintResponseService) {}
+    constructor(private complaintService: ComplaintService, private jhiAlertService: AlertService, private complaintResponseService: ComplaintResponseService) {}
 
     ngOnInit(): void {
         this.complaintText = this.complaint.complaintText;

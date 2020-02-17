@@ -1,8 +1,8 @@
 import { Injectable } from '@angular/core';
-import { DragAndDropQuestion } from '../../entities/drag-and-drop-question';
-import { DragAndDropMapping } from '../../entities/drag-and-drop-mapping';
-import { DropLocation } from '../../entities/drop-location';
-import { DragItem } from '../../entities/drag-item';
+import { DragAndDropMapping } from 'app/entities/drag-and-drop-mapping/drag-and-drop-mapping.model';
+import { DragAndDropQuestion } from 'app/entities/drag-and-drop-question/drag-and-drop-question.model';
+import { DragItem } from 'app/entities/drag-item/drag-item.model';
+import { DropLocation } from 'app/entities/drop-location/drop-location.model';
 
 @Injectable({ providedIn: 'root' })
 export class DragAndDropQuestionUtil {

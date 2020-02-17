@@ -1,18 +1,19 @@
 import { Input, OnChanges, OnDestroy, SimpleChanges } from '@angular/core';
-import { filter, tap, catchError } from 'rxjs/operators';
-import { Subscription, of } from 'rxjs';
+import { filter, tap } from 'rxjs/operators';
+import { Subscription } from 'rxjs';
 import { compose, head, orderBy } from 'lodash/fp';
 import { ProgrammingSubmissionService, ProgrammingSubmissionState } from 'app/programming-submission/programming-submission.service';
-import { hasParticipationChanged, InitializationState, Participation } from 'app/entities/participation';
+import { InitializationState, Participation } from 'app/entities/participation/participation.model';
+import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
 import { ParticipationWebsocketService } from 'app/entities/participation/participation-websocket.service';
-import { ProgrammingExercise } from 'app/entities/programming-exercise';
-import { ButtonSize, ButtonType } from 'app/shared/components';
-import { SubmissionType } from 'app/entities/submission';
-import { AssessmentType } from 'app/entities/assessment-type';
 import { hasDeadlinePassed } from 'app/entities/programming-exercise/utils/programming-exercise.utils';
-import { FeatureToggle } from 'app/feature-toggle';
-import { Result } from 'app/entities/result';
-import { JhiAlertService } from 'ng-jhipster';
+import { Result } from 'app/entities/result/result.model';
+import { FeatureToggle } from 'app/feature-toggle/feature-toggle.service';
+import { AssessmentType } from 'app/entities/assessment-type/assessment-type.model';
+import { SubmissionType } from 'app/entities/submission/submission.model';
+import { ProgrammingExercise } from 'app/entities/programming-exercise/programming-exercise.model';
+import { hasParticipationChanged } from 'app/entities/participation/participation-utils';
+import { AlertService } from 'app/core/alert/alert.service';
 
 /**
  * Component for triggering a build for the CURRENT submission of the student (does not create a new commit!).
@@ -42,7 +43,7 @@ export abstract class ProgrammingExerciseTriggerBuildButtonComponent implements 
     protected constructor(
         protected submissionService: ProgrammingSubmissionService,
         protected participationWebsocketService: ParticipationWebsocketService,
-        protected alertService: JhiAlertService,
+        protected alertService: AlertService,
     ) {}
 
     /**

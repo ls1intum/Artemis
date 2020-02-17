@@ -9,7 +9,7 @@ import { TutorGroupComponent } from './tutor-group.component';
 import { TutorGroupDetailComponent } from './tutor-group-detail.component';
 import { TutorGroupUpdateComponent } from './tutor-group-update.component';
 import { TutorGroupDeletePopupComponent } from './tutor-group-delete-dialog.component';
-import { TutorGroup } from 'app/entities/tutor-group';
+import { TutorGroup } from 'app/entities/tutor-group/tutor-group.model';
 
 @Injectable({ providedIn: 'root' })
 export class TutorGroupResolve implements Resolve<TutorGroup> {

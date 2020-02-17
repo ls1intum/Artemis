@@ -1,15 +1,15 @@
 import { Component, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleChanges } from '@angular/core';
-import { ButtonSize, ButtonType } from 'app/shared/components';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { ProgrammingAssessmentManualResultDialogComponent } from 'app/programming-assessment/manual-result/programming-assessment-manual-result-dialog.component';
-import { Result } from 'app/entities/result';
-import { AssessmentType } from 'app/entities/assessment-type';
+import { Result } from 'app/entities/result/result.model';
 import { Subscription } from 'rxjs';
 import { ParticipationWebsocketService } from 'app/entities/participation/participation-websocket.service';
 import { filter } from 'rxjs/operators';
 import { cloneDeep } from 'lodash';
-import { ProgrammingExercise } from 'app/entities/programming-exercise';
 import { User } from 'app/core/user/user.model';
+import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
+import { AssessmentType } from 'app/entities/assessment-type/assessment-type.model';
+import { ProgrammingExercise } from 'app/entities/programming-exercise/programming-exercise.model';
 
 @Component({
     selector: 'jhi-programming-assessment-manual-result',

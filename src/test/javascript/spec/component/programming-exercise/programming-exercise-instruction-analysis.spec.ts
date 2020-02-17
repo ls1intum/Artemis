@@ -9,12 +9,13 @@ import * as sinonChai from 'sinon-chai';
 import { SinonSpy, SinonStub, spy, stub } from 'sinon';
 import { ArtemisTestModule } from '../../test.module';
 import { ArtemisProgrammingExerciseInstructionsEditorModule } from 'app/entities/programming-exercise/instructions/instructions-editor/programming-exercise-instructions-editor.module';
-import { ProgrammingExerciseInstructionAnalysisComponent, ProgrammingExerciseInstructionAnalysisService } from 'app/entities/programming-exercise/instructions/instructions-editor';
 import { ExerciseHint } from 'app/entities/exercise-hint/exercise-hint.model';
 import { TaskCommand } from 'app/markdown-editor/domainCommands/programming-exercise/task.command';
-import { ExerciseHintService, IExerciseHintService } from 'app/entities/exercise-hint';
 import { HttpResponse } from '@angular/common/http';
 import { triggerChanges } from '../../utils/general.utils';
+import { ExerciseHintService, IExerciseHintService } from 'app/entities/exercise-hint/exercise-hint.service';
+import { ProgrammingExerciseInstructionAnalysisComponent } from 'app/entities/programming-exercise/instructions/instructions-editor/analysis/programming-exercise-instruction-analysis.component';
+import { ProgrammingExerciseInstructionAnalysisService } from 'app/entities/programming-exercise/instructions/instructions-editor/analysis/programming-exercise-instruction-analysis.service';
 
 chai.use(sinonChai);
 const expect = chai.expect;

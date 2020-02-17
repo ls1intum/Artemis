@@ -1,22 +1,22 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Location } from '@angular/common';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/alert/alert.service';
 import { AccountService } from 'app/core/auth/account.service';
-import { ExampleSubmission } from 'app/entities/example-submission/example-submission.model';
-import { ExerciseService } from 'app/entities/exercise';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { ModelingSubmission } from 'app/entities/modeling-submission';
 import { ExampleSubmissionService } from 'app/entities/example-submission/example-submission.service';
-import { Feedback } from 'app/entities/feedback';
-import { Result } from 'app/entities/result';
-import { ModelingExercise } from 'app/entities/modeling-exercise';
+import { Result } from 'app/entities/result/result.model';
 import { TutorParticipationService } from 'app/tutor-exercise-dashboard/tutor-participation.service';
-import { TutorParticipation } from 'app/entities/tutor-participation';
-import { ModelingEditorComponent } from 'app/modeling-editor';
 import { UMLModel } from '@ls1intum/apollon';
 import { ModelingAssessmentComponent } from 'app/modeling-assessment/modeling-assessment.component';
-import { ModelingAssessmentService } from 'app/entities/modeling-assessment';
+import { ModelingEditorComponent } from 'app/modeling-editor/modeling-editor.component';
+import { ExampleSubmission } from 'app/entities/example-submission/example-submission.model';
+import { Feedback } from 'app/entities/feedback/feedback.model';
+import { ExerciseService } from 'app/entities/exercise/exercise.service';
+import { ModelingAssessmentService } from 'app/entities/modeling-assessment/modeling-assessment.service';
+import { ModelingSubmission } from 'app/entities/modeling-submission/modeling-submission.model';
+import { ModelingExercise } from 'app/entities/modeling-exercise/modeling-exercise.model';
+import { TutorParticipation } from 'app/entities/tutor-participation/tutor-participation.model';
 
 @Component({
     selector: 'jhi-example-modeling-submission',
@@ -55,7 +55,7 @@ export class ExampleModelingSubmissionComponent implements OnInit {
         private exampleSubmissionService: ExampleSubmissionService,
         private modelingAssessmentService: ModelingAssessmentService,
         private tutorParticipationService: TutorParticipationService,
-        private jhiAlertService: JhiAlertService,
+        private jhiAlertService: AlertService,
         private accountService: AccountService,
         private route: ActivatedRoute,
         private router: Router,

@@ -1,7 +1,7 @@
-import { ShortAnswerSolution } from '../short-answer-solution';
-import { ShortAnswerSpot } from '../short-answer-spot';
-import { ShortAnswerQuestion } from '../short-answer-question';
-import { BaseEntity } from 'app/shared';
+import { BaseEntity } from 'app/shared/model/base-entity';
+import { ShortAnswerQuestion } from 'app/entities/short-answer-question/short-answer-question.model';
+import { ShortAnswerSpot } from 'app/entities/short-answer-spot/short-answer-spot.model';
+import { ShortAnswerSolution } from 'app/entities/short-answer-solution/short-answer-solution.model';
 
 export class ShortAnswerMapping implements BaseEntity {
     public id: number;

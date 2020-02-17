@@ -1,10 +1,10 @@
 import { async, ComponentFixture, TestBed } from '@angular/core/testing';
-import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { HttpErrorResponse } from '@angular/common/http';
 import { of, throwError } from 'rxjs';
 
 import { ArtemisTestModule } from '../../../test.module';
 import { HealthComponent } from 'app/admin/health/health.component';
-import { HealthService, Health } from 'app/admin/health/health.service';
+import { Health, HealthService } from 'app/admin/health/health.service';
 
 describe('Component Tests', () => {
     describe('HealthComponent', () => {

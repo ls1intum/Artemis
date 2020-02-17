@@ -2,11 +2,12 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Subscription } from 'rxjs/Subscription';
-import { JhiAlertService, JhiEventManager } from 'ng-jhipster';
+import { JhiEventManager } from 'ng-jhipster';
 
 import { Course } from './course.model';
 import { CourseService } from './course.service';
-import { CachingStrategy } from 'app/shared';
+import { CachingStrategy } from 'app/shared/image/secured-image.component';
+import { AlertService } from 'app/core/alert/alert.service';
 
 @Component({
     selector: 'jhi-course-detail',
@@ -19,7 +20,7 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
     private subscription: Subscription;
     private eventSubscriber: Subscription;
 
-    constructor(private eventManager: JhiEventManager, private courseService: CourseService, private route: ActivatedRoute, private jhiAlertService: JhiAlertService) {}
+    constructor(private eventManager: JhiEventManager, private courseService: CourseService, private route: ActivatedRoute, private jhiAlertService: AlertService) {}
 
     ngOnInit() {
         this.subscription = this.route.params.subscribe(params => {

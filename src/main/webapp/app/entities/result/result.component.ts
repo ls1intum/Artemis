@@ -1,20 +1,23 @@
 import { Component, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
-import { getExercise, isModelingOrTextOrFileUpload, isParticipationInDueTime, isProgrammingOrQuiz, Participation } from 'app/entities/participation';
 import { ParticipationService } from 'app/entities/participation/participation.service';
 import { initializedResultWithScore } from 'app/entities/result/result-utils';
-import { Result, ResultDetailComponent, ResultService } from '.';
 import { RepositoryService } from 'app/entities/repository/repository.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { HttpClient } from '@angular/common/http';
-import { ExerciseType } from 'app/entities/exercise';
 import { MIN_POINTS_GREEN, MIN_POINTS_ORANGE } from 'app/app.constants';
 import { TranslateService } from '@ngx-translate/core';
 import { ProgrammingExercise } from 'app/entities/programming-exercise/programming-exercise.model';
 import * as moment from 'moment';
 import { isProgrammingExerciseStudentParticipation, isResultPreliminary } from 'app/entities/programming-exercise/utils/programming-exercise.utils';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
-import { ProgrammingSubmission } from 'app/entities/programming-submission';
-import { Submission, SubmissionExerciseType } from 'app/entities/submission';
+import { getExercise, Participation } from 'app/entities/participation/participation.model';
+import { ProgrammingSubmission } from 'app/entities/programming-submission/programming-submission.model';
+import { Submission, SubmissionExerciseType } from 'app/entities/submission/submission.model';
+import { isModelingOrTextOrFileUpload, isParticipationInDueTime, isProgrammingOrQuiz } from 'app/entities/participation/participation-utils';
+import { ResultService } from 'app/entities/result/result.service';
+import { ExerciseType } from 'app/entities/exercise/exercise.model';
+import { ResultDetailComponent } from 'app/entities/result/result-detail.component';
+import { Result } from 'app/entities/result/result.model';
 
 enum ResultTemplateStatus {
     IS_BUILDING = 'IS_BUILDING',

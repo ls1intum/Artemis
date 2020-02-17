@@ -9,7 +9,7 @@ import { TranslateModule } from '@ngx-translate/core';
 import { IdeFilterDirective } from './ide-filter.directive';
 import { IdeBuildAndTestService } from 'app/intellij/ide-build-and-test.service';
 import { FeatureToggleModule } from 'app/feature-toggle/feature-toggle.module';
-import { ArtemisSharedModule } from 'app/shared';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
 
 export function initJavaBridge(bridge: JavaBridgeService, win: WindowRef) {
     return () => JavaBridgeService.initBridge(bridge, win);
