@@ -1060,6 +1060,7 @@ public class DatabaseUtilService {
         quizExercise.addQuestions(createMultipleChoiceQuestion());
         quizExercise.addQuestions(createDragAndDropQuestion());
         quizExercise.addQuestions(createShortAnswerQuestion());
+        quizExercise.setMaxScore(quizExercise.getMaxTotalScore().doubleValue());
         return quizExercise;
     }
 

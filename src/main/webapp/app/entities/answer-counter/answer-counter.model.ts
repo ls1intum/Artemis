@@ -1,6 +1,6 @@
-import { AnswerOption } from '../answer-option';
-import { MultipleChoiceQuestionStatistic } from '../multiple-choice-question-statistic';
-import { QuizStatisticCounter } from '../quiz-statistic-counter';
+import { AnswerOption } from 'app/entities/answer-option/answer-option.model';
+import { QuizStatisticCounter } from 'app/entities/quiz-statistic-counter/quiz-statistic-counter.model';
+import { MultipleChoiceQuestionStatistic } from 'app/entities/multiple-choice-question-statistic/multiple-choice-question-statistic.model';
 
 export class AnswerCounter extends QuizStatisticCounter {
     public answer: AnswerOption;

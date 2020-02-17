@@ -1,8 +1,8 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/alert/alert.service';
 import { TUM_USERNAME_REGEX } from 'app/app.constants';
 import { AccountService } from 'app/core/auth/account.service';
-import { Course } from 'app/entities/course';
+import { Course } from 'app/entities/course/course.model';
 import { CourseService } from 'app/entities/course/course.service';
 
 const DEFAULT_COLORS = ['#6ae8ac', '#9dca53', '#94a11c', '#691b0b', '#ad5658', '#1b97ca', '#0d3cc2', '#0ab84f'];
@@ -21,7 +21,7 @@ export class CourseRegistrationSelectorComponent implements OnInit {
     addedSuccessful = false;
     loading = false;
 
-    constructor(private accountService: AccountService, private courseService: CourseService, private jhiAlertService: JhiAlertService) {}
+    constructor(private accountService: AccountService, private courseService: CourseService, private jhiAlertService: AlertService) {}
 
     ngOnInit(): void {
         this.accountService.identity().then(user => {

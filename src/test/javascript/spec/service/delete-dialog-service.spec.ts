@@ -2,14 +2,14 @@ import { TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
-import { ArtemisSharedModule } from 'app/shared';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { ArtemisTestModule } from '../test.module';
 import { DeleteDialogService } from 'app/shared/delete-dialog/delete-dialog.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import * as sinon from 'sinon';
 import { DeleteDialogComponent } from 'app/shared/delete-dialog/delete-dialog.component';
 import { TranslateModule } from '@ngx-translate/core';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/alert/alert.service';
 import { ActionType, DeleteDialogData } from 'app/shared/delete-dialog/delete-dialog.model';
 import { EventEmitter } from '@angular/core';
 
@@ -23,11 +23,11 @@ describe('Delete Dialog Service', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, ArtemisSharedModule, HttpClientTestingModule, TranslateModule.forRoot()],
-            providers: [DeleteDialogService, JhiAlertService],
+            providers: [DeleteDialogService, AlertService],
         });
 
-        service = TestBed.get(DeleteDialogService);
-        modalService = TestBed.get(NgbModal);
+        service = TestBed.inject(DeleteDialogService);
+        modalService = TestBed.inject(NgbModal);
     });
 
     it('should open delete dialog', () => {

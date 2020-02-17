@@ -1,19 +1,19 @@
 import { async, ComponentFixture, TestBed } from '@angular/core/testing';
 import * as chai from 'chai';
-import { ComplaintsForTutorComponent } from 'app/complaints-for-tutor';
 import { BrowserModule, By } from '@angular/platform-browser';
 import { ComplaintService } from 'app/entities/complaint/complaint.service';
 import { MockComplaintService } from '../../mocks/mock-complaint.service';
 import { MockAlertService } from '../../helpers/mock-alert.service';
-import { JhiAlertService } from 'ng-jhipster';
-import { ArtemisSharedModule } from 'app/shared';
+import { AlertService } from 'app/core/alert/alert.service';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { MomentModule } from 'ngx-moment';
 import { ClipboardModule } from 'ngx-clipboard';
 import { DebugElement } from '@angular/core';
 import { HttpClientModule } from '@angular/common/http';
 import { ComplaintResponseService } from 'app/entities/complaint-response/complaint-response.service';
-import { Complaint } from 'app/entities/complaint';
 import { TranslateModule } from '@ngx-translate/core';
+import { ComplaintsForTutorComponent } from 'app/complaints-for-tutor/complaints-for-tutor.component';
+import { Complaint } from 'app/entities/complaint/complaint.model';
 
 const expect = chai.expect;
 describe('ComplaintsForTutorComponent', () => {
@@ -48,7 +48,7 @@ describe('ComplaintsForTutorComponent', () => {
                     useClass: MockComplaintService,
                 },
                 {
-                    provide: JhiAlertService,
+                    provide: AlertService,
                     useClass: MockAlertService,
                 },
                 {

@@ -1,10 +1,10 @@
 import { User } from 'app/core/user/user.model';
-import { BaseEntity } from 'app/shared';
-import { Feedback } from '../feedback';
-import { Submission } from '../submission';
-import { Participation } from '../participation';
+import { BaseEntity } from 'app/shared/model/base-entity';
 import { Moment } from 'moment';
-import { AssessmentType } from 'app/entities/assessment-type';
+import { Participation } from 'app/entities/participation/participation.model';
+import { Submission } from 'app/entities/submission/submission.model';
+import { Feedback } from 'app/entities/feedback/feedback.model';
+import { AssessmentType } from 'app/entities/assessment-type/assessment-type.model';
 
 export class Result implements BaseEntity {
     public id: number;

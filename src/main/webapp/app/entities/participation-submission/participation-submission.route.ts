@@ -1,5 +1,4 @@
 import { Routes } from '@angular/router';
-
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { ParticipationSubmissionComponent } from 'app/entities/participation-submission/participation-submission.component';
 import { ParticipationSubmissionDeletePopupComponent } from 'app/entities/participation-submission/participation-submission-delete-dialog.component';

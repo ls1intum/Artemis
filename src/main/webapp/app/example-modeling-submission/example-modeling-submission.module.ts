@@ -1,20 +1,18 @@
 import { NgModule } from '@angular/core';
-
 import { RouterModule } from '@angular/router';
-
-import { ArtemisSharedModule } from '../shared';
-import { CourseComponent } from '../entities/course';
-import { JhiAlertService } from 'ng-jhipster';
-import { ArtemisResultModule } from '../entities/result';
-import { HomeComponent } from '../home';
+import { AlertService } from 'app/core/alert/alert.service';
 import { MomentModule } from 'ngx-moment';
-import { JhiMainComponent } from '../layouts';
 import { ClipboardModule } from 'ngx-clipboard';
 import { exampleModelingSubmissionRoute } from 'app/example-modeling-submission/example-modeling-submission.route';
 import { ExampleModelingSubmissionComponent } from 'app/example-modeling-submission/example-modeling-submission.component';
 import { ArtemisModelingEditorModule } from 'app/modeling-editor/modeling-editor.module';
 import { ModelingAssessmentModule } from 'app/modeling-assessment/modeling-assessment.module';
 import { AssessmentInstructionsModule } from 'app/assessment-instructions/assessment-instructions.module';
+import { JhiMainComponent } from 'app/layouts/main/main.component';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
+import { HomeComponent } from 'app/home/home.component';
+import { ArtemisResultModule } from 'app/entities/result/result.module';
+import { CourseComponent } from 'app/entities/course/course.component';
 
 const ENTITY_STATES = [...exampleModelingSubmissionRoute];
 
@@ -32,7 +30,7 @@ const ENTITY_STATES = [...exampleModelingSubmissionRoute];
     declarations: [ExampleModelingSubmissionComponent],
     exports: [],
     entryComponents: [HomeComponent, CourseComponent, JhiMainComponent],
-    providers: [JhiAlertService],
+    providers: [],
     schemas: [],
 })
 export class ArtemisExampleModelingSubmissionModule {}

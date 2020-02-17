@@ -12,6 +12,8 @@ export enum ExerciseView {
     INSTRUCTOR = 'INSTRUCTOR',
 }
 
+export interface IJavaBridgeService extends JavaDowncallBridge, JavaUpcallBridge {}
+
 export interface JavaDowncallBridge {
     onExerciseOpened(opened: number, view: string): void;
     isCloning(cloning: boolean): void;

@@ -1,6 +1,6 @@
-import { PointCounter } from '../point-counter';
-import { QuizStatistic } from '../quiz-statistic';
-import { QuizExercise } from '../quiz-exercise';
+import { PointCounter } from 'app/entities/point-counter/point-counter.model';
+import { QuizStatistic } from 'app/entities/quiz-statistic/quiz-statistic.model';
+import { QuizExercise } from 'app/entities/quiz-exercise/quiz-exercise.model';
 
 export class QuizPointStatistic extends QuizStatistic {
     public pointCounters: PointCounter[];

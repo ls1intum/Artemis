@@ -1,6 +1,6 @@
-import { BaseEntity } from 'app/shared';
-import { Result } from '../result';
+import { BaseEntity } from 'app/shared/model/base-entity';
 import { UMLModelElementType } from '@ls1intum/apollon';
+import { Result } from 'app/entities/result/result.model';
 
 export const enum FeedbackHighlightColor {
     RED = 'rgba(219, 53, 69, 0.6)',

@@ -1,15 +1,14 @@
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
-import { stub } from 'sinon';
+import { SinonStub, stub } from 'sinon';
 import { Component, DebugElement } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
-import { SinonStub } from 'sinon';
 import { ArtemisTestModule } from '../../test.module';
 import { ProgrammingExerciseUtilsModule } from 'app/entities/programming-exercise/utils/programming-exercise-utils.module';
 import { ProfileService } from 'app/layouts/profiles/profile.service';
 import { MockProfileService } from '../../mocks/mock-profile.service';
 import { BehaviorSubject } from 'rxjs';
-import { ProfileInfo } from 'app/layouts';
+import { ProfileInfo } from 'app/layouts/profiles/profile-info.model';
 import { By } from '@angular/platform-browser';
 
 chai.use(sinonChai);

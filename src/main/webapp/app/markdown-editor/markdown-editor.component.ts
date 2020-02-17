@@ -8,28 +8,27 @@ import 'brace/mode/latex';
 import 'brace/ext/language_tools';
 import { Interactable } from '@interactjs/core/Interactable';
 import interact from 'interactjs';
-import {
-    AttachmentCommand,
-    BoldCommand,
-    CodeCommand,
-    ColorPickerCommand,
-    Command,
-    FullscreenCommand,
-    HeadingOneCommand,
-    HeadingThreeCommand,
-    HeadingTwoCommand,
-    ItalicCommand,
-    LinkCommand,
-    OrderedListCommand,
-    ReferenceCommand,
-    UnderlineCommand,
-    UnorderedListCommand,
-} from 'app/markdown-editor/commands';
 import { ArtemisMarkdown } from 'app/components/util/markdown.service';
-import { DomainCommand, DomainMultiOptionCommand } from 'app/markdown-editor/domainCommands';
 import { ColorSelectorComponent } from 'app/components/color-selector/color-selector.component';
 import { DomainTagCommand } from './domainCommands/domainTag.command';
 import { escapeStringForUseInRegex } from 'app/utils/global.utils';
+import { UnderlineCommand } from 'app/markdown-editor/commands/underline.command';
+import { ColorPickerCommand } from 'app/markdown-editor/commands/colorPicker.command';
+import { BoldCommand } from 'app/markdown-editor/commands/bold.command';
+import { AttachmentCommand } from 'app/markdown-editor/commands/attachmentCommand';
+import { ReferenceCommand } from 'app/markdown-editor/commands/reference.command';
+import { DomainMultiOptionCommand } from 'app/markdown-editor/domainCommands/domainMultiOptionCommand';
+import { FullscreenCommand } from 'app/markdown-editor/commands/fullscreen.command';
+import { HeadingOneCommand } from 'app/markdown-editor/commands/headingOne.command';
+import { Command } from 'app/markdown-editor/commands/command';
+import { ItalicCommand } from 'app/markdown-editor/commands/italic.command';
+import { OrderedListCommand } from 'app/markdown-editor/commands/orderedListCommand';
+import { HeadingTwoCommand } from 'app/markdown-editor/commands/headingTwo.command';
+import { LinkCommand } from 'app/markdown-editor/commands/link.command';
+import { CodeCommand } from 'app/markdown-editor/commands/code.command';
+import { DomainCommand } from 'app/markdown-editor/domainCommands/domainCommand';
+import { UnorderedListCommand } from 'app/markdown-editor/commands/unorderedListCommand';
+import { HeadingThreeCommand } from 'app/markdown-editor/commands/headingThree.command';
 
 export enum MarkdownEditorHeight {
     SMALL = 200,

@@ -140,7 +140,7 @@
                                         ngbTooltip="Invalid Drop Locations and invalid Drag Items will be assessed as correct."
                                         placement="top"
                                         style="color:black;"
-                                        icon="question-circle"
+                                        [icon]="'question-circle'"
                                         *ngIf="dropLocation.invalid || question.invalid || invalidDragItemForDropLocation(dropLocation)"
                                     ></fa-icon>
                                 </div>
@@ -196,7 +196,7 @@
                                         ngbTooltip="Invalid Drop Locations and invalid Drag Items will be assessed as correct."
                                         placement="top"
                                         style="color:black;"
-                                        icon="question-circle"
+                                        [icon]="'question-circle'"
                                         *ngIf="dropLocation.invalid || question.invalid"
                                     ></fa-icon>
                                 </div>

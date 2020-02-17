@@ -1,26 +1,29 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { JhiAlertService, JhiEventManager } from 'ng-jhipster';
-import { Exercise, ExerciseService, ExerciseType } from 'app/entities/exercise';
+import { JhiEventManager } from 'ng-jhipster';
 import { UMLDiagramType } from '@ls1intum/apollon';
-import { Course } from 'app/entities/course';
+import { Course } from 'app/entities/course/course.model';
 import { CourseService } from 'app/entities/course/course.service';
-import { ModelingExercise } from 'app/entities/modeling-exercise';
 import { Subscription } from 'rxjs';
-import { ModelingSubmission, ModelingSubmissionService } from 'app/entities/modeling-submission';
 import { ActivatedRoute, Router } from '@angular/router';
-import { ResultService } from 'app/entities/result';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { AccountService } from 'app/core/auth/account.service';
 import { HttpResponse } from '@angular/common/http';
-import { ModelingAssessmentService } from 'app/entities/modeling-assessment';
 import { DifferencePipe } from 'ngx-moment';
 import { TranslateService } from '@ngx-translate/core';
-import { Submission } from 'app/entities/submission';
+import { ModelingSubmissionService } from 'app/entities/modeling-submission/modeling-submission.service';
+import { Exercise, ExerciseType } from 'app/entities/exercise/exercise.model';
+import { Submission } from 'app/entities/submission/submission.model';
+import { ModelingAssessmentService } from 'app/entities/modeling-assessment/modeling-assessment.service';
+import { ExerciseService } from 'app/entities/exercise/exercise.service';
+import { ModelingSubmission } from 'app/entities/modeling-submission/modeling-submission.model';
+import { ResultService } from 'app/entities/result/result.service';
+import { ModelingExercise } from 'app/entities/modeling-exercise/modeling-exercise.model';
+import { AlertService } from 'app/core/alert/alert.service';
 
 @Component({
     selector: 'jhi-assessment-dashboard',
     templateUrl: './modeling-assessment-dashboard.component.html',
-    providers: [JhiAlertService, ModelingAssessmentService],
+    providers: [],
 })
 export class ModelingAssessmentDashboardComponent implements OnInit, OnDestroy {
     // make constants available to html for comparison
@@ -52,7 +55,7 @@ export class ModelingAssessmentDashboardComponent implements OnInit, OnDestroy {
 
     constructor(
         private route: ActivatedRoute,
-        private jhiAlertService: JhiAlertService,
+        private jhiAlertService: AlertService,
         private router: Router,
         private momentDiff: DifferencePipe,
         private courseService: CourseService,

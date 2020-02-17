@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { VERSION } from 'app/app.constants';
 import { ProfileService } from 'app/layouts/profiles/profile.service';
-import { ProfileInfo } from 'app/layouts';
+import { ProfileInfo } from 'app/layouts/profiles/profile-info.model';
 import { filter, tap } from 'rxjs/operators';
 
 @Component({
