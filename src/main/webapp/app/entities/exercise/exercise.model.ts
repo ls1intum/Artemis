@@ -8,6 +8,8 @@ import { StudentQuestion } from 'app/entities/student-question';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { AssessmentType } from 'app/entities/assessment-type';
 import { TeamAssignmentConfig } from 'app/entities/team-assignment-config/team-assignment-config.model';
+import { TeamParticipation } from 'app/entities/participation';
+import { AgentParticipation } from 'app/entities/participation/agent-participation.model';
 
 export const enum DifficultyLevel {
     EASY = 'EASY',
@@ -68,6 +70,8 @@ export abstract class Exercise implements BaseEntity {
     public type: ExerciseType;
 
     public studentParticipations: StudentParticipation[];
+    public teamParticipations: TeamParticipation[];
+    public agentParticipations: AgentParticipation[];
     public tutorParticipations: TutorParticipation[];
     public course: Course | null;
     public participationStatus: ParticipationStatus;

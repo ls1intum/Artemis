@@ -6,19 +6,20 @@ import { map } from 'rxjs/operators';
 
 import { SERVER_API_URL } from 'app/app.constants';
 import { Course } from './course.model';
-import { ProgrammingExercise } from '../programming-exercise/programming-exercise.model';
-import { ModelingExercise } from '../modeling-exercise/modeling-exercise.model';
-import { TextExercise } from '../text-exercise/text-exercise.model';
-import { FileUploadExercise } from '../file-upload-exercise/file-upload-exercise.model';
-import { Exercise } from '../exercise/exercise.model';
-import { ExerciseService } from '../exercise/exercise.service';
+import { ProgrammingExercise } from 'app/entities/programming-exercise';
+import { ModelingExercise } from 'app/entities/modeling-exercise';
+import { TextExercise } from 'app/entities/text-exercise';
+import { FileUploadExercise } from 'app/entities/file-upload-exercise';
+import { Exercise } from 'app/entities/exercise';
+import { ExerciseService } from 'app/entities/exercise';
 import { User } from 'app/core/user/user.model';
 import { NotificationService } from 'app/entities/notification';
 import { LectureService } from 'app/entities/lecture/lecture.service';
 import { StatsForDashboard } from 'app/instructor-course-dashboard/stats-for-dashboard.model';
-import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { AgentParticipation } from 'app/entities/participation/agent-participation.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { ParticipationWebsocketService } from 'app/entities/participation/participation-websocket.service';
+import { StudentParticipation } from 'app/entities/participation';
 
 export type EntityResponseType = HttpResponse<Course>;
 export type EntityArrayResponseType = HttpResponse<Course[]>;
@@ -77,8 +78,8 @@ export class CourseService {
             .pipe(map((res: EntityArrayResponseType) => this.subscribeToCourseNotifications(res)));
     }
 
-    findAllParticipationsWithResults(courseId: number): Observable<StudentParticipation[]> {
-        return this.http.get<StudentParticipation[]>(`${this.resourceUrl}/${courseId}/participations`);
+    findAllParticipationsWithResults(courseId: number): Observable<AgentParticipation[]> {
+        return this.http.get<AgentParticipation[]>(`${this.resourceUrl}/${courseId}/participations`);
     }
 
     findAllResultsOfCourseForExerciseAndCurrentUser(courseId: number): Observable<Course> {
@@ -272,21 +273,21 @@ export class CourseExerciseService {
             .map((res: HttpResponse<FileUploadExercise[]>) => this.convertDateArrayFromServer(res));
     }
 
-    startExercise(courseId: number, exerciseId: number): Observable<StudentParticipation> {
-        return this.http.post<StudentParticipation>(`${this.resourceUrl}/${courseId}/exercises/${exerciseId}/participations`, {}).map((participation: StudentParticipation) => {
+    startExercise(courseId: number, exerciseId: number): Observable<AgentParticipation> {
+        return this.http.post<AgentParticipation>(`${this.resourceUrl}/${courseId}/exercises/${exerciseId}/participations`, {}).map((participation: AgentParticipation) => {
             return this.handleParticipation(participation);
         });
     }
 
-    resumeProgrammingExercise(courseId: number, exerciseId: number): Observable<StudentParticipation> {
+    resumeProgrammingExercise(courseId: number, exerciseId: number): Observable<AgentParticipation> {
         return this.http
-            .put<StudentParticipation>(`${this.resourceUrl}/${courseId}/exercises/${exerciseId}/resume-programming-participation`, {})
-            .map((participation: StudentParticipation) => {
+            .put<AgentParticipation>(`${this.resourceUrl}/${courseId}/exercises/${exerciseId}/resume-programming-participation`, {})
+            .map((participation: AgentParticipation) => {
                 return this.handleParticipation(participation);
             });
     }
 
-    handleParticipation(participation: StudentParticipation) {
+    handleParticipation(participation: AgentParticipation) {
         if (participation) {
             // convert date
             participation.initializationDate = participation.initializationDate ? moment(participation.initializationDate) : null;
@@ -294,9 +295,13 @@ export class CourseExerciseService {
                 const exercise = participation.exercise;
                 exercise.dueDate = exercise.dueDate ? moment(exercise.dueDate) : null;
                 exercise.releaseDate = exercise.releaseDate ? moment(exercise.releaseDate) : null;
-                exercise.studentParticipations = [participation];
+                exercise.agentParticipations = [participation];
             }
-            this.participationWebsocketService.addParticipation(participation);
+            if (participation instanceof StudentParticipation) {
+                this.participationWebsocketService.addParticipation(participation);
+            } else {
+                // TODO: handle generic agent
+            }
         }
         return participation;
     }

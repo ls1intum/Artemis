@@ -1,8 +1,9 @@
+import { Team } from 'app/entities/team/team.model';
 import { Exercise } from '../exercise';
 import { Participation, ParticipationType } from 'app/entities/participation/participation.model';
-import { Team } from 'app/entities/team/team.model';
+import { AgentParticipation } from 'app/entities/participation/agent-participation.model';
 
-export class TeamParticipation extends Participation {
+export class TeamParticipation extends Participation implements AgentParticipation {
     public team: Team;
     public exercise: Exercise;
 
@@ -12,5 +13,9 @@ export class TeamParticipation extends Participation {
 
     getExercise(): Exercise {
         return this.exercise;
+    }
+
+    getAgent(): Team {
+        return this.team;
     }
 }

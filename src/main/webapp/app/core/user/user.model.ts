@@ -15,6 +15,7 @@ export class User extends Account {
     constructor(
         id?: number,
         login?: string,
+        username?: string,
         firstName?: string,
         lastName?: string,
         email?: string,
@@ -38,6 +39,7 @@ export class User extends Account {
             langKey || undefined,
             lastName || undefined,
             login || undefined,
+            username || undefined,
             imageUrl || undefined,
         );
         this.id = id ? id : null;
