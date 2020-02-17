@@ -1,10 +1,12 @@
 import { Component, Input, OnInit } from '@angular/core';
-import { Result, ResultService } from 'app/entities/result';
-import { ComplaintService, ComplaintType } from 'app/entities/complaint';
-import { Exercise } from 'app/entities/exercise';
-import { StudentParticipation } from 'app/entities/participation';
+import { Exercise } from 'app/entities/exercise/exercise.model';
 import * as moment from 'moment';
 import { MAX_COMPLAINT_TIME_WEEKS } from 'app/complaints/complaint.constants';
+import { ComplaintType } from 'app/entities/complaint/complaint.model';
+import { ResultService } from 'app/entities/result/result.service';
+import { ComplaintService } from 'app/entities/complaint/complaint.service';
+import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { Result } from 'app/entities/result/result.model';
 
 @Component({
     selector: 'jhi-complaint-interactions',

@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { ProgrammingExercise } from 'app/entities/programming-exercise';
+import { ProgrammingExercise } from 'app/entities/programming-exercise/programming-exercise.model';
 
 /**
  * The actions of the test case table:

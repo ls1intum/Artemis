@@ -2,13 +2,13 @@ import { Injectable } from '@angular/core';
 import { BehaviorSubject, of } from 'rxjs';
 import { switchMap, tap } from 'rxjs/operators';
 import { Participation } from './participation.model';
-import { Result } from 'app/entities/result';
-import { Exercise } from 'app/entities/exercise';
+import { Result } from 'app/entities/result/result.model';
+import { Exercise } from 'app/entities/exercise/exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ParticipationService } from 'app/entities/participation/participation.service';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import * as moment from 'moment';
-import { ProgrammingExercise } from 'app/entities/programming-exercise';
+import { ProgrammingExercise } from 'app/entities/programming-exercise/programming-exercise.model';
 
 const RESULTS_WEBSOCKET = 'results_';
 const PARTICIPATION_WEBSOCKET = 'participation_';

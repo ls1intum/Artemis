@@ -1,6 +1,6 @@
-import { SubmittedAnswer } from '../submitted-answer';
-import { DragAndDropMapping } from '../drag-and-drop-mapping';
-import { QuizQuestionType } from '../quiz-question';
+import { SubmittedAnswer } from 'app/entities/submitted-answer/submitted-answer.model';
+import { DragAndDropMapping } from 'app/entities/drag-and-drop-mapping/drag-and-drop-mapping.model';
+import { QuizQuestionType } from 'app/entities/quiz-question/quiz-question.model';
 
 export class DragAndDropSubmittedAnswer extends SubmittedAnswer {
     public mappings: DragAndDropMapping[];

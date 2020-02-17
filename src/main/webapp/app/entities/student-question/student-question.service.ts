@@ -3,10 +3,8 @@ import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import * as moment from 'moment';
 import { map } from 'rxjs/operators';
-
 import { SERVER_API_URL } from 'app/app.constants';
-import { createRequestOption } from 'app/shared';
-import { StudentQuestion } from 'app/entities/student-question';
+import { StudentQuestion } from 'app/entities/student-question/student-question.model';
 
 type EntityResponseType = HttpResponse<StudentQuestion>;
 type EntityArrayResponseType = HttpResponse<StudentQuestion[]>;

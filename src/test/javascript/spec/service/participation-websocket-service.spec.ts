@@ -3,11 +3,11 @@ import * as chai from 'chai';
 import { SinonSpy, SinonStub, spy, stub } from 'sinon';
 import { BehaviorSubject, Subject } from 'rxjs';
 import * as sinonChai from 'sinon-chai';
-import { Participation } from '../../../../main/webapp/app/entities/participation';
 import { ParticipationWebsocketService } from 'app/entities/participation/participation-websocket.service';
 import { MockWebsocketService } from '../mocks/mock-websocket.service';
-import { IWebsocketService } from 'app/core/websocket/websocket.service.ts';
-import { Result } from '../../../../main/webapp/app/entities/result';
+import { Participation } from 'app/entities/participation/participation.model';
+import { Result } from 'app/entities/result/result.model';
+import { IWebsocketService } from 'app/core/websocket/websocket.service';
 
 chai.use(sinonChai);
 const expect = chai.expect;

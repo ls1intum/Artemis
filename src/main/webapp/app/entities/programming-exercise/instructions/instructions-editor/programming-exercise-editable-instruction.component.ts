@@ -1,25 +1,27 @@
 import { AfterViewInit, Component, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleChanges, ViewChild, ViewEncapsulation } from '@angular/core';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/alert/alert.service';
 import Interactable from '@interactjs/core/Interactable';
 import interact from 'interactjs';
 import { Observable, of, Subject, Subscription, throwError } from 'rxjs';
 import { catchError, map as rxMap, switchMap, tap } from 'rxjs/operators';
-import { Participation } from 'app/entities/participation';
 import { compose, filter, flatten, map, sortBy, toPairs, values } from 'lodash/fp';
-import { DomainCommand } from 'app/markdown-editor/domainCommands';
 import { TaskCommand } from 'app/markdown-editor/domainCommands/programming-exercise/task.command';
 import { TestCaseCommand } from 'app/markdown-editor/domainCommands/programming-exercise/testCase.command';
-import { MarkdownEditorComponent } from 'app/markdown-editor';
-import { ProgrammingExerciseParticipationService, ProgrammingExerciseService, ProgrammingExerciseTestCaseService } from 'app/entities/programming-exercise/services';
 import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise/programming-exercise-test-case.model';
-import { Result } from 'app/entities/result';
-import { hasExerciseChanged } from 'app/entities/exercise';
-import { KatexCommand } from 'app/markdown-editor/commands';
 import { TaskHintCommand } from 'app/markdown-editor/domainCommands/programming-exercise/task-hint.command';
-import { ExerciseHintService } from 'app/entities/exercise-hint';
 import { ExerciseHint } from 'app/entities/exercise-hint/exercise-hint.model';
-import { ProgrammingExercise } from 'app/entities/programming-exercise';
 import { ProblemStatementAnalysis } from 'app/entities/programming-exercise/instructions/instructions-editor/analysis/programming-exercise-instruction-analysis.model';
+import { Participation } from 'app/entities/participation/participation.model';
+import { ProgrammingExerciseService } from 'app/entities/programming-exercise/services/programming-exercise.service';
+import { ProgrammingExercise } from 'app/entities/programming-exercise/programming-exercise.model';
+import { hasExerciseChanged } from 'app/entities/exercise/exercise-utils';
+import { MarkdownEditorComponent } from 'app/markdown-editor/markdown-editor.component';
+import { ProgrammingExerciseParticipationService } from 'app/entities/programming-exercise/services/programming-exercise-participation.service';
+import { DomainCommand } from 'app/markdown-editor/domainCommands/domainCommand';
+import { ProgrammingExerciseTestCaseService } from 'app/entities/programming-exercise/services/programming-exercise-test-case.service';
+import { KatexCommand } from 'app/markdown-editor/commands/katex.command';
+import { ExerciseHintService } from 'app/entities/exercise-hint/exercise-hint.service';
+import { Result } from 'app/entities/result/result.model';
 
 @Component({
     selector: 'jhi-programming-exercise-editable-instructions',
@@ -93,7 +95,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
 
     constructor(
         private programmingExerciseService: ProgrammingExerciseService,
-        private jhiAlertService: JhiAlertService,
+        private jhiAlertService: AlertService,
         private programmingExerciseParticipationService: ProgrammingExerciseParticipationService,
         private testCaseService: ProgrammingExerciseTestCaseService,
         private exerciseHintService: ExerciseHintService,

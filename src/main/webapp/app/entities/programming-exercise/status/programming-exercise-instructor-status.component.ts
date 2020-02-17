@@ -1,20 +1,22 @@
 import { Component, Input, OnChanges, OnDestroy, SimpleChanges } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { filter } from 'rxjs/operators';
-import { ParticipationType, ProgrammingExercise } from 'app/entities/programming-exercise';
-import { hasParticipationChanged, Participation } from 'app/entities/participation';
 import { ParticipationWebsocketService } from 'app/entities/participation/participation-websocket.service';
-import { Result } from 'app/entities/result';
+import { Result } from 'app/entities/result/result.model';
+import { Participation } from 'app/entities/participation/participation.model';
+import { ProgrammingExercise } from 'app/entities/programming-exercise/programming-exercise.model';
+import { hasParticipationChanged } from 'app/entities/participation/participation-utils';
+import { ProgrammingExerciseParticipationType } from '../programming-exercise-participation.model';
 
 @Component({
     selector: 'jhi-programming-exercise-instructor-status',
     templateUrl: './programming-exercise-instructor-status.component.html',
 })
 export class ProgrammingExerciseInstructorStatusComponent implements OnChanges, OnDestroy {
-    ParticipationType = ParticipationType;
+    ProgrammingExerciseParticipationType = ProgrammingExerciseParticipationType;
 
     @Input()
-    participationType: ParticipationType;
+    participationType: ProgrammingExerciseParticipationType;
     @Input()
     participation: Participation;
     @Input()

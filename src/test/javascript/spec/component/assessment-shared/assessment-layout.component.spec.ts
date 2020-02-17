@@ -1,17 +1,18 @@
 import { async, ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { TranslateModule } from '@ngx-translate/core';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/alert/alert.service';
 
-import { ArtemisSharedModule, JhiAlertComponent } from 'app/shared';
 import { ArtemisTestModule } from '../../test.module';
-import { ComplaintsForTutorComponent } from 'app/complaints-for-tutor';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
-import { Complaint } from 'app/entities/complaint';
 import { AssessmentLayoutComponent } from 'app/assessment-shared/assessment-layout/assessment-layout.component';
 import { ArtemisAssessmentSharedModule } from 'app/assessment-shared/assessment-shared.module';
 import { AssessmentHeaderComponent } from 'app/assessment-shared/assessment-header/assessment-header.component';
 import { AssessmentComplaintAlertComponent } from 'app/assessment-shared/assessment-complaint-alert/assessment-complaint-alert.component';
+import { ComplaintsForTutorComponent } from 'app/complaints-for-tutor/complaints-for-tutor.component';
+import { JhiAlertComponent } from 'app/shared/alert/alert.component';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
+import { Complaint } from 'app/entities/complaint/complaint.model';
 
 describe('AssessmentLayoutComponent', () => {
     let component: AssessmentLayoutComponent;
@@ -21,7 +22,7 @@ describe('AssessmentLayoutComponent', () => {
         TestBed.configureTestingModule({
             imports: [TranslateModule.forRoot(), ArtemisTestModule, ArtemisSharedModule, ArtemisAssessmentSharedModule],
             declarations: [],
-            providers: [JhiAlertService, JhiLanguageHelper],
+            providers: [JhiLanguageHelper],
         }).compileComponents();
     }));
 

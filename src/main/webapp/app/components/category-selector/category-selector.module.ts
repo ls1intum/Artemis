@@ -1,6 +1,6 @@
 import { NgModule } from '@angular/core';
 
-import { ArtemisSharedModule } from 'app/shared';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { ArtemisColorSelectorModule } from 'app/components/color-selector/color-selector.module';
 import { TagInputModule } from 'ngx-chips';
 import { ReactiveFormsModule } from '@angular/forms';

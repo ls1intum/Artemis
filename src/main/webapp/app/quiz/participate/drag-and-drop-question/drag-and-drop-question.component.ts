@@ -1,14 +1,14 @@
 import { Component, EventEmitter, HostListener, Input, OnChanges, Output, SimpleChanges, ViewChild, ViewEncapsulation } from '@angular/core';
-import { ArtemisMarkdown } from '../../../components/util/markdown.service';
-import { DragAndDropQuestionUtil } from '../../../components/util/drag-and-drop-question-util.service';
-import { DragAndDropQuestion } from '../../../entities/drag-and-drop-question';
-import { DragAndDropMapping } from '../../../entities/drag-and-drop-mapping';
-import { DropLocation } from '../../../entities/drop-location';
+import { ArtemisMarkdown } from 'app/components/util/markdown.service';
+import { DragAndDropQuestionUtil } from 'app/components/util/drag-and-drop-question-util.service';
 import { polyfill } from 'mobile-drag-drop';
 import { scrollBehaviourDragImageTranslateOverride } from 'mobile-drag-drop/scroll-behaviour';
 import { SecuredImageComponent } from 'app/shared/image/secured-image.component';
 import { resizeImage } from 'app/utils/drag-and-drop.utils';
-import { RenderedQuizQuestionMarkDownElement } from 'app/entities/quiz-question';
+import { DragAndDropQuestion } from 'app/entities/drag-and-drop-question/drag-and-drop-question.model';
+import { DragAndDropMapping } from 'app/entities/drag-and-drop-mapping/drag-and-drop-mapping.model';
+import { RenderedQuizQuestionMarkDownElement } from 'app/entities/quiz-question/quiz-question.model';
+import { DropLocation } from 'app/entities/drop-location/drop-location.model';
 
 // options are optional ;)
 polyfill({

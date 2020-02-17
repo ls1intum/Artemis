@@ -1,26 +1,24 @@
 import { NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { adminState } from './admin.route';
-import { ArtemisSharedModule } from 'app/shared';
-import {
-    AuditsComponent,
-    JhiConfigurationComponent,
-    HealthComponent,
-    HealthModalComponent,
-    JhiMetricsMonitoringComponent,
-    JhiTrackerComponent,
-    LogsComponent,
-    NotificationMgmtComponent,
-    NotificationMgmtDetailComponent,
-    NotificationMgmtUpdateComponent,
-    UserManagementComponent,
-    UserManagementDetailComponent,
-    UserManagementUpdateComponent,
-} from './';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { FormDateTimePickerModule } from 'app/shared/date-time-picker/date-time-picker.module';
 import { AdminFeatureToggleComponent } from 'app/admin/features/admin-feature-toggle.component';
 import { NgxDatatableModule } from '@swimlane/ngx-datatable';
 import { TagInputModule } from 'ngx-chips';
+import { UserManagementDetailComponent } from 'app/admin/user-management/user-management-detail.component';
+import { LogsComponent } from 'app/admin/logs/logs.component';
+import { JhiMetricsMonitoringComponent } from 'app/admin/metrics/metrics.component';
+import { HealthComponent } from 'app/admin/health/health.component';
+import { JhiConfigurationComponent } from 'app/admin/configuration/configuration.component';
+import { NotificationMgmtComponent } from 'app/admin/notification-management/notification-management.component';
+import { NotificationMgmtUpdateComponent } from 'app/admin/notification-management/notification-management-update.component';
+import { JhiTrackerComponent } from 'app/admin/tracker/tracker.component';
+import { AuditsComponent } from 'app/admin/audits/audits.component';
+import { HealthModalComponent } from 'app/admin/health/health-modal.component';
+import { UserManagementComponent } from 'app/admin/user-management/user-management.component';
+import { UserManagementUpdateComponent } from 'app/admin/user-management/user-management-update.component';
+import { NotificationMgmtDetailComponent } from 'app/admin/notification-management/notification-management-detail.component';
 
 /* jhipster-needle-add-admin-module-import - JHipster will add admin modules imports here */
 
