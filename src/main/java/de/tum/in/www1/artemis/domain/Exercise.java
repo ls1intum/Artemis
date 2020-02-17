@@ -16,10 +16,7 @@ import com.fasterxml.jackson.annotation.*;
 
 import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
-import de.tum.in.www1.artemis.domain.participation.Participation;
-import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
-import de.tum.in.www1.artemis.domain.participation.TeamParticipation;
-import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
+import de.tum.in.www1.artemis.domain.participation.*;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.domain.view.QuizView;
@@ -537,6 +534,20 @@ public abstract class Exercise implements Serializable {
 
     public Boolean isTeamMode() {
         return mode == ExerciseMode.TEAM;
+    }
+
+    /**
+     * Instantiates a new agent participation with the correct subtype depending on the exercise mode.
+     *
+     * @return The instantiated agent participation
+     */
+    public AgentParticipation newAgentParticipation() {
+        if (isTeamMode()) {
+            return new TeamParticipation();
+        }
+        else {
+            return new StudentParticipation();
+        }
     }
 
     /**

@@ -9,7 +9,7 @@ import de.tum.in.www1.artemis.domain.view.QuizView;
 
 @Entity
 @DiscriminatorValue(value = "TP")
-public class TeamParticipation extends Participation {
+public class TeamParticipation extends Participation implements AgentParticipation {
 
     private static final long serialVersionUID = 1L;
 
@@ -19,6 +19,10 @@ public class TeamParticipation extends Participation {
     @ManyToOne
     @JsonView(QuizView.Before.class)
     private Team team;
+
+    public String getAgentUsername() {
+        return team.getShortName();
+    }
 
     public Integer getPresentationScore() {
         return presentationScore;

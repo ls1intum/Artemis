@@ -16,7 +16,7 @@ import de.tum.in.www1.artemis.domain.view.QuizView;
 
 @Entity
 @DiscriminatorValue(value = "PESP")
-public class ProgrammingExerciseStudentParticipation extends StudentParticipation implements ProgrammingExerciseParticipation {
+public class ProgrammingExerciseStudentParticipation extends StudentParticipation implements ProgrammingExerciseAgentParticipation {
 
     private static final long serialVersionUID = 1L;
 

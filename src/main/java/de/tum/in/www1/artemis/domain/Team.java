@@ -23,7 +23,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 @DiscriminatorValue(value = "T")
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class Team implements Serializable {
+public class Team implements Serializable, Agent {
 
     private static final long serialVersionUID = 1L;
 

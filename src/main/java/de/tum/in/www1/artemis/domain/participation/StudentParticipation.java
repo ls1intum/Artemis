@@ -9,7 +9,7 @@ import de.tum.in.www1.artemis.domain.view.QuizView;
 
 @Entity
 @DiscriminatorValue(value = "SP")
-public class StudentParticipation extends Participation {
+public class StudentParticipation extends Participation implements AgentParticipation {
 
     private static final long serialVersionUID = 1L;
 
@@ -19,6 +19,10 @@ public class StudentParticipation extends Participation {
     @ManyToOne
     @JsonView(QuizView.Before.class)
     private User student;
+
+    public String getAgentUsername() {
+        return student.getLogin();
+    }
 
     public Integer getPresentationScore() {
         return presentationScore;

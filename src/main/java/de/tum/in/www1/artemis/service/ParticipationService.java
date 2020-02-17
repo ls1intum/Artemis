@@ -43,6 +43,8 @@ public class ParticipationService {
 
     private final StudentParticipationRepository studentParticipationRepository;
 
+    private final TeamParticipationRepository teamParticipationRepository;
+
     private final ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
 
     private final TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository;
@@ -76,15 +78,17 @@ public class ParticipationService {
     public ParticipationService(ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, ParticipationRepository participationRepository,
-            StudentParticipationRepository studentParticipationRepository, ExerciseRepository exerciseRepository, ResultRepository resultRepository,
-            SubmissionRepository submissionRepository, ComplaintResponseRepository complaintResponseRepository, ComplaintRepository complaintRepository,
-            QuizSubmissionService quizSubmissionService, UserService userService, GitService gitService, Optional<ContinuousIntegrationService> continuousIntegrationService,
-            Optional<VersionControlService> versionControlService, ConflictingResultService conflictingResultService, AuthorizationCheckService authCheckService) {
+            StudentParticipationRepository studentParticipationRepository, TeamParticipationRepository teamParticipationRepository, ExerciseRepository exerciseRepository,
+            ResultRepository resultRepository, SubmissionRepository submissionRepository, ComplaintResponseRepository complaintResponseRepository,
+            ComplaintRepository complaintRepository, QuizSubmissionService quizSubmissionService, UserService userService, GitService gitService,
+            Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService,
+            ConflictingResultService conflictingResultService, AuthorizationCheckService authCheckService) {
         this.participationRepository = participationRepository;
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
         this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
         this.solutionProgrammingExerciseParticipationRepository = solutionProgrammingExerciseParticipationRepository;
         this.studentParticipationRepository = studentParticipationRepository;
+        this.teamParticipationRepository = teamParticipationRepository;
         this.exerciseRepository = exerciseRepository;
         this.resultRepository = resultRepository;
         this.submissionRepository = submissionRepository;
@@ -108,13 +112,7 @@ public class ParticipationService {
     public Participation save(ParticipationInterface participation) {
         // Note: unfortunately polymorphism does not always work in Hibernate due to reflective method invocation.
         // Therefore we provide a convenience method here that finds out the concrete participation type and delegates the call to the right method
-        if (participation instanceof ProgrammingExerciseStudentParticipation) {
-            return save((ProgrammingExerciseStudentParticipation) participation);
-        }
-        else if (participation instanceof StudentParticipation) {
-            return save((StudentParticipation) participation);
-        }
-        else if (participation instanceof TemplateProgrammingExerciseParticipation) {
+        if (participation instanceof TemplateProgrammingExerciseParticipation) {
             return save((TemplateProgrammingExerciseParticipation) participation);
         }
         else if (participation instanceof SolutionProgrammingExerciseParticipation) {
@@ -122,6 +120,46 @@ public class ParticipationService {
         }
         else {
             throw new RuntimeException("Participation type not known. Cannot save!");
+        }
+    }
+
+    /**
+     * Save any type of agent participation without knowing the explicit subtype
+     *
+     * @param participation the entity to save
+     * @return the persisted entity
+     */
+    public AgentParticipation save(AgentParticipation participation) {
+        // Note: unfortunately polymorphism does not always work in Hibernate due to reflective method invocation.
+        // Therefore we provide a convenience method here that finds out the concrete participation type and delegates the call to the right method
+        if (participation instanceof StudentParticipation) {
+            return save((StudentParticipation) participation);
+        }
+        else if (participation instanceof TeamParticipation) {
+            return save((TeamParticipation) participation);
+        }
+        else {
+            throw new RuntimeException("AgentParticipation type not known. Cannot save!");
+        }
+    }
+
+    /**
+     * Save any type of programming exercise agent participation without knowing the explicit subtype
+     *
+     * @param participation the entity to save
+     * @return the persisted entity
+     */
+    public ProgrammingExerciseAgentParticipation save(ProgrammingExerciseAgentParticipation participation) {
+        // Note: unfortunately polymorphism does not always work in Hibernate due to reflective method invocation.
+        // Therefore we provide a convenience method here that finds out the concrete participation type and delegates the call to the right method
+        if (participation instanceof ProgrammingExerciseStudentParticipation) {
+            return save((ProgrammingExerciseStudentParticipation) participation);
+        }
+        else if (participation instanceof ProgrammingExerciseTeamParticipation) {
+            return save((ProgrammingExerciseTeamParticipation) participation);
+        }
+        else {
+            throw new RuntimeException("ProgrammingExerciseAgentParticipation type not known. Cannot save!");
         }
     }
 
@@ -148,6 +186,28 @@ public class ParticipationService {
     }
 
     /**
+     * Save a ProgrammingExerciseTeamParticipation.
+     *
+     * @param participation the entity to save
+     * @return the persisted entity
+     */
+    public ProgrammingExerciseTeamParticipation save(ProgrammingExerciseTeamParticipation participation) {
+        log.debug("Request to save ProgrammingExerciseTeamParticipation : {}", participation);
+        return teamParticipationRepository.saveAndFlush(participation);
+    }
+
+    /**
+     * Save a TeamParticipation.
+     *
+     * @param participation the entity to save
+     * @return the persisted entity
+     */
+    public TeamParticipation save(TeamParticipation participation) {
+        log.debug("Request to save TeamParticipation : {}", participation);
+        return teamParticipationRepository.saveAndFlush(participation);
+    }
+
+    /**
      * Save a TemplateProgrammingExerciseParticipation.
      *
      * @param participation the entity to save
@@ -170,55 +230,56 @@ public class ParticipationService {
     }
 
     /**
-     * This method is triggered when a student starts an exercise. It creates a Participation which connects the corresponding student and exercise. Additionally, it configures
-     * repository / build plan related stuff for programming exercises. In the case of modeling or text exercises, it also initializes and stores the corresponding submission.
+     * This method is triggered when a student (or team) starts an exercise. It creates a Participation which connects the corresponding student (or team) and exercise.
+     * Additionally, it configures repository / build plan related stuff for programming exercises. In the case of modeling or text exercises, it also initializes and stores the
+     * corresponding submission.
      *
      * @param exercise the exercise which is started
-     * @param user the user who starts the exercise
-     * @return the participation connecting the given exercise and user
+     * @param agent the agent who starts the exercise (student or team)
+     * @return the participation connecting the given exercise and agent
      */
-    public StudentParticipation startExercise(Exercise exercise, User user) {
-        // common for all exercises
-        // Check if participation already exists
-        Optional<StudentParticipation> optionalStudentParticipation = findOneByExerciseIdAndStudentLoginAnyState(exercise.getId(), user.getLogin());
-        StudentParticipation participation;
-        if (optionalStudentParticipation.isEmpty()) {
-            // create a new participation only if no participation can be found
-            if (exercise instanceof ProgrammingExercise) {
-                participation = new ProgrammingExerciseStudentParticipation();
-            }
-            else {
-                participation = new StudentParticipation();
-            }
-            participation.setInitializationState(UNINITIALIZED);
-            participation.setExercise(exercise);
-            participation.setStudent(user);
+    public AgentParticipation startExercise(Exercise exercise, Agent agent) {
+        return findOneByExerciseAndAgentAnyState(exercise.getId(), agent).map(participation -> initializeParticipation(exercise, participation, false))
+                .orElse(initializeNewParticipation(exercise, agent));
+    }
 
-            participation = save(participation);
+    private AgentParticipation initializeNewParticipation(Exercise exercise, Agent agent) {
+        AgentParticipation participation;
+
+        if (exercise instanceof ProgrammingExercise) {
+            participation = ((ProgrammingExercise) exercise).newProgrammingExerciseAgentParticipation();
         }
         else {
-            // make sure participation and exercise are connected
-            participation = optionalStudentParticipation.get();
-            participation.setExercise(exercise);
+            participation = exercise.newAgentParticipation();
         }
+        participation.setInitializationState(UNINITIALIZED);
+        participation.setExercise(exercise);
+        participation.setAgent(agent);
 
+        participation = save(participation);
+
+        return initializeParticipation(exercise, participation, true);
+    }
+
+    private AgentParticipation initializeParticipation(Exercise exercise, AgentParticipation participation, boolean newParticipation) {
         // specific to programming exercises
         if (exercise instanceof ProgrammingExercise) {
-            ProgrammingExerciseStudentParticipation programmingExerciseStudentParticipation = (ProgrammingExerciseStudentParticipation) participation;
-            programmingExerciseStudentParticipation = copyRepository(programmingExerciseStudentParticipation);
-            programmingExerciseStudentParticipation = configureRepository(programmingExerciseStudentParticipation);
-            programmingExerciseStudentParticipation = copyBuildPlan(programmingExerciseStudentParticipation);
-            programmingExerciseStudentParticipation = configureBuildPlan(programmingExerciseStudentParticipation);
+            ProgrammingExerciseAgentParticipation programmingExerciseAgentParticipation = (ProgrammingExerciseAgentParticipation) participation;
+            programmingExerciseAgentParticipation = copyRepository(programmingExerciseAgentParticipation);
+            programmingExerciseAgentParticipation = configureRepository(programmingExerciseAgentParticipation);
+            programmingExerciseAgentParticipation = copyBuildPlan(programmingExerciseAgentParticipation);
+            programmingExerciseAgentParticipation = configureBuildPlan(programmingExerciseAgentParticipation);
             // we might need to perform an empty commit (depends on the CI system), we perform this here, because it should not trigger a new programming submission
-            programmingExerciseStudentParticipation = performEmptyCommit(programmingExerciseStudentParticipation);
+            programmingExerciseAgentParticipation = performEmptyCommit(programmingExerciseAgentParticipation);
             // Note: we configure the repository webhook last, so that the potential empty commit does not trigger a new programming submission (see empty-commit-necessary)
-            programmingExerciseStudentParticipation = configureRepositoryWebHook(programmingExerciseStudentParticipation);
-            programmingExerciseStudentParticipation.setInitializationState(INITIALIZED);
-            programmingExerciseStudentParticipation.setInitializationDate(ZonedDateTime.now());
+            programmingExerciseAgentParticipation = configureRepositoryWebHook(programmingExerciseAgentParticipation);
+            programmingExerciseAgentParticipation.setInitializationState(INITIALIZED);
+            programmingExerciseAgentParticipation.setInitializationDate(ZonedDateTime.now());
             // after saving, we need to make sure the object that is used after the if statement is the right one
-            participation = programmingExerciseStudentParticipation;
+            participation = programmingExerciseAgentParticipation;
         }
-        else {// for all other exercises: QuizExercise, ModelingExercise, TextExercise, FileUploadExercise
+        // for all other exercises: QuizExercise, ModelingExercise, TextExercise, FileUploadExercise
+        else {
             if (participation.getInitializationState() == null || participation.getInitializationState() == UNINITIALIZED || participation.getInitializationState() == FINISHED) {
                 // in case the participation was finished before, we set it to initialized again so that the user sees the correct button "Open modeling editor" on the client side
                 participation.setInitializationState(INITIALIZED);
@@ -228,7 +289,7 @@ public class ParticipationService {
                 participation.setInitializationDate(ZonedDateTime.now());
             }
 
-            if (optionalStudentParticipation.isEmpty() || !submissionRepository.existsByParticipationId(participation.getId())) {
+            if (newParticipation || !submissionRepository.existsByParticipationId(participation.getId())) {
                 // initialize a modeling, text or file upload submission (depending on the exercise type), it will not do anything in the case of a quiz exercise
                 initializeSubmission(participation, exercise, null);
             }
@@ -448,7 +509,7 @@ public class ParticipationService {
      * @param participation inactive participation
      * @return resumed participation
      */
-    public ProgrammingExerciseStudentParticipation resumeExercise(ProgrammingExerciseStudentParticipation participation) {
+    public ProgrammingExerciseAgentParticipation resumeExercise(ProgrammingExerciseAgentParticipation participation) {
         participation = copyBuildPlan(participation);
         participation = configureBuildPlan(participation);
         // Note: the repository webhook already exists so we don't need to set it up again
@@ -461,12 +522,12 @@ public class ParticipationService {
         return save(participation);
     }
 
-    private ProgrammingExerciseStudentParticipation copyRepository(ProgrammingExerciseStudentParticipation participation) {
+    private ProgrammingExerciseAgentParticipation copyRepository(ProgrammingExerciseAgentParticipation participation) {
         // only execute this step if it has not yet been completed yet or if the repository url is missing for some reason
         if (!participation.getInitializationState().hasCompletedState(InitializationState.REPO_COPIED) || participation.getRepositoryUrlAsUrl() == null) {
             final var programmingExercise = participation.getProgrammingExercise();
             final var projectKey = programmingExercise.getProjectKey();
-            final var username = participation.getStudent().getLogin();
+            final var username = participation.getAgentUsername();
             // NOTE: we have to get the repository slug of the template participation here, because not all exercises (in particular old ones) follow the naming conventions
             final var repoName = versionControlService.get().getRepositorySlugFromUrl(programmingExercise.getTemplateParticipation().getRepositoryUrlAsUrl());
             // the next action includes recovery, which means if the repository has already been copied, we simply retrieve the repository url and do not copy it again
@@ -481,9 +542,9 @@ public class ParticipationService {
         }
     }
 
-    private ProgrammingExerciseStudentParticipation configureRepository(ProgrammingExerciseStudentParticipation participation) {
+    private ProgrammingExerciseAgentParticipation configureRepository(ProgrammingExerciseAgentParticipation participation) {
         if (!participation.getInitializationState().hasCompletedState(InitializationState.REPO_CONFIGURED)) {
-            versionControlService.get().configureRepository(participation.getRepositoryUrlAsUrl(), participation.getStudent().getLogin());
+            versionControlService.get().configureRepository(participation.getRepositoryUrlAsUrl(), participation.getAgentUsername());
             participation.setInitializationState(InitializationState.REPO_CONFIGURED);
             return save(participation);
         }
@@ -492,13 +553,13 @@ public class ParticipationService {
         }
     }
 
-    private ProgrammingExerciseStudentParticipation copyBuildPlan(ProgrammingExerciseStudentParticipation participation) {
+    private ProgrammingExerciseAgentParticipation copyBuildPlan(ProgrammingExerciseAgentParticipation participation) {
         // only execute this step if it has not yet been completed yet or if the build plan id is missing for some reason
         if (!participation.getInitializationState().hasCompletedState(InitializationState.BUILD_PLAN_COPIED) || participation.getBuildPlanId() == null) {
             final var projectKey = participation.getProgrammingExercise().getProjectKey();
             final var planName = BuildPlanType.TEMPLATE.getName();
-            final var username = participation.getStudent().getLogin();
-            final var buildProjectName = participation.getExercise().getCourse().getShortName().toUpperCase() + " " + participation.getExercise().getTitle();
+            final var username = participation.getAgentUsername();
+            final var buildProjectName = participation.getProgrammingExercise().getCourse().getShortName().toUpperCase() + " " + participation.getProgrammingExercise().getTitle();
             // the next action includes recovery, which means if the build plan has already been copied, we simply retrieve the build plan id and do not copy it again
             final var buildPlanId = continuousIntegrationService.get().copyBuildPlan(projectKey, planName, projectKey, buildProjectName, username.toUpperCase());
             participation.setBuildPlanId(buildPlanId);
@@ -510,7 +571,7 @@ public class ParticipationService {
         }
     }
 
-    private ProgrammingExerciseStudentParticipation configureBuildPlan(ProgrammingExerciseStudentParticipation participation) {
+    private ProgrammingExerciseAgentParticipation configureBuildPlan(ProgrammingExerciseAgentParticipation participation) {
         if (!participation.getInitializationState().hasCompletedState(InitializationState.BUILD_PLAN_CONFIGURED)) {
             continuousIntegrationService.get().configureBuildPlan(participation);
             participation.setInitializationState(InitializationState.BUILD_PLAN_CONFIGURED);
@@ -521,7 +582,7 @@ public class ParticipationService {
         }
     }
 
-    private ProgrammingExerciseStudentParticipation configureRepositoryWebHook(ProgrammingExerciseStudentParticipation participation) {
+    private ProgrammingExerciseAgentParticipation configureRepositoryWebHook(ProgrammingExerciseAgentParticipation participation) {
         if (!participation.getInitializationState().hasCompletedState(InitializationState.INITIALIZED)) {
             versionControlService.get().addWebHookForParticipation(participation);
         }
@@ -531,10 +592,10 @@ public class ParticipationService {
     /**
      * Perform an empty commit so that the Bamboo build plan definitely runs for the actual student commit
      *
-     * @param participation the participation of the student
-     * @return the participation of the student
+     * @param participation the participation of the agent (student or team)
+     * @return the participation of the agent (student or team)
      */
-    public ProgrammingExerciseStudentParticipation performEmptyCommit(ProgrammingExerciseStudentParticipation participation) {
+    public ProgrammingExerciseAgentParticipation performEmptyCommit(ProgrammingExerciseAgentParticipation participation) {
         continuousIntegrationService.get().performEmptySetupCommit(participation);
         return participation;
     }
@@ -655,6 +716,37 @@ public class ParticipationService {
     public Optional<StudentParticipation> findOneByExerciseIdAndStudentLoginAnyState(Long exerciseId, String username) {
         log.debug("Request to get Participation for User {} for Exercise with id: {}", username, exerciseId);
         return studentParticipationRepository.findByExerciseIdAndStudentLogin(exerciseId, username);
+    }
+
+    /**
+     * Get one participation (in any state) by its team and exercise.
+     *
+     * @param exerciseId the project key of the exercise
+     * @param teamId   the id of the team
+     * @return the participation of the given team and exercise in any state
+     */
+    public Optional<TeamParticipation> findOneByExerciseIdAndTeamIdAnyState(Long exerciseId, Long teamId) {
+        log.debug("Request to get Participation for Team with id {} for Exercise with id: {}", teamId, exerciseId);
+        return teamParticipationRepository.findByExerciseIdAndTeamId(exerciseId, teamId);
+    }
+
+    /**
+     * Get one participation (in any state) by its agent and exercise.
+     *
+     * @param exerciseId the project key of the exercise
+     * @param agent   the agent for which to get the participation
+     * @return the participation of the given agent and exercise in any state
+     */
+    public Optional<? extends AgentParticipation> findOneByExerciseAndAgentAnyState(Long exerciseId, Agent agent) {
+        if (agent instanceof Team) {
+            return findOneByExerciseIdAndTeamIdAnyState(exerciseId, ((Team) agent).getId());
+        }
+        else if (agent instanceof User) {
+            return findOneByExerciseIdAndStudentLoginAnyState(exerciseId, ((User) agent).getLogin());
+        }
+        else {
+            throw new RuntimeException("Agent type not known. Cannot find participation!");
+        }
     }
 
     /**

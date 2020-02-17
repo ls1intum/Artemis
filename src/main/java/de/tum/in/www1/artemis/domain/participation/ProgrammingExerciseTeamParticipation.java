@@ -16,7 +16,7 @@ import de.tum.in.www1.artemis.domain.view.QuizView;
 
 @Entity
 @DiscriminatorValue(value = "PETP")
-public class ProgrammingExerciseTeamParticipation extends TeamParticipation implements ProgrammingExerciseParticipation {
+public class ProgrammingExerciseTeamParticipation extends TeamParticipation implements ProgrammingExerciseAgentParticipation {
 
     private static final long serialVersionUID = 1L;
 

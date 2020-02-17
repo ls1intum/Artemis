@@ -25,8 +25,7 @@ import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
-import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
-import de.tum.in.www1.artemis.domain.participation.TemplateProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.domain.participation.*;
 import de.tum.in.www1.artemis.service.ProgrammingExerciseService;
 import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 
@@ -85,6 +84,20 @@ public class ProgrammingExercise extends Exercise {
     @OneToMany(mappedBy = "exercise", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     @JsonIgnoreProperties("exercise")
     private Set<ProgrammingExerciseTestCase> testCases = new HashSet<>();
+
+    /**
+     * Instantiates a new programming exercise agent participation with the correct subtype depending on the exercise mode.
+     *
+     * @return The instantiated programming exercise agent participation
+     */
+    public ProgrammingExerciseAgentParticipation newProgrammingExerciseAgentParticipation() {
+        if (isTeamMode()) {
+            return new ProgrammingExerciseTeamParticipation();
+        }
+        else {
+            return new ProgrammingExerciseStudentParticipation();
+        }
+    }
 
     /**
      * Convenience getter. The actual URL is stored in the {@link TemplateProgrammingExerciseParticipation}
