@@ -28,10 +28,7 @@ import de.tum.in.www1.artemis.config.GuidedTourConfiguration;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
-import de.tum.in.www1.artemis.domain.participation.Participation;
-import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
-import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
-import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.domain.participation.*;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
@@ -144,7 +141,7 @@ public class ParticipationResource {
     @PostMapping(Endpoints.START_PARTICIPATION)
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     // TODO: remove courseId attribute
-    public ResponseEntity<Participation> startParticipation(@PathVariable Long courseId, @PathVariable Long exerciseId) throws URISyntaxException {
+    public ResponseEntity<AgentParticipation> startParticipation(@PathVariable Long courseId, @PathVariable Long exerciseId) throws URISyntaxException {
         log.debug("REST request to start Exercise : {}", exerciseId);
         Exercise exercise = exerciseService.findOneWithAdditionalElements(exerciseId);
         User user = userService.getUserWithGroupsAndAuthorities();
@@ -170,12 +167,17 @@ public class ParticipationResource {
             }
         }
 
-        // users cannot start a team-based exercise if they have not been assigned to a team yet
-        if (exercise.isTeamMode() && !teamService.isAssignedToTeam(exercise, user)) {
-            return forbidden();
+        // if this is a team-based exercise, set the agent to the team that the user belongs to
+        Agent agent;
+        if (exercise.isTeamMode()) {
+            agent = teamService.findOneByExerciseAndUser(exercise, user)
+                    .orElseThrow(() -> new BadRequestAlertException("Team exercise cannot be started without assigned team.", "participation", "cannotStart"));
+        }
+        else {
+            agent = user;
         }
 
-        StudentParticipation participation = participationService.startExercise(exercise, user);
+        AgentParticipation participation = participationService.startExercise(exercise, agent);
         // remove sensitive information before sending participation to the client
         participation.getExercise().filterSensitiveInformation();
         return ResponseEntity.created(new URI("/api/participations/" + participation.getId())).body(participation);
@@ -221,9 +223,9 @@ public class ParticipationResource {
                 return forbidden();
             }
 
-            participation = participationService.resumeExercise(participation);
+            participation = (ProgrammingExerciseStudentParticipation) participationService.resumeExercise(participation);
             // Note: in this case we might need an empty commit to make sure the build plan works correctly for subsequent student commits
-            participation = participationService.performEmptyCommit(participation);
+            participation = (ProgrammingExerciseStudentParticipation) participationService.performEmptyCommit(participation);
             if (participation != null) {
                 addLatestResultToParticipation(participation);
                 participation.getExercise().filterSensitiveInformation();
