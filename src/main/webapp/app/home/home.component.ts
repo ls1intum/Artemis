@@ -2,8 +2,6 @@ import { AfterViewInit, Component, ElementRef, OnInit, Renderer2 } from '@angula
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { JhiEventManager } from 'ng-jhipster';
 import { Router } from '@angular/router';
-
-import { StateStorageService } from '../core';
 import { User } from 'app/core/user/user.model';
 import { Credentials } from 'app/core/auth/auth-jwt.service';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -16,7 +14,8 @@ import { LoginService } from 'app/core/login/login.service';
 import { TUM_USERNAME_REGEX } from 'app/app.constants';
 import { ProfileService } from 'app/layouts/profiles/profile.service';
 import { filter, tap } from 'rxjs/operators';
-import { ProfileInfo } from 'app/layouts';
+import { StateStorageService } from 'app/core/auth/state-storage.service';
+import { ProfileInfo } from 'app/layouts/profiles/profile-info.model';
 
 @Component({
     selector: 'jhi-home',

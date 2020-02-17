@@ -2,12 +2,12 @@ import { ApplicationRef, ComponentFactoryResolver, EmbeddedViewRef, Injectable, 
 import { Observable, Subject } from 'rxjs';
 import * as showdown from 'showdown';
 import { ProgrammingExerciseInstructionTaskStatusComponent } from 'app/entities/programming-exercise/instructions/instructions-render/task/programming-exercise-instruction-task-status.component';
-import { Result } from 'app/entities/result';
+import { Result } from 'app/entities/result/result.model';
 import { escapeStringForUseInRegex } from 'app/utils/global.utils';
 import { ProgrammingExerciseInstructionService } from 'app/entities/programming-exercise/instructions/instructions-render/service/programming-exercise-instruction.service';
 import { ArtemisShowdownExtensionWrapper } from 'app/markdown-editor/extensions/artemis-showdown-extension-wrapper';
 import { ExerciseHint } from 'app/entities/exercise-hint/exercise-hint.model';
-import { TaskArray } from 'app/entities/programming-exercise/instructions/instructions-render';
+import { TaskArray } from 'app/entities/programming-exercise/instructions/instructions-render/task/programming-exercise-task.model';
 
 @Injectable()
 export class ProgrammingExerciseTaskExtensionWrapper implements ArtemisShowdownExtensionWrapper {

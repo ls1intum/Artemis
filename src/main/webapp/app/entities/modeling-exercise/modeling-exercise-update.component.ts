@@ -1,22 +1,19 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-
 import { Observable } from 'rxjs/Observable';
-import { JhiAlertService, JhiEventManager } from 'ng-jhipster';
-
+import { JhiEventManager } from 'ng-jhipster';
 import { ModelingExercise } from './modeling-exercise.model';
 import { ModelingExerciseService } from './modeling-exercise.service';
-import { Course } from '../course';
 import { CourseService } from 'app/entities/course/course.service';
-
-import { ExerciseCategory, ExerciseService } from 'app/entities/exercise';
 import { ExampleSubmissionService } from 'app/entities/example-submission/example-submission.service';
-import { KatexCommand } from 'app/markdown-editor/commands';
-import { EditorMode } from 'app/markdown-editor';
 import { MAX_SCORE_PATTERN } from 'app/app.constants';
-import { CreditsCommand, FeedbackCommand, GradingCriteriaCommand, InstructionCommand, UsageCountCommand } from 'app/markdown-editor/domainCommands';
 import { WindowRef } from 'app/core/websocket/window.service';
+import { ExerciseService } from 'app/entities/exercise/exercise.service';
+import { ExerciseCategory } from 'app/entities/exercise/exercise.model';
+import { EditorMode } from 'app/markdown-editor/markdown-editor.component';
+import { KatexCommand } from 'app/markdown-editor/commands/katex.command';
+import { AlertService } from 'app/core/alert/alert.service';
 
 @Component({
     selector: 'jhi-modeling-exercise-update',
@@ -33,13 +30,11 @@ export class ModelingExerciseUpdateComponent implements OnInit {
     existingCategories: ExerciseCategory[];
     notificationText: string | null;
 
-    courses: Course[];
-
     domainCommandsProblemStatement = [new KatexCommand()];
     domainCommandsSampleSolution = [new KatexCommand()];
 
     constructor(
-        private jhiAlertService: JhiAlertService,
+        private jhiAlertService: AlertService,
         private modelingExerciseService: ModelingExerciseService,
         private courseService: CourseService,
         private exerciseService: ExerciseService,
@@ -53,7 +48,7 @@ export class ModelingExerciseUpdateComponent implements OnInit {
     /**
      * Initializes all relevant data for creating or editing modeling exercise
      */
-    ngOnInit() {
+    ngOnInit(): void {
         // This is used to scroll page to the top of the page, because the routing keeps the position for the
         // new page from previous page.
         this.$window.nativeWindow.scroll(0, 0);
@@ -70,33 +65,27 @@ export class ModelingExerciseUpdateComponent implements OnInit {
         });
         this.isSaving = false;
         this.notificationText = null;
-        this.courseService.query().subscribe(
-            (res: HttpResponse<Course[]>) => {
-                this.courses = res.body!;
-            },
-            (res: HttpErrorResponse) => this.onError(res),
-        );
     }
 
     /**
      * Updates the exercise categories
      * @param categories list of exercise categories
      */
-    updateCategories(categories: ExerciseCategory[]) {
+    updateCategories(categories: ExerciseCategory[]): void {
         this.modelingExercise.categories = categories.map(el => JSON.stringify(el));
     }
 
     /**
      * Validates if the date is correct
      */
-    validateDate() {
+    validateDate(): void {
         this.exerciseService.validateDate(this.modelingExercise);
     }
 
     /**
      * Sends a request to either update or create a modeling exercise
      */
-    save() {
+    save(): void {
         this.isSaving = true;
         if (this.modelingExercise.id !== undefined) {
             const requestOptions = {} as any;
@@ -114,7 +103,7 @@ export class ModelingExerciseUpdateComponent implements OnInit {
      * @param id of the submission that will be deleted
      * @param index in the example submissions array
      */
-    deleteExampleSubmission(id: number, index: number) {
+    deleteExampleSubmission(id: number, index: number): void {
         this.exampleSubmissionService.delete(id).subscribe(
             () => {
                 this.modelingExercise.exampleSubmissions.splice(index, 1);
@@ -128,7 +117,7 @@ export class ModelingExerciseUpdateComponent implements OnInit {
     /**
      * Returns to previous state, which is always exercise page
      */
-    previousState() {
+    previousState(): void {
         if (this.modelingExercise.course) {
             this.router.navigate(['/course', this.modelingExercise.course.id]);
         } else {
@@ -136,33 +125,24 @@ export class ModelingExerciseUpdateComponent implements OnInit {
         }
     }
 
-    private subscribeToSaveResponse(result: Observable<HttpResponse<ModelingExercise>>) {
+    private subscribeToSaveResponse(result: Observable<HttpResponse<ModelingExercise>>): void {
         result.subscribe(
             (res: HttpResponse<ModelingExercise>) => this.onSaveSuccess(res.body!),
             (res: HttpErrorResponse) => this.onSaveError(),
         );
     }
 
-    private onSaveSuccess(result: ModelingExercise) {
+    private onSaveSuccess(result: ModelingExercise): void {
         this.eventManager.broadcast({ name: 'modelingExerciseListModification', content: 'OK' });
         this.isSaving = false;
         this.previousState();
     }
 
-    private onSaveError() {
+    private onSaveError(): void {
         this.isSaving = false;
     }
 
-    private onError(error: HttpErrorResponse) {
+    private onError(error: HttpErrorResponse): void {
         this.jhiAlertService.error(error.message);
-    }
-
-    /**
-     * Returns the unique identifier for items in the collection
-     * @param index of a course in the collection
-     * @param item current course
-     */
-    trackCourseById(index: number, item: Course) {
-        return item.id;
     }
 }

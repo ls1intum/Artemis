@@ -3,17 +3,17 @@ import { HttpClient, HttpResponse } from '@angular/common/http';
 import { BehaviorSubject, Observable } from 'rxjs';
 import * as moment from 'moment';
 import { map, shareReplay } from 'rxjs/operators';
-import { Notification, NotificationType } from 'app/entities/notification';
 
 import { SERVER_API_URL } from 'app/app.constants';
-import { createRequestOption } from 'app/shared';
+import { createRequestOption } from 'app/shared/util/request-util';
 import { Router } from '@angular/router';
-import { Course } from 'app/entities/course';
-import { GroupNotification, GroupNotificationType } from 'app/entities/group-notification';
-import { SystemNotification } from 'app/entities/system-notification';
 import { AccountService } from 'app/core/auth/account.service';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { User } from 'app/core/user/user.model';
+import { GroupNotification, GroupNotificationType } from 'app/entities/group-notification/group-notification.model';
+import { SystemNotification } from 'app/entities/system-notification/system-notification.model';
+import { Notification, NotificationType } from 'app/entities/notification/notification.model';
+import { Course } from 'app/entities/course/course.model';
 
 type EntityResponseType = HttpResponse<Notification>;
 type EntityArrayResponseType = HttpResponse<Notification[]>;

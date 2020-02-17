@@ -1,6 +1,9 @@
 import { ArtemisMarkdown } from 'app/components/util/markdown.service';
 import { DomainTagCommand } from 'app/markdown-editor/domainCommands/domainTag.command';
-import { CreditsCommand, FeedbackCommand, InstructionCommand, UsageCountCommand } from 'app/markdown-editor/domainCommands/index';
+import { CreditsCommand } from 'app/markdown-editor/domainCommands/credits.command';
+import { InstructionCommand } from 'app/markdown-editor/domainCommands/instruction.command';
+import { FeedbackCommand } from 'app/markdown-editor/domainCommands/feedback.command';
+import { UsageCountCommand } from 'app/markdown-editor/domainCommands/usageCount.command';
 
 export class GradingCriteriaCommand extends DomainTagCommand {
     creditsCommand = new CreditsCommand();

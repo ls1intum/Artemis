@@ -4,13 +4,13 @@ import { Observable } from 'rxjs/Observable';
 import { SERVER_API_URL } from 'app/app.constants';
 
 import * as moment from 'moment';
-import { createRequestOption } from 'app/shared';
-import { Result } from 'app/entities/result';
-import { Submission } from 'app/entities/submission';
-import { Exercise } from 'app/entities/exercise';
+import { createRequestOption } from 'app/shared/util/request-util';
+import { Exercise } from 'app/entities/exercise/exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { ParticipationType } from 'app/entities/participation/participation.model';
+import { Submission } from 'app/entities/submission/submission.model';
+import { Result } from 'app/entities/result/result.model';
 
 export type EntityResponseType = HttpResponse<StudentParticipation>;
 export type EntityArrayResponseType = HttpResponse<StudentParticipation[]>;

@@ -1,14 +1,16 @@
 import { Component, OnInit } from '@angular/core';
-import { ExerciseService, ExerciseType } from 'app/entities/exercise';
-import { TextSubmission, TextSubmissionService } from 'app/entities/text-submission';
 import { ActivatedRoute } from '@angular/router';
-import { TextExercise } from 'app/entities/text-exercise';
 import { DifferencePipe } from 'ngx-moment';
 import { TranslateService } from '@ngx-translate/core';
 import { HttpResponse } from '@angular/common/http';
-import { Result } from 'app/entities/result';
+import { Result } from 'app/entities/result/result.model';
 import { TextAssessmentsService } from 'app/entities/text-assessments/text-assessments.service';
-import { Submission } from 'app/entities/submission';
+import { TextSubmissionService } from 'app/entities/text-submission/text-submission.service';
+import { Submission } from 'app/entities/submission/submission.model';
+import { ExerciseService } from 'app/entities/exercise/exercise.service';
+import { TextExercise } from 'app/entities/text-exercise/text-exercise.model';
+import { ExerciseType } from 'app/entities/exercise/exercise.model';
+import { TextSubmission } from 'app/entities/text-submission/text-submission.model';
 
 @Component({
     templateUrl: './text-assessment-dashboard.component.html',

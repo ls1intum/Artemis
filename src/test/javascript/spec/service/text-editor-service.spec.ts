@@ -2,7 +2,7 @@ import { TextEditorService } from 'app/text-editor/text-editor.service';
 
 import { HttpClient, HttpEvent, HttpHandler, HttpRequest } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { Language } from 'app/entities/tutor-group';
+import { Language } from 'app/entities/tutor-group/tutor-group.model';
 
 class MockHttpHandler implements HttpHandler {
     handle(req: HttpRequest<any>): Observable<HttpEvent<any>> {

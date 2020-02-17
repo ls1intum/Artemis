@@ -204,7 +204,7 @@
                             *ngIf="value.participation.exercise.allowOnlineEditor"
                             [jhiFeatureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
                         >
-                            <fa-icon class="mr-1" icon="folder-open" [fixedWidth]="true"></fa-icon>
+                            <fa-icon class="mr-1" [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>
                             Online editor
                         </button>
                         <jhi-programming-assessment-manual-result

@@ -1,7 +1,6 @@
 import { NgModule } from '@angular/core';
-
-import { ArtemisSharedModule } from 'app/shared';
-import { ConnectionNotificationComponent } from './';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
+import { ConnectionNotificationComponent } from 'app/layouts/connection-notification/connection-notification.component';
 
 @NgModule({
     imports: [ArtemisSharedModule],

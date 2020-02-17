@@ -1,21 +1,22 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { Observable, of, Subject } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 
 import { ProgrammingExercise, ProgrammingLanguage } from './programming-exercise.model';
 import { ProgrammingExerciseService } from 'app/entities/programming-exercise/services/programming-exercise.service';
-import { Result } from 'app/entities/result';
-import { JhiAlertService } from 'ng-jhipster';
-import { ParticipationType } from './programming-exercise-participation.model';
+import { Result } from 'app/entities/result/result.model';
+import { AlertService } from 'app/core/alert/alert.service';
+import { ProgrammingExerciseParticipationType } from './programming-exercise-participation.model';
 import { ProgrammingExerciseParticipationService } from 'app/entities/programming-exercise/services/programming-exercise-participation.service';
-import { ExerciseService, ExerciseType } from 'app/entities/exercise';
 import { AccountService } from 'app/core/auth/account.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { SafeHtml } from '@angular/platform-browser';
 import { ArtemisMarkdown } from 'app/components/util/markdown.service';
-import { FeatureToggle } from 'app/feature-toggle';
+import { FeatureToggle } from 'app/feature-toggle/feature-toggle.service';
+import { ExerciseService } from 'app/entities/exercise/exercise.service';
+import { ExerciseType } from 'app/entities/exercise/exercise.model';
 
 @Component({
     selector: 'jhi-programming-exercise-detail',
@@ -24,7 +25,7 @@ import { FeatureToggle } from 'app/feature-toggle';
 })
 export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     readonly ActionType = ActionType;
-    readonly ParticipationType = ParticipationType;
+    readonly ProgrammingExerciseParticipationType = ProgrammingExerciseParticipationType;
     readonly FeatureToggle = FeatureToggle;
     readonly JAVA = ProgrammingLanguage.JAVA;
     readonly PROGRAMMING = ExerciseType.PROGRAMMING;
@@ -43,7 +44,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
         private accountService: AccountService,
         private programmingExerciseService: ProgrammingExerciseService,
         private exerciseService: ExerciseService,
-        private jhiAlertService: JhiAlertService,
+        private jhiAlertService: AlertService,
         private programmingExerciseParticipationService: ProgrammingExerciseParticipationService,
         private artemisMarkdown: ArtemisMarkdown,
     ) {}

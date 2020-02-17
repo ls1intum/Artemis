@@ -1,7 +1,7 @@
 import { Component, Input } from '@angular/core';
-import { Feedback } from 'app/entities/feedback';
-import { Result } from 'app/entities/result';
+import { Result } from 'app/entities/result/result.model';
 import { partition } from 'lodash';
+import { Feedback } from 'app/entities/feedback/feedback.model';
 
 @Component({
     selector: 'jhi-file-upload-result',

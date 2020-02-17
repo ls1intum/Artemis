@@ -1,11 +1,12 @@
 import { SimpleChanges } from '@angular/core';
 import { Exercise, ExerciseType, ParticipationStatus } from 'app/entities/exercise/exercise.model';
-import { hasResults, InitializationState } from 'app/entities/participation';
-import { QuizExercise } from 'app/entities/quiz-exercise';
 import * as moment from 'moment';
 import { now } from 'moment';
-import { ProgrammingExercise } from 'app/entities/programming-exercise';
-import { AssessmentType } from 'app/entities/assessment-type';
+import { InitializationState } from 'app/entities/participation/participation.model';
+import { ProgrammingExercise } from 'app/entities/programming-exercise/programming-exercise.model';
+import { AssessmentType } from 'app/entities/assessment-type/assessment-type.model';
+import { QuizExercise } from 'app/entities/quiz-exercise/quiz-exercise.model';
+import { hasResults } from 'app/entities/participation/participation-utils';
 
 export const hasExerciseChanged = (changes: SimpleChanges) => {
     return changes.exercise && changes.exercise.currentValue && (!changes.exercise.previousValue || changes.exercise.previousValue.id !== changes.exercise.currentValue.id);

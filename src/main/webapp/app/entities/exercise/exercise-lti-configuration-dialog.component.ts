@@ -3,9 +3,9 @@ import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { Exercise } from './exercise.model';
 import { ActivatedRoute } from '@angular/router';
 import { ExercisePopupService } from './exercise-popup.service';
-import { LtiConfiguration } from 'app/entities/lti-configuration';
 
 import { Subscription } from 'rxjs/Subscription';
+import { LtiConfiguration } from 'app/entities/lti-configuration/lti-configuration.model';
 
 @Component({
     selector: 'jhi-exercise-lti-configuration-dialog',

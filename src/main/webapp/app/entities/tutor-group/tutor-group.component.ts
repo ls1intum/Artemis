@@ -2,11 +2,11 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Subscription } from 'rxjs';
 import { filter, map } from 'rxjs/operators';
-import { JhiAlertService, JhiEventManager } from 'ng-jhipster';
-
+import { JhiEventManager } from 'ng-jhipster';
 import { AccountService } from 'app/core/auth/account.service';
 import { TutorGroupService } from './tutor-group.service';
 import { TutorGroup } from 'app/entities/tutor-group/tutor-group.model';
+import { AlertService } from 'app/core/alert/alert.service';
 
 @Component({
     selector: 'jhi-tutor-group',
@@ -19,7 +19,7 @@ export class TutorGroupComponent implements OnInit, OnDestroy {
 
     constructor(
         protected tutorGroupService: TutorGroupService,
-        protected jhiAlertService: JhiAlertService,
+        protected jhiAlertService: AlertService,
         protected eventManager: JhiEventManager,
         protected accountService: AccountService,
     ) {}

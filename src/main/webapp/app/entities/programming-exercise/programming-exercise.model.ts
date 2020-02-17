@@ -1,8 +1,8 @@
-import { Course } from '../course';
 import { Moment } from 'moment';
-import { Exercise, ExerciseType } from '../exercise';
 import { SolutionProgrammingExerciseParticipation } from 'app/entities/participation/solution-programming-exercise-participation.model';
 import { TemplateProgrammingExerciseParticipation } from 'app/entities/participation/template-programming-exercise-participation.model';
+import { Exercise, ExerciseType } from 'app/entities/exercise/exercise.model';
+import { Course } from 'app/entities/course/course.model';
 
 export const enum ProgrammingLanguage {
     JAVA = 'JAVA',

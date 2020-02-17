@@ -1,8 +1,8 @@
-import { BaseEntity } from 'app/shared';
-import { Exercise } from '../exercise';
+import { BaseEntity } from 'app/shared/model/base-entity';
 import { Moment } from 'moment';
-import { Lecture } from 'app/entities/lecture';
-import { TutorGroup } from 'app/entities/tutor-group';
+import { Lecture } from 'app/entities/lecture/lecture.model';
+import { Exercise } from 'app/entities/exercise/exercise.model';
+import { TutorGroup } from 'app/entities/tutor-group/tutor-group.model';
 
 export class Course implements BaseEntity {
     public id: number;

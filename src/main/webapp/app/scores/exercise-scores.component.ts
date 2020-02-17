@@ -1,26 +1,30 @@
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/alert/alert.service';
 import { Component, OnDestroy, OnInit, ViewEncapsulation } from '@angular/core';
 import { Subscription } from 'rxjs/Subscription';
 import { ActivatedRoute } from '@angular/router';
 import { DifferencePipe } from 'ngx-moment';
 import { HttpResponse } from '@angular/common/http';
 import { Moment } from 'moment';
-import { areManualResultsAllowed, Exercise, ExerciseService, ExerciseType } from 'app/entities/exercise';
-import { Course } from 'app/entities/course';
+import { Course } from 'app/entities/course/course.model';
 import { CourseService } from 'app/entities/course/course.service';
-import { Result, ResultService } from 'app/entities/result';
 import { SourceTreeService } from 'app/components/util/sourceTree.service';
-import { ModelingAssessmentService } from 'app/entities/modeling-assessment';
-import { ProgrammingExerciseStudentParticipation, StudentParticipation } from 'app/entities/participation';
 import { take, tap } from 'rxjs/operators';
 import { of, zip } from 'rxjs';
-import { AssessmentType } from 'app/entities/assessment-type';
-import { FeatureToggle } from 'app/feature-toggle';
+import { FeatureToggle } from 'app/feature-toggle/feature-toggle.service';
 import { ProgrammingSubmissionService } from 'app/programming-submission/programming-submission.service';
 import { ProfileService } from 'app/layouts/profiles/profile.service';
-import { ProgrammingExercise } from 'app/entities/programming-exercise';
-import { SubmissionExerciseType } from 'app/entities/submission';
-import { ProgrammingSubmission } from 'app/entities/programming-submission';
+import { areManualResultsAllowed } from 'app/entities/exercise/exercise-utils';
+import { ResultService } from 'app/entities/result/result.service';
+import { Exercise, ExerciseType } from 'app/entities/exercise/exercise.model';
+import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { Result } from 'app/entities/result/result.model';
+import { ProgrammingSubmission } from 'app/entities/programming-submission/programming-submission.model';
+import { ModelingAssessmentService } from 'app/entities/modeling-assessment/modeling-assessment.service';
+import { ExerciseService } from 'app/entities/exercise/exercise.service';
+import { AssessmentType } from 'app/entities/assessment-type/assessment-type.model';
+import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
+import { ProgrammingExercise } from 'app/entities/programming-exercise/programming-exercise.model';
+import { SubmissionExerciseType } from 'app/entities/submission/submission.model';
 
 enum FilterProp {
     ALL = 'all',
@@ -35,7 +39,7 @@ enum FilterProp {
     selector: 'jhi-exercise-scores',
     styleUrls: ['./exercise-scores.component.scss'],
     templateUrl: './exercise-scores.component.html',
-    providers: [JhiAlertService, ModelingAssessmentService, SourceTreeService],
+    providers: [ModelingAssessmentService, SourceTreeService],
     encapsulation: ViewEncapsulation.None,
 })
 export class ExerciseScoresComponent implements OnInit, OnDestroy {

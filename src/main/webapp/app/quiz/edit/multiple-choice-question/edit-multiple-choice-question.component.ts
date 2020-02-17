@@ -1,11 +1,15 @@
 import { ChangeDetectorRef, Component, EventEmitter, Input, OnInit, Output, ViewChild } from '@angular/core';
-import { MultipleChoiceQuestion } from 'app/entities/multiple-choice-question';
-import { AnswerOption } from 'app/entities/answer-option';
 import { ArtemisMarkdown } from 'app/components/util/markdown.service';
-import { MarkdownEditorComponent } from 'app/markdown-editor';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { CorrectOptionCommand, DomainCommand, ExplanationCommand, HintCommand, IncorrectOptionCommand } from 'app/markdown-editor/domainCommands';
 import { EditQuizQuestion } from 'app/quiz/edit/edit-quiz-question.interface';
+import { HintCommand } from 'app/markdown-editor/domainCommands/hint.command';
+import { ExplanationCommand } from 'app/markdown-editor/domainCommands/explanation.command';
+import { IncorrectOptionCommand } from 'app/markdown-editor/domainCommands/incorrectOptionCommand';
+import { AnswerOption } from 'app/entities/answer-option/answer-option.model';
+import { MarkdownEditorComponent } from 'app/markdown-editor/markdown-editor.component';
+import { MultipleChoiceQuestion } from 'app/entities/multiple-choice-question/multiple-choice-question.model';
+import { CorrectOptionCommand } from 'app/markdown-editor/domainCommands/correctOptionCommand';
+import { DomainCommand } from 'app/markdown-editor/domainCommands/domainCommand';
 
 @Component({
     selector: 'jhi-edit-multiple-choice-question',

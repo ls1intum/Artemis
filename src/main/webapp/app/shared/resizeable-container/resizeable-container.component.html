@@ -17,7 +17,7 @@
 <ng-template #expandedBody>
     <div class="expanded right">
         <div class="draggable-left">
-            <fa-icon icon="grip-lines-vertical"></fa-icon>
+            <fa-icon [icon]="'grip-lines-vertical'"></fa-icon>
         </div>
         <div class="card">
             <div class="card-header text-white bg-primary" (click)="collapsed = !collapsed">
@@ -27,7 +27,7 @@
                     </div>
                     <ng-container *ngTemplateOutlet="rightHeaderSpan"></ng-container>
                 </h3>
-                <fa-icon icon="chevron-right"></fa-icon>
+                <fa-icon [icon]="'chevron-right'"></fa-icon>
             </div>
             <div class="card-body">
                 <ng-content select="[right-body]"></ng-content>
@@ -38,11 +38,11 @@
 
 <ng-template #collapsedBody>
     <div class="collapsed right text-white bg-primary" (click)="collapsed = !collapsed">
-        <fa-icon icon="chevron-left"></fa-icon>
+        <fa-icon [icon]="'chevron-left'"></fa-icon>
         <div class="header">
             <ng-container *ngTemplateOutlet="rightHeaderSpan"></ng-container>
         </div>
-        <fa-icon icon="chevron-left"></fa-icon>
+        <fa-icon [icon]="'chevron-left'"></fa-icon>
     </div>
 </ng-template>
 

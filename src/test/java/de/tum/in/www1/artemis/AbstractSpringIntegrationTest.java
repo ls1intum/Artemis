@@ -4,6 +4,7 @@ import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabas
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.SpyBean;
+import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.test.context.ActiveProfiles;
 
 import com.atlassian.bamboo.specs.util.BambooServer;
@@ -46,4 +47,7 @@ public abstract class AbstractSpringIntegrationTest {
 
     @SpyBean
     protected PlantUmlService plantUmlService;
+
+    @SpyBean
+    protected SimpMessageSendingOperations messagingTemplate;
 }

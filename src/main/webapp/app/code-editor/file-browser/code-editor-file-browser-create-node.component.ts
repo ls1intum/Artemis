@@ -1,7 +1,7 @@
 import { AfterViewInit, Component, ElementRef, EventEmitter, Input, Output, ViewChild } from '@angular/core';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { WindowRef } from 'app/core/websocket/window.service';
-import { FileType } from 'app/entities/ace-editor/file-change.model';
+import { FileType } from 'app/code-editor/model/code-editor.model';
 
 @Component({
     selector: 'jhi-code-editor-file-browser-create-node',

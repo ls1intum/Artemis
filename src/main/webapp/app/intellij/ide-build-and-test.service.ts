@@ -1,14 +1,14 @@
 import { Injectable } from '@angular/core';
-import { ProgrammingExercise } from '../entities/programming-exercise';
 import { ProgrammingSubmissionService } from 'app/programming-submission/programming-submission.service';
-import { Participation } from '../entities/participation';
 import { ParticipationWebsocketService } from 'app/entities/participation/participation-websocket.service';
-import { Result } from '../entities/result';
-import { filter, first, map, tap } from 'rxjs/operators';
-import { JavaBridgeService } from 'app/intellij/java-bridge.service';
-import { BuildLogEntryArray } from 'app/entities/build-log';
+import { filter, map, tap } from 'rxjs/operators';
 import { Observable, Subject, Subscription } from 'rxjs';
 import { BuildLogService } from 'app/programming-assessment/build-logs/build-log.service';
+import { Participation } from 'app/entities/participation/participation.model';
+import { BuildLogEntryArray } from 'app/entities/build-log/build-log.model';
+import { ProgrammingExercise } from 'app/entities/programming-exercise/programming-exercise.model';
+import { Result } from 'app/entities/result/result.model';
+import { JavaBridgeService } from 'app/intellij/java-bridge.service';
 
 /**
  * Notifies the IDE about a result, that is currently building and forwards incoming test results.

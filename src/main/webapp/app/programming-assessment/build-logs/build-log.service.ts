@@ -1,8 +1,8 @@
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
-import { BuildLogEntry } from 'app/entities/build-log';
 import { SERVER_API_URL } from 'app/app.constants';
+import { BuildLogEntry } from 'app/entities/build-log/build-log.model';
 
 export interface IBuildLogService {
     getBuildLogs: (participationId: number) => Observable<BuildLogEntry[]>;

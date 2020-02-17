@@ -1,22 +1,20 @@
 import { ActivatedRoute } from '@angular/router';
 import { Component, OnInit } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/alert/alert.service';
 import { Observable, Subject } from 'rxjs';
-import { Course } from 'app/entities/course';
 import { CourseService } from 'app/entities/course/course.service';
-import { ExerciseCategory, ExerciseService } from 'app/entities/exercise';
 import { ProgrammingExercise, ProgrammingLanguage } from './programming-exercise.model';
 import { ProgrammingExerciseService } from './services/programming-exercise.service';
 import { FileService } from 'app/shared/http/file.service';
 import { MAX_SCORE_PATTERN } from 'app/app.constants';
 import { TranslateService } from '@ngx-translate/core';
 import { switchMap, tap } from 'rxjs/operators';
-import { KatexCommand } from 'app/markdown-editor/commands';
-import { EditorMode } from 'app/markdown-editor';
-import { AssessmentType } from 'app/entities/assessment-type';
-import { CreditsCommand, FeedbackCommand, GradingCriteriaCommand, InstructionCommand, UsageCountCommand } from 'app/markdown-editor/domainCommands';
-import { FeatureToggle } from 'app/feature-toggle';
+import { FeatureToggle } from 'app/feature-toggle/feature-toggle.service';
+import { ExerciseService } from 'app/entities/exercise/exercise.service';
+import { AssessmentType } from 'app/entities/assessment-type/assessment-type.model';
+import { ExerciseCategory } from 'app/entities/exercise/exercise.model';
+import { EditorMode } from 'app/markdown-editor/markdown-editor.component';
 
 @Component({
     selector: 'jhi-programming-exercise-update',
@@ -55,7 +53,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     constructor(
         private programmingExerciseService: ProgrammingExerciseService,
         private courseService: CourseService,
-        private jhiAlertService: JhiAlertService,
+        private jhiAlertService: AlertService,
         private exerciseService: ExerciseService,
         private fileService: FileService,
         private activatedRoute: ActivatedRoute,
@@ -193,10 +191,6 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
 
     private onError(error: HttpErrorResponse) {
         this.jhiAlertService.error(error.message);
-    }
-
-    trackCourseById(index: number, item: Course) {
-        return item.id;
     }
 
     /**

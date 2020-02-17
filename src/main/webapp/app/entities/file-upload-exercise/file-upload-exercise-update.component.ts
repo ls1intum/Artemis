@@ -2,16 +2,16 @@ import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/alert/alert.service';
 import { FileUploadExerciseService } from './file-upload-exercise.service';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise/file-upload-exercise.model';
-import { Course } from 'app/entities/course';
 import { CourseService } from 'app/entities/course/course.service';
-import { ExerciseCategory, ExerciseService } from 'app/entities/exercise';
-import { EditorMode } from 'app/markdown-editor';
-import { KatexCommand } from 'app/markdown-editor/commands';
 import { MAX_SCORE_PATTERN } from 'app/app.constants';
-import { CreditsCommand, FeedbackCommand, GradingCriteriaCommand, InstructionCommand, UsageCountCommand } from 'app/markdown-editor/domainCommands';
+import { ExerciseService } from 'app/entities/exercise/exercise.service';
+import { ExerciseCategory } from 'app/entities/exercise/exercise.model';
+import { EditorMode } from 'app/markdown-editor/markdown-editor.component';
+import { Course } from 'app/entities/course/course.model';
+import { KatexCommand } from 'app/markdown-editor/commands/katex.command';
 
 @Component({
     selector: 'jhi-file-upload-exercise-update',
@@ -24,7 +24,6 @@ export class FileUploadExerciseUpdateComponent implements OnInit {
     maxScorePattern = MAX_SCORE_PATTERN;
     exerciseCategories: ExerciseCategory[];
     existingCategories: ExerciseCategory[];
-    courses: Course[];
     EditorMode = EditorMode;
     domainCommandsProblemStatement = [new KatexCommand()];
     domainCommandsSampleSolution = [new KatexCommand()];
@@ -34,7 +33,7 @@ export class FileUploadExerciseUpdateComponent implements OnInit {
         private activatedRoute: ActivatedRoute,
         private courseService: CourseService,
         private exerciseService: ExerciseService,
-        private jhiAlertService: JhiAlertService,
+        private jhiAlertService: AlertService,
         private router: Router,
     ) {}
 
@@ -57,12 +56,6 @@ export class FileUploadExerciseUpdateComponent implements OnInit {
                 (categoryRes: HttpErrorResponse) => this.onError(categoryRes),
             );
         });
-        this.courseService.query().subscribe(
-            (res: HttpResponse<Course[]>) => {
-                this.courses = res.body!;
-            },
-            (res: HttpErrorResponse) => this.onError(res),
-        );
     }
 
     /**
@@ -106,15 +99,6 @@ export class FileUploadExerciseUpdateComponent implements OnInit {
             (res: HttpResponse<FileUploadExercise>) => this.onSaveSuccess(),
             (res: HttpErrorResponse) => this.onSaveError(res),
         );
-    }
-
-    /**
-     * Returns the unique identifier for items in the collection
-     * @param index of a course in the collection
-     * @param item current course
-     */
-    trackCourseById(index: number, item: Course) {
-        return item.id;
     }
 
     private onSaveSuccess() {

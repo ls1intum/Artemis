@@ -1,11 +1,17 @@
 import { Component, OnInit, ViewChild, Input } from '@angular/core';
 import { Subscription } from 'rxjs/Subscription';
-import { CreditsCommand, DomainCommand, FeedbackCommand, GradingCriteriaCommand, InstructionCommand, UsageCountCommand } from 'app/markdown-editor/domainCommands';
-import { KatexCommand } from 'app/markdown-editor/commands';
-import { MarkdownEditorComponent } from 'app/markdown-editor';
 import { GradingCriterion } from 'app/structured-grading-criterion/grading-criterion.model';
-import { Exercise, ExerciseService } from 'app/entities/exercise';
 import { ActivatedRoute } from '@angular/router';
+import { MarkdownEditorComponent } from 'app/markdown-editor/markdown-editor.component';
+import { Exercise } from 'app/entities/exercise/exercise.model';
+import { KatexCommand } from 'app/markdown-editor/commands/katex.command';
+import { GradingCriteriaCommand } from 'app/markdown-editor/domainCommands/gradingCriteria.command';
+import { CreditsCommand } from 'app/markdown-editor/domainCommands/credits.command';
+import { InstructionCommand } from 'app/markdown-editor/domainCommands/instruction.command';
+import { DomainCommand } from 'app/markdown-editor/domainCommands/domainCommand';
+import { UsageCountCommand } from 'app/markdown-editor/domainCommands/usageCount.command';
+import { FeedbackCommand } from 'app/markdown-editor/domainCommands/feedback.command';
+import { ExerciseService } from 'app/entities/exercise/exercise.service';
 
 @Component({
     selector: 'jhi-edit-structured-grading-instruction',

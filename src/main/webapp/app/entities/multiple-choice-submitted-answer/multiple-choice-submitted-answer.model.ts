@@ -1,6 +1,6 @@
-import { SubmittedAnswer } from '../submitted-answer';
-import { AnswerOption } from '../answer-option';
-import { QuizQuestionType } from '../quiz-question';
+import { SubmittedAnswer } from 'app/entities/submitted-answer/submitted-answer.model';
+import { QuizQuestionType } from 'app/entities/quiz-question/quiz-question.model';
+import { AnswerOption } from 'app/entities/answer-option/answer-option.model';
 
 export class MultipleChoiceSubmittedAnswer extends SubmittedAnswer {
     public selectedOptions: AnswerOption[];

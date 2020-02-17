@@ -1,8 +1,8 @@
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
 import { ArtemisMarkdown } from 'app/components/util/markdown.service';
-import { MultipleChoiceQuestion } from 'app/entities/multiple-choice-question';
-import { ShortAnswerQuestion } from 'app/entities/short-answer-question';
+import { MultipleChoiceQuestion } from 'app/entities/multiple-choice-question/multiple-choice-question.model';
+import { ShortAnswerQuestion } from 'app/entities/short-answer-question/short-answer-question.model';
 
 chai.use(sinonChai);
 const expect = chai.expect;
