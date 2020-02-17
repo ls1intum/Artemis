@@ -15,7 +15,6 @@ import { ExerciseService } from 'app/entities/exercise/exercise.service';
 import { AssessmentType } from 'app/entities/assessment-type/assessment-type.model';
 import { ExerciseCategory } from 'app/entities/exercise/exercise.model';
 import { EditorMode } from 'app/markdown-editor/markdown-editor.component';
-import { Course } from 'app/entities/course/course.model';
 import { KatexCommand } from 'app/markdown-editor/commands/katex.command';
 
 @Component({
@@ -194,10 +193,6 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
 
     private onError(error: HttpErrorResponse) {
         this.jhiAlertService.error(error.message);
-    }
-
-    trackCourseById(index: number, item: Course) {
-        return item.id;
     }
 
     /**

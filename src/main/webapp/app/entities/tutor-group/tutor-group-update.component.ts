@@ -95,10 +95,6 @@ export class TutorGroupUpdateComponent implements OnInit {
         return item.id;
     }
 
-    trackCourseById(index: number, item: Course) {
-        return item.id;
-    }
-
     getSelected(selectedVals: Array<any>, option: any) {
         if (selectedVals) {
             for (let i = 0; i < selectedVals.length; i++) {

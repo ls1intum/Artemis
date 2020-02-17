@@ -24,7 +24,6 @@ export class FileUploadExerciseUpdateComponent implements OnInit {
     maxScorePattern = MAX_SCORE_PATTERN;
     exerciseCategories: ExerciseCategory[];
     existingCategories: ExerciseCategory[];
-    courses: Course[];
     EditorMode = EditorMode;
     domainCommandsProblemStatement = [new KatexCommand()];
     domainCommandsSampleSolution = [new KatexCommand()];
@@ -58,12 +57,6 @@ export class FileUploadExerciseUpdateComponent implements OnInit {
                 (categoryRes: HttpErrorResponse) => this.onError(categoryRes),
             );
         });
-        this.courseService.query().subscribe(
-            (res: HttpResponse<Course[]>) => {
-                this.courses = res.body!;
-            },
-            (res: HttpErrorResponse) => this.onError(res),
-        );
     }
 
     /**
@@ -107,15 +100,6 @@ export class FileUploadExerciseUpdateComponent implements OnInit {
             (res: HttpResponse<FileUploadExercise>) => this.onSaveSuccess(),
             (res: HttpErrorResponse) => this.onSaveError(res),
         );
-    }
-
-    /**
-     * Returns the unique identifier for items in the collection
-     * @param index of a course in the collection
-     * @param item current course
-     */
-    trackCourseById(index: number, item: Course) {
-        return item.id;
     }
 
     private onSaveSuccess() {

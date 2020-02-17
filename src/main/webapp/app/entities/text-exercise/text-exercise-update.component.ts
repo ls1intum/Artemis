@@ -32,8 +32,6 @@ export class TextExerciseUpdateComponent implements OnInit {
     existingCategories: ExerciseCategory[];
     notificationText: string | null;
 
-    courses: Course[];
-
     domainCommandsProblemStatement = [new KatexCommand()];
     domainCommandsSampleSolution = [new KatexCommand()];
     domainCommandsGradingInstructions = [new KatexCommand()];
@@ -71,12 +69,6 @@ export class TextExerciseUpdateComponent implements OnInit {
 
         this.isSaving = false;
         this.notificationText = null;
-        this.courseService.query().subscribe(
-            (res: HttpResponse<Course[]>) => {
-                this.courses = res.body!;
-            },
-            (res: HttpErrorResponse) => this.onError(res),
-        );
     }
 
     /**
@@ -155,14 +147,5 @@ export class TextExerciseUpdateComponent implements OnInit {
 
     private onError(error: HttpErrorResponse) {
         this.jhiAlertService.error(error.message);
-    }
-
-    /**
-     * Returns the unique identifier for items in the collection
-     * @param index of a course in the collection
-     * @param item current course
-     */
-    trackCourseById(index: number, item: Course) {
-        return item.id;
     }
 }
