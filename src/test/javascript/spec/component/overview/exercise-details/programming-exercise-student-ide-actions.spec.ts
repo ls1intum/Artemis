@@ -1,4 +1,5 @@
 import * as chai from 'chai';
+
 import * as sinonChai from 'sinon-chai';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { DebugElement } from '@angular/core';
@@ -9,7 +10,6 @@ import { TranslateModule } from '@ngx-translate/core';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { IntelliJState } from 'app/intellij/intellij';
 import { BehaviorSubject, Subject } from 'rxjs';
-import { AlertService } from 'app/core/alert/alert.service';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { IntellijModule } from 'app/intellij/intellij.module';
 import { MockComponent } from 'ng-mocks';
@@ -28,6 +28,7 @@ import { MockJavaBridgeService } from '../../../mocks/mock-java-bridge.service';
 import { MockIdeBuildAndTestService } from '../../../mocks/mock-ide-build-and-test.service';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { ArtemisTestModule } from '../../../test.module';
+import { JhiAlertService } from 'ng-jhipster';
 import { MockAlertService } from '../../../mocks/mock-alert.service';
 
 chai.use(sinonChai);
@@ -58,7 +59,7 @@ describe('ProgrammingExerciseStudentIdeActionsComponent', () => {
                 { provide: IdeBuildAndTestService, useClass: MockIdeBuildAndTestService },
                 { provide: JavaBridgeService, useClass: MockJavaBridgeService },
                 { provide: CourseExerciseService, useClass: MockCourseExerciseService },
-                { provide: AlertService, useClass: MockAlertService },
+                { provide: JhiAlertService, useClass: MockAlertService },
                 { provide: FeatureToggleService, useClass: MockFeatureToggleService },
             ],
         })
