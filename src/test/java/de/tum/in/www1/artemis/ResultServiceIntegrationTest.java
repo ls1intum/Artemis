@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.when;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -95,6 +94,8 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationTest 
 
     private StudentParticipation studentParticipation;
 
+    private Result result;
+
     @BeforeEach
     public void reset() {
         database.addUsers(10, 2, 2);
@@ -109,6 +110,14 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationTest 
         modelingExercise.setDueDate(ZonedDateTime.now().minusHours(1));
         modelingExerciseRepository.save(modelingExercise);
         studentParticipation = database.addParticipationForExercise(modelingExercise, "student2");
+
+        result = ModelFactory.generateResult(true, 200).resultString("Good effort!").participation(programmingExerciseStudentParticipation);
+        List<Feedback> feedbacks = ModelFactory.generateFeedback().stream().peek(feedback -> feedback.setText("Good work here")).collect(Collectors.toList());
+        result.setFeedbacks(feedbacks);
+        result.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
+
+        String dummyHash = "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d";
+        doReturn(ObjectId.fromString(dummyHash)).when(gitService).getLastCommitHash(ArgumentMatchers.any());
     }
 
     @AfterEach
@@ -199,10 +208,6 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationTest 
     @Test
     @WithMockUser(value = "student1", roles = "USER")
     public void programmingExerciseManualResultUpdate_noManualReviewsAllowed_forbidden() throws Exception {
-        final var result = ModelFactory.generateResult(true, 1);
-        result.setParticipation(programmingExerciseStudentParticipation);
-        result.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
-
         request.post("/api/participations/" + programmingExerciseStudentParticipation.getId() + "/manual-results", result, HttpStatus.FORBIDDEN);
     }
 
@@ -210,9 +215,6 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationTest 
     @WithMockUser(value = "student1", roles = "USER")
     public void programmingExerciseManualResultNew_noManualReviewsAllowed_forbidden() throws Exception {
         ProgrammingSubmission programmingSubmission = (ProgrammingSubmission) new ProgrammingSubmission().commitHash("abc").submitted(true).submissionDate(ZonedDateTime.now());
-        final var result = ModelFactory.generateResult(true, 1);
-        result.setParticipation(programmingExerciseStudentParticipation);
-        result.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
         result.setSubmission(programmingSubmission);
 
         request.put("/api/participations/" + programmingExerciseStudentParticipation.getId() + "/manual-results", result, HttpStatus.FORBIDDEN);
@@ -221,10 +223,6 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationTest 
     @Test
     @WithMockUser(value = "student1", roles = "INSTRUCTOR")
     public void programmingExerciseManualResultNew_noManualReviewsWithoutSubmission_badRequest() throws Exception {
-        final var result = ModelFactory.generateResult(true, 1);
-        result.setParticipation(programmingExerciseStudentParticipation);
-        result.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
-
         request.put("/api/participations/" + programmingExerciseStudentParticipation.getId() + "/manual-results", result, HttpStatus.BAD_REQUEST);
     }
 
@@ -273,14 +271,7 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationTest 
     @WithMockUser(value = "tutor1", roles = "TA")
     public void createManualProgrammingExerciseResult() throws Exception {
         var participation = setParticipationForProgrammingExercise(AssessmentType.SEMI_AUTOMATIC);
-
-        Result result = ModelFactory.generateResult(true, 200).resultString("Good effort!");
-        List<Feedback> feedbacks = ModelFactory.generateFeedback().stream().peek(feedback -> feedback.setText("Good work here")).collect(Collectors.toList());
-        result.setFeedbacks(feedbacks);
         result.setParticipation(participation);
-
-        String dummyHash = "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d";
-        when(gitService.getLastCommitHash(ArgumentMatchers.any())).thenReturn(ObjectId.fromString(dummyHash));
 
         Result response = request.postWithResponseBody("/api/participations/" + participation.getId() + "/manual-results", result, Result.class);
         assertThat(response.getResultString()).isEqualTo(result.getResultString());
@@ -293,13 +284,7 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationTest 
     @WithMockUser(value = "tutor1", roles = "TA")
     public void createManualProgrammingExerciseResult_manualResultsNotAllowed() throws Exception {
         var participation = setParticipationForProgrammingExercise(AssessmentType.AUTOMATIC);
-        Result result = ModelFactory.generateResult(true, 200).resultString("Good effort!");
-        List<Feedback> feedbacks = ModelFactory.generateFeedback().stream().peek(feedback -> feedback.setText("Good work here")).collect(Collectors.toList());
-        result.setFeedbacks(feedbacks);
         result.setParticipation(participation);
-
-        String dummyHash = "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d";
-        when(gitService.getLastCommitHash(ArgumentMatchers.any())).thenReturn(ObjectId.fromString(dummyHash));
 
         request.postWithResponseBody("/api/participations/" + participation.getId() + "/manual-results", result, Result.class, HttpStatus.FORBIDDEN);
     }
@@ -308,14 +293,8 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationTest 
     @WithMockUser(value = "tutor1", roles = "TA")
     public void createManualProgrammingExerciseResult_resultExists() throws Exception {
         var participation = setParticipationForProgrammingExercise(AssessmentType.SEMI_AUTOMATIC);
-        Result result = ModelFactory.generateResult(true, 200).resultString("Good effort!");
-        List<Feedback> feedbacks = ModelFactory.generateFeedback().stream().peek(feedback -> feedback.setText("Good work here")).collect(Collectors.toList());
-        result.setFeedbacks(feedbacks);
         result.setParticipation(participation);
         result = resultRepository.save(result);
-
-        String dummyHash = "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d";
-        when(gitService.getLastCommitHash(ArgumentMatchers.any())).thenReturn(ObjectId.fromString(dummyHash));
 
         request.postWithResponseBody("/api/participations/" + participation.getId() + "/manual-results", result, Result.class, HttpStatus.BAD_REQUEST);
     }
@@ -325,9 +304,6 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationTest 
     public void createManualProgrammingExerciseResult_resultPropertyMissing() throws Exception {
         var participation = setParticipationForProgrammingExercise(AssessmentType.SEMI_AUTOMATIC);
         Result result = new Result();
-
-        String dummyHash = "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d";
-        when(gitService.getLastCommitHash(ArgumentMatchers.any())).thenReturn(ObjectId.fromString(dummyHash));
 
         // Result string is missing
         request.postWithResponseBody("/api/participations/" + participation.getId() + "/manual-results", result, Result.class, HttpStatus.BAD_REQUEST);
@@ -350,20 +326,14 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationTest 
         database.addProgrammingSubmission(programmingExercise, programmingSubmission, "student1");
         var participation = setParticipationForProgrammingExercise(AssessmentType.SEMI_AUTOMATIC);
 
-        Result result = ModelFactory.generateResult(true, 200).resultString("Good effort!");
-        List<Feedback> feedbacks = ModelFactory.generateFeedback().stream().peek(feedback -> feedback.setText("Good work here")).collect(Collectors.toList());
-        result.setFeedbacks(feedbacks);
         result.setParticipation(participation);
         result = resultRepository.save(result);
         result.setSubmission(programmingSubmission);
 
         // Remove feedbacks, change text and score.
-        result.setFeedbacks(feedbacks.subList(0, 1));
+        result.setFeedbacks(result.getFeedbacks().subList(0, 1));
         result.setResultString("Changed text");
         result.setScore(77L);
-
-        String dummyHash = "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d";
-        when(gitService.getLastCommitHash(ArgumentMatchers.any())).thenReturn(ObjectId.fromString(dummyHash));
 
         Result response = request.putWithResponseBody("/api/participations/" + participation.getId() + "/manual-results", result, Result.class, HttpStatus.OK);
         assertThat(response.getResultString()).isEqualTo(result.getResultString());
@@ -379,19 +349,13 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationTest 
         database.addProgrammingSubmission(programmingExercise, programmingSubmission, "student1");
         var participation = setParticipationForProgrammingExercise(AssessmentType.SEMI_AUTOMATIC);
 
-        Result result = ModelFactory.generateResult(true, 200).resultString("Good effort!");
-        List<Feedback> feedbacks = ModelFactory.generateFeedback().stream().peek(feedback -> feedback.setText("Good work here")).collect(Collectors.toList());
-        result.setFeedbacks(feedbacks);
         result.setParticipation(participation);
         result.setSubmission(programmingSubmission);
 
         // Remove feedbacks, change text and score.
-        result.setFeedbacks(feedbacks.subList(0, 1));
+        result.setFeedbacks(result.getFeedbacks().subList(0, 1));
         result.setResultString("Changed text");
         result.setScore(77L);
-
-        String dummyHash = "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d";
-        when(gitService.getLastCommitHash(ArgumentMatchers.any())).thenReturn(ObjectId.fromString(dummyHash));
 
         Result response = request.putWithResponseBody("/api/participations/" + participation.getId() + "/manual-results", result, Result.class, HttpStatus.CREATED);
         assertThat(response.getResultString()).isEqualTo(result.getResultString());
