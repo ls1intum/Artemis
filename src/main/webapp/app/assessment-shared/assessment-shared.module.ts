@@ -1,5 +1,5 @@
 import { NgModule } from '@angular/core';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/alert/alert.service';
 
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 
@@ -41,6 +41,6 @@ import { ArtemisComplaintsForTutorModule } from 'app/complaints-for-tutor/compla
     ],
     entryComponents: [ExternalSubmissionDialogComponent],
 
-    providers: [JhiAlertService],
+    providers: [],
 })
 export class ArtemisAssessmentSharedModule {}

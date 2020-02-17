@@ -1,5 +1,5 @@
 import { NgModule } from '@angular/core';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/alert/alert.service';
 import { ListOfComplaintsComponent } from './list-of-complaints.component';
 import { MomentModule } from 'ngx-moment';
 import { ClipboardModule } from 'ngx-clipboard';
@@ -15,6 +15,6 @@ const ENTITY_STATES = [...listOfComplaintsRoute];
     imports: [ArtemisSharedModule, MomentModule, ClipboardModule, RouterModule.forChild(ENTITY_STATES), SortByModule],
     declarations: [ListOfComplaintsComponent],
     exports: [ListOfComplaintsComponent],
-    providers: [JhiAlertService, ComplaintService],
+    providers: [ComplaintService],
 })
 export class ArtemisListOfComplaintsModule {}

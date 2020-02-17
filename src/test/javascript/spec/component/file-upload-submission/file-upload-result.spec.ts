@@ -6,7 +6,7 @@ import { ArtemisTestModule } from '../../test.module';
 import { Result } from 'app/entities/result/result.model';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { MockAlertService } from '../../helpers/mock-alert.service';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/alert/alert.service';
 import { DebugElement } from '@angular/core';
 import { By } from '@angular/platform-browser';
 import { MockAccountService } from '../../mocks/mock-account.service';
@@ -30,7 +30,7 @@ describe('FileUploadSubmissionComponent', () => {
             imports: [ArtemisTestModule, NgxDatatableModule, ArtemisSharedModule, TranslateModule.forRoot(), ArtemisSharedComponentModule],
             declarations: [FileUploadResultComponent],
             providers: [
-                { provide: JhiAlertService, useClass: MockAlertService },
+                { provide: AlertService, useClass: MockAlertService },
                 { provide: AccountService, useClass: MockAccountService },
             ],
         })

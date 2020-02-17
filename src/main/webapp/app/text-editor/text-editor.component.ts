@@ -3,7 +3,7 @@ import { Location } from '@angular/common';
 import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/alert/alert.service';
 import { ParticipationService } from 'app/entities/participation/participation.service';
 import { ParticipationWebsocketService } from 'app/entities/participation/participation-websocket.service';
 import { TextEditorService } from 'app/text-editor/text-editor.service';
@@ -47,7 +47,7 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
         private textSubmissionService: TextSubmissionService,
         private textService: TextEditorService,
         private resultService: ResultService,
-        private jhiAlertService: JhiAlertService,
+        private jhiAlertService: AlertService,
         private artemisMarkdown: ArtemisMarkdown,
         private location: Location,
         private translateService: TranslateService,

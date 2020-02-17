@@ -6,7 +6,7 @@ import { catchError, map } from 'rxjs/operators';
 import { ProgrammingExercise, ProgrammingLanguage } from './programming-exercise.model';
 import { ProgrammingExerciseService } from 'app/entities/programming-exercise/services/programming-exercise.service';
 import { Result } from 'app/entities/result/result.model';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/alert/alert.service';
 import { ProgrammingExerciseParticipationType } from './programming-exercise-participation.model';
 import { ProgrammingExerciseParticipationService } from 'app/entities/programming-exercise/services/programming-exercise-participation.service';
 import { AccountService } from 'app/core/auth/account.service';
@@ -44,7 +44,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
         private accountService: AccountService,
         private programmingExerciseService: ProgrammingExerciseService,
         private exerciseService: ExerciseService,
-        private jhiAlertService: JhiAlertService,
+        private jhiAlertService: AlertService,
         private programmingExerciseParticipationService: ProgrammingExerciseParticipationService,
         private artemisMarkdown: ArtemisMarkdown,
     ) {}

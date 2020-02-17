@@ -6,7 +6,7 @@ import * as moment from 'moment';
 import { ParticipationService } from 'app/entities/participation/participation.service';
 import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute } from '@angular/router';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/alert/alert.service';
 import { ProgrammingExerciseParticipationService } from 'app/entities/programming-exercise/services/programming-exercise-participation.service';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { codeEditorTour } from 'app/guided-tour/tours/code-editor-tour';
@@ -59,7 +59,7 @@ export class CodeEditorStudentContainerComponent extends CodeEditorContainer imp
         participationService: ParticipationService,
         translateService: TranslateService,
         route: ActivatedRoute,
-        jhiAlertService: JhiAlertService,
+        jhiAlertService: AlertService,
         sessionService: CodeEditorSessionService,
         fileService: CodeEditorFileService,
     ) {

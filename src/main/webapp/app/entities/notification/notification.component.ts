@@ -1,8 +1,8 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { HttpErrorResponse, HttpHeaders, HttpResponse } from '@angular/common/http';
 import { Subscription } from 'rxjs';
-import { JhiAlertService, JhiEventManager, JhiParseLinks } from 'ng-jhipster';
-
+import { JhiEventManager, JhiParseLinks } from 'ng-jhipster';
+import { AlertService } from 'app/core/alert/alert.service';
 import { User } from 'app/core/user/user.model';
 import { Lecture } from 'app/entities/lecture/lecture.model';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -35,10 +35,10 @@ export class NotificationComponent implements OnInit, OnDestroy {
     constructor(
         public notificationService: NotificationService,
         private route: ActivatedRoute,
-        protected jhiAlertService: JhiAlertService,
+        protected jhiAlertService: AlertService,
         private router: Router,
         private activatedRoute: ActivatedRoute,
-        private alertService: JhiAlertService,
+        private alertService: AlertService,
         private parseLinks: JhiParseLinks,
         protected eventManager: JhiEventManager,
         protected accountService: AccountService,

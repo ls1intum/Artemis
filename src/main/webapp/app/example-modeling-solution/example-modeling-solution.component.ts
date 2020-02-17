@@ -1,7 +1,7 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { SafeHtml } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/alert/alert.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { UMLModel } from '@ls1intum/apollon';
@@ -27,7 +27,7 @@ export class ExampleModelingSolutionComponent implements OnInit {
 
     constructor(
         private exerciseService: ModelingExerciseService,
-        private jhiAlertService: JhiAlertService,
+        private jhiAlertService: AlertService,
         private accountService: AccountService,
         private route: ActivatedRoute,
         private router: Router,

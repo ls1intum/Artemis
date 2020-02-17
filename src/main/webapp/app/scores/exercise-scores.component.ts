@@ -1,4 +1,4 @@
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/alert/alert.service';
 import { Component, OnDestroy, OnInit, ViewEncapsulation } from '@angular/core';
 import { Subscription } from 'rxjs/Subscription';
 import { ActivatedRoute } from '@angular/router';
@@ -39,7 +39,7 @@ enum FilterProp {
     selector: 'jhi-exercise-scores',
     styleUrls: ['./exercise-scores.component.scss'],
     templateUrl: './exercise-scores.component.html',
-    providers: [JhiAlertService, ModelingAssessmentService, SourceTreeService],
+    providers: [ModelingAssessmentService, SourceTreeService],
     encapsulation: ViewEncapsulation.None,
 })
 export class ExerciseScoresComponent implements OnInit, OnDestroy {

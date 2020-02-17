@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { SafeHtml } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CourseService } from 'app/entities/course/course.service';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/alert/alert.service';
 import { User } from 'app/core/user/user.model';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { TutorParticipationService } from 'app/tutor-exercise-dashboard/tutor-participation.service';
@@ -42,7 +42,7 @@ export interface ExampleSubmissionQueryParams {
     selector: 'jhi-courses',
     templateUrl: './tutor-exercise-dashboard.component.html',
     styles: ['jhi-collapsable-assessment-instructions { max-height: 100vh }'],
-    providers: [JhiAlertService, CourseService],
+    providers: [CourseService],
 })
 export class TutorExerciseDashboardComponent implements OnInit {
     exercise: Exercise;
@@ -102,7 +102,7 @@ export class TutorExerciseDashboardComponent implements OnInit {
 
     constructor(
         private exerciseService: ExerciseService,
-        private jhiAlertService: JhiAlertService,
+        private jhiAlertService: AlertService,
         private translateService: TranslateService,
         private accountService: AccountService,
         private route: ActivatedRoute,

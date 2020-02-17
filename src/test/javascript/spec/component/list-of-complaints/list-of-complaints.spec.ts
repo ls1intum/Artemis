@@ -4,7 +4,7 @@ import { ArtemisTestModule } from '../../test.module';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { RouterTestingModule } from '@angular/router/testing';
 import { SortByModule } from 'app/components/pipes/sort-by.module';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/alert/alert.service';
 import { MockAlertService } from '../../helpers/mock-alert.service';
 import { ComplaintService } from 'app/entities/complaint/complaint.service';
 import { DifferencePipe } from 'ngx-moment';
@@ -37,7 +37,7 @@ describe('ListOfComplaintsComponent', () => {
                 },
                 DifferencePipe,
                 {
-                    provide: JhiAlertService,
+                    provide: AlertService,
                     useValue: MockAlertService,
                 },
                 {

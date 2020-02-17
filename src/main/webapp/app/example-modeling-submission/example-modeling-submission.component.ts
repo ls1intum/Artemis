@@ -1,7 +1,7 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Location } from '@angular/common';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/alert/alert.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ExampleSubmissionService } from 'app/entities/example-submission/example-submission.service';
@@ -55,7 +55,7 @@ export class ExampleModelingSubmissionComponent implements OnInit {
         private exampleSubmissionService: ExampleSubmissionService,
         private modelingAssessmentService: ModelingAssessmentService,
         private tutorParticipationService: TutorParticipationService,
-        private jhiAlertService: JhiAlertService,
+        private jhiAlertService: AlertService,
         private accountService: AccountService,
         private route: ActivatedRoute,
         private router: Router,

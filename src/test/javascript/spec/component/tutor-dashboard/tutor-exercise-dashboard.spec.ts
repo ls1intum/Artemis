@@ -9,7 +9,7 @@ import { MockSyncStorage } from '../../mocks/mock-sync.storage';
 import { MockComponent } from 'ng-mocks';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { MockAlertService } from '../../helpers/mock-alert.service';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/alert/alert.service';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { MockRouter } from '../../mocks/mock-router.service';
 import { of, throwError } from 'rxjs';
@@ -75,7 +75,7 @@ describe('TutorExerciseDashboardComponent', () => {
             ],
             providers: [
                 JhiLanguageHelper,
-                { provide: JhiAlertService, useClass: MockAlertService },
+                { provide: AlertService, useClass: MockAlertService },
                 { provide: ActivatedRoute, useClass: MockActivatedRoute },
                 { provide: Router, useClass: MockRouter },
                 { provide: LocalStorageService, useClass: MockSyncStorage },

@@ -1,5 +1,5 @@
 import { AfterViewInit, Component, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleChanges, ViewChild, ViewEncapsulation } from '@angular/core';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/alert/alert.service';
 import Interactable from '@interactjs/core/Interactable';
 import interact from 'interactjs';
 import { Observable, of, Subject, Subscription, throwError } from 'rxjs';
@@ -95,7 +95,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
 
     constructor(
         private programmingExerciseService: ProgrammingExerciseService,
-        private jhiAlertService: JhiAlertService,
+        private jhiAlertService: AlertService,
         private programmingExerciseParticipationService: ProgrammingExerciseParticipationService,
         private testCaseService: ProgrammingExerciseTestCaseService,
         private exerciseHintService: ExerciseHintService,

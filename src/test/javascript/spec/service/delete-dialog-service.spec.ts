@@ -9,7 +9,7 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import * as sinon from 'sinon';
 import { DeleteDialogComponent } from 'app/shared/delete-dialog/delete-dialog.component';
 import { TranslateModule } from '@ngx-translate/core';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/alert/alert.service';
 import { ActionType, DeleteDialogData } from 'app/shared/delete-dialog/delete-dialog.model';
 import { EventEmitter } from '@angular/core';
 
@@ -23,7 +23,7 @@ describe('Delete Dialog Service', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, ArtemisSharedModule, HttpClientTestingModule, TranslateModule.forRoot()],
-            providers: [DeleteDialogService, JhiAlertService],
+            providers: [DeleteDialogService, AlertService],
         });
 
         service = TestBed.inject(DeleteDialogService);

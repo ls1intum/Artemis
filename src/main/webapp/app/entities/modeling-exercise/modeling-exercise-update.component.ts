@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs/Observable';
-import { JhiAlertService, JhiEventManager } from 'ng-jhipster';
+import { JhiEventManager } from 'ng-jhipster';
 import { ModelingExercise } from './modeling-exercise.model';
 import { ModelingExerciseService } from './modeling-exercise.service';
 import { CourseService } from 'app/entities/course/course.service';
@@ -13,6 +13,7 @@ import { ExerciseService } from 'app/entities/exercise/exercise.service';
 import { ExerciseCategory } from 'app/entities/exercise/exercise.model';
 import { EditorMode } from 'app/markdown-editor/markdown-editor.component';
 import { KatexCommand } from 'app/markdown-editor/commands/katex.command';
+import { AlertService } from 'app/core/alert/alert.service';
 
 @Component({
     selector: 'jhi-modeling-exercise-update',
@@ -34,7 +35,7 @@ export class ModelingExerciseUpdateComponent implements OnInit {
     domainCommandsGradingInstructions = [new KatexCommand()];
 
     constructor(
-        private jhiAlertService: JhiAlertService,
+        private jhiAlertService: AlertService,
         private modelingExerciseService: ModelingExerciseService,
         private courseService: CourseService,
         private exerciseService: ExerciseService,

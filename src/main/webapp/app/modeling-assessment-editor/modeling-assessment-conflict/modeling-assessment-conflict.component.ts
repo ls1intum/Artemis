@@ -4,7 +4,7 @@ import { UMLModel } from '@ls1intum/apollon';
 import { Conflict, ConflictingResult, ConflictResolutionState } from 'app/modeling-assessment-editor/conflict.model';
 import { User } from 'app/core/user/user.model';
 import * as $ from 'jquery';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/alert/alert.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { ModelingSubmissionService } from 'app/entities/modeling-submission/modeling-submission.service';
 import { Feedback, FeedbackHighlightColor } from 'app/entities/feedback/feedback.model';
@@ -37,7 +37,7 @@ export class ModelingAssessmentConflictComponent implements OnInit, AfterViewIni
     submissionId: number;
 
     constructor(
-        private jhiAlertService: JhiAlertService,
+        private jhiAlertService: AlertService,
         private route: ActivatedRoute,
         private router: Router,
         private modelingSubmissionService: ModelingSubmissionService,

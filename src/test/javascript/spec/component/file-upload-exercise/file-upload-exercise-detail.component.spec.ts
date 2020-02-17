@@ -12,7 +12,7 @@ import * as sinonChai from 'sinon-chai';
 import * as chai from 'chai';
 import { fileUploadExercise, MockFileUploadExerciseService } from '../../mocks/mock-file-upload-exercise.service';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/alert/alert.service';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { RouterTestingModule } from '@angular/router/testing';
 import { TranslateModule } from '@ngx-translate/core';
@@ -43,7 +43,7 @@ describe('Component Tests', () => {
                 declarations: [FileUploadExerciseDetailComponent],
                 providers: [
                     JhiLanguageHelper,
-                    JhiAlertService,
+                    AlertService,
                     { provide: ActivatedRoute, useValue: route },
                     { provide: FileUploadExerciseService, useClass: MockFileUploadExerciseService },
                     { provide: LocalStorageService, useClass: MockSyncStorage },

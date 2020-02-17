@@ -3,7 +3,7 @@ import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { filter, map } from 'rxjs/operators';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/alert/alert.service';
 import { TutorGroupService } from './tutor-group.service';
 import { User } from 'app/core/user/user.model';
 import { UserService } from 'app/core/user/user.service';
@@ -24,7 +24,7 @@ export class TutorGroupUpdateComponent implements OnInit {
     courses: Course[];
 
     constructor(
-        protected jhiAlertService: JhiAlertService,
+        protected jhiAlertService: AlertService,
         protected tutorGroupService: TutorGroupService,
         protected userService: UserService,
         protected courseService: CourseService,

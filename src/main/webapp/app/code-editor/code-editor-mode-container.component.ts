@@ -11,7 +11,7 @@ import { CodeEditorGridComponent } from 'app/code-editor/layout/code-editor-grid
 import { AnnotationArray } from 'app/entities/ace-editor/annotation.model';
 import { CommitState, CreateFileChange, DeleteFileChange, EditorState, FileChange, FileType, RenameFileChange } from 'app/code-editor/model/code-editor.model';
 import { ParticipationService } from 'app/entities/participation/participation.service';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/alert/alert.service';
 
 export abstract class CodeEditorContainer implements ComponentCanDeactivate {
     @ViewChild(CodeEditorGridComponent, { static: false }) grid: CodeEditorGridComponent;
@@ -30,7 +30,7 @@ export abstract class CodeEditorContainer implements ComponentCanDeactivate {
         protected participationService: ParticipationService,
         private translateService: TranslateService,
         protected route: ActivatedRoute,
-        private jhiAlertService: JhiAlertService,
+        private jhiAlertService: AlertService,
         protected sessionService: CodeEditorSessionService,
         private fileService: CodeEditorFileService,
     ) {

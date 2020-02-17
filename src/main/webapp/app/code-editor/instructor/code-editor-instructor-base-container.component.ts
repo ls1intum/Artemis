@@ -4,7 +4,7 @@ import { Observable, Subscription, throwError } from 'rxjs';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CourseExerciseService } from 'app/entities/course/course.service';
 import { TranslateService } from '@ngx-translate/core';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/alert/alert.service';
 import { catchError, filter, map, tap } from 'rxjs/operators';
 import { ParticipationService } from 'app/entities/participation/participation.service';
 import { Participation } from 'app/entities/participation/participation.model';
@@ -72,7 +72,7 @@ export abstract class CodeEditorInstructorBaseContainerComponent extends CodeEdi
         participationService: ParticipationService,
         translateService: TranslateService,
         route: ActivatedRoute,
-        jhiAlertService: JhiAlertService,
+        jhiAlertService: AlertService,
         sessionService: CodeEditorSessionService,
         fileService: CodeEditorFileService,
     ) {

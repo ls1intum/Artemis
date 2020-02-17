@@ -1,5 +1,5 @@
 import { NgModule } from '@angular/core';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/alert/alert.service';
 import { EditMultipleChoiceQuestionComponent } from './multiple-choice-question/edit-multiple-choice-question.component';
 import { EditDragAndDropQuestionComponent } from './drag-and-drop-question/edit-drag-and-drop-question.component';
 import { EditShortAnswerQuestionComponent } from './short-answer-question/edit-short-answer-question.component';
@@ -27,7 +27,7 @@ import { QuizComponent } from 'app/quiz/participate/quiz.component';
         EditDragAndDropQuestionComponent,
         EditShortAnswerQuestionComponent,
     ],
-    providers: [JhiAlertService],
+    providers: [],
     exports: [EditMultipleChoiceQuestionComponent, EditDragAndDropQuestionComponent, EditShortAnswerQuestionComponent],
 })
 export class ArtemisQuizEditModule {}

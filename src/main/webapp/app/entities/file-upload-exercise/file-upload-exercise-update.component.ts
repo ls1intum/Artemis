@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/alert/alert.service';
 import { FileUploadExerciseService } from './file-upload-exercise.service';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise/file-upload-exercise.model';
 import { CourseService } from 'app/entities/course/course.service';
@@ -34,7 +34,7 @@ export class FileUploadExerciseUpdateComponent implements OnInit {
         private activatedRoute: ActivatedRoute,
         private courseService: CourseService,
         private exerciseService: ExerciseService,
-        private jhiAlertService: JhiAlertService,
+        private jhiAlertService: AlertService,
         private router: Router,
     ) {}
 

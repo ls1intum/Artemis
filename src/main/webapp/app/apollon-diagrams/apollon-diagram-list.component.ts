@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { UMLDiagramType } from '@ls1intum/apollon';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/alert/alert.service';
 import { ApollonDiagramCreateFormComponent } from 'app/apollon-diagrams/apollon-diagram-create-form.component';
 import { ApollonDiagramService } from 'app/entities/apollon-diagram/apollon-diagram.service';
 import { ApollonDiagram } from 'app/entities/apollon-diagram/apollon-diagram.model';
@@ -10,7 +10,7 @@ import { ApollonDiagram } from 'app/entities/apollon-diagram/apollon-diagram.mod
 @Component({
     selector: 'jhi-apollon-diagram-list',
     templateUrl: './apollon-diagram-list.component.html',
-    providers: [ApollonDiagramService, JhiAlertService],
+    providers: [ApollonDiagramService],
 })
 export class ApollonDiagramListComponent implements OnInit {
     apollonDiagrams: ApollonDiagram[] = [];
@@ -19,7 +19,7 @@ export class ApollonDiagramListComponent implements OnInit {
 
     constructor(
         private apollonDiagramsService: ApollonDiagramService,
-        private jhiAlertService: JhiAlertService,
+        private jhiAlertService: AlertService,
         private modalService: NgbModal,
         private route: ActivatedRoute,
         private router: Router,

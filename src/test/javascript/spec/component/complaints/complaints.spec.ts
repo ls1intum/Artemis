@@ -4,7 +4,7 @@ import { BrowserModule, By } from '@angular/platform-browser';
 import { ComplaintService } from 'app/entities/complaint/complaint.service';
 import { MockComplaintResponse, MockComplaintService } from '../../mocks/mock-complaint.service';
 import { MockAlertService } from '../../helpers/mock-alert.service';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/alert/alert.service';
 import { MomentModule } from 'ngx-moment';
 import { ClipboardModule } from 'ngx-clipboard';
 import { DebugElement } from '@angular/core';
@@ -30,7 +30,7 @@ describe('ComplaintsComponent', () => {
                     useClass: MockComplaintService,
                 },
                 {
-                    provide: JhiAlertService,
+                    provide: AlertService,
                     useClass: MockAlertService,
                 },
             ],

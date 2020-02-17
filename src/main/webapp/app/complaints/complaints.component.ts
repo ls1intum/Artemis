@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/alert/alert.service';
 import { ComplaintService } from 'app/entities/complaint/complaint.service';
 import { Result } from 'app/entities/result/result.model';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -13,7 +13,7 @@ import { Complaint, ComplaintType } from 'app/entities/complaint/complaint.model
     selector: 'jhi-complaint-form',
     templateUrl: './complaints.component.html',
     styleUrls: ['complaints.component.scss'],
-    providers: [JhiAlertService],
+    providers: [],
 })
 export class ComplaintsComponent implements OnInit {
     @Input() resultId: number;
@@ -31,7 +31,7 @@ export class ComplaintsComponent implements OnInit {
 
     readonly maxComplaintNumberPerStudent = 3; // please note that this number has to be the same as in Constant.java on the server
 
-    constructor(private complaintService: ComplaintService, private jhiAlertService: JhiAlertService, private complaintResponseService: ComplaintResponseService) {}
+    constructor(private complaintService: ComplaintService, private jhiAlertService: AlertService, private complaintResponseService: ComplaintResponseService) {}
 
     ngOnInit(): void {
         this.complaintService

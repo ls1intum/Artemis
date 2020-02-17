@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { Course } from 'app/entities/course/course.model';
 import { CourseService } from 'app/entities/course/course.service';
 import { HttpResponse } from '@angular/common/http';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/alert/alert.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { courseOverviewTour } from 'app/guided-tour/tours/course-overview-tour';
@@ -24,7 +24,7 @@ export class OverviewComponent implements OnInit {
     constructor(
         private courseService: CourseService,
         private exerciseService: ExerciseService,
-        private jhiAlertService: JhiAlertService,
+        private jhiAlertService: AlertService,
         private accountService: AccountService,
         private courseScoreCalculationService: CourseScoreCalculationService,
         private guidedTourService: GuidedTourService,

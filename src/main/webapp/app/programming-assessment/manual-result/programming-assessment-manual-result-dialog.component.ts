@@ -4,7 +4,7 @@ import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { Result } from 'app/entities/result/result.model';
 import { ResultService } from 'app/entities/result/result.service';
 import { Feedback, FeedbackType } from 'app/entities/feedback/feedback.model';
-import { JhiAlertService, JhiEventManager } from 'ng-jhipster';
+import { JhiEventManager } from 'ng-jhipster';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import * as moment from 'moment';
 import { Observable, of } from 'rxjs';
@@ -19,6 +19,7 @@ import { ComplaintResponse } from 'app/entities/complaint-response/complaint-res
 import { User } from 'app/core/user/user.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise/programming-exercise.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
+import { AlertService } from 'app/core/alert/alert.service';
 
 @Component({
     selector: 'jhi-exercise-scores-result-dialog',
@@ -52,11 +53,11 @@ export class ProgrammingAssessmentManualResultDialogComponent implements OnInit 
         private activeModal: NgbActiveModal,
         private datePipe: DatePipe,
         private eventManager: JhiEventManager,
-        private alertService: JhiAlertService,
+        private alertService: AlertService,
         private resultService: ResultService,
         private complaintService: ComplaintService,
         private accountService: AccountService,
-        private jhiAlertService: JhiAlertService,
+        private jhiAlertService: AlertService,
     ) {}
 
     ngOnInit() {

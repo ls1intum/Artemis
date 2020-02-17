@@ -2,7 +2,7 @@ import { ActivatedRoute } from '@angular/router';
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/alert/alert.service';
 import { Observable } from 'rxjs';
 import { ImageCroppedEvent } from 'ngx-image-cropper';
 import { base64StringToBlob } from 'blob-util';
@@ -44,7 +44,7 @@ export class CourseUpdateComponent implements OnInit {
         private courseService: CourseService,
         private activatedRoute: ActivatedRoute,
         private fileUploaderService: FileUploaderService,
-        private jhiAlertService: JhiAlertService,
+        private jhiAlertService: AlertService,
     ) {}
 
     ngOnInit() {

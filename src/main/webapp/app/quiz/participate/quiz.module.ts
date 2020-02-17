@@ -1,6 +1,6 @@
 import { NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/alert/alert.service';
 import { DeviceDetectorService } from 'ngx-device-detector';
 import { quizRoute } from './quiz.route';
 import { QuizComponent } from './quiz.component';
@@ -29,7 +29,7 @@ const ENTITY_STATES = [...quizRoute];
         DragItemComponent,
     ],
     entryComponents: [HomeComponent, QuizComponent, JhiMainComponent],
-    providers: [JhiAlertService, DeviceDetectorService],
+    providers: [DeviceDetectorService],
     exports: [MultipleChoiceQuestionComponent, DragAndDropQuestionComponent, ShortAnswerQuestionComponent, DragItemComponent],
 })
 export class ArtemisQuizModule {}

@@ -22,7 +22,7 @@ import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
 import { MockAlertService } from '../../helpers/mock-alert.service';
 import { MockComplaintService } from '../../mocks/mock-complaint.service';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/alert/alert.service';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { ModelingAssessmentModule } from 'app/modeling-assessment/modeling-assessment.module';
@@ -68,7 +68,7 @@ describe('Component Tests', () => {
                 ],
                 declarations: [ModelingSubmissionComponent, MockComponent(ModelingEditorComponent)],
                 providers: [
-                    { provide: JhiAlertService, useClass: MockAlertService },
+                    { provide: AlertService, useClass: MockAlertService },
                     { provide: ComplaintService, useClass: MockComplaintService },
                     { provide: LocalStorageService, useClass: MockSyncStorage },
                     { provide: SessionStorageService, useClass: MockSyncStorage },

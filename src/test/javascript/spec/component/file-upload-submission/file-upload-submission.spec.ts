@@ -8,7 +8,7 @@ import { MockSyncStorage } from '../../mocks/mock-sync.storage';
 import { MockParticipationWebsocketService } from '../../mocks/mock-participation-websocket.service';
 import { MockComponent } from 'ng-mocks';
 import { MockAlertService } from '../../helpers/mock-alert.service';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/alert/alert.service';
 import { Router } from '@angular/router';
 import { ResizableInstructionsComponent } from 'app/text-assessment/resizable-instructions/resizable-instructions.component';
 import { DebugElement } from '@angular/core';
@@ -52,7 +52,7 @@ describe('FileUploadSubmissionComponent', () => {
     let router: Router;
     let location: Location;
     let fileUploaderService: FileUploaderService;
-    let jhiAlertService: JhiAlertService;
+    let jhiAlertService: AlertService;
     let fileUploadSubmissionService: FileUploadSubmissionService;
 
     const result = { id: 1 } as Result;
@@ -77,7 +77,7 @@ describe('FileUploadSubmissionComponent', () => {
                 MockComponent(FileUploadResultComponent),
             ],
             providers: [
-                { provide: JhiAlertService, useClass: MockAlertService },
+                { provide: AlertService, useClass: MockAlertService },
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
@@ -96,7 +96,7 @@ describe('FileUploadSubmissionComponent', () => {
                 location = debugElement.injector.get(Location);
                 router.initialNavigation();
                 fileUploaderService = TestBed.inject(FileUploaderService);
-                jhiAlertService = TestBed.inject(JhiAlertService);
+                jhiAlertService = TestBed.inject(AlertService);
                 fileUploadSubmissionService = debugElement.injector.get(FileUploadSubmissionService);
             });
     });

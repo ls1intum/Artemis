@@ -7,7 +7,7 @@ import 'brace/mode/python';
 import 'brace/theme/dreamweaver';
 import { AceEditorComponent } from 'ng2-ace-editor';
 import { AfterViewInit, Component, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleChanges, ViewChild } from '@angular/core';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/alert/alert.service';
 import { fromEvent, of, Subscription } from 'rxjs';
 import { catchError, tap } from 'rxjs/operators';
 import { WindowRef } from 'app/core/websocket/window.service';
@@ -24,7 +24,7 @@ import { TextChange } from 'app/entities/ace-editor/text-change.model';
     selector: 'jhi-code-editor-ace',
     templateUrl: './code-editor-ace.component.html',
     styleUrls: ['./code-editor-ace.scss'],
-    providers: [JhiAlertService, WindowRef, RepositoryFileService],
+    providers: [WindowRef, RepositoryFileService],
 })
 export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestroy {
     @ViewChild('editor', { static: true })

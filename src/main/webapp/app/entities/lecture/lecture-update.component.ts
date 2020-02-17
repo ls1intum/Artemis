@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/alert/alert.service';
 import { LectureService } from './lecture.service';
 import { CourseService } from 'app/entities/course/course.service';
 import { Lecture } from 'app/entities/lecture/lecture.model';
@@ -27,7 +27,7 @@ export class LectureUpdateComponent implements OnInit {
     domainCommandsDescription = [new KatexCommand()];
 
     constructor(
-        protected jhiAlertService: JhiAlertService,
+        protected jhiAlertService: AlertService,
         protected lectureService: LectureService,
         protected courseService: CourseService,
         protected activatedRoute: ActivatedRoute,

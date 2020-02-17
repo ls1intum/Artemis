@@ -1,5 +1,5 @@
 import { NgModule } from '@angular/core';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/alert/alert.service';
 import { RouterModule } from '@angular/router';
 import { MomentModule } from 'ngx-moment';
 import { AceEditorModule } from 'ng2-ace-editor';
@@ -75,6 +75,6 @@ const ENTITY_STATES = [...codeEditorRoute];
         ExerciseHintStudentDialogComponent,
         CodeEditorResolveConflictModalComponent,
     ],
-    providers: [JhiAlertService],
+    providers: [],
 })
 export class ArtemisCodeEditorModule {}

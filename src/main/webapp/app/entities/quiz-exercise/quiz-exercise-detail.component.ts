@@ -13,7 +13,7 @@ import { NgbDate } from '@ng-bootstrap/ng-bootstrap';
 import * as moment from 'moment';
 import { Moment } from 'moment';
 import { Location } from '@angular/common';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/alert/alert.service';
 import { Observable } from 'rxjs/Observable';
 import { EditQuizQuestion } from 'app/quiz/edit/edit-quiz-question.interface';
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
@@ -111,7 +111,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
         private translateService: TranslateService,
         private fileUploaderService: FileUploaderService,
         private exerciseService: ExerciseService,
-        private jhiAlertService: JhiAlertService,
+        private jhiAlertService: AlertService,
         private location: Location,
         private changeDetector: ChangeDetectorRef,
     ) {}

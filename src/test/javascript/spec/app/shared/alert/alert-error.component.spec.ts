@@ -1,6 +1,6 @@
 import { async, ComponentFixture, TestBed } from '@angular/core/testing';
 import { HttpErrorResponse, HttpHeaders } from '@angular/common/http';
-import { JhiAlertService, JhiEventManager } from 'ng-jhipster';
+import { JhiEventManager } from 'ng-jhipster';
 import { TranslateModule } from '@ngx-translate/core';
 
 import { ArtemisTestModule } from '../../../test.module';
@@ -20,7 +20,7 @@ describe('Component Tests', () => {
                 providers: [
                     JhiEventManager,
                     {
-                        provide: JhiAlertService,
+                        provide: AlertService,
                         useClass: MockAlertService,
                     },
                 ],

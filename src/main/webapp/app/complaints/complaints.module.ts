@@ -1,5 +1,5 @@
 import { NgModule } from '@angular/core';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/alert/alert.service';
 
 import { ComplaintsComponent } from './complaints.component';
 import { MomentModule } from 'ngx-moment';
@@ -12,6 +12,6 @@ import { ArtemisSharedModule } from 'app/shared/shared.module';
     imports: [ArtemisSharedModule, MomentModule, ClipboardModule],
     declarations: [ComplaintsComponent, ComplaintInteractionsComponent],
     exports: [ComplaintsComponent, ComplaintInteractionsComponent],
-    providers: [JhiAlertService, ComplaintService],
+    providers: [ComplaintService],
 })
 export class ArtemisComplaintsModule {}

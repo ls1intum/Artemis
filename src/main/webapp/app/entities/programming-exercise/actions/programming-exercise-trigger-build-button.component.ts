@@ -13,7 +13,7 @@ import { AssessmentType } from 'app/entities/assessment-type/assessment-type.mod
 import { SubmissionType } from 'app/entities/submission/submission.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise/programming-exercise.model';
 import { hasParticipationChanged } from 'app/entities/participation/participation-utils';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/alert/alert.service';
 
 /**
  * Component for triggering a build for the CURRENT submission of the student (does not create a new commit!).
@@ -43,7 +43,7 @@ export abstract class ProgrammingExerciseTriggerBuildButtonComponent implements 
     protected constructor(
         protected submissionService: ProgrammingSubmissionService,
         protected participationWebsocketService: ParticipationWebsocketService,
-        protected alertService: JhiAlertService,
+        protected alertService: AlertService,
     ) {}
 
     /**

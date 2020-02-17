@@ -16,10 +16,4 @@ export class AlertService extends JhiAlertService {
         super(sanitizer, configService, translateService);
         this.mySanitizer = sanitizer;
     }
-
-    success(msg: string, params?: any, position?: string): JhiAlert {
-        console.log('Is sanitizer defined?');
-        console.log(this.mySanitizer);
-        return super.success(msg, params, position);
-    }
 }

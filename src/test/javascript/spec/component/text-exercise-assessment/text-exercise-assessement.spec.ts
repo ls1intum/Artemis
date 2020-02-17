@@ -11,7 +11,7 @@ import { MockSyncStorage } from '../../mocks/mock-sync.storage';
 import { MockComponent } from 'ng-mocks';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { MockAlertService } from '../../helpers/mock-alert.service';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/alert/alert.service';
 import { Router } from '@angular/router';
 import { of } from 'rxjs';
 import { TextAssessmentComponent } from 'app/text-assessment/text-assessment.component';
@@ -62,7 +62,7 @@ describe('TextAssessmentComponent', () => {
             ],
             providers: [
                 JhiLanguageHelper,
-                { provide: JhiAlertService, useClass: MockAlertService },
+                { provide: AlertService, useClass: MockAlertService },
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: LocalStorageService, useClass: MockSyncStorage },

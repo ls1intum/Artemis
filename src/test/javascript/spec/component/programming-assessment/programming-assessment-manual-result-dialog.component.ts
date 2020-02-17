@@ -20,7 +20,7 @@ import { User } from 'app/core/user/user.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { By } from '@angular/platform-browser';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/alert/alert.service';
 import { MockComponent } from 'ng-mocks';
 import { ProgrammingAssessmentManualResultDialogComponent } from 'app/programming-assessment/manual-result/programming-assessment-manual-result-dialog.component';
 import { ResultService } from 'app/entities/result/result.service';
@@ -77,7 +77,7 @@ describe('ProgrammingAssessmentManualResultDialogComponent', () => {
                 ComplaintService,
                 BuildLogService,
                 AccountService,
-                JhiAlertService,
+                AlertService,
                 { provide: ResultService, useClass: MockResultService },
                 {
                     provide: ProgrammingExerciseParticipationService,

@@ -1,6 +1,6 @@
 import { NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/alert/alert.service';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { tutorExerciseDashboardRoute } from './tutor-exercise-dashboard.route';
 import { TutorExerciseDashboardComponent } from './tutor-exercise-dashboard.component';
@@ -44,6 +44,6 @@ const ENTITY_STATES = [...tutorExerciseDashboardRoute];
     ],
     declarations: [TutorExerciseDashboardComponent],
     entryComponents: [HomeComponent, CourseComponent, JhiMainComponent],
-    providers: [JhiAlertService],
+    providers: [],
 })
 export class ArtemisTutorExerciseDashboardModule {}

@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { Location } from '@angular/common';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/alert/alert.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { UMLDiagramType, UMLModel } from '@ls1intum/apollon';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -54,7 +54,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     private cancelConfirmationText: string;
 
     constructor(
-        private jhiAlertService: JhiAlertService,
+        private jhiAlertService: AlertService,
         private modalService: NgbModal,
         private router: Router,
         private route: ActivatedRoute,

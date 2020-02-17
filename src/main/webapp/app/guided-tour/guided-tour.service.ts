@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { NavigationEnd, NavigationStart, Router } from '@angular/router';
 import { cloneDeep } from 'lodash';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/alert/alert.service';
 import { fromEvent, Observable, Subject } from 'rxjs';
 import { filter, flatMap, map, switchMap } from 'rxjs/operators';
 import { debounceTime, distinctUntilChanged } from 'rxjs/internal/operators';
@@ -59,7 +59,7 @@ export class GuidedTourService {
 
     constructor(
         private http: HttpClient,
-        private jhiAlertService: JhiAlertService,
+        private jhiAlertService: AlertService,
         private accountService: AccountService,
         private router: Router,
         private deviceService: DeviceDetectorService,

@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { partition } from 'lodash';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CourseService } from 'app/entities/course/course.service';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/alert/alert.service';
 import { User } from 'app/core/user/user.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { HttpResponse } from '@angular/common/http';
@@ -13,7 +13,7 @@ import { Course } from 'app/entities/course/course.model';
 @Component({
     selector: 'jhi-courses',
     templateUrl: './tutor-course-dashboard.component.html',
-    providers: [JhiAlertService, CourseService],
+    providers: [CourseService],
 })
 export class TutorCourseDashboardComponent implements OnInit {
     course: Course;
@@ -45,7 +45,7 @@ export class TutorCourseDashboardComponent implements OnInit {
 
     constructor(
         private courseService: CourseService,
-        private jhiAlertService: JhiAlertService,
+        private jhiAlertService: AlertService,
         private accountService: AccountService,
         private route: ActivatedRoute,
         private router: Router,

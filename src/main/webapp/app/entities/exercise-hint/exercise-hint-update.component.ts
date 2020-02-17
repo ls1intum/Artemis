@@ -3,7 +3,7 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ActivatedRoute } from '@angular/router';
 import { Observable, of, Subscription } from 'rxjs';
 import { catchError, map, tap } from 'rxjs/operators';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/alert/alert.service';
 import { ExerciseHint } from 'app/entities/exercise-hint/exercise-hint.model';
 import { ExerciseHintService } from './exercise-hint.service';
 import { EditorMode, MarkdownEditorHeight } from 'app/markdown-editor/markdown-editor.component';
@@ -32,7 +32,7 @@ export class ExerciseHintUpdateComponent implements OnInit, OnDestroy {
 
     constructor(
         private route: ActivatedRoute,
-        protected jhiAlertService: JhiAlertService,
+        protected jhiAlertService: AlertService,
         protected exerciseHintService: ExerciseHintService,
         protected exerciseService: ExerciseService,
     ) {}

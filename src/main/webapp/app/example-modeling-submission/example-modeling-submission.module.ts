@@ -1,6 +1,6 @@
 import { NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/alert/alert.service';
 import { MomentModule } from 'ngx-moment';
 import { ClipboardModule } from 'ngx-clipboard';
 import { exampleModelingSubmissionRoute } from 'app/example-modeling-submission/example-modeling-submission.route';
@@ -30,7 +30,7 @@ const ENTITY_STATES = [...exampleModelingSubmissionRoute];
     declarations: [ExampleModelingSubmissionComponent],
     exports: [],
     entryComponents: [HomeComponent, CourseComponent, JhiMainComponent],
-    providers: [JhiAlertService],
+    providers: [],
     schemas: [],
 })
 export class ArtemisExampleModelingSubmissionModule {}

@@ -1,7 +1,7 @@
 import { ActivatedRoute } from '@angular/router';
 import { Component, OnInit } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/alert/alert.service';
 import { Observable, Subject } from 'rxjs';
 import { CourseService } from 'app/entities/course/course.service';
 import { ProgrammingExercise, ProgrammingLanguage } from './programming-exercise.model';
@@ -55,7 +55,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     constructor(
         private programmingExerciseService: ProgrammingExerciseService,
         private courseService: CourseService,
-        private jhiAlertService: JhiAlertService,
+        private jhiAlertService: AlertService,
         private exerciseService: ExerciseService,
         private fileService: FileService,
         private activatedRoute: ActivatedRoute,

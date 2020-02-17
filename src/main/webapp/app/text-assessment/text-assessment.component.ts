@@ -5,7 +5,7 @@ import { AfterViewInit, ChangeDetectorRef, Component, OnDestroy, OnInit, ViewEnc
 import { Location } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { HighlightColors } from './highlight-colors';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/alert/alert.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TextAssessmentsService } from 'app/entities/text-assessments/text-assessments.service';
@@ -76,7 +76,7 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
 
     constructor(
         private changeDetectorRef: ChangeDetectorRef,
-        private jhiAlertService: JhiAlertService,
+        private jhiAlertService: AlertService,
         private modalService: NgbModal,
         private router: Router,
         private route: ActivatedRoute,

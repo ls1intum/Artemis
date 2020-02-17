@@ -1,5 +1,5 @@
 import { ParticipationWebsocketService } from 'app/entities/participation/participation-websocket.service';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/alert/alert.service';
 import { AfterViewInit, Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, SimpleChanges } from '@angular/core';
 import { WindowRef } from 'app/core/websocket/window.service';
 import { Observable, of, Subscription } from 'rxjs';
@@ -23,7 +23,7 @@ export type BuildLogErrors = { errors: { [fileName: string]: AnnotationArray }; 
     selector: 'jhi-code-editor-build-output',
     templateUrl: './code-editor-build-output.component.html',
     styleUrls: ['./code-editor-build-output.scss'],
-    providers: [JhiAlertService, WindowRef],
+    providers: [WindowRef],
 })
 export class CodeEditorBuildOutputComponent implements AfterViewInit, OnInit, OnChanges, OnDestroy {
     @Input()

@@ -1,7 +1,7 @@
 import { Component, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/alert/alert.service';
 import { UpdatingResultComponent } from 'app/entities/result/updating-result.component';
 import { CodeEditorAceComponent } from 'app/code-editor/ace/code-editor-ace.component';
 import { CodeEditorActionsComponent } from 'app/code-editor/actions/code-editor-actions.component';
@@ -38,7 +38,7 @@ export class CodeEditorInstructorContainerComponent extends CodeEditorInstructor
         participationService: ParticipationService,
         translateService: TranslateService,
         route: ActivatedRoute,
-        jhiAlertService: JhiAlertService,
+        jhiAlertService: AlertService,
         sessionService: CodeEditorSessionService,
         fileService: CodeEditorFileService,
     ) {

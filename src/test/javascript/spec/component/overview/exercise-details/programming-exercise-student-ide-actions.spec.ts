@@ -9,7 +9,7 @@ import { TranslateModule } from '@ngx-translate/core';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { IntelliJState } from 'app/intellij/intellij';
 import { BehaviorSubject, Subject } from 'rxjs';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/alert/alert.service';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { IntellijModule } from 'app/intellij/intellij.module';
 import { MockComponent } from 'ng-mocks';
@@ -58,7 +58,7 @@ describe('ProgrammingExerciseStudentIdeActionsComponent', () => {
                 { provide: IdeBuildAndTestService, useClass: MockIdeBuildAndTestService },
                 { provide: JavaBridgeService, useClass: MockJavaBridgeService },
                 { provide: CourseExerciseService, useClass: MockCourseExerciseService },
-                { provide: JhiAlertService, useClass: MockAlertService },
+                { provide: AlertService, useClass: MockAlertService },
                 { provide: FeatureToggleService, useClass: MockFeatureToggleService },
             ],
         })

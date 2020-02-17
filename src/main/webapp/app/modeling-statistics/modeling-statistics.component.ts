@@ -1,4 +1,4 @@
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/alert/alert.service';
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Subscription } from 'rxjs/Subscription';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -9,7 +9,7 @@ import { ModelingExerciseService } from 'app/entities/modeling-exercise/modeling
 @Component({
     selector: 'jhi-assessment-dashboard',
     templateUrl: './modeling-statistics.component.html',
-    providers: [JhiAlertService, ModelingExerciseService],
+    providers: [ModelingExerciseService],
 })
 export class ModelingStatisticsComponent implements OnInit, OnDestroy {
     statistics: ModelingStatistic;
@@ -17,7 +17,7 @@ export class ModelingStatisticsComponent implements OnInit, OnDestroy {
     modelIds: string[] = [];
     elementIds: string[] = [];
 
-    constructor(private route: ActivatedRoute, private jhiAlertService: JhiAlertService, private router: Router, private modelingExerciseService: ModelingExerciseService) {}
+    constructor(private route: ActivatedRoute, private jhiAlertService: AlertService, private router: Router, private modelingExerciseService: ModelingExerciseService) {}
 
     ngOnInit() {
         this.paramSub = this.route.params.subscribe(params => {

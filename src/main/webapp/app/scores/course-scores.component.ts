@@ -1,4 +1,4 @@
-import { JhiAlertService, JhiLanguageService } from 'ng-jhipster';
+import { JhiLanguageService } from 'ng-jhipster';
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Subscription } from 'rxjs/Subscription';
 import { ActivatedRoute } from '@angular/router';
@@ -10,6 +10,7 @@ import { ExportToCsv } from 'export-to-csv';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { Exercise, ExerciseType } from 'app/entities/exercise/exercise.model';
 import { Course } from 'app/entities/course/course.model';
+import { AlertService } from 'app/core/alert/alert.service';
 
 const PRESENTATION_SCORE_KEY = 'Presentation Score';
 const NAME_KEY = 'Name';
@@ -24,7 +25,7 @@ const SCORE_KEY = 'Score';
 @Component({
     selector: 'jhi-course-scores',
     templateUrl: './course-scores.component.html',
-    providers: [JhiAlertService],
+    providers: [],
 })
 export class CourseScoresComponent implements OnInit, OnDestroy {
     // supported exercise type

@@ -1,5 +1,5 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { JhiAlertService, JhiEventManager } from 'ng-jhipster';
+import { JhiEventManager } from 'ng-jhipster';
 import { UMLDiagramType } from '@ls1intum/apollon';
 import { Course } from 'app/entities/course/course.model';
 import { CourseService } from 'app/entities/course/course.service';
@@ -18,11 +18,12 @@ import { ExerciseService } from 'app/entities/exercise/exercise.service';
 import { ModelingSubmission } from 'app/entities/modeling-submission/modeling-submission.model';
 import { ResultService } from 'app/entities/result/result.service';
 import { ModelingExercise } from 'app/entities/modeling-exercise/modeling-exercise.model';
+import { AlertService } from 'app/core/alert/alert.service';
 
 @Component({
     selector: 'jhi-assessment-dashboard',
     templateUrl: './modeling-assessment-dashboard.component.html',
-    providers: [JhiAlertService, ModelingAssessmentService],
+    providers: [],
 })
 export class ModelingAssessmentDashboardComponent implements OnInit, OnDestroy {
     // make constants available to html for comparison
@@ -54,7 +55,7 @@ export class ModelingAssessmentDashboardComponent implements OnInit, OnDestroy {
 
     constructor(
         private route: ActivatedRoute,
-        private jhiAlertService: JhiAlertService,
+        private jhiAlertService: AlertService,
         private router: Router,
         private momentDiff: DifferencePipe,
         private courseService: CourseService,

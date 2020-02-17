@@ -1,7 +1,7 @@
 import { Component, Input, OnDestroy, OnInit } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { JhiAlertService, JhiEventManager } from 'ng-jhipster';
-
+import { JhiEventManager } from 'ng-jhipster';
+import { AlertService } from 'app/core/alert/alert.service';
 import { ProgrammingExercise } from './programming-exercise.model';
 import { ProgrammingExerciseService } from './services/programming-exercise.service';
 import { CourseExerciseService, CourseService } from 'app/entities/course/course.service';
@@ -35,7 +35,7 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
         private courseExerciseService: CourseExerciseService,
         private exerciseService: ExerciseService,
         private accountService: AccountService,
-        private jhiAlertService: JhiAlertService,
+        private jhiAlertService: AlertService,
         private modalService: NgbModal,
         private router: Router,
         private javaBridge: JavaBridgeService,

@@ -5,7 +5,7 @@ import { ParticipationService } from 'app/entities/participation/participation.s
 import { ActivatedRoute, Router } from '@angular/router';
 import { CourseExerciseService } from 'app/entities/course/course.service';
 import { TranslateService } from '@ngx-translate/core';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/alert/alert.service';
 import { CodeEditorInstructorBaseContainerComponent, REPOSITORY } from 'app/code-editor/instructor/code-editor-instructor-base-container.component';
 import { JavaBridgeService } from 'app/intellij/java-bridge.service';
 import { IdeBuildAndTestService } from 'app/intellij/ide-build-and-test.service';
@@ -33,7 +33,7 @@ export class CodeEditorInstructorIntellijContainerComponent extends CodeEditorIn
         participationService: ParticipationService,
         translateService: TranslateService,
         route: ActivatedRoute,
-        jhiAlertService: JhiAlertService,
+        jhiAlertService: AlertService,
         sessionService: CodeEditorSessionService,
         fileService: CodeEditorFileService,
     ) {

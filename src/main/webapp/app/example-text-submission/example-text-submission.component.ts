@@ -2,7 +2,7 @@ import * as $ from 'jquery';
 import { AfterViewInit, Component, OnInit, ViewEncapsulation } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Location } from '@angular/common';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/alert/alert.service';
 import { WindowRef } from 'app/core/websocket/window.service';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ExampleSubmissionService } from 'app/entities/example-submission/example-submission.service';
@@ -26,7 +26,7 @@ import { Result } from 'app/entities/result/result.model';
 @Component({
     selector: 'jhi-example-text-submission',
     templateUrl: './example-text-submission.component.html',
-    providers: [JhiAlertService],
+    providers: [],
     styleUrls: ['./example-text-submission.component.scss'],
     encapsulation: ViewEncapsulation.None,
 })
@@ -62,7 +62,7 @@ export class ExampleTextSubmissionComponent implements OnInit, AfterViewInit {
         private exampleSubmissionService: ExampleSubmissionService,
         private assessmentsService: TextAssessmentsService,
         private tutorParticipationService: TutorParticipationService,
-        private jhiAlertService: JhiAlertService,
+        private jhiAlertService: AlertService,
         private accountService: AccountService,
         private route: ActivatedRoute,
         private router: Router,

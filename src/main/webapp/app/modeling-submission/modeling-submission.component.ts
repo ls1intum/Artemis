@@ -3,7 +3,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { Subscription } from 'rxjs/Subscription';
 import { ParticipationWebsocketService } from 'app/entities/participation/participation-websocket.service';
 import { Selection, UMLDiagramType, UMLModel, UMLRelationshipType } from '@ls1intum/apollon';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/alert/alert.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { Observable } from 'rxjs/Observable';
 import { TranslateService } from '@ngx-translate/core';
@@ -77,7 +77,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         private modelingSubmissionService: ModelingSubmissionService,
         private modelingAssessmentService: ModelingAssessmentService,
         private resultService: ResultService,
-        private jhiAlertService: JhiAlertService,
+        private jhiAlertService: AlertService,
         private route: ActivatedRoute,
         private modalService: NgbModal,
         private translateService: TranslateService,

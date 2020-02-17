@@ -1,4 +1,4 @@
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/alert/alert.service';
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
@@ -10,7 +10,7 @@ import { ResultService } from 'app/entities/result/result.service';
 @Component({
     selector: 'jhi-instructor-exercise-dashboard',
     templateUrl: './instructor-exercise-dashboard.component.html',
-    providers: [JhiAlertService],
+    providers: [],
 })
 export class InstructorExerciseDashboardComponent implements OnInit {
     exercise: Exercise;
@@ -25,7 +25,7 @@ export class InstructorExerciseDashboardComponent implements OnInit {
     constructor(
         private exerciseService: ExerciseService,
         private route: ActivatedRoute,
-        private jhiAlertService: JhiAlertService,
+        private jhiAlertService: AlertService,
         private resultService: ResultService,
         private router: Router,
     ) {}

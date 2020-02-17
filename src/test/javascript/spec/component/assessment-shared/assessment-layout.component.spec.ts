@@ -1,7 +1,7 @@
 import { async, ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { TranslateModule } from '@ngx-translate/core';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/alert/alert.service';
 
 import { ArtemisTestModule } from '../../test.module';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
@@ -22,7 +22,7 @@ describe('AssessmentLayoutComponent', () => {
         TestBed.configureTestingModule({
             imports: [TranslateModule.forRoot(), ArtemisTestModule, ArtemisSharedModule, ArtemisAssessmentSharedModule],
             declarations: [],
-            providers: [JhiAlertService, JhiLanguageHelper],
+            providers: [JhiLanguageHelper],
         }).compileComponents();
     }));
 

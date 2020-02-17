@@ -1,5 +1,4 @@
 import { NgModule } from '@angular/core';
-import { JhiAlertService } from 'ng-jhipster';
 import { QuizComponent } from '../participate/quiz.component';
 import { AngularFittextModule } from 'angular-fittext';
 import { AceEditorModule } from 'ng2-ace-editor';
@@ -27,7 +26,7 @@ import { ArtemisQuizModule } from 'app/quiz/participate/quiz.module';
         QuizReEvaluateWarningComponent,
     ],
     entryComponents: [HomeComponent, QuizComponent, QuizExerciseComponent, JhiMainComponent, QuizReEvaluateWarningComponent],
-    providers: [JhiAlertService, QuizReEvaluateService],
+    providers: [QuizReEvaluateService],
     exports: [
         QuizReEvaluateComponent,
         ReEvaluateMultipleChoiceQuestionComponent,

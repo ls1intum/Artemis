@@ -2,7 +2,7 @@ import { Component, HostBinding, Input, OnInit } from '@angular/core';
 import * as moment from 'moment';
 import { CourseExerciseService } from 'app/entities/course/course.service';
 import { Router } from '@angular/router';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/alert/alert.service';
 import { HttpClient } from '@angular/common/http';
 import { AccountService } from 'app/core/auth/account.service';
 import { SourceTreeService } from 'app/components/util/sourceTree.service';
@@ -18,7 +18,7 @@ import { QuizExercise } from 'app/entities/quiz-exercise/quiz-exercise.model';
     selector: 'jhi-exercise-details-student-actions',
     templateUrl: './exercise-details-student-actions.component.html',
     styleUrls: ['../course-overview.scss'],
-    providers: [JhiAlertService, SourceTreeService],
+    providers: [SourceTreeService],
 })
 export class ExerciseDetailsStudentActionsComponent implements OnInit {
     FeatureToggle = FeatureToggle;
@@ -39,7 +39,7 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
     public wasCopied = false;
 
     constructor(
-        private jhiAlertService: JhiAlertService,
+        private jhiAlertService: AlertService,
         private courseExerciseService: CourseExerciseService,
         private httpClient: HttpClient,
         private accountService: AccountService,

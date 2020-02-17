@@ -3,7 +3,7 @@ import { DebugElement } from '@angular/core';
 import * as moment from 'moment';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/alert/alert.service';
 import { ArtemisTestModule } from '../../test.module';
 import { TranslateModule } from '@ngx-translate/core';
 import { MockTextEditorService } from '../../mocks/mock-text-editor.service';
@@ -55,7 +55,7 @@ describe('TableEditableFieldComponent', () => {
                 MockComponent(ComplaintInteractionsComponent),
             ],
             providers: [
-                JhiAlertService,
+                AlertService,
                 { provide: ActivatedRoute, useValue: route },
                 { provide: TextEditorService, useClass: MockTextEditorService },
                 { provide: LocalStorageService, useClass: MockSyncStorage },

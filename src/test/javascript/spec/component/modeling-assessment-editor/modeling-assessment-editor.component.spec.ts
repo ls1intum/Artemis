@@ -1,6 +1,6 @@
 import { async, ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateModule } from '@ngx-translate/core';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/alert/alert.service';
 
 import { ArtemisTestModule } from '../../test.module';
 import { ArtemisModelingAssessmentEditorModule } from 'app/modeling-assessment-editor/modeling-assessment-editor.module';
@@ -29,7 +29,7 @@ describe('ModelingAssessmentEditorComponent', () => {
         TestBed.configureTestingModule({
             imports: [RouterTestingModule, TranslateModule.forRoot(), ArtemisTestModule, ArtemisModelingAssessmentEditorModule],
             declarations: [],
-            providers: [JhiAlertService, JhiLanguageHelper, mockedActivatedRoute({}, { showBackButton: 'false' })],
+            providers: [JhiLanguageHelper, mockedActivatedRoute({}, { showBackButton: 'false' })],
         }).compileComponents();
     }));
 

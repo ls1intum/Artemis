@@ -1,6 +1,6 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/alert/alert.service';
 import { WindowRef } from 'app/core/websocket/window.service';
 import { ProgrammingAssessmentRepoExportService, RepositoryExportOptions } from 'app/programming-assessment/repo-export/programming-assessment-repo-export.service';
 import { catchError, tap } from 'rxjs/operators';
@@ -33,7 +33,7 @@ export class ProgrammingAssessmentRepoExportDialogComponent implements OnInit {
         private exerciseService: ExerciseService,
         private repoExportService: ProgrammingAssessmentRepoExportService,
         public activeModal: NgbActiveModal,
-        private jhiAlertService: JhiAlertService,
+        private jhiAlertService: AlertService,
     ) {}
 
     ngOnInit() {

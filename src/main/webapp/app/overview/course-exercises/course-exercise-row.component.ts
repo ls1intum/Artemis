@@ -1,5 +1,5 @@
 import { Component, HostBinding, Input, OnDestroy, OnInit } from '@angular/core';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/alert/alert.service';
 import { ParticipationService } from 'app/entities/participation/participation.service';
 import { ParticipationWebsocketService } from 'app/entities/participation/participation-websocket.service';
 import * as moment from 'moment';
@@ -43,7 +43,7 @@ export class CourseExerciseRowComponent implements OnInit, OnDestroy {
 
     constructor(
         private accountService: AccountService,
-        private jhiAlertService: JhiAlertService,
+        private jhiAlertService: AlertService,
         private $window: WindowRef,
         private participationService: ParticipationService,
         private exerciseService: ExerciseService,

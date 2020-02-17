@@ -1,6 +1,6 @@
 import { NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/alert/alert.service';
 import { ApollonDiagramCreateFormComponent } from './apollon-diagram-create-form.component';
 import { ApollonDiagramDetailComponent } from './apollon-diagram-detail.component';
 import { ApollonDiagramListComponent } from './apollon-diagram-list.component';
@@ -16,6 +16,6 @@ const ENTITY_STATES = [...apollonDiagramsRoutes];
     imports: [ArtemisSharedModule, RouterModule.forChild(ENTITY_STATES), SortByModule, ArtemisResultModule],
     declarations: [ApollonDiagramCreateFormComponent, ApollonDiagramDetailComponent, ApollonDiagramListComponent, ApollonQuizExerciseGenerationComponent],
     entryComponents: [ApollonDiagramCreateFormComponent, ApollonQuizExerciseGenerationComponent],
-    providers: [JhiAlertService],
+    providers: [],
 })
 export class ArtemisApollonDiagramsModule {}

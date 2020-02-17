@@ -11,7 +11,7 @@ import { TranslateModule } from '@ngx-translate/core';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { MockJavaBridgeService } from '../../../mocks/mock-java-bridge.service';
 import { MockCourseExerciseService } from '../../../mocks/mock-course-exercise.service';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/alert/alert.service';
 import { MockAlertService } from '../../../helpers/mock-alert.service';
 import { MockParticipationWebsocketService } from '../../../mocks/mock-participation-websocket.service';
 import { Result } from 'app/entities/result/result.model';
@@ -48,7 +48,7 @@ describe('CourseExerciseRowComponent', () => {
                 { provide: CourseExerciseService, useClass: MockCourseExerciseService },
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: JavaBridgeService, useClass: MockJavaBridgeService },
-                { provide: JhiAlertService, useClass: MockAlertService },
+                { provide: AlertService, useClass: MockAlertService },
             ],
         })
             .overrideModule(ArtemisTestModule, { set: { declarations: [], exports: [] } })
