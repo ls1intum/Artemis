@@ -1,8 +1,8 @@
 import { Component, Input } from '@angular/core';
-import { ButtonSize, ButtonType } from 'app/shared/components';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
-import { Exercise } from 'app/entities/exercise';
+import { Exercise } from 'app/entities/exercise/exercise.model';
 import { ExternalSubmissionDialogComponent } from 'app/assessment-shared/external-submission/external-submission-dialog.component';
+import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
 
 @Component({
     selector: 'jhi-external-submission',

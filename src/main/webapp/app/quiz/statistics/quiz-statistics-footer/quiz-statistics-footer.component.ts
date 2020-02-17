@@ -1,11 +1,7 @@
 import { Component, Input, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { QuizExercise, QuizExerciseService } from 'app/entities/quiz-exercise';
 import { QuizStatisticUtil } from 'app/components/util/quiz-statistic-util.service';
-import { QuizQuestion, QuizQuestionType } from 'app/entities/quiz-question';
-import { MultipleChoiceQuestionStatistic } from 'app/entities/multiple-choice-question-statistic';
 import { ShortAnswerQuestionUtil } from 'app/components/util/short-answer-question-util.service';
-import { QuizPointStatistic } from 'app/entities/quiz-point-statistic';
 import { ArtemisMarkdown } from 'app/components/util/markdown.service';
 import { TranslateService } from '@ngx-translate/core';
 import { Subscription } from 'rxjs/Subscription';
@@ -13,6 +9,11 @@ import { HttpResponse } from '@angular/common/http';
 import * as moment from 'moment';
 import { AccountService } from 'app/core/auth/account.service';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { QuizQuestion, QuizQuestionType } from 'app/entities/quiz-question/quiz-question.model';
+import { QuizExerciseService } from 'app/entities/quiz-exercise/quiz-exercise.service';
+import { MultipleChoiceQuestionStatistic } from 'app/entities/multiple-choice-question-statistic/multiple-choice-question-statistic.model';
+import { QuizPointStatistic } from 'app/entities/quiz-point-statistic/quiz-point-statistic.model';
+import { QuizExercise } from 'app/entities/quiz-exercise/quiz-exercise.model';
 
 @Component({
     selector: 'jhi-quiz-statistics-footer',

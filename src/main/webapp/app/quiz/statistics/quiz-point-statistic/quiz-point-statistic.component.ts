@@ -1,16 +1,17 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { QuizExercise, QuizExerciseService } from '../../../entities/quiz-exercise';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
-import { QuizPointStatistic } from '../../../entities/quiz-point-statistic';
 import { ChartOptions } from 'chart.js';
 import { createOptions, DataSet, DataSetProvider } from '../quiz-statistic/quiz-statistic.component';
 import { Subscription } from 'rxjs/Subscription';
-import { PointCounter } from 'app/entities/point-counter';
 import * as moment from 'moment';
 import { QuizStatisticUtil } from 'app/components/util/quiz-statistic-util.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { PointCounter } from 'app/entities/point-counter/point-counter.model';
+import { QuizExerciseService } from 'app/entities/quiz-exercise/quiz-exercise.service';
+import { QuizPointStatistic } from 'app/entities/quiz-point-statistic/quiz-point-statistic.model';
+import { QuizExercise } from 'app/entities/quiz-exercise/quiz-exercise.model';
 
 @Component({
     selector: 'jhi-quiz-point-statistic',

@@ -3,11 +3,11 @@ import { catchError, tap } from 'rxjs/operators';
 import { ProgrammingSubmissionService } from 'app/programming-submission/programming-submission.service';
 import { of } from 'rxjs';
 import { NgbActiveModal, NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { ButtonType } from 'app/shared/components';
-import { ProgrammingExercise } from 'app/entities/programming-exercise';
 import { hasDeadlinePassed } from 'app/entities/programming-exercise/utils/programming-exercise.utils';
 import { BuildRunState, ProgrammingBuildRunService } from 'app/programming-submission/programming-build-run.service';
-import { FeatureToggle } from 'app/feature-toggle';
+import { FeatureToggle } from 'app/feature-toggle/feature-toggle.service';
+import { ProgrammingExercise } from 'app/entities/programming-exercise/programming-exercise.model';
+import { ButtonType } from 'app/shared/components/button.component';
 
 /**
  * A button that triggers the build for all participations of the given programming exercise.

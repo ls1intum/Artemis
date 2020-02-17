@@ -1,5 +1,5 @@
 import { Component, Input } from '@angular/core';
-import { CommitState, EditorState } from 'app/code-editor';
+import { CommitState, EditorState } from 'app/code-editor/model/code-editor.model';
 
 @Component({
     selector: 'jhi-code-editor-status',

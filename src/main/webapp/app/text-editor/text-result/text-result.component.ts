@@ -1,7 +1,7 @@
 import { Component, Input } from '@angular/core';
-import { Feedback } from 'app/entities/feedback';
-import { TextSubmission } from 'app/entities/text-submission';
-import { Result } from 'app/entities/result';
+import { Feedback } from 'app/entities/feedback/feedback.model';
+import { TextSubmission } from 'app/entities/text-submission/text-submission.model';
+import { Result } from 'app/entities/result/result.model';
 import { TextResultBlock } from './text-result-block';
 import { TranslateService } from '@ngx-translate/core';
 import { TextBlock } from 'app/entities/text-block/text-block.model';

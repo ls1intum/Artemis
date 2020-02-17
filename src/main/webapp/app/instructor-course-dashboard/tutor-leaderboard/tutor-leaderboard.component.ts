@@ -1,7 +1,7 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { TutorLeaderboardElement } from 'app/instructor-course-dashboard/tutor-leaderboard/tutor-leaderboard.model';
-import { Course } from 'app/entities/course';
-import { Exercise } from 'app/entities/exercise';
+import { Course } from 'app/entities/course/course.model';
+import { Exercise } from 'app/entities/exercise/exercise.model';
 import { AccountService } from 'app/core/auth/account.service';
 
 @Component({

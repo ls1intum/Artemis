@@ -2,10 +2,10 @@ import { Injectable, OnDestroy } from '@angular/core';
 import { HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs/Observable';
 
-import { ProgrammingExercise } from '../programming-exercise.model';
 import { BehaviorSubject } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { ProgrammingExercise } from 'app/entities/programming-exercise/programming-exercise.model';
 
 export type EntityResponseType = HttpResponse<ProgrammingExercise>;
 export type EntityArrayResponseType = HttpResponse<ProgrammingExercise[]>;

@@ -7,13 +7,12 @@ import { SinonSpy, spy } from 'sinon';
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
 import { ArtemisTestModule } from '../../test.module';
-import { ButtonComponent } from 'app/shared/components';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { SessionStorageStrategy } from 'app/shared/image/SessionStorageStrategy';
-import { MockSyncStorage } from '../../mocks';
+import { MockSyncStorage } from '../../mocks/mock-sync.storage';
 import { FeatureToggleService } from 'app/feature-toggle/feature-toggle.service';
 import { MockFeatureToggleService } from '../../mocks/mock-feature-toggle-service';
+import { ButtonComponent } from 'app/shared/components/button.component';
 
 chai.use(sinonChai);
 const expect = chai.expect;

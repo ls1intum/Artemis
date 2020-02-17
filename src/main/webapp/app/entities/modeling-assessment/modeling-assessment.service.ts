@@ -2,14 +2,14 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs/Observable';
 import { SERVER_API_URL } from 'app/app.constants';
-import { Result } from '../result';
 import { UMLElementType, UMLModel, UMLModelElementType, UMLRelationshipType } from '@ls1intum/apollon';
-import { Feedback } from 'app/entities/feedback';
 import { mergeMap } from 'rxjs/operators';
 import { timer } from 'rxjs';
-import { ComplaintResponse } from 'app/entities/complaint-response';
 import { Conflict } from 'app/modeling-assessment-editor/conflict.model';
 import * as moment from 'moment';
+import { ComplaintResponse } from 'app/entities/complaint-response/complaint-response.model';
+import { Feedback } from 'app/entities/feedback/feedback.model';
+import { Result } from 'app/entities/result/result.model';
 
 export type EntityResponseType = HttpResponse<Result>;
 

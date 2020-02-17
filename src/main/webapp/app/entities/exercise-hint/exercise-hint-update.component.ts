@@ -3,12 +3,13 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ActivatedRoute } from '@angular/router';
 import { Observable, of, Subscription } from 'rxjs';
 import { catchError, map, tap } from 'rxjs/operators';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/alert/alert.service';
 import { ExerciseHint } from 'app/entities/exercise-hint/exercise-hint.model';
 import { ExerciseHintService } from './exercise-hint.service';
-import { Exercise, ExerciseService } from 'app/entities/exercise';
-import { EditorMode, MarkdownEditorHeight } from 'app/markdown-editor';
-import { KatexCommand } from 'app/markdown-editor/commands';
+import { EditorMode, MarkdownEditorHeight } from 'app/markdown-editor/markdown-editor.component';
+import { Exercise } from 'app/entities/exercise/exercise.model';
+import { ExerciseService } from 'app/entities/exercise/exercise.service';
+import { KatexCommand } from 'app/markdown-editor/commands/katex.command';
 
 @Component({
     selector: 'jhi-exercise-hint-update',
@@ -31,7 +32,7 @@ export class ExerciseHintUpdateComponent implements OnInit, OnDestroy {
 
     constructor(
         private route: ActivatedRoute,
-        protected jhiAlertService: JhiAlertService,
+        protected jhiAlertService: AlertService,
         protected exerciseHintService: ExerciseHintService,
         protected exerciseService: ExerciseService,
     ) {}

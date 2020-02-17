@@ -1,20 +1,16 @@
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
 import * as moment from 'moment';
-import {
-    ProgrammingExerciseTestScheduleDatePickerComponent,
-    ProgrammingExerciseLifecycleComponent,
-} from 'app/entities/programming-exercise/programming-exercise-test-schedule-picker';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { DebugElement } from '@angular/core';
-import { ProgrammingExercise } from 'app/entities/programming-exercise';
 import { TranslateModule } from '@ngx-translate/core';
 import { ArtemisTestModule } from '../../test.module';
-import { ArtemisSharedModule } from 'app/shared';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { MockComponent } from 'ng-mocks';
-import { HelpIconComponent } from 'app/shared/components';
-import { BrowserDynamicTestingModule } from '@angular/platform-browser-dynamic/testing';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { ProgrammingExerciseLifecycleComponent } from 'app/entities/programming-exercise/programming-exercise-test-schedule-picker/programming-exercise-lifecycle.component';
+import { HelpIconComponent } from 'app/shared/components/help-icon.component';
+import { ProgrammingExercise } from 'app/entities/programming-exercise/programming-exercise.model';
+import { ProgrammingExerciseTestScheduleDatePickerComponent } from 'app/entities/programming-exercise/programming-exercise-test-schedule-picker/programming-exercise-test-schedule-date-picker.component';
 
 chai.use(sinonChai);
 const expect = chai.expect;

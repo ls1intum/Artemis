@@ -5,8 +5,8 @@ import * as moment from 'moment';
 import { map } from 'rxjs/operators';
 
 import { SERVER_API_URL } from 'app/app.constants';
-import { createRequestOption } from 'app/shared';
-import { Lecture } from 'app/entities/lecture';
+import { createRequestOption } from 'app/shared/util/request-util';
+import { Lecture } from 'app/entities/lecture/lecture.model';
 import { AccountService } from 'app/core/auth/account.service';
 
 type EntityResponseType = HttpResponse<Lecture>;

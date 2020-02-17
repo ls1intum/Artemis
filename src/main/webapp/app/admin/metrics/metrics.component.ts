@@ -1,7 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-
-import { JhiMetricsService } from 'app/admin';
+import { JhiMetricsService } from 'app/admin/metrics/metrics.service';
 
 @Component({
     selector: 'jhi-metrics',

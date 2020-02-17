@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { Result } from 'app/entities/result';
+import { Result } from 'app/entities/result/result.model';
 
 /**
  * The <jhi-assessment-header> component is used in the shared assessment layout.

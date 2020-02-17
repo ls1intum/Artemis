@@ -1,7 +1,7 @@
-import { Exercise } from '../exercise';
-import { Submission } from '../submission';
-import { TutorParticipation } from '../tutor-participation';
-import { BaseEntity } from 'app/shared';
+import { BaseEntity } from 'app/shared/model/base-entity';
+import { Exercise } from 'app/entities/exercise/exercise.model';
+import { Submission } from 'app/entities/submission/submission.model';
+import { TutorParticipation } from 'app/entities/tutor-participation/tutor-participation.model';
 
 export class ExampleSubmission implements BaseEntity {
     public id: number;

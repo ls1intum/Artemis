@@ -1,6 +1,6 @@
 import { Component, Input } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { JhiAlertService, JhiEventManager } from 'ng-jhipster';
+import { JhiEventManager } from 'ng-jhipster';
 
 import { QuizExercise } from './quiz-exercise.model';
 import { QuizExerciseService } from './quiz-exercise.service';
@@ -11,7 +11,7 @@ import { CourseService } from 'app/entities/course/course.service';
 import { ExerciseComponent } from 'app/entities/exercise/exercise.component';
 import { TranslateService } from '@ngx-translate/core';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
-import { Subject } from 'rxjs';
+import { AlertService } from 'app/core/alert/alert.service';
 
 @Component({
     selector: 'jhi-quiz-exercise',
@@ -33,7 +33,7 @@ export class QuizExerciseComponent extends ExerciseComponent {
     constructor(
         private quizExerciseService: QuizExerciseService,
         private accountService: AccountService,
-        private jhiAlertService: JhiAlertService,
+        private jhiAlertService: AlertService,
         courseService: CourseService,
         translateService: TranslateService,
         eventManager: JhiEventManager,

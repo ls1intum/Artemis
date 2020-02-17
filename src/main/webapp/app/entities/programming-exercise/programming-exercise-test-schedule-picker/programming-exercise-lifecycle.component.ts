@@ -1,8 +1,8 @@
 import { Component, Input, OnInit } from '@angular/core';
-import { ProgrammingExercise } from 'app/entities/programming-exercise';
-import { AssessmentType } from 'app/entities/assessment-type';
 import * as moment from 'moment';
 import { TranslateService } from '@ngx-translate/core';
+import { AssessmentType } from 'app/entities/assessment-type/assessment-type.model';
+import { ProgrammingExercise } from 'app/entities/programming-exercise/programming-exercise.model';
 
 @Component({
     selector: 'jhi-programming-exercise-lifecycle',

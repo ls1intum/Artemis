@@ -1,8 +1,8 @@
 import { Component, Input } from '@angular/core';
-import { ButtonSize, ButtonType } from 'app/shared/components';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ProgrammingAssessmentRepoExportDialogComponent } from 'app/programming-assessment/repo-export/programming-assessment-repo-export-dialog.component';
-import { FeatureToggle } from 'app/feature-toggle';
+import { FeatureToggle } from 'app/feature-toggle/feature-toggle.service';
+import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
 
 @Component({
     selector: 'jhi-programming-assessment-repo-export',

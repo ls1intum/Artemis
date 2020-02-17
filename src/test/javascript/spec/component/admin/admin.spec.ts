@@ -5,8 +5,8 @@ import { DebugElement } from '@angular/core';
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
 import { ArtemisTestModule } from '../../test.module';
-import { AuditsComponent } from 'app/admin';
 import { ArtemisAdminModule } from 'app/admin/admin.module';
+import { AuditsComponent } from 'app/admin/audits/audits.component';
 
 chai.use(sinonChai);
 const expect = chai.expect;

@@ -1,18 +1,17 @@
 import { NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
-import { JhiAlertService } from 'ng-jhipster';
-
-import { ArtemisSharedModule } from '../shared';
-import { CourseComponent } from '../entities/course';
-import { ArtemisResultModule } from '../entities/result';
-import { HomeComponent } from '../home';
+import { AlertService } from 'app/core/alert/alert.service';
 import { MomentModule } from 'ngx-moment';
-import { JhiMainComponent } from '../layouts';
 import { ClipboardModule } from 'ngx-clipboard';
 import { exampleTextSubmissionRoute } from 'app/example-text-submission/example-text-submission.route';
 import { ExampleTextSubmissionComponent } from 'app/example-text-submission/example-text-submission.component';
-import { ArtemisTextAssessmentModule } from 'app/text-assessment';
 import { ArtemisAssessmentSharedModule } from 'app/assessment-shared/assessment-shared.module';
+import { JhiMainComponent } from 'app/layouts/main/main.component';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
+import { HomeComponent } from 'app/home/home.component';
+import { ArtemisResultModule } from 'app/entities/result/result.module';
+import { ArtemisTextAssessmentModule } from 'app/text-assessment/text-assessment.module';
+import { CourseComponent } from 'app/entities/course/course.component';
 
 const ENTITY_STATES = [...exampleTextSubmissionRoute];
 
@@ -29,7 +28,7 @@ const ENTITY_STATES = [...exampleTextSubmissionRoute];
     declarations: [ExampleTextSubmissionComponent],
     exports: [],
     entryComponents: [HomeComponent, CourseComponent, JhiMainComponent],
-    providers: [JhiAlertService],
+    providers: [],
     schemas: [],
 })
 export class ArtemisExampleTextSubmissionModule {}

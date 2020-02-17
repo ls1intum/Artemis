@@ -1,17 +1,17 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { HttpErrorResponse, HttpHeaders, HttpResponse } from '@angular/common/http';
 import { Subscription } from 'rxjs';
-import { JhiAlertService, JhiEventManager, JhiParseLinks } from 'ng-jhipster';
-
+import { JhiEventManager, JhiParseLinks } from 'ng-jhipster';
+import { AlertService } from 'app/core/alert/alert.service';
 import { User } from 'app/core/user/user.model';
-import { Lecture } from 'app/entities/lecture';
+import { Lecture } from 'app/entities/lecture/lecture.model';
 import { ActivatedRoute, Router } from '@angular/router';
 import { NotificationService } from 'app/entities/notification/notification.service';
 import { Notification } from 'app/entities/notification/notification.model';
-import { ITEMS_PER_PAGE } from 'app/shared';
-import { SystemNotification } from 'app/entities/system-notification';
 import * as moment from 'moment';
 import { AccountService } from 'app/core/auth/account.service';
+import { SystemNotification } from 'app/entities/system-notification/system-notification.model';
+import { ITEMS_PER_PAGE } from 'app/shared/constants/pagination.constants';
 
 @Component({
     selector: 'jhi-notification',
@@ -35,10 +35,10 @@ export class NotificationComponent implements OnInit, OnDestroy {
     constructor(
         public notificationService: NotificationService,
         private route: ActivatedRoute,
-        protected jhiAlertService: JhiAlertService,
+        protected jhiAlertService: AlertService,
         private router: Router,
         private activatedRoute: ActivatedRoute,
-        private alertService: JhiAlertService,
+        private alertService: AlertService,
         private parseLinks: JhiParseLinks,
         protected eventManager: JhiEventManager,
         protected accountService: AccountService,
