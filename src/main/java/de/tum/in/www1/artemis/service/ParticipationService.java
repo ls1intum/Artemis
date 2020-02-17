@@ -291,7 +291,7 @@ public class ParticipationService {
 
             if (newParticipation || !submissionRepository.existsByParticipationId(participation.getId())) {
                 // initialize a modeling, text or file upload submission (depending on the exercise type), it will not do anything in the case of a quiz exercise
-                initializeSubmission(participation, exercise, null);
+                initializeSubmission((Participation) participation, exercise, null);
             }
         }
         participation = save(participation);
@@ -300,41 +300,41 @@ public class ParticipationService {
     }
 
     /**
-     * This method checks whether a participation exists for a given exercise and user. If not, it creates such a participation with initialization state FINISHED.
+     * This method checks whether a participation exists for a given exercise and agent. If not, it creates such a participation with initialization state FINISHED.
      * If the participation had to be newly created or there were no submissions yet for the existing participation, a new submission is created with the given submission type.
      * For external submissions, the submission is assumed to be submitted immediately upon creation.
      *
      * @param exercise the exercise for which to create a participation and submission
-     * @param user the user for which to create a participation and submission
+     * @param agent the agent (student or team) for which to create a participation and submission
      * @param submissionType the type of submission to create if none exist yet
      * @return the participation connecting the given exercise and user
      */
-    public StudentParticipation createParticipationWithEmptySubmissionIfNotExisting(Exercise exercise, User user, SubmissionType submissionType) {
-        Optional<StudentParticipation> optionalStudentParticipation = findOneByExerciseIdAndStudentLoginAnyState(exercise.getId(), user.getLogin());
-        StudentParticipation participation;
-        if (optionalStudentParticipation.isEmpty()) {
+    public AgentParticipation createParticipationWithEmptySubmissionIfNotExisting(Exercise exercise, Agent agent, SubmissionType submissionType) {
+        Optional<? extends AgentParticipation> optionalAgentParticipation = findOneByExerciseAndAgentAnyState(exercise.getId(), agent);
+        AgentParticipation participation;
+        if (optionalAgentParticipation.isEmpty()) {
             // create a new participation only if no participation can be found
             if (exercise instanceof ProgrammingExercise) {
-                participation = new ProgrammingExerciseStudentParticipation();
+                participation = ((ProgrammingExercise) exercise).newProgrammingExerciseAgentParticipation();
             }
             else {
-                participation = new StudentParticipation();
+                participation = exercise.newAgentParticipation();
             }
             participation.setInitializationState(UNINITIALIZED);
             participation.setInitializationDate(ZonedDateTime.now());
             participation.setExercise(exercise);
-            participation.setStudent(user);
+            participation.setAgent(agent);
 
             participation = save(participation);
         }
         else {
-            participation = optionalStudentParticipation.get();
+            participation = optionalAgentParticipation.get();
         }
 
         // setup repository in case of programming exercise
         if (exercise instanceof ProgrammingExercise) {
             ProgrammingExercise programmingExercise = (ProgrammingExercise) exercise;
-            ProgrammingExerciseStudentParticipation programmingParticipation = (ProgrammingExerciseStudentParticipation) participation;
+            ProgrammingExerciseAgentParticipation programmingParticipation = (ProgrammingExerciseAgentParticipation) participation;
             // Note: we need a repository, otherwise the student cannot click resume.
             programmingParticipation = copyRepository(programmingParticipation);
             programmingParticipation = configureRepository(programmingParticipation);
@@ -344,7 +344,7 @@ public class ParticipationService {
                 // restrict access for the student
                 try {
                     versionControlService.get().setRepositoryPermissionsToReadOnly(programmingParticipation.getRepositoryUrlAsUrl(), programmingExercise.getProjectKey(),
-                            programmingParticipation.getStudent().getLogin());
+                            programmingParticipation.getAgent().getUsername());
                 }
                 catch (VersionControlException e) {
                     log.error("Removing write permissions failed for programming exercise with id " + programmingExercise.getId() + " for student repository with participation id "
@@ -357,14 +357,14 @@ public class ParticipationService {
         participation = save(participation);
 
         // Take the latest submission or initialize a new empty submission
-        participation = (StudentParticipation) findOneWithEagerSubmissions(participation.getId());
+        participation = (AgentParticipation) findOneWithEagerSubmissions(participation.getId());
         Optional<Submission> optionalSubmission = participation.findLatestSubmission();
         Submission submission;
         if (optionalSubmission.isPresent()) {
             submission = optionalSubmission.get();
         }
         else {
-            submission = initializeSubmission(participation, exercise, submissionType).get();
+            submission = initializeSubmission((Participation) participation, exercise, submissionType).get();
             participation = save(participation);
         }
 
@@ -527,7 +527,7 @@ public class ParticipationService {
         if (!participation.getInitializationState().hasCompletedState(InitializationState.REPO_COPIED) || participation.getRepositoryUrlAsUrl() == null) {
             final var programmingExercise = participation.getProgrammingExercise();
             final var projectKey = programmingExercise.getProjectKey();
-            final var username = participation.getAgentUsername();
+            final var username = participation.getAgent().getUsername();
             // NOTE: we have to get the repository slug of the template participation here, because not all exercises (in particular old ones) follow the naming conventions
             final var repoName = versionControlService.get().getRepositorySlugFromUrl(programmingExercise.getTemplateParticipation().getRepositoryUrlAsUrl());
             // the next action includes recovery, which means if the repository has already been copied, we simply retrieve the repository url and do not copy it again
@@ -544,7 +544,7 @@ public class ParticipationService {
 
     private ProgrammingExerciseAgentParticipation configureRepository(ProgrammingExerciseAgentParticipation participation) {
         if (!participation.getInitializationState().hasCompletedState(InitializationState.REPO_CONFIGURED)) {
-            versionControlService.get().configureRepository(participation.getRepositoryUrlAsUrl(), participation.getAgentUsername());
+            versionControlService.get().configureRepository(participation.getRepositoryUrlAsUrl(), participation.getAgent().getUsername());
             participation.setInitializationState(InitializationState.REPO_CONFIGURED);
             return save(participation);
         }
@@ -558,7 +558,7 @@ public class ParticipationService {
         if (!participation.getInitializationState().hasCompletedState(InitializationState.BUILD_PLAN_COPIED) || participation.getBuildPlanId() == null) {
             final var projectKey = participation.getProgrammingExercise().getProjectKey();
             final var planName = BuildPlanType.TEMPLATE.getName();
-            final var username = participation.getAgentUsername();
+            final var username = participation.getAgent().getUsername();
             final var buildProjectName = participation.getProgrammingExercise().getCourse().getShortName().toUpperCase() + " " + participation.getProgrammingExercise().getTitle();
             // the next action includes recovery, which means if the build plan has already been copied, we simply retrieve the build plan id and do not copy it again
             final var buildPlanId = continuousIntegrationService.get().copyBuildPlan(projectKey, planName, projectKey, buildProjectName, username.toUpperCase());

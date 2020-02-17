@@ -132,6 +132,10 @@ public class User extends AbstractAuditingEntity implements Serializable, Agent 
         this.login = StringUtils.lowerCase(login, Locale.ENGLISH);
     }
 
+    public String getUsername() {
+        return login;
+    }
+
     public String getPassword() {
         return password;
     }

@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.domain.participation;
 
 import java.time.ZonedDateTime;
+import java.util.Optional;
 
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.Submission;
@@ -21,6 +22,8 @@ public interface ParticipationInterface {
     void setInitializationDate(ZonedDateTime initializationDate);
 
     void addSubmissions(Submission submission);
+
+    Optional<Submission> findLatestSubmission();
 
     Participation copyParticipationId();
 }

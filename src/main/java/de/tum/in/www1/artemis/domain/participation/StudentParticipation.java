@@ -20,10 +20,6 @@ public class StudentParticipation extends Participation implements AgentParticip
     @JsonView(QuizView.Before.class)
     private User student;
 
-    public String getAgentUsername() {
-        return student.getLogin();
-    }
-
     public Integer getPresentationScore() {
         return presentationScore;
     }
@@ -48,6 +44,14 @@ public class StudentParticipation extends Participation implements AgentParticip
 
     public void setStudent(User user) {
         this.student = user;
+    }
+
+    public User getAgent() {
+        return student;
+    }
+
+    public void setAgent(Agent agent) {
+        this.student = (User) agent;
     }
 
     public Exercise getExercise() {

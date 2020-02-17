@@ -84,6 +84,10 @@ public class Team implements Serializable, Agent {
         this.shortName = shortName;
     }
 
+    public String getUsername() {
+        return shortName;
+    }
+
     public String getImage() {
         return image;
     }

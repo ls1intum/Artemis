@@ -5,8 +5,6 @@ import de.tum.in.www1.artemis.domain.Exercise;
 
 public interface AgentParticipation extends ParticipationInterface {
 
-    String getAgentUsername();
-
     Integer getPresentationScore();
 
     void setPresentationScore(Integer presentationScore);

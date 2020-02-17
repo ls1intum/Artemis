@@ -20,10 +20,6 @@ public class TeamParticipation extends Participation implements AgentParticipati
     @JsonView(QuizView.Before.class)
     private Team team;
 
-    public String getAgentUsername() {
-        return team.getShortName();
-    }
-
     public Integer getPresentationScore() {
         return presentationScore;
     }
@@ -48,6 +44,14 @@ public class TeamParticipation extends Participation implements AgentParticipati
 
     public void setTeam(Team team) {
         this.team = team;
+    }
+
+    public Team getAgent() {
+        return team;
+    }
+
+    public void setAgent(Agent agent) {
+        this.team = (Team) agent;
     }
 
     public Exercise getExercise() {
