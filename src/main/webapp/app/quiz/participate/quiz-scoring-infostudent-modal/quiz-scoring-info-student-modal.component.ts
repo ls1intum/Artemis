@@ -1,17 +1,17 @@
 import { AfterViewInit, Component, Input } from '@angular/core';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { QuizQuestion, QuizQuestionType, ScoringType } from 'app/entities/quiz-question';
-import { DragAndDropMapping } from '../../../entities/drag-and-drop-mapping';
-import { AnswerOption } from '../../../entities/answer-option';
-import { MultipleChoiceQuestion } from '../../../entities/multiple-choice-question';
-import { DragAndDropQuestion } from '../../../entities/drag-and-drop-question';
-import { ShortAnswerQuestion } from '../../../entities/short-answer-question';
-import { ShortAnswerSubmittedText } from 'app/entities/short-answer-submitted-text';
 import { TranslateService } from '@ngx-translate/core';
-import { Result } from 'app/entities/result';
-import { QuizExercise } from 'app/entities/quiz-exercise';
-import { QuizSubmission } from 'app/entities/quiz-submission';
-import { MultipleChoiceSubmittedAnswer } from 'app/entities/multiple-choice-submitted-answer';
+import { Result } from 'app/entities/result/result.model';
+import { QuizSubmission } from 'app/entities/quiz-submission/quiz-submission.model';
+import { ShortAnswerQuestion } from 'app/entities/short-answer-question/short-answer-question.model';
+import { QuizQuestion, QuizQuestionType, ScoringType } from 'app/entities/quiz-question/quiz-question.model';
+import { MultipleChoiceSubmittedAnswer } from 'app/entities/multiple-choice-submitted-answer/multiple-choice-submitted-answer.model';
+import { DragAndDropMapping } from 'app/entities/drag-and-drop-mapping/drag-and-drop-mapping.model';
+import { AnswerOption } from 'app/entities/answer-option/answer-option.model';
+import { ShortAnswerSubmittedText } from 'app/entities/short-answer-submitted-text/short-answer-submitted-text.model';
+import { DragAndDropQuestion } from 'app/entities/drag-and-drop-question/drag-and-drop-question.model';
+import { MultipleChoiceQuestion } from 'app/entities/multiple-choice-question/multiple-choice-question.model';
+import { QuizExercise } from 'app/entities/quiz-exercise/quiz-exercise.model';
 
 @Component({
     selector: 'jhi-quiz-scoring-infostudent-modal',

@@ -4,13 +4,15 @@ import { ProgrammingExerciseService } from 'app/entities/programming-exercise/se
 import { ParticipationService } from 'app/entities/participation/participation.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CourseExerciseService } from 'app/entities/course/course.service';
-import { CodeEditorFileService, CodeEditorSessionService, DomainService } from 'app/code-editor/service';
 import { TranslateService } from '@ngx-translate/core';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/alert/alert.service';
 import { CodeEditorInstructorBaseContainerComponent, REPOSITORY } from 'app/code-editor/instructor/code-editor-instructor-base-container.component';
 import { JavaBridgeService } from 'app/intellij/java-bridge.service';
 import { IdeBuildAndTestService } from 'app/intellij/ide-build-and-test.service';
 import { IntelliJState } from 'app/intellij/intellij';
+import { CodeEditorSessionService } from 'app/code-editor/service/code-editor-session.service';
+import { DomainService } from 'app/code-editor/service/code-editor-domain.service';
+import { CodeEditorFileService } from 'app/code-editor/service/code-editor-file.service';
 
 @Component({
     selector: 'jhi-code-editor-instructor-intellij',
@@ -31,7 +33,7 @@ export class CodeEditorInstructorIntellijContainerComponent extends CodeEditorIn
         participationService: ParticipationService,
         translateService: TranslateService,
         route: ActivatedRoute,
-        jhiAlertService: JhiAlertService,
+        jhiAlertService: AlertService,
         sessionService: CodeEditorSessionService,
         fileService: CodeEditorFileService,
     ) {

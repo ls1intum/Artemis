@@ -1,19 +1,19 @@
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/alert/alert.service';
 import { Component, OnInit } from '@angular/core';
-import { Course } from 'app/entities/course';
+import { Course } from 'app/entities/course/course.model';
 import { CourseService } from 'app/entities/course/course.service';
 import { catchError, map, tap } from 'rxjs/operators';
 import { of, zip } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { getIcon, getIconTooltip } from 'app/entities/exercise';
-import { ResultService } from 'app/entities/result';
 import { StatsForDashboard } from 'app/instructor-course-dashboard/stats-for-dashboard.model';
+import { ResultService } from 'app/entities/result/result.service';
+import { getIcon, getIconTooltip } from 'app/entities/exercise/exercise.model';
 
 @Component({
     selector: 'jhi-instructor-course-dashboard',
     templateUrl: './instructor-course-dashboard.component.html',
-    providers: [JhiAlertService],
+    providers: [],
 })
 export class InstructorCourseDashboardComponent implements OnInit {
     course: Course;
@@ -31,7 +31,7 @@ export class InstructorCourseDashboardComponent implements OnInit {
     readonly MIN_POINTS_GREEN = 100;
     readonly MIN_POINTS_ORANGE = 50;
 
-    constructor(private courseService: CourseService, private resultService: ResultService, private route: ActivatedRoute, private jhiAlertService: JhiAlertService) {}
+    constructor(private courseService: CourseService, private resultService: ResultService, private route: ActivatedRoute, private jhiAlertService: AlertService) {}
 
     ngOnInit(): void {
         this.isLoading = true;

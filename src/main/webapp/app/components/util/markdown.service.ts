@@ -4,10 +4,11 @@ import * as showdown from 'showdown';
 import * as showdownKatex from 'showdown-katex';
 import * as ace from 'brace';
 import * as DOMPurify from 'dompurify';
-import { ExplanationCommand, HintCommand } from 'app/markdown-editor/domainCommands';
 import { AceEditorComponent } from 'ng2-ace-editor';
 import { escapeStringForUseInRegex } from 'app/utils/global.utils';
-import { TextHintExplanationInterface } from 'app/entities/quiz-question';
+import { ExplanationCommand } from 'app/markdown-editor/domainCommands/explanation.command';
+import { HintCommand } from 'app/markdown-editor/domainCommands/hint.command';
+import { TextHintExplanationInterface } from 'app/entities/quiz-question/quiz-question.model';
 
 const Range = ace.acequire('ace/range').Range;
 

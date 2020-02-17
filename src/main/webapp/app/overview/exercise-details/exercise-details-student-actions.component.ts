@@ -1,23 +1,24 @@
 import { Component, HostBinding, Input, OnInit } from '@angular/core';
-import { Exercise, ExerciseType, isStartExerciseAvailable, ParticipationStatus, participationStatus } from 'app/entities/exercise';
-import { QuizExercise } from 'app/entities/quiz-exercise';
-import { InitializationState, Participation, ProgrammingExerciseStudentParticipation } from 'app/entities/participation';
 import * as moment from 'moment';
 import { CourseExerciseService } from 'app/entities/course/course.service';
 import { Router } from '@angular/router';
-import { JhiAlertService } from 'ng-jhipster';
-import { ProgrammingExercise } from 'app/entities/programming-exercise';
+import { AlertService } from 'app/core/alert/alert.service';
 import { HttpClient } from '@angular/common/http';
 import { AccountService } from 'app/core/auth/account.service';
 import { SourceTreeService } from 'app/components/util/sourceTree.service';
-import { FeatureToggle } from 'app/feature-toggle';
-import { Result } from 'app/entities/result';
+import { FeatureToggle } from 'app/feature-toggle/feature-toggle.service';
+import { Participation } from 'app/entities/participation/participation.model';
+import { Exercise, ExerciseType, ParticipationStatus } from 'app/entities/exercise/exercise.model';
+import { isStartExerciseAvailable, participationStatus } from 'app/entities/exercise/exercise-utils';
+import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
+import { ProgrammingExercise } from 'app/entities/programming-exercise/programming-exercise.model';
+import { QuizExercise } from 'app/entities/quiz-exercise/quiz-exercise.model';
 
 @Component({
     selector: 'jhi-exercise-details-student-actions',
     templateUrl: './exercise-details-student-actions.component.html',
     styleUrls: ['../course-overview.scss'],
-    providers: [JhiAlertService, SourceTreeService],
+    providers: [SourceTreeService],
 })
 export class ExerciseDetailsStudentActionsComponent implements OnInit {
     FeatureToggle = FeatureToggle;
@@ -38,7 +39,7 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
     public wasCopied = false;
 
     constructor(
-        private jhiAlertService: JhiAlertService,
+        private jhiAlertService: AlertService,
         private courseExerciseService: CourseExerciseService,
         private httpClient: HttpClient,
         private accountService: AccountService,

@@ -8,7 +8,8 @@ import { LectureService } from './lecture.service';
 import { LectureComponent } from './lecture.component';
 import { LectureDetailComponent } from './lecture-detail.component';
 import { LectureUpdateComponent } from './lecture-update.component';
-import { Lecture, LectureAttachmentsComponent } from 'app/entities/lecture';
+import { Lecture } from 'app/entities/lecture/lecture.model';
+import { LectureAttachmentsComponent } from 'app/entities/lecture/lecture-attachments.component';
 
 @Injectable({ providedIn: 'root' })
 export class LectureResolve implements Resolve<Lecture> {
