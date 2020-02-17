@@ -3,7 +3,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/alert/alert.service';
 import interact from 'interactjs';
 import * as moment from 'moment';
 import * as $ from 'jquery';
@@ -11,17 +11,20 @@ import { Interactable } from '@interactjs/types/types';
 import { Location } from '@angular/common';
 import { FileUploadAssessmentsService } from 'app/entities/file-upload-assessment/file-upload-assessment.service';
 import { WindowRef } from 'app/core/websocket/window.service';
-import { StudentParticipation } from 'app/entities/participation';
-import { Result, ResultService } from 'app/entities/result';
-import { Feedback } from 'app/entities/feedback';
-import { Complaint, ComplaintService, ComplaintType } from 'app/entities/complaint';
 import { ArtemisMarkdown } from 'app/components/util/markdown.service';
-import { ComplaintResponse } from 'app/entities/complaint-response';
-import { FileUploadSubmission, FileUploadSubmissionService } from 'app/entities/file-upload-submission';
-import { FileUploadExercise } from 'app/entities/file-upload-exercise';
 import { filter, finalize } from 'rxjs/operators';
-import { FileService } from 'app/shared';
 import { AccountService } from 'app/core/auth/account.service';
+import { FileUploadExercise } from 'app/entities/file-upload-exercise/file-upload-exercise.model';
+import { ComplaintResponse } from 'app/entities/complaint-response/complaint-response.model';
+import { FileUploadSubmissionService } from 'app/entities/file-upload-submission/file-upload-submission.service';
+import { FileService } from 'app/shared/http/file.service';
+import { Complaint, ComplaintType } from 'app/entities/complaint/complaint.model';
+import { Feedback } from 'app/entities/feedback/feedback.model';
+import { ResultService } from 'app/entities/result/result.service';
+import { FileUploadSubmission } from 'app/entities/file-upload-submission/file-upload-submission.model';
+import { ComplaintService } from 'app/entities/complaint/complaint.service';
+import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { Result } from 'app/entities/result/result.model';
 
 @Component({
     providers: [FileUploadAssessmentsService, WindowRef],
@@ -63,7 +66,7 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
 
     constructor(
         private changeDetectorRef: ChangeDetectorRef,
-        private jhiAlertService: JhiAlertService,
+        private jhiAlertService: AlertService,
         private modalService: NgbModal,
         private router: Router,
         private route: ActivatedRoute,

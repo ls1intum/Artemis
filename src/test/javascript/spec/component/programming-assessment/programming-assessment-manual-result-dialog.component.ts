@@ -8,32 +8,37 @@ import * as sinonChai from 'sinon-chai';
 import { SinonStub, stub } from 'sinon';
 import { of } from 'rxjs';
 import { ArtemisTestModule } from '../../test.module';
-import { StudentParticipation } from 'src/main/webapp/app/entities/participation';
 import { ParticipationWebsocketService } from 'app/entities/participation/participation-websocket.service';
-import { ResultService } from 'src/main/webapp/app/entities/result';
-import { Feedback } from 'src/main/webapp/app/entities/feedback';
 import { MockResultService } from '../../mocks/mock-result.service';
-import { ProgrammingExercise, ProgrammingExerciseParticipationService } from 'src/main/webapp/app/entities/programming-exercise';
-import { RepositoryFileService } from 'src/main/webapp/app/entities/repository';
-import { MockRepositoryFileService } from '../../mocks/mock-repository-file.service';
-import { MockExerciseHintService, MockParticipationWebsocketService, MockSyncStorage } from '../../mocks';
-import { MockNgbModalService } from '../../mocks/mock-ngb-modal.service';
+import { MockSyncStorage } from '../../mocks/mock-sync.storage';
+import { MockParticipationWebsocketService } from '../../mocks/mock-participation-websocket.service';
 import { MockProgrammingExerciseParticipationService } from '../../mocks/mock-programming-exercise-participation.service';
-import { ExerciseHintService } from 'app/entities/exercise-hint';
-import { ProgrammingAssessmentManualResultDialogComponent, ProgrammingAssessmentManualResultService } from 'app/programming-assessment/manual-result';
-import { Complaint, ComplaintService } from 'app/entities/complaint';
-import { ProgrammingSubmission } from 'app/entities/programming-submission';
-import { ArtemisSharedModule } from 'app/shared';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { BuildLogService } from 'app/programming-assessment/build-logs/build-log.service';
 import { FormDateTimePickerModule } from 'app/shared/date-time-picker/date-time-picker.module';
-import { ComplaintsForTutorComponent } from 'app/complaints-for-tutor';
 import { User } from 'app/core/user/user.model';
 import { AccountService } from 'app/core/auth/account.service';
-import { SessionStorageService, LocalStorageService } from 'ngx-webstorage';
+import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { By } from '@angular/platform-browser';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/alert/alert.service';
 import { MockComponent } from 'ng-mocks';
-import { ProgrammingAssessmentRepoExportButtonComponent } from 'app/programming-assessment/repo-export';
+import { ProgrammingAssessmentManualResultDialogComponent } from 'app/programming-assessment/manual-result/programming-assessment-manual-result-dialog.component';
+import { ResultService } from 'app/entities/result/result.service';
+import { RepositoryFileService } from 'app/entities/repository/repository.service';
+import { ProgrammingExerciseParticipationService } from 'app/entities/programming-exercise/services/programming-exercise-participation.service';
+import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { ProgrammingAssessmentRepoExportButtonComponent } from 'app/programming-assessment/repo-export/programming-assessment-repo-export-button.component';
+import { ProgrammingSubmission } from 'app/entities/programming-submission/programming-submission.model';
+import { ComplaintsForTutorComponent } from 'app/complaints-for-tutor/complaints-for-tutor.component';
+import { Feedback } from 'app/entities/feedback/feedback.model';
+import { ProgrammingAssessmentManualResultService } from 'app/programming-assessment/manual-result/programming-assessment-manual-result.service';
+import { ProgrammingExercise } from 'app/entities/programming-exercise/programming-exercise.model';
+import { Complaint } from 'app/entities/complaint/complaint.model';
+import { ComplaintService } from 'app/entities/complaint/complaint.service';
+import { ExerciseHintService } from 'app/entities/exercise-hint/exercise-hint.service';
+import { MockRepositoryFileService } from '../../mocks/mock-repository-file.service';
+import { MockExerciseHintService } from '../../mocks/mock-exercise-hint.service';
+import { MockNgbModalService } from '../../mocks/mock-ngb-modal.service';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -72,7 +77,7 @@ describe('ProgrammingAssessmentManualResultDialogComponent', () => {
                 ComplaintService,
                 BuildLogService,
                 AccountService,
-                JhiAlertService,
+                AlertService,
                 { provide: ResultService, useClass: MockResultService },
                 {
                     provide: ProgrammingExerciseParticipationService,

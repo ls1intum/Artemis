@@ -1,5 +1,5 @@
-import { TextSubmission } from 'app/entities/text-submission';
 import { sha1Hex } from 'app/utils/crypto.utils';
+import { TextSubmission } from 'app/entities/text-submission/text-submission.model';
 
 export class TextBlock {
     id: string;

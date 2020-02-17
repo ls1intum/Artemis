@@ -1,5 +1,5 @@
-import { Component, Input, Output, EventEmitter } from '@angular/core';
-import { Submission } from 'app/entities/submission';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Submission } from 'app/entities/submission/submission.model';
 
 enum FilterProp {
     ALL = 'all',

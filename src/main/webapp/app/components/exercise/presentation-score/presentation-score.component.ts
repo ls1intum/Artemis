@@ -1,5 +1,5 @@
 import { Component, Input } from '@angular/core';
-import { Exercise } from 'app/entities/exercise';
+import { Exercise } from 'app/entities/exercise/exercise.model';
 
 @Component({
     selector: 'jhi-presentation-score-checkbox',

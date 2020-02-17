@@ -1,7 +1,9 @@
 import { Component, OnDestroy } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
-import { JhiAlertService, JhiEventManager } from 'ng-jhipster';
+import { JhiEventManager, JhiAlert, JhiEventWithContent } from 'ng-jhipster';
 import { Subscription } from 'rxjs/Subscription';
+import { AlertService } from 'app/core/alert/alert.service';
+import { AlertError } from 'app/shared/alert/alert-error.model';
 
 @Component({
     selector: 'jhi-alert-error',
@@ -16,15 +18,17 @@ import { Subscription } from 'rxjs/Subscription';
     `,
 })
 export class JhiAlertErrorComponent implements OnDestroy {
-    alerts: any[];
-    cleanHttpErrorListener: Subscription;
-    /* tslint:disable */
-    constructor(private alertService: JhiAlertService, private eventManager: JhiEventManager, private translateService: TranslateService) {
-        /* tslint:enable */
-        this.alerts = [];
+    alerts: JhiAlert[] = [];
+    errorListener: Subscription;
+    httpErrorListener: Subscription;
 
-        this.cleanHttpErrorListener = eventManager.subscribe('artemisApp.httpError', (response: any) => {
-            let i;
+    constructor(private alertService: AlertService, private eventManager: JhiEventManager, private translateService: TranslateService) {
+        this.errorListener = eventManager.subscribe('artemisApp.error', (response: JhiEventWithContent<AlertError>) => {
+            const errorResponse = response.content;
+            this.addErrorAlert(errorResponse.message, errorResponse.key, errorResponse.params);
+        });
+
+        this.httpErrorListener = eventManager.subscribe('artemisApp.httpError', (response: any) => {
             const httpErrorResponse = response.content;
             switch (httpErrorResponse.status) {
                 // connection refused, server not reachable
@@ -48,8 +52,7 @@ export class JhiAlertErrorComponent implements OnDestroy {
                         this.addErrorAlert(errorHeader, errorHeader, { entityName });
                     } else if (httpErrorResponse.error !== '' && httpErrorResponse.error.fieldErrors) {
                         const fieldErrors = httpErrorResponse.error.fieldErrors;
-                        for (i = 0; i < fieldErrors.length; i++) {
-                            const fieldError = fieldErrors[i];
+                        for (const fieldError of fieldErrors) {
                             if (['Min', 'Max', 'DecimalMin', 'DecimalMax'].includes(fieldError.message)) {
                                 fieldError.message = 'Size';
                             }
@@ -79,34 +82,35 @@ export class JhiAlertErrorComponent implements OnDestroy {
         });
     }
 
-    setClasses(alert: any) {
-        return {
-            'jhi-toast': alert.toast,
-            [alert.position]: true,
-        };
+    setClasses(alert: JhiAlert): { [key: string]: boolean } {
+        const classes = { 'jhi-toast': Boolean(alert.toast) };
+        if (alert.position) {
+            return { ...classes, [alert.position]: true };
+        }
+        return classes;
     }
 
-    ngOnDestroy() {
-        if (this.cleanHttpErrorListener !== undefined && this.cleanHttpErrorListener !== null) {
-            this.eventManager.destroy(this.cleanHttpErrorListener);
-            this.alerts = [];
+    ngOnDestroy(): void {
+        if (this.errorListener) {
+            this.eventManager.destroy(this.errorListener);
+        }
+        if (this.httpErrorListener) {
+            this.eventManager.destroy(this.httpErrorListener);
         }
     }
 
-    addErrorAlert(message: string, key?: string, data?: any) {
-        key = key && key !== null ? key : message;
-        this.alerts.push(
-            this.alertService.addAlert(
-                {
-                    type: 'danger',
-                    msg: key,
-                    params: data,
-                    timeout: 5000,
-                    toast: this.alertService.isToast(),
-                    scoped: true,
-                },
-                this.alerts,
-            ),
-        );
+    addErrorAlert(message: string, key?: string, data?: any): void {
+        message = key && key !== null ? key : message;
+
+        const newAlert: JhiAlert = {
+            type: 'danger',
+            msg: message,
+            params: data,
+            timeout: 5000,
+            toast: this.alertService.isToast(),
+            scoped: true,
+        };
+
+        this.alerts.push(this.alertService.addAlert(newAlert, this.alerts));
     }
 }

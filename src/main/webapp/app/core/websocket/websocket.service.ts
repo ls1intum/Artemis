@@ -5,7 +5,7 @@ import { Observable, Observer, Subscription } from 'rxjs/Rx';
 import { AuthServerProvider } from 'app/core/auth/auth-jwt.service';
 import { CSRFService } from 'app/core/auth/csrf.service';
 
-import { Client, Subscription as StompSubscription, over, VERSIONS, ConnectionHeaders } from 'webstomp-client';
+import { Client, ConnectionHeaders, over, Subscription as StompSubscription } from 'webstomp-client';
 import { WindowRef } from 'app/core/websocket/window.service';
 import * as SockJS from 'sockjs-client';
 import { timer } from 'rxjs';

@@ -1,8 +1,8 @@
-import { BaseEntity } from 'app/shared';
-import { DragItem } from '../drag-item';
-import { DropLocation } from '../drop-location';
-import { DragAndDropSubmittedAnswer } from '../drag-and-drop-submitted-answer';
-import { DragAndDropQuestion } from '../drag-and-drop-question';
+import { BaseEntity } from 'app/shared/model/base-entity';
+import { DragAndDropSubmittedAnswer } from 'app/entities/drag-and-drop-submitted-answer/drag-and-drop-submitted-answer.model';
+import { DragAndDropQuestion } from 'app/entities/drag-and-drop-question/drag-and-drop-question.model';
+import { DragItem } from 'app/entities/drag-item/drag-item.model';
+import { DropLocation } from 'app/entities/drop-location/drop-location.model';
 
 export class DragAndDropMapping implements BaseEntity {
     public id: number;

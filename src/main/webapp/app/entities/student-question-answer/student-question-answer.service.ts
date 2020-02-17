@@ -5,7 +5,7 @@ import * as moment from 'moment';
 import { map } from 'rxjs/operators';
 
 import { SERVER_API_URL } from 'app/app.constants';
-import { createRequestOption } from 'app/shared';
+import { createRequestOption } from 'app/shared/util/request-util';
 import { StudentQuestionAnswer } from 'app/entities/student-question-answer/student-question-answer.model';
 
 type EntityResponseType = HttpResponse<StudentQuestionAnswer>;

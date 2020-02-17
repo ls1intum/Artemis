@@ -121,7 +121,7 @@
                     <input type="checkbox" class="form-check-input" [checked]="course.presentationScore !== 0" (change)="this.togglePresentationScoreInput()" />
                     <label class="form-control-label" jhiTranslate="artemisApp.course.presentationScoreEnabled.title">Presentation Score Enabled</label>
                     <fa-icon
-                        icon="question-circle"
+                        [icon]="'question-circle'"
                         class="text-secondary"
                         placement="top"
                         ngbTooltip="{{ 'artemisApp.course.presentationScoreEnabled.description' | translate }}"

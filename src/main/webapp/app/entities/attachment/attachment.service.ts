@@ -5,8 +5,8 @@ import * as moment from 'moment';
 import { map } from 'rxjs/operators';
 
 import { SERVER_API_URL } from 'app/app.constants';
-import { createRequestOption } from 'app/shared';
-import { Attachment } from 'app/entities/attachment';
+import { createRequestOption } from 'app/shared/util/request-util';
+import { Attachment } from 'app/entities/attachment/attachment.model';
 
 type EntityResponseType = HttpResponse<Attachment>;
 type EntityArrayResponseType = HttpResponse<Attachment[]>;

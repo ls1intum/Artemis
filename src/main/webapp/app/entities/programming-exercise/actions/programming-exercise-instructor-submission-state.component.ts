@@ -2,10 +2,10 @@ import { Component, Input, OnChanges, OnInit, SimpleChanges } from '@angular/cor
 import { debounceTime, map, tap } from 'rxjs/operators';
 import { ExerciseSubmissionState, ProgrammingSubmissionService, ProgrammingSubmissionState } from 'app/programming-submission/programming-submission.service';
 import { Subscription } from 'rxjs';
-import { ButtonType } from 'app/shared/components';
-import { ProgrammingExercise } from 'app/entities/programming-exercise';
-import { hasExerciseChanged } from 'app/entities/exercise';
-import { FeatureToggle } from 'app/feature-toggle';
+import { FeatureToggle } from 'app/feature-toggle/feature-toggle.service';
+import { ProgrammingExercise } from 'app/entities/programming-exercise/programming-exercise.model';
+import { hasExerciseChanged } from 'app/entities/exercise/exercise-utils';
+import { ButtonType } from 'app/shared/components/button.component';
 
 /**
  * This components provides two buttons to the instructor to interact with the students' submissions:

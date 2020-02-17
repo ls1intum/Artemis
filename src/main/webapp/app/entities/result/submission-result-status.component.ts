@@ -1,6 +1,6 @@
 import { Component, Input } from '@angular/core';
-import { Exercise, ExerciseType } from 'app/entities/exercise';
-import { StudentParticipation } from 'app/entities/participation';
+import { Exercise, ExerciseType } from 'app/entities/exercise/exercise.model';
+import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 
 @Component({
     selector: 'jhi-submission-result-status',

@@ -9,12 +9,14 @@ import { AceEditorModule } from 'ng2-ace-editor';
 import { TreeviewModule } from 'ngx-treeview';
 import { SinonStub, spy, stub } from 'sinon';
 import { Subject } from 'rxjs';
-import { CodeEditorAceComponent, CodeEditorFileService, CodeEditorRepositoryFileService } from 'app/code-editor';
 import { ArtemisTestModule } from '../../test.module';
-import { MockCodeEditorRepositoryFileService } from '../../mocks';
-import { CreateFileChange, FileType, RenameFileChange } from 'app/entities/ace-editor/file-change.model';
-import { AnnotationArray } from 'app/entities/ace-editor';
+import { CreateFileChange, FileType, RenameFileChange } from 'app/code-editor/model/code-editor.model';
 import { triggerChanges } from '../../utils/general.utils';
+import { AnnotationArray } from 'app/entities/ace-editor/annotation.model';
+import { CodeEditorRepositoryFileService } from 'app/code-editor/service/code-editor-repository.service';
+import { CodeEditorFileService } from 'app/code-editor/service/code-editor-file.service';
+import { CodeEditorAceComponent } from 'app/code-editor/ace/code-editor-ace.component';
+import { MockCodeEditorRepositoryFileService } from '../../mocks/mock-code-editor-repository-file.service';
 
 chai.use(sinonChai);
 const expect = chai.expect;

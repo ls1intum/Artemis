@@ -2,11 +2,12 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Subscription } from 'rxjs/Subscription';
-import { JhiAlertService, JhiEventManager } from 'ng-jhipster';
+import { JhiEventManager } from 'ng-jhipster';
 
 import { FileUploadExercise } from './file-upload-exercise.model';
 import { FileUploadExerciseService } from './file-upload-exercise.service';
 import { filter } from 'rxjs/operators';
+import { AlertService } from 'app/core/alert/alert.service';
 
 @Component({
     selector: 'jhi-file-upload-exercise-detail',
@@ -21,7 +22,7 @@ export class FileUploadExerciseDetailComponent implements OnInit, OnDestroy {
         private eventManager: JhiEventManager,
         private fileUploadExerciseService: FileUploadExerciseService,
         private route: ActivatedRoute,
-        private jhiAlertService: JhiAlertService,
+        private jhiAlertService: AlertService,
     ) {}
 
     /**

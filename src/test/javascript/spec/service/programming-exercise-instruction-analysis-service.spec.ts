@@ -1,9 +1,9 @@
 import { problemStatement } from '../sample/problemStatement.json';
-import { ProgrammingExerciseInstructionAnalysisService } from 'app/entities/programming-exercise/instructions/instructions-editor';
 import { MockTranslateService } from '../mocks/mock-translate.service';
 import { ExerciseHint } from 'app/entities/exercise-hint/exercise-hint.model';
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
+import { ProgrammingExerciseInstructionAnalysisService } from 'app/entities/programming-exercise/instructions/instructions-editor/analysis/programming-exercise-instruction-analysis.service';
 
 chai.use(sinonChai);
 const expect = chai.expect;

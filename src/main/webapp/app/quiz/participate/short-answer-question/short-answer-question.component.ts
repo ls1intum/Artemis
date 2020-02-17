@@ -1,11 +1,10 @@
 import { Component, EventEmitter, Input, OnDestroy, OnInit, Output, ViewEncapsulation } from '@angular/core';
-import { SafeHtml } from '@angular/platform-browser';
 import { ArtemisMarkdown } from 'app/components/util/markdown.service';
 import { ShortAnswerQuestionUtil } from 'app/components/util/short-answer-question-util.service';
-import { ShortAnswerQuestion } from 'app/entities/short-answer-question';
-import { ShortAnswerSubmittedText } from 'app/entities/short-answer-submitted-text';
-import { RenderedQuizQuestionMarkDownElement } from 'app/entities/quiz-question';
 import { ShortAnswerSolution } from 'app/entities/short-answer-solution/short-answer-solution.model';
+import { ShortAnswerQuestion } from 'app/entities/short-answer-question/short-answer-question.model';
+import { ShortAnswerSubmittedText } from 'app/entities/short-answer-submitted-text/short-answer-submitted-text.model';
+import { RenderedQuizQuestionMarkDownElement } from 'app/entities/quiz-question/quiz-question.model';
 
 @Component({
     selector: 'jhi-short-answer-question',

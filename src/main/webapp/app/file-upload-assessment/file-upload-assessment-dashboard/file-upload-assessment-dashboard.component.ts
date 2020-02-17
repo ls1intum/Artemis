@@ -1,19 +1,17 @@
 import { Component, OnInit } from '@angular/core';
 import { HttpResponse } from '@angular/common/http';
 import { ActivatedRoute } from '@angular/router';
-
 import { DifferencePipe } from 'ngx-moment';
 import { TranslateService } from '@ngx-translate/core';
 import { map } from 'rxjs/operators';
-
 import { ExerciseService } from 'app/entities/exercise/exercise.service';
 import { Exercise, ExerciseType } from 'app/entities/exercise/exercise.model';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise/file-upload-exercise.model';
 import { FileUploadSubmission } from 'app/entities/file-upload-submission/file-upload-submission.model';
 import { FileUploadSubmissionService } from 'app/entities/file-upload-submission/file-upload-submission.service';
 import { AccountService } from 'app/core/auth/account.service';
-import { Submission } from 'app/entities/submission';
 import { FileUploadAssessmentsService } from 'app/entities/file-upload-assessment/file-upload-assessment.service';
+import { Submission } from 'app/entities/submission/submission.model';
 
 @Component({
     templateUrl: './file-upload-assessment-dashboard.component.html',
