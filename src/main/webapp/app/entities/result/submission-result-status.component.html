@@ -32,10 +32,10 @@
         ></jhi-updating-result>
     </span>
     <!-- For programming exercises -->
-    <ng-container *ngIf="exercise.type === ExerciseType.PROGRAMMING && exercise.studentParticipations && exercise.studentParticipations.length > 0">
+    <ng-container *ngIf="exercise.type === ExerciseType.PROGRAMMING && exercise.agentParticipations && exercise.agentParticipations.length > 0">
         <jhi-programming-exercise-student-trigger-build-button
             [exercise]="exercise"
-            [participation]="exercise.studentParticipations[0]"
+            [participation]="exercise.agentParticipations[0]"
             [triggerLastGraded]="true"
         ></jhi-programming-exercise-student-trigger-build-button>
     </ng-container>

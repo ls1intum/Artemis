@@ -9,7 +9,7 @@
 
         <div class="col-12 col-lg-4 text-right">
             <div *ngIf="participation">
-                <jhi-submission-result-status [exercise]="textExercise" [studentParticipation]="isAfterAssessmentDueDate ? participation : null"></jhi-submission-result-status>
+                <jhi-submission-result-status [exercise]="textExercise" [agentParticipation]="isAfterAssessmentDueDate ? participation : null"></jhi-submission-result-status>
             </div>
             <br />
             <jhi-button

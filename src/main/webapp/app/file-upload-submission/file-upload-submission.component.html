@@ -10,10 +10,7 @@
 
         <div class="col-12 col-lg-4 text-right">
             <div *ngIf="participation">
-                <jhi-submission-result-status
-                    [exercise]="fileUploadExercise"
-                    [studentParticipation]="isAfterAssessmentDueDate ? participation : null"
-                ></jhi-submission-result-status>
+                <jhi-submission-result-status [exercise]="fileUploadExercise" [agentParticipation]="isAfterAssessmentDueDate ? participation : null"></jhi-submission-result-status>
             </div>
             <br />
             <jhi-button

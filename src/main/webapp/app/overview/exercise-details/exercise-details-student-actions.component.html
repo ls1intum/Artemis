@@ -104,8 +104,8 @@
             [buttonLoading]="exercise.loading"
             [smallButton]="smallButtons"
             [hideLabelMobile]="false"
-            *ngIf="exercise.studentParticipations && exercise.studentParticipations.length > 0 && exercise.studentParticipations[0].initializationState === 'INITIALIZED'"
-            routerLink="/modeling-submission/{{ exercise.studentParticipations[0].id }}"
+            *ngIf="exercise.agentParticipations && exercise.agentParticipations.length > 0 && exercise.agentParticipations[0].initializationState === 'INITIALIZED'"
+            routerLink="/modeling-submission/{{ exercise.agentParticipations[0].id }}"
         ></button>
     </div>
     <!-- ACTION END -->
@@ -120,12 +120,12 @@
                 [buttonLoading]="exercise.loading"
                 [smallButton]="smallButtons"
                 *ngIf="
-                    exercise.studentParticipations &&
-                    exercise.studentParticipations.length > 0 &&
-                    exercise.studentParticipations[0].initializationState === 'FINISHED' &&
-                    (!exercise.studentParticipations[0].results || exercise.studentParticipations[0].results.length === 0 || !showResult)
+                    exercise.agentParticipations &&
+                    exercise.agentParticipations.length > 0 &&
+                    exercise.agentParticipations[0].initializationState === 'FINISHED' &&
+                    (!exercise.agentParticipations[0].results || exercise.agentParticipations[0].results.length === 0 || !showResult)
                 "
-                routerLink="/modeling-submission/{{ exercise.studentParticipations[0].id }}"
+                routerLink="/modeling-submission/{{ exercise.agentParticipations[0].id }}"
             ></button>
             <!-- TODO improve the distinction, in particular if there are multiple submissions and results -->
             <button
@@ -136,14 +136,14 @@
                 [buttonLoading]="exercise.loading"
                 [smallButton]="smallButtons"
                 *ngIf="
-                    exercise.studentParticipations &&
-                    exercise.studentParticipations.length > 0 &&
-                    exercise.studentParticipations[0].initializationState === 'FINISHED' &&
-                    exercise.studentParticipations[0].results &&
-                    exercise.studentParticipations[0].results.length > 0 &&
+                    exercise.agentParticipations &&
+                    exercise.agentParticipations.length > 0 &&
+                    exercise.agentParticipations[0].initializationState === 'FINISHED' &&
+                    exercise.agentParticipations[0].results &&
+                    exercise.agentParticipations[0].results.length > 0 &&
                     showResult
                 "
-                routerLink="/modeling-submission/{{ exercise.studentParticipations[0].id }}"
+                routerLink="/modeling-submission/{{ exercise.agentParticipations[0].id }}"
             ></button>
         </div>
     </div>
@@ -178,10 +178,10 @@
             *ngIf="
                 isOnlineEditorAllowed() &&
                 participationStatusWrapper() == ParticipationStatus.INITIALIZED &&
-                exercise.studentParticipations &&
-                exercise.studentParticipations.length > 0
+                exercise.agentParticipations &&
+                exercise.agentParticipations.length > 0
             "
-            routerLink="/code-editor/{{ exercise.studentParticipations[0].id }}"
+            routerLink="/code-editor/{{ exercise.agentParticipations[0].id }}"
         ></button>
         <button
             jhi-exercise-action-button
@@ -194,7 +194,7 @@
             [hideLabelMobile]="false"
             placement="right"
             container="body"
-            *ngIf="exercise.studentParticipations && participationStatusWrapper() == ParticipationStatus.INITIALIZED && exercise.studentParticipations.length > 0"
+            *ngIf="exercise.agentParticipations && participationStatusWrapper() == ParticipationStatus.INITIALIZED && exercise.agentParticipations.length > 0"
             [ngbPopover]="popContent"
             [autoClose]="'outside'"
         ></button>
@@ -212,21 +212,16 @@
         ></button>
         <ng-template #popContent>
             <p>{{ 'artemisApp.exerciseActions.clonePersonalRepository' | translate }}</p>
-            <pre
-                style="max-width: 100%;"
-                ngxClipboard
-                [cbContent]="repositoryUrl(exercise.studentParticipations[0])"
-                (cbOnSuccess)="onCopySuccess()"
-                (cbOnError)="onCopyFailure()"
-                >{{ repositoryUrl(exercise.studentParticipations[0]) }}</pre
-            >
+            <pre style="max-width: 100%;" ngxClipboard [cbContent]="repositoryUrl(exercise.agentParticipations[0])" (cbOnSuccess)="onCopySuccess()" (cbOnError)="onCopyFailure()">{{
+                repositoryUrl(exercise.agentParticipations[0])
+            }}</pre>
             <p *ngIf="repositoryPassword">
                 {{ 'artemisApp.exerciseActions.repositoryPassword' | translate }} <code class="password">{{ repositoryPassword }}</code>
                 {{ 'artemisApp.exerciseActions.hoverToShow' | translate }}
             </p>
             <button
                 ngxClipboard
-                [cbContent]="repositoryUrl(exercise.studentParticipations[0])"
+                [cbContent]="repositoryUrl(exercise.agentParticipations[0])"
                 (cbOnSuccess)="onCopySuccess()"
                 (cbOnError)="onCopyFailure()"
                 [class.btn-success]="wasCopied"
@@ -236,7 +231,7 @@
             >
                 {{ wasCopied ? ('artemisApp.exerciseActions.copiedUrl' | translate) : ('artemisApp.exerciseActions.copyUrl' | translate) }}
             </button>
-            <a class="btn btn-primary btn-sm mr-2" [href]="buildSourceTreeUrl(repositoryUrl(exercise.studentParticipations[0])) | safeUrl">{{
+            <a class="btn btn-primary btn-sm mr-2" [href]="buildSourceTreeUrl(repositoryUrl(exercise.agentParticipations[0])) | safeUrl">{{
                 'artemisApp.exerciseActions.cloneSourceTree' | translate
             }}</a>
             <span [innerHTML]="'artemisApp.exerciseActions.sourceTreeDescription' | translate"></span>
@@ -268,8 +263,8 @@
             [buttonLoading]="exercise.loading"
             [smallButton]="smallButtons"
             [hideLabelMobile]="false"
-            *ngIf="exercise.studentParticipations && exercise.studentParticipations.length > 0 && exercise.studentParticipations[0].initializationState === 'INITIALIZED'"
-            routerLink="/text/{{ exercise.studentParticipations[0].id }}"
+            *ngIf="exercise.agentParticipations && exercise.agentParticipations.length > 0 && exercise.agentParticipations[0].initializationState === 'INITIALIZED'"
+            routerLink="/text/{{ exercise.agentParticipations[0].id }}"
         ></button>
     </div>
     <!-- ACTIONS END -->
@@ -284,12 +279,12 @@
             [smallButton]="smallButtons"
             [hideLabelMobile]="false"
             *ngIf="
-                exercise.studentParticipations &&
-                exercise.studentParticipations.length > 0 &&
-                exercise.studentParticipations[0].initializationState === 'FINISHED' &&
-                (!exercise.studentParticipations[0].results || exercise.studentParticipations[0].results.length === 0 || !showResult)
+                exercise.agentParticipations &&
+                exercise.agentParticipations.length > 0 &&
+                exercise.agentParticipations[0].initializationState === 'FINISHED' &&
+                (!exercise.agentParticipations[0].results || exercise.agentParticipations[0].results.length === 0 || !showResult)
             "
-            routerLink="/text/{{ exercise.studentParticipations[0].id }}"
+            routerLink="/text/{{ exercise.agentParticipations[0].id }}"
         ></button>
         <!-- TODO improve the distinction, in particular if there are multiple submissions and results -->
         <button
@@ -300,14 +295,14 @@
             [buttonLoading]="exercise.loading"
             [smallButton]="smallButtons"
             *ngIf="
-                exercise.studentParticipations &&
-                exercise.studentParticipations.length > 0 &&
-                exercise.studentParticipations[0].initializationState === 'FINISHED' &&
-                exercise.studentParticipations[0].results &&
-                exercise.studentParticipations[0].results.length > 0 &&
+                exercise.agentParticipations &&
+                exercise.agentParticipations.length > 0 &&
+                exercise.agentParticipations[0].initializationState === 'FINISHED' &&
+                exercise.agentParticipations[0].results &&
+                exercise.agentParticipations[0].results.length > 0 &&
                 showResult
             "
-            routerLink="/text/{{ exercise.studentParticipations[0].id }}"
+            routerLink="/text/{{ exercise.agentParticipations[0].id }}"
         ></button>
     </div>
     <!-- INFORMATION END -->
@@ -335,8 +330,8 @@
             [buttonLoading]="exercise.loading"
             [smallButton]="smallButtons"
             [hideLabelMobile]="false"
-            *ngIf="exercise.studentParticipations && exercise.studentParticipations.length > 0 && exercise.studentParticipations[0].initializationState === 'INITIALIZED'"
-            routerLink="/file-upload-submission/{{ exercise.studentParticipations[0].id }}"
+            *ngIf="exercise.agentParticipations && exercise.agentParticipations.length > 0 && exercise.agentParticipations[0].initializationState === 'INITIALIZED'"
+            routerLink="/file-upload-submission/{{ exercise.agentParticipations[0].id }}"
         ></button>
     </div>
     <!-- ACTIONS END-->
@@ -351,12 +346,12 @@
             [smallButton]="smallButtons"
             [hideLabelMobile]="false"
             *ngIf="
-                exercise.studentParticipations &&
-                exercise.studentParticipations.length > 0 &&
-                exercise.studentParticipations[0].initializationState === 'FINISHED' &&
-                (!exercise.studentParticipations[0].results || exercise.studentParticipations[0].results.length === 0 || !showResult)
+                exercise.agentParticipations &&
+                exercise.agentParticipations.length > 0 &&
+                exercise.agentParticipations[0].initializationState === 'FINISHED' &&
+                (!exercise.agentParticipations[0].results || exercise.agentParticipations[0].results.length === 0 || !showResult)
             "
-            routerLink="/file-upload-submission/{{ exercise.studentParticipations[0].id }}"
+            routerLink="/file-upload-submission/{{ exercise.agentParticipations[0].id }}"
         ></button>
         <button
             jhi-exercise-action-button
@@ -366,14 +361,14 @@
             [buttonLoading]="exercise.loading"
             [smallButton]="smallButtons"
             *ngIf="
-                exercise.studentParticipations &&
-                exercise.studentParticipations.length > 0 &&
-                exercise.studentParticipations[0].initializationState === 'FINISHED' &&
-                exercise.studentParticipations[0].results &&
-                exercise.studentParticipations[0].results.length > 0 &&
+                exercise.agentParticipations &&
+                exercise.agentParticipations.length > 0 &&
+                exercise.agentParticipations[0].initializationState === 'FINISHED' &&
+                exercise.agentParticipations[0].results &&
+                exercise.agentParticipations[0].results.length > 0 &&
                 showResult
             "
-            routerLink="/file-upload-submission/{{ exercise.studentParticipations[0].id }}"
+            routerLink="/file-upload-submission/{{ exercise.agentParticipations[0].id }}"
         ></button>
     </div>
     <!-- INFORMATION END -->
