@@ -4,7 +4,7 @@ import { Observable } from 'rxjs/Observable';
 import { SERVER_API_URL } from 'app/app.constants';
 import { ExampleSubmission } from 'app/entities/example-submission/example-submission.model';
 import { AccountService } from 'app/core/auth/account.service';
-import { Exercise } from 'app/entities/exercise';
+import { Exercise } from 'app/entities/exercise/exercise.model';
 import { Course } from 'app/entities/course/course.model';
 import { TutorParticipation } from 'app/entities/tutor-participation/tutor-participation.model';
 

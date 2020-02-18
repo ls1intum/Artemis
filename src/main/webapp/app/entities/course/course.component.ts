@@ -33,7 +33,7 @@ export class CourseComponent implements OnInit, OnDestroy {
 
     constructor(
         private courseService: CourseService,
-        private jhiAlertService: JhiAlertService,
+        private jhiAlertService: AlertService,
         private eventManager: JhiEventManager,
         private guidedTourService: GuidedTourService,
     ) {
