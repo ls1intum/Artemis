@@ -5,9 +5,6 @@
             <column name="team_id" type="BIGINT" afterColumn="student_id"/>
         </addColumn>
         <createTable tableName="team">
-            <column name="discriminator" type="varchar(31)">
-                <constraints nullable="false"/>
-            </column>
             <column name="id" type="bigint" autoIncrement="${autoIncrement}">
                 <constraints primaryKey="true" nullable="false"/>
             </column>
