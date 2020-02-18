@@ -3,10 +3,12 @@ import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs/Observable';
 import { SERVER_API_URL } from 'app/app.constants';
 import * as moment from 'moment';
+
 import { createRequestOption } from 'app/shared/util/request-util';
 import { Result } from 'app/entities/result/result.model';
 import { Participation } from 'app/entities/participation/participation.model';
 import { Submission } from 'app/entities/submission/submission.model';
+import { filter, map, tap } from 'rxjs/operators';
 
 export type EntityResponseType = HttpResponse<Submission>;
 export type EntityArrayResponseType = HttpResponse<Submission[]>;
@@ -26,7 +28,18 @@ export class SubmissionService {
     findAllSubmissionsOfParticipation(participationId: number): Observable<EntityArrayResponseType> {
         return this.http
             .get<Submission[]>(`${this.resourceUrlParticipation}/${participationId}/submissions`, { observe: 'response' })
-            .map((res: EntityArrayResponseType) => this.convertDateArrayFromServer(res));
+            .pipe(
+                map(res => this.convertDateArrayFromServer(res)),
+                filter(res => !!res.body),
+                tap(res =>
+                    res.body!.forEach(submission => {
+                        // reconnect results to submissions
+                        if (submission.result) {
+                            submission.result.submission = submission;
+                        }
+                    }),
+                ),
+            );
     }
 
     protected convertDateFromServer(res: EntityResponseType): EntityResponseType {
