@@ -11,7 +11,7 @@ import { User } from 'app/core/user/user.model';
 import { cloneDeep, omit, isEmpty } from 'lodash';
 import { TeamAssignmentConfig } from 'app/entities/team-assignment-config/team-assignment-config.model';
 import { Subject } from 'rxjs';
-import { debounceTime, distinctUntilChanged, switchMap } from 'rxjs/operators';
+import { debounceTime, switchMap } from 'rxjs/operators';
 import { Exercise } from 'app/entities/exercise/exercise.model';
 
 @Component({
@@ -49,7 +49,7 @@ export class TeamUpdateDialogComponent implements OnInit {
         this.pendingTeam.shortName = shortName.toLowerCase();
 
         // check that no other team already uses this short name
-        this.shortNameValidator.next(shortName);
+        this.shortNameValidator.next(this.pendingTeam.shortName);
     }
 
     onTeamNameChanged(name: string) {
@@ -166,7 +166,6 @@ export class TeamUpdateDialogComponent implements OnInit {
         shortName$
             .pipe(
                 debounceTime(500),
-                distinctUntilChanged(),
                 switchMap(shortName => this.teamService.existsByShortName(shortName)),
             )
             .subscribe(
