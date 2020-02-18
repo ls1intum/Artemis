@@ -163,6 +163,7 @@ public class DatabaseUtilService {
     private TextClusterRepository textClusterRepository;
 
     public void resetDatabase() {
+
         conflictRepo.deleteAll();
         conflictingResultRepo.deleteAll();
         complaintResponseRepo.deleteAll();
@@ -188,6 +189,8 @@ public class DatabaseUtilService {
         attachmentRepo.deleteAll();
         lectureRepo.deleteAll();
         courseRepo.deleteAll();
+
+        assertThat(resultRepo.findAll()).as("result data has been cleared").isEmpty();
         assertThat(courseRepo.findAll()).as("course data has been cleared").isEmpty();
         ltiUserIdRepository.deleteAll();
         userRepo.deleteAll();
@@ -291,21 +294,25 @@ public class DatabaseUtilService {
 
         ModelingExercise modelingExercise = ModelFactory.generateModelingExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, DiagramType.ClassDiagram, course1);
         modelingExercise.setGradingInstructions("some grading instructions");
+        addGradingInstructionsToExercise(modelingExercise);
         modelingExercise.getCategories().add("Modeling");
         course1.addExercises(modelingExercise);
 
         TextExercise textExercise = ModelFactory.generateTextExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, course1);
         textExercise.setGradingInstructions("some grading instructions");
+        addGradingInstructionsToExercise(textExercise);
         textExercise.getCategories().add("Text");
         course1.addExercises(textExercise);
 
         FileUploadExercise fileUploadExercise = ModelFactory.generateFileUploadExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, "png", course1);
         fileUploadExercise.setGradingInstructions("some grading instructions");
+        addGradingInstructionsToExercise(fileUploadExercise);
         fileUploadExercise.getCategories().add("File");
         course1.addExercises(fileUploadExercise);
 
         ProgrammingExercise programmingExercise = ModelFactory.generateProgrammingExercise(pastTimestamp, futureTimestamp, course1);
         programmingExercise.setGradingInstructions("some grading instructions");
+        addGradingInstructionsToExercise(programmingExercise);
         programmingExercise.getCategories().add("Programming");
         course1.addExercises(programmingExercise);
 
@@ -484,6 +491,22 @@ public class DatabaseUtilService {
         Result result = new Result().participation(submission.getParticipation()).submission(submission).resultString("x of y passed").rated(true).score(100L);
         resultRepo.save(result);
         return result;
+    }
+
+    public List<GradingCriterion> addGradingInstructionsToExercise(Exercise exercise) {
+        GradingCriterion emptyCriterion = ModelFactory.generateGradingCriterion(null);
+        List<GradingInstruction> instructionWithNoCriteria = ModelFactory.generateGradingInstructions(emptyCriterion, 1);
+        emptyCriterion.setExercise(exercise);
+        emptyCriterion.setStructuredGradingInstructions(instructionWithNoCriteria);
+        GradingCriterion testCriterion = ModelFactory.generateGradingCriterion("test title");
+        List<GradingInstruction> instructions = ModelFactory.generateGradingInstructions(testCriterion, 3);
+        testCriterion.setStructuredGradingInstructions(instructions);
+        testCriterion.setExercise(exercise);
+        var criteria = new ArrayList<GradingCriterion>();
+        criteria.add(emptyCriterion);
+        criteria.add(testCriterion);
+        exercise.setGradingCriteria(criteria);
+        return exercise.getGradingCriteria();
     }
 
     public void addCourseWithOneModelingExercise() {
