@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { Exercise, ExerciseMode } from 'app/entities/exercise';
+import { Exercise, ExerciseMode } from 'app/entities/exercise/exercise.model';
 
 @Component({
     selector: 'jhi-mode-picker',

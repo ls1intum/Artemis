@@ -4,7 +4,7 @@ import { Observable } from 'rxjs';
 
 import { SERVER_API_URL } from 'app/app.constants';
 import { Team } from 'app/entities/team/team.model';
-import { Exercise } from 'app/entities/exercise';
+import { Exercise } from 'app/entities/exercise/exercise.model';
 
 export type TeamResponse = HttpResponse<Team>;
 

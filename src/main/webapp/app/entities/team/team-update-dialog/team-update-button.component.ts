@@ -1,9 +1,9 @@
 import { Component, Input, Output, EventEmitter } from '@angular/core';
-import { ButtonSize, ButtonType } from 'app/shared/components';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
-import { Exercise } from 'app/entities/exercise';
 import { TeamUpdateDialogComponent } from 'app/entities/team/team-update-dialog/team-update-dialog.component';
 import { Team } from 'app/entities/team/team.model';
+import { Exercise } from 'app/entities/exercise/exercise.model';
+import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
 
 @Component({
     selector: 'jhi-team-update-button',

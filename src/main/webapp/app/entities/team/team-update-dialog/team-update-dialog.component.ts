@@ -5,7 +5,6 @@ import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { HttpResponse, HttpErrorResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { ParticipationService } from 'app/entities/participation/participation.service';
-import { Exercise } from 'app/entities/exercise';
 import { TeamService } from 'app/entities/team/team.service';
 import { Team } from 'app/entities/team/team.model';
 import { User } from 'app/core/user/user.model';
@@ -13,6 +12,7 @@ import { cloneDeep, omit, isEmpty } from 'lodash';
 import { TeamAssignmentConfig } from 'app/entities/team-assignment-config/team-assignment-config.model';
 import { Subject } from 'rxjs';
 import { debounceTime, distinctUntilChanged, switchMap } from 'rxjs/operators';
+import { Exercise } from 'app/entities/exercise/exercise.model';
 
 @Component({
     selector: 'jhi-team-update-dialog',

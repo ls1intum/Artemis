@@ -1,6 +1,6 @@
-import { BaseEntity } from 'app/shared';
-import { Exercise } from 'app/entities/exercise';
 import { User } from 'app/core/user/user.model';
+import { BaseEntity } from 'app/shared/model/base-entity';
+import { Exercise } from 'app/entities/exercise/exercise.model';
 
 export class Team implements BaseEntity {
     public id: number;

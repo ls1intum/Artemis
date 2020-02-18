@@ -1,11 +1,11 @@
 import { Component, Input, Output, EventEmitter, ViewChild, ElementRef } from '@angular/core';
-import { Course } from 'app/entities/course';
 import { Observable, of } from 'rxjs';
 import { User } from 'app/core/user/user.model';
 import { debounceTime, distinctUntilChanged, map, switchMap, tap, catchError } from 'rxjs/operators';
 import { UserService } from 'app/core/user/user.service';
-import { Exercise } from 'app/entities/exercise';
 import { get } from 'lodash';
+import { Course } from 'app/entities/course/course.model';
+import { Exercise } from 'app/entities/exercise/exercise.model';
 
 @Component({
     selector: 'jhi-team-student-search',

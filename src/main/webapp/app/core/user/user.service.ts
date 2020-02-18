@@ -5,9 +5,9 @@ import { Observable } from 'rxjs';
 import { createRequestOption } from 'app/shared/util/request-util';
 import { User } from 'app/core/user/user.model';
 import { SERVER_API_URL } from 'app/app.constants';
-import { Course } from 'app/entities/course';
-import { Exercise } from 'app/entities/exercise';
 import { TeamSearchUser } from 'app/entities/team-search-student/team-search-student.model';
+import { Course } from 'app/entities/course/course.model';
+import { Exercise } from 'app/entities/exercise/exercise.model';
 
 @Injectable({ providedIn: 'root' })
 export class UserService {

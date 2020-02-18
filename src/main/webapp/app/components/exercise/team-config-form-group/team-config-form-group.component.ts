@@ -1,7 +1,7 @@
 import { Component, Input, OnInit } from '@angular/core';
-import { Exercise, ExerciseMode } from 'app/entities/exercise';
 import { TeamAssignmentConfig } from 'app/entities/team-assignment-config/team-assignment-config.model';
 import { cloneDeep } from 'lodash';
+import { Exercise, ExerciseMode } from 'app/entities/exercise/exercise.model';
 
 @Component({
     selector: 'jhi-team-config-form-group',

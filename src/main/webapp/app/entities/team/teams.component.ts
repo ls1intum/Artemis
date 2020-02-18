@@ -1,13 +1,14 @@
 import { Component, OnInit, OnDestroy, ViewEncapsulation } from '@angular/core';
 import { Subscription } from 'rxjs/Subscription';
-import { Exercise, ExerciseService } from 'app/entities/exercise';
 import { ParticipationService } from 'app/entities/participation/participation.service';
 import { JhiAlertService, JhiEventManager } from 'ng-jhipster';
 import { ActivatedRoute } from '@angular/router';
 import { Subject } from 'rxjs';
 import { Team } from 'app/entities/team/team.model';
 import { TeamService } from 'app/entities/team/team.service';
-import { ButtonSize } from 'app/shared/components';
+import { ButtonSize } from 'app/shared/components/button.component';
+import { Exercise } from 'app/entities/exercise/exercise.model';
+import { ExerciseService } from 'app/entities/exercise/exercise.service';
 
 @Component({
     selector: 'jhi-teams',
