@@ -5,6 +5,7 @@ import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 import java.net.URI;
 import java.net.URISyntaxException;
 
+import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -127,8 +128,11 @@ public class TutorParticipationResource {
         User user = userService.getUserWithGroupsAndAuthorities();
 
         // Allow all tutors to delete their own participation if it's for a tutorial
-        if (!authorizationCheckService.isAtLeastTeachingAssistantForExercise(exercise, user) || !guidedTourConfiguration.isExerciseForTutorial(exercise)) {
-            return forbidden();
+        if (!authorizationCheckService.isAtLeastTeachingAssistantForExercise(exercise, user)) {
+            throw new AccessForbiddenException("You are not allowed to access this resource");
+        }
+        if (!guidedTourConfiguration.isExerciseForTutorial(exercise)) {
+            throw new AccessForbiddenException("This exercise is not part of a tutorial");
         }
 
         tutorParticipationService.removeTutorParticipations(exercise, user);

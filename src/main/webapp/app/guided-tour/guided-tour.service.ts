@@ -805,6 +805,10 @@ export class GuidedTourService {
                         this.deleteGuidedTourSetting(this.availableTourForComponent!.settingsKey).subscribe(() => {
                             this.navigateToUrlAfterRestart('/course');
                         });
+                    },
+                    () => {
+                        this.restartIsLoading = false;
+                        this.startTour();
                     });
                     break;
                 case ResetParticipation.NONE:
