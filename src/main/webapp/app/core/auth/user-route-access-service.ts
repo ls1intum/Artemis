@@ -29,19 +29,21 @@ export class UserRouteAccessService implements CanActivate {
         // We need to call the checkLogin / and so the accountService.identity() function, to ensure,
         // that the client has an account too, if they already logged in by the server.
         // This could happen on a page refresh.
-        return this.orionVersionValidator
-            .validateOrionVersion()
-            .pipe(
-                filter(Boolean),
-                first(),
-                switchMap(isValidOrNoIDE => {
-                    if (isValidOrNoIDE) {
-                        return from(this.checkLogin(authorities, state.url));
-                    }
-                    return of(false);
-                }),
-            )
-            .toPromise();
+        return this.checkLogin(authorities, state.url);
+        // TODO return the following as soon as Orion v1.0.0 is released and the API is stable.
+        // return this.orionVersionValidator
+        //     .validateOrionVersion()
+        //     .pipe(
+        //         filter(Boolean),
+        //         first(),
+        //         switchMap(isValidOrNoIDE => {
+        //             if (isValidOrNoIDE) {
+        //                 return from(this.checkLogin(authorities, state.url));
+        //             }
+        //             return of(false);
+        //         }),
+        //     )
+        //     .toPromise();
     }
 
     checkLogin(authorities: string[], url: string): Promise<boolean> {

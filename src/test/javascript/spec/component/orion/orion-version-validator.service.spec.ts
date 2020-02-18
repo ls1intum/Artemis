@@ -7,10 +7,8 @@ import { Router } from '@angular/router';
 import { MockProfileService } from '../../mocks/mock-profile.service';
 import { MockWindowRef } from '../../mocks/mock-window.service';
 import { MockRouter } from '../../mocks/mock-router.service';
-import { ProfileInfo } from 'app/layouts';
-import { first, tap } from 'rxjs/operators';
-import { fakeAsync } from '@angular/core/testing';
 import { of } from 'rxjs';
+import { ProfileInfo } from 'app/layouts/profiles/profile-info.model';
 
 chai.use(sinonChai);
 const expect = chai.expect;
