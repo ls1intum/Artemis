@@ -134,6 +134,7 @@ public class User extends AbstractAuditingEntity implements Serializable, Partic
         this.login = StringUtils.lowerCase(login, Locale.ENGLISH);
     }
 
+    @JsonIgnore
     public String getParticipantIdentifier() {
         return login;
     }

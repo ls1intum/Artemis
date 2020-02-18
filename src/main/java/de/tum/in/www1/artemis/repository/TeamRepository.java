@@ -1,7 +1,7 @@
 package de.tum.in.www1.artemis.repository;
 
+import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -16,7 +16,7 @@ import de.tum.in.www1.artemis.domain.Team;
 @Repository
 public interface TeamRepository extends JpaRepository<Team, Long> {
 
-    Set<Team> findAllByExerciseId(@Param("exerciseId") Long exerciseId);
+    List<Team> findAllByExerciseId(@Param("exerciseId") Long exerciseId);
 
     Optional<Team> findOneByShortName(@Param("shortName") String shortName);
 
@@ -24,7 +24,7 @@ public interface TeamRepository extends JpaRepository<Team, Long> {
     Optional<Team> findOneByExerciseIdAndUserId(@Param("exerciseId") Long exerciseId, @Param("userId") Long userId);
 
     @Query(value = "select distinct team from Team team left join fetch team.students where team.exercise.id = :#{#exerciseId}")
-    Set<Team> findAllByExerciseIdWithEagerStudents(@Param("exerciseId") Long exerciseId);
+    List<Team> findAllByExerciseIdWithEagerStudents(@Param("exerciseId") Long exerciseId);
 
     @Query("select team from Team team left join fetch team.students where team.id = :#{#teamId}")
     Optional<Team> findOneWithEagerStudents(@Param("teamId") Long teamId);

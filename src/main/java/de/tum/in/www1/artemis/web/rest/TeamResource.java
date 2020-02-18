@@ -6,7 +6,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -118,6 +117,9 @@ public class TeamResource {
         if (existingTeam.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
+        if (!team.getShortName().equals(existingTeam.get().getShortName())) {
+            return forbidden(ENTITY_NAME, "shortNameChangeForbidden", "The team's short name cannot be changed after the team has been created.");
+        }
         User user = userService.getUserWithGroupsAndAuthorities();
         Exercise exercise = exerciseService.findOne(exerciseId);
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user)) {
@@ -162,7 +164,7 @@ public class TeamResource {
      */
     @GetMapping("/exercises/{exerciseId}/teams")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Set<Team>> getTeamsForExercise(@PathVariable long exerciseId) {
+    public ResponseEntity<List<Team>> getTeamsForExercise(@PathVariable long exerciseId) {
         log.debug("REST request to get all Teams for the exercise with id : {}", exerciseId);
         User user = userService.getUserWithGroupsAndAuthorities();
         Exercise exercise = exerciseService.findOne(exerciseId);

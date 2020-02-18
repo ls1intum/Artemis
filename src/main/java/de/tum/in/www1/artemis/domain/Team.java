@@ -82,6 +82,7 @@ public class Team implements Serializable, ParticipantInterface {
         this.shortName = shortName;
     }
 
+    @JsonIgnore
     public String getParticipantIdentifier() {
         return shortName;
     }
