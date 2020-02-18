@@ -1,9 +1,12 @@
 import { Injectable, Injector } from '@angular/core';
 import { WindowRef } from 'app/core/websocket/window.service';
 import { BehaviorSubject, Observable } from 'rxjs';
-import { ExerciseView, IntelliJState, JavaDowncallBridge, JavaUpcallBridge } from 'app/intellij/intellij';
+import { ExerciseView, OrionState, ArtemisOrionConnector } from 'app/orion/orion';
 import { Router } from '@angular/router';
 import { REPOSITORY } from 'app/code-editor/instructor/code-editor-instructor-base-container.component';
+import { stringifyCircular } from 'app/shared/util/utils';
+import { ProgrammingExercise } from 'app/entities/programming-exercise/programming-exercise.model';
+import { BuildLogErrors } from 'app/code-editor/build-output/code-editor-build-output.component';
 
 /**
  * This is the main interface between an IDE (e.g. IntelliJ) and this webapp. If a student has the Orion plugin
@@ -21,16 +24,16 @@ import { REPOSITORY } from 'app/code-editor/instructor/code-editor-instructor-ba
 @Injectable({
     providedIn: 'root',
 })
-export class JavaBridgeService implements JavaDowncallBridge, JavaUpcallBridge {
-    private intellijState: IntelliJState;
-    private intellijStateSubject: BehaviorSubject<IntelliJState>;
+export class OrionConnectorService implements ArtemisOrionConnector {
+    private orionState: OrionState;
+    private orionStateSubject: BehaviorSubject<OrionState>;
 
     constructor(private window: WindowRef, private injector: Injector) {}
 
-    static initBridge(bridge: JavaBridgeService, win: WindowRef) {
-        win.nativeWindow.javaDowncallBridge = bridge;
-        bridge.intellijState = { opened: -1, inInstructorView: false, cloning: false, building: false };
-        bridge.intellijStateSubject = new BehaviorSubject<IntelliJState>(bridge.intellijState);
+    static initBridge(bridge: OrionConnectorService, win: WindowRef) {
+        win.nativeWindow.artemisClientConnector = bridge;
+        bridge.orionState = { opened: -1, inInstructorView: false, cloning: false, building: false };
+        bridge.orionStateSubject = new BehaviorSubject<OrionState>(bridge.orionState);
     }
 
     /**
@@ -50,25 +53,25 @@ export class JavaBridgeService implements JavaDowncallBridge, JavaUpcallBridge {
      * @param password The password of the current user. This is stored safely in the IDE's password safe
      */
     login(username: string, password: string) {
-        this.window.nativeWindow.intellij.login(username, password);
+        this.window.nativeWindow.orionCoreConnector.login(username, password);
     }
 
     /**
      * "Imports" a project/exercise by cloning th repository on the local machine of the user and opening the new project.
      *
      * @param repository The full URL of the repository of a programming exercise
-     * @param exerciseJson The exercise formatted as JSON string for which the repository should get cloned.
+     * @param exercise The exercise for which the repository should get cloned.
      */
-    clone(repository: string, exerciseJson: string) {
-        this.window.nativeWindow.intellij.clone(repository, exerciseJson);
+    importParticipation(repository: string, exercise: ProgrammingExercise) {
+        this.window.nativeWindow.orionCoreConnector.importParticipation(repository, stringifyCircular(exercise));
     }
 
     /**
      * Submits all changes on the local machine of the user by staging and committing every file. Afterwards, all commits
      * get pushed to the remote master branch
      */
-    submit() {
-        this.window.nativeWindow.intellij.addCommitAndPushAllChanges();
+    submitChanges() {
+        this.window.nativeWindow.orionCoreConnector.submitChanges();
     }
 
     /**
@@ -77,8 +80,8 @@ export class JavaBridgeService implements JavaDowncallBridge, JavaUpcallBridge {
      *
      * @return An observable containing the internal state of the IDE
      */
-    state(): Observable<IntelliJState> {
-        return this.intellijStateSubject;
+    state(): Observable<OrionState> {
+        return this.orionStateSubject;
     }
 
     /**
@@ -87,14 +90,14 @@ export class JavaBridgeService implements JavaDowncallBridge, JavaUpcallBridge {
      * @param message The message to log in the development environment
      */
     log(message: string) {
-        this.window.nativeWindow.intellij.log(message);
+        this.window.nativeWindow.orionCoreConnector.log(message);
     }
 
     /**
      * Gets called by the IDE. Informs the Angular app about a newly opened exercise.
      *
      * @param opened The ID of the exercise that was opened by the user.
-     * @param view ExerciseView which is currently open in IntelliJ (instructor vs. student)
+     * @param view ExerciseView which is currently open in in the IDE (instructor vs. student)
      */
     onExerciseOpened(opened: number, view: string): void {
         const inInstructorView = view === ExerciseView.INSTRUCTOR;
@@ -105,24 +108,24 @@ export class JavaBridgeService implements JavaDowncallBridge, JavaUpcallBridge {
     /**
      * Notify the IDE that a new build has started
      */
-    onBuildStarted() {
-        this.window.nativeWindow.intellij.onBuildStarted();
+    onBuildStarted(problemStatement: string) {
+        this.window.nativeWindow.orionTestResultsConnector.onBuildStarted(problemStatement);
     }
 
     /**
      * Notify the IDE that a build finished and all results have been sent
      */
     onBuildFinished() {
-        this.window.nativeWindow.intellij.onBuildFinished();
+        this.window.nativeWindow.orionTestResultsConnector.onBuildFinished();
     }
 
     /**
      * Notify the IDE that a build failed. Alternative to onBuildFinished
      *
-     * @param message The message containing all compile errors for the current build
+     * @param buildErrors All compile errors for the current build
      */
-    onBuildFailed(message: string) {
-        this.window.nativeWindow.intellij.onBuildFailed(message);
+    onBuildFailed(buildErrors: BuildLogErrors) {
+        this.window.nativeWindow.orionTestResultsConnector.onBuildFailed(JSON.stringify(buildErrors));
     }
 
     /**
@@ -131,9 +134,10 @@ export class JavaBridgeService implements JavaDowncallBridge, JavaUpcallBridge {
      *
      * @param success True if the test was successful, false otherwise
      * @param message A detail message explaining the test result
+     * @param testName The name of finished test
      */
-    onTestResult(success: boolean, message: string) {
-        this.window.nativeWindow.intellij.onTestResult(success, message);
+    onTestResult(success: boolean, testName: string, message: string) {
+        this.window.nativeWindow.orionTestResultsConnector.onTestResult(success, testName, message);
     }
 
     /**
@@ -154,9 +158,9 @@ export class JavaBridgeService implements JavaDowncallBridge, JavaUpcallBridge {
         this.setIDEStateParameter({ cloning });
     }
 
-    private setIDEStateParameter(patch: Partial<IntelliJState>) {
-        Object.assign(this.intellijState, patch);
-        this.intellijStateSubject.next(this.intellijState);
+    private setIDEStateParameter(patch: Partial<OrionState>) {
+        Object.assign(this.orionState, patch);
+        this.orionStateSubject.next(this.orionState);
     }
 
     /**
@@ -166,43 +170,32 @@ export class JavaBridgeService implements JavaDowncallBridge, JavaUpcallBridge {
      * @param courseId
      * @param exerciseId
      */
-    startedBuildInIntelliJ(courseId: number, exerciseId: number) {
+    startedBuildInOrion(courseId: number, exerciseId: number) {
         this.router.navigateByUrl(`/overview/${courseId}/exercises/${exerciseId}`, { queryParams: { withIdeSubmit: true } });
     }
 
     /**
-     * Edit the given exercise in IntelliJ as an instructor. This will trigger the import of the exercise
+     * Edit the given exercise in the IDE as an instructor. This will trigger the import of the exercise
      * (if it is not already imported) and opens the created project afterwards.
      *
-     * @param exerciseJson The exercise to be imported as a JSON string
+     * @param exercise The exercise to be imported
      */
-    editExercise(exerciseJson: string): void {
+    editExercise(exercise: ProgrammingExercise): void {
         this.setIDEStateParameter({ cloning: true });
-        this.window.nativeWindow.intellij.editExercise(exerciseJson);
+        this.window.nativeWindow.orionCoreConnector.editExercise(stringifyCircular(exercise));
     }
 
     /**
-     * Builds the selected repository and runs all tests locally in the IDE. This will not send or commit any files
-     * to the remote repositories.
-     */
-    buildAndTestInstructorRepository(): void {
-        this.window.nativeWindow.intellij.buildAndTestInstructorRepository();
-    }
-
-    /**
-     * Selects an instructor repository in IntelliJ. The selected repository will be used for all future actions
+     * Selects an instructor repository in the IDE. The selected repository will be used for all future actions
      * that reference an instructor repo s.a. submitting the code.
      *
      * @param repository The repository to be selected for all future interactions
      */
-    selectInstructorRepository(repository: REPOSITORY): void {
-        this.window.nativeWindow.intellij.selectInstructorRepository(repository);
+    selectRepository(repository: REPOSITORY): void {
+        this.window.nativeWindow.orionInstructorConnector.selectRepository(repository);
     }
 
-    /**
-     * Submits the selected repository in IntelliJ by adding and committing all changes and pushing them to the remote.
-     */
-    submitInstructorRepository(): void {
-        this.window.nativeWindow.intellij.submitInstructorRepository();
+    buildAndTestLocally(): void {
+        this.window.nativeWindow.orionInstructorConnector.buildAndTestLocally();
     }
 }

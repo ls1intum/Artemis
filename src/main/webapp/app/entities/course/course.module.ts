@@ -12,7 +12,6 @@ import { FormDateTimePickerModule } from 'app/shared/date-time-picker/date-time-
 import { ArtemisColorSelectorModule } from 'app/components/color-selector/color-selector.module';
 import { ImageCropperModule } from 'ngx-image-cropper';
 import { MomentModule } from 'ngx-moment';
-import { IntellijModule } from 'app/intellij/intellij.module';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { SortByModule } from 'app/components/pipes/sort-by.module';
 import { CourseExercisesOverviewComponent } from 'app/entities/course/course-exercises-overview.component';
@@ -20,6 +19,7 @@ import { CourseDetailComponent } from 'app/entities/course/course-detail.compone
 import { CourseUpdateComponent } from 'app/entities/course/course-update.component';
 import { courseRoute } from 'app/entities/course/course.route';
 import { CourseComponent } from 'app/entities/course/course.component';
+import { OrionModule } from 'app/orion/orion.module';
 
 const ENTITY_STATES = [...courseRoute];
 
@@ -38,7 +38,7 @@ const ENTITY_STATES = [...courseRoute];
         ArtemisColorSelectorModule,
         ImageCropperModule,
         MomentModule,
-        IntellijModule,
+        OrionModule,
     ],
     declarations: [CourseComponent, CourseDetailComponent, CourseUpdateComponent, CourseExerciseCardComponent, CourseExercisesOverviewComponent],
     entryComponents: [CourseComponent, CourseUpdateComponent, CourseExerciseCardComponent],

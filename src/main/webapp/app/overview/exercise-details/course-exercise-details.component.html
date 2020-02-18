@@ -9,8 +9,15 @@
     <!-- HEADER INFORMATION END -->
     <!-- EXERCISE ACTIONS START -->
     <div class="tab-bar tab-bar-exercise-details pl-2 pr-2 mb-2 justify-content-between">
-        <jhi-programming-exercise-student-ide-actions jhiIdeFilter [showInIDE]="true" [courseId]="courseId" [exercise]="exercise"> </jhi-programming-exercise-student-ide-actions>
-        <jhi-exercise-details-student-actions jhiIdeFilter [showInIDE]="false" [courseId]="courseId" [exercise]="exercise" [showResult]="showResults && currentResult !== null">
+        <jhi-programming-exercise-student-ide-actions jhiOrionFilter [showInOrionWindow]="true" [courseId]="courseId" [exercise]="exercise">
+        </jhi-programming-exercise-student-ide-actions>
+        <jhi-exercise-details-student-actions
+            jhiOrionFilter
+            [showInOrionWindow]="false"
+            [courseId]="courseId"
+            [exercise]="exercise"
+            [showResult]="showResults && currentResult !== null"
+        >
         </jhi-exercise-details-student-actions>
         <jhi-submission-result-status [exercise]="exercise" [studentParticipation]="studentParticipation" updatingResultClass="mr-2" [showGradedBadge]="true">
         </jhi-submission-result-status>
@@ -143,7 +150,7 @@
             >
             </jhi-complaint-interactions>
         </div>
-        <div class="col-sm-12 col-md-4 col-lg-4" jhiIdeFilter [showInIDE]="false">
+        <div class="col-sm-12 col-md-4 col-lg-4" jhiOrionFilter [showInOrionWindow]="false">
             <jhi-student-questions [exercise]="exercise"></jhi-student-questions>
         </div>
     </div>
