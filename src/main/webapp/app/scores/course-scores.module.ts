@@ -1,13 +1,12 @@
 import { NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
-
-import { ArtemisSharedModule } from '../shared';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
-import { HomeComponent } from '../home';
 import { MomentModule } from 'ngx-moment';
-import { JhiMainComponent } from '../layouts';
 import { CourseScoresComponent } from './course-scores.component';
-import { SortByModule } from 'app/components/pipes';
+import { SortByModule } from 'app/components/pipes/sort-by.module';
+import { JhiMainComponent } from 'app/layouts/main/main.component';
+import { HomeComponent } from 'app/home/home.component';
 
 const ENTITY_STATES = [
     {

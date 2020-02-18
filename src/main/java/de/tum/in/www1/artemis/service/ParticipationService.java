@@ -454,8 +454,6 @@ public class ParticipationService {
         // Note: the repository webhook already exists so we don't need to set it up again
         participation.setInitializationState(INITIALIZED);
         participation = save(participation);
-        // we need to (optionally) perform the empty commit hook last, because the webhook has already been created and otherwise this would lead to a new programming submission
-        // because in notifyPush we only filter out empty commits when the state is already initialized
         if (participation.getInitializationDate() == null) {
             // only set the date if it was not set before (which should NOT be the case)
             participation.setInitializationDate(ZonedDateTime.now());
@@ -1012,5 +1010,19 @@ public class ParticipationService {
      */
     public List<StudentParticipation> findWithSubmissionsWithResultByStudentIdAndExercise(Long studentId, Set<Exercise> exercises) {
         return studentParticipationRepository.findByStudentIdAndExerciseWithEagerSubmissionsResult(studentId, exercises);
+    }
+
+    /**
+     * Get a mapping of participation ids to the number of submission for each participation.
+     *
+     * @param exerciseId the id of the exercise for which to consider participations
+     * @return the number of submissions per participation in the given exercise
+     */
+    public Map<Long, Integer> countSubmissionsPerParticipationByExerciseId(long exerciseId) {
+        List<long[]> participationIdAndSubmissionCountPairs = studentParticipationRepository.countSubmissionsPerParticipationByExerciseId(exerciseId);
+        // convert List<[participationId, submissionCount]> into Map<participationId -> submissionCount>
+        return participationIdAndSubmissionCountPairs.stream().collect(Collectors.toMap(participationIdAndSubmissionCountPair -> participationIdAndSubmissionCountPair[0], // participationId
+                participationIdAndSubmissionCountPair -> Math.toIntExact(participationIdAndSubmissionCountPair[1]) // submissionCount
+        ));
     }
 }

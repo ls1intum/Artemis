@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { Lecture } from 'app/entities/lecture';
+import { Lecture } from 'app/entities/lecture/lecture.model';
 
 @Component({
     selector: 'jhi-lecture-detail',

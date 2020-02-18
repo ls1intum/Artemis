@@ -1,18 +1,21 @@
-import { hasParticipationChanged, Participation } from '../../entities/participation';
 import { ParticipationWebsocketService } from 'app/entities/participation/participation-websocket.service';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/alert/alert.service';
 import { AfterViewInit, Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, SimpleChanges } from '@angular/core';
 import { WindowRef } from 'app/core/websocket/window.service';
-import { Result, ResultService } from '../../entities/result';
-import { BuildLogEntry, BuildLogEntryArray } from 'app/entities/build-log';
-import { Feedback } from 'app/entities/feedback';
 import { Observable, of, Subscription } from 'rxjs';
 import { catchError, filter, map, switchMap, tap } from 'rxjs/operators';
+import { CodeEditorSessionService } from 'app/code-editor/service/code-editor-session.service';
+import { AnnotationArray } from 'app/entities/ace-editor/annotation.model';
+import { BuildLogEntry, BuildLogEntryArray } from 'app/entities/build-log/build-log.model';
+import { Participation } from 'app/entities/participation/participation.model';
+import { CodeEditorSubmissionService } from 'app/code-editor/service/code-editor-submission.service';
+import { CodeEditorBuildLogService } from 'app/code-editor/service/code-editor-repository.service';
+import { Feedback } from 'app/entities/feedback/feedback.model';
+import { ResultService } from 'app/entities/result/result.service';
+import { hasParticipationChanged } from 'app/entities/participation/participation-utils';
+import { Result } from 'app/entities/result/result.model';
 import Interactable from '@interactjs/core/Interactable';
 import interact from 'interactjs';
-import { CodeEditorSessionService } from 'app/code-editor/service/code-editor-session.service';
-import { AnnotationArray } from 'app/entities/ace-editor';
-import { CodeEditorBuildLogService, CodeEditorSubmissionService } from 'app/code-editor/service';
 
 export type BuildLogErrors = { errors: { [fileName: string]: AnnotationArray }; timestamp: number };
 
@@ -20,7 +23,7 @@ export type BuildLogErrors = { errors: { [fileName: string]: AnnotationArray }; 
     selector: 'jhi-code-editor-build-output',
     templateUrl: './code-editor-build-output.component.html',
     styleUrls: ['./code-editor-build-output.scss'],
-    providers: [JhiAlertService, WindowRef],
+    providers: [WindowRef],
 })
 export class CodeEditorBuildOutputComponent implements AfterViewInit, OnInit, OnChanges, OnDestroy {
     @Input()

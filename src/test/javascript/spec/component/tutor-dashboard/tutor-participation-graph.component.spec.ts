@@ -3,14 +3,14 @@ import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
 import { ArtemisTestModule } from '../../test.module';
-import { ArtemisSharedModule } from 'app/shared';
-import { MockSyncStorage } from '../../mocks';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
+import { MockSyncStorage } from '../../mocks/mock-sync.storage';
 import { TranslateModule } from '@ngx-translate/core';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { TutorParticipationGraphComponent } from 'app/tutor-course-dashboard/tutor-participation-graph/tutor-participation-graph.component';
-import { TutorParticipation, TutorParticipationStatus } from 'app/entities/tutor-participation';
-import { Exercise } from 'app/entities/exercise';
+import { Exercise } from 'app/entities/exercise/exercise.model';
 import { ProgressBarComponent } from 'app/tutor-course-dashboard/tutor-participation-graph/progress-bar/progress-bar.component';
+import { TutorParticipation, TutorParticipationStatus } from 'app/entities/tutor-participation/tutor-participation.model';
 
 chai.use(sinonChai);
 const expect = chai.expect;

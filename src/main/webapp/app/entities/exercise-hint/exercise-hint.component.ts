@@ -1,13 +1,14 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { Subscription, Subject } from 'rxjs';
+import { Subject, Subscription } from 'rxjs';
 import { filter, map } from 'rxjs/operators';
-import { JhiAlertService, JhiEventManager } from 'ng-jhipster';
+import { JhiEventManager } from 'ng-jhipster';
 
 import { ExerciseHint } from 'app/entities/exercise-hint/exercise-hint.model';
 import { ExerciseHintService } from './exercise-hint.service';
 import { onError } from 'app/utils/global.utils';
+import { AlertService } from 'app/core/alert/alert.service';
 
 @Component({
     selector: 'jhi-exercise-hint',
@@ -26,7 +27,7 @@ export class ExerciseHintComponent implements OnInit, OnDestroy {
     constructor(
         private route: ActivatedRoute,
         protected exerciseHintService: ExerciseHintService,
-        private jhiAlertService: JhiAlertService,
+        private jhiAlertService: AlertService,
         protected eventManager: JhiEventManager,
     ) {}
 

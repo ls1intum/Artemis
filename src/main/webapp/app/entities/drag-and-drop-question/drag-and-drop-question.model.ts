@@ -1,7 +1,7 @@
-import { QuizQuestion, QuizQuestionType } from '../quiz-question';
-import { DropLocation } from '../drop-location';
-import { DragItem } from '../drag-item';
-import { DragAndDropMapping } from '../drag-and-drop-mapping';
+import { QuizQuestion, QuizQuestionType } from 'app/entities/quiz-question/quiz-question.model';
+import { DropLocation } from 'app/entities/drop-location/drop-location.model';
+import { DragItem } from 'app/entities/drag-item/drag-item.model';
+import { DragAndDropMapping } from 'app/entities/drag-and-drop-mapping/drag-and-drop-mapping.model';
 
 export class DragAndDropQuestion extends QuizQuestion {
     public backgroundFilePath: string;

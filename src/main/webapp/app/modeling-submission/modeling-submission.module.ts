@@ -1,15 +1,15 @@
 import { ModelingSubmissionComponent } from './modeling-submission.component';
 import { RouterModule } from '@angular/router';
 import { NgModule } from '@angular/core';
-import { ArtemisSharedModule } from '../shared';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { modelingSubmissionRoute } from './modeling-submission.route';
-import { ArtemisResultModule } from '../entities/result';
 import { AceEditorModule } from 'ng2-ace-editor';
-import { ArtemisModelingEditorModule } from 'app/modeling-editor';
 import { ModelingAssessmentModule } from 'app/modeling-assessment/modeling-assessment.module';
-import { ArtemisComplaintsModule } from 'app/complaints';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { MomentModule } from 'ngx-moment';
+import { ArtemisResultModule } from 'app/entities/result/result.module';
+import { ArtemisComplaintsModule } from 'app/complaints/complaints.module';
+import { ArtemisModelingEditorModule } from 'app/modeling-editor/modeling-editor.module';
 
 const ENTITY_STATES = [...modelingSubmissionRoute];
 

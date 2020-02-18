@@ -1,6 +1,6 @@
-import { BaseEntity } from 'app/shared';
+import { BaseEntity } from 'app/shared/model/base-entity';
 import { User } from 'app/core/user/user.model';
-import { Exercise } from '../exercise';
+import { Exercise } from 'app/entities/exercise/exercise.model';
 
 export class LtiOutcomeUrl implements BaseEntity {
     public id: number;

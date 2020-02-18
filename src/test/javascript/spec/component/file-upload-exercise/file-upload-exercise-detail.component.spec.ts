@@ -10,17 +10,18 @@ import { By } from '@angular/platform-browser';
 
 import * as sinonChai from 'sinon-chai';
 import * as chai from 'chai';
-import { FileUploadExerciseService } from 'app/entities/file-upload-exercise';
 import { fileUploadExercise, MockFileUploadExerciseService } from '../../mocks/mock-file-upload-exercise.service';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
-import { JhiAlertService } from 'ng-jhipster';
-import { ArtemisSharedModule } from 'app/shared';
+import { AlertService } from 'app/core/alert/alert.service';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { RouterTestingModule } from '@angular/router/testing';
 import { TranslateModule } from '@ngx-translate/core';
 import { ArtemisAssessmentSharedModule } from 'app/assessment-shared/assessment-shared.module';
-import { MockCookieService, MockSyncStorage } from '../../mocks';
+import { MockSyncStorage } from '../../mocks/mock-sync.storage';
+import { MockCookieService } from '../../mocks/mock-cookie.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { CookieService } from 'ngx-cookie';
+import { CookieService } from 'ngx-cookie-service';
+import { FileUploadExerciseService } from 'app/entities/file-upload-exercise/file-upload-exercise.service';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -42,7 +43,7 @@ describe('Component Tests', () => {
                 declarations: [FileUploadExerciseDetailComponent],
                 providers: [
                     JhiLanguageHelper,
-                    JhiAlertService,
+                    AlertService,
                     { provide: ActivatedRoute, useValue: route },
                     { provide: FileUploadExerciseService, useClass: MockFileUploadExerciseService },
                     { provide: LocalStorageService, useClass: MockSyncStorage },
