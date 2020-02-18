@@ -1,6 +1,6 @@
-import { Exercise, ExerciseType } from '../exercise';
-import { Course } from '../course';
 import { UMLDiagramType } from '@ls1intum/apollon';
+import { Exercise, ExerciseType } from 'app/entities/exercise/exercise.model';
+import { Course } from 'app/entities/course/course.model';
 
 export class ModelingExercise extends Exercise {
     public diagramType: UMLDiagramType;

@@ -1,20 +1,21 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { SafeHtml } from '@angular/platform-browser';
-import { QuizExercise, QuizExerciseService } from '../../../entities/quiz-exercise';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
-import { QuizStatisticUtil } from '../../../components/util/quiz-statistic-util.service';
-import { ShortAnswerQuestionUtil } from '../../../components/util/short-answer-question-util.service';
-import { ArtemisMarkdown } from '../../../components/util/markdown.service';
-import { ShortAnswerQuestion } from '../../../entities/short-answer-question';
-import { ShortAnswerQuestionStatistic } from '../../../entities/short-answer-question-statistic';
-import { ShortAnswerSpot } from '../../../entities/short-answer-spot';
+import { QuizStatisticUtil } from 'app/components/util/quiz-statistic-util.service';
+import { ShortAnswerQuestionUtil } from 'app/components/util/short-answer-question-util.service';
+import { ArtemisMarkdown } from 'app/components/util/markdown.service';
 import { ChartOptions } from 'chart.js';
 import { createOptions, DataSet, DataSetProvider } from '../quiz-statistic/quiz-statistic.component';
 import { Subscription } from 'rxjs/Subscription';
-import { ShortAnswerSolution } from 'app/entities/short-answer-solution';
 import { AccountService } from 'app/core/auth/account.service';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { ShortAnswerQuestion } from 'app/entities/short-answer-question/short-answer-question.model';
+import { QuizExerciseService } from 'app/entities/quiz-exercise/quiz-exercise.service';
+import { ShortAnswerSpot } from 'app/entities/short-answer-spot/short-answer-spot.model';
+import { ShortAnswerQuestionStatistic } from 'app/entities/short-answer-question-statistic/short-answer-question-statistic.model';
+import { ShortAnswerSolution } from 'app/entities/short-answer-solution/short-answer-solution.model';
+import { QuizExercise } from 'app/entities/quiz-exercise/quiz-exercise.model';
 
 interface BackgroundColorConfig {
     backgroundColor: string;

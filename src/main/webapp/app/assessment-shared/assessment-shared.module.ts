@@ -1,8 +1,7 @@
 import { NgModule } from '@angular/core';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/alert/alert.service';
 
-import { ArtemisSharedModule } from 'app/shared';
-import { ArtemisComplaintsForTutorModule } from 'app/complaints-for-tutor';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
 
 import { AssessmentHeaderComponent } from './assessment-header/assessment-header.component';
 import { AssessmentLayoutComponent } from './assessment-layout/assessment-layout.component';
@@ -15,6 +14,7 @@ import { ArtemisSharedComponentModule } from 'app/shared/components/shared-compo
 import { ExternalSubmissionDialogComponent } from 'app/assessment-shared/external-submission/external-submission-dialog.component';
 import { ExternalSubmissionButtonComponent } from 'app/assessment-shared/external-submission/external-submission-button.component';
 import { AssessmentWarningComponent } from 'app/assessment-shared/assessment-warning/assessment-warning.component';
+import { ArtemisComplaintsForTutorModule } from 'app/complaints-for-tutor/complaints-for-tutor.module';
 
 @NgModule({
     imports: [ArtemisSharedModule, ArtemisComplaintsForTutorModule, ArtemisSharedComponentModule],
@@ -41,6 +41,6 @@ import { AssessmentWarningComponent } from 'app/assessment-shared/assessment-war
     ],
     entryComponents: [ExternalSubmissionDialogComponent],
 
-    providers: [JhiAlertService],
+    providers: [],
 })
 export class ArtemisAssessmentSharedModule {}

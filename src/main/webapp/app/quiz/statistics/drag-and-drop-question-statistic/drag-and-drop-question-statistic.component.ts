@@ -1,20 +1,21 @@
 import { Component, HostListener, OnDestroy, OnInit, ViewEncapsulation } from '@angular/core';
 import { SafeHtml } from '@angular/platform-browser';
-import { QuizExercise, QuizExerciseService } from '../../../entities/quiz-exercise';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
-import { QuizStatisticUtil } from '../../../components/util/quiz-statistic-util.service';
-import { DragAndDropQuestionUtil } from '../../../components/util/drag-and-drop-question-util.service';
-import { ArtemisMarkdown } from '../../../components/util/markdown.service';
-import { DragAndDropQuestion } from '../../../entities/drag-and-drop-question';
-import { DragAndDropQuestionStatistic } from '../../../entities/drag-and-drop-question-statistic';
-import { DropLocation } from '../../../entities/drop-location';
+import { QuizStatisticUtil } from 'app/components/util/quiz-statistic-util.service';
+import { DragAndDropQuestionUtil } from 'app/components/util/drag-and-drop-question-util.service';
+import { ArtemisMarkdown } from 'app/components/util/markdown.service';
 import { ChartOptions } from 'chart.js';
 import { createOptions, DataSet, DataSetProvider } from '../quiz-statistic/quiz-statistic.component';
 import { Subscription } from 'rxjs/Subscription';
 import { resizeImage } from 'app/utils/drag-and-drop.utils';
 import { AccountService } from 'app/core/auth/account.service';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { QuizExerciseService } from 'app/entities/quiz-exercise/quiz-exercise.service';
+import { DragAndDropQuestion } from 'app/entities/drag-and-drop-question/drag-and-drop-question.model';
+import { DragAndDropQuestionStatistic } from 'app/entities/drag-and-drop-question-statistic/drag-and-drop-question-statistic.model';
+import { DropLocation } from 'app/entities/drop-location/drop-location.model';
+import { QuizExercise } from 'app/entities/quiz-exercise/quiz-exercise.model';
 
 interface BackgroundColorConfig {
     backgroundColor: string;

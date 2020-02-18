@@ -1,6 +1,7 @@
 import { NgModule } from '@angular/core';
-import { ProgrammingExerciseInstructorExerciseStatusComponent, ProgrammingExerciseInstructorStatusComponent } from './';
-import { ArtemisSharedModule } from 'app/shared';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
+import { ProgrammingExerciseInstructorStatusComponent } from 'app/entities/programming-exercise/status/programming-exercise-instructor-status.component';
+import { ProgrammingExerciseInstructorExerciseStatusComponent } from 'app/entities/programming-exercise/status/programming-exercise-instructor-exercise-status.component';
 
 @NgModule({
     imports: [ArtemisSharedModule],

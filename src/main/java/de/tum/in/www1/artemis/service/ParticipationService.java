@@ -23,6 +23,7 @@ import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.*;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
+import de.tum.in.www1.artemis.exception.VersionControlException;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
@@ -258,13 +259,39 @@ public class ParticipationService {
             else {
                 participation = new StudentParticipation();
             }
+            participation.setInitializationState(UNINITIALIZED);
             participation.setInitializationDate(ZonedDateTime.now());
             participation.setExercise(exercise);
             participation.setStudent(user);
+
+            participation = save(participation);
         }
         else {
             participation = optionalStudentParticipation.get();
         }
+
+        // setup repository in case of programming exercise
+        if (exercise instanceof ProgrammingExercise) {
+            ProgrammingExercise programmingExercise = (ProgrammingExercise) exercise;
+            ProgrammingExerciseStudentParticipation programmingParticipation = (ProgrammingExerciseStudentParticipation) participation;
+            // Note: we need a repository, otherwise the student cannot click resume.
+            programmingParticipation = copyRepository(programmingParticipation);
+            programmingParticipation = configureRepository(programmingParticipation);
+            programmingParticipation = configureRepositoryWebHook(programmingParticipation);
+            participation = programmingParticipation;
+            if (programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate() != null || programmingExercise.getAssessmentType() != AssessmentType.AUTOMATIC) {
+                // restrict access for the student
+                try {
+                    versionControlService.get().setRepositoryPermissionsToReadOnly(programmingParticipation.getRepositoryUrlAsUrl(), programmingExercise.getProjectKey(),
+                            programmingParticipation.getStudent().getLogin());
+                }
+                catch (VersionControlException e) {
+                    log.error("Removing write permissions failed for programming exercise with id " + programmingExercise.getId() + " for student repository with participation id "
+                            + programmingParticipation.getId() + ": " + e.getMessage());
+                }
+            }
+        }
+
         participation.setInitializationState(FINISHED);
         participation = save(participation);
 
@@ -427,8 +454,6 @@ public class ParticipationService {
         // Note: the repository webhook already exists so we don't need to set it up again
         participation.setInitializationState(INITIALIZED);
         participation = save(participation);
-        // we need to (optionally) perform the empty commit hook last, because the webhook has already been created and otherwise this would lead to a new programming submission
-        // because in notifyPush we only filter out empty commits when the state is already initialized
         if (participation.getInitializationDate() == null) {
             // only set the date if it was not set before (which should NOT be the case)
             participation.setInitializationDate(ZonedDateTime.now());
@@ -985,5 +1010,19 @@ public class ParticipationService {
      */
     public List<StudentParticipation> findWithSubmissionsWithResultByStudentIdAndExercise(Long studentId, Set<Exercise> exercises) {
         return studentParticipationRepository.findByStudentIdAndExerciseWithEagerSubmissionsResult(studentId, exercises);
+    }
+
+    /**
+     * Get a mapping of participation ids to the number of submission for each participation.
+     *
+     * @param exerciseId the id of the exercise for which to consider participations
+     * @return the number of submissions per participation in the given exercise
+     */
+    public Map<Long, Integer> countSubmissionsPerParticipationByExerciseId(long exerciseId) {
+        List<long[]> participationIdAndSubmissionCountPairs = studentParticipationRepository.countSubmissionsPerParticipationByExerciseId(exerciseId);
+        // convert List<[participationId, submissionCount]> into Map<participationId -> submissionCount>
+        return participationIdAndSubmissionCountPairs.stream().collect(Collectors.toMap(participationIdAndSubmissionCountPair -> participationIdAndSubmissionCountPair[0], // participationId
+                participationIdAndSubmissionCountPair -> Math.toIntExact(participationIdAndSubmissionCountPair[1]) // submissionCount
+        ));
     }
 }

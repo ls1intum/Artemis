@@ -2,9 +2,9 @@ import { Routes } from '@angular/router';
 
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { PendingChangesGuard } from 'app/shared/guard/pending-changes.guard';
-import { CodeEditorStudentContainerComponent } from './';
 import { CodeEditorInstructorIntellijContainerComponent } from 'app/code-editor/instructor/code-editor-instructor-intellij-container.component';
 import { CodeEditorInstructorContainerComponent } from 'app/code-editor/instructor/code-editor-instructor-container.component';
+import { CodeEditorStudentContainerComponent } from 'app/code-editor/code-editor-student-container.component';
 
 export const codeEditorRoute: Routes = [
     {

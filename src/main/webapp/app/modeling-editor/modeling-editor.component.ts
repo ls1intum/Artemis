@@ -1,6 +1,6 @@
 import { AfterViewInit, Component, ElementRef, Input, OnChanges, OnDestroy, Renderer2, SimpleChanges, ViewChild } from '@angular/core';
 import { ApollonEditor, ApollonMode, UMLDiagramType, UMLElementType, UMLModel, UMLRelationship, UMLRelationshipType } from '@ls1intum/apollon';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/alert/alert.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import interact from 'interactjs';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
@@ -27,11 +27,10 @@ export class ModelingEditorComponent implements AfterViewInit, OnDestroy, OnChan
 
     private apollonEditor: ApollonEditor | null = null;
 
-    constructor(private jhiAlertService: JhiAlertService, private renderer: Renderer2, private modalService: NgbModal, private guidedTourService: GuidedTourService) {}
+    constructor(private jhiAlertService: AlertService, private renderer: Renderer2, private modalService: NgbModal, private guidedTourService: GuidedTourService) {}
 
     ngAfterViewInit(): void {
         this.initializeApollonEditor();
-        this.subscribeForUMLModelReset();
         this.guidedTourService.checkModelingComponent().subscribe(key => {
             if (key) {
                 this.assessModelForGuidedTour(key, this.getCurrentModel());
@@ -124,30 +123,6 @@ export class ModelingEditorComponent implements AfterViewInit, OnDestroy, OnChan
         if (this.apollonEditor !== null) {
             this.apollonEditor.destroy();
         }
-    }
-
-    /**
-     * Resets the UML model for the guided tour by removing the elements, relationships and assessments
-     * @param umlModel the model that should be reset
-     */
-    private resetUMLModelForGuidedTour(umlModel: UMLModel): void {
-        if (umlModel) {
-            umlModel.elements = [];
-            umlModel.relationships = [];
-            umlModel.assessments = [];
-        }
-        this.initializeApollonEditor();
-    }
-
-    /**
-     * Subscribes to the guided tour service
-     */
-    private subscribeForUMLModelReset() {
-        this.guidedTourService.resetUMLModel().subscribe(reset => {
-            if (reset) {
-                this.resetUMLModelForGuidedTour(this.umlModel);
-            }
-        });
     }
 
     /**

@@ -25,7 +25,10 @@ describe('Service Tests', () => {
             service = injector.get(ExerciseHintService);
             httpMock = injector.get(HttpTestingController);
 
-            elemDefault = new ExerciseHint(0, 'AAAAAAA', 'AAAAAAA');
+            elemDefault = new ExerciseHint();
+            elemDefault.id = 0;
+            elemDefault.title = 'AAAAAAA';
+            elemDefault.content = 'AAAAAAA';
         });
 
         describe('Service methods', () => {

@@ -1,11 +1,12 @@
 import { Injectable } from '@angular/core';
-import { EntityResponseType, Result, ResultService } from 'app/entities/result';
 import { SERVER_API_URL } from 'app/app.constants';
 import { Observable } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
 import * as moment from 'moment';
-import { Exercise } from 'app/entities/exercise';
+import { Exercise } from 'app/entities/exercise/exercise.model';
 import { User } from 'app/core/user/user.model';
+import { EntityResponseType, ResultService } from 'app/entities/result/result.service';
+import { Result } from 'app/entities/result/result.model';
 
 @Injectable({ providedIn: 'root' })
 export class ExternalSubmissionService {

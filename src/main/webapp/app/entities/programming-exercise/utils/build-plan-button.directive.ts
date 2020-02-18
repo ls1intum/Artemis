@@ -1,15 +1,18 @@
-import { Directive, HostListener, Input, OnInit } from '@angular/core';
+import { Directive, HostBinding, HostListener, Input, OnInit } from '@angular/core';
 import { ProfileService } from 'app/layouts/profiles/profile.service';
 import { take, tap } from 'rxjs/operators';
-import { ProfileInfo } from 'app/layouts';
 import { createBuildPlanUrl } from 'app/entities/programming-exercise/utils/build-plan-link.directive';
+import { ProfileInfo } from 'app/layouts/profiles/profile-info.model';
 
 @Directive({ selector: 'button[jhiBuildPlanButton], jhi-button[jhiBuildPlanButton]' })
 export class BuildPlanButtonDirective implements OnInit {
-    @Input() projectKey: string;
-    @Input() buildPlanId: string;
+    @HostBinding('style.visibility')
+    visibility = 'hidden';
 
-    private linkToBuildPlan: string;
+    private participationBuildPlanId: string;
+    private exerciseProjectKey: string;
+    private buildPlanLink: string | null;
+    private templateLink: string;
 
     constructor(private profileService: ProfileService) {}
 
@@ -19,7 +22,8 @@ export class BuildPlanButtonDirective implements OnInit {
             .pipe(
                 take(1),
                 tap((info: ProfileInfo) => {
-                    this.linkToBuildPlan = createBuildPlanUrl(info.buildPlanURLTemplate, this.projectKey, this.buildPlanId);
+                    this.templateLink = info.buildPlanURLTemplate;
+                    this.linkToBuildPlan = createBuildPlanUrl(this.templateLink, this.exerciseProjectKey, this.participationBuildPlanId);
                 }),
             )
             .subscribe();
@@ -27,6 +31,23 @@ export class BuildPlanButtonDirective implements OnInit {
 
     @HostListener('click')
     onClick() {
-        window.open(this.linkToBuildPlan);
+        window.open(this.buildPlanLink!);
+    }
+
+    @Input()
+    set projectKey(key: string) {
+        this.exerciseProjectKey = key;
+        this.linkToBuildPlan = createBuildPlanUrl(this.templateLink, this.exerciseProjectKey, this.participationBuildPlanId);
+    }
+
+    @Input()
+    set buildPlanId(planId: string) {
+        this.participationBuildPlanId = planId;
+        this.linkToBuildPlan = createBuildPlanUrl(this.templateLink, this.exerciseProjectKey, this.participationBuildPlanId);
+    }
+
+    set linkToBuildPlan(link: string | null) {
+        this.buildPlanLink = link;
+        this.visibility = link ? 'visible' : 'hidden';
     }
 }

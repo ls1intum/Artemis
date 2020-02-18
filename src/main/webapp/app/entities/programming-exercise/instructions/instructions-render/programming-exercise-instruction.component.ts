@@ -4,21 +4,23 @@ import { TranslateService } from '@ngx-translate/core';
 import { ShowdownExtension } from 'showdown';
 import { catchError, filter, flatMap, map, switchMap, tap } from 'rxjs/operators';
 import { merge, Observable, of, Subscription } from 'rxjs';
-import { Feedback } from 'app/entities/feedback';
-import { Result, ResultService } from 'app/entities/result';
 import { ProgrammingExercise } from '../../programming-exercise.model';
-import { RepositoryFileService } from 'app/entities/repository';
-import { hasParticipationChanged, Participation } from 'app/entities/participation';
 import { ParticipationWebsocketService } from 'app/entities/participation/participation-websocket.service';
-import { problemStatementHasChanged } from 'app/entities/exercise';
 import { ArtemisMarkdown } from 'app/components/util/markdown.service';
 import { ProgrammingExerciseTaskExtensionWrapper } from './extensions/programming-exercise-task.extension';
 import { ProgrammingExercisePlantUmlExtensionWrapper } from 'app/entities/programming-exercise/instructions/instructions-render/extensions/programming-exercise-plant-uml.extension';
 import { ProgrammingExerciseInstructionService } from 'app/entities/programming-exercise/instructions/instructions-render/service/programming-exercise-instruction.service';
 import { TaskArray } from 'app/entities/programming-exercise/instructions/instructions-render/task/programming-exercise-task.model';
-import { ProgrammingExerciseParticipationService } from 'app/entities/programming-exercise/services';
-import { ExerciseHintService } from 'app/entities/exercise-hint';
 import { ExerciseHint } from 'app/entities/exercise-hint/exercise-hint.model';
+import { Participation } from 'app/entities/participation/participation.model';
+import { Feedback } from 'app/entities/feedback/feedback.model';
+import { ResultService } from 'app/entities/result/result.service';
+import { RepositoryFileService } from 'app/entities/repository/repository.service';
+import { problemStatementHasChanged } from 'app/entities/exercise/exercise-utils';
+import { ProgrammingExerciseParticipationService } from 'app/entities/programming-exercise/services/programming-exercise-participation.service';
+import { hasParticipationChanged } from 'app/entities/participation/participation-utils';
+import { Result } from 'app/entities/result/result.model';
+import { ExerciseHintService } from 'app/entities/exercise-hint/exercise-hint.service';
 
 @Component({
     selector: 'jhi-programming-exercise-instructions',

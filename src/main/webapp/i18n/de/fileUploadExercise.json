@@ -17,7 +17,7 @@
                 "title": "Datei Upload Aufgabe"
             },
             "filePattern": "Dateimuster",
-            "filePatternInfo": "Hier kannst du eine kommagetrennte Liste der erlaubten Dateierweiterungen angeben.",
+            "filePatternInfo": "Hier kannst du eine kommagetrennte Liste der erlaubten Dateierweiterungen ohne Punkte angeben (z.B. 'png, pdf').",
             "submitSuccessful": "Deine Antwort wurde erfolgreich abgesendet! Du kannst es ändern oder auf dein Feedback warten.",
             "submitDeadlineMissed": "Deine Antwort wurde erfolgreich abgesendet! Du kannst es ändern oder auf dein Feedback warten. Da du die Deadline verpasst hast wird deine Bewertung nicht gezählt.",
             "error": "Ein Fehler ist aufgetreten. Bitte versuche es später noch einmal.",

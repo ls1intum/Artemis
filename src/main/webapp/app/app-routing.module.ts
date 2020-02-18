@@ -1,6 +1,7 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
-import { errorRoute, navbarRoute } from './layouts';
+import { navbarRoute } from 'app/layouts/navbar/navbar.route';
+import { errorRoute } from 'app/layouts/error/error.route';
 
 const LAYOUT_ROUTES: Routes = [navbarRoute, ...errorRoute];
 // TODO add future feature routes here, e.g. quiz, modeling, apollon, programming editor

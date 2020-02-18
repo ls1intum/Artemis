@@ -1,6 +1,5 @@
 import { Injectable, OnDestroy } from '@angular/core';
-import { DOMStorageStrategy } from 'ngx-cacheable';
-import { Cacheable } from 'ngx-cacheable';
+import { Cacheable, DOMStorageStrategy } from 'ngx-cacheable';
 import { HttpClient } from '@angular/common/http';
 import { Observable, pipe, Subject, Subscription, UnaryFunction } from 'rxjs';
 import { distinctUntilChanged, switchMap, tap } from 'rxjs/operators';

@@ -8,7 +8,7 @@ import { JhiEventManager } from 'ng-jhipster';
 import { TextExercise } from './text-exercise.model';
 import { TextExerciseService } from './text-exercise.service';
 import { ArtemisMarkdown } from 'app/components/util/markdown.service';
-import { AssessmentType } from 'app/entities/assessment-type';
+import { AssessmentType } from '../assessment-type/assessment-type.model';
 
 @Component({
     selector: 'jhi-text-exercise-detail',

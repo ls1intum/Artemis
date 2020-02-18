@@ -1,6 +1,6 @@
-import { ShortAnswerQuestion } from '../short-answer-question';
-import { BaseEntity } from 'app/shared';
+import { BaseEntity } from 'app/shared/model/base-entity';
 import { generate } from 'app/quiz/edit/temp-id';
+import { ShortAnswerQuestion } from 'app/entities/short-answer-question/short-answer-question.model';
 
 export class ShortAnswerSpot implements BaseEntity {
     public id: number;

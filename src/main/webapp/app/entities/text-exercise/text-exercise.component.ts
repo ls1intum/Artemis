@@ -1,16 +1,15 @@
 import { Component, Input } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { JhiAlertService, JhiEventManager } from 'ng-jhipster';
-
+import { JhiEventManager } from 'ng-jhipster';
 import { TextExercise } from './text-exercise.model';
 import { TextExerciseService } from './text-exercise.service';
-import { CourseService } from 'app/entities/course/course.service';
-import { CourseExerciseService } from 'app/entities/course/course.service';
+import { CourseExerciseService, CourseService } from 'app/entities/course/course.service';
 import { ActivatedRoute } from '@angular/router';
 import { ExerciseComponent } from 'app/entities/exercise/exercise.component';
 import { TranslateService } from '@ngx-translate/core';
 import { onError } from 'app/utils/global.utils';
 import { AccountService } from 'app/core/auth/account.service';
+import { AlertService } from 'app/core/alert/alert.service';
 
 @Component({
     selector: 'jhi-text-exercise',
@@ -24,7 +23,7 @@ export class TextExerciseComponent extends ExerciseComponent {
         private courseExerciseService: CourseExerciseService,
         courseService: CourseService,
         translateService: TranslateService,
-        private jhiAlertService: JhiAlertService,
+        private jhiAlertService: AlertService,
         eventManager: JhiEventManager,
         route: ActivatedRoute,
         private accountService: AccountService,

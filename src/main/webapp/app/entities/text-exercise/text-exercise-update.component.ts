@@ -1,22 +1,21 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-
 import { Observable } from 'rxjs/Observable';
-import { JhiAlertService, JhiEventManager } from 'ng-jhipster';
-
+import { JhiEventManager } from 'ng-jhipster';
 import { TextExercise } from './text-exercise.model';
 import { TextExerciseService } from './text-exercise.service';
-import { Course } from '../course';
 import { CourseService } from 'app/entities/course/course.service';
-
-import { ExerciseCategory, ExerciseService } from 'app/entities/exercise';
 import { ExampleSubmissionService } from 'app/entities/example-submission/example-submission.service';
-import { KatexCommand } from 'app/markdown-editor/commands';
-import { EditorMode } from 'app/markdown-editor';
 import { MAX_SCORE_PATTERN } from 'app/app.constants';
-import { AssessmentType } from 'app/entities/assessment-type';
 import { WindowRef } from 'app/core/websocket/window.service';
+import { ExerciseService } from 'app/entities/exercise/exercise.service';
+import { AssessmentType } from 'app/entities/assessment-type/assessment-type.model';
+import { ExerciseCategory } from 'app/entities/exercise/exercise.model';
+import { EditorMode } from 'app/markdown-editor/markdown-editor.component';
+import { Course } from 'app/entities/course/course.model';
+import { KatexCommand } from 'app/markdown-editor/commands/katex.command';
+import { AlertService } from 'app/core/alert/alert.service';
 
 @Component({
     selector: 'jhi-text-exercise-update',
@@ -34,14 +33,12 @@ export class TextExerciseUpdateComponent implements OnInit {
     existingCategories: ExerciseCategory[];
     notificationText: string | null;
 
-    courses: Course[];
-
     domainCommandsProblemStatement = [new KatexCommand()];
     domainCommandsSampleSolution = [new KatexCommand()];
     domainCommandsGradingInstructions = [new KatexCommand()];
 
     constructor(
-        private jhiAlertService: JhiAlertService,
+        private jhiAlertService: AlertService,
         private textExerciseService: TextExerciseService,
         private exerciseService: ExerciseService,
         private courseService: CourseService,
@@ -73,12 +70,6 @@ export class TextExerciseUpdateComponent implements OnInit {
 
         this.isSaving = false;
         this.notificationText = null;
-        this.courseService.query().subscribe(
-            (res: HttpResponse<Course[]>) => {
-                this.courses = res.body!;
-            },
-            (res: HttpErrorResponse) => this.onError(res),
-        );
     }
 
     /**
@@ -157,14 +148,5 @@ export class TextExerciseUpdateComponent implements OnInit {
 
     private onError(error: HttpErrorResponse) {
         this.jhiAlertService.error(error.message);
-    }
-
-    /**
-     * Returns the unique identifier for items in the collection
-     * @param index of a course in the collection
-     * @param item current course
-     */
-    trackCourseById(index: number, item: Course) {
-        return item.id;
     }
 }

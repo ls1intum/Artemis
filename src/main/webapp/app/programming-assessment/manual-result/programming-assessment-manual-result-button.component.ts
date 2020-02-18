@@ -1,14 +1,15 @@
 import { Component, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleChanges } from '@angular/core';
-import { ButtonSize, ButtonType } from 'app/shared/components';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { ProgrammingAssessmentManualResultDialogComponent } from 'app/programming-assessment/manual-result/programming-assessment-manual-result-dialog.component';
-import { Result } from 'app/entities/result';
-import { AssessmentType } from 'app/entities/assessment-type';
+import { Result } from 'app/entities/result/result.model';
 import { Subscription } from 'rxjs';
 import { ParticipationWebsocketService } from 'app/entities/participation/participation-websocket.service';
 import { filter } from 'rxjs/operators';
 import { cloneDeep } from 'lodash';
-import { ProgrammingExercise } from 'app/entities/programming-exercise';
+import { User } from 'app/core/user/user.model';
+import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
+import { AssessmentType } from 'app/entities/assessment-type/assessment-type.model';
+import { ProgrammingExercise } from 'app/entities/programming-exercise/programming-exercise.model';
 
 @Component({
     selector: 'jhi-programming-assessment-manual-result',
@@ -53,7 +54,18 @@ export class ProgrammingAssessmentManualResultButtonComponent implements OnChang
             this.latestResultSubscription = this.participationWebsocketService
                 .subscribeForLatestResultOfParticipation(this.participationId)
                 .pipe(filter((result: Result) => result && result.assessmentType === AssessmentType.MANUAL))
-                .subscribe(manualResult => (this.latestResult = manualResult));
+                .subscribe(manualResult => {
+                    let assessor: User | null = null;
+                    // TODO: workaround to fix an issue when the assessor gets lost due to the websocket update
+                    // we should properly fix this in the future and make sure the assessor is not cut off in the first place
+                    if (this.latestResult && this.latestResult.assessor && this.latestResult.id === manualResult.id) {
+                        assessor = this.latestResult.assessor;
+                    }
+                    this.latestResult = manualResult;
+                    if (assessor && !this.latestResult.assessor) {
+                        this.latestResult.assessor = assessor;
+                    }
+                });
         }
     }
 
