@@ -509,7 +509,7 @@ public abstract class Exercise implements Serializable {
         return ZonedDateTime.now().isAfter(getDueDate());
     }
 
-    public Boolean isTeamMode() {
+    public boolean isTeamMode() {
         return mode == ExerciseMode.TEAM;
     }
 

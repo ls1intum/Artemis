@@ -35,7 +35,7 @@ export class TeamService implements ITeamService {
     }
 
     update(exercise: Exercise, team: Team): Observable<TeamResponse> {
-        return this.http.put<Team>(TeamService.resourceUrl(exercise.id), team, { observe: 'response' });
+        return this.http.put<Team>(`${TeamService.resourceUrl(exercise.id)}/${team.id}`, team, { observe: 'response' });
     }
 
     find(exercise: Exercise, teamId: number): Observable<TeamResponse> {

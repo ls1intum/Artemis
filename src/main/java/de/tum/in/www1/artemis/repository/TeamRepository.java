@@ -13,7 +13,6 @@ import de.tum.in.www1.artemis.domain.Team;
 /**
  * Spring Data repository for the Team entity.
  */
-@SuppressWarnings("unused")
 @Repository
 public interface TeamRepository extends JpaRepository<Team, Long> {
 

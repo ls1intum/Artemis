@@ -73,7 +73,7 @@ public class TeamResource {
      */
     @PostMapping("/exercises/{exerciseId}/teams")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Team> createTeam(@RequestBody Team team, @PathVariable Long exerciseId) throws URISyntaxException {
+    public ResponseEntity<Team> createTeam(@RequestBody Team team, @PathVariable long exerciseId) throws URISyntaxException {
         log.debug("REST request to save Team : {}", team);
         if (team.getId() != null) {
             throw new BadRequestAlertException("A new team cannot already have an ID", ENTITY_NAME, "idexists");
@@ -92,17 +92,18 @@ public class TeamResource {
     }
 
     /**
-     * PUT /exercises/:exerciseId/teams : Updates an existing team.
+     * PUT /exercises/:exerciseId/teams/:id : Updates an existing team.
      *
      * @param team       the team to update
      * @param exerciseId the id of the exercise that the team belongs to
+     * @param id the id of the team which to update
      * @return the ResponseEntity with status 200 (OK) and with body the updated team, or with status 400 (Bad Request) if the team is not valid, or with status 500 (Internal
      * Server Error) if the team couldn't be updated
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
-    @PutMapping("/exercises/{exerciseId}/teams")
+    @PutMapping("/exercises/{exerciseId}/teams/{id}")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Team> updateTeam(@RequestBody Team team, @PathVariable Long exerciseId) throws URISyntaxException {
+    public ResponseEntity<Team> updateTeam(@RequestBody Team team, @PathVariable long exerciseId, @PathVariable long id) throws URISyntaxException {
         log.debug("REST request to update Team : {}", team);
         if (team.getId() == null) {
             throw new BadRequestAlertException("Invalid id", ENTITY_NAME, "idnull");
@@ -110,7 +111,10 @@ public class TeamResource {
         if (!team.getExercise().getId().equals(exerciseId)) {
             throw new BadRequestAlertException("The team does not belong to the specified exercise id.", ENTITY_NAME, "wrongExerciseId");
         }
-        Optional<Team> existingTeam = teamRepository.findById(team.getId());
+        if (!team.getId().equals(id)) {
+            throw new BadRequestAlertException("The team has an incorrect id.", ENTITY_NAME, "wrongId");
+        }
+        Optional<Team> existingTeam = teamRepository.findById(id);
         if (existingTeam.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
@@ -132,7 +136,7 @@ public class TeamResource {
      */
     @GetMapping("/exercises/{exerciseId}/teams/{id}")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Team> getTeam(@PathVariable Long id, @PathVariable Long exerciseId) {
+    public ResponseEntity<Team> getTeam(@PathVariable long exerciseId, @PathVariable long id) {
         log.debug("REST request to get Team : {}", id);
         Optional<Team> optionalTeam = teamRepository.findOneWithEagerStudents(id);
         if (optionalTeam.isEmpty()) {
@@ -158,7 +162,7 @@ public class TeamResource {
      */
     @GetMapping("/exercises/{exerciseId}/teams")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Set<Team>> getTeamsForExercise(@PathVariable Long exerciseId) {
+    public ResponseEntity<Set<Team>> getTeamsForExercise(@PathVariable long exerciseId) {
         log.debug("REST request to get all Teams for the exercise with id : {}", exerciseId);
         User user = userService.getUserWithGroupsAndAuthorities();
         Exercise exercise = exerciseService.findOne(exerciseId);
@@ -177,7 +181,7 @@ public class TeamResource {
      */
     @DeleteMapping("/exercises/{exerciseId}/teams/{id}")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Void> deleteTeam(@PathVariable Long id, @PathVariable Long exerciseId) {
+    public ResponseEntity<Void> deleteTeam(@PathVariable long exerciseId, @PathVariable long id) {
         log.debug("REST request to delete Team : {}", id);
         // TODO: Martin Wauligmann - Add audit in db and log info (see delete participation)
         User user = userService.getUserWithGroupsAndAuthorities();
@@ -194,7 +198,7 @@ public class TeamResource {
             return forbidden();
         }
         teamRepository.delete(team);
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, id.toString())).build();
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, Long.toString(id))).build();
     }
 
     /**
@@ -220,7 +224,7 @@ public class TeamResource {
      */
     @GetMapping("/courses/{courseId}/exercises/{exerciseId}/team-search-users")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<List<TeamSearchUserDTO>> searchUsersInCourse(@PathVariable Long courseId, @PathVariable Long exerciseId,
+    public ResponseEntity<List<TeamSearchUserDTO>> searchUsersInCourse(@PathVariable long courseId, @PathVariable long exerciseId,
             @RequestParam("loginOrName") String loginOrName) {
         log.debug("REST request to search Users for {} in course with id : {}", loginOrName, courseId);
         // restrict result size by only allowing reasonable searches
