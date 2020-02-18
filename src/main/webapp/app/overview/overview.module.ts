@@ -8,7 +8,7 @@ import { ArtemisProgrammingExerciseModule } from 'app/entities/programming-exerc
 import { ArtemisSidePanelModule } from 'app/components/side-panel/side-panel.module';
 import { CourseLectureRowComponent } from 'app/overview/course-lectures/course-lecture-row.component';
 import { ArtemisCourseRegistrationSelector } from 'app/components/course-registration-selector/course-registration-selector.module';
-import { IntellijModule } from 'app/intellij/intellij.module';
+import { OrionModule } from 'app/orion/orion.module';
 import { FeatureToggleModule } from 'app/feature-toggle/feature-toggle.module';
 import { ProgrammingExerciseUtilsModule } from 'app/entities/programming-exercise/utils/programming-exercise-utils.module';
 import { ProgrammingExerciseStudentIdeActionsComponent } from 'app/overview/exercise-details/programming-exercise-student-ide-actions.component';
@@ -44,7 +44,7 @@ const ENTITY_STATES = [...OVERVIEW_ROUTES];
         RouterModule.forChild(ENTITY_STATES),
         ArtemisHeaderExercisePageWithDetailsModule,
         ArtemisCourseRegistrationSelector,
-        IntellijModule,
+        OrionModule,
         ArtemisComplaintsModule,
         FeatureToggleModule,
         ProgrammingExerciseUtilsModule,

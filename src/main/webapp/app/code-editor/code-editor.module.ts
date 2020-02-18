@@ -27,8 +27,8 @@ import { CodeEditorFileBrowserComponent } from 'app/code-editor/file-browser/cod
 import { CodeEditorStatusComponent } from 'app/code-editor/status/code-editor-status.component';
 import { ArtemisProgrammingExerciseActionsModule } from 'app/entities/programming-exercise/actions/programming-exercise-actions.module';
 import { FeatureToggleModule } from 'app/feature-toggle/feature-toggle.module';
-import { CodeEditorInstructorIntellijContainerComponent } from 'app/code-editor/instructor/code-editor-instructor-intellij-container.component';
-import { IntellijModule } from 'app/intellij/intellij.module';
+import { CodeEditorInstructorOrionContainerComponent } from 'app/code-editor/instructor/code-editor-instructor-orion-container.component';
+import { OrionModule } from 'app/orion/orion.module';
 import { CodeEditorInstructorContainerComponent } from 'app/code-editor/instructor/code-editor-instructor-container.component';
 
 const ENTITY_STATES = [...codeEditorRoute];
@@ -46,7 +46,7 @@ const ENTITY_STATES = [...codeEditorRoute];
         TreeviewModule.forRoot(),
         ArtemisExerciseHintModule,
         FeatureToggleModule,
-        IntellijModule,
+        OrionModule,
     ],
     declarations: [
         CodeEditorGridComponent,
@@ -64,11 +64,11 @@ const ENTITY_STATES = [...codeEditorRoute];
         CodeEditorStatusComponent,
         CodeEditorActionsComponent,
         CodeEditorResolveConflictModalComponent,
-        CodeEditorInstructorIntellijContainerComponent,
+        CodeEditorInstructorOrionContainerComponent,
     ],
     exports: [CodeEditorInstructorContainerComponent, CodeEditorStudentContainerComponent],
     entryComponents: [
-        CodeEditorInstructorIntellijContainerComponent,
+        CodeEditorInstructorOrionContainerComponent,
         CodeEditorInstructorContainerComponent,
         CodeEditorStudentContainerComponent,
         CodeEditorFileBrowserDeleteComponent,

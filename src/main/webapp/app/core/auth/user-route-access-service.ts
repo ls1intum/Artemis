@@ -3,10 +3,19 @@ import { ActivatedRouteSnapshot, CanActivate, Router, RouterStateSnapshot } from
 import { LocalStorageService } from 'ngx-webstorage';
 import { AccountService } from 'app/core/auth/account.service';
 import { StateStorageService } from 'app/core/auth/state-storage.service';
+import { filter, first, switchMap } from 'rxjs/operators';
+import { OrionVersionValidator } from 'app/orion/outdated-plugin-warning/orion-version-validator.service';
+import { from, of } from 'rxjs';
 
 @Injectable({ providedIn: 'root' })
 export class UserRouteAccessService implements CanActivate {
-    constructor(private router: Router, private accountService: AccountService, private stateStorageService: StateStorageService, private localStorage: LocalStorageService) {}
+    constructor(
+        private router: Router,
+        private accountService: AccountService,
+        private stateStorageService: StateStorageService,
+        private localStorage: LocalStorageService,
+        private orionVersionValidator: OrionVersionValidator,
+    ) {}
 
     canActivate(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): boolean | Promise<boolean> {
         // save the jwt token from get parameter for lti launch requests for online course users
@@ -21,6 +30,20 @@ export class UserRouteAccessService implements CanActivate {
         // that the client has an account too, if they already logged in by the server.
         // This could happen on a page refresh.
         return this.checkLogin(authorities, state.url);
+        // TODO return the following as soon as Orion v1.0.0 is released and the API is stable.
+        // return this.orionVersionValidator
+        //     .validateOrionVersion()
+        //     .pipe(
+        //         filter(Boolean),
+        //         first(),
+        //         switchMap(isValidOrNoIDE => {
+        //             if (isValidOrNoIDE) {
+        //                 return from(this.checkLogin(authorities, state.url));
+        //             }
+        //             return of(false);
+        //         }),
+        //     )
+        //     .toPromise();
     }
 
     checkLogin(authorities: string[], url: string): Promise<boolean> {

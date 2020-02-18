@@ -13,7 +13,7 @@ import { OwlDateTimeModule } from 'ng-pick-datetime';
 import { ProgrammingExercisePlansAndRepositoriesPreviewComponent } from 'app/entities/programming-exercise/programming-exercise-plans-and-repositories-preview.component';
 import { FeatureToggleModule } from 'app/feature-toggle/feature-toggle.module';
 import { ArtemisProgrammingAssessmentModule } from 'app/programming-assessment/programming-assessment.module';
-import { IntellijModule } from 'app/intellij/intellij.module';
+import { OrionModule } from 'app/orion/orion.module';
 import { ProgrammingExerciseComponent } from 'app/entities/programming-exercise/programming-exercise.component';
 import { ProgrammingExerciseUpdateComponent } from 'app/entities/programming-exercise/programming-exercise-update.component';
 import { ProgrammingExerciseDetailComponent } from 'app/entities/programming-exercise/programming-exercise-detail.component';
@@ -55,7 +55,7 @@ const ENTITY_STATES = [...programmingExerciseRoute];
         ArtemisComplaintsModule,
         FeatureToggleModule,
         ArtemisProgrammingAssessmentModule,
-        IntellijModule,
+        OrionModule,
         ProgrammingExerciseUtilsModule,
         ArtemisAssessmentSharedModule,
     ],

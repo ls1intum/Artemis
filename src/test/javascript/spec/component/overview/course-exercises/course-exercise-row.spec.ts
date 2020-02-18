@@ -2,14 +2,14 @@ import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { DebugElement } from '@angular/core';
-import { JavaBridgeService } from 'app/intellij/java-bridge.service';
+import { OrionConnectorService } from 'app/orion/orion-connector.service';
 import { CourseExerciseService, CourseService } from 'app/entities/course/course.service';
 import { SinonStub, stub } from 'sinon';
 import { ParticipationWebsocketService } from 'app/entities/participation/participation-websocket.service';
 import { ArtemisTestModule } from '../../../test.module';
 import { TranslateModule } from '@ngx-translate/core';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
-import { MockJavaBridgeService } from '../../../mocks/mock-java-bridge.service';
+import { MockOrionConnectorService } from '../../../mocks/mock-orion-connector.service';
 import { MockCourseExerciseService } from '../../../mocks/mock-course-exercise.service';
 import { AlertService } from 'app/core/alert/alert.service';
 import { MockAlertService } from '../../../helpers/mock-alert.service';
@@ -47,7 +47,7 @@ describe('CourseExerciseRowComponent', () => {
                 { provide: CourseService, useClass: MockCourseService },
                 { provide: CourseExerciseService, useClass: MockCourseExerciseService },
                 { provide: AccountService, useClass: MockAccountService },
-                { provide: JavaBridgeService, useClass: MockJavaBridgeService },
+                { provide: OrionConnectorService, useClass: MockOrionConnectorService },
                 { provide: AlertService, useClass: MockAlertService },
             ],
         })

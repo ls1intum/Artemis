@@ -38,6 +38,7 @@
         "blob-util": "2.0.2",
         "bootstrap": "4.4.1",
         "chart.js": "2.9.3",
+        "compare-versions": "3.5.1",
         "core-js": "3.6.4",
         "dompurify": "2.0.8",
         "export-to-csv": "0.2.1",
