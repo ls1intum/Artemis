@@ -57,6 +57,8 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationTest 
 
     private TextExercise textExercise;
 
+    private ProgrammingExercise programmingExercise;
+
     @BeforeEach
     public void initTestCase() {
         database.addUsers(2, 2, 2);
@@ -71,6 +73,11 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationTest 
         }
         modelingExercise.setTitle("UML Class Diagram");
         exerciseRepo.save(modelingExercise);
+
+        programmingExercise = ModelFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(1), course);
+        programmingExercise = exerciseRepo.save(programmingExercise);
+        course.addExercises(programmingExercise);
+        course = courseRepo.save(course);
     }
 
     @AfterEach
@@ -128,6 +135,13 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationTest 
         textExercise.setReleaseDate(ZonedDateTime.now().plusHours(2));
         exerciseRepo.save(textExercise);
         request.post("/api/courses/" + course.getId() + "/exercises/" + textExercise.getId() + "/participations", null, HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = "student1")
+    public void participateInProgrammingExercise_featureDisabled() throws Exception {
+        Feature.PROGRAMMING_EXERCISES.disable();
+        request.post("/api/courses/" + course.getId() + "/exercises/" + programmingExercise.getId() + "/participations", null, HttpStatus.FORBIDDEN);
     }
 
     @Test
