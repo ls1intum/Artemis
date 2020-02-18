@@ -5,14 +5,13 @@ import static org.mockito.Mockito.verify;
 
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 import java.util.HashMap;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.actuate.audit.AuditEvent;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
@@ -50,6 +49,13 @@ public class ManagementResourceIntegrationTest extends AbstractSpringIntegration
         data.put("1", "2");
         persAuditEvent.setData(data);
         persAuditEvent = persistenceAuditEventRepository.save(persAuditEvent);
+
+        var persAuditEvent2 = new PersistentAuditEvent();
+        persAuditEvent2.setPrincipal("student2");
+        persAuditEvent2.setAuditEventDate(Instant.now().minus(5, ChronoUnit.DAYS));
+        persAuditEvent2.setAuditEventType("tt");
+        persAuditEvent2.setData(data);
+        persistenceAuditEventRepository.save(persAuditEvent2);
     }
 
     @AfterEach
@@ -64,30 +70,29 @@ public class ManagementResourceIntegrationTest extends AbstractSpringIntegration
         features.put(Feature.PROGRAMMING_EXERCISES, false);
         request.put("/api/management/feature-toggle", features, HttpStatus.OK);
         verify(this.websocketMessagingService).sendMessage("/topic/management/feature-toggles", Feature.enabledFeatures());
+        assertThat(Feature.PROGRAMMING_EXERCISES.isEnabled()).isFalse();
     }
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     public void getAllAuditEvents() throws Exception {
-        var auditEvents = request.getList("/management/audits", HttpStatus.OK, AuditEvent.class);
-        var expectedAuditEvents = auditEventService.findAll(PageRequest.of(0, 20));
-        assertThat(auditEvents).isEqualTo(expectedAuditEvents);
+        var auditEvents = request.getList("/management/audits", HttpStatus.OK, PersistentAuditEvent.class);
+        assertThat(auditEvents.size()).isEqualTo(2);
     }
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     public void getAllAuditEventsByDate() throws Exception {
-        LocalDate date = LocalDate.now();
-        var auditEvents = request.getList("/management/audits?fromDate=2020-01-20&toDate=" + date.toString(), HttpStatus.OK, AuditEvent.class);
-        var expectedAuditEvents = auditEventService.findAll(PageRequest.of(0, 20));
-        assertThat(auditEvents).isEqualTo(expectedAuditEvents);
+        String pastDate = LocalDate.now().minusDays(2).toString();
+        String currentDate = LocalDate.now().toString();
+        var auditEvents = request.getList("/management/audits?fromDate=" + pastDate + "&toDate=" + currentDate, HttpStatus.OK, PersistentAuditEvent.class);
+        assertThat(auditEvents.size()).isEqualTo(1);
     }
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     public void getAuditEvent() throws Exception {
-        var auditEvent = request.get("/management/audits/" + persAuditEvent.getId(), HttpStatus.OK, AuditEvent.class);
-        var expectedAuditEvent = auditEventService.find(persAuditEvent.getId());
-        assertThat(auditEvent).isEqualTo(expectedAuditEvent);
+        var auditEvent = request.get("/management/audits/" + persAuditEvent.getId(), HttpStatus.OK, PersistentAuditEvent.class);
+        assertThat(auditEvent).isNotNull();
     }
 }
