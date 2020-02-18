@@ -40,8 +40,16 @@ export class TeamUpdateDialogComponent implements OnInit {
     constructor(private participationService: ParticipationService, private teamService: TeamService, private activeModal: NgbActiveModal, private datePipe: DatePipe) {}
 
     ngOnInit(): void {
-        this.pendingTeam = cloneDeep(this.team);
+        this.initPendingTeam();
         this.shortNameValidation(this.shortNameValidator);
+    }
+
+    private initPendingTeam() {
+        this.pendingTeam = cloneDeep(this.team);
+
+        if (!this.pendingTeam.students) {
+            this.pendingTeam.students = [];
+        }
     }
 
     onTeamShortNameChanged(shortName: string) {
@@ -82,7 +90,7 @@ export class TeamUpdateDialogComponent implements OnInit {
     }
 
     private get recommendedTeamSize(): boolean {
-        const pendingTeamSize = this.pendingTeam.students.length;
+        const pendingTeamSize = (this.pendingTeam.students || []).length;
         return pendingTeamSize >= this.config.minTeamSize && pendingTeamSize <= this.config.maxTeamSize;
     }
 
@@ -104,9 +112,6 @@ export class TeamUpdateDialogComponent implements OnInit {
     }
 
     onAddStudent(student: User) {
-        if (!this.pendingTeam.students) {
-            this.pendingTeam.students = [];
-        }
         if (!this.isStudentAlreadyInPendingTeam(student)) {
             this.pendingTeam.students.push(student);
         }
