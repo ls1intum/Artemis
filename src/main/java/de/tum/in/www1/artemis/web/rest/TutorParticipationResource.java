@@ -132,7 +132,7 @@ public class TutorParticipationResource {
             throw new AccessForbiddenException("You are not allowed to access this resource");
         }
         if (!guidedTourConfiguration.isExerciseForTutorial(exercise)) {
-            throw new AccessForbiddenException("This exercise is not part of a tutorial");
+            throw new AccessForbiddenException("This exercise is not part of a tutorial. Current tutorials: " + guidedTourConfiguration.getTours());
         }
 
         tutorParticipationService.removeTutorParticipations(exercise, user);
