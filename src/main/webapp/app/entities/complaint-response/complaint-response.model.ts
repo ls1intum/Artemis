@@ -1,7 +1,7 @@
 import { Moment } from 'moment';
-import { Complaint } from '../complaint';
 import { User } from 'app/core/user/user.model';
-import { BaseEntity } from 'app/shared';
+import { BaseEntity } from 'app/shared/model/base-entity';
+import { Complaint } from 'app/entities/complaint/complaint.model';
 
 export class ComplaintResponse implements BaseEntity {
     public id: number;

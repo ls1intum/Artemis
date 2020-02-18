@@ -1,8 +1,7 @@
 import { AfterViewInit, Component, ElementRef, HostListener, OnDestroy, ViewChild, ViewEncapsulation } from '@angular/core';
 import { fromEvent, Subscription } from 'rxjs';
 import { take } from 'rxjs/internal/operators';
-
-import { Orientation, OverlayPosition, UserInteractionEvent, Direction } from './guided-tour.constants';
+import { Direction, Orientation, OverlayPosition, UserInteractionEvent } from './guided-tour.constants';
 import { GuidedTourService } from './guided-tour.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { ImageTourStep, TextTourStep, VideoTourStep } from 'app/guided-tour/guided-tour-step.model';

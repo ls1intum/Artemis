@@ -1,8 +1,9 @@
 import { AfterViewInit, Component, ElementRef, ViewChild } from '@angular/core';
 import { Router } from '@angular/router';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { JhiAlertService } from 'ng-jhipster';
-import { ApollonDiagram, ApollonDiagramService } from 'app/entities/apollon-diagram';
+import { AlertService } from 'app/core/alert/alert.service';
+import { ApollonDiagramService } from 'app/entities/apollon-diagram/apollon-diagram.service';
+import { ApollonDiagram } from 'app/entities/apollon-diagram/apollon-diagram.model';
 
 @Component({
     selector: 'jhi-apollon-diagram-create-form',
@@ -14,7 +15,7 @@ export class ApollonDiagramCreateFormComponent implements AfterViewInit {
     isSaving: boolean;
     @ViewChild('titleInput', { static: false }) titleInput: ElementRef;
 
-    constructor(private activeModal: NgbActiveModal, private apollonDiagramService: ApollonDiagramService, private router: Router, private jhiAlertService: JhiAlertService) {}
+    constructor(private activeModal: NgbActiveModal, private apollonDiagramService: ApollonDiagramService, private router: Router, private jhiAlertService: AlertService) {}
 
     /**
      * Adds focus on the title input field

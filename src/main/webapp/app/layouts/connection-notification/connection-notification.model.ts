@@ -1,5 +1,5 @@
 import { Moment } from 'moment';
-import { Notification, NotificationType } from 'app/entities/notification';
+import { Notification, NotificationType } from 'app/entities/notification/notification.model';
 
 export const enum ConnectionNotificationType {
     DISCONNECTED = 'DISCONNECTED',

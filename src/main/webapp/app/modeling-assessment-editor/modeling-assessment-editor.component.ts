@@ -1,24 +1,27 @@
 import { Component, OnInit } from '@angular/core';
 import { Location } from '@angular/common';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/alert/alert.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { UMLDiagramType, UMLModel } from '@ls1intum/apollon';
 import { ActivatedRoute, Router } from '@angular/router';
-import { ModelingSubmission, ModelingSubmissionService } from '../entities/modeling-submission';
-import { ModelingExercise, ModelingExerciseService } from '../entities/modeling-exercise';
-import { Result, ResultService } from '../entities/result';
 import { AccountService } from 'app/core/auth/account.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Conflict, ConflictingResult } from 'app/modeling-assessment-editor/conflict.model';
-import { Feedback, FeedbackHighlightColor, FeedbackType } from 'app/entities/feedback';
-import { ComplaintResponse } from 'app/entities/complaint-response';
 import { TranslateService } from '@ngx-translate/core';
 import * as moment from 'moment';
-import { ModelingAssessmentService } from 'app/entities/modeling-assessment';
-import { StudentParticipation } from 'app/entities/participation';
-import { Complaint, ComplaintType } from 'app/entities/complaint';
 import { ComplaintService } from 'app/entities/complaint/complaint.service';
 import { filter } from 'rxjs/operators';
+import { ComplaintResponse } from 'app/entities/complaint-response/complaint-response.model';
+import { ModelingSubmission } from 'app/entities/modeling-submission/modeling-submission.model';
+import { ResultService } from 'app/entities/result/result.service';
+import { ModelingExercise } from 'app/entities/modeling-exercise/modeling-exercise.model';
+import { ModelingExerciseService } from 'app/entities/modeling-exercise/modeling-exercise.service';
+import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { Result } from 'app/entities/result/result.model';
+import { ModelingSubmissionService } from 'app/entities/modeling-submission/modeling-submission.service';
+import { Feedback, FeedbackHighlightColor, FeedbackType } from 'app/entities/feedback/feedback.model';
+import { Complaint, ComplaintType } from 'app/entities/complaint/complaint.model';
+import { ModelingAssessmentService } from 'app/entities/modeling-assessment/modeling-assessment.service';
 
 @Component({
     selector: 'jhi-modeling-assessment-editor',
@@ -51,7 +54,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     private cancelConfirmationText: string;
 
     constructor(
-        private jhiAlertService: JhiAlertService,
+        private jhiAlertService: AlertService,
         private modalService: NgbModal,
         private router: Router,
         private route: ActivatedRoute,

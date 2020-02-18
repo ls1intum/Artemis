@@ -1,5 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/alert/alert.service';
 
 /**
  * Prepares a string for insertion into a regex.
@@ -96,6 +96,6 @@ export const buildUrlWithParams = (url: string, params: string[]): string => {
  * @param jhiAlertService the service used to show the exception messages to the user
  * @param error returned from the request
  */
-export const onError = (jhiAlertService: JhiAlertService, error: HttpErrorResponse) => {
+export const onError = (jhiAlertService: AlertService, error: HttpErrorResponse) => {
     jhiAlertService.error(error.message);
 };

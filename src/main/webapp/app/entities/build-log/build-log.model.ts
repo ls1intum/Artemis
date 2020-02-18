@@ -1,5 +1,5 @@
-import { safeUnescape } from 'app/shared';
-import { AnnotationArray } from '../ace-editor';
+import { AnnotationArray } from 'app/entities/ace-editor/annotation.model';
+import { safeUnescape } from 'app/shared/util/security-util';
 
 export enum BuildLogType {
     ERROR = 'ERROR',

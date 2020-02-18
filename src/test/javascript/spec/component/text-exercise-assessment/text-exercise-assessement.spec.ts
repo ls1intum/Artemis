@@ -7,32 +7,33 @@ import * as sinonChai from 'sinon-chai';
 import * as moment from 'moment';
 import { SinonStub, stub } from 'sinon';
 import { ArtemisTestModule } from '../../test.module';
-import { MockSyncStorage } from '../../mocks';
-import { ResultComponent } from 'app/entities/result';
+import { MockSyncStorage } from '../../mocks/mock-sync.storage';
 import { MockComponent } from 'ng-mocks';
-import { ArtemisSharedModule } from 'app/shared';
-import { ExerciseType } from 'app/entities/exercise';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { MockAlertService } from '../../helpers/mock-alert.service';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/alert/alert.service';
 import { Router } from '@angular/router';
 import { of } from 'rxjs';
 import { TextAssessmentComponent } from 'app/text-assessment/text-assessment.component';
-import { TextSubmission, TextSubmissionService } from 'app/entities/text-submission';
-import { TextExercise } from 'app/entities/text-exercise';
 import { TextAssessmentEditorComponent } from 'app/text-assessment/text-assessment-editor/text-assessment-editor.component';
 import { ResizableInstructionsComponent } from 'app/text-assessment/resizable-instructions/resizable-instructions.component';
 import { AssessmentDetailComponent } from 'app/assessment-shared/assessment-detail/assessment-detail.component';
-import { ComplaintsForTutorComponent } from 'app/complaints-for-tutor';
 import { DebugElement } from '@angular/core';
 import { By } from '@angular/platform-browser';
 import { MockAccountService } from '../../mocks/mock-account.service';
 import { Location } from '@angular/common';
 import { textAssessmentRoutes } from 'app/text-assessment/text-assessment.route';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { SubmissionExerciseType, SubmissionType } from 'app/entities/submission';
 import { ComplaintService } from 'app/entities/complaint/complaint.service';
 import { MockComplaintService } from '../../mocks/mock-complaint.service';
 import { TranslateModule } from '@ngx-translate/core';
+import { TextSubmissionService } from 'app/entities/text-submission/text-submission.service';
+import { ComplaintsForTutorComponent } from 'app/complaints-for-tutor/complaints-for-tutor.component';
+import { ResultComponent } from 'app/entities/result/result.component';
+import { SubmissionExerciseType, SubmissionType } from 'app/entities/submission/submission.model';
+import { TextExercise } from 'app/entities/text-exercise/text-exercise.model';
+import { ExerciseType } from 'app/entities/exercise/exercise.model';
+import { TextSubmission } from 'app/entities/text-submission/text-submission.model';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -61,7 +62,7 @@ describe('TextAssessmentComponent', () => {
             ],
             providers: [
                 JhiLanguageHelper,
-                { provide: JhiAlertService, useClass: MockAlertService },
+                { provide: AlertService, useClass: MockAlertService },
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
@@ -77,7 +78,7 @@ describe('TextAssessmentComponent', () => {
                 debugElement = fixture.debugElement;
                 router = debugElement.injector.get(Router);
                 location = debugElement.injector.get(Location);
-                textSubmissionService = TestBed.get(TextSubmissionService);
+                textSubmissionService = TestBed.inject(TextSubmissionService);
                 getTextSubmissionForExerciseWithoutAssessmentStub = stub(textSubmissionService, 'getTextSubmissionForExerciseWithoutAssessment');
 
                 router.initialNavigation();

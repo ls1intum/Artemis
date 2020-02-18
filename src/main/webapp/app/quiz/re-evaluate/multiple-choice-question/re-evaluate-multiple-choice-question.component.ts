@@ -1,8 +1,8 @@
 import { AfterViewInit, Component, EventEmitter, Input, OnChanges, OnInit, Output, QueryList, SimpleChanges, ViewChild, ViewChildren } from '@angular/core';
-import { MultipleChoiceQuestion } from '../../../entities/multiple-choice-question';
-import { AnswerOption } from '../../../entities/answer-option';
-import { ArtemisMarkdown } from '../../../components/util/markdown.service';
 import { AceEditorComponent } from 'ng2-ace-editor';
+import { ArtemisMarkdown } from 'app/components/util/markdown.service';
+import { AnswerOption } from 'app/entities/answer-option/answer-option.model';
+import { MultipleChoiceQuestion } from 'app/entities/multiple-choice-question/multiple-choice-question.model';
 
 @Component({
     selector: 'jhi-re-evaluate-multiple-choice-question',

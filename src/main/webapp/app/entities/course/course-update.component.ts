@@ -2,7 +2,7 @@ import { ActivatedRoute } from '@angular/router';
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/alert/alert.service';
 import { Observable } from 'rxjs';
 import { ImageCroppedEvent } from 'ngx-image-cropper';
 import { base64StringToBlob } from 'blob-util';
@@ -14,7 +14,7 @@ import { CourseService } from './course.service';
 import { ColorSelectorComponent } from 'app/components/color-selector/color-selector.component';
 import { ARTEMIS_DEFAULT_COLOR } from 'app/app.constants';
 import { FileUploaderService } from 'app/shared/http/file-uploader.service';
-import { CachingStrategy } from 'app/shared';
+import { CachingStrategy } from 'app/shared/image/secured-image.component';
 
 @Component({
     selector: 'jhi-course-update',
@@ -44,7 +44,7 @@ export class CourseUpdateComponent implements OnInit {
         private courseService: CourseService,
         private activatedRoute: ActivatedRoute,
         private fileUploaderService: FileUploaderService,
-        private jhiAlertService: JhiAlertService,
+        private jhiAlertService: AlertService,
     ) {}
 
     ngOnInit() {

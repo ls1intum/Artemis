@@ -2,7 +2,6 @@ import { Injectable } from '@angular/core';
 import { Subject } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import * as showdown from 'showdown';
-import { Result } from 'app/entities/result';
 import { escapeStringForUseInRegex } from 'app/utils/global.utils';
 import {
     ProgrammingExerciseInstructionService,
@@ -11,6 +10,7 @@ import {
 import { ProgrammingExercisePlantUmlService } from 'app/entities/programming-exercise/instructions/instructions-render/service/programming-exercise-plant-uml.service';
 import { ArtemisShowdownExtensionWrapper } from 'app/markdown-editor/extensions/artemis-showdown-extension-wrapper';
 import * as DOMPurify from 'dompurify';
+import { Result } from 'app/entities/result/result.model';
 
 @Injectable()
 export class ProgrammingExercisePlantUmlExtensionWrapper implements ArtemisShowdownExtensionWrapper {

@@ -1,6 +1,5 @@
 import { Route } from '@angular/router';
-
-import { HomeComponent } from './';
+import { HomeComponent } from 'app/home/home.component';
 
 export const HOME_ROUTE: Route = {
     path: '',

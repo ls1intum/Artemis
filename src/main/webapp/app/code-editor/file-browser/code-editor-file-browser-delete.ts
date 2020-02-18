@@ -1,8 +1,8 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { CodeEditorRepositoryFileService } from 'app/code-editor/service';
-import { CodeEditorFileBrowserComponent } from 'app/code-editor/file-browser';
-import { DeleteFileChange, FileType } from 'app/entities/ace-editor/file-change.model';
+import { DeleteFileChange, FileType } from 'app/code-editor/model/code-editor.model';
+import { CodeEditorRepositoryFileService } from 'app/code-editor/service/code-editor-repository.service';
+import { IFileDeleteDelegate } from 'app/code-editor/file-browser/code-editor-file-browser-on-file-delete-delegate';
 
 // Modal -> Delete repository file
 @Component({
@@ -12,7 +12,7 @@ import { DeleteFileChange, FileType } from 'app/entities/ace-editor/file-change.
 })
 export class CodeEditorFileBrowserDeleteComponent implements OnInit {
     @Input() fileNameToDelete: string;
-    @Input() parent: CodeEditorFileBrowserComponent;
+    @Input() parent: IFileDeleteDelegate;
     @Input() fileType: FileType;
 
     isLoading: boolean;

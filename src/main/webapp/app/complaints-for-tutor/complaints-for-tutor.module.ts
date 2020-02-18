@@ -1,16 +1,16 @@
 import { NgModule } from '@angular/core';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/alert/alert.service';
 import { MomentModule } from 'ngx-moment';
 import { ClipboardModule } from 'ngx-clipboard';
-import { ArtemisSharedModule } from 'app/shared';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { ComplaintsForTutorComponent } from './complaints-for-tutor.component';
-import { ComplaintService } from 'app/entities/complaint';
-import { ComplaintResponseService } from 'app/entities/complaint-response';
+import { ComplaintResponseService } from 'app/entities/complaint-response/complaint-response.service';
+import { ComplaintService } from 'app/entities/complaint/complaint.service';
 
 @NgModule({
     imports: [ArtemisSharedModule, MomentModule, ClipboardModule],
     declarations: [ComplaintsForTutorComponent],
     exports: [ComplaintsForTutorComponent],
-    providers: [JhiAlertService, ComplaintService, ComplaintResponseService],
+    providers: [ComplaintService, ComplaintResponseService],
 })
 export class ArtemisComplaintsForTutorModule {}

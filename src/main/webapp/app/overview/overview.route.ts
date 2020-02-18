@@ -1,15 +1,12 @@
 import { Routes } from '@angular/router';
-
-import {
-    CourseExerciseDetailsComponent,
-    CourseExercisesComponent,
-    CourseLectureDetailsComponent,
-    CourseLecturesComponent,
-    CourseOverviewComponent,
-    CourseStatisticsComponent,
-    OverviewComponent,
-} from './';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
+import { CourseLectureDetailsComponent } from 'app/overview/course-lectures/course-lecture-details.component';
+import { CourseExercisesComponent } from 'app/overview/course-exercises/course-exercises.component';
+import { OverviewComponent } from 'app/overview/overview.component';
+import { CourseStatisticsComponent } from 'app/overview/course-statistics/course-statistics.component';
+import { CourseLecturesComponent } from 'app/overview/course-lectures/course-lectures.component';
+import { CourseOverviewComponent } from 'app/overview/course-overview.component';
+import { CourseExerciseDetailsComponent } from 'app/overview/exercise-details/course-exercise-details.component';
 
 export const OVERVIEW_ROUTES: Routes = [
     {

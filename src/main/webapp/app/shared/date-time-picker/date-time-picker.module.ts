@@ -2,10 +2,9 @@ import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { NgModule } from '@angular/core';
 import { OWL_DATE_TIME_FORMATS, OwlDateTimeModule, OwlNativeDateTimeModule } from 'ng-pick-datetime';
-
-import { DatePipeModule } from '../../components/pipes';
 import { FormDateTimePickerComponent } from './date-time-picker.component';
-import { ArtemisSharedModule } from 'app/shared';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
+import { DatePipeModule } from 'app/components/pipes/format-date.module';
 
 // It would be nice to use the moment adapter for ng-pick-datetime: https://danielykpan.github.io/date-time-picker/
 // However atm there is a compiler issue in angular 7 that conflicts with the compilation of this module: https://github.com/angular/angular/issues/23609

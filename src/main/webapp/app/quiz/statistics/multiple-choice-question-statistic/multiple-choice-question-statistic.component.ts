@@ -1,17 +1,18 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { SafeHtml } from '@angular/platform-browser';
-import { QuizExercise, QuizExerciseService } from '../../../entities/quiz-exercise';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
-import { QuizStatisticUtil } from '../../../components/util/quiz-statistic-util.service';
-import { ArtemisMarkdown } from '../../../components/util/markdown.service';
-import { MultipleChoiceQuestion } from '../../../entities/multiple-choice-question';
-import { MultipleChoiceQuestionStatistic } from '../../../entities/multiple-choice-question-statistic';
+import { QuizStatisticUtil } from 'app/components/util/quiz-statistic-util.service';
+import { ArtemisMarkdown } from 'app/components/util/markdown.service';
 import { ChartOptions } from 'chart.js';
 import { createOptions, DataSet, DataSetProvider } from '../quiz-statistic/quiz-statistic.component';
 import { Subscription } from 'rxjs/Subscription';
 import { AccountService } from 'app/core/auth/account.service';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { QuizExerciseService } from 'app/entities/quiz-exercise/quiz-exercise.service';
+import { MultipleChoiceQuestionStatistic } from 'app/entities/multiple-choice-question-statistic/multiple-choice-question-statistic.model';
+import { MultipleChoiceQuestion } from 'app/entities/multiple-choice-question/multiple-choice-question.model';
+import { QuizExercise } from 'app/entities/quiz-exercise/quiz-exercise.model';
 
 @Component({
     selector: 'jhi-multiple-choice-question-statistic',
