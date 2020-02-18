@@ -28,7 +28,7 @@ public class AttachmentResourceIntegrationTest extends AbstractSpringIntegration
     CourseRepository courseRepo;
 
     @Autowired
-    CustomAuditEventRepository auditEventRepo;
+    ExerciseRepository exerciseRepository;
 
     @Autowired
     AttachmentRepository attachmentRepository;
@@ -45,11 +45,14 @@ public class AttachmentResourceIntegrationTest extends AbstractSpringIntegration
 
     @BeforeEach
     public void initTestCase() {
-        database.addUsers(1, 1, 1);
+        database.addUsers(0, 1, 1);
 
         attachment = new Attachment().attachmentType(AttachmentType.FILE).link("files/temp/example.txt").name("example");
 
-        lecture = new Lecture().title("test").description("test");
+        var course = database.addCourseWithOneTextExercise();
+        lecture = new Lecture().title("test").description("test").course(course);
+        lecture = lectureRepository.save(lecture);
+        attachment.setLecture(lecture);
     }
 
     @AfterEach
@@ -77,10 +80,10 @@ public class AttachmentResourceIntegrationTest extends AbstractSpringIntegration
     public void updateAttachment() throws Exception {
         attachment = attachmentRepository.save(attachment);
         attachment.setName("new name");
-        var actualAttachment = request.putWithResponseBody("/api/attachments", attachment, Attachment.class, HttpStatus.CREATED);
+        var actualAttachment = request.putWithResponseBody("/api/attachments", attachment, Attachment.class, HttpStatus.OK);
         var expectedAttachment = attachmentRepository.findById(actualAttachment.getId()).get();
         assertThat(actualAttachment.getName()).isEqualTo("new name");
-        assertThat(actualAttachment).isEqualToIgnoringGivenFields(expectedAttachment, "name");
+        assertThat(actualAttachment).isEqualToIgnoringGivenFields(expectedAttachment, "name", "fileService", "prevLink");
     }
 
     @Test
@@ -102,11 +105,31 @@ public class AttachmentResourceIntegrationTest extends AbstractSpringIntegration
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
     public void getAttachmentsForLecture() throws Exception {
-        lecture = lectureRepository.save(lecture);
-        attachment.setLecture(lecture);
         attachment = attachmentRepository.save(attachment);
         var actualAttachments = request.getList("/api/lectures/" + lecture.getId() + "/attachments", HttpStatus.OK, Attachment.class);
         assertThat(actualAttachments.size()).isEqualTo(1);
         assertThat(actualAttachments.stream().findFirst().get()).isEqualTo(attachment);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void deleteAttachment() throws Exception {
+        attachment = attachmentRepository.save(attachment);
+        request.delete("/api/attachments/" + attachment.getId(), HttpStatus.OK);
+        assertThat(attachmentRepository.findById(attachment.getId())).isEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void deleteAttachment_noAttachment() throws Exception {
+        request.delete("/api/attachments/1", HttpStatus.NOT_FOUND);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void deleteAttachment_noCourse() throws Exception {
+        lecture.setCourse(null);
+        lectureRepository.save(lecture);
+        request.delete("/api/attachments/" + attachment.getId(), HttpStatus.BAD_REQUEST);
     }
 }
