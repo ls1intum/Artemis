@@ -42,17 +42,14 @@ public class TutorParticipationResource {
 
     private final UserService userService;
 
-    private final ExampleSubmissionRepository exampleSubmissionRepository;
-
     private final GuidedTourConfiguration guidedTourConfiguration;
 
     public TutorParticipationResource(TutorParticipationService tutorParticipationService, AuthorizationCheckService authorizationCheckService, ExerciseService exerciseService,
-            UserService userService, ExampleSubmissionRepository exampleSubmissionRepository, GuidedTourConfiguration guidedTourConfiguration) {
+            UserService userService, GuidedTourConfiguration guidedTourConfiguration) {
         this.tutorParticipationService = tutorParticipationService;
         this.exerciseService = exerciseService;
         this.authorizationCheckService = authorizationCheckService;
         this.userService = userService;
-        this.exampleSubmissionRepository = exampleSubmissionRepository;
         this.guidedTourConfiguration = guidedTourConfiguration;
     }
 
@@ -130,8 +127,8 @@ public class TutorParticipationResource {
         Exercise exercise = this.exerciseService.findOne(exerciseId);
         User user = userService.getUserWithGroupsAndAuthorities();
 
-        // Allow all users to delete their own StudentParticipations if it's for a tutorial
-        if (!authorizationCheckService.isAtLeastStudentForExercise(exercise, user) || !guidedTourConfiguration.isExerciseForTutorial(exercise)) {
+        // Allow all tutors to delete their own participation if it's for a tutorial
+        if (!authorizationCheckService.isAtLeastTeachingAssistantForExercise(exercise, user) || !guidedTourConfiguration.isExerciseForTutorial(exercise)) {
             return forbidden();
         }
 
