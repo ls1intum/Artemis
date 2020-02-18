@@ -42,7 +42,7 @@ public class GradingCriterionService {
      * @param exerciseId the id of exercise
      * @return the list of criteria belonging to exercise
      */
-    public List<GradingCriterion> findByExerciseIdWithEagerGradingCriteria(Long exerciseId) {
+    public List<GradingCriterion> findByExerciseIdWithEagerGradingCriteria(long exerciseId) {
         return gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(exerciseId);
     }
 
