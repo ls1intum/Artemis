@@ -196,6 +196,20 @@ public class ExerciseService {
     }
 
     /**
+     * Get one exercise by exerciseId with its criteria
+     *
+     * @param exerciseId the exerciseId of the entity
+     * @return the entity
+     */
+    public Exercise findOneWithCriteria(Long exerciseId) {
+        Optional<Exercise> exercise = exerciseRepository.findByIdWithEagerGradingCriteria(exerciseId);
+        if (exercise.isEmpty()) {
+            throw new EntityNotFoundException("Exercise with exerciseId " + exerciseId + " does not exist!");
+        }
+        return exercise.get();
+    }
+
+    /**
      * Find exercise by exerciseId and load participations in this exercise.
      *
      * @param exerciseId the exerciseId of the exercise entity
