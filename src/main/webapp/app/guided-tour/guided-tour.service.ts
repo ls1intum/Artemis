@@ -108,6 +108,9 @@ export class GuidedTourService {
                 if (this.availableTourForComponent && this.currentTour) {
                     this.guidedTourCurrentStepSubject.next(null);
                     this.checkNextTourStepOnNavigation();
+                } else {
+                    this.skipTour();
+                    this.guidedTourAvailabilitySubject.next(false);
                 }
             }
         });
