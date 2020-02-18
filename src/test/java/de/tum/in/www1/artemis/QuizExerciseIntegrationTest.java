@@ -348,7 +348,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationTest {
     public void testQuizSubmit() throws Exception {
         // change config to make test faster
         scheduleService.stopSchedule();
-        scheduleService.startSchedule(1 * 1000); // every 1 second
+        scheduleService.startSchedule(2 * 1000); // every 1 second
         List<Course> courses = database.createCoursesWithExercisesAndLectures();
         Course course = courses.get(0);
         QuizExercise quizExercise = database.createQuiz(course, ZonedDateTime.now(), null);
@@ -385,7 +385,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationTest {
         assertThat(quizSubmissionRepository.findAll().size()).isEqualTo(0);
 
         // wait until the quiz has finished
-        Thread.sleep(2000);
+        Thread.sleep(4000);
 
         // after the quiz has ended, all submission are saved to the database
         assertThat(quizSubmissionRepository.findAll().size()).isEqualTo(numberOfParticipants);
