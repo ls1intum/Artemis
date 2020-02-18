@@ -38,6 +38,7 @@ import { SubmissionExerciseType, SubmissionType } from 'app/entities/submission/
 import { TextExercise } from 'app/entities/text-exercise/text-exercise.model';
 import { ExerciseType } from 'app/entities/exercise/exercise.model';
 import { TextSubmission } from 'app/entities/text-submission/text-submission.model';
+import { AssessmentType } from 'app/entities/assessment-type/assessment-type.model';
 
 chai.use(sinonChai);
 const expect = chai.expect;
