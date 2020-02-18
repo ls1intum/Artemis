@@ -15,6 +15,7 @@ import { modelingExerciseRoute } from 'app/entities/modeling-exercise/modeling-e
 import { ModelingExerciseComponent } from 'app/entities/modeling-exercise/modeling-exercise.component';
 import { ModelingExerciseService } from 'app/entities/modeling-exercise/modeling-exercise.service';
 import { ModelingExerciseDetailComponent } from 'app/entities/modeling-exercise/modeling-exercise-detail.component';
+import { ArtemisTeamConfigFormGroupModule } from 'app/components/exercise/team-config-form-group/team-config-form-group.module';
 
 const ENTITY_STATES = [...modelingExerciseRoute];
 
@@ -30,6 +31,7 @@ const ENTITY_STATES = [...modelingExerciseRoute];
         ArtemisPresentationScoreModule,
         ArtemisModelingEditorModule,
         ArtemisAssessmentSharedModule,
+        ArtemisTeamConfigFormGroupModule,
     ],
     declarations: [ModelingExerciseComponent, ModelingExerciseDetailComponent, ModelingExerciseUpdateComponent],
     entryComponents: [ModelingExerciseComponent, DeleteDialogComponent],

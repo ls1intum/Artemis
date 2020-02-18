@@ -29,6 +29,7 @@ import { ProgrammingExerciseTestScheduleDatePickerComponent } from 'app/entities
 import { ArtemisComplaintsModule } from 'app/complaints/complaints.module';
 import { ArtemisMarkdownEditorModule } from 'app/markdown-editor/markdown-editor.module';
 import { ArtemisProgrammingExerciseStatusModule } from 'app/entities/programming-exercise/status/programming-exercise-status.module';
+import { ArtemisTeamConfigFormGroupModule } from 'app/components/exercise/team-config-form-group/team-config-form-group.module';
 
 const ENTITY_STATES = [...programmingExerciseRoute];
 
@@ -58,6 +59,7 @@ const ENTITY_STATES = [...programmingExerciseRoute];
         OrionModule,
         ProgrammingExerciseUtilsModule,
         ArtemisAssessmentSharedModule,
+        ArtemisTeamConfigFormGroupModule,
     ],
     declarations: [
         ProgrammingExerciseComponent,

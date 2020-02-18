@@ -1,0 +1,56 @@
+{
+    "artemisApp": {
+        "team": {
+            "home": {
+                "title": "Teams",
+                "createLabel": "Create a new Team",
+                "createOrEditLabel": "Create or edit a Team"
+            },
+            "created": "A new team is created with identifier {{ param }}",
+            "updated": "The Team of {{ param }} was updated",
+            "deleted": "The Team of {{ param }} was deleted",
+            "delete": {
+                "question": "Are you sure you want to delete the team of <strong>{{ name }}</strong>?"
+            },
+            "detail": {
+                "title": "Team"
+            },
+            "name": {
+                "label": "Name",
+                "minlength": "The name must be at least 3 characters long."
+            },
+            "shortName": {
+                "label": "Short Name",
+                "tooltip": "The short name of the team can NOT be edited after creating the team! It is used as a unique identifier for the repositories and build plans.",
+                "pattern": "The short name must start with a letter and cannot contain special characters.",
+                "minlength": "The short name must be at least 3 characters long.",
+                "alreadyTaken": "This short name is already taken by another team."
+            },
+            "image": "Image",
+            "students": "Students",
+            "noStudentsAddedYet": "No students added yet.",
+            "addStudentToTeam": "Add a student to the team (by searching for login or name)",
+            "studentSearch": {
+                "failed": "Search failed. Please try again."
+            },
+            "teamSizeNote": "Recommended team size:",
+            "teamSizeUnit": "students",
+            "ignoreTeamSizeRecommendation": "Proceed against recommendation",
+            "createTeam": {
+                "label": "Create team",
+                "error": "Could not create team. Please try again."
+            },
+            "updateTeam": {
+                "label": "Edit team",
+                "error": "Could not update team. Please try again."
+            },
+            "removeTeam": {
+                "label": "Remove team",
+                "error": "Could not remove team. Please try again."
+            },
+            "errors": {
+                "studentAlreadyAssignedToTeam": "Student with login {{ studentLogin }} is already assigned to team with id {{ teamId }."
+            }
+        }
+    }
+}

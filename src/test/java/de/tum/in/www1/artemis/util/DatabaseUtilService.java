@@ -79,6 +79,9 @@ public class DatabaseUtilService {
     UserRepository userRepo;
 
     @Autowired
+    TeamRepository teamRepo;
+
+    @Autowired
     ResultRepository resultRepo;
 
     @Autowired
@@ -181,6 +184,7 @@ public class DatabaseUtilService {
         submissionRepository.deleteAll();
         participationRepo.deleteAll();
         assertThat(participationRepo.findAll()).as("participation data has been cleared").isEmpty();
+        teamRepo.deleteAll();
         ltiOutcomeUrlRepository.deleteAll();
         programmingExerciseRepository.deleteAll();
         groupNotificationRepository.deleteAll();
@@ -230,6 +234,16 @@ public class DatabaseUtilService {
         users.addAll(instructors);
         users.add(admin);
         return users;
+    }
+
+    public List<Team> addTeamsForExercise(Exercise exercise, int numberOfTeams) {
+        List<Team> teams = ModelFactory.generateTeamsForExercise(exercise, numberOfTeams);
+        userRepo.saveAll(teams.stream().map(Team::getStudents).flatMap(Collection::stream).collect(Collectors.toList()));
+        return teamRepo.saveAll(teams);
+    }
+
+    public Team addTeamForExercise(Exercise exercise) {
+        return addTeamsForExercise(exercise, 1).get(0);
     }
 
     public Result addProgrammingParticipationWithResultForExercise(ProgrammingExercise exercise, String login) {
@@ -606,6 +620,7 @@ public class DatabaseUtilService {
         programmingExercise.setPublishBuildPlanUrl(true);
         programmingExercise.setMaxScore(42.0);
         programmingExercise.setDifficulty(DifficultyLevel.EASY);
+        programmingExercise.setMode(ExerciseMode.INDIVIDUAL);
         programmingExercise.setProblemStatement("Lorem Ipsum");
         programmingExercise.setAssessmentType(AssessmentType.AUTOMATIC);
         programmingExercise.setGradingInstructions("Lorem Ipsum");

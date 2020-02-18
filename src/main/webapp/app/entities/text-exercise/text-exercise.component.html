@@ -65,6 +65,15 @@
                                 <fa-icon [icon]="['far', 'list-alt']"></fa-icon>
                                 <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.participations">Participations</span>
                             </button>
+                            <button
+                                type="submit"
+                                *ngIf="textExercise.teamMode && textExercise.isAtLeastTutor"
+                                [routerLink]="['/exercise', textExercise.id, 'teams']"
+                                class="btn btn-primary btn-sm mr-1"
+                            >
+                                <fa-icon [icon]="'users'"></fa-icon>
+                                <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.teams">Teams</span>
+                            </button>
                             <button *ngIf="textExercise.isAtLeastInstructor" type="submit" [routerLink]="['/text-exercise', textExercise.id]" class="btn btn-info btn-sm mr-1">
                                 <fa-icon [icon]="'eye'"></fa-icon>
                                 <span class="d-none d-md-inline" jhiTranslate="entity.action.view">View</span>
