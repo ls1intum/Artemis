@@ -12,9 +12,11 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
+import de.tum.in.www1.artemis.config.audit.AuditEventConverter;
 import de.tum.in.www1.artemis.domain.PersistentAuditEvent;
 import de.tum.in.www1.artemis.repository.PersistenceAuditEventRepository;
 import de.tum.in.www1.artemis.service.AuditEventService;
@@ -36,11 +38,15 @@ public class ManagementResourceIntegrationTest extends AbstractSpringIntegration
     @Autowired
     PersistenceAuditEventRepository persistenceAuditEventRepository;
 
+    @Autowired
+    AuditEventConverter auditEventConverter;
+
     private PersistentAuditEvent persAuditEvent;
 
     @BeforeEach
     public void initTestCase() {
         database.addUsers(2, 2, 2);
+        persistenceAuditEventRepository.deleteAll();
         persAuditEvent = new PersistentAuditEvent();
         persAuditEvent.setPrincipal("student1");
         persAuditEvent.setAuditEventDate(Instant.now());
@@ -87,6 +93,10 @@ public class ManagementResourceIntegrationTest extends AbstractSpringIntegration
         String currentDate = LocalDate.now().toString();
         var auditEvents = request.getList("/management/audits?fromDate=" + pastDate + "&toDate=" + currentDate, HttpStatus.OK, PersistentAuditEvent.class);
         assertThat(auditEvents.size()).isEqualTo(1);
+        var auditEvent = auditEvents.get(0);
+        var auditEventsInDb = persistenceAuditEventRepository.findAllByAuditEventDateBetween(Instant.now().minus(2, ChronoUnit.DAYS), Instant.now(), Pageable.unpaged());
+        assertThat(auditEventsInDb.getTotalElements()).isEqualTo(1);
+        assertThat(auditEvent.getPrincipal()).isEqualTo(auditEventsInDb.get().findFirst().get().getPrincipal());
     }
 
     @Test
@@ -94,5 +104,7 @@ public class ManagementResourceIntegrationTest extends AbstractSpringIntegration
     public void getAuditEvent() throws Exception {
         var auditEvent = request.get("/management/audits/" + persAuditEvent.getId(), HttpStatus.OK, PersistentAuditEvent.class);
         assertThat(auditEvent).isNotNull();
+        var auditEventInDb = persistenceAuditEventRepository.findById(persAuditEvent.getId()).get();
+        assertThat(auditEventInDb.getPrincipal()).isEqualTo(auditEvent.getPrincipal());
     }
 }
