@@ -9,8 +9,4 @@ export class StudentParticipation extends Participation {
     constructor(type?: ParticipationType) {
         super(type ? type : ParticipationType.STUDENT);
     }
-
-    getExercise(): Exercise {
-        return this.exercise;
-    }
 }

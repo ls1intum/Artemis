@@ -67,6 +67,7 @@ export abstract class Exercise implements BaseEntity {
     public attachments: Attachment[];
     public studentQuestions: StudentQuestion[];
 
+    // transient objects which might not be set
     public numberOfParticipations?: number;
     public numberOfAssessments?: number;
     public numberOfComplaints?: number;
