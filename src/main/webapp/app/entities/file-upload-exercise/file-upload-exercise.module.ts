@@ -16,6 +16,7 @@ import { FileUploadExerciseUpdateComponent } from 'app/entities/file-upload-exer
 import { FileUploadExerciseDetailComponent } from 'app/entities/file-upload-exercise/file-upload-exercise-detail.component';
 import { AssessmentInstructionsModule } from 'app/assessment-instructions/assessment-instructions.module';
 import { StructuredGradingCriterionModule } from 'app/structured-grading-criterion/structured-grading-criterion.module';
+import { ArtemisSlideToggleModule } from 'app/components/slide-toggle/slide-toggle.module';
 
 const ENTITY_STATES = [...fileUploadExerciseRoute];
 
@@ -32,6 +33,7 @@ const ENTITY_STATES = [...fileUploadExerciseRoute];
         ArtemisAssessmentSharedModule,
         AssessmentInstructionsModule,
         StructuredGradingCriterionModule,
+        ArtemisSlideToggleModule,
     ],
     declarations: [FileUploadExerciseComponent, FileUploadExerciseDetailComponent, FileUploadExerciseUpdateComponent],
     exports: [FileUploadExerciseComponent],

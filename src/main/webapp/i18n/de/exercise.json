@@ -30,6 +30,7 @@
             "problemStatement": "Aufgabenstellung",
             "sampleSolution": "Beispiel Lösung",
             "gradingInstructions": "Benotungshinweise",
+            "structuredGradingInstructions": "Strukturierte Benotungshinweise",
             "title": "Titel",
             "shortName": "Kurzname",
             "releaseDate": "Veröffentlichungsdatum",
