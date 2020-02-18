@@ -1,5 +1,5 @@
 import { Component, Input, OnInit } from '@angular/core';
-import { Feedback } from 'app/entities/feedback';
+import { Feedback } from 'app/entities/feedback/feedback.model';
 import { HighlightColors } from 'app/text-assessment/highlight-colors';
 
 @Component({

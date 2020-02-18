@@ -3,13 +3,13 @@ import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { filter, map } from 'rxjs/operators';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/alert/alert.service';
 import { TutorGroupService } from './tutor-group.service';
 import { User } from 'app/core/user/user.model';
 import { UserService } from 'app/core/user/user.service';
-import { Course } from 'app/entities/course';
 import { CourseService } from 'app/entities/course/course.service';
-import { TutorGroup } from 'app/entities/tutor-group';
+import { TutorGroup } from 'app/entities/tutor-group/tutor-group.model';
+import { Course } from 'app/entities/course/course.model';
 
 @Component({
     selector: 'jhi-tutor-group-update',
@@ -24,7 +24,7 @@ export class TutorGroupUpdateComponent implements OnInit {
     courses: Course[];
 
     constructor(
-        protected jhiAlertService: JhiAlertService,
+        protected jhiAlertService: AlertService,
         protected tutorGroupService: TutorGroupService,
         protected userService: UserService,
         protected courseService: CourseService,
@@ -92,10 +92,6 @@ export class TutorGroupUpdateComponent implements OnInit {
     }
 
     trackUserById(index: number, item: User) {
-        return item.id;
-    }
-
-    trackCourseById(index: number, item: Course) {
         return item.id;
     }
 

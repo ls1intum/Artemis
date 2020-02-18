@@ -1,6 +1,6 @@
 import { Component, Input, OnInit, ViewEncapsulation } from '@angular/core';
-import { DragItem } from '../../../entities/drag-item';
 import { DeviceDetectorService, DeviceInfo } from 'ngx-device-detector';
+import { DragItem } from 'app/entities/drag-item/drag-item.model';
 
 @Component({
     selector: 'jhi-drag-item',

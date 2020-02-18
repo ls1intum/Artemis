@@ -2,11 +2,11 @@
 // We changed the notification plugin to also send information about successful tests (previously only failed tests).
 // In some cases it needs to be checked explicitly wether a result is legacy or not.
 // The date used is the date of the merge: 2019-05-10T22:12:28Z.
-import { Result } from 'app/entities/result';
-import { ProgrammingExercise } from 'app/entities/programming-exercise';
+import { Result } from 'app/entities/result/result.model';
 import * as moment from 'moment';
 import { isMoment } from 'moment';
-import { Participation, ParticipationType } from 'app/entities/participation';
+import { Participation, ParticipationType } from 'app/entities/participation/participation.model';
+import { ProgrammingExercise } from 'app/entities/programming-exercise/programming-exercise.model';
 
 const BAMBOO_RESULT_LEGACY_TIMESTAMP = 1557526348000;
 

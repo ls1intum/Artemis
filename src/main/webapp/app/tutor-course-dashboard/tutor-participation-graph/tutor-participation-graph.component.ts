@@ -1,8 +1,8 @@
 import { Component, Input, OnChanges, OnInit, SimpleChanges, ViewEncapsulation } from '@angular/core';
-import { TutorParticipation, TutorParticipationStatus } from 'app/entities/tutor-participation';
 import { Router } from '@angular/router';
 import { get } from 'lodash';
-import { Exercise, ExerciseType } from 'app/entities/exercise';
+import { Exercise, ExerciseType } from 'app/entities/exercise/exercise.model';
+import { TutorParticipation, TutorParticipationStatus } from 'app/entities/tutor-participation/tutor-participation.model';
 
 @Component({
     selector: 'jhi-tutor-participation-graph',

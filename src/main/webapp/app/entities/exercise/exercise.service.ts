@@ -1,16 +1,16 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs/Observable';
-import { SERVER_API_URL } from '../../app.constants';
+import { SERVER_API_URL } from 'app/app.constants';
 
 import * as moment from 'moment';
 
 import { Exercise, ExerciseCategory } from './exercise.model';
-import { LtiConfiguration } from '../lti-configuration';
 import { ParticipationService } from '../participation/participation.service';
 import { map } from 'rxjs/operators';
 import { AccountService } from 'app/core/auth/account.service';
 import { StatsForDashboard } from 'app/instructor-course-dashboard/stats-for-dashboard.model';
+import { LtiConfiguration } from 'app/entities/lti-configuration/lti-configuration.model';
 
 export type EntityResponseType = HttpResponse<Exercise>;
 export type EntityArrayResponseType = HttpResponse<Exercise[]>;

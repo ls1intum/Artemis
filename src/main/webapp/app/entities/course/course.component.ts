@@ -1,7 +1,7 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Subscription } from 'rxjs/Subscription';
-import { JhiAlertService, JhiEventManager } from 'ng-jhipster';
+import { JhiEventManager } from 'ng-jhipster';
 import { Course } from './course.model';
 import { CourseService } from './course.service';
 import { ARTEMIS_DEFAULT_COLOR } from 'app/app.constants';
@@ -9,6 +9,7 @@ import { onError } from 'app/utils/global.utils';
 import { Subject } from 'rxjs';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { tutorAssessmentTour } from 'app/guided-tour/tours/tutor-assessment-tour';
+import { AlertService } from 'app/core/alert/alert.service';
 
 @Component({
     selector: 'jhi-course',

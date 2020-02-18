@@ -5,34 +5,36 @@ import { By } from '@angular/platform-browser';
 import { Router } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
-import { of, Observable } from 'rxjs';
-import { CookieService } from 'ngx-cookie';
+import { Observable, of } from 'rxjs';
+import { CookieService } from 'ngx-cookie-service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { TranslateService } from '@ngx-translate/core';
-import { ArtemisSharedModule } from 'app/shared';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { ArtemisTestModule } from '../test.module';
-import { NavbarComponent } from 'app/layouts';
 import { SERVER_API_URL } from 'app/app.constants';
 import { GuidedTour } from 'app/guided-tour/guided-tour.model';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { GuidedTourState, Orientation, ResetParticipation, UserInteractionEvent } from 'app/guided-tour/guided-tour.constants';
 import { GuidedTourComponent } from 'app/guided-tour/guided-tour.component';
-import { MockCookieService, MockSyncStorage } from '../mocks';
 import { GuidedTourMapping, GuidedTourSetting } from 'app/guided-tour/guided-tour-setting.model';
 import { ModelingTaskTourStep, TextTourStep, UserInterActionTourStep } from 'app/guided-tour/guided-tour-step.model';
 import { MockAccountService } from '../mocks/mock-account.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { DeviceDetectorService } from 'ngx-device-detector';
 import { Course } from 'app/entities/course/course.model';
-import { Exercise, ExerciseService, ExerciseType } from 'app/entities/exercise';
 import { MockTranslateService } from '../mocks/mock-translate.service';
 import { GuidedTourModelingTask, personUML } from 'app/guided-tour/guided-tour-task.model';
 import { completedTour } from 'app/guided-tour/tours/general-tour';
-import { InitializationState, StudentParticipation } from 'app/entities/participation';
 import { SinonStub, stub } from 'sinon';
 import { HttpResponse } from '@angular/common/http';
 import { ParticipationService } from 'app/entities/participation/participation.service';
 import { CourseService } from 'app/entities/course/course.service';
+import { Exercise, ExerciseType } from 'app/entities/exercise/exercise.model';
+import { InitializationState } from 'app/entities/participation/participation.model';
+import { NavbarComponent } from 'app/layouts/navbar/navbar.component';
+import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { MockSyncStorage } from '../mocks/mock-sync.storage';
+import { MockCookieService } from '../mocks/mock-cookie.service';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -100,8 +102,8 @@ describe('GuidedTourService', () => {
                 .overrideModule(ArtemisTestModule, { set: { declarations: [], exports: [] } })
                 .compileComponents();
 
-            service = TestBed.get(GuidedTourService);
-            httpMock = TestBed.get(HttpTestingController);
+            service = TestBed.inject(GuidedTourService);
+            httpMock = TestBed.inject(HttpTestingController);
         });
 
         afterEach(() => {

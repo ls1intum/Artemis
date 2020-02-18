@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { TutorGroup } from 'app/entities/tutor-group';
+import { TutorGroup } from 'app/entities/tutor-group/tutor-group.model';
 
 @Component({
     selector: 'jhi-tutor-group-detail',

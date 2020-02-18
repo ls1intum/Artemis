@@ -1,13 +1,12 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs/Observable';
-
-import { TutorParticipation } from 'app/entities/tutor-participation';
 import { SERVER_API_URL } from 'app/app.constants';
 import { ExampleSubmission } from 'app/entities/example-submission/example-submission.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { Exercise } from 'app/entities/exercise';
 import { Course } from 'app/entities/course/course.model';
+import { TutorParticipation } from 'app/entities/tutor-participation/tutor-participation.model';
 
 export type EntityResponseType = HttpResponse<TutorParticipation>;
 export type EntityArrayResponseType = HttpResponse<TutorParticipation[]>;

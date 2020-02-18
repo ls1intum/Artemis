@@ -1,19 +1,18 @@
 import { NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
-
-import { ArtemisSharedModule } from '../../shared';
-import { quizStatisticRoute } from './quiz-statistic.route';
-import { HomeComponent } from '../../home';
-import { JhiMainComponent } from '../../layouts';
 import { QuizStatisticComponent } from './quiz-statistic/quiz-statistic.component';
 import { ChartsModule } from 'ng2-charts';
 import { QuizPointStatisticComponent } from './quiz-point-statistic/quiz-point-statistic.component';
-import { QuizStatisticUtil } from '../../components/util/quiz-statistic-util.service';
+import { QuizStatisticUtil } from 'app/components/util/quiz-statistic-util.service';
 import { MultipleChoiceQuestionStatisticComponent } from './multiple-choice-question-statistic/multiple-choice-question-statistic.component';
 import { DragAndDropQuestionStatisticComponent } from './drag-and-drop-question-statistic/drag-and-drop-question-statistic.component';
 import { ShortAnswerQuestionStatisticComponent } from './short-answer-question-statistic/short-answer-question-statistic.component';
 import { ArtemisQuizModule } from '../participate/quiz.module';
 import { QuizStatisticsFooterComponent } from 'app/quiz/statistics/quiz-statistics-footer/quiz-statistics-footer.component';
+import { quizStatisticRoute } from 'app/quiz/statistics/quiz-statistic.route';
+import { JhiMainComponent } from 'app/layouts/main/main.component';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
+import { HomeComponent } from 'app/home/home.component';
 
 const ENTITY_STATES = [...quizStatisticRoute];
 

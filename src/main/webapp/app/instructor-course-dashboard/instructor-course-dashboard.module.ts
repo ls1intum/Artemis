@@ -1,15 +1,13 @@
 import { NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
-
 import { ChartsModule } from 'ng2-charts';
-
-import { ArtemisSharedModule } from '../shared';
 import { instructorCourseDashboardRoute } from './instructor-course-dashboard.route';
 import { InstructorCourseDashboardComponent } from './instructor-course-dashboard.component';
 import { MomentModule } from 'ngx-moment';
 import { ClipboardModule } from 'ngx-clipboard';
-import { SortByModule } from 'app/components/pipes';
+import { SortByModule } from 'app/components/pipes/sort-by.module';
 import { ArtemisTutorLeaderboardModule } from 'app/instructor-course-dashboard/tutor-leaderboard/tutor-leaderboard.module';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
 
 const ENTITY_STATES = instructorCourseDashboardRoute;
 

@@ -3,11 +3,11 @@ import { SERVER_API_URL } from 'app/app.constants';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
-import { Result } from 'app/entities/result';
-import { StudentParticipation } from 'app/entities/participation';
-import { Feedback } from 'app/entities/feedback';
+import { Result } from 'app/entities/result/result.model';
 import * as moment from 'moment';
-import { ComplaintResponse } from 'app/entities/complaint-response';
+import { ComplaintResponse } from 'app/entities/complaint-response/complaint-response.model';
+import { Feedback } from 'app/entities/feedback/feedback.model';
+import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 
 type EntityResponseType = HttpResponse<Result>;
 

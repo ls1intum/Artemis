@@ -15,7 +15,8 @@ import de.tum.in.www1.artemis.exception.BambooException;
 import de.tum.in.www1.artemis.exception.BitbucketException;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
-import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildResultDTO;
+import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildResultNotificationDTO;
+import de.tum.in.www1.artemis.service.connectors.bamboo.dto.QueriedBambooBuildResultDTO;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooProjectSearchDTO;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooTestResultDTO;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
@@ -395,28 +396,25 @@ public class BambooService implements ContinuousIntegrationService {
      * React to a new build result from Bamboo, create the result and feedbacks and link the result to the submission and participation.
      *
      * @param participation The participation for which the build finished.
-     * @param requestBody   The request Body received from the CI-Server.
+     * @param requestBody   The result notification received from the CI-Server.
      * @return the created result.
      * @throws Exception when the request body cannot be parsed, this method throws an exception
      */
     @Override
-    @SuppressWarnings("unchecked")
-    public Result onBuildCompletedNew(ProgrammingExerciseParticipation participation, Object requestBody) throws Exception {
+    public Result onBuildCompletedNew(ProgrammingExerciseParticipation participation, Object requestBody) {
+        final var buildResult = mapper.convertValue(requestBody, BambooBuildResultNotificationDTO.class);
         log.debug("Retrieving build result (NEW) ...");
         try {
-            Map<String, Object> requestBodyMap = (Map<String, Object>) requestBody;
-            Map<String, Object> buildMap = (Map<String, Object>) requestBodyMap.get("build");
-
             // Filter the first build plan that was automatically executed when the build plan was created.
-            if (isFirstBuildForThisPlan(buildMap)) return null;
+            if (isFirstBuildForThisPlan(buildResult)) return null;
 
             List<ProgrammingSubmission> submissions = programmingSubmissionRepository.findByParticipationIdAndResultIsNullOrderBySubmissionDateDesc(participation.getId());
             Optional<ProgrammingSubmission> latestMatchingPendingSubmission = submissions.stream().filter(submission -> {
-                String matchingCommitHashInBuildMap = getCommitHash(buildMap, submission.getType());
+                String matchingCommitHashInBuildMap = getCommitHash(buildResult, submission.getType());
                 return matchingCommitHashInBuildMap != null && matchingCommitHashInBuildMap.equals(submission.getCommitHash());
             }).findFirst();
 
-            Result result = createResultFromBuildResult(buildMap, participation);
+            Result result = createResultFromBuildResult(buildResult, participation);
             ProgrammingExercise programmingExercise = participation.getProgrammingExercise();
             ProgrammingSubmission programmingSubmission;
             if (latestMatchingPendingSubmission.isPresent()) {
@@ -426,7 +424,7 @@ public class BambooService implements ContinuousIntegrationService {
                 // 1) Manual build triggered from Bamboo.
                 // 2) An unknown error that caused the programming submission not to be created when the code commits have been pushed
                 // we can still get the commit has from the payload of the Bamboo REST Call and "reverse engineer" the programming submission object to be consistent
-                String commitHash = getCommitHash(buildMap, SubmissionType.MANUAL);
+                String commitHash = getCommitHash(buildResult, SubmissionType.MANUAL);
                 log.warn("Could not find pending ProgrammingSubmission for Commit-Hash {} (Participation {}, Build-Plan {}). Will create a new one subsequently...", commitHash, participation.getId(), participation.getBuildPlanId());
                 programmingSubmission = new ProgrammingSubmission();
                 programmingSubmission.setParticipation((Participation) participation);
@@ -437,7 +435,7 @@ public class BambooService implements ContinuousIntegrationService {
                 programmingSubmission.setSubmissionDate(result.getCompletionDate());
                 // Save to avoid TransientPropertyValueException.
             }
-            final var hasArtifact = (boolean) buildMap.get("artifact");
+            final var hasArtifact = buildResult.getBuild().isArtifact();
             programmingSubmission.setBuildArtifact(hasArtifact);
             programmingSubmission.setBuildFailed(result.getResultString().equals("No tests found"));
             programmingSubmissionRepository.save(programmingSubmission);
@@ -479,58 +477,57 @@ public class BambooService implements ContinuousIntegrationService {
     /**
      * Check if the build result received is the initial build of the plan.
      *
-     * @param buildMap data provided by build.
+     * @param buildResult Build result data provided by build notification.
      * @return true if build is the first build.
      */
-    private boolean isFirstBuildForThisPlan(Map<String, Object> buildMap) {
-        String buildReason = (String) buildMap.get("reason");
-        return buildReason != null && buildReason.contains("First build for this plan");
+    private boolean isFirstBuildForThisPlan(BambooBuildResultNotificationDTO buildResult) {
+        final var reason = buildResult.getBuild().getReason();
+        return reason != null && reason.contains("First build for this plan");
     }
 
     /**
      * Generate an Artemis result object from the CI build result. Will use the test case feedback as result feedback.
      *
-     * @param buildMap data provided by build.
+     * @param buildResult Build result data provided by build notification.
      * @param participation to attach result to.
      * @return the created result (is not persisted in this method, only constructed!)
      */
-    private Result createResultFromBuildResult(Map<String, Object> buildMap, ProgrammingExerciseParticipation participation) {
+    private Result createResultFromBuildResult(BambooBuildResultNotificationDTO buildResult, ProgrammingExerciseParticipation participation) {
         Result result = new Result();
         result.setAssessmentType(AssessmentType.AUTOMATIC);
-        result.setSuccessful((Boolean) buildMap.get("successful"));
+        result.setSuccessful(buildResult.getBuild().isSuccessful());
 
-        Map<String, Object> testSummary = (Map<String, Object>) buildMap.get("testSummary");
-        result.setResultString((String) testSummary.get("description"));
+        result.setResultString(buildResult.getBuild().getTestSummary().getDescription());
 
-        result.setCompletionDate(ZonedDateTime.parse((String) buildMap.get("buildCompletedDate")));
-        result.setScore(calculateScoreForResult(result, (int) testSummary.get("skippedCount")));
+        result.setCompletionDate(buildResult.getBuild().getBuildCompletedDate());
+        result.setScore(calculateScoreForResult(result, buildResult.getBuild().getTestSummary().getSkippedCount()));
         result.setParticipation((Participation) participation);
 
-        return addFeedbackToResultNew(result, (List<Object>) buildMap.get("jobs"));
+        return addFeedbackToResultNew(result, buildResult.getBuild().getJobs());
     }
 
     /**
      * Get the commit hash from the build map, the commit hash will be different for submission types or null.
      *
-     * @param buildMap data provided by build.
+     * @param buildResult Build result data provided by build notification.
      * @param submissionType describes why the build was started.
      * @return if the commit hash for the given submission type was found, otherwise null.
      */
-    private String getCommitHash(Map<String, Object> buildMap, SubmissionType submissionType) {
-        List<Object> vcsList = (List<Object>) buildMap.get("vcs");
-
-        String commitHash = null;
-        for (Object changeSet : vcsList) {
-            Map<String, Object> changeSetMap = (Map<String, Object>) changeSet;
-            String repositoryName = (String) changeSetMap.get("repositoryName");
-            if ((submissionType.equals(SubmissionType.MANUAL) || submissionType.equals(SubmissionType.INSTRUCTOR)) && repositoryName.equalsIgnoreCase(ASSIGNMENT_REPO_NAME)) {
-                // We are only interested in the last commit hash of the assignment repo, not the test repo
-                commitHash = (String) changeSetMap.get("id");
-            } else if (submissionType.equals(SubmissionType.TEST) && repositoryName.equalsIgnoreCase(TEST_REPO_NAME)) {
-                commitHash = (String) changeSetMap.get("id");
-            }
+    private String getCommitHash(BambooBuildResultNotificationDTO buildResult, SubmissionType submissionType) {
+        final Optional<String> optionalRelevantRepoName;
+        if (List.of(SubmissionType.MANUAL, SubmissionType.INSTRUCTOR).contains(submissionType)) {
+            optionalRelevantRepoName = Optional.of(ASSIGNMENT_REPO_NAME);
+        } else if (submissionType.equals(SubmissionType.TEST)) {
+            optionalRelevantRepoName = Optional.of(TEST_REPO_NAME);
+        } else {
+            optionalRelevantRepoName = Optional.empty();
         }
-        return commitHash;
+
+        return optionalRelevantRepoName.flatMap(relevantRepoName -> buildResult.getBuild().getVcs().stream()
+                .filter(change -> change.getRepositoryName().equalsIgnoreCase(relevantRepoName))
+                .findFirst()
+                .map(change -> change.getId()))
+                .orElse(null);
     }
 
     /**
@@ -614,25 +611,22 @@ public class BambooService implements ContinuousIntegrationService {
      * @return a list of feedbacks itemsstored in a result
      */
     @SuppressWarnings("unchecked")
-    private Result addFeedbackToResultNew(Result result, List<Object> jobs) {
+    private Result addFeedbackToResultNew(Result result, List<BambooBuildResultNotificationDTO.BambooJobDTO> jobs) {
         if (jobs == null) {
             return null;
         }
 
         try {
-            List<Map<String, Object>> castedJobs = (List<Map<String, Object>>) (Object) jobs;
             final ProgrammingLanguage programmingLanguage = ((ProgrammingExercise) result.getParticipation().getExercise())
                     .getProgrammingLanguage();
 
-            for (Map<String, Object> job : castedJobs) {
+            for (final var job : jobs) {
 
                 // 1) add feedback for failed test cases
-                List<Map<String, Object>> failedTests = (List<Map<String, Object>>) job.get("failedTests");
-                for (Map<String, Object> failedTest : failedTests) {
-                    String methodName = (String) failedTest.get("name"); // in the attribute "methodName", bamboo seems to apply some unwanted logic
+                for (final var failedTest: job.getFailedTests()) {
+                    String methodName = failedTest.getName(); // in the attribute "methodName", bamboo seems to apply some unwanted logic
 
-                    List<String> errors = (List<String>) failedTest.get("errors");
-                    final String errorMessageString = errors.stream()
+                    final String errorMessageString = failedTest.getErrors().stream()
                             .map(errorString -> processResultErrorMessage(programmingLanguage, errorString))
                             .reduce("", String::concat);
 
@@ -642,14 +636,13 @@ public class BambooService implements ContinuousIntegrationService {
                 }
 
                 // 2) add feedback for passed test cases
-                List<Map<String, Object>> succuessfulTests = (List<Map<String, Object>>) job.get("successfulTests");
-                for (Map<String, Object> succuessfulTest : succuessfulTests) {
-                    String methodName = (String) succuessfulTest.get("name"); // in the attribute "methodName", bamboo seems to apply some unwanted logic
+                for (final var successfulTest : job.getSuccessfulTests()) {
+                    String methodName = successfulTest.getName(); // in the attribute "methodName", bamboo seems to apply some unwanted logic
 
                     createAutomaticFeedback(result, methodName, true, null);
                 }
 
-                if (!failedTests.isEmpty()) {
+                if (!job.getFailedTests().isEmpty()) {
                     result.setHasFeedback(true);
                 }
             }
@@ -702,7 +695,7 @@ public class BambooService implements ContinuousIntegrationService {
         Result result = new Result();
         result.setRatedIfNotExceeded(participation.getProgrammingExercise().getDueDate(), submission);
         result.setAssessmentType(AssessmentType.AUTOMATIC);
-        result.setSuccessful(buildResults.getBuildState() == BambooBuildResultDTO.BuildState.SUCCESS);
+        result.setSuccessful(buildResults.getBuildState() == QueriedBambooBuildResultDTO.BuildState.SUCCESS);
         result.setResultString(buildResults.getBuildTestSummary());
         result.setCompletionDate(buildResults.getBuildCompletedDate());
         result.setScore(calculateScoreForResult(result, buildResults.getTestResults().getSkipped()));
@@ -728,16 +721,16 @@ public class BambooService implements ContinuousIntegrationService {
      * - buildTestSummary:      a string generated by Bamboo summarizing the build result
      * - buildCompletedDate:    the completion date of the build
      */
-    public BambooBuildResultDTO queryLatestBuildResultFromBambooServer(String planKey) {
+    public QueriedBambooBuildResultDTO queryLatestBuildResultFromBambooServer(String planKey) {
         HttpHeaders headers = HeaderUtil.createAuthorization(BAMBOO_USER, BAMBOO_PASSWORD);
         HttpEntity<?> entity = new HttpEntity<>(headers);
-        ResponseEntity<BambooBuildResultDTO> response = null;
+        ResponseEntity<QueriedBambooBuildResultDTO> response = null;
         try {
             response = restTemplate.exchange(
                     BAMBOO_SERVER_URL + "/rest/api/latest/result/" + planKey.toUpperCase() + "-JOB1/latest.json?expand=testResults.failedTests.testResult.errors,artifacts,changes,vcsRevisions",
                     HttpMethod.GET,
                     entity,
-                    BambooBuildResultDTO.class);
+                    QueriedBambooBuildResultDTO.class);
         } catch (Exception e) {
             log.error("HttpError while retrieving latest build results from Bamboo for planKey " + planKey + ": " + e.getMessage());
         }

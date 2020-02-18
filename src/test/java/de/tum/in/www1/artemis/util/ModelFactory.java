@@ -14,6 +14,8 @@ import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 
 public class ModelFactory {
 
+    public static final String USER_PASSWORD = "0000";
+
     public static Lecture generateLecture(ZonedDateTime startDate, ZonedDateTime endDate, Course course) {
         Lecture lecture = new Lecture();
         lecture.setStartDate(startDate);
@@ -105,10 +107,10 @@ public class ModelFactory {
         return generatedUsers;
     }
 
-    public static User generateActivatedUser(String login) {
+    public static User generateActivatedUser(String login, String password) {
         User user = new User();
         user.setLogin(login);
-        user.setPassword("0000");
+        user.setPassword(password);
         user.setFirstName(login + "First");
         user.setLastName(login + "Last");
         user.setEmail(login + "@test.de");
@@ -117,6 +119,10 @@ public class ModelFactory {
         user.setGroups(new HashSet<>());
         user.setAuthorities(new HashSet<>());
         return user;
+    }
+
+    public static User generateActivatedUser(String login) {
+        return generateActivatedUser(login, USER_PASSWORD);
     }
 
     public static Course generateCourse(Long id, ZonedDateTime startDate, ZonedDateTime endDate, Set<Exercise> exercises) {
@@ -187,6 +193,28 @@ public class ModelFactory {
         course.setOnlineCourse(false);
         course.setPresentationScore(2);
         return course;
+    }
+
+    public static GradingCriterion generateGradingCriterion(String title) {
+        var criterion = new GradingCriterion();
+        criterion.setTitle(title);
+        return criterion;
+    }
+
+    public static List<GradingInstruction> generateGradingInstructions(GradingCriterion criterion, int numberOfTestInstructions) {
+        var instructions = new ArrayList<GradingInstruction>();
+        var exampleInstruction1 = new GradingInstruction();
+        while (numberOfTestInstructions > 0) {
+            exampleInstruction1.setGradingCriterion(criterion);
+            exampleInstruction1.setCredits(0.5);
+            exampleInstruction1.setGradingScale("good test");
+            exampleInstruction1.setInstructionDescription("created first instruction with empty criteria for testing");
+            exampleInstruction1.setFeedback("test feedback");
+            exampleInstruction1.setUsageCount(3);
+            instructions.add(exampleInstruction1);
+            numberOfTestInstructions--;
+        }
+        return instructions;
     }
 
     public static List<Feedback> generateFeedback() {

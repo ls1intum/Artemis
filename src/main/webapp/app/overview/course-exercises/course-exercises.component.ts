@@ -1,20 +1,21 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { Course } from 'app/entities/course';
+import { Course } from 'app/entities/course/course.model';
 import { CourseService } from 'app/entities/course/course.service';
 import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs/Subscription';
 import { TranslateService } from '@ngx-translate/core';
 import { HttpResponse } from '@angular/common/http';
 import * as moment from 'moment';
-import { Exercise, ExerciseService, ExerciseType } from 'app/entities/exercise';
 import { AccountService } from 'app/core/auth/account.service';
 import { sum } from 'lodash';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { courseExerciseOverviewTour } from 'app/guided-tour/tours/course-exercise-overview-tour';
-import { CourseScoreCalculationService } from 'app/overview';
-import { isIntelliJ } from 'app/intellij/intellij';
+import { isOrion } from 'app/orion/orion';
 import { ProgrammingSubmissionService } from 'app/programming-submission/programming-submission.service';
 import { LocalStorageService } from 'ngx-webstorage';
+import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
+import { Exercise, ExerciseType } from 'app/entities/exercise/exercise.model';
+import { ExerciseService } from 'app/entities/exercise/exercise.service';
 
 enum ExerciseFilter {
     OVERDUE = 'OVERDUE',
@@ -152,7 +153,7 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
             exercise =>
                 (!needsWorkFilterActive || this.needsWork(exercise)) &&
                 (!exercise.dueDate || !overdueFilterActive || exercise.dueDate.isAfter(moment(new Date()))) &&
-                (!isIntelliJ || exercise.type === ExerciseType.PROGRAMMING),
+                (!isOrion || exercise.type === ExerciseType.PROGRAMMING),
         );
         this.groupExercises(filtered);
     }

@@ -1,17 +1,17 @@
 import { AfterViewInit, Component, OnInit } from '@angular/core';
-import { ModelingSubmission, ModelingSubmissionService } from 'app/entities/modeling-submission';
 import { ActivatedRoute, Router } from '@angular/router';
 import { UMLModel } from '@ls1intum/apollon';
-import { Conflict, ConflictingResult } from 'app/modeling-assessment-editor/conflict.model';
+import { Conflict, ConflictingResult, ConflictResolutionState } from 'app/modeling-assessment-editor/conflict.model';
 import { User } from 'app/core/user/user.model';
 import * as $ from 'jquery';
-import { JhiAlertService } from 'ng-jhipster';
-import { ModelingExercise } from 'app/entities/modeling-exercise';
-import { Feedback, FeedbackHighlightColor } from 'app/entities/feedback';
-import { ConflictResolutionState } from 'app/modeling-assessment-editor/conflict-resolution-state.enum';
-import { ModelingAssessmentService } from 'app/entities/modeling-assessment';
-import { StudentParticipation } from 'app/entities/participation';
+import { AlertService } from 'app/core/alert/alert.service';
 import { AccountService } from 'app/core/auth/account.service';
+import { ModelingSubmissionService } from 'app/entities/modeling-submission/modeling-submission.service';
+import { Feedback, FeedbackHighlightColor } from 'app/entities/feedback/feedback.model';
+import { ModelingAssessmentService } from 'app/entities/modeling-assessment/modeling-assessment.service';
+import { ModelingSubmission } from 'app/entities/modeling-submission/modeling-submission.model';
+import { ModelingExercise } from 'app/entities/modeling-exercise/modeling-exercise.model';
+import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 
 @Component({
     selector: 'jhi-modeling-assessment-conflict',
@@ -37,7 +37,7 @@ export class ModelingAssessmentConflictComponent implements OnInit, AfterViewIni
     submissionId: number;
 
     constructor(
-        private jhiAlertService: JhiAlertService,
+        private jhiAlertService: AlertService,
         private route: ActivatedRoute,
         private router: Router,
         private modelingSubmissionService: ModelingSubmissionService,

@@ -1,14 +1,15 @@
 import { ApollonEditor, SVG, UMLElementType, UMLModel, UMLModelElement, UMLRelationshipType } from '@ls1intum/apollon';
 import * as moment from 'moment';
-import { Course } from 'app/entities/course';
-import { DragAndDropMapping } from 'app/entities/drag-and-drop-mapping';
-import { DragAndDropQuestion } from 'app/entities/drag-and-drop-question';
-import { DragItem } from 'app/entities/drag-item';
-import { DropLocation } from 'app/entities/drop-location';
-import { QuizExercise, QuizExerciseService } from 'app/entities/quiz-exercise';
-import { ScoringType } from 'app/entities/quiz-question';
-import { convertRenderedSVGToPNG } from './svg-renderer';
-import { FileUploaderService } from 'app/shared';
+import { Course } from 'app/entities/course/course.model';
+import { convertRenderedSVGToPNG } from 'app/apollon-diagrams/exercise-generation/svg-renderer';
+import { QuizExerciseService } from 'app/entities/quiz-exercise/quiz-exercise.service';
+import { FileUploaderService } from 'app/shared/http/file-uploader.service';
+import { DragAndDropMapping } from 'app/entities/drag-and-drop-mapping/drag-and-drop-mapping.model';
+import { DragAndDropQuestion } from 'app/entities/drag-and-drop-question/drag-and-drop-question.model';
+import { ScoringType } from 'app/entities/quiz-question/quiz-question.model';
+import { DragItem } from 'app/entities/drag-item/drag-item.model';
+import { DropLocation } from 'app/entities/drop-location/drop-location.model';
+import { QuizExercise } from 'app/entities/quiz-exercise/quiz-exercise.model';
 
 // Drop locations in quiz exercises are relatively positioned and sized using integers in the interval [0, 200]
 const MAX_SIZE_UNIT = 200;

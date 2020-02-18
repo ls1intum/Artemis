@@ -1,13 +1,8 @@
 import { NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/alert/alert.service';
 import { DeviceDetectorService } from 'ngx-device-detector';
-
-import { ArtemisSharedModule } from '../../shared';
 import { quizRoute } from './quiz.route';
-import { RepositoryService } from '../../entities/repository/repository.service';
-import { HomeComponent } from '../../home';
-import { JhiMainComponent } from '../../layouts';
 import { QuizComponent } from './quiz.component';
 import { MultipleChoiceQuestionComponent } from './multiple-choice-question/multiple-choice-question.component';
 import { DragAndDropQuestionComponent } from './drag-and-drop-question/drag-and-drop-question.component';
@@ -17,6 +12,9 @@ import { AngularFittextModule } from 'angular-fittext';
 import { DndModule } from 'ng2-dnd';
 import { QuizScoringInfoStudentModalComponent } from './quiz-scoring-infostudent-modal/quiz-scoring-info-student-modal.component';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
+import { JhiMainComponent } from 'app/layouts/main/main.component';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
+import { HomeComponent } from 'app/home/home.component';
 
 const ENTITY_STATES = [...quizRoute];
 
@@ -31,7 +29,7 @@ const ENTITY_STATES = [...quizRoute];
         DragItemComponent,
     ],
     entryComponents: [HomeComponent, QuizComponent, JhiMainComponent],
-    providers: [RepositoryService, JhiAlertService, DeviceDetectorService],
+    providers: [DeviceDetectorService],
     exports: [MultipleChoiceQuestionComponent, DragAndDropQuestionComponent, ShortAnswerQuestionComponent, DragItemComponent],
 })
 export class ArtemisQuizModule {}

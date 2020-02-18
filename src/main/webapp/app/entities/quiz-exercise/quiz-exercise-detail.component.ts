@@ -2,29 +2,32 @@ import { ChangeDetectionStrategy, ChangeDetectorRef, Component, HostListener, On
 import { QuizExerciseService } from './quiz-exercise.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { Course } from 'app/entities/course';
 import { CourseService } from 'app/entities/course/course.service';
 import { QuizExercise } from './quiz-exercise.model';
 import { DragAndDropQuestionUtil } from 'app/components/util/drag-and-drop-question-util.service';
 import { ShortAnswerQuestionUtil } from 'app/components/util/short-answer-question-util.service';
 import { TranslateService } from '@ngx-translate/core';
 import { FileUploaderService } from 'app/shared/http/file-uploader.service';
-import { QuizQuestion, QuizQuestionType, ScoringType } from '../quiz-question';
-import { MultipleChoiceQuestion } from 'app/entities/multiple-choice-question';
-import { DragAndDropQuestion } from 'app/entities/drag-and-drop-question';
-import { ShortAnswerQuestion } from 'app/entities/short-answer-question';
-import { AnswerOption } from 'app/entities/answer-option';
 import { Duration, Option } from './quiz-exercise-interfaces';
 import { NgbDate } from '@ng-bootstrap/ng-bootstrap';
 import * as moment from 'moment';
 import { Moment } from 'moment';
 import { Location } from '@angular/common';
-import { ComponentCanDeactivate } from 'app/shared';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/alert/alert.service';
 import { Observable } from 'rxjs/Observable';
-import { EditDragAndDropQuestionComponent, EditMultipleChoiceQuestionComponent, EditShortAnswerQuestionComponent } from 'app/quiz/edit';
 import { EditQuizQuestion } from 'app/quiz/edit/edit-quiz-question.interface';
-import { ExerciseCategory, ExerciseService } from 'app/entities/exercise';
+import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
+import { EditMultipleChoiceQuestionComponent } from 'app/quiz/edit/multiple-choice-question/edit-multiple-choice-question.component';
+import { QuizQuestion, QuizQuestionType, ScoringType } from 'app/entities/quiz-question/quiz-question.model';
+import { ExerciseCategory } from 'app/entities/exercise/exercise.model';
+import { EditDragAndDropQuestionComponent } from 'app/quiz/edit/drag-and-drop-question/edit-drag-and-drop-question.component';
+import { AnswerOption } from 'app/entities/answer-option/answer-option.model';
+import { MultipleChoiceQuestion } from 'app/entities/multiple-choice-question/multiple-choice-question.model';
+import { ShortAnswerQuestion } from 'app/entities/short-answer-question/short-answer-question.model';
+import { ExerciseService } from 'app/entities/exercise/exercise.service';
+import { DragAndDropQuestion } from 'app/entities/drag-and-drop-question/drag-and-drop-question.model';
+import { EditShortAnswerQuestionComponent } from 'app/quiz/edit/short-answer-question/edit-short-answer-question.component';
+import { Course } from 'app/entities/course/course.model';
 
 interface Reason {
     translateKey: string;
@@ -108,7 +111,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
         private translateService: TranslateService,
         private fileUploaderService: FileUploaderService,
         private exerciseService: ExerciseService,
-        private jhiAlertService: JhiAlertService,
+        private jhiAlertService: AlertService,
         private location: Location,
         private changeDetector: ChangeDetectorRef,
     ) {}
