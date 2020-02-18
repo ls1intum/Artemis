@@ -4,6 +4,7 @@ import { ArtemisCourseModule } from './course/course.module';
 import { ArtemisExerciseModule } from './exercise/exercise.module';
 import { ArtemisQuizExerciseModule } from './quiz-exercise/quiz-exercise.module';
 import { ArtemisParticipationModule } from './participation/participation.module';
+import { ArtemisTeamModule } from 'app/entities/team/team.module';
 import { ArtemisProgrammingExerciseModule } from './programming-exercise/programming-exercise.module';
 import { ArtemisModelingExerciseModule } from './modeling-exercise/modeling-exercise.module';
 import { ArtemisTextExerciseModule } from './text-exercise/text-exercise.module';
@@ -21,6 +22,7 @@ import { ArtemisResultModule } from 'app/entities/result/result.module';
         ArtemisExerciseModule,
         ArtemisQuizExerciseModule,
         ArtemisParticipationModule,
+        ArtemisTeamModule,
         ArtemisProgrammingExerciseModule,
         ArtemisExerciseHintModule,
         ArtemisModelingExerciseModule,

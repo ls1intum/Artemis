@@ -14,6 +14,7 @@ import { fileUploadExerciseRoute } from 'app/entities/file-upload-exercise/file-
 import { FileUploadExerciseComponent } from 'app/entities/file-upload-exercise/file-upload-exercise.component';
 import { FileUploadExerciseUpdateComponent } from 'app/entities/file-upload-exercise/file-upload-exercise-update.component';
 import { FileUploadExerciseDetailComponent } from 'app/entities/file-upload-exercise/file-upload-exercise-detail.component';
+import { ArtemisTeamConfigFormGroupModule } from 'app/components/exercise/team-config-form-group/team-config-form-group.module';
 
 const ENTITY_STATES = [...fileUploadExerciseRoute];
 
@@ -28,6 +29,7 @@ const ENTITY_STATES = [...fileUploadExerciseRoute];
         ArtemisMarkdownEditorModule,
         ArtemisPresentationScoreModule,
         ArtemisAssessmentSharedModule,
+        ArtemisTeamConfigFormGroupModule,
     ],
     declarations: [FileUploadExerciseComponent, FileUploadExerciseDetailComponent, FileUploadExerciseUpdateComponent],
     exports: [FileUploadExerciseComponent],

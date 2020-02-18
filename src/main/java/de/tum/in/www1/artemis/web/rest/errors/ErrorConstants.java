@@ -30,6 +30,8 @@ public final class ErrorConstants {
 
     public static final URI EMAIL_NOT_FOUND_TYPE = URI.create(PROBLEM_BASE_URL + "/email-not-found");
 
+    public static final URI STUDENT_ALREADY_ASSIGNED_TYPE = URI.create(PROBLEM_BASE_URL + "/student-already-assigned");
+
     private ErrorConstants() {
     }
 }
