@@ -37,9 +37,19 @@ public class ManagementResourceIntegrationTest extends AbstractSpringIntegration
     @Autowired
     PersistenceAuditEventRepository persistenceAuditEventRepository;
 
+    private PersistentAuditEvent persAuditEvent;
+
     @BeforeEach
     public void initTestCase() {
         database.addUsers(2, 2, 2);
+        persAuditEvent = new PersistentAuditEvent();
+        persAuditEvent.setPrincipal("student1");
+        persAuditEvent.setAuditEventDate(Instant.now());
+        persAuditEvent.setAuditEventType("type");
+        var data = new HashMap<String, String>();
+        data.put("1", "2");
+        persAuditEvent.setData(data);
+        persAuditEvent = persistenceAuditEventRepository.save(persAuditEvent);
     }
 
     @AfterEach
@@ -59,11 +69,6 @@ public class ManagementResourceIntegrationTest extends AbstractSpringIntegration
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     public void getAllAuditEvents() throws Exception {
-        var persAuditEvent = new PersistentAuditEvent();
-        persAuditEvent.setPrincipal("student1");
-        persAuditEvent.setAuditEventDate(Instant.now());
-        persAuditEvent.setAuditEventType("type");
-        persistenceAuditEventRepository.save(persAuditEvent);
         var auditEvents = request.getList("/management/audits", HttpStatus.OK, AuditEvent.class);
         var expectedAuditEvents = auditEventService.findAll(PageRequest.of(0, 20));
         assertThat(auditEvents).isEqualTo(expectedAuditEvents);
@@ -74,5 +79,15 @@ public class ManagementResourceIntegrationTest extends AbstractSpringIntegration
     public void getAllAuditEventsByDate() throws Exception {
         LocalDate date = LocalDate.now();
         var auditEvents = request.getList("/management/audits?fromDate=2020-01-20&toDate=" + date.toString(), HttpStatus.OK, AuditEvent.class);
+        var expectedAuditEvents = auditEventService.findAll(PageRequest.of(0, 20));
+        assertThat(auditEvents).isEqualTo(expectedAuditEvents);
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    public void getAuditEvent() throws Exception {
+        var auditEvent = request.get("/management/audits/" + persAuditEvent.getId(), HttpStatus.OK, AuditEvent.class);
+        var expectedAuditEvent = auditEventService.find(persAuditEvent.getId());
+        assertThat(auditEvent).isEqualTo(expectedAuditEvent);
     }
 }
