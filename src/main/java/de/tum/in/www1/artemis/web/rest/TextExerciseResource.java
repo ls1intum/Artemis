@@ -18,7 +18,6 @@ import org.springframework.web.bind.annotation.*;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.ExampleSubmissionRepository;
-import de.tum.in.www1.artemis.repository.GradingCriterionRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.TextExerciseRepository;
 import de.tum.in.www1.artemis.service.*;
@@ -66,7 +65,7 @@ public class TextExerciseResource {
     public TextExerciseResource(TextExerciseRepository textExerciseRepository, TextExerciseService textExerciseService, TextAssessmentService textAssessmentService,
             UserService userService, AuthorizationCheckService authCheckService, CourseService courseService, ParticipationService participationService,
             ResultRepository resultRepository, GroupNotificationService groupNotificationService, ExampleSubmissionRepository exampleSubmissionRepository,
-            Optional<TextClusteringScheduleService> textClusteringScheduleService, ExerciseService exerciseService, GradingCriterionRepository gradingCriterionRepository) {
+            Optional<TextClusteringScheduleService> textClusteringScheduleService, ExerciseService exerciseService) {
         this.textAssessmentService = textAssessmentService;
         this.textExerciseService = textExerciseService;
         this.textExerciseRepository = textExerciseRepository;
