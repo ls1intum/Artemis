@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.net.URI;
+import java.time.ZonedDateTime;
 import java.util.Optional;
 
 import org.junit.jupiter.api.AfterEach;
@@ -13,12 +14,14 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
+import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.RequestUtilService;
 
 public class ParticipationIntegrationTest extends AbstractSpringIntegrationTest {
@@ -116,6 +119,23 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationTest 
         var participation1 = request.post("/api/courses/" + course.getId() + "/exercises/" + textExercise.getId() + "/participations", null, HttpStatus.CREATED);
         var participation2 = request.post("/api/courses/" + course.getId() + "/exercises/" + textExercise.getId() + "/participations", null, HttpStatus.CREATED);
         assertThat(participation1.equals(participation2));
+    }
+
+    @Test
+    @WithMockUser(username = "student2")
+    public void participateInTextExercise_releaseDateNotReached() throws Exception {
+        textExercise.setReleaseDate(ZonedDateTime.now().plusHours(2));
+        exerciseRepo.save(textExercise);
+        request.post("/api/courses/" + course.getId() + "/exercises/" + textExercise.getId() + "/participations", null, HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void createParticipation() throws Exception {
+        var participation = ModelFactory.generateStudentParticipation(InitializationState.INITIALIZED, textExercise, database.getUserByLogin("student1"));
+        var actualParticipation = request.postWithResponseBody("/api/participations", participation, Participation.class, HttpStatus.CREATED);
+        var expectedParticipation = participationRepo.findById(actualParticipation.getId()).get();
+        assertThat(actualParticipation).isEqualTo(expectedParticipation);
     }
 
     @Test
