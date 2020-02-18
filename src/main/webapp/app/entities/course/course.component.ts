@@ -1,12 +1,13 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Subscription } from 'rxjs/Subscription';
-import { JhiAlertService, JhiEventManager } from 'ng-jhipster';
+import { JhiEventManager } from 'ng-jhipster';
 import { Course } from './course.model';
 import { CourseService } from './course.service';
 import { ARTEMIS_DEFAULT_COLOR } from 'app/app.constants';
 import { onError } from 'app/utils/global.utils';
 import { Subject } from 'rxjs';
+import { AlertService } from 'app/core/alert/alert.service';
 
 @Component({
     selector: 'jhi-course',
@@ -26,7 +27,7 @@ export class CourseComponent implements OnInit, OnDestroy {
 
     readonly ARTEMIS_DEFAULT_COLOR = ARTEMIS_DEFAULT_COLOR;
 
-    constructor(private courseService: CourseService, private jhiAlertService: JhiAlertService, private eventManager: JhiEventManager) {
+    constructor(private courseService: CourseService, private jhiAlertService: AlertService, private eventManager: JhiEventManager) {
         this.predicate = 'id';
         // show the newest courses first and the oldest last
         this.reverse = false;

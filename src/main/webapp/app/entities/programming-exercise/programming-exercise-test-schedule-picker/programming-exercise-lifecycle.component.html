@@ -58,8 +58,8 @@
                     (click)="toggleHasManualTests()"
                     class="btn btn-light scheduled-test scheduled-test--can-toggle btn-lifecycle calendar-event-toggle"
                 >
-                    <fa-icon class="icon-static" icon="user-check" size="lg"></fa-icon>
-                    <fa-icon class="icon-remove" icon="user-minus" size="lg"></fa-icon>
+                    <fa-icon class="icon-static" [icon]="'user-check'" size="lg"></fa-icon>
+                    <fa-icon class="icon-remove" [icon]="'user-minus'" size="lg"></fa-icon>
                 </div>
                 <div
                     *ngIf="!exercise.assessmentType || exercise.assessmentType === assessmentType.AUTOMATIC"

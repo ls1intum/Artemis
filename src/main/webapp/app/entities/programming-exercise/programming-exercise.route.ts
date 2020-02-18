@@ -10,8 +10,8 @@ import { ProgrammingExerciseService } from './services/programming-exercise.serv
 import { ProgrammingExerciseComponent } from './programming-exercise.component';
 import { ProgrammingExerciseDetailComponent } from './programming-exercise-detail.component';
 import { ProgrammingExerciseUpdateComponent } from './programming-exercise-update.component';
-import { ProgrammingExerciseManageTestCasesComponent } from 'app/entities/programming-exercise/test-cases';
 import { CanDeactivateGuard } from 'app/shared/guard/can-deactivate.guard';
+import { ProgrammingExerciseManageTestCasesComponent } from 'app/entities/programming-exercise/test-cases/programming-exercise-manage-test-cases.component';
 
 @Injectable({ providedIn: 'root' })
 export class ProgrammingExerciseResolve implements Resolve<ProgrammingExercise> {

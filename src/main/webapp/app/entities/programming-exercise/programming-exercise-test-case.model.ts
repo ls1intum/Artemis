@@ -1,4 +1,4 @@
-import { ProgrammingExercise } from '.';
+import { ProgrammingExercise } from 'app/entities/programming-exercise/programming-exercise.model';
 
 export interface IProgrammingExerciseTestCase {
     id: number;

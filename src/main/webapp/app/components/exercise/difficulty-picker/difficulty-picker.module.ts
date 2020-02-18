@@ -1,6 +1,6 @@
 import { NgModule } from '@angular/core';
 
-import { ArtemisSharedModule } from 'app/shared';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { DifficultyPickerComponent } from 'app/components/exercise/difficulty-picker/difficulty-picker.component';
 
 @NgModule({

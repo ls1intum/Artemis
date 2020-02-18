@@ -1,17 +1,18 @@
 import * as $ from 'jquery';
 import { AfterViewInit, Component, ContentChild, ElementRef, Input, ViewEncapsulation } from '@angular/core';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/alert/alert.service';
 
 import { WindowRef } from 'app/core/websocket/window.service';
 import Interactable from '@interactjs/core/Interactable';
 import interact from 'interactjs';
-import { CodeEditorGridService, ResizeType } from 'app/code-editor/service';
+import { CodeEditorGridService } from 'app/code-editor/service/code-editor-grid.service';
+import { ResizeType } from 'app/code-editor/model/code-editor.model';
 
 @Component({
     selector: 'jhi-code-editor-grid',
     templateUrl: './code-editor-grid.component.html',
     styleUrls: ['./code-editor-grid.scss'],
-    providers: [JhiAlertService, WindowRef, CodeEditorGridService],
+    providers: [WindowRef, CodeEditorGridService],
     encapsulation: ViewEncapsulation.None,
 })
 export class CodeEditorGridComponent implements AfterViewInit {

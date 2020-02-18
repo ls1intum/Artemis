@@ -17,7 +17,7 @@
                 "title": "File Upload Exercise"
             },
             "filePattern": "File Pattern",
-            "filePatternInfo": "Here you can specify a coma separated list of allowed file extensions.",
+            "filePatternInfo": "Here you can specify a coma separated list of allowed file extensions without dots (e.g. 'png, pdf').",
             "submitSuccessful": "Your answer was submitted successfully! You can still submit again or wait for your feedback.",
             "submitDeadlineMissed": "Your answer was submitted successfully! You can still submit again or  wait for your feedback. As you missed the deadline the score will not be counted.",
             "error": "An error occurred. Please try again later.",

@@ -1,6 +1,6 @@
 import { Component, Input } from '@angular/core';
-import { Result } from './';
 import { MIN_POINTS_GREEN, MIN_POINTS_ORANGE } from 'app/app.constants';
+import { Result } from 'app/entities/result/result.model';
 
 // Modal -> Result details view
 @Component({

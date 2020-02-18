@@ -94,7 +94,7 @@ export class JavaBridgeService implements JavaDowncallBridge, JavaUpcallBridge {
      * Gets called by the IDE. Informs the Angular app about a newly opened exercise.
      *
      * @param opened The ID of the exercise that was opened by the user.
-     * @param The ExerciseView which is currently open in IntelliJ (instructor vs. student)
+     * @param view ExerciseView which is currently open in IntelliJ (instructor vs. student)
      */
     onExerciseOpened(opened: number, view: string): void {
         const inInstructorView = view === ExerciseView.INSTRUCTOR;

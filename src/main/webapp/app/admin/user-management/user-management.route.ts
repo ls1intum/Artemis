@@ -1,10 +1,11 @@
 import { Injectable } from '@angular/core';
 import { ActivatedRouteSnapshot, Resolve, Route, RouterStateSnapshot } from '@angular/router';
 import { JhiResolvePagingParams } from 'ng-jhipster';
-
-import { UserManagementComponent, UserManagementDetailComponent, UserManagementUpdateComponent } from 'app/admin';
 import { User } from 'app/core/user/user.model';
 import { UserService } from 'app/core/user/user.service';
+import { UserManagementDetailComponent } from 'app/admin/user-management/user-management-detail.component';
+import { UserManagementComponent } from 'app/admin/user-management/user-management.component';
+import { UserManagementUpdateComponent } from 'app/admin/user-management/user-management-update.component';
 
 @Injectable({ providedIn: 'root' })
 export class UserMgmtResolve implements Resolve<any> {

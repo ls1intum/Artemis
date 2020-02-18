@@ -1,10 +1,9 @@
 import { Injectable } from '@angular/core';
-import { ShortAnswerSolution } from '../../entities/short-answer-solution';
-import { ShortAnswerSpot } from '../../entities/short-answer-spot';
-import { ShortAnswerMapping } from '../../entities/short-answer-mapping';
-import { ShortAnswerQuestion } from '../../entities/short-answer-question';
-import { ArtemisMarkdown } from '../../components/util/markdown.service';
-import { SafeHtml } from '@angular/platform-browser';
+import { ArtemisMarkdown } from 'app/components/util/markdown.service';
+import { ShortAnswerQuestion } from 'app/entities/short-answer-question/short-answer-question.model';
+import { ShortAnswerMapping } from 'app/entities/short-answer-mapping/short-answer-mapping.model';
+import { ShortAnswerSpot } from 'app/entities/short-answer-spot/short-answer-spot.model';
+import { ShortAnswerSolution } from 'app/entities/short-answer-solution/short-answer-solution.model';
 
 @Injectable({ providedIn: 'root' })
 export class ShortAnswerQuestionUtil {

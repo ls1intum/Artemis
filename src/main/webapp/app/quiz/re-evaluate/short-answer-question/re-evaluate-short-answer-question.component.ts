@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { ShortAnswerQuestion } from '../../../entities/short-answer-question';
+import { ShortAnswerQuestion } from 'app/entities/short-answer-question/short-answer-question.model';
 
 @Component({
     selector: 'jhi-re-evaluate-short-answer-question',

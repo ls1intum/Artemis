@@ -85,6 +85,22 @@ public abstract class Participation implements Serializable, ParticipationInterf
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     private Set<Submission> submissions = new HashSet<>();
 
+    /**
+     * This property stores the total number of submissions in this participation. Not stored in the database, computed dynamically and used in showing statistics to the user in
+     * the exercise view.
+     */
+    @Transient
+    @JsonProperty
+    private Integer submissionCount;
+
+    public Integer getSubmissionCount() {
+        return submissionCount;
+    }
+
+    public void setSubmissionCount(Integer submissionCount) {
+        this.submissionCount = submissionCount;
+    }
+
     // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
     public Long getId() {
         return id;
@@ -246,7 +262,7 @@ public abstract class Participation implements Serializable, ParticipationInterf
     @Override
     public String toString() {
         return "Participation{" + "id=" + id + ", initializationState=" + initializationState + ", initializationDate=" + initializationDate + ", results=" + results
-                + ", submissions=" + submissions + '}';
+                + ", submissions=" + submissions + ", submissionCount=" + submissionCount + "}";
     }
 
     /**

@@ -173,7 +173,7 @@ public class JSONParser {
      * @return the UMLAttribute object parsed from the JSON object
      */
     private static UMLAttribute parseAttribute(JsonObject attributeJson) {
-        String[] attributeNameArray = attributeJson.get(JSONMapping.elementName).getAsString().replaceAll(" ", "").split(":");
+        String[] attributeNameArray = attributeJson.get(JSONMapping.elementName).getAsString().replaceAll("\\s+", "").split(":");
         String attributeName = attributeNameArray[0];
         String attributeType = "";
 
@@ -192,7 +192,7 @@ public class JSONParser {
      */
     private static UMLMethod parseMethod(JsonObject methodJson) {
         String completeMethodName = methodJson.get(JSONMapping.elementName).getAsString();
-        String[] methodEntryArray = completeMethodName.replaceAll(" ", "").split(":");
+        String[] methodEntryArray = completeMethodName.replaceAll("\\s+", "").split(":");
         String[] methodParts = methodEntryArray[0].split("[()]");
 
         String methodName = "";

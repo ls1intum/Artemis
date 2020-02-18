@@ -1,9 +1,9 @@
-import { DatePipe } from '@angular/common';
+import { DatePipe, registerLocaleData } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ElementRef, NgModule, Renderer2 } from '@angular/core';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
-import { NgbActiveModal, NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { JhiAlertService, JhiDataUtils, JhiDateUtils, JhiEventManager, JhiLanguageService, JhiParseLinks } from 'ng-jhipster';
+import { NgbActiveModal, NgbModal, NgbDatepickerConfig } from '@ng-bootstrap/ng-bootstrap';
+import { AlertService, JhiDataUtils, JhiDateUtils, JhiEventManager, JhiLanguageService, JhiParseLinks } from 'ng-jhipster';
 
 import { MockLanguageHelper, MockLanguageService } from './helpers/mock-language.service';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
@@ -12,20 +12,22 @@ import { MockAccountService } from './helpers/mock-account.service';
 import { MockActivatedRoute, MockRouter } from './helpers/mock-route.service';
 import { MockActiveModal } from './helpers/mock-active-modal.service';
 import { MockEventManager } from './helpers/mock-event-manager.service';
-import { CookieModule, CookieOptionsProvider, CookieService } from 'ngx-cookie';
+import { CookieService } from 'ngx-cookie-service';
+import { FaIconLibrary, FontAwesomeModule, FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { fas } from '@fortawesome/free-solid-svg-icons';
+import locale from '@angular/common/locales/en';
+import { fontAwesomeIcons } from 'app/core/icons/font-awesome-icons';
+import * as moment from 'moment';
 import { MockComponent } from 'ng-mocks';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
-// TODO: This module was taken from auto generated tests. Needs to be reworked completely.
 @NgModule({
-    imports: [CookieModule.forRoot(), HttpClientTestingModule],
+    imports: [HttpClientTestingModule, FontAwesomeModule],
     providers: [
         DatePipe,
         JhiDataUtils,
         JhiDateUtils,
         JhiParseLinks,
         CookieService,
-        CookieOptionsProvider,
         {
             provide: JhiLanguageService,
             useClass: MockLanguageService,
@@ -34,10 +36,6 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
             provide: JhiLanguageHelper,
             useClass: MockLanguageHelper,
         },
-        // {
-        //     provide: JhiTrackerService,
-        //     useValue: null,
-        // },
         {
             provide: JhiEventManager,
             useClass: MockEventManager,
@@ -54,10 +52,6 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
             provide: Router,
             useClass: MockRouter,
         },
-        // {
-        //     provide: Principal,
-        //     useClass: MockPrincipal,
-        // },
         {
             provide: AccountService,
             useClass: MockAccountService,
@@ -71,7 +65,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
             useValue: null,
         },
         {
-            provide: JhiAlertService,
+            provide: AlertService,
             useValue: null,
         },
         {
@@ -82,4 +76,12 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
     declarations: [MockComponent(FaIconComponent)],
     exports: [MockComponent(FaIconComponent)],
 })
-export class ArtemisTestModule {}
+export class ArtemisTestModule {
+    constructor(iconLibrary: FaIconLibrary, dpConfig: NgbDatepickerConfig, languageService: JhiLanguageService) {
+        registerLocaleData(locale);
+        iconLibrary.addIconPacks(fas);
+        iconLibrary.addIcons(...fontAwesomeIcons);
+        dpConfig.minDate = { year: moment().year() - 100, month: 1, day: 1 };
+        languageService.init();
+    }
+}

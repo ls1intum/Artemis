@@ -2,11 +2,9 @@ import { Component, OnInit } from '@angular/core';
 import { SafeHtml } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CourseService } from 'app/entities/course/course.service';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/alert/alert.service';
 import { User } from 'app/core/user/user.model';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { Exercise, ExerciseService, ExerciseType } from 'app/entities/exercise';
-import { TutorParticipation, TutorParticipationStatus } from 'app/entities/tutor-participation';
 import { TutorParticipationService } from 'app/tutor-exercise-dashboard/tutor-participation.service';
 import { TextSubmissionService } from 'app/entities/text-submission/text-submission.service';
 import { ExampleSubmission } from 'app/entities/example-submission/example-submission.model';
@@ -18,8 +16,8 @@ import { ComplaintService } from 'app/entities/complaint/complaint.service';
 import { Complaint } from 'app/entities/complaint/complaint.model';
 import { Submission } from 'app/entities/submission/submission.model';
 import { ModelingSubmissionService } from 'app/entities/modeling-submission/modeling-submission.service';
-import { Observable, of, throwError } from 'rxjs';
-import { map, catchError } from 'rxjs/operators';
+import { Observable, of } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { StatsForDashboard } from 'app/instructor-course-dashboard/stats-for-dashboard.model';
 import { TranslateService } from '@ngx-translate/core';
 import { FileUploadSubmissionService } from 'app/entities/file-upload-submission/file-upload-submission.service';
@@ -31,6 +29,9 @@ import { ProgrammingAssessmentManualResultDialogComponent } from 'app/programmin
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { AccountService } from 'app/core/auth/account.service';
 import { cloneDeep } from 'lodash';
+import { Exercise, ExerciseType } from 'app/entities/exercise/exercise.model';
+import { TutorParticipation, TutorParticipationStatus } from 'app/entities/tutor-participation/tutor-participation.model';
+import { ExerciseService } from 'app/entities/exercise/exercise.service';
 
 export interface ExampleSubmissionQueryParams {
     readOnly?: boolean;
@@ -41,7 +42,7 @@ export interface ExampleSubmissionQueryParams {
     selector: 'jhi-courses',
     templateUrl: './tutor-exercise-dashboard.component.html',
     styles: ['jhi-collapsable-assessment-instructions { max-height: 100vh }'],
-    providers: [JhiAlertService, CourseService],
+    providers: [CourseService],
 })
 export class TutorExerciseDashboardComponent implements OnInit {
     exercise: Exercise;
@@ -101,7 +102,7 @@ export class TutorExerciseDashboardComponent implements OnInit {
 
     constructor(
         private exerciseService: ExerciseService,
-        private jhiAlertService: JhiAlertService,
+        private jhiAlertService: AlertService,
         private translateService: TranslateService,
         private accountService: AccountService,
         private route: ActivatedRoute,

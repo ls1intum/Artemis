@@ -1,9 +1,10 @@
 import { Component, Input, OnChanges, SimpleChanges } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
-import { hasSolutionParticipationChanged, hasTemplateParticipationChanged, Participation } from 'app/entities/participation';
 import { ParticipationWebsocketService } from 'app/entities/participation/participation-websocket.service';
-import { ProgrammingExercise } from 'app/entities/programming-exercise';
+import { Participation } from 'app/entities/participation/participation.model';
+import { ProgrammingExercise } from 'app/entities/programming-exercise/programming-exercise.model';
+import { hasSolutionParticipationChanged, hasTemplateParticipationChanged } from 'app/entities/participation/participation-utils';
 
 enum ProgrammingExerciseIssues {
     TEMPLATE_PASSING = 'TEMPLATE_PASSING',

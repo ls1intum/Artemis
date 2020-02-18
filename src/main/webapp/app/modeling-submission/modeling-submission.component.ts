@@ -1,37 +1,39 @@
 import { Component, HostListener, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subscription } from 'rxjs/Subscription';
-import { ModelingExercise } from '../entities/modeling-exercise';
-import { StudentParticipation } from '../entities/participation';
 import { ParticipationWebsocketService } from 'app/entities/participation/participation-websocket.service';
-import { ApollonDiagramService } from '../entities/apollon-diagram';
 import { Selection, UMLDiagramType, UMLModel, UMLRelationshipType } from '@ls1intum/apollon';
-import { JhiAlertService } from 'ng-jhipster';
-import { Result, ResultService } from '../entities/result';
-import { ModelingSubmission, ModelingSubmissionService } from '../entities/modeling-submission';
+import { AlertService } from 'app/core/alert/alert.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { ComponentCanDeactivate } from '../shared';
 import { Observable } from 'rxjs/Observable';
 import { TranslateService } from '@ngx-translate/core';
 import * as moment from 'moment';
-import { ModelingEditorComponent } from 'app/modeling-editor';
-import { ModelingAssessmentService } from 'app/entities/modeling-assessment';
-import { Feedback } from 'app/entities/feedback';
-import { ComplaintType } from 'app/entities/complaint';
-import { filter } from 'rxjs/operators';
-import { ButtonType } from 'app/shared/components';
 import { omit } from 'lodash';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { modelingTour } from 'app/guided-tour/tours/modeling-tour';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
-import { participationStatus } from 'app/entities/exercise';
+import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
+import { ModelingSubmission } from 'app/entities/modeling-submission/modeling-submission.model';
+import { ResultService } from 'app/entities/result/result.service';
+import { ModelingExercise } from 'app/entities/modeling-exercise/modeling-exercise.model';
+import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { Result } from 'app/entities/result/result.model';
+import { ModelingEditorComponent } from 'app/modeling-editor/modeling-editor.component';
+import { ModelingSubmissionService } from 'app/entities/modeling-submission/modeling-submission.service';
+import { ComplaintType } from 'app/entities/complaint/complaint.model';
+import { ModelingAssessmentService } from 'app/entities/modeling-assessment/modeling-assessment.service';
+import { Feedback } from 'app/entities/feedback/feedback.model';
+import { ApollonDiagramService } from 'app/entities/apollon-diagram/apollon-diagram.service';
+import { ButtonType } from 'app/shared/components/button.component';
+import { participationStatus } from 'app/entities/exercise/exercise-utils';
+import { filter } from 'rxjs/operators';
 
 @Component({
     selector: 'jhi-modeling-submission',
     templateUrl: './modeling-submission.component.html',
     styleUrls: ['./modeling-submission.component.scss'],
 })
-// TODO CZ: move assessment stuff to separate assessment result view?
+// TODO CZ: move assessment functionality to separate assessment result view?
 export class ModelingSubmissionComponent implements OnInit, OnDestroy, ComponentCanDeactivate {
     @ViewChild(ModelingEditorComponent, { static: false })
     modelingEditor: ModelingEditorComponent;
@@ -75,7 +77,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         private modelingSubmissionService: ModelingSubmissionService,
         private modelingAssessmentService: ModelingAssessmentService,
         private resultService: ResultService,
-        private jhiAlertService: JhiAlertService,
+        private jhiAlertService: AlertService,
         private route: ActivatedRoute,
         private modalService: NgbModal,
         private translateService: TranslateService,

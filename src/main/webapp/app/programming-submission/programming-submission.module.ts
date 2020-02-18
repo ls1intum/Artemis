@@ -1,6 +1,5 @@
 import { NgModule } from '@angular/core';
-
-import { ArtemisSharedModule } from 'app/shared';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
 
 @NgModule({
     imports: [ArtemisSharedModule],

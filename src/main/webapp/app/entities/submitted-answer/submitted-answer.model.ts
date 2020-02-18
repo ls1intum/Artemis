@@ -1,6 +1,6 @@
-import { BaseEntity } from 'app/shared';
-import { QuizQuestion, QuizQuestionType } from '../quiz-question';
-import { QuizSubmission } from '../quiz-submission';
+import { BaseEntity } from 'app/shared/model/base-entity';
+import { QuizSubmission } from 'app/entities/quiz-submission/quiz-submission.model';
+import { QuizQuestion, QuizQuestionType } from 'app/entities/quiz-question/quiz-question.model';
 
 export abstract class SubmittedAnswer implements BaseEntity {
     public id: number;

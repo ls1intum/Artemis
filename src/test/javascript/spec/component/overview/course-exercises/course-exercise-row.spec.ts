@@ -11,20 +11,22 @@ import { TranslateModule } from '@ngx-translate/core';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { MockJavaBridgeService } from '../../../mocks/mock-java-bridge.service';
 import { MockCourseExerciseService } from '../../../mocks/mock-course-exercise.service';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/alert/alert.service';
 import { MockAlertService } from '../../../helpers/mock-alert.service';
-import { ArtemisOverviewModule, CourseExerciseRowComponent } from 'app/overview';
-import { MockParticipationWebsocketService } from '../../../mocks';
-import { Result } from 'app/entities/result';
+import { MockParticipationWebsocketService } from '../../../mocks/mock-participation-websocket.service';
+import { Result } from 'app/entities/result/result.model';
 import { DeviceDetectorService } from 'ngx-device-detector';
-import { Exercise, ExerciseType, ParticipationStatus } from 'app/entities/exercise';
 import { of } from 'rxjs';
-import { InitializationState, StudentParticipation } from 'app/entities/participation';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../../mocks/mock-account.service';
 import * as moment from 'moment';
-import { QuizExercise } from 'app/entities/quiz-exercise';
 import { MockCourseService } from '../../../mocks/mock-course.service';
+import { Exercise, ExerciseType, ParticipationStatus } from 'app/entities/exercise/exercise.model';
+import { ArtemisOverviewModule } from 'app/overview/overview.module';
+import { InitializationState } from 'app/entities/participation/participation.model';
+import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { CourseExerciseRowComponent } from 'app/overview/course-exercises/course-exercise-row.component';
+import { QuizExercise } from 'app/entities/quiz-exercise/quiz-exercise.model';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -46,7 +48,7 @@ describe('CourseExerciseRowComponent', () => {
                 { provide: CourseExerciseService, useClass: MockCourseExerciseService },
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: JavaBridgeService, useClass: MockJavaBridgeService },
-                { provide: JhiAlertService, useClass: MockAlertService },
+                { provide: AlertService, useClass: MockAlertService },
             ],
         })
             .overrideModule(ArtemisTestModule, { set: { declarations: [], exports: [] } })

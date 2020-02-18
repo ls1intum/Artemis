@@ -274,7 +274,7 @@ public class ResultResource {
             // }
             // handles new results and sends them to LTI consumers
             if (participation instanceof ProgrammingExerciseStudentParticipation) {
-                ltiService.onNewBuildResult((ProgrammingExerciseStudentParticipation) participation);
+                ltiService.onNewResult((ProgrammingExerciseStudentParticipation) participation);
             }
             log.info("The new result for {} was saved successfully", planKey);
         }
@@ -359,7 +359,7 @@ public class ResultResource {
                 continue;
             }
 
-            relevantSubmissionWithResult.getResult().setSubmissionCount(participation.getSubmissions().size());
+            participation.setSubmissionCount(participation.getSubmissions().size());
             if (withSubmissions) {
                 relevantSubmissionWithResult.getResult().setSubmission(relevantSubmissionWithResult);
             }
