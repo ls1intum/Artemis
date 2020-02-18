@@ -1,6 +1,9 @@
 package de.tum.in.www1.artemis;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doReturn;
 
 import java.net.URI;
 import java.time.ZonedDateTime;
@@ -18,6 +21,7 @@ import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.Participation;
+import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.feature.Feature;
@@ -267,5 +271,26 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationTest 
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void deleteParticipation_notFound() throws Exception {
         request.delete("/api/participations/" + 1, HttpStatus.NOT_FOUND);
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void resumeProgrammingExerciseParticipation() throws Exception {
+        var participation = ModelFactory.generateProgrammingExerciseStudentParticipation(InitializationState.UNINITIALIZED, programmingExercise, database.getUserByLogin("tutor1"));
+        participationRepo.save(participation);
+        doReturn("Success").when(continuousIntegrationService).copyBuildPlan(any(), any(), any(), any(), any());
+        doNothing().when(continuousIntegrationService).configureBuildPlan(any());
+        doNothing().when(continuousIntegrationService).performEmptySetupCommit(any());
+        request.putWithResponseBody("/api/courses/" + course.getId() + "/exercises/" + programmingExercise.getId() + "/resume-programming-participation", null,
+                ProgrammingExerciseStudentParticipation.class, HttpStatus.OK);
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void resumeProgrammingExerciseParticipation_wrongExerciseId() throws Exception {
+        var participation = ModelFactory.generateProgrammingExerciseStudentParticipation(InitializationState.UNINITIALIZED, programmingExercise, database.getUserByLogin("tutor1"));
+        participationRepo.save(participation);
+        request.putWithResponseBody("/api/courses/" + course.getId() + "/exercises/100/resume-programming-participation", null, ProgrammingExerciseStudentParticipation.class,
+                HttpStatus.BAD_REQUEST);
     }
 }
