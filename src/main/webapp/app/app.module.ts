@@ -50,6 +50,7 @@ import { ArtemisInstructorCourseStatsDashboardModule } from 'app/instructor-cour
 import { ArtemisComplaintsModule } from 'app/complaints/complaints.module';
 import { ArtemisHomeModule } from 'app/home/home.module';
 import { OrionOutdatedComponent } from 'app/orion/outdated-plugin-warning/orion-outdated.component';
+import { ArtemisTeamModule } from 'app/entities/team/team.module';
 
 @NgModule({
     imports: [
@@ -64,6 +65,7 @@ import { OrionOutdatedComponent } from 'app/orion/outdated-plugin-warning/orion-
         GuidedTourModule,
         ArtemisLegalModule,
         ArtemisParticipationModule.forRoot(),
+        ArtemisTeamModule.forRoot(),
         ArtemisProgrammingSubmissionModule.forRoot(),
         ArtemisOverviewModule,
         ArtemisAccountModule,

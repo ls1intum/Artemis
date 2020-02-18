@@ -7,11 +7,17 @@ import { Course } from 'app/entities/course/course.model';
 import { ExampleSubmission } from 'app/entities/example-submission/example-submission.model';
 import { Attachment } from 'app/entities/attachment/attachment.model';
 import { StudentQuestion } from 'app/entities/student-question/student-question.model';
+import { TeamAssignmentConfig } from 'app/entities/team-assignment-config/team-assignment-config.model';
 
 export const enum DifficultyLevel {
     EASY = 'EASY',
     MEDIUM = 'MEDIUM',
     HARD = 'HARD',
+}
+
+export const enum ExerciseMode {
+    INDIVIDUAL = 'INDIVIDUAL',
+    TEAM = 'TEAM',
 }
 
 // IMPORTANT NOTICE: The following strings have to be consistent with the ones defined in Exercise.java
@@ -56,6 +62,8 @@ export abstract class Exercise implements BaseEntity {
     public maxScore: number;
     public assessmentType: AssessmentType;
     public difficulty: DifficultyLevel | null;
+    public mode: ExerciseMode = ExerciseMode.INDIVIDUAL; // default value
+    public teamAssignmentConfig: TeamAssignmentConfig | null;
     public categories: string[];
     public type: ExerciseType;
 
@@ -78,6 +86,7 @@ export abstract class Exercise implements BaseEntity {
     // helper attributes
     public isAtLeastTutor = false; // default value
     public isAtLeastInstructor = false; // default value
+    public teamMode = false; // default value
     public assessmentDueDateError = false;
     public dueDateError = false;
     public loading: boolean;
