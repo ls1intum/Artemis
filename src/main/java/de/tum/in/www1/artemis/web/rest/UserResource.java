@@ -193,6 +193,7 @@ public class UserResource {
      */
     @GetMapping("/courses/{courseId}/exercises/{exerciseId}/team-search-users")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    // TODO: Martin Wauligmann - Move into TeamResource
     public ResponseEntity<List<TeamSearchUserDTO>> searchUsersInCourse(@PathVariable Long courseId, @PathVariable Long exerciseId,
             @RequestParam("loginOrName") String loginOrName) {
         log.debug("REST request to search Users for {} in course with id : {}", loginOrName, courseId);

@@ -88,6 +88,7 @@ public class TeamResource {
      * Server Error) if the team couldn't be updated
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
+    // TODO: Martin Wauligmann - Move to exercise scope
     @PutMapping("/teams")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Team> updateTeam(@RequestBody Team team) throws URISyntaxException {
@@ -115,9 +116,11 @@ public class TeamResource {
      * @return Response with status 200 (OK) and boolean flag in the body
      */
     @GetMapping("/teams")
+    // TODO: Martin Wauligmann - Move to exercise scope
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Boolean> existsTeamByShortName(@RequestParam("shortName") String shortName) {
         log.debug("REST request to check Team existence by shortName : {}", shortName);
+        // TODO: Martin Wauligmann - Perform auth check
         return ResponseEntity.ok().body(teamRepository.findOneByShortName(shortName).isPresent());
     }
 
@@ -128,6 +131,7 @@ public class TeamResource {
      * @return the ResponseEntity with status 200 (OK) and with body the team, or with status 404 (Not Found)
      */
     @GetMapping("/teams/{id}")
+    // TODO: Martin Wauligmann - Move to exercise scope
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Team> getTeam(@PathVariable Long id) {
         log.debug("REST request to get Team : {}", id);
@@ -169,9 +173,11 @@ public class TeamResource {
      * @return the ResponseEntity with status 200 (OK)
      */
     @DeleteMapping("/teams/{id}")
+    // TODO: Martin Wauligmann - Move to exercise scope
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Void> deleteTeam(@PathVariable Long id) {
         log.debug("REST request to delete Team : {}", id);
+        // TODO: Martin Wauligmann - Add audit in db and log info (see delete participation)
         User user = userService.getUserWithGroupsAndAuthorities();
         Optional<Team> optionalTeam = teamRepository.findById(id);
         if (optionalTeam.isEmpty()) {

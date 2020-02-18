@@ -529,6 +529,7 @@ public class UserService {
      * @param loginOrName Login or name by which to search students
      * @return users whose login matched
      */
+    // TODO: Martin Wauligmann - Move into TeamService
     public List<TeamSearchUserDTO> searchByLoginOrNameInCourseForExerciseTeam(Course course, Exercise exercise, String loginOrName) {
         List<User> users = userRepository.searchByLoginOrNameInGroup(course.getStudentGroupName(), loginOrName);
         List<TeamSearchUserDTO> teamSearchUsers = users.stream().map(TeamSearchUserDTO::new).collect(Collectors.toList());
