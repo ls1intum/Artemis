@@ -108,7 +108,7 @@ public class TeamResource {
         if (team.getId() == null) {
             throw new BadRequestAlertException("Invalid id", ENTITY_NAME, "idnull");
         }
-        if (!team.getExercise().getId().equals(exerciseId)) {
+        if (team.getExercise() != null && !team.getExercise().getId().equals(exerciseId)) {
             throw new BadRequestAlertException("The team does not belong to the specified exercise id.", ENTITY_NAME, "wrongExerciseId");
         }
         if (!team.getId().equals(id)) {
@@ -143,7 +143,7 @@ public class TeamResource {
             return ResponseEntity.notFound().build();
         }
         Team team = optionalTeam.get();
-        if (!team.getExercise().getId().equals(exerciseId)) {
+        if (team.getExercise() != null && !team.getExercise().getId().equals(exerciseId)) {
             throw new BadRequestAlertException("The team does not belong to the specified exercise id.", ENTITY_NAME, "wrongExerciseId");
         }
         User user = userService.getUserWithGroupsAndAuthorities();
@@ -190,10 +190,10 @@ public class TeamResource {
             return ResponseEntity.notFound().build();
         }
         Team team = optionalTeam.get();
-        if (!team.getExercise().getId().equals(exerciseId)) {
+        if (team.getExercise() != null && !team.getExercise().getId().equals(exerciseId)) {
             throw new BadRequestAlertException("The team does not belong to the specified exercise id.", ENTITY_NAME, "wrongExerciseId");
         }
-        Exercise exercise = exerciseService.findOne(team.getExercise().getId());
+        Exercise exercise = exerciseService.findOne(exerciseId);
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user)) {
             return forbidden();
         }
