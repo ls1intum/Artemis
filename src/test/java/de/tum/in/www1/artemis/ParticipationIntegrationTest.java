@@ -82,11 +82,19 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationTest 
         programmingExercise = exerciseRepo.save(programmingExercise);
         course.addExercises(programmingExercise);
         course = courseRepo.save(course);
+
+        var participation = ModelFactory.generateProgrammingExerciseStudentParticipation(InitializationState.INITIALIZED, programmingExercise, database.getUserByLogin("student1"));
+        participationRepo.save(participation);
+
+        doReturn("Success").when(continuousIntegrationService).copyBuildPlan(any(), any(), any(), any(), any());
+        doNothing().when(continuousIntegrationService).configureBuildPlan(any());
+        doNothing().when(continuousIntegrationService).performEmptySetupCommit(any());
     }
 
     @AfterEach
     public void tearDown() {
         database.resetDatabase();
+        Feature.PROGRAMMING_EXERCISES.enable();
     }
 
     @Test
@@ -270,26 +278,19 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationTest 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void deleteParticipation_notFound() throws Exception {
-        request.delete("/api/participations/" + 1, HttpStatus.NOT_FOUND);
+        request.delete("/api/participations/" + 100, HttpStatus.NOT_FOUND);
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
+    @WithMockUser(username = "student1", roles = "USER")
     public void resumeProgrammingExerciseParticipation() throws Exception {
-        var participation = ModelFactory.generateProgrammingExerciseStudentParticipation(InitializationState.UNINITIALIZED, programmingExercise, database.getUserByLogin("tutor1"));
-        participationRepo.save(participation);
-        doReturn("Success").when(continuousIntegrationService).copyBuildPlan(any(), any(), any(), any(), any());
-        doNothing().when(continuousIntegrationService).configureBuildPlan(any());
-        doNothing().when(continuousIntegrationService).performEmptySetupCommit(any());
         request.putWithResponseBody("/api/courses/" + course.getId() + "/exercises/" + programmingExercise.getId() + "/resume-programming-participation", null,
                 ProgrammingExerciseStudentParticipation.class, HttpStatus.OK);
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
+    @WithMockUser(username = "student1", roles = "USER")
     public void resumeProgrammingExerciseParticipation_wrongExerciseId() throws Exception {
-        var participation = ModelFactory.generateProgrammingExerciseStudentParticipation(InitializationState.UNINITIALIZED, programmingExercise, database.getUserByLogin("tutor1"));
-        participationRepo.save(participation);
         request.putWithResponseBody("/api/courses/" + course.getId() + "/exercises/100/resume-programming-participation", null, ProgrammingExerciseStudentParticipation.class,
                 HttpStatus.BAD_REQUEST);
     }
