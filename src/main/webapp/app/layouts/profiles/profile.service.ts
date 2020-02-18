@@ -27,12 +27,8 @@ export class ProfileService {
                         profileInfo.activeProfiles = data.activeProfiles;
                         const displayRibbonOnProfiles = data['display-ribbon-on-profiles'].split(',');
 
-                        /** map guided tour configuration */
-                        const guidedTourMapping = data['guided-tour'];
-                        if (guidedTourMapping) {
-                            guidedTourMapping.tours = _.reduce(guidedTourMapping.tours, _.extend);
-                            profileInfo.guidedTourMapping = guidedTourMapping;
-                        }
+                        this.mapGuidedTourConfig(data, profileInfo);
+                        this.mapAllowedOrionVersions(data, profileInfo);
 
                         if (profileInfo.activeProfiles) {
                             const ribbonProfiles = displayRibbonOnProfiles.filter((profile: string) => profileInfo.activeProfiles.includes(profile));
@@ -57,5 +53,21 @@ export class ProfileService {
         }
 
         return this.profileInfo;
+    }
+
+    private mapAllowedOrionVersions(data: any, profileInfo: ProfileInfo) {
+        const orionVersions = data['orion-versions'];
+        if (orionVersions) {
+            profileInfo.allowedOrionVersions = orionVersions;
+        }
+    }
+
+    private mapGuidedTourConfig(data: any, profileInfo: ProfileInfo) {
+        /** map guided tour configuration */
+        const guidedTourMapping = data['guided-tour'];
+        if (guidedTourMapping) {
+            guidedTourMapping.tours = _.reduce(guidedTourMapping.tours, _.extend);
+            profileInfo.guidedTourMapping = guidedTourMapping;
+        }
     }
 }

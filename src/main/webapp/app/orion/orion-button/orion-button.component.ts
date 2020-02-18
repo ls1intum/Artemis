@@ -3,10 +3,10 @@ import { FeatureToggle } from 'app/feature-toggle/feature-toggle.service';
 
 @Component({
     selector: 'jhi-ide-button',
-    templateUrl: './intellij-button.component.html',
-    styleUrls: ['./intellij-button.component.scss'],
+    templateUrl: './orion-button.component.html',
+    styleUrls: ['./orion-button.component.scss'],
 })
-export class IntellijButtonComponent {
+export class OrionButtonComponent {
     @Input() buttonLabel: string;
     @Input() buttonLoading = false;
     @Input() outlined = false;
