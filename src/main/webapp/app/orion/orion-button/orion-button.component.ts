@@ -1,5 +1,5 @@
 import { Component, Input } from '@angular/core';
-import { FeatureToggle } from 'app/feature-toggle';
+import { FeatureToggle } from 'app/feature-toggle/feature-toggle.service';
 
 @Component({
     selector: 'jhi-ide-button',

@@ -15,6 +15,7 @@ import de.tum.in.www1.artemis.domain.Submission;
 import de.tum.in.www1.artemis.domain.TextExercise;
 import de.tum.in.www1.artemis.domain.TextSubmission;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
+import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.SubmissionRepository;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.RequestUtilService;
@@ -32,6 +33,9 @@ public class ParticipationSubmissionIntegrationTest extends AbstractSpringIntegr
 
     @Autowired
     RequestUtilService request;
+
+    @Autowired
+    ResultRepository resultRepository;
 
     private TextExercise textExercise;
 
@@ -51,6 +55,9 @@ public class ParticipationSubmissionIntegrationTest extends AbstractSpringIntegr
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void deleteSubmissionOfParticipation() throws Exception {
         Submission submissionWithResult = database.addSubmission(textExercise, new TextSubmission(), "student1");
+        var result = database.addResultToSubmission(submissionWithResult);
+        submissionWithResult.setResult(result);
+        submissionRepository.save(submissionWithResult);
         Long participationId = submissionWithResult.getParticipation().getId();
         Long submissionId = submissionWithResult.getId();
 
@@ -64,6 +71,8 @@ public class ParticipationSubmissionIntegrationTest extends AbstractSpringIntegr
         assertThat(submission.isPresent()).isFalse();
         // Make sure that also the submission was deleted.
         assertThat(submissionRepository.findByParticipationId(participationId)).hasSize(0);
+        // Result is deleted.
+        assertThat(resultRepository.findById(result.getId()).isPresent()).isFalse();
     }
 
     @Test

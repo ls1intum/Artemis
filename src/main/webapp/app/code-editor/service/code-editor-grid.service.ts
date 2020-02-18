@@ -1,13 +1,7 @@
 import { Injectable, OnDestroy } from '@angular/core';
 import { Observable, Subject } from 'rxjs';
 import { filter } from 'rxjs/operators';
-
-export enum ResizeType {
-    SIDEBAR_LEFT = 'SIDEBAR_LEFT',
-    SIDEBAR_RIGHT = 'SIDEBAR_RIGHT',
-    MAIN_BOTTOM = 'MAIN_BOTTOM',
-    BOTTOM = 'BOTTOM',
-}
+import { ResizeType } from 'app/code-editor/model/code-editor.model';
 
 export class ICodeEditorGridService {
     subscribeForResizeEvents: (byTypes: ResizeType[]) => Observable<ResizeType>;

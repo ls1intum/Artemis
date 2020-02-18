@@ -4,16 +4,14 @@ import { fromPairs, toPairs } from 'lodash/fp';
 import { isEmpty as _isEmpty } from 'lodash';
 import { ActivatedRoute } from '@angular/router';
 import Interactable from '@interactjs/core/Interactable';
-
-import { ComponentCanDeactivate } from 'app/shared';
-import { ParticipationService } from 'app/entities/participation/participation.service';
-import { CreateFileChange, DeleteFileChange, FileChange, FileType, RenameFileChange } from 'app/entities/ace-editor/file-change.model';
-import { AnnotationArray } from 'app/entities/ace-editor';
-import { JhiAlertService } from 'ng-jhipster';
-import { CodeEditorSessionService } from 'app/code-editor/service';
-import { CommitState, EditorState } from 'app/code-editor/model';
-import { CodeEditorGridComponent } from 'app/code-editor/layout';
 import { CodeEditorFileService } from 'app/code-editor/service/code-editor-file.service';
+import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
+import { CodeEditorSessionService } from 'app/code-editor/service/code-editor-session.service';
+import { CodeEditorGridComponent } from 'app/code-editor/layout/code-editor-grid.component';
+import { AnnotationArray } from 'app/entities/ace-editor/annotation.model';
+import { CommitState, CreateFileChange, DeleteFileChange, EditorState, FileChange, FileType, RenameFileChange } from 'app/code-editor/model/code-editor.model';
+import { ParticipationService } from 'app/entities/participation/participation.service';
+import { AlertService } from 'app/core/alert/alert.service';
 
 export abstract class CodeEditorContainer implements ComponentCanDeactivate {
     @ViewChild(CodeEditorGridComponent, { static: false }) grid: CodeEditorGridComponent;
@@ -32,7 +30,7 @@ export abstract class CodeEditorContainer implements ComponentCanDeactivate {
         protected participationService: ParticipationService,
         private translateService: TranslateService,
         protected route: ActivatedRoute,
-        private jhiAlertService: JhiAlertService,
+        private jhiAlertService: AlertService,
         protected sessionService: CodeEditorSessionService,
         private fileService: CodeEditorFileService,
     ) {

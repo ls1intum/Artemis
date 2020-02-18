@@ -97,7 +97,7 @@ export class OrionConnectorService implements ArtemisClientConnector, JavaConnec
      * Gets called by the IDE. Informs the Angular app about a newly opened exercise.
      *
      * @param opened The ID of the exercise that was opened by the user.
-     * @param view The ExerciseView which is currently open in the IDE (instructor vs. student)
+     * @param view ExerciseView which is currently open in in the IDE (instructor vs. student)
      */
     onExerciseOpened(opened: number, view: string): void {
         const inInstructorView = view === ExerciseView.INSTRUCTOR;

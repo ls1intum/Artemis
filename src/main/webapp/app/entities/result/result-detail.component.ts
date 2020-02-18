@@ -1,13 +1,14 @@
 import { Component, Input, OnInit } from '@angular/core';
-import { Result, ResultService } from './';
 import { RepositoryService } from 'app/entities/repository/repository.service';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { Feedback } from '../feedback/index';
-import { BuildLogEntry, BuildLogEntryArray, BuildLogType } from 'app/entities/build-log';
 import { catchError, map, switchMap, tap } from 'rxjs/operators';
 import { HttpErrorResponse } from '@angular/common/http';
 import { of } from 'rxjs';
-import { ExerciseType } from 'app/entities/exercise';
+import { BuildLogEntry, BuildLogEntryArray, BuildLogType } from 'app/entities/build-log/build-log.model';
+import { Feedback } from 'app/entities/feedback/feedback.model';
+import { ResultService } from 'app/entities/result/result.service';
+import { ExerciseType } from 'app/entities/exercise/exercise.model';
+import { Result } from 'app/entities/result/result.model';
 
 // Modal -> Result details view
 @Component({

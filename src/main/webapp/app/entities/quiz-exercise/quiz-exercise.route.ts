@@ -11,7 +11,7 @@ import { QuizExerciseComponent } from './quiz-exercise.component';
 import { QuizExerciseDetailComponent } from './quiz-exercise-detail.component';
 import { QuizExerciseExportComponent } from './quiz-exercise-export.component';
 import { PendingChangesGuard } from 'app/shared/guard/pending-changes.guard';
-import { QuizReEvaluateComponent } from 'app/quiz/re-evaluate';
+import { QuizReEvaluateComponent } from 'app/quiz/re-evaluate/quiz-re-evaluate.component';
 
 @Injectable({ providedIn: 'root' })
 export class QuizExerciseResolve implements Resolve<QuizExercise> {

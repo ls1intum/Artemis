@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.web.rest;
 
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 
-import java.security.Principal;
 import java.time.ZonedDateTime;
 
 import org.slf4j.Logger;
@@ -65,13 +64,12 @@ public class QuizSubmissionResource {
      * POST /exercises/:exerciseId/submissions/practice : Submit a new quizSubmission for practice mode.
      *
      * @param exerciseId     the id of the exercise for which to init a participation
-     * @param principal      the current user principal
      * @param quizSubmission the quizSubmission to submit
      * @return the ResponseEntity with status 200 (OK) and the Result as its body, or with status 4xx if the request is invalid
      */
     @PostMapping("/exercises/{exerciseId}/submissions/practice")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Result> submitForPractice(@PathVariable Long exerciseId, Principal principal, @RequestBody QuizSubmission quizSubmission) {
+    public ResponseEntity<Result> submitForPractice(@PathVariable Long exerciseId, @RequestBody QuizSubmission quizSubmission) {
         log.debug("REST request to submit QuizSubmission for practice : {}", quizSubmission);
 
         // recreate pointers back to submission in each submitted answer

@@ -2,9 +2,9 @@ import { Component, OnInit } from '@angular/core';
 import { debounceTime, switchMap, tap } from 'rxjs/operators';
 import { Subject } from 'rxjs';
 import { ProgrammingExercise } from 'app/entities/programming-exercise/programming-exercise.model';
-import { ProgrammingExercisePagingService } from 'app/entities/programming-exercise/services';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { PageableSearch, SearchResult, SortingOrder } from 'app/components/table';
+import { PageableSearch, SearchResult, SortingOrder } from 'app/components/table/pageable-table';
+import { ProgrammingExercisePagingService } from 'app/entities/programming-exercise/services/programming-exercise-paging.service';
 
 enum TableColumn {
     ID = 'ID',

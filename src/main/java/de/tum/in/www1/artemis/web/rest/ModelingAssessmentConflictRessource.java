@@ -58,7 +58,7 @@ public class ModelingAssessmentConflictRessource {
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<List<ModelAssessmentConflict>> getAllConflicts(@PathVariable Long exerciseId) {
         Exercise exercise = modelingExerciseService.findOne(exerciseId);
-        if (authCheckService.isAtLeastInstructorForExercise(exercise)) {
+        if (!authCheckService.isAtLeastInstructorForExercise(exercise)) {
             return forbidden();
         }
         return ResponseEntity.ok(conflictService.getConflictsForExercise(exerciseId));

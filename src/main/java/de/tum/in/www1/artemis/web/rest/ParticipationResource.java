@@ -204,16 +204,25 @@ public class ParticipationResource {
         User user = userService.getUserWithGroupsAndAuthorities();
         checkAccessPermissionOwner(participation, user);
         if (exercise instanceof ProgrammingExercise) {
+
+            // users cannot resume the programming exercises if test run after due date or semi automatic grading is active and the due date has passed
+            var pExercise = (ProgrammingExercise) exercise;
+            if ((pExercise.getDueDate() != null && ZonedDateTime.now().isAfter(pExercise.getDueDate())
+                    && (pExercise.getBuildAndTestStudentSubmissionsAfterDueDate() != null || pExercise.getAssessmentType() != AssessmentType.AUTOMATIC))) {
+                return forbidden();
+            }
+
             participation = participationService.resumeExercise(participation);
             // Note: in this case we might need an empty commit to make sure the build plan works correctly for subsequent student commits
             participation = participationService.performEmptyCommit(participation);
             if (participation != null) {
                 addLatestResultToParticipation(participation);
                 participation.getExercise().filterSensitiveInformation();
-                return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, participation.getStudent().getFirstName()))
+                return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, participation.getStudent().getName()))
                         .body(participation);
             }
         }
+        // error case
         log.info("Exercise with participationId {} is not an instance of ProgrammingExercise. Ignoring the request to resume participation", exerciseId);
         // remove sensitive information before sending participation to the client
         if (participation != null && participation.getExercise() != null) {
@@ -272,7 +281,7 @@ public class ParticipationResource {
         }
 
         Participation result = participationService.save(participation);
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, participation.getStudent().getFirstName())).body(result);
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, participation.getStudent().getName())).body(result);
     }
 
     /**
@@ -302,6 +311,9 @@ public class ParticipationResource {
             participations = participationService.findByExerciseId(exerciseId);
         }
         participations = participations.stream().filter(participation -> participation.getStudent() != null).collect(Collectors.toList());
+
+        Map<Long, Integer> submissionCountMap = participationService.countSubmissionsPerParticipationByExerciseId(exerciseId);
+        participations.forEach(participation -> participation.setSubmissionCount(submissionCountMap.get(participation.getId())));
 
         return ResponseEntity.ok(participations);
     }
@@ -590,13 +602,14 @@ public class ParticipationResource {
 
         checkAccessPermissionAtLeastInstructor(participation, user);
 
-        String username = participation.getStudent().getFirstName();
-        var auditEvent = new AuditEvent(user.getLogin(), Constants.DELETE_PARTICIPATION, "participation=" + participation.getId());
+        String name = participation.getStudent().getName();
+        var logMessage = "Delete Participation " + participationId + " of exercise " + participation.getExercise().getTitle() + " for " + name + ", deleteBuildPlan: "
+                + deleteBuildPlan + ", deleteRepository: " + deleteRepository + " by " + principal.getName();
+        var auditEvent = new AuditEvent(user.getLogin(), Constants.DELETE_PARTICIPATION, logMessage);
         auditEventRepository.add(auditEvent);
-        log.info("Delete Participation {} of exercise {} for {}, deleteBuildPlan: {}, deleteRepository: {} by {}", participationId, participation.getExercise().getTitle(),
-                username, deleteBuildPlan, deleteRepository, principal.getName());
+        log.info(logMessage);
         participationService.delete(participationId, deleteBuildPlan, deleteRepository);
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, "participation", username)).build();
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, "participation", name)).build();
     }
 
     /**
@@ -632,13 +645,14 @@ public class ParticipationResource {
             return forbidden();
         }
 
-        String username = participation.getStudent().getFirstName();
-        var auditEvent = new AuditEvent(user.getLogin(), Constants.DELETE_PARTICIPATION, "participation=" + participation.getId());
+        String name = participation.getStudent().getName();
+        var logMessage = "Delete Participation " + participationId + " of exercise " + participation.getExercise().getTitle() + " for " + name + ", deleteBuildPlan: "
+                + deleteBuildPlan + ", deleteRepository: " + deleteRepository + " by " + principal.getName();
+        var auditEvent = new AuditEvent(user.getLogin(), Constants.DELETE_PARTICIPATION, logMessage);
         auditEventRepository.add(auditEvent);
-        log.info("Delete Participation {} of exercise {} for {}, deleteBuildPlan: {}, deleteRepository: {} by {}", participationId, participation.getExercise().getTitle(),
-                username, deleteBuildPlan, deleteRepository, principal.getName());
+        log.info(logMessage);
         participationService.delete(participationId, deleteBuildPlan, deleteRepository);
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, "participation", username)).build();
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, "participation", name)).build();
     }
 
     /**

@@ -1,22 +1,24 @@
 import { Component, HostBinding, Input, OnInit } from '@angular/core';
-import { Exercise, isStartExerciseAvailable, participationStatus, ParticipationStatus } from 'app/entities/exercise';
-import { Participation, ProgrammingExerciseStudentParticipation, StudentParticipation } from 'app/entities/participation';
 import { CourseExerciseService } from 'app/entities/course/course.service';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/alert/alert.service';
 import { SourceTreeService } from 'app/components/util/sourceTree.service';
+import { ActivatedRoute } from '@angular/router';
+import { FeatureToggle } from 'app/feature-toggle/feature-toggle.service';
+import { stringifyCircular } from 'app/shared/util/utils';
+import { InitializationState, Participation } from 'app/entities/participation/participation.model';
+import { Exercise, ParticipationStatus } from 'app/entities/exercise/exercise.model';
+import { isStartExerciseAvailable } from 'app/entities/exercise/exercise-utils';
+import { ProgrammingExercise } from 'app/entities/programming-exercise/programming-exercise.model';
+import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { OrionState } from 'app/orion/orion';
 import { OrionConnectorService } from 'app/orion/orion-connector.service';
 import { OrionBuildAndTestService } from 'app/orion/orion-build-and-test.service';
-import { ProgrammingExercise } from 'app/entities/programming-exercise';
-import { ActivatedRoute } from '@angular/router';
-import { FeatureToggle } from 'app/feature-toggle';
-import { catchError, filter, tap } from 'rxjs/operators';
 
 @Component({
     selector: 'jhi-programming-exercise-student-ide-actions',
     templateUrl: './programming-exercise-student-ide-actions.component.html',
     styleUrls: ['../course-overview.scss'],
-    providers: [JhiAlertService, SourceTreeService],
+    providers: [SourceTreeService],
 })
 export class ProgrammingExerciseStudentIdeActionsComponent implements OnInit {
     readonly UNINITIALIZED = ParticipationStatus.UNINITIALIZED;
@@ -35,7 +37,7 @@ export class ProgrammingExerciseStudentIdeActionsComponent implements OnInit {
     @Input() smallButtons: boolean;
 
     constructor(
-        private jhiAlertService: JhiAlertService,
+        private jhiAlertService: AlertService,
         private courseExerciseService: CourseExerciseService,
         private javaBridge: OrionConnectorService,
         private ideBuildAndTestService: OrionBuildAndTestService,

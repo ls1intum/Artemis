@@ -1,27 +1,28 @@
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
-import { ProgrammingSubmissionService } from 'app/programming-submission/programming-submission.service';
-import { ParticipationWebsocketService } from 'app/entities/participation/participation-websocket.service';
-import { OrionConnectorService } from 'app/orion/orion-connector.service';
-import { CodeEditorBuildLogService } from 'app/code-editor';
+import { IProgrammingSubmissionService } from 'app/programming-submission/programming-submission.service';
+import { IParticipationWebsocketService } from 'app/entities/participation/participation-websocket.service';
 import { SinonSpy, SinonStub, spy, stub } from 'sinon';
 import { MockProgrammingSubmissionService } from '../mocks/mock-programming-submission.service';
-import { MockCodeEditorBuildLogService, MockParticipationWebsocketService } from '../mocks';
-import { MockOrionConnectorService } from '../mocks/mock-orion-connector.service';
-import { OrionBuildAndTestService } from 'app/orion/orion-build-and-test.service';
-import { Result } from 'app/entities/result';
-import { Feedback } from 'app/entities/feedback';
+import { Result } from 'app/entities/result/result.model';
 import { BehaviorSubject, of } from 'rxjs';
-import { ProgrammingExercise } from 'app/entities/programming-exercise';
+import { Feedback } from 'app/entities/feedback/feedback.model';
+import { ProgrammingExercise } from 'app/entities/programming-exercise/programming-exercise.model';
+import { IBuildLogService } from 'app/programming-assessment/build-logs/build-log.service';
+import { MockParticipationWebsocketService } from '../mocks/mock-participation-websocket.service';
+import { MockCodeEditorBuildLogService } from '../mocks/mock-code-editor-build-log.service';
+import { OrionBuildAndTestService } from 'app/orion/orion-build-and-test.service';
+import { OrionConnectorService } from 'app/orion/orion-connector.service';
+import { MockOrionConnectorService } from '../mocks/mock-orion-connector.service';
 
 chai.use(sinonChai);
 const expect = chai.expect;
 
 describe('IdeBuildAndTestService', () => {
-    let submissionService: ProgrammingSubmissionService;
-    let participationService: ParticipationWebsocketService;
+    let submissionService: IProgrammingSubmissionService;
+    let participationService: IParticipationWebsocketService;
     let javaBridge: OrionConnectorService;
-    let buildLogService: CodeEditorBuildLogService;
+    let buildLogService: IBuildLogService;
     let ideBuildAndTestService: OrionBuildAndTestService;
 
     let onBuildFinishedSpy: SinonSpy;
@@ -31,10 +32,7 @@ describe('IdeBuildAndTestService', () => {
     let buildLogsStub: SinonStub;
     let participationSubscriptionStub: SinonStub;
 
-    const feedbacks = [
-        { id: 2, positive: false, detailText: 'abc' },
-        { id: 3, positive: true, detailText: 'cde' },
-    ] as [Feedback];
+    const feedbacks = [{ id: 2, positive: false, detailText: 'abc' } as Feedback, { id: 3, positive: true, detailText: 'cde' } as Feedback];
     const result = { id: 1 } as Result;
     const exercise = { id: 42, studentParticipations: [{ id: 32 }] } as ProgrammingExercise;
 
@@ -105,8 +103,8 @@ describe('IdeBuildAndTestService', () => {
             },
         ];
         buildLogsStub.returns(of(logs));
+        result.feedbacks = [];
         result.successful = false;
-        result.feedbacks = undefined;
         result.hasFeedback = false;
         const subject = new BehaviorSubject(result);
         participationSubscriptionStub.returns(subject);

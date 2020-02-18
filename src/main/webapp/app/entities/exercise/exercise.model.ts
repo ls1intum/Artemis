@@ -1,12 +1,12 @@
-import { BaseEntity } from 'app/shared';
-import { Course } from '../course';
+import { BaseEntity } from 'app/shared/model/base-entity';
 import { Moment } from 'moment';
-import { ExampleSubmission } from '../example-submission';
-import { TutorParticipation } from 'app/entities/tutor-participation';
-import { Attachment } from 'app/entities/attachment';
-import { StudentQuestion } from 'app/entities/student-question';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { AssessmentType } from 'app/entities/assessment-type';
+import { AssessmentType } from 'app/entities/assessment-type/assessment-type.model';
+import { TutorParticipation } from 'app/entities/tutor-participation/tutor-participation.model';
+import { Course } from 'app/entities/course/course.model';
+import { ExampleSubmission } from 'app/entities/example-submission/example-submission.model';
+import { Attachment } from 'app/entities/attachment/attachment.model';
+import { StudentQuestion } from 'app/entities/student-question/student-question.model';
 
 export const enum DifficultyLevel {
     EASY = 'EASY',

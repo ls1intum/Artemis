@@ -1,9 +1,9 @@
-import { Component, OnInit, Output, EventEmitter, OnDestroy } from '@angular/core';
+import { Component, EventEmitter, OnDestroy, OnInit, Output } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { mapValues } from 'lodash';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { Observable, Subscription } from 'rxjs';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/alert/alert.service';
 
 @Component({
     selector: 'jhi-delete-dialog',
@@ -26,7 +26,7 @@ export class DeleteDialogComponent implements OnInit, OnDestroy {
     // used by *ngFor in the template
     objectKeys = Object.keys;
 
-    constructor(private activeModal: NgbActiveModal, private jhiAlertService: JhiAlertService) {}
+    constructor(private activeModal: NgbActiveModal, private jhiAlertService: AlertService) {}
 
     ngOnInit(): void {
         this.dialogErrorSubscription = this.dialogError.subscribe((errorMessage: string) => {

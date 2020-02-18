@@ -3,21 +3,24 @@ import { Location } from '@angular/common';
 import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
-import { JhiAlertService } from 'ng-jhipster';
-import { TextSubmission, TextSubmissionService } from 'app/entities/text-submission';
-import { TextExercise, TextExerciseService } from 'app/entities/text-exercise';
-import { Result, ResultService } from 'app/entities/result';
+import { AlertService } from 'app/core/alert/alert.service';
 import { ParticipationService } from 'app/entities/participation/participation.service';
 import { ParticipationWebsocketService } from 'app/entities/participation/participation-websocket.service';
 import { TextEditorService } from 'app/text-editor/text-editor.service';
 import * as moment from 'moment';
 import { ArtemisMarkdown } from 'app/components/util/markdown.service';
-import { Feedback } from 'app/entities/feedback';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { ComponentCanDeactivate } from 'app/shared';
 import { Observable } from 'rxjs/Observable';
-import { ButtonType } from 'app/shared/components';
-import { participationStatus } from 'app/entities/exercise';
+import { TextSubmissionService } from 'app/entities/text-submission/text-submission.service';
+import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
+import { Feedback } from 'app/entities/feedback/feedback.model';
+import { ResultService } from 'app/entities/result/result.service';
+import { TextExerciseService } from 'app/entities/text-exercise/text-exercise.service';
+import { participationStatus } from 'app/entities/exercise/exercise-utils';
+import { TextExercise } from 'app/entities/text-exercise/text-exercise.model';
+import { ButtonType } from 'app/shared/components/button.component';
+import { Result } from 'app/entities/result/result.model';
+import { TextSubmission } from 'app/entities/text-submission/text-submission.model';
 
 @Component({
     templateUrl: './text-editor.component.html',
@@ -44,7 +47,7 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
         private textSubmissionService: TextSubmissionService,
         private textService: TextEditorService,
         private resultService: ResultService,
-        private jhiAlertService: JhiAlertService,
+        private jhiAlertService: AlertService,
         private artemisMarkdown: ArtemisMarkdown,
         private location: Location,
         private translateService: TranslateService,

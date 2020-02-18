@@ -4,21 +4,14 @@ import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
 import { SinonStub, stub } from 'sinon';
 import { ArtemisTestModule } from '../../test.module';
-import { MockActivatedRoute, MockSyncStorage } from '../../mocks';
-import { ArtemisResultModule } from 'app/entities/result';
+import { MockActivatedRoute } from '../../mocks/mock-activated.route';
+import { MockSyncStorage } from '../../mocks/mock-sync.storage';
 import { MockComponent } from 'ng-mocks';
-import { ArtemisSharedModule } from 'app/shared';
-import { ExerciseService, ExerciseType } from 'app/entities/exercise';
-import { TutorExerciseDashboardComponent } from 'app/tutor-exercise-dashboard';
-import { ModelingExercise } from 'app/entities/modeling-exercise';
-import { ModelingSubmission, ModelingSubmissionService } from 'app/entities/modeling-submission';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { MockAlertService } from '../../helpers/mock-alert.service';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/alert/alert.service';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { MockRouter } from '../../mocks/mock-router.service';
-import { HeaderExercisePageWithDetailsComponent } from 'app/exercise-headers';
-import { ModelingEditorComponent } from 'app/modeling-editor';
-import { TutorParticipationStatus } from 'app/entities/tutor-participation';
 import { of, throwError } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
 import { SidePanelComponent } from 'app/components/side-panel/side-panel.component';
@@ -29,9 +22,19 @@ import { TutorLeaderboardComponent } from 'app/instructor-course-dashboard/tutor
 import { TranslateModule } from '@ngx-translate/core';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { ArtemisProgrammingAssessmentModule } from 'app/programming-assessment/programming-assessment.module';
-import { ArtemisProgrammingExerciseInstructionsRenderModule } from 'app/entities/programming-exercise/instructions/instructions-render';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { ArtemisAssessmentSharedModule } from 'app/assessment-shared/assessment-shared.module';
+import { ModelingSubmission } from 'app/entities/modeling-submission/modeling-submission.model';
+import { ArtemisProgrammingExerciseInstructionsRenderModule } from 'app/entities/programming-exercise/instructions/instructions-render/programming-exercise-instructions-render.module';
+import { ModelingExercise } from 'app/entities/modeling-exercise/modeling-exercise.model';
+import { HeaderExercisePageWithDetailsComponent } from 'app/exercise-headers/header-exercise-page-with-details.component';
+import { TutorExerciseDashboardComponent } from 'app/tutor-exercise-dashboard/tutor-exercise-dashboard.component';
+import { ExerciseType } from 'app/entities/exercise/exercise.model';
+import { ModelingEditorComponent } from 'app/modeling-editor/modeling-editor.component';
+import { ModelingSubmissionService } from 'app/entities/modeling-submission/modeling-submission.service';
+import { TutorParticipationStatus } from 'app/entities/tutor-participation/tutor-participation.model';
+import { ExerciseService } from 'app/entities/exercise/exercise.service';
+import { ArtemisResultModule } from 'app/entities/result/result.module';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -72,7 +75,7 @@ describe('TutorExerciseDashboardComponent', () => {
             ],
             providers: [
                 JhiLanguageHelper,
-                { provide: JhiAlertService, useClass: MockAlertService },
+                { provide: AlertService, useClass: MockAlertService },
                 { provide: ActivatedRoute, useClass: MockActivatedRoute },
                 { provide: Router, useClass: MockRouter },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
@@ -100,7 +103,7 @@ describe('TutorExerciseDashboardComponent', () => {
             .then(() => {
                 fixture = TestBed.createComponent(TutorExerciseDashboardComponent);
                 comp = fixture.componentInstance;
-                modelingSubmissionService = TestBed.get(ModelingSubmissionService);
+                modelingSubmissionService = TestBed.inject(ModelingSubmissionService);
 
                 comp.exerciseId = exercise.id;
 

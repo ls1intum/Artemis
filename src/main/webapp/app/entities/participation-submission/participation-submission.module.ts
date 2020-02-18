@@ -1,18 +1,17 @@
 import { NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
-import { ArtemisSharedModule } from 'app/shared';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { SubmissionService } from 'app/entities/submission/submission.service';
-import { SortByModule } from 'app/components/pipes';
 import { NgxDatatableModule } from '@swimlane/ngx-datatable';
+import { participationSubmissionPopupRoute, participationSubmissionRoute } from 'app/entities/participation-submission/participation-submission.route';
+import { ParticipationSubmissionPopupService } from 'app/entities/participation-submission/participation-submission-popup.service';
+import { ArtemisResultModule } from 'app/entities/result/result.module';
+import { SortByModule } from 'app/components/pipes/sort-by.module';
 import {
-    ParticipationSubmissionComponent,
     ParticipationSubmissionDeleteDialogComponent,
     ParticipationSubmissionDeletePopupComponent,
-    participationSubmissionPopupRoute,
-    ParticipationSubmissionPopupService,
-    participationSubmissionRoute,
-} from './';
-import { ArtemisResultModule } from 'app/entities/result';
+} from 'app/entities/participation-submission/participation-submission-delete-dialog.component';
+import { ParticipationSubmissionComponent } from 'app/entities/participation-submission/participation-submission.component';
 
 const ENTITY_STATES = [...participationSubmissionRoute, ...participationSubmissionPopupRoute];
 

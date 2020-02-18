@@ -1,16 +1,16 @@
 import { Injectable, OnDestroy } from '@angular/core';
-import { HttpClient, HttpResponse, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { BehaviorSubject, from, merge, Observable, of, Subject, Subscription, timer } from 'rxjs';
 import { catchError, distinctUntilChanged, filter, map, reduce, switchMap, tap } from 'rxjs/operators';
 import { SERVER_API_URL } from 'app/app.constants';
 import { ParticipationWebsocketService } from 'app/entities/participation/participation-websocket.service';
-import { Result } from 'app/entities/result';
-import { ProgrammingSubmission } from 'app/entities/programming-submission';
-import { createRequestOption } from 'app/shared';
-import { SubmissionType } from 'app/entities/submission';
+import { Result } from 'app/entities/result/result.model';
+import { createRequestOption } from 'app/shared/util/request-util';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { Exercise, ExerciseType } from 'app/entities/exercise/exercise.model';
-import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation';
+import { ProgrammingSubmission } from 'app/entities/programming-submission/programming-submission.model';
+import { SubmissionType } from 'app/entities/submission/submission.model';
+import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 
 export enum ProgrammingSubmissionState {
     // The last submission of participation has a result.

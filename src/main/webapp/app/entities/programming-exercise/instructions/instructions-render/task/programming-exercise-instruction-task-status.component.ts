@@ -1,13 +1,14 @@
 import { ApplicationRef, Component, ComponentFactoryResolver, Injector, Input } from '@angular/core';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
-import { Result, ResultDetailComponent } from 'app/entities/result';
 import { ExerciseHint } from 'app/entities/exercise-hint/exercise-hint.model';
-import { ExerciseHintStudentDialogComponent } from 'app/entities/exercise-hint';
 import {
     ProgrammingExerciseInstructionService,
     TestCaseState,
 } from 'app/entities/programming-exercise/instructions/instructions-render/service/programming-exercise-instruction.service';
-import { ExerciseType } from 'app/entities/exercise';
+import { ExerciseHintStudentDialogComponent } from 'app/entities/exercise-hint/exercise-hint-student-dialog.component';
+import { ResultDetailComponent } from 'app/entities/result/result-detail.component';
+import { ExerciseType } from 'app/entities/exercise/exercise.model';
+import { Result } from 'app/entities/result/result.model';
 
 @Component({
     selector: 'jhi-programming-exercise-instructions-task-status',

@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { DragAndDropQuestion } from '../../../entities/drag-and-drop-question';
+import { DragAndDropQuestion } from 'app/entities/drag-and-drop-question/drag-and-drop-question.model';
 
 @Component({
     selector: 'jhi-re-evaluate-drag-and-drop-question',

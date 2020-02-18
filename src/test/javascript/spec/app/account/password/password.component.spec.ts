@@ -5,7 +5,6 @@ import { of, throwError } from 'rxjs';
 import { ArtemisTestModule } from '../../../test.module';
 import { PasswordComponent } from 'app/account/password/password.component';
 import { PasswordService } from 'app/account/password/password.service';
-import { JhiTrackerService } from 'app/core/tracker/tracker.service';
 import { MockTrackerService } from '../../../helpers/mock-tracker.service';
 
 describe('Component Tests', () => {

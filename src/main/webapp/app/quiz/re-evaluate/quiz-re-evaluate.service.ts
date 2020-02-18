@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { SERVER_API_URL } from '../../app.constants';
-import { QuizExercise } from '../../entities/quiz-exercise/quiz-exercise.model';
+import { SERVER_API_URL } from 'app/app.constants';
+import { QuizExercise } from 'app/entities/quiz-exercise/quiz-exercise.model';
 
 @Injectable({ providedIn: 'root' })
 export class QuizReEvaluateService {
