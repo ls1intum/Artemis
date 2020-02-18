@@ -13,11 +13,11 @@ $error-bg-color: #f8d7da;
 
 .student-search-searching {
     position: relative;
-    top: 1px;
+    top: -1px;
 }
 
 .student-search-failed {
-    line-height: 1.2rem;
+    line-height: 1.4rem;
     font-size: 0.8rem;
 }
 

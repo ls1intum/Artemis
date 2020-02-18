@@ -78,7 +78,7 @@ public class TeamResource {
         if (team.getId() != null) {
             throw new BadRequestAlertException("A new team cannot already have an ID", ENTITY_NAME, "idexists");
         }
-        if (!team.getExercise().getId().equals(exerciseId)) {
+        if (team.getExercise() != null && !team.getExercise().getId().equals(exerciseId)) {
             throw new BadRequestAlertException("The team does not belong to the specified exercise id.", ENTITY_NAME, "wrongExerciseId");
         }
         User user = userService.getUserWithGroupsAndAuthorities();
