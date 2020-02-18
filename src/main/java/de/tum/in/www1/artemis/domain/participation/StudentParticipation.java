@@ -4,6 +4,7 @@ import java.util.Optional;
 
 import javax.persistence.*;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonView;
 
 import de.tum.in.www1.artemis.domain.*;
@@ -65,6 +66,7 @@ public class StudentParticipation extends Participation {
         this.team = team;
     }
 
+    @JsonIgnore
     public ParticipantInterface getParticipant() {
         return Optional.ofNullable((ParticipantInterface) student).orElse(team);
     }
