@@ -1,4 +1,4 @@
-import { Submission, SubmissionExerciseType } from '../submission';
+import { Submission, SubmissionExerciseType } from 'app/entities/submission/submission.model';
 
 export class FileUploadSubmission extends Submission {
     public filePath: string | null;

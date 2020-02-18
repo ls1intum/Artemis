@@ -4,7 +4,7 @@
             <fa-icon [icon]="'folder-open'"></fa-icon>
             <span class="ml-2" jhiTranslate="artemisApp.editor.fileBrowser.fileBrowser">File Browser</span>
         </h3>
-        <fa-icon class="ml-auto" icon="chevron-left"></fa-icon>
+        <fa-icon class="ml-auto" [icon]="'chevron-left'"></fa-icon>
     </div>
 
     <!-- Root actions -->
@@ -33,7 +33,7 @@
             id="compress_tree"
             [disabled]="isLoadingFiles"
             class="btn btn-light ml-auto"
-            (click)="toggleTreeCompress($event)"
+            (click)="toggleTreeCompress()"
             title="{{ 'artemisApp.editor.fileBrowser.compressTree' | translate }}"
         >
             <fa-icon [icon]="compressFolders ? 'angle-double-up' : 'angle-double-down'"></fa-icon>

@@ -1,5 +1,4 @@
-import { IAuthServerProvider } from 'app/core';
-import { Credentials } from 'app/core/auth/auth-jwt.service';
+import { Credentials, IAuthServerProvider } from 'app/core/auth/auth-jwt.service';
 import { of } from 'rxjs';
 
 export class MockAuthServerProviderService implements IAuthServerProvider {

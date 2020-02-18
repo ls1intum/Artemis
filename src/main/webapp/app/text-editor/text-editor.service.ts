@@ -1,8 +1,8 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs/Observable';
-import { Language } from 'app/entities/tutor-group';
 import { Franc, FrancLanguage } from './franc';
+import { Language } from 'app/entities/tutor-group/tutor-group.model';
 
 @Injectable({ providedIn: 'root' })
 export class TextEditorService {

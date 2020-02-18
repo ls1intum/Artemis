@@ -1,13 +1,10 @@
 import { BehaviorSubject, Observable } from 'rxjs';
 import { Injectable, OnDestroy } from '@angular/core';
-import { DomainDependent, DomainService, DomainType } from 'app/code-editor/service';
 import { distinctUntilChanged } from 'rxjs/operators';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
-
-export enum GitConflictState {
-    CHECKOUT_CONFLICT = 'CHECKOUT_CONFLICT',
-    OK = 'OK',
-}
+import { DomainService } from 'app/code-editor/service/code-editor-domain.service';
+import { DomainType, GitConflictState } from 'app/code-editor/model/code-editor.model';
+import { DomainDependentService } from 'app/code-editor/service/code-editor-domain-dependent.service';
 
 export interface IConflictStateService {
     subscribeConflictState: () => Observable<GitConflictState>;
@@ -19,7 +16,7 @@ export interface IConflictStateService {
  * It offers methods to both subscribe and notify on conflicts.
  */
 @Injectable({ providedIn: 'root' })
-export class CodeEditorConflictStateService extends DomainDependent implements IConflictStateService, OnDestroy {
+export class CodeEditorConflictStateService extends DomainDependentService implements IConflictStateService, OnDestroy {
     private conflictSubjects: Map<string, BehaviorSubject<GitConflictState>> = new Map();
     private websocketConnections: Map<string, string> = new Map();
 

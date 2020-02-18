@@ -2,9 +2,8 @@ import { Component, OnInit } from '@angular/core';
 import { ActivatedRouteSnapshot, NavigationEnd, NavigationError, Router } from '@angular/router';
 import { Angulartics2 } from 'angulartics2';
 import { Angulartics2Piwik } from 'angulartics2/piwik';
-
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
-import { ProfileInfo } from 'app/layouts';
+import { ProfileInfo } from 'app/layouts/profiles/profile-info.model';
 import { ProfileService } from 'app/layouts/profiles/profile.service';
 import { SentryErrorHandler } from 'app/sentry/sentry.error-handler';
 

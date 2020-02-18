@@ -1,16 +1,11 @@
 import { NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
-
-import { ArtemisSharedModule } from 'app/shared';
-import {
-    TutorGroupComponent,
-    TutorGroupDeleteDialogComponent,
-    TutorGroupDeletePopupComponent,
-    TutorGroupDetailComponent,
-    tutorGroupPopupRoute,
-    tutorGroupRoute,
-    TutorGroupUpdateComponent,
-} from './';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
+import { tutorGroupPopupRoute, tutorGroupRoute } from 'app/entities/tutor-group/tutor-group.route';
+import { TutorGroupDeleteDialogComponent, TutorGroupDeletePopupComponent } from 'app/entities/tutor-group/tutor-group-delete-dialog.component';
+import { TutorGroupComponent } from 'app/entities/tutor-group/tutor-group.component';
+import { TutorGroupDetailComponent } from 'app/entities/tutor-group/tutor-group-detail.component';
+import { TutorGroupUpdateComponent } from 'app/entities/tutor-group/tutor-group-update.component';
 
 const ENTITY_STATES = [...tutorGroupRoute, ...tutorGroupPopupRoute];
 

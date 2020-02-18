@@ -1,5 +1,5 @@
-import { Exercise } from 'app/entities/exercise';
-import { BaseEntity } from 'app/shared';
+import { Exercise } from 'app/entities/exercise/exercise.model';
+import { BaseEntity } from 'app/shared/model/base-entity';
 
 export class ExerciseHint implements BaseEntity {
     id: number;

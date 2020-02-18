@@ -13,6 +13,15 @@
                     <input type="radio" [ngModel]="participationCriteria.filterProp" (click)="updateParticipationFilter(FilterProp.FAILED)" [value]="FilterProp.FAILED" />
                     <span class="ml-1">{{ 'artemisApp.exercise.showFailed' | translate }}</span>
                 </label>
+                <label class="radio-inline ml-2 mb-0 d-flex align-items-center">
+                    <input
+                        type="radio"
+                        [ngModel]="participationCriteria.filterProp"
+                        (click)="updateParticipationFilter(FilterProp.NO_SUBMISSIONS)"
+                        [value]="FilterProp.NO_SUBMISSIONS"
+                    />
+                    <span class="ml-1">{{ 'artemisApp.exercise.showNoSubmissions' | translate }}</span>
+                </label>
             </div>
         </div>
         <jhi-programming-exercise-instructor-submission-state
@@ -68,7 +77,7 @@
                     </ng-template>
                 </ngx-datatable-column>
 
-                <ngx-datatable-column prop="repositoryUrl" *ngIf="exercise?.type === ExerciseType.PROGRAMMING" [minWidth]="120">
+                <ngx-datatable-column prop="repositoryUrl" *ngIf="exercise?.type === ExerciseType.PROGRAMMING" [minWidth]="120" [width]="120">
                     <ng-template ngx-datatable-header-template>
                         <span class="datatable-header-cell-wrapper" (click)="controls.onSort('repositoryUrl')">
                             <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.participation.repositoryUrl">
@@ -84,7 +93,7 @@
                     </ng-template>
                 </ngx-datatable-column>
 
-                <ngx-datatable-column *ngIf="exercise?.type === ExerciseType.PROGRAMMING" [minWidth]="100">
+                <ngx-datatable-column *ngIf="exercise?.type === ExerciseType.PROGRAMMING" [minWidth]="100" [width]="100">
                     <ng-template ngx-datatable-header-template>
                         <span class="datatable-header-cell-wrapper" (click)="controls.onSort('buildPlanId')">
                             <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.participation.buildPlanId">
@@ -102,7 +111,7 @@
                     </ng-template>
                 </ngx-datatable-column>
 
-                <ngx-datatable-column prop="initializationState" [minWidth]="80">
+                <ngx-datatable-column prop="initializationState" [minWidth]="80" [width]="80">
                     <ng-template ngx-datatable-header-template>
                         <span class="datatable-header-cell-wrapper" (click)="controls.onSort('initializationState')">
                             <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.participation.initializationState">
@@ -130,7 +139,28 @@
                     </ng-template>
                 </ngx-datatable-column>
 
-                <ngx-datatable-column prop="student" [minWidth]="120">
+                <ngx-datatable-column [minWidth]="100" [width]="110">
+                    <ng-template ngx-datatable-header-template>
+                        <span class="datatable-header-cell-wrapper d-inline-block w-100 text-center" (click)="controls.onSort('submissionCount')">
+                            <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.exercise.submissionCount">
+                                Submissions
+                            </span>
+                            <fa-icon [icon]="controls.iconForSortPropField('submissionCount')"></fa-icon>
+                        </span>
+                    </ng-template>
+                    <ng-template ngx-datatable-cell-template let-value="row">
+                        <div class="text-center">
+                            <a *ngIf="exercise.isAtLeastInstructor; else displayTextOnly" routerLink="/participation/{{ value.id }}/submissions">
+                                {{ value.submissionCount }}
+                            </a>
+                            <ng-template #displayTextOnly>
+                                {{ value.submissionCount }}
+                            </ng-template>
+                        </div>
+                    </ng-template>
+                </ngx-datatable-column>
+
+                <ngx-datatable-column prop="student" [minWidth]="120" [width]="120">
                     <ng-template ngx-datatable-header-template>
                         <span class="datatable-header-cell-wrapper" (click)="controls.onSort('student.name')">
                             <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.participation.student">
@@ -144,7 +174,7 @@
                     </ng-template>
                 </ngx-datatable-column>
 
-                <ngx-datatable-column prop="presentationScore" *ngIf="this.presentationScoreEnabled" [minWidth]="150">
+                <ngx-datatable-column prop="presentationScore" *ngIf="this.presentationScoreEnabled" [minWidth]="150" [width]="150">
                     <ng-template ngx-datatable-header-template>
                         <span class="datatable-header-cell-wrapper" (click)="controls.onSort('presentationScore')">
                             <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.participation.presentationScore">
@@ -158,7 +188,7 @@
                     </ng-template>
                 </ngx-datatable-column>
 
-                <ngx-datatable-column prop="" [minWidth]="350">
+                <ngx-datatable-column prop="" [minWidth]="350" [width]="350">
                     <ng-template ngx-datatable-cell-template let-value="value">
                         <div class="text-right">
                             <div class="btn-group">

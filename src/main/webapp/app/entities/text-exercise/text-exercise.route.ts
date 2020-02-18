@@ -7,11 +7,11 @@ import { TextExerciseUpdateComponent } from './text-exercise-update.component';
 import { TextExercise } from './text-exercise.model';
 import { Injectable } from '@angular/core';
 import { TextExerciseService } from 'app/entities/text-exercise/text-exercise.service';
-import { Course } from 'app/entities/course';
 import { CourseService } from 'app/entities/course/course.service';
 import { Observable } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { filter, map } from 'rxjs/operators';
+import { Course } from 'app/entities/course/course.model';
 
 @Injectable({ providedIn: 'root' })
 export class TextExerciseResolver implements Resolve<TextExercise> {

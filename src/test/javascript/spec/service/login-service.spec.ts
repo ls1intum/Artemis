@@ -10,7 +10,7 @@ import { MockAlertService } from '../mocks/mock-alert.service';
 import { IAccountService } from 'app/core/auth/account.service';
 import { IWebsocketService } from 'app/core/websocket/websocket.service';
 import { LoginService } from 'app/core/login/login.service';
-import { IAuthServerProvider } from 'app/core';
+import { IAuthServerProvider } from 'app/core/auth/auth-jwt.service';
 
 chai.use(sinonChai);
 const expect = chai.expect;

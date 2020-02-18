@@ -4,29 +4,31 @@ import * as moment from 'moment';
 import { AfterViewInit, ChangeDetectorRef, Component, OnDestroy, OnInit, ViewEncapsulation } from '@angular/core';
 import { Location } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
-import { TextExercise } from 'app/entities/text-exercise';
-import { TextSubmission, TextSubmissionService } from 'app/entities/text-submission';
 import { HighlightColors } from './highlight-colors';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/alert/alert.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Result, ResultService } from 'app/entities/result';
 import { TextAssessmentsService } from 'app/entities/text-assessments/text-assessments.service';
-import { Feedback } from 'app/entities/feedback';
-import { StudentParticipation } from 'app/entities/participation';
 import Interactable from '@interactjs/core/Interactable';
 import interact from 'interactjs';
 import { WindowRef } from 'app/core/websocket/window.service';
 import { ArtemisMarkdown } from 'app/components/util/markdown.service';
-import { Complaint, ComplaintType } from 'app/entities/complaint';
-import { ComplaintResponse } from 'app/entities/complaint-response';
 import { TranslateService } from '@ngx-translate/core';
 import { ComplaintService } from 'app/entities/complaint/complaint.service';
-import { ExerciseType } from 'app/entities/exercise';
 import { Subscription } from 'rxjs/Subscription';
 import { TextBlock } from 'app/entities/text-block/text-block.model';
-import { AssessmentType } from 'app/entities/assessment-type';
 import { AccountService } from 'app/core/auth/account.service';
+import { TextSubmissionService } from 'app/entities/text-submission/text-submission.service';
+import { ComplaintResponse } from 'app/entities/complaint-response/complaint-response.model';
+import { Complaint, ComplaintType } from 'app/entities/complaint/complaint.model';
+import { Feedback } from 'app/entities/feedback/feedback.model';
+import { ResultService } from 'app/entities/result/result.service';
+import { AssessmentType } from 'app/entities/assessment-type/assessment-type.model';
+import { TextExercise } from 'app/entities/text-exercise/text-exercise.model';
+import { ExerciseType } from 'app/entities/exercise/exercise.model';
+import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { TextSubmission } from 'app/entities/text-submission/text-submission.model';
+import { Result } from 'app/entities/result/result.model';
 
 @Component({
     providers: [TextAssessmentsService, WindowRef],
@@ -74,7 +76,7 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
 
     constructor(
         private changeDetectorRef: ChangeDetectorRef,
-        private jhiAlertService: JhiAlertService,
+        private jhiAlertService: AlertService,
         private modalService: NgbModal,
         private router: Router,
         private route: ActivatedRoute,

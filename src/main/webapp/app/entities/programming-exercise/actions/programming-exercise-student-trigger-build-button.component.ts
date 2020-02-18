@@ -1,11 +1,11 @@
 import { Component, Input } from '@angular/core';
 import { ProgrammingExerciseTriggerBuildButtonComponent } from './programming-exercise-trigger-build-button.component';
 import { ProgrammingSubmissionService } from 'app/programming-submission/programming-submission.service';
-import { SubmissionType } from 'app/entities/submission';
 import { ParticipationWebsocketService } from 'app/entities/participation/participation-websocket.service';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/alert/alert.service';
 import { catchError } from 'rxjs/operators';
 import { of } from 'rxjs';
+import { SubmissionType } from 'app/entities/submission/submission.model';
 
 @Component({
     selector: 'jhi-programming-exercise-student-trigger-build-button',
@@ -14,7 +14,7 @@ import { of } from 'rxjs';
 export class ProgrammingExerciseStudentTriggerBuildButtonComponent extends ProgrammingExerciseTriggerBuildButtonComponent {
     @Input() triggerLastGraded = false;
 
-    constructor(submissionService: ProgrammingSubmissionService, alertService: JhiAlertService, participationWebsocketService: ParticipationWebsocketService) {
+    constructor(submissionService: ProgrammingSubmissionService, alertService: AlertService, participationWebsocketService: ParticipationWebsocketService) {
         super(submissionService, participationWebsocketService, alertService);
     }
 

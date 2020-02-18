@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { Location } from '@angular/common';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/alert/alert.service';
 import { ComplaintService } from 'app/entities/complaint/complaint.service';
 import { Complaint, ComplaintType } from 'app/entities/complaint/complaint.model';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
@@ -16,7 +16,7 @@ import { cloneDeep } from 'lodash';
 @Component({
     selector: 'jhi-complaint-form',
     templateUrl: './list-of-complaints.component.html',
-    providers: [JhiAlertService],
+    providers: [],
 })
 export class ListOfComplaintsComponent implements OnInit {
     public complaints: Complaint[] = [];
@@ -37,7 +37,7 @@ export class ListOfComplaintsComponent implements OnInit {
 
     constructor(
         private complaintService: ComplaintService,
-        private jhiAlertService: JhiAlertService,
+        private jhiAlertService: AlertService,
         private route: ActivatedRoute,
         private router: Router,
         private location: Location,

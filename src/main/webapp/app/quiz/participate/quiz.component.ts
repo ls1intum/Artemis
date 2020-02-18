@@ -1,34 +1,36 @@
 import { Component, OnDestroy, OnInit, QueryList, ViewChildren } from '@angular/core';
 import * as moment from 'moment';
 import * as _ from 'lodash';
-import { QuizExercise, QuizExerciseService } from '../../entities/quiz-exercise';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Subscription } from 'rxjs/Subscription';
 import { ActivatedRoute } from '@angular/router';
-import { JhiAlertService } from 'ng-jhipster';
-import { QuizSubmission, QuizSubmissionService } from '../../entities/quiz-submission';
+import { AlertService } from 'app/core/alert/alert.service';
 import { ParticipationService } from 'app/entities/participation/participation.service';
 import { ParticipationWebsocketService } from 'app/entities/participation/participation-websocket.service';
-import { Result } from 'app/entities/result';
-import { DragAndDropQuestion } from 'app/entities/drag-and-drop-question';
-import { MultipleChoiceQuestion } from 'app/entities/multiple-choice-question';
-import { ShortAnswerQuestion } from 'app/entities/short-answer-question';
-import { MultipleChoiceSubmittedAnswer } from 'app/entities/multiple-choice-submitted-answer';
-import { DragAndDropSubmittedAnswer } from 'app/entities/drag-and-drop-submitted-answer';
-import { ShortAnswerSubmittedAnswer } from 'app/entities/short-answer-submitted-answer';
-import { QuizQuestionType } from 'app/entities/quiz-question';
+import { Result } from 'app/entities/result/result.model';
 import { MultipleChoiceQuestionComponent } from 'app/quiz/participate/multiple-choice-question/multiple-choice-question.component';
 import { DragAndDropQuestionComponent } from 'app/quiz/participate/drag-and-drop-question/drag-and-drop-question.component';
 import { ShortAnswerQuestionComponent } from 'app/quiz/participate/short-answer-question/short-answer-question.component';
-import { DragAndDropMapping } from 'app/entities/drag-and-drop-mapping';
-import { AnswerOption } from 'app/entities/answer-option';
-import { ShortAnswerSubmittedText } from 'app/entities/short-answer-submitted-text';
 import { TranslateService } from '@ngx-translate/core';
 import * as smoothscroll from 'smoothscroll-polyfill';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { DeviceDetectorService } from 'ngx-device-detector';
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { ShortAnswerSubmittedAnswer } from 'app/entities/short-answer-submitted-answer/short-answer-submitted-answer.model';
+import { QuizExerciseService } from 'app/entities/quiz-exercise/quiz-exercise.service';
+import { DragAndDropMapping } from 'app/entities/drag-and-drop-mapping/drag-and-drop-mapping.model';
+import { AnswerOption } from 'app/entities/answer-option/answer-option.model';
+import { ShortAnswerSubmittedText } from 'app/entities/short-answer-submitted-text/short-answer-submitted-text.model';
+import { QuizSubmissionService } from 'app/entities/quiz-submission/quiz-submission.service';
+import { MultipleChoiceQuestion } from 'app/entities/multiple-choice-question/multiple-choice-question.model';
+import { QuizExercise } from 'app/entities/quiz-exercise/quiz-exercise.model';
+import { DragAndDropSubmittedAnswer } from 'app/entities/drag-and-drop-submitted-answer/drag-and-drop-submitted-answer.model';
+import { QuizSubmission } from 'app/entities/quiz-submission/quiz-submission.model';
+import { ShortAnswerQuestion } from 'app/entities/short-answer-question/short-answer-question.model';
+import { QuizQuestionType } from 'app/entities/quiz-question/quiz-question.model';
+import { MultipleChoiceSubmittedAnswer } from 'app/entities/multiple-choice-submitted-answer/multiple-choice-submitted-answer.model';
+import { DragAndDropQuestion } from 'app/entities/drag-and-drop-question/drag-and-drop-question.model';
 
 @Component({
     selector: 'jhi-quiz',
@@ -112,7 +114,7 @@ export class QuizComponent implements OnInit, OnDestroy {
         private participationService: ParticipationService,
         private participationWebsocketService: ParticipationWebsocketService,
         private route: ActivatedRoute,
-        private jhiAlertService: JhiAlertService,
+        private jhiAlertService: AlertService,
         private quizSubmissionService: QuizSubmissionService,
         private translateService: TranslateService,
         private deviceService: DeviceDetectorService,

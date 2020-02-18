@@ -3,8 +3,8 @@ import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { SERVER_API_URL } from 'app/app.constants';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
-import { ProgrammingExercise } from 'app/entities/programming-exercise';
-import { PageableSearch, SearchResult } from 'app/components/table';
+import { PageableSearch, SearchResult } from 'app/components/table/pageable-table';
+import { ProgrammingExercise } from 'app/entities/programming-exercise/programming-exercise.model';
 
 type EntityResponseType = SearchResult<ProgrammingExercise>;
 

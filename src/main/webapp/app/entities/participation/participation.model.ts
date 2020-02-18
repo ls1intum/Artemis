@@ -1,12 +1,12 @@
-import { BaseEntity } from 'app/shared';
-import { Result } from '../result';
-import { Submission } from '../submission';
+import { BaseEntity } from 'app/shared/model/base-entity';
 import { Moment } from 'moment';
-import { Exercise } from 'app/entities/exercise';
+import { Exercise } from 'app/entities/exercise/exercise.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { SolutionProgrammingExerciseParticipation } from 'app/entities/participation/solution-programming-exercise-participation.model';
 import { TemplateProgrammingExerciseParticipation } from 'app/entities/participation/template-programming-exercise-participation.model';
+import { Submission } from 'app/entities/submission/submission.model';
+import { Result } from 'app/entities/result/result.model';
 
 export const enum InitializationState {
     UNINITIALIZED = 'UNINITIALIZED',
@@ -37,6 +37,9 @@ export abstract class Participation implements BaseEntity {
     public submissions: Submission[];
     public exercise?: Exercise;
     public type: ParticipationType;
+
+    // transient
+    public submissionCount?: number;
 
     constructor(type: ParticipationType) {
         this.type = type;
