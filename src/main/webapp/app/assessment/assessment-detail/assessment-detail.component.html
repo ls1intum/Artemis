@@ -5,7 +5,7 @@
             {{ 'artemisApp.assessment.detail.scoreFor' | translate }}
             <span>
                 "
-                <span class="highlight" [ngClass]="highlightColor">{{ block?.text || assessment.reference }} </span>
+                <span class="highlight" [ngClass]="highlightColor" [innerHTML]="sanitizedText"></span>
                 "
             </span>
         </h4>
