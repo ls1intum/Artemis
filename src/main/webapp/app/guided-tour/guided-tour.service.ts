@@ -804,15 +804,17 @@ export class GuidedTourService {
                 // Reset tutor assessment participation
                 case ResetParticipation.TUTOR_ASSESSMENT:
                     this.restartIsLoading = true;
-                    this.tutorParticipationService.deleteTutorParticipationForGuidedTour(this.currentCourse, this.currentExercise).subscribe(() => {
-                        this.deleteGuidedTourSetting(this.availableTourForComponent!.settingsKey).subscribe(() => {
-                            this.navigateToUrlAfterRestart('/course');
-                        });
-                    },
-                    () => {
-                        this.restartIsLoading = false;
-                        this.startTour();
-                    });
+                    this.tutorParticipationService.deleteTutorParticipationForGuidedTour(this.currentCourse, this.currentExercise).subscribe(
+                        () => {
+                            this.deleteGuidedTourSetting(this.availableTourForComponent!.settingsKey).subscribe(() => {
+                                this.navigateToUrlAfterRestart('/course');
+                            });
+                        },
+                        () => {
+                            this.restartIsLoading = false;
+                            this.startTour();
+                        },
+                    );
                     break;
                 case ResetParticipation.NONE:
                     this.startTour();
