@@ -47,8 +47,6 @@ public class TextExerciseResource {
 
     private final TextExerciseRepository textExerciseRepository;
 
-    private final GradingCriterionRepository gradingCriterionRepository;
-
     private final UserService userService;
 
     private final CourseService courseService;
@@ -81,7 +79,6 @@ public class TextExerciseResource {
         this.exampleSubmissionRepository = exampleSubmissionRepository;
         this.textClusteringScheduleService = textClusteringScheduleService;
         this.exerciseService = exerciseService;
-        this.gradingCriterionRepository = gradingCriterionRepository;
     }
 
     /**

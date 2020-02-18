@@ -808,12 +808,7 @@ public abstract class Exercise implements Serializable {
     }
 
     public Exercise gradingCriteria(List<GradingCriterion> gradingCriteria) {
-        this.gradingCriteria = gradingCriteria;
-        if (gradingCriteria != null) {
-            this.gradingCriteria.forEach(gradingCriterion -> {
-                gradingCriterion.setExercise(this);
-            });
-        }
+        reconnectCriteriaWithExercise(gradingCriteria);
         return this;
     }
 
@@ -830,6 +825,10 @@ public abstract class Exercise implements Serializable {
     }
 
     public void setGradingCriteria(List<GradingCriterion> gradingCriteria) {
+        reconnectCriteriaWithExercise(gradingCriteria);
+    }
+
+    private void reconnectCriteriaWithExercise(List<GradingCriterion> gradingCriteria){
         this.gradingCriteria = gradingCriteria;
         if (gradingCriteria != null) {
             this.gradingCriteria.forEach(gradingCriterion -> {
