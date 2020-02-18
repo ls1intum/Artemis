@@ -10,7 +10,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonValue;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class BambooBuildResultDTO {
+public class QueriedBambooBuildResultDTO {
 
     private BuildState buildState;
 
