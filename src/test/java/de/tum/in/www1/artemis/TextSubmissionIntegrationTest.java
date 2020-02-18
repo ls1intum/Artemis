@@ -22,6 +22,8 @@ import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.TextSubmissionRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.service.UserService;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.RequestUtilService;
@@ -42,6 +44,12 @@ public class TextSubmissionIntegrationTest extends AbstractSpringIntegrationTest
 
     @Autowired
     DatabaseUtilService database;
+
+    @Autowired
+    UserService userService;
+
+    @Autowired
+    UserRepository userRepository;
 
     private TextExercise textExerciseAfterDueDate;
 
@@ -65,6 +73,7 @@ public class TextSubmissionIntegrationTest extends AbstractSpringIntegrationTest
         database.addParticipationForExercise(textExerciseBeforeDueDate, student.getLogin());
 
         textSubmission = ModelFactory.generateTextSubmission("example text", Language.ENGLISH, true);
+        userRepository.save(ModelFactory.generateActivatedUser("tutor2"));
     }
 
     @AfterEach
@@ -124,6 +133,13 @@ public class TextSubmissionIntegrationTest extends AbstractSpringIntegrationTest
     }
 
     @Test
+    @WithMockUser(username = "tutor2", roles = "TA")
+    public void getAllTextSubmission_notTutorInExercise() throws Exception {
+        textSubmission = database.addTextSubmission(textExerciseAfterDueDate, textSubmission, "student1");
+        request.getList("/api/exercises/" + textExerciseAfterDueDate.getId() + "/text-submissions?assessedByTutor=true", HttpStatus.FORBIDDEN, TextSubmission.class);
+    }
+
+    @Test
     @WithMockUser(value = "tutor1", roles = "TA")
     public void getTextSubmissionWithoutAssessment_studentHidden() throws Exception {
         textSubmission = database.addTextSubmission(textExerciseAfterDueDate, textSubmission, "student1");
@@ -161,6 +177,13 @@ public class TextSubmissionIntegrationTest extends AbstractSpringIntegrationTest
         database.addTextSubmission(textExerciseAfterDueDate, submission, "student1");
 
         request.get("/api/exercises/" + textExerciseAfterDueDate.getId() + "/text-submission-without-assessment", HttpStatus.NOT_FOUND, TextSubmission.class);
+    }
+
+    @Test
+    @WithMockUser(value = "tutor2", roles = "TA")
+    public void getTextSubmissionWithoutAssessment_notTutorInExercise() throws Exception {
+        textSubmission = database.addTextSubmission(textExerciseAfterDueDate, textSubmission, "student1");
+        request.get("/api/exercises/" + textExerciseAfterDueDate.getId() + "/text-submission-without-assessment", HttpStatus.FORBIDDEN, TextSubmission.class);
     }
 
     @Test
