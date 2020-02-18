@@ -35,7 +35,6 @@ import de.tum.in.www1.artemis.security.AuthoritiesConstants;
 import de.tum.in.www1.artemis.security.PBEPasswordEncoder;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.connectors.VcsUserManagementService;
-import de.tum.in.www1.artemis.service.dto.TeamSearchUserDTO;
 import de.tum.in.www1.artemis.service.dto.UserDTO;
 import de.tum.in.www1.artemis.service.ldap.LdapUserDto;
 import de.tum.in.www1.artemis.service.ldap.LdapUserService;
@@ -520,23 +519,6 @@ public class UserService {
      */
     public Page<UserDTO> getAllManagedUsers(Pageable pageable) {
         return userRepository.findAllWithGroups(pageable).map(UserDTO::new);
-    }
-
-    /**
-     * Search for users by login or name in course
-     * @param course Course in which to search students
-     * @param exercise Exercise in which the student might be added to a team
-     * @param loginOrName Login or name by which to search students
-     * @return users whose login matched
-     */
-    // TODO: Martin Wauligmann - Move into TeamService
-    public List<TeamSearchUserDTO> searchByLoginOrNameInCourseForExerciseTeam(Course course, Exercise exercise, String loginOrName) {
-        List<User> users = userRepository.searchByLoginOrNameInGroup(course.getStudentGroupName(), loginOrName);
-        List<TeamSearchUserDTO> teamSearchUsers = users.stream().map(TeamSearchUserDTO::new).collect(Collectors.toList());
-        // Annotate whether the user is already assigned to a team for the given exercise
-        // TODO: swap n+1 db queries with only 1 or 2 queries?
-        teamSearchUsers.forEach(user -> user.setIsAssignedToTeam(teamRepository.findOneByExerciseIdAndUserId(exercise.getId(), user.getId()).isPresent()));
-        return teamSearchUsers;
     }
 
     /**

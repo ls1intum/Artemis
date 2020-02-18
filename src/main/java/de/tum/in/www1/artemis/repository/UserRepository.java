@@ -49,10 +49,12 @@ public interface UserRepository extends JpaRepository<User, Long> {
     @Query("select user from User user where :#{#groupName} member user.groups")
     List<User> findAllInGroup(String groupName);
 
+    /**
+     * Searches for users in a group by their login or full name.
+     */
     @EntityGraph(attributePaths = { "groups" })
     @Query("select user from User user where :#{#groupName} member user.groups and "
             + "(user.login like :#{#loginOrName}% or concat_ws(' ', user.firstName, user.lastName) like %:#{#loginOrName}%)")
-    // TODO: Martin Wauligmann - Add JavaDoc
     List<User> searchByLoginOrNameInGroup(String groupName, String loginOrName);
 
     @EntityGraph(attributePaths = { "groups" })

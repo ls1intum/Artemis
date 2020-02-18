@@ -12,6 +12,7 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import de.tum.in.www1.artemis.domain.participation.ParticipantInterface;
 
 /**
  * A Team of students.
@@ -20,7 +21,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 @Table(name = "team")
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class Team implements Serializable {
+public class Team implements Serializable, ParticipantInterface {
 
     private static final long serialVersionUID = 1L;
 
@@ -79,6 +80,10 @@ public class Team implements Serializable {
 
     public void setShortName(String shortName) {
         this.shortName = shortName;
+    }
+
+    public String getParticipantIdentifier() {
+        return shortName;
     }
 
     public String getImage() {

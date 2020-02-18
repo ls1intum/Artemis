@@ -74,7 +74,7 @@ export class TeamsComponent implements OnInit, OnDestroy {
      * @param team Team that should be removed
      */
     removeTeam = (team: Team) => {
-        this.teamService.delete(team.id).subscribe(
+        this.teamService.delete(this.exercise, team.id).subscribe(
             () => this.deleteTeam(team),
             () => this.jhiAlertService.error('artemisApp.team.removeTeam.error'),
         );

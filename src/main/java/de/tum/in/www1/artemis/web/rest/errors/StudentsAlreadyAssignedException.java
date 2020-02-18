@@ -10,6 +10,11 @@ import de.tum.in.www1.artemis.domain.Team;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.web.rest.TeamResource;
 
+/**
+ * Exception that will be thrown if the user tries to create a team that contains students who are already assigned to a different team for the exercise. The error response will
+ * contain a list of conflicts in the format [{studentLogin, teamId}] (listing all those students for which there is a conflict and for each of them the existing team they already
+ * belong to).
+ */
 public class StudentsAlreadyAssignedException extends BadRequestAlertException {
 
     private static final long serialVersionUID = 1L;

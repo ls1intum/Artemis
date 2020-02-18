@@ -10,10 +10,13 @@ import javax.validation.Payload;
 
 import de.tum.in.www1.artemis.validation.TeamAssignmentConfigValidator;
 
+/**
+ * Custom constraint annotation for team assignment configurations
+ * Validation is performed by TeamAssignmentConfigValidator before saving. If it fails, an error will be thrown.
+ */
 @Constraint(validatedBy = TeamAssignmentConfigValidator.class)
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
-// TODO: Martin Wauligmann - Describe what the purpose of this is
 public @interface TeamAssignmentConfigConstraints {
 
     String message() default "{de.tum.in.www1.artemis.validation.constraints.TeamAssignmentConfigConstraints}";

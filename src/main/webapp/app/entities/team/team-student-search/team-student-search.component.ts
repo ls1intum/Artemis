@@ -2,10 +2,10 @@ import { Component, Input, Output, EventEmitter, ViewChild, ElementRef } from '@
 import { Observable, of } from 'rxjs';
 import { User } from 'app/core/user/user.model';
 import { debounceTime, distinctUntilChanged, map, switchMap, tap, catchError } from 'rxjs/operators';
-import { UserService } from 'app/core/user/user.service';
 import { get } from 'lodash';
 import { Course } from 'app/entities/course/course.model';
 import { Exercise } from 'app/entities/exercise/exercise.model';
+import { TeamService } from 'app/entities/team/team.service';
 
 @Component({
     selector: 'jhi-team-student-search',
@@ -25,7 +25,7 @@ export class TeamStudentSearchComponent {
 
     inputDisplayValue: string;
 
-    constructor(private userService: UserService) {}
+    constructor(private teamService: TeamService) {}
 
     onAutocompleteSelect = (student: User) => {
         this.inputDisplayValue = '';
@@ -51,7 +51,7 @@ export class TeamStudentSearchComponent {
                 if (loginOrName.length < 3) {
                     return of([]);
                 }
-                return this.userService
+                return this.teamService
                     .searchInCourseForExerciseTeam(this.course, this.exercise, loginOrName)
                     .pipe(map(usersResponse => usersResponse.body!))
                     .pipe(

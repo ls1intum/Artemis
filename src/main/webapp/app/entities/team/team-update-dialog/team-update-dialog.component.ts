@@ -133,7 +133,7 @@ export class TeamUpdateDialogComponent implements OnInit {
         this.team = cloneDeep(this.pendingTeam);
 
         if (this.team.id !== undefined) {
-            this.subscribeToSaveResponse(this.teamService.update(this.team));
+            this.subscribeToSaveResponse(this.teamService.update(this.exercise, this.team));
         } else {
             this.subscribeToSaveResponse(this.teamService.create(this.exercise, this.team));
         }
