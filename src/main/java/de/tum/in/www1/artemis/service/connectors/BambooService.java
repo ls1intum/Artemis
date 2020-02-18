@@ -624,7 +624,7 @@ public class BambooService implements ContinuousIntegrationService {
 
                 // 1) add feedback for failed test cases
                 for (final var failedTest: job.getFailedTests()) {
-                    String methodName = failedTest.getMethodName(); // in the attribute "methodName", bamboo seems to apply some unwanted logic
+                    String methodName = failedTest.getName(); // in the attribute "methodName", bamboo seems to apply some unwanted logic
 
                     final String errorMessageString = failedTest.getErrors().stream()
                             .map(errorString -> processResultErrorMessage(programmingLanguage, errorString))
