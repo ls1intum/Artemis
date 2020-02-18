@@ -10,7 +10,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { sum } from 'lodash';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { courseExerciseOverviewTour } from 'app/guided-tour/tours/course-exercise-overview-tour';
-import { isIntelliJ } from 'app/intellij/intellij';
+import { isOrion } from 'app/orion/orion';
 import { ProgrammingSubmissionService } from 'app/programming-submission/programming-submission.service';
 import { LocalStorageService } from 'ngx-webstorage';
 import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
@@ -153,7 +153,7 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
             exercise =>
                 (!needsWorkFilterActive || this.needsWork(exercise)) &&
                 (!exercise.dueDate || !overdueFilterActive || exercise.dueDate.isAfter(moment(new Date()))) &&
-                (!isIntelliJ || exercise.type === ExerciseType.PROGRAMMING),
+                (!isOrion || exercise.type === ExerciseType.PROGRAMMING),
         );
         this.groupExercises(filtered);
     }

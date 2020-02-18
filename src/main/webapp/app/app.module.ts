@@ -49,6 +49,7 @@ import { ArtemisQuizModule } from 'app/quiz/participate/quiz.module';
 import { ArtemisInstructorCourseStatsDashboardModule } from 'app/instructor-course-dashboard/instructor-course-dashboard.module';
 import { ArtemisComplaintsModule } from 'app/complaints/complaints.module';
 import { ArtemisHomeModule } from 'app/home/home.module';
+import { OrionOutdatedComponent } from 'app/orion/outdated-plugin-warning/orion-outdated.component';
 import { ArtemisTeamModule } from 'app/entities/team/team.module';
 
 @NgModule({
@@ -99,6 +100,7 @@ import { ArtemisTeamModule } from 'app/entities/team/team.module';
         JhiMainComponent,
         NavbarComponent,
         ErrorComponent,
+        OrionOutdatedComponent,
         PageRibbonComponent,
         ActiveMenuDirective,
         FooterComponent,

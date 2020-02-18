@@ -6,9 +6,9 @@ import { User } from 'app/core/user/user.model';
 import { Credentials } from 'app/core/auth/auth-jwt.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
-import { JavaBridgeService } from 'app/intellij/java-bridge.service';
-import { isIntelliJ } from 'app/intellij/intellij';
-import { ModalConfirmAutofocusComponent } from 'app/intellij/modal-confirm-autofocus/modal-confirm-autofocus.component';
+import { OrionConnectorService } from 'app/orion/orion-connector.service';
+import { isOrion } from 'app/orion/orion';
+import { ModalConfirmAutofocusComponent } from 'app/orion/modal-confirm-autofocus/modal-confirm-autofocus.component';
 import { AccountService } from 'app/core/auth/account.service';
 import { LoginService } from 'app/core/login/login.service';
 import { TUM_USERNAME_REGEX } from 'app/app.constants';
@@ -49,7 +49,7 @@ export class HomeComponent implements OnInit, AfterViewInit {
         private renderer: Renderer2,
         private eventManager: JhiEventManager,
         private guidedTourService: GuidedTourService,
-        private javaBridge: JavaBridgeService,
+        private javaBridge: OrionConnectorService,
         private modalService: NgbModal,
         private profileService: ProfileService,
     ) {}
@@ -117,8 +117,8 @@ export class HomeComponent implements OnInit, AfterViewInit {
                     this.router.navigate([redirect]);
                 }
 
-                // Log in to IntelliJ
-                if (isIntelliJ) {
+                // Log in to Orion
+                if (isOrion) {
                     const modalRef: NgbModalRef = this.modalService.open(ModalConfirmAutofocusComponent as Component, { size: 'lg', backdrop: 'static' });
                     modalRef.componentInstance.text = 'login.ide.confirmation';
                     modalRef.componentInstance.title = 'login.ide.title';
