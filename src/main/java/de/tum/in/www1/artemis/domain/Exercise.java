@@ -828,7 +828,7 @@ public abstract class Exercise implements Serializable {
         reconnectCriteriaWithExercise(gradingCriteria);
     }
 
-    private void reconnectCriteriaWithExercise(List<GradingCriterion> gradingCriteria){
+    private void reconnectCriteriaWithExercise(List<GradingCriterion> gradingCriteria) {
         this.gradingCriteria = gradingCriteria;
         if (gradingCriteria != null) {
             this.gradingCriteria.forEach(gradingCriterion -> {
