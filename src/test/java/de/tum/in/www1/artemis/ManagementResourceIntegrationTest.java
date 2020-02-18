@@ -20,7 +20,6 @@ import de.tum.in.www1.artemis.config.audit.AuditEventConverter;
 import de.tum.in.www1.artemis.domain.PersistentAuditEvent;
 import de.tum.in.www1.artemis.repository.PersistenceAuditEventRepository;
 import de.tum.in.www1.artemis.service.AuditEventService;
-import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.RequestUtilService;
 
@@ -45,7 +44,7 @@ public class ManagementResourceIntegrationTest extends AbstractSpringIntegration
 
     @BeforeEach
     public void initTestCase() {
-        database.addUsers(2, 2, 2);
+        database.addUsers(2, 0, 0);
         persistenceAuditEventRepository.deleteAll();
         persAuditEvent = new PersistentAuditEvent();
         persAuditEvent.setPrincipal("student1");
