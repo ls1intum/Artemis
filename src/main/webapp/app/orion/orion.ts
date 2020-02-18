@@ -1,6 +1,6 @@
 import { REPOSITORY } from 'app/code-editor/instructor/code-editor-instructor-base-container.component';
-import { ProgrammingExercise } from 'app/entities/programming-exercise';
-import { BuildLogErrors } from 'app/code-editor';
+import { ProgrammingExercise } from 'app/entities/programming-exercise/programming-exercise.model';
+import { BuildLogErrors } from 'app/code-editor/build-output/code-editor-build-output.component';
 
 export interface OrionState {
     opened: number;
@@ -14,7 +14,9 @@ export enum ExerciseView {
     INSTRUCTOR = 'INSTRUCTOR',
 }
 
-export interface OrionCoreConnector {
+export interface ArtemisOrionConnector extends ArtemisClientConnector, OrionConnectorFacade {}
+
+export interface OrionExerciseConnector {
     login(username: string, password: string): void;
     log(message: string): void;
     editExercise(exerciseJson: string): void;
@@ -34,7 +36,7 @@ export interface OrionTestResultConnector {
     onTestResult(success: boolean, testName: string, message: string): void;
 }
 
-export interface JavaConnectorFacade {
+export interface OrionConnectorFacade {
     login(username: string, password: string): void;
     log(message: string): void;
     editExercise(exercise: ProgrammingExercise): void;
@@ -58,7 +60,7 @@ export interface ArtemisClientConnector {
 }
 
 export interface Window {
-    orionCoreConnector: OrionCoreConnector;
+    orionCoreConnector: OrionExerciseConnector;
     orionTestResultsConnector: OrionTestResultConnector;
     orionInstructorConnector: OrionInstructorConnector;
     artemisClientConnector: ArtemisClientConnector;

@@ -9,7 +9,7 @@ import { TranslateModule } from '@ngx-translate/core';
 import { OrionFilterDirective } from './orion-filter.directive';
 import { OrionBuildAndTestService } from 'app/orion/orion-build-and-test.service';
 import { FeatureToggleModule } from 'app/feature-toggle/feature-toggle.module';
-import { ArtemisSharedModule } from 'app/shared';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
 
 export function initOrionConnector(bridge: OrionConnectorService, win: WindowRef) {
     return () => OrionConnectorService.initBridge(bridge, win);

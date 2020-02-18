@@ -4,8 +4,7 @@ import { AlertService } from 'app/core/alert/alert.service';
 import { SourceTreeService } from 'app/components/util/sourceTree.service';
 import { ActivatedRoute } from '@angular/router';
 import { FeatureToggle } from 'app/feature-toggle/feature-toggle.service';
-import { stringifyCircular } from 'app/shared/util/utils';
-import { InitializationState, Participation } from 'app/entities/participation/participation.model';
+import { Participation } from 'app/entities/participation/participation.model';
 import { Exercise, ParticipationStatus } from 'app/entities/exercise/exercise.model';
 import { isStartExerciseAvailable } from 'app/entities/exercise/exercise-utils';
 import { ProgrammingExercise } from 'app/entities/programming-exercise/programming-exercise.model';
@@ -13,6 +12,9 @@ import { ProgrammingExerciseStudentParticipation } from 'app/entities/participat
 import { OrionState } from 'app/orion/orion';
 import { OrionConnectorService } from 'app/orion/orion-connector.service';
 import { OrionBuildAndTestService } from 'app/orion/orion-build-and-test.service';
+import { catchError, filter, tap } from 'rxjs/operators';
+import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { participationStatus } from 'app/entities/exercise/exercise-utils';
 
 @Component({
     selector: 'jhi-programming-exercise-student-ide-actions',

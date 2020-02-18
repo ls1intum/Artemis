@@ -1,12 +1,12 @@
 import { Injectable, Injector } from '@angular/core';
 import { WindowRef } from 'app/core/websocket/window.service';
 import { BehaviorSubject, Observable } from 'rxjs';
-import { ExerciseView, OrionState, ArtemisClientConnector, JavaConnectorFacade } from 'app/orion/orion';
+import { ExerciseView, OrionState, ArtemisOrionConnector } from 'app/orion/orion';
 import { Router } from '@angular/router';
 import { REPOSITORY } from 'app/code-editor/instructor/code-editor-instructor-base-container.component';
-import { ProgrammingExercise } from 'app/entities/programming-exercise';
 import { stringifyCircular } from 'app/shared/util/utils';
-import { BuildLogErrors } from 'app/code-editor';
+import { ProgrammingExercise } from 'app/entities/programming-exercise/programming-exercise.model';
+import { BuildLogErrors } from 'app/code-editor/build-output/code-editor-build-output.component';
 
 /**
  * This is the main interface between an IDE (e.g. IntelliJ) and this webapp. If a student has the Orion plugin
@@ -24,7 +24,7 @@ import { BuildLogErrors } from 'app/code-editor';
 @Injectable({
     providedIn: 'root',
 })
-export class OrionConnectorService implements ArtemisClientConnector, JavaConnectorFacade {
+export class OrionConnectorService implements ArtemisOrionConnector {
     private orionState: OrionState;
     private orionStateSubject: BehaviorSubject<OrionState>;
 

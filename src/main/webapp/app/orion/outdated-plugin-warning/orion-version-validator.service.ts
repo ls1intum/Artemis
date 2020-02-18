@@ -4,9 +4,9 @@ import { isOrion } from 'app/orion/orion';
 import { ProfileService } from 'app/layouts/profiles/profile.service';
 import { Router } from '@angular/router';
 import { filter, first, map } from 'rxjs/operators';
-import { ProfileInfo } from 'app/layouts';
 import { compare } from 'compare-versions';
 import { BehaviorSubject, Observable, of } from 'rxjs';
+import { ProfileInfo } from 'app/layouts/profiles/profile-info.model';
 
 export type AllowedOrionVersionRange = {
     from: string;

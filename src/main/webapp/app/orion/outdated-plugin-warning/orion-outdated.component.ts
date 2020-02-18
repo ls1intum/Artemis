@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { ProfileService } from 'app/layouts/profiles/profile.service';
 import { filter, tap } from 'rxjs/operators';
-import { ProfileInfo } from 'app/layouts';
+import { ProfileInfo } from 'app/layouts/profiles/profile-info.model';
 
 @Component({
     selector: 'jhi-orion-outdated',
