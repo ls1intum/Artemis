@@ -83,9 +83,6 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationTest 
         course.addExercises(programmingExercise);
         course = courseRepo.save(course);
 
-        var participation = ModelFactory.generateProgrammingExerciseStudentParticipation(InitializationState.INITIALIZED, programmingExercise, database.getUserByLogin("student1"));
-        participationRepo.save(participation);
-
         doReturn("Success").when(continuousIntegrationService).copyBuildPlan(any(), any(), any(), any(), any());
         doNothing().when(continuousIntegrationService).configureBuildPlan(any());
         doNothing().when(continuousIntegrationService).performEmptySetupCommit(any());
@@ -153,6 +150,14 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationTest 
     @WithMockUser(username = "student1")
     public void participateInProgrammingExercise_featureDisabled() throws Exception {
         Feature.PROGRAMMING_EXERCISES.disable();
+        request.post("/api/courses/" + course.getId() + "/exercises/" + programmingExercise.getId() + "/participations", null, HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = "student1")
+    public void participateInProgrammingExercise_dueDatePassed() throws Exception {
+        programmingExercise.setDueDate(ZonedDateTime.now().minusHours(2));
+        exerciseRepo.save(programmingExercise);
         request.post("/api/courses/" + course.getId() + "/exercises/" + programmingExercise.getId() + "/participations", null, HttpStatus.FORBIDDEN);
     }
 
@@ -284,6 +289,8 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationTest 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     public void resumeProgrammingExerciseParticipation() throws Exception {
+        var participation = ModelFactory.generateProgrammingExerciseStudentParticipation(InitializationState.INITIALIZED, programmingExercise, database.getUserByLogin("student1"));
+        participationRepo.save(participation);
         request.putWithResponseBody("/api/courses/" + course.getId() + "/exercises/" + programmingExercise.getId() + "/resume-programming-participation", null,
                 ProgrammingExerciseStudentParticipation.class, HttpStatus.OK);
     }
@@ -291,7 +298,19 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationTest 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     public void resumeProgrammingExerciseParticipation_wrongExerciseId() throws Exception {
+        var participation = ModelFactory.generateProgrammingExerciseStudentParticipation(InitializationState.INITIALIZED, programmingExercise, database.getUserByLogin("student1"));
+        participationRepo.save(participation);
         request.putWithResponseBody("/api/courses/" + course.getId() + "/exercises/100/resume-programming-participation", null, ProgrammingExerciseStudentParticipation.class,
                 HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void resumeProgrammingExerciseParticipation_noParticipation() throws Exception {
+        var participation = ModelFactory.generateProgrammingExerciseStudentParticipation(InitializationState.INITIALIZED, programmingExercise, database.getUserByLogin("student1"));
+        participation.setExercise(textExercise);
+        participationRepo.save(participation);
+        request.putWithResponseBody("/api/courses/" + course.getId() + "/exercises/" + textExercise.getId() + "/resume-programming-participation", null,
+                ProgrammingExerciseStudentParticipation.class, HttpStatus.BAD_REQUEST);
     }
 }
