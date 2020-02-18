@@ -175,5 +175,13 @@ export const tutorAssessmentTour: GuidedTour = {
             permission: ['ROLE_TA'],
             pageUrl: '/course/(\\d+)+/exercise/(\\d+)+/tutor-dashboard',
         }),
+        new TextTourStep({
+            highlightSelector: '.exercise-table button.guided-tour',
+            headlineTranslateKey: 'tour.tutorExerciseDashboard.assessSubmissions.headline',
+            contentTranslateKey: 'tour.tutorExerciseDashboard.assessSubmissions.content',
+            highlightPadding: 10,
+            orientation: Orientation.TOP,
+            permission: ['ROLE_TA'],
+        }),
     ],
 };

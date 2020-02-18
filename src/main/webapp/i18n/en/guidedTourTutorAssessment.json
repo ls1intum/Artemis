@@ -47,7 +47,11 @@
             },
             "submissionsAndComplaints": {
                 "headline": "Student submission",
-                "content": "The student submissions that have to be assessed will be displayed here after the exercise due date. We have disabled the <tt>Start new assessment</tt> button in this dashboard since it is only used for the tutorial."
+                "content": "The student submissions that have to be assessed will be displayed here after the exercise due date."
+            },
+            "assessSubmissions": {
+                "headline": "Assess Student Submissions",
+                "content": "To start an actual assessment you need to click on the button <tt>Start new assessment</tt>. In this case the button is disabled for tutorial reasons."
             }
         },
         "exampleReview": {
