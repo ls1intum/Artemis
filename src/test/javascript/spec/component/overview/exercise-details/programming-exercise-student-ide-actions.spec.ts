@@ -11,10 +11,8 @@ import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { BehaviorSubject, Subject } from 'rxjs';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { MockComponent } from 'ng-mocks';
-import { IdeBuildAndTestService } from 'app/intellij/ide-build-and-test.service';
 import { FeatureToggleModule } from 'app/feature-toggle/feature-toggle.module';
 import { FeatureToggleService } from 'app/feature-toggle/feature-toggle.service';
-import { stringifyCircular } from 'app/shared/util/utils';
 import { ProgrammingExerciseStudentIdeActionsComponent } from 'app/overview/exercise-details/programming-exercise-student-ide-actions.component';
 import { InitializationState } from 'app/entities/participation/participation.model';
 import { MockFeatureToggleService } from '../../../mocks/mock-feature-toggle-service';
@@ -27,9 +25,10 @@ import { ArtemisTestModule } from '../../../test.module';
 import { JhiAlertService } from 'ng-jhipster';
 import { MockAlertService } from '../../../mocks/mock-alert.service';
 import { MockOrionConnectorService } from '../../../mocks/mock-orion-connector.service';
-import { OrionState } from 'app/orion/orion';
+import { ArtemisOrionConnector, OrionState } from 'app/orion/orion';
 import { OrionModule } from 'app/orion/orion.module';
 import { MockIdeBuildAndTestService } from '../../../mocks/mock-ide-build-and-test.service';
+import { OrionBuildAndTestService } from 'app/orion/orion-build-and-test.service';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -38,7 +37,7 @@ describe('ProgrammingExerciseStudentIdeActionsComponent', () => {
     let comp: ProgrammingExerciseStudentIdeActionsComponent;
     let fixture: ComponentFixture<ProgrammingExerciseStudentIdeActionsComponent>;
     let debugElement: DebugElement;
-    let javaBridge: OrionConnectorService;
+    let orionConnector: ArtemisOrionConnector;
     let courseExerciseService: CourseExerciseService;
     let ideBuildService: OrionBuildAndTestService;
 
@@ -69,14 +68,14 @@ describe('ProgrammingExerciseStudentIdeActionsComponent', () => {
                 fixture = TestBed.createComponent(ProgrammingExerciseStudentIdeActionsComponent);
                 comp = fixture.componentInstance;
                 debugElement = fixture.debugElement;
-                javaBridge = debugElement.injector.get(OrionConnectorService);
+                orionConnector = debugElement.injector.get(OrionConnectorService);
                 ideBuildService = debugElement.injector.get(OrionBuildAndTestService);
                 courseExerciseService = debugElement.injector.get(CourseExerciseService);
                 startExerciseStub = stub(courseExerciseService, 'startExercise');
                 forwardBuildSpy = spy(ideBuildService, 'listenOnBuildOutputAndForwardChanges');
-                cloneSpy = spy(javaBridge, 'importParticipation');
-                submitSpy = spy(javaBridge, 'submitChanges');
-                ideStateStub = stub(javaBridge, 'state');
+                cloneSpy = spy(orionConnector, 'importParticipation');
+                submitSpy = spy(orionConnector, 'submitChanges');
+                ideStateStub = stub(orionConnector, 'state');
             });
     });
 

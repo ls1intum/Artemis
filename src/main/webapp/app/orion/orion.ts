@@ -1,6 +1,7 @@
 import { REPOSITORY } from 'app/code-editor/instructor/code-editor-instructor-base-container.component';
 import { ProgrammingExercise } from 'app/entities/programming-exercise/programming-exercise.model';
 import { BuildLogErrors } from 'app/code-editor/build-output/code-editor-build-output.component';
+import { Observable } from 'rxjs';
 
 export interface OrionState {
     opened: number;
@@ -14,7 +15,9 @@ export enum ExerciseView {
     INSTRUCTOR = 'INSTRUCTOR',
 }
 
-export interface ArtemisOrionConnector extends ArtemisClientConnector, OrionConnectorFacade {}
+export interface ArtemisOrionConnector extends ArtemisClientConnector, OrionConnectorFacade {
+    state(): Observable<OrionState>;
+}
 
 export interface OrionExerciseConnector {
     login(username: string, password: string): void;
