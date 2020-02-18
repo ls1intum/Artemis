@@ -20,6 +20,7 @@ import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.RequestUtilService;
@@ -136,6 +137,25 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationTest 
         var actualParticipation = request.postWithResponseBody("/api/participations", participation, Participation.class, HttpStatus.CREATED);
         var expectedParticipation = participationRepo.findById(actualParticipation.getId()).get();
         assertThat(actualParticipation).isEqualTo(expectedParticipation);
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void createParticipation_idExists() throws Exception {
+        var participation = ModelFactory.generateStudentParticipation(InitializationState.INITIALIZED, textExercise, database.getUserByLogin("student1"));
+        participation.setId(1L);
+        request.postWithResponseBody("/api/participations", participation, Participation.class, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void createParticipation_programmingExercisesFeatureDisabled() throws Exception {
+        var programmingExercise = ModelFactory.generateProgrammingExercise(ZonedDateTime.now(), ZonedDateTime.now(), course);
+        exerciseRepo.save(programmingExercise);
+        var participation = ModelFactory.generateProgrammingExerciseStudentParticipation(InitializationState.INITIALIZED, programmingExercise, database.getUserByLogin("student1"));
+        participation.setId(1L);
+        Feature.PROGRAMMING_EXERCISES.disable();
+        request.postWithResponseBody("/api/participations", participation, Participation.class, HttpStatus.FORBIDDEN);
     }
 
     @Test
