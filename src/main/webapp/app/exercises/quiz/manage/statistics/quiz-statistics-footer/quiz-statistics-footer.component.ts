@@ -19,7 +19,7 @@ import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
     selector: 'jhi-quiz-statistics-footer',
     templateUrl: './quiz-statistics-footer.component.html',
     providers: [QuizStatisticUtil, ShortAnswerQuestionUtil, ArtemisMarkdown],
-    styleUrls: ['./quiz-statistics-footer.component.scss', '../../../quiz.scss'],
+    styleUrls: ['./quiz-statistics-footer.component.scss', '../../../shared/quiz.scss'],
 })
 export class QuizStatisticsFooterComponent implements OnInit, OnDestroy {
     @Input() isQuizPointStatistic: boolean;

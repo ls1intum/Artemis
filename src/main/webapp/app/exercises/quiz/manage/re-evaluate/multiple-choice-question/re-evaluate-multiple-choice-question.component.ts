@@ -7,7 +7,7 @@ import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-questi
 @Component({
     selector: 'jhi-re-evaluate-multiple-choice-question',
     templateUrl: './re-evaluate-multiple-choice-question.component.html',
-    styleUrls: ['./re-evaluate-multiple-choice-question.component.scss', '../../../quiz.scss'],
+    styleUrls: ['./re-evaluate-multiple-choice-question.component.scss', '../../../shared/quiz.scss'],
     providers: [ArtemisMarkdown],
 })
 export class ReEvaluateMultipleChoiceQuestionComponent implements OnInit, AfterViewInit, OnChanges {

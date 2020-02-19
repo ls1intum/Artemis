@@ -15,7 +15,7 @@ import { Duration, Option } from 'app/exercises/quiz/manage/quiz-exercise-interf
 @Component({
     selector: 'jhi-quiz-re-evaluate',
     templateUrl: './quiz-re-evaluate.component.html',
-    styleUrls: ['./quiz-re-evaluate.component.scss', '../../quiz.scss'],
+    styleUrls: ['./quiz-re-evaluate.component.scss', '../../shared/quiz.scss'],
     encapsulation: ViewEncapsulation.None,
     providers: [],
 })

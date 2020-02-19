@@ -13,7 +13,7 @@ import { Course } from 'app/entities/course.model';
 @Component({
     selector: 'jhi-quiz-exercise-export',
     templateUrl: './quiz-exercise-export.component.html',
-    styleUrls: ['./quiz-exercise-export.component.scss', '../../quiz.scss'],
+    styleUrls: ['./quiz-exercise-export.component.scss', '../shared/quiz.scss'],
 })
 export class QuizExerciseExportComponent implements OnInit {
     questions: QuizQuestion[] = new Array(0);

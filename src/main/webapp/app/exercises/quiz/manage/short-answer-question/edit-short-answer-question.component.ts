@@ -27,7 +27,7 @@ import { ShortAnswerSolution } from 'app/entities/quiz/short-answer-solution.mod
 @Component({
     selector: 'jhi-edit-short-answer-question',
     templateUrl: './edit-short-answer-question.component.html',
-    styleUrls: ['./edit-short-answer-question.component.scss', '../edit-quiz-question.scss', '../../../quiz.scss'],
+    styleUrls: ['./edit-short-answer-question.component.scss', '../edit-quiz-question.scss', '../../shared/quiz.scss'],
     encapsulation: ViewEncapsulation.None,
     providers: [ArtemisMarkdown],
 })

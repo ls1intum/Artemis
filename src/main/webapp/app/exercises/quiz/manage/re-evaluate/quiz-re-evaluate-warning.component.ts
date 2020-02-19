@@ -12,7 +12,7 @@ import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 @Component({
     selector: 'jhi-quiz-re-evaluate-warning',
     templateUrl: './quiz-re-evaluate-warning.component.html',
-    styleUrls: ['../../quiz.scss'],
+    styleUrls: ['../../shared/quiz.scss'],
 })
 export class QuizReEvaluateWarningComponent implements OnInit {
     isSaving: boolean;

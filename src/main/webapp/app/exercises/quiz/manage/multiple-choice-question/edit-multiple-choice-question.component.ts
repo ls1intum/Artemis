@@ -14,7 +14,7 @@ import { EditQuizQuestion } from 'app/exercises/quiz/manage/edit-quiz-question.i
 @Component({
     selector: 'jhi-edit-multiple-choice-question',
     templateUrl: './edit-multiple-choice-question.component.html',
-    styleUrls: ['../../../quiz.scss'],
+    styleUrls: ['../../shared/quiz.scss'],
     providers: [ArtemisMarkdown],
 })
 export class EditMultipleChoiceQuestionComponent implements OnInit, EditQuizQuestion {

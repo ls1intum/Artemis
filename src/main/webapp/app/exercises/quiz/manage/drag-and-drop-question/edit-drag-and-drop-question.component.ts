@@ -21,7 +21,7 @@ import { EditQuizQuestion } from 'app/exercises/quiz/manage/edit-quiz-question.i
     selector: 'jhi-edit-drag-and-drop-question',
     templateUrl: './edit-drag-and-drop-question.component.html',
     providers: [ArtemisMarkdown, DragAndDropQuestionUtil],
-    styleUrls: ['./edit-drag-and-drop-question.component.scss', '../edit-quiz-question.scss', '../../../quiz.scss'],
+    styleUrls: ['./edit-drag-and-drop-question.component.scss', '../edit-quiz-question.scss', '../../shared/quiz.scss'],
     encapsulation: ViewEncapsulation.None,
 })
 export class EditDragAndDropQuestionComponent implements OnInit, OnChanges, EditQuizQuestion {
