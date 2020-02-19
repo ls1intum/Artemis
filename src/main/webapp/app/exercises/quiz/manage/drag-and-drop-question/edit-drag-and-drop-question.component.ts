@@ -6,7 +6,6 @@ import { DragAndDropMouseEvent } from 'app/exercises/quiz/manage/drag-and-drop-q
 import { DragState } from 'app/entities/quiz/drag-state.enum';
 import * as $ from 'jquery';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { EditQuizQuestion } from 'app/quiz/edit/edit-quiz-question.interface';
 import { resizeImage } from 'app/shared/util/drag-and-drop.utils';
 import { HintCommand } from 'app/shared/markdown-editor/domainCommands/hint.command';
 import { ExplanationCommand } from 'app/shared/markdown-editor/domainCommands/explanation.command';
@@ -16,6 +15,7 @@ import { MarkdownEditorComponent } from 'app/shared/markdown-editor/markdown-edi
 import { DragItem } from 'app/entities/quiz/drag-item.model';
 import { DropLocation } from 'app/entities/quiz/drop-location.model';
 import { DomainCommand } from 'app/shared/markdown-editor/domainCommands/domainCommand';
+import { EditQuizQuestion } from 'app/exercises/quiz/manage/edit-quiz-question.interface';
 
 @Component({
     selector: 'jhi-edit-drag-and-drop-question',
