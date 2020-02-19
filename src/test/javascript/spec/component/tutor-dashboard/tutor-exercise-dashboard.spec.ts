@@ -24,6 +24,9 @@ import { ArtemisSharedComponentModule } from 'app/shared/components/shared-compo
 import { ArtemisProgrammingAssessmentModule } from 'app/programming-assessment/programming-assessment.module';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { ArtemisAssessmentSharedModule } from 'app/assessment-shared/assessment-shared.module';
+import { GuidedTourMapping } from 'app/guided-tour/guided-tour-setting.model';
+import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
+import { DeviceDetectorService } from 'ngx-device-detector';
 import { ModelingSubmission } from 'app/entities/modeling-submission/modeling-submission.model';
 import { ArtemisProgrammingExerciseInstructionsRenderModule } from 'app/entities/programming-exercise/instructions/instructions-render/programming-exercise-instructions-render.module';
 import { ModelingExercise } from 'app/entities/modeling-exercise/modeling-exercise.model';
@@ -43,8 +46,8 @@ describe('TutorExerciseDashboardComponent', () => {
     let comp: TutorExerciseDashboardComponent;
     let fixture: ComponentFixture<TutorExerciseDashboardComponent>;
     let modelingSubmissionService: ModelingSubmissionService;
-
     let modelingSubmissionStub: SinonStub;
+    let guidedTourService: GuidedTourService;
 
     const exercise = { id: 20, type: ExerciseType.MODELING, tutorParticipations: [{ status: TutorParticipationStatus.TRAINED }] } as ModelingExercise;
     const submission = { id: 30 } as ModelingSubmission;
@@ -75,6 +78,7 @@ describe('TutorExerciseDashboardComponent', () => {
             ],
             providers: [
                 JhiLanguageHelper,
+                DeviceDetectorService,
                 { provide: AlertService, useClass: MockAlertService },
                 { provide: ActivatedRoute, useClass: MockActivatedRoute },
                 { provide: Router, useClass: MockRouter },
@@ -103,7 +107,9 @@ describe('TutorExerciseDashboardComponent', () => {
             .then(() => {
                 fixture = TestBed.createComponent(TutorExerciseDashboardComponent);
                 comp = fixture.componentInstance;
-                modelingSubmissionService = TestBed.inject(ModelingSubmissionService);
+
+                modelingSubmissionService = TestBed.get(ModelingSubmissionService);
+                guidedTourService = TestBed.get(GuidedTourService);
 
                 comp.exerciseId = exercise.id;
 
@@ -116,6 +122,9 @@ describe('TutorExerciseDashboardComponent', () => {
     });
 
     it('should set unassessedSubmission if lock limit is not reached', () => {
+        const guidedTourMapping = {} as GuidedTourMapping;
+        spyOn<any>(guidedTourService, 'checkTourState').and.returnValue(true);
+        guidedTourService.guidedTourMapping = guidedTourMapping;
         modelingSubmissionStub.returns(of(submission));
 
         comp.loadAll();

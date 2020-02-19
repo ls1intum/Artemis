@@ -1,10 +1,11 @@
 import { GuidedTour } from 'app/guided-tour/guided-tour.model';
 import { TextTourStep } from 'app/guided-tour/guided-tour-step.model';
-import { Orientation } from 'app/guided-tour/guided-tour.constants';
+import { Orientation, ResetParticipation } from 'app/guided-tour/guided-tour.constants';
 import { clickOnElement } from 'app/guided-tour/guided-tour.utils';
 
 export const cancelTour: GuidedTour = {
     settingsKey: 'cancel_tour',
+    resetParticipation: ResetParticipation.NONE,
     steps: [
         new TextTourStep({
             highlightSelector: '.dropdown-item.guided-tour',
@@ -21,6 +22,7 @@ export const cancelTour: GuidedTour = {
 
 export const completedTour: GuidedTour = {
     settingsKey: 'completed_tour',
+    resetParticipation: ResetParticipation.NONE,
     steps: [
         new TextTourStep({
             headlineTranslateKey: 'tour.completed.headline',

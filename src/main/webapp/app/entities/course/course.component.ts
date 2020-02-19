@@ -7,6 +7,8 @@ import { CourseService } from './course.service';
 import { ARTEMIS_DEFAULT_COLOR } from 'app/app.constants';
 import { onError } from 'app/utils/global.utils';
 import { Subject } from 'rxjs';
+import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
+import { tutorAssessmentTour } from 'app/guided-tour/tours/tutor-assessment-tour';
 import { AlertService } from 'app/core/alert/alert.service';
 
 @Component({
@@ -27,7 +29,9 @@ export class CourseComponent implements OnInit, OnDestroy {
 
     readonly ARTEMIS_DEFAULT_COLOR = ARTEMIS_DEFAULT_COLOR;
 
-    constructor(private courseService: CourseService, private jhiAlertService: AlertService, private eventManager: JhiEventManager) {
+    courseForGuidedTour: Course | null;
+
+    constructor(private courseService: CourseService, private jhiAlertService: AlertService, private eventManager: JhiEventManager, private guidedTourService: GuidedTourService) {
         this.predicate = 'id';
         // show the newest courses first and the oldest last
         this.reverse = false;
@@ -37,6 +41,7 @@ export class CourseComponent implements OnInit, OnDestroy {
         this.courseService.query().subscribe(
             (res: HttpResponse<Course[]>) => {
                 this.courses = res.body!;
+                this.courseForGuidedTour = this.guidedTourService.enableTourForCourseOverview(this.courses, tutorAssessmentTour, true);
             },
             (res: HttpErrorResponse) => onError(this.jhiAlertService, res),
         );

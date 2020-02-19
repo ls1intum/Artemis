@@ -29,6 +29,8 @@ import { ProgrammingAssessmentManualResultDialogComponent } from 'app/programmin
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { AccountService } from 'app/core/auth/account.service';
 import { cloneDeep } from 'lodash';
+import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
+import { tutorAssessmentTour } from 'app/guided-tour/tours/tutor-assessment-tour';
 import { Exercise, ExerciseType } from 'app/entities/exercise/exercise.model';
 import { TutorParticipation, TutorParticipationStatus } from 'app/entities/tutor-participation/tutor-participation.model';
 import { ExerciseService } from 'app/entities/exercise/exercise.service';
@@ -100,6 +102,8 @@ export class TutorExerciseDashboardComponent implements OnInit {
 
     tutor: User | null;
 
+    exerciseForGuidedTour: Exercise | null;
+
     constructor(
         private exerciseService: ExerciseService,
         private jhiAlertService: AlertService,
@@ -115,6 +119,7 @@ export class TutorExerciseDashboardComponent implements OnInit {
         private complaintService: ComplaintService,
         private programmingSubmissionService: ProgrammingSubmissionService,
         private modalService: NgbModal,
+        private guidedTourService: GuidedTourService,
     ) {}
 
     ngOnInit(): void {
@@ -151,6 +156,7 @@ export class TutorExerciseDashboardComponent implements OnInit {
                         break;
                 }
 
+                this.exerciseForGuidedTour = this.guidedTourService.enableTourForExercise(this.exercise, tutorAssessmentTour, false);
                 this.tutorParticipation = this.exercise.tutorParticipations[0];
                 this.tutorParticipationStatus = this.tutorParticipation.status;
                 if (this.exercise.exampleSubmissions && this.exercise.exampleSubmissions.length > 0) {

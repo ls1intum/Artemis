@@ -3,6 +3,9 @@ import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs/Observable';
 import { SERVER_API_URL } from 'app/app.constants';
 import { ExampleSubmission } from 'app/entities/example-submission/example-submission.model';
+import { AccountService } from 'app/core/auth/account.service';
+import { Exercise } from 'app/entities/exercise/exercise.model';
+import { Course } from 'app/entities/course/course.model';
 import { TutorParticipation } from 'app/entities/tutor-participation/tutor-participation.model';
 
 export type EntityResponseType = HttpResponse<TutorParticipation>;
@@ -12,7 +15,7 @@ export type EntityArrayResponseType = HttpResponse<TutorParticipation[]>;
 export class TutorParticipationService {
     public resourceUrl = SERVER_API_URL + 'api/exercises';
 
-    constructor(private http: HttpClient) {}
+    constructor(private http: HttpClient, private accountService: AccountService) {}
 
     /**
      * Starts the exercise with the given ID for the current tutor. A tutor participation will be created and returned
@@ -40,5 +43,16 @@ export class TutorParticipationService {
      */
     assessExampleSubmission(exampleSubmission: ExampleSubmission, exerciseId: number) {
         return this.http.post<TutorParticipation>(`${this.resourceUrl}/${exerciseId}/exampleSubmission`, exampleSubmission, { observe: 'response' });
+    }
+
+    /**
+     * Deletes the tutor participation of the current user for the guided tour
+     * @param exercise  exercise with tutor participation
+     */
+    deleteTutorParticipationForGuidedTour(course: Course, exercise: Exercise) {
+        if (course && this.accountService.isAtLeastTutorInCourse(course)) {
+            return this.http.delete<void>(`api/guided-tour/exercises/${exercise.id}/exampleSubmission`);
+        }
+        return new Observable();
     }
 }
