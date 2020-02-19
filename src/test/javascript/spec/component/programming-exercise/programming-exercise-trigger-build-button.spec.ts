@@ -14,16 +14,20 @@ import * as sinonChai from 'sinon-chai';
 import { ArtemisTestModule } from '../../test.module';
 import { MockSyncStorage } from '../../mocks/mock-sync.storage';
 import { MockParticipationWebsocketService } from '../../mocks/mock-participation-websocket.service';
-import { Result } from 'app/entities/result/result.model';
-import { ParticipationWebsocketService } from 'app/entities/participation/participation-websocket.service';
+import { Result } from 'app/entities/result.model';
+import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import { MockAccountService } from '../../mocks/mock-account.service';
-import { Exercise } from 'app/entities/exercise/exercise.model';
-import { ProgrammingSubmissionService, ProgrammingSubmissionState, ProgrammingSubmissionStateObj } from 'app/programming-submission/programming-submission.service';
-import { ArtemisProgrammingExerciseActionsModule } from 'app/entities/programming-exercise/actions/programming-exercise-actions.module';
+import { Exercise } from 'app/entities/exercise.model';
+import {
+    ProgrammingSubmissionService,
+    ProgrammingSubmissionState,
+    ProgrammingSubmissionStateObj,
+} from 'app/exercises/programming/participate/programming-submission/programming-submission.service';
+import { ArtemisProgrammingExerciseActionsModule } from 'app/exercises/programming/manage/actions/programming-exercise-actions.module';
 import { triggerChanges } from '../../utils/general.utils';
 import { InitializationState } from 'app/entities/participation/participation.model';
-import { ProgrammingExerciseStudentTriggerBuildButtonComponent } from 'app/entities/programming-exercise/actions/programming-exercise-student-trigger-build-button.component';
-import { ProgrammingExercise } from 'app/entities/programming-exercise/programming-exercise.model';
+import { ProgrammingExerciseStudentTriggerBuildButtonComponent } from 'app/exercises/programming/manage/actions/programming-exercise-student-trigger-build-button.component';
+import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 
 chai.use(sinonChai);
 const expect = chai.expect;

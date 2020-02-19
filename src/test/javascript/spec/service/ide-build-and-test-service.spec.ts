@@ -1,18 +1,18 @@
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
-import { IProgrammingSubmissionService } from 'app/programming-submission/programming-submission.service';
-import { IParticipationWebsocketService } from 'app/entities/participation/participation-websocket.service';
+import { IProgrammingSubmissionService } from 'app/exercises/programming/participate/programming-submission/programming-submission.service';
+import { IParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import { SinonSpy, SinonStub, spy, stub } from 'sinon';
 import { MockProgrammingSubmissionService } from '../mocks/mock-programming-submission.service';
-import { Result } from 'app/entities/result/result.model';
+import { Result } from 'app/entities/result.model';
 import { BehaviorSubject, of } from 'rxjs';
-import { Feedback } from 'app/entities/feedback/feedback.model';
-import { ProgrammingExercise } from 'app/entities/programming-exercise/programming-exercise.model';
-import { IBuildLogService } from 'app/programming-assessment/build-logs/build-log.service';
+import { Feedback } from 'app/entities/feedback.model';
+import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { IBuildLogService } from 'app/exercises/programming/assess/programming-assessment/build-logs/build-log.service';
 import { MockParticipationWebsocketService } from '../mocks/mock-participation-websocket.service';
 import { MockCodeEditorBuildLogService } from '../mocks/mock-code-editor-build-log.service';
-import { OrionBuildAndTestService } from 'app/orion/orion-build-and-test.service';
-import { OrionConnectorService } from 'app/orion/orion-connector.service';
+import { OrionBuildAndTestService } from 'app/shared/orion/orion-build-and-test.service';
+import { OrionConnectorService } from 'app/shared/orion/orion-connector.service';
 import { MockOrionConnectorService } from '../mocks/mock-orion-connector.service';
 
 chai.use(sinonChai);

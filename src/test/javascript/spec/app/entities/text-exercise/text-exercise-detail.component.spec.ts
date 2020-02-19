@@ -4,7 +4,7 @@ import { ActivatedRoute } from '@angular/router';
 import { of } from 'rxjs';
 
 import { ArTeMiSTestModule } from '../../../test.module';
-import { TextExerciseDetailComponent } from 'app/entities/text-exercise/text-exercise-detail.component';
+import { TextExerciseDetailComponent } from 'app/exercises/text/manage/text-exercise/text-exercise-detail.component';
 import { TextExercise } from 'app/shared/model/text-exercise.model';
 
 describe('Component Tests', () => {

@@ -6,11 +6,11 @@ import { AuthServerProvider } from 'app/core/auth/auth-jwt.service';
 import { HttpResponse } from '@angular/common/http';
 import * as moment from 'moment';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
-import { Lecture } from 'app/entities/lecture/lecture.model';
+import { Lecture } from 'app/entities/lecture.model';
 import { FileService } from 'app/shared/http/file.service';
-import { Attachment } from 'app/entities/attachment/attachment.model';
-import { LectureService } from 'app/entities/lecture/lecture.service';
-import { AttachmentService } from 'app/entities/attachment/attachment.service';
+import { Attachment } from 'app/entities/attachment.model';
+import { LectureService } from 'app/lecture/lecture.service';
+import { AttachmentService } from 'app/lecture/attachment.service';
 
 @Component({
     selector: 'jhi-course-lecture-details',

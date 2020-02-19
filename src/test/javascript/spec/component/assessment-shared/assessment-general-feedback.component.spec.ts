@@ -2,8 +2,8 @@ import { async, ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { FormsModule } from '@angular/forms';
 
-import { AssessmentGeneralFeedbackComponent } from 'app/assessment-shared/assessment-general-feedback/assessment-general-feedback.component';
-import { Feedback } from 'app/entities/feedback/feedback.model';
+import { AssessmentGeneralFeedbackComponent } from 'app/assessment/assessment-general-feedback/assessment-general-feedback.component';
+import { Feedback } from 'app/entities/feedback.model';
 
 describe('AssessmentGeneralFeedbackComponent', () => {
     let component: AssessmentGeneralFeedbackComponent;

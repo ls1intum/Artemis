@@ -2,8 +2,8 @@ import { Injectable } from '@angular/core';
 import { ActivatedRouteSnapshot, Resolve, Route, RouterStateSnapshot } from '@angular/router';
 import { JhiResolvePagingParams } from 'ng-jhipster';
 import { NotificationMgmtUpdateComponent } from 'app/admin/notification-management/notification-management-update.component';
-import { SystemNotification } from 'app/entities/system-notification/system-notification.model';
-import { SystemNotificationService } from 'app/entities/system-notification/system-notification.service';
+import { SystemNotification } from 'app/entities/system-notification.model';
+import { SystemNotificationService } from 'app/core/system-notification/system-notification.service';
 import { NotificationMgmtComponent } from 'app/admin/notification-management/notification-management.component';
 import { NotificationMgmtDetailComponent } from 'app/admin/notification-management/notification-management-detail.component';
 

@@ -5,8 +5,8 @@ import { of } from 'rxjs';
 import { JhiEventManager } from 'ng-jhipster';
 
 import { ArtemisTestModule } from '../../../test.module';
-import { ModelingExerciseDeleteDialogComponent } from 'app/entities/modeling-exercise/modeling-exercise-delete-dialog.component';
-import { ModelingExerciseService } from 'app/entities/modeling-exercise/modeling-exercise.service';
+import { ModelingExerciseDeleteDialogComponent } from 'app/exercises/modeling/manage/modeling-exercise/modeling-exercise-delete-dialog.component';
+import { ModelingExerciseService } from 'app/exercises/modeling/manage/modeling-exercise/modeling-exercise.service';
 
 describe('Component Tests', () => {
     describe('ModelingExercise Management Delete Component', () => {

@@ -5,7 +5,7 @@ import { HttpHeaders, HttpResponse } from '@angular/common/http';
 
 import { ArtemisTestModule } from '../../../test.module';
 import { QuizExerciseComponent } from 'app/entities/quiz-exercise/quiz-exercise.component';
-import { QuizExerciseService } from 'app/entities/quiz-exercise/quiz-exercise.service';
+import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.service';
 import { QuizExercise } from 'app/shared/model/quiz-exercise.model';
 
 describe('Component Tests', () => {
