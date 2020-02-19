@@ -1,6 +1,6 @@
 import { Component, HostBinding, Input, OnInit } from '@angular/core';
 import * as moment from 'moment';
-import { CourseExerciseService } from 'app/entities/manage/course.service';
+import { CourseExerciseService } from 'app/course/manage/course.service';
 import { Router } from '@angular/router';
 import { AlertService } from 'app/core/alert/alert.service';
 import { HttpClient } from '@angular/common/http';
@@ -13,6 +13,7 @@ import { isStartExerciseAvailable, participationStatus } from 'app/exercises/sha
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
+import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 
 @Component({
     selector: 'jhi-exercise-details-student-actions',
@@ -124,7 +125,7 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
             .resumeProgrammingExercise(this.courseId, this.exercise.id)
             .finally(() => (this.exercise.loading = false))
             .subscribe(
-                participation => {
+                (participation: StudentParticipation) => {
                     if (participation) {
                         // Otherwise the client would think that all results are loaded, but there would not be any (=> no graded result).
                         participation.results = this.exercise.studentParticipations[0] ? this.exercise.studentParticipations[0].results : [];

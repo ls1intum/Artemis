@@ -2,7 +2,7 @@ import { CodeEditorContainer } from 'app/exercises/programming/shared/code-edito
 import { OnDestroy, OnInit } from '@angular/core';
 import { Observable, Subscription, throwError } from 'rxjs';
 import { ActivatedRoute, Router } from '@angular/router';
-import { CourseExerciseService } from 'app/entities/manage/course.service';
+import { CourseExerciseService } from 'app/course/manage/course.service';
 import { TranslateService } from '@ngx-translate/core';
 import { AlertService } from 'app/core/alert/alert.service';
 import { catchError, filter, map, tap } from 'rxjs/operators';

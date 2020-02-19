@@ -1,5 +1,5 @@
 import { Component, HostBinding, Input, OnInit } from '@angular/core';
-import { CourseExerciseService } from 'app/entities/manage/course.service';
+import { CourseExerciseService } from 'app/course/manage/course.service';
 import { AlertService } from 'app/core/alert/alert.service';
 import { SourceTreeService } from 'app/exercises/programming/shared/sourceTree.service';
 import { ActivatedRoute } from '@angular/router';
@@ -82,7 +82,7 @@ export class ProgrammingExerciseStudentIdeActionsComponent implements OnInit {
             .startExercise(this.courseId, this.exercise.id)
             .finally(() => (this.exercise.loading = false))
             .subscribe(
-                participation => {
+                (participation: StudentParticipation) => {
                     if (participation) {
                         this.exercise.studentParticipations = [participation];
                         this.exercise.participationStatus = this.participationStatus(this.exercise);

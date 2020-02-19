@@ -1,9 +1,9 @@
 import { Component, Input } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { JhiEventManager } from 'ng-jhipster';
-import { TextExercise } from '../../../../entities/text-exercise.model';
+import { TextExercise } from 'app/entities/text-exercise.model';
 import { TextExerciseService } from './text-exercise.service';
-import { CourseExerciseService, CourseService } from 'app/entities/manage/course.service';
+import { CourseExerciseService, CourseService } from 'app/course/manage/course.service';
 import { ActivatedRoute } from '@angular/router';
 import { ExerciseComponent } from 'app/exercises/shared/exercise/exercise.component';
 import { TranslateService } from '@ngx-translate/core';
