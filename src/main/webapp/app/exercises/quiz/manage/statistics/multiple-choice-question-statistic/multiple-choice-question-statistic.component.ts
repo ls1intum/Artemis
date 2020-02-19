@@ -9,7 +9,7 @@ import { createOptions, DataSet, DataSetProvider } from '../quiz-statistic/quiz-
 import { Subscription } from 'rxjs/Subscription';
 import { AccountService } from 'app/core/auth/account.service';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
-import { QuizExerciseService } from 'app/entities/quiz-exercise/quiz-exercise.service';
+import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.service';
 import { MultipleChoiceQuestionStatistic } from 'app/entities/quiz/multiple-choice-question-statistic.model';
 import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-question.model';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';

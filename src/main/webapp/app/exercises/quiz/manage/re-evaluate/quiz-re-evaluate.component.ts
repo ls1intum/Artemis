@@ -8,7 +8,7 @@ import { Location } from '@angular/common';
 import * as moment from 'moment';
 import { QuizExercisePopupService } from 'app/entities/quiz-exercise/quiz-exercise-popup.service';
 import { QuizQuestion, QuizQuestionType } from 'app/entities/quiz/quiz-question.model';
-import { QuizExerciseService } from 'app/entities/quiz-exercise/quiz-exercise.service';
+import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.service';
 import { Duration, Option } from 'app/entities/quiz-exercise/quiz-exercise-interfaces';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 

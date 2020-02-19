@@ -8,7 +8,7 @@ import { QuizStatisticUtil } from 'app/exercises/quiz/shared/quiz-statistic-util
 import { AccountService } from 'app/core/auth/account.service';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
-import { QuizExerciseService } from 'app/entities/quiz-exercise/quiz-exercise.service';
+import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.service';
 
 const Sugar = require('sugar');
 Sugar.extend();
