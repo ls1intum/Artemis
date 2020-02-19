@@ -25,7 +25,6 @@ import { MockComplaintService } from '../../mocks/mock-complaint.service';
 import { AlertService } from 'app/core/alert/alert.service';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
-import { ModelingAssessmentModule } from 'app/modeling-assessment/modeling-assessment.module';
 import * as moment from 'moment';
 import * as sinon from 'sinon';
 import { MockComponent } from 'ng-mocks';
@@ -37,6 +36,7 @@ import { ArtemisComplaintsModule } from 'app/complaints/complaints.module';
 import { ComplaintService } from 'app/complaints/complaint.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { Result } from 'app/entities/result.model';
+import { ModelingAssessmentModule } from 'app/exercises/modeling/assess/modeling-assessment/modeling-assessment.module';
 
 chai.use(sinonChai);
 const expect = chai.expect;

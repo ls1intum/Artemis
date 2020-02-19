@@ -26,6 +26,7 @@ import { StudentParticipation } from 'app/entities/participation/student-partici
 import { ButtonComponent } from 'app/shared/components/button.component';
 import { Result } from 'app/entities/result.model';
 import { ComplaintsComponent } from 'app/complaints/complaints.component';
+import { TextSubmission } from 'app/entities/text-submission.model';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -40,7 +41,7 @@ describe('TableEditableFieldComponent', () => {
 
     const route = { snapshot: { paramMap: convertToParamMap({ participationId: 42 }) } } as ActivatedRoute;
     const textExercise = { id: 1 } as TextExercise;
-    const participation = { id: 42, exercise: textExercise } as StudentParticipation;
+    const participation = { id: 42, exercise: textExercise, submissions: [new TextSubmission()] } as StudentParticipation;
     const result = { id: 1 } as Result;
 
     beforeEach(async () => {

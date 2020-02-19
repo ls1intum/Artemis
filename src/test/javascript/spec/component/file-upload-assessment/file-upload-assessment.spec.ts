@@ -24,7 +24,6 @@ import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { ComplaintService } from 'app/complaints/complaint.service';
 import { MockComplaintService } from '../../mocks/mock-complaint.service';
 import { ArtemisAssessmentSharedModule } from 'app/assessment/assessment-shared.module';
-import { ModelingAssessmentModule } from 'app/modeling-assessment/modeling-assessment.module';
 import { TranslateModule } from '@ngx-translate/core';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
 import { FileUploadSubmissionService } from 'app/exercises/file-upload/participate/file-upload-submission/file-upload-submission.service';
@@ -35,6 +34,7 @@ import { SubmissionExerciseType, SubmissionType } from 'app/entities/submission.
 import { ExerciseType } from 'app/entities/exercise.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { Result } from 'app/entities/result.model';
+import { ModelingAssessmentModule } from 'app/exercises/modeling/assess/modeling-assessment/modeling-assessment.module';
 
 chai.use(sinonChai);
 const expect = chai.expect;

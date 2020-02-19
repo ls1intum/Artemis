@@ -3,7 +3,6 @@ import * as sinonChai from 'sinon-chai';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { DebugElement } from '@angular/core';
 import { OrionConnectorService } from 'app/shared/orion/orion-connector.service';
-import { CourseExerciseService, CourseService } from 'app/entities/manage/course.service';
 import { SinonStub, stub } from 'sinon';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import { ArtemisTestModule } from '../../../test.module';
@@ -27,6 +26,7 @@ import { InitializationState } from 'app/entities/participation/participation.mo
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { CourseExerciseRowComponent } from 'app/overview/course-exercises/course-exercise-row.component';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
+import { CourseExerciseService, CourseService } from 'app/course/manage/course.service';
 
 chai.use(sinonChai);
 const expect = chai.expect;

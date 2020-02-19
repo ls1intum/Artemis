@@ -1,9 +1,7 @@
 import { async, ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateModule } from '@ngx-translate/core';
-import { AlertService } from 'app/core/alert/alert.service';
 
 import { ArtemisTestModule } from '../../test.module';
-import { ArtemisModelingAssessmentEditorModule } from 'app/modeling-assessment-editor/modeling-assessment-editor.module';
 import { By } from '@angular/platform-browser';
 import { mockedActivatedRoute } from '../../helpers/mock-activated-route-query-param-map';
 import { ActivatedRoute, convertToParamMap, ParamMap } from '@angular/router';
@@ -18,7 +16,8 @@ import { AssessmentLayoutComponent } from 'app/assessment/assessment-layout/asse
 import { AssessmentHeaderComponent } from 'app/assessment/assessment-header/assessment-header.component';
 import { Course } from 'app/entities/course.model';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
-import { ModelingAssessmentEditorComponent } from 'app/modeling-assessment-editor/modeling-assessment-editor.component';
+import { ModelingAssessmentEditorComponent } from 'app/exercises/modeling/assess/modeling-assessment-editor/modeling-assessment-editor.component';
+import { ArtemisModelingAssessmentEditorModule } from 'app/exercises/modeling/assess/modeling-assessment-editor/modeling-assessment-editor.module';
 
 describe('ModelingAssessmentEditorComponent', () => {
     let component: ModelingAssessmentEditorComponent;
