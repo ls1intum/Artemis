@@ -9,7 +9,6 @@ import { ArtemisSystemNotificationModule } from 'app/core/system-notification/sy
 import { ArtemisExampleModelingSolutionModule } from 'app/exercises/modeling/manage/example-modeling-solution/example-modeling-solution.module';
 import { ArtemisCourseScoresModule } from 'app/course/course-scores.module';
 import { NavbarComponent } from 'app/shared/layouts/navbar/navbar.component';
-import { ArtemisModelingAssessmentEditorModule } from 'app/modeling-assessment-editor/modeling-assessment-editor.module';
 import { ArtemisFileUploadSubmissionModule } from 'app/exercises/file-upload/participate/file-upload-submission/file-upload-submission.module';
 import { ArtemisNotificationModule } from 'app/overview/notification/notification.module';
 import { NotificationContainerComponent } from 'app/shared/layouts/notification-container/notification-container.component';
@@ -21,9 +20,7 @@ import { ArtemisAppRoutingModule } from 'app/app-routing.module';
 import { ArtemisExerciseScoresModule } from 'app/exercises/shared/exercise-scores/exercise-scores.module';
 import { ArtemisFileUploadAssessmentModule } from 'app/exercises/file-upload/assess/file-upload-assessment.module';
 import { ArtemisModelingStatisticsModule } from 'app/exercises/modeling/manage/modeling-statistics/modeling-statistics.module';
-import { QuizExerciseExportComponent } from 'app/entities/quiz-exercise/quiz-exercise-export.component';
 import { ArtemisExampleTextSubmissionModule } from 'app/exercises/text/manage/example-text-submission/example-text-submission.module';
-import { ArtemisStatisticModule } from 'app/quiz/statistics/quiz-statistic.module';
 import { ArtemisTextModule } from 'app/exercises/text/participate/text-editor/text-editor.module';
 import { JhiMainComponent } from 'app/shared/layouts/main/main.component';
 import { ArtemisExampleModelingSubmissionModule } from 'app/exercises/modeling/manage/example-modeling-submission/example-modeling-submission.module';
@@ -45,12 +42,15 @@ import { ArtemisCoreModule } from 'app/core/core.module';
 import { ArtemisModelingSubmissionModule } from 'app/exercises/modeling/participate/modeling-submission/modeling-submission.module';
 import { GuidedTourModule } from 'app/guided-tour/guided-tour.module';
 import { ArtemisAccountModule } from 'app/account/account.module';
-import { ArtemisQuizModule } from 'app/quiz/participate/quiz.module';
 import { ArtemisInstructorCourseStatsDashboardModule } from 'app/course/instructor-course-dashboard/instructor-course-dashboard.module';
 import { ArtemisComplaintsModule } from 'app/complaints/complaints.module';
 import { ArtemisHomeModule } from 'app/home/home.module';
 import { OrionOutdatedComponent } from 'app/shared/orion/outdated-plugin-warning/orion-outdated.component';
 import { ArtemisTeamModule } from 'app/exercises/shared/team/team.module';
+import { ArtemisQuizModule } from 'app/exercises/quiz/participate/quiz.module';
+import { ArtemisStatisticModule } from 'app/exercises/quiz/manage/statistics/quiz-statistic.module';
+import { ArtemisModelingAssessmentEditorModule } from 'app/exercises/modeling/assess/modeling-assessment-editor/modeling-assessment-editor.module';
+import { QuizExerciseExportComponent } from 'app/exercises/quiz/manage/quiz-exercise-export.component';
 
 @NgModule({
     imports: [
