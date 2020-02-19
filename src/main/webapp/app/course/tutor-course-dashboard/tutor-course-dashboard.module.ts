@@ -1,6 +1,5 @@
 import { NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
-import { AlertService } from 'app/core/alert/alert.service';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { tutorCourseDashboardRoute } from './tutor-course-dashboard.route';
 import { TutorCourseDashboardComponent } from './tutor-course-dashboard.component';
@@ -14,7 +13,7 @@ import { JhiMainComponent } from 'app/shared/layouts/main/main.component';
 import { HomeComponent } from 'app/home/home.component';
 import { ArtemisResultModule } from 'app/exercises/shared/result/result.module';
 import { ResultComponent } from 'app/shared/result/result.component';
-import { CourseComponent } from 'app/entities/manage/course.component';
+import { CourseComponent } from 'app/course/manage/course.component';
 
 const ENTITY_STATES = [...tutorCourseDashboardRoute];
 

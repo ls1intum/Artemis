@@ -24,7 +24,7 @@ import { ExerciseHint } from 'app/entities/exercise-hint.model';
 import { DeviceDetectorService } from 'ngx-device-detector';
 import { CodeEditorInstructorContainerComponent } from 'app/exercises/programming/shared/code-editor/instructor/code-editor-instructor-container.component';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
-import { CourseExerciseService } from 'app/entities/manage/course.service';
+import { CourseExerciseService } from 'app/course/manage/course.service';
 import { MockCourseExerciseService } from '../../mocks/mock-course-exercise.service';
 import { ExerciseHintService, IExerciseHintService } from 'app/exercises/shared/exercise-hint/exercise-hint.service';
 import {

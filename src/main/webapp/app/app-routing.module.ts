@@ -25,7 +25,7 @@ const LAYOUT_ROUTES: Routes = [navbarRoute, ...errorRoute];
                 },
                 {
                     path: 'course',
-                    loadChildren: () => import('./entities/manage/course.module').then(m => m.ArtemisCourseModule),
+                    loadChildren: () => import('./course/manage/course.module').then(m => m.ArtemisCourseModule),
                 },
             ],
             { useHash: true, enableTracing: false },

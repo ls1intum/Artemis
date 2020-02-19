@@ -10,7 +10,7 @@ import * as moment from 'moment';
 import { AccountService } from 'app/core/auth/account.service';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { QuizQuestion, QuizQuestionType } from 'app/entities/quiz/quiz-question.model';
-import { QuizExerciseService } from 'app/entities/quiz-exercise/quiz-exercise.service';
+import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.service';
 import { MultipleChoiceQuestionStatistic } from 'app/entities/quiz/multiple-choice-question-statistic.model';
 import { QuizPointStatistic } from 'app/entities/quiz/quiz-point-statistic.model';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';

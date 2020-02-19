@@ -1,8 +1,8 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { Result } from 'app/entities/result.model';
-import { Conflict } from 'app/modeling-assessment-editor/conflict.model';
 import { ComplaintResponse } from 'app/entities/complaint-response.model';
 import { Complaint, ComplaintType } from 'app/entities/complaint.model';
+import { Conflict } from 'app/exercises/modeling/assess/modeling-assessment-editor/conflict.model';
 
 /**
  * The <jhi-assessment-layout> component provides the basic layout for an assessment page.

@@ -9,7 +9,7 @@ import { base64StringToBlob } from 'blob-util';
 
 import { regexValidator } from 'app/shared/form/shortname-validator.directive';
 
-import { Course } from '../../entities/course.model';
+import { Course } from 'app/entities/course.model';
 import { CourseService } from './course.service';
 import { ColorSelectorComponent } from 'app/shared/color-selector/color-selector.component';
 import { ARTEMIS_DEFAULT_COLOR } from 'app/app.constants';

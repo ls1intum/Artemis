@@ -3,6 +3,7 @@ import { ProgrammingExerciseParticipationService } from 'app/exercises/programmi
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import { ActivatedRoute, Router } from '@angular/router';
+import { CourseExerciseService } from 'app/course/manage/course.service';
 import { TranslateService } from '@ngx-translate/core';
 import { AlertService } from 'app/core/alert/alert.service';
 import { CodeEditorInstructorBaseContainerComponent, REPOSITORY } from 'app/exercises/programming/shared/code-editor/instructor/code-editor-instructor-base-container.component';
@@ -12,7 +13,6 @@ import { CodeEditorFileService } from 'app/exercises/programming/shared/code-edi
 import { OrionConnectorService } from 'app/shared/orion/orion-connector.service';
 import { OrionBuildAndTestService } from 'app/shared/orion/orion-build-and-test.service';
 import { OrionState } from 'app/shared/orion/orion';
-import { CourseExerciseService } from 'app/course/manage/course.service';
 
 @Component({
     selector: 'jhi-code-editor-instructor-orion',

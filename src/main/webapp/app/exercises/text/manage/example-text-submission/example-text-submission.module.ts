@@ -11,7 +11,7 @@ import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { HomeComponent } from 'app/home/home.component';
 import { ArtemisResultModule } from 'app/exercises/shared/result/result.module';
 import { ArtemisTextAssessmentModule } from 'app/exercises/text/assess/text-assessment/text-assessment.module';
-import { CourseComponent } from 'app/entities/manage/course.component';
+import { CourseComponent } from 'app/course/manage/course.component';
 
 const ENTITY_STATES = [...exampleTextSubmissionRoute];
 
