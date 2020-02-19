@@ -1,7 +1,6 @@
 import { NgModule } from '@angular/core';
 import { ReactiveFormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
-import { ArtemisQuizExerciseModule } from '../../entities/quiz-exercise/quiz-exercise.module';
 import { ArtemisTextExerciseModule } from '../../exercises/text/manage/text-exercise/text-exercise.module';
 import { ArtemisModelingExerciseModule } from '../../exercises/modeling/manage/modeling-exercise/modeling-exercise.module';
 import { ArtemisFileUploadExerciseModule } from '../../exercises/file-upload/manage/file-upload-exercise/file-upload-exercise.module';
@@ -20,6 +19,7 @@ import { CourseUpdateComponent } from 'app/course/manage/course-update.component
 import { courseRoute } from 'app/course/manage/course.route';
 import { CourseComponent } from 'app/course/manage/course.component';
 import { OrionModule } from 'app/shared/orion/orion.module';
+import { ArtemisQuizExerciseModule } from 'app/exercises/quiz/manage/quiz-exercise.module';
 
 const ENTITY_STATES = [...courseRoute];
 
