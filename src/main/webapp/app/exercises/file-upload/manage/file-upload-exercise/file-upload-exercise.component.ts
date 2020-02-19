@@ -4,13 +4,13 @@ import { ActivatedRoute } from '@angular/router';
 import { JhiEventManager } from 'ng-jhipster';
 import { TranslateService } from '@ngx-translate/core';
 import { filter } from 'rxjs/operators';
-import { FileUploadExercise } from '../../../../entities/file-upload-exercise.model';
+import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
 import { FileUploadExerciseService } from './file-upload-exercise.service';
-import { CourseExerciseService, CourseService } from 'app/entities/manage/course.service';
 import { ExerciseComponent } from 'app/exercises/shared/exercise/exercise.component';
 import { onError } from 'app/shared/util/global.utils';
 import { AccountService } from 'app/core/auth/account.service';
 import { AlertService } from 'app/core/alert/alert.service';
+import { CourseExerciseService, CourseService } from 'app/course/manage/course.service';
 
 @Component({
     selector: 'jhi-file-upload-exercise',

@@ -1,6 +1,6 @@
 import { BaseEntity } from 'app/shared/model/base-entity';
-import { generate } from 'app/quiz/edit/temp-id';
 import { ShortAnswerQuestion } from 'app/entities/quiz/short-answer-question.model';
+import { generate } from 'app/exercises/quiz/manage/temp-id';
 
 export class ShortAnswerSolution implements BaseEntity {
     public id: number;

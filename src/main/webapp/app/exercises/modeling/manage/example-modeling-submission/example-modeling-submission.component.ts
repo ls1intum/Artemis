@@ -8,7 +8,6 @@ import { ExampleSubmissionService } from 'app/exercises/shared/example-submissio
 import { Result } from 'app/entities/result.model';
 import { TutorParticipationService } from 'app/exercises/shared/tutor-exercise-dashboard/tutor-participation.service';
 import { UMLModel } from '@ls1intum/apollon';
-import { ModelingAssessmentComponent } from 'app/modeling-assessment/modeling-assessment.component';
 import { ModelingEditorComponent } from 'app/exercises/modeling/shared/modeling-editor/modeling-editor.component';
 import { ExampleSubmission } from 'app/entities/example-submission.model';
 import { Feedback } from 'app/entities/feedback.model';
@@ -17,6 +16,7 @@ import { ModelingAssessmentService } from 'app/exercises/modeling/assess/modelin
 import { ModelingSubmission } from 'app/entities/modeling-submission.model';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { TutorParticipation } from 'app/entities/participation/tutor-participation.model';
+import { ModelingAssessmentComponent } from 'app/exercises/modeling/assess/modeling-assessment/modeling-assessment.component';
 
 @Component({
     selector: 'jhi-example-modeling-submission',

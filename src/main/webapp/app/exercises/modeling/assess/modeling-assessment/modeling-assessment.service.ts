@@ -5,11 +5,11 @@ import { SERVER_API_URL } from 'app/app.constants';
 import { UMLElementType, UMLModel, UMLModelElementType, UMLRelationshipType } from '@ls1intum/apollon';
 import { mergeMap } from 'rxjs/operators';
 import { timer } from 'rxjs';
-import { Conflict } from 'app/modeling-assessment-editor/conflict.model';
 import * as moment from 'moment';
 import { ComplaintResponse } from 'app/entities/complaint-response.model';
 import { Feedback } from 'app/entities/feedback.model';
 import { Result } from 'app/entities/result.model';
+import { Conflict } from 'app/exercises/modeling/assess/modeling-assessment-editor/conflict.model';
 
 export type EntityResponseType = HttpResponse<Result>;
 

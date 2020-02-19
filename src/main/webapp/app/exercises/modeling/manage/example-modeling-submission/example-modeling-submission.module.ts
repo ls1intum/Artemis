@@ -6,13 +6,13 @@ import { ClipboardModule } from 'ngx-clipboard';
 import { exampleModelingSubmissionRoute } from 'app/exercises/modeling/manage/example-modeling-submission/example-modeling-submission.route';
 import { ExampleModelingSubmissionComponent } from 'app/exercises/modeling/manage/example-modeling-submission/example-modeling-submission.component';
 import { ArtemisModelingEditorModule } from 'app/exercises/modeling/shared/modeling-editor/modeling-editor.module';
-import { ModelingAssessmentModule } from 'app/modeling-assessment/modeling-assessment.module';
 import { AssessmentInstructionsModule } from 'app/assessment/assessment-instructions/assessment-instructions.module';
 import { JhiMainComponent } from 'app/shared/layouts/main/main.component';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { HomeComponent } from 'app/home/home.component';
 import { ArtemisResultModule } from 'app/exercises/shared/result/result.module';
-import { CourseComponent } from 'app/entities/manage/course.component';
+import { ModelingAssessmentModule } from 'app/exercises/modeling/assess/modeling-assessment/modeling-assessment.module';
+import { CourseComponent } from 'app/course/manage/course.component';
 
 const ENTITY_STATES = [...exampleModelingSubmissionRoute];
 

@@ -1,12 +1,11 @@
 import { Component, Input } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { JhiEventManager } from 'ng-jhipster';
-import { ModelingExercise } from '../../../../entities/modeling-exercise.model';
+import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { ModelingExerciseService } from './modeling-exercise.service';
 import { AccountService } from 'app/core/auth/account.service';
-import { CourseExerciseService } from '../manage/course.service';
 import { ActivatedRoute } from '@angular/router';
-import { CourseService } from 'app/course/manage/course.service';
+import { CourseExerciseService, CourseService } from 'app/course/manage/course.service';
 import { ExerciseComponent } from 'app/exercises/shared/exercise/exercise.component';
 import { TranslateService } from '@ngx-translate/core';
 import { onError } from 'app/shared/util/global.utils';

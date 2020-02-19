@@ -6,7 +6,6 @@ import { UMLDiagramType, UMLModel } from '@ls1intum/apollon';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AccountService } from 'app/core/auth/account.service';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Conflict, ConflictingResult } from 'app/modeling-assessment-editor/conflict.model';
 import { TranslateService } from '@ngx-translate/core';
 import * as moment from 'moment';
 import { ComplaintService } from 'app/complaints/complaint.service';
@@ -22,6 +21,7 @@ import { ModelingSubmissionService } from 'app/exercises/modeling/participate/mo
 import { Feedback, FeedbackHighlightColor, FeedbackType } from 'app/entities/feedback.model';
 import { Complaint, ComplaintType } from 'app/entities/complaint.model';
 import { ModelingAssessmentService } from 'app/exercises/modeling/assess/modeling-assessment/modeling-assessment.service';
+import { Conflict, ConflictingResult } from 'app/exercises/modeling/assess/modeling-assessment-editor/conflict.model';
 
 @Component({
     selector: 'jhi-modeling-assessment-editor',
