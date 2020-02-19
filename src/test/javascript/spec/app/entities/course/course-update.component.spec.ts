@@ -5,7 +5,7 @@ import { of } from 'rxjs';
 
 import { ArtemisTestModule } from '../../../test.module';
 import { CourseUpdateComponent } from 'app/entities/manage/course-update.component';
-import { CourseService } from 'app/entities/manage/course.service';
+import { CourseService } from 'app/course/manage/course.service';
 import { Course } from 'app/entities/course.model';
 
 describe('Component Tests', () => {

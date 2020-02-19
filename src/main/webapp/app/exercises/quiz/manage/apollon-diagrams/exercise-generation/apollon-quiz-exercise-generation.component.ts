@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { CourseService } from 'app/entities/manage/course.service';
+import { CourseService } from 'app/course/manage/course.service';
 import { FileUploaderService } from 'app/shared/http/file-uploader.service';
 import { ApollonEditor } from '@ls1intum/apollon';
 import { generateDragAndDropQuizExercise } from 'app/exercises/quiz/manage/apollon-diagrams/exercise-generation/quiz-exercise-generator';

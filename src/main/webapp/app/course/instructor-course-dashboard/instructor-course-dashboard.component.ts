@@ -1,7 +1,7 @@
 import { AlertService } from 'app/core/alert/alert.service';
 import { Component, OnInit } from '@angular/core';
 import { Course } from 'app/entities/course.model';
-import { CourseService } from 'app/entities/manage/course.service';
+import { CourseService } from 'app/course/manage/course.service';
 import { catchError, map, tap } from 'rxjs/operators';
 import { of, zip } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';

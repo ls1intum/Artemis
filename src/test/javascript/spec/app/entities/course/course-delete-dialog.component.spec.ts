@@ -6,7 +6,7 @@ import { JhiEventManager } from 'ng-jhipster';
 
 import { ArtemisTestModule } from '../../../test.module';
 import { CourseDeleteDialogComponent } from 'app/entities/manage/course-delete-dialog.component';
-import { CourseService } from 'app/entities/manage/course.service';
+import { CourseService } from 'app/course/manage/course.service';
 
 describe('Component Tests', () => {
     describe('Course Management Delete Component', () => {

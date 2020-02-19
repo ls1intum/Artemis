@@ -7,7 +7,7 @@ import { AlertService } from 'app/core/alert/alert.service';
 import { TutorGroupService } from './tutor-group.service';
 import { User } from 'app/core/user/user.model';
 import { UserService } from 'app/core/user/user.service';
-import { CourseService } from 'app/entities/manage/course.service';
+import { CourseService } from 'app/course/manage/course.service';
 import { TutorGroup } from 'app/entities/tutor-group.model';
 import { Course } from 'app/entities/course.model';
 

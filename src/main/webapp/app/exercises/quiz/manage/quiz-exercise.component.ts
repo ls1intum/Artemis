@@ -7,7 +7,7 @@ import { QuizExerciseService } from './quiz-exercise.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { ActivatedRoute } from '@angular/router';
 import * as moment from 'moment';
-import { CourseService } from 'app/entities/manage/course.service';
+import { CourseService } from 'app/course/manage/course.service';
 import { ExerciseComponent } from 'app/exercises/shared/exercise/exercise.component';
 import { TranslateService } from '@ngx-translate/core';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';

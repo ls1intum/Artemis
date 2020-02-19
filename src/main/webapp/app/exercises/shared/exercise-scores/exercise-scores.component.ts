@@ -6,7 +6,7 @@ import { DifferencePipe } from 'ngx-moment';
 import { HttpResponse } from '@angular/common/http';
 import { Moment } from 'moment';
 import { Course } from 'app/entities/course.model';
-import { CourseService } from 'app/entities/manage/course.service';
+import { CourseService } from 'app/course/manage/course.service';
 import { SourceTreeService } from 'app/exercises/programming/shared/sourceTree.service';
 import { take, tap } from 'rxjs/operators';
 import { of, zip } from 'rxjs';

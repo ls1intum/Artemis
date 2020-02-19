@@ -5,7 +5,7 @@ import { Observable } from 'rxjs';
 import { AlertService } from 'app/core/alert/alert.service';
 import { FileUploadExerciseService } from './file-upload-exercise.service';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
-import { CourseService } from 'app/entities/manage/course.service';
+import { CourseService } from 'app/course/manage/course.service';
 import { MAX_SCORE_PATTERN } from 'app/app.constants';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { ExerciseCategory } from 'app/entities/exercise.model';

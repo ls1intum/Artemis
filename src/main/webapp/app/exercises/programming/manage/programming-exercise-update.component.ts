@@ -3,7 +3,7 @@ import { Component, OnInit } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService } from 'app/core/alert/alert.service';
 import { Observable, Subject } from 'rxjs';
-import { CourseService } from 'app/entities/manage/course.service';
+import { CourseService } from 'app/course/manage/course.service';
 import { ProgrammingExercise, ProgrammingLanguage } from '../../../entities/programming-exercise.model';
 import { ProgrammingExerciseService } from './services/programming-exercise.service';
 import { FileService } from 'app/shared/http/file.service';

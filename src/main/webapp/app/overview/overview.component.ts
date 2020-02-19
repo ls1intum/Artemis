@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { Course } from 'app/entities/course.model';
-import { CourseService } from 'app/entities/manage/course.service';
+import { CourseService } from 'app/course/manage/course.service';
 import { HttpResponse } from '@angular/common/http';
 import { AlertService } from 'app/core/alert/alert.service';
 import { AccountService } from 'app/core/auth/account.service';

@@ -11,7 +11,7 @@ import { Injectable } from '@angular/core';
 import { filter, map } from 'rxjs/operators';
 import { FileUploadExerciseService } from 'app/exercises/file-upload/manage/file-upload-exercise/file-upload-exercise.service';
 import { FileUploadExerciseUpdateComponent } from 'app/exercises/file-upload/manage/file-upload-exercise/file-upload-exercise-update.component';
-import { CourseService } from 'app/entities/manage/course.service';
+import { CourseService } from 'app/course/manage/course.service';
 import { Course } from 'app/entities/course.model';
 
 @Injectable({ providedIn: 'root' })

@@ -28,7 +28,7 @@ import { completedTour } from 'app/guided-tour/tours/general-tour';
 import { SinonStub, stub } from 'sinon';
 import { HttpResponse } from '@angular/common/http';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
-import { CourseService } from 'app/entities/manage/course.service';
+import { CourseService } from 'app/course/manage/course.service';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { InitializationState } from 'app/entities/participation/participation.model';
 import { NavbarComponent } from 'app/shared/layouts/navbar/navbar.component';

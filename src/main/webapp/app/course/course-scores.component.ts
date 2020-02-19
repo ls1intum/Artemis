@@ -2,7 +2,6 @@ import { JhiLanguageService } from 'ng-jhipster';
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Subscription } from 'rxjs/Subscription';
 import { ActivatedRoute } from '@angular/router';
-import { CourseService } from 'app/entities/manage/course.service';
 import { User } from 'app/core/user/user.model';
 import * as moment from 'moment';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
@@ -10,7 +9,7 @@ import { ExportToCsv } from 'export-to-csv';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { Course } from 'app/entities/course.model';
-import { AlertService } from 'app/core/alert/alert.service';
+import { CourseService } from 'app/course/manage/course.service';
 
 const PRESENTATION_SCORE_KEY = 'Presentation Score';
 const NAME_KEY = 'Name';

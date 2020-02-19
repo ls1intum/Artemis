@@ -3,7 +3,7 @@ import { AlertService } from 'app/core/alert/alert.service';
 import { TUM_USERNAME_REGEX } from 'app/app.constants';
 import { AccountService } from 'app/core/auth/account.service';
 import { Course } from 'app/entities/course.model';
-import { CourseService } from 'app/entities/manage/course.service';
+import { CourseService } from 'app/course/manage/course.service';
 
 const DEFAULT_COLORS = ['#6ae8ac', '#9dca53', '#94a11c', '#691b0b', '#ad5658', '#1b97ca', '#0d3cc2', '#0ab84f'];
 

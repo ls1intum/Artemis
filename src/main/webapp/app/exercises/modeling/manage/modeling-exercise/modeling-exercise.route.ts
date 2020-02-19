@@ -5,7 +5,7 @@ import { ModelingExerciseComponent } from './modeling-exercise.component';
 import { ModelingExerciseDetailComponent } from './modeling-exercise-detail.component';
 import { ModelingExerciseUpdateComponent } from 'app/exercises/modeling/manage/modeling-exercise/modeling-exercise-update.component';
 import { Injectable } from '@angular/core';
-import { CourseService } from 'app/entities/manage/course.service';
+import { CourseService } from 'app/course/manage/course.service';
 import { ModelingExerciseService } from 'app/exercises/modeling/manage/modeling-exercise/modeling-exercise.service';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { HttpResponse } from '@angular/common/http';

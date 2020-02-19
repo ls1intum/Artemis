@@ -23,7 +23,7 @@ import { StudentParticipation } from 'app/entities/participation/student-partici
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import { AssessmentObject } from './guided-tour-task.model';
 import { TutorParticipationService } from 'app/exercises/shared/tutor-exercise-dashboard/tutor-participation.service';
-import { CourseService } from 'app/entities/manage/course.service';
+import { CourseService } from 'app/course/manage/course.service';
 
 export type EntityResponseType = HttpResponse<GuidedTourSetting[]>;
 
