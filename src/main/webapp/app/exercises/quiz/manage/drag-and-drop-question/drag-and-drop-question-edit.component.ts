@@ -15,16 +15,16 @@ import { MarkdownEditorComponent } from 'app/shared/markdown-editor/markdown-edi
 import { DragItem } from 'app/entities/quiz/drag-item.model';
 import { DropLocation } from 'app/entities/quiz/drop-location.model';
 import { DomainCommand } from 'app/shared/markdown-editor/domainCommands/domainCommand';
-import { EditQuizQuestion } from 'app/exercises/quiz/manage/edit-quiz-question.interface';
+import { QuizQuestionEdit } from 'app/exercises/quiz/manage/quiz-question-edit.interface';
 
 @Component({
-    selector: 'jhi-edit-drag-and-drop-question',
-    templateUrl: './edit-drag-and-drop-question.component.html',
+    selector: 'jhi-drag-and-drop-question-edit',
+    templateUrl: './drag-and-drop-question-edit.component.html',
     providers: [ArtemisMarkdown, DragAndDropQuestionUtil],
-    styleUrls: ['./edit-drag-and-drop-question.component.scss', '../edit-quiz-question.scss', '../../shared/quiz.scss'],
+    styleUrls: ['./drag-and-drop-question-edit.component.scss', '../quiz-exercise.scss', '../../shared/quiz.scss'],
     encapsulation: ViewEncapsulation.None,
 })
-export class EditDragAndDropQuestionComponent implements OnInit, OnChanges, EditQuizQuestion {
+export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, QuizQuestionEdit {
     @ViewChild('clickLayer', { static: false })
     private clickLayer: ElementRef;
     @ViewChild('markdownEditor', { static: false })

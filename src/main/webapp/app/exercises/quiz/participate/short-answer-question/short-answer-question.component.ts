@@ -10,7 +10,7 @@ import { RenderedQuizQuestionMarkDownElement } from 'app/entities/quiz/quiz-ques
     selector: 'jhi-short-answer-question',
     templateUrl: './short-answer-question.component.html',
     providers: [ArtemisMarkdown, ShortAnswerQuestionUtil],
-    styleUrls: ['./short-answer-question.component.scss', '../quiz-question.scss'],
+    styleUrls: ['./short-answer-question.component.scss', '../quiz-participation.scss'],
     encapsulation: ViewEncapsulation.None,
 })
 export class ShortAnswerQuestionComponent implements OnInit, OnDestroy {

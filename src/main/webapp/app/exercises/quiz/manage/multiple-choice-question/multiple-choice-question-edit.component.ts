@@ -9,15 +9,15 @@ import { MarkdownEditorComponent } from 'app/shared/markdown-editor/markdown-edi
 import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-question.model';
 import { CorrectOptionCommand } from 'app/shared/markdown-editor/domainCommands/correctOptionCommand';
 import { DomainCommand } from 'app/shared/markdown-editor/domainCommands/domainCommand';
-import { EditQuizQuestion } from 'app/exercises/quiz/manage/edit-quiz-question.interface';
+import { QuizQuestionEdit } from 'app/exercises/quiz/manage/quiz-question-edit.interface';
 
 @Component({
-    selector: 'jhi-edit-multiple-choice-question',
-    templateUrl: './edit-multiple-choice-question.component.html',
+    selector: 'jhi-multiple-choice-question-edit',
+    templateUrl: './multiple-choice-question-edit.component.html',
     styleUrls: ['../../shared/quiz.scss'],
     providers: [ArtemisMarkdown],
 })
-export class EditMultipleChoiceQuestionComponent implements OnInit, EditQuizQuestion {
+export class MultipleChoiceQuestionEditComponent implements OnInit, QuizQuestionEdit {
     @ViewChild('markdownEditor', { static: false })
     private markdownEditor: MarkdownEditorComponent;
 

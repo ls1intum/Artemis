@@ -22,7 +22,7 @@ import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.ser
 import { DragAndDropMapping } from 'app/entities/quiz/drag-and-drop-mapping.model';
 import { AnswerOption } from 'app/entities/quiz/answer-option.model';
 import { ShortAnswerSubmittedText } from 'app/entities/quiz/short-answer-submitted-text.model';
-import { QuizSubmissionService } from 'app/exercises/quiz/participate/quiz-submission/quiz-submission.service';
+import { QuizParticipationService } from 'app/exercises/quiz/participate/quiz-participation.service';
 import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-question.model';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { DragAndDropSubmittedAnswer } from 'app/entities/quiz/drag-and-drop-submitted-answer.model';
@@ -34,11 +34,11 @@ import { DragAndDropQuestion } from 'app/entities/quiz/drag-and-drop-question.mo
 
 @Component({
     selector: 'jhi-quiz',
-    templateUrl: './quiz.component.html',
+    templateUrl: './quiz-participation.component.html',
     providers: [ParticipationService],
-    styleUrls: ['./quiz.component.scss'],
+    styleUrls: ['./quiz-participation.component.scss'],
 })
-export class QuizComponent implements OnInit, OnDestroy {
+export class QuizParticipationComponent implements OnInit, OnDestroy {
     // make constants available to html for comparison
     readonly DRAG_AND_DROP = QuizQuestionType.DRAG_AND_DROP;
     readonly MULTIPLE_CHOICE = QuizQuestionType.MULTIPLE_CHOICE;
@@ -115,7 +115,7 @@ export class QuizComponent implements OnInit, OnDestroy {
         private participationWebsocketService: ParticipationWebsocketService,
         private route: ActivatedRoute,
         private jhiAlertService: AlertService,
-        private quizSubmissionService: QuizSubmissionService,
+        private quizSubmissionService: QuizParticipationService,
         private translateService: TranslateService,
         private deviceService: DeviceDetectorService,
     ) {

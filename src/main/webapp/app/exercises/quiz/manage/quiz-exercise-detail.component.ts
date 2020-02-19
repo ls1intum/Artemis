@@ -24,10 +24,10 @@ import { ShortAnswerQuestion } from 'app/entities/quiz/short-answer-question.mod
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { DragAndDropQuestion } from 'app/entities/quiz/drag-and-drop-question.model';
 import { Course } from 'app/entities/course.model';
-import { EditDragAndDropQuestionComponent } from 'app/exercises/quiz/manage/drag-and-drop-question/edit-drag-and-drop-question.component';
-import { EditMultipleChoiceQuestionComponent } from 'app/exercises/quiz/manage/multiple-choice-question/edit-multiple-choice-question.component';
-import { EditShortAnswerQuestionComponent } from 'app/exercises/quiz/manage/short-answer-question/edit-short-answer-question.component';
-import { EditQuizQuestion } from 'app/exercises/quiz/manage/edit-quiz-question.interface';
+import { DragAndDropQuestionEditComponent } from 'app/exercises/quiz/manage/drag-and-drop-question/drag-and-drop-question-edit.component';
+import { MultipleChoiceQuestionEditComponent } from 'app/exercises/quiz/manage/multiple-choice-question/multiple-choice-question-edit.component';
+import { ShortAnswerQuestionEditComponent } from 'app/exercises/quiz/manage/short-answer-question/short-answer-question-edit.component';
+import { QuizQuestionEdit } from 'app/exercises/quiz/manage/quiz-question-edit.interface';
 
 interface Reason {
     translateKey: string;
@@ -54,13 +54,13 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
     readonly SHORT_ANSWER = QuizQuestionType.SHORT_ANSWER;
 
     @ViewChildren('editMultipleChoice')
-    editMultipleChoiceQuestionComponents: QueryList<EditMultipleChoiceQuestionComponent>;
+    editMultipleChoiceQuestionComponents: QueryList<MultipleChoiceQuestionEditComponent>;
 
     @ViewChildren('editDragAndDrop')
-    editDragAndDropQuestionComponents: QueryList<EditDragAndDropQuestionComponent>;
+    editDragAndDropQuestionComponents: QueryList<DragAndDropQuestionEditComponent>;
 
     @ViewChildren('editShortAnswer')
-    editShortAnswerQuestionComponents: QueryList<EditShortAnswerQuestionComponent>;
+    editShortAnswerQuestionComponents: QueryList<ShortAnswerQuestionEditComponent>;
 
     course: Course;
     quizExercise: QuizExercise;
@@ -925,7 +925,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
      * @function triggers the parsing of the editor content in the designated edit component
      */
     parseAllQuestions(): void {
-        const editQuestionComponents: EditQuizQuestion[] = [
+        const editQuestionComponents: QuizQuestionEdit[] = [
             ...this.editMultipleChoiceQuestionComponents.toArray(),
             ...this.editDragAndDropQuestionComponents.toArray(),
             ...this.editShortAnswerQuestionComponents.toArray(),

@@ -37,7 +37,6 @@ import { ArtemisLegalModule } from 'app/core/legal/legal.module';
 import { ArtemisTutorExerciseDashboardModule } from 'app/exercises/shared/tutor-exercise-dashboard/tutor-exercise-dashboard.module';
 import { ActiveMenuDirective } from 'app/shared/layouts/navbar/active-menu.directive';
 import { ErrorComponent } from 'app/shared/layouts/error/error.component';
-import { ArtemisApollonDiagramsModule } from 'app/exercises/quiz/manage/apollon-diagrams/apollon-diagram.module';
 import { ArtemisCoreModule } from 'app/core/core.module';
 import { ArtemisModelingSubmissionModule } from 'app/exercises/modeling/participate/modeling-submission/modeling-submission.module';
 import { GuidedTourModule } from 'app/guided-tour/guided-tour.module';
@@ -47,10 +46,10 @@ import { ArtemisComplaintsModule } from 'app/complaints/complaints.module';
 import { ArtemisHomeModule } from 'app/home/home.module';
 import { OrionOutdatedComponent } from 'app/shared/orion/outdated-plugin-warning/orion-outdated.component';
 import { ArtemisTeamModule } from 'app/exercises/shared/team/team.module';
-import { ArtemisQuizModule } from 'app/exercises/quiz/participate/quiz.module';
-import { ArtemisStatisticModule } from 'app/exercises/quiz/manage/statistics/quiz-statistic.module';
+import { ArtemisQuizParticipationModule } from 'app/exercises/quiz/participate/quiz-participation.module';
 import { ArtemisModelingAssessmentEditorModule } from 'app/exercises/modeling/assess/modeling-assessment-editor/modeling-assessment-editor.module';
 import { QuizExerciseExportComponent } from 'app/exercises/quiz/manage/quiz-exercise-export.component';
+import { ArtemisQuizManageModule } from 'app/exercises/quiz/manage/quiz-manage.module';
 
 @NgModule({
     imports: [
@@ -69,11 +68,10 @@ import { QuizExerciseExportComponent } from 'app/exercises/quiz/manage/quiz-exer
         ArtemisProgrammingSubmissionModule.forRoot(),
         ArtemisOverviewModule,
         ArtemisAccountModule,
-        ArtemisApollonDiagramsModule,
-        ArtemisQuizModule,
+        ArtemisQuizParticipationModule,
+        ArtemisQuizManageModule,
         ArtemisCourseScoresModule,
         ArtemisExerciseScoresModule,
-        ArtemisStatisticModule,
         ArtemisModelingSubmissionModule,
         ArtemisModelingStatisticsModule,
         ArtemisTextModule,

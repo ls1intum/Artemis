@@ -20,18 +20,18 @@ import { ShortAnswerQuestionUtil } from 'app/exercises/quiz/shared/short-answer-
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ShortAnswerQuestion } from 'app/entities/quiz/short-answer-question.model';
 import { ShortAnswerMapping } from 'app/entities/quiz/short-answer-mapping.model';
-import { EditQuizQuestion } from 'app/exercises/quiz/manage/edit-quiz-question.interface';
+import { QuizQuestionEdit } from 'app/exercises/quiz/manage/quiz-question-edit.interface';
 import { ShortAnswerSpot } from 'app/entities/quiz/short-answer-spot.model';
 import { ShortAnswerSolution } from 'app/entities/quiz/short-answer-solution.model';
 
 @Component({
-    selector: 'jhi-edit-short-answer-question',
-    templateUrl: './edit-short-answer-question.component.html',
-    styleUrls: ['./edit-short-answer-question.component.scss', '../edit-quiz-question.scss', '../../shared/quiz.scss'],
+    selector: 'jhi-short-answer-question-edit',
+    templateUrl: './short-answer-question-edit.component.html',
+    styleUrls: ['./short-answer-question-edit.component.scss', '../quiz-exercise.scss', '../../shared/quiz.scss'],
     encapsulation: ViewEncapsulation.None,
     providers: [ArtemisMarkdown],
 })
-export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, AfterViewInit, EditQuizQuestion {
+export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, AfterViewInit, QuizQuestionEdit {
     @ViewChild('questionEditor', { static: false })
     private questionEditor: AceEditorComponent;
     @ViewChild('clickLayer', { static: false })

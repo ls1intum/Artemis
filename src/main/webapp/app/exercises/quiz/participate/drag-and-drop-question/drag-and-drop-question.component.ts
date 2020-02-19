@@ -28,7 +28,7 @@ window.addEventListener('touchmove', function() {}, { passive: false });
     selector: 'jhi-drag-and-drop-question',
     templateUrl: './drag-and-drop-question.component.html',
     providers: [ArtemisMarkdown, DragAndDropQuestionUtil],
-    styleUrls: ['./drag-and-drop-question.component.scss', '../quiz-question.scss'],
+    styleUrls: ['./drag-and-drop-question.component.scss', '../quiz-participation.scss'],
     encapsulation: ViewEncapsulation.None,
 })
 export class DragAndDropQuestionComponent implements OnChanges {

@@ -12,7 +12,6 @@ import { ArtemisExerciseHintModule } from 'app/exercises/shared/exercise-hint/ex
 import { ArtemisNotificationModule } from 'app/overview/notification/notification.module';
 import { ArtemisResultModule } from 'app/exercises/shared/result/result.module';
 import { ArtemisCourseModule } from 'app/course/manage/course.module';
-import { ArtemisQuizExerciseModule } from 'app/exercises/quiz/manage/quiz-exercise.module';
 
 /* jhipster-needle-add-entity-module-import - JHipster will add entity modules imports here */
 
@@ -20,7 +19,6 @@ import { ArtemisQuizExerciseModule } from 'app/exercises/quiz/manage/quiz-exerci
     imports: [
         ArtemisCourseModule,
         ArtemisExerciseModule,
-        ArtemisQuizExerciseModule,
         ArtemisParticipationModule,
         ArtemisTeamModule,
         ArtemisProgrammingExerciseModule,

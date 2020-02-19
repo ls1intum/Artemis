@@ -1,15 +1,14 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs/Observable';
-
-import { QuizSubmission } from '../../../../entities/quiz/quiz-submission.model';
+import { QuizSubmission } from 'app/entities/quiz/quiz-submission.model';
 import { Result } from 'app/entities/result.model';
 
 export type EntityResponseType = HttpResponse<QuizSubmission>;
 export type ResultResponseType = HttpResponse<Result>;
 
 @Injectable({ providedIn: 'root' })
-export class QuizSubmissionService {
+export class QuizParticipationService {
     constructor(private http: HttpClient) {}
 
     submitForPractice(quizSubmission: QuizSubmission, exerciseId: number): Observable<ResultResponseType> {
