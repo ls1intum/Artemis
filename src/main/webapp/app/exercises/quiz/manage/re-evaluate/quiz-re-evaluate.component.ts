@@ -6,11 +6,11 @@ import { QuizReEvaluateWarningComponent } from './quiz-re-evaluate-warning.compo
 import { HttpResponse } from '@angular/common/http';
 import { Location } from '@angular/common';
 import * as moment from 'moment';
-import { QuizExercisePopupService } from 'app/entities/quiz-exercise/quiz-exercise-popup.service';
 import { QuizQuestion, QuizQuestionType } from 'app/entities/quiz/quiz-question.model';
 import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.service';
-import { Duration, Option } from 'app/entities/quiz-exercise/quiz-exercise-interfaces';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
+import { QuizExercisePopupService } from 'app/exercises/quiz/manage/quiz-exercise-popup.service';
+import { Duration, Option } from 'app/exercises/quiz/manage/quiz-exercise-interfaces';
 
 @Component({
     selector: 'jhi-quiz-re-evaluate',
