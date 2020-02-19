@@ -11,17 +11,21 @@ import * as sinonChai from 'sinon-chai';
 import { ArtemisTestModule } from '../../test.module';
 import { MockSyncStorage } from '../../mocks/mock-sync.storage';
 import { MockParticipationWebsocketService } from '../../mocks/mock-participation-websocket.service';
-import { ParticipationWebsocketService } from 'app/entities/participation/participation-websocket.service';
-import { Exercise } from 'app/entities/exercise/exercise.model';
-import { ExerciseSubmissionState, ProgrammingSubmissionService, ProgrammingSubmissionState } from 'app/programming-submission/programming-submission.service';
-import { ArtemisProgrammingExerciseActionsModule } from 'app/entities/programming-exercise/actions/programming-exercise-actions.module';
-import { ProgrammingExerciseInstructorSubmissionStateComponent } from 'app/entities/programming-exercise/actions/programming-exercise-instructor-submission-state.component';
+import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
+import { Exercise } from 'app/entities/exercise.model';
+import {
+    ExerciseSubmissionState,
+    ProgrammingSubmissionService,
+    ProgrammingSubmissionState,
+} from 'app/exercises/programming/participate/programming-submission/programming-submission.service';
+import { ArtemisProgrammingExerciseActionsModule } from 'app/exercises/programming/manage/actions/programming-exercise-actions.module';
+import { ProgrammingExerciseInstructorSubmissionStateComponent } from 'app/exercises/programming/manage/actions/programming-exercise-instructor-submission-state.component';
 import { triggerChanges } from '../../utils/general.utils';
-import { BuildRunState, ProgrammingBuildRunService } from 'app/programming-submission/programming-build-run.service';
+import { BuildRunState, ProgrammingBuildRunService } from 'app/exercises/programming/participate/programming-submission/programming-build-run.service';
 import { MockProgrammingBuildRunService } from '../../mocks/mock-programming-build-run.service';
-import { FeatureToggleService } from 'app/feature-toggle/feature-toggle.service';
+import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 import { MockFeatureToggleService } from '../../mocks/mock-feature-toggle-service';
-import { ProgrammingExercise } from 'app/entities/programming-exercise/programming-exercise.model';
+import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 
 chai.use(sinonChai);
 const expect = chai.expect;

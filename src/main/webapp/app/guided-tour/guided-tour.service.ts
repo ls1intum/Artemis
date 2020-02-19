@@ -13,17 +13,17 @@ import { User } from 'app/core/user/user.model';
 import { TextTourStep, TourStep, UserInterActionTourStep, VideoTourStep } from 'app/guided-tour/guided-tour-step.model';
 import { GuidedTour } from 'app/guided-tour/guided-tour.model';
 import { DeviceDetectorService } from 'ngx-device-detector';
-import { Exercise, ExerciseType } from 'app/entities/exercise/exercise.model';
-import { Course } from 'app/entities/course/course.model';
+import { Exercise, ExerciseType } from 'app/entities/exercise.model';
+import { Course } from 'app/entities/course.model';
 import { checkPageUrlEnding, clickOnElement, determineUrlMatching, getUrlParams } from 'app/guided-tour/guided-tour.utils';
 import { cancelTour, completedTour } from 'app/guided-tour/tours/general-tour';
 import { AccountService } from 'app/core/auth/account.service';
-import { ProfileService } from 'app/layouts/profiles/profile.service';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { ParticipationService } from 'app/entities/participation/participation.service';
+import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import { AssessmentObject } from './guided-tour-task.model';
-import { TutorParticipationService } from 'app/tutor-exercise-dashboard/tutor-participation.service';
-import { CourseService } from 'app/entities/course/course.service';
+import { TutorParticipationService } from 'app/exercises/shared/tutor-exercise-dashboard/tutor-participation.service';
+import { CourseService } from 'app/entities/manage/course.service';
 
 export type EntityResponseType = HttpResponse<GuidedTourSetting[]>;
 

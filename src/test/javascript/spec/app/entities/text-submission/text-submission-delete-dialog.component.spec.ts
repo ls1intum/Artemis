@@ -5,8 +5,8 @@ import { of } from 'rxjs';
 import { JhiEventManager } from 'ng-jhipster';
 
 import { ArTeMiSTestModule } from '../../../test.module';
-import { TextSubmissionDeleteDialogComponent } from 'app/entities/text-submission/text-submission-delete-dialog.component';
-import { TextSubmissionService } from 'app/entities/text-submission/text-submission.service';
+import { TextSubmissionDeleteDialogComponent } from 'app/exercises/text/participate/text-submission/text-submission-delete-dialog.component';
+import { TextSubmissionService } from 'app/exercises/text/participate/text-submission/text-submission.service';
 
 describe('Component Tests', () => {
     describe('TextSubmission Management Delete Component', () => {

@@ -1,5 +1,5 @@
 import { of, Observable } from 'rxjs';
-import { IRepositoryFileService } from 'app/entities/repository/repository.service';
+import { IRepositoryFileService } from 'app/shared/result/repository.service';
 
 export class MockRepositoryFileService implements IRepositoryFileService {
     createFile = (participationId: number, fileName: string) => Observable.empty();
