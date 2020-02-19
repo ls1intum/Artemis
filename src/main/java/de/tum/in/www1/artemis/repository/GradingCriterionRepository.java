@@ -18,5 +18,5 @@ public interface GradingCriterionRepository extends JpaRepository<GradingCriteri
     List<GradingCriterion> findByExerciseId(long exerciseId);
 
     @Query("select distinct criterion from GradingCriterion criterion left join fetch criterion.structuredGradingInstructions where criterion.exercise.id = :#{#exerciseId}")
-    List<GradingCriterion> findByExerciseIdWithEagerGradingCriteria(@Param("exerciseId") Long exerciseId);
+    List<GradingCriterion> findByExerciseIdWithEagerGradingCriteria(@Param("exerciseId") long exerciseId);
 }

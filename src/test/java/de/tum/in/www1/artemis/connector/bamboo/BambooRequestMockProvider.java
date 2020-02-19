@@ -185,10 +185,10 @@ public class BambooRequestMockProvider {
                 .andRespond(withStatus(HttpStatus.OK).contentType(MediaType.APPLICATION_JSON).body(mapper.writeValueAsString(response)));
     }
 
-    private BambooBuildResultDTO createBuildResult(final String planKey) throws JsonProcessingException, MalformedURLException {
-        final var buildResult = new BambooBuildResultDTO();
-        final var testResults = new BambooBuildResultDTO.BambooTestResultsDTO();
-        final var failedTests = new BambooBuildResultDTO.BambooFailedTestsDTO();
+    private QueriedBambooBuildResultDTO createBuildResult(final String planKey) throws JsonProcessingException, MalformedURLException {
+        final var buildResult = new QueriedBambooBuildResultDTO();
+        final var testResults = new QueriedBambooBuildResultDTO.BambooTestResultsDTO();
+        final var failedTests = new QueriedBambooBuildResultDTO.BambooFailedTestsDTO();
         final var changes = new BambooChangesDTO();
         final var artifacts = new BambooArtifactsDTO();
         final var buildArtifact = new BambooArtifactsDTO.BambooArtifactDTO();
@@ -210,7 +210,7 @@ public class BambooRequestMockProvider {
 
         buildResult.setBuildCompletedDate(ZonedDateTime.now().minusMinutes(1));
         buildResult.setBuildReason("Initial clean build");
-        buildResult.setBuildState(BambooBuildResultDTO.BuildState.FAILED);
+        buildResult.setBuildState(QueriedBambooBuildResultDTO.BuildState.FAILED);
         buildResult.setBuildTestSummary("3 of 3 failed");
         buildResult.setVcsRevisionKey(TestConstants.COMMIT_HASH_STRING);
         buildResult.setTestResults(testResults);

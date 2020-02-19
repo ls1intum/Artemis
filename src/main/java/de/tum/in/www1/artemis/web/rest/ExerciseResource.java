@@ -111,8 +111,6 @@ public class ExerciseResource {
 
         User user = userService.getUserWithGroupsAndAuthorities();
         Exercise exercise = exerciseService.findOneWithCategories(exerciseId);
-        List<GradingCriterion> gradingCriteria = gradingCriterionService.findByExerciseIdWithEagerGradingCriteria(exercise.getId());
-        exercise.setGradingCriteria(gradingCriteria);
 
         if (!authCheckService.isAllowedToSeeExercise(exercise, user)) {
             return forbidden();
@@ -320,7 +318,7 @@ public class ExerciseResource {
         User user = userService.getUserWithGroupsAndAuthorities();
         log.debug(user.getLogin() + " requested access for exercise with exerciseId " + exerciseId, exerciseId);
 
-        Exercise exercise = exerciseService.findOne(exerciseId);
+        Exercise exercise = exerciseService.findOneWithCriteria(exerciseId);
         // if exercise is not yet released to the students they should not have any access to it
         if (!authCheckService.isAllowedToSeeExercise(exercise, user)) {
             return forbidden();
@@ -328,9 +326,7 @@ public class ExerciseResource {
 
         if (exercise != null) {
             List<StudentParticipation> participations = participationService.findByExerciseIdAndStudentIdWithEagerResultsAndSubmissions(exercise.getId(), user.getId());
-            List<GradingCriterion> gradingCriteria = gradingCriterionService.findByExerciseIdWithEagerGradingCriteria(exercise.getId());
             exercise.setStudentParticipations(new HashSet<>());
-            exercise.setGradingCriteria(gradingCriteria);
             for (StudentParticipation participation : participations) {
 
                 participation.setResults(exercise.findResultsFilteredForStudents(participation));

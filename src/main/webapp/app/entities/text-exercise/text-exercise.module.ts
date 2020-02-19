@@ -17,6 +17,7 @@ import { TextExerciseComponent } from 'app/entities/text-exercise/text-exercise.
 import { TextExerciseService } from 'app/entities/text-exercise/text-exercise.service';
 import { TextExerciseDetailComponent } from 'app/entities/text-exercise/text-exercise-detail.component';
 import { StructuredGradingCriterionModule } from 'app/structured-grading-criterion/structured-grading-criterion.module';
+import { ArtemisSlideToggleModule } from 'app/components/slide-toggle/slide-toggle.module';
 
 const ENTITY_STATES = [...textExerciseRoute];
 
@@ -33,6 +34,7 @@ const ENTITY_STATES = [...textExerciseRoute];
         AssessmentInstructionsModule,
         StructuredGradingCriterionModule,
         ArtemisAssessmentSharedModule,
+        ArtemisSlideToggleModule,
     ],
     declarations: [TextExerciseComponent, TextExerciseDetailComponent, TextExerciseUpdateComponent],
     entryComponents: [TextExerciseUpdateComponent, DeleteDialogComponent],

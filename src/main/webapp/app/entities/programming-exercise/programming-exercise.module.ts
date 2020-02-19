@@ -14,7 +14,7 @@ import { ProgrammingExercisePlansAndRepositoriesPreviewComponent } from 'app/ent
 import { AssessmentInstructionsModule } from 'app/assessment-instructions/assessment-instructions.module';
 import { FeatureToggleModule } from 'app/feature-toggle/feature-toggle.module';
 import { ArtemisProgrammingAssessmentModule } from 'app/programming-assessment/programming-assessment.module';
-import { IntellijModule } from 'app/intellij/intellij.module';
+import { OrionModule } from 'app/orion/orion.module';
 import { ProgrammingExerciseComponent } from 'app/entities/programming-exercise/programming-exercise.component';
 import { ProgrammingExerciseUpdateComponent } from 'app/entities/programming-exercise/programming-exercise-update.component';
 import { ProgrammingExerciseDetailComponent } from 'app/entities/programming-exercise/programming-exercise-detail.component';
@@ -58,8 +58,8 @@ const ENTITY_STATES = [...programmingExerciseRoute];
         AssessmentInstructionsModule,
         FeatureToggleModule,
         ArtemisProgrammingAssessmentModule,
+        OrionModule,
         StructuredGradingCriterionModule,
-        IntellijModule,
         ProgrammingExerciseUtilsModule,
         ArtemisAssessmentSharedModule,
     ],

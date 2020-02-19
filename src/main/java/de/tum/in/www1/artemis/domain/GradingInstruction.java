@@ -62,7 +62,7 @@ public class GradingInstruction implements Serializable {
         return this;
     }
 
-    public void setCredits(Double credits) {
+    public void setCredits(double credits) {
         this.credits = credits;
     }
 

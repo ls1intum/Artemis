@@ -13,6 +13,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.domain.GradingCriterion;
+import de.tum.in.www1.artemis.domain.GradingInstruction;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
@@ -149,9 +150,15 @@ public class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationTe
     public void testUpdateModelingExerciseCriteria_asInstructor() throws Exception {
         ModelingExercise modelingExercise = modelingExerciseUtilService.createModelingExercise(classExercise.getCourse().getId());
         gradingCriteria = database.addGradingInstructionsToExercise(modelingExercise);
+        var currentCriteriaSize = modelingExercise.getGradingCriteria().size();
+        var newCriteria = new GradingCriterion();
+        newCriteria.setTitle("new");
+        modelingExercise.addGradingCriteria(newCriteria);
+        ModelingExercise createdModelingExercise = request.putWithResponseBody("/api/modeling-exercises", modelingExercise, ModelingExercise.class, HttpStatus.CREATED);
+        assertThat(createdModelingExercise.getGradingCriteria().size()).isEqualTo(currentCriteriaSize + 1);
 
         modelingExercise.getGradingCriteria().get(1).setTitle("UPDATE");
-        ModelingExercise createdModelingExercise = request.putWithResponseBody("/api/modeling-exercises", modelingExercise, ModelingExercise.class, HttpStatus.CREATED);
+        createdModelingExercise = request.putWithResponseBody("/api/modeling-exercises", modelingExercise, ModelingExercise.class, HttpStatus.CREATED);
         assertThat(createdModelingExercise.getGradingCriteria().get(1).getTitle()).isEqualTo("UPDATE");
 
         // If the grading criteria are deleted then their instructions should also be deleted
@@ -166,8 +173,15 @@ public class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationTe
         ModelingExercise modelingExercise = modelingExerciseUtilService.createModelingExercise(classExercise.getCourse().getId());
         gradingCriteria = database.addGradingInstructionsToExercise(modelingExercise);
 
-        modelingExercise.getGradingCriteria().get(1).getStructuredGradingInstructions().get(0).setInstructionDescription("UPDATE");
+        var currentInstructionsSize = modelingExercise.getGradingCriteria().get(1).getStructuredGradingInstructions().size();
+        var newInstruction = new GradingInstruction();
+        newInstruction.setInstructionDescription("New Instruction");
+        modelingExercise.getGradingCriteria().get(1).addStructuredGradingInstructions(newInstruction);
         ModelingExercise createdModelingExercise = request.putWithResponseBody("/api/modeling-exercises", modelingExercise, ModelingExercise.class, HttpStatus.CREATED);
+        assertThat(createdModelingExercise.getGradingCriteria().get(1).getStructuredGradingInstructions().size()).isEqualTo(currentInstructionsSize + 1);
+
+        modelingExercise.getGradingCriteria().get(1).getStructuredGradingInstructions().get(0).setInstructionDescription("UPDATE");
+        createdModelingExercise = request.putWithResponseBody("/api/modeling-exercises", modelingExercise, ModelingExercise.class, HttpStatus.CREATED);
         assertThat(createdModelingExercise.getGradingCriteria().get(1).getStructuredGradingInstructions().get(0).getInstructionDescription()).isEqualTo("UPDATE");
 
         modelingExercise.getGradingCriteria().get(1).setStructuredGradingInstructions(null);

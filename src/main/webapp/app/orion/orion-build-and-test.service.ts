@@ -1,14 +1,14 @@
 import { Injectable } from '@angular/core';
 import { ProgrammingSubmissionService } from 'app/programming-submission/programming-submission.service';
 import { ParticipationWebsocketService } from 'app/entities/participation/participation-websocket.service';
-import { filter, map, tap } from 'rxjs/operators';
+import { filter, first, map, tap } from 'rxjs/operators';
 import { Observable, Subject, Subscription } from 'rxjs';
 import { BuildLogService } from 'app/programming-assessment/build-logs/build-log.service';
 import { Participation } from 'app/entities/participation/participation.model';
 import { BuildLogEntryArray } from 'app/entities/build-log/build-log.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise/programming-exercise.model';
 import { Result } from 'app/entities/result/result.model';
-import { JavaBridgeService } from 'app/intellij/java-bridge.service';
+import { OrionConnectorService } from 'app/orion/orion-connector.service';
 
 /**
  * Notifies the IDE about a result, that is currently building and forwards incoming test results.
@@ -17,7 +17,7 @@ import { JavaBridgeService } from 'app/intellij/java-bridge.service';
 @Injectable({
     providedIn: 'root',
 })
-export class IdeBuildAndTestService {
+export class OrionBuildAndTestService {
     private buildFinished = new Subject<void>();
     private resultSubsription: Subscription;
     private buildLogSubscription: Subscription;
@@ -26,7 +26,7 @@ export class IdeBuildAndTestService {
     constructor(
         private submissionService: ProgrammingSubmissionService,
         private participationWebsocketService: ParticipationWebsocketService,
-        private javaBridge: JavaBridgeService,
+        private javaBridge: OrionConnectorService,
         private buildLogService: BuildLogService,
     ) {}
 
@@ -51,7 +51,7 @@ export class IdeBuildAndTestService {
      */
     listenOnBuildOutputAndForwardChanges(exercise: ProgrammingExercise, participation: Participation | null = null): Observable<void> {
         const participationId = participation ? participation.id : exercise.studentParticipations[0].id;
-        this.javaBridge.onBuildStarted();
+        this.javaBridge.onBuildStarted(exercise.problemStatement);
 
         // Listen for the new result on the websocket
         if (this.resultSubsription) {
@@ -70,7 +70,7 @@ export class IdeBuildAndTestService {
                     this.latestResult = result;
                     // If there was no compile error, we can forward the test results, otherwise we have to fetch the error output
                     if ((result && result.successful) || (result && !result.successful && result.feedbacks && result.feedbacks.length)) {
-                        result.feedbacks.forEach(feedback => this.javaBridge.onTestResult(!!feedback.positive, feedback.detailText!));
+                        result.feedbacks.forEach(feedback => this.javaBridge.onTestResult(!!feedback.positive, feedback.text!, feedback.detailText!));
                         this.javaBridge.onBuildFinished();
                         this.buildFinished.next();
                     } else {
@@ -91,7 +91,7 @@ export class IdeBuildAndTestService {
                 map(logs => new BuildLogEntryArray(...logs)),
                 tap((logs: BuildLogEntryArray) => {
                     const logErrors = logs.extractErrors();
-                    this.javaBridge.onBuildFailed(JSON.stringify(logErrors));
+                    this.javaBridge.onBuildFailed(logErrors);
                     this.buildFinished.next();
                 }),
             )

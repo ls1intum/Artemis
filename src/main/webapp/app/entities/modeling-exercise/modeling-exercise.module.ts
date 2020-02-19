@@ -17,6 +17,7 @@ import { ModelingExerciseService } from 'app/entities/modeling-exercise/modeling
 import { ModelingExerciseDetailComponent } from 'app/entities/modeling-exercise/modeling-exercise-detail.component';
 import { AssessmentInstructionsModule } from 'app/assessment-instructions/assessment-instructions.module';
 import { StructuredGradingCriterionModule } from 'app/structured-grading-criterion/structured-grading-criterion.module';
+import { ArtemisSlideToggleModule } from 'app/components/slide-toggle/slide-toggle.module';
 
 const ENTITY_STATES = [...modelingExerciseRoute];
 
@@ -34,6 +35,7 @@ const ENTITY_STATES = [...modelingExerciseRoute];
         ArtemisModelingEditorModule,
         StructuredGradingCriterionModule,
         ArtemisAssessmentSharedModule,
+        ArtemisSlideToggleModule,
     ],
     declarations: [ModelingExerciseComponent, ModelingExerciseDetailComponent, ModelingExerciseUpdateComponent],
     entryComponents: [ModelingExerciseComponent, DeleteDialogComponent],

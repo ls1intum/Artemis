@@ -13,8 +13,8 @@ import { onError } from 'app/utils/global.utils';
 import { AccountService } from 'app/core/auth/account.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ProgrammingExerciseImportComponent } from 'app/entities/programming-exercise/programming-exercise-import.component';
-import { IntelliJState, isIntelliJ } from 'app/intellij/intellij';
-import { JavaBridgeService } from 'app/intellij/java-bridge.service';
+import { OrionState, isOrion } from 'app/orion/orion';
+import { OrionConnectorService } from 'app/orion/orion-connector.service';
 import { stringifyCircular } from 'app/shared/util/utils';
 import { FeatureToggle } from 'app/feature-toggle/feature-toggle.service';
 import { ExerciseService } from 'app/entities/exercise/exercise.service';
@@ -26,9 +26,9 @@ import { ExerciseService } from 'app/entities/exercise/exercise.service';
 export class ProgrammingExerciseComponent extends ExerciseComponent implements OnInit, OnDestroy {
     @Input() programmingExercises: ProgrammingExercise[];
     readonly ActionType = ActionType;
-    readonly isIntelliJ = isIntelliJ;
+    readonly isOrion = isOrion;
     FeatureToggle = FeatureToggle;
-    intelliJState: IntelliJState;
+    orionState: OrionState;
 
     constructor(
         private programmingExerciseService: ProgrammingExerciseService,
@@ -38,7 +38,7 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
         private jhiAlertService: AlertService,
         private modalService: NgbModal,
         private router: Router,
-        private javaBridge: JavaBridgeService,
+        private javaBridge: OrionConnectorService,
         courseService: CourseService,
         translateService: TranslateService,
         eventManager: JhiEventManager,
@@ -50,7 +50,7 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
 
     ngOnInit(): void {
         super.ngOnInit();
-        this.javaBridge.state().subscribe(state => (this.intelliJState = state));
+        this.javaBridge.state().subscribe(state => (this.orionState = state));
     }
 
     protected loadExercises(): void {
@@ -118,11 +118,11 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
         );
     }
 
-    editIntIntelliJ(programmingExercise: ProgrammingExercise) {
-        this.javaBridge.editExercise(stringifyCircular(programmingExercise));
+    editInIDE(programmingExercise: ProgrammingExercise) {
+        this.javaBridge.editExercise(programmingExercise);
     }
 
-    openIntelliJEditor(exercise: ProgrammingExercise) {
+    openOrionEditor(exercise: ProgrammingExercise) {
         try {
             this.router.navigate(['code-editor', 'ide', exercise.id, 'admin', exercise.templateParticipation.id]);
         } catch (e) {

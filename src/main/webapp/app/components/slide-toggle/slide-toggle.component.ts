@@ -11,7 +11,6 @@ import { Component, OnInit, OnChanges } from '@angular/core';
         <label *ngIf="checked === false" jhiTranslate="artemisApp.exercise.gradingInstructions"> Grading Instructions</label>
         <label *ngIf="checked === true" jhiTranslate="artemisApp.exercise.structuredGradingInstructions"> Structured Grading Instructions</label>
     `,
-    styleUrls: ['./slide-toggle.scss'],
 })
 export class SlideToggleComponent implements OnInit {
     checked: boolean;
