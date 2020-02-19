@@ -1,4 +1,4 @@
-import { IProgrammingExerciseWebsocketService } from 'app/entities/programming-exercise/services/programming-exercise-websocket.service';
+import { IProgrammingExerciseWebsocketService } from 'app/exercises/programming/manage/services/programming-exercise-websocket.service';
 import { Observable, of } from 'rxjs';
 
 export class MockProgrammingExerciseWebsocketService implements IProgrammingExerciseWebsocketService {

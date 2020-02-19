@@ -4,7 +4,7 @@ import { AlertService } from 'app/core/alert/alert.service';
 import { ComplaintsComponent } from './complaints.component';
 import { MomentModule } from 'ngx-moment';
 import { ClipboardModule } from 'ngx-clipboard';
-import { ComplaintService } from 'app/entities/complaint/complaint.service';
+import { ComplaintService } from 'app/complaints/complaint.service';
 import { ComplaintInteractionsComponent } from 'app/complaints/complaint-interactions.component';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 

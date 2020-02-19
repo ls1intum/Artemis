@@ -4,8 +4,8 @@ import { of } from 'rxjs';
 import { HttpHeaders, HttpResponse } from '@angular/common/http';
 
 import { ArtemisTestModule } from '../../../test.module';
-import { CourseComponent } from 'app/entities/course/course.component';
-import { CourseService } from 'app/entities/course/course.service';
+import { CourseComponent } from 'app/entities/manage/course.component';
+import { CourseService } from 'app/course/manage/course.service';
 import { Course } from 'app/shared/model/course.model';
 
 describe('Component Tests', () => {

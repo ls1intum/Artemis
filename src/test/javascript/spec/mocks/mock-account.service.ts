@@ -1,5 +1,5 @@
 import { of, Observable } from 'rxjs';
-import { Course } from 'app/entities/course/course.model';
+import { Course } from 'app/entities/course.model';
 import { IAccountService } from 'app/core/auth/account.service';
 import { User } from 'app/core/user/user.model';
 

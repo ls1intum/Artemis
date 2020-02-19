@@ -12,13 +12,13 @@ import {
     ProgrammingSubmissionService,
     ProgrammingSubmissionState,
     ProgrammingSubmissionStateObj,
-} from 'app/programming-submission/programming-submission.service';
-import { IParticipationWebsocketService } from 'app/entities/participation/participation-websocket.service';
+} from 'app/exercises/programming/participate/programming-submission/programming-submission.service';
+import { IParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import { MockAlertService } from '../mocks/mock-alert.service';
-import { Result } from 'app/entities/result/result.model';
+import { Result } from 'app/entities/result.model';
 import { SERVER_API_URL } from 'app/app.constants';
-import { ProgrammingSubmission } from 'app/entities/programming-submission/programming-submission.model';
-import { Submission } from 'app/entities/submission/submission.model';
+import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
+import { Submission } from 'app/entities/submission.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { MockParticipationWebsocketService } from '../mocks/mock-participation-websocket.service';
 
