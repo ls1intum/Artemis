@@ -11,11 +11,11 @@ import { CodeEditorInstructionsComponent } from 'app/exercises/programming/share
 import { CodeEditorInstructorBaseContainerComponent } from 'app/exercises/programming/shared/code-editor/instructor/code-editor-instructor-base-container.component';
 import { CodeEditorFileService } from 'app/exercises/programming/shared/code-editor/service/code-editor-file.service';
 import { CodeEditorSessionService } from 'app/exercises/programming/shared/code-editor/service/code-editor-session.service';
-import { CourseExerciseService } from 'app/entities/manage/course.service';
 import { DomainService } from 'app/exercises/programming/shared/code-editor/service/code-editor-domain.service';
 import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
+import { CourseExerciseService } from 'app/course/manage/course.service';
 
 @Component({
     selector: 'jhi-code-editor-instructor',

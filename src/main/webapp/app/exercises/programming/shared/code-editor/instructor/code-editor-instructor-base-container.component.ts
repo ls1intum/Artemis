@@ -2,7 +2,6 @@ import { CodeEditorContainer } from 'app/exercises/programming/shared/code-edito
 import { OnDestroy, OnInit } from '@angular/core';
 import { Observable, Subscription, throwError } from 'rxjs';
 import { ActivatedRoute, Router } from '@angular/router';
-import { CourseExerciseService } from 'app/entities/manage/course.service';
 import { TranslateService } from '@ngx-translate/core';
 import { AlertService } from 'app/core/alert/alert.service';
 import { catchError, filter, map, tap } from 'rxjs/operators';
@@ -20,6 +19,7 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { SolutionProgrammingExerciseParticipation } from 'app/entities/participation/solution-programming-exercise-participation.model';
 import { DomainChange, DomainType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
+import { CourseExerciseService } from 'app/course/manage/course.service';
 
 export enum REPOSITORY {
     ASSIGNMENT = 'ASSIGNMENT',

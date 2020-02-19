@@ -4,8 +4,8 @@ import { CourseService } from 'app/course/manage/course.service';
 import { FileUploaderService } from 'app/shared/http/file-uploader.service';
 import { ApollonEditor } from '@ls1intum/apollon';
 import { generateDragAndDropQuizExercise } from 'app/exercises/quiz/manage/apollon-diagrams/exercise-generation/quiz-exercise-generator';
-import { QuizExerciseService } from 'app/entities/quiz-exercise/quiz-exercise.service';
 import { Course } from 'app/entities/course.model';
+import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.service';
 
 @Component({
     selector: 'jhi-apollon-quiz-exercise-generation',
