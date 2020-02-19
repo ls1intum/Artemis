@@ -1,10 +1,10 @@
-import { AfterViewInit, Component, ElementRef, HostListener, OnDestroy, ViewChild, ViewEncapsulation } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, HostListener, OnDestroy, ViewChild, ViewChildren, ViewEncapsulation, Renderer2, QueryList } from '@angular/core';
 import { fromEvent, Subscription } from 'rxjs';
-import { take } from 'rxjs/internal/operators';
+import { take, tap } from 'rxjs/internal/operators';
 import { Direction, Orientation, OverlayPosition, UserInteractionEvent } from './guided-tour.constants';
 import { GuidedTourService } from './guided-tour.service';
 import { AccountService } from 'app/core/auth/account.service';
-import { ImageTourStep, TextTourStep, VideoTourStep } from 'app/guided-tour/guided-tour-step.model';
+import { ImageTourStep, TextTourStep, TourStep, VideoTourStep } from 'app/guided-tour/guided-tour-step.model';
 import { cancelTour, completedTour } from 'app/guided-tour/tours/general-tour';
 import { calculateLeftOffset, calculateTopOffset, isElementInViewPortHorizontally } from 'app/guided-tour/guided-tour.utils';
 
@@ -15,7 +15,9 @@ import { calculateLeftOffset, calculateTopOffset, isElementInViewPortHorizontall
     encapsulation: ViewEncapsulation.None,
 })
 export class GuidedTourComponent implements AfterViewInit, OnDestroy {
-    @ViewChild('tourStep', { static: false }) public tourStep: ElementRef;
+    @ViewChild('tourStep', { static: false }) private tourStep: ElementRef;
+    @ViewChild('dotNavigation', { static: false }) private dotNavigation: ElementRef;
+    @ViewChildren('dotElements') private dotElements: QueryList<ElementRef>;
 
     // TODO automatically determine optimal width of tour step
     // Sets the width of all tour step elements.
@@ -42,7 +44,16 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
     readonly cancelTour = cancelTour;
     readonly completedTour = completedTour;
 
-    constructor(public guidedTourService: GuidedTourService, public accountService: AccountService) {}
+    /** Variables for the dot navigation */
+    public maxDots = 10;
+    private transformCount = 0;
+    private transformXIntervalNext = -26;
+    private transformXIntervalPrev = 26;
+    private dotArray: Array<ElementRef>;
+    public currentStepIndex: number;
+    public nextStepIndex: number;
+
+    constructor(public guidedTourService: GuidedTourService, private accountService: AccountService, private renderer: Renderer2) {}
 
     /**
      * Enable tour navigation with left and right keyboard arrows and escape key
@@ -93,6 +104,7 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
         this.subscribeToUserInteractionState();
         this.subscribeToResizeEvent();
         this.subscribeToScrollEvent();
+        this.subscribeToDotChanges();
     }
 
     /**
@@ -105,6 +117,15 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
         if (this.resizeSubscription) {
             this.scrollSubscription.unsubscribe();
         }
+    }
+
+    private subscribeToDotChanges() {
+        this.dotElements.changes.subscribe((elements: QueryList<ElementRef>) => {
+            this.dotArray = elements.toArray();
+        });
+
+        this.guidedTourService.currentDotSubject.pipe(tap( currentIndex => this.currentStepIndex = currentIndex)).subscribe();
+        this.guidedTourService.nextDotSubject.pipe(tap( currentIndex => this.nextStepIndex = currentIndex)).subscribe();
     }
 
     /**
@@ -125,12 +146,15 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
                 this.scrollToAndSetElement();
                 this.handleTransition();
                 this.guidedTourService.isBackPageNavigation.next(false);
+                this.calculateTranslateValue();
+                if (this.currentStepIndex !== undefined && this.nextStepIndex !== undefined) {
+                    setTimeout(() => {
+                        this.calculateAndDisplayDotNavigation(this.currentStepIndex, this.nextStepIndex);
+                    }, 0);
+                }
                 return;
             }
             this.selectedElementRect = null;
-        });
-        this.guidedTourService.calculateTransformValue().subscribe(transformX => {
-            this.transformX = transformX;
         });
     }
 
@@ -658,5 +682,99 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
                     }
                 });
         }
+    }
+
+    /**
+     * Display only as many dots as defined in GuidedTourComponent.maxDots
+     * @param currentIndex index of the current step
+     * @param nextIndex index of the next step, this should (current step -/+ 1) depending on whether the user navigates forwards or backwards
+     */
+    private calculateAndDisplayDotNavigation(currentIndex: number, nextIndex: number) {
+        const isForwardNavigation = nextIndex > currentIndex;
+        const nextPlusOneIndex = isForwardNavigation ? nextIndex + 1 : nextIndex - 1;
+        const nextDot = this.dotArray[nextIndex];
+        const nextPlusOneDot = this.dotArray[nextPlusOneIndex];
+
+        if (!nextDot || !nextPlusOneDot) {
+            return;
+        }
+
+        if (isForwardNavigation) {
+            this.handleForwardNavigation(nextDot.nativeElement, nextPlusOneDot.nativeElement, nextIndex);
+        } else {
+            this.handleBackwardNavigation(nextDot.nativeElement, nextPlusOneDot.nativeElement, nextIndex);
+        }
+        this.renderer.setStyle(this.dotNavigation.nativeElement, 'transform', 'translateX(' + this.transformCount + 'px)');
+    }
+
+    private handleForwardNavigation(next: HTMLElement, nextPlusOne: HTMLElement, nextIndex: number) {
+        // Moves the n-small and p-small class one dot further
+        const lastDot = this.dotElements.last.nativeElement;
+        if (next && next.classList.contains('n-small') && lastDot && !lastDot.classList.contains('n-small')) {
+            this.transformCount += this.transformXIntervalNext;
+            next.classList.remove('n-small');
+            nextPlusOne.classList.add('n-small');
+
+            this.dotArray.forEach((node: ElementRef, index: number) => {
+                if (index === nextIndex - 9) {
+                    node.nativeElement.classList.remove('p-small');
+                } else if (index === nextIndex - 8) {
+                    node.nativeElement.classList.add('p-small');
+                }
+            });
+        }
+    }
+
+    private handleBackwardNavigation(next: HTMLElement, nextPlusOne: HTMLElement, nextIndex: number) {
+        // Handles backwards navigation
+        const firstDot = this.dotElements.first.nativeElement;
+        if (next && next.classList.contains('p-small') && firstDot && !firstDot.classList.contains('p-small')) {
+            this.transformCount += this.transformXIntervalPrev;
+            next.classList.remove('p-small');
+            nextPlusOne.classList.add('p-small');
+
+            this.dotArray.forEach((node: ElementRef, index: number) => {
+                if (index === nextIndex + 9) {
+                    node.nativeElement.classList.remove('n-small');
+                } else if (index === nextIndex + 8) {
+                    node.nativeElement.classList.add('n-small');
+                }
+            });
+        }
+    }
+
+    /**
+     * Defines the translateX value for the <ul> transform style
+     */
+    private calculateTranslateValue(): void {
+        let transform = 0;
+        const currentTourStep = this.guidedTourService.currentTourStepIndex + 1;
+        if (currentTourStep > this.maxDots) {
+            transform = ((currentTourStep % this.maxDots) + 1) * this.transformXIntervalNext;
+        }
+        console.log('transform: ', transform);
+        this.transformX = transform;
+    }
+
+    /**
+     * Defines if an <li> item should have the 'n-small' class
+     * @param stepNumber tour step number of the <li> item
+     */
+    public calculateNSmallDot(stepNumber: number): boolean {
+        if (this.guidedTourService.currentTourStepIndex < this.maxDots) {
+            return stepNumber === this.maxDots;
+        }
+        return stepNumber === this.nextStepIndex + 1;
+    }
+
+    /**
+     * Defines if an <li> item should have the 'p-small' class
+     * @param stepNumber tour step number of the <li> item
+     */
+    public calculatePSmallDot(stepNumber: number): boolean {
+        if (this.guidedTourService.currentTourStepIndex > this.maxDots) {
+            return this.nextStepIndex + 1 - stepNumber === 8;
+        }
+        return false;
     }
 }

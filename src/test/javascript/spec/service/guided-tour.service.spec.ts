@@ -198,6 +198,7 @@ describe('GuidedTourService', () => {
                 guidedTourService['availableTourForComponent'] = tour;
                 guidedTourService.currentTour = tour;
             });
+            spyOn<any>(guidedTourComponent, 'subscribeToDotChanges').and.callFake(() => {});
         }
 
         async function startCourseOverviewTour(tour: GuidedTour) {
@@ -422,25 +423,6 @@ describe('GuidedTourService', () => {
                     const index = course1.exercises.findIndex(exercise => (exercise.id = exercise4.id));
                     course1.exercises.splice(index, 1);
                 });
-            });
-        });
-
-        describe('Dot calculation', () => {
-            it('should calculate the n-small dot display', () => {
-                // Initially the getLastSeenTourStepIndex is 0 because we don't access the user guided settings
-                expect(guidedTourService.calculateNSmallDot(0)).to.be.false;
-                expect(guidedTourService.calculateNSmallDot(10)).to.be.true;
-
-                // We update the getLastSeenTourStepIndex to check whether it is called correctly if the last seen step is bigger than the max dots value
-                spyOn(guidedTourService, 'getLastSeenTourStepIndex').and.returnValue(12);
-                expect(guidedTourService.calculateNSmallDot(14)).to.be.true;
-            });
-
-            it('should calculate the p-small dot', () => {
-                // The p-small class is not displayed if the total count of steps is smaller than the max dots value
-                expect(guidedTourService.calculatePSmallDot(0)).to.be.false;
-                spyOn(guidedTourService, 'getLastSeenTourStepIndex').and.returnValue(15);
-                expect(guidedTourService.calculatePSmallDot(8)).to.be.true;
             });
         });
 

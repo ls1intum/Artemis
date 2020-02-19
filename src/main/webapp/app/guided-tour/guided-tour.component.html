@@ -132,12 +132,17 @@
                     <span jhiTranslate="global.menu.restartTutorial"></span>
                 </button>
                 <div class="dotstyle dotstyle--scaleup" *ngIf="!guidedTourService.isOnResizeMessage">
-                    <ul *ngIf="guidedTourService.currentTour && guidedTourService.currentTour.steps.length > 1" [ngStyle]="{ transform: 'translateX(' + transformX + 'px)' }">
+                    <ul
+                        #dotNavigation
+                        *ngIf="guidedTourService.currentTour && guidedTourService.currentTour.steps.length > 1"
+                        [ngStyle]="{ transform: 'translateX(' + transformX + 'px)' }"
+                    >
                         <li
+                            #dotElements
                             class="dot-index-{{ guidedTourService.currentTour.steps.indexOf(i) }}"
                             [class.current]="guidedTourService.isCurrentStep(i)"
-                            [class.n-small]="guidedTourService.calculateNSmallDot(guidedTourService.currentTour.steps.indexOf(i) + 1)"
-                            [class.p-small]="guidedTourService.calculatePSmallDot(guidedTourService.currentTour.steps.indexOf(i) + 1)"
+                            [class.n-small]="calculateNSmallDot(guidedTourService.currentTour.steps.indexOf(i) + 1)"
+                            [class.p-small]="calculatePSmallDot(guidedTourService.currentTour.steps.indexOf(i) + 1)"
                             *ngFor="let i of guidedTourService.currentTour.steps"
                         >
                             <span>{{ guidedTourService.currentTour.steps.indexOf(i) }}</span>
