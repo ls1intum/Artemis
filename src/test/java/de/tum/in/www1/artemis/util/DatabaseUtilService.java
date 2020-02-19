@@ -208,8 +208,9 @@ public class DatabaseUtilService {
      * numberOfStudents Tutors login is a concatenation of the prefix "tutor" and a number counting from 1 to numberOfStudents Tutors are all in the "tutor" group and students in
      * the "tumuser" group
      *
-     * @param numberOfStudents
-     * @param numberOfTutors
+     * @param numberOfStudents the number of students that will be added to the database
+     * @param numberOfTutors the number of tutors that will be added to the database
+     * @param numberOfInstructors the number of instructors that will be added to the database
      */
     public List<User> addUsers(int numberOfStudents, int numberOfTutors, int numberOfInstructors) {
 
