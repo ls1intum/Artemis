@@ -29,7 +29,7 @@ export class CourseResolve implements Resolve<Course> {
 
 export const courseRoute: Routes = [
     {
-        path: 'course',
+        path: '',
         component: CourseComponent,
         data: {
             authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
@@ -38,7 +38,7 @@ export const courseRoute: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
-        path: 'course/new',
+        path: 'new',
         component: CourseUpdateComponent,
         resolve: {
             course: CourseResolve,
@@ -50,7 +50,7 @@ export const courseRoute: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
-        path: 'course/:id/view',
+        path: ':id/view',
         component: CourseDetailComponent,
         resolve: {
             course: CourseResolve,
@@ -62,7 +62,7 @@ export const courseRoute: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
-        path: 'course/:courseId',
+        path: ':courseId',
         component: CourseExercisesOverviewComponent,
         resolve: {
             course: CourseResolve,
@@ -74,7 +74,7 @@ export const courseRoute: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
-        path: 'course/:id/edit',
+        path: ':id/edit',
         component: CourseUpdateComponent,
         resolve: {
             course: CourseResolve,

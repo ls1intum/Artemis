@@ -23,6 +23,10 @@ const LAYOUT_ROUTES: Routes = [navbarRoute, ...errorRoute];
                     path: 'account',
                     loadChildren: () => import('./account/account.module').then(m => m.ArtemisAccountModule),
                 },
+                {
+                    path: 'course',
+                    loadChildren: () => import('./entities/course/course.module').then(m => m.ArtemisCourseModule),
+                },
             ],
             { useHash: true, enableTracing: false },
         ),
