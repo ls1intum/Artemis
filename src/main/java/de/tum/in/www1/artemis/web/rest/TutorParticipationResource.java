@@ -12,9 +12,11 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import de.tum.in.www1.artemis.config.GuidedTourConfiguration;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
 import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
 /**
@@ -40,12 +42,15 @@ public class TutorParticipationResource {
 
     private final UserService userService;
 
+    private final GuidedTourConfiguration guidedTourConfiguration;
+
     public TutorParticipationResource(TutorParticipationService tutorParticipationService, AuthorizationCheckService authorizationCheckService, ExerciseService exerciseService,
-            UserService userService) {
+            UserService userService, GuidedTourConfiguration guidedTourConfiguration) {
         this.tutorParticipationService = tutorParticipationService;
         this.exerciseService = exerciseService;
         this.authorizationCheckService = authorizationCheckService;
         this.userService = userService;
+        this.guidedTourConfiguration = guidedTourConfiguration;
     }
 
     /**
@@ -101,11 +106,36 @@ public class TutorParticipationResource {
         TutorParticipation resultTutorParticipation = tutorParticipationService.addExampleSubmission(exercise, exampleSubmission, user);
 
         // Avoid infinite recursion for JSON
-        resultTutorParticipation.getTrainedExampleSubmissions().forEach(trainedExampleSubmissioin -> {
-            trainedExampleSubmissioin.setTutorParticipations(null);
-            trainedExampleSubmissioin.setExercise(null);
+        resultTutorParticipation.getTrainedExampleSubmissions().forEach(trainedExampleSubmission -> {
+            trainedExampleSubmission.setTutorParticipations(null);
+            trainedExampleSubmission.setExercise(null);
         });
 
         return ResponseEntity.ok().body(resultTutorParticipation);
+    }
+
+    /**
+     * DELETE guided-tour/exercises/:exerciseId/exampleSubmission: delete the tutor participation for example submissions of the "exerciseId" exercise for guided tutorials (e.g. when restarting a tutorial)
+     * Please note: all tutors can delete their own tutor participation participation for example submissions when it belongs to a guided tutorial
+     * @param exerciseId    the exercise id which has example submissions and tutor participations
+     * @return  the ResponseEntity with status 200 (OK) or 403 (FORBIDDEN)
+     */
+    @DeleteMapping(value = "guided-tour/exercises/{exerciseId}/exampleSubmission")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<TutorParticipation> deleteTutorParticipationForGuidedTour(@PathVariable Long exerciseId) {
+        log.debug("REST request to remove tutor participation of the example submission for exercise id : {}", exerciseId);
+        Exercise exercise = this.exerciseService.findOne(exerciseId);
+        User user = userService.getUserWithGroupsAndAuthorities();
+
+        // Allow all tutors to delete their own participation if it's for a tutorial
+        if (!authorizationCheckService.isAtLeastTeachingAssistantForExercise(exercise, user)) {
+            throw new AccessForbiddenException("You are not allowed to access this resource");
+        }
+        if (!guidedTourConfiguration.isExerciseForTutorial(exercise)) {
+            throw new AccessForbiddenException("This exercise is not part of a tutorial. Current tutorials: " + guidedTourConfiguration.getTours());
+        }
+
+        tutorParticipationService.removeTutorParticipations(exercise, user);
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, exerciseId.toString())).build();
     }
 }

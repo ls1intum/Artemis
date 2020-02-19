@@ -193,9 +193,9 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
             });
             if (this.currentResult) {
                 if (this.currentResult.successful) {
-                    this.guidedTourService.enableTourForExercise(this.exercise, programmingExerciseSuccess);
+                    this.guidedTourService.enableTourForExercise(this.exercise, programmingExerciseSuccess, true);
                 } else if (this.currentResult.hasFeedback && !this.currentResult.successful) {
-                    this.guidedTourService.enableTourForExercise(this.exercise, programmingExerciseFail);
+                    this.guidedTourService.enableTourForExercise(this.exercise, programmingExerciseFail, true);
                 }
             }
         }

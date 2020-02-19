@@ -108,7 +108,8 @@
                                         *ngIf="course.isAtLeastTutor"
                                         type="submit"
                                         [routerLink]="['/course', course.id]"
-                                        class="btn btn-primary btn-sm mr-1 mb-1"
+                                        class="btn btn-primary btn-sm mr-1 mb-1 exercise-button"
+                                        [class.guided-tour]="course === courseForGuidedTour"
                                         id="exercises-button-{{ course.id }}"
                                     >
                                         <fa-icon [icon]="'list-alt'"></fa-icon>
@@ -144,7 +145,8 @@
                                         type="submit"
                                         *ngIf="course.isAtLeastTutor"
                                         [routerLink]="['/course', course.id, 'tutor-dashboard']"
-                                        class="btn btn-info btn-sm mr-1 mb-1"
+                                        class="btn btn-info btn-sm mr-1 mb-1 tutor-dashboard"
+                                        [class.guided-tour]="course === courseForGuidedTour"
                                     >
                                         <fa-icon [icon]="'th-list'"></fa-icon>
                                         <span class="d-none d-md-inline">{{ 'entity.action.tutorCourseDashboard' | translate }}</span>
@@ -153,7 +155,7 @@
                                         type="submit"
                                         *ngIf="course.isAtLeastInstructor"
                                         [routerLink]="['/course', course.id, 'instructor-dashboard']"
-                                        class="btn btn-info btn-sm mr-1 mb-1"
+                                        class="btn btn-info btn-sm mr-1 mb-1 instructor-dashboard"
                                     >
                                         <fa-icon [icon]="'th-list'"></fa-icon>
                                         <span class="d-none d-md-inline">{{ 'artemisApp.course.instructorDashboard' | translate }}</span>
