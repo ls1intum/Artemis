@@ -3,15 +3,12 @@ import { Subject } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import * as showdown from 'showdown';
 import { escapeStringForUseInRegex } from 'app/shared/util/global.utils';
-import {
-    ProgrammingExerciseInstructionService,
-    TestCaseState,
-} from 'app/exercises/programming/shared/instructions/instructions-render/service/programming-exercise-instruction.service';
-import { ProgrammingExercisePlantUmlService } from 'app/exercises/programming/shared/instructions/instructions-render/service/programming-exercise-plant-uml.service';
+import { ProgrammingExerciseInstructionService, TestCaseState } from 'app/exercises/programming/shared/instructions-render/service/programming-exercise-instruction.service';
+import { ProgrammingExercisePlantUmlService } from 'app/exercises/programming/shared/instructions-render/service/programming-exercise-plant-uml.service';
 import { ArtemisShowdownExtensionWrapper } from 'app/shared/markdown-editor/extensions/artemis-showdown-extension-wrapper';
 import * as DOMPurify from 'dompurify';
 import { Result } from 'app/entities/result.model';
-import { ArtemisProgrammingExerciseInstructionsRenderModule } from 'app/exercises/programming/shared/instructions/instructions-render/programming-exercise-instructions-render.module';
+import { ArtemisProgrammingExerciseInstructionsRenderModule } from 'app/exercises/programming/shared/instructions-render/programming-exercise-instructions-render.module';
 
 @Injectable({ providedIn: 'root' })
 export class ProgrammingExercisePlantUmlExtensionWrapper implements ArtemisShowdownExtensionWrapper {

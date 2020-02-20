@@ -8,7 +8,7 @@ import { CodeEditorActionsComponent } from 'app/exercises/programming/shared/cod
 import { CodeEditorBuildOutputComponent } from 'app/exercises/programming/shared/code-editor/build-output/code-editor-build-output.component';
 import { CodeEditorFileBrowserComponent } from 'app/exercises/programming/shared/code-editor/file-browser/code-editor-file-browser.component';
 import { CodeEditorInstructionsComponent } from 'app/exercises/programming/shared/code-editor/instructions/code-editor-instructions.component';
-import { CodeEditorInstructorBaseContainerComponent } from 'app/exercises/programming/shared/code-editor/instructor/code-editor-instructor-base-container.component';
+import { CodeEditorInstructorBaseContainerComponent } from 'app/exercises/programming/manage/code-editor/code-editor-instructor-base-container.component';
 import { CodeEditorFileService } from 'app/exercises/programming/shared/code-editor/service/code-editor-file.service';
 import { CodeEditorSessionService } from 'app/exercises/programming/shared/code-editor/service/code-editor-session.service';
 import { CourseExerciseService } from 'app/course/manage/course.service';

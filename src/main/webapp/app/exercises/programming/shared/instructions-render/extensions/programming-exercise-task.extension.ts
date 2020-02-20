@@ -1,14 +1,14 @@
 import { ApplicationRef, ComponentFactoryResolver, EmbeddedViewRef, Injectable, Injector } from '@angular/core';
 import { Observable, Subject } from 'rxjs';
 import * as showdown from 'showdown';
-import { ProgrammingExerciseInstructionTaskStatusComponent } from 'app/exercises/programming/shared/instructions/instructions-render/task/programming-exercise-instruction-task-status.component';
+import { ProgrammingExerciseInstructionTaskStatusComponent } from 'app/exercises/programming/shared/instructions-render/task/programming-exercise-instruction-task-status.component';
 import { Result } from 'app/entities/result.model';
 import { escapeStringForUseInRegex } from 'app/shared/util/global.utils';
-import { ProgrammingExerciseInstructionService } from 'app/exercises/programming/shared/instructions/instructions-render/service/programming-exercise-instruction.service';
+import { ProgrammingExerciseInstructionService } from 'app/exercises/programming/shared/instructions-render/service/programming-exercise-instruction.service';
 import { ArtemisShowdownExtensionWrapper } from 'app/shared/markdown-editor/extensions/artemis-showdown-extension-wrapper';
 import { ExerciseHint } from 'app/entities/exercise-hint.model';
-import { TaskArray } from 'app/exercises/programming/shared/instructions/instructions-render/task/programming-exercise-task.model';
-import { ArtemisProgrammingExerciseInstructionsRenderModule } from 'app/exercises/programming/shared/instructions/instructions-render/programming-exercise-instructions-render.module';
+import { TaskArray } from 'app/exercises/programming/shared/instructions-render/task/programming-exercise-task.model';
+import { ArtemisProgrammingExerciseInstructionsRenderModule } from 'app/exercises/programming/shared/instructions-render/programming-exercise-instructions-render.module';
 
 @Injectable({ providedIn: 'root' })
 export class ProgrammingExerciseTaskExtensionWrapper implements ArtemisShowdownExtensionWrapper {

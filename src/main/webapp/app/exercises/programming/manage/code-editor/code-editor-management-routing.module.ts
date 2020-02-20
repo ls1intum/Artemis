@@ -1,8 +1,8 @@
 import { RouterModule, Routes } from '@angular/router';
-import { CodeEditorInstructorContainerComponent } from 'app/exercises/programming/shared/code-editor/instructor/code-editor-instructor-container.component';
+import { CodeEditorInstructorContainerComponent } from 'app/exercises/programming/manage/code-editor/code-editor-instructor-container.component';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { PendingChangesGuard } from 'app/shared/guard/pending-changes.guard';
-import { CodeEditorInstructorOrionContainerComponent } from 'app/exercises/programming/shared/code-editor/instructor/code-editor-instructor-orion-container.component';
+import { CodeEditorInstructorOrionContainerComponent } from 'app/exercises/programming/manage/code-editor/code-editor-instructor-orion-container.component';
 import { NgModule } from '@angular/core';
 
 const routes: Routes = [

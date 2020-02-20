@@ -3,7 +3,7 @@ import { SERVER_API_URL } from 'app/app.constants';
 import { HttpClient, HttpParameterCodec, HttpParams } from '@angular/common/http';
 import { Cacheable } from 'ngx-cacheable';
 import { Observable } from 'rxjs';
-import { ArtemisProgrammingExerciseInstructionsRenderModule } from 'app/exercises/programming/shared/instructions/instructions-render/programming-exercise-instructions-render.module';
+import { ArtemisProgrammingExerciseInstructionsRenderModule } from 'app/exercises/programming/shared/instructions-render/programming-exercise-instructions-render.module';
 
 @Injectable({ providedIn: 'root' })
 export class ProgrammingExercisePlantUmlService {

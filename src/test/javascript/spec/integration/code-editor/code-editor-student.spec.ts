@@ -46,7 +46,7 @@ import {
     CodeEditorRepositoryService,
 } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
 import { Feedback } from 'app/entities/feedback.model';
-import { CodeEditorStudentContainerComponent } from 'app/exercises/programming/shared/code-editor/code-editor-student-container.component';
+import { CodeEditorStudentContainerComponent } from 'app/exercises/programming/participate/code-editor/code-editor-student-container.component';
 import { ExerciseHintService, IExerciseHintService } from 'app/exercises/shared/exercise-hint/exercise-hint.service';
 import { CodeEditorSessionService } from 'app/exercises/programming/shared/code-editor/service/code-editor-session.service';
 import { DomainService } from 'app/exercises/programming/shared/code-editor/service/code-editor-domain.service';

@@ -17,11 +17,12 @@ const LAYOUT_ROUTES: Routes = [navbarRoute, ...errorRoute];
                 },
                 {
                     path: 'courses/:courseId/programming-exercises/:exerciseId/code-editor',
-                    loadChildren: () => import('./exercises/programming/shared/code-editor/code-editor-participation.module').then(m => m.ArtemisCodeEditorParticipationModule),
+                    loadChildren: () =>
+                        import('./exercises/programming/participate/code-editor/code-editor-participation.module').then(m => m.ArtemisCodeEditorParticipationModule),
                 },
                 {
                     path: 'course-management/:courseId/programming-exercises/:exerciseId/code-editor',
-                    loadChildren: () => import('./exercises/programming/shared/code-editor/code-editor-management.module').then(m => m.ArtemisCodeEditorManagementModule),
+                    loadChildren: () => import('./exercises/programming/manage/code-editor/code-editor-management.module').then(m => m.ArtemisCodeEditorManagementModule),
                 },
                 {
                     path: 'account',

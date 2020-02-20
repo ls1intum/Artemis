@@ -16,7 +16,7 @@ import { ArtemisTutorCourseDashboardModule } from 'app/course/tutor-course-dashb
 import { JhiMainComponent } from 'app/shared/layouts/main/main.component';
 import { ArtemisHeaderExercisePageWithDetailsModule } from 'app/exercises/shared/exercise-headers/exercise-headers.module';
 import { HomeComponent } from 'app/home/home.component';
-import { ArtemisProgrammingExerciseInstructionsRenderModule } from 'app/exercises/programming/shared/instructions/instructions-render/programming-exercise-instructions-render.module';
+import { ArtemisProgrammingExerciseInstructionsRenderModule } from 'app/exercises/programming/shared/instructions-render/programming-exercise-instructions-render.module';
 import { ArtemisResultModule } from 'app/exercises/shared/result/result.module';
 import { CourseComponent } from 'app/course/manage/course.component';
 import { ArtemisModelingEditorModule } from 'app/exercises/modeling/shared/modeling-editor/modeling-editor.module';
