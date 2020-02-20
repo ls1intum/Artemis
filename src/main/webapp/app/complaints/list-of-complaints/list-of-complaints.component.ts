@@ -104,7 +104,7 @@ export class ListOfComplaintsComponent implements OnInit {
         } else if (exercise.type === ExerciseType.MODELING) {
             route = `/modeling-exercise/${exercise.id}/submissions/${submissionId}/assessment`;
         } else if (exercise.type === ExerciseType.FILE_UPLOAD) {
-            route = `/file-upload-exercise/${exercise.id}/submission/${submissionId}/assessment`;
+            route = `/course-management/${this.courseId}/file-upload-exercises/${exercise.id}/submissions/${submissionId}/assessment`;
         } else if (exercise.type === ExerciseType.PROGRAMMING) {
             const modalRef: NgbModalRef = this.modalService.open(ProgrammingAssessmentManualResultDialogComponent, { keyboard: true, size: 'lg', backdrop: 'static' });
             modalRef.componentInstance.participationId = studentParticipation.id;

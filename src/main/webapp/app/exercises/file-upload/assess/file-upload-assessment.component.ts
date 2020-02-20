@@ -54,6 +54,7 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
     userId: number;
     canOverride = false;
     isLoading = true;
+    courseId: number;
 
     /** Resizable constants **/
     resizableMinWidth = 100;
@@ -99,6 +100,7 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
         this.isAtLeastInstructor = this.accountService.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR']);
 
         this.route.params.subscribe(params => {
+            this.courseId = Number(params['courseId']);
             const exerciseId = Number(params['exerciseId']);
             const submissionValue = params['submissionId'];
             const submissionId = Number(submissionValue);
@@ -277,7 +279,10 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
                 this.unassessedSubmission = response;
                 this.router.onSameUrlNavigation = 'reload';
                 // navigate to the new assessment page to trigger re-initialization of the components
-                this.router.navigateByUrl(`/file-upload-exercise/${this.exercise.id}/submission/${this.unassessedSubmission.id}/assessment`, {});
+                this.router.navigateByUrl(
+                    `/course-management/${this.courseId}/file-upload-exercises/${this.exercise.id}/submissions/${this.unassessedSubmission.id}/assessment`,
+                    {},
+                );
             },
             (error: HttpErrorResponse) => {
                 if (error.status === 404) {

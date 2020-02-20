@@ -64,7 +64,7 @@
                         <span *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA']">
                             <button
                                 *ngIf="submission && !submission.result"
-                                routerLink="/file-upload-exercise/{{ exercise.id }}/submission/{{ submission.id }}/assessment"
+                                [routerLink]="['/course-management', exercise.course.id, 'file-upload-exercises', exercise.id, 'submissions', submission.id, 'assessment']"
                                 [disabled]="busy"
                                 class="btn btn-outline-secondary btn-sm mb-1"
                             >
@@ -74,7 +74,7 @@
                         <span *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA']">
                             <button
                                 *ngIf="submission && submission.result"
-                                routerLink="/file-upload-exercise/{{ exercise.id }}/submission/{{ submission.id }}/assessment"
+                                [routerLink]="['/course-management', exercise.course.id, 'file-upload-exercises', exercise.id, 'submissions', submission.id, 'assessment']"
                                 [disabled]="busy"
                                 class="btn btn-outline-secondary btn-sm mb-1"
                             >

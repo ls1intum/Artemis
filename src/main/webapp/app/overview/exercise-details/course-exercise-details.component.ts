@@ -234,7 +234,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         } else if (this.exercise && this.exercise.type === ExerciseType.TEXT) {
             return `/text/${this.exercise.id}/assessment`;
         } else if (this.exercise && this.exercise.type === ExerciseType.FILE_UPLOAD) {
-            return `/file-upload-exercise/${this.exercise.id}/assessment`;
+            return `/course-management/${this.courseId}/file-upload-exercises/${this.exercise.id}/assessment`;
         } else {
             return null;
         }

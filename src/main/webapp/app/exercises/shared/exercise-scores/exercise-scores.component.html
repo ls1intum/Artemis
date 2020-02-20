@@ -226,7 +226,10 @@
                     [width]="180"
                 >
                     <ng-template ngx-datatable-cell-template let-value="value">
-                        <button routerLink="/file-upload-exercise/{{ exercise.id }}/submission/{{ value.submission.id }}/assessment" class="btn btn-primary btn-sm mr-1">
+                        <button
+                            [routerLink]="['/course-management', exercise.course?.id, 'file-upload-exercises', exercise.id, 'submissions', value.submission.id, 'assessment']"
+                            class="btn btn-primary btn-sm mr-1"
+                        >
                             <fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>
                             {{ 'artemisApp.fileUploadSubmission.view' | translate }}
                         </button>

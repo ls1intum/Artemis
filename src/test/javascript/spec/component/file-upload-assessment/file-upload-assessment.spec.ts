@@ -19,7 +19,6 @@ import { ResizableInstructionsComponent } from 'app/exercises/text/assess/text-a
 import { DebugElement } from '@angular/core';
 import { MockAccountService } from '../../mocks/mock-account.service';
 import { Location } from '@angular/common';
-import { fileUploadAssessmentRoutes } from 'app/exercises/file-upload/assess/file-upload-assessment.route';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { ComplaintService } from 'app/complaints/complaint.service';
 import { MockComplaintService } from '../../mocks/mock-complaint.service';
@@ -35,6 +34,8 @@ import { ExerciseType } from 'app/entities/exercise.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { Result } from 'app/entities/result.model';
 import { ModelingAssessmentModule } from 'app/exercises/modeling/assess/modeling-assessment/modeling-assessment.module';
+import { routes } from 'app/exercises/file-upload/assess/file-upload-assessment.route';
+import { Course } from 'app/entities/course.model';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -48,6 +49,7 @@ describe('FileUploadAssessmentComponent', () => {
     let router: Router;
     let location: Location;
 
+    const course = { id: 5 } as Course;
     const exercise = { id: 20, type: ExerciseType.FILE_UPLOAD } as FileUploadExercise;
 
     beforeEach(async () => {
@@ -55,7 +57,7 @@ describe('FileUploadAssessmentComponent', () => {
             imports: [
                 ArtemisTestModule,
                 ArtemisSharedModule,
-                RouterTestingModule.withRoutes([fileUploadAssessmentRoutes[0]]),
+                RouterTestingModule.withRoutes([routes[0]]),
                 ArtemisAssessmentSharedModule,
                 ModelingAssessmentModule,
                 TranslateModule.forRoot(),
@@ -128,6 +130,7 @@ describe('FileUploadAssessmentComponent', () => {
             const unassessedSubmission = { submissionExerciseType: SubmissionExerciseType.FILE_UPLOAD, id: 2279, submitted: true, type: 'MANUAL' };
 
             fixture.detectChanges();
+            comp.courseId = course.id;
 
             getFileUploadSubmissionForExerciseWithoutAssessmentStub.returns(of(unassessedSubmission));
             comp.assessNextOptimal();
@@ -136,7 +139,9 @@ describe('FileUploadAssessmentComponent', () => {
 
             // check if the url changes when you clicked on assessNextAssessmentButton
             tick();
-            expect(location.path()).to.be.equal('/file-upload-exercise/' + comp.exercise.id + '/submission/' + comp.unassessedSubmission.id + '/assessment');
+            expect(location.path()).to.be.equal(
+                '/course-management/' + comp.courseId + '/file-upload-exercises/' + comp.exercise.id + '/submissions/' + comp.unassessedSubmission.id + '/assessment',
+            );
 
             fixture.destroy();
             flush();
