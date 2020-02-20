@@ -28,18 +28,6 @@ export class ProgrammingExerciseResolve implements Resolve<ProgrammingExercise> 
 
 export const programmingExerciseRoute: Routes = [
     {
-        path: 'course/:courseId/programming-exercise/:id/view',
-        component: ProgrammingExerciseDetailComponent,
-        resolve: {
-            programmingExercise: ProgrammingExerciseResolve,
-        },
-        data: {
-            authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
-            pageTitle: 'artemisApp.programmingExercise.home.title',
-        },
-        canActivate: [UserRouteAccessService],
-    },
-    {
         path: 'course/:courseId/programming-exercise/new',
         component: ProgrammingExerciseUpdateComponent,
         resolve: {

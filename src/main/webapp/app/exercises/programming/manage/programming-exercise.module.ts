@@ -15,7 +15,6 @@ import { FeatureToggleModule } from 'app/shared/feature-toggle/feature-toggle.mo
 import { ArtemisProgrammingAssessmentModule } from 'app/exercises/programming/assess/programming-assessment/programming-assessment.module';
 import { OrionModule } from 'app/shared/orion/orion.module';
 import { ProgrammingExerciseUpdateComponent } from 'app/exercises/programming/manage/programming-exercise-update.component';
-import { ProgrammingExerciseDetailComponent } from 'app/exercises/programming/manage/programming-exercise-detail.component';
 import { ProgrammingExerciseImportComponent } from 'app/exercises/programming/manage/programming-exercise-import.component';
 import { programmingExerciseRoute } from 'app/exercises/programming/manage/programming-exercise.route';
 import { ProgrammingExerciseUtilsModule } from 'app/exercises/programming/manage/utils/programming-exercise-utils.module';
@@ -61,7 +60,6 @@ const ENTITY_STATES = [...programmingExerciseRoute];
         ArtemisTeamConfigFormGroupModule,
     ],
     declarations: [
-        ProgrammingExerciseDetailComponent,
         ProgrammingExerciseUpdateComponent,
         ProgrammingExerciseImportComponent,
         ProgrammingExercisePlansAndRepositoriesPreviewComponent,
