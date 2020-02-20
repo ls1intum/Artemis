@@ -17,7 +17,7 @@ const LAYOUT_ROUTES: Routes = [navbarRoute, ...errorRoute];
                 },
                 {
                     path: 'courses/:courseId/programming-exercises/:exerciseId/code-editor',
-                    loadChildren: () => import('./exercises/programming/shared/code-editor/code-editor.module').then(m => m.ArtemisCodeEditorModule),
+                    loadChildren: () => import('./exercises/programming/shared/code-editor/code-editor-participation.module').then(m => m.ArtemisCodeEditorParticipationModule),
                 },
                 {
                     path: 'code-editor',

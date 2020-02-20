@@ -8,19 +8,6 @@ import { CodeEditorInstructorOrionContainerComponent } from 'app/exercises/progr
 
 export const codeEditorRoute: Routes = [
     {
-        path: ':participationId',
-        component: CodeEditorStudentContainerComponent,
-        data: {
-            authorities: ['ROLE_USER'],
-            pageTitle: 'artemisApp.editor.home.title',
-            flushRepositoryCacheAfter: 900000, // 15 min
-            participationCache: {},
-            repositoryCache: {},
-        },
-        canActivate: [UserRouteAccessService],
-        canDeactivate: [PendingChangesGuard],
-    },
-    {
         path: ':exerciseId/admin/:participationId',
         component: CodeEditorInstructorContainerComponent,
         data: {

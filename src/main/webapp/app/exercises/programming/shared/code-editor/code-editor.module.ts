@@ -13,7 +13,6 @@ import { CodeEditorAceComponent } from 'app/exercises/programming/shared/code-ed
 import { CodeEditorFileBrowserDeleteComponent } from 'app/exercises/programming/shared/code-editor/file-browser/code-editor-file-browser-delete';
 import { CodeEditorInstructionsComponent } from 'app/exercises/programming/shared/code-editor/instructions/code-editor-instructions.component';
 import { CodeEditorResolveConflictModalComponent } from 'app/exercises/programming/shared/code-editor/actions/code-editor-resolve-conflict-modal.component';
-import { CodeEditorStudentContainerComponent } from 'app/exercises/programming/shared/code-editor/code-editor-student-container.component';
 import { ExerciseHintStudentDialogComponent } from 'app/exercises/shared/exercise-hint/exercise-hint-student-dialog.component';
 import { ArtemisProgrammingExerciseInstructionsEditorModule } from 'app/exercises/programming/shared/instructions/instructions-editor/programming-exercise-instructions-editor.module';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
@@ -52,7 +51,6 @@ const ENTITY_STATES = [...codeEditorRoute];
         CodeEditorGridComponent,
         CodeEditorRepositoryIsLockedComponent,
         CodeEditorInstructorContainerComponent,
-        CodeEditorStudentContainerComponent,
         CodeEditorFileBrowserComponent,
         CodeEditorFileBrowserDeleteComponent,
         CodeEditorFileBrowserFileComponent,
@@ -66,11 +64,19 @@ const ENTITY_STATES = [...codeEditorRoute];
         CodeEditorResolveConflictModalComponent,
         CodeEditorInstructorOrionContainerComponent,
     ],
-    exports: [CodeEditorInstructorContainerComponent, CodeEditorStudentContainerComponent],
+    exports: [
+        CodeEditorInstructorContainerComponent,
+        CodeEditorGridComponent,
+        CodeEditorRepositoryIsLockedComponent,
+        CodeEditorAceComponent,
+        CodeEditorFileBrowserComponent,
+        CodeEditorActionsComponent,
+        CodeEditorInstructionsComponent,
+        CodeEditorBuildOutputComponent,
+    ],
     entryComponents: [
         CodeEditorInstructorOrionContainerComponent,
         CodeEditorInstructorContainerComponent,
-        CodeEditorStudentContainerComponent,
         CodeEditorFileBrowserDeleteComponent,
         ExerciseHintStudentDialogComponent,
         CodeEditorResolveConflictModalComponent,
