@@ -1,7 +1,7 @@
 import { Directive, HostBinding, HostListener, Input, OnInit } from '@angular/core';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { take, tap } from 'rxjs/operators';
-import { createBuildPlanUrl } from 'app/exercises/programming/manage/utils/build-plan-link.directive';
+import { createBuildPlanUrl } from 'app/exercises/programming/shared/utils/build-plan-link.directive';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 
 @Directive({ selector: 'button[jhiBuildPlanButton], jhi-button[jhiBuildPlanButton]' })

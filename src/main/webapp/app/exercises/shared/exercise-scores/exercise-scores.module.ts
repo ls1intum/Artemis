@@ -10,7 +10,7 @@ import { ArtemisProgrammingAssessmentModule } from 'app/exercises/programming/as
 import { NgxDatatableModule } from '@swimlane/ngx-datatable';
 import { ArtemisDataTableModule } from 'app/shared/data-table/data-table.module';
 import { FeatureToggleModule } from 'app/shared/feature-toggle/feature-toggle.module';
-import { ProgrammingExerciseUtilsModule } from 'app/exercises/programming/manage/utils/programming-exercise-utils.module';
+import { ProgrammingExerciseUtilsModule } from 'app/exercises/programming/shared/utils/programming-exercise-utils.module';
 import { SortByPipe } from 'app/shared/pipes/sort-by.pipe';
 import { ArtemisResultModule } from 'app/exercises/shared/result/result.module';
 import { SortByModule } from 'app/shared/pipes/sort-by.module';

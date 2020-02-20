@@ -181,7 +181,7 @@
                 exercise.studentParticipations &&
                 exercise.studentParticipations.length > 0
             "
-            routerLink="/code-editor/{{ exercise.studentParticipations[0].id }}"
+            [routerLink]="['/courses', courseId, 'programming-exercises', exercise.id, 'code-editor', exercise.studentParticipations[0].id]"
         ></button>
         <button
             jhi-exercise-action-button

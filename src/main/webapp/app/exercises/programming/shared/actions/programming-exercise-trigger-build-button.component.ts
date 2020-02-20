@@ -6,7 +6,7 @@ import { ProgrammingSubmissionService, ProgrammingSubmissionState } from 'app/ex
 import { InitializationState, Participation } from 'app/entities/participation/participation.model';
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
-import { hasDeadlinePassed } from 'app/exercises/programming/manage/utils/programming-exercise.utils';
+import { hasDeadlinePassed } from 'app/exercises/programming/shared/utils/programming-exercise.utils';
 import { Result } from 'app/entities/result.model';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { AssessmentType } from 'app/entities/assessment-type.model';

@@ -3,7 +3,7 @@ import { catchError, tap } from 'rxjs/operators';
 import { ProgrammingSubmissionService } from 'app/exercises/programming/participate/programming-submission/programming-submission.service';
 import { of } from 'rxjs';
 import { NgbActiveModal, NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { hasDeadlinePassed } from 'app/exercises/programming/manage/utils/programming-exercise.utils';
+import { hasDeadlinePassed } from 'app/exercises/programming/shared/utils/programming-exercise.utils';
 import { BuildRunState, ProgrammingBuildRunService } from 'app/exercises/programming/participate/programming-submission/programming-build-run.service';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';

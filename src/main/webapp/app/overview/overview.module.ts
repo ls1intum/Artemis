@@ -9,7 +9,7 @@ import { CourseLectureRowComponent } from 'app/overview/course-lectures/course-l
 import { ArtemisCourseRegistrationSelector } from 'app/course/course-registration-selector/course-registration-selector.module';
 import { OrionModule } from 'app/shared/orion/orion.module';
 import { FeatureToggleModule } from 'app/shared/feature-toggle/feature-toggle.module';
-import { ProgrammingExerciseUtilsModule } from 'app/exercises/programming/manage/utils/programming-exercise-utils.module';
+import { ProgrammingExerciseUtilsModule } from 'app/exercises/programming/shared/utils/programming-exercise-utils.module';
 import { ProgrammingExerciseStudentIdeActionsComponent } from 'app/overview/exercise-details/programming-exercise-student-ide-actions.component';
 import { OverviewCourseCardComponent } from 'app/overview/overview-course-card.component';
 import { ArtemisStudentQuestionsModule } from 'app/overview/student-questions/student-questions.module';

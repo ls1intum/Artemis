@@ -10,5 +10,6 @@ import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown
     imports: [ArtemisSharedModule, ArtemisMarkdownEditorModule, ArtemisResultModule],
     declarations: [ProgrammingExerciseInstructionComponent, ProgrammingExerciseInstructionStepWizardComponent, ProgrammingExerciseInstructionTaskStatusComponent],
     exports: [ProgrammingExerciseInstructionComponent],
+    entryComponents: [ProgrammingExerciseInstructionTaskStatusComponent],
 })
 export class ArtemisProgrammingExerciseInstructionsRenderModule {}

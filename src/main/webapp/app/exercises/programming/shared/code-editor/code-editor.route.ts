@@ -20,7 +20,6 @@ export const codeEditorRoute: Routes = [
         canActivate: [UserRouteAccessService],
         canDeactivate: [PendingChangesGuard],
     },
-    // TODO: This should probably be moved into a module of the programming exercises as it is an administratory tool. This would also be a good chance to improve the route path.
     {
         path: ':exerciseId/admin/:participationId',
         component: CodeEditorInstructorContainerComponent,
