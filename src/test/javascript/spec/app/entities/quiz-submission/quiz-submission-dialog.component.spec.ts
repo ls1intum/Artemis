@@ -6,9 +6,9 @@ import { Observable } from 'rxjs/Observable';
 import { JhiEventManager } from 'ng-jhipster';
 
 import { ArtemisTestModule } from '../../../test.module';
-import { QuizSubmissionDialogComponent } from '../../../../../../main/webapp/app/entities/quiz-submission/quiz-submission-dialog.component';
-import { QuizSubmissionService } from '../../../../../../main/webapp/app/entities/quiz-submission/quiz-submission.service';
-import { QuizSubmission } from '../../../../../../main/webapp/app/entities/quiz-submission/quiz-submission.model';
+import { QuizSubmissionDialogComponent } from '../../../../../../main/webapp/app/exercises/quiz/participate/quiz-submission/quiz-submission-dialog.component';
+import { QuizSubmissionService } from '../../../../../../main/webapp/app/exercises/quiz/participate/quiz-submission/quiz-submission.service';
+import { QuizSubmission } from 'app/entities/quiz/quiz-submission.model';
 
 describe('Component Tests', () => {
     describe('QuizSubmission Management Dialog Component', () => {

@@ -1,10 +1,11 @@
 import { GuidedTour } from 'app/guided-tour/guided-tour.model';
 import { TextTourStep, UserInterActionTourStep } from 'app/guided-tour/guided-tour-step.model';
-import { Orientation, UserInteractionEvent } from 'app/guided-tour/guided-tour.constants';
+import { Orientation, ResetParticipation, UserInteractionEvent } from 'app/guided-tour/guided-tour.constants';
 import { clickOnElement } from 'app/guided-tour/guided-tour.utils';
 
 export const codeEditorTour: GuidedTour = {
     settingsKey: 'code_editor_tour',
+    resetParticipation: ResetParticipation.EXERCISE_PARTICIPATION,
     steps: [
         new TextTourStep({
             highlightSelector: '.editor-sidebar-left .file-browser',
@@ -74,6 +75,7 @@ export const codeEditorTour: GuidedTour = {
             orientation: Orientation.BOTTOMRIGHT,
             userInteractionEvent: UserInteractionEvent.CLICK,
             skipStepIfNoSelector: true,
+            triggerNextStep: true,
         }),
         new TextTourStep({
             highlightSelector: '.modal-body pre',

@@ -10,6 +10,7 @@
             "resultsPerPage": "{{number}} results per page",
             "showAllResults": "Show all results",
             "searchForStudents": "Search for students by login or name (comma separated)",
+            "searchForTeams": "Search for teams by name (comma separated)",
             "created": "A new Exercise is created with identifier {{ param }}",
             "updated": "An Exercise is updated with identifier {{ param }}",
             "deleted": "An Exercise is deleted with identifier {{ param }}",
@@ -44,8 +45,19 @@
             "easy": "Easy",
             "medium": "Medium",
             "hard": "Hard",
+            "mode": "Mode",
+            "modeTooltip": "The solving mode of an exercise determines whether students work alone or in teams.",
+            "modes": {
+                "individual": "Individual",
+                "team": "Team"
+            },
+            "teamAssignmentConfig": {
+                "teamSize": "Team Size",
+                "teamSizeTooltip": "Stipulation regarding the minimum and maximum number of students per team."
+            },
             "categories": "Categories",
             "participations": "Participations",
+            "teams": "Teams",
             "exportNames": "Export Names",
             "exportResults": "Export Results",
             "refresh": "Refresh",

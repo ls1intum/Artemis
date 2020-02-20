@@ -1,14 +1,14 @@
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
 import { SinonSpy, SinonStub, spy, stub } from 'sinon';
-import { AllowedOrionVersionRange, OrionVersionValidator } from 'app/orion/outdated-plugin-warning/orion-version-validator.service';
-import { ProfileService } from 'app/layouts/profiles/profile.service';
+import { AllowedOrionVersionRange, OrionVersionValidator } from 'app/shared/orion/outdated-plugin-warning/orion-version-validator.service';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { Router } from '@angular/router';
 import { MockProfileService } from '../../mocks/mock-profile.service';
 import { MockWindowRef } from '../../mocks/mock-window.service';
 import { MockRouter } from '../../mocks/mock-router.service';
 import { of } from 'rxjs';
-import { ProfileInfo } from 'app/layouts/profiles/profile-info.model';
+import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 
 chai.use(sinonChai);
 const expect = chai.expect;

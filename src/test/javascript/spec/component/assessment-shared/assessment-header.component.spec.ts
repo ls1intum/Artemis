@@ -3,9 +3,9 @@ import { By } from '@angular/platform-browser';
 import { AlertService } from 'app/core/alert/alert.service';
 import * as moment from 'moment';
 
-import { AssessmentHeaderComponent } from 'app/assessment-shared/assessment-header/assessment-header.component';
+import { AssessmentHeaderComponent } from 'app/assessment/assessment-header/assessment-header.component';
 import { ArtemisTestModule } from '../../test.module';
-import { Result } from 'app/entities/result/result.model';
+import { Result } from 'app/entities/result.model';
 import { JhiAlertComponent } from 'app/shared/alert/alert.component';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 

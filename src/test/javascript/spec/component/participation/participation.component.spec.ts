@@ -7,10 +7,10 @@ import { ArtemisTestModule } from '../../test.module';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { MockActivatedRoute } from '../../mocks/mock-activated.route';
 import { MockSyncStorage } from '../../mocks/mock-sync.storage';
-import { ParticipationService } from 'app/entities/participation/participation.service';
-import { ParticipationComponent } from 'app/entities/participation/participation.component';
-import { Course } from 'app/entities/course/course.model';
-import { Exercise } from 'app/entities/exercise/exercise.model';
+import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
+import { ParticipationComponent } from 'app/exercises/shared/participation/participation.component';
+import { Course } from 'app/entities/course.model';
+import { Exercise } from 'app/entities/exercise.model';
 import { of } from 'rxjs';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 

@@ -1,6 +1,6 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { Course } from 'app/entities/course/course.model';
-import { CourseService } from 'app/entities/course/course.service';
+import { Course } from 'app/entities/course.model';
+import { CourseService } from 'app/course/manage/course.service';
 import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs/Subscription';
 import { TranslateService } from '@ngx-translate/core';
@@ -10,12 +10,12 @@ import { AccountService } from 'app/core/auth/account.service';
 import { sum } from 'lodash';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { courseExerciseOverviewTour } from 'app/guided-tour/tours/course-exercise-overview-tour';
-import { isOrion } from 'app/orion/orion';
-import { ProgrammingSubmissionService } from 'app/programming-submission/programming-submission.service';
+import { isOrion } from 'app/shared/orion/orion';
+import { ProgrammingSubmissionService } from 'app/exercises/programming/participate/programming-submission/programming-submission.service';
 import { LocalStorageService } from 'ngx-webstorage';
 import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
-import { Exercise, ExerciseType } from 'app/entities/exercise/exercise.model';
-import { ExerciseService } from 'app/entities/exercise/exercise.service';
+import { Exercise, ExerciseType } from 'app/entities/exercise.model';
+import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 
 enum ExerciseFilter {
     OVERDUE = 'OVERDUE',
@@ -102,7 +102,7 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
             this.applyFiltersAndOrder();
         });
 
-        this.exerciseForGuidedTour = this.guidedTourService.enableTourForCourseExerciseComponent(this.course, courseExerciseOverviewTour);
+        this.exerciseForGuidedTour = this.guidedTourService.enableTourForCourseExerciseComponent(this.course, courseExerciseOverviewTour, true);
     }
 
     ngOnDestroy(): void {

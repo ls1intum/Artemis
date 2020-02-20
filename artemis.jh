@@ -65,6 +65,7 @@ entity Exercise (exercise) {        //abstract
     maxScore Double,
     assessmentType AssessmentType,
     difficulty DifficultyLevel,
+    mode ExerciseMode,
     categories String               //List<String>, similar to User --> groups
 }
 
@@ -72,6 +73,11 @@ enum DifficultyLevel {
 	EASY,
     MEDIUM,
     HARD
+}
+
+enum ExerciseMode {
+	INDIVIDUAL,
+    TEAM
 }
 
 entity TextExercise {               //extends Exercise
@@ -192,6 +198,16 @@ entity ShortAnswerSpot {
 entity ShortAnswerSolution {
     text String
     invalid Boolean
+}
+
+entity Team {
+    name String
+    image String
+}
+
+entity TeamAssignmentConfig {
+    minTeamSize Integer
+    maxTeamSize Integer
 }
 
 entity Participation (participation) {
@@ -511,11 +527,14 @@ relationship OneToOne {
     ProgrammingExercise{solutionParticipation} to Participation,
     ModelAssessmentConflict{causingConflictingResult} to ConflictingResult,
     ModelAssessmentConflict{updatedFeedback} to Feedback,
+    Exercise{teamAssignmentConfig} to TeamAssignmentConfig{exercise},
 }
 
 relationship ManyToOne {
     TutorGroup{tutor} to User,
+    Team{exercise} to Exercise,
     Participation{student} to User,
+    Participation{team} to Team,
     LtiOutcomeUrl{user} to User,
     LtiOutcomeUrl{exercise} to Exercise,
     SubmittedAnswer{quizQuestion} to QuizQuestion
@@ -535,6 +554,7 @@ relationship ManyToOne {
 }
 
 relationship ManyToMany {
+    Team{students} to User,    //Note: there should be a constraint that per exercise/course (depending on team scope) a student can only be in one team at the same time
     TutorGroup{students} to User,    //Note: there should be a constraint that per course a student can only be in one tutor group at the same time
 	MultipleChoiceSubmittedAnswer{selectedOptions} to AnswerOption,
 	TutorParticipation{trainedExampleSubmissions} to ExampleSubmission{tutorParticipations},

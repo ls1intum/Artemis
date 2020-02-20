@@ -10,6 +10,7 @@
             "resultsPerPage": "{{number}} Ergebnisse pro Seite",
             "showAllResults": "Zeige alle Ergebnisse",
             "searchForStudents": "Suche nach Studenten Logins oder Namen (Komma getrennt)",
+            "searchForTeams": "Suche nach Team Namen (Komma getrennt)",
             "created": "Übung erstellt mit ID {{ param }}",
             "updated": "Übung aktualisiert mit ID {{ param }}",
             "deleted": "Übung gelöscht mit ID {{ param }}",
@@ -44,8 +45,19 @@
             "easy": "Leicht",
             "medium": "Mittel",
             "hard": "Schwer",
+            "mode": "Modus",
+            "modeTooltip": "Der Bearbeitungsmodus einer Aufgabe bestimmt, ob Studenten alleine oder in Teams daran arbeiten.",
+            "modes": {
+                "individual": "Individuell",
+                "team": "Team"
+            },
+            "teamAssignmentConfig": {
+                "teamSize": "Team-Größe",
+                "teamSizeTooltip": "Vorgabe bezüglich minimaler und maximaler Anzahl Studenten pro Team."
+            },
             "categories": "Kategorien",
             "participations": "Teilnahmen",
+            "teams": "Teams",
             "exportNames": "Namen exportieren",
             "exportResults": "Ergebnisse exportieren",
             "refresh": "Aktualisieren",

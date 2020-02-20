@@ -396,6 +396,7 @@ public class ParticipationResource {
             exercise.setStudentQuestions(null);
             exercise.setGradingInstructions(null);
             exercise.setDifficulty(null);
+            exercise.setMode(null);
             if (exercise instanceof ProgrammingExercise) {
                 ProgrammingExercise programmingExercise = (ProgrammingExercise) exercise;
                 programmingExercise.setSolutionParticipation(null);

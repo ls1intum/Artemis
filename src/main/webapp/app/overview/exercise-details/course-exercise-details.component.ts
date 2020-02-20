@@ -1,30 +1,30 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Location } from '@angular/common';
 import { HttpResponse } from '@angular/common/http';
-import { CourseService } from 'app/entities/course/course.service';
+import { CourseService } from 'app/course/manage/course.service';
 import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs/Subscription';
-import { Result } from 'app/entities/result/result.model';
+import { Result } from 'app/entities/result.model';
 import * as moment from 'moment';
 import { User } from 'app/core/user/user.model';
-import { ParticipationService } from 'app/entities/participation/participation.service';
-import { ParticipationWebsocketService } from 'app/entities/participation/participation-websocket.service';
+import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
+import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { programmingExerciseFail, programmingExerciseSuccess } from 'app/guided-tour/tours/course-exercise-detail-tour';
-import { SourceTreeService } from 'app/components/util/sourceTree.service';
-import { ProfileService } from 'app/layouts/profiles/profile.service';
+import { SourceTreeService } from 'app/exercises/programming/shared/sourceTree.service';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
 import { InitializationState, Participation } from 'app/entities/participation/participation.model';
-import { Exercise, ExerciseCategory, ExerciseType } from 'app/entities/exercise/exercise.model';
+import { Exercise, ExerciseCategory, ExerciseType } from 'app/entities/exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { ExerciseService } from 'app/entities/exercise/exercise.service';
-import { AssessmentType } from 'app/entities/assessment-type/assessment-type.model';
-import { participationStatus } from 'app/entities/exercise/exercise-utils';
-import { ProgrammingExercise } from 'app/entities/programming-exercise/programming-exercise.model';
+import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
+import { AssessmentType } from 'app/entities/assessment-type.model';
+import { participationStatus } from 'app/exercises/shared/exercise/exercise-utils';
+import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
-import { GradingCriterion } from 'app/structured-grading-criterion/grading-criterion.model';
+import { GradingCriterion } from 'app/exercises/shared/structured-grading-criterion/grading-criterion.model';
 
 const MAX_RESULT_HISTORY_LENGTH = 5;
 
@@ -195,9 +195,9 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
             });
             if (this.currentResult) {
                 if (this.currentResult.successful) {
-                    this.guidedTourService.enableTourForExercise(this.exercise, programmingExerciseSuccess);
+                    this.guidedTourService.enableTourForExercise(this.exercise, programmingExerciseSuccess, true);
                 } else if (this.currentResult.hasFeedback && !this.currentResult.successful) {
-                    this.guidedTourService.enableTourForExercise(this.exercise, programmingExerciseFail);
+                    this.guidedTourService.enableTourForExercise(this.exercise, programmingExerciseFail, true);
                 }
             }
         }
