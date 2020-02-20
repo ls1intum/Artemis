@@ -28,7 +28,7 @@ import { GuidedTourMapping } from 'app/guided-tour/guided-tour-setting.model';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { DeviceDetectorService } from 'ngx-device-detector';
 import { ModelingSubmission } from 'app/entities/modeling-submission.model';
-import { ArtemisProgrammingExerciseInstructionsRenderModule } from 'app/exercises/programming/shared/instructions/instructions-render/programming-exercise-instructions-render.module';
+import { ArtemisProgrammingExerciseInstructionsRenderModule } from 'app/exercises/programming/shared/instructions-render/programming-exercise-instructions-render.module';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { HeaderExercisePageWithDetailsComponent } from 'app/exercises/shared/exercise-headers/header-exercise-page-with-details.component';
 import { TutorExerciseDashboardComponent } from 'app/exercises/shared/tutor-exercise-dashboard/tutor-exercise-dashboard.component';
