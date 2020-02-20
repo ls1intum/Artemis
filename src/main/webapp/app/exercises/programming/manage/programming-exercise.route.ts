@@ -5,7 +5,7 @@ import { UserRouteAccessService } from 'app/core/auth/user-route-access-service'
 import { Observable } from 'rxjs/Observable';
 import { map } from 'rxjs/operators';
 
-import { ProgrammingExercise } from '../../../entities/programming-exercise.model';
+import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ProgrammingExerciseService } from './services/programming-exercise.service';
 import { ProgrammingExerciseComponent } from './programming-exercise.component';
 import { ProgrammingExerciseDetailComponent } from './programming-exercise-detail.component';
@@ -27,15 +27,6 @@ export class ProgrammingExerciseResolve implements Resolve<ProgrammingExercise> 
 }
 
 export const programmingExerciseRoute: Routes = [
-    {
-        path: 'course/:courseId/programming-exercise',
-        component: ProgrammingExerciseComponent,
-        data: {
-            authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
-            pageTitle: 'artemisApp.programmingExercise.home.title',
-        },
-        canActivate: [UserRouteAccessService],
-    },
     {
         path: 'course/:courseId/programming-exercise/:id/view',
         component: ProgrammingExerciseDetailComponent,

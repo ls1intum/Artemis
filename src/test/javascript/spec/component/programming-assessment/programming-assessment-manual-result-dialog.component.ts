@@ -14,7 +14,7 @@ import { MockSyncStorage } from '../../mocks/mock-sync.storage';
 import { MockParticipationWebsocketService } from '../../mocks/mock-participation-websocket.service';
 import { MockProgrammingExerciseParticipationService } from '../../mocks/mock-programming-exercise-participation.service';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
-import { BuildLogService } from 'app/exercises/programming/assess/programming-assessment/build-logs/build-log.service';
+import { BuildLogService } from 'app/exercises/programming/shared/service/build-log.service';
 import { FormDateTimePickerModule } from 'app/shared/date-time-picker/date-time-picker.module';
 import { User } from 'app/core/user/user.model';
 import { AccountService } from 'app/core/auth/account.service';

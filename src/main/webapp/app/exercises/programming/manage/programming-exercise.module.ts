@@ -14,7 +14,6 @@ import { ProgrammingExercisePlansAndRepositoriesPreviewComponent } from 'app/exe
 import { FeatureToggleModule } from 'app/shared/feature-toggle/feature-toggle.module';
 import { ArtemisProgrammingAssessmentModule } from 'app/exercises/programming/assess/programming-assessment/programming-assessment.module';
 import { OrionModule } from 'app/shared/orion/orion.module';
-import { ProgrammingExerciseComponent } from 'app/exercises/programming/manage/programming-exercise.component';
 import { ProgrammingExerciseUpdateComponent } from 'app/exercises/programming/manage/programming-exercise-update.component';
 import { ProgrammingExerciseDetailComponent } from 'app/exercises/programming/manage/programming-exercise-detail.component';
 import { ProgrammingExerciseImportComponent } from 'app/exercises/programming/manage/programming-exercise-import.component';
@@ -62,7 +61,6 @@ const ENTITY_STATES = [...programmingExerciseRoute];
         ArtemisTeamConfigFormGroupModule,
     ],
     declarations: [
-        ProgrammingExerciseComponent,
         ProgrammingExerciseDetailComponent,
         ProgrammingExerciseUpdateComponent,
         ProgrammingExerciseImportComponent,
@@ -71,7 +69,7 @@ const ENTITY_STATES = [...programmingExerciseRoute];
         ProgrammingExerciseLifecycleComponent,
         ProgrammingExerciseTestScheduleDatePickerComponent,
     ],
-    entryComponents: [ProgrammingExerciseComponent, ProgrammingExerciseUpdateComponent, ProgrammingExerciseImportComponent],
-    exports: [ProgrammingExerciseComponent, ArtemisProgrammingExerciseInstructionsEditorModule, ArtemisProgrammingExerciseActionsModule],
+    entryComponents: [ProgrammingExerciseUpdateComponent, ProgrammingExerciseImportComponent],
+    exports: [ArtemisProgrammingExerciseInstructionsEditorModule, ArtemisProgrammingExerciseActionsModule],
 })
 export class ArtemisProgrammingExerciseModule {}

@@ -29,7 +29,6 @@ import { ArtemisOverviewModule } from 'app/overview/overview.module';
 import { ArtemisConnectionNotificationModule } from 'app/shared/layouts/connection-notification/connection-notification.module';
 import { ArtemisTextAssessmentModule } from 'app/exercises/text/assess/text-assessment/text-assessment.module';
 import { ArtemisListOfComplaintsModule } from 'app/complaints/list-of-complaints/list-of-complaints.module';
-import { ArtemisProgrammingSubmissionModule } from 'app/exercises/programming/participate/programming-submission/programming-submission.module';
 import { FooterComponent } from 'app/shared/layouts/footer/footer.component';
 import { ArtemisEntityModule } from 'app/entities/entity.module';
 import { ArtemisParticipationModule } from 'app/exercises/shared/participation/participation.module';
@@ -65,7 +64,6 @@ import { ArtemisQuizManageModule } from 'app/exercises/quiz/manage/quiz-manage.m
         ArtemisLegalModule,
         ArtemisParticipationModule.forRoot(),
         ArtemisTeamModule.forRoot(),
-        ArtemisProgrammingSubmissionModule.forRoot(),
         ArtemisOverviewModule,
         ArtemisAccountModule,
         ArtemisQuizParticipationModule,

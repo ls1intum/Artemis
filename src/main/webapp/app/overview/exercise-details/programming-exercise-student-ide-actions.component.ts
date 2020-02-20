@@ -1,7 +1,7 @@
 import { Component, HostBinding, Input, OnInit } from '@angular/core';
 import { CourseExerciseService } from 'app/course/manage/course.service';
 import { AlertService } from 'app/core/alert/alert.service';
-import { SourceTreeService } from 'app/exercises/programming/shared/sourceTree.service';
+import { SourceTreeService } from 'app/exercises/programming/shared/service/sourceTree.service';
 import { ActivatedRoute } from '@angular/router';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { Participation } from 'app/entities/participation/participation.model';

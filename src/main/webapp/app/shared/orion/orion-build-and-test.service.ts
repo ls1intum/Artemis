@@ -3,7 +3,7 @@ import { ProgrammingSubmissionService } from 'app/exercises/programming/particip
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import { filter, first, map, tap } from 'rxjs/operators';
 import { Observable, Subject, Subscription } from 'rxjs';
-import { BuildLogService } from 'app/exercises/programming/assess/programming-assessment/build-logs/build-log.service';
+import { BuildLogService } from 'app/exercises/programming/shared/service/build-log.service';
 import { Participation } from 'app/entities/participation/participation.model';
 import { BuildLogEntryArray } from 'app/entities/build-log.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';

@@ -20,6 +20,7 @@ import { courseRoute } from 'app/course/manage/course.route';
 import { CourseComponent } from 'app/course/manage/course.component';
 import { OrionModule } from 'app/shared/orion/orion.module';
 import { ArtemisQuizManageModule } from 'app/exercises/quiz/manage/quiz-manage.module';
+import { ProgrammingExerciseManagementModule } from 'app/exercises/programming/manage/programming-exercise-management.module';
 
 const ENTITY_STATES = [...courseRoute];
 
@@ -38,6 +39,7 @@ const ENTITY_STATES = [...courseRoute];
         ArtemisColorSelectorModule,
         ImageCropperModule,
         MomentModule,
+        ProgrammingExerciseManagementModule,
         OrionModule,
     ],
     declarations: [CourseComponent, CourseDetailComponent, CourseUpdateComponent, CourseExerciseCardComponent, CourseExercisesOverviewComponent],

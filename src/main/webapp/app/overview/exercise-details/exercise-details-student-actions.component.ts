@@ -5,7 +5,7 @@ import { Router } from '@angular/router';
 import { AlertService } from 'app/core/alert/alert.service';
 import { HttpClient } from '@angular/common/http';
 import { AccountService } from 'app/core/auth/account.service';
-import { SourceTreeService } from 'app/exercises/programming/shared/sourceTree.service';
+import { SourceTreeService } from 'app/exercises/programming/shared/service/sourceTree.service';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { Participation } from 'app/entities/participation/participation.model';
 import { Exercise, ExerciseType, ParticipationStatus } from 'app/entities/exercise.model';
