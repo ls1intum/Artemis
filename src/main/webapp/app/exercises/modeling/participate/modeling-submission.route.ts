@@ -4,7 +4,7 @@ import { UserRouteAccessService } from 'app/core/auth/user-route-access-service'
 import { Routes, RouterModule } from '@angular/router';
 import { ModelingSubmissionComponent } from './modeling-submission.component';
 
-const routes: Routes = [
+export const routes: Routes = [
     {
         path: 'courses/:courseId/modeling-exercises/:exerciseId/participate/:participationId',
         component: ModelingSubmissionComponent,
