@@ -13,8 +13,6 @@ import { OwlDateTimeModule } from 'ng-pick-datetime';
 import { FeatureToggleModule } from 'app/shared/feature-toggle/feature-toggle.module';
 import { ArtemisProgrammingAssessmentModule } from 'app/exercises/programming/assess/programming-assessment/programming-assessment.module';
 import { OrionModule } from 'app/shared/orion/orion.module';
-import { ProgrammingExerciseImportComponent } from 'app/exercises/programming/manage/programming-exercise-import.component';
-import { programmingExerciseRoute } from 'app/exercises/programming/manage/programming-exercise.route';
 import { ProgrammingExerciseUtilsModule } from 'app/exercises/programming/manage/utils/programming-exercise-utils.module';
 import { ArtemisAssessmentSharedModule } from 'app/assessment/assessment-shared.module';
 import { ArtemisProgrammingExerciseInstructionsEditorModule } from 'app/exercises/programming/manage/instructions/instructions-editor/programming-exercise-instructions-editor.module';
@@ -25,13 +23,10 @@ import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown
 import { ArtemisProgrammingExerciseStatusModule } from 'app/exercises/programming/manage/status/programming-exercise-status.module';
 import { ArtemisTeamConfigFormGroupModule } from 'app/exercises/shared/team-config-form-group/team-config-form-group.module';
 
-const ENTITY_STATES = [...programmingExerciseRoute];
-
 @NgModule({
     imports: [
         // Shared modules.
         ArtemisSharedModule,
-        RouterModule.forChild(ENTITY_STATES),
         SortByModule,
         FormDateTimePickerModule,
         ArtemisCategorySelectorModule,
@@ -55,8 +50,6 @@ const ENTITY_STATES = [...programmingExerciseRoute];
         ArtemisAssessmentSharedModule,
         ArtemisTeamConfigFormGroupModule,
     ],
-    declarations: [ProgrammingExerciseImportComponent],
-    entryComponents: [ProgrammingExerciseImportComponent],
     exports: [ArtemisProgrammingExerciseInstructionsEditorModule, ArtemisProgrammingExerciseActionsModule],
 })
 export class ArtemisProgrammingExerciseModule {}
