@@ -63,19 +63,19 @@ export class CodeEditorInstructorOrionContainerComponent extends CodeEditorInstr
     }
 
     selectSolutionParticipation() {
-        this.router.navigateByUrl(`/code-editor/ide/${this.exercise.id}/admin/${this.exercise.solutionParticipation.id}`);
+        this.router.navigate(['..', this.exercise.solutionParticipation.id], { relativeTo: this.route });
     }
 
     selectTemplateParticipation() {
-        this.router.navigateByUrl(`/code-editor/ide/${this.exercise.id}/admin/${this.exercise.templateParticipation.id}`);
+        this.router.navigate(['..', this.exercise.templateParticipation.id], { relativeTo: this.route });
     }
 
     selectAssignmentParticipation() {
-        this.router.navigateByUrl(`/code-editor/ide/${this.exercise.id}/admin/${this.exercise.studentParticipations[0].id}`);
+        this.router.navigate(['..', this.exercise.studentParticipations[0].id], { relativeTo: this.route });
     }
 
     selectTestRepository() {
-        this.router.navigateByUrl(`/code-editor/ide/${this.exercise.id}/admin/test`);
+        this.router.navigate(['..', 'test'], { relativeTo: this.route });
     }
 
     /**
