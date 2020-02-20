@@ -7,9 +7,6 @@ import { map } from 'rxjs/operators';
 
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ProgrammingExerciseService } from './services/programming-exercise.service';
-import { ProgrammingExerciseComponent } from './programming-exercise.component';
-import { ProgrammingExerciseDetailComponent } from './programming-exercise-detail.component';
-import { ProgrammingExerciseUpdateComponent } from './programming-exercise-update.component';
 import { CanDeactivateGuard } from 'app/shared/guard/can-deactivate.guard';
 import { ProgrammingExerciseManageTestCasesComponent } from 'app/exercises/programming/manage/test-cases/programming-exercise-manage-test-cases.component';
 
@@ -27,42 +24,6 @@ export class ProgrammingExerciseResolve implements Resolve<ProgrammingExercise> 
 }
 
 export const programmingExerciseRoute: Routes = [
-    {
-        path: 'course/:courseId/programming-exercise/new',
-        component: ProgrammingExerciseUpdateComponent,
-        resolve: {
-            programmingExercise: ProgrammingExerciseResolve,
-        },
-        data: {
-            authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
-            pageTitle: 'artemisApp.programmingExercise.home.title',
-        },
-        canActivate: [UserRouteAccessService],
-    },
-    {
-        path: 'course/:courseId/programming-exercise/:id/edit',
-        component: ProgrammingExerciseUpdateComponent,
-        resolve: {
-            programmingExercise: ProgrammingExerciseResolve,
-        },
-        data: {
-            authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
-            pageTitle: 'artemisApp.programmingExercise.home.title',
-        },
-        canActivate: [UserRouteAccessService],
-    },
-    {
-        path: 'course/:courseId/programming-exercise/import/:id',
-        component: ProgrammingExerciseUpdateComponent,
-        resolve: {
-            programmingExercise: ProgrammingExerciseResolve,
-        },
-        data: {
-            authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
-            pageTitle: 'artemisApp.programmingExercise.home.importLabel',
-        },
-        canActivate: [UserRouteAccessService],
-    },
     {
         path: 'course/:courseId/programming-exercise/:exerciseId/manage-test-cases',
         component: ProgrammingExerciseManageTestCasesComponent,

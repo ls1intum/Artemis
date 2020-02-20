@@ -14,22 +14,24 @@ import { ArtemisProgrammingAssessmentModule } from 'app/exercises/programming/as
 import { ArtemisResultModule } from 'app/exercises/shared/result/result.module';
 import { ArtemisProgrammingExerciseActionsModule } from 'app/exercises/programming/manage/actions/programming-exercise-actions.module';
 import { ArtemisProgrammingExerciseInstructionsEditorModule } from 'app/exercises/programming/manage/instructions/instructions-editor/programming-exercise-instructions-editor.module';
+import { ArtemisProgrammingExerciseUpdateModule } from 'app/exercises/programming/manage/update/programming-exercise-update.module';
 
 @NgModule({
     imports: [
         ArtemisSharedModule,
-        ArtemisProgrammingExerciseManagementRoutingModule,
+        SortByModule,
         OrionModule,
         FeatureToggleModule,
+        ProgrammingExerciseUtilsModule,
+        ArtemisResultModule,
+        ArtemisAssessmentSharedModule,
+        ArtemisProgrammingExerciseManagementRoutingModule,
         ArtemisProgrammingExerciseTestCaseModule,
         ArtemisProgrammingExerciseStatusModule,
-        ProgrammingExerciseUtilsModule,
-        SortByModule,
-        ArtemisAssessmentSharedModule,
         ArtemisProgrammingAssessmentModule,
-        ArtemisResultModule,
         ArtemisProgrammingExerciseActionsModule,
         ArtemisProgrammingExerciseInstructionsEditorModule,
+        ArtemisProgrammingExerciseUpdateModule,
     ],
     declarations: [ProgrammingExerciseComponent, ProgrammingExerciseDetailComponent],
     exports: [ProgrammingExerciseComponent],

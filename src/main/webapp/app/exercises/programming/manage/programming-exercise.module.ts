@@ -10,11 +10,9 @@ import { ArtemisProgrammingExerciseActionsModule } from 'app/exercises/programmi
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { ArtemisPresentationScoreModule } from 'app/exercises/shared/presentation-score/presentation-score.module';
 import { OwlDateTimeModule } from 'ng-pick-datetime';
-import { ProgrammingExercisePlansAndRepositoriesPreviewComponent } from 'app/exercises/programming/manage/programming-exercise-plans-and-repositories-preview.component';
 import { FeatureToggleModule } from 'app/shared/feature-toggle/feature-toggle.module';
 import { ArtemisProgrammingAssessmentModule } from 'app/exercises/programming/assess/programming-assessment/programming-assessment.module';
 import { OrionModule } from 'app/shared/orion/orion.module';
-import { ProgrammingExerciseUpdateComponent } from 'app/exercises/programming/manage/programming-exercise-update.component';
 import { ProgrammingExerciseImportComponent } from 'app/exercises/programming/manage/programming-exercise-import.component';
 import { programmingExerciseRoute } from 'app/exercises/programming/manage/programming-exercise.route';
 import { ProgrammingExerciseUtilsModule } from 'app/exercises/programming/manage/utils/programming-exercise-utils.module';
@@ -22,8 +20,6 @@ import { ArtemisAssessmentSharedModule } from 'app/assessment/assessment-shared.
 import { ArtemisProgrammingExerciseInstructionsEditorModule } from 'app/exercises/programming/manage/instructions/instructions-editor/programming-exercise-instructions-editor.module';
 import { ArtemisResultModule } from 'app/exercises/shared/result/result.module';
 import { SortByModule } from 'app/shared/pipes/sort-by.module';
-import { ProgrammingExerciseLifecycleComponent } from 'app/exercises/programming/manage/programming-exercise-test-schedule-picker/programming-exercise-lifecycle.component';
-import { ProgrammingExerciseTestScheduleDatePickerComponent } from 'app/exercises/programming/manage/programming-exercise-test-schedule-picker/programming-exercise-test-schedule-date-picker.component';
 import { ArtemisComplaintsModule } from 'app/complaints/complaints.module';
 import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown-editor.module';
 import { ArtemisProgrammingExerciseStatusModule } from 'app/exercises/programming/manage/status/programming-exercise-status.module';
@@ -59,15 +55,8 @@ const ENTITY_STATES = [...programmingExerciseRoute];
         ArtemisAssessmentSharedModule,
         ArtemisTeamConfigFormGroupModule,
     ],
-    declarations: [
-        ProgrammingExerciseUpdateComponent,
-        ProgrammingExerciseImportComponent,
-        ProgrammingExercisePlansAndRepositoriesPreviewComponent,
-        // Form components
-        ProgrammingExerciseLifecycleComponent,
-        ProgrammingExerciseTestScheduleDatePickerComponent,
-    ],
-    entryComponents: [ProgrammingExerciseUpdateComponent, ProgrammingExerciseImportComponent],
+    declarations: [ProgrammingExerciseImportComponent],
+    entryComponents: [ProgrammingExerciseImportComponent],
     exports: [ArtemisProgrammingExerciseInstructionsEditorModule, ArtemisProgrammingExerciseActionsModule],
 })
 export class ArtemisProgrammingExerciseModule {}

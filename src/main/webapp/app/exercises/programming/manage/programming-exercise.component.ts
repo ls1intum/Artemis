@@ -111,7 +111,7 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
         const modalRef = this.modalService.open(ProgrammingExerciseImportComponent, { size: 'lg', backdrop: 'static' });
         modalRef.result.then(
             (result: ProgrammingExercise) => {
-                this.router.navigate(['course', this.courseId, 'programming-exercise', 'import', result.id]);
+                this.router.navigate(['course-management', this.courseId, 'programming-exercises', 'import', result.id]);
             },
             reason => {},
         );

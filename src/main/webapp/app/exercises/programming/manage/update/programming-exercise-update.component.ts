@@ -4,8 +4,8 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService } from 'app/core/alert/alert.service';
 import { Observable, Subject } from 'rxjs';
 import { CourseService } from 'app/course/manage/course.service';
-import { ProgrammingExercise, ProgrammingLanguage } from '../../../entities/programming-exercise.model';
-import { ProgrammingExerciseService } from './services/programming-exercise.service';
+import { ProgrammingExercise, ProgrammingLanguage } from '../../../../entities/programming-exercise.model';
+import { ProgrammingExerciseService } from '../services/programming-exercise.service';
 import { FileService } from 'app/shared/http/file.service';
 import { MAX_SCORE_PATTERN } from 'app/app.constants';
 import { TranslateService } from '@ngx-translate/core';
@@ -20,7 +20,7 @@ import { KatexCommand } from 'app/shared/markdown-editor/commands/katex.command'
 @Component({
     selector: 'jhi-programming-exercise-update',
     templateUrl: './programming-exercise-update.component.html',
-    styleUrls: ['./programming-exercise-form.scss'],
+    styleUrls: ['../programming-exercise-form.scss'],
 })
 export class ProgrammingExerciseUpdateComponent implements OnInit {
     FeatureToggle = FeatureToggle;

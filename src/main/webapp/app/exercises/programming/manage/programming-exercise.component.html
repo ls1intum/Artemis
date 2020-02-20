@@ -39,7 +39,7 @@
             id="jh-create-entity"
             class="btn btn-primary float-right jh-create-entity create-programming-exercise mr-1"
             [jhiFeatureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
-            [routerLink]="['/course', courseId, 'programming-exercise', 'new']"
+            [routerLink]="['/course-management', courseId, 'programming-exercises', 'new']"
         >
             <fa-icon [icon]="'plus'"></fa-icon>
             <span class="hidden-sm-down" jhiTranslate="artemisApp.programmingExercise.home.generateLabel">
@@ -82,10 +82,10 @@
             <tbody>
                 <tr *ngFor="let programmingExercise of programmingExercises | sortBy: predicate:reverse; trackBy: trackId">
                     <td class="d-none d-md-table-cell">
-                        <a [routerLink]="['/course', programmingExercise.course.id, 'programming-exercise', programmingExercise.id, 'view']">{{ programmingExercise.id }}</a>
+                        <a [routerLink]="['/course-management', programmingExercise.course.id, 'programming-exercises', programmingExercise.id]">{{ programmingExercise.id }}</a>
                     </td>
                     <td>
-                        <a [routerLink]="['/course', programmingExercise.course.id, 'programming-exercise', programmingExercise.id, 'view']">{{ programmingExercise.title }}</a>
+                        <a [routerLink]="['/course-management', programmingExercise.course.id, 'programming-exercises', programmingExercise.id]">{{ programmingExercise.title }}</a>
                         <jhi-programming-exercise-test-cases-dirty-warning
                             class="ml-2"
                             [programmingExerciseId]="programmingExercise.id"
