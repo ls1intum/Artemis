@@ -5,7 +5,7 @@ import { ArtemisParticipationModule } from '../exercises/shared/participation/pa
 import { ArtemisTeamModule } from 'app/exercises/shared/team/team.module';
 import { ArtemisModelingExerciseModule } from '../exercises/modeling/manage/modeling-exercise/modeling-exercise.module';
 import { ArtemisTextExerciseModule } from '../exercises/text/manage/text-exercise/text-exercise.module';
-import { ArtemisFileUploadExerciseModule } from '../exercises/file-upload/manage/file-upload-exercise/file-upload-exercise.module';
+import { ArtemisFileUploadExerciseManagementModule } from '../exercises/file-upload/manage/file-upload-exercise-management.module';
 import { ArtemisLectureModule } from 'app/lecture/lecture.module';
 import { ArtemisExerciseHintModule } from 'app/exercises/shared/exercise-hint/exercise-hint.module';
 import { ArtemisNotificationModule } from 'app/overview/notification/notification.module';
@@ -25,7 +25,7 @@ import { ArtemisCourseModule } from 'app/course/manage/course.module';
         ArtemisNotificationModule,
         ArtemisResultModule,
         ArtemisTextExerciseModule,
-        ArtemisFileUploadExerciseModule,
+        ArtemisFileUploadExerciseManagementModule,
         ArtemisLectureModule,
         /* jhipster-needle-add-entity-module - JHipster will add entity modules here */
     ],

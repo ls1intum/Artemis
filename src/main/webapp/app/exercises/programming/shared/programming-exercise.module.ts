@@ -10,7 +10,6 @@ import { SortByModule } from 'app/shared/pipes/sort-by.module';
 import { FeatureToggleModule } from 'app/shared/feature-toggle/feature-toggle.module';
 
 @NgModule({
-    declarations: [ProgrammingExerciseComponent],
     imports: [
         ArtemisSharedModule,
         SortByModule,
@@ -21,6 +20,7 @@ import { FeatureToggleModule } from 'app/shared/feature-toggle/feature-toggle.mo
         ArtemisProgrammingExerciseTestCaseModule,
         ProgrammingExerciseUtilsModule,
     ],
+    declarations: [ProgrammingExerciseComponent],
     exports: [ProgrammingExerciseComponent],
 })
 export class ArtemisProgrammingExerciseModule {}

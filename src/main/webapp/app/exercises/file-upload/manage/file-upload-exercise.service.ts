@@ -4,7 +4,7 @@ import { Observable } from 'rxjs/Observable';
 import { map } from 'rxjs/operators';
 import { SERVER_API_URL } from 'app/app.constants';
 
-import { FileUploadExercise } from '../../../../entities/file-upload-exercise.model';
+import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
 import { createRequestOption } from 'app/shared/util/request-util';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 

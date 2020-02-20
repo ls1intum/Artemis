@@ -6,7 +6,7 @@
         <button
             *ngIf="course && course.isAtLeastInstructor"
             class="btn btn-primary float-right jh-create-entity create-file-upload-exercise"
-            [routerLink]="['/course', course.id, 'file-upload-exercise', 'new']"
+            [routerLink]="['/course-management', course.id, 'file-upload-exercises', 'new']"
         >
             <fa-icon [icon]="'plus'"></fa-icon>
             <span jhiTranslate="artemisApp.fileUploadExercise.home.createLabel">
@@ -39,7 +39,7 @@
             <tbody class="markdown-preview">
                 <tr *ngFor="let fileUploadExercise of fileUploadExercises | sortBy: predicate:reverse; trackBy: trackId">
                     <td>
-                        <a [routerLink]="['/course', fileUploadExercise.course.id, 'file-upload-exercise', fileUploadExercise.id]">{{ fileUploadExercise.id }}</a>
+                        <a [routerLink]="['/course-management', fileUploadExercise.course.id, 'file-upload-exercises', fileUploadExercise.id]">{{ fileUploadExercise.id }}</a>
                     </td>
                     <td>{{ fileUploadExercise.title }}</td>
                     <td [innerHTML]="fileUploadExercise.problemStatement | htmlForMarkdown"></td>
@@ -80,7 +80,7 @@
                             <button
                                 type="submit"
                                 *ngIf="fileUploadExercise.isAtLeastInstructor"
-                                [routerLink]="['/file-upload-exercise', fileUploadExercise.id]"
+                                [routerLink]="['/course-management', fileUploadExercise.course.id, 'file-upload-exercises', fileUploadExercise.id]"
                                 class="btn btn-info btn-sm mr-1"
                             >
                                 <fa-icon [icon]="'eye'"></fa-icon>
@@ -89,7 +89,7 @@
                             <button
                                 type="submit"
                                 *ngIf="fileUploadExercise.isAtLeastInstructor"
-                                [routerLink]="['/file-upload-exercise/' + fileUploadExercise.id + '/edit']"
+                                [routerLink]="['/course-management', fileUploadExercise.course.id, 'file-upload-exercises', fileUploadExercise.id, 'edit']"
                                 replaceUrl="true"
                                 queryParamsHandling="merge"
                                 class="btn btn-primary btn-sm mr-1"

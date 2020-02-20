@@ -3,7 +3,7 @@ import { ReactiveFormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { ArtemisTextExerciseModule } from 'app/exercises/text/manage/text-exercise/text-exercise.module';
 import { ArtemisModelingExerciseModule } from 'app/exercises/modeling/manage/modeling-exercise/modeling-exercise.module';
-import { ArtemisFileUploadExerciseModule } from 'app/exercises/file-upload/manage/file-upload-exercise/file-upload-exercise.module';
+import { ArtemisFileUploadExerciseManagementModule } from 'app/exercises/file-upload/manage/file-upload-exercise-management.module';
 
 import { CourseExerciseCardComponent } from 'app/course/manage/course-exercise-card.component';
 import { FormDateTimePickerModule } from 'app/shared/date-time-picker/date-time-picker.module';
@@ -21,13 +21,14 @@ import { OrionModule } from 'app/shared/orion/orion.module';
 import { ArtemisProgrammingExerciseManagementModule } from 'app/exercises/programming/manage/programming-exercise-management.module';
 import { ArtemisQuizManageModule } from 'app/exercises/quiz/manage/quiz-manage.module';
 import { ArtemisProgrammingExerciseModule } from 'app/exercises/programming/shared/programming-exercise.module';
+import { ArtemisFileUploadExerciseModule } from 'app/exercises/file-upload/shared/file-upload-exercise.module';
 
 const ENTITY_STATES = [...courseRoute];
 
 @NgModule({
     imports: [
         ArtemisSharedModule,
-        ArtemisFileUploadExerciseModule,
+        ArtemisFileUploadExerciseManagementModule,
         ArtemisQuizManageModule,
         ArtemisTextExerciseModule,
         ArtemisModelingExerciseModule,
@@ -41,6 +42,8 @@ const ENTITY_STATES = [...courseRoute];
         ArtemisProgrammingExerciseManagementModule,
         OrionModule,
         ArtemisProgrammingExerciseModule,
+        ArtemisFileUploadExerciseManagementModule,
+        ArtemisFileUploadExerciseModule,
     ],
     declarations: [CourseComponent, CourseDetailComponent, CourseUpdateComponent, CourseExerciseCardComponent, CourseExercisesOverviewComponent],
     entryComponents: [CourseComponent, CourseUpdateComponent, CourseExerciseCardComponent],

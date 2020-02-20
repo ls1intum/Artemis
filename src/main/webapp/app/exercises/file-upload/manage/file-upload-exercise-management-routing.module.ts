@@ -1,16 +1,14 @@
-import { ActivatedRouteSnapshot, Resolve, RouterStateSnapshot, Routes } from '@angular/router';
-
+import { ActivatedRouteSnapshot, Resolve, RouterModule, RouterStateSnapshot, Routes } from '@angular/router';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
-import { FileUploadExerciseComponent } from './file-upload-exercise.component';
+import { FileUploadExerciseComponent } from '../shared/file-upload-exercise.component';
 import { FileUploadExerciseDetailComponent } from './file-upload-exercise-detail.component';
-
 import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
 import { Observable } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
-import { Injectable } from '@angular/core';
+import { Injectable, NgModule } from '@angular/core';
 import { filter, map } from 'rxjs/operators';
-import { FileUploadExerciseService } from 'app/exercises/file-upload/manage/file-upload-exercise/file-upload-exercise.service';
-import { FileUploadExerciseUpdateComponent } from 'app/exercises/file-upload/manage/file-upload-exercise/file-upload-exercise-update.component';
+import { FileUploadExerciseService } from 'app/exercises/file-upload/manage/file-upload-exercise.service';
+import { FileUploadExerciseUpdateComponent } from 'app/exercises/file-upload/manage/file-upload-exercise-update.component';
 import { CourseService } from 'app/course/manage/course.service';
 import { Course } from 'app/entities/course.model';
 
@@ -44,27 +42,9 @@ export class FileUploadExerciseResolve implements Resolve<FileUploadExercise> {
     }
 }
 
-export const fileUploadExerciseRoute: Routes = [
+const routes: Routes = [
     {
-        path: 'file-upload-exercise',
-        component: FileUploadExerciseComponent,
-        data: {
-            authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
-            pageTitle: 'artemisApp.fileUploadExercise.home.title',
-        },
-        canActivate: [UserRouteAccessService],
-    },
-    {
-        path: 'file-upload-exercise/:exerciseId',
-        component: FileUploadExerciseDetailComponent,
-        data: {
-            authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
-            pageTitle: 'artemisApp.fileUploadExercise.home.title',
-        },
-        canActivate: [UserRouteAccessService],
-    },
-    {
-        path: 'course/:courseId/file-upload-exercise/new',
+        path: 'course-management/:courseId/file-upload-exercises/new',
         component: FileUploadExerciseUpdateComponent,
         resolve: {
             fileUploadExercise: FileUploadExerciseResolve,
@@ -76,7 +56,7 @@ export const fileUploadExerciseRoute: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
-        path: 'file-upload-exercise/:exerciseId/edit',
+        path: 'course-management/:courseId/file-upload-exercises/:exerciseId/edit',
         component: FileUploadExerciseUpdateComponent,
         resolve: {
             fileUploadExercise: FileUploadExerciseResolve,
@@ -88,8 +68,8 @@ export const fileUploadExerciseRoute: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
-        path: 'course/:courseId/file-upload-exercise',
-        component: FileUploadExerciseComponent,
+        path: 'course-management/:courseId/file-upload-exercises/:exerciseId',
+        component: FileUploadExerciseDetailComponent,
         data: {
             authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
             pageTitle: 'artemisApp.fileUploadExercise.home.title',
@@ -97,8 +77,8 @@ export const fileUploadExerciseRoute: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
-        path: 'course/:courseId/file-upload-exercise/:exerciseId',
-        component: FileUploadExerciseDetailComponent,
+        path: 'course-management/:courseId/file-upload-exercises',
+        component: FileUploadExerciseComponent,
         data: {
             authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
             pageTitle: 'artemisApp.fileUploadExercise.home.title',
@@ -106,3 +86,9 @@ export const fileUploadExerciseRoute: Routes = [
         canActivate: [UserRouteAccessService],
     },
 ];
+
+@NgModule({
+    imports: [RouterModule.forChild(routes)],
+    exports: [RouterModule],
+})
+export class ArtemisFileUploadExerciseManagementRoutingModule {}

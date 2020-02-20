@@ -4,7 +4,7 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Subscription } from 'rxjs/Subscription';
 import { JhiEventManager } from 'ng-jhipster';
 
-import { FileUploadExercise } from '../../../../entities/file-upload-exercise.model';
+import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
 import { FileUploadExerciseService } from './file-upload-exercise.service';
 import { filter } from 'rxjs/operators';
 import { AlertService } from 'app/core/alert/alert.service';
