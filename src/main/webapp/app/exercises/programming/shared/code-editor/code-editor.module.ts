@@ -39,7 +39,6 @@ const ENTITY_STATES = [...codeEditorRoute];
     declarations: [
         CodeEditorGridComponent,
         CodeEditorRepositoryIsLockedComponent,
-        CodeEditorInstructorContainerComponent,
         CodeEditorFileBrowserComponent,
         CodeEditorFileBrowserDeleteComponent,
         CodeEditorFileBrowserFileComponent,
@@ -51,10 +50,8 @@ const ENTITY_STATES = [...codeEditorRoute];
         CodeEditorStatusComponent,
         CodeEditorActionsComponent,
         CodeEditorResolveConflictModalComponent,
-        CodeEditorInstructorOrionContainerComponent,
     ],
     exports: [
-        CodeEditorInstructorContainerComponent,
         CodeEditorGridComponent,
         CodeEditorRepositoryIsLockedComponent,
         CodeEditorAceComponent,
@@ -63,13 +60,7 @@ const ENTITY_STATES = [...codeEditorRoute];
         CodeEditorInstructionsComponent,
         CodeEditorBuildOutputComponent,
     ],
-    entryComponents: [
-        CodeEditorInstructorOrionContainerComponent,
-        CodeEditorInstructorContainerComponent,
-        CodeEditorFileBrowserDeleteComponent,
-        ExerciseHintStudentDialogComponent,
-        CodeEditorResolveConflictModalComponent,
-    ],
+    entryComponents: [CodeEditorFileBrowserDeleteComponent, ExerciseHintStudentDialogComponent, CodeEditorResolveConflictModalComponent],
     providers: [],
 })
 export class ArtemisCodeEditorModule {}
