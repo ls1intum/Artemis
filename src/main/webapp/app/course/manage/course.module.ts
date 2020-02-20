@@ -1,9 +1,9 @@
 import { NgModule } from '@angular/core';
 import { ReactiveFormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
-import { ArtemisTextExerciseModule } from '../../exercises/text/manage/text-exercise/text-exercise.module';
-import { ArtemisModelingExerciseModule } from '../../exercises/modeling/manage/modeling-exercise/modeling-exercise.module';
-import { ArtemisFileUploadExerciseModule } from '../../exercises/file-upload/manage/file-upload-exercise/file-upload-exercise.module';
+import { ArtemisTextExerciseModule } from 'app/exercises/text/manage/text-exercise/text-exercise.module';
+import { ArtemisModelingExerciseModule } from 'app/exercises/modeling/manage/modeling-exercise/modeling-exercise.module';
+import { ArtemisFileUploadExerciseModule } from 'app/exercises/file-upload/manage/file-upload-exercise/file-upload-exercise.module';
 
 import { CourseExerciseCardComponent } from 'app/course/manage/course-exercise-card.component';
 import { FormDateTimePickerModule } from 'app/shared/date-time-picker/date-time-picker.module';
@@ -20,6 +20,7 @@ import { CourseComponent } from 'app/course/manage/course.component';
 import { OrionModule } from 'app/shared/orion/orion.module';
 import { ArtemisProgrammingExerciseManagementModule } from 'app/exercises/programming/manage/programming-exercise-management.module';
 import { ArtemisQuizManageModule } from 'app/exercises/quiz/manage/quiz-manage.module';
+import { ArtemisProgrammingExerciseModule } from 'app/exercises/programming/shared/programming-exercise.module';
 
 const ENTITY_STATES = [...courseRoute];
 
@@ -39,6 +40,7 @@ const ENTITY_STATES = [...courseRoute];
         MomentModule,
         ArtemisProgrammingExerciseManagementModule,
         OrionModule,
+        ArtemisProgrammingExerciseModule,
     ],
     declarations: [CourseComponent, CourseDetailComponent, CourseUpdateComponent, CourseExerciseCardComponent, CourseExercisesOverviewComponent],
     entryComponents: [CourseComponent, CourseUpdateComponent, CourseExerciseCardComponent],

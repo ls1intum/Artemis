@@ -7,7 +7,7 @@ import { catchError, map as rxMap, switchMap, tap } from 'rxjs/operators';
 import { compose, filter, flatten, map, sortBy, toPairs, values } from 'lodash/fp';
 import { TaskCommand } from 'app/shared/markdown-editor/domainCommands/programming-exercise/task.command';
 import { TestCaseCommand } from 'app/shared/markdown-editor/domainCommands/programming-exercise/testCase.command';
-import { ProgrammingExerciseTestCase } from 'app/exercises/programming/manage/programming-exercise-test-case.model';
+import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise-test-case.model';
 import { TaskHintCommand } from 'app/shared/markdown-editor/domainCommands/programming-exercise/task-hint.command';
 import { ExerciseHint } from 'app/entities/exercise-hint.model';
 import { ProblemStatementAnalysis } from 'app/exercises/programming/shared/instructions/instructions-editor/analysis/programming-exercise-instruction-analysis.model';

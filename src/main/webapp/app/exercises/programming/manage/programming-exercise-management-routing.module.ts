@@ -1,5 +1,4 @@
 import { ActivatedRouteSnapshot, Resolve, RouterModule, RouterStateSnapshot, Routes } from '@angular/router';
-import { ProgrammingExerciseComponent } from 'app/exercises/programming/manage/programming-exercise.component';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { Injectable, NgModule } from '@angular/core';
 import { ProgrammingExerciseDetailComponent } from 'app/exercises/programming/manage/programming-exercise-detail.component';
@@ -26,15 +25,6 @@ export class ProgrammingExerciseResolve implements Resolve<ProgrammingExercise> 
 }
 
 const routes: Routes = [
-    {
-        path: 'course-management/:courseId/programming-exercises    ',
-        component: ProgrammingExerciseComponent,
-        data: {
-            authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
-            pageTitle: 'artemisApp.programmingExercise.home.title',
-        },
-        canActivate: [UserRouteAccessService],
-    },
     {
         path: 'course-management/:courseId/programming-exercises/new',
         component: ProgrammingExerciseUpdateComponent,
