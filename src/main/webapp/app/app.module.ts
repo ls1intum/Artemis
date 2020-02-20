@@ -9,7 +9,7 @@ import { ArtemisSystemNotificationModule } from 'app/core/system-notification/sy
 import { ArtemisExampleModelingSolutionModule } from 'app/exercises/modeling/manage/example-modeling-solution/example-modeling-solution.module';
 import { ArtemisCourseScoresModule } from 'app/course/course-scores.module';
 import { NavbarComponent } from 'app/shared/layouts/navbar/navbar.component';
-import { ArtemisFileUploadSubmissionModule } from 'app/exercises/file-upload/participate/file-upload-submission/file-upload-submission.module';
+import { ArtemisFileUploadParticipationModule } from 'app/exercises/file-upload/participate/file-upload-submission.module';
 import { ArtemisNotificationModule } from 'app/overview/notification/notification.module';
 import { NotificationContainerComponent } from 'app/shared/layouts/notification-container/notification-container.component';
 import { PageRibbonComponent } from 'app/shared/layouts/profiles/page-ribbon.component';
@@ -74,7 +74,7 @@ import { ArtemisQuizManageModule } from 'app/exercises/quiz/manage/quiz-manage.m
         ArtemisModelingStatisticsModule,
         ArtemisTextModule,
         ArtemisTextAssessmentModule,
-        ArtemisFileUploadSubmissionModule,
+        ArtemisFileUploadParticipationModule,
         ArtemisFileUploadAssessmentModule,
         ArtemisInstructorCourseStatsDashboardModule,
         ArtemisInstructorExerciseStatsDashboardModule,

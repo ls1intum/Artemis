@@ -8,7 +8,7 @@ import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service'
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
 import { FileUploadSubmission } from 'app/entities/file-upload-submission.model';
-import { FileUploadSubmissionService } from 'app/exercises/file-upload/participate/file-upload-submission/file-upload-submission.service';
+import { FileUploadSubmissionService } from 'app/exercises/file-upload/participate/file-upload-submission.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { FileUploadAssessmentsService } from 'app/exercises/file-upload/assess/file-upload-assessment/file-upload-assessment.service';
 import { Submission } from 'app/entities/submission.model';

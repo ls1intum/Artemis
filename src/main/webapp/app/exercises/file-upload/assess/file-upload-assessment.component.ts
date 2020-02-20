@@ -16,7 +16,7 @@ import { filter, finalize } from 'rxjs/operators';
 import { AccountService } from 'app/core/auth/account.service';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
 import { ComplaintResponse } from 'app/entities/complaint-response.model';
-import { FileUploadSubmissionService } from 'app/exercises/file-upload/participate/file-upload-submission/file-upload-submission.service';
+import { FileUploadSubmissionService } from 'app/exercises/file-upload/participate/file-upload-submission.service';
 import { FileService } from 'app/shared/http/file.service';
 import { Complaint, ComplaintType } from 'app/entities/complaint.model';
 import { Feedback } from 'app/entities/feedback.model';

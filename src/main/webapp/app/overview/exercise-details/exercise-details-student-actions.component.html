@@ -336,7 +336,7 @@
             [smallButton]="smallButtons"
             [hideLabelMobile]="false"
             *ngIf="exercise.studentParticipations && exercise.studentParticipations.length > 0 && exercise.studentParticipations[0].initializationState === 'INITIALIZED'"
-            routerLink="/file-upload-submission/{{ exercise.studentParticipations[0].id }}"
+            [routerLink]="['/courses', courseId, 'file-upload-exercises', exercise.id, 'participate', exercise.studentParticipations[0].id]"
         ></button>
     </div>
     <!-- ACTIONS END-->
@@ -356,7 +356,7 @@
                 exercise.studentParticipations[0].initializationState === 'FINISHED' &&
                 (!exercise.studentParticipations[0].results || exercise.studentParticipations[0].results.length === 0 || !showResult)
             "
-            routerLink="/file-upload-submission/{{ exercise.studentParticipations[0].id }}"
+            [routerLink]="['/courses', courseId, 'file-upload-exercises', exercise.id, 'participate', exercise.studentParticipations[0].id]"
         ></button>
         <button
             jhi-exercise-action-button
@@ -373,7 +373,7 @@
                 exercise.studentParticipations[0].results.length > 0 &&
                 showResult
             "
-            routerLink="/file-upload-submission/{{ exercise.studentParticipations[0].id }}"
+            [routerLink]="['/courses', courseId, 'file-upload-exercises', exercise.id, 'participate', exercise.studentParticipations[0].id]"
         ></button>
     </div>
     <!-- INFORMATION END -->
