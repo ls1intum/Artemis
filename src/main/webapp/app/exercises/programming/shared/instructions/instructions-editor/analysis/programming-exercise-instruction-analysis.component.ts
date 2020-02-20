@@ -2,8 +2,8 @@ import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, S
 import { Subject, Subscription } from 'rxjs';
 import { debounceTime, map as rxMap, tap } from 'rxjs/operators';
 import { ExerciseHint } from 'app/entities/exercise-hint.model';
-import { ProgrammingExerciseInstructionAnalysisService } from 'app/exercises/programming/manage/instructions/instructions-editor/analysis/programming-exercise-instruction-analysis.service';
-import { ProblemStatementAnalysis } from 'app/exercises/programming/manage/instructions/instructions-editor/analysis/programming-exercise-instruction-analysis.model';
+import { ProgrammingExerciseInstructionAnalysisService } from 'app/exercises/programming/shared/instructions/instructions-editor/analysis/programming-exercise-instruction-analysis.service';
+import { ProblemStatementAnalysis } from 'app/exercises/programming/shared/instructions/instructions-editor/analysis/programming-exercise-instruction-analysis.model';
 
 @Component({
     selector: 'jhi-programming-exercise-instruction-instructor-analysis',

@@ -9,7 +9,7 @@ import { ProgrammingExercisePlansAndRepositoriesPreviewComponent } from 'app/exe
 import { ArtemisTeamConfigFormGroupModule } from 'app/exercises/shared/team-config-form-group/team-config-form-group.module';
 import { ArtemisDifficultyPickerModule } from 'app/exercises/shared/difficulty-picker/difficulty-picker.module';
 import { ArtemisPresentationScoreModule } from 'app/exercises/shared/presentation-score/presentation-score.module';
-import { ArtemisProgrammingExerciseInstructionsEditorModule } from 'app/exercises/programming/manage/instructions/instructions-editor/programming-exercise-instructions-editor.module';
+import { ArtemisProgrammingExerciseInstructionsEditorModule } from 'app/exercises/programming/shared/instructions/instructions-editor/programming-exercise-instructions-editor.module';
 import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown-editor.module';
 import { ArtemisCategorySelectorModule } from 'app/shared/category-selector/category-selector.module';
 

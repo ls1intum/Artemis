@@ -3,7 +3,6 @@ import { NgModule } from '@angular/core';
 import { ArtemisExerciseModule } from '../exercises/shared/exercise/exercise.module';
 import { ArtemisParticipationModule } from '../exercises/shared/participation/participation.module';
 import { ArtemisTeamModule } from 'app/exercises/shared/team/team.module';
-import { ArtemisProgrammingExerciseModule } from '../exercises/programming/manage/programming-exercise.module';
 import { ArtemisModelingExerciseModule } from '../exercises/modeling/manage/modeling-exercise/modeling-exercise.module';
 import { ArtemisTextExerciseModule } from '../exercises/text/manage/text-exercise/text-exercise.module';
 import { ArtemisFileUploadExerciseModule } from '../exercises/file-upload/manage/file-upload-exercise/file-upload-exercise.module';
@@ -21,7 +20,6 @@ import { ArtemisCourseModule } from 'app/course/manage/course.module';
         ArtemisExerciseModule,
         ArtemisParticipationModule,
         ArtemisTeamModule,
-        ArtemisProgrammingExerciseModule,
         ArtemisExerciseHintModule,
         ArtemisModelingExerciseModule,
         ArtemisNotificationModule,

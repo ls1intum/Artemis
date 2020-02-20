@@ -7,7 +7,7 @@ import {
     AnalysisItem,
     ProblemStatementAnalysis,
     ProblemStatementIssue,
-} from 'app/exercises/programming/manage/instructions/instructions-editor/analysis/programming-exercise-instruction-analysis.model';
+} from 'app/exercises/programming/shared/instructions/instructions-editor/analysis/programming-exercise-instruction-analysis.model';
 
 /**
  * Analyzes the problem statement of a programming-exercise and provides information support concerning potential issues.

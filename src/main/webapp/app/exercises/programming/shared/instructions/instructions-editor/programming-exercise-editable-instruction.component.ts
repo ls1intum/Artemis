@@ -10,7 +10,7 @@ import { TestCaseCommand } from 'app/shared/markdown-editor/domainCommands/progr
 import { ProgrammingExerciseTestCase } from 'app/exercises/programming/manage/programming-exercise-test-case.model';
 import { TaskHintCommand } from 'app/shared/markdown-editor/domainCommands/programming-exercise/task-hint.command';
 import { ExerciseHint } from 'app/entities/exercise-hint.model';
-import { ProblemStatementAnalysis } from 'app/exercises/programming/manage/instructions/instructions-editor/analysis/programming-exercise-instruction-analysis.model';
+import { ProblemStatementAnalysis } from 'app/exercises/programming/shared/instructions/instructions-editor/analysis/programming-exercise-instruction-analysis.model';
 import { Participation } from 'app/entities/participation/participation.model';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';

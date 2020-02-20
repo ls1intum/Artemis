@@ -4,7 +4,6 @@ import { ChartsModule } from 'ng2-charts';
 import { ClipboardModule } from 'ngx-clipboard';
 import { MomentModule } from 'ngx-moment';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
-import { ArtemisProgrammingExerciseModule } from 'app/exercises/programming/manage/programming-exercise.module';
 import { ArtemisSidePanelModule } from 'app/shared/side-panel/side-panel.module';
 import { CourseLectureRowComponent } from 'app/overview/course-lectures/course-lecture-row.component';
 import { ArtemisCourseRegistrationSelector } from 'app/course/course-registration-selector/course-registration-selector.module';
@@ -28,6 +27,7 @@ import { ArtemisComplaintsModule } from 'app/complaints/complaints.module';
 import { CourseLecturesComponent } from 'app/overview/course-lectures/course-lectures.component';
 import { ExerciseDetailsStudentActionsComponent } from 'app/overview/exercise-details/exercise-details-student-actions.component';
 import { CourseExerciseRowComponent } from 'app/overview/course-exercises/course-exercise-row.component';
+import { ArtemisProgrammingExerciseInstructionsRenderModule } from 'app/exercises/programming/shared/instructions/instructions-render/programming-exercise-instructions-render.module';
 
 const ENTITY_STATES = [...OVERVIEW_ROUTES];
 
@@ -38,7 +38,6 @@ const ENTITY_STATES = [...OVERVIEW_ROUTES];
         ClipboardModule,
         MomentModule,
         ArtemisResultModule,
-        ArtemisProgrammingExerciseModule,
         ArtemisStudentQuestionsModule,
         ArtemisSidePanelModule,
         RouterModule.forChild(ENTITY_STATES),
@@ -48,6 +47,7 @@ const ENTITY_STATES = [...OVERVIEW_ROUTES];
         ArtemisComplaintsModule,
         FeatureToggleModule,
         ProgrammingExerciseUtilsModule,
+        ArtemisProgrammingExerciseInstructionsRenderModule,
     ],
     declarations: [
         OverviewComponent,

@@ -8,9 +8,9 @@ import { ProgrammingExercise } from '../../../../../entities/programming-exercis
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import { ArtemisMarkdown } from 'app/shared/markdown.service';
 import { ProgrammingExerciseTaskExtensionWrapper } from './extensions/programming-exercise-task.extension';
-import { ProgrammingExercisePlantUmlExtensionWrapper } from 'app/exercises/programming/manage/instructions/instructions-render/extensions/programming-exercise-plant-uml.extension';
-import { ProgrammingExerciseInstructionService } from 'app/exercises/programming/manage/instructions/instructions-render/service/programming-exercise-instruction.service';
-import { TaskArray } from 'app/exercises/programming/manage/instructions/instructions-render/task/programming-exercise-task.model';
+import { ProgrammingExercisePlantUmlExtensionWrapper } from 'app/exercises/programming/shared/instructions/instructions-render/extensions/programming-exercise-plant-uml.extension';
+import { ProgrammingExerciseInstructionService } from 'app/exercises/programming/shared/instructions/instructions-render/service/programming-exercise-instruction.service';
+import { TaskArray } from 'app/exercises/programming/shared/instructions/instructions-render/task/programming-exercise-task.model';
 import { ExerciseHint } from 'app/entities/exercise-hint.model';
 import { Participation } from 'app/entities/participation/participation.model';
 import { Feedback } from 'app/entities/feedback.model';

@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Result } from 'app/entities/result.model';
 import { isLegacyResult } from 'app/exercises/programming/manage/utils/programming-exercise.utils';
+import { ArtemisProgrammingExerciseInstructionsRenderModule } from 'app/exercises/programming/shared/instructions/instructions-render/programming-exercise-instructions-render.module';
 
 export enum TestCaseState {
     NOT_EXECUTED = 'NOT_EXECUTED',
@@ -18,7 +19,7 @@ export type TaskResult = {
     };
 };
 
-@Injectable()
+@Injectable({ providedIn: 'root' })
 export class ProgrammingExerciseInstructionService {
     /**
      * @function testStatusForTask

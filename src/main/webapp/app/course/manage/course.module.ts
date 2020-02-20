@@ -4,7 +4,6 @@ import { RouterModule } from '@angular/router';
 import { ArtemisTextExerciseModule } from '../../exercises/text/manage/text-exercise/text-exercise.module';
 import { ArtemisModelingExerciseModule } from '../../exercises/modeling/manage/modeling-exercise/modeling-exercise.module';
 import { ArtemisFileUploadExerciseModule } from '../../exercises/file-upload/manage/file-upload-exercise/file-upload-exercise.module';
-import { ArtemisProgrammingExerciseModule } from '../../exercises/programming/manage/programming-exercise.module';
 
 import { CourseExerciseCardComponent } from 'app/course/manage/course-exercise-card.component';
 import { FormDateTimePickerModule } from 'app/shared/date-time-picker/date-time-picker.module';
@@ -27,7 +26,6 @@ const ENTITY_STATES = [...courseRoute];
 @NgModule({
     imports: [
         ArtemisSharedModule,
-        ArtemisProgrammingExerciseModule,
         ArtemisFileUploadExerciseModule,
         ArtemisQuizManageModule,
         ArtemisTextExerciseModule,

@@ -15,7 +15,7 @@ import { CodeEditorInstructionsComponent } from 'app/exercises/programming/share
 import { CodeEditorResolveConflictModalComponent } from 'app/exercises/programming/shared/code-editor/actions/code-editor-resolve-conflict-modal.component';
 import { CodeEditorStudentContainerComponent } from 'app/exercises/programming/shared/code-editor/code-editor-student-container.component';
 import { ExerciseHintStudentDialogComponent } from 'app/exercises/shared/exercise-hint/exercise-hint-student-dialog.component';
-import { ArtemisProgrammingExerciseInstructionsEditorModule } from 'app/exercises/programming/manage/instructions/instructions-editor/programming-exercise-instructions-editor.module';
+import { ArtemisProgrammingExerciseInstructionsEditorModule } from 'app/exercises/programming/shared/instructions/instructions-editor/programming-exercise-instructions-editor.module';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { CodeEditorRepositoryIsLockedComponent } from 'app/exercises/programming/shared/code-editor/layout/code-editor-repository-is-locked.component';
 import { ArtemisProgrammingExerciseStatusModule } from 'app/exercises/programming/manage/status/programming-exercise-status.module';

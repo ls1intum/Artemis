@@ -4,7 +4,7 @@ import { ExerciseHint } from 'app/entities/exercise-hint.model';
 import {
     ProgrammingExerciseInstructionService,
     TestCaseState,
-} from 'app/exercises/programming/manage/instructions/instructions-render/service/programming-exercise-instruction.service';
+} from 'app/exercises/programming/shared/instructions/instructions-render/service/programming-exercise-instruction.service';
 import { ExerciseHintStudentDialogComponent } from 'app/exercises/shared/exercise-hint/exercise-hint-student-dialog.component';
 import { ResultDetailComponent } from 'app/shared/result/result-detail.component';
 import { ExerciseType } from 'app/entities/exercise.model';
