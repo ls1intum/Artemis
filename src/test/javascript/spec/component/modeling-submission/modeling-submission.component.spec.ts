@@ -3,8 +3,8 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
 
 import { ArtemisTestModule } from '../../test.module';
-import { ModelingSubmissionComponent } from 'app/exercises/modeling/participate/modeling-submission/modeling-submission.component';
-import { ModelingSubmissionService } from 'app/exercises/modeling/participate/modeling-submission/modeling-submission.service';
+import { ModelingSubmissionComponent } from 'app/exercises/modeling/participate/modeling-submission.component';
+import { ModelingSubmissionService } from 'app/exercises/modeling/participate/modeling-submission.service';
 import { ModelingSubmission } from 'app/entities/modeling-submission.model';
 import { MockSyncStorage } from '../../mocks/mock-sync.storage';
 import { MockParticipationWebsocketService } from '../../mocks/mock-participation-websocket.service';
@@ -13,7 +13,7 @@ import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { CookieService } from 'ngx-cookie-service';
 import { TranslateModule } from '@ngx-translate/core';
 import { RouterTestingModule } from '@angular/router/testing';
-import { modelingSubmissionRoute } from 'app/exercises/modeling/participate/modeling-submission/modeling-submission.route';
+import { modelingSubmissionRoute } from 'app/exercises/modeling/participate/modeling-submission.route';
 import { ActivatedRoute } from '@angular/router';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import { DebugElement } from '@angular/core';
@@ -36,7 +36,7 @@ import { ArtemisComplaintsModule } from 'app/complaints/complaints.module';
 import { ComplaintService } from 'app/complaints/complaint.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { Result } from 'app/entities/result.model';
-import { ModelingAssessmentModule } from 'app/exercises/modeling/assess/modeling-assessment/modeling-assessment.module';
+import { ModelingAssessmentModule } from 'app/exercises/modeling/assess/modeling-assessment.module';
 
 chai.use(sinonChai);
 const expect = chai.expect;

@@ -7,7 +7,7 @@ import { FileUploadAssessmentDashboardComponent } from 'app/exercises/file-uploa
 import { ArtemisResultModule } from 'app/exercises/shared/result/result.module';
 import { ArtemisTextAssessmentModule } from 'app/exercises/text/assess/text-assessment/text-assessment.module';
 import { SortByModule } from 'app/shared/pipes/sort-by.module';
-import { ModelingAssessmentModule } from 'app/exercises/modeling/assess/modeling-assessment/modeling-assessment.module';
+import { ModelingAssessmentModule } from 'app/exercises/modeling/assess/modeling-assessment.module';
 
 @NgModule({
     imports: [

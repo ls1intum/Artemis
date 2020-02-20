@@ -15,7 +15,7 @@ import { UMLModel } from '@ls1intum/apollon';
 import { ComplaintService } from 'app/complaints/complaint.service';
 import { Complaint } from 'app/entities/complaint.model';
 import { Submission } from 'app/entities/submission.model';
-import { ModelingSubmissionService } from 'app/exercises/modeling/participate/modeling-submission/modeling-submission.service';
+import { ModelingSubmissionService } from 'app/exercises/modeling/participate/modeling-submission.service';
 import { Observable, of } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { StatsForDashboard } from 'app/course/instructor-course-dashboard/stats-for-dashboard.model';

@@ -9,7 +9,7 @@ import { MomentModule } from 'ngx-moment';
 import { ArtemisResultModule } from 'app/exercises/shared/result/result.module';
 import { ArtemisComplaintsModule } from 'app/complaints/complaints.module';
 import { ArtemisModelingEditorModule } from 'app/exercises/modeling/shared/modeling-editor/modeling-editor.module';
-import { ModelingAssessmentModule } from 'app/exercises/modeling/assess/modeling-assessment/modeling-assessment.module';
+import { ModelingAssessmentModule } from 'app/exercises/modeling/assess/modeling-assessment.module';
 
 const ENTITY_STATES = [...modelingSubmissionRoute];
 

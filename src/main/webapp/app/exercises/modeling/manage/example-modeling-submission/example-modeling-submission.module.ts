@@ -11,7 +11,7 @@ import { JhiMainComponent } from 'app/shared/layouts/main/main.component';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { HomeComponent } from 'app/home/home.component';
 import { ArtemisResultModule } from 'app/exercises/shared/result/result.module';
-import { ModelingAssessmentModule } from 'app/exercises/modeling/assess/modeling-assessment/modeling-assessment.module';
+import { ModelingAssessmentModule } from 'app/exercises/modeling/assess/modeling-assessment.module';
 import { CourseComponent } from 'app/course/manage/course.component';
 
 const ENTITY_STATES = [...exampleModelingSubmissionRoute];

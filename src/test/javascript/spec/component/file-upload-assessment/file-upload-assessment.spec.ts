@@ -33,7 +33,7 @@ import { SubmissionExerciseType, SubmissionType } from 'app/entities/submission.
 import { ExerciseType } from 'app/entities/exercise.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { Result } from 'app/entities/result.model';
-import { ModelingAssessmentModule } from 'app/exercises/modeling/assess/modeling-assessment/modeling-assessment.module';
+import { ModelingAssessmentModule } from 'app/exercises/modeling/assess/modeling-assessment.module';
 import { routes } from 'app/exercises/file-upload/assess/file-upload-assessment.route';
 import { Course } from 'app/entities/course.model';
 

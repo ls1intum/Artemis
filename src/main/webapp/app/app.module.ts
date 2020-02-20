@@ -37,7 +37,7 @@ import { ArtemisTutorExerciseDashboardModule } from 'app/exercises/shared/tutor-
 import { ActiveMenuDirective } from 'app/shared/layouts/navbar/active-menu.directive';
 import { ErrorComponent } from 'app/shared/layouts/error/error.component';
 import { ArtemisCoreModule } from 'app/core/core.module';
-import { ArtemisModelingSubmissionModule } from 'app/exercises/modeling/participate/modeling-submission/modeling-submission.module';
+import { ArtemisModelingSubmissionModule } from 'app/exercises/modeling/participate/modeling-submission.module';
 import { GuidedTourModule } from 'app/guided-tour/guided-tour.module';
 import { ArtemisAccountModule } from 'app/account/account.module';
 import { ArtemisInstructorCourseStatsDashboardModule } from 'app/course/instructor-course-dashboard/instructor-course-dashboard.module';

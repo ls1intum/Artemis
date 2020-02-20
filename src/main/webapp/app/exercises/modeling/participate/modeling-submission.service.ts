@@ -3,7 +3,7 @@ import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs/Observable';
 import { SERVER_API_URL } from 'app/app.constants';
 
-import { ModelingSubmission } from '../../../../entities/modeling-submission.model';
+import { ModelingSubmission } from '../../../entities/modeling-submission.model';
 import { createRequestOption } from 'app/shared/util/request-util';
 import { stringifyCircular } from 'app/shared/util/utils';
 

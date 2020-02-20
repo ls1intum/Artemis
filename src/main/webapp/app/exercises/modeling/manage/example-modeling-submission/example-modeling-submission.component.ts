@@ -12,11 +12,11 @@ import { ModelingEditorComponent } from 'app/exercises/modeling/shared/modeling-
 import { ExampleSubmission } from 'app/entities/example-submission.model';
 import { Feedback } from 'app/entities/feedback.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
-import { ModelingAssessmentService } from 'app/exercises/modeling/assess/modeling-assessment/modeling-assessment.service';
+import { ModelingAssessmentService } from 'app/exercises/modeling/assess/modeling-assessment.service';
 import { ModelingSubmission } from 'app/entities/modeling-submission.model';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { TutorParticipation } from 'app/entities/participation/tutor-participation.model';
-import { ModelingAssessmentComponent } from 'app/exercises/modeling/assess/modeling-assessment/modeling-assessment.component';
+import { ModelingAssessmentComponent } from 'app/exercises/modeling/assess/modeling-assessment.component';
 
 @Component({
     selector: 'jhi-example-modeling-submission',

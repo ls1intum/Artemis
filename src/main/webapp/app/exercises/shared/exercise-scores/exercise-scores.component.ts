@@ -19,7 +19,7 @@ import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { Result } from 'app/entities/result.model';
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
-import { ModelingAssessmentService } from 'app/exercises/modeling/assess/modeling-assessment/modeling-assessment.service';
+import { ModelingAssessmentService } from 'app/exercises/modeling/assess/modeling-assessment.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';

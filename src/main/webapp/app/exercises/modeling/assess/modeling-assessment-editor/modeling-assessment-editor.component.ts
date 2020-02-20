@@ -17,10 +17,10 @@ import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { ModelingExerciseService } from 'app/exercises/modeling/manage/modeling-exercise/modeling-exercise.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { Result } from 'app/entities/result.model';
-import { ModelingSubmissionService } from 'app/exercises/modeling/participate/modeling-submission/modeling-submission.service';
+import { ModelingSubmissionService } from 'app/exercises/modeling/participate/modeling-submission.service';
 import { Feedback, FeedbackHighlightColor, FeedbackType } from 'app/entities/feedback.model';
 import { Complaint, ComplaintType } from 'app/entities/complaint.model';
-import { ModelingAssessmentService } from 'app/exercises/modeling/assess/modeling-assessment/modeling-assessment.service';
+import { ModelingAssessmentService } from 'app/exercises/modeling/assess/modeling-assessment.service';
 import { Conflict, ConflictingResult } from 'app/exercises/modeling/assess/modeling-assessment-editor/conflict.model';
 
 @Component({

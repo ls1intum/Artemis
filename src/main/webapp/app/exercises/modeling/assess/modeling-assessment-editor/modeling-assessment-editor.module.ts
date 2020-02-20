@@ -6,7 +6,7 @@ import { AssessmentInstructionsModule } from 'app/assessment/assessment-instruct
 import { ArtemisAssessmentSharedModule } from 'app/assessment/assessment-shared.module';
 import { ArtemisResultModule } from 'app/exercises/shared/result/result.module';
 import { modelingAssessmentRoutes } from 'app/exercises/modeling/assess/modeling-assessment-editor/modeling-assessment-editor.route';
-import { ModelingAssessmentModule } from 'app/exercises/modeling/assess/modeling-assessment/modeling-assessment.module';
+import { ModelingAssessmentModule } from 'app/exercises/modeling/assess/modeling-assessment.module';
 import { ModelingAssessmentDashboardComponent } from 'app/exercises/modeling/assess/modeling-assessment-editor/modeling-assessment-dashboard/modeling-assessment-dashboard.component';
 import { ModelingAssessmentEditorComponent } from 'app/exercises/modeling/assess/modeling-assessment-editor/modeling-assessment-editor.component';
 import { ModelingAssessmentConflictComponent } from 'app/exercises/modeling/assess/modeling-assessment-editor/modeling-assessment-conflict/modeling-assessment-conflict.component';
