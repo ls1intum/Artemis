@@ -67,7 +67,15 @@
                                 (submission.result && submission.result.assessor && submission.result.assessor.id === userId) ||
                                 canOverrideAssessments
                             "
-                            routerLink="/modeling-exercise/{{ modelingExercise.id }}/submissions/{{ submission.id }}/assessment"
+                            [routerLink]="[
+                                '/course-management',
+                                modelingExercise.course?.id,
+                                'modeling-exercises',
+                                modelingExercise.id,
+                                'submissions',
+                                submission.id,
+                                'assessment'
+                            ]"
                             [queryParams]="{ optimal: false, hideBackButton: true }"
                             class="btn btn-outline-success btn-sm"
                         >
@@ -155,7 +163,15 @@
                         <span *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']">
                             <button
                                 *ngIf="modelingExercise.type === MODELING && submission && !submission.result"
-                                routerLink="/modeling-exercise/{{ modelingExercise.id }}/submissions/{{ submission.id }}/assessment"
+                                [routerLink]="[
+                                    '/course-management',
+                                    modelingExercise.course?.id,
+                                    'modeling-exercises',
+                                    modelingExercise.id,
+                                    'submissions',
+                                    submission.id,
+                                    'assessment'
+                                ]"
                                 [disabled]="busy"
                                 [queryParams]="{ optimal: false, hideBackButton: true }"
                                 class="btn btn-outline-secondary btn-sm mb-1"
@@ -165,7 +181,15 @@
                         </span>
                         <button
                             *ngIf="modelingExercise.type === MODELING && submission && submission.result"
-                            routerLink="/modeling-exercise/{{ modelingExercise.id }}/submissions/{{ submission.id }}/assessment"
+                            [routerLink]="[
+                                '/course-management',
+                                modelingExercise.course?.id,
+                                'modeling-exercises',
+                                modelingExercise.id,
+                                'submissions',
+                                submission.id,
+                                'assessment'
+                            ]"
                             [disabled]="busy"
                             [queryParams]="{ optimal: false, hideBackButton: true }"
                             class="btn btn-outline-secondary btn-sm mb-1"

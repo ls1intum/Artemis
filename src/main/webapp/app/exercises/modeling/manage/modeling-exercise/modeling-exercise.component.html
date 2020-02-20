@@ -6,7 +6,7 @@
             id="modeling-exercise-create-button"
             *ngIf="course && course.isAtLeastInstructor"
             class="btn btn-primary float-right jh-create-entity create-modeling-exercise"
-            [routerLink]="['modeling-exercise', 'new']"
+            [routerLink]="['/course-management', course.id, 'modeling-exercises', 'new']"
         >
             <fa-icon [icon]="'plus'"></fa-icon>
             <span jhiTranslate="artemisApp.modelingExercise.home.createLabel">
@@ -36,7 +36,7 @@
             <tbody>
                 <tr *ngFor="let modelingExercise of modelingExercises | sortBy: predicate:reverse; trackBy: trackId">
                     <td>
-                        <a [routerLink]="['/course', modelingExercise.course.id, 'modeling-exercise', modelingExercise.id]">{{ modelingExercise.id }}</a>
+                        <a [routerLink]="['/course-management', modelingExercise.course.id, 'modeling-exercises', modelingExercise.id]">{{ modelingExercise.id }}</a>
                     </td>
                     <td>{{ modelingExercise.title }}</td>
                     <td>{{ modelingExercise.releaseDate | date: 'medium' }}</td>
@@ -76,7 +76,7 @@
                             <button
                                 type="submit"
                                 *ngIf="modelingExercise.isAtLeastInstructor"
-                                [routerLink]="['/modeling-exercise', modelingExercise.id]"
+                                [routerLink]="['/course-management', modelingExercise.course.id, 'modeling-exercises', modelingExercise.id]"
                                 class="btn btn-info btn-sm mr-1"
                             >
                                 <fa-icon [icon]="'eye'"></fa-icon>
@@ -85,7 +85,7 @@
                             <button
                                 type="submit"
                                 *ngIf="modelingExercise.isAtLeastInstructor"
-                                [routerLink]="['/modeling-exercise/' + modelingExercise.id + '/edit']"
+                                [routerLink]="['/course-management', modelingExercise.course.id, 'modeling-exercises', modelingExercise.id, 'edit']"
                                 replaceUrl="true"
                                 queryParamsHandling="merge"
                                 class="btn btn-primary btn-sm mr-1"

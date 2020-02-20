@@ -226,7 +226,15 @@ export class ModelingAssessmentDashboardComponent implements OnInit, OnDestroy {
     private navigateToNextRandomOptimalSubmission() {
         const randomInt = Math.floor(Math.random() * this.nextOptimalSubmissionIds.length);
         this.router.onSameUrlNavigation = 'reload';
-        this.router.navigate(['modeling-exercise', this.modelingExercise.id, 'submissions', this.nextOptimalSubmissionIds[randomInt], 'assessment']);
+        this.router.navigate([
+            '/course-management',
+            this.course.id,
+            'modeling-exercises',
+            this.modelingExercise.id,
+            'submissions',
+            this.nextOptimalSubmissionIds[randomInt],
+            'assessment',
+        ]);
     }
 
     /**

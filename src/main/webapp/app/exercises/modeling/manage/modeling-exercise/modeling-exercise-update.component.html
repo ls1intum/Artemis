@@ -112,7 +112,7 @@
             <ul>
                 <li *ngIf="modelingExercise.id && modelingExercise.sampleSolutionModel">
                     <button
-                        routerLink="/modeling-exercise/{{ modelingExercise.id }}/example-solution"
+                        [routerLink]="['/course-management', modelingExercise.course?.id, 'modeling-exercises', modelingExercise.id, 'example-solution']"
                         class="btn btn-link"
                         type="button"
                         jhiTranslate="artemisApp.modelingExercise.exampleSolution"
@@ -124,7 +124,7 @@
             <button
                 *ngIf="modelingExercise.id && !modelingExercise.sampleSolutionModel"
                 class="btn btn-primary"
-                routerLink="/modeling-exercise/{{ modelingExercise.id }}/example-solution"
+                [routerLink]="['/course-management', modelingExercise.course?.id, 'modeling-exercises', modelingExercise.id, 'example-solution']"
                 jhiTranslate="artemisApp.modelingExercise.createExampleSolution"
             >
                 Create example solution
@@ -150,7 +150,7 @@
             <ul *ngIf="modelingExercise.id">
                 <li *ngFor="let exampleSubmission of modelingExercise.exampleSubmissions; let i = index">
                     <button
-                        routerLink="/modeling-exercise/{{ modelingExercise.id }}/example-submission/{{ exampleSubmission.id }}"
+                        [routerLink]="['/course-management', modelingExercise.course?.id, 'modeling-exercises', modelingExercise.id, 'example-submissions', exampleSubmission.id]"
                         class="btn btn-link"
                         type="button"
                         jhiTranslate="artemisApp.modelingExercise.exampleSubmission"
@@ -174,7 +174,7 @@
             <button
                 *ngIf="modelingExercise.id"
                 class="btn btn-primary"
-                routerLink="/modeling-exercise/{{ modelingExercise.id }}/example-submission/new"
+                [routerLink]="['/course-management', modelingExercise.course?.id, 'modeling-exercises', modelingExercise.id, 'example-submission', 'new']"
                 jhiTranslate="artemisApp.modelingExercise.createExampleSubmission"
             >
                 Create example submission

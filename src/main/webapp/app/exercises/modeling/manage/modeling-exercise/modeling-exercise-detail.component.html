@@ -66,7 +66,13 @@
                 <fa-icon [icon]="'arrow-left'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.back"> Back</span>
             </button>
 
-            <button type="button" [routerLink]="['/modeling-exercise', modelingExercise.id, 'edit']" replaceUrl="true" queryParamsHandling="merge" class="btn btn-primary">
+            <button
+                type="button"
+                [routerLink]="['/course-management', modelingExercise.course?.id, 'modeling-exercises', modelingExercise.id, 'edit']"
+                replaceUrl="true"
+                queryParamsHandling="merge"
+                class="btn btn-primary"
+            >
                 <fa-icon [icon]="'pencil-alt'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.edit"> Edit</span>
             </button>
         </div>

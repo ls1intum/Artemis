@@ -1,15 +1,15 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
-import { ExampleModelingSubmissionComponent } from './example-modeling-submission.component';
+import { ModelingStatisticsComponent } from './modeling-statistics.component';
 
 const routes: Routes = [
     {
-        path: 'course-management/:courseId/modeling-exercises/:exerciseId/example-submissions/:exampleSubmissionId',
-        component: ExampleModelingSubmissionComponent,
+        path: 'course-management/:courseId/modeling-exercises/:exerciseId/statistics',
+        component: ModelingStatisticsComponent,
         data: {
             authorities: ['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'],
-            pageTitle: 'artemisApp.exampleSubmission.home.title',
+            pageTitle: 'assessmentDashboard.title',
         },
         canActivate: [UserRouteAccessService],
     },
@@ -19,4 +19,4 @@ const routes: Routes = [
     imports: [RouterModule.forChild(routes)],
     exports: [RouterModule],
 })
-export class ArtemisExampleModelingSubmissionRoutingModule {}
+export class ArtemisModelingStatisticsRoutingModule {}

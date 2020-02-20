@@ -30,7 +30,11 @@
                 <div class="btn btn-outline-primary" *ngIf="exerciseRouterLink" routerLink="{{ exerciseRouterLink }}">
                     {{ 'artemisApp.courseOverview.exerciseDetails.instructorActions.submissions' | translate }}
                 </div>
-                <div class="btn btn-outline-primary" *ngIf="exercise.type === MODELING" routerLink="/course/{{ courseId }}/exercise/{{ exercise.id }}/statistics">
+                <div
+                    *ngIf="exercise.type === MODELING"
+                    [routerLink]="['/course-management', courseId, 'modeling-exercises', exercise.id, 'statistics']"
+                    class="btn btn-outline-primary"
+                >
                     {{ 'artemisApp.courseOverview.exerciseDetails.instructorActions.statistics' | translate }}
                 </div>
             </div>

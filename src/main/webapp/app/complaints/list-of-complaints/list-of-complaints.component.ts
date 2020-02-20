@@ -102,7 +102,7 @@ export class ListOfComplaintsComponent implements OnInit {
         if (exercise.type === ExerciseType.TEXT) {
             route = `/text/${exercise.id}/assessment/${submissionId}`;
         } else if (exercise.type === ExerciseType.MODELING) {
-            route = `/modeling-exercise/${exercise.id}/submissions/${submissionId}/assessment`;
+            route = `/course-management/${this.courseId}/modeling-exercises/${exercise.id}/submissions/${submissionId}/assessment`;
         } else if (exercise.type === ExerciseType.FILE_UPLOAD) {
             route = `/course-management/${this.courseId}/file-upload-exercises/${exercise.id}/submissions/${submissionId}/assessment`;
         } else if (exercise.type === ExerciseType.PROGRAMMING) {

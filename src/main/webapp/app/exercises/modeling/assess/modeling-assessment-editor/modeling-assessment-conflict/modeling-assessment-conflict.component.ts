@@ -34,6 +34,7 @@ export class ModelingAssessmentConflictComponent implements OnInit, AfterViewIni
     conflictIndex = 0;
     conflictsAllHandled = false;
     modelingExercise: ModelingExercise;
+    courseId: number;
     submissionId: number;
 
     constructor(
@@ -47,6 +48,7 @@ export class ModelingAssessmentConflictComponent implements OnInit, AfterViewIni
 
     ngOnInit() {
         this.route.params.subscribe(params => {
+            this.courseId = Number(params['courseId']);
             this.submissionId = Number(params['submissionId']);
             this.conflicts = this.modelingAssessmentService.getLocalConflicts(this.submissionId);
             if (this.conflicts && this.conflicts.length > 0) {
@@ -145,7 +147,7 @@ export class ModelingAssessmentConflictComponent implements OnInit, AfterViewIni
             this.modelingAssessmentService.saveAssessment(this.mergedFeedbacks, this.submissionId, true).subscribe(
                 result => {
                     this.jhiAlertService.success('modelingAssessmentEditor.messages.submitSuccessful');
-                    this.router.navigate(['modeling-exercise', this.modelingExercise.id, 'submissions', this.submissionId, 'assessment']);
+                    this.router.navigate(['/course-management', this.courseId, 'modeling-exercises', this.modelingExercise.id, 'submissions', this.submissionId, 'assessment']);
                 },
                 error => {
                     if (error.status === 409) {

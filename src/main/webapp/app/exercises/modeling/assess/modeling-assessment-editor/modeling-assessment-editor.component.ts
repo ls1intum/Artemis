@@ -41,6 +41,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
 
     assessmentsAreValid = false;
     busy: boolean;
+    courseId: number;
     userId: number;
     isAssessor = false;
     isAtLeastInstructor = false;
@@ -86,8 +87,9 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         this.isAtLeastInstructor = this.accountService.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR']);
 
         this.route.paramMap.subscribe(params => {
-            const submissionId: String | null = params.get('submissionId');
+            this.courseId = Number(params.get('courseId'));
             const exerciseId = Number(params.get('exerciseId'));
+            const submissionId: String | null = params.get('submissionId');
             if (submissionId === 'new') {
                 this.loadOptimalSubmission(exerciseId);
             } else {
@@ -336,7 +338,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     onShowConflictResolution() {
         this.modelingAssessmentService.addLocalConflicts(this.submission!.id, this.conflicts!);
         this.jhiAlertService.clear();
-        this.router.navigate(['modeling-exercise', this.modelingExercise!.id, 'submissions', this.submission!.id, 'assessment', 'conflict']);
+        this.router.navigate(['/course-management', this.courseId, 'modeling-exercises', this.modelingExercise!.id, 'submissions', this.submission!.id, 'assessment', 'conflict']);
     }
 
     /**
@@ -370,7 +372,11 @@ export class ModelingAssessmentEditorComponent implements OnInit {
                     // navigate to root and then to new assessment page to trigger re-initialization of the components
                     this.router
                         .navigateByUrl('/', { skipLocationChange: true })
-                        .then(() => this.router.navigateByUrl(`modeling-exercise/${this.modelingExercise!.id}/submissions/${optimal.pop()}/assessment`));
+                        .then(() =>
+                            this.router.navigateByUrl(
+                                `/course-management/${this.courseId}/modeling-exercises/${this.modelingExercise!.id}/submissions/${optimal.pop()}/assessment`,
+                            ),
+                        );
                 }
             },
             (error: HttpErrorResponse) => {

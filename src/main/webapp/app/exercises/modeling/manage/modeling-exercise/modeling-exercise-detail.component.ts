@@ -6,7 +6,7 @@ import { UMLModel } from '@ls1intum/apollon';
 import { Subscription } from 'rxjs/Subscription';
 import { JhiEventManager } from 'ng-jhipster';
 
-import { ModelingExercise } from '../../../../entities/modeling-exercise.model';
+import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { ModelingExerciseService } from './modeling-exercise.service';
 import { ArtemisMarkdown } from 'app/shared/markdown.service';
 
@@ -32,7 +32,7 @@ export class ModelingExerciseDetailComponent implements OnInit, OnDestroy {
 
     ngOnInit() {
         this.subscription = this.route.params.subscribe(params => {
-            this.load(params['id']);
+            this.load(params['exerciseId']);
         });
         this.registerChangeInModelingExercises();
     }

@@ -239,7 +239,7 @@
                 <ngx-datatable-column prop="" *ngIf="exercise.type === ExerciseType.MODELING && exercise.isAtLeastInstructor" [resizeable]="false" [minWidth]="180" [width]="180">
                     <ng-template ngx-datatable-cell-template let-value="value">
                         <button
-                            routerLink="/modeling-exercise/{{ exercise.id }}/submissions/{{ value.submission.id }}/assessment"
+                            [routerLink]="['/course-management', exercise.course?.id, 'file-upload-exercises', exercise.id, 'submissions', value.submission.id, 'assessment']"
                             [queryParams]="{ optimal: false, hideBackButton: true }"
                             class="btn btn-primary btn-sm mr-1"
                         >

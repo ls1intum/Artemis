@@ -21,4 +21,4 @@ const routes: Routes = [
     imports: [RouterModule.forChild(routes)],
     exports: [RouterModule],
 })
-export class ArtemisFileUploadParticipationRoutingModule {}
+export class ArtemisFileUploadSubmissionRoutingModule {}

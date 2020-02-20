@@ -1,5 +1,5 @@
-import { ActivatedRouteSnapshot, Resolve, RouterStateSnapshot, Routes } from '@angular/router';
-
+import { NgModule } from '@angular/core';
+import { ActivatedRouteSnapshot, Resolve, RouterStateSnapshot, RouterModule, Routes } from '@angular/router';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { ModelingExerciseComponent } from './modeling-exercise.component';
 import { ModelingExerciseDetailComponent } from './modeling-exercise-detail.component';
@@ -32,9 +32,33 @@ export class ModelingExerciseResolver implements Resolve<ModelingExercise> {
     }
 }
 
-export const modelingExerciseRoute: Routes = [
+const routes: Routes = [
     {
-        path: 'modeling-exercise/:id',
+        path: 'course-management/:courseId/modeling-exercises/new',
+        component: ModelingExerciseUpdateComponent,
+        resolve: {
+            modelingExercise: ModelingExerciseResolver,
+        },
+        data: {
+            authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
+            pageTitle: 'artemisApp.modelingExercise.home.title',
+        },
+        canActivate: [UserRouteAccessService],
+    },
+    {
+        path: 'course-management/:courseId/modeling-exercises/:exerciseId/edit',
+        component: ModelingExerciseUpdateComponent,
+        resolve: {
+            modelingExercise: ModelingExerciseResolver,
+        },
+        data: {
+            authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
+            pageTitle: 'artemisApp.modelingExercise.home.title',
+        },
+        canActivate: [UserRouteAccessService],
+    },
+    {
+        path: 'course-management/:courseId/modeling-exercises/:exerciseId',
         component: ModelingExerciseDetailComponent,
         data: {
             authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
@@ -43,31 +67,7 @@ export const modelingExerciseRoute: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
-        path: 'course/:courseId/modeling-exercise/new',
-        component: ModelingExerciseUpdateComponent,
-        resolve: {
-            modelingExercise: ModelingExerciseResolver,
-        },
-        data: {
-            authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
-            pageTitle: 'artemisApp.modelingExercise.home.title',
-        },
-        canActivate: [UserRouteAccessService],
-    },
-    {
-        path: 'modeling-exercise/:exerciseId/edit',
-        component: ModelingExerciseUpdateComponent,
-        resolve: {
-            modelingExercise: ModelingExerciseResolver,
-        },
-        data: {
-            authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
-            pageTitle: 'artemisApp.modelingExercise.home.title',
-        },
-        canActivate: [UserRouteAccessService],
-    },
-    {
-        path: 'course/:courseId/modeling-exercise',
+        path: 'course-management/:courseId/modeling-exercises',
         component: ModelingExerciseComponent,
         data: {
             authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
@@ -75,13 +75,10 @@ export const modelingExerciseRoute: Routes = [
         },
         canActivate: [UserRouteAccessService],
     },
-    {
-        path: 'course/:courseId/modeling-exercise/:id',
-        component: ModelingExerciseDetailComponent,
-        data: {
-            authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
-            pageTitle: 'artemisApp.modelingExercise.home.title',
-        },
-        canActivate: [UserRouteAccessService],
-    },
 ];
+
+@NgModule({
+    imports: [RouterModule.forChild(routes)],
+    exports: [RouterModule],
+})
+export class ArtemisModelingExerciseRoutingModule {}
