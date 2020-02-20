@@ -25,7 +25,7 @@ import { ArtemisResultModule } from 'app/exercises/shared/result/result.module';
 import { ArtemisExerciseHintModule } from 'app/exercises/shared/exercise-hint/exercise-hint.module';
 import { CodeEditorFileBrowserComponent } from 'app/exercises/programming/shared/code-editor/file-browser/code-editor-file-browser.component';
 import { CodeEditorStatusComponent } from 'app/exercises/programming/shared/code-editor/status/code-editor-status.component';
-import { ArtemisProgrammingExerciseActionsModule } from 'app/exercises/programming/manage/actions/programming-exercise-actions.module';
+import { ArtemisProgrammingExerciseActionsModule } from 'app/exercises/programming/shared/actions/programming-exercise-actions.module';
 import { FeatureToggleModule } from 'app/shared/feature-toggle/feature-toggle.module';
 import { CodeEditorInstructorOrionContainerComponent } from 'app/exercises/programming/shared/code-editor/instructor/code-editor-instructor-orion-container.component';
 import { OrionModule } from 'app/shared/orion/orion.module';

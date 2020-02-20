@@ -23,10 +23,10 @@ import {
     ProgrammingSubmissionState,
     ProgrammingSubmissionStateObj,
 } from 'app/exercises/programming/participate/programming-submission/programming-submission.service';
-import { ArtemisProgrammingExerciseActionsModule } from 'app/exercises/programming/manage/actions/programming-exercise-actions.module';
+import { ArtemisProgrammingExerciseActionsModule } from 'app/exercises/programming/shared/actions/programming-exercise-actions.module';
 import { triggerChanges } from '../../utils/general.utils';
 import { InitializationState } from 'app/entities/participation/participation.model';
-import { ProgrammingExerciseStudentTriggerBuildButtonComponent } from 'app/exercises/programming/manage/actions/programming-exercise-student-trigger-build-button.component';
+import { ProgrammingExerciseStudentTriggerBuildButtonComponent } from 'app/exercises/programming/shared/actions/programming-exercise-student-trigger-build-button.component';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 
 chai.use(sinonChai);

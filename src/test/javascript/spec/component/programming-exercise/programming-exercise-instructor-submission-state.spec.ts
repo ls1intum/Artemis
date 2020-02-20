@@ -18,8 +18,8 @@ import {
     ProgrammingSubmissionService,
     ProgrammingSubmissionState,
 } from 'app/exercises/programming/participate/programming-submission/programming-submission.service';
-import { ArtemisProgrammingExerciseActionsModule } from 'app/exercises/programming/manage/actions/programming-exercise-actions.module';
-import { ProgrammingExerciseInstructorSubmissionStateComponent } from 'app/exercises/programming/manage/actions/programming-exercise-instructor-submission-state.component';
+import { ArtemisProgrammingExerciseActionsModule } from 'app/exercises/programming/shared/actions/programming-exercise-actions.module';
+import { ProgrammingExerciseInstructorSubmissionStateComponent } from 'app/exercises/programming/shared/actions/programming-exercise-instructor-submission-state.component';
 import { triggerChanges } from '../../utils/general.utils';
 import { BuildRunState, ProgrammingBuildRunService } from 'app/exercises/programming/participate/programming-submission/programming-build-run.service';
 import { MockProgrammingBuildRunService } from '../../mocks/mock-programming-build-run.service';

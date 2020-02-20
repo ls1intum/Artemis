@@ -1,12 +1,10 @@
 import { NgModule } from '@angular/core';
-import { RouterModule } from '@angular/router';
 
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { FormDateTimePickerModule } from 'app/shared/date-time-picker/date-time-picker.module';
 import { ArtemisCategorySelectorModule } from 'app/shared/category-selector/category-selector.module';
 import { ArtemisDifficultyPickerModule } from 'app/exercises/shared/difficulty-picker/difficulty-picker.module';
 import { ArtemisProgrammingExerciseTestCaseModule } from 'app/exercises/programming/manage/test-cases/programming-exercise-test-case.module';
-import { ArtemisProgrammingExerciseActionsModule } from 'app/exercises/programming/manage/actions/programming-exercise-actions.module';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { ArtemisPresentationScoreModule } from 'app/exercises/shared/presentation-score/presentation-score.module';
 import { OwlDateTimeModule } from 'ng-pick-datetime';
@@ -32,9 +30,7 @@ import { ArtemisTeamConfigFormGroupModule } from 'app/exercises/shared/team-conf
         ArtemisCategorySelectorModule,
         ArtemisDifficultyPickerModule,
         // Programming exercise sub modules.
-        ArtemisProgrammingExerciseInstructionsEditorModule,
         ArtemisProgrammingExerciseStatusModule,
-        ArtemisProgrammingExerciseActionsModule,
         ArtemisProgrammingExerciseTestCaseModule,
         // Other entity modules.
         ArtemisResultModule,
@@ -50,6 +46,6 @@ import { ArtemisTeamConfigFormGroupModule } from 'app/exercises/shared/team-conf
         ArtemisAssessmentSharedModule,
         ArtemisTeamConfigFormGroupModule,
     ],
-    exports: [ArtemisProgrammingExerciseInstructionsEditorModule, ArtemisProgrammingExerciseActionsModule],
+    exports: [ArtemisProgrammingExerciseInstructionsEditorModule],
 })
 export class ArtemisProgrammingExerciseModule {}

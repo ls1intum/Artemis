@@ -3,7 +3,7 @@ import { NgModule } from '@angular/core';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { MomentModule } from 'ngx-moment';
 import { ResultHistoryComponent } from 'app/overview/result-history/result-history.component';
-import { ArtemisProgrammingExerciseActionsModule } from 'app/exercises/programming/manage/actions/programming-exercise-actions.module';
+import { ArtemisProgrammingExerciseActionsModule } from 'app/exercises/programming/shared/actions/programming-exercise-actions.module';
 import { SubmissionResultStatusComponent } from 'app/overview/submission-result-status.component';
 import { UpdatingResultComponent } from 'app/shared/result/updating-result.component';
 import { ResultService } from 'app/exercises/shared/result/result.service';

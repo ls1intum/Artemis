@@ -12,9 +12,11 @@ import { ProgrammingExerciseDetailComponent } from 'app/exercises/programming/ma
 import { ArtemisAssessmentSharedModule } from 'app/assessment/assessment-shared.module';
 import { ArtemisProgrammingAssessmentModule } from 'app/exercises/programming/assess/programming-assessment/programming-assessment.module';
 import { ArtemisResultModule } from 'app/exercises/shared/result/result.module';
-import { ArtemisProgrammingExerciseActionsModule } from 'app/exercises/programming/manage/actions/programming-exercise-actions.module';
+import { ArtemisProgrammingExerciseActionsModule } from 'app/exercises/programming/shared/actions/programming-exercise-actions.module';
 import { ArtemisProgrammingExerciseInstructionsEditorModule } from 'app/exercises/programming/manage/instructions/instructions-editor/programming-exercise-instructions-editor.module';
 import { ArtemisProgrammingExerciseUpdateModule } from 'app/exercises/programming/manage/update/programming-exercise-update.module';
+import { ProgrammingExerciseImportComponent } from 'app/exercises/programming/manage/programming-exercise-import.component';
+import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 
 @NgModule({
     imports: [
@@ -23,6 +25,7 @@ import { ArtemisProgrammingExerciseUpdateModule } from 'app/exercises/programmin
         OrionModule,
         FeatureToggleModule,
         ProgrammingExerciseUtilsModule,
+        ArtemisSharedComponentModule,
         ArtemisResultModule,
         ArtemisAssessmentSharedModule,
         ArtemisProgrammingExerciseManagementRoutingModule,
@@ -33,7 +36,7 @@ import { ArtemisProgrammingExerciseUpdateModule } from 'app/exercises/programmin
         ArtemisProgrammingExerciseInstructionsEditorModule,
         ArtemisProgrammingExerciseUpdateModule,
     ],
-    declarations: [ProgrammingExerciseComponent, ProgrammingExerciseDetailComponent],
+    declarations: [ProgrammingExerciseComponent, ProgrammingExerciseDetailComponent, ProgrammingExerciseImportComponent],
     exports: [ProgrammingExerciseComponent],
 })
 export class ArtemisProgrammingExerciseManagementModule {}
