@@ -174,10 +174,10 @@ describe('GuidedTourService', () => {
                     const navBarComponentFixture = TestBed.createComponent(NavbarComponent);
                     const navBarComponent = navBarComponentFixture.componentInstance;
 
-                    router = TestBed.get(Router);
-                    guidedTourService = TestBed.get(GuidedTourService);
-                    participationService = TestBed.get(ParticipationService);
-                    courseService = TestBed.get(CourseService);
+                    router = TestBed.inject(Router);
+                    guidedTourService = TestBed.inject(GuidedTourService);
+                    participationService = TestBed.inject(ParticipationService);
+                    courseService = TestBed.inject(CourseService);
 
                     findParticipationStub = stub(participationService, 'findParticipation');
                     deleteParticipationStub = stub(participationService, 'deleteForGuidedTour');
