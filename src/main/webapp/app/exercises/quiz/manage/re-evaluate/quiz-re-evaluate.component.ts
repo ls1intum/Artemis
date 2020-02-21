@@ -32,18 +32,10 @@ export class QuizReEvaluateComponent implements OnInit, OnChanges, OnDestroy {
     popupService: QuizExercisePopupService;
     router: Router;
 
-    datePickerOpenStatus = {
-        releaseDate: false,
-    };
     isSaving: boolean;
     duration: Duration;
     // Create Backup Quiz for resets
     backupQuiz: QuizExercise;
-
-    // Status options depending on relationship between start time, end time, and current time
-    statusOptionsVisible: Option[] = [new Option(false, 'Hidden'), new Option(true, 'Visible')];
-    statusOptionsPractice: Option[] = [new Option(false, 'Closed'), new Option(true, 'Open for Practice')];
-    statusOptionsActive: Option[] = [new Option(true, 'Active')];
 
     constructor(
         private quizExerciseService: QuizExerciseService,

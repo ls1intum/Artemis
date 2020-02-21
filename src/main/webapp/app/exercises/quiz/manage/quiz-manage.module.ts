@@ -56,6 +56,8 @@ const ENTITY_STATES = [...quizExerciseRoute];
         ReEvaluateShortAnswerQuestionComponent,
         QuizReEvaluateWarningComponent,
     ],
+    // only add popups
+    entryComponents: [QuizReEvaluateWarningComponent],
     exports: [QuizExerciseComponent],
 })
 export class ArtemisQuizManageModule {}
