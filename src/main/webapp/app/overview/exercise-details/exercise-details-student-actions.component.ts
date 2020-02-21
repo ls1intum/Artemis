@@ -91,7 +91,7 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
     startExercise() {
         if (this.exercise.type === ExerciseType.QUIZ) {
             // Start the quiz
-            return this.router.navigate(['/quiz', this.exercise.id]);
+            return this.router.navigate(['/courses', this.exercise.course?.id, 'quiz-exercises', this.exercise.id]);
         }
 
         this.exercise.loading = true;
@@ -150,7 +150,7 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
     }
 
     startPractice() {
-        return this.router.navigate(['/quiz', this.exercise.id, 'practice']);
+        return this.router.navigate(['/courses', this.exercise.course?.id, 'quiz-exercises', this.exercise.id, 'practice']);
     }
 
     getRepositoryPassword() {

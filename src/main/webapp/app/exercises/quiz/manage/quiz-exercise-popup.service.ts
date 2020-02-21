@@ -27,7 +27,7 @@ export class QuizExercisePopupService {
         modalRef.result.then(
             result => {
                 if (result === 're-evaluate') {
-                    this.router.navigate(['/course/' + quizExercise.course!.id + '/quiz-exercise']);
+                    this.router.navigate(['/course-management/' + quizExercise.course!.id + '/quiz-exercises']);
                 } else {
                     this.router.navigate([{ outlets: { popup: null } }], { replaceUrl: true, queryParamsHandling: 'merge' });
                     this.ngbModalRef = null;

@@ -5,7 +5,7 @@ import { UserRouteAccessService } from 'app/core/auth/user-route-access-service'
 
 export const quizParticipationRoute: Routes = [
     {
-        path: 'quiz/:id',
+        path: 'courses/:courseId/quiz-exercises/:exerciseId',
         component: QuizParticipationComponent,
         data: {
             authorities: [],
@@ -15,7 +15,7 @@ export const quizParticipationRoute: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
-        path: 'quiz/:id/practice',
+        path: 'courses/:courseId/quiz-exercises/:exerciseId/practice',
         component: QuizParticipationComponent,
         data: {
             authorities: [],
@@ -25,20 +25,20 @@ export const quizParticipationRoute: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
-        path: 'quiz/:id/preview',
+        path: 'course-management/:courseId/quiz-exercises/:exerciseId/preview',
         component: QuizParticipationComponent,
         data: {
-            authorities: [],
+            authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
             pageTitle: 'artemisApp.quizExercise.home.title',
             mode: 'preview',
         },
         canActivate: [UserRouteAccessService],
     },
     {
-        path: 'quiz/:id/solution',
+        path: 'course-management/:courseId/quiz-exercises/:exerciseId/solution',
         component: QuizParticipationComponent,
         data: {
-            authorities: [],
+            authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
             pageTitle: 'artemisApp.quizExercise.home.title',
             mode: 'solution',
         },

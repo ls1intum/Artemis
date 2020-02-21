@@ -11,6 +11,7 @@ import { HttpResponse } from '@angular/common/http';
 import { filter, map } from 'rxjs/operators';
 import { Observable } from 'rxjs';
 import { Course } from 'app/entities/course.model';
+import { UMLDiagramType } from '@ls1intum/apollon';
 
 @Injectable({ providedIn: 'root' })
 export class ModelingExerciseResolver implements Resolve<ModelingExercise> {
@@ -24,10 +25,10 @@ export class ModelingExerciseResolver implements Resolve<ModelingExercise> {
         } else if (route.params['courseId']) {
             return this.courseService.find(route.params['courseId']).pipe(
                 filter(res => !!res.body),
-                map((course: HttpResponse<Course>) => new ModelingExercise('ClassDiagram', course.body!)),
+                map((course: HttpResponse<Course>) => new ModelingExercise(UMLDiagramType.ClassDiagram, course.body!)),
             );
         }
-        return Observable.of(new ModelingExercise('ClassDiagram'));
+        return Observable.of(new ModelingExercise(UMLDiagramType.ClassDiagram));
     }
 }
 

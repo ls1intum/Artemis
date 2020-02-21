@@ -11,7 +11,7 @@ import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { ArtemisQuizParticipationModule } from 'app/exercises/quiz/participate/quiz-participation.module';
 import { ArtemisQuizStatisticModule } from 'app/exercises/quiz/manage/statistics/quiz-statistic.module';
 import { ArtemisApollonDiagramsModule } from 'app/exercises/quiz/manage/apollon-diagrams/apollon-diagram.module';
-import { quizExerciseRoute } from 'app/exercises/quiz/manage/quiz-exercise.route';
+import { quizManagementRoute } from 'app/exercises/quiz/manage/quiz-management.route';
 import { QuizExerciseComponent } from 'app/exercises/quiz/manage/quiz-exercise.component';
 import { QuizExerciseDetailComponent } from 'app/exercises/quiz/manage/quiz-exercise-detail.component';
 import { RouterModule } from '@angular/router';
@@ -25,7 +25,7 @@ import { ReEvaluateDragAndDropQuestionComponent } from 'app/exercises/quiz/manag
 import { ReEvaluateShortAnswerQuestionComponent } from 'app/exercises/quiz/manage/re-evaluate/short-answer-question/re-evaluate-short-answer-question.component';
 import { QuizReEvaluateWarningComponent } from 'app/exercises/quiz/manage/re-evaluate/quiz-re-evaluate-warning.component';
 
-const ENTITY_STATES = [...quizExerciseRoute];
+const ENTITY_STATES = [...quizManagementRoute];
 
 @NgModule({
     imports: [

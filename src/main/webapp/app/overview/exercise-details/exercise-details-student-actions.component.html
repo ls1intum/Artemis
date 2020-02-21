@@ -10,7 +10,7 @@
             [smallButton]="smallButtons"
             [hideLabelMobile]="false"
             *ngIf="isPracticeModeAvailable()"
-            [routerLink]="['/quiz', exercise.id, 'practice']"
+            [routerLink]="['courses', exercise.course?.id, '/quiz-exercises', exercise.id, 'practice']"
         ></button>
         <button
             jhi-exercise-action-button
@@ -76,7 +76,7 @@
             outlined="true"
             [buttonLoading]="exercise.loading"
             [smallButton]="smallButtons"
-            routerLink="/quiz/{{ exercise.id }}/quiz-point-statistic"
+            routerLink="/course-management/{{ exercise.course?.id }}/quiz-exercises/{{ exercise.id }}/quiz-point-statistic"
         ></button>
     </div>
     <!-- INFORMATION END -->
