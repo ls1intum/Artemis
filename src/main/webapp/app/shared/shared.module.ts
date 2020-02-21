@@ -17,6 +17,7 @@ import { JhiAlertErrorComponent } from 'app/shared/alert/alert-error.component';
     imports: [ArtemisSharedLibsModule, ArtemisSharedCommonModule, ArtemisSharedPipesModule],
     declarations: [HasAnyAuthorityDirective, SecuredImageComponent, DeleteDialogComponent, DeleteButtonDirective, ResizeableContainerComponent, SecureLinkDirective],
     providers: [DatePipe],
+    entryComponents: [DeleteDialogComponent],
     exports: [
         ArtemisSharedLibsModule,
         FindLanguageFromKeyPipe,
