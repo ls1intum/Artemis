@@ -16,7 +16,7 @@ import { StudentParticipation } from 'app/entities/participation/student-partici
 @Component({
     selector: 'jhi-modeling-assessment-conflict',
     templateUrl: './modeling-assessment-conflict.component.html',
-    styleUrls: ['./modeling-assessment-conflict.component.scss', '../modeling-assessment-editor.component.scss'],
+    styleUrls: ['./modeling-assessment-conflict.component.scss', './modeling-assessment-editor.component.scss'],
 })
 export class ModelingAssessmentConflictComponent implements OnInit, AfterViewInit {
     model: UMLModel;

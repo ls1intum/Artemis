@@ -9,7 +9,7 @@ import * as moment from 'moment';
 import * as $ from 'jquery';
 import { Interactable } from '@interactjs/types/types';
 import { Location } from '@angular/common';
-import { FileUploadAssessmentsService } from 'app/exercises/file-upload/assess/file-upload-assessment/file-upload-assessment.service';
+import { FileUploadAssessmentsService } from 'app/exercises/file-upload/assess/file-upload-assessment.service';
 import { WindowRef } from 'app/core/websocket/window.service';
 import { ArtemisMarkdown } from 'app/shared/markdown.service';
 import { filter, finalize } from 'rxjs/operators';

@@ -8,7 +8,7 @@ import { ExampleSubmissionService } from 'app/exercises/shared/example-submissio
 import { Result } from 'app/entities/result.model';
 import { TutorParticipationService } from 'app/exercises/shared/tutor-exercise-dashboard/tutor-participation.service';
 import { UMLModel } from '@ls1intum/apollon';
-import { ModelingEditorComponent } from 'app/exercises/modeling/shared/modeling-editor/modeling-editor.component';
+import { ModelingEditorComponent } from 'app/exercises/modeling/shared/modeling-editor.component';
 import { ExampleSubmission } from 'app/entities/example-submission.model';
 import { Feedback } from 'app/entities/feedback.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';

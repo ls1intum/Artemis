@@ -6,9 +6,9 @@ import { ArtemisAssessmentSharedModule } from 'app/assessment/assessment-shared.
 import { ArtemisResultModule } from 'app/exercises/shared/result/result.module';
 import { ArtemisModelingAssessmentEditorRoutingModule } from 'app/exercises/modeling/assess/modeling-assessment-editor/modeling-assessment-editor.route';
 import { ModelingAssessmentModule } from 'app/exercises/modeling/assess/modeling-assessment.module';
-import { ModelingAssessmentDashboardComponent } from 'app/exercises/modeling/assess/modeling-assessment-editor/modeling-assessment-dashboard/modeling-assessment-dashboard.component';
+import { ModelingAssessmentDashboardComponent } from 'app/exercises/modeling/assess/modeling-assessment-editor/modeling-assessment-dashboard.component';
 import { ModelingAssessmentEditorComponent } from 'app/exercises/modeling/assess/modeling-assessment-editor/modeling-assessment-editor.component';
-import { ModelingAssessmentConflictComponent } from 'app/exercises/modeling/assess/modeling-assessment-editor/modeling-assessment-conflict/modeling-assessment-conflict.component';
+import { ModelingAssessmentConflictComponent } from 'app/exercises/modeling/assess/modeling-assessment-editor/modeling-assessment-conflict.component';
 
 @NgModule({
     imports: [

@@ -18,7 +18,7 @@ import { ResultService } from 'app/exercises/shared/result/result.service';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { Result } from 'app/entities/result.model';
-import { ModelingEditorComponent } from 'app/exercises/modeling/shared/modeling-editor/modeling-editor.component';
+import { ModelingEditorComponent } from 'app/exercises/modeling/shared/modeling-editor.component';
 import { ModelingSubmissionService } from 'app/exercises/modeling/participate/modeling-submission.service';
 import { ComplaintType } from 'app/entities/complaint.model';
 import { ModelingAssessmentService } from 'app/exercises/modeling/assess/modeling-assessment.service';

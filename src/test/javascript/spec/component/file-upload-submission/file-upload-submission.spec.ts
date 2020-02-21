@@ -29,7 +29,7 @@ import { MAX_SUBMISSION_FILE_SIZE } from 'app/shared/constants/input.constants';
 import { TranslateModule } from '@ngx-translate/core';
 import * as sinon from 'sinon';
 import { stub } from 'sinon';
-import { FileUploadResultComponent } from 'app/exercises/file-upload/participate/file-upload-result/file-upload-result.component';
+import { FileUploadResultComponent } from 'app/exercises/file-upload/participate/file-upload-result.component';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import * as moment from 'moment';
 import { of } from 'rxjs';

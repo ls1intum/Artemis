@@ -4,7 +4,7 @@ import { ArtemisFileUploadSubmissionRoutingModule } from './file-upload-submissi
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { ArtemisResultModule } from 'app/exercises/shared/result/result.module';
 import { ArtemisComplaintsModule } from 'app/complaints/complaints.module';
-import { FileUploadResultComponent } from 'app/exercises/file-upload/participate/file-upload-result/file-upload-result.component';
+import { FileUploadResultComponent } from 'app/exercises/file-upload/participate/file-upload-result.component';
 import { FileUploadSubmissionComponent } from './file-upload-submission.component';
 import { MomentModule } from 'ngx-moment';
 

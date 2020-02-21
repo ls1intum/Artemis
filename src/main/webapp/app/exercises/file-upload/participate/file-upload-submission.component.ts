@@ -9,7 +9,7 @@ import { StudentParticipation } from 'app/entities/participation/student-partici
 import { FileUploadSubmissionService } from 'app/exercises/file-upload/participate/file-upload-submission.service';
 import { FileUploaderService } from 'app/shared/http/file-uploader.service';
 import { MAX_SUBMISSION_FILE_SIZE } from 'app/shared/constants/input.constants';
-import { FileUploadAssessmentsService } from 'app/exercises/file-upload/assess/file-upload-assessment/file-upload-assessment.service';
+import { FileUploadAssessmentsService } from 'app/exercises/file-upload/assess/file-upload-assessment.service';
 import { omit } from 'lodash';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';

@@ -28,7 +28,7 @@ import * as moment from 'moment';
 import * as sinon from 'sinon';
 import { MockComponent } from 'ng-mocks';
 import { DeviceDetectorService } from 'ngx-device-detector';
-import { ModelingEditorComponent } from 'app/exercises/modeling/shared/modeling-editor/modeling-editor.component';
+import { ModelingEditorComponent } from 'app/exercises/modeling/shared/modeling-editor.component';
 import { ArtemisResultModule } from 'app/exercises/shared/result/result.module';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { ArtemisComplaintsModule } from 'app/complaints/complaints.module';

@@ -33,7 +33,7 @@ import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { HeaderExercisePageWithDetailsComponent } from 'app/exercises/shared/exercise-headers/header-exercise-page-with-details.component';
 import { TutorExerciseDashboardComponent } from 'app/exercises/shared/tutor-exercise-dashboard/tutor-exercise-dashboard.component';
 import { ExerciseType } from 'app/entities/exercise.model';
-import { ModelingEditorComponent } from 'app/exercises/modeling/shared/modeling-editor/modeling-editor.component';
+import { ModelingEditorComponent } from 'app/exercises/modeling/shared/modeling-editor.component';
 import { ModelingSubmissionService } from 'app/exercises/modeling/participate/modeling-submission.service';
 import { TutorParticipationStatus } from 'app/entities/participation/tutor-participation.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';

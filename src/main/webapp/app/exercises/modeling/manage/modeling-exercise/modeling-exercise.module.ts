@@ -7,7 +7,7 @@ import { ArtemisPresentationScoreModule } from 'app/exercises/shared/presentatio
 import { ArtemisAssessmentSharedModule } from 'app/assessment/assessment-shared.module';
 import { SortByModule } from 'app/shared/pipes/sort-by.module';
 import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown-editor.module';
-import { ArtemisModelingEditorModule } from 'app/exercises/modeling/shared/modeling-editor/modeling-editor.module';
+import { ArtemisModelingEditorModule } from 'app/exercises/modeling/shared/modeling-editor.module';
 import { ModelingExerciseUpdateComponent } from 'app/exercises/modeling/manage/modeling-exercise/modeling-exercise-update.component';
 import { ArtemisModelingExerciseRoutingModule } from 'app/exercises/modeling/manage/modeling-exercise/modeling-exercise.route';
 import { ModelingExerciseComponent } from 'app/exercises/modeling/manage/modeling-exercise/modeling-exercise.component';

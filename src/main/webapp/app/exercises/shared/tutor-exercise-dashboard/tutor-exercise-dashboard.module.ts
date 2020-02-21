@@ -15,7 +15,7 @@ import { ArtemisTutorCourseDashboardModule } from 'app/course/tutor-course-dashb
 import { ArtemisHeaderExercisePageWithDetailsModule } from 'app/exercises/shared/exercise-headers/exercise-headers.module';
 import { ArtemisProgrammingExerciseInstructionsRenderModule } from 'app/exercises/programming/shared/instructions-render/programming-exercise-instructions-render.module';
 import { ArtemisResultModule } from 'app/exercises/shared/result/result.module';
-import { ArtemisModelingEditorModule } from 'app/exercises/modeling/shared/modeling-editor/modeling-editor.module';
+import { ArtemisModelingEditorModule } from 'app/exercises/modeling/shared/modeling-editor.module';
 
 const ENTITY_STATES = [...tutorExerciseDashboardRoute];
 
