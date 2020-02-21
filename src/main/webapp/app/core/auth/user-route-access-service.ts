@@ -3,9 +3,7 @@ import { ActivatedRouteSnapshot, CanActivate, Router, RouterStateSnapshot } from
 import { LocalStorageService } from 'ngx-webstorage';
 import { AccountService } from 'app/core/auth/account.service';
 import { StateStorageService } from 'app/core/auth/state-storage.service';
-import { filter, first, switchMap } from 'rxjs/operators';
 import { OrionVersionValidator } from 'app/shared/orion/outdated-plugin-warning/orion-version-validator.service';
-import { from, of } from 'rxjs';
 
 @Injectable({ providedIn: 'root' })
 export class UserRouteAccessService implements CanActivate {

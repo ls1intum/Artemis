@@ -19,7 +19,7 @@ import { courseRoute } from 'app/course/manage/course.route';
 import { CourseComponent } from 'app/course/manage/course.component';
 import { OrionModule } from 'app/shared/orion/orion.module';
 import { ArtemisProgrammingExerciseManagementModule } from 'app/exercises/programming/manage/programming-exercise-management.module';
-import { ArtemisQuizManageModule } from 'app/exercises/quiz/manage/quiz-manage.module';
+import { ArtemisQuizManagementModule } from 'app/exercises/quiz/manage/quiz-management.module';
 import { ArtemisProgrammingExerciseModule } from 'app/exercises/programming/shared/programming-exercise.module';
 import { ArtemisFileUploadExerciseModule } from 'app/exercises/file-upload/shared/file-upload-exercise.module';
 
@@ -29,7 +29,7 @@ const ENTITY_STATES = [...courseRoute];
     imports: [
         ArtemisSharedModule,
         ArtemisFileUploadExerciseManagementModule,
-        ArtemisQuizManageModule,
+        ArtemisQuizManagementModule,
         ArtemisTextExerciseModule,
         ArtemisModelingExerciseModule,
         RouterModule.forChild(ENTITY_STATES),
@@ -46,6 +46,5 @@ const ENTITY_STATES = [...courseRoute];
         ArtemisFileUploadExerciseModule,
     ],
     declarations: [CourseComponent, CourseDetailComponent, CourseUpdateComponent, CourseExerciseCardComponent, CourseExercisesOverviewComponent],
-    entryComponents: [CourseComponent, CourseUpdateComponent, CourseExerciseCardComponent],
 })
 export class ArtemisCourseModule {}

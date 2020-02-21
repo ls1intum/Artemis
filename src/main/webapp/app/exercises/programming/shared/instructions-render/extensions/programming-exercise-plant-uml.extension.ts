@@ -8,7 +8,6 @@ import { ProgrammingExercisePlantUmlService } from 'app/exercises/programming/sh
 import { ArtemisShowdownExtensionWrapper } from 'app/shared/markdown-editor/extensions/artemis-showdown-extension-wrapper';
 import * as DOMPurify from 'dompurify';
 import { Result } from 'app/entities/result.model';
-import { ArtemisProgrammingExerciseInstructionsRenderModule } from 'app/exercises/programming/shared/instructions-render/programming-exercise-instructions-render.module';
 
 @Injectable({ providedIn: 'root' })
 export class ProgrammingExercisePlantUmlExtensionWrapper implements ArtemisShowdownExtensionWrapper {

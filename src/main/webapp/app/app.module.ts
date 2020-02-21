@@ -48,7 +48,7 @@ import { ArtemisTeamModule } from 'app/exercises/shared/team/team.module';
 import { ArtemisQuizParticipationModule } from 'app/exercises/quiz/participate/quiz-participation.module';
 import { ArtemisModelingAssessmentEditorModule } from 'app/exercises/modeling/assess/modeling-assessment-editor/modeling-assessment-editor.module';
 import { QuizExerciseExportComponent } from 'app/exercises/quiz/manage/quiz-exercise-export.component';
-import { ArtemisQuizManageModule } from 'app/exercises/quiz/manage/quiz-manage.module';
+import { ArtemisQuizManagementModule } from 'app/exercises/quiz/manage/quiz-management.module';
 
 @NgModule({
     imports: [
@@ -62,12 +62,12 @@ import { ArtemisQuizManageModule } from 'app/exercises/quiz/manage/quiz-manage.m
         ArtemisConnectionNotificationModule,
         GuidedTourModule,
         ArtemisLegalModule,
-        ArtemisParticipationModule.forRoot(),
-        ArtemisTeamModule.forRoot(),
+        ArtemisParticipationModule,
+        ArtemisTeamModule,
         ArtemisOverviewModule,
         ArtemisAccountModule,
         ArtemisQuizParticipationModule,
-        ArtemisQuizManageModule,
+        ArtemisQuizManagementModule,
         ArtemisCourseScoresModule,
         ArtemisExerciseScoresModule,
         ArtemisModelingSubmissionModule,

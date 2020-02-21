@@ -8,7 +8,5 @@ import { SortByModule } from 'app/shared/pipes/sort-by.module';
     imports: [ArtemisSharedModule, SortByModule, RouterModule.forChild([])],
     declarations: [TutorLeaderboardComponent],
     exports: [TutorLeaderboardComponent],
-    entryComponents: [],
-    providers: [],
 })
 export class ArtemisTutorLeaderboardModule {}

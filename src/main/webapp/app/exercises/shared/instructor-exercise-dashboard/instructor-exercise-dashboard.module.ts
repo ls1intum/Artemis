@@ -26,7 +26,5 @@ const ENTITY_STATES = instructorExerciseDashboardRoute;
         ArtemisTutorLeaderboardModule,
     ],
     declarations: [InstructorExerciseDashboardComponent],
-    entryComponents: [],
-    providers: [],
 })
 export class ArtemisInstructorExerciseStatsDashboardModule {}

@@ -64,7 +64,6 @@ const ENTITY_STATES = [...OVERVIEW_ROUTES];
         ExerciseDetailsStudentActionsComponent,
         ProgrammingExerciseStudentIdeActionsComponent,
     ],
-    entryComponents: [],
     exports: [ExerciseActionButtonComponent],
 })
 export class ArtemisOverviewModule {}

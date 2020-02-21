@@ -14,7 +14,6 @@ const ENTITY_STATES = [...textEditorRoute];
 
 @NgModule({
     declarations: [TextEditorComponent, TextEditorScoreCardComponent, TextResultComponent],
-    entryComponents: [TextEditorComponent],
     imports: [ArtemisSharedModule, RouterModule.forChild(ENTITY_STATES), ArtemisResultModule, ArtemisComplaintsModule, ArtemisSharedComponentModule, MomentModule],
 })
 export class ArtemisTextModule {}

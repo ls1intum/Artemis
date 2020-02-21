@@ -10,7 +10,7 @@ import { QuizQuestion, QuizQuestionType } from 'app/entities/quiz/quiz-question.
 import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.service';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { QuizExercisePopupService } from 'app/exercises/quiz/manage/quiz-exercise-popup.service';
-import { Duration, Option } from 'app/exercises/quiz/manage/quiz-exercise-interfaces';
+import { Duration } from 'app/exercises/quiz/manage/quiz-exercise-interfaces';
 
 @Component({
     selector: 'jhi-quiz-re-evaluate',

@@ -1,6 +1,5 @@
 import { NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
-import { AlertService } from 'app/core/alert/alert.service';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { tutorExerciseDashboardRoute } from './tutor-exercise-dashboard.route';
 import { TutorExerciseDashboardComponent } from './tutor-exercise-dashboard.component';
@@ -13,12 +12,9 @@ import { ArtemisSharedComponentModule } from 'app/shared/components/shared-compo
 import { ArtemisProgrammingAssessmentModule } from 'app/exercises/programming/assess/programming-assessment/programming-assessment.module';
 import { ArtemisAssessmentSharedModule } from 'app/assessment/assessment-shared.module';
 import { ArtemisTutorCourseDashboardModule } from 'app/course/tutor-course-dashboard/tutor-course-dashboard.module';
-import { JhiMainComponent } from 'app/shared/layouts/main/main.component';
 import { ArtemisHeaderExercisePageWithDetailsModule } from 'app/exercises/shared/exercise-headers/exercise-headers.module';
-import { HomeComponent } from 'app/home/home.component';
 import { ArtemisProgrammingExerciseInstructionsRenderModule } from 'app/exercises/programming/shared/instructions-render/programming-exercise-instructions-render.module';
 import { ArtemisResultModule } from 'app/exercises/shared/result/result.module';
-import { CourseComponent } from 'app/course/manage/course.component';
 import { ArtemisModelingEditorModule } from 'app/exercises/modeling/shared/modeling-editor/modeling-editor.module';
 
 const ENTITY_STATES = [...tutorExerciseDashboardRoute];
@@ -43,7 +39,6 @@ const ENTITY_STATES = [...tutorExerciseDashboardRoute];
         ArtemisAssessmentSharedModule,
     ],
     declarations: [TutorExerciseDashboardComponent],
-    entryComponents: [HomeComponent, CourseComponent, JhiMainComponent],
     providers: [],
 })
 export class ArtemisTutorExerciseDashboardModule {}

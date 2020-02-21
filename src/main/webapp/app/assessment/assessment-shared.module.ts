@@ -1,5 +1,4 @@
 import { NgModule } from '@angular/core';
-import { AlertService } from 'app/core/alert/alert.service';
 
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 

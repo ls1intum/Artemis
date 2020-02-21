@@ -29,8 +29,5 @@ import { ArtemisCourseModule } from 'app/course/manage/course.module';
         ArtemisLectureModule,
         /* jhipster-needle-add-entity-module - JHipster will add entity modules here */
     ],
-    declarations: [],
-    entryComponents: [],
-    providers: [],
 })
 export class ArtemisEntityModule {}

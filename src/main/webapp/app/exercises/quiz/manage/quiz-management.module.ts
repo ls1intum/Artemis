@@ -60,4 +60,4 @@ const ENTITY_STATES = [...quizExerciseRoute];
     entryComponents: [QuizReEvaluateWarningComponent],
     exports: [QuizExerciseComponent],
 })
-export class ArtemisQuizManageModule {}
+export class ArtemisQuizManagementModule {}

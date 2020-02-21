@@ -6,7 +6,6 @@ import { ResultHistoryComponent } from 'app/overview/result-history/result-histo
 import { ArtemisProgrammingExerciseActionsModule } from 'app/exercises/programming/shared/actions/programming-exercise-actions.module';
 import { SubmissionResultStatusComponent } from 'app/overview/submission-result-status.component';
 import { UpdatingResultComponent } from 'app/shared/result/updating-result.component';
-import { ResultService } from 'app/exercises/shared/result/result.service';
 import { ResultComponent } from 'app/shared/result/result.component';
 import { ResultDetailComponent } from 'app/shared/result/result-detail.component';
 
@@ -14,7 +13,5 @@ import { ResultDetailComponent } from 'app/shared/result/result-detail.component
     imports: [ArtemisSharedModule, MomentModule, ArtemisProgrammingExerciseActionsModule],
     declarations: [ResultComponent, UpdatingResultComponent, ResultDetailComponent, ResultHistoryComponent, SubmissionResultStatusComponent],
     exports: [ResultComponent, UpdatingResultComponent, ResultDetailComponent, ResultHistoryComponent, SubmissionResultStatusComponent],
-    entryComponents: [ResultComponent, UpdatingResultComponent, ResultDetailComponent, SubmissionResultStatusComponent],
-    providers: [ResultService],
 })
 export class ArtemisResultModule {}

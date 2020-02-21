@@ -1,4 +1,4 @@
-import { ModuleWithProviders, NgModule } from '@angular/core';
+import { NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
 
 import { ArtemisSharedModule } from 'app/shared/shared.module';
@@ -28,14 +28,6 @@ const ENTITY_STATES = [...participationRoute];
         FeatureToggleModule,
         ProgrammingExerciseUtilsModule,
     ],
-
     declarations: [ParticipationComponent],
-    entryComponents: [ParticipationComponent],
 })
-export class ArtemisParticipationModule {
-    static forRoot(): ModuleWithProviders {
-        return {
-            ngModule: ArtemisParticipationModule,
-        };
-    }
-}
+export class ArtemisParticipationModule {}

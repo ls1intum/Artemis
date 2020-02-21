@@ -5,8 +5,6 @@ import { UserRouteAccessService } from 'app/core/auth/user-route-access-service'
 import { MomentModule } from 'ngx-moment';
 import { CourseScoresComponent } from './course-scores.component';
 import { SortByModule } from 'app/shared/pipes/sort-by.module';
-import { JhiMainComponent } from 'app/shared/layouts/main/main.component';
-import { HomeComponent } from 'app/home/home.component';
 
 const ENTITY_STATES = [
     {
@@ -23,6 +21,5 @@ const ENTITY_STATES = [
 @NgModule({
     imports: [ArtemisSharedModule, MomentModule, RouterModule.forChild(ENTITY_STATES), SortByModule],
     declarations: [CourseScoresComponent],
-    entryComponents: [HomeComponent, CourseScoresComponent, JhiMainComponent],
 })
 export class ArtemisCourseScoresModule {}

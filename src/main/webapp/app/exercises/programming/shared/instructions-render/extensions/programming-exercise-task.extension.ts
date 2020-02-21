@@ -8,7 +8,6 @@ import { ProgrammingExerciseInstructionService } from 'app/exercises/programming
 import { ArtemisShowdownExtensionWrapper } from 'app/shared/markdown-editor/extensions/artemis-showdown-extension-wrapper';
 import { ExerciseHint } from 'app/entities/exercise-hint.model';
 import { TaskArray } from 'app/exercises/programming/shared/instructions-render/task/programming-exercise-task.model';
-import { ArtemisProgrammingExerciseInstructionsRenderModule } from 'app/exercises/programming/shared/instructions-render/programming-exercise-instructions-render.module';
 
 @Injectable({ providedIn: 'root' })
 export class ProgrammingExerciseTaskExtensionWrapper implements ArtemisShowdownExtensionWrapper {

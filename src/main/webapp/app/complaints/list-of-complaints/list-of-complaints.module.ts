@@ -1,5 +1,4 @@
 import { NgModule } from '@angular/core';
-import { AlertService } from 'app/core/alert/alert.service';
 import { ListOfComplaintsComponent } from './list-of-complaints.component';
 import { MomentModule } from 'ngx-moment';
 import { ClipboardModule } from 'ngx-clipboard';

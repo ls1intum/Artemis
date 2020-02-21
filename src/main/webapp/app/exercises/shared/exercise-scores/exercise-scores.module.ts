@@ -44,7 +44,6 @@ const ENTITY_STATES = [
         ProgrammingExerciseUtilsModule,
     ],
     declarations: [ExerciseScoresComponent],
-    entryComponents: [ExerciseScoresComponent],
     providers: [SortByPipe],
 })
 export class ArtemisExerciseScoresModule {}

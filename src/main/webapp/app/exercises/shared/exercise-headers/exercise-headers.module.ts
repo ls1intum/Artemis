@@ -7,8 +7,6 @@ import { MomentModule } from 'ngx-moment';
 @NgModule({
     imports: [MomentModule, ArtemisSharedModule],
     declarations: [HeaderExercisePageWithDetailsComponent, DifficultyBadgeComponent],
-    entryComponents: [],
-
     exports: [HeaderExercisePageWithDetailsComponent, DifficultyBadgeComponent],
 })
 export class ArtemisHeaderExercisePageWithDetailsModule {}

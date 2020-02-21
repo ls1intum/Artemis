@@ -14,8 +14,5 @@ const ENTITY_STATES = instructorCourseDashboardRoute;
 @NgModule({
     imports: [ArtemisSharedModule, SortByModule, MomentModule, ClipboardModule, RouterModule.forChild(ENTITY_STATES), ChartsModule, ArtemisTutorLeaderboardModule],
     declarations: [InstructorCourseDashboardComponent],
-    exports: [],
-    entryComponents: [],
-    providers: [],
 })
 export class ArtemisInstructorCourseStatsDashboardModule {}

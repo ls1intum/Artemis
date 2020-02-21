@@ -1,4 +1,3 @@
-import { AlertService } from 'app/core/alert/alert.service';
 import { Component, OnDestroy, OnInit, ViewEncapsulation } from '@angular/core';
 import { Subscription } from 'rxjs/Subscription';
 import { ActivatedRoute } from '@angular/router';

@@ -5,12 +5,9 @@ import { ArtemisExampleModelingSubmissionRoutingModule } from 'app/exercises/mod
 import { ExampleModelingSubmissionComponent } from 'app/exercises/modeling/manage/example-modeling-submission/example-modeling-submission.component';
 import { ArtemisModelingEditorModule } from 'app/exercises/modeling/shared/modeling-editor/modeling-editor.module';
 import { AssessmentInstructionsModule } from 'app/assessment/assessment-instructions/assessment-instructions.module';
-import { JhiMainComponent } from 'app/shared/layouts/main/main.component';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
-import { HomeComponent } from 'app/home/home.component';
 import { ArtemisResultModule } from 'app/exercises/shared/result/result.module';
 import { ModelingAssessmentModule } from 'app/exercises/modeling/assess/modeling-assessment.module';
-import { CourseComponent } from 'app/course/manage/course.component';
 
 @NgModule({
     imports: [
@@ -24,6 +21,5 @@ import { CourseComponent } from 'app/course/manage/course.component';
         MomentModule,
     ],
     declarations: [ExampleModelingSubmissionComponent],
-    entryComponents: [HomeComponent, CourseComponent, JhiMainComponent],
 })
 export class ArtemisExampleModelingSubmissionModule {}
