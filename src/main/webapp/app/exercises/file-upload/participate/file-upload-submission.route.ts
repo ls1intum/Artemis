@@ -4,7 +4,7 @@ import { UserRouteAccessService } from 'app/core/auth/user-route-access-service'
 import { PendingChangesGuard } from 'app/shared/guard/pending-changes.guard';
 import { FileUploadSubmissionComponent } from 'app/exercises/file-upload/participate/file-upload-submission.component';
 
-const routes: Routes = [
+export const routes: Routes = [
     {
         path: 'courses/:courseId/file-upload-exercises/:exerciseId/participate/:participationId',
         component: FileUploadSubmissionComponent,
