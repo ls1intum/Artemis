@@ -3,7 +3,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs/Observable';
 import { JhiEventManager } from 'ng-jhipster';
-import { ModelingExercise } from '../../../../entities/modeling-exercise.model';
+import { ModelingExercise } from '../../../entities/modeling-exercise.model';
 import { ModelingExerciseService } from './modeling-exercise.service';
 import { CourseService } from 'app/course/manage/course.service';
 import { ExampleSubmissionService } from 'app/exercises/shared/example-submission/example-submission.service';

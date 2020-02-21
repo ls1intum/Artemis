@@ -36,7 +36,7 @@ import { ComplaintService } from 'app/complaints/complaint.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { Result } from 'app/entities/result.model';
 import { ModelingAssessmentModule } from 'app/exercises/modeling/assess/modeling-assessment.module';
-import { routes } from 'app/exercises/modeling/participate/modeling-submission.route';
+import { routes } from 'app/exercises/modeling/participate/modeling-participation.route';
 
 chai.use(sinonChai);
 const expect = chai.expect;

@@ -3,9 +3,9 @@ import { ActivatedRouteSnapshot, Resolve, RouterModule, RouterStateSnapshot, Rou
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { ModelingExerciseComponent } from './modeling-exercise.component';
 import { ModelingExerciseDetailComponent } from './modeling-exercise-detail.component';
-import { ModelingExerciseUpdateComponent } from 'app/exercises/modeling/manage/modeling-exercise/modeling-exercise-update.component';
+import { ModelingExerciseUpdateComponent } from 'app/exercises/modeling/manage/modeling-exercise-update.component';
 import { CourseService } from 'app/course/manage/course.service';
-import { ModelingExerciseService } from 'app/exercises/modeling/manage/modeling-exercise/modeling-exercise.service';
+import { ModelingExerciseService } from 'app/exercises/modeling/manage/modeling-exercise.service';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { HttpResponse } from '@angular/common/http';
 import { filter, map } from 'rxjs/operators';

@@ -8,7 +8,7 @@ import { UMLModel } from '@ls1intum/apollon';
 import { ArtemisMarkdown } from 'app/shared/markdown.service';
 import { ModelingEditorComponent } from 'app/exercises/modeling/shared/modeling-editor.component';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
-import { ModelingExerciseService } from 'app/exercises/modeling/manage/modeling-exercise/modeling-exercise.service';
+import { ModelingExerciseService } from 'app/exercises/modeling/manage/modeling-exercise.service';
 
 @Component({
     selector: 'jhi-example-modeling-solution',

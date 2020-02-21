@@ -8,7 +8,7 @@ import { ArtemisResultModule } from 'app/exercises/shared/result/result.module';
 import { ArtemisComplaintsModule } from 'app/complaints/complaints.module';
 import { ArtemisModelingEditorModule } from 'app/exercises/modeling/shared/modeling-editor.module';
 import { ModelingAssessmentModule } from 'app/exercises/modeling/assess/modeling-assessment.module';
-import { ArtemisModelingSubmissionRoutingModule } from 'app/exercises/modeling/participate/modeling-submission.route';
+import { ArtemisModelingParticipationRoutingModule } from 'app/exercises/modeling/participate/modeling-participation.route';
 
 @NgModule({
     imports: [
@@ -17,11 +17,11 @@ import { ArtemisModelingSubmissionRoutingModule } from 'app/exercises/modeling/p
         ArtemisModelingEditorModule,
         ArtemisComplaintsModule,
         ArtemisSharedComponentModule,
-        ArtemisModelingSubmissionRoutingModule,
+        ArtemisModelingParticipationRoutingModule,
         ModelingAssessmentModule,
         MomentModule,
         AceEditorModule,
     ],
     declarations: [ModelingSubmissionComponent],
 })
-export class ArtemisModelingSubmissionModule {}
+export class ArtemisModelingParticipationModule {}

@@ -2,7 +2,7 @@ import { NgModule } from '@angular/core';
 import { ReactiveFormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { ArtemisTextExerciseModule } from 'app/exercises/text/manage/text-exercise/text-exercise.module';
-import { ArtemisModelingExerciseModule } from 'app/exercises/modeling/manage/modeling-exercise/modeling-exercise.module';
+import { ArtemisModelingExerciseModule } from 'app/exercises/modeling/manage/modeling-exercise.module';
 import { ArtemisFileUploadExerciseManagementModule } from 'app/exercises/file-upload/manage/file-upload-exercise-management.module';
 
 import { CourseExerciseCardComponent } from 'app/course/manage/course-exercise-card.component';

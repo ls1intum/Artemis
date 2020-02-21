@@ -4,7 +4,7 @@ import { Observable } from 'rxjs/Observable';
 import { map } from 'rxjs/operators';
 import { SERVER_API_URL } from 'app/app.constants';
 
-import { ModelingExercise } from '../../../../entities/modeling-exercise.model';
+import { ModelingExercise } from '../../../entities/modeling-exercise.model';
 import { createRequestOption } from 'app/shared/util/request-util';
 import { ModelingStatistic } from 'app/entities/modeling-statistic.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';

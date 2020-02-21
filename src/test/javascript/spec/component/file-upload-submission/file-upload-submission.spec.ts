@@ -19,7 +19,7 @@ import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { ComplaintService } from 'app/complaints/complaint.service';
 import { MockComplaintService } from '../../mocks/mock-complaint.service';
 import { NgxDatatableModule } from '@swimlane/ngx-datatable';
-import { fileUploadSubmissionRoute, routes } from 'app/exercises/file-upload/participate/file-upload-submission.route';
+import { fileUploadSubmissionRoute, routes } from 'app/exercises/file-upload/participate/file-upload-participation.route';
 import { FileUploadSubmissionComponent } from 'app/exercises/file-upload/participate/file-upload-submission.component';
 import { MomentModule } from 'ngx-moment';
 import { createFileUploadSubmission, MockFileUploadSubmissionService } from '../../mocks/mock-file-upload-submission.service';
