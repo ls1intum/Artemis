@@ -343,7 +343,7 @@ export class TutorExerciseDashboardComponent implements OnInit {
         if (!this.exercise || !this.exercise.type || !submissionId) {
             return;
         }
-        const route = `/${this.exercise.type}-exercise/${this.exercise.id}/example-submission/${submissionId}`;
+        const route = `/${this.exercise.type}-exercises/${this.exercise.id}/example-submissions/${submissionId}`;
         // TODO CZ: add both flags and check for value in example submission components
         const queryParams: ExampleSubmissionQueryParams = {};
         if (readOnly) {
