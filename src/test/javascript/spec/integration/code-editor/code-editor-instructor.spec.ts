@@ -37,7 +37,6 @@ import { ResultService } from 'app/exercises/shared/result/result.service';
 import { DomainService } from 'app/exercises/programming/shared/code-editor/service/code-editor-domain.service';
 import { TemplateProgrammingExerciseParticipation } from 'app/entities/participation/template-programming-exercise-participation.model';
 import { Result } from 'app/entities/result.model';
-import { ArtemisCodeEditorModule } from 'app/exercises/programming/shared/code-editor/code-editor.module';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
@@ -55,6 +54,7 @@ import { MockProgrammingExerciseService } from '../../mocks/mock-programming-exe
 import { MockExerciseHintService } from '../../mocks/mock-exercise-hint.service';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { MockWebsocketService } from '../../mocks/mock-websocket.service';
+import { ArtemisCodeEditorManagementModule } from 'app/exercises/programming/manage/code-editor/code-editor-management.module';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -101,7 +101,7 @@ describe('CodeEditorInstructorIntegration', () => {
 
     beforeEach(async () => {
         return TestBed.configureTestingModule({
-            imports: [TranslateModule.forRoot(), ArtemisTestModule, ArtemisCodeEditorModule],
+            imports: [TranslateModule.forRoot(), ArtemisTestModule, ArtemisCodeEditorManagementModule],
             declarations: [],
             providers: [
                 JhiLanguageHelper,

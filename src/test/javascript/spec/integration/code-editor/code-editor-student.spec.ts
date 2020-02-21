@@ -46,7 +46,6 @@ import { CodeEditorStudentContainerComponent } from 'app/exercises/programming/p
 import { ExerciseHintService, IExerciseHintService } from 'app/exercises/shared/exercise-hint/exercise-hint.service';
 import { CodeEditorSessionService } from 'app/exercises/programming/shared/code-editor/service/code-editor-session.service';
 import { DomainService } from 'app/exercises/programming/shared/code-editor/service/code-editor-domain.service';
-import { ArtemisCodeEditorModule } from 'app/exercises/programming/shared/code-editor/code-editor.module';
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { MockActivatedRoute } from '../../mocks/mock-activated.route';
@@ -58,7 +57,7 @@ import { MockExerciseHintService } from '../../mocks/mock-exercise-hint.service'
 import { MockCodeEditorRepositoryFileService } from '../../mocks/mock-code-editor-repository-file.service';
 import { MockCodeEditorSessionService } from '../../mocks/mock-code-editor-session.service';
 import { MockCodeEditorBuildLogService } from '../../mocks/mock-code-editor-build-log.service';
-import { DomainDependentService } from 'app/exercises/programming/shared/code-editor/service/code-editor-domain-dependent.service';
+import { ArtemisProgrammingParticipationModule } from 'app/exercises/programming/participate/programming-participation.module';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -103,7 +102,7 @@ describe('CodeEditorStudentIntegration', () => {
 
     beforeEach(async () => {
         return TestBed.configureTestingModule({
-            imports: [TranslateModule.forRoot(), ArtemisTestModule, ArtemisCodeEditorModule],
+            imports: [TranslateModule.forRoot(), ArtemisTestModule, ArtemisProgrammingParticipationModule],
             declarations: [],
             providers: [
                 JhiLanguageHelper,

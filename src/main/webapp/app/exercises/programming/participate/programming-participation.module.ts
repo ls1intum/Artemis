@@ -18,4 +18,4 @@ import { ArtemisResultModule } from 'app/exercises/shared/result/result.module';
     ],
     declarations: [CodeEditorStudentContainerComponent],
 })
-export class ArtemisCodeEditorParticipationModule {}
+export class ArtemisProgrammingParticipationModule {}
