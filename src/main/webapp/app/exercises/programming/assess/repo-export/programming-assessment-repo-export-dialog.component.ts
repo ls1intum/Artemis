@@ -2,10 +2,7 @@ import { Component, Input, OnInit } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { AlertService } from 'app/core/alert/alert.service';
 import { WindowRef } from 'app/core/websocket/window.service';
-import {
-    ProgrammingAssessmentRepoExportService,
-    RepositoryExportOptions,
-} from 'app/exercises/programming/assess/programming-assessment/repo-export/programming-assessment-repo-export.service';
+import { ProgrammingAssessmentRepoExportService, RepositoryExportOptions } from 'app/exercises/programming/assess/repo-export/programming-assessment-repo-export.service';
 import { catchError, tap } from 'rxjs/operators';
 import { of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';

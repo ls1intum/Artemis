@@ -21,7 +21,7 @@ import { TutorParticipationGraphComponent } from 'app/course/tutor-course-dashbo
 import { TutorLeaderboardComponent } from 'app/course/instructor-course-dashboard/tutor-leaderboard/tutor-leaderboard.component';
 import { TranslateModule } from '@ngx-translate/core';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
-import { ArtemisProgrammingAssessmentModule } from 'app/exercises/programming/assess/programming-assessment/programming-assessment.module';
+import { ArtemisProgrammingAssessmentModule } from 'app/exercises/programming/assess/programming-assessment.module';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { ArtemisAssessmentSharedModule } from 'app/assessment/assessment-shared.module';
 import { GuidedTourMapping } from 'app/guided-tour/guided-tour-setting.model';

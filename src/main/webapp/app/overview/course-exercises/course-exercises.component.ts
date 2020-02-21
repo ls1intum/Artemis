@@ -11,7 +11,7 @@ import { sum } from 'lodash';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { courseExerciseOverviewTour } from 'app/guided-tour/tours/course-exercise-overview-tour';
 import { isOrion } from 'app/shared/orion/orion';
-import { ProgrammingSubmissionService } from 'app/exercises/programming/participate/programming-submission/programming-submission.service';
+import { ProgrammingSubmissionService } from 'app/exercises/programming/participate/programming-submission.service';
 import { LocalStorageService } from 'ngx-webstorage';
 import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';

@@ -1,6 +1,6 @@
 import { Component, Input } from '@angular/core';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { ProgrammingAssessmentRepoExportDialogComponent } from 'app/exercises/programming/assess/programming-assessment/repo-export/programming-assessment-repo-export-dialog.component';
+import { ProgrammingAssessmentRepoExportDialogComponent } from 'app/exercises/programming/assess/repo-export/programming-assessment-repo-export-dialog.component';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
 

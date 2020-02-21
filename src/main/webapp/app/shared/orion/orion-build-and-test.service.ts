@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { ProgrammingSubmissionService } from 'app/exercises/programming/participate/programming-submission/programming-submission.service';
+import { ProgrammingSubmissionService } from 'app/exercises/programming/participate/programming-submission.service';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import { filter, map, tap } from 'rxjs/operators';
 import { Observable, Subject, Subscription } from 'rxjs';

@@ -1,6 +1,6 @@
 import { Component, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleChanges } from '@angular/core';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
-import { ProgrammingAssessmentManualResultDialogComponent } from 'app/exercises/programming/assess/programming-assessment/manual-result/programming-assessment-manual-result-dialog.component';
+import { ProgrammingAssessmentManualResultDialogComponent } from 'app/exercises/programming/assess/manual-result/programming-assessment-manual-result-dialog.component';
 import { Result } from 'app/entities/result.model';
 import { Subscription } from 'rxjs';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';

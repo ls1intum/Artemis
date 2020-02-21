@@ -2,7 +2,7 @@ import { Input, OnChanges, OnDestroy, SimpleChanges } from '@angular/core';
 import { filter, tap } from 'rxjs/operators';
 import { Subscription } from 'rxjs';
 import { compose, head, orderBy } from 'lodash/fp';
-import { ProgrammingSubmissionService, ProgrammingSubmissionState } from 'app/exercises/programming/participate/programming-submission/programming-submission.service';
+import { ProgrammingSubmissionService, ProgrammingSubmissionState } from 'app/exercises/programming/participate/programming-submission.service';
 import { InitializationState, Participation } from 'app/entities/participation/participation.model';
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';

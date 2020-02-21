@@ -18,11 +18,7 @@ import { Result } from 'app/entities/result.model';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import { MockAccountService } from '../../mocks/mock-account.service';
 import { Exercise } from 'app/entities/exercise.model';
-import {
-    ProgrammingSubmissionService,
-    ProgrammingSubmissionState,
-    ProgrammingSubmissionStateObj,
-} from 'app/exercises/programming/participate/programming-submission/programming-submission.service';
+import { ProgrammingSubmissionService, ProgrammingSubmissionState, ProgrammingSubmissionStateObj } from 'app/exercises/programming/participate/programming-submission.service';
 import { ArtemisProgrammingExerciseActionsModule } from 'app/exercises/programming/shared/actions/programming-exercise-actions.module';
 import { triggerChanges } from '../../utils/general.utils';
 import { InitializationState } from 'app/entities/participation/participation.model';

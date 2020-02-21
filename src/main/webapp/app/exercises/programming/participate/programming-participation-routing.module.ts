@@ -1,5 +1,5 @@
 import { RouterModule, Routes } from '@angular/router';
-import { CodeEditorStudentContainerComponent } from 'app/exercises/programming/participate/code-editor/code-editor-student-container.component';
+import { CodeEditorStudentContainerComponent } from 'app/exercises/programming/participate/code-editor-student-container.component';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { PendingChangesGuard } from 'app/shared/guard/pending-changes.guard';
 import { NgModule } from '@angular/core';
@@ -24,4 +24,4 @@ const routes: Routes = [
     imports: [RouterModule.forChild(routes)],
     exports: [RouterModule],
 })
-export class ArtemisCodeEditorParticipationRoutingModule {}
+export class ArtemisProgrammingParticipationRoutingModule {}

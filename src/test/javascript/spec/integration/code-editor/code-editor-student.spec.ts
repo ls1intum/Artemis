@@ -21,11 +21,7 @@ import { buildLogs, extractedBuildLogErrors } from '../../sample/build-logs';
 import { problemStatement } from '../../sample/problemStatement.json';
 import { MockAccountService } from '../../mocks/mock-account.service';
 import { MockProgrammingExerciseParticipationService } from '../../mocks/mock-programming-exercise-participation.service';
-import {
-    ProgrammingSubmissionService,
-    ProgrammingSubmissionState,
-    ProgrammingSubmissionStateObj,
-} from 'app/exercises/programming/participate/programming-submission/programming-submission.service';
+import { ProgrammingSubmissionService, ProgrammingSubmissionState, ProgrammingSubmissionStateObj } from 'app/exercises/programming/participate/programming-submission.service';
 import { MockProgrammingSubmissionService } from '../../mocks/mock-programming-submission.service';
 import { ExerciseHint } from 'app/entities/exercise-hint.model';
 import { DeviceDetectorService } from 'ngx-device-detector';
@@ -46,7 +42,7 @@ import {
     CodeEditorRepositoryService,
 } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
 import { Feedback } from 'app/entities/feedback.model';
-import { CodeEditorStudentContainerComponent } from 'app/exercises/programming/participate/code-editor/code-editor-student-container.component';
+import { CodeEditorStudentContainerComponent } from 'app/exercises/programming/participate/code-editor-student-container.component';
 import { ExerciseHintService, IExerciseHintService } from 'app/exercises/shared/exercise-hint/exercise-hint.service';
 import { CodeEditorSessionService } from 'app/exercises/programming/shared/code-editor/service/code-editor-session.service';
 import { DomainService } from 'app/exercises/programming/shared/code-editor/service/code-editor-domain.service';

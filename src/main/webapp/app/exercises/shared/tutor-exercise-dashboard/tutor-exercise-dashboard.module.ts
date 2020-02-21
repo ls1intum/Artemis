@@ -9,7 +9,7 @@ import { AssessmentInstructionsModule } from 'app/assessment/assessment-instruct
 import { ArtemisSidePanelModule } from 'app/shared/side-panel/side-panel.module';
 import { ArtemisTutorLeaderboardModule } from 'app/course/instructor-course-dashboard/tutor-leaderboard/tutor-leaderboard.module';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
-import { ArtemisProgrammingAssessmentModule } from 'app/exercises/programming/assess/programming-assessment/programming-assessment.module';
+import { ArtemisProgrammingAssessmentModule } from 'app/exercises/programming/assess/programming-assessment.module';
 import { ArtemisAssessmentSharedModule } from 'app/assessment/assessment-shared.module';
 import { ArtemisTutorCourseDashboardModule } from 'app/course/tutor-course-dashboard/tutor-course-dashboard.module';
 import { ArtemisHeaderExercisePageWithDetailsModule } from 'app/exercises/shared/exercise-headers/exercise-headers.module';

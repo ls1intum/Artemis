@@ -9,7 +9,7 @@ import { Observable } from 'rxjs';
 import { ExerciseType } from 'app/entities/exercise.model';
 import * as moment from 'moment';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { ProgrammingAssessmentManualResultDialogComponent } from 'app/exercises/programming/assess/programming-assessment/manual-result/programming-assessment-manual-result-dialog.component';
+import { ProgrammingAssessmentManualResultDialogComponent } from 'app/exercises/programming/assess/manual-result/programming-assessment-manual-result-dialog.component';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { cloneDeep } from 'lodash';
 

@@ -10,7 +10,7 @@ import * as moment from 'moment';
 import { Observable, of } from 'rxjs';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import { catchError, filter, tap } from 'rxjs/operators';
-import { ProgrammingAssessmentManualResultService } from 'app/exercises/programming/assess/programming-assessment/manual-result/programming-assessment-manual-result.service';
+import { ProgrammingAssessmentManualResultService } from 'app/exercises/programming/assess/manual-result/programming-assessment-manual-result.service';
 import { SCORE_PATTERN } from 'app/app.constants';
 import { Complaint, ComplaintType } from 'app/entities/complaint.model';
 import { ComplaintService } from 'app/complaints/complaint.service';

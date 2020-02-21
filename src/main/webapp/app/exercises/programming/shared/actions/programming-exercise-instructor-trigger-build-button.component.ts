@@ -1,7 +1,7 @@
 import { Component } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { ProgrammingExerciseTriggerBuildButtonComponent } from './programming-exercise-trigger-build-button.component';
-import { ProgrammingSubmissionService } from 'app/exercises/programming/participate/programming-submission/programming-submission.service';
+import { ProgrammingSubmissionService } from 'app/exercises/programming/participate/programming-submission.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import { AlertService } from 'app/core/alert/alert.service';

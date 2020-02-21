@@ -10,7 +10,7 @@ import { SourceTreeService } from 'app/exercises/programming/shared/service/sour
 import { take, tap } from 'rxjs/operators';
 import { of, zip } from 'rxjs';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
-import { ProgrammingSubmissionService } from 'app/exercises/programming/participate/programming-submission/programming-submission.service';
+import { ProgrammingSubmissionService } from 'app/exercises/programming/participate/programming-submission.service';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { areManualResultsAllowed } from 'app/exercises/shared/exercise/exercise-utils';
 import { ResultService } from 'app/exercises/shared/result/result.service';

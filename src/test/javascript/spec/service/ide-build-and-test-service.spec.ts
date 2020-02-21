@@ -1,6 +1,6 @@
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
-import { IProgrammingSubmissionService } from 'app/exercises/programming/participate/programming-submission/programming-submission.service';
+import { IProgrammingSubmissionService } from 'app/exercises/programming/participate/programming-submission.service';
 import { IParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import { SinonSpy, SinonStub, spy, stub } from 'sinon';
 import { MockProgrammingSubmissionService } from '../mocks/mock-programming-submission.service';

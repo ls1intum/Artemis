@@ -1,10 +1,6 @@
 import { Component, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
 import { debounceTime, map, tap } from 'rxjs/operators';
-import {
-    ExerciseSubmissionState,
-    ProgrammingSubmissionService,
-    ProgrammingSubmissionState,
-} from 'app/exercises/programming/participate/programming-submission/programming-submission.service';
+import { ExerciseSubmissionState, ProgrammingSubmissionService, ProgrammingSubmissionState } from 'app/exercises/programming/participate/programming-submission.service';
 import { Subscription } from 'rxjs';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';

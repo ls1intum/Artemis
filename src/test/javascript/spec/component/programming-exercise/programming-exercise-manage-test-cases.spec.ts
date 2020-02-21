@@ -21,7 +21,7 @@ import { ArtemisProgrammingExerciseTestCaseModule } from 'app/exercises/programm
 import { expectElementToBeDisabled, expectElementToBeEnabled, getElement } from '../../utils/general.utils';
 import { ProgrammingExerciseWebsocketService } from 'app/exercises/programming/manage/services/programming-exercise-websocket.service';
 import { MockProgrammingExerciseWebsocketService } from '../../mocks/mock-programming-exercise-websocket.service';
-import { ProgrammingBuildRunService } from 'app/exercises/programming/participate/programming-submission/programming-build-run.service';
+import { ProgrammingBuildRunService } from 'app/exercises/programming/participate/programming-build-run.service';
 import { MockProgrammingBuildRunService } from '../../mocks/mock-programming-build-run.service';
 import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 import { MockFeatureToggleService } from '../../mocks/mock-feature-toggle-service';
