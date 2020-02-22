@@ -41,8 +41,15 @@ describe('TableEditableFieldComponent', () => {
 
     const route = { snapshot: { paramMap: convertToParamMap({ participationId: 42 }) } } as ActivatedRoute;
     const textExercise = { id: 1 } as TextExercise;
-    const participation = { id: 42, exercise: textExercise, submissions: [new TextSubmission()] } as StudentParticipation;
-    const result = { id: 1 } as Result;
+    const participation = new StudentParticipation();
+    const result = new Result();
+
+    beforeAll(() => {
+        participation.id = 42;
+        participation.exercise = textExercise;
+        participation.submissions = [new TextSubmission()];
+        result.id = 1;
+    });
 
     beforeEach(async () => {
         return TestBed.configureTestingModule({

@@ -1,6 +1,6 @@
 import { Component, DoCheck, Input, IterableDiffers, OnChanges, SimpleChanges } from '@angular/core';
 import { Feedback } from 'app/entities/feedback.model';
-import { HighlightColors } from 'app/exercises/text/assess/text-assessment/highlight-colors';
+import { HighlightColors } from 'app/exercises/text/assess/highlight-colors';
 import { TextBlock } from 'app/entities/text-block.model';
 
 @Component({

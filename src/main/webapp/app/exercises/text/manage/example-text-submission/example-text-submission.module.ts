@@ -7,7 +7,7 @@ import { ExampleTextSubmissionComponent } from 'app/exercises/text/manage/exampl
 import { ArtemisAssessmentSharedModule } from 'app/assessment/assessment-shared.module';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { ArtemisResultModule } from 'app/exercises/shared/result/result.module';
-import { ArtemisTextAssessmentModule } from 'app/exercises/text/assess/text-assessment/text-assessment.module';
+import { ArtemisTextAssessmentModule } from 'app/exercises/text/assess/text-assessment.module';
 
 const ENTITY_STATES = [...exampleTextSubmissionRoute];
 

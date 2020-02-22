@@ -6,7 +6,6 @@ import { MomentModule } from 'ngx-moment';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { ArtemisSidePanelModule } from 'app/shared/side-panel/side-panel.module';
 import { CourseLectureRowComponent } from 'app/overview/course-lectures/course-lecture-row.component';
-import { ArtemisCourseRegistrationSelector } from 'app/course/course-registration-selector/course-registration-selector.module';
 import { OrionModule } from 'app/shared/orion/orion.module';
 import { FeatureToggleModule } from 'app/shared/feature-toggle/feature-toggle.module';
 import { ProgrammingExerciseUtilsModule } from 'app/exercises/programming/shared/utils/programming-exercise-utils.module';
@@ -28,12 +27,15 @@ import { CourseLecturesComponent } from 'app/overview/course-lectures/course-lec
 import { ExerciseDetailsStudentActionsComponent } from 'app/overview/exercise-details/exercise-details-student-actions.component';
 import { CourseExerciseRowComponent } from 'app/overview/course-exercises/course-exercise-row.component';
 import { ArtemisProgrammingExerciseInstructionsRenderModule } from 'app/exercises/programming/shared/instructions-render/programming-exercise-instructions-render.module';
+import { CourseRegistrationSelectorComponent } from 'app/overview/course-registration-selector/course-registration-selector.component';
+import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 
 const ENTITY_STATES = [...OVERVIEW_ROUTES];
 
 @NgModule({
     imports: [
         ArtemisSharedModule,
+        ArtemisSharedComponentModule,
         ChartsModule,
         ClipboardModule,
         MomentModule,
@@ -42,7 +44,6 @@ const ENTITY_STATES = [...OVERVIEW_ROUTES];
         ArtemisSidePanelModule,
         RouterModule.forChild(ENTITY_STATES),
         ArtemisHeaderExercisePageWithDetailsModule,
-        ArtemisCourseRegistrationSelector,
         OrionModule,
         ArtemisComplaintsModule,
         FeatureToggleModule,
@@ -52,6 +53,7 @@ const ENTITY_STATES = [...OVERVIEW_ROUTES];
     declarations: [
         OverviewComponent,
         CourseOverviewComponent,
+        CourseRegistrationSelectorComponent,
         OverviewCourseCardComponent,
         CourseStatisticsComponent,
         CourseExerciseRowComponent,

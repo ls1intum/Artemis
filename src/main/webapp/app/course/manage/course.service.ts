@@ -14,7 +14,7 @@ import { Exercise } from '../../entities/exercise.model';
 import { ExerciseService } from '../../exercises/shared/exercise/exercise.service';
 import { User } from 'app/core/user/user.model';
 import { LectureService } from 'app/lecture/lecture.service';
-import { StatsForDashboard } from 'app/course/instructor-course-dashboard/stats-for-dashboard.model';
+import { StatsForDashboard } from 'app/course/dashboards/instructor-course-dashboard/stats-for-dashboard.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';

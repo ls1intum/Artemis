@@ -1,6 +1,6 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { Feedback } from 'app/entities/feedback.model';
-import { HighlightColors } from 'app/exercises/text/assess/text-assessment/highlight-colors';
+import { HighlightColors } from 'app/exercises/text/assess/highlight-colors';
 
 @Component({
     selector: 'jhi-text-editor-score-card',

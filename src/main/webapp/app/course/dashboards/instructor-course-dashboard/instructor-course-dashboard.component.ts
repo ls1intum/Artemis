@@ -6,7 +6,7 @@ import { catchError, map, tap } from 'rxjs/operators';
 import { of, zip } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { StatsForDashboard } from 'app/course/instructor-course-dashboard/stats-for-dashboard.model';
+import { StatsForDashboard } from 'app/course/dashboards/instructor-course-dashboard/stats-for-dashboard.model';
 import { ResultService } from 'app/exercises/shared/result/result.service';
 import { getIcon, getIconTooltip } from 'app/entities/exercise.model';
 

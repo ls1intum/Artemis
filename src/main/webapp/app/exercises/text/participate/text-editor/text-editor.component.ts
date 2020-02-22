@@ -11,7 +11,7 @@ import * as moment from 'moment';
 import { ArtemisMarkdown } from 'app/shared/markdown.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { Observable } from 'rxjs/Observable';
-import { TextSubmissionService } from 'app/exercises/text/participate/text-submission/text-submission.service';
+import { TextSubmissionService } from 'app/exercises/text/participate/text-submission.service';
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 import { Feedback } from 'app/entities/feedback.model';
 import { ResultService } from 'app/exercises/shared/result/result.service';

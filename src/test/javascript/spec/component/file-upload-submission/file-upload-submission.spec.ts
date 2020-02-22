@@ -10,7 +10,7 @@ import { MockComponent } from 'ng-mocks';
 import { MockAlertService } from '../../helpers/mock-alert.service';
 import { AlertService } from 'app/core/alert/alert.service';
 import { Router } from '@angular/router';
-import { ResizableInstructionsComponent } from 'app/exercises/text/assess/text-assessment/resizable-instructions/resizable-instructions.component';
+import { ResizableInstructionsComponent } from 'app/exercises/text/assess/resizable-instructions/resizable-instructions.component';
 import { DebugElement } from '@angular/core';
 import { By } from '@angular/platform-browser';
 import { MockAccountService } from '../../mocks/mock-account.service';
