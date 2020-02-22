@@ -343,7 +343,7 @@ export class TutorExerciseDashboardComponent implements OnInit {
         if (!this.exercise || !this.exercise.type || !submissionId) {
             return;
         }
-        const route = `/${this.exercise.type}-exercises/${this.exercise.id}/example-submissions/${submissionId}`;
+        const route = `/course-management/${this.courseId}/${this.exercise.type}-exercises/${this.exercise.id}/example-submissions/${submissionId}`;
         // TODO CZ: add both flags and check for value in example submission components
         const queryParams: ExampleSubmissionQueryParams = {};
         if (readOnly) {
@@ -361,23 +361,8 @@ export class TutorExerciseDashboardComponent implements OnInit {
             return;
         }
 
-        let route = '';
-        let submission = submissionId.toString();
-        if (isNewAssessment) {
-            submission = 'new';
-        }
-
-        switch (this.exercise.type) {
-            case ExerciseType.TEXT:
-                route = `/text/${this.exercise.id}/assessment/${submission}`;
-                break;
-            case ExerciseType.MODELING:
-                route = `/course-management/${this.courseId}/modeling-exercises/${this.exercise.id}/submissions/${submission}/assessment`;
-                break;
-            case ExerciseType.FILE_UPLOAD:
-                route = `/course-management/${this.courseId}/file-upload-exercises/${this.exercise.id}/submissions/${submission}/assessment`;
-                break;
-        }
+        const submission = isNewAssessment ? 'new' : submissionId.toString();
+        const route = `/course-management/${this.courseId}/${this.exercise.type}-exercises/${this.exercise.id}/submissions/${submission}/assessment`;
         this.router.navigate([route]);
     }
 
