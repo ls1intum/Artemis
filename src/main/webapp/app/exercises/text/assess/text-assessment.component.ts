@@ -291,7 +291,10 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
                     this.unassessedSubmission = response;
                     this.router.onSameUrlNavigation = 'reload';
                     // navigate to the new assessment page to trigger re-initialization of the components
-                    this.router.navigateByUrl(`/text/${this.exercise.id}/assessment/${this.unassessedSubmission.id}`, {});
+                    this.router.navigateByUrl(
+                        `/course-management/${this.exercise.course?.id}/text-exercises/${this.exercise.id}/submissions/${this.unassessedSubmission.id}/assessment`,
+                        {},
+                    );
                 },
                 (error: HttpErrorResponse) => {
                     if (error.status === 404) {
