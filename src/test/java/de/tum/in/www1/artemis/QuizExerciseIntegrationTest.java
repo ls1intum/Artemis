@@ -348,7 +348,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationTest {
     public void testQuizSubmit() throws Exception {
         // change config to make test faster
         scheduleService.stopSchedule();
-        scheduleService.startSchedule(2 * 1000); // every 1 second
+        scheduleService.startSchedule(1 * 1000); // every 1 second
         List<Course> courses = database.createCoursesWithExercisesAndLectures();
         Course course = courses.get(0);
         QuizExercise quizExercise = database.createQuiz(course, ZonedDateTime.now(), null);
@@ -419,7 +419,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationTest {
     public void testQuizSubmitPractice() throws Exception {
         // change config to make test faster
         scheduleService.stopSchedule();
-        scheduleService.startSchedule(2 * 1000); // every 2 seconds
+        scheduleService.startSchedule(1 * 1000); // every 2 seconds
         List<Course> courses = database.createCoursesWithExercisesAndLectures();
         Course course = courses.get(0);
         QuizExercise quizExercise = database.createQuiz(course, ZonedDateTime.now().minusSeconds(4), null);
@@ -475,7 +475,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationTest {
     public void testQuizSubmitPreview() throws Exception {
         // change config to make test faster
         scheduleService.stopSchedule();
-        scheduleService.startSchedule(2 * 1000); // every 1 second
+        scheduleService.startSchedule(1 * 1000); // every 1 second
         List<Course> courses = database.createCoursesWithExercisesAndLectures();
         Course course = courses.get(0);
         QuizExercise quizExercise = database.createQuiz(course, ZonedDateTime.now().minusSeconds(4), null);
