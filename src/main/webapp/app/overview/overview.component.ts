@@ -1,14 +1,14 @@
 import { Component, OnInit } from '@angular/core';
-import { Course } from 'app/entities/course/course.model';
-import { CourseService } from 'app/entities/course/course.service';
+import { Course } from 'app/entities/course.model';
+import { CourseService } from 'app/course/manage/course.service';
 import { HttpResponse } from '@angular/common/http';
 import { AlertService } from 'app/core/alert/alert.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { courseOverviewTour } from 'app/guided-tour/tours/course-overview-tour';
 import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
-import { Exercise } from 'app/entities/exercise/exercise.model';
-import { ExerciseService } from 'app/entities/exercise/exercise.service';
+import { Exercise } from 'app/entities/exercise.model';
+import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 
 @Component({
     selector: 'jhi-overview',

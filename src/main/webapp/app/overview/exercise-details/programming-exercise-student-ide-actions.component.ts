@@ -1,20 +1,20 @@
 import { Component, HostBinding, Input, OnInit } from '@angular/core';
-import { CourseExerciseService } from 'app/entities/course/course.service';
+import { CourseExerciseService } from 'app/course/manage/course.service';
 import { AlertService } from 'app/core/alert/alert.service';
-import { SourceTreeService } from 'app/components/util/sourceTree.service';
+import { SourceTreeService } from 'app/exercises/programming/shared/sourceTree.service';
 import { ActivatedRoute } from '@angular/router';
-import { FeatureToggle } from 'app/feature-toggle/feature-toggle.service';
+import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { Participation } from 'app/entities/participation/participation.model';
-import { Exercise, ParticipationStatus } from 'app/entities/exercise/exercise.model';
-import { isStartExerciseAvailable } from 'app/entities/exercise/exercise-utils';
-import { ProgrammingExercise } from 'app/entities/programming-exercise/programming-exercise.model';
+import { Exercise, ParticipationStatus } from 'app/entities/exercise.model';
+import { isStartExerciseAvailable } from 'app/exercises/shared/exercise/exercise-utils';
+import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
-import { OrionState } from 'app/orion/orion';
-import { OrionConnectorService } from 'app/orion/orion-connector.service';
-import { OrionBuildAndTestService } from 'app/orion/orion-build-and-test.service';
+import { OrionState } from 'app/shared/orion/orion';
+import { OrionConnectorService } from 'app/shared/orion/orion-connector.service';
+import { OrionBuildAndTestService } from 'app/shared/orion/orion-build-and-test.service';
 import { catchError, filter, tap } from 'rxjs/operators';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { participationStatus } from 'app/entities/exercise/exercise-utils';
+import { participationStatus } from 'app/exercises/shared/exercise/exercise-utils';
 
 @Component({
     selector: 'jhi-programming-exercise-student-ide-actions',
@@ -82,7 +82,7 @@ export class ProgrammingExerciseStudentIdeActionsComponent implements OnInit {
             .startExercise(this.courseId, this.exercise.id)
             .finally(() => (this.exercise.loading = false))
             .subscribe(
-                participation => {
+                (participation: StudentParticipation) => {
                     if (participation) {
                         this.exercise.studentParticipations = [participation];
                         this.exercise.participationStatus = this.participationStatus(this.exercise);

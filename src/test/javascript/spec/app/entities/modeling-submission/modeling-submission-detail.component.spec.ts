@@ -4,7 +4,7 @@ import { ActivatedRoute } from '@angular/router';
 import { of } from 'rxjs';
 
 import { ArtemisTestModule } from '../../../test.module';
-import { ModelingSubmissionDetailComponent } from 'app/entities/modeling-submission/modeling-submission-detail.component';
+import { ModelingSubmissionDetailComponent } from 'app/exercises/modeling-submission/modeling-submission-detail.component';
 import { ModelingSubmission } from 'app/shared/model/modeling-submission.model';
 
 describe('Component Tests', () => {

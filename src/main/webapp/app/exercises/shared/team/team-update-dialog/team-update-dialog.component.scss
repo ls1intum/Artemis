@@ -1,0 +1,86 @@
+@import 'src/main/webapp/content/scss/bootstrap-variables';
+
+$error-text-color: $danger;
+$error-bg-color: #f8d7da;
+
+.form-control-error {
+    margin-top: 0.35rem;
+
+    & + & {
+        margin-top: 0;
+    }
+}
+
+.student-search-searching {
+    position: relative;
+    top: -1px;
+}
+
+.student-search-failed {
+    line-height: 1.4rem;
+    font-size: 0.8rem;
+}
+
+.list-group--students {
+    max-width: 450px;
+
+    .list-group-item-container {
+        position: relative;
+
+        &:not(:last-child) {
+            margin-bottom: 0.15rem;
+        }
+
+        &:nth-child(even) {
+            .list-group-item {
+                background-color: rgba(0, 0, 0, 0.05);
+
+                &.has-error {
+                    background-color: darken($error-bg-color, 8%);
+                }
+            }
+        }
+    }
+
+    .list-group-item-index {
+        font-size: 1.1rem;
+        margin-left: 1.5rem;
+        margin-right: 1rem;
+        font-weight: 500;
+    }
+
+    .list-group-item {
+        flex-grow: 1;
+
+        &.has-error {
+            background-color: $error-bg-color;
+        }
+    }
+
+    .list-group-item-error {
+        width: 280px;
+        position: absolute;
+        left: 100%;
+        margin-left: 2rem;
+        color: $error-text-color;
+    }
+}
+
+.student-name {
+    flex-grow: 1;
+    width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.student-remove-link {
+    display: block;
+    cursor: pointer;
+}
+
+.modal-footer {
+    button[disabled] {
+        cursor: not-allowed;
+    }
+}

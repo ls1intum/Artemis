@@ -7,10 +7,10 @@ import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { MockSyncStorage } from '../../mocks/mock-sync.storage';
 import { TranslateModule } from '@ngx-translate/core';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { TutorParticipationGraphComponent } from 'app/tutor-course-dashboard/tutor-participation-graph/tutor-participation-graph.component';
-import { Exercise } from 'app/entities/exercise/exercise.model';
-import { ProgressBarComponent } from 'app/tutor-course-dashboard/tutor-participation-graph/progress-bar/progress-bar.component';
-import { TutorParticipation, TutorParticipationStatus } from 'app/entities/tutor-participation/tutor-participation.model';
+import { TutorParticipationGraphComponent } from 'app/course/tutor-course-dashboard/tutor-participation-graph/tutor-participation-graph.component';
+import { Exercise } from 'app/entities/exercise.model';
+import { ProgressBarComponent } from 'app/course/tutor-course-dashboard/tutor-participation-graph/progress-bar/progress-bar.component';
+import { TutorParticipation, TutorParticipationStatus } from 'app/entities/participation/tutor-participation.model';
 
 chai.use(sinonChai);
 const expect = chai.expect;
