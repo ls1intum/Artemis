@@ -28,9 +28,7 @@
                     *ngIf="guidedTourService.currentTour"
                     class="close"
                     (click)="
-                        guidedTourService.isCurrentTour(cancelTour) || guidedTourService.isCurrentTour(completedTour)
-                            ? guidedTourService.resetTour()
-                            : guidedTourService.skipTour(true, false)
+                        guidedTourService.isCurrentTour(cancelTour) || guidedTourService.isCurrentTour(completedTour) ? guidedTourService.resetTour() : guidedTourService.skipTour()
                     "
                 ></div>
             </div>
@@ -70,6 +68,7 @@
                                 *ngIf="currentTourStep.userInteractionEvent === UserInteractionEvent.MODELING && !currentTourStep.modelingTask"
                                 [icon]="'arrows-alt'"
                             ></fa-icon>
+                            <fa-icon *ngIf="currentTourStep.userInteractionEvent === UserInteractionEvent.ASSESS_SUBMISSION" [icon]="'edit'"></fa-icon>
                         </div>
                     </ng-template>
                     <div class="step-hint__label">
@@ -79,6 +78,10 @@
                         <span
                             *ngIf="currentTourStep.userInteractionEvent === UserInteractionEvent.MODELING && !currentTourStep.modelingTask"
                             jhiTranslate="tour.modelingHint.text"
+                        ></span>
+                        <span
+                            *ngIf="currentTourStep.userInteractionEvent === UserInteractionEvent.ASSESS_SUBMISSION"
+                            [jhiTranslate]="currentTourStep.assessmentTask.taskTranslateKey"
                         ></span>
                     </div>
                 </div>

@@ -5,13 +5,13 @@ import { ArtemisTestModule } from '../../test.module';
 import { MockComponent } from 'ng-mocks';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { RouterModule } from '@angular/router';
-import { SidePanelComponent } from 'app/components/side-panel/side-panel.component';
-import { TutorLeaderboardComponent } from 'app/instructor-course-dashboard/tutor-leaderboard/tutor-leaderboard.component';
-import { StatsForDashboard } from 'app/instructor-course-dashboard/stats-for-dashboard.model';
+import { SidePanelComponent } from 'app/shared/side-panel/side-panel.component';
+import { TutorLeaderboardComponent } from 'app/course/instructor-course-dashboard/tutor-leaderboard/tutor-leaderboard.component';
+import { StatsForDashboard } from 'app/course/instructor-course-dashboard/stats-for-dashboard.model';
 import { ChartsModule } from 'ng2-charts';
 import { TranslateModule } from '@ngx-translate/core';
-import { InstructorExerciseDashboardComponent } from 'app/instructor-exercise-dashboard/instructor-exercise-dashboard.component';
-import { HeaderExercisePageWithDetailsComponent } from 'app/exercise-headers/header-exercise-page-with-details.component';
+import { InstructorExerciseDashboardComponent } from 'app/exercises/shared/instructor-exercise-dashboard/instructor-exercise-dashboard.component';
+import { HeaderExercisePageWithDetailsComponent } from 'app/exercises/shared/exercise-headers/header-exercise-page-with-details.component';
 
 chai.use(sinonChai);
 const expect = chai.expect;

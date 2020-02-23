@@ -37,6 +37,9 @@ export class JhiAlertErrorComponent implements OnDestroy {
                     break;
 
                 case 400:
+                    if (httpErrorResponse.error !== '' && httpErrorResponse.error.skipAlert) {
+                        break;
+                    }
                     const arr = httpErrorResponse.headers.keys();
                     let errorHeader = null;
                     let entityKey = null;

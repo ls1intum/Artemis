@@ -1,0 +1,63 @@
+<div *jhiHasAnyAuthority="'ROLE_ADMIN'" class="form-group-narrow">
+    <div class="row">
+        <div class="col-auto">
+            <div>
+                <label class="label-narrow" jhiTranslate="artemisApp.exercise.mode">Mode</label>
+                <jhi-help-icon placement="top auto" text="artemisApp.exercise.modeTooltip"></jhi-help-icon>
+            </div>
+            <div>
+                <jhi-mode-picker [exercise]="exercise" (ngModelChange)="onExerciseModeChange($event)"></jhi-mode-picker>
+            </div>
+        </div>
+        <div class="col-auto" *ngIf="exercise.mode === TEAM">
+            <div>
+                <label class="label-narrow" jhiTranslate="artemisApp.exercise.teamAssignmentConfig.teamSize">Team size</label>
+                <jhi-help-icon placement="top" text="artemisApp.exercise.teamAssignmentConfig.teamSizeTooltip"></jhi-help-icon>
+            </div>
+            <div>
+                <div class="input-group">
+                    <div class="input-group-prepend">
+                        <label class="input-group-text" for="field_minTeamSize">Min</label>
+                    </div>
+                    <input
+                        name="minTeamSize"
+                        id="field_minTeamSize"
+                        type="number"
+                        min="1"
+                        max="99"
+                        required
+                        class="form-control input-number-short"
+                        [(ngModel)]="config.minTeamSize"
+                        (ngModelChange)="updateMinTeamSize($event)"
+                        #minTeamSize="ngModel"
+                    />
+                    <div class="input-group-append">
+                        <label class="input-group-text" for="field_maxTeamSize">Max</label>
+                    </div>
+                    <input
+                        name="maxTeamSize"
+                        id="field_maxTeamSize"
+                        type="number"
+                        min="1"
+                        max="99"
+                        required
+                        class="form-control input-number-short"
+                        [(ngModel)]="config.maxTeamSize"
+                        (ngModelChange)="updateMaxTeamSize($event)"
+                        #maxTeamSize="ngModel"
+                    />
+                </div>
+                <ng-container *ngFor="let e of minTeamSize.errors! | keyvalue | removekeys: ['required']">
+                    <div *ngIf="minTeamSize.invalid && (minTeamSize.dirty || minTeamSize.touched)" class="alert alert-danger">
+                        <div [jhiTranslate]="'artemisApp.exercise.form.minTeamSize' + '.' + e.key"></div>
+                    </div>
+                </ng-container>
+                <ng-container *ngFor="let e of maxTeamSize.errors! | keyvalue | removekeys: ['required']">
+                    <div *ngIf="maxTeamSize.invalid && (maxTeamSize.dirty || maxTeamSize.touched)" class="alert alert-danger">
+                        <div [jhiTranslate]="'artemisApp.exercise.form.maxTeamSize' + '.' + e.key"></div>
+                    </div>
+                </ng-container>
+            </div>
+        </div>
+    </div>
+</div>

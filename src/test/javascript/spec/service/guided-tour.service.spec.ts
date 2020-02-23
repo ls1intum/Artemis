@@ -14,23 +14,24 @@ import { ArtemisTestModule } from '../test.module';
 import { SERVER_API_URL } from 'app/app.constants';
 import { GuidedTour } from 'app/guided-tour/guided-tour.model';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
-import { GuidedTourState, Orientation, UserInteractionEvent } from 'app/guided-tour/guided-tour.constants';
+import { GuidedTourState, Orientation, ResetParticipation, UserInteractionEvent } from 'app/guided-tour/guided-tour.constants';
 import { GuidedTourComponent } from 'app/guided-tour/guided-tour.component';
 import { GuidedTourMapping, GuidedTourSetting } from 'app/guided-tour/guided-tour-setting.model';
 import { ModelingTaskTourStep, TextTourStep, UserInterActionTourStep } from 'app/guided-tour/guided-tour-step.model';
 import { MockAccountService } from '../mocks/mock-account.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { DeviceDetectorService } from 'ngx-device-detector';
-import { Course } from 'app/entities/course/course.model';
+import { Course } from 'app/entities/course.model';
 import { MockTranslateService } from '../mocks/mock-translate.service';
 import { GuidedTourModelingTask, personUML } from 'app/guided-tour/guided-tour-task.model';
 import { completedTour } from 'app/guided-tour/tours/general-tour';
 import { SinonStub, stub } from 'sinon';
 import { HttpResponse } from '@angular/common/http';
-import { ParticipationService } from 'app/entities/participation/participation.service';
-import { Exercise, ExerciseType } from 'app/entities/exercise/exercise.model';
+import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
+import { CourseService } from 'app/course/manage/course.service';
+import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { InitializationState } from 'app/entities/participation/participation.model';
-import { NavbarComponent } from 'app/layouts/navbar/navbar.component';
+import { NavbarComponent } from 'app/shared/layouts/navbar/navbar.component';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { MockSyncStorage } from '../mocks/mock-sync.storage';
 import { MockCookieService } from '../mocks/mock-cookie.service';
@@ -41,6 +42,7 @@ const expect = chai.expect;
 describe('GuidedTourService', () => {
     const tour: GuidedTour = {
         settingsKey: 'tour',
+        resetParticipation: ResetParticipation.EXERCISE_PARTICIPATION,
         steps: [
             new TextTourStep({ highlightSelector: '.random-selector', headlineTranslateKey: '', contentTranslateKey: '' }),
             new TextTourStep({ headlineTranslateKey: '', contentTranslateKey: '', orientation: Orientation.TOPLEFT }),
@@ -49,6 +51,7 @@ describe('GuidedTourService', () => {
 
     const tourWithUserInteraction: GuidedTour = {
         settingsKey: 'tour_user_interaction',
+        resetParticipation: ResetParticipation.EXERCISE_PARTICIPATION,
         steps: [
             new UserInterActionTourStep({
                 highlightSelector: '.random-selector',
@@ -62,6 +65,7 @@ describe('GuidedTourService', () => {
 
     const tourWithCourseAndExercise: GuidedTour = {
         settingsKey: 'tour_with_course_and_exercise',
+        resetParticipation: ResetParticipation.EXERCISE_PARTICIPATION,
         steps: [
             new TextTourStep({ headlineTranslateKey: '', contentTranslateKey: '' }),
             new TextTourStep({ headlineTranslateKey: '', contentTranslateKey: '', orientation: Orientation.TOPLEFT }),
@@ -70,6 +74,7 @@ describe('GuidedTourService', () => {
 
     const tourWithModelingTask: GuidedTour = {
         settingsKey: 'tour_modeling_task',
+        resetParticipation: ResetParticipation.EXERCISE_PARTICIPATION,
         steps: [
             new ModelingTaskTourStep({
                 headlineTranslateKey: '',
@@ -130,6 +135,7 @@ describe('GuidedTourService', () => {
         let router: Router;
         let guidedTourService: GuidedTourService;
         let participationService: ParticipationService;
+        let courseService: CourseService;
 
         let findParticipationStub: SinonStub;
         let deleteParticipationStub: SinonStub;
@@ -168,9 +174,10 @@ describe('GuidedTourService', () => {
                     const navBarComponentFixture = TestBed.createComponent(NavbarComponent);
                     const navBarComponent = navBarComponentFixture.componentInstance;
 
-                    router = TestBed.inject(Router);
-                    guidedTourService = TestBed.inject(GuidedTourService);
-                    participationService = TestBed.inject(ParticipationService);
+                    router = TestBed.get(Router);
+                    guidedTourService = TestBed.get(GuidedTourService);
+                    participationService = TestBed.get(ParticipationService);
+                    courseService = TestBed.get(CourseService);
 
                     findParticipationStub = stub(participationService, 'findParticipation');
                     deleteParticipationStub = stub(participationService, 'deleteForGuidedTour');
@@ -202,7 +209,7 @@ describe('GuidedTourService', () => {
 
             // Start course overview tour
             expect(guidedTourComponentFixture.debugElement.query(By.css('.tour-step'))).to.not.exist;
-            guidedTourService['enableTour'](tour);
+            guidedTourService['enableTour'](tour, true);
             guidedTourService['startTour']();
             guidedTourComponentFixture.detectChanges();
             expect(guidedTourComponentFixture.debugElement.query(By.css('.tour-step'))).to.exist;
@@ -291,42 +298,56 @@ describe('GuidedTourService', () => {
             });
 
             it('should start the tour for the matching course title', () => {
-                let courses = [course1];
+                spyOn(courseService, 'findWithExercises').and.returnValue(of({ body: course1 } as HttpResponse<any>));
+                const courses = [course1];
+
                 // enable tour for matching course title
-                guidedTourService.enableTourForCourseOverview(courses, tourWithCourseAndExercise);
+                guidedTourService.enableTourForCourseOverview(courses, tourWithCourseAndExercise, true);
+                expect(guidedTourService.currentTour).to.equal(tourWithCourseAndExercise);
+                expect(guidedTourService['currentCourse']).to.equal(course1);
+                expect(guidedTourService['currentExercise']).to.equal(exercise1);
+                resetCurrentTour();
+
+                const tourWithoutExerciseMapping = { courseShortName: 'tutorial', tours: { tour_with_course_and_exercise: '' } } as GuidedTourMapping;
+                guidedTourService.guidedTourMapping = tourWithoutExerciseMapping;
+
+                // enable tour for matching course title
+                guidedTourService.enableTourForCourseOverview(courses, tourWithCourseAndExercise, true);
                 expect(guidedTourService.currentTour).to.equal(tourWithCourseAndExercise);
                 expect(guidedTourService['currentCourse']).to.equal(course1);
                 expect(guidedTourService['currentExercise']).to.be.null;
                 resetCurrentTour();
+            });
 
-                courses = [course2];
+            it('should disable the tour for not matching course title', () => {
+                const courses = [course2];
                 // disable tour for not matching titles
-                guidedTourService.enableTourForCourseOverview(courses, tourWithCourseAndExercise);
+                guidedTourService.enableTourForCourseOverview(courses, tourWithCourseAndExercise, true);
                 currentCourseAndExerciseNull();
             });
 
             it('should start the tour for the matching exercise short name', () => {
                 // disable tour for exercises without courses
                 guidedTourService.currentTour = null;
-                guidedTourService.enableTourForExercise(exercise1, tourWithCourseAndExercise);
+                guidedTourService.enableTourForExercise(exercise1, tourWithCourseAndExercise, true);
                 currentCourseAndExerciseNull();
                 resetCurrentTour();
 
                 // disable tour for not matching course and exercise identifiers
                 exercise2.course = course2;
-                guidedTourService.enableTourForExercise(exercise2, tourWithCourseAndExercise);
+                guidedTourService.enableTourForExercise(exercise2, tourWithCourseAndExercise, true);
                 currentCourseAndExerciseNull();
                 resetCurrentTour();
 
                 // disable tour for not matching course identifier
                 exercise3.course = course2;
-                guidedTourService.enableTourForExercise(exercise3, tourWithCourseAndExercise);
+                guidedTourService.enableTourForExercise(exercise3, tourWithCourseAndExercise, true);
                 currentCourseAndExerciseNull();
                 resetCurrentTour();
 
                 // enable tour for matching course and exercise identifiers
                 exercise1.course = course1;
-                guidedTourService.enableTourForExercise(exercise1, tourWithCourseAndExercise);
+                guidedTourService.enableTourForExercise(exercise1, tourWithCourseAndExercise, true);
                 expect(guidedTourService.currentTour).to.equal(tourWithCourseAndExercise);
                 expect(guidedTourService['currentCourse']).to.equal(course1);
                 expect(guidedTourService['currentExercise']).to.equal(exercise1);
@@ -336,7 +357,7 @@ describe('GuidedTourService', () => {
                 guidedTourService.currentTour = null;
 
                 // enable tour for matching course / exercise short name
-                guidedTourService.enableTourForCourseExerciseComponent(course1, tourWithCourseAndExercise);
+                guidedTourService.enableTourForCourseExerciseComponent(course1, tourWithCourseAndExercise, true);
                 expect(guidedTourService.currentTour).to.equal(tourWithCourseAndExercise);
 
                 course1.exercises.forEach(exercise => {
@@ -350,13 +371,13 @@ describe('GuidedTourService', () => {
 
                 // disable tour for not matching course without exercise
                 guidedTourService.currentTour = null;
-                guidedTourService.enableTourForCourseExerciseComponent(course2, tourWithCourseAndExercise);
+                guidedTourService.enableTourForCourseExerciseComponent(course2, tourWithCourseAndExercise, true);
                 expect(guidedTourService.currentTour).to.be.null;
 
                 // disable tour for not matching course but matching exercise identifier
                 guidedTourService.currentTour = null;
                 course2.exercises = [exercise3];
-                guidedTourService.enableTourForCourseExerciseComponent(course2, tourWithCourseAndExercise);
+                guidedTourService.enableTourForCourseExerciseComponent(course2, tourWithCourseAndExercise, true);
                 expect(guidedTourService.currentTour).to.be.null;
             });
 
@@ -383,7 +404,7 @@ describe('GuidedTourService', () => {
                     course1.exercises.push(exercise4);
 
                     prepareParticipation(exercise1, studentParticipation1, httpResponse1);
-                    guidedTourService.enableTourForExercise(exercise1, tourWithCourseAndExercise);
+                    guidedTourService.enableTourForExercise(exercise1, tourWithCourseAndExercise, true);
                     guidedTourService.restartTour();
                     expect(findParticipationStub).to.have.been.calledOnceWithExactly(1);
                     expect(deleteParticipationStub).to.have.been.calledOnceWithExactly(1, { deleteBuildPlan: true, deleteRepository: true });
@@ -391,7 +412,7 @@ describe('GuidedTourService', () => {
                     expect(navigationStub).to.have.been.calledOnceWith('/overview/1/exercises');
 
                     prepareParticipation(exercise4, studentParticipation2, httpResponse2);
-                    guidedTourService.enableTourForExercise(exercise4, tourWithCourseAndExercise);
+                    guidedTourService.enableTourForExercise(exercise4, tourWithCourseAndExercise, true);
                     guidedTourService.restartTour();
                     expect(findParticipationStub).to.have.been.calledOnceWithExactly(4);
                     expect(deleteParticipationStub).to.have.been.calledOnceWithExactly(2, { deleteBuildPlan: false, deleteRepository: false });

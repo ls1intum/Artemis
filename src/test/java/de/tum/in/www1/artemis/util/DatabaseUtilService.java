@@ -79,6 +79,9 @@ public class DatabaseUtilService {
     UserRepository userRepo;
 
     @Autowired
+    TeamRepository teamRepo;
+
+    @Autowired
     ResultRepository resultRepo;
 
     @Autowired
@@ -163,6 +166,7 @@ public class DatabaseUtilService {
     private TextClusterRepository textClusterRepository;
 
     public void resetDatabase() {
+
         conflictRepo.deleteAll();
         conflictingResultRepo.deleteAll();
         complaintResponseRepo.deleteAll();
@@ -180,6 +184,7 @@ public class DatabaseUtilService {
         submissionRepository.deleteAll();
         participationRepo.deleteAll();
         assertThat(participationRepo.findAll()).as("participation data has been cleared").isEmpty();
+        teamRepo.deleteAll();
         ltiOutcomeUrlRepository.deleteAll();
         programmingExerciseRepository.deleteAll();
         groupNotificationRepository.deleteAll();
@@ -188,6 +193,8 @@ public class DatabaseUtilService {
         attachmentRepo.deleteAll();
         lectureRepo.deleteAll();
         courseRepo.deleteAll();
+
+        assertThat(resultRepo.findAll()).as("result data has been cleared").isEmpty();
         assertThat(courseRepo.findAll()).as("course data has been cleared").isEmpty();
         ltiUserIdRepository.deleteAll();
         userRepo.deleteAll();
@@ -201,8 +208,9 @@ public class DatabaseUtilService {
      * numberOfStudents Tutors login is a concatenation of the prefix "tutor" and a number counting from 1 to numberOfStudents Tutors are all in the "tutor" group and students in
      * the "tumuser" group
      *
-     * @param numberOfStudents
-     * @param numberOfTutors
+     * @param numberOfStudents the number of students that will be added to the database
+     * @param numberOfTutors the number of tutors that will be added to the database
+     * @param numberOfInstructors the number of instructors that will be added to the database
      */
     public List<User> addUsers(int numberOfStudents, int numberOfTutors, int numberOfInstructors) {
 
@@ -227,6 +235,16 @@ public class DatabaseUtilService {
         users.addAll(instructors);
         users.add(admin);
         return users;
+    }
+
+    public List<Team> addTeamsForExercise(Exercise exercise, int numberOfTeams) {
+        List<Team> teams = ModelFactory.generateTeamsForExercise(exercise, numberOfTeams);
+        userRepo.saveAll(teams.stream().map(Team::getStudents).flatMap(Collection::stream).collect(Collectors.toList()));
+        return teamRepo.saveAll(teams);
+    }
+
+    public Team addTeamForExercise(Exercise exercise) {
+        return addTeamsForExercise(exercise, 1).get(0);
     }
 
     public Result addProgrammingParticipationWithResultForExercise(ProgrammingExercise exercise, String login) {
@@ -291,21 +309,25 @@ public class DatabaseUtilService {
 
         ModelingExercise modelingExercise = ModelFactory.generateModelingExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, DiagramType.ClassDiagram, course1);
         modelingExercise.setGradingInstructions("some grading instructions");
+        addGradingInstructionsToExercise(modelingExercise);
         modelingExercise.getCategories().add("Modeling");
         course1.addExercises(modelingExercise);
 
         TextExercise textExercise = ModelFactory.generateTextExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, course1);
         textExercise.setGradingInstructions("some grading instructions");
+        addGradingInstructionsToExercise(textExercise);
         textExercise.getCategories().add("Text");
         course1.addExercises(textExercise);
 
         FileUploadExercise fileUploadExercise = ModelFactory.generateFileUploadExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, "png", course1);
         fileUploadExercise.setGradingInstructions("some grading instructions");
+        addGradingInstructionsToExercise(fileUploadExercise);
         fileUploadExercise.getCategories().add("File");
         course1.addExercises(fileUploadExercise);
 
         ProgrammingExercise programmingExercise = ModelFactory.generateProgrammingExercise(pastTimestamp, futureTimestamp, course1);
         programmingExercise.setGradingInstructions("some grading instructions");
+        addGradingInstructionsToExercise(programmingExercise);
         programmingExercise.getCategories().add("Programming");
         course1.addExercises(programmingExercise);
 
@@ -486,6 +508,22 @@ public class DatabaseUtilService {
         return result;
     }
 
+    public List<GradingCriterion> addGradingInstructionsToExercise(Exercise exercise) {
+        GradingCriterion emptyCriterion = ModelFactory.generateGradingCriterion(null);
+        List<GradingInstruction> instructionWithNoCriteria = ModelFactory.generateGradingInstructions(emptyCriterion, 1);
+        emptyCriterion.setExercise(exercise);
+        emptyCriterion.setStructuredGradingInstructions(instructionWithNoCriteria);
+        GradingCriterion testCriterion = ModelFactory.generateGradingCriterion("test title");
+        List<GradingInstruction> instructions = ModelFactory.generateGradingInstructions(testCriterion, 3);
+        testCriterion.setStructuredGradingInstructions(instructions);
+        testCriterion.setExercise(exercise);
+        var criteria = new ArrayList<GradingCriterion>();
+        criteria.add(emptyCriterion);
+        criteria.add(testCriterion);
+        exercise.setGradingCriteria(criteria);
+        return exercise.getGradingCriteria();
+    }
+
     public void addCourseWithOneModelingExercise() {
         long currentCourseRepoSize = courseRepo.count();
         long currentExerciseRepoSize = exerciseRepo.count();
@@ -583,6 +621,7 @@ public class DatabaseUtilService {
         programmingExercise.setPublishBuildPlanUrl(true);
         programmingExercise.setMaxScore(42.0);
         programmingExercise.setDifficulty(DifficultyLevel.EASY);
+        programmingExercise.setMode(ExerciseMode.INDIVIDUAL);
         programmingExercise.setProblemStatement("Lorem Ipsum");
         programmingExercise.setAssessmentType(AssessmentType.AUTOMATIC);
         programmingExercise.setGradingInstructions("Lorem Ipsum");

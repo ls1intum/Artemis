@@ -4,9 +4,9 @@ import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
 
 import { AceEditorModule } from 'ng2-ace-editor';
-import { ItalicCommand } from 'app/markdown-editor/commands/italic.command';
-import { MarkdownEditorComponent } from 'app/markdown-editor/markdown-editor.component';
-import { ArtemisMarkdownEditorModule } from 'app/markdown-editor/markdown-editor.module';
+import { ItalicCommand } from 'app/shared/markdown-editor/commands/italic.command';
+import { MarkdownEditorComponent } from 'app/shared/markdown-editor/markdown-editor.component';
+import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown-editor.module';
 import { ArtemisTestModule } from '../../test.module';
 
 chai.use(sinonChai);

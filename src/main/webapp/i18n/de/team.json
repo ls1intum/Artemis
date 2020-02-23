@@ -1,0 +1,56 @@
+{
+    "artemisApp": {
+        "team": {
+            "home": {
+                "title": "Teams",
+                "createLabel": "Team erstellen",
+                "createOrEditLabel": "Team erstellen oder bearbeiten"
+            },
+            "created": "Team erstellt mit ID {{ param }}",
+            "updated": "Team von {{ param }} aktualisiert",
+            "deleted": "Team von {{ param }} gelöscht",
+            "delete": {
+                "question": "Soll die Team von <strong>{{ name }}</strong> wirklich dauerhaft gelöscht werden?"
+            },
+            "detail": {
+                "title": "Team"
+            },
+            "name": {
+                "label": "Name",
+                "minlength": "Der Name muss mindestens 3 Zeichen lang sein."
+            },
+            "shortName": {
+                "label": "Kurzname",
+                "tooltip": "Der Kurzname des Teams kann NICHT im Nachhinein bearbeitet werden! Er wird als eindeutiger Schlüssel für die Repositories und Build Pläne verwendet.",
+                "pattern": "Der Kurzname muss mit einem Buchstaben beginnen und darf keine Sonderzeichen beinhalten.",
+                "minlength": "Der Kurzname muss mindestens 3 Zeichen lang sein.",
+                "alreadyTaken": "Dieser Kurzname ist bereits an ein anderes Team vergeben."
+            },
+            "image": "Bild",
+            "students": "Studenten",
+            "noStudentsAddedYet": "Noch keine Studenten hinzugefügt.",
+            "addStudentToTeam": "Studenten zum Team hinzufügen (nach Login oder Name suchen)",
+            "studentSearch": {
+                "failed": "Suche fehlgeschlagen. Bitte nochmal versuchen."
+            },
+            "teamSizeNote": "Empfohlene Team-Größe:",
+            "teamSizeUnit": "Studenten",
+            "ignoreTeamSizeRecommendation": "Fortfahren gegen Empfehlung",
+            "createTeam": {
+                "label": "Erstelle Team",
+                "error": "Das Team konnte nicht entfernt werden. Bitte versuche es nochmal."
+            },
+            "updateTeam": {
+                "label": "Bearbeite Team",
+                "error": "Das Team konnte nicht bearbeitet werden. Bitte versuche es nochmal."
+            },
+            "removeTeam": {
+                "label": "Entferne Team",
+                "error": "Das Team konnte nicht entfernt werden. Bitte versuche es nochmal."
+            },
+            "errors": {
+                "studentAlreadyAssignedToTeam": "Student mit Login {{ studentLogin }} ist bereits in Team mit Id {{ teamId }."
+            }
+        }
+    }
+}

@@ -8,8 +8,8 @@ import { JhiEventManager } from 'ng-jhipster';
 import { ArtemisTestModule } from '../../../test.module';
 import { FeedbackDialogComponent } from '../../../../../../main/webapp/app/entities/feedback/feedback-dialog.component';
 import { FeedbackService } from '../../../../../../main/webapp/app/entities/feedback/feedback.service';
-import { Feedback } from '../../../../../../main/webapp/app/entities/feedback/feedback.model';
-import { ExerciseService } from '../../../../../../main/webapp/app/entities/exercise';
+import { Feedback } from 'app/entities/feedback.model';
+import { ExerciseService } from '../../../../../../main/webapp/app/exercises/shared/exercise';
 
 describe('Component Tests', () => {
     describe('Feedback Management Dialog Component', () => {
