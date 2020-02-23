@@ -66,6 +66,7 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationTest 
     @BeforeEach
     public void initTestCase() {
         database.addUsers(2, 2, 2);
+        userRepo.save(ModelFactory.generateActivatedUser("student3"));
         course = database.addCourseWithModelingAndTextExercise();
         for (Exercise exercise : course.getExercises()) {
             if (exercise instanceof ModelingExercise) {
@@ -143,6 +144,12 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationTest 
     public void participateInTextExercise_releaseDateNotReached() throws Exception {
         textExercise.setReleaseDate(ZonedDateTime.now().plusHours(2));
         exerciseRepo.save(textExercise);
+        request.post("/api/courses/" + course.getId() + "/exercises/" + textExercise.getId() + "/participations", null, HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = "student3")
+    public void participateInTextExercise_notStudentInCourse() throws Exception {
         request.post("/api/courses/" + course.getId() + "/exercises/" + textExercise.getId() + "/participations", null, HttpStatus.FORBIDDEN);
     }
 
@@ -312,5 +319,17 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationTest 
         participationRepo.save(participation);
         request.putWithResponseBody("/api/courses/" + course.getId() + "/exercises/" + textExercise.getId() + "/resume-programming-participation", null,
                 ProgrammingExerciseStudentParticipation.class, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void getAllParticipationsForExercise() throws Exception {
+        database.addParticipationForExercise(textExercise, "student1");
+        database.addParticipationForExercise(textExercise, "student2");
+        var participations = request.getList("/api/exercise/" + textExercise.getId() + "/participations", HttpStatus.OK, StudentParticipation.class);
+        assertThat(participations.size()).as("Exactly 2 participations are returned").isEqualTo(2);
+        assertThat(participations.stream().allMatch(participation -> participation.getStudent() != null)).as("Only participation that has student are returned").isTrue();
+        assertThat(participations.stream().allMatch(participation -> participation.getSubmissionCount() == 0)).as("No submissions should exist for participations").isTrue();
+
     }
 }
