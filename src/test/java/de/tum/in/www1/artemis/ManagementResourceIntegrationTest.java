@@ -46,7 +46,6 @@ public class ManagementResourceIntegrationTest extends AbstractSpringIntegration
     @BeforeEach
     public void initTestCase() {
         database.addUsers(2, 0, 0);
-        persistenceAuditEventRepository.deleteAll();
         persAuditEvent = new PersistentAuditEvent();
         persAuditEvent.setPrincipal("student1");
         persAuditEvent.setAuditEventDate(Instant.now());
