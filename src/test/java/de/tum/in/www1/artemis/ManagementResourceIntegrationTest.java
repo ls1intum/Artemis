@@ -45,7 +45,7 @@ public class ManagementResourceIntegrationTest extends AbstractSpringIntegration
 
     @BeforeEach
     public void initTestCase() {
-        database.addUsers(2, 0, 0);
+        database.addUsers(0, 0, 0);
         persAuditEvent = new PersistentAuditEvent();
         persAuditEvent.setPrincipal("student1");
         persAuditEvent.setAuditEventDate(Instant.now());
@@ -53,6 +53,7 @@ public class ManagementResourceIntegrationTest extends AbstractSpringIntegration
         var data = new HashMap<String, String>();
         data.put("1", "2");
         persAuditEvent.setData(data);
+        persistenceAuditEventRepository.deleteAll();
         persAuditEvent = persistenceAuditEventRepository.save(persAuditEvent);
 
         var persAuditEvent2 = new PersistentAuditEvent();
@@ -88,7 +89,7 @@ public class ManagementResourceIntegrationTest extends AbstractSpringIntegration
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     public void getAllAuditEventsByDate() throws Exception {
-        String pastDate = LocalDate.now().minusDays(2).toString();
+        String pastDate = LocalDate.now().minusDays(1).toString();
         String currentDate = LocalDate.now().toString();
         var auditEvents = request.getList("/management/audits?fromDate=" + pastDate + "&toDate=" + currentDate, HttpStatus.OK, PersistentAuditEvent.class);
         assertThat(auditEvents.size()).isEqualTo(1);
