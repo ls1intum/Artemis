@@ -15,6 +15,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
@@ -66,7 +67,11 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationTest 
     @BeforeEach
     public void initTestCase() {
         database.addUsers(2, 2, 2);
+
+        // Add users that are not in the course/exercise
         userRepo.save(ModelFactory.generateActivatedUser("student3"));
+        userRepo.save(ModelFactory.generateActivatedUser("tutor3"));
+
         course = database.addCourseWithModelingAndTextExercise();
         for (Exercise exercise : course.getExercises()) {
             if (exercise instanceof ModelingExercise) {
@@ -330,6 +335,30 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationTest 
         assertThat(participations.size()).as("Exactly 2 participations are returned").isEqualTo(2);
         assertThat(participations.stream().allMatch(participation -> participation.getStudent() != null)).as("Only participation that has student are returned").isTrue();
         assertThat(participations.stream().allMatch(participation -> participation.getSubmissionCount() == 0)).as("No submissions should exist for participations").isTrue();
+    }
 
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void getAllParticipationsForExercise_withLatestResult() throws Exception {
+        database.addParticipationForExercise(textExercise, "student1");
+        var participation = database.addParticipationForExercise(textExercise, "student2");
+        database.addResultToParticipation(participation);
+        var result = ModelFactory.generateResult(true, 70);
+        result = database.addResultToParticipation(participation);
+        final var params = new LinkedMultiValueMap<String, String>();
+        params.add("withLatestResult", "true");
+        var participations = request.getList("/api/exercise/" + textExercise.getId() + "/participations", HttpStatus.OK, StudentParticipation.class, params);
+        assertThat(participations.size()).as("Exactly 2 participations are returned").isEqualTo(2);
+        assertThat(participations.stream().allMatch(p -> p.getStudent() != null)).as("Only participation that has student are returned").isTrue();
+        assertThat(participations.stream().allMatch(p -> p.getSubmissionCount() == 0)).as("No submissions should exist for participations").isTrue();
+        var participationWithResult = participations.stream().filter(p -> p.getStudent().equals(database.getUserByLogin("student2"))).findFirst().get();
+        assertThat(participationWithResult.getResults().size()).isEqualTo(1);
+        assertThat(participationWithResult.getResults().stream().findFirst().get()).isEqualTo(result);
+    }
+
+    @Test
+    @WithMockUser(username = "tutor3", roles = "TA")
+    public void getAllParticipationsForExercise_NotTutorInCourse() throws Exception {
+        request.getList("/api/exercise/" + textExercise.getId() + "/participations", HttpStatus.FORBIDDEN, StudentParticipation.class);
     }
 }
