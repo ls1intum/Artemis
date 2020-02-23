@@ -14,27 +14,30 @@ import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { MockRouter } from '../../mocks/mock-router.service';
 import { of, throwError } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
-import { SidePanelComponent } from 'app/components/side-panel/side-panel.component';
-import { CollapsableAssessmentInstructionsComponent } from 'app/assessment-instructions/collapsable-assessment-instructions/collapsable-assessment-instructions.component';
-import { AssessmentInstructionsComponent } from 'app/assessment-instructions/assessment-instructions/assessment-instructions.component';
-import { TutorParticipationGraphComponent } from 'app/tutor-course-dashboard/tutor-participation-graph/tutor-participation-graph.component';
-import { TutorLeaderboardComponent } from 'app/instructor-course-dashboard/tutor-leaderboard/tutor-leaderboard.component';
+import { SidePanelComponent } from 'app/shared/side-panel/side-panel.component';
+import { CollapsableAssessmentInstructionsComponent } from 'app/assessment/assessment-instructions/collapsable-assessment-instructions/collapsable-assessment-instructions.component';
+import { AssessmentInstructionsComponent } from 'app/assessment/assessment-instructions/assessment-instructions/assessment-instructions.component';
+import { TutorParticipationGraphComponent } from 'app/course/tutor-course-dashboard/tutor-participation-graph/tutor-participation-graph.component';
+import { TutorLeaderboardComponent } from 'app/course/instructor-course-dashboard/tutor-leaderboard/tutor-leaderboard.component';
 import { TranslateModule } from '@ngx-translate/core';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
-import { ArtemisProgrammingAssessmentModule } from 'app/programming-assessment/programming-assessment.module';
+import { ArtemisProgrammingAssessmentModule } from 'app/exercises/programming/assess/programming-assessment/programming-assessment.module';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { ArtemisAssessmentSharedModule } from 'app/assessment-shared/assessment-shared.module';
-import { ModelingSubmission } from 'app/entities/modeling-submission/modeling-submission.model';
-import { ArtemisProgrammingExerciseInstructionsRenderModule } from 'app/entities/programming-exercise/instructions/instructions-render/programming-exercise-instructions-render.module';
-import { ModelingExercise } from 'app/entities/modeling-exercise/modeling-exercise.model';
-import { HeaderExercisePageWithDetailsComponent } from 'app/exercise-headers/header-exercise-page-with-details.component';
-import { TutorExerciseDashboardComponent } from 'app/tutor-exercise-dashboard/tutor-exercise-dashboard.component';
-import { ExerciseType } from 'app/entities/exercise/exercise.model';
-import { ModelingEditorComponent } from 'app/modeling-editor/modeling-editor.component';
-import { ModelingSubmissionService } from 'app/entities/modeling-submission/modeling-submission.service';
-import { TutorParticipationStatus } from 'app/entities/tutor-participation/tutor-participation.model';
-import { ExerciseService } from 'app/entities/exercise/exercise.service';
-import { ArtemisResultModule } from 'app/entities/result/result.module';
+import { ArtemisAssessmentSharedModule } from 'app/assessment/assessment-shared.module';
+import { GuidedTourMapping } from 'app/guided-tour/guided-tour-setting.model';
+import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
+import { DeviceDetectorService } from 'ngx-device-detector';
+import { ModelingSubmission } from 'app/entities/modeling-submission.model';
+import { ArtemisProgrammingExerciseInstructionsRenderModule } from 'app/exercises/programming/manage/instructions/instructions-render/programming-exercise-instructions-render.module';
+import { ModelingExercise } from 'app/entities/modeling-exercise.model';
+import { HeaderExercisePageWithDetailsComponent } from 'app/exercises/shared/exercise-headers/header-exercise-page-with-details.component';
+import { TutorExerciseDashboardComponent } from 'app/exercises/shared/tutor-exercise-dashboard/tutor-exercise-dashboard.component';
+import { ExerciseType } from 'app/entities/exercise.model';
+import { ModelingEditorComponent } from 'app/exercises/modeling/shared/modeling-editor/modeling-editor.component';
+import { ModelingSubmissionService } from 'app/exercises/modeling/participate/modeling-submission/modeling-submission.service';
+import { TutorParticipationStatus } from 'app/entities/participation/tutor-participation.model';
+import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
+import { ArtemisResultModule } from 'app/exercises/shared/result/result.module';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -43,8 +46,8 @@ describe('TutorExerciseDashboardComponent', () => {
     let comp: TutorExerciseDashboardComponent;
     let fixture: ComponentFixture<TutorExerciseDashboardComponent>;
     let modelingSubmissionService: ModelingSubmissionService;
-
     let modelingSubmissionStub: SinonStub;
+    let guidedTourService: GuidedTourService;
 
     const exercise = { id: 20, type: ExerciseType.MODELING, tutorParticipations: [{ status: TutorParticipationStatus.TRAINED }] } as ModelingExercise;
     const submission = { id: 30 } as ModelingSubmission;
@@ -75,6 +78,7 @@ describe('TutorExerciseDashboardComponent', () => {
             ],
             providers: [
                 JhiLanguageHelper,
+                DeviceDetectorService,
                 { provide: AlertService, useClass: MockAlertService },
                 { provide: ActivatedRoute, useClass: MockActivatedRoute },
                 { provide: Router, useClass: MockRouter },
@@ -103,7 +107,9 @@ describe('TutorExerciseDashboardComponent', () => {
             .then(() => {
                 fixture = TestBed.createComponent(TutorExerciseDashboardComponent);
                 comp = fixture.componentInstance;
-                modelingSubmissionService = TestBed.inject(ModelingSubmissionService);
+
+                modelingSubmissionService = TestBed.get(ModelingSubmissionService);
+                guidedTourService = TestBed.get(GuidedTourService);
 
                 comp.exerciseId = exercise.id;
 
@@ -116,6 +122,9 @@ describe('TutorExerciseDashboardComponent', () => {
     });
 
     it('should set unassessedSubmission if lock limit is not reached', () => {
+        const guidedTourMapping = {} as GuidedTourMapping;
+        spyOn<any>(guidedTourService, 'checkTourState').and.returnValue(true);
+        guidedTourService.guidedTourMapping = guidedTourMapping;
         modelingSubmissionStub.returns(of(submission));
 
         comp.loadAll();

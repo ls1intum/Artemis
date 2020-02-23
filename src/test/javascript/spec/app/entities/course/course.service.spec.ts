@@ -4,7 +4,7 @@ import { HttpClientTestingModule, HttpTestingController } from '@angular/common/
 import { map, take } from 'rxjs/operators';
 import * as moment from 'moment';
 import { DATE_TIME_FORMAT } from 'app/shared/constants/input.constants';
-import { CourseService } from 'app/entities/course/course.service';
+import { CourseService } from 'app/course/manage/course.service';
 import { Course, ICourse } from 'app/shared/model/course.model';
 
 describe('Service Tests', () => {

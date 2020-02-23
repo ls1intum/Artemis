@@ -6,16 +6,16 @@ import { User } from 'app/core/user/user.model';
 import { Credentials } from 'app/core/auth/auth-jwt.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
-import { OrionConnectorService } from 'app/orion/orion-connector.service';
-import { isOrion } from 'app/orion/orion';
-import { ModalConfirmAutofocusComponent } from 'app/orion/modal-confirm-autofocus/modal-confirm-autofocus.component';
+import { OrionConnectorService } from 'app/shared/orion/orion-connector.service';
+import { isOrion } from 'app/shared/orion/orion';
+import { ModalConfirmAutofocusComponent } from 'app/shared/orion/modal-confirm-autofocus/modal-confirm-autofocus.component';
 import { AccountService } from 'app/core/auth/account.service';
 import { LoginService } from 'app/core/login/login.service';
 import { TUM_USERNAME_REGEX } from 'app/app.constants';
-import { ProfileService } from 'app/layouts/profiles/profile.service';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { filter, tap } from 'rxjs/operators';
 import { StateStorageService } from 'app/core/auth/state-storage.service';
-import { ProfileInfo } from 'app/layouts/profiles/profile-info.model';
+import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 
 @Component({
     selector: 'jhi-home',

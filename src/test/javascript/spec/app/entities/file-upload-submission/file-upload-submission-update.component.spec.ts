@@ -4,8 +4,8 @@ import { HttpResponse } from '@angular/common/http';
 import { of } from 'rxjs';
 
 import { ArTeMiSTestModule } from '../../../test.module';
-import { FileUploadSubmissionUpdateComponent } from 'app/entities/file-upload-submission/file-upload-submission-update.component';
-import { FileUploadSubmissionService } from 'app/entities/file-upload-submission/file-upload-submission.service';
+import { FileUploadSubmissionUpdateComponent } from 'app/exercises/file-upload-submission/file-upload-submission-update.component';
+import { FileUploadSubmissionService } from 'app/exercises/file-upload/participate/file-upload-submission/file-upload-submission.service';
 import { FileUploadSubmission } from 'app/shared/model/file-upload-submission.model';
 
 describe('Component Tests', () => {

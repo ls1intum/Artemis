@@ -1,5 +1,5 @@
 import { Orientation, OrientationConfiguration, UserInteractionEvent } from 'app/guided-tour/guided-tour.constants';
-import { GuidedTourModelingTask } from 'app/guided-tour/guided-tour-task.model';
+import { GuidedTourAssessmentTask, GuidedTourModelingTask } from 'app/guided-tour/guided-tour-task.model';
 
 export abstract class TourStep {
     /** Selector for element that will be highlighted */
@@ -19,6 +19,10 @@ export abstract class TourStep {
     permission?: string[];
     /** Skips this step if the selector is not found, else the setStepAlreadyFinishedHint will be called by the guided tour service */
     skipStepIfNoSelector?: boolean;
+    /** Should be added to the first step of each page in multi-page tours.
+     *  numbers in the page url should be replaced with the regex (\d+)+
+     */
+    pageUrl?: string;
 }
 
 export class TextTourStep extends TourStep {
@@ -60,7 +64,9 @@ export class VideoTourStep extends TextTourStep {
 }
 
 export class UserInterActionTourStep extends TextTourStep {
-    /** If this is set, then the user can interact with the elements that are within the rectangle that highlights the selected element */
+    /** The user can interact with the elements that are within the rectangle that highlights the selected element
+     *  The user interaction will be observed and once accomplished, the next step navigation will be enabled
+     */
     userInteractionEvent: UserInteractionEvent;
     /** Enables the automatic display of the next step after a user interaction */
     triggerNextStep?: boolean;
@@ -76,6 +82,16 @@ export class ModelingTaskTourStep extends UserInterActionTourStep {
     modelingTask: GuidedTourModelingTask;
 
     constructor(tourStep: ModelingTaskTourStep) {
+        super(tourStep);
+        Object.assign(this, tourStep);
+    }
+}
+
+export class AssessmentTaskTourStep extends UserInterActionTourStep {
+    /** Assessment task that has to be completed during this step */
+    assessmentTask: GuidedTourAssessmentTask;
+
+    constructor(tourStep: AssessmentTaskTourStep) {
         super(tourStep);
         Object.assign(this, tourStep);
     }

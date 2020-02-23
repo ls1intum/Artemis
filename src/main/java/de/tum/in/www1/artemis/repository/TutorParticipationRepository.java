@@ -22,6 +22,9 @@ public interface TutorParticipationRepository extends JpaRepository<TutorPartici
     @EntityGraph(attributePaths = "trainedExampleSubmissions")
     TutorParticipation findByAssessedExerciseAndTutor(Exercise assessedExercise, User tutor);
 
+    @EntityGraph(attributePaths = "trainedExampleSubmissions")
+    TutorParticipation findWithEagerExampleSubmissionByAssessedExerciseAndTutor(Exercise assessedExercise, User tutor);
+
     Boolean existsByAssessedExerciseIdAndTutorId(Long assessedExerciseId, Long tutorId);
 
     @EntityGraph(attributePaths = "trainedExampleSubmissions")

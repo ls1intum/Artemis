@@ -1,4 +1,4 @@
-import { sha1Hex } from 'app/utils/crypto.utils';
+import { sha1Hex } from 'app/shared/util/crypto.utils';
 
 describe('CryptoUtils', () => {
     describe('sha1Hex', () => {

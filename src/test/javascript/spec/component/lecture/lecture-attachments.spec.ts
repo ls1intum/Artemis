@@ -11,10 +11,10 @@ import { ActivatedRoute } from '@angular/router';
 import { FormDateTimePickerModule } from 'app/shared/date-time-picker/date-time-picker.module';
 import { By } from '@angular/platform-browser';
 import { FileUploaderService } from 'app/shared/http/file-uploader.service';
-import { Lecture } from 'app/entities/lecture/lecture.model';
-import { Attachment } from 'app/entities/attachment/attachment.model';
-import { LectureAttachmentsComponent } from 'app/entities/lecture/lecture-attachments.component';
-import { AttachmentService } from 'app/entities/attachment/attachment.service';
+import { Lecture } from 'app/entities/lecture.model';
+import { Attachment } from 'app/entities/attachment.model';
+import { LectureAttachmentsComponent } from 'app/lecture/lecture-attachments.component';
+import { AttachmentService } from 'app/lecture/attachment.service';
 
 chai.use(sinonChai);
 const expect = chai.expect;

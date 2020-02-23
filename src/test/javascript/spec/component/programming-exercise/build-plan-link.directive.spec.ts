@@ -4,11 +4,11 @@ import { SinonStub, stub } from 'sinon';
 import { Component, DebugElement } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { ArtemisTestModule } from '../../test.module';
-import { ProgrammingExerciseUtilsModule } from 'app/entities/programming-exercise/utils/programming-exercise-utils.module';
-import { ProfileService } from 'app/layouts/profiles/profile.service';
+import { ProgrammingExerciseUtilsModule } from 'app/exercises/programming/manage/utils/programming-exercise-utils.module';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { MockProfileService } from '../../mocks/mock-profile.service';
 import { BehaviorSubject } from 'rxjs';
-import { ProfileInfo } from 'app/layouts/profiles/profile-info.model';
+import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { By } from '@angular/platform-browser';
 
 chai.use(sinonChai);

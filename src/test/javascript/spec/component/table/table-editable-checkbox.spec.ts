@@ -4,8 +4,8 @@ import { TranslateModule } from '@ngx-translate/core';
 import { DebugElement } from '@angular/core';
 import * as chai from 'chai';
 import { ArtemisTestModule } from '../../test.module';
-import { ArtemisTableModule } from 'app/components/table/table.module';
-import { TableEditableCheckboxComponent } from 'app/components/table/table-editable-checkbox.component';
+import { ArtemisTableModule } from 'app/shared/table/table.module';
+import { TableEditableCheckboxComponent } from 'app/shared/table/table-editable-checkbox.component';
 
 const expect = chai.expect;
 

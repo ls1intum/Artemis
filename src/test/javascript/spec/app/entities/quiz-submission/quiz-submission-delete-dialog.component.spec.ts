@@ -5,8 +5,8 @@ import { of } from 'rxjs';
 import { JhiEventManager } from 'ng-jhipster';
 
 import { ArtemisTestModule } from '../../../test.module';
-import { QuizSubmissionDeleteDialogComponent } from 'app/entities/quiz-submission/quiz-submission-delete-dialog.component';
-import { QuizSubmissionService } from 'app/entities/quiz-submission/quiz-submission.service';
+import { QuizSubmissionDeleteDialogComponent } from 'app/exercises/quiz/participate/quiz-submission/quiz-submission-delete-dialog.component';
+import { QuizSubmissionService } from 'app/exercises/quiz/participate/quiz-submission/quiz-submission.service';
 
 describe('Component Tests', () => {
     describe('QuizSubmission Management Delete Component', () => {
