@@ -9,11 +9,11 @@ import { User } from 'app/core/user/user.model';
 import { UserService } from 'app/core/user/user.service';
 import { AccountService } from 'app/core/auth/account.service';
 import * as moment from 'moment';
-import { onError } from 'app/utils/global.utils';
+import { onError } from 'app/shared/util/global.utils';
 import { Subject } from 'rxjs';
-import { SystemNotification } from 'app/entities/system-notification/system-notification.model';
+import { SystemNotification } from 'app/entities/system-notification.model';
 import { ITEMS_PER_PAGE } from 'app/shared/constants/pagination.constants';
-import { SystemNotificationService } from 'app/entities/system-notification/system-notification.service';
+import { SystemNotificationService } from 'app/core/system-notification/system-notification.service';
 import { AlertService } from 'app/core/alert/alert.service';
 
 @Component({

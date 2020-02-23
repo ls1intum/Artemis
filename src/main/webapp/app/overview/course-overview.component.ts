@@ -1,10 +1,10 @@
 import { Component, OnInit } from '@angular/core';
-import { Course } from 'app/entities/course/course.model';
-import { CourseService } from 'app/entities/course/course.service';
+import { Course } from 'app/entities/course.model';
+import { CourseService } from 'app/course/manage/course.service';
 import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs/Subscription';
 import { HttpResponse } from '@angular/common/http';
-import { isIntelliJ } from 'app/intellij/intellij';
+import { isOrion } from 'app/shared/orion/orion';
 import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
 import { CachingStrategy } from 'app/shared/image/secured-image.component';
 
@@ -16,7 +16,7 @@ const DESCRIPTION_READ = 'isDescriptionRead';
     styleUrls: ['course-overview.scss'],
 })
 export class CourseOverviewComponent implements OnInit {
-    readonly isIntelliJ = isIntelliJ;
+    readonly isOrion = isOrion;
     CachingStrategy = CachingStrategy;
     private courseId: number;
     private subscription: Subscription;

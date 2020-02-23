@@ -1,9 +1,10 @@
 import { GuidedTour } from 'app/guided-tour/guided-tour.model';
-import { Orientation, UserInteractionEvent } from 'app/guided-tour/guided-tour.constants';
+import { Orientation, ResetParticipation, UserInteractionEvent } from 'app/guided-tour/guided-tour.constants';
 import { TextTourStep, UserInterActionTourStep, VideoTourStep } from 'app/guided-tour/guided-tour-step.model';
 
 export const courseExerciseOverviewTour: GuidedTour = {
     settingsKey: 'course_exercise_overview_tour',
+    resetParticipation: ResetParticipation.EXERCISE_PARTICIPATION,
     steps: [
         new TextTourStep({
             headlineTranslateKey: 'tour.courseExerciseOverview.installPrerequisites.headline',

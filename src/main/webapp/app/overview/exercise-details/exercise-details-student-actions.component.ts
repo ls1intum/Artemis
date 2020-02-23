@@ -1,18 +1,19 @@
 import { Component, HostBinding, Input, OnInit } from '@angular/core';
 import * as moment from 'moment';
-import { CourseExerciseService } from 'app/entities/course/course.service';
+import { CourseExerciseService } from 'app/course/manage/course.service';
 import { Router } from '@angular/router';
 import { AlertService } from 'app/core/alert/alert.service';
 import { HttpClient } from '@angular/common/http';
 import { AccountService } from 'app/core/auth/account.service';
-import { SourceTreeService } from 'app/components/util/sourceTree.service';
-import { FeatureToggle } from 'app/feature-toggle/feature-toggle.service';
+import { SourceTreeService } from 'app/exercises/programming/shared/sourceTree.service';
+import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { Participation } from 'app/entities/participation/participation.model';
-import { Exercise, ExerciseType, ParticipationStatus } from 'app/entities/exercise/exercise.model';
-import { isStartExerciseAvailable, participationStatus } from 'app/entities/exercise/exercise-utils';
+import { Exercise, ExerciseType, ParticipationStatus } from 'app/entities/exercise.model';
+import { isStartExerciseAvailable, participationStatus } from 'app/exercises/shared/exercise/exercise-utils';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
-import { ProgrammingExercise } from 'app/entities/programming-exercise/programming-exercise.model';
-import { QuizExercise } from 'app/entities/quiz-exercise/quiz-exercise.model';
+import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
+import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 
 @Component({
     selector: 'jhi-exercise-details-student-actions',
@@ -124,7 +125,7 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
             .resumeProgrammingExercise(this.courseId, this.exercise.id)
             .finally(() => (this.exercise.loading = false))
             .subscribe(
-                participation => {
+                (participation: StudentParticipation) => {
                     if (participation) {
                         // Otherwise the client would think that all results are loaded, but there would not be any (=> no graded result).
                         participation.results = this.exercise.studentParticipations[0] ? this.exercise.studentParticipations[0].results : [];

@@ -24,13 +24,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.config.Constants;
-import de.tum.in.www1.artemis.domain.Authority;
-import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.GuidedTourSetting;
-import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.exception.UsernameAlreadyUsedException;
 import de.tum.in.www1.artemis.repository.AuthorityRepository;
 import de.tum.in.www1.artemis.repository.GuidedTourSettingsRepository;
+import de.tum.in.www1.artemis.repository.TeamRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
 import de.tum.in.www1.artemis.security.AuthoritiesConstants;
@@ -59,6 +57,8 @@ public class UserService {
 
     private final UserRepository userRepository;
 
+    private final TeamRepository teamRepository;
+
     private final AuthorityRepository authorityRepository;
 
     private final GuidedTourSettingsRepository guidedTourSettingsRepository;
@@ -71,9 +71,10 @@ public class UserService {
 
     private ArtemisAuthenticationProvider artemisAuthenticationProvider;
 
-    public UserService(UserRepository userRepository, AuthorityRepository authorityRepository, CacheManager cacheManager, Optional<LdapUserService> ldapUserService,
-            GuidedTourSettingsRepository guidedTourSettingsRepository) {
+    public UserService(UserRepository userRepository, TeamRepository teamRepository, AuthorityRepository authorityRepository, CacheManager cacheManager,
+            Optional<LdapUserService> ldapUserService, GuidedTourSettingsRepository guidedTourSettingsRepository) {
         this.userRepository = userRepository;
+        this.teamRepository = teamRepository;
         this.authorityRepository = authorityRepository;
         this.cacheManager = cacheManager;
         this.ldapUserService = ldapUserService;

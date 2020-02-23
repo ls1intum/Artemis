@@ -20,7 +20,8 @@ import de.tum.in.www1.artemis.domain.view.QuizView;
  * A Participation.
  */
 @Entity
-@Table(name = "participation", uniqueConstraints = @UniqueConstraint(columnNames = { "student_id", "exercise_id", "initialization_state" }))
+@Table(name = "participation", uniqueConstraints = { @UniqueConstraint(columnNames = { "student_id", "exercise_id", "initialization_state" }),
+        @UniqueConstraint(columnNames = { "team_id", "exercise_id", "initialization_state" }) })
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
 @DiscriminatorColumn(name = "discriminator", discriminatorType = DiscriminatorType.STRING)
 @DiscriminatorValue(value = "P")

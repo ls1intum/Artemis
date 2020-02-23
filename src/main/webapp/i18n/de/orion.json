@@ -1,0 +1,11 @@
+{
+    "artemisApp": {
+        "orion": {
+            "version": {
+                "outdated": "Das installierte Orion Plugin ist veraltet!",
+                "usedVersion": "Installierte Version: ",
+                "allowedVersion": "Erlaubte Versionen: "
+            }
+        }
+    }
+}
