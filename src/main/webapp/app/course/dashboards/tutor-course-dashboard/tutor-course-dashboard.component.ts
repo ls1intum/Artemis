@@ -131,7 +131,7 @@ export class TutorCourseDashboardComponent implements OnInit {
     }
 
     back() {
-        this.router.navigate(['course']);
+        this.router.navigate(['course-management']);
     }
 
     callback() {}

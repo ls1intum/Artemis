@@ -39,16 +39,6 @@ export class TextExerciseResolver implements Resolve<TextExercise> {
 }
 
 export const textExerciseRoute: Routes = [
-    // View Text Exercise
-    {
-        path: 'course-management/:courseId/text-exercises/:exerciseId',
-        component: TextExerciseDetailComponent,
-        data: {
-            authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
-            pageTitle: 'artemisApp.textExercise.home.title',
-        },
-        canActivate: [UserRouteAccessService],
-    },
     // Create New Text Exercise
     {
         path: 'course-management/:courseId/text-exercises/new',
@@ -56,6 +46,16 @@ export const textExerciseRoute: Routes = [
         resolve: {
             textExercise: TextExerciseResolver,
         },
+        data: {
+            authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
+            pageTitle: 'artemisApp.textExercise.home.title',
+        },
+        canActivate: [UserRouteAccessService],
+    },
+    // View Text Exercise
+    {
+        path: 'course-management/:courseId/text-exercises/:exerciseId',
+        component: TextExerciseDetailComponent,
         data: {
             authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
             pageTitle: 'artemisApp.textExercise.home.title',

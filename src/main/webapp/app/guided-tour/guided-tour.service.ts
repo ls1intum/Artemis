@@ -807,7 +807,7 @@ export class GuidedTourService {
                     this.tutorParticipationService.deleteTutorParticipationForGuidedTour(this.currentCourse, this.currentExercise).subscribe(
                         () => {
                             this.deleteGuidedTourSetting(this.availableTourForComponent!.settingsKey).subscribe(() => {
-                                this.navigateToUrlAfterRestart('/course');
+                                this.navigateToUrlAfterRestart('/course-management');
                             });
                         },
                         () => {

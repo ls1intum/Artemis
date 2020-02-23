@@ -41,7 +41,7 @@
                 <dt><span jhiTranslate="artemisApp.exercise.course">Course</span></dt>
                 <dd>
                     <div *ngIf="fileUploadExercise.course">
-                        <a [routerLink]="['/course', fileUploadExercise.course?.id]">{{ fileUploadExercise.course?.title }}</a>
+                        <a [routerLink]="['/course-management', fileUploadExercise.course?.id]">{{ fileUploadExercise.course?.title }}</a>
                     </div>
                 </dd>
                 <dt><span jhiTranslate="artemisApp.exercise.problemStatement">Problem Statement</span></dt>

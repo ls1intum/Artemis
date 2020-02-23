@@ -1037,8 +1037,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
      * @desc Navigate back
      */
     cancel(): void {
-        // TODO: change to new route scheme
-        this.router.navigate(['/course', this.quizExercise.course!.id, 'quiz-exercise']);
+        this.router.navigate(['/course-management', this.quizExercise.course!.id, 'quiz-exercise']);
     }
 
     /**

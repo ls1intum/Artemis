@@ -14,7 +14,7 @@ export const tutorAssessmentTour: GuidedTour = {
             highlightPadding: 10,
             orientation: Orientation.LEFT,
             permission: ['ROLE_TA'],
-            pageUrl: '/course',
+            pageUrl: '/course-management',
             userInteractionEvent: UserInteractionEvent.CLICK,
         }),
         // new page
@@ -96,7 +96,7 @@ export const tutorAssessmentTour: GuidedTour = {
             contentTranslateKey: 'tour.exampleReview.reviewSubmission.content',
             orientation: Orientation.TOP,
             permission: ['ROLE_TA'],
-            pageUrl: '/text-exercise/(\\d+)+/example-submission/(\\d+)+?readOnly=true',
+            pageUrl: 'course-management/(\\d+)+/text-exercises/(\\d+)+/example-submissions/(\\d+)+?readOnly=true',
         }),
         new TextTourStep({
             highlightSelector: '.text-assessments',
@@ -135,7 +135,7 @@ export const tutorAssessmentTour: GuidedTour = {
             permission: ['ROLE_TA'],
             userInteractionEvent: UserInteractionEvent.ASSESS_SUBMISSION,
             assessmentTask: new GuidedTourAssessmentTask('tour.exampleAssessment.addAssessment.task', new AssessmentObject(3, 0)),
-            pageUrl: '/text-exercise/(\\d+)+/example-submission/(\\d+)+?toComplete=true',
+            pageUrl: 'course-management/(\\d+)+/text-exercises/(\\d+)+/example-submissions/(\\d+)+?toComplete=true',
         }),
         new AssessmentTaskTourStep({
             highlightSelector: '.text-assessments .row',
