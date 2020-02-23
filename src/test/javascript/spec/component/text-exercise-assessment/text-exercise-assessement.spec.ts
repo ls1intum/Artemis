@@ -48,7 +48,7 @@ describe('TextAssessmentComponent', () => {
     let router: Router;
     let location: Location;
 
-    const exercise = { id: 20, type: ExerciseType.TEXT } as TextExercise;
+    const exercise = { id: 20, type: ExerciseType.TEXT, course: { id: 1 } } as TextExercise;
 
     beforeEach(async () => {
         return TestBed.configureTestingModule({
@@ -134,7 +134,9 @@ describe('TextAssessmentComponent', () => {
 
             // check if the url changes when you clicked on assessNextAssessmentButton
             tick();
-            expect(location.path()).to.be.equal('/text/' + comp.exercise.id + '/assessment/' + comp.unassessedSubmission.id);
+            expect(location.path()).to.be.equal(
+                `/course-management/${comp.exercise.course?.id}/text-exercises/${comp.exercise.id}/submissions/${comp.unassessedSubmission.id}/assessment`,
+            );
 
             fixture.destroy();
             flush();
