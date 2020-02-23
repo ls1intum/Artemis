@@ -10,7 +10,7 @@
             [smallButton]="smallButtons"
             [hideLabelMobile]="false"
             *ngIf="isPracticeModeAvailable()"
-            [routerLink]="['courses', courseId, '/quiz-exercises', exercise.id, 'practice']"
+            [routerLink]="['/courses', courseId, 'quiz-exercises', exercise.id, 'practice']"
         ></button>
         <button
             jhi-exercise-action-button
