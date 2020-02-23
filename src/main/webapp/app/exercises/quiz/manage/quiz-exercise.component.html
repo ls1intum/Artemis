@@ -112,7 +112,7 @@
                                 <button
                                     *ngIf="quizExercise.isAtLeastTutor"
                                     type="submit"
-                                    [routerLink]="['course-management', quizExercise.course?.id, '/quiz-exercises', quizExercise.id, 'preview']"
+                                    [routerLink]="['/course-management', quizExercise.course?.id, 'quiz-exercises', quizExercise.id, 'preview']"
                                     class="btn btn-success btn-sm mr-1 mb-1"
                                 >
                                     <fa-icon [icon]="'eye'"></fa-icon>
@@ -121,7 +121,7 @@
                                 <button
                                     *ngIf="quizExercise.isAtLeastTutor"
                                     type="submit"
-                                    [routerLink]="['course-management', quizExercise.course?.id, '/quiz-exercises', quizExercise.id, 'solution']"
+                                    [routerLink]="['/course-management', quizExercise.course?.id, 'quiz-exercises', quizExercise.id, 'solution']"
                                     class="btn btn-success btn-sm mr-1 mb-1"
                                 >
                                     <fa-icon [icon]="'eye'"></fa-icon>
@@ -132,7 +132,7 @@
                                 <button
                                     *ngIf="quizExercise.isAtLeastTutor"
                                     type="submit"
-                                    [routerLink]="['course-management', quizExercise.course?.id, '/quiz-exercises', quizExercise.id, 'quiz-point-statistic']"
+                                    [routerLink]="['/course-management', quizExercise.course?.id, 'quiz-exercises', quizExercise.id, 'quiz-point-statistic']"
                                     class="btn btn-info btn-sm mr-1 mb-1"
                                 >
                                     <fa-icon [icon]="'signal'"></fa-icon>
@@ -163,7 +163,7 @@
                                     type="submit"
                                     [hidden]="quizIsOver(quizExercise)"
                                     [disabled]="quizExercise.status === QuizStatus.ACTIVE || quizIsOver(quizExercise)"
-                                    [routerLink]="['course-management', quizExercise.course?.id, '/quiz-exercises', quizExercise.id, 'edit']"
+                                    [routerLink]="['/course-management', quizExercise.course?.id, 'quiz-exercises', quizExercise.id, 'edit']"
                                     class="btn btn-primary btn-sm mr-1 mb-1"
                                 >
                                     <fa-icon [icon]="'pencil-alt'"></fa-icon>
@@ -173,7 +173,7 @@
                                     *ngIf="quizExercise.isAtLeastInstructor"
                                     type="submit"
                                     [hidden]="!quizIsOver(quizExercise)"
-                                    [routerLink]="['course-management', quizExercise.course?.id, '/quiz-exercises', quizExercise.id, 're-evaluate']"
+                                    [routerLink]="['/course-management', quizExercise.course?.id, 'quiz-exercises', quizExercise.id, 're-evaluate']"
                                     class="btn btn-primary btn-sm mr-1 mb-1"
                                 >
                                     <fa-icon [icon]="'pencil-alt'"></fa-icon>
