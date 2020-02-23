@@ -6,7 +6,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { AlertService } from 'app/core/alert/alert.service';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
-import { TextEditorService } from 'app/exercises/text/participate/text-editor/text-editor.service';
+import { TextEditorService } from 'app/exercises/text/participate/text-editor.service';
 import * as moment from 'moment';
 import { ArtemisMarkdown } from 'app/shared/markdown.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';

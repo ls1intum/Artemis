@@ -18,13 +18,13 @@ import { ArtemisHeaderExercisePageWithDetailsModule } from 'app/exercises/shared
 import { SystemNotificationComponent } from 'app/shared/layouts/system-notification/system-notification.component';
 import { ArtemisAppRoutingModule } from 'app/app-routing.module';
 import { ArtemisExerciseScoresModule } from 'app/exercises/shared/exercise-scores/exercise-scores.module';
-import { ArtemisExampleTextSubmissionModule } from 'app/exercises/text/manage/example-text-submission/example-text-submission.module';
-import { ArtemisTextModule } from 'app/exercises/text/participate/text-editor/text-editor.module';
 import { JhiMainComponent } from 'app/shared/layouts/main/main.component';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { ArtemisOverviewModule } from 'app/overview/overview.module';
 import { ArtemisConnectionNotificationModule } from 'app/shared/layouts/connection-notification/connection-notification.module';
-import { ArtemisTextAssessmentModule } from 'app/exercises/text/assess/text-assessment.module';
+import { ArtemisTextExerciseAssessmnetModule } from 'app/exercises/text/assess/text-assessment.module';
+import { ArtemisTextExerciseParticipationModule } from 'app/exercises/text/participate/text-exercise-participation.module';
+import { ArtemisTextExerciseManagementModule } from 'app/exercises/text/manage/text-exercise-management.module';
 import { ArtemisListOfComplaintsModule } from 'app/complaints/list-of-complaints/list-of-complaints.module';
 import { FooterComponent } from 'app/shared/layouts/footer/footer.component';
 import { ArtemisEntityModule } from 'app/entities/entity.module';
@@ -68,8 +68,9 @@ import { ArtemisModelingExerciseManagementModule } from 'app/exercises/modeling/
         ArtemisQuizManagementModule,
         ArtemisCourseScoresModule,
         ArtemisExerciseScoresModule,
-        ArtemisTextModule,
-        ArtemisTextAssessmentModule,
+        ArtemisTextExerciseParticipationModule,
+        ArtemisTextExerciseAssessmnetModule,
+        ArtemisTextExerciseManagementModule,
         ArtemisFileUploadParticipationModule,
         ArtemisFileUploadAssessmentModule,
         ArtemisModelingAssessmentEditorModule,
@@ -83,7 +84,6 @@ import { ArtemisModelingExerciseManagementModule } from 'app/exercises/modeling/
         ArtemisComplaintsModule,
         ArtemisComplaintsForTutorModule,
         ArtemisNotificationModule,
-        ArtemisExampleTextSubmissionModule,
         ArtemisHeaderExercisePageWithDetailsModule,
         ArtemisListOfComplaintsModule,
     ],

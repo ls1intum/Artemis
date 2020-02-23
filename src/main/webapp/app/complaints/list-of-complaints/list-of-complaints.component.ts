@@ -98,26 +98,25 @@ export class ListOfComplaintsComponent implements OnInit {
             return;
         }
 
-        let route: string;
-        if (exercise.type === ExerciseType.TEXT) {
-            route = `/text/${exercise.id}/assessment/${submissionId}`;
-        } else if (exercise.type === ExerciseType.MODELING) {
-            route = `/course-management/${this.courseId}/modeling-exercises/${exercise.id}/submissions/${submissionId}/assessment`;
-        } else if (exercise.type === ExerciseType.FILE_UPLOAD) {
-            route = `/course-management/${this.courseId}/file-upload-exercises/${exercise.id}/submissions/${submissionId}/assessment`;
-        } else if (exercise.type === ExerciseType.PROGRAMMING) {
-            const modalRef: NgbModalRef = this.modalService.open(ProgrammingAssessmentManualResultDialogComponent, { keyboard: true, size: 'lg', backdrop: 'static' });
-            modalRef.componentInstance.participationId = studentParticipation.id;
-            modalRef.componentInstance.exercise = exercise;
-            modalRef.componentInstance.result = cloneDeep(complaint.result);
-            modalRef.componentInstance.onResultModified.subscribe(() => this.loadComplaints());
-            modalRef.result.then(
-                _ => this.loadComplaints(),
-                () => {},
-            );
-            return;
+        switch (exercise.type) {
+            case ExerciseType.TEXT:
+            case ExerciseType.MODELING:
+            case ExerciseType.FILE_UPLOAD:
+                const route = `/course-management/${this.courseId}/${exercise.type}-exercises/${exercise.id}/submissions/${submissionId}/assessment`;
+                this.router.navigate([route]);
+                return;
+            case ExerciseType.PROGRAMMING:
+                const modalRef: NgbModalRef = this.modalService.open(ProgrammingAssessmentManualResultDialogComponent, { keyboard: true, size: 'lg', backdrop: 'static' });
+                modalRef.componentInstance.participationId = studentParticipation.id;
+                modalRef.componentInstance.exercise = exercise;
+                modalRef.componentInstance.result = cloneDeep(complaint.result);
+                modalRef.componentInstance.onResultModified.subscribe(() => this.loadComplaints());
+                modalRef.result.then(
+                    _ => this.loadComplaints(),
+                    () => {},
+                );
+                return;
         }
-        this.router.navigate([route!]);
     }
 
     private onError(error: string) {

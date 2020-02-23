@@ -10,7 +10,7 @@
             [smallButton]="smallButtons"
             [hideLabelMobile]="false"
             *ngIf="isPracticeModeAvailable()"
-            [routerLink]="['courses', exercise.course?.id, '/quiz-exercises', exercise.id, 'practice']"
+            [routerLink]="['courses', courseId, '/quiz-exercises', exercise.id, 'practice']"
         ></button>
         <button
             jhi-exercise-action-button
@@ -76,7 +76,7 @@
             outlined="true"
             [buttonLoading]="exercise.loading"
             [smallButton]="smallButtons"
-            routerLink="/course-management/{{ exercise.course?.id }}/quiz-exercises/{{ exercise.id }}/quiz-point-statistic"
+            routerLink="/course-management/{{ courseId }}/quiz-exercises/{{ exercise.id }}/quiz-point-statistic"
         ></button>
     </div>
     <!-- INFORMATION END -->
@@ -269,7 +269,7 @@
             [smallButton]="smallButtons"
             [hideLabelMobile]="false"
             *ngIf="exercise.studentParticipations && exercise.studentParticipations.length > 0 && exercise.studentParticipations[0].initializationState === 'INITIALIZED'"
-            routerLink="/text/{{ exercise.studentParticipations[0].id }}"
+            [routerLink]="['/courses', courseId, 'text-exercises', exercise.id, 'participate', exercise.studentParticipations[0].id]"
         ></button>
     </div>
     <!-- ACTIONS END -->
@@ -289,7 +289,7 @@
                 exercise.studentParticipations[0].initializationState === 'FINISHED' &&
                 (!exercise.studentParticipations[0].results || exercise.studentParticipations[0].results.length === 0 || !showResult)
             "
-            routerLink="/text/{{ exercise.studentParticipations[0].id }}"
+            [routerLink]="['/courses', courseId, 'text-exercises', exercise.id, 'participate', exercise.studentParticipations[0].id]"
         ></button>
         <!-- TODO improve the distinction, in particular if there are multiple submissions and results -->
         <button
@@ -307,7 +307,7 @@
                 exercise.studentParticipations[0].results.length > 0 &&
                 showResult
             "
-            routerLink="/text/{{ exercise.studentParticipations[0].id }}"
+            [routerLink]="['/courses', courseId, 'text-exercises', exercise.id, 'participate', exercise.studentParticipations[0].id]"
         ></button>
     </div>
     <!-- INFORMATION END -->
