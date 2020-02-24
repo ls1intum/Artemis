@@ -64,7 +64,7 @@
                             <button
                                 type="submit"
                                 *ngIf="textExercise.teamMode && textExercise.isAtLeastTutor"
-                                [routerLink]="['/exercise', textExercise.id, 'teams']"
+                                [routerLink]="['/course-management', course.id, 'exercises', textExercise.id, 'teams']"
                                 class="btn btn-primary btn-sm mr-1"
                             >
                                 <fa-icon [icon]="'users'"></fa-icon>

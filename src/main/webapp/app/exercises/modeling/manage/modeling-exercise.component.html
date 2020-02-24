@@ -67,7 +67,7 @@
                             <button
                                 type="submit"
                                 *ngIf="modelingExercise.teamMode && modelingExercise.isAtLeastTutor"
-                                [routerLink]="['/exercise', modelingExercise.id, 'teams']"
+                                [routerLink]="['/course-management', modelingExercise.course.id, 'exercises', modelingExercise.id, 'teams']"
                                 class="btn btn-primary btn-sm mr-1"
                             >
                                 <fa-icon [icon]="'users'"></fa-icon>
