@@ -1,17 +1,18 @@
-import { Routes } from '@angular/router';
+import { RouterModule, Routes } from '@angular/router';
+import { CoursesComponent } from 'app/overview/courses.component';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
-import { CourseLectureDetailsComponent } from 'app/overview/course-lectures/course-lecture-details.component';
-import { CourseExercisesComponent } from 'app/overview/course-exercises/course-exercises.component';
-import { OverviewComponent } from 'app/overview/overview.component';
-import { CourseStatisticsComponent } from 'app/overview/course-statistics/course-statistics.component';
-import { CourseLecturesComponent } from 'app/overview/course-lectures/course-lectures.component';
 import { CourseOverviewComponent } from 'app/overview/course-overview.component';
+import { CourseExercisesComponent } from 'app/overview/course-exercises/course-exercises.component';
+import { CourseLecturesComponent } from 'app/overview/course-lectures/course-lectures.component';
+import { CourseStatisticsComponent } from 'app/overview/course-statistics/course-statistics.component';
 import { CourseExerciseDetailsComponent } from 'app/overview/exercise-details/course-exercise-details.component';
+import { CourseLectureDetailsComponent } from 'app/overview/course-lectures/course-lecture-details.component';
+import { NgModule } from '@angular/core';
 
-export const OVERVIEW_ROUTES: Routes = [
+const routes: Routes = [
     {
         path: 'courses',
-        component: OverviewComponent,
+        component: CoursesComponent,
         data: {
             authorities: ['ROLE_USER'],
             pageTitle: 'overview.title',
@@ -80,3 +81,9 @@ export const OVERVIEW_ROUTES: Routes = [
         canActivate: [UserRouteAccessService],
     },
 ];
+
+@NgModule({
+    imports: [RouterModule.forChild(routes)],
+    exports: [RouterModule],
+})
+export class ArtemisCoursesRoutingModule {}

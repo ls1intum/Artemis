@@ -21,7 +21,7 @@ import { MockAccountService } from '../../../mocks/mock-account.service';
 import * as moment from 'moment';
 import { MockCourseService } from '../../../mocks/mock-course.service';
 import { Exercise, ExerciseType, ParticipationStatus } from 'app/entities/exercise.model';
-import { ArtemisOverviewModule } from 'app/overview/overview.module';
+import { ArtemisCoursesModule } from 'app/overview/courses.module';
 import { InitializationState } from 'app/entities/participation/participation.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { CourseExerciseRowComponent } from 'app/overview/course-exercises/course-exercise-row.component';
@@ -40,7 +40,7 @@ describe('CourseExerciseRowComponent', () => {
 
     beforeEach(async () => {
         return TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, TranslateModule.forRoot(), NgbModule, ArtemisOverviewModule],
+            imports: [ArtemisTestModule, TranslateModule.forRoot(), NgbModule, ArtemisCoursesModule],
             providers: [
                 DeviceDetectorService,
                 { provide: ParticipationWebsocketService, useClass: MockParticipationWebsocketService },

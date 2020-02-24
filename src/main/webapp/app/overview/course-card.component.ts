@@ -8,10 +8,10 @@ import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service'
 
 @Component({
     selector: 'jhi-overview-course-card',
-    templateUrl: './overview-course-card.component.html',
-    styleUrls: ['overview-course-card.scss'],
+    templateUrl: './course-card.component.html',
+    styleUrls: ['course-card.scss'],
 })
-export class OverviewCourseCardComponent implements OnInit {
+export class CourseCardComponent implements OnInit {
     readonly ARTEMIS_DEFAULT_COLOR = ARTEMIS_DEFAULT_COLOR;
     @Input() course: Course;
     @Input() hasGuidedTour: boolean;

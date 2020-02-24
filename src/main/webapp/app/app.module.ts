@@ -20,7 +20,7 @@ import { ArtemisAppRoutingModule } from 'app/app-routing.module';
 import { ArtemisExerciseScoresModule } from 'app/exercises/shared/exercise-scores/exercise-scores.module';
 import { JhiMainComponent } from 'app/shared/layouts/main/main.component';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
-import { ArtemisOverviewModule } from 'app/overview/overview.module';
+import { ArtemisCoursesModule } from 'app/overview/courses.module';
 import { ArtemisConnectionNotificationModule } from 'app/shared/layouts/connection-notification/connection-notification.module';
 import { ArtemisTextExerciseAssessmnetModule } from 'app/exercises/text/assess/text-assessment.module';
 import { ArtemisTextExerciseParticipationModule } from 'app/exercises/text/participate/text-exercise-participation.module';
@@ -62,7 +62,7 @@ import { ArtemisModelingExerciseManagementModule } from 'app/exercises/modeling/
         ArtemisLegalModule,
         ArtemisParticipationModule,
         ArtemisTeamModule,
-        ArtemisOverviewModule,
+        ArtemisCoursesModule,
         ArtemisAccountModule,
         ArtemisQuizParticipationModule,
         ArtemisQuizManagementModule,

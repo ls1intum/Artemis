@@ -12,10 +12,10 @@ import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service'
 
 @Component({
     selector: 'jhi-overview',
-    templateUrl: './overview.component.html',
+    templateUrl: './courses.component.html',
     styles: [],
 })
-export class OverviewComponent implements OnInit {
+export class CoursesComponent implements OnInit {
     public courses: Course[];
     public nextRelevantCourse: Course;
 

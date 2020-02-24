@@ -10,7 +10,7 @@ import { OrionModule } from 'app/shared/orion/orion.module';
 import { FeatureToggleModule } from 'app/shared/feature-toggle/feature-toggle.module';
 import { ProgrammingExerciseUtilsModule } from 'app/exercises/programming/shared/utils/programming-exercise-utils.module';
 import { ProgrammingExerciseStudentIdeActionsComponent } from 'app/overview/exercise-details/programming-exercise-student-ide-actions.component';
-import { OverviewCourseCardComponent } from 'app/overview/overview-course-card.component';
+import { CourseCardComponent } from 'app/overview/course-card.component';
 import { ArtemisStudentQuestionsModule } from 'app/overview/student-questions/student-questions.module';
 import { CourseStatisticsComponent } from 'app/overview/course-statistics/course-statistics.component';
 import { ExerciseActionButtonComponent } from 'app/overview/exercise-details/exercise-action-button.component';
@@ -20,8 +20,7 @@ import { CourseLectureDetailsComponent } from 'app/overview/course-lectures/cour
 import { CourseExercisesComponent } from 'app/overview/course-exercises/course-exercises.component';
 import { ArtemisHeaderExercisePageWithDetailsModule } from 'app/exercises/shared/exercise-headers/exercise-headers.module';
 import { ArtemisResultModule } from 'app/exercises/shared/result/result.module';
-import { OverviewComponent } from 'app/overview/overview.component';
-import { OVERVIEW_ROUTES } from 'app/overview/overview.route';
+import { CoursesComponent } from 'app/overview/courses.component';
 import { ArtemisComplaintsModule } from 'app/complaints/complaints.module';
 import { CourseLecturesComponent } from 'app/overview/course-lectures/course-lectures.component';
 import { ExerciseDetailsStudentActionsComponent } from 'app/overview/exercise-details/exercise-details-student-actions.component';
@@ -29,8 +28,7 @@ import { CourseExerciseRowComponent } from 'app/overview/course-exercises/course
 import { ArtemisProgrammingExerciseInstructionsRenderModule } from 'app/exercises/programming/shared/instructions-render/programming-exercise-instructions-render.module';
 import { CourseRegistrationSelectorComponent } from 'app/overview/course-registration-selector/course-registration-selector.component';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
-
-const ENTITY_STATES = [...OVERVIEW_ROUTES];
+import { ArtemisCoursesRoutingModule } from 'app/overview/courses-routing.module';
 
 @NgModule({
     imports: [
@@ -42,7 +40,7 @@ const ENTITY_STATES = [...OVERVIEW_ROUTES];
         ArtemisResultModule,
         ArtemisStudentQuestionsModule,
         ArtemisSidePanelModule,
-        RouterModule.forChild(ENTITY_STATES),
+        ArtemisCoursesRoutingModule,
         ArtemisHeaderExercisePageWithDetailsModule,
         OrionModule,
         ArtemisComplaintsModule,
@@ -51,10 +49,10 @@ const ENTITY_STATES = [...OVERVIEW_ROUTES];
         ArtemisProgrammingExerciseInstructionsRenderModule,
     ],
     declarations: [
-        OverviewComponent,
+        CoursesComponent,
         CourseOverviewComponent,
         CourseRegistrationSelectorComponent,
-        OverviewCourseCardComponent,
+        CourseCardComponent,
         CourseStatisticsComponent,
         CourseExerciseRowComponent,
         CourseExercisesComponent,
@@ -68,4 +66,4 @@ const ENTITY_STATES = [...OVERVIEW_ROUTES];
     ],
     exports: [ExerciseActionButtonComponent],
 })
-export class ArtemisOverviewModule {}
+export class ArtemisCoursesModule {}
