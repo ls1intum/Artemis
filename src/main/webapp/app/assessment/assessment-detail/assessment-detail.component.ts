@@ -36,7 +36,7 @@ export class AssessmentDetailComponent {
     }
 
     private get text(): string {
-        return this.block && this.block.text ? this.block.text : this.assessment.reference ? this.assessment.reference : '';
+        return this.block?.text || this.assessment.reference || '';
     }
 
     public get sanitizedText(): string {
