@@ -1,11 +1,12 @@
-import { Routes } from '@angular/router';
-import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
+import { RouterModule, Routes } from '@angular/router';
 import { ParticipationSubmissionComponent } from 'app/exercises/shared/participation-submission/participation-submission.component';
+import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { ParticipationSubmissionDeletePopupComponent } from 'app/exercises/shared/participation-submission/participation-submission-delete-dialog.component';
+import { NgModule } from '@angular/core';
 
-export const participationSubmissionRoute: Routes = [
+const participationSubmissionRoutes: Routes = [
     {
-        path: 'participation/:participationId/submissions',
+        path: 'course-management/:courseId/exercises/:exerciseId/participations/:participationId/submissions',
         component: ParticipationSubmissionComponent,
         data: {
             authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
@@ -15,7 +16,7 @@ export const participationSubmissionRoute: Routes = [
     },
 ];
 
-export const participationSubmissionPopupRoute: Routes = [
+const participationSubmissionPopupRoutes: Routes = [
     {
         path: 'participation/:participationId/submission/:submissionId/delete',
         component: ParticipationSubmissionDeletePopupComponent,
@@ -27,3 +28,9 @@ export const participationSubmissionPopupRoute: Routes = [
         outlet: 'popup',
     },
 ];
+
+@NgModule({
+    imports: [RouterModule.forChild([...participationSubmissionRoutes, ...participationSubmissionPopupRoutes])],
+    exports: [RouterModule],
+})
+export class ArtemisParticipationSubmissionRoutingModule {}
