@@ -373,7 +373,7 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
     }
     goToExerciseDashboard() {
         if (this.exercise && this.exercise.course) {
-            this.router.navigateByUrl(`/course/${this.exercise.course.id}/exercise/${this.exercise.id}/tutor-dashboard`);
+            this.router.navigateByUrl(`/course-management/${this.exercise.course.id}/exercises/${this.exercise.id}/tutor-dashboard`);
         } else {
             this.location.back();
         }

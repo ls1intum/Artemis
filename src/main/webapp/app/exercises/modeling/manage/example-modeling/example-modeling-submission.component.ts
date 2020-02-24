@@ -294,7 +294,7 @@ export class ExampleModelingSubmissionComponent implements OnInit {
         const courseId = this.exercise.course!.id;
 
         if (this.readOnly || this.toComplete) {
-            this.router.navigate([`/course/${courseId}/exercise/${this.exerciseId}/tutor-dashboard`]);
+            this.router.navigate(['/course-management', courseId, 'exercises', this.exerciseId, 'tutor-dashboard']);
         } else {
             await this.router.navigate([`/course/${courseId}/`]);
             this.router.navigate(['/course-management', courseId, 'modeling-exercises', this.exerciseId, 'edit']);

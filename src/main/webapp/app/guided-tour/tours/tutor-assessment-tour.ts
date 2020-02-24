@@ -25,7 +25,7 @@ export const tutorAssessmentTour: GuidedTour = {
             highlightPadding: 10,
             orientation: Orientation.TOP,
             permission: ['ROLE_TA'],
-            pageUrl: '/course/(\\d+)+/tutor-dashboard',
+            pageUrl: '/course-management/(\\d+)+/tutor-dashboard',
         }),
         new TextTourStep({
             highlightSelector: '.table-responsive .form-check',
@@ -68,7 +68,7 @@ export const tutorAssessmentTour: GuidedTour = {
             highlightPadding: 10,
             orientation: Orientation.TOP,
             permission: ['ROLE_TA'],
-            pageUrl: '/course/(\\d+)+/exercise/(\\d+)+/tutor-dashboard',
+            pageUrl: '/course-management/(\\d+)+/exercises/(\\d+)+/tutor-dashboard',
         }),
         new UserInterActionTourStep({
             highlightSelector: '.instructions-button',
@@ -123,7 +123,7 @@ export const tutorAssessmentTour: GuidedTour = {
             orientation: Orientation.TOP,
             userInteractionEvent: UserInteractionEvent.CLICK,
             permission: ['ROLE_TA'],
-            pageUrl: '/course/(\\d+)+/exercise/(\\d+)+/tutor-dashboard',
+            pageUrl: '/course-management/(\\d+)+/exercises/(\\d+)+/tutor-dashboard',
         }),
         // new page
         new AssessmentTaskTourStep({
@@ -173,7 +173,7 @@ export const tutorAssessmentTour: GuidedTour = {
             highlightPadding: 10,
             orientation: Orientation.TOP,
             permission: ['ROLE_TA'],
-            pageUrl: '/course/(\\d+)+/exercise/(\\d+)+/tutor-dashboard',
+            pageUrl: '/course-management/(\\d+)+/exercises/(\\d+)+/tutor-dashboard',
         }),
         new TextTourStep({
             highlightSelector: '.exercise-table button.guided-tour',

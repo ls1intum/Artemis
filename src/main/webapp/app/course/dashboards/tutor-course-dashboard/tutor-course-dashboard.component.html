@@ -125,7 +125,7 @@
 
                     <td class="text-center">
                         <button
-                            routerLink="/course/{{ course.id }}/exercise/{{ exercise.id }}/tutor-dashboard"
+                            [routerLink]="['/course-management', course.id, 'exercises', exercise.id, 'tutor-dashboard']"
                             class="btn btn-info btn-sm mr-1"
                             [class.guided-tour]="exercise === exerciseForGuidedTour"
                         >

@@ -334,7 +334,7 @@ export class ExampleTextSubmissionComponent implements OnInit, AfterViewInit {
         const courseId = this.exercise.course!.id;
 
         if (this.readOnly || this.toComplete) {
-            this.router.navigate([`/course/${courseId}/exercise/${this.exerciseId}/tutor-dashboard`]);
+            this.router.navigate([`/course-management/${courseId}/exercises/${this.exerciseId}/tutor-dashboard`]);
         } else {
             await this.router.navigate(['/course-management', courseId, 'text-exercises']);
             this.router.navigate(['/course-management', courseId, 'text-exercises', this.exerciseId, 'edit']);

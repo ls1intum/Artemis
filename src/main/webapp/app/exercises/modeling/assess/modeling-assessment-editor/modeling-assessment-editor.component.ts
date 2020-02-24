@@ -424,7 +424,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
 
     goToExerciseDashboard() {
         if (this.modelingExercise && this.modelingExercise.course) {
-            this.router.navigateByUrl(`/course/${this.modelingExercise.course.id}/exercise/${this.modelingExercise.id}/tutor-dashboard`);
+            this.router.navigateByUrl(`/course-management/${this.modelingExercise.course.id}/exercises/${this.modelingExercise.id}/tutor-dashboard`);
         } else {
             this.location.back();
         }

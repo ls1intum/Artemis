@@ -4,7 +4,7 @@ import { UserRouteAccessService } from 'app/core/auth/user-route-access-service'
 
 export const tutorExerciseDashboardRoute: Routes = [
     {
-        path: 'course/:courseId/exercise/:exerciseId/tutor-dashboard',
+        path: 'course-management/:courseId/exercises/:exerciseId/tutor-dashboard',
         component: TutorExerciseDashboardComponent,
         data: {
             authorities: ['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'],

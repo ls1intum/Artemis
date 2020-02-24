@@ -41,7 +41,7 @@ export class TutorParticipationGraphComponent implements OnInit, OnChanges {
         const courseId = get(this.tutorParticipation, 'trainedExampleSubmissions[0].exercise.course.id');
 
         if (courseId && exerciseId) {
-            this.routerLink = `/course/${courseId}/exercise/${exerciseId}/tutor-dashboard`;
+            this.routerLink = `/course-management/${courseId}/exercises/${exerciseId}/tutor-dashboard`;
         }
         this.calculatePercentageAssessmentProgress();
         this.calculatePercentageComplaintsProgress();

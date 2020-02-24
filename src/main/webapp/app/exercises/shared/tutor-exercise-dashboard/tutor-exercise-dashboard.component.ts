@@ -396,6 +396,6 @@ export class TutorExerciseDashboardComponent implements OnInit {
     }
 
     back() {
-        this.router.navigate([`/course/${this.courseId}/tutor-dashboard`]);
+        this.router.navigate([`/course-management/${this.courseId}/tutor-dashboard`]);
     }
 }
