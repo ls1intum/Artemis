@@ -24,6 +24,7 @@ import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
@@ -71,6 +72,7 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationTest 
         // Add users that are not in the course/exercise
         userRepo.save(ModelFactory.generateActivatedUser("student3"));
         userRepo.save(ModelFactory.generateActivatedUser("tutor3"));
+        userRepo.save(ModelFactory.generateActivatedUser("instructor3"));
 
         course = database.addCourseWithModelingAndTextExercise();
         for (Exercise exercise : course.getExercises()) {
@@ -360,5 +362,63 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationTest 
     @WithMockUser(username = "tutor3", roles = "TA")
     public void getAllParticipationsForExercise_NotTutorInCourse() throws Exception {
         request.getList("/api/exercise/" + textExercise.getId() + "/participations", HttpStatus.FORBIDDEN, StudentParticipation.class);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void getAllParticipationsForCourse() throws Exception {
+        database.addParticipationForExercise(programmingExercise, "student1");
+        database.addParticipationForExercise(textExercise, "student2");
+        database.addParticipationForExercise(modelingExercise, "student1");
+        var quizEx = ModelFactory.generateQuizExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(1), course);
+        exerciseRepo.save(quizEx);
+        database.addParticipationForExercise(quizEx, "student2");
+
+        var participations = request.getList("/api/courses/" + course.getId() + "/participations", HttpStatus.OK, StudentParticipation.class);
+        assertThat(participations.size()).isEqualTo(4);
+        participations.forEach(participation -> {
+            var exercise = participation.getExercise();
+            assertThat(exercise.getCourse()).isNull();
+            assertThat(exercise.getStudentParticipations()).isEmpty();
+            assertThat(exercise.getTutorParticipations()).isEmpty();
+            assertThat(exercise.getExampleSubmissions()).isEmpty();
+            assertThat(exercise.getAttachments()).isEmpty();
+            assertThat(exercise.getCategories()).isEmpty();
+            assertThat(exercise.getProblemStatement()).isNull();
+            assertThat(exercise.getStudentQuestions()).isEmpty();
+            assertThat(exercise.getGradingInstructions()).isNull();
+            assertThat(exercise.getDifficulty()).isNull();
+            assertThat(exercise.getMode()).isNull();
+            if (exercise instanceof ProgrammingExercise) {
+                ProgrammingExercise programmingExercise = (ProgrammingExercise) exercise;
+                assertThat(programmingExercise.getSolutionParticipation()).isNull();
+                assertThat(programmingExercise.getTemplateParticipation()).isNull();
+                assertThat(programmingExercise.getTestRepositoryUrl()).isNull();
+                assertThat(programmingExercise.getShortName()).isNull();
+                assertThat(programmingExercise.isPublishBuildPlanUrl()).isNull();
+                assertThat(programmingExercise.getProgrammingLanguage()).isNull();
+                assertThat(programmingExercise.getPackageName()).isNull();
+                assertThat(programmingExercise.isAllowOnlineEditor()).isNull();
+            }
+            else if (exercise instanceof QuizExercise) {
+                QuizExercise quizExercise = (QuizExercise) exercise;
+                assertThat(quizExercise.getQuizQuestions()).isEmpty();
+            }
+            else if (exercise instanceof TextExercise) {
+                TextExercise textExercise = (TextExercise) exercise;
+                assertThat(textExercise.getSampleSolution()).isNull();
+            }
+            else if (exercise instanceof ModelingExercise) {
+                ModelingExercise modelingExercise = (ModelingExercise) exercise;
+                assertThat(modelingExercise.getSampleSolutionModel()).isNull();
+                assertThat(modelingExercise.getSampleSolutionExplanation()).isNull();
+            }
+        });
+    }
+
+    @Test
+    @WithMockUser(username = "instructor3", roles = "INSTRUCTOR")
+    public void getAllParticipationsForCourse_noInstructorInCourse() throws Exception {
+        request.getList("/api/courses/" + course.getId() + "/participations", HttpStatus.FORBIDDEN, StudentParticipation.class);
     }
 }
