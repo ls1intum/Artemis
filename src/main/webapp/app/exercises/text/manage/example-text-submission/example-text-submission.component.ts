@@ -6,8 +6,8 @@ import { AlertService } from 'app/core/alert/alert.service';
 import { WindowRef } from 'app/core/websocket/window.service';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ExampleSubmissionService } from 'app/exercises/shared/example-submission/example-submission.service';
-import { TextAssessmentsService } from 'app/exercises/text/assess/text-assessments/text-assessments.service';
-import { HighlightColors } from 'app/exercises/text/assess/text-assessment/highlight-colors';
+import { TextAssessmentsService } from 'app/exercises/text/assess/text-assessments.service';
+import { HighlightColors } from 'app/exercises/text/assess/highlight-colors';
 import { TutorParticipationService } from 'app/exercises/shared/tutor-exercise-dashboard/tutor-participation.service';
 import { ArtemisMarkdown } from 'app/shared/markdown.service';
 import Interactable from '@interactjs/core/Interactable';
@@ -15,7 +15,7 @@ import interact from 'interactjs';
 import { AccountService } from 'app/core/auth/account.service';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { tutorAssessmentTour } from 'app/guided-tour/tours/tutor-assessment-tour';
-import { TextSubmissionService } from 'app/exercises/text/participate/text-submission/text-submission.service';
+import { TextSubmissionService } from 'app/exercises/text/participate/text-submission.service';
 import { ExampleSubmission } from 'app/entities/example-submission.model';
 import { Feedback } from 'app/entities/feedback.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
@@ -336,8 +336,8 @@ export class ExampleTextSubmissionComponent implements OnInit, AfterViewInit {
         if (this.readOnly || this.toComplete) {
             this.router.navigate([`/course/${courseId}/exercise/${this.exerciseId}/tutor-dashboard`]);
         } else {
-            await this.router.navigate([`/course/${courseId}/text-exercise/`]);
-            this.router.navigate(['/text-exercise/' + this.exerciseId + '/edit']);
+            await this.router.navigate(['/course-management', courseId, 'text-exercises']);
+            this.router.navigate(['/course-management', courseId, 'text-exercises', this.exerciseId, 'edit']);
         }
     }
 

@@ -792,7 +792,7 @@ export class GuidedTourService {
                         )
                         .subscribe(
                             () => {
-                                this.navigateToUrlAfterRestart(`/overview/${this.currentCourse!.id}/exercises`);
+                                this.navigateToUrlAfterRestart(`/courses/${this.currentCourse!.id}/exercises`);
                             },
                             () => {
                                 // start tour in case the participation was deleted otherwise
@@ -807,7 +807,7 @@ export class GuidedTourService {
                     this.tutorParticipationService.deleteTutorParticipationForGuidedTour(this.currentCourse, this.currentExercise).subscribe(
                         () => {
                             this.deleteGuidedTourSetting(this.availableTourForComponent!.settingsKey).subscribe(() => {
-                                this.navigateToUrlAfterRestart('/course');
+                                this.navigateToUrlAfterRestart('/course-management');
                             });
                         },
                         () => {

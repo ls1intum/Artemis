@@ -38,8 +38,5 @@ import { ArtemisComplaintsForTutorModule } from 'app/complaints/complaints-for-t
         AssessmentWarningComponent,
         ExternalSubmissionButtonComponent,
     ],
-    entryComponents: [ExternalSubmissionDialogComponent],
-
-    providers: [],
 })
 export class ArtemisAssessmentSharedModule {}

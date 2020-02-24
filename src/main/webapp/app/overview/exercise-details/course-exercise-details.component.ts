@@ -229,15 +229,11 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     }
 
     get exerciseRouterLink(): string | null {
-        if (this.exercise && this.exercise.type === ExerciseType.MODELING) {
-            return `/course-management/${this.courseId}/modeling-exercises/${this.exercise!.id}/assessment`;
-        } else if (this.exercise && this.exercise.type === ExerciseType.TEXT) {
-            return `/text/${this.exercise.id}/assessment`;
-        } else if (this.exercise && this.exercise.type === ExerciseType.FILE_UPLOAD) {
-            return `/course-management/${this.courseId}/file-upload-exercises/${this.exercise.id}/assessment`;
-        } else {
-            return null;
+        if (this.exercise && [ExerciseType.MODELING, ExerciseType.TEXT, ExerciseType.FILE_UPLOAD].includes(this.exercise.type)) {
+            return `/course-management/${this.courseId}/${this.exercise.type}-exercises/${this.exercise!.id}/assessment`;
         }
+
+        return null;
     }
 
     get showResults(): boolean {

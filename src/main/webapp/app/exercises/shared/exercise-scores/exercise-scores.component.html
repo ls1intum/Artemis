@@ -239,7 +239,7 @@
                 <ngx-datatable-column prop="" *ngIf="exercise.type === ExerciseType.MODELING && exercise.isAtLeastInstructor" [resizeable]="false" [minWidth]="180" [width]="180">
                     <ng-template ngx-datatable-cell-template let-value="value">
                         <button
-                            [routerLink]="['/course-management', exercise.course?.id, 'file-upload-exercises', exercise.id, 'submissions', value.submission.id, 'assessment']"
+                            [routerLink]="['/course-management', exercise.course?.id, 'modeling-exercises', exercise.id, 'submissions', value.submission.id, 'assessment']"
                             [queryParams]="{ optimal: false, hideBackButton: true }"
                             class="btn btn-primary btn-sm mr-1"
                         >
@@ -251,7 +251,10 @@
 
                 <ngx-datatable-column prop="" *ngIf="exercise.type === ExerciseType.TEXT && exercise.isAtLeastInstructor" [resizeable]="false" [minWidth]="180" [width]="180">
                     <ng-template ngx-datatable-cell-template let-value="value">
-                        <button routerLink="/text/{{ exercise.id }}/assessment/{{ value.submission.id }}" class="btn btn-primary btn-sm mr-1">
+                        <button
+                            [routerLink]="['/course-management', exercise.course?.id, 'text-exercises', exercise.id, 'submissions', value.submission.id, 'assessment']"
+                            class="btn btn-primary btn-sm mr-1"
+                        >
                             <fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>
                             {{ 'artemisApp.textSubmission.view' | translate }}
                         </button>

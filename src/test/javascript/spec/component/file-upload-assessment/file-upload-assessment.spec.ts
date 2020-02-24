@@ -15,7 +15,7 @@ import { AlertService } from 'app/core/alert/alert.service';
 import { Router } from '@angular/router';
 import { of } from 'rxjs';
 import { FileUploadAssessmentComponent } from 'app/exercises/file-upload/assess/file-upload-assessment.component';
-import { ResizableInstructionsComponent } from 'app/exercises/text/assess/text-assessment/resizable-instructions/resizable-instructions.component';
+import { ResizableInstructionsComponent } from 'app/exercises/text/assess/resizable-instructions/resizable-instructions.component';
 import { DebugElement } from '@angular/core';
 import { MockAccountService } from '../../mocks/mock-account.service';
 import { Location } from '@angular/common';

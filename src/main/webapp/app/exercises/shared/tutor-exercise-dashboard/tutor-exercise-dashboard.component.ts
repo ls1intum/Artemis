@@ -6,7 +6,7 @@ import { AlertService } from 'app/core/alert/alert.service';
 import { User } from 'app/core/user/user.model';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { TutorParticipationService } from 'app/exercises/shared/tutor-exercise-dashboard/tutor-participation.service';
-import { TextSubmissionService } from 'app/exercises/text/participate/text-submission/text-submission.service';
+import { TextSubmissionService } from 'app/exercises/text/participate/text-submission.service';
 import { ExampleSubmission } from 'app/entities/example-submission.model';
 import { ArtemisMarkdown } from 'app/shared/markdown.service';
 import { TextExercise } from 'app/entities/text-exercise.model';
@@ -18,7 +18,7 @@ import { Submission } from 'app/entities/submission.model';
 import { ModelingSubmissionService } from 'app/exercises/modeling/participate/modeling-submission.service';
 import { Observable, of } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { StatsForDashboard } from 'app/course/instructor-course-dashboard/stats-for-dashboard.model';
+import { StatsForDashboard } from 'app/course/dashboards/instructor-course-dashboard/stats-for-dashboard.model';
 import { TranslateService } from '@ngx-translate/core';
 import { FileUploadSubmissionService } from 'app/exercises/file-upload/participate/file-upload-submission.service';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
@@ -343,7 +343,7 @@ export class TutorExerciseDashboardComponent implements OnInit {
         if (!this.exercise || !this.exercise.type || !submissionId) {
             return;
         }
-        const route = `/${this.exercise.type}-exercises/${this.exercise.id}/example-submissions/${submissionId}`;
+        const route = `/course-management/${this.courseId}/${this.exercise.type}-exercises/${this.exercise.id}/example-submissions/${submissionId}`;
         // TODO CZ: add both flags and check for value in example submission components
         const queryParams: ExampleSubmissionQueryParams = {};
         if (readOnly) {
@@ -361,23 +361,8 @@ export class TutorExerciseDashboardComponent implements OnInit {
             return;
         }
 
-        let route = '';
-        let submission = submissionId.toString();
-        if (isNewAssessment) {
-            submission = 'new';
-        }
-
-        switch (this.exercise.type) {
-            case ExerciseType.TEXT:
-                route = `/text/${this.exercise.id}/assessment/${submission}`;
-                break;
-            case ExerciseType.MODELING:
-                route = `/course-management/${this.courseId}/modeling-exercises/${this.exercise.id}/submissions/${submission}/assessment`;
-                break;
-            case ExerciseType.FILE_UPLOAD:
-                route = `/course-management/${this.courseId}/file-upload-exercises/${this.exercise.id}/submissions/${submission}/assessment`;
-                break;
-        }
+        const submission = isNewAssessment ? 'new' : submissionId.toString();
+        const route = `/course-management/${this.courseId}/${this.exercise.type}-exercises/${this.exercise.id}/submissions/${submission}/assessment`;
         this.router.navigate([route]);
     }
 

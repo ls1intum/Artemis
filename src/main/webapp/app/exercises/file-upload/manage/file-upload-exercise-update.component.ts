@@ -63,7 +63,7 @@ export class FileUploadExerciseUpdateComponent implements OnInit {
      */
     previousState() {
         if (this.fileUploadExercise.course) {
-            this.router.navigate(['/course', this.fileUploadExercise.course!.id]);
+            this.router.navigate(['/course-management', this.fileUploadExercise.course!.id]);
         } else {
             window.history.back();
         }

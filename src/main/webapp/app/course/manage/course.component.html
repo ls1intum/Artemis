@@ -11,7 +11,7 @@
                 [showInOrionWindow]="false"
                 *jhiHasAnyAuthority="'ROLE_ADMIN'"
                 class="btn btn-primary jh-create-entity create-course"
-                [routerLink]="['/course/new']"
+                [routerLink]="['/course-management/new']"
             >
                 <fa-icon [icon]="'plus'"></fa-icon>
                 <span class="hidden-sm-down" jhiTranslate="artemisApp.course.home.createLabel">
@@ -66,7 +66,7 @@
                             <div [ngStyle]="{ backgroundColor: course.color || ARTEMIS_DEFAULT_COLOR, width: '15px', height: '20px' }">&nbsp;</div>
                         </td>
                         <td class="d-none d-md-table-cell">
-                            <a [routerLink]="['/course', course.id, 'view']">{{ course.id }}</a>
+                            <a [routerLink]="['/course-management', course.id, 'view']">{{ course.id }}</a>
                         </td>
                         <td>
                             <span class="bold">{{ course.title }}</span
@@ -93,7 +93,7 @@
                             <button
                                 *ngIf="course.isAtLeastTutor"
                                 type="submit"
-                                [routerLink]="['/course', course.id]"
+                                [routerLink]="['/course-management', course.id]"
                                 class="btn btn-primary btn-sm mr-1 mb-1"
                                 id="exercises-ide-button-{{ course.id }}"
                             >
@@ -107,7 +107,7 @@
                                     <button
                                         *ngIf="course.isAtLeastTutor"
                                         type="submit"
-                                        [routerLink]="['/course', course.id]"
+                                        [routerLink]="['/course-management', course.id]"
                                         class="btn btn-primary btn-sm mr-1 mb-1 exercise-button"
                                         [class.guided-tour]="course === courseForGuidedTour"
                                         id="exercises-button-{{ course.id }}"
@@ -135,7 +135,12 @@
                                         <fa-icon [icon]="'eye'"></fa-icon>
                                         <span class="d-none d-md-inline">{{ 'entity.action.scores' | translate }}</span>
                                     </button>
-                                    <button type="submit" *ngIf="course.isAtLeastInstructor" [routerLink]="['/course', course.id, 'view']" class="btn btn-info btn-sm mr-1 mb-1">
+                                    <button
+                                        type="submit"
+                                        *ngIf="course.isAtLeastInstructor"
+                                        [routerLink]="['/course-management', course.id, 'view']"
+                                        class="btn btn-info btn-sm mr-1 mb-1"
+                                    >
                                         <fa-icon [icon]="'eye'"></fa-icon>
                                         <span class="d-none d-md-inline">{{ 'entity.action.view' | translate }}</span>
                                     </button>
@@ -162,7 +167,12 @@
                                     </button>
                                 </div>
                                 <div class="d-flex flex-column mr-1 mb-1" *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']">
-                                    <button type="submit" *ngIf="course.isAtLeastInstructor" [routerLink]="['/course', course.id, 'edit']" class="btn btn-primary btn-sm mr-1 mb-1">
+                                    <button
+                                        type="submit"
+                                        *ngIf="course.isAtLeastInstructor"
+                                        [routerLink]="['/course-management', course.id, 'edit']"
+                                        class="btn btn-primary btn-sm mr-1 mb-1"
+                                    >
                                         <fa-icon [icon]="'pencil-alt'"></fa-icon>
                                         <span class="d-none d-md-inline">{{ 'entity.action.edit' | translate }}</span>
                                     </button>

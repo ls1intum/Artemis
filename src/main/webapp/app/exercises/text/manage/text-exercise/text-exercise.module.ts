@@ -14,6 +14,7 @@ import { textExerciseRoute } from 'app/exercises/text/manage/text-exercise/text-
 import { TextExerciseComponent } from 'app/exercises/text/manage/text-exercise/text-exercise.component';
 import { TextExerciseDetailComponent } from 'app/exercises/text/manage/text-exercise/text-exercise-detail.component';
 import { ArtemisTeamConfigFormGroupModule } from 'app/exercises/shared/team-config-form-group/team-config-form-group.module';
+import { ExternalSubmissionDialogComponent } from 'app/exercises/shared/external-submission/external-submission-dialog.component';
 
 const ENTITY_STATES = [...textExerciseRoute];
 
@@ -32,5 +33,6 @@ const ENTITY_STATES = [...textExerciseRoute];
     ],
     declarations: [TextExerciseComponent, TextExerciseDetailComponent, TextExerciseUpdateComponent],
     exports: [TextExerciseComponent],
+    entryComponents: [ExternalSubmissionDialogComponent],
 })
 export class ArtemisTextExerciseModule {}
