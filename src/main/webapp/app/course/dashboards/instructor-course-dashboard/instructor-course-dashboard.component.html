@@ -31,13 +31,13 @@
                                 {{ 'artemisApp.instructorCourseDashboard.open' | translate }})
                             </li>
                             <li>
-                                <a routerLink="/complaints" [queryParams]="{ courseId: course.id }">
+                                <a [routerLink]="['/course-management', course.id, 'complaints']">
                                     <b>{{ 'artemisApp.instructorCourseDashboard.complaints' | translate }}:</b> {{ stats.numberOfComplaints }}
                                 </a>
                                 ({{ stats.numberOfOpenComplaints }} {{ 'artemisApp.instructorCourseDashboard.openComplaint' | translate }})
                             </li>
                             <li>
-                                <a routerLink="/more-feedback-requests" [queryParams]="{ courseId: course.id }">
+                                <a [routerLink]="['/course-management', course.id, 'more-feedback-requests']">
                                     <b>{{ 'artemisApp.instructorCourseDashboard.moreFeedbackRequests' | translate }}:</b> {{ stats.numberOfMoreFeedbackRequests }}
                                 </a>
                                 ({{ stats.numberOfOpenMoreFeedbackRequests }} {{ 'artemisApp.instructorCourseDashboard.openRequest' | translate }})
