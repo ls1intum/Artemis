@@ -8,7 +8,6 @@ import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown
 import { DndModule } from 'ng2-dnd';
 import { QuizScoringInfoModalComponent } from './quiz-scoring-info-modal/quiz-scoring-info-modal.component';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
-import { ArtemisQuizParticipationModule } from 'app/exercises/quiz/participate/quiz-participation.module';
 import { ArtemisQuizStatisticModule } from 'app/exercises/quiz/manage/statistics/quiz-statistic.module';
 import { ArtemisApollonDiagramsModule } from 'app/exercises/quiz/manage/apollon-diagrams/apollon-diagram.module';
 import { quizManagementRoute } from 'app/exercises/quiz/manage/quiz-management.route';
@@ -25,6 +24,7 @@ import { ReEvaluateDragAndDropQuestionComponent } from 'app/exercises/quiz/manag
 import { ReEvaluateShortAnswerQuestionComponent } from 'app/exercises/quiz/manage/re-evaluate/short-answer-question/re-evaluate-short-answer-question.component';
 import { QuizReEvaluateWarningComponent } from 'app/exercises/quiz/manage/re-evaluate/quiz-re-evaluate-warning.component';
 import { QuizExerciseExportComponent } from 'app/exercises/quiz/manage/quiz-exercise-export.component';
+import { ArtemisQuizQuestionTypesModule } from 'app/exercises/quiz/shared/questions/artemis-quiz-question-types.module';
 
 const ENTITY_STATES = [...quizManagementRoute];
 
@@ -36,7 +36,7 @@ const ENTITY_STATES = [...quizManagementRoute];
         SortByModule,
         AngularFittextModule,
         AceEditorModule,
-        ArtemisQuizParticipationModule,
+        ArtemisQuizQuestionTypesModule,
         ArtemisMarkdownEditorModule,
         ArtemisQuizStatisticModule,
         ArtemisApollonDiagramsModule,
