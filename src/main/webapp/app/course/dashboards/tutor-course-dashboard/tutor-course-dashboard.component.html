@@ -5,7 +5,7 @@
                 <fa-icon [icon]="'arrow-left'" (click)="back()" class="back-button mr-2"></fa-icon>
                 {{ 'artemisApp.tutorCourseDashboard.pageHeader' | translate }} {{ course?.title }}
 
-                <a class="text-primary card-link" *ngIf="course?.isAtLeastInstructor" routerLink="/course/{{ course?.id }}/dashboard" routerLinkActive="active">
+                <a class="text-primary card-link" *ngIf="course?.isAtLeastInstructor" routerLink="/course-management/{{ course?.id }}/scores" routerLinkActive="active">
                     <fa-icon [icon]="'info-circle'" [fixedWidth]="true" style="color:white;"></fa-icon>
                 </a>
             </h2>
