@@ -49,6 +49,7 @@ public class StudentParticipation extends Participation {
         return Optional.ofNullable(team);
     }
 
+    @JsonIgnore
     public Set<User> getStudents() {
         return getStudent().map(Set::of).orElse(team.getStudents());
     }
@@ -105,7 +106,7 @@ public class StudentParticipation extends Participation {
     }
 
     public boolean isOwnedBy(User user) {
-        return getStudent().map(student -> student.equals(user)).orElse(team.hasStudent(user));
+        return isOwnedBy(user.getLogin());
     }
 
     @Override
