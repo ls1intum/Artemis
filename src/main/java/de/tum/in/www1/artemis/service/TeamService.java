@@ -1,8 +1,6 @@
 package de.tum.in.www1.artemis.service;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import org.springframework.data.util.Pair;
@@ -33,6 +31,26 @@ public class TeamService {
     }
 
     /**
+     * Finds the team of a given user for an exercise
+     * @param exercise Exercise for which to find the team
+     * @param user Student for which to find the team
+     * @return found team (or empty if student has not been assigned to a team yet for the exercise)
+     */
+    public Optional<Team> findOneByExerciseAndUser(Exercise exercise, User user) {
+        return teamRepository.findOneByExerciseIdAndUserId(exercise.getId(), user.getId());
+    }
+
+    /**
+     * Returns whether the student is already assigned to a team for a given exercise
+     * @param exercise Exercise for which to check
+     * @param user Student for which to check
+     * @return boolean flag whether the student has been assigned already or not yet
+     */
+    public boolean isAssignedToTeam(Exercise exercise, User user) {
+        return teamRepository.findOneByExerciseIdAndUserId(exercise.getId(), user.getId()).isPresent();
+    }
+
+    /**
      * Search for users by login or name in course
      * @param course Course in which to search students
      * @param exercise Exercise in which the student might be added to a team
@@ -41,10 +59,11 @@ public class TeamService {
      */
     public List<TeamSearchUserDTO> searchByLoginOrNameInCourseForExerciseTeam(Course course, Exercise exercise, String loginOrName) {
         List<User> users = userRepository.searchByLoginOrNameInGroup(course.getStudentGroupName(), loginOrName);
+        List<Long> userIds = users.stream().map(User::getId).collect(Collectors.toList());
         List<TeamSearchUserDTO> teamSearchUsers = users.stream().map(TeamSearchUserDTO::new).collect(Collectors.toList());
         // Annotate whether the user is already assigned to a team for the given exercise
-        // TODO Martin Wauligmann: swap n+1 db queries with only 1 or 2 queries?
-        teamSearchUsers.forEach(user -> user.setIsAssignedToTeam(teamRepository.findOneByExerciseIdAndUserId(exercise.getId(), user.getId()).isPresent()));
+        HashSet<Long> loginsOfAssignedStudents = (HashSet<Long>) teamRepository.findAssignedUserIdsByExerciseIdAndUserIds(exercise.getId(), userIds);
+        teamSearchUsers.forEach(user -> user.setIsAssignedToTeam(loginsOfAssignedStudents.contains(user.getId())));
         return teamSearchUsers;
     }
 

@@ -28,10 +28,7 @@ import de.tum.in.www1.artemis.config.GuidedTourConfiguration;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
-import de.tum.in.www1.artemis.domain.participation.Participation;
-import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
-import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
-import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.domain.participation.*;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
@@ -84,10 +81,13 @@ public class ParticipationResource {
 
     private final GuidedTourConfiguration guidedTourConfiguration;
 
+    private final TeamService teamService;
+
     public ParticipationResource(ParticipationService participationService, ProgrammingExerciseParticipationService programmingExerciseParticipationService,
             CourseService courseService, QuizExerciseService quizExerciseService, ExerciseService exerciseService, AuthorizationCheckService authCheckService,
             Optional<ContinuousIntegrationService> continuousIntegrationService, AuthorizationCheckService authorizationCheckService, TextSubmissionService textSubmissionService,
-            ResultService resultService, UserService userService, AuditEventRepository auditEventRepository, GuidedTourConfiguration guidedTourConfiguration) {
+            ResultService resultService, UserService userService, AuditEventRepository auditEventRepository, GuidedTourConfiguration guidedTourConfiguration,
+            TeamService teamService) {
         this.participationService = participationService;
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.quizExerciseService = quizExerciseService;
@@ -101,6 +101,7 @@ public class ParticipationResource {
         this.userService = userService;
         this.auditEventRepository = auditEventRepository;
         this.guidedTourConfiguration = guidedTourConfiguration;
+        this.teamService = teamService;
     }
 
     /**
@@ -144,6 +145,7 @@ public class ParticipationResource {
         log.debug("REST request to start Exercise : {}", exerciseId);
         Exercise exercise = exerciseService.findOneWithAdditionalElements(exerciseId);
         User user = userService.getUserWithGroupsAndAuthorities();
+        Participant participant = user;
         Course course = exercise.getCourse();
         if (!authCheckService.isAtLeastStudentInCourse(course, user)) {
             throw new AccessForbiddenException("You are not allowed to access this resource");
@@ -166,7 +168,13 @@ public class ParticipationResource {
             }
         }
 
-        StudentParticipation participation = participationService.startExercise(exercise, user);
+        // if this is a team-based exercise, set the participant to the team that the user belongs to
+        if (exercise.isTeamMode()) {
+            participant = teamService.findOneByExerciseAndUser(exercise, user)
+                    .orElseThrow(() -> new BadRequestAlertException("Team exercise cannot be started without assigned team.", "participation", "cannotStart"));
+        }
+
+        StudentParticipation participation = participationService.startExercise(exercise, participant);
         // remove sensitive information before sending participation to the client
         participation.getExercise().filterSensitiveInformation();
         return ResponseEntity.created(new URI("/api/participations/" + participation.getId())).body(participation);
