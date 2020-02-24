@@ -548,8 +548,8 @@ public class ProgrammingExerciseResource {
         List<ProgrammingExerciseStudentParticipation> exportedStudentParticipations = new ArrayList<>();
         for (StudentParticipation studentParticipation : programmingExercise.getStudentParticipations()) {
             ProgrammingExerciseStudentParticipation programmingStudentParticipation = (ProgrammingExerciseStudentParticipation) studentParticipation;
-            if (repositoryExportOptions.isExportAllStudents() || (programmingStudentParticipation.getRepositoryUrl() != null && studentParticipation.getStudent() != null
-                    && studentList.contains(studentParticipation.getStudent().getLogin()))) {
+            if (repositoryExportOptions.isExportAllStudents() || (programmingStudentParticipation.getRepositoryUrl() != null && studentParticipation.getParticipant() != null
+                    && studentParticipation.getStudents().stream().map(User::getLogin).anyMatch(studentList::contains))) {
                 exportedStudentParticipations.add(programmingStudentParticipation);
             }
         }

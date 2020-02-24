@@ -29,11 +29,19 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
 
     Optional<StudentParticipation> findByExerciseIdAndStudentLogin(Long exerciseId, String username);
 
+    Optional<StudentParticipation> findByExerciseIdAndTeamShortName(Long exerciseId, String teamShortName);
+
     @EntityGraph(attributePaths = "results")
     Optional<StudentParticipation> findWithEagerResultsByExerciseIdAndStudentLogin(Long exerciseId, String username);
 
+    @EntityGraph(attributePaths = "results")
+    Optional<StudentParticipation> findWithEagerResultsByExerciseIdAndTeamShortName(Long exerciseId, String teamShortName);
+
     @EntityGraph(attributePaths = "submissions")
     Optional<StudentParticipation> findWithEagerSubmissionsByExerciseIdAndStudentLogin(Long exerciseId, String username);
+
+    @EntityGraph(attributePaths = "submissions")
+    Optional<StudentParticipation> findWithEagerSubmissionsByExerciseIdAndTeamShortName(Long exerciseId, String teamShortName);
 
     @Query("select distinct participation from StudentParticipation participation left join fetch participation.submissions s left join fetch s.result where participation.exercise.id = :#{#exerciseId}")
     List<StudentParticipation> findByExerciseIdWithEagerSubmissionsResult(@Param("exerciseId") Long exerciseId);
@@ -56,6 +64,12 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
 
     @Query("select distinct participation from StudentParticipation participation left join fetch participation.results as par left join fetch par.feedbacks where participation.exercise.id = :#{#exerciseId} and participation.student.id = :#{#studentId} and (par.id = (select max(id) from participation.results) or par.id = null)")
     Optional<StudentParticipation> findByExerciseIdAndStudentIdWithLatestResult(@Param("exerciseId") Long exerciseId, @Param("studentId") Long studentId);
+
+    @Query("select distinct participation from StudentParticipation participation left join fetch participation.results left join fetch participation.submissions where participation.exercise.id = :#{#exerciseId} and participation.team.id = :#{#teamId}")
+    List<StudentParticipation> findByExerciseIdAndTeamIdWithEagerResultsAndSubmissions(@Param("exerciseId") Long exerciseId, @Param("teamId") Long teamId);
+
+    @Query("select distinct participation from StudentParticipation participation left join fetch participation.results as par left join fetch par.feedbacks where participation.exercise.id = :#{#exerciseId} and participation.team.id = :#{#teamId} and (par.id = (select max(id) from participation.results) or par.id = null)")
+    Optional<StudentParticipation> findByExerciseIdAndTeamIdWithLatestResult(@Param("exerciseId") Long exerciseId, @Param("teamId") Long teamId);
 
     /**
      * Find all participations of submissions that are submitted and do not already have a manual result. No manual result means that no user has started an assessment for the
@@ -106,6 +120,9 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
 
     @Query("select distinct p from StudentParticipation p left join fetch p.submissions s left join fetch s.result r where p.student.id = :#{#studentId} and p.exercise in :#{#exercises}")
     List<StudentParticipation> findByStudentIdAndExerciseWithEagerSubmissionsResult(@Param("studentId") Long studentId, @Param("exercises") Set<Exercise> exercises);
+
+    @Query("select distinct p from StudentParticipation p left join fetch p.submissions s left join fetch s.result r where p.team.id = :#{#teamId} and p.exercise in :#{#exercises}")
+    List<StudentParticipation> findByTeamIdAndExerciseWithEagerSubmissionsResult(@Param("teamId") Long teamId, @Param("exercises") Set<Exercise> exercises);
 
     @EntityGraph(attributePaths = { "submissions", "submissions.result", "submissions.result.assessor" })
     @Query("select distinct p from StudentParticipation p left join fetch p.submissions s where p.exercise.id = :#{#exerciseId} and (s.result.assessor.id = :#{#assessorId} and s.id = (select max(id) from p.submissions) or s.id = null)")

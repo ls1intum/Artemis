@@ -7,6 +7,7 @@ import java.net.URL;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import javax.annotation.PostConstruct;
 
@@ -28,6 +29,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 
 import de.tum.in.www1.artemis.domain.Commit;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
@@ -87,16 +89,20 @@ public class GitLabService extends AbstractVersionControlService {
     }
 
     @Override
-    public void configureRepository(URL repositoryUrl, String username) {
-        // Automatically created users
-        if (username.startsWith(USER_PREFIX_EDX) || username.startsWith(USER_PREFIX_U4I)) {
-            if (!userExists(username)) {
-                final var user = userService.getUserByLogin(username).get();
-                gitLabUserManagementService.importUser(user);
+    public void configureRepository(URL repositoryUrl, Set<User> users) {
+        for (User user : users) {
+            String username = user.getLogin();
+
+            // Automatically created users
+            if (username.startsWith(USER_PREFIX_EDX) || username.startsWith(USER_PREFIX_U4I)) {
+                if (!userExists(username)) {
+                    gitLabUserManagementService.importUser(user);
+                }
             }
+
+            addMemberToProject(repositoryUrl, username);
         }
 
-        addMemberToProject(repositoryUrl, username);
         protectBranch("master", repositoryUrl);
     }
 
@@ -323,8 +329,8 @@ public class GitLabService extends AbstractVersionControlService {
     }
 
     @Override
-    public void setRepositoryPermissionsToReadOnly(URL repositoryUrl, String projectKey, String username) {
-        setRepositoryPermission(repositoryUrl, username, GUEST);
+    public void setRepositoryPermissionsToReadOnly(URL repositoryUrl, String projectKey, Set<User> users) {
+        users.forEach(user -> setRepositoryPermission(repositoryUrl, user.getLogin(), GUEST));
     }
 
     private void setRepositoryPermission(URL repositoryUrl, String username, AccessLevel accessLevel) {

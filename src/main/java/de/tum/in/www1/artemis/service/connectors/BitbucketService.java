@@ -79,33 +79,36 @@ public class BitbucketService extends AbstractVersionControlService {
     }
 
     @Override
-    public void configureRepository(URL repositoryUrl, String username) {
-        if (username.startsWith(USER_PREFIX_EDX) || username.startsWith((USER_PREFIX_U4I))) {
-            // It is an automatically created user
+    public void configureRepository(URL repositoryUrl, Set<User> users) {
+        for (User user : users) {
+            String username = user.getLogin();
 
-            User user = userService.getUserWithGroupsByLogin(username).get();
+            if (username.startsWith(USER_PREFIX_EDX) || username.startsWith((USER_PREFIX_U4I))) {
+                // It is an automatically created user
 
-            if (!userExists(username)) {
-                log.debug("Bitbucket user {} does not exist yet", username);
-                String displayName = (user.getFirstName() + " " + user.getLastName()).trim();
-                createUser(username, userService.decryptPasswordByLogin(username).get(), user.getEmail(), displayName);
+                if (!userExists(username)) {
+                    log.debug("Bitbucket user {} does not exist yet", username);
+                    String displayName = (user.getFirstName() + " " + user.getLastName()).trim();
+                    createUser(username, userService.decryptPasswordByLogin(username).get(), user.getEmail(), displayName);
 
-                try {
-                    addUserToGroups(username, user.getGroups());
+                    try {
+                        addUserToGroups(username, user.getGroups());
+                    }
+                    catch (BitbucketException e) {
+                        /*
+                         * This might throw exceptions, for example if the group does not exist on Bitbucket. We can safely ignore them.
+                         */
+                    }
                 }
-                catch (BitbucketException e) {
-                    /*
-                     * This might throw exceptions, for example if the group does not exist on Bitbucket. We can safely ignore them.
-                     */
+                else {
+                    log.debug("Bitbucket user {} already exists", username);
                 }
-            }
-            else {
-                log.debug("Bitbucket user {} already exists", username);
+
             }
 
+            giveWritePermission(getProjectKeyFromUrl(repositoryUrl), getRepositorySlugFromUrl(repositoryUrl), username);
         }
 
-        giveWritePermission(getProjectKeyFromUrl(repositoryUrl), getRepositorySlugFromUrl(repositoryUrl), username);
         protectBranches(getProjectKeyFromUrl(repositoryUrl), getRepositorySlugFromUrl(repositoryUrl));
     }
 
@@ -445,8 +448,8 @@ public class BitbucketService extends AbstractVersionControlService {
     }
 
     @Override
-    public void setRepositoryPermissionsToReadOnly(URL repositoryUrl, String projectKey, String username) throws BitbucketException {
-        setStudentRepositoryPermission(repositoryUrl, projectKey, username, VersionControlRepositoryPermission.READ_ONLY);
+    public void setRepositoryPermissionsToReadOnly(URL repositoryUrl, String projectKey, Set<User> users) throws BitbucketException {
+        users.forEach(user -> setStudentRepositoryPermission(repositoryUrl, projectKey, user.getLogin(), VersionControlRepositoryPermission.READ_ONLY));
     }
 
     private void setStudentRepositoryPermission(URL repositoryUrl, String projectKey, String username, VersionControlRepositoryPermission repositoryPermission)

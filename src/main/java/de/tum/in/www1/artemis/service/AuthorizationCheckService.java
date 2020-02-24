@@ -229,7 +229,7 @@ public class AuthorizationCheckService {
             return false;
         }
         else {
-            return participation.isOwner(SecurityUtils.getCurrentUserLogin().get());
+            return participation.isOwnedBy(SecurityUtils.getCurrentUserLogin().get());
         }
     }
 
@@ -249,7 +249,7 @@ public class AuthorizationCheckService {
             return false;
         }
         else {
-            return participation.isOwner(user);
+            return participation.isOwnedBy(user);
         }
     }
 
@@ -261,7 +261,7 @@ public class AuthorizationCheckService {
      * @return true, if user is student is owner of this participation, otherwise false
      */
     public boolean isOwnerOfParticipation(StudentParticipation participation, Principal principal) {
-        return participation.getParticipant() != null && participation.isOwner(principal.getName());
+        return participation.getParticipant() != null && participation.isOwnedBy(principal.getName());
     }
 
     /**

@@ -87,8 +87,9 @@ public class ProgrammingExerciseExportService {
             log.info("Request to export all student repositories of programming exercise " + programmingExerciseId + " with title '" + programmingExercise.getTitle() + "'");
         }
         else {
+            // TODO: Is this the expected behavior for teams? Or should all team members be listed instead?
             log.info("Request to export the repositories of programming exercise " + programmingExerciseId + " with title '" + programmingExercise.getTitle()
-                    + "' of the following students: " + participations.stream().map(p -> p.getStudent().getLogin()).collect(Collectors.joining(", ")));
+                    + "' of the following students/teams: " + participations.stream().map(StudentParticipation::getParticipantIdentifier).collect(Collectors.joining(", ")));
         }
 
         List<Path> zippedRepoFiles = new ArrayList<>();
@@ -277,15 +278,15 @@ public class ProgrammingExerciseExportService {
     }
 
     /**
-     * Adds the student id of the given student participation to the project name in all .project (Eclipse)
+     * Adds the student/team identifier of the given student participation to the project name in all .project (Eclipse)
      * and pom.xml (Maven) files found in the given repository.
      *
      * @param repo The repository for which the student id should get added
      * @param programmingExercise The checked out exercise in the repository
-     * @param participation The student participation for the student id, which should be added.
+     * @param participation The student participation for the student/team identifier, which should be added.
      */
     public void addStudentIdToProjectName(Repository repo, ProgrammingExercise programmingExercise, StudentParticipation participation) {
-        String studentId = participation.getStudent().getLogin();
+        String studentId = participation.getParticipantIdentifier();
 
         // Get all files in repository expect .git files
         List<String> allRepoFiles = listAllFilesInPath(repo.getLocalPath());
@@ -308,7 +309,7 @@ public class ProgrammingExerciseExportService {
 
         try {
             gitService.stageAllChanges(repo);
-            gitService.commit(repo, "Add Student Id to Project Name");
+            gitService.commit(repo, "Add Participant Identifier (Student Login or Team Short Name) to Project Name");
         }
         catch (GitAPIException ex) {
             log.error("Cannot stage or commit to the repo " + repo.getLocalPath() + " due to the following exception: " + ex);

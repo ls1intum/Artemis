@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.domain.participation;
 
 import java.util.Optional;
+import java.util.Set;
 
 import javax.persistence.*;
 
@@ -40,42 +41,24 @@ public class StudentParticipation extends Participation {
         this.presentationScore = presentationScore;
     }
 
-    // public User getStudent() {
-    // return student;
-    // }
-    //
-    // public Participation student(User user) {
-    // this.student = user;
-    // return this;
-    // }
-    //
-    // public void setStudent(User user) {
-    // this.student = user;
-    // }
-
-    public Team getTeam() {
-        return team;
+    public Optional<User> getStudent() {
+        return Optional.ofNullable(student);
     }
 
-    public Participation team(Team team) {
-        this.team = team;
-        return this;
+    public Optional<Team> getTeam() {
+        return Optional.ofNullable(team);
     }
 
-    public void setTeam(Team team) {
-        this.team = team;
-    }
-
-    public boolean isTeamParticipation() {
-        return Optional.ofNullable(team).isPresent();
+    public Set<User> getStudents() {
+        return getStudent().map(Set::of).orElse(team.getStudents());
     }
 
     @JsonIgnore
-    public Object getParticipant() {
-        return Optional.ofNullable((Object) student).orElse(team);
+    public Participant getParticipant() {
+        return Optional.ofNullable((Participant) student).orElse(team);
     }
 
-    public void setParticipant(Object participant) {
+    public void setParticipant(Participant participant) {
         if (participant instanceof User) {
             this.student = (User) participant;
         }
@@ -93,7 +76,7 @@ public class StudentParticipation extends Participation {
 
     @JsonIgnore
     public String getParticipantIdentifier() {
-        return Optional.ofNullable(student).map(User::getLogin).orElse(team.getShortName());
+        return getParticipant().getParticipantIdentifier();
     }
 
     public Exercise getExercise() {
@@ -114,21 +97,20 @@ public class StudentParticipation extends Participation {
      * E.g. tutors should not see information about the student.
      */
     public void filterSensitiveInformation() {
-        // setStudent(null);
-        setTeam(null);
+        setParticipant(null);
     }
 
-    public boolean isOwner(String userLogin) {
-        return Optional.ofNullable(student).map(student -> student.getLogin().equals(userLogin)).orElse(team.hasStudentWithLogin(userLogin));
+    public boolean isOwnedBy(String userLogin) {
+        return getStudent().map(student -> student.getLogin().equals(userLogin)).orElse(team.hasStudentWithLogin(userLogin));
     }
 
-    public boolean isOwner(User user) {
-        return Optional.ofNullable(student).map(student -> student.equals(user)).orElse(team.hasStudent(user));
+    public boolean isOwnedBy(User user) {
+        return getStudent().map(student -> student.equals(user)).orElse(team.hasStudent(user));
     }
 
     @Override
     public String toString() {
-        String participantString = Optional.ofNullable(student).map(student -> "student=" + student).orElse("team=" + team);
+        String participantString = getStudent().map(student -> "student=" + student).orElse("team=" + team);
         return "StudentParticipation{" + "id=" + getId() + ", presentationScore=" + presentationScore + ", " + participantString + "}";
     }
 

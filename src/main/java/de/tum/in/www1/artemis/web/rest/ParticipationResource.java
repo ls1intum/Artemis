@@ -218,7 +218,7 @@ public class ParticipationResource {
             if (participation != null) {
                 addLatestResultToParticipation(participation);
                 participation.getExercise().filterSensitiveInformation();
-                return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, participation.getStudent().getName()))
+                return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, participation.getParticipant().getName()))
                         .body(participation);
             }
         }
@@ -276,12 +276,12 @@ public class ParticipationResource {
 
         StudentParticipation currentParticipation = participationService.findOneStudentParticipation(participation.getId());
         if (currentParticipation.getPresentationScore() != null && currentParticipation.getPresentationScore() > participation.getPresentationScore()) {
-            log.info(user.getLogin() + " removed the presentation score of " + participation.getStudent().getLogin() + " for exercise with participationId "
+            log.info(user.getLogin() + " removed the presentation score of " + participation.getParticipantIdentifier() + " for exercise with participationId "
                     + participation.getExercise().getId());
         }
 
         Participation result = participationService.save(participation);
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, participation.getStudent().getName())).body(result);
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, participation.getParticipant().getName())).body(result);
     }
 
     /**
@@ -310,7 +310,7 @@ public class ParticipationResource {
         else {
             participations = participationService.findByExerciseId(exerciseId);
         }
-        participations = participations.stream().filter(participation -> participation.getStudent() != null).collect(Collectors.toList());
+        participations = participations.stream().filter(participation -> participation.getParticipant() != null).collect(Collectors.toList());
 
         Map<Long, Integer> submissionCountMap = participationService.countSubmissionsPerParticipationByExerciseId(exerciseId);
         participations.forEach(participation -> participation.setSubmissionCount(submissionCountMap.get(participation.getId())));
@@ -381,8 +381,8 @@ public class ParticipationResource {
         List<StudentParticipation> participations = participationService.findByCourseIdWithRelevantResult(courseId);
         int resultCount = 0;
         for (StudentParticipation participation : participations) {
-            // make sure the registration number is explicitely shown in the client
-            participation.getStudent().setVisibleRegistrationNumber(participation.getStudent().getRegistrationNumber());
+            // make sure the registration number is explicitly shown in the client
+            participation.getStudents().forEach(student -> student.setVisibleRegistrationNumber(student.getRegistrationNumber()));
             // we only need participationId, title, dates and max points
             // remove unnecessary elements
             Exercise exercise = participation.getExercise();
@@ -603,7 +603,7 @@ public class ParticipationResource {
 
         checkAccessPermissionAtLeastInstructor(participation, user);
 
-        String name = participation.getStudent().getName();
+        String name = participation.getParticipant().getName();
         var logMessage = "Delete Participation " + participationId + " of exercise " + participation.getExercise().getTitle() + " for " + name + ", deleteBuildPlan: "
                 + deleteBuildPlan + ", deleteRepository: " + deleteRepository + " by " + principal.getName();
         var auditEvent = new AuditEvent(user.getLogin(), Constants.DELETE_PARTICIPATION, logMessage);
@@ -636,7 +636,7 @@ public class ParticipationResource {
         User user = userService.getUserWithGroupsAndAuthorities();
 
         // Allow all users to delete their own StudentParticipations if it's for a tutorial
-        if (user.getId().equals(participation.getStudent().getId())) {
+        if (participation.isOwnedBy(user)) {
             checkAccessPermissionAtLeastStudent(participation, user);
             if (!guidedTourConfiguration.isExerciseForTutorial(participation.getExercise())) {
                 return forbidden();
@@ -646,7 +646,7 @@ public class ParticipationResource {
             return forbidden();
         }
 
-        String name = participation.getStudent().getName();
+        String name = participation.getParticipant().getName();
         var logMessage = "Delete Participation " + participationId + " of exercise " + participation.getExercise().getTitle() + " for " + name + ", deleteBuildPlan: "
                 + deleteBuildPlan + ", deleteRepository: " + deleteRepository + " by " + principal.getName();
         var auditEvent = new AuditEvent(user.getLogin(), Constants.DELETE_PARTICIPATION, logMessage);

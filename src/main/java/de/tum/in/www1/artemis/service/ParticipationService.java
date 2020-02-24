@@ -174,13 +174,13 @@ public class ParticipationService {
      * repository / build plan related stuff for programming exercises. In the case of modeling or text exercises, it also initializes and stores the corresponding submission.
      *
      * @param exercise the exercise which is started
-     * @param user the user who starts the exercise
+     * @param participant the user or team who starts the exercise
      * @return the participation connecting the given exercise and user
      */
-    public StudentParticipation startExercise(Exercise exercise, User user) {
+    public StudentParticipation startExercise(Exercise exercise, Participant participant) {
         // common for all exercises
         // Check if participation already exists
-        Optional<StudentParticipation> optionalStudentParticipation = findOneByExerciseIdAndStudentLoginAnyState(exercise.getId(), user.getLogin());
+        Optional<StudentParticipation> optionalStudentParticipation = findOneByExerciseIdAndParticipantAnyState(exercise.getId(), participant);
         StudentParticipation participation;
         if (optionalStudentParticipation.isEmpty()) {
             // create a new participation only if no participation can be found
@@ -192,7 +192,7 @@ public class ParticipationService {
             }
             participation.setInitializationState(UNINITIALIZED);
             participation.setExercise(exercise);
-            participation.setStudent(user);
+            participation.setParticipant(participant);
 
             participation = save(participation);
         }
@@ -244,12 +244,12 @@ public class ParticipationService {
      * For external submissions, the submission is assumed to be submitted immediately upon creation.
      *
      * @param exercise the exercise for which to create a participation and submission
-     * @param user the user for which to create a participation and submission
+     * @param participant the user/team for which to create a participation and submission
      * @param submissionType the type of submission to create if none exist yet
      * @return the participation connecting the given exercise and user
      */
-    public StudentParticipation createParticipationWithEmptySubmissionIfNotExisting(Exercise exercise, User user, SubmissionType submissionType) {
-        Optional<StudentParticipation> optionalStudentParticipation = findOneByExerciseIdAndStudentLoginAnyState(exercise.getId(), user.getLogin());
+    public StudentParticipation createParticipationWithEmptySubmissionIfNotExisting(Exercise exercise, Participant participant, SubmissionType submissionType) {
+        Optional<StudentParticipation> optionalStudentParticipation = findOneByExerciseIdAndParticipantAnyState(exercise.getId(), participant);
         StudentParticipation participation;
         if (optionalStudentParticipation.isEmpty()) {
             // create a new participation only if no participation can be found
@@ -262,7 +262,7 @@ public class ParticipationService {
             participation.setInitializationState(UNINITIALIZED);
             participation.setInitializationDate(ZonedDateTime.now());
             participation.setExercise(exercise);
-            participation.setStudent(user);
+            participation.setParticipant(participant);
 
             participation = save(participation);
         }
@@ -283,7 +283,7 @@ public class ParticipationService {
                 // restrict access for the student
                 try {
                     versionControlService.get().setRepositoryPermissionsToReadOnly(programmingParticipation.getRepositoryUrlAsUrl(), programmingExercise.getProjectKey(),
-                            programmingParticipation.getStudent().getLogin());
+                            programmingParticipation.getStudents());
                 }
                 catch (VersionControlException e) {
                     log.error("Removing write permissions failed for programming exercise with id " + programmingExercise.getId() + " for student repository with participation id "
@@ -466,7 +466,7 @@ public class ParticipationService {
         if (!participation.getInitializationState().hasCompletedState(InitializationState.REPO_COPIED) || participation.getRepositoryUrlAsUrl() == null) {
             final var programmingExercise = participation.getProgrammingExercise();
             final var projectKey = programmingExercise.getProjectKey();
-            final var username = participation.getStudent().getLogin();
+            final var username = participation.getParticipantIdentifier();
             // NOTE: we have to get the repository slug of the template participation here, because not all exercises (in particular old ones) follow the naming conventions
             final var repoName = versionControlService.get().getRepositorySlugFromUrl(programmingExercise.getTemplateParticipation().getRepositoryUrlAsUrl());
             // the next action includes recovery, which means if the repository has already been copied, we simply retrieve the repository url and do not copy it again
@@ -483,7 +483,7 @@ public class ParticipationService {
 
     private ProgrammingExerciseStudentParticipation configureRepository(ProgrammingExerciseStudentParticipation participation) {
         if (!participation.getInitializationState().hasCompletedState(InitializationState.REPO_CONFIGURED)) {
-            versionControlService.get().configureRepository(participation.getRepositoryUrlAsUrl(), participation.getStudent().getLogin());
+            versionControlService.get().configureRepository(participation.getRepositoryUrlAsUrl(), participation.getStudents());
             participation.setInitializationState(InitializationState.REPO_CONFIGURED);
             return save(participation);
         }
@@ -497,7 +497,7 @@ public class ParticipationService {
         if (!participation.getInitializationState().hasCompletedState(InitializationState.BUILD_PLAN_COPIED) || participation.getBuildPlanId() == null) {
             final var projectKey = participation.getProgrammingExercise().getProjectKey();
             final var planName = BuildPlanType.TEMPLATE.getName();
-            final var username = participation.getStudent().getLogin();
+            final var username = participation.getParticipantIdentifier();
             final var buildProjectName = participation.getExercise().getCourse().getShortName().toUpperCase() + " " + participation.getExercise().getTitle();
             // the next action includes recovery, which means if the build plan has already been copied, we simply retrieve the build plan id and do not copy it again
             final var buildPlanId = continuousIntegrationService.get().copyBuildPlan(projectKey, planName, projectKey, buildProjectName, username.toUpperCase());
@@ -649,12 +649,43 @@ public class ParticipationService {
      * Get one participation (in any state) by its student and exercise.
      *
      * @param exerciseId the project key of the exercise
-     * @param username   the username of the student
+     * @param username the username of the student
      * @return the participation of the given student and exercise in any state
      */
     public Optional<StudentParticipation> findOneByExerciseIdAndStudentLoginAnyState(Long exerciseId, String username) {
         log.debug("Request to get Participation for User {} for Exercise with id: {}", username, exerciseId);
         return studentParticipationRepository.findByExerciseIdAndStudentLogin(exerciseId, username);
+    }
+
+    /**
+     * Get one participation (in any state) by its team and exercise.
+     *
+     * @param exerciseId the project key of the exercise
+     * @param teamShortName the short name of the team
+     * @return the participation of the given team and exercise in any state
+     */
+    public Optional<StudentParticipation> findOneByExerciseIdAndTeamShortNameAnyState(Long exerciseId, String teamShortName) {
+        log.debug("Request to get Participation for Team {} for Exercise with id: {}", teamShortName, exerciseId);
+        return studentParticipationRepository.findByExerciseIdAndTeamShortName(exerciseId, teamShortName);
+    }
+
+    /**
+     * Get one participation (in any state) by its participant and exercise.
+     *
+     * @param exerciseId the project key of the exercise
+     * @param participant the short name of the team
+     * @return the participation of the given team and exercise in any state
+     */
+    public Optional<StudentParticipation> findOneByExerciseIdAndParticipantAnyState(Long exerciseId, Participant participant) {
+        if (participant instanceof User) {
+            return findOneByExerciseIdAndStudentLoginAnyState(exerciseId, participant.getParticipantIdentifier());
+        }
+        else if (participant instanceof Team) {
+            return findOneByExerciseIdAndTeamShortNameAnyState(exerciseId, participant.getParticipantIdentifier());
+        }
+        else {
+            throw new Error("Unknown Participant type");
+        }
     }
 
     /**
@@ -767,7 +798,7 @@ public class ParticipationService {
 
                 // Filter out participations without Students
                 // These participations are used e.g. to store template and solution build plans in programming exercises
-                .filter(participation -> participation.getStudent() != null)
+                .filter(participation -> participation.getParticipant() != null)
 
                 // filter all irrelevant results, i.e. rated = false or no completion date or no score
                 .peek(participation -> {

@@ -67,7 +67,7 @@ public class AutomaticBuildPlanCleanupService {
                 // already cleaned up
                 continue;
             }
-            if (participation.getStudent() == null) {
+            if (participation.getParticipant() == null) {
                 // we only want to clean up build plans of students
                 continue;
             }

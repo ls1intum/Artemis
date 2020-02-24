@@ -435,7 +435,7 @@ public class QuizScheduleService {
             // TODO: when this is set earlier for the individual quiz start of a student, we don't need to set this here anymore
             participation.setInitializationDate(quizSubmission.getSubmissionDate());
             Optional<User> user = userService.getUserByLogin(username);
-            user.ifPresent(participation::setStudent);
+            user.ifPresent(participation::setParticipant);
             // add the quizExercise to the participation
             participation.setExercise(quizExercise);
 

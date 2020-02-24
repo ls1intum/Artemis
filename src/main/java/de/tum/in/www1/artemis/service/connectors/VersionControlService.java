@@ -1,16 +1,18 @@
 package de.tum.in.www1.artemis.service.connectors;
 
 import java.net.URL;
+import java.util.Set;
 
 import de.tum.in.www1.artemis.domain.Commit;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.exception.VersionControlException;
 
 public interface VersionControlService {
 
-    void configureRepository(URL repositoryUrl, String username);
+    void configureRepository(URL repositoryUrl, Set<User> users);
 
     /**
      * Creates all necessary webhooks from the VCS to any other system (e.g. Artemis, CI) on pushes to the specified
@@ -119,10 +121,10 @@ public interface VersionControlService {
      *
      * @param repositoryUrl     The repository url of the repository to update. It contains the project key & the repository name.
      * @param projectKey        The projectKey that the repo is part of in the VCS.
-     * @param username          String to identify the user with.
+     * @param users             Set of users for which to change permissions
      * @throws VersionControlException        If the communication with the VCS fails.
      */
-    void setRepositoryPermissionsToReadOnly(URL repositoryUrl, String projectKey, String username) throws VersionControlException;
+    void setRepositoryPermissionsToReadOnly(URL repositoryUrl, String projectKey, Set<User> users) throws VersionControlException;
 
     /**
      * Gets the repository slug from the given URL

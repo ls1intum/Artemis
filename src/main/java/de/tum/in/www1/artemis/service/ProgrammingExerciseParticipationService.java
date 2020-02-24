@@ -171,7 +171,7 @@ public class ProgrammingExerciseParticipationService {
 
     private boolean canAccessParticipation(@NotNull ProgrammingExerciseStudentParticipation participation) {
         User user = userService.getUserWithGroupsAndAuthorities();
-        return participation.getStudent().getLogin().equals(user.getLogin()) || authCheckService.isAtLeastTeachingAssistantForExercise(participation.getExercise(), user);
+        return participation.isOwnedBy(user) || authCheckService.isAtLeastTeachingAssistantForExercise(participation.getExercise(), user);
     }
 
     private boolean canAccessParticipation(@NotNull SolutionProgrammingExerciseParticipation participation) {
@@ -218,7 +218,7 @@ public class ProgrammingExerciseParticipationService {
     }
 
     public boolean canAccessParticipation(ProgrammingExerciseStudentParticipation participation, Principal principal) {
-        return participation.getStudent().getLogin().equals(principal.getName());
+        return participation.isOwnedBy(principal.getName());
     }
 
     public boolean canAccessParticipation(SolutionProgrammingExerciseParticipation participation, Principal principal) {

@@ -469,7 +469,7 @@ public class GitService {
 
             studentGit.reset().setMode(ResetCommand.ResetType.SOFT).setRef(latestHash.getName()).call();
             studentGit.add().addFilepattern(".").call();
-            var student = ((StudentParticipation) repository.getParticipation()).getStudent();
+            var student = ((StudentParticipation) repository.getParticipation()).getStudents().iterator().next();
             var name = student != null ? student.getName() : ARTEMIS_GIT_NAME;
             var email = student != null ? student.getEmail() : ARTEMIS_GIT_EMAIL;
             studentGit.commit().setMessage("All student changes in one commit").setCommitter(name, email).call();
