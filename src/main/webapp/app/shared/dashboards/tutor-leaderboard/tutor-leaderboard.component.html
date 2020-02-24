@@ -40,7 +40,7 @@
                 </ng-container>
 
                 <ng-template #atLeastInstructor>
-                    <ng-container *ngIf="exercise">
+                    <ng-container *ngIf="exercise && course">
                         <td>
                             <a [routerLink]="['/course-management', course.id, 'exercises', exercise.id, 'complaints']" [queryParams]="{ tutorId: tutor.userId }">
                                 {{ tutor.numberOfAcceptedComplaints }}
