@@ -10,8 +10,8 @@ import { TutorLeaderboardComponent } from 'app/shared/dashboards/tutor-leaderboa
 import { StatsForDashboard } from 'app/course/dashboards/instructor-course-dashboard/stats-for-dashboard.model';
 import { ChartsModule } from 'ng2-charts';
 import { TranslateModule } from '@ngx-translate/core';
-import { InstructorExerciseDashboardComponent } from 'app/exercises/shared/instructor-exercise-dashboard/instructor-exercise-dashboard.component';
 import { HeaderExercisePageWithDetailsComponent } from 'app/exercises/shared/exercise-headers/header-exercise-page-with-details.component';
+import { InstructorExerciseDashboardComponent } from 'app/exercises/shared/dashboards/instructor/instructor-exercise-dashboard.component';
 
 chai.use(sinonChai);
 const expect = chai.expect;

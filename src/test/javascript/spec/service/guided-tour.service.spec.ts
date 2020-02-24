@@ -28,13 +28,13 @@ import { completedTour } from 'app/guided-tour/tours/general-tour';
 import { SinonStub, stub } from 'sinon';
 import { HttpResponse } from '@angular/common/http';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
-import { CourseService } from 'app/course/manage/course.service';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { InitializationState } from 'app/entities/participation/participation.model';
 import { NavbarComponent } from 'app/shared/layouts/navbar/navbar.component';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { MockSyncStorage } from '../mocks/mock-sync.storage';
 import { MockCookieService } from '../mocks/mock-cookie.service';
+import { CourseManagementService } from 'app/course/manage/course-management.service';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -135,7 +135,7 @@ describe('GuidedTourService', () => {
         let router: Router;
         let guidedTourService: GuidedTourService;
         let participationService: ParticipationService;
-        let courseService: CourseService;
+        let courseService: CourseManagementService;
 
         let findParticipationStub: SinonStub;
         let deleteParticipationStub: SinonStub;
@@ -177,7 +177,7 @@ describe('GuidedTourService', () => {
                     router = TestBed.inject(Router);
                     guidedTourService = TestBed.inject(GuidedTourService);
                     participationService = TestBed.inject(ParticipationService);
-                    courseService = TestBed.inject(CourseService);
+                    courseService = TestBed.inject(CourseManagementService);
 
                     findParticipationStub = stub(participationService, 'findParticipation');
                     deleteParticipationStub = stub(participationService, 'deleteForGuidedTour');
