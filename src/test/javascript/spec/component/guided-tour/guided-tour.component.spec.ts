@@ -1,7 +1,7 @@
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
 import { DebugElement, NO_ERRORS_SCHEMA } from '@angular/core';
-import { ComponentFixture, TestBed, inject, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed, inject, fakeAsync } from '@angular/core/testing';
 import { Router } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 import { CookieService } from 'ngx-cookie-service';
@@ -158,48 +158,33 @@ describe('GuidedTourComponent', () => {
             nextStep.calls.reset();
         });
 
-        /* it('should navigate next with the right arrow key', inject(
-            [], fakeAsync(() => {
+         it('should navigate next with the right arrow key', () => {
             guidedTourComponent['currentStepIndex'] = guidedTourService.currentTourStepIndex;
             guidedTourComponent['nextStepIndex'] = guidedTourService.currentTourStepIndex + 1;
             const nextStep = spyOn(guidedTourService, 'nextStep');
-            const dotCalculation = spyOn<any>(guidedTourComponent, 'calculateAndDisplayDotNavigation');
             const eventMock = new KeyboardEvent('keydown', { code: 'ArrowRight' });
             guidedTourComponent.handleKeyboardEvent(eventMock);
-            tick(0);
             expect(nextStep.calls.count()).to.equal(1);
-            expect(dotCalculation.calls.count()).to.equal(1);
             nextStep.calls.reset();
-            dotCalculation.calls.reset();
-        })));
+        });
 
-        it('should navigate back with the left arrow key', inject(
-            [], fakeAsync(() => {
-            const backStep = spyOn(guidedTourService, 'backStep').and.callThrough();
+        it('should navigate back with the left arrow key', () => {
+            const backStep = spyOn(guidedTourService, 'backStep').and.returnValue(of());
             const nextStep = spyOn(guidedTourService, 'nextStep').and.callThrough();
-            const dotCalculation = spyOn<any>(guidedTourComponent, 'calculateAndDisplayDotNavigation');
             const eventMockRight = new KeyboardEvent('keydown', { code: 'ArrowRight' });
             const eventMockLeft = new KeyboardEvent('keydown', { code: 'ArrowLeft' });
 
             guidedTourComponent.handleKeyboardEvent(eventMockLeft);
-            tick(0);
             expect(backStep.calls.count()).to.equal(0);
-            expect(dotCalculation.calls.count()).to.equal(0);
 
             guidedTourComponent.handleKeyboardEvent(eventMockRight);
-            tick(0);
-            expect(nextStep.calls.count()).to.equal(1);
-            expect(dotCalculation.calls.count()).to.equal(1);
 
             guidedTourComponent.handleKeyboardEvent(eventMockLeft);
-            tick(0);
             expect(backStep.calls.count()).to.equal(1);
-            expect(dotCalculation.calls.count()).to.equal(2);
 
             nextStep.calls.reset();
             backStep.calls.reset();
-            dotCalculation.calls.reset();
-        }))); */
+        });
 
         it('should skip the tour with the escape key', () => {
             const skipTour = spyOn(guidedTourService, 'skipTour');
