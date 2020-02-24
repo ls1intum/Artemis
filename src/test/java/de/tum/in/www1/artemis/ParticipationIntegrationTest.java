@@ -2,8 +2,7 @@ package de.tum.in.www1.artemis;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.*;
 
 import java.net.URI;
 import java.time.ZonedDateTime;
@@ -13,7 +12,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
+import org.springframework.http.*;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
@@ -471,5 +470,14 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationTest 
         assertThat(actualParticipation).isNotNull();
         assertThat(actualParticipation.getResults().size()).isEqualTo(1);
         assertThat(actualParticipation.getResults().iterator().next()).as("Only latest result is returned").isEqualTo(result);
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void getParticipationBuildArtifact() throws Exception {
+        var participation = database.addStudentParticipationForProgrammingExercise(programmingExercise, "student1");
+        doReturn(new ResponseEntity<>(null, HttpStatus.OK)).when(continuousIntegrationService).retrieveLatestArtifact(participation);
+        request.getNullable("/api/participations/" + participation.getId() + "/buildArtifact", HttpStatus.OK, Object.class);
+        verify(continuousIntegrationService).retrieveLatestArtifact(participation);
     }
 }
