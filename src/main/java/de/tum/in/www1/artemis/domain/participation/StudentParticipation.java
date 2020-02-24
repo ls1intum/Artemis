@@ -40,18 +40,18 @@ public class StudentParticipation extends Participation {
         this.presentationScore = presentationScore;
     }
 
-    public User getStudent() {
-        return student;
-    }
-
-    public Participation student(User user) {
-        this.student = user;
-        return this;
-    }
-
-    public void setStudent(User user) {
-        this.student = user;
-    }
+    // public User getStudent() {
+    // return student;
+    // }
+    //
+    // public Participation student(User user) {
+    // this.student = user;
+    // return this;
+    // }
+    //
+    // public void setStudent(User user) {
+    // this.student = user;
+    // }
 
     public Team getTeam() {
         return team;
@@ -66,17 +66,16 @@ public class StudentParticipation extends Participation {
         this.team = team;
     }
 
+    public boolean isTeamParticipation() {
+        return Optional.ofNullable(team).isPresent();
+    }
+
     @JsonIgnore
-    public ParticipantInterface getParticipant() {
-        return Optional.ofNullable((ParticipantInterface) student).orElse(team);
+    public Object getParticipant() {
+        return Optional.ofNullable((Object) student).orElse(team);
     }
 
-    public Participation participant(ParticipantInterface participant) {
-        setParticipant(participant);
-        return this;
-    }
-
-    public void setParticipant(ParticipantInterface participant) {
+    public void setParticipant(Object participant) {
         if (participant instanceof User) {
             this.student = (User) participant;
         }
@@ -88,8 +87,13 @@ public class StudentParticipation extends Participation {
             this.team = null;
         }
         else {
-            throw new Error("Unknown ParticipantInterface type.");
+            throw new Error("Unknown participant type");
         }
+    }
+
+    @JsonIgnore
+    public String getParticipantIdentifier() {
+        return Optional.ofNullable(student).map(User::getLogin).orElse(team.getShortName());
     }
 
     public Exercise getExercise() {
@@ -110,12 +114,22 @@ public class StudentParticipation extends Participation {
      * E.g. tutors should not see information about the student.
      */
     public void filterSensitiveInformation() {
-        setParticipant(null);
+        // setStudent(null);
+        setTeam(null);
+    }
+
+    public boolean isOwner(String userLogin) {
+        return Optional.ofNullable(student).map(student -> student.getLogin().equals(userLogin)).orElse(team.hasStudentWithLogin(userLogin));
+    }
+
+    public boolean isOwner(User user) {
+        return Optional.ofNullable(student).map(student -> student.equals(user)).orElse(team.hasStudent(user));
     }
 
     @Override
     public String toString() {
-        return "StudentParticipation{" + "id=" + getId() + ", presentationScore=" + presentationScore + ", student=" + student + ", team=" + team + "}";
+        String participantString = Optional.ofNullable(student).map(student -> "student=" + student).orElse("team=" + team);
+        return "StudentParticipation{" + "id=" + getId() + ", presentationScore=" + presentationScore + ", " + participantString + "}";
     }
 
     @Override

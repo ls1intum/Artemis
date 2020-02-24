@@ -387,6 +387,10 @@ public class LtiService {
      * @param participation The programming exercise participation for which a new build result is available
      */
     public void onNewResult(ProgrammingExerciseStudentParticipation participation) {
+        if (participation.isTeamParticipation()) {
+            // TODO: How should this be handled for teams?
+            return;
+        }
 
         // Get the LTI outcome URL
         ltiOutcomeUrlRepository.findByUserAndExercise(participation.getStudent(), participation.getExercise()).ifPresent(ltiOutcomeUrl -> {

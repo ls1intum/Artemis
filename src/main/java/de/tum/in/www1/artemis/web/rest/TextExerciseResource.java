@@ -306,7 +306,7 @@ public class TextExerciseResource {
         }
 
         if (!authCheckService.isAtLeastInstructorForExercise(textExercise, user)) {
-            participation.setStudent(null);
+            participation.setParticipant(null);
         }
 
         return ResponseEntity.ok(participation);

@@ -18,9 +18,7 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
-
 import de.tum.in.www1.artemis.config.Constants;
-import de.tum.in.www1.artemis.domain.participation.ParticipantInterface;
 
 /**
  * A user.
@@ -29,7 +27,7 @@ import de.tum.in.www1.artemis.domain.participation.ParticipantInterface;
 @Table(name = "jhi_user")
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class User extends AbstractAuditingEntity implements Serializable, ParticipantInterface {
+public class User extends AbstractAuditingEntity implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
@@ -132,11 +130,6 @@ public class User extends AbstractAuditingEntity implements Serializable, Partic
     // Lowercase the login before saving it in database
     public void setLogin(String login) {
         this.login = StringUtils.lowerCase(login, Locale.ENGLISH);
-    }
-
-    @JsonIgnore
-    public String getParticipantIdentifier() {
-        return login;
     }
 
     public String getPassword() {
