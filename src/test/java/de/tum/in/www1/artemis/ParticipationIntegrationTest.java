@@ -345,8 +345,8 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationTest 
         database.addParticipationForExercise(textExercise, "student1");
         var participation = database.addParticipationForExercise(textExercise, "student2");
         database.addResultToParticipation(participation);
-        var result = ModelFactory.generateResult(true, 70);
-        result = database.addResultToParticipation(participation);
+        var result = ModelFactory.generateResult(true, 70).participation(participation);
+        resultRepository.save(result);
         final var params = new LinkedMultiValueMap<String, String>();
         params.add("withLatestResult", "true");
         var participations = request.getList("/api/exercise/" + textExercise.getId() + "/participations", HttpStatus.OK, StudentParticipation.class, params);
@@ -457,5 +457,19 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationTest 
     public void updateParticipation_notTutorInCourse() throws Exception {
         var participation = ModelFactory.generateStudentParticipation(InitializationState.INITIALIZED, textExercise, database.getUserByLogin("student1"));
         request.putWithResponseBody("/api/participations", participation, StudentParticipation.class, HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void getParticipationWithLatestResult() throws Exception {
+        var participation = database.addParticipationForExercise(textExercise, "student1");
+        database.addResultToParticipation(participation);
+        var result = ModelFactory.generateResult(true, 70);
+        result.participation(participation).setCompletionDate(ZonedDateTime.now().minusHours(2));
+        resultRepository.save(result);
+        var actualParticipation = request.get("/api/participations/" + participation.getId() + "/withLatestResult", HttpStatus.OK, StudentParticipation.class);
+        assertThat(actualParticipation).isNotNull();
+        assertThat(actualParticipation.getResults().size()).isEqualTo(1);
+        assertThat(actualParticipation.getResults().iterator().next()).as("Only latest result is returned").isEqualTo(result);
     }
 }
