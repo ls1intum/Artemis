@@ -257,13 +257,12 @@ public class ParticipationResource {
         if (participation.getId() == null) {
             return createParticipation(participation);
         }
+        if (participation.getPresentationScore() == null || participation.getPresentationScore() < 0) {
+            participation.setPresentationScore(0);
+        }
         if (participation.getPresentationScore() > 1) {
             participation.setPresentationScore(1);
         }
-        if (participation.getPresentationScore() < 0 || participation.getPresentationScore() == null) {
-            participation.setPresentationScore(0);
-        }
-
         StudentParticipation currentParticipation = participationService.findOneStudentParticipation(participation.getId());
         if (currentParticipation.getPresentationScore() != null && currentParticipation.getPresentationScore() > participation.getPresentationScore()) {
             log.info(user.getLogin() + " removed the presentation score of " + participation.getStudent().getLogin() + " for exercise with participationId "

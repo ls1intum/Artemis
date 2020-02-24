@@ -421,4 +421,41 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationTest 
     public void getAllParticipationsForCourse_noInstructorInCourse() throws Exception {
         request.getList("/api/courses/" + course.getId() + "/participations", HttpStatus.FORBIDDEN, StudentParticipation.class);
     }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void updateParticipation() throws Exception {
+        var participation = ModelFactory.generateStudentParticipation(InitializationState.INITIALIZED, textExercise, database.getUserByLogin("student1"));
+        participation.setPresentationScore(1);
+        participation = participationRepo.save(participation);
+        participation.setPresentationScore(null);
+        var actualParticipation = request.putWithResponseBody("/api/participations", participation, StudentParticipation.class, HttpStatus.OK);
+        assertThat(actualParticipation).as("The participation was updated").isNotNull();
+        assertThat(actualParticipation.getPresentationScore()).as("Presentation score was set to 0").isEqualTo(0);
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void updateParticipation_notStored() throws Exception {
+        var participation = ModelFactory.generateStudentParticipation(InitializationState.INITIALIZED, textExercise, database.getUserByLogin("student1"));
+        request.putWithResponseBody("/api/participations", participation, StudentParticipation.class, HttpStatus.CREATED);
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void updateParticipation_presentationScoreMoreThan0() throws Exception {
+        var participation = ModelFactory.generateStudentParticipation(InitializationState.INITIALIZED, textExercise, database.getUserByLogin("student1"));
+        participation = participationRepo.save(participation);
+        participation.setPresentationScore(2);
+        var actualParticipation = request.putWithResponseBody("/api/participations", participation, StudentParticipation.class, HttpStatus.OK);
+        assertThat(actualParticipation).as("The participation was updated").isNotNull();
+        assertThat(actualParticipation.getPresentationScore()).as("Presentation score was set to 1").isEqualTo(1);
+    }
+
+    @Test
+    @WithMockUser(username = "tutor3", roles = "TA")
+    public void updateParticipation_notTutorInCourse() throws Exception {
+        var participation = ModelFactory.generateStudentParticipation(InitializationState.INITIALIZED, textExercise, database.getUserByLogin("student1"));
+        request.putWithResponseBody("/api/participations", participation, StudentParticipation.class, HttpStatus.FORBIDDEN);
+    }
 }
