@@ -1,6 +1,4 @@
 import { NgModule } from '@angular/core';
-import { RouterModule } from '@angular/router';
-import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { MomentModule } from 'ngx-moment';
@@ -15,24 +13,13 @@ import { SortByPipe } from 'app/shared/pipes/sort-by.pipe';
 import { ArtemisResultModule } from 'app/exercises/shared/result/result.module';
 import { SortByModule } from 'app/shared/pipes/sort-by.module';
 import { FormDateTimePickerModule } from 'app/shared/date-time-picker/date-time-picker.module';
-
-const ENTITY_STATES = [
-    {
-        path: 'course/:courseId/exercise/:exerciseId/dashboard',
-        component: ExerciseScoresComponent,
-        data: {
-            authorities: ['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'],
-            pageTitle: 'instructorDashboard.exerciseDashboard',
-        },
-        canActivate: [UserRouteAccessService],
-    },
-];
+import { ArtemisExerciseScoresRoutingModule } from 'app/exercises/shared/exercise-scores/exercise-scores-routing.module';
 
 @NgModule({
     imports: [
         ArtemisSharedModule,
         MomentModule,
-        RouterModule.forChild(ENTITY_STATES),
+        ArtemisExerciseScoresRoutingModule,
         NgbModule,
         ArtemisResultModule,
         SortByModule,

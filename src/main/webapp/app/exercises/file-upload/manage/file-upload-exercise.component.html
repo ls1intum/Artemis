@@ -49,7 +49,7 @@
                             <button
                                 type="submit"
                                 *ngIf="fileUploadExercise.isAtLeastTutor"
-                                [routerLink]="['/course', fileUploadExercise.course.id, 'exercise', fileUploadExercise.id, 'dashboard']"
+                                [routerLink]="['/course-management', fileUploadExercise.course.id, 'exercises', fileUploadExercise.id, 'scores']"
                                 class="btn btn-info btn-sm mr-1"
                             >
                                 <fa-icon [icon]="'eye'"></fa-icon>

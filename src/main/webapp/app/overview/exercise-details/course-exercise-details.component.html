@@ -24,7 +24,7 @@
         <div class="col-auto d-none d-md-flex align-items-center" *ngIf="exercise.isAtLeastInstructor">
             <span class="mr-1">{{ 'artemisApp.courseOverview.exerciseDetails.instructorActions.title' | translate }}</span>
             <div class="btn-group">
-                <div class="btn btn-outline-primary" routerLink="/course/{{ courseId }}/exercise/{{ exercise.id }}/dashboard">
+                <div class="btn btn-outline-primary" routerLink="/course-management/{{ courseId }}/exercises/{{ exercise.id }}/scores">
                     {{ 'artemisApp.courseOverview.exerciseDetails.instructorActions.scores' | translate }}
                 </div>
                 <div class="btn btn-outline-primary" *ngIf="exerciseRouterLink" routerLink="{{ exerciseRouterLink }}">
