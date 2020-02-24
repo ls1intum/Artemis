@@ -45,9 +45,11 @@ export class ListOfComplaintsComponent implements OnInit {
     ) {}
 
     ngOnInit(): void {
+        this.route.params.subscribe(params => {
+            this.courseId = Number(params['courseId']);
+            this.exerciseId = Number(params['exerciseId']);
+        });
         this.route.queryParams.subscribe(queryParams => {
-            this.courseId = Number(queryParams['courseId']);
-            this.exerciseId = Number(queryParams['exerciseId']);
             this.tutorId = Number(queryParams['tutorId']);
         });
         this.route.data.subscribe(data => (this.complaintType = data.complaintType));
@@ -58,16 +60,16 @@ export class ListOfComplaintsComponent implements OnInit {
         let complaintResponse: Observable<HttpResponse<Complaint[]>>;
 
         if (this.tutorId) {
-            if (this.courseId) {
-                complaintResponse = this.complaintService.findAllByTutorIdForCourseId(this.tutorId, this.courseId, this.complaintType);
-            } else {
+            if (this.exerciseId) {
                 complaintResponse = this.complaintService.findAllByTutorIdForExerciseId(this.tutorId, this.exerciseId, this.complaintType);
+            } else {
+                complaintResponse = this.complaintService.findAllByTutorIdForCourseId(this.tutorId, this.courseId, this.complaintType);
             }
         } else {
-            if (this.courseId) {
-                complaintResponse = this.complaintService.findAllByCourseId(this.courseId, this.complaintType);
-            } else {
+            if (this.exerciseId) {
                 complaintResponse = this.complaintService.findAllByExerciseId(this.exerciseId, this.complaintType);
+            } else {
+                complaintResponse = this.complaintService.findAllByCourseId(this.courseId, this.complaintType);
             }
         }
 
