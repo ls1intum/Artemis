@@ -27,7 +27,6 @@ import { ArtemisConnectionNotificationModule } from 'app/shared/layouts/connecti
 import { ArtemisTextAssessmentModule } from 'app/exercises/text/assess/text-assessment/text-assessment.module';
 import { ArtemisListOfComplaintsModule } from 'app/complaints/list-of-complaints/list-of-complaints.module';
 import { FooterComponent } from 'app/shared/layouts/footer/footer.component';
-import { ArtemisEntityModule } from 'app/entities/entity.module';
 import { ArtemisParticipationModule } from 'app/exercises/shared/participation/participation.module';
 import { ArtemisLegalModule } from 'app/core/legal/legal.module';
 import { ArtemisTutorExerciseDashboardModule } from 'app/exercises/shared/tutor-exercise-dashboard/tutor-exercise-dashboard.module';
@@ -47,6 +46,7 @@ import { ArtemisModelingAssessmentEditorModule } from 'app/exercises/modeling/as
 import { QuizExerciseExportComponent } from 'app/exercises/quiz/manage/quiz-exercise-export.component';
 import { ArtemisQuizManagementModule } from 'app/exercises/quiz/manage/quiz-management.module';
 import { ArtemisModelingExerciseManagementModule } from 'app/exercises/modeling/manage/modeling-exercise-management.module';
+import { ArtemisCourseModule } from 'app/course/manage/course.module';
 
 @NgModule({
     imports: [
@@ -55,7 +55,7 @@ import { ArtemisModelingExerciseManagementModule } from 'app/exercises/modeling/
         ArtemisSharedModule,
         ArtemisCoreModule,
         ArtemisHomeModule,
-        ArtemisEntityModule,
+        ArtemisCourseModule,
         ArtemisAppRoutingModule,
         ArtemisConnectionNotificationModule,
         GuidedTourModule,

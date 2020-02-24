@@ -21,27 +21,30 @@ import { OrionModule } from 'app/shared/orion/orion.module';
 import { ArtemisProgrammingExerciseManagementModule } from 'app/exercises/programming/manage/programming-exercise-management.module';
 import { ArtemisQuizManagementModule } from 'app/exercises/quiz/manage/quiz-management.module';
 import { ArtemisProgrammingExerciseModule } from 'app/exercises/programming/shared/programming-exercise.module';
+import { ArtemisExerciseModule } from 'app/exercises/shared/exercise/exercise.module';
+import { ArtemisLectureModule } from 'app/lecture/lecture.module';
 
 const ENTITY_STATES = [...courseRoute];
 
 @NgModule({
     imports: [
         ArtemisSharedModule,
+        ArtemisExerciseModule,
+        ArtemisLectureModule,
+        ArtemisProgrammingExerciseManagementModule,
+        ArtemisProgrammingExerciseModule,
+        OrionModule,
         ArtemisFileUploadExerciseManagementModule,
         ArtemisQuizManagementModule,
         ArtemisTextExerciseModule,
         ArtemisModelingExerciseModule,
+        ArtemisColorSelectorModule,
         RouterModule.forChild(ENTITY_STATES),
         SortByModule,
         FormDateTimePickerModule,
         ReactiveFormsModule,
-        ArtemisColorSelectorModule,
         ImageCropperModule,
         MomentModule,
-        ArtemisProgrammingExerciseManagementModule,
-        OrionModule,
-        ArtemisProgrammingExerciseModule,
-        ArtemisFileUploadExerciseManagementModule,
     ],
     declarations: [CourseComponent, CourseDetailComponent, CourseUpdateComponent, CourseExerciseCardComponent, CourseExercisesOverviewComponent],
 })
