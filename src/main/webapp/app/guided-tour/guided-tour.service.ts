@@ -159,8 +159,7 @@ export class GuidedTourService {
                     setTimeout(() => {
                         this.resetUserInteractionFinishedState(nextStep);
                         this.setPreparedTourStep();
-                    }, 300);
-
+                    }, 600);
                 } else if (this.currentTour) {
                     // Ends guided tour if the navigation is done through a multi-page tutorial
                     this.guidedTourAvailabilitySubject.next(false);
@@ -291,7 +290,6 @@ export class GuidedTourService {
         if (currentStep.pageUrl && previousStepLocation !== this.router.url) {
             this.isBackPageNavigation.next(true);
             this.router.navigateByUrl(this.determinePreviousStepLocation()).then();
-
         }
 
         if (previousStep) {

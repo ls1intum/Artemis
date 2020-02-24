@@ -158,7 +158,7 @@ describe('GuidedTourComponent', () => {
             nextStep.calls.reset();
         });
 
-         it('should navigate next with the right arrow key', () => {
+        it('should navigate next with the right arrow key', () => {
             guidedTourComponent['currentStepIndex'] = guidedTourService.currentTourStepIndex;
             guidedTourComponent['nextStepIndex'] = guidedTourService.currentTourStepIndex + 1;
             const nextStep = spyOn(guidedTourService, 'nextStep');

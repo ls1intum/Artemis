@@ -124,8 +124,8 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
             this.dotArray = elements.toArray();
         });
 
-        this.guidedTourService.currentDotSubject.pipe(tap( currentIndex => this.currentStepIndex = currentIndex)).subscribe();
-        this.guidedTourService.nextDotSubject.pipe(tap( currentIndex => this.nextStepIndex = currentIndex)).subscribe();
+        this.guidedTourService.currentDotSubject.pipe(tap(currentIndex => (this.currentStepIndex = currentIndex))).subscribe();
+        this.guidedTourService.nextDotSubject.pipe(tap(currentIndex => (this.nextStepIndex = currentIndex))).subscribe();
     }
 
     /**
@@ -752,7 +752,6 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
         if (currentTourStep > this.maxDots) {
             transform = ((currentTourStep % this.maxDots) + 1) * this.transformXIntervalNext;
         }
-        console.log('transform: ', transform);
         this.transformX = transform;
     }
 

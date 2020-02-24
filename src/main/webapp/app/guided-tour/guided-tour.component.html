@@ -72,12 +72,12 @@
                         </div>
                     </ng-template>
                     <div class="step-hint__label">
-                        <span *ngIf="currentTourStep.userInteractionEvent === UserInteractionEvent.CLICK" jhiTranslate="tour.clickHint.text"></span>
-                        <span *ngIf="currentTourStep.userInteractionEvent === UserInteractionEvent.ACE_EDITOR" jhiTranslate="tour.typeHint.text"></span>
-                        <span *ngIf="currentTourStep.userInteractionEvent === UserInteractionEvent.WAIT_FOR_SELECTOR" jhiTranslate="tour.waitHint.text"></span>
+                        <span *ngIf="currentTourStep.userInteractionEvent === UserInteractionEvent.CLICK" [jhiTranslate]="'tour.clickHint.text'"></span>
+                        <span *ngIf="currentTourStep.userInteractionEvent === UserInteractionEvent.ACE_EDITOR" [jhiTranslate]="'tour.typeHint.text'"></span>
+                        <span *ngIf="currentTourStep.userInteractionEvent === UserInteractionEvent.WAIT_FOR_SELECTOR" [jhiTranslate]="'tour.waitHint.text'"></span>
                         <span
                             *ngIf="currentTourStep.userInteractionEvent === UserInteractionEvent.MODELING && !currentTourStep.modelingTask"
-                            jhiTranslate="tour.modelingHint.text"
+                            [jhiTranslate]="'tour.modelingHint.text'"
                         ></span>
                         <span
                             *ngIf="currentTourStep.userInteractionEvent === UserInteractionEvent.ASSESS_SUBMISSION"
