@@ -5,7 +5,7 @@ import { DifferencePipe } from 'ngx-moment';
 import { HttpResponse } from '@angular/common/http';
 import { Moment } from 'moment';
 import { Course } from 'app/entities/course.model';
-import { CourseService } from 'app/course/manage/course.service';
+import { CourseManagementService } from '../../../course/manage/course-management.service';
 import { SourceTreeService } from 'app/exercises/programming/shared/service/sourceTree.service';
 import { take, tap } from 'rxjs/operators';
 import { of, zip } from 'rxjs';
@@ -65,7 +65,7 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
     constructor(
         private route: ActivatedRoute,
         private momentDiff: DifferencePipe,
-        private courseService: CourseService,
+        private courseService: CourseManagementService,
         private exerciseService: ExerciseService,
         private resultService: ResultService,
         private profileService: ProfileService,

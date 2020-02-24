@@ -3,7 +3,7 @@ import { Component, OnInit } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService } from 'app/core/alert/alert.service';
 import { Observable, Subject } from 'rxjs';
-import { CourseService } from 'app/course/manage/course.service';
+import { CourseManagementService } from '../../../../course/manage/course-management.service';
 import { ProgrammingExercise, ProgrammingLanguage } from '../../../../entities/programming-exercise.model';
 import { ProgrammingExerciseService } from '../services/programming-exercise.service';
 import { FileService } from 'app/shared/http/file.service';
@@ -54,7 +54,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
 
     constructor(
         private programmingExerciseService: ProgrammingExerciseService,
-        private courseService: CourseService,
+        private courseService: CourseManagementService,
         private jhiAlertService: AlertService,
         private exerciseService: ExerciseService,
         private fileService: FileService,

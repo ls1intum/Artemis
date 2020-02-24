@@ -1,5 +1,5 @@
 import { Component, HostBinding, Input, OnInit } from '@angular/core';
-import { CourseExerciseService } from 'app/course/manage/course.service';
+import { CourseExerciseService } from '../../course/manage/course-management.service';
 import { AlertService } from 'app/core/alert/alert.service';
 import { SourceTreeService } from 'app/exercises/programming/shared/service/sourceTree.service';
 import { ActivatedRoute } from '@angular/router';

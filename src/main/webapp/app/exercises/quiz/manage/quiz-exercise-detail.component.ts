@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, ChangeDetectorRef, Component, HostListener, On
 import { QuizExerciseService } from './quiz-exercise.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { CourseService } from 'app/course/manage/course.service';
+import { CourseManagementService } from '../../../course/manage/course-management.service';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { DragAndDropQuestionUtil } from 'app/exercises/quiz/shared/drag-and-drop-question-util.service';
 import { ShortAnswerQuestionUtil } from 'app/exercises/quiz/shared/short-answer-question-util.service';
@@ -64,7 +64,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
 
     course: Course;
     quizExercise: QuizExercise;
-    courseRepository: CourseService;
+    courseRepository: CourseManagementService;
     notificationText: string | null;
 
     entity: QuizExercise;
@@ -103,7 +103,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
 
     constructor(
         private route: ActivatedRoute,
-        private courseService: CourseService,
+        private courseService: CourseManagementService,
         private quizExerciseService: QuizExerciseService,
         private dragAndDropQuestionUtil: DragAndDropQuestionUtil,
         private shortAnswerQuestionUtil: ShortAnswerQuestionUtil,

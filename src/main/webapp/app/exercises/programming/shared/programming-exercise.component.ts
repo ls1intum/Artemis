@@ -16,7 +16,7 @@ import { isOrion, OrionState } from 'app/shared/orion/orion';
 import { OrionConnectorService } from 'app/shared/orion/orion-connector.service';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
-import { CourseExerciseService, CourseService } from 'app/course/manage/course.service';
+import { CourseExerciseService, CourseManagementService } from '../../../course/manage/course-management.service';
 
 @Component({
     selector: 'jhi-programming-exercise',
@@ -38,7 +38,7 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
         private modalService: NgbModal,
         private router: Router,
         private javaBridge: OrionConnectorService,
-        courseService: CourseService,
+        courseService: CourseManagementService,
         translateService: TranslateService,
         eventManager: JhiEventManager,
         route: ActivatedRoute,

@@ -6,7 +6,7 @@ import { QuizExerciseService } from './quiz-exercise.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { ActivatedRoute } from '@angular/router';
 import * as moment from 'moment';
-import { CourseService } from 'app/course/manage/course.service';
+import { CourseManagementService } from '../../../course/manage/course-management.service';
 import { ExerciseComponent } from 'app/exercises/shared/exercise/exercise.component';
 import { TranslateService } from '@ngx-translate/core';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
@@ -33,7 +33,7 @@ export class QuizExerciseComponent extends ExerciseComponent {
         private quizExerciseService: QuizExerciseService,
         private accountService: AccountService,
         private jhiAlertService: AlertService,
-        courseService: CourseService,
+        courseService: CourseManagementService,
         translateService: TranslateService,
         eventManager: JhiEventManager,
         route: ActivatedRoute,

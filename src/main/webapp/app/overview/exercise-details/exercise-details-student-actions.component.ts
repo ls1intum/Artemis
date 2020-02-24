@@ -1,6 +1,6 @@
 import { Component, HostBinding, Input, OnInit } from '@angular/core';
 import * as moment from 'moment';
-import { CourseExerciseService } from 'app/course/manage/course.service';
+import { CourseExerciseService } from '../../course/manage/course-management.service';
 import { Router } from '@angular/router';
 import { AlertService } from 'app/core/alert/alert.service';
 import { HttpClient } from '@angular/common/http';

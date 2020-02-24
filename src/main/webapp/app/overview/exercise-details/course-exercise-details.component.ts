@@ -1,7 +1,7 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Location } from '@angular/common';
 import { HttpResponse } from '@angular/common/http';
-import { CourseService } from 'app/course/manage/course.service';
+import { CourseManagementService } from '../../course/manage/course-management.service';
 import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs/Subscription';
 import { Result } from 'app/entities/result.model';
@@ -56,14 +56,14 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     constructor(
         private $location: Location,
         private exerciseService: ExerciseService,
-        private courseService: CourseService,
+        private courseService: CourseManagementService,
         private jhiWebsocketService: JhiWebsocketService,
         private accountService: AccountService,
         private courseCalculationService: CourseScoreCalculationService,
         private participationWebsocketService: ParticipationWebsocketService,
         private participationService: ParticipationService,
         private sourceTreeService: SourceTreeService,
-        private courseServer: CourseService,
+        private courseServer: CourseManagementService,
         private route: ActivatedRoute,
         private profileService: ProfileService,
         private guidedTourService: GuidedTourService,

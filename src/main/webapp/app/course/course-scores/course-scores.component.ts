@@ -9,7 +9,7 @@ import { ExportToCsv } from 'export-to-csv';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { Course } from 'app/entities/course.model';
-import { CourseService } from 'app/course/manage/course.service';
+import { CourseManagementService } from '../manage/course-management.service';
 
 const PRESENTATION_SCORE_KEY = 'Presentation Score';
 const NAME_KEY = 'Name';
@@ -61,7 +61,12 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
     options: Intl.NumberFormatOptions = { maximumFractionDigits: 1 }; // TODO: allow user to customize
     locale = getLang(); // default value, will be overridden by the current language of Artemis
 
-    constructor(private route: ActivatedRoute, private courseService: CourseService, private languageHelper: JhiLanguageHelper, private languageService: JhiLanguageService) {
+    constructor(
+        private route: ActivatedRoute,
+        private courseService: CourseManagementService,
+        private languageHelper: JhiLanguageHelper,
+        private languageService: JhiLanguageService,
+    ) {
         this.reverse = false;
         this.predicate = 'id';
         this.locale = this.languageService.currentLang;

@@ -2,8 +2,8 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Subscription } from 'rxjs/Subscription';
 import { JhiEventManager } from 'ng-jhipster';
-import { Course } from '../../entities/course.model';
-import { CourseService } from './course.service';
+import { Course } from 'app/entities/course.model';
+import { CourseManagementService } from './course-management.service';
 import { ARTEMIS_DEFAULT_COLOR } from 'app/app.constants';
 import { onError } from 'app/shared/util/global.utils';
 import { Subject } from 'rxjs';
@@ -13,10 +13,10 @@ import { AlertService } from 'app/core/alert/alert.service';
 
 @Component({
     selector: 'jhi-course',
-    templateUrl: './course.component.html',
+    templateUrl: './course-management.component.html',
     styles: ['.course-table {padding-bottom: 5rem}'],
 })
-export class CourseComponent implements OnInit, OnDestroy {
+export class CourseManagementComponent implements OnInit, OnDestroy {
     predicate: string;
     reverse: boolean;
     showOnlyActive = true;
@@ -31,7 +31,12 @@ export class CourseComponent implements OnInit, OnDestroy {
 
     courseForGuidedTour: Course | null;
 
-    constructor(private courseService: CourseService, private jhiAlertService: AlertService, private eventManager: JhiEventManager, private guidedTourService: GuidedTourService) {
+    constructor(
+        private courseService: CourseManagementService,
+        private jhiAlertService: AlertService,
+        private eventManager: JhiEventManager,
+        private guidedTourService: GuidedTourService,
+    ) {
         this.predicate = 'id';
         // show the newest courses first and the oldest last
         this.reverse = false;

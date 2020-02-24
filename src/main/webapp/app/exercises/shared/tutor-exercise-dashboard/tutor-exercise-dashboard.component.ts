@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { SafeHtml } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
-import { CourseService } from 'app/course/manage/course.service';
+import { CourseManagementService } from '../../../course/manage/course-management.service';
 import { AlertService } from 'app/core/alert/alert.service';
 import { User } from 'app/core/user/user.model';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
@@ -44,7 +44,7 @@ export interface ExampleSubmissionQueryParams {
     selector: 'jhi-courses',
     templateUrl: './tutor-exercise-dashboard.component.html',
     styles: ['jhi-collapsable-assessment-instructions { max-height: 100vh }'],
-    providers: [CourseService],
+    providers: [CourseManagementService],
 })
 export class TutorExerciseDashboardComponent implements OnInit {
     exercise: Exercise;

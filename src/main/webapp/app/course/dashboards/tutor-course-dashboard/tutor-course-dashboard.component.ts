@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { partition } from 'lodash';
 import { ActivatedRoute, Router } from '@angular/router';
-import { CourseService } from 'app/course/manage/course.service';
+import { CourseManagementService } from '../../manage/course-management.service';
 import { AlertService } from 'app/core/alert/alert.service';
 import { User } from 'app/core/user/user.model';
 import { AccountService } from 'app/core/auth/account.service';
@@ -15,7 +15,7 @@ import { Course } from 'app/entities/course.model';
 @Component({
     selector: 'jhi-courses',
     templateUrl: './tutor-course-dashboard.component.html',
-    providers: [CourseService],
+    providers: [CourseManagementService],
 })
 export class TutorCourseDashboardComponent implements OnInit {
     course: Course;
@@ -48,7 +48,7 @@ export class TutorCourseDashboardComponent implements OnInit {
     exerciseForGuidedTour: Exercise | null;
 
     constructor(
-        private courseService: CourseService,
+        private courseService: CourseManagementService,
         private jhiAlertService: AlertService,
         private accountService: AccountService,
         private route: ActivatedRoute,

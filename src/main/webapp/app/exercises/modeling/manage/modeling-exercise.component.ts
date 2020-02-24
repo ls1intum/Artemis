@@ -5,7 +5,7 @@ import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { ModelingExerciseService } from './modeling-exercise.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { ActivatedRoute } from '@angular/router';
-import { CourseExerciseService, CourseService } from 'app/course/manage/course.service';
+import { CourseExerciseService, CourseManagementService } from '../../../course/manage/course-management.service';
 import { ExerciseComponent } from 'app/exercises/shared/exercise/exercise.component';
 import { TranslateService } from '@ngx-translate/core';
 import { onError } from 'app/shared/util/global.utils';
@@ -23,7 +23,7 @@ export class ModelingExerciseComponent extends ExerciseComponent {
         private courseExerciseService: CourseExerciseService,
         private jhiAlertService: AlertService,
         private accountService: AccountService,
-        courseService: CourseService,
+        courseService: CourseManagementService,
         translateService: TranslateService,
         eventManager: JhiEventManager,
         route: ActivatedRoute,

@@ -15,8 +15,8 @@ import { SortByModule } from 'app/shared/pipes/sort-by.module';
 import { CourseExercisesOverviewComponent } from 'app/course/manage/course-exercises-overview.component';
 import { CourseDetailComponent } from 'app/course/manage/course-detail.component';
 import { CourseUpdateComponent } from 'app/course/manage/course-update.component';
-import { courseRoute } from 'app/course/manage/course.route';
-import { CourseComponent } from 'app/course/manage/course.component';
+import { courseMangementRoute } from 'app/course/manage/course-mangement.route';
+import { CourseManagementComponent } from 'app/course/manage/course-management.component';
 import { OrionModule } from 'app/shared/orion/orion.module';
 import { ArtemisProgrammingExerciseManagementModule } from 'app/exercises/programming/manage/programming-exercise-management.module';
 import { ArtemisQuizManagementModule } from 'app/exercises/quiz/manage/quiz-management.module';
@@ -24,7 +24,7 @@ import { ArtemisProgrammingExerciseModule } from 'app/exercises/programming/shar
 import { ArtemisExerciseModule } from 'app/exercises/shared/exercise/exercise.module';
 import { ArtemisLectureModule } from 'app/lecture/lecture.module';
 
-const ENTITY_STATES = [...courseRoute];
+const ENTITY_STATES = [...courseMangementRoute];
 
 @NgModule({
     imports: [
@@ -46,6 +46,6 @@ const ENTITY_STATES = [...courseRoute];
         ImageCropperModule,
         MomentModule,
     ],
-    declarations: [CourseComponent, CourseDetailComponent, CourseUpdateComponent, CourseExerciseCardComponent, CourseExercisesOverviewComponent],
+    declarations: [CourseManagementComponent, CourseDetailComponent, CourseUpdateComponent, CourseExerciseCardComponent, CourseExercisesOverviewComponent],
 })
-export class ArtemisCourseModule {}
+export class ArtemisCourseManagementModule {}

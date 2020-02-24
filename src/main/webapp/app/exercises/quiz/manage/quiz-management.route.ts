@@ -11,12 +11,12 @@ import { QuizExerciseDetailComponent } from './quiz-exercise-detail.component';
 import { QuizExerciseExportComponent } from './quiz-exercise-export.component';
 import { PendingChangesGuard } from 'app/shared/guard/pending-changes.guard';
 import { QuizReEvaluateComponent } from 'app/exercises/quiz/manage/re-evaluate/quiz-re-evaluate.component';
-import { CourseService } from 'app/course/manage/course.service';
+import { CourseManagementService } from '../../../course/manage/course-management.service';
 import { Course } from 'app/entities/course.model';
 
 @Injectable({ providedIn: 'root' })
 export class QuizExerciseResolve implements Resolve<QuizExercise> {
-    constructor(private quizExerciseService: QuizExerciseService, private courseService: CourseService) {}
+    constructor(private quizExerciseService: QuizExerciseService, private courseService: CourseManagementService) {}
 
     /**
      * Resolves the route and initializes quiz exercise either from exerciseId (existing exercise) or

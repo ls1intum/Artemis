@@ -9,12 +9,12 @@ import { Injectable, NgModule } from '@angular/core';
 import { filter, map } from 'rxjs/operators';
 import { FileUploadExerciseService } from 'app/exercises/file-upload/manage/file-upload-exercise.service';
 import { FileUploadExerciseUpdateComponent } from 'app/exercises/file-upload/manage/file-upload-exercise-update.component';
-import { CourseService } from 'app/course/manage/course.service';
+import { CourseManagementService } from '../../../course/manage/course-management.service';
 import { Course } from 'app/entities/course.model';
 
 @Injectable({ providedIn: 'root' })
 export class FileUploadExerciseResolve implements Resolve<FileUploadExercise> {
-    constructor(private fileUploadExerciseService: FileUploadExerciseService, private courseService: CourseService) {}
+    constructor(private fileUploadExerciseService: FileUploadExerciseService, private courseService: CourseManagementService) {}
 
     /**
      * Resolves the route and initializes file upload exercise either from exerciseId (existing exercise) or

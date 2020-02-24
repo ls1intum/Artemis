@@ -5,7 +5,7 @@ import { Observable } from 'rxjs/Observable';
 import { JhiEventManager } from 'ng-jhipster';
 import { TextExercise } from '../../../../entities/text-exercise.model';
 import { TextExerciseService } from './text-exercise.service';
-import { CourseService } from 'app/course/manage/course.service';
+import { CourseManagementService } from '../../../../course/manage/course-management.service';
 import { ExampleSubmissionService } from 'app/exercises/shared/example-submission/example-submission.service';
 import { MAX_SCORE_PATTERN } from 'app/app.constants';
 import { WindowRef } from 'app/core/websocket/window.service';
@@ -40,7 +40,7 @@ export class TextExerciseUpdateComponent implements OnInit {
         private jhiAlertService: AlertService,
         private textExerciseService: TextExerciseService,
         private exerciseService: ExerciseService,
-        private courseService: CourseService,
+        private courseService: CourseManagementService,
         private eventManager: JhiEventManager,
         private exampleSubmissionService: ExampleSubmissionService,
         private activatedRoute: ActivatedRoute,

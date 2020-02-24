@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { Course } from 'app/entities/course.model';
-import { CourseService } from 'app/course/manage/course.service';
+import { CourseManagementService } from '../course/manage/course-management.service';
 import { HttpResponse } from '@angular/common/http';
 import { AlertService } from 'app/core/alert/alert.service';
 import { AccountService } from 'app/core/auth/account.service';
@@ -22,7 +22,7 @@ export class CoursesComponent implements OnInit {
     courseForGuidedTour: Course | null;
 
     constructor(
-        private courseService: CourseService,
+        private courseService: CourseManagementService,
         private exerciseService: ExerciseService,
         private jhiAlertService: AlertService,
         private accountService: AccountService,

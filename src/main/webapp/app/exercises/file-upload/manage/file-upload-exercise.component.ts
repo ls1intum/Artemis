@@ -10,7 +10,7 @@ import { ExerciseComponent } from 'app/exercises/shared/exercise/exercise.compon
 import { onError } from 'app/shared/util/global.utils';
 import { AccountService } from 'app/core/auth/account.service';
 import { AlertService } from 'app/core/alert/alert.service';
-import { CourseExerciseService, CourseService } from 'app/course/manage/course.service';
+import { CourseExerciseService, CourseManagementService } from '../../../course/manage/course-management.service';
 
 @Component({
     selector: 'jhi-file-upload-exercise',
@@ -24,7 +24,7 @@ export class FileUploadExerciseComponent extends ExerciseComponent {
         private courseExerciseService: CourseExerciseService,
         private jhiAlertService: AlertService,
         private accountService: AccountService,
-        courseService: CourseService,
+        courseService: CourseManagementService,
         translateService: TranslateService,
         eventManager: JhiEventManager,
         route: ActivatedRoute,

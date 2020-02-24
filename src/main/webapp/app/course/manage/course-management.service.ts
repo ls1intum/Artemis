@@ -24,7 +24,7 @@ export type EntityResponseType = HttpResponse<Course>;
 export type EntityArrayResponseType = HttpResponse<Course[]>;
 
 @Injectable({ providedIn: 'root' })
-export class CourseService {
+export class CourseManagementService {
     private resourceUrl = SERVER_API_URL + 'api/courses';
 
     constructor(

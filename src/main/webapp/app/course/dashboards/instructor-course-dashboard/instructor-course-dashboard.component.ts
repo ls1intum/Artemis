@@ -1,7 +1,7 @@
 import { AlertService } from 'app/core/alert/alert.service';
 import { Component, OnInit } from '@angular/core';
 import { Course } from 'app/entities/course.model';
-import { CourseService } from 'app/course/manage/course.service';
+import { CourseManagementService } from '../../manage/course-management.service';
 import { catchError, map, tap } from 'rxjs/operators';
 import { of, zip } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
@@ -31,7 +31,7 @@ export class InstructorCourseDashboardComponent implements OnInit {
     readonly MIN_POINTS_GREEN = 100;
     readonly MIN_POINTS_ORANGE = 50;
 
-    constructor(private courseService: CourseService, private resultService: ResultService, private route: ActivatedRoute, private jhiAlertService: AlertService) {}
+    constructor(private courseService: CourseManagementService, private resultService: ResultService, private route: ActivatedRoute, private jhiAlertService: AlertService) {}
 
     ngOnInit(): void {
         this.isLoading = true;

@@ -1,6 +1,6 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Course } from 'app/entities/course.model';
-import { CourseService } from 'app/course/manage/course.service';
+import { CourseManagementService } from '../../course/manage/course-management.service';
 import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs/Subscription';
 import { TranslateService } from '@ngx-translate/core';
@@ -56,9 +56,9 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
     exerciseForGuidedTour: Exercise | null;
 
     constructor(
-        private courseService: CourseService,
+        private courseService: CourseManagementService,
         private courseCalculationService: CourseScoreCalculationService,
-        private courseServer: CourseService,
+        private courseServer: CourseManagementService,
         private translateService: TranslateService,
         private exerciseService: ExerciseService,
         private accountService: AccountService,

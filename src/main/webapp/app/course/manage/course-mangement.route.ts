@@ -5,15 +5,15 @@ import { UserRouteAccessService } from 'app/core/auth/user-route-access-service'
 import { Observable, of } from 'rxjs';
 import { filter, map } from 'rxjs/operators';
 import { Course } from 'app/entities/course.model';
-import { CourseService } from './course.service';
-import { CourseComponent } from './course.component';
+import { CourseManagementService } from './course-management.service';
+import { CourseManagementComponent } from './course-management.component';
 import { CourseDetailComponent } from './course-detail.component';
 import { CourseUpdateComponent } from './course-update.component';
 import { CourseExercisesOverviewComponent } from './course-exercises-overview.component';
 
 @Injectable({ providedIn: 'root' })
 export class CourseResolve implements Resolve<Course> {
-    constructor(private service: CourseService) {}
+    constructor(private service: CourseManagementService) {}
 
     resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<Course> {
         const id = route.params['id'] ? route.params['id'] : null;
@@ -27,10 +27,10 @@ export class CourseResolve implements Resolve<Course> {
     }
 }
 
-export const courseRoute: Routes = [
+export const courseMangementRoute: Routes = [
     {
         path: 'course-management',
-        component: CourseComponent,
+        component: CourseManagementComponent,
         data: {
             authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
             pageTitle: 'artemisApp.course.home.title',

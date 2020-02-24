@@ -4,7 +4,7 @@ import { UserRouteAccessService } from 'app/core/auth/user-route-access-service'
 import { ModelingExerciseComponent } from './modeling-exercise.component';
 import { ModelingExerciseDetailComponent } from './modeling-exercise-detail.component';
 import { ModelingExerciseUpdateComponent } from 'app/exercises/modeling/manage/modeling-exercise-update.component';
-import { CourseService } from 'app/course/manage/course.service';
+import { CourseManagementService } from '../../../course/manage/course-management.service';
 import { ModelingExerciseService } from 'app/exercises/modeling/manage/modeling-exercise.service';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { HttpResponse } from '@angular/common/http';
@@ -15,7 +15,7 @@ import { UMLDiagramType } from '@ls1intum/apollon';
 
 @Injectable({ providedIn: 'root' })
 export class ModelingExerciseResolver implements Resolve<ModelingExercise> {
-    constructor(private modelingExerciseService: ModelingExerciseService, private courseService: CourseService) {}
+    constructor(private modelingExerciseService: ModelingExerciseService, private courseService: CourseManagementService) {}
     resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot) {
         if (route.params['exerciseId']) {
             return this.modelingExerciseService.find(route.params['exerciseId']).pipe(
