@@ -10,7 +10,7 @@ import { CourseExerciseDetailsComponent } from 'app/overview/exercise-details/co
 
 export const OVERVIEW_ROUTES: Routes = [
     {
-        path: 'overview',
+        path: 'courses',
         component: OverviewComponent,
         data: {
             authorities: ['ROLE_USER'],
@@ -19,7 +19,7 @@ export const OVERVIEW_ROUTES: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
-        path: 'overview/:courseId',
+        path: 'courses/:courseId',
         component: CourseOverviewComponent,
         data: {
             authorities: ['ROLE_USER'],
@@ -62,7 +62,7 @@ export const OVERVIEW_ROUTES: Routes = [
         ],
     },
     {
-        path: 'overview/:courseId/exercises/:exerciseId',
+        path: 'courses/:courseId/exercises/:exerciseId',
         component: CourseExerciseDetailsComponent,
         data: {
             authorities: ['ROLE_USER'],
@@ -71,7 +71,7 @@ export const OVERVIEW_ROUTES: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
-        path: 'overview/:courseId/lectures/:lectureId',
+        path: 'courses/:courseId/lectures/:lectureId',
         component: CourseLectureDetailsComponent,
         data: {
             authorities: ['ROLE_USER'],

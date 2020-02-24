@@ -792,7 +792,7 @@ export class GuidedTourService {
                         )
                         .subscribe(
                             () => {
-                                this.navigateToUrlAfterRestart(`/overview/${this.currentCourse!.id}/exercises`);
+                                this.navigateToUrlAfterRestart(`/courses/${this.currentCourse!.id}/exercises`);
                             },
                             () => {
                                 // start tour in case the participation was deleted otherwise

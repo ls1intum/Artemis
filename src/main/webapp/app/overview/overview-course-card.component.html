@@ -1,10 +1,10 @@
 <div class="card" [class.guided-tour]="hasGuidedTour">
-    <div class="card-header text-white" routerLink="/overview/{{ course.id }}" [ngStyle]="{ backgroundColor: course.color || ARTEMIS_DEFAULT_COLOR }">
+    <div class="card-header text-white" routerLink="/courses/{{ course.id }}" [ngStyle]="{ backgroundColor: course.color || ARTEMIS_DEFAULT_COLOR }">
         <h5 class="card-title text-center">
             {{ course.title }}
         </h5>
     </div>
-    <div class="card-body" routerLink="/overview/{{ course.id }}">
+    <div class="card-body" routerLink="/courses/{{ course.id }}">
         <h4 jhiTranslate="artemisApp.studentDashboard.cardTitle">Your current score:</h4>
         <h2>{{ displayTotalRelativeScore() }}%</h2>
     </div>
