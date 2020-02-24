@@ -149,7 +149,7 @@ describe('GuidedTourService', () => {
                     ArtemisSharedModule,
                     RouterTestingModule.withRoutes([
                         {
-                            path: 'overview',
+                            path: 'courses',
                             component: NavbarComponent,
                         },
                     ]),
@@ -204,7 +204,7 @@ describe('GuidedTourService', () => {
             guidedTourComponent.ngAfterViewInit();
 
             await guidedTourComponentFixture.ngZone!.run(() => {
-                router.navigateByUrl('/overview');
+                router.navigateByUrl('/courses');
             });
 
             // Start course overview tour
@@ -409,7 +409,7 @@ describe('GuidedTourService', () => {
                     expect(findParticipationStub).to.have.been.calledOnceWithExactly(1);
                     expect(deleteParticipationStub).to.have.been.calledOnceWithExactly(1, { deleteBuildPlan: true, deleteRepository: true });
                     expect(deleteGuidedTourSettingStub).to.have.been.calledOnceWith('tour_with_course_and_exercise');
-                    expect(navigationStub).to.have.been.calledOnceWith('/overview/1/exercises');
+                    expect(navigationStub).to.have.been.calledOnceWith('/courses/1/exercises');
 
                     prepareParticipation(exercise4, studentParticipation2, httpResponse2);
                     guidedTourService.enableTourForExercise(exercise4, tourWithCourseAndExercise, true);
@@ -417,7 +417,7 @@ describe('GuidedTourService', () => {
                     expect(findParticipationStub).to.have.been.calledOnceWithExactly(4);
                     expect(deleteParticipationStub).to.have.been.calledOnceWithExactly(2, { deleteBuildPlan: false, deleteRepository: false });
                     expect(deleteGuidedTourSettingStub).to.have.been.calledOnceWith('tour_with_course_and_exercise');
-                    expect(navigationStub).to.have.been.calledOnceWith('/overview/1/exercises');
+                    expect(navigationStub).to.have.been.calledOnceWith('/courses/1/exercises');
 
                     const index = course1.exercises.findIndex(exercise => (exercise.id = exercise4.id));
                     course1.exercises.splice(index, 1);
