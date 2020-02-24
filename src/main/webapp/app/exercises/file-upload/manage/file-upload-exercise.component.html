@@ -58,7 +58,7 @@
                             <button
                                 type="submit"
                                 *ngIf="fileUploadExercise.isAtLeastTutor"
-                                [routerLink]="['/exercise', fileUploadExercise.id, 'participation']"
+                                [routerLink]="['/course-management', courseId, 'exercises', fileUploadExercise.id, 'participations']"
                                 class="btn btn-primary btn-sm mr-1"
                             >
                                 <fa-icon [icon]="['far', 'list-alt']"></fa-icon>
@@ -67,7 +67,7 @@
                             <button
                                 type="submit"
                                 *ngIf="fileUploadExercise.teamMode && fileUploadExercise.isAtLeastTutor"
-                                [routerLink]="['/course-management', fileUploadExercise.course.id, 'exercises', fileUploadExercise.id, 'teams']"
+                                [routerLink]="['/exercise', fileUploadExercise.id, 'teams']"
                                 class="btn btn-primary btn-sm mr-1"
                             >
                                 <fa-icon [icon]="'users'"></fa-icon>

@@ -1,5 +1,4 @@
 import { NgModule } from '@angular/core';
-import { RouterModule } from '@angular/router';
 
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { ArtemisProgrammingExerciseActionsModule } from 'app/exercises/programming/shared/actions/programming-exercise-actions.module';
@@ -8,17 +7,15 @@ import { NgxDatatableModule } from '@swimlane/ngx-datatable';
 import { ArtemisDataTableModule } from 'app/shared/data-table/data-table.module';
 import { FeatureToggleModule } from 'app/shared/feature-toggle/feature-toggle.module';
 import { ParticipationComponent } from 'app/exercises/shared/participation/participation.component';
-import { participationRoute } from 'app/exercises/shared/participation/participation.route';
 import { ProgrammingExerciseUtilsModule } from 'app/exercises/programming/shared/utils/programming-exercise-utils.module';
 import { SortByModule } from 'app/shared/pipes/sort-by.module';
 import { ArtemisExerciseScoresModule } from 'app/exercises/shared/exercise-scores/exercise-scores.module';
-
-const ENTITY_STATES = [...participationRoute];
+import { ArtemisParticipationRoutingModule } from 'app/exercises/shared/participation/participation-routing.module';
 
 @NgModule({
     imports: [
         ArtemisSharedModule,
-        RouterModule.forChild(ENTITY_STATES),
+        ArtemisParticipationRoutingModule,
         SortByModule,
         ArtemisExerciseScoresModule,
         ArtemisProgrammingExerciseActionsModule,

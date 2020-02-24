@@ -188,7 +188,7 @@
                                 <button
                                     type="submit"
                                     *ngIf="programmingExercise.isAtLeastTutor"
-                                    [routerLink]="['/exercise', programmingExercise.id, 'participation']"
+                                    [routerLink]="['/course-management', courseId, 'exercises', programmingExercise.id, 'participations']"
                                     class="btn btn-primary btn-sm mr-1 mb-1"
                                 >
                                     <fa-icon [icon]="'list-alt'"></fa-icon>
