@@ -159,7 +159,7 @@
                                     <button
                                         type="submit"
                                         *ngIf="course.isAtLeastInstructor"
-                                        [routerLink]="['/course', course.id, 'instructor-dashboard']"
+                                        [routerLink]="['/course-management', course.id, 'instructor-dashboard']"
                                         class="btn btn-info btn-sm mr-1 mb-1 instructor-dashboard"
                                     >
                                         <fa-icon [icon]="'th-list'"></fa-icon>

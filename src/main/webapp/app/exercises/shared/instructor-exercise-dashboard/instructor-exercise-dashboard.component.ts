@@ -37,7 +37,7 @@ export class InstructorExerciseDashboardComponent implements OnInit {
     }
 
     back() {
-        this.router.navigate([`/course/${this.courseId}/instructor-dashboard`]);
+        this.router.navigate([`/course-management/${this.courseId}/instructor-dashboard`]);
     }
     public setStatistics() {
         if (this.stats.numberOfSubmissions > 0) {
