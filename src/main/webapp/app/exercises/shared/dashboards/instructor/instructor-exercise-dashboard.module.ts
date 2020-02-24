@@ -6,7 +6,7 @@ import { MomentModule } from 'ngx-moment';
 import { ClipboardModule } from 'ngx-clipboard';
 import { ChartsModule } from 'ng2-charts';
 import { ArtemisSidePanelModule } from 'app/shared/side-panel/side-panel.module';
-import { ArtemisTutorLeaderboardModule } from 'app/course/dashboards/instructor-course-dashboard/tutor-leaderboard/tutor-leaderboard.module';
+import { ArtemisTutorLeaderboardModule } from 'app/shared/dashboards/tutor-leaderboard/tutor-leaderboard.module';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { ArtemisHeaderExercisePageWithDetailsModule } from 'app/exercises/shared/exercise-headers/exercise-headers.module';
 import { ArtemisInstructorCourseStatsDashboardModule } from 'app/course/dashboards/instructor-course-dashboard/instructor-course-dashboard.module';

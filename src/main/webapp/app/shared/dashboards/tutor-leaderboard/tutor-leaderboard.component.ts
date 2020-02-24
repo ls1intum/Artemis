@@ -1,5 +1,5 @@
 import { Component, Input, OnInit } from '@angular/core';
-import { TutorLeaderboardElement } from 'app/course/dashboards/instructor-course-dashboard/tutor-leaderboard/tutor-leaderboard.model';
+import { TutorLeaderboardElement } from 'app/shared/dashboards/tutor-leaderboard/tutor-leaderboard.model';
 import { Course } from 'app/entities/course.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { AccountService } from 'app/core/auth/account.service';

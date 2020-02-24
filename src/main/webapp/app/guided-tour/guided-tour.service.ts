@@ -22,7 +22,7 @@ import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import { AssessmentObject } from './guided-tour-task.model';
-import { TutorParticipationService } from 'app/exercises/shared/tutor-exercise-dashboard/tutor-participation.service';
+import { TutorParticipationService } from 'app/exercises/shared/dashboards/tutor/tutor-participation.service';
 import { CourseManagementService } from '../course/manage/course-management.service';
 
 export type EntityResponseType = HttpResponse<GuidedTourSetting[]>;

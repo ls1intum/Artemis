@@ -1,6 +1,6 @@
 import { NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
-import { TutorLeaderboardComponent } from 'app/course/dashboards/instructor-course-dashboard/tutor-leaderboard/tutor-leaderboard.component';
+import { TutorLeaderboardComponent } from 'app/shared/dashboards/tutor-leaderboard/tutor-leaderboard.component';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { SortByModule } from 'app/shared/pipes/sort-by.module';
 

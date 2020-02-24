@@ -23,28 +23,32 @@ import { ArtemisQuizManagementModule } from 'app/exercises/quiz/manage/quiz-mana
 import { ArtemisProgrammingExerciseModule } from 'app/exercises/programming/shared/programming-exercise.module';
 import { ArtemisExerciseModule } from 'app/exercises/shared/exercise/exercise.module';
 import { ArtemisLectureModule } from 'app/lecture/lecture.module';
+import { ArtemisTextExerciseManagementModule } from 'app/exercises/text/manage/text-exercise-management.module';
+import { ArtemisDashboardsModule } from 'app/shared/dashboards/dashboards.module';
 
 const ENTITY_STATES = [...courseMangementRoute];
 
 @NgModule({
     imports: [
         ArtemisSharedModule,
-        ArtemisExerciseModule,
-        ArtemisLectureModule,
-        ArtemisProgrammingExerciseManagementModule,
-        ArtemisProgrammingExerciseModule,
-        OrionModule,
-        ArtemisFileUploadExerciseManagementModule,
-        ArtemisQuizManagementModule,
-        ArtemisTextExerciseModule,
-        ArtemisModelingExerciseModule,
-        ArtemisColorSelectorModule,
         RouterModule.forChild(ENTITY_STATES),
         SortByModule,
         FormDateTimePickerModule,
         ReactiveFormsModule,
         ImageCropperModule,
+        OrionModule,
         MomentModule,
+        ArtemisExerciseModule,
+        ArtemisLectureModule,
+        ArtemisProgrammingExerciseManagementModule,
+        ArtemisFileUploadExerciseManagementModule,
+        ArtemisQuizManagementModule,
+        ArtemisTextExerciseManagementModule,
+        ArtemisProgrammingExerciseModule,
+        ArtemisTextExerciseModule,
+        ArtemisModelingExerciseModule,
+        ArtemisColorSelectorModule,
+        ArtemisDashboardsModule,
     ],
     declarations: [CourseManagementComponent, CourseDetailComponent, CourseUpdateComponent, CourseExerciseCardComponent, CourseExercisesOverviewComponent],
 })

@@ -8,7 +8,7 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ExampleSubmissionService } from 'app/exercises/shared/example-submission/example-submission.service';
 import { TextAssessmentsService } from 'app/exercises/text/assess/text-assessments.service';
 import { HighlightColors } from 'app/exercises/text/assess/highlight-colors';
-import { TutorParticipationService } from 'app/exercises/shared/tutor-exercise-dashboard/tutor-participation.service';
+import { TutorParticipationService } from 'app/exercises/shared/dashboards/tutor/tutor-participation.service';
 import { ArtemisMarkdown } from 'app/shared/markdown.service';
 import Interactable from '@interactjs/core/Interactable';
 import interact from 'interactjs';

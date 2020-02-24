@@ -1,4 +1,4 @@
-import { TutorLeaderboardElement } from 'app/course/dashboards/instructor-course-dashboard/tutor-leaderboard/tutor-leaderboard.model';
+import { TutorLeaderboardElement } from 'app/shared/dashboards/tutor-leaderboard/tutor-leaderboard.model';
 
 export class StatsForDashboard {
     public numberOfStudents = 0;

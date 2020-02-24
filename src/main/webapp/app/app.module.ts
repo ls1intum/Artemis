@@ -3,8 +3,6 @@ import './vendor.ts';
 import { NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
-import { ArtemisTutorCourseDashboardModule } from 'app/course/dashboards/tutor-course-dashboard/tutor-course-dashboard.module';
-import { ArtemisInstructorExerciseStatsDashboardModule } from 'app/exercises/shared/instructor-exercise-dashboard/instructor-exercise-dashboard.module';
 import { ArtemisSystemNotificationModule } from 'app/core/system-notification/system-notification.module';
 import { ArtemisCourseScoresModule } from 'app/course/course-scores/course-scores.module';
 import { NavbarComponent } from 'app/shared/layouts/navbar/navbar.component';
@@ -24,28 +22,22 @@ import { ArtemisCoursesModule } from 'app/overview/courses.module';
 import { ArtemisConnectionNotificationModule } from 'app/shared/layouts/connection-notification/connection-notification.module';
 import { ArtemisTextExerciseAssessmnetModule } from 'app/exercises/text/assess/text-assessment.module';
 import { ArtemisTextExerciseParticipationModule } from 'app/exercises/text/participate/text-exercise-participation.module';
-import { ArtemisTextExerciseManagementModule } from 'app/exercises/text/manage/text-exercise-management.module';
 import { ArtemisListOfComplaintsModule } from 'app/complaints/list-of-complaints/list-of-complaints.module';
 import { FooterComponent } from 'app/shared/layouts/footer/footer.component';
 import { ArtemisParticipationModule } from 'app/exercises/shared/participation/participation.module';
 import { ArtemisLegalModule } from 'app/core/legal/legal.module';
-import { ArtemisTutorExerciseDashboardModule } from 'app/exercises/shared/tutor-exercise-dashboard/tutor-exercise-dashboard.module';
 import { ActiveMenuDirective } from 'app/shared/layouts/navbar/active-menu.directive';
 import { ErrorComponent } from 'app/shared/layouts/error/error.component';
 import { ArtemisCoreModule } from 'app/core/core.module';
 import { ArtemisModelingParticipationModule } from 'app/exercises/modeling/participate/modeling-participation.module';
 import { GuidedTourModule } from 'app/guided-tour/guided-tour.module';
 import { ArtemisAccountModule } from 'app/account/account.module';
-import { ArtemisInstructorCourseStatsDashboardModule } from 'app/course/dashboards/instructor-course-dashboard/instructor-course-dashboard.module';
 import { ArtemisComplaintsModule } from 'app/complaints/complaints.module';
 import { ArtemisHomeModule } from 'app/home/home.module';
 import { OrionOutdatedComponent } from 'app/shared/orion/outdated-plugin-warning/orion-outdated.component';
 import { ArtemisTeamModule } from 'app/exercises/shared/team/team.module';
 import { ArtemisQuizParticipationModule } from 'app/exercises/quiz/participate/quiz-participation.module';
 import { ArtemisModelingAssessmentEditorModule } from 'app/exercises/modeling/assess/modeling-assessment-editor/modeling-assessment-editor.module';
-import { QuizExerciseExportComponent } from 'app/exercises/quiz/manage/quiz-exercise-export.component';
-import { ArtemisQuizManagementModule } from 'app/exercises/quiz/manage/quiz-management.module';
-import { ArtemisModelingExerciseManagementModule } from 'app/exercises/modeling/manage/modeling-exercise-management.module';
 import { ArtemisCourseManagementModule } from 'app/course/manage/course-management.module';
 
 @NgModule({
@@ -65,21 +57,14 @@ import { ArtemisCourseManagementModule } from 'app/course/manage/course-manageme
         ArtemisCoursesModule,
         ArtemisAccountModule,
         ArtemisQuizParticipationModule,
-        ArtemisQuizManagementModule,
         ArtemisCourseScoresModule,
         ArtemisExerciseScoresModule,
         ArtemisTextExerciseParticipationModule,
         ArtemisTextExerciseAssessmnetModule,
-        ArtemisTextExerciseManagementModule,
         ArtemisFileUploadParticipationModule,
         ArtemisFileUploadAssessmentModule,
         ArtemisModelingAssessmentEditorModule,
-        ArtemisModelingExerciseManagementModule,
         ArtemisModelingParticipationModule,
-        ArtemisInstructorCourseStatsDashboardModule,
-        ArtemisInstructorExerciseStatsDashboardModule,
-        ArtemisTutorCourseDashboardModule,
-        ArtemisTutorExerciseDashboardModule,
         ArtemisSystemNotificationModule,
         ArtemisComplaintsModule,
         ArtemisComplaintsForTutorModule,
@@ -97,8 +82,6 @@ import { ArtemisCourseManagementModule } from 'app/course/manage/course-manageme
         FooterComponent,
         NotificationContainerComponent,
         SystemNotificationComponent,
-        // TODO: this should be much lower in the hierarchy
-        QuizExerciseExportComponent,
     ],
     bootstrap: [JhiMainComponent],
 })

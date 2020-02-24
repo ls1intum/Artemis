@@ -6,7 +6,7 @@ import { MockComponent } from 'ng-mocks';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { RouterModule } from '@angular/router';
 import { SidePanelComponent } from 'app/shared/side-panel/side-panel.component';
-import { TutorLeaderboardComponent } from 'app/course/dashboards/instructor-course-dashboard/tutor-leaderboard/tutor-leaderboard.component';
+import { TutorLeaderboardComponent } from 'app/shared/dashboards/tutor-leaderboard/tutor-leaderboard.component';
 import { StatsForDashboard } from 'app/course/dashboards/instructor-course-dashboard/stats-for-dashboard.model';
 import { ChartsModule } from 'ng2-charts';
 import { TranslateModule } from '@ngx-translate/core';

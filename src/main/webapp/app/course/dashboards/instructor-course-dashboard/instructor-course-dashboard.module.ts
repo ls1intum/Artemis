@@ -6,7 +6,7 @@ import { InstructorCourseDashboardComponent } from './instructor-course-dashboar
 import { MomentModule } from 'ngx-moment';
 import { ClipboardModule } from 'ngx-clipboard';
 import { SortByModule } from 'app/shared/pipes/sort-by.module';
-import { ArtemisTutorLeaderboardModule } from 'app/course/dashboards/instructor-course-dashboard/tutor-leaderboard/tutor-leaderboard.module';
+import { ArtemisTutorLeaderboardModule } from 'app/shared/dashboards/tutor-leaderboard/tutor-leaderboard.module';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 
 const ENTITY_STATES = instructorCourseDashboardRoute;

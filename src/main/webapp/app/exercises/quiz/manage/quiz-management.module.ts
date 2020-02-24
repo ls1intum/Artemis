@@ -24,6 +24,7 @@ import { ReEvaluateMultipleChoiceQuestionComponent } from 'app/exercises/quiz/ma
 import { ReEvaluateDragAndDropQuestionComponent } from 'app/exercises/quiz/manage/re-evaluate/drag-and-drop-question/re-evaluate-drag-and-drop-question.component';
 import { ReEvaluateShortAnswerQuestionComponent } from 'app/exercises/quiz/manage/re-evaluate/short-answer-question/re-evaluate-short-answer-question.component';
 import { QuizReEvaluateWarningComponent } from 'app/exercises/quiz/manage/re-evaluate/quiz-re-evaluate-warning.component';
+import { QuizExerciseExportComponent } from 'app/exercises/quiz/manage/quiz-exercise-export.component';
 
 const ENTITY_STATES = [...quizManagementRoute];
 
@@ -55,6 +56,7 @@ const ENTITY_STATES = [...quizManagementRoute];
         ReEvaluateDragAndDropQuestionComponent,
         ReEvaluateShortAnswerQuestionComponent,
         QuizReEvaluateWarningComponent,
+        QuizExerciseExportComponent,
     ],
     // only add popups
     entryComponents: [QuizReEvaluateWarningComponent],

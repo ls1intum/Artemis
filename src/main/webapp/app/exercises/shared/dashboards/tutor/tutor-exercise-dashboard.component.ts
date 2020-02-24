@@ -1,11 +1,11 @@
 import { Component, OnInit } from '@angular/core';
 import { SafeHtml } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
-import { CourseManagementService } from '../../../course/manage/course-management.service';
+import { CourseManagementService } from '../../../../course/manage/course-management.service';
 import { AlertService } from 'app/core/alert/alert.service';
 import { User } from 'app/core/user/user.model';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { TutorParticipationService } from 'app/exercises/shared/tutor-exercise-dashboard/tutor-participation.service';
+import { TutorParticipationService } from 'app/exercises/shared/dashboards/tutor/tutor-participation.service';
 import { TextSubmissionService } from 'app/exercises/text/participate/text-submission.service';
 import { ExampleSubmission } from 'app/entities/example-submission.model';
 import { ArtemisMarkdown } from 'app/shared/markdown.service';
