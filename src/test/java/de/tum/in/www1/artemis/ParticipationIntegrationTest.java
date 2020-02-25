@@ -18,6 +18,7 @@ import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
+import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.Participation;
@@ -502,5 +503,15 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationTest 
         var participation = database.addParticipationForExercise(quizEx, "student1");
         var quizStatus = request.get("/api/participations/" + participation.getId() + "/status", HttpStatus.OK, QuizExercise.Status.class);
         assertThat(quizStatus).isEqualTo(QuizExercise.Status.FINISHED);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void getSubmissionOfParticipation() throws Exception {
+        var participation = database.addParticipationForExercise(textExercise, "student1");
+        var submission1 = database.addSubmission(participation, ModelFactory.generateTextSubmission("text", Language.ENGLISH, true), "student1");
+        var submission2 = database.addSubmission(participation, ModelFactory.generateTextSubmission("text2", Language.ENGLISH, true), "student1");
+        var submissions = request.getList("/api/participations/" + participation.getId() + "/submissions", HttpStatus.OK, Submission.class);
+        assertThat(submissions).contains(submission1, submission2);
     }
 }
