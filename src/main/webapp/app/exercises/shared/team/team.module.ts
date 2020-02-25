@@ -1,4 +1,4 @@
-import { NgModule, ModuleWithProviders } from '@angular/core';
+import { NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { NgxDatatableModule } from '@swimlane/ngx-datatable';
 import { TeamsComponent } from 'app/exercises/shared/team/teams.component';
@@ -16,12 +16,6 @@ const ENTITY_STATES = [...teamRoute];
     imports: [RouterModule.forChild(ENTITY_STATES), ArtemisSharedModule, NgxDatatableModule, ArtemisDataTableModule, ArtemisSharedComponentModule],
     declarations: [TeamsComponent, TeamUpdateButtonComponent, TeamUpdateDialogComponent, TeamStudentSearchComponent],
     exports: [TeamUpdateButtonComponent],
-    entryComponents: [TeamsComponent, TeamUpdateDialogComponent],
+    entryComponents: [TeamUpdateDialogComponent],
 })
-export class ArtemisTeamModule {
-    static forRoot(): ModuleWithProviders {
-        return {
-            ngModule: ArtemisTeamModule,
-        };
-    }
-}
+export class ArtemisTeamModule {}

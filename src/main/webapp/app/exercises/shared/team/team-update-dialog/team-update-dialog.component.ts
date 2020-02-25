@@ -1,16 +1,15 @@
-import { Component, Input, OnInit, ViewEncapsulation, ViewChild } from '@angular/core';
-import { NgForm, AbstractControl } from '@angular/forms';
+import { Component, Input, OnInit, ViewChild, ViewEncapsulation } from '@angular/core';
+import { AbstractControl, NgForm } from '@angular/forms';
 import { DatePipe } from '@angular/common';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { HttpResponse, HttpErrorResponse } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { Observable, Subject } from 'rxjs';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import { TeamService } from 'app/exercises/shared/team/team.service';
 import { Team } from 'app/entities/team.model';
 import { User } from 'app/core/user/user.model';
-import { cloneDeep, omit, isEmpty } from 'lodash';
+import { cloneDeep, isEmpty, omit } from 'lodash';
 import { TeamAssignmentConfig } from 'app/entities/team-assignment-config.model';
-import { Subject } from 'rxjs';
 import { debounceTime, switchMap } from 'rxjs/operators';
 import { Exercise } from 'app/entities/exercise.model';
 

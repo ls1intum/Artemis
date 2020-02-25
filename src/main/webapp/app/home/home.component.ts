@@ -141,7 +141,7 @@ export class HomeComponent implements OnInit, AfterViewInit {
     currentUserCallback(account: User) {
         this.account = account;
         if (account) {
-            this.router.navigate(['overview']);
+            this.router.navigate(['courses']);
         }
     }
 

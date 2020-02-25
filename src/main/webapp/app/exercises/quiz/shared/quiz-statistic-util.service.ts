@@ -25,14 +25,7 @@ export class QuizStatisticUtil {
             this.router.navigateByUrl('/quiz/' + quizExercise.id + '/quiz-statistic');
         } else {
             // go to previous Question-statistic
-            const previousQuestion = quizExercise.quizQuestions[index - 1];
-            if (previousQuestion.type === QuizQuestionType.MULTIPLE_CHOICE) {
-                this.router.navigateByUrl('/quiz/' + quizExercise.id + '/multiple-choice-question-statistic/' + previousQuestion.id);
-            } else if (previousQuestion.type === QuizQuestionType.DRAG_AND_DROP) {
-                this.router.navigateByUrl('/quiz/' + quizExercise.id + '/drag-and-drop-question-statistic/' + previousQuestion.id);
-            } else if (previousQuestion.type === QuizQuestionType.SHORT_ANSWER) {
-                this.router.navigateByUrl('/quiz/' + quizExercise.id + '/short-answer-question-statistic/' + previousQuestion.id);
-            }
+            this.navigateToStatisticOf(quizExercise, quizExercise.quizQuestions[index - 1]);
         }
     }
 
@@ -53,14 +46,17 @@ export class QuizStatisticUtil {
             this.router.navigateByUrl('/quiz/' + quizExercise.id + '/quiz-point-statistic');
         } else {
             // go to next Question-statistic
-            const nextQuestion = quizExercise.quizQuestions[index + 1];
-            if (nextQuestion.type === QuizQuestionType.MULTIPLE_CHOICE) {
-                this.router.navigateByUrl('/quiz/' + quizExercise.id + '/multiple-choice-question-statistic/' + nextQuestion.id);
-            } else if (nextQuestion.type === QuizQuestionType.DRAG_AND_DROP) {
-                this.router.navigateByUrl('/quiz/' + quizExercise.id + '/drag-and-drop-question-statistic/' + nextQuestion.id);
-            } else if (nextQuestion.type === QuizQuestionType.SHORT_ANSWER) {
-                this.router.navigateByUrl('/quiz/' + quizExercise.id + '/short-answer-question-statistic/' + nextQuestion.id);
-            }
+            this.navigateToStatisticOf(quizExercise, quizExercise.quizQuestions[index + 1]);
+        }
+    }
+
+    navigateToStatisticOf(quizExercise: QuizExercise, question: QuizQuestion) {
+        if (question.type === QuizQuestionType.MULTIPLE_CHOICE) {
+            this.router.navigateByUrl(`/course-management/${quizExercise.course?.id}/quiz-exercises/${quizExercise.id}/mc-question-statistic/${question.id}`);
+        } else if (question.type === QuizQuestionType.DRAG_AND_DROP) {
+            this.router.navigateByUrl(`/course-management/${quizExercise.course?.id}/quiz-exercises/${quizExercise.id}/dnd-question-statistic/${question.id}`);
+        } else if (question.type === QuizQuestionType.SHORT_ANSWER) {
+            this.router.navigateByUrl(`/course-management/${quizExercise.course?.id}/quiz-exercises/${quizExercise.id}/sa-question-statistic/${question.id}`);
         }
     }
 }

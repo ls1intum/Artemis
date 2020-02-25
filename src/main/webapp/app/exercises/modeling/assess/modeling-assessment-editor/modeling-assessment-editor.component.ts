@@ -14,13 +14,13 @@ import { ComplaintResponse } from 'app/entities/complaint-response.model';
 import { ModelingSubmission } from 'app/entities/modeling-submission.model';
 import { ResultService } from 'app/exercises/shared/result/result.service';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
-import { ModelingExerciseService } from 'app/exercises/modeling/manage/modeling-exercise/modeling-exercise.service';
+import { ModelingExerciseService } from 'app/exercises/modeling/manage/modeling-exercise.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { Result } from 'app/entities/result.model';
-import { ModelingSubmissionService } from 'app/exercises/modeling/participate/modeling-submission/modeling-submission.service';
+import { ModelingSubmissionService } from 'app/exercises/modeling/participate/modeling-submission.service';
 import { Feedback, FeedbackHighlightColor, FeedbackType } from 'app/entities/feedback.model';
 import { Complaint, ComplaintType } from 'app/entities/complaint.model';
-import { ModelingAssessmentService } from 'app/exercises/modeling/assess/modeling-assessment/modeling-assessment.service';
+import { ModelingAssessmentService } from 'app/exercises/modeling/assess/modeling-assessment.service';
 import { Conflict, ConflictingResult } from 'app/exercises/modeling/assess/modeling-assessment-editor/conflict.model';
 
 @Component({
@@ -41,6 +41,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
 
     assessmentsAreValid = false;
     busy: boolean;
+    courseId: number;
     userId: number;
     isAssessor = false;
     isAtLeastInstructor = false;
@@ -86,8 +87,9 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         this.isAtLeastInstructor = this.accountService.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR']);
 
         this.route.paramMap.subscribe(params => {
-            const submissionId: String | null = params.get('submissionId');
+            this.courseId = Number(params.get('courseId'));
             const exerciseId = Number(params.get('exerciseId'));
+            const submissionId: String | null = params.get('submissionId');
             if (submissionId === 'new') {
                 this.loadOptimalSubmission(exerciseId);
             } else {
@@ -336,7 +338,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     onShowConflictResolution() {
         this.modelingAssessmentService.addLocalConflicts(this.submission!.id, this.conflicts!);
         this.jhiAlertService.clear();
-        this.router.navigate(['modeling-exercise', this.modelingExercise!.id, 'submissions', this.submission!.id, 'assessment', 'conflict']);
+        this.router.navigate(['/course-management', this.courseId, 'modeling-exercises', this.modelingExercise!.id, 'submissions', this.submission!.id, 'assessment', 'conflict']);
     }
 
     /**
@@ -370,7 +372,11 @@ export class ModelingAssessmentEditorComponent implements OnInit {
                     // navigate to root and then to new assessment page to trigger re-initialization of the components
                     this.router
                         .navigateByUrl('/', { skipLocationChange: true })
-                        .then(() => this.router.navigateByUrl(`modeling-exercise/${this.modelingExercise!.id}/submissions/${optimal.pop()}/assessment`));
+                        .then(() =>
+                            this.router.navigateByUrl(
+                                `/course-management/${this.courseId}/modeling-exercises/${this.modelingExercise!.id}/submissions/${optimal.pop()}/assessment`,
+                            ),
+                        );
                 }
             },
             (error: HttpErrorResponse) => {
@@ -418,7 +424,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
 
     goToExerciseDashboard() {
         if (this.modelingExercise && this.modelingExercise.course) {
-            this.router.navigateByUrl(`/course/${this.modelingExercise.course.id}/exercise/${this.modelingExercise.id}/tutor-dashboard`);
+            this.router.navigateByUrl(`/course-management/${this.modelingExercise.course.id}/exercises/${this.modelingExercise.id}/tutor-dashboard`);
         } else {
             this.location.back();
         }

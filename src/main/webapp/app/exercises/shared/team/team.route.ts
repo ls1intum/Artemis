@@ -5,7 +5,7 @@ import { TeamsComponent } from './teams.component';
 
 export const teamRoute: Routes = [
     {
-        path: 'exercise/:exerciseId/teams',
+        path: 'course-management/:courseId/exercises/:exerciseId/teams',
         component: TeamsComponent,
         data: {
             authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],

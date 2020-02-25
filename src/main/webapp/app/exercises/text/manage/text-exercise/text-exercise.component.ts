@@ -3,7 +3,7 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { JhiEventManager } from 'ng-jhipster';
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { TextExerciseService } from './text-exercise.service';
-import { CourseExerciseService, CourseService } from 'app/course/manage/course.service';
+import { CourseExerciseService, CourseManagementService } from '../../../../course/manage/course-management.service';
 import { ActivatedRoute } from '@angular/router';
 import { ExerciseComponent } from 'app/exercises/shared/exercise/exercise.component';
 import { TranslateService } from '@ngx-translate/core';
@@ -21,7 +21,7 @@ export class TextExerciseComponent extends ExerciseComponent {
     constructor(
         private textExerciseService: TextExerciseService,
         private courseExerciseService: CourseExerciseService,
-        courseService: CourseService,
+        courseService: CourseManagementService,
         translateService: TranslateService,
         private jhiAlertService: AlertService,
         eventManager: JhiEventManager,

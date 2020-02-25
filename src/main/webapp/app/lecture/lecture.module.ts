@@ -16,6 +16,5 @@ const ENTITY_STATES = [...lectureRoute];
 @NgModule({
     imports: [ArtemisSharedModule, RouterModule.forChild(ENTITY_STATES), FormDateTimePickerModule, ArtemisSharedComponentModule, ArtemisMarkdownEditorModule],
     declarations: [LectureComponent, LectureDetailComponent, LectureUpdateComponent, LectureAttachmentsComponent],
-    entryComponents: [LectureComponent, LectureUpdateComponent, LectureAttachmentsComponent],
 })
 export class ArtemisLectureModule {}

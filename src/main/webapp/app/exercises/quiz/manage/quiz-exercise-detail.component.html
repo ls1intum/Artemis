@@ -113,34 +113,34 @@
             </div>
             <div class="question card" *ngFor="let question of quizExercise.quizQuestions; let i = index">
                 <div *ngIf="question.type === MULTIPLE_CHOICE">
-                    <jhi-edit-multiple-choice-question
+                    <jhi-multiple-choice-question-edit
                         #editMultipleChoice
                         [question]="question"
                         [questionIndex]="i + 1"
                         (questionDeleted)="deleteQuestion(question)"
                         (questionUpdated)="onQuestionUpdated()"
                     >
-                    </jhi-edit-multiple-choice-question>
+                    </jhi-multiple-choice-question-edit>
                 </div>
                 <div *ngIf="question.type === DRAG_AND_DROP">
-                    <jhi-edit-drag-and-drop-question
+                    <jhi-drag-and-drop-question-edit
                         #editDragAndDrop
                         [question]="question"
                         [questionIndex]="i + 1"
                         (questionDeleted)="deleteQuestion(question)"
                         (questionUpdated)="onQuestionUpdated()"
                     >
-                    </jhi-edit-drag-and-drop-question>
+                    </jhi-drag-and-drop-question-edit>
                 </div>
                 <div *ngIf="question.type === SHORT_ANSWER">
-                    <jhi-edit-short-answer-question
+                    <jhi-short-answer-question-edit
                         #editShortAnswer
                         [question]="question"
                         [questionIndex]="i + 1"
                         (questionDeleted)="deleteQuestion(question)"
                         (questionUpdated)="onQuestionUpdated()"
                     >
-                    </jhi-edit-short-answer-question>
+                    </jhi-short-answer-question-edit>
                 </div>
             </div>
             <div class="row w-100">

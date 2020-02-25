@@ -11,9 +11,9 @@ import { DebugElement } from '@angular/core';
 import { By } from '@angular/platform-browser';
 import { MockAccountService } from '../../mocks/mock-account.service';
 import { NgxDatatableModule } from '@swimlane/ngx-datatable';
-import { FileUploadSubmissionComponent } from 'app/exercises/file-upload/participate/file-upload-submission/file-upload-submission.component';
+import { FileUploadSubmissionComponent } from 'app/exercises/file-upload/participate/file-upload-submission.component';
 import { TranslateModule } from '@ngx-translate/core';
-import { FileUploadResultComponent } from 'app/exercises/file-upload/participate/file-upload-submission/file-upload-result/file-upload-result.component';
+import { FileUploadResultComponent } from 'app/exercises/file-upload/participate/file-upload-result.component';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { Feedback } from 'app/entities/feedback.model';
 

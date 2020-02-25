@@ -1,0 +1,138 @@
+<div *ngIf="course">
+    <jhi-alert></jhi-alert>
+
+    <div class="course-info-bar">
+        <h3>{{ 'artemisApp.instructorCourseDashboard.pageHeader' | translate }} {{ course.title }}</h3>
+        <h4>{{ course.description || ('artemisApp.instructorCourseDashboard.noDescription' | translate) }}</h4>
+    </div>
+
+    <div class="container-fluid">
+        <div class="row mt-3" *ngIf="!isLoading">
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-header bg-primary text-white">
+                        <h4 class="card-title">{{ 'artemisApp.instructorCourseDashboard.informationAboutCourse' | translate }}</h4>
+                    </div>
+                    <div class="card-body">
+                        <ul>
+                            <li>
+                                <b>{{ 'artemisApp.instructorCourseDashboard.students' | translate }}:</b> {{ stats.numberOfStudents }}
+                            </li>
+                            <li>
+                                <b>{{ 'artemisApp.instructorCourseDashboard.submissions' | translate }}:</b> {{ stats.numberOfSubmissions }}
+                            </li>
+                            <li>
+                                <b>{{ 'artemisApp.instructorCourseDashboard.tutors' | translate }}:</b> {{ stats.tutorLeaderboardEntries.length }}
+                            </li>
+                            <li>
+                                <b>{{ 'artemisApp.instructorCourseDashboard.assessments' | translate }}:</b> {{ stats.numberOfAssessments }} ({{
+                                    stats.numberOfSubmissions - stats.numberOfAssessments
+                                }}
+                                {{ 'artemisApp.instructorCourseDashboard.open' | translate }})
+                            </li>
+                            <li>
+                                <a [routerLink]="['/course-management', course.id, 'complaints']">
+                                    <b>{{ 'artemisApp.instructorCourseDashboard.complaints' | translate }}:</b> {{ stats.numberOfComplaints }}
+                                </a>
+                                ({{ stats.numberOfOpenComplaints }} {{ 'artemisApp.instructorCourseDashboard.openComplaint' | translate }})
+                            </li>
+                            <li>
+                                <a [routerLink]="['/course-management', course.id, 'more-feedback-requests']">
+                                    <b>{{ 'artemisApp.instructorCourseDashboard.moreFeedbackRequests' | translate }}:</b> {{ stats.numberOfMoreFeedbackRequests }}
+                                </a>
+                                ({{ stats.numberOfOpenMoreFeedbackRequests }} {{ 'artemisApp.instructorCourseDashboard.openRequest' | translate }})
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4" *ngIf="stats && !isLoading">
+                <canvas baseChart [data]="dataForAssessmentPieChart" [labels]="['Open assessments', 'Completed assessments']" chartType="pie"> </canvas>
+            </div>
+        </div>
+
+        <ng-template #loadingScreen>
+            <p></p>
+            <h3>
+                <span style="color:grey"><fa-icon [icon]="'spinner'" [spin]="true"></fa-icon>&nbsp;<span>Please wait while loading the statistics!</span></span>
+            </h3>
+        </ng-template>
+
+        <div class="row table-responsive mt-3">
+            <div *ngIf="course.exercises.length === 0">
+                {{ 'artemisApp.instructorCourseDashboard.noExercise' | translate }}
+            </div>
+
+            <table class="table" *ngIf="course.exercises.length >= 0">
+                <thead>
+                    <tr jhiSort [(predicate)]="exercisesSortingPredicate" [(ascending)]="exercisesReverseOrder" [callback]="callback">
+                        <th jhiSortBy="id"><a class="th-link">#</a> <fa-icon [icon]="'sort'"></fa-icon></th>
+                        <th jhiSortBy="title">
+                            <a class="th-link">{{ 'artemisApp.instructorCourseDashboard.exercise' | translate }}</a> <fa-icon [icon]="'sort'"></fa-icon>
+                        </th>
+                        <th jhiSortBy="dueDate">
+                            <a class="th-link">{{ 'artemisApp.instructorCourseDashboard.dueDate' | translate }}</a> <fa-icon [icon]="'sort'"></fa-icon>
+                        </th>
+                        <th jhiSortBy="assessmentDueDate">
+                            <a class="th-link">{{ 'artemisApp.instructorCourseDashboard.assessmentDueDate' | translate }}</a> <fa-icon [icon]="'sort'"></fa-icon>
+                        </th>
+                        <th jhiSortBy="submissions">
+                            <a class="th-link">{{ 'artemisApp.instructorCourseDashboard.submissions' | translate }}</a> <fa-icon [icon]="'sort'"></fa-icon>
+                        </th>
+                        <th jhiSortBy="complaints">
+                            <a class="th-link">{{ 'artemisApp.instructorCourseDashboard.complaints' | translate }}</a> <fa-icon [icon]="'sort'"></fa-icon>
+                        </th>
+                        <th jhiSortBy="requests">
+                            <a class="th-link">{{ 'artemisApp.instructorCourseDashboard.moreFeedbackRequests' | translate }}</a> <fa-icon [icon]="'sort'"></fa-icon>
+                        </th>
+                        <th>{{ 'artemisApp.instructorCourseDashboard.completedAssessments' | translate }}</th>
+                        <th>{{ 'artemisApp.instructorCourseDashboard.action' | translate }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr *ngFor="let exercise of course.exercises | sortBy: exercisesSortingPredicate:exercisesReverseOrder">
+                        <td>
+                            {{ exercise.id }}
+                            <fa-icon [icon]="getIcon(exercise.type)" placement="right" [ngbTooltip]="getIconTooltip(exercise.type) | translate" container="body"></fa-icon>
+                        </td>
+                        <td>{{ exercise.title }}</td>
+                        <td>{{ exercise.dueDate | date: 'medium' }}</td>
+                        <td>{{ exercise.assessmentDueDate | date: 'medium' }}</td>
+                        <td>{{ exercise.numberOfParticipations }}</td>
+                        <td>{{ exercise.numberOfComplaints }}</td>
+                        <td>{{ exercise.numberOfMoreFeedbackRequests }}</td>
+                        <td class="text-center">
+                            <div class="progress position-relative">
+                                <div
+                                    class="progress-bar"
+                                    role="progressbar"
+                                    [ngClass]="calculateClass(exercise.numberOfAssessments, exercise.numberOfParticipations)"
+                                    [style.width]="calculatePercentage(exercise.numberOfAssessments, exercise.numberOfParticipations) + '%'"
+                                    attr.aria-valuenow="{{ calculatePercentage(exercise.numberOfAssessments, exercise.numberOfParticipations) }}"
+                                    aria-valuemin="0"
+                                    aria-valuemax="100"
+                                >
+                                    <span class="justify-content-center d-flex position-absolute w-100 text-dark">
+                                        {{ exercise.numberOfAssessments }} / {{ exercise.numberOfParticipations }} ({{
+                                            calculatePercentage(exercise.numberOfAssessments, exercise.numberOfParticipations)
+                                        }}%)
+                                    </span>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <button class="btn btn-primary" routerLink="/course-management/{{ course.id }}/exercises/{{ exercise.id }}/instructor-dashboard">
+                                {{ 'artemisApp.instructorCourseDashboard.exerciseDashboard' | translate }}
+                            </button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <h2>{{ 'artemisApp.instructorCourseDashboard.tutorLeaderboard.courseTitle' | translate }}</h2>
+
+        <jhi-tutor-leaderboard [tutorsData]="stats.tutorLeaderboardEntries" [course]="course"></jhi-tutor-leaderboard>
+    </div>
+</div>
