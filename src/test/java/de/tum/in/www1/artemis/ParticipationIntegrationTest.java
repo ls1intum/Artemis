@@ -25,6 +25,7 @@ import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentPar
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.ModelFactory;
@@ -467,6 +468,7 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationTest 
         result.participation(participation).setCompletionDate(ZonedDateTime.now().minusHours(2));
         resultRepository.save(result);
         var actualParticipation = request.get("/api/participations/" + participation.getId() + "/withLatestResult", HttpStatus.OK, StudentParticipation.class);
+
         assertThat(actualParticipation).isNotNull();
         assertThat(actualParticipation.getResults().size()).isEqualTo(1);
         assertThat(actualParticipation.getResults().iterator().next()).as("Only latest result is returned").isEqualTo(result);
@@ -479,5 +481,26 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationTest 
         doReturn(new ResponseEntity<>(null, HttpStatus.OK)).when(continuousIntegrationService).retrieveLatestArtifact(participation);
         request.getNullable("/api/participations/" + participation.getId() + "/buildArtifact", HttpStatus.OK, Object.class);
         verify(continuousIntegrationService).retrieveLatestArtifact(participation);
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    public void getParticipationStatus_programmingExercise() throws Exception {
+        var participation = database.addStudentParticipationForProgrammingExercise(programmingExercise, "student1");
+        var expectedBuildStatus = ContinuousIntegrationService.BuildStatus.QUEUED;
+        doReturn(expectedBuildStatus).when(continuousIntegrationService).getBuildStatus(participation);
+        var buildStatus = request.get("/api/participations/" + participation.getId() + "/status", HttpStatus.OK, ContinuousIntegrationService.BuildStatus.class);
+        verify(continuousIntegrationService).getBuildStatus(participation);
+        assertThat(buildStatus).isEqualTo(expectedBuildStatus);
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    public void getParticipationStatus_quizExercise() throws Exception {
+        var quizEx = ModelFactory.generateQuizExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(1), course);
+        exerciseRepo.save(quizEx);
+        var participation = database.addParticipationForExercise(quizEx, "student1");
+        var quizStatus = request.get("/api/participations/" + participation.getId() + "/status", HttpStatus.OK, QuizExercise.Status.class);
+        assertThat(quizStatus).isEqualTo(QuizExercise.Status.FINISHED);
     }
 }

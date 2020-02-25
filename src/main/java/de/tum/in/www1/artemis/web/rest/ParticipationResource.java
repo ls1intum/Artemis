@@ -550,12 +550,12 @@ public class ParticipationResource {
     /**
      * GET /participations/:participationId/status: get build status of the user's participation for the "participationId" participation.
      *
-     * @param id the participation participationId
+     * @param participationId the participation participationId
      * @return the ResponseEntity with status 200 (OK) and with body the participation, or with status 404 (Not Found)
      */
-    @GetMapping(value = "/participations/{participationId}/status")
-    public ResponseEntity<?> getParticipationStatus(@PathVariable Long id) {
-        StudentParticipation participation = participationService.findOneStudentParticipation(id);
+    @GetMapping("/participations/{participationId}/status")
+    public ResponseEntity<?> getParticipationStatus(@PathVariable Long participationId) {
+        StudentParticipation participation = participationService.findOneStudentParticipation(participationId);
         // NOTE: Disable Authorization check for increased performance
         // (Unauthorized users being unable to see any participation's status is not a priority!)
         if (participation.getExercise() instanceof QuizExercise) {
