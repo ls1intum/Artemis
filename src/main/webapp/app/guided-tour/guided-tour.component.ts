@@ -726,7 +726,6 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
             next.classList.remove('n-small');
             nextPlusOne.classList.add('n-small');
         }
-
     }
 
     private handleBackwardNavigation(next: HTMLElement, nextPlusOne: HTMLElement, nextIndex: number) {
@@ -734,7 +733,7 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
         const firstDot = this.dotElements.first.nativeElement;
         this.dotArray.forEach((node: ElementRef, index: number) => {
             node.nativeElement.classList.remove('n-small');
-            if (this.transformCount !== 0 && index === nextIndex + 1 || this.transformCount === 0 && index === this.maxDots - 1) {
+            if ((this.transformCount !== 0 && index === nextIndex + 1) || (this.transformCount === 0 && index === this.maxDots - 1)) {
                 node.nativeElement.classList.add('n-small');
             }
         });
