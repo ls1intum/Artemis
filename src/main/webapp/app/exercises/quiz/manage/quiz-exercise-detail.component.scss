@@ -1,0 +1,112 @@
+@import 'src/main/webapp/content/scss/artemis-mixins';
+
+.edit-quiz {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 100px;
+
+    #quiz-title {
+        margin-bottom: 8px;
+    }
+
+    .question {
+        width: 100%;
+        box-sizing: border-box;
+        border: 1px solid lightgrey;
+        margin-bottom: 18px;
+        background: #fefefe;
+
+        &:first-of-type {
+            margin-top: 18px;
+        }
+
+        /** css style for child components start **/
+        .question-card-header {
+            padding: 15px 5px 5px 5px;
+        }
+
+        .question-collapse {
+            margin-top: -15px;
+            width: 3.25rem;
+        }
+
+        .question-title {
+            flex: 1;
+
+            input.form-control {
+                width: 100%;
+            }
+        }
+
+        .mc-question,
+        .dnd-question,
+        .sa-question {
+            width: 100%;
+            box-sizing: border-box;
+            border: none;
+            margin-bottom: 0;
+            padding: 0;
+        }
+
+        .question-card-body,
+        .preview-mc-question,
+        .preview-dnd-question,
+        .preview-sa-question {
+            padding: 20px;
+        }
+
+        .delete-button,
+        .duplicate-button {
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            padding: 4px;
+        }
+
+        .delete-button:hover {
+            color: red;
+        }
+
+        .duplicate-button:hover {
+            color: #0f6ab4;
+        }
+
+        .markupEditorArea {
+            margin: 0 4px;
+
+            .toolbar {
+                margin: 4px 0;
+            }
+        }
+
+        .question-content {
+            display: flex;
+            flex-flow: column;
+            > * {
+                height: 350px;
+            }
+        }
+        /** css style for child components end **/
+    }
+
+    .edit-quiz-footer {
+        height: 80px;
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        z-index: 10;
+        box-shadow: 0 0 3px rgba(0, 0, 0, 0.7);
+        background: white;
+
+        .container {
+            height: 100%;
+        }
+    }
+}
+
+.quiz-is-active-background {
+    @include position-style(fixed, 0, 0, 0, 0, 6);
+    background: rgba(0, 0, 0, 0.4);
+}

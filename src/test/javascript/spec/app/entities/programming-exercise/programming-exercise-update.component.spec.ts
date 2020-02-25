@@ -4,8 +4,8 @@ import { HttpResponse } from '@angular/common/http';
 import { of } from 'rxjs';
 
 import { ArtemisTestModule } from '../../../test.module';
-import { ProgrammingExerciseUpdateComponent } from 'app/entities/programming-exercise/programming-exercise-update.component';
-import { ProgrammingExerciseService } from 'app/entities/programming-exercise/services/programming-exercise.service';
+import { ProgrammingExerciseUpdateComponent } from 'app/exercises/programming/manage/programming-exercise-update.component';
+import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { ProgrammingExercise } from 'app/shared/model/programming-exercise.model';
 
 describe('Component Tests', () => {

@@ -5,7 +5,7 @@ import { of } from 'rxjs';
 
 import { ArtemisTestModule } from '../../../test.module';
 import { QuizExerciseUpdateComponent } from 'app/entities/quiz-exercise/quiz-exercise-update.component';
-import { QuizExerciseService } from 'app/entities/quiz-exercise/quiz-exercise.service';
+import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.service';
 import { QuizExercise } from 'app/shared/model/quiz-exercise.model';
 
 describe('Component Tests', () => {

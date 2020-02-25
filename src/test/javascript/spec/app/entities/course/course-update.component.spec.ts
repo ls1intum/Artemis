@@ -4,9 +4,9 @@ import { HttpResponse } from '@angular/common/http';
 import { of } from 'rxjs';
 
 import { ArtemisTestModule } from '../../../test.module';
-import { CourseUpdateComponent } from 'app/entities/course/course-update.component';
-import { CourseService } from 'app/entities/course/course.service';
-import { Course } from 'app/entities/course/course.model';
+import { CourseUpdateComponent } from 'app/entities/manage/course-update.component';
+import { CourseService } from 'app/course/manage/course.service';
+import { Course } from 'app/entities/course.model';
 
 describe('Component Tests', () => {
     describe('Course Management Update Component', () => {

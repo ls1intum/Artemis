@@ -4,7 +4,7 @@ import { ActivatedRoute } from '@angular/router';
 import { of } from 'rxjs';
 
 import { ArTeMiSTestModule } from '../../../test.module';
-import { FileUploadSubmissionDetailComponent } from 'app/entities/file-upload-submission/file-upload-submission-detail.component';
+import { FileUploadSubmissionDetailComponent } from 'app/exercises/file-upload-submission/file-upload-submission-detail.component';
 import { FileUploadSubmission } from 'app/shared/model/file-upload-submission.model';
 
 describe('Component Tests', () => {

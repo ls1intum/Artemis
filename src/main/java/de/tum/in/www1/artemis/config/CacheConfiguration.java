@@ -160,6 +160,13 @@ public class CacheConfiguration {
             createIfNotExists(cm, ExerciseHint.class.getName(), jcacheConfiguration);
             createIfNotExists(cm, GuidedTourSetting.class.getName(), jcacheConfiguration);
             createIfNotExists(cm, User.class.getName() + ".guidedTourSettings", jcacheConfiguration);
+            createIfNotExists(cm, Exercise.class.getName() + ".teams", jcacheConfiguration);
+            createIfNotExists(cm, Team.class.getName(), jcacheConfiguration);
+            createIfNotExists(cm, Team.class.getName() + ".students", jcacheConfiguration);
+            createIfNotExists(cm, Exercise.class.getName() + ".gradingCriteria", jcacheConfiguration);
+            createIfNotExists(cm, GradingInstruction.class.getName(), jcacheConfiguration);
+            createIfNotExists(cm, GradingCriterion.class.getName(), jcacheConfiguration);
+            createIfNotExists(cm, GradingCriterion.class.getName() + ".structuredGradingInstructions", jcacheConfiguration);
             // jhipster-needle-ehcache-add-entry
             createIfNotExists(cm, "files", jcacheConfiguration);
         };

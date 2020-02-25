@@ -1,11 +1,12 @@
 package de.tum.in.www1.artemis;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 import java.security.Principal;
 import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 import org.junit.jupiter.api.AfterEach;
@@ -309,7 +310,9 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationTest {
         QuizExercise quizExercise = createQuizOnServer();
         QuizExercise updatedQuizExercise = request.putWithResponseBody("/api/quiz-exercises/" + quizExercise.getId() + "/start-now", quizExercise, QuizExercise.class,
                 HttpStatus.OK);
-        assertThat(updatedQuizExercise.getReleaseDate()).isEqualToIgnoringNanos(ZonedDateTime.now());
+        long millis = ChronoUnit.MILLIS.between(updatedQuizExercise.getReleaseDate(), ZonedDateTime.now());
+        // actually the two dates should be "exactly" the same, but for the sake of slow CI testing machines and to prevent flaky tests, we live with the following rule
+        assertThat(millis).isCloseTo(0, byLessThan(2000L));
         assertThat(updatedQuizExercise.isIsPlannedToStart()).isTrue();
     }
 
@@ -345,7 +348,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationTest {
     public void testQuizSubmit() throws Exception {
         // change config to make test faster
         scheduleService.stopSchedule();
-        scheduleService.startSchedule(1 * 1000); // every 1 second
+        scheduleService.startSchedule(2 * 1000); // every 1 second
         List<Course> courses = database.createCoursesWithExercisesAndLectures();
         Course course = courses.get(0);
         QuizExercise quizExercise = database.createQuiz(course, ZonedDateTime.now(), null);
@@ -382,7 +385,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationTest {
         assertThat(quizSubmissionRepository.findAll().size()).isEqualTo(0);
 
         // wait until the quiz has finished
-        Thread.sleep(2000);
+        Thread.sleep(4000);
 
         // after the quiz has ended, all submission are saved to the database
         assertThat(quizSubmissionRepository.findAll().size()).isEqualTo(numberOfParticipants);
@@ -416,7 +419,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationTest {
     public void testQuizSubmitPractice() throws Exception {
         // change config to make test faster
         scheduleService.stopSchedule();
-        scheduleService.startSchedule(1 * 1000); // every 1 second
+        scheduleService.startSchedule(2 * 1000); // every 2 seconds
         List<Course> courses = database.createCoursesWithExercisesAndLectures();
         Course course = courses.get(0);
         QuizExercise quizExercise = database.createQuiz(course, ZonedDateTime.now().minusSeconds(4), null);
@@ -441,7 +444,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationTest {
         assertThat(quizSubmissionRepository.findAll().size()).isEqualTo(numberOfParticipants);
 
         // wait until statistics have been updated
-        Thread.sleep(2000);
+        Thread.sleep(4000);
 
         QuizExercise quizExerciseWithStatistic = quizExerciseService.findOneWithQuestionsAndStatistics(quizExercise.getId());
         assertThat(quizExerciseWithStatistic.getQuizPointStatistic().getParticipantsRated()).isEqualTo(0);
@@ -472,7 +475,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationTest {
     public void testQuizSubmitPreview() throws Exception {
         // change config to make test faster
         scheduleService.stopSchedule();
-        scheduleService.startSchedule(1 * 1000); // every 1 second
+        scheduleService.startSchedule(2 * 1000); // every 1 second
         List<Course> courses = database.createCoursesWithExercisesAndLectures();
         Course course = courses.get(0);
         QuizExercise quizExercise = database.createQuiz(course, ZonedDateTime.now().minusSeconds(4), null);
@@ -487,7 +490,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationTest {
         assertThat(quizSubmissionRepository.findAll().size()).isEqualTo(0);
 
         // wait until statistics might have been updated
-        Thread.sleep(2000);
+        Thread.sleep(4000);
 
         // all stats must be 0 because we have a preview here
         QuizExercise quizExerciseWithStatistic = quizExerciseService.findOneWithQuestionsAndStatistics(quizExercise.getId());

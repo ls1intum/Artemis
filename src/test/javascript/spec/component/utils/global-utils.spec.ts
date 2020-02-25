@@ -1,5 +1,5 @@
 import * as chai from 'chai';
-import { getStringSegmentPositions, matchRegexWithLineNumbers } from '../../../../../main/webapp/app/utils/global.utils';
+import { getStringSegmentPositions, matchRegexWithLineNumbers } from 'app/shared/util/global.utils';
 
 const expect = chai.expect;
 

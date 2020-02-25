@@ -4,7 +4,7 @@ import { ActivatedRoute } from '@angular/router';
 import { of } from 'rxjs';
 
 import { ArTeMiSTestModule } from '../../../test.module';
-import { TextSubmissionDetailComponent } from 'app/entities/text-submission/text-submission-detail.component';
+import { TextSubmissionDetailComponent } from 'app/exercises/text/participate/text-submission/text-submission-detail.component';
 import { TextSubmission } from 'app/shared/model/text-submission.model';
 
 describe('Component Tests', () => {

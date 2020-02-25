@@ -1,4 +1,4 @@
-import { Orientation, UserInteractionEvent } from 'app/guided-tour/guided-tour.constants';
+import { Orientation, ResetParticipation, UserInteractionEvent } from 'app/guided-tour/guided-tour.constants';
 import { GuidedTour } from 'app/guided-tour/guided-tour.model';
 import { ImageTourStep, TextTourStep, UserInterActionTourStep } from 'app/guided-tour/guided-tour-step.model';
 
@@ -7,6 +7,7 @@ import { ImageTourStep, TextTourStep, UserInterActionTourStep } from 'app/guided
  */
 export const courseOverviewTour: GuidedTour = {
     settingsKey: 'course_overview_tour',
+    resetParticipation: ResetParticipation.NONE,
     steps: [
         new ImageTourStep({
             headlineTranslateKey: 'tour.courseOverview.welcome.headline',

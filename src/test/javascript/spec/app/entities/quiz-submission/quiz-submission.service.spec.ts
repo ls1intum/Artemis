@@ -2,7 +2,7 @@
 import { getTestBed, TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { map, take } from 'rxjs/operators';
-import { QuizSubmissionService } from 'app/entities/quiz-submission/quiz-submission.service';
+import { QuizSubmissionService } from 'app/exercises/quiz/participate/quiz-submission/quiz-submission.service';
 import { IQuizSubmission, QuizSubmission } from 'app/shared/model/quiz-submission.model';
 
 describe('Service Tests', () => {

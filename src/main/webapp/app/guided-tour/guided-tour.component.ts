@@ -17,8 +17,8 @@ import { calculateLeftOffset, calculateTopOffset, isElementInViewPortHorizontall
 export class GuidedTourComponent implements AfterViewInit, OnDestroy {
     @ViewChild('tourStep', { static: false }) public tourStep: ElementRef;
 
-    // Sets the width of all tour step elements.
     // TODO automatically determine optimal width of tour step
+    // Sets the width of all tour step elements.
     public tourStepWidth = 550;
     // Sets the minimal width of all tour step elements.
     public minimalTourStepWidth = 500;
@@ -74,10 +74,10 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
             }
             case 'Escape': {
                 if (this.currentTourStep && !this.guidedTourService.isCurrentTour(cancelTour) && !this.guidedTourService.isCurrentTour(completedTour)) {
-                    this.guidedTourService.skipTour(true, false);
+                    this.guidedTourService.skipTour();
                 } else if (this.currentTourStep && this.guidedTourService.isOnLastStep) {
                     // The escape key event finishes the tour when the user is seeing the cancel tour step or last tour step
-                    this.guidedTourService.finishGuidedTour(false);
+                    this.guidedTourService.finishGuidedTour();
                 }
                 break;
             }
@@ -124,6 +124,7 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
             if (this.hasUserPermissionForCurrentTourStep()) {
                 this.scrollToAndSetElement();
                 this.handleTransition();
+                this.guidedTourService.isBackPageNavigation.next(false);
                 return;
             }
             this.selectedElementRect = null;
@@ -148,7 +149,9 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
      */
     private subscribeToResizeEvent() {
         this.resizeSubscription = fromEvent(window, 'resize').subscribe(() => {
-            this.selectedElementRect = this.updateStepLocation(this.getSelectedElement(), true);
+            if (this.getSelectedElement()) {
+                this.selectedElementRect = this.updateStepLocation(this.getSelectedElement(), true);
+            }
         });
     }
 
@@ -157,7 +160,9 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
      */
     private subscribeToScrollEvent() {
         this.scrollSubscription = fromEvent(window, 'scroll').subscribe(() => {
-            this.selectedElementRect = this.updateStepLocation(this.getSelectedElement(), true);
+            if (this.getSelectedElement()) {
+                this.selectedElementRect = this.updateStepLocation(this.getSelectedElement(), true);
+            }
         });
     }
 
@@ -302,7 +307,7 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
                 const tourStep = this.tourStep.nativeElement.getBoundingClientRect();
                 const tourStepPosition = tourStep.top + tourStep.height;
                 const windowHeight = window.innerHeight + window.pageYOffset;
-                elementInViewPort = top >= window.pageYOffset - stepScreenAdjustment && top + height <= windowHeight && tourStepPosition <= windowHeight;
+                elementInViewPort = top >= window.pageYOffset - stepScreenAdjustment && top + height + 10 <= windowHeight && tourStepPosition <= windowHeight;
                 break;
             }
         }
@@ -426,7 +431,7 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
             const totalStepHeight = this.selectedElementRect.height > tourStep.height ? this.selectedElementRect.height : tourStep.height;
 
             if (this.isBottom()) {
-                positionAdjustment = stepScreenAdjustment - 15;
+                positionAdjustment = stepScreenAdjustment;
             } else {
                 positionAdjustment = totalStepHeight - window.innerHeight - stepScreenAdjustment;
             }
@@ -436,6 +441,7 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
                 topPosition = window.scrollY + tourStep.top - 15;
             } else {
                 topPosition = window.scrollY + this.selectedElementRect.top + positionAdjustment;
+                topPosition = topPosition < 15 ? 0 : topPosition + 15;
             }
         }
         return topPosition;
@@ -647,7 +653,9 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
                 .observeMutations(alertElement, { childList: true })
                 .pipe(take(1))
                 .subscribe(mutation => {
-                    this.scrollToAndSetElement();
+                    if (this.getSelectedElement()) {
+                        this.scrollToAndSetElement();
+                    }
                 });
         }
     }
