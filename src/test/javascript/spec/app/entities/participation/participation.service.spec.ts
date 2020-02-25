@@ -4,7 +4,7 @@ import { HttpClientTestingModule, HttpTestingController } from '@angular/common/
 import { map, take } from 'rxjs/operators';
 import * as moment from 'moment';
 import { DATE_TIME_FORMAT } from 'app/shared/constants/input.constants';
-import { ParticipationService } from 'app/entities/participation/participation.service';
+import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import { InitializationState, IParticipation, Participation } from 'app/shared/model/participation.model';
 
 describe('Service Tests', () => {

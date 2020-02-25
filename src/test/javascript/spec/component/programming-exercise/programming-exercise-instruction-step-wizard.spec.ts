@@ -7,11 +7,11 @@ import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
 import * as moment from 'moment';
 import { ArtemisTestModule } from '../../test.module';
-import { ProgrammingExerciseInstructionStepWizardComponent } from 'app/entities/programming-exercise/instructions/instructions-render/step-wizard/programming-exercise-instruction-step-wizard.component';
-import { ProgrammingExerciseInstructionService } from 'app/entities/programming-exercise/instructions/instructions-render/service/programming-exercise-instruction.service';
+import { ProgrammingExerciseInstructionStepWizardComponent } from 'app/exercises/programming/manage/instructions/instructions-render/step-wizard/programming-exercise-instruction-step-wizard.component';
+import { ProgrammingExerciseInstructionService } from 'app/exercises/programming/manage/instructions/instructions-render/service/programming-exercise-instruction.service';
 import { triggerChanges } from '../../utils/general.utils';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
-import { Task } from 'app/entities/programming-exercise/instructions/instructions-render/task/programming-exercise-task.model';
+import { Task } from 'app/exercises/programming/manage/instructions/instructions-render/task/programming-exercise-task.model';
 
 chai.use(sinonChai);
 const expect = chai.expect;

@@ -14,16 +14,20 @@ import * as ace from 'brace';
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
 import { ArtemisTestModule } from '../../test.module';
-import { ParticipationWebsocketService } from 'app/entities/participation/participation-websocket.service';
-import { ProgrammingExerciseParticipationService } from 'app/entities/programming-exercise/services/programming-exercise-participation.service';
-import { CommitState, DeleteFileChange, DomainType, EditorState, FileType, GitConflictState } from 'app/code-editor/model/code-editor.model';
+import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
+import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
+import { CommitState, DeleteFileChange, DomainType, EditorState, FileType, GitConflictState } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { buildLogs, extractedBuildLogErrors } from '../../sample/build-logs';
 import { problemStatement } from '../../sample/problemStatement.json';
 import { MockAccountService } from '../../mocks/mock-account.service';
 import { MockProgrammingExerciseParticipationService } from '../../mocks/mock-programming-exercise-participation.service';
-import { ProgrammingSubmissionService, ProgrammingSubmissionState, ProgrammingSubmissionStateObj } from 'app/programming-submission/programming-submission.service';
+import {
+    ProgrammingSubmissionService,
+    ProgrammingSubmissionState,
+    ProgrammingSubmissionStateObj,
+} from 'app/exercises/programming/participate/programming-submission/programming-submission.service';
 import { MockProgrammingSubmissionService } from '../../mocks/mock-programming-submission.service';
-import { ExerciseHint } from 'app/entities/exercise-hint/exercise-hint.model';
+import { ExerciseHint } from 'app/entities/exercise-hint.model';
 import { DeviceDetectorService } from 'ngx-device-detector';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { getElement } from '../../utils/general.utils';
@@ -31,20 +35,24 @@ import { GuidedTourMapping } from 'app/guided-tour/guided-tour-setting.model';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { MockWebsocketService } from '../../mocks/mock-websocket.service';
 import { Participation } from 'app/entities/participation/participation.model';
-import { BuildLogEntryArray } from 'app/entities/build-log/build-log.model';
-import { CodeEditorConflictStateService } from 'app/code-editor/service/code-editor-conflict-state.service';
-import { ResultService } from 'app/entities/result/result.service';
+import { BuildLogEntryArray } from 'app/entities/build-log.model';
+import { CodeEditorConflictStateService } from 'app/exercises/programming/shared/code-editor/service/code-editor-conflict-state.service';
+import { ResultService } from 'app/exercises/shared/result/result.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { Result } from 'app/entities/result/result.model';
-import { CodeEditorBuildLogService, CodeEditorRepositoryFileService, CodeEditorRepositoryService } from 'app/code-editor/service/code-editor-repository.service';
-import { Feedback } from 'app/entities/feedback/feedback.model';
-import { CodeEditorStudentContainerComponent } from 'app/code-editor/code-editor-student-container.component';
-import { ExerciseHintService, IExerciseHintService } from 'app/entities/exercise-hint/exercise-hint.service';
-import { CodeEditorSessionService } from 'app/code-editor/service/code-editor-session.service';
-import { DomainService } from 'app/code-editor/service/code-editor-domain.service';
-import { ArtemisCodeEditorModule } from 'app/code-editor/code-editor.module';
-import { ProgrammingSubmission } from 'app/entities/programming-submission/programming-submission.model';
-import { ProgrammingExercise } from 'app/entities/programming-exercise/programming-exercise.model';
+import { Result } from 'app/entities/result.model';
+import {
+    CodeEditorBuildLogService,
+    CodeEditorRepositoryFileService,
+    CodeEditorRepositoryService,
+} from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
+import { Feedback } from 'app/entities/feedback.model';
+import { CodeEditorStudentContainerComponent } from 'app/exercises/programming/shared/code-editor/code-editor-student-container.component';
+import { ExerciseHintService, IExerciseHintService } from 'app/exercises/shared/exercise-hint/exercise-hint.service';
+import { CodeEditorSessionService } from 'app/exercises/programming/shared/code-editor/service/code-editor-session.service';
+import { DomainService } from 'app/exercises/programming/shared/code-editor/service/code-editor-domain.service';
+import { ArtemisCodeEditorModule } from 'app/exercises/programming/shared/code-editor/code-editor.module';
+import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
+import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { MockActivatedRoute } from '../../mocks/mock-activated.route';
 import { MockParticipationWebsocketService } from '../../mocks/mock-participation-websocket.service';
 import { MockSyncStorage } from '../../mocks/mock-sync.storage';
@@ -54,7 +62,7 @@ import { MockExerciseHintService } from '../../mocks/mock-exercise-hint.service'
 import { MockCodeEditorRepositoryFileService } from '../../mocks/mock-code-editor-repository-file.service';
 import { MockCodeEditorSessionService } from '../../mocks/mock-code-editor-session.service';
 import { MockCodeEditorBuildLogService } from '../../mocks/mock-code-editor-build-log.service';
-import { DomainDependentService } from 'app/code-editor/service/code-editor-domain-dependent.service';
+import { DomainDependentService } from 'app/exercises/programming/shared/code-editor/service/code-editor-domain-dependent.service';
 
 chai.use(sinonChai);
 const expect = chai.expect;

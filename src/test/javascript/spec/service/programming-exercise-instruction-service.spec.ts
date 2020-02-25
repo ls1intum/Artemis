@@ -5,7 +5,7 @@ import * as sinonChai from 'sinon-chai';
 import {
     ProgrammingExerciseInstructionService,
     TestCaseState,
-} from 'app/entities/programming-exercise/instructions/instructions-render/service/programming-exercise-instruction.service';
+} from 'app/exercises/programming/manage/instructions/instructions-render/service/programming-exercise-instruction.service';
 
 chai.use(sinonChai);
 const expect = chai.expect;

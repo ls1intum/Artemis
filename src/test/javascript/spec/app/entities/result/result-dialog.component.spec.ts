@@ -6,11 +6,11 @@ import { Observable } from 'rxjs/Observable';
 import { JhiEventManager } from 'ng-jhipster';
 
 import { ArtemisTestModule } from '../../../test.module';
-import { ResultDialogComponent } from '../../../../../../main/webapp/app/entities/result/result-dialog.component';
-import { ResultService } from '../../../../../../main/webapp/app/entities/result/result.service';
-import { Result } from '../../../../../../main/webapp/app/entities/result/result.model';
-import { SubmissionService } from '../../../../../../main/webapp/app/entities/submission';
-import { ParticipationService } from '../../../../../../main/webapp/app/entities/participation';
+import { ResultDialogComponent } from '../../../../../../main/webapp/app/exercises/shared/result/result-dialog.component';
+import { ResultService } from '../../../../../../main/webapp/app/exercises/shared/result/result.service';
+import { Result } from 'app/entities/result.model';
+import { SubmissionService } from '../../../../../../main/webapp/app/exercises/shared/submission';
+import { ParticipationService } from '../../../../../../main/webapp/app/exercises/shared/participation';
 
 describe('Component Tests', () => {
     describe('Result Management Dialog Component', () => {

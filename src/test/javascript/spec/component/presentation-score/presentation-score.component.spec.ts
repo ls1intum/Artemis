@@ -1,9 +1,9 @@
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { PresentationScoreComponent } from 'app/components/exercise/presentation-score/presentation-score.component';
-import { Course } from 'app/entities/course/course.model';
-import { Exercise } from 'app/entities/exercise/exercise.model';
+import { PresentationScoreComponent } from 'app/exercises/shared/presentation-score/presentation-score.component';
+import { Course } from 'app/entities/course.model';
+import { Exercise } from 'app/entities/exercise.model';
 
 chai.use(sinonChai);
 const expect = chai.expect;

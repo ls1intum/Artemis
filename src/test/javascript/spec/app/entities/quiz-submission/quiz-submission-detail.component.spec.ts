@@ -4,7 +4,7 @@ import { ActivatedRoute } from '@angular/router';
 import { of } from 'rxjs';
 
 import { ArtemisTestModule } from '../../../test.module';
-import { QuizSubmissionDetailComponent } from 'app/entities/quiz-submission/quiz-submission-detail.component';
+import { QuizSubmissionDetailComponent } from 'app/exercises/quiz/participate/quiz-submission/quiz-submission-detail.component';
 import { QuizSubmission } from 'app/shared/model/quiz-submission.model';
 
 describe('Component Tests', () => {

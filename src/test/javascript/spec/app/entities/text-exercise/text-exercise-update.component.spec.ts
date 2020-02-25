@@ -4,8 +4,8 @@ import { HttpResponse } from '@angular/common/http';
 import { of } from 'rxjs';
 
 import { ArTeMiSTestModule } from '../../../test.module';
-import { TextExerciseUpdateComponent } from 'app/entities/text-exercise/text-exercise-update.component';
-import { TextExerciseService } from 'app/entities/text-exercise/text-exercise.service';
+import { TextExerciseUpdateComponent } from 'app/exercises/text/manage/text-exercise/text-exercise-update.component';
+import { TextExerciseService } from 'app/exercises/text/manage/text-exercise/text-exercise.service';
 import { TextExercise } from 'app/shared/model/text-exercise.model';
 
 describe('Component Tests', () => {

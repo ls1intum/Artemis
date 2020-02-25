@@ -1,7 +1,7 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
-import { navbarRoute } from 'app/layouts/navbar/navbar.route';
-import { errorRoute } from 'app/layouts/error/error.route';
+import { navbarRoute } from 'app/shared/layouts/navbar/navbar.route';
+import { errorRoute } from 'app/shared/layouts/error/error.route';
 
 const LAYOUT_ROUTES: Routes = [navbarRoute, ...errorRoute];
 // TODO add future feature routes here, e.g. quiz, modeling, apollon, programming editor
@@ -17,7 +17,7 @@ const LAYOUT_ROUTES: Routes = [navbarRoute, ...errorRoute];
                 },
                 {
                     path: 'code-editor',
-                    loadChildren: () => import('./code-editor/code-editor.module').then(m => m.ArtemisCodeEditorModule),
+                    loadChildren: () => import('./exercises/programming/shared/code-editor/code-editor.module').then(m => m.ArtemisCodeEditorModule),
                 },
                 {
                     path: 'account',

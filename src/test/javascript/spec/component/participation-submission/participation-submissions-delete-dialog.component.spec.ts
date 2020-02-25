@@ -5,8 +5,8 @@ import { of } from 'rxjs';
 import { JhiEventManager } from 'ng-jhipster';
 
 import { ArtemisTestModule } from '../../test.module';
-import { ParticipationSubmissionDeleteDialogComponent } from 'app/entities/participation-submission/participation-submission-delete-dialog.component';
-import { SubmissionService } from 'app/entities/submission/submission.service';
+import { ParticipationSubmissionDeleteDialogComponent } from 'app/exercises/shared/participation-submission/participation-submission-delete-dialog.component';
+import { SubmissionService } from 'app/exercises/shared/submission/submission.service';
 
 describe('ParticipationSubmissionDeleteDialogComponent', () => {
     describe('Manage delete of submissions in participation-submission view', () => {
