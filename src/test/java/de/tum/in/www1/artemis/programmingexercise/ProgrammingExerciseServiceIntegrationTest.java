@@ -1,13 +1,17 @@
 package de.tum.in.www1.artemis.programmingexercise;
 
+import static de.tum.in.www1.artemis.config.Constants.ASSIGNMENT_REPO_NAME;
+import static de.tum.in.www1.artemis.config.Constants.TEST_REPO_NAME;
 import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.SOLUTION;
 import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.TEMPLATE;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
 import java.net.MalformedURLException;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -41,7 +45,7 @@ public class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringInt
 
     private static final String BASE_RESOURCE = "/api/programming-exercises/";
 
-    private static final String DUMMY_URL = "https://te12ste@repobruegge.in.tum.de/scm/TEST2019TEST/testexercise-te12ste.git";
+    private static final String DUMMY_URL = "https://te12ste@repobruegge.in.tum.de/scm/TEST2019TEST/testexercise-%s.git";
 
     @Autowired
     ProgrammingExerciseService programmingExerciseService;
@@ -158,18 +162,25 @@ public class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringInt
     public void importExercise_instructor_correctBuildPlansAndRepositories() throws Exception {
         final var toBeImported = createToBeImported();
         final var verifications = new LinkedList<Verifiable>();
+        final var projectKey = toBeImported.getProjectKey();
+        final var templateRepoName = (projectKey + "-" + RepositoryType.TEMPLATE.getName()).toLowerCase();
+        final var solutionRepoName = (projectKey + "-" + RepositoryType.SOLUTION.getName()).toLowerCase();
+        final var testsRepoName = (projectKey + "-" + RepositoryType.TESTS.getName()).toLowerCase();
 
-        verifications.add(bambooRequestMockProvider.mockCopyBuildPlan(programmingExercise.getProjectKey(), TEMPLATE.getName(), toBeImported.getProjectKey(), TEMPLATE.getName()));
-        verifications.add(bambooRequestMockProvider.mockCopyBuildPlan(programmingExercise.getProjectKey(), SOLUTION.getName(), toBeImported.getProjectKey(), SOLUTION.getName()));
-        verifications.add(bambooRequestMockProvider.mockEnablePlan(toBeImported.getProjectKey(), TEMPLATE.getName()));
-        verifications.add(bambooRequestMockProvider.mockEnablePlan(toBeImported.getProjectKey(), SOLUTION.getName()));
-        doReturn(new DummyRepositoryUrl(DUMMY_URL)).when(versionControlService).getCloneRepositoryUrl(anyString(), anyString());
+        verifications.add(bambooRequestMockProvider.mockCopyBuildPlan(programmingExercise.getProjectKey(), TEMPLATE.getName(), projectKey, TEMPLATE.getName()));
+        verifications.add(bambooRequestMockProvider.mockCopyBuildPlan(programmingExercise.getProjectKey(), SOLUTION.getName(), projectKey, SOLUTION.getName()));
+        verifications.add(bambooRequestMockProvider.mockEnablePlan(projectKey, TEMPLATE.getName()));
+        verifications.add(bambooRequestMockProvider.mockEnablePlan(projectKey, SOLUTION.getName()));
         doNothing().when(versionControlService).createProjectForExercise(any());
         doReturn(new DummyRepositoryUrl(DUMMY_URL)).when(versionControlService).copyRepository(anyString(), anyString(), anyString(), anyString());
         doNothing().when(versionControlService).addWebHooksForExercise(any());
-        doNothing().when(continuousIntegrationService).giveProjectPermissions(anyString(), any(), any());
-        doNothing().when(continuousIntegrationService).updatePlanRepository(any(), any(), any(), any(), any(), any());
-        doNothing().when(continuousIntegrationService).triggerBuild(any());
+        bambooRequestMockProvider.mockGiveProjectPermissions(toBeImported);
+        bambooRequestMockProvider.mockUpdatePlanRepository(toBeImported, TEMPLATE.getName(), ASSIGNMENT_REPO_NAME, templateRepoName, List.of(ASSIGNMENT_REPO_NAME));
+        bambooRequestMockProvider.mockUpdatePlanRepository(toBeImported, TEMPLATE.getName(), TEST_REPO_NAME, testsRepoName, List.of());
+        bambooRequestMockProvider.mockUpdatePlanRepository(toBeImported, SOLUTION.getName(), ASSIGNMENT_REPO_NAME, solutionRepoName, List.of());
+        bambooRequestMockProvider.mockUpdatePlanRepository(toBeImported, SOLUTION.getName(), TEST_REPO_NAME, testsRepoName, List.of());
+        bambooRequestMockProvider.mockTriggerBuild(toBeImported.getProjectKey() + "-" + TEMPLATE.getName());
+        bambooRequestMockProvider.mockTriggerBuild(toBeImported.getProjectKey() + "-" + SOLUTION.getName());
 
         request.postWithResponseBody(BASE_RESOURCE + "import/" + programmingExercise.getId(), toBeImported, ProgrammingExercise.class, HttpStatus.OK);
 
