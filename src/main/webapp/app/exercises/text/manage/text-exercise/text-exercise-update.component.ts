@@ -5,7 +5,7 @@ import { Observable } from 'rxjs/Observable';
 import { JhiEventManager } from 'ng-jhipster';
 import { TextExercise } from '../../../../entities/text-exercise.model';
 import { TextExerciseService } from './text-exercise.service';
-import { CourseService } from 'app/course/manage/course.service';
+import { CourseManagementService } from '../../../../course/manage/course-management.service';
 import { ExampleSubmissionService } from 'app/exercises/shared/example-submission/example-submission.service';
 import { MAX_SCORE_PATTERN } from 'app/app.constants';
 import { WindowRef } from 'app/core/websocket/window.service';
@@ -13,7 +13,6 @@ import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service'
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { ExerciseCategory } from 'app/entities/exercise.model';
 import { EditorMode } from 'app/shared/markdown-editor/markdown-editor.component';
-import { Course } from 'app/entities/course.model';
 import { KatexCommand } from 'app/shared/markdown-editor/commands/katex.command';
 import { AlertService } from 'app/core/alert/alert.service';
 
@@ -40,7 +39,7 @@ export class TextExerciseUpdateComponent implements OnInit {
         private jhiAlertService: AlertService,
         private textExerciseService: TextExerciseService,
         private exerciseService: ExerciseService,
-        private courseService: CourseService,
+        private courseService: CourseManagementService,
         private eventManager: JhiEventManager,
         private exampleSubmissionService: ExampleSubmissionService,
         private activatedRoute: ActivatedRoute,
@@ -76,7 +75,7 @@ export class TextExerciseUpdateComponent implements OnInit {
      */
     previousState() {
         if (this.textExercise.course) {
-            this.router.navigate(['/course', this.textExercise.course.id]);
+            this.router.navigate(['/course-management', this.textExercise.course.id]);
         } else {
             window.history.back();
         }

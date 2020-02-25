@@ -1,11 +1,11 @@
 import { Component, HostBinding, Input, OnInit } from '@angular/core';
 import * as moment from 'moment';
-import { CourseExerciseService } from 'app/course/manage/course.service';
+import { CourseExerciseService } from '../../course/manage/course-management.service';
 import { Router } from '@angular/router';
 import { AlertService } from 'app/core/alert/alert.service';
 import { HttpClient } from '@angular/common/http';
 import { AccountService } from 'app/core/auth/account.service';
-import { SourceTreeService } from 'app/exercises/programming/shared/sourceTree.service';
+import { SourceTreeService } from 'app/exercises/programming/shared/service/sourceTree.service';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { Participation } from 'app/entities/participation/participation.model';
 import { Exercise, ExerciseType, ParticipationStatus } from 'app/entities/exercise.model';
@@ -91,7 +91,7 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
     startExercise() {
         if (this.exercise.type === ExerciseType.QUIZ) {
             // Start the quiz
-            return this.router.navigate(['/quiz', this.exercise.id]);
+            return this.router.navigate(['/courses', this.exercise.course?.id, 'quiz-exercises', this.exercise.id]);
         }
 
         this.exercise.loading = true;
@@ -150,7 +150,7 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
     }
 
     startPractice() {
-        return this.router.navigate(['/quiz', this.exercise.id, 'practice']);
+        return this.router.navigate(['/courses', this.exercise.course?.id, 'quiz-exercises', this.exercise.id, 'practice']);
     }
 
     getRepositoryPassword() {

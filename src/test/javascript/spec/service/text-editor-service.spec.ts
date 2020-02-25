@@ -1,4 +1,4 @@
-import { TextEditorService } from 'app/exercises/text/participate/text-editor/text-editor.service';
+import { TextEditorService } from 'app/exercises/text/participate/text-editor.service';
 
 import { HttpClient, HttpEvent, HttpHandler, HttpRequest } from '@angular/common/http';
 import { Observable } from 'rxjs';

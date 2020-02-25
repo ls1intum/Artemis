@@ -2,13 +2,13 @@
 import { getTestBed, TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { map, take } from 'rxjs/operators';
-import { QuizSubmissionService } from 'app/exercises/quiz/participate/quiz-submission/quiz-submission.service';
+import { QuizParticipationService } from 'app/exercises/quiz/participate/quiz-participation.service';
 import { IQuizSubmission, QuizSubmission } from 'app/shared/model/quiz-submission.model';
 
 describe('Service Tests', () => {
     describe('QuizSubmission Service', () => {
         let injector: TestBed;
-        let service: QuizSubmissionService;
+        let service: QuizParticipationService;
         let httpMock: HttpTestingController;
         let elemDefault: IQuizSubmission;
         beforeEach(() => {
@@ -16,7 +16,7 @@ describe('Service Tests', () => {
                 imports: [HttpClientTestingModule],
             });
             injector = getTestBed();
-            service = injector.get(QuizSubmissionService);
+            service = injector.get(QuizParticipationService);
             httpMock = injector.get(HttpTestingController);
 
             elemDefault = new QuizSubmission(0, 0);

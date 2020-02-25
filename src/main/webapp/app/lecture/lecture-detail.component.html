@@ -22,7 +22,7 @@
                 <dt><span jhiTranslate="artemisApp.lecture.course">Course</span></dt>
                 <dd>
                     <div *ngIf="lecture.course">
-                        <a [routerLink]="['/course', lecture.course?.id, 'view']">{{ lecture.course?.title }}</a>
+                        <a [routerLink]="['/course-management', lecture.course?.id, 'view']">{{ lecture.course?.title }}</a>
                     </div>
                 </dd>
             </dl>
@@ -31,7 +31,7 @@
                 <fa-icon [icon]="'arrow-left'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.back"> Back</span>
             </button>
 
-            <button type="button" [routerLink]="['/lecture', lecture.id, 'edit']" class="btn btn-primary">
+            <button type="button" [routerLink]="['/course-management', lecture.course?.id, 'lectures', lecture.id, 'edit']" class="btn btn-primary">
                 <fa-icon [icon]="'pencil-alt'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.edit"> Edit</span>
             </button>
         </div>

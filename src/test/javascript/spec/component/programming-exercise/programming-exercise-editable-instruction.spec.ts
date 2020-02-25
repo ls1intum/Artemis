@@ -14,7 +14,7 @@ import { MockResultService } from '../../mocks/mock-result.service';
 import { MockParticipationWebsocketService } from '../../mocks/mock-participation-websocket.service';
 import { MarkdownEditorComponent } from 'app/shared/markdown-editor/markdown-editor.component';
 import { MockProgrammingExerciseTestCaseService } from '../../mocks/mock-programming-exercise-test-case.service';
-import { ArtemisProgrammingExerciseInstructionsEditorModule } from 'app/exercises/programming/manage/instructions/instructions-editor/programming-exercise-instructions-editor.module';
+import { ArtemisProgrammingExerciseInstructionsEditorModule } from 'app/exercises/programming/manage/instructions-editor/programming-exercise-instructions-editor.module';
 import { triggerChanges } from '../../utils/general.utils';
 import { Participation } from 'app/entities/participation/participation.model';
 import { ResultService } from 'app/exercises/shared/result/result.service';
@@ -23,8 +23,8 @@ import { ProgrammingExerciseParticipationService } from 'app/exercises/programmi
 import { ProgrammingExerciseTestCaseService } from 'app/exercises/programming/manage/services/programming-exercise-test-case.service';
 import { Result } from 'app/entities/result.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
-import { ProgrammingExerciseInstructionAnalysisComponent } from 'app/exercises/programming/manage/instructions/instructions-editor/analysis/programming-exercise-instruction-analysis.component';
-import { ProgrammingExerciseEditableInstructionComponent } from 'app/exercises/programming/manage/instructions/instructions-editor/programming-exercise-editable-instruction.component';
+import { ProgrammingExerciseInstructionAnalysisComponent } from 'app/exercises/programming/manage/instructions-editor/analysis/programming-exercise-instruction-analysis.component';
+import { ProgrammingExerciseEditableInstructionComponent } from 'app/exercises/programming/manage/instructions-editor/programming-exercise-editable-instruction.component';
 
 chai.use(sinonChai);
 const expect = chai.expect;

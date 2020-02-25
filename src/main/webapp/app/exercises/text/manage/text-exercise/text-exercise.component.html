@@ -5,7 +5,7 @@
         <button
             *ngIf="course && course.isAtLeastInstructor"
             class="btn btn-primary float-right jh-create-entity create-text-exercise"
-            [routerLink]="['/course', course.id, 'text-exercise', 'new']"
+            [routerLink]="['/course-management', course.id, 'text-exercises', 'new']"
         >
             <fa-icon [icon]="'plus'"></fa-icon>
             <span jhiTranslate="artemisApp.textExercise.home.createLabel">
@@ -22,9 +22,6 @@
                 <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" [callback]="callback">
                     <th jhiSortBy="id"><span jhiTranslate="global.field.id">ID</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon></th>
                     <th jhiSortBy="title"><span jhiTranslate="artemisApp.exercise.title">Title</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon></th>
-                    <th jhiSortBy="problemStatement">
-                        <span jhiTranslate="artemisApp.exercise.problemStatement">Problem Statement</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon>
-                    </th>
                     <th jhiSortBy="releaseDate"><span jhiTranslate="artemisApp.exercise.releaseDate">Release Date</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon></th>
                     <th jhiSortBy="dueDate"><span jhiTranslate="artemisApp.exercise.dueDate">Due Date</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon></th>
                     <th jhiSortBy="maxScore"><span jhiTranslate="artemisApp.exercise.maxScore">Max Score</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon></th>
@@ -37,10 +34,9 @@
             <tbody class="markdown-preview">
                 <tr *ngFor="let textExercise of textExercises | sortBy: predicate:reverse; trackBy: trackId">
                     <td>
-                        <a [routerLink]="['/course', textExercise.course.id, 'text-exercise', textExercise.id]">{{ textExercise.id }}</a>
+                        <a [routerLink]="['/course-management', course.id, 'text-exercises', textExercise.id]">{{ textExercise.id }}</a>
                     </td>
                     <td>{{ textExercise.title }}</td>
-                    <td [innerHTML]="textExercise.problemStatement | htmlForMarkdown"></td>
                     <td>{{ textExercise.releaseDate | date: 'medium' }}</td>
                     <td>{{ textExercise.dueDate | date: 'medium' }}</td>
                     <td>{{ textExercise.maxScore }}</td>
@@ -50,7 +46,7 @@
                             <button
                                 *ngIf="textExercise.isAtLeastTutor"
                                 type="submit"
-                                [routerLink]="['/course', textExercise.course.id, 'exercise', textExercise.id, 'dashboard']"
+                                [routerLink]="['/course-management', course.id, 'exercises', textExercise.id, 'scores']"
                                 class="btn btn-info btn-sm mr-1"
                             >
                                 <fa-icon [icon]="'eye'"></fa-icon>
@@ -59,7 +55,7 @@
                             <button
                                 *ngIf="textExercise.isAtLeastTutor"
                                 type="submit"
-                                [routerLink]="['/exercise', textExercise.id, 'participation']"
+                                [routerLink]="['/course-management', courseId, 'exercises', textExercise.id, 'participations']"
                                 class="btn btn-primary btn-sm mr-1"
                             >
                                 <fa-icon [icon]="['far', 'list-alt']"></fa-icon>
@@ -74,14 +70,19 @@
                                 <fa-icon [icon]="'users'"></fa-icon>
                                 <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.teams">Teams</span>
                             </button>
-                            <button *ngIf="textExercise.isAtLeastInstructor" type="submit" [routerLink]="['/text-exercise', textExercise.id]" class="btn btn-info btn-sm mr-1">
+                            <button
+                                *ngIf="textExercise.isAtLeastInstructor"
+                                type="submit"
+                                [routerLink]="['/course-management', course.id, 'text-exercises', textExercise.id]"
+                                class="btn btn-info btn-sm mr-1"
+                            >
                                 <fa-icon [icon]="'eye'"></fa-icon>
                                 <span class="d-none d-md-inline" jhiTranslate="entity.action.view">View</span>
                             </button>
                             <button
                                 *ngIf="textExercise.isAtLeastInstructor"
                                 type="submit"
-                                [routerLink]="['/text-exercise', textExercise.id, 'edit']"
+                                [routerLink]="['/course-management', course.id, 'text-exercises', textExercise.id, 'edit']"
                                 replaceUrl="true"
                                 queryParamsHandling="merge"
                                 class="btn btn-primary btn-sm mr-1"

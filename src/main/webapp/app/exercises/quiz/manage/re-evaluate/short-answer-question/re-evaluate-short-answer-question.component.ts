@@ -4,7 +4,7 @@ import { ShortAnswerQuestion } from 'app/entities/quiz/short-answer-question.mod
 @Component({
     selector: 'jhi-re-evaluate-short-answer-question',
     template: `
-        <jhi-edit-short-answer-question
+        <jhi-short-answer-question-edit
             [question]="question"
             [questionIndex]="questionIndex"
             [reEvaluationInProgress]="true"
@@ -13,7 +13,7 @@ import { ShortAnswerQuestion } from 'app/entities/quiz/short-answer-question.mod
             (questionMoveUp)="questionMoveUp.emit()"
             (questionMoveDown)="questionMoveDown.emit()"
         >
-        </jhi-edit-short-answer-question>
+        </jhi-short-answer-question-edit>
     `,
     providers: [],
 })

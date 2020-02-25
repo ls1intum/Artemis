@@ -116,7 +116,7 @@ public class LtiResource {
         String redirectUrl = request.getScheme() + // "https"
                 "://" +                                // "://"
                 request.getServerName() +              // "artemis.ase.in.tum.de"
-                (request.getServerPort() != 80 && request.getServerPort() != 443 ? ":" + request.getServerPort() : "") + "/#/overview/" + exercise.getCourse().getId()
+                (request.getServerPort() != 80 && request.getServerPort() != 443 ? ":" + request.getServerPort() : "") + "/#/courses/" + exercise.getCourse().getId()
                 + "/exercises/" + exercise.getId() + (isNewUser ? "?welcome" : "") + (!SecurityUtils.isAuthenticated() ? "?login" : "")
                 + (isNewUser || !SecurityUtils.isAuthenticated() ? "&" : "") + "jwt=" + jwt;
 
