@@ -25,14 +25,14 @@ export const courseExerciseOverviewTour: GuidedTour = {
             orientation: Orientation.RIGHT,
         }),
         new TextTourStep({
-            highlightSelector: '.tab-item.statistics',
+            highlightSelector: '.guided-tour.tab-item.statistics',
             headlineTranslateKey: 'tour.courseExerciseOverview.statistics.headline',
             contentTranslateKey: 'tour.courseExerciseOverview.statistics.content',
             highlightPadding: 10,
             orientation: Orientation.RIGHT,
         }),
         new TextTourStep({
-            highlightSelector: '.exercise-row-container .control-label',
+            highlightSelector: '.guided-tour.exercise-row-container .control-label',
             headlineTranslateKey: 'tour.courseExerciseOverview.exerciseRow.headline',
             contentTranslateKey: 'tour.courseExerciseOverview.exerciseRow.content',
             highlightPadding: 10,
@@ -60,14 +60,14 @@ export const courseExerciseOverviewTour: GuidedTour = {
             orientation: Orientation.TOP,
         }),
         new TextTourStep({
-            highlightSelector: '.course-information .panel-wrapper',
+            highlightSelector: '.guided-tour.course-information .guided-tour.panel-wrapper',
             headlineTranslateKey: 'tour.courseExerciseOverview.courseInformation.headline',
             contentTranslateKey: 'tour.courseExerciseOverview.courseInformation.content',
             highlightPadding: 10,
             orientation: Orientation.LEFT,
         }),
         new TextTourStep({
-            highlightSelector: '.course-information .exercise-panel .panel-wrapper',
+            highlightSelector: '.guided-tour.course-information .guided-tour.exercise-panel .guided-tour.panel-wrapper',
             headlineTranslateKey: 'tour.courseExerciseOverview.upcomingDeadlines.headline',
             contentTranslateKey: 'tour.courseExerciseOverview.upcomingDeadlines.content',
             highlightPadding: 10,

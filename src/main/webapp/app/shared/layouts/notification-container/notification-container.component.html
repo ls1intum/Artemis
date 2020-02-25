@@ -7,7 +7,7 @@
     [routerLinkActiveOptions]="{ exact: true }"
     [autoClose]="true"
 >
-    <a class="nav-link dropdown-toggle" ngbDropdownToggle href="javascript:void(0);" id="notificationsNavBarDropdown" (click)="updateNotificationDate()">
+    <a class="guided-tour-notification nav-link dropdown-toggle" ngbDropdownToggle href="javascript:void(0);" id="notificationsNavBarDropdown" (click)="updateNotificationDate()">
         <span>
             <fa-icon [icon]="'bell'"></fa-icon>
             <span *ngIf="notificationCount > 0" class="badge badge-danger badge-pill">{{ notificationCount }}</span>
