@@ -514,4 +514,12 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationTest 
         var submissions = request.getList("/api/participations/" + participation.getId() + "/submissions", HttpStatus.OK, Submission.class);
         assertThat(submissions).contains(submission1, submission2);
     }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void cleanupBuildPlan() throws Exception {
+        var participation = database.addStudentParticipationForProgrammingExercise(programmingExercise, "student1");
+        var actualParticipation = request.putWithResponseBody("/api/participations/" + participation.getId() + "/cleanupBuildPlan", null, Participation.class, HttpStatus.OK);
+        assertThat(actualParticipation).isEqualTo(participation);
+    }
 }
