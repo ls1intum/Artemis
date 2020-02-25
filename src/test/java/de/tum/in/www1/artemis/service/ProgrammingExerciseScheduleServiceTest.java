@@ -79,9 +79,9 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationTe
         for (StudentParticipation studentParticipation : studentParticipations) {
             ProgrammingExerciseStudentParticipation programmingExerciseStudentParticipation = (ProgrammingExerciseStudentParticipation) studentParticipation;
             verify(versionControlService, Mockito.times(callCount)).setRepositoryPermissionsToReadOnly(programmingExerciseStudentParticipation.getRepositoryUrlAsUrl(),
-                    programmingExercise.getProjectKey(), programmingExerciseStudentParticipation.getStudent().getLogin());
+                    programmingExercise.getProjectKey(), programmingExerciseStudentParticipation.getStudents());
             verify(versionControlService, Mockito.times(callCount)).setRepositoryPermissionsToReadOnly(programmingExerciseStudentParticipation.getRepositoryUrlAsUrl(),
-                    programmingExercise.getProjectKey(), programmingExerciseStudentParticipation.getStudent().getLogin());
+                    programmingExercise.getProjectKey(), programmingExerciseStudentParticipation.getStudents());
         }
     }
 
