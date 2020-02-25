@@ -48,7 +48,7 @@ export class QuizReEvaluateComponent implements OnInit, OnChanges, OnDestroy {
 
     ngOnInit(): void {
         this.subscription = this.route.params.subscribe(params => {
-            this.quizExerciseService.find(params['id']).subscribe((response: HttpResponse<QuizExercise>) => {
+            this.quizExerciseService.find(params['exerciseId']).subscribe((response: HttpResponse<QuizExercise>) => {
                 this.quizExercise = response.body!;
                 this.prepareEntity(this.quizExercise);
                 this.backupQuiz = JSON.parse(JSON.stringify(this.quizExercise));
