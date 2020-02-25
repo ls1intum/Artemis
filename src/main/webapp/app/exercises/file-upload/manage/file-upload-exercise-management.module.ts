@@ -15,8 +15,6 @@ import { SortByModule } from 'app/shared/pipes/sort-by.module';
 import { StructuredGradingCriterionModule } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.module';
 import { ArtemisSlideToggleModule } from 'app/exercises/shared/slide-toggle/slide-toggle.module';
 
-const ENTITY_STATES = [...fileUploadExerciseRoute];
-
 @NgModule({
     imports: [
         ArtemisSharedModule,
