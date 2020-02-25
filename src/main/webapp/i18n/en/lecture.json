@@ -2,7 +2,7 @@
     "artemisApp": {
         "lecture": {
             "home": {
-                "title": "Lecture",
+                "title": "Lectures",
                 "createLabel": "Create Lecture",
                 "createOrEditLabel": "Create or Edit Lecture"
             },
