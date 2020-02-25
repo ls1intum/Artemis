@@ -118,7 +118,7 @@
                                     <button
                                         *ngIf="course.isAtLeastInstructor"
                                         type="submit"
-                                        [routerLink]="['/course', course.id, 'lecture']"
+                                        [routerLink]="['/course-management', course.id, 'lectures']"
                                         class="btn btn-primary btn-sm mr-1 mb-1"
                                     >
                                         <fa-icon [icon]="'list-alt'"></fa-icon>
