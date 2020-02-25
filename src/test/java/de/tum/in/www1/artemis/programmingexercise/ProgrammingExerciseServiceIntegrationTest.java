@@ -1,10 +1,13 @@
 package de.tum.in.www1.artemis.programmingexercise;
 
+import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.SOLUTION;
+import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.TEMPLATE;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 import java.net.MalformedURLException;
+import java.util.LinkedList;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -20,8 +23,8 @@ import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationTest;
+import de.tum.in.www1.artemis.connector.bamboo.BambooRequestMockProvider;
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.BuildPlanType;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.enumeration.SortingOrder;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
@@ -30,6 +33,7 @@ import de.tum.in.www1.artemis.service.ProgrammingExerciseService;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.RequestUtilService;
+import de.tum.in.www1.artemis.util.Verifiable;
 import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 
@@ -54,12 +58,16 @@ public class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringInt
     @Autowired
     RequestUtilService request;
 
+    @Autowired
+    private BambooRequestMockProvider bambooRequestMockProvider;
+
     private Course additionalEmptyCourse;
 
     private ProgrammingExercise programmingExercise;
 
     @BeforeEach
     public void setUp() throws MalformedURLException {
+        bambooRequestMockProvider.enableMockingOfRequests();
         databse.addUsers(1, 1, 1);
         databse.addInstructor("other-instructors", "instructorother");
         databse.addCourseWithOneProgrammingExerciseAndTestCases();
@@ -149,12 +157,12 @@ public class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringInt
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void importExercise_instructor_correctBuildPlansAndRepositories() throws Exception {
         final var toBeImported = createToBeImported();
+        final var verifications = new LinkedList<Verifiable>();
 
-        doReturn(toBeImported.getTemplateBuildPlanId()).when(continuousIntegrationService).copyBuildPlan(anyString(), eq(BuildPlanType.TEMPLATE.getName()), anyString(),
-                anyString(), eq(BuildPlanType.TEMPLATE.getName()));
-        doReturn(toBeImported.getSolutionBuildPlanId()).when(continuousIntegrationService).copyBuildPlan(anyString(), eq(BuildPlanType.SOLUTION.getName()), anyString(),
-                anyString(), eq(BuildPlanType.SOLUTION.getName()));
-        doNothing().when(continuousIntegrationService).enablePlan(anyString(), anyString());
+        verifications.add(bambooRequestMockProvider.mockCopyBuildPlan(programmingExercise.getProjectKey(), TEMPLATE.getName(), toBeImported.getProjectKey(), TEMPLATE.getName()));
+        verifications.add(bambooRequestMockProvider.mockCopyBuildPlan(programmingExercise.getProjectKey(), SOLUTION.getName(), toBeImported.getProjectKey(), SOLUTION.getName()));
+        verifications.add(bambooRequestMockProvider.mockEnablePlan(toBeImported.getProjectKey(), TEMPLATE.getName()));
+        verifications.add(bambooRequestMockProvider.mockEnablePlan(toBeImported.getProjectKey(), SOLUTION.getName()));
         doReturn(new DummyRepositoryUrl(DUMMY_URL)).when(versionControlService).getCloneRepositoryUrl(anyString(), anyString());
         doNothing().when(versionControlService).createProjectForExercise(any());
         doReturn(new DummyRepositoryUrl(DUMMY_URL)).when(versionControlService).copyRepository(anyString(), anyString(), anyString(), anyString());
@@ -164,6 +172,10 @@ public class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringInt
         doNothing().when(continuousIntegrationService).triggerBuild(any());
 
         request.postWithResponseBody(BASE_RESOURCE + "import/" + programmingExercise.getId(), toBeImported, ProgrammingExercise.class, HttpStatus.OK);
+
+        for (final var verifiable : verifications) {
+            verifiable.performVerification();
+        }
     }
 
     @Test

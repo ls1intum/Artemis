@@ -267,4 +267,20 @@ public class BambooRequestMockProvider {
 
         mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.GET)).andRespond(withStatus(isValid ? HttpStatus.OK : HttpStatus.BAD_REQUEST));
     }
+
+    public Verifiable mockCopyBuildPlan(String sourceProjectKey, String sourcePlanName, String targetProjectKey, String targetPlanName)
+            throws CliClient.RemoteRestException, CliClient.ClientException {
+        final var targetPlanKey = targetProjectKey + "-" + targetPlanName;
+        final var sourcePlanKey = sourceProjectKey + "-" + sourcePlanName;
+        doReturn(targetPlanKey).when(planHelper).clonePlan(eq(sourcePlanKey), eq(targetPlanKey), eq(targetPlanName), eq(""), anyString(), eq(true));
+
+        return () -> verify(planHelper, times(1)).clonePlan(eq(sourcePlanKey), eq(targetPlanKey), eq(targetPlanName), eq(""), anyString(), eq(true));
+    }
+
+    public Verifiable mockEnablePlan(String projectKey, String planName) throws CliClient.RemoteRestException, CliClient.ClientException {
+        final var planKey = projectKey + "-" + planName;
+        doReturn("foobar").when(planHelper).enablePlan(planKey, true);
+
+        return () -> verify(planHelper, times(1)).enablePlan(eq(planKey), eq(true));
+    }
 }

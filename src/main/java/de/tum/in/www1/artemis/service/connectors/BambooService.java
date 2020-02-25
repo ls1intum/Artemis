@@ -336,7 +336,6 @@ public class BambooService implements ContinuousIntegrationService {
     public void enablePlan(String projectKey, String planKey) throws BambooException {
         try {
             log.debug("Enable build plan " + planKey);
-            //TODO use REST API PUT "/rest/api/latest/clone/{projectKey}-{buildKey}"
             String message = bambooClient.getPlanHelper().enablePlan(planKey, true);
             log.info("Enable build plan " + planKey + " was successful. " + message);
         } catch (CliClient.ClientException | CliClient.RemoteRestException e) {
