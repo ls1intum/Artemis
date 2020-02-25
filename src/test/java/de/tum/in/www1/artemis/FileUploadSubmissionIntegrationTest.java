@@ -7,10 +7,6 @@ import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.List;
 
-import de.tum.in.www1.artemis.domain.File;
-import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
-import de.tum.in.www1.artemis.domain.participation.Participation;
-import org.bouncycastle.math.raw.Mod;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -22,7 +18,9 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.in.www1.artemis.domain.Feedback;
 import de.tum.in.www1.artemis.domain.FileUploadExercise;
 import de.tum.in.www1.artemis.domain.FileUploadSubmission;
+import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
+import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.FileService;
@@ -112,7 +110,7 @@ public class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrati
         FileUploadSubmission submission = ModelFactory.generateFileUploadSubmission(false);
         var file = new MockMultipartFile("file", "file.png", "application/json", "some data".getBytes());
         request.postWithMultipartFile("/api/exercises/" + fileUploadExercise.getId() + "/file-upload-submissions", submission, "submission", file, FileUploadSubmission.class,
-            HttpStatus.FAILED_DEPENDENCY);
+                HttpStatus.FAILED_DEPENDENCY);
     }
 
     @Test
@@ -121,7 +119,7 @@ public class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrati
         FileUploadSubmission submission = ModelFactory.generateFileUploadSubmission(false);
         var file = new MockMultipartFile("file", "file.png", "application/json", "some data".getBytes());
         request.postWithMultipartFile("/api/exercises/" + fileUploadExercise.getId() + "/file-upload-submissions", submission, "submission", file, FileUploadSubmission.class,
-            HttpStatus.FAILED_DEPENDENCY);
+                HttpStatus.FAILED_DEPENDENCY);
     }
 
     @Test
@@ -226,7 +224,7 @@ public class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrati
     }
 
     @Test
-    @WithMockUser(value = "tutor1", roles ="TA")
+    @WithMockUser(value = "tutor1", roles = "TA")
     public void getFileUploadSubmissionWithoutAssessment_inFuture() throws Exception {
         database.updateExerciseDueDate(fileUploadExercise.getId(), ZonedDateTime.now().plusHours(1));
 
@@ -234,7 +232,7 @@ public class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrati
     }
 
     @Test
-    @WithMockUser(value = "tutor1", roles ="TA")
+    @WithMockUser(value = "tutor1", roles = "TA")
     public void getFileUploadSubmissionWithoutAssessment_wrongExerciseType() throws Exception {
         database.addCourseWithOneModelingExercise();
         ModelingExercise modelingExercise = (ModelingExercise) exerciseRepo.findAll().get(3);
@@ -268,7 +266,7 @@ public class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrati
         database.updateExerciseDueDate(fileUploadExercise.getId(), ZonedDateTime.now().minusHours(1));
 
         FileUploadSubmission submission = request.get("/api/participations/" + fileUploadSubmission.getParticipation().getId() + "/file-upload-editor", HttpStatus.OK,
-            FileUploadSubmission.class);
+                FileUploadSubmission.class);
         assertThat(submission.getResult()).isNull();
     }
 
@@ -281,7 +279,7 @@ public class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrati
         database.updateExerciseDueDate(fileUploadExercise.getId(), ZonedDateTime.now().minusHours(1));
 
         FileUploadSubmission submission = request.get("/api/participations/" + fileUploadSubmission.getParticipation().getId() + "/file-upload-editor", HttpStatus.FORBIDDEN,
-            FileUploadSubmission.class);
+                FileUploadSubmission.class);
         assertThat(submission).isNull();
     }
 
@@ -292,7 +290,7 @@ public class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrati
         ModelingExercise modelingExercise = (ModelingExercise) exerciseRepo.findAll().get(3);
         Participation modelingExerciseParticipation = database.addParticipationForExercise(modelingExercise, "student1");
         FileUploadSubmission submission = request.get("/api/participations/" + modelingExerciseParticipation.getId() + "/file-upload-editor", HttpStatus.BAD_REQUEST,
-            FileUploadSubmission.class);
+                FileUploadSubmission.class);
         assertThat(submission).isNull();
     }
 
@@ -348,7 +346,7 @@ public class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrati
     @WithMockUser(value = "tutor1", roles = "TA")
     public void getSubmissionByID_asTA() throws Exception {
         FileUploadSubmission fileUploadSubmission = ModelFactory.generateFileUploadSubmission(true);
-        fileUploadSubmission  = database.addFileUploadSubmission(fileUploadExercise, fileUploadSubmission, "student1");
+        fileUploadSubmission = database.addFileUploadSubmission(fileUploadExercise, fileUploadSubmission, "student1");
 
         long submissionID = fileUploadSubmission.getId();
         FileUploadSubmission receivedSubmission = request.get("/api/file-upload-submissions/" + submissionID, HttpStatus.OK, FileUploadSubmission.class);
@@ -360,7 +358,7 @@ public class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrati
     @WithMockUser(value = "student1", roles = "USER")
     public void getSubmissionByID_asStudent() throws Exception {
         FileUploadSubmission fileUploadSubmission = ModelFactory.generateFileUploadSubmission(true);
-        fileUploadSubmission  = database.addFileUploadSubmission(fileUploadExercise, fileUploadSubmission, "student1");
+        fileUploadSubmission = database.addFileUploadSubmission(fileUploadExercise, fileUploadSubmission, "student1");
 
         long submissionID = fileUploadSubmission.getId();
         FileUploadSubmission receivedSubmission = request.get("/api/file-upload-submissions/" + submissionID, HttpStatus.FORBIDDEN, FileUploadSubmission.class);
