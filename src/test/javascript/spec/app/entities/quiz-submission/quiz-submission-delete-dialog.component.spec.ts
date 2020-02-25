@@ -6,13 +6,13 @@ import { JhiEventManager } from 'ng-jhipster';
 
 import { ArtemisTestModule } from '../../../test.module';
 import { QuizSubmissionDeleteDialogComponent } from 'app/exercises/quiz/participate/quiz-submission/quiz-submission-delete-dialog.component';
-import { QuizSubmissionService } from 'app/exercises/quiz/participate/quiz-submission/quiz-submission.service';
+import { QuizParticipationService } from 'app/exercises/quiz/participate/quiz-participation.service';
 
 describe('Component Tests', () => {
     describe('QuizSubmission Management Delete Component', () => {
         let comp: QuizSubmissionDeleteDialogComponent;
         let fixture: ComponentFixture<QuizSubmissionDeleteDialogComponent>;
-        let service: QuizSubmissionService;
+        let service: QuizParticipationService;
         let mockEventManager: any;
         let mockActiveModal: any;
 
@@ -25,7 +25,7 @@ describe('Component Tests', () => {
                 .compileComponents();
             fixture = TestBed.createComponent(QuizSubmissionDeleteDialogComponent);
             comp = fixture.componentInstance;
-            service = fixture.debugElement.injector.get(QuizSubmissionService);
+            service = fixture.debugElement.injector.get(QuizParticipationService);
             mockEventManager = fixture.debugElement.injector.get(JhiEventManager);
             mockActiveModal = fixture.debugElement.injector.get(NgbActiveModal);
         });

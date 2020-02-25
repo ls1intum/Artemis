@@ -7,7 +7,5 @@ import { notificationRoute } from 'app/overview/notification/notification.route'
 @NgModule({
     imports: [ArtemisSharedModule, RouterModule.forChild(notificationRoute)],
     declarations: [NotificationComponent],
-    entryComponents: [NotificationComponent],
-    exports: [],
 })
 export class ArtemisNotificationModule {}

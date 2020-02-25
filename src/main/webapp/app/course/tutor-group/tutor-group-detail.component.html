@@ -40,7 +40,7 @@
                 <dt><span jhiTranslate="artemisApp.tutorGroup.course">Course</span></dt>
                 <dd>
                     <div *ngIf="tutorGroup.course">
-                        <a [routerLink]="['/course', tutorGroup.course?.id, 'view']">{{ tutorGroup.course?.id }}</a>
+                        <a [routerLink]="['/course-management', tutorGroup.course?.id, 'view']">{{ tutorGroup.course?.id }}</a>
                     </div>
                 </dd>
             </dl>

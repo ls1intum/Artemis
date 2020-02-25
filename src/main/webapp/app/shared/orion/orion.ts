@@ -1,4 +1,4 @@
-import { REPOSITORY } from 'app/exercises/programming/shared/code-editor/instructor/code-editor-instructor-base-container.component';
+import { REPOSITORY } from 'app/exercises/programming/manage/code-editor/code-editor-instructor-base-container.component';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { BuildLogErrors } from 'app/exercises/programming/shared/code-editor/build-output/code-editor-build-output.component';
 import { Observable } from 'rxjs';

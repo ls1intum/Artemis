@@ -9,7 +9,7 @@ import { Observable } from 'rxjs';
 import { ExerciseType } from 'app/entities/exercise.model';
 import * as moment from 'moment';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { ProgrammingAssessmentManualResultDialogComponent } from 'app/exercises/programming/assess/programming-assessment/manual-result/programming-assessment-manual-result-dialog.component';
+import { ProgrammingAssessmentManualResultDialogComponent } from 'app/exercises/programming/assess/manual-result/programming-assessment-manual-result-dialog.component';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { cloneDeep } from 'lodash';
 
@@ -45,9 +45,11 @@ export class ListOfComplaintsComponent implements OnInit {
     ) {}
 
     ngOnInit(): void {
+        this.route.params.subscribe(params => {
+            this.courseId = Number(params['courseId']);
+            this.exerciseId = Number(params['exerciseId']);
+        });
         this.route.queryParams.subscribe(queryParams => {
-            this.courseId = Number(queryParams['courseId']);
-            this.exerciseId = Number(queryParams['exerciseId']);
             this.tutorId = Number(queryParams['tutorId']);
         });
         this.route.data.subscribe(data => (this.complaintType = data.complaintType));
@@ -58,16 +60,16 @@ export class ListOfComplaintsComponent implements OnInit {
         let complaintResponse: Observable<HttpResponse<Complaint[]>>;
 
         if (this.tutorId) {
-            if (this.courseId) {
-                complaintResponse = this.complaintService.findAllByTutorIdForCourseId(this.tutorId, this.courseId, this.complaintType);
-            } else {
+            if (this.exerciseId) {
                 complaintResponse = this.complaintService.findAllByTutorIdForExerciseId(this.tutorId, this.exerciseId, this.complaintType);
+            } else {
+                complaintResponse = this.complaintService.findAllByTutorIdForCourseId(this.tutorId, this.courseId, this.complaintType);
             }
         } else {
-            if (this.courseId) {
-                complaintResponse = this.complaintService.findAllByCourseId(this.courseId, this.complaintType);
-            } else {
+            if (this.exerciseId) {
                 complaintResponse = this.complaintService.findAllByExerciseId(this.exerciseId, this.complaintType);
+            } else {
+                complaintResponse = this.complaintService.findAllByCourseId(this.courseId, this.complaintType);
             }
         }
 
@@ -98,26 +100,25 @@ export class ListOfComplaintsComponent implements OnInit {
             return;
         }
 
-        let route: string;
-        if (exercise.type === ExerciseType.TEXT) {
-            route = `/text/${exercise.id}/assessment/${submissionId}`;
-        } else if (exercise.type === ExerciseType.MODELING) {
-            route = `/modeling-exercise/${exercise.id}/submissions/${submissionId}/assessment`;
-        } else if (exercise.type === ExerciseType.FILE_UPLOAD) {
-            route = `/file-upload-exercise/${exercise.id}/submission/${submissionId}/assessment`;
-        } else if (exercise.type === ExerciseType.PROGRAMMING) {
-            const modalRef: NgbModalRef = this.modalService.open(ProgrammingAssessmentManualResultDialogComponent, { keyboard: true, size: 'lg', backdrop: 'static' });
-            modalRef.componentInstance.participationId = studentParticipation.id;
-            modalRef.componentInstance.exercise = exercise;
-            modalRef.componentInstance.result = cloneDeep(complaint.result);
-            modalRef.componentInstance.onResultModified.subscribe(() => this.loadComplaints());
-            modalRef.result.then(
-                _ => this.loadComplaints(),
-                () => {},
-            );
-            return;
+        switch (exercise.type) {
+            case ExerciseType.TEXT:
+            case ExerciseType.MODELING:
+            case ExerciseType.FILE_UPLOAD:
+                const route = `/course-management/${this.courseId}/${exercise.type}-exercises/${exercise.id}/submissions/${submissionId}/assessment`;
+                this.router.navigate([route]);
+                return;
+            case ExerciseType.PROGRAMMING:
+                const modalRef: NgbModalRef = this.modalService.open(ProgrammingAssessmentManualResultDialogComponent, { keyboard: true, size: 'lg', backdrop: 'static' });
+                modalRef.componentInstance.participationId = studentParticipation.id;
+                modalRef.componentInstance.exercise = exercise;
+                modalRef.componentInstance.result = cloneDeep(complaint.result);
+                modalRef.componentInstance.onResultModified.subscribe(() => this.loadComplaints());
+                modalRef.result.then(
+                    _ => this.loadComplaints(),
+                    () => {},
+                );
+                return;
         }
-        this.router.navigate([route!]);
     }
 
     private onError(error: string) {

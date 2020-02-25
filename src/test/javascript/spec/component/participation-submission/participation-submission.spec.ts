@@ -1,5 +1,4 @@
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
-import { RouterTestingModule } from '@angular/router/testing';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { AccountService } from 'app/core/auth/account.service';
 import * as chai from 'chai';
@@ -14,8 +13,8 @@ import { MockAlertService } from '../../helpers/mock-alert.service';
 import { AlertService } from 'app/core/alert/alert.service';
 import { Router } from '@angular/router';
 import { of } from 'rxjs';
-import { TextAssessmentEditorComponent } from 'app/exercises/text/assess/text-assessment/text-assessment-editor/text-assessment-editor.component';
-import { ResizableInstructionsComponent } from 'app/exercises/text/assess/text-assessment/resizable-instructions/resizable-instructions.component';
+import { TextAssessmentEditorComponent } from 'app/exercises/text/assess/text-assessment-editor/text-assessment-editor.component';
+import { ResizableInstructionsComponent } from 'app/exercises/text/assess/resizable-instructions/resizable-instructions.component';
 import { AssessmentDetailComponent } from 'app/assessment/assessment-detail/assessment-detail.component';
 import { DebugElement } from '@angular/core';
 import { By } from '@angular/platform-browser';
@@ -28,13 +27,13 @@ import { SubmissionService } from 'app/exercises/shared/submission/submission.se
 import { MockComplaintService } from '../../mocks/mock-complaint.service';
 import { NgxDatatableModule } from '@swimlane/ngx-datatable';
 import { TranslateModule } from '@ngx-translate/core';
-import { participationSubmissionRoute } from 'app/exercises/shared/participation-submission/participation-submission.route';
 import { ComplaintsForTutorComponent } from 'app/complaints/complaints-for-tutor/complaints-for-tutor.component';
 import { UpdatingResultComponent } from 'app/shared/result/updating-result.component';
 import { ArtemisResultModule } from 'app/exercises/shared/result/result.module';
 import { SubmissionExerciseType, SubmissionType } from 'app/entities/submission.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { TextSubmission } from 'app/entities/text-submission.model';
+import { RouterTestingModule } from '@angular/router/testing';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -50,14 +49,7 @@ describe('ParticipationSubmissionComponent', () => {
 
     beforeEach(async () => {
         return TestBed.configureTestingModule({
-            imports: [
-                ArtemisTestModule,
-                NgxDatatableModule,
-                ArtemisResultModule,
-                ArtemisSharedModule,
-                TranslateModule.forRoot(),
-                RouterTestingModule.withRoutes([participationSubmissionRoute[0]]),
-            ],
+            imports: [ArtemisTestModule, NgxDatatableModule, ArtemisResultModule, ArtemisSharedModule, TranslateModule.forRoot(), RouterTestingModule],
             declarations: [
                 ParticipationSubmissionComponent,
                 MockComponent(UpdatingResultComponent),

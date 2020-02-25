@@ -1,9 +1,9 @@
 import { Injectable, Injector } from '@angular/core';
 import { WindowRef } from 'app/core/websocket/window.service';
 import { BehaviorSubject, Observable } from 'rxjs';
-import { ExerciseView, OrionState, ArtemisOrionConnector } from 'app/shared/orion/orion';
+import { ArtemisOrionConnector, ExerciseView, OrionState } from 'app/shared/orion/orion';
 import { Router } from '@angular/router';
-import { REPOSITORY } from 'app/exercises/programming/shared/code-editor/instructor/code-editor-instructor-base-container.component';
+import { REPOSITORY } from 'app/exercises/programming/manage/code-editor/code-editor-instructor-base-container.component';
 import { stringifyCircular } from 'app/shared/util/utils';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { BuildLogErrors } from 'app/exercises/programming/shared/code-editor/build-output/code-editor-build-output.component';

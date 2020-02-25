@@ -3,7 +3,7 @@ import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs/Observable';
 import { SERVER_API_URL } from 'app/app.constants';
 
-import { ApollonDiagram } from '../../../../entities/apollon-diagram.model';
+import { ApollonDiagram } from 'app/entities/apollon-diagram.model';
 import { createRequestOption } from 'app/shared/util/request-util';
 
 export type EntityResponseType = HttpResponse<ApollonDiagram>;

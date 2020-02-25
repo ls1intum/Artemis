@@ -21,12 +21,12 @@ import { MockAccountService } from '../../../mocks/mock-account.service';
 import * as moment from 'moment';
 import { MockCourseService } from '../../../mocks/mock-course.service';
 import { Exercise, ExerciseType, ParticipationStatus } from 'app/entities/exercise.model';
-import { ArtemisOverviewModule } from 'app/overview/overview.module';
+import { ArtemisCoursesModule } from 'app/overview/courses.module';
 import { InitializationState } from 'app/entities/participation/participation.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { CourseExerciseRowComponent } from 'app/overview/course-exercises/course-exercise-row.component';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
-import { CourseExerciseService, CourseService } from 'app/course/manage/course.service';
+import { CourseExerciseService, CourseManagementService } from 'app/course/manage/course-management.service';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -40,11 +40,11 @@ describe('CourseExerciseRowComponent', () => {
 
     beforeEach(async () => {
         return TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, TranslateModule.forRoot(), NgbModule, ArtemisOverviewModule],
+            imports: [ArtemisTestModule, TranslateModule.forRoot(), NgbModule, ArtemisCoursesModule],
             providers: [
                 DeviceDetectorService,
                 { provide: ParticipationWebsocketService, useClass: MockParticipationWebsocketService },
-                { provide: CourseService, useClass: MockCourseService },
+                { provide: CourseManagementService, useClass: MockCourseService },
                 { provide: CourseExerciseService, useClass: MockCourseExerciseService },
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: OrionConnectorService, useClass: MockOrionConnectorService },

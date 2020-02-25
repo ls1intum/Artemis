@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, ViewEncapsulation } from '@angular/core';
+import { Component, OnDestroy, OnInit, ViewEncapsulation } from '@angular/core';
 import { Subscription } from 'rxjs/Subscription';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import { JhiAlertService, JhiEventManager } from 'ng-jhipster';
