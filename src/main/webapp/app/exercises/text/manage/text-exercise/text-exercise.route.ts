@@ -7,7 +7,7 @@ import { TextExerciseUpdateComponent } from './text-exercise-update.component';
 import { TextExercise } from '../../../../entities/text-exercise.model';
 import { Injectable } from '@angular/core';
 import { TextExerciseService } from 'app/exercises/text/manage/text-exercise/text-exercise.service';
-import { CourseService } from 'app/course/manage/course.service';
+import { CourseManagementService } from '../../../../course/manage/course-management.service';
 import { Observable } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { filter, map } from 'rxjs/operators';
@@ -15,7 +15,7 @@ import { Course } from 'app/entities/course.model';
 
 @Injectable({ providedIn: 'root' })
 export class TextExerciseResolver implements Resolve<TextExercise> {
-    constructor(private textExerciseService: TextExerciseService, private courseService: CourseService) {}
+    constructor(private textExerciseService: TextExerciseService, private courseService: CourseManagementService) {}
 
     /**
      * Resolves the route and initializes text exercise
@@ -39,8 +39,22 @@ export class TextExerciseResolver implements Resolve<TextExercise> {
 }
 
 export const textExerciseRoute: Routes = [
+    // Create New Text Exercise
     {
-        path: 'text-exercise/:id',
+        path: 'course-management/:courseId/text-exercises/new',
+        component: TextExerciseUpdateComponent,
+        resolve: {
+            textExercise: TextExerciseResolver,
+        },
+        data: {
+            authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
+            pageTitle: 'artemisApp.textExercise.home.title',
+        },
+        canActivate: [UserRouteAccessService],
+    },
+    // View Text Exercise
+    {
+        path: 'course-management/:courseId/text-exercises/:exerciseId',
         component: TextExerciseDetailComponent,
         data: {
             authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
@@ -48,8 +62,9 @@ export const textExerciseRoute: Routes = [
         },
         canActivate: [UserRouteAccessService],
     },
+    // Edit Text Exercise
     {
-        path: 'course/:courseId/text-exercise/new',
+        path: 'course-management/:courseId/text-exercises/:exerciseId/edit',
         component: TextExerciseUpdateComponent,
         resolve: {
             textExercise: TextExerciseResolver,
@@ -60,30 +75,10 @@ export const textExerciseRoute: Routes = [
         },
         canActivate: [UserRouteAccessService],
     },
+    // View list of Text Exercises for Course
     {
-        path: 'text-exercise/:exerciseId/edit',
-        component: TextExerciseUpdateComponent,
-        resolve: {
-            textExercise: TextExerciseResolver,
-        },
-        data: {
-            authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
-            pageTitle: 'artemisApp.textExercise.home.title',
-        },
-        canActivate: [UserRouteAccessService],
-    },
-    {
-        path: 'course/:courseId/text-exercise',
+        path: 'course-management/:courseId/text-exercises',
         component: TextExerciseComponent,
-        data: {
-            authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
-            pageTitle: 'artemisApp.textExercise.home.title',
-        },
-        canActivate: [UserRouteAccessService],
-    },
-    {
-        path: 'course/:courseId/text-exercise/:id',
-        component: TextExerciseDetailComponent,
         data: {
             authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
             pageTitle: 'artemisApp.textExercise.home.title',

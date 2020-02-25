@@ -14,7 +14,7 @@ import {
     RepositoryError,
 } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { CodeEditorConflictStateService } from 'app/exercises/programming/shared/code-editor/service/code-editor-conflict-state.service';
-import { BuildLogService } from 'app/exercises/programming/assess/programming-assessment/build-logs/build-log.service';
+import { BuildLogService } from 'app/exercises/programming/shared/service/build-log.service';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { DomainService } from 'app/exercises/programming/shared/code-editor/service/code-editor-domain.service';
 import { DomainDependentEndpointService } from 'app/exercises/programming/shared/code-editor/service/code-editor-domain-dependent-endpoint.service';

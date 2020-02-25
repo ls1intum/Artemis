@@ -4,9 +4,6 @@ import { SystemNotificationService } from 'app/core/system-notification/system-n
 
 @NgModule({
     imports: [ArtemisSharedModule],
-    declarations: [],
-    entryComponents: [],
-    exports: [],
     providers: [SystemNotificationService],
 })
 export class ArtemisSystemNotificationModule {}

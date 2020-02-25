@@ -9,14 +9,14 @@ import * as moment from 'moment';
 import * as $ from 'jquery';
 import { Interactable } from '@interactjs/types/types';
 import { Location } from '@angular/common';
-import { FileUploadAssessmentsService } from 'app/exercises/file-upload/assess/file-upload-assessment/file-upload-assessment.service';
+import { FileUploadAssessmentsService } from 'app/exercises/file-upload/assess/file-upload-assessment.service';
 import { WindowRef } from 'app/core/websocket/window.service';
 import { ArtemisMarkdown } from 'app/shared/markdown.service';
 import { filter, finalize } from 'rxjs/operators';
 import { AccountService } from 'app/core/auth/account.service';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
 import { ComplaintResponse } from 'app/entities/complaint-response.model';
-import { FileUploadSubmissionService } from 'app/exercises/file-upload/participate/file-upload-submission/file-upload-submission.service';
+import { FileUploadSubmissionService } from 'app/exercises/file-upload/participate/file-upload-submission.service';
 import { FileService } from 'app/shared/http/file.service';
 import { Complaint, ComplaintType } from 'app/entities/complaint.model';
 import { Feedback } from 'app/entities/feedback.model';
@@ -54,6 +54,7 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
     userId: number;
     canOverride = false;
     isLoading = true;
+    courseId: number;
 
     /** Resizable constants **/
     resizableMinWidth = 100;
@@ -99,6 +100,7 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
         this.isAtLeastInstructor = this.accountService.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR']);
 
         this.route.params.subscribe(params => {
+            this.courseId = Number(params['courseId']);
             const exerciseId = Number(params['exerciseId']);
             const submissionValue = params['submissionId'];
             const submissionId = Number(submissionValue);
@@ -277,7 +279,10 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
                 this.unassessedSubmission = response;
                 this.router.onSameUrlNavigation = 'reload';
                 // navigate to the new assessment page to trigger re-initialization of the components
-                this.router.navigateByUrl(`/file-upload-exercise/${this.exercise.id}/submission/${this.unassessedSubmission.id}/assessment`, {});
+                this.router.navigateByUrl(
+                    `/course-management/${this.courseId}/file-upload-exercises/${this.exercise.id}/submissions/${this.unassessedSubmission.id}/assessment`,
+                    {},
+                );
             },
             (error: HttpErrorResponse) => {
                 if (error.status === 404) {
@@ -368,7 +373,7 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
     }
     goToExerciseDashboard() {
         if (this.exercise && this.exercise.course) {
-            this.router.navigateByUrl(`/course/${this.exercise.course.id}/exercise/${this.exercise.id}/tutor-dashboard`);
+            this.router.navigateByUrl(`/course-management/${this.exercise.course.id}/exercises/${this.exercise.id}/tutor-dashboard`);
         } else {
             this.location.back();
         }

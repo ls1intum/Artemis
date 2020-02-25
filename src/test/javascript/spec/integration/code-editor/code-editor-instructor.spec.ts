@@ -22,9 +22,8 @@ import { problemStatement } from '../../sample/problemStatement.json';
 import { MockProgrammingExerciseParticipationService } from '../../mocks/mock-programming-exercise-participation.service';
 import { ExerciseHint } from 'app/entities/exercise-hint.model';
 import { DeviceDetectorService } from 'ngx-device-detector';
-import { CodeEditorInstructorContainerComponent } from 'app/exercises/programming/shared/code-editor/instructor/code-editor-instructor-container.component';
+import { CodeEditorInstructorContainerComponent } from 'app/exercises/programming/manage/code-editor/code-editor-instructor-container.component';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
-import { CourseExerciseService } from 'app/course/manage/course.service';
 import { MockCourseExerciseService } from '../../mocks/mock-course-exercise.service';
 import { ExerciseHintService, IExerciseHintService } from 'app/exercises/shared/exercise-hint/exercise-hint.service';
 import {
@@ -37,7 +36,6 @@ import { ResultService } from 'app/exercises/shared/result/result.service';
 import { DomainService } from 'app/exercises/programming/shared/code-editor/service/code-editor-domain.service';
 import { TemplateProgrammingExerciseParticipation } from 'app/entities/participation/template-programming-exercise-participation.model';
 import { Result } from 'app/entities/result.model';
-import { ArtemisCodeEditorModule } from 'app/exercises/programming/shared/code-editor/code-editor.module';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
@@ -55,6 +53,8 @@ import { MockProgrammingExerciseService } from '../../mocks/mock-programming-exe
 import { MockExerciseHintService } from '../../mocks/mock-exercise-hint.service';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { MockWebsocketService } from '../../mocks/mock-websocket.service';
+import { ArtemisCodeEditorManagementModule } from 'app/exercises/programming/manage/code-editor/code-editor-management.module';
+import { CourseExerciseService } from 'app/course/manage/course-management.service';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -101,7 +101,7 @@ describe('CodeEditorInstructorIntegration', () => {
 
     beforeEach(async () => {
         return TestBed.configureTestingModule({
-            imports: [TranslateModule.forRoot(), ArtemisTestModule, ArtemisCodeEditorModule],
+            imports: [TranslateModule.forRoot(), ArtemisTestModule, ArtemisCodeEditorManagementModule],
             declarations: [],
             providers: [
                 JhiLanguageHelper,

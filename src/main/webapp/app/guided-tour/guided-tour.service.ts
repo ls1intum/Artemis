@@ -22,8 +22,8 @@ import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import { AssessmentObject } from './guided-tour-task.model';
-import { TutorParticipationService } from 'app/exercises/shared/tutor-exercise-dashboard/tutor-participation.service';
-import { CourseService } from 'app/course/manage/course.service';
+import { TutorParticipationService } from 'app/exercises/shared/dashboards/tutor/tutor-participation.service';
+import { CourseManagementService } from '../course/manage/course-management.service';
 
 export type EntityResponseType = HttpResponse<GuidedTourSetting[]>;
 
@@ -74,7 +74,7 @@ export class GuidedTourService {
         private profileService: ProfileService,
         private participationService: ParticipationService,
         private tutorParticipationService: TutorParticipationService,
-        private courseService: CourseService,
+        private courseService: CourseManagementService,
     ) {}
 
     /**
@@ -792,7 +792,7 @@ export class GuidedTourService {
                         )
                         .subscribe(
                             () => {
-                                this.navigateToUrlAfterRestart(`/overview/${this.currentCourse!.id}/exercises`);
+                                this.navigateToUrlAfterRestart(`/courses/${this.currentCourse!.id}/exercises`);
                             },
                             () => {
                                 // start tour in case the participation was deleted otherwise
@@ -807,7 +807,7 @@ export class GuidedTourService {
                     this.tutorParticipationService.deleteTutorParticipationForGuidedTour(this.currentCourse, this.currentExercise).subscribe(
                         () => {
                             this.deleteGuidedTourSetting(this.availableTourForComponent!.settingsKey).subscribe(() => {
-                                this.navigateToUrlAfterRestart('/course');
+                                this.navigateToUrlAfterRestart('/course-management');
                             });
                         },
                         () => {

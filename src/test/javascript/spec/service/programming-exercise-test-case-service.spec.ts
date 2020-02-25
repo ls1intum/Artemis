@@ -8,7 +8,7 @@ import { MockWebsocketService } from '../mocks/mock-websocket.service';
 import { IWebsocketService } from 'app/core/websocket/websocket.service.ts';
 import { ProgrammingExerciseTestCaseService } from 'app/exercises/programming/manage/services/programming-exercise-test-case.service';
 import { MockHttpService } from '../mocks/mock-http.service';
-import { ProgrammingExerciseTestCase } from 'app/exercises/programming/manage/programming-exercise-test-case.model';
+import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise-test-case.model';
 import { Participation } from 'app/entities/participation/participation.model';
 import { Result } from 'app/entities/result.model';
 

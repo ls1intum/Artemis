@@ -1,4 +1,4 @@
-import { JhiAlertService, JhiConfigService, JhiAlert } from 'ng-jhipster';
+import { JhiAlertService, JhiConfigService } from 'ng-jhipster';
 import { Injectable, Optional } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { DomSanitizer } from '@angular/platform-browser';
