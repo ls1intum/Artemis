@@ -18,6 +18,7 @@ import { KatexCommand } from 'app/shared/markdown-editor/commands/katex.command'
     styleUrls: ['./file-upload-exercise-update.component.scss'],
 })
 export class FileUploadExerciseUpdateComponent implements OnInit {
+    checkedFlag: boolean;
     fileUploadExercise: FileUploadExercise;
     isSaving: boolean;
     maxScorePattern = MAX_SCORE_PATTERN;
@@ -26,6 +27,7 @@ export class FileUploadExerciseUpdateComponent implements OnInit {
     EditorMode = EditorMode;
     domainCommandsProblemStatement = [new KatexCommand()];
     domainCommandsSampleSolution = [new KatexCommand()];
+    domainCommandsGradingInstructions = [new KatexCommand()];
 
     constructor(
         private fileUploadExerciseService: FileUploadExerciseService,
@@ -40,6 +42,8 @@ export class FileUploadExerciseUpdateComponent implements OnInit {
      * Initializes information relevant to file upload exercise
      */
     ngOnInit() {
+        this.checkedFlag = false; // default value of grading instructions toggle
+
         // This is used to scroll page to the top of the page, because the routing keeps the position for the
         // new page from previous page.
         window.scroll(0, 0);
@@ -115,5 +119,11 @@ export class FileUploadExerciseUpdateComponent implements OnInit {
 
     private onError(error: HttpErrorResponse) {
         this.jhiAlertService.error(error.message);
+    }
+    /**
+     * gets the flag of the structured grading instructions slide toggle
+     */
+    private getCheckedFlag(event: boolean) {
+        this.checkedFlag = event;
     }
 }

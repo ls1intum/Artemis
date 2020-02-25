@@ -6,6 +6,7 @@
                 "createLabel": "Create a new Exercise",
                 "createOrEditLabel": "Create or edit an Exercise"
             },
+            "addCriterion": "Add a Grading Criterion",
             "resultCount": "{{resultsLength}} results",
             "resultsPerPage": "{{number}} results per page",
             "showAllResults": "Show all results",

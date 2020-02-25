@@ -42,6 +42,7 @@ export class EditStructuredGradingInstructionComponent implements OnInit {
 
     ngOnInit() {
         //  this.questionEditorText = this.generateMarkdown();
+        this.criteria = this.exercise.gradingCriteria;
     }
     credits = new Array();
     instructions = new Array();

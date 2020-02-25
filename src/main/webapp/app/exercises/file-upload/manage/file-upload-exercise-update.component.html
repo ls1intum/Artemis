@@ -108,9 +108,16 @@
                         [editorMode]="EditorMode.LATEX"
                     ></jhi-markdown-editor>
                 </div>
-                <jhi-slide-toggle></jhi-slide-toggle>
-                <div class="form-group" id="field_gradingInstructions">
-                    <jhi-edit-structured-grading-instruction [exercise]="fileUploadExercise"></jhi-edit-structured-grading-instruction>
+                <div class="form-group" name="gradingInstructions" id="field_gradingInstructions">
+                    <jhi-slide-toggle (checkedEmitter)="getCheckedFlag($event)"></jhi-slide-toggle>
+                    <jhi-markdown-editor
+                        *ngIf="this.checkedFlag === false"
+                        class="markdown-editor background-editor-color"
+                        [domainCommands]="domainCommandsGradingInstructions"
+                        [(markdown)]="fileUploadExercise.gradingInstructions"
+                        [editorMode]="EditorMode.LATEX"
+                    ></jhi-markdown-editor>
+                    <jhi-edit-structured-grading-instruction *ngIf="this.checkedFlag" [exercise]="fileUploadExercise"></jhi-edit-structured-grading-instruction>
                 </div>
             </div>
             <div>
