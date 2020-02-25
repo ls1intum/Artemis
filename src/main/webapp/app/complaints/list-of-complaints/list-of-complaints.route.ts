@@ -5,7 +5,7 @@ import { ComplaintType } from 'app/entities/complaint.model';
 
 export const listOfComplaintsRoute: Routes = [
     {
-        path: 'complaints',
+        path: 'course-management/:courseId/complaints',
         component: ListOfComplaintsComponent,
         data: {
             authorities: ['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'],
@@ -15,7 +15,27 @@ export const listOfComplaintsRoute: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
-        path: 'more-feedback-requests',
+        path: 'course-management/:courseId/exercises/:exerciseId/complaints',
+        component: ListOfComplaintsComponent,
+        data: {
+            authorities: ['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'],
+            pageTitle: 'artemisApp.complaint.listOfComplaints.title',
+            complaintType: ComplaintType.COMPLAINT,
+        },
+        canActivate: [UserRouteAccessService],
+    },
+    {
+        path: 'course-management/:courseId/more-feedback-requests',
+        component: ListOfComplaintsComponent,
+        data: {
+            authorities: ['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'],
+            pageTitle: 'artemisApp.moreFeedback.list.title',
+            complaintType: ComplaintType.MORE_FEEDBACK,
+        },
+        canActivate: [UserRouteAccessService],
+    },
+    {
+        path: 'course-management/:courseId/exercises/:exerciseId/more-feedback-requests',
         component: ListOfComplaintsComponent,
         data: {
             authorities: ['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'],

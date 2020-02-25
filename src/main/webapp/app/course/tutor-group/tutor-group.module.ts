@@ -12,6 +12,6 @@ const ENTITY_STATES = [...tutorGroupRoute, ...tutorGroupPopupRoute];
 @NgModule({
     imports: [ArtemisSharedModule, RouterModule.forChild(ENTITY_STATES)],
     declarations: [TutorGroupComponent, TutorGroupDetailComponent, TutorGroupUpdateComponent, TutorGroupDeleteDialogComponent, TutorGroupDeletePopupComponent],
-    entryComponents: [TutorGroupComponent, TutorGroupUpdateComponent, TutorGroupDeleteDialogComponent, TutorGroupDeletePopupComponent],
+    entryComponents: [TutorGroupDeleteDialogComponent, TutorGroupDeletePopupComponent],
 })
 export class ArtemisTutorGroupModule {}

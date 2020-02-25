@@ -1,0 +1,120 @@
+import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { catchError, tap } from 'rxjs/operators';
+import { ProgrammingSubmissionService } from 'app/exercises/programming/participate/programming-submission.service';
+import { of } from 'rxjs';
+import { NgbActiveModal, NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { hasDeadlinePassed } from 'app/exercises/programming/shared/utils/programming-exercise.utils';
+import { BuildRunState, ProgrammingBuildRunService } from 'app/exercises/programming/participate/programming-build-run.service';
+import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
+import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { ButtonType } from 'app/shared/components/button.component';
+
+/**
+ * A button that triggers the build for all participations of the given programming exercise.
+ */
+@Component({
+    selector: 'jhi-programming-exercise-trigger-all-button',
+    template: `
+        <jhi-button
+            id="trigger-all-button"
+            class="ml-3"
+            [disabled]="disabled"
+            [btnType]="ButtonType.ERROR"
+            [isLoading]="isTriggeringBuildAll"
+            [tooltip]="'artemisApp.programmingExercise.resubmitAllTooltip'"
+            [icon]="'redo'"
+            [title]="'artemisApp.programmingExercise.resubmitAll'"
+            [featureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
+            (onClick)="openTriggerAllModal()"
+        >
+        </jhi-button>
+    `,
+})
+export class ProgrammingExerciseTriggerAllButtonComponent implements OnInit {
+    FeatureToggle = FeatureToggle;
+    ButtonType = ButtonType;
+    @Input() exercise: ProgrammingExercise;
+    @Input() disabled = false;
+    @Output() onBuildTriggered = new EventEmitter();
+    isTriggeringBuildAll = false;
+
+    constructor(private submissionService: ProgrammingSubmissionService, private programmingBuildRunService: ProgrammingBuildRunService, private modalService: NgbModal) {}
+
+    ngOnInit() {
+        // The info that the builds were triggered comes from a websocket channel.
+        this.subscribeBuildRunUpdates();
+    }
+
+    /**
+     * Opens a modal in that the user has to confirm to trigger all participations.
+     * This confirmation is needed as this is a performance intensive action and puts heavy load on our build system
+     * and will create new results for the students (which could be confusing to them).
+     */
+    openTriggerAllModal() {
+        const modalRef = this.modalService.open(ProgrammingExerciseInstructorTriggerAllDialogComponent, { size: 'lg', backdrop: 'static' });
+        modalRef.componentInstance.exerciseId = this.exercise.id;
+        modalRef.componentInstance.deadlinePassed = hasDeadlinePassed(this.exercise);
+        modalRef.result.then(() => {
+            this.submissionService
+                .triggerInstructorBuildForAllParticipationsOfExercise(this.exercise.id)
+                .pipe(catchError(() => of(null)))
+                .subscribe(() => {
+                    this.onBuildTriggered.emit();
+                });
+        });
+    }
+
+    private subscribeBuildRunUpdates() {
+        this.programmingBuildRunService
+            .getBuildRunUpdates(this.exercise.id)
+            .pipe(tap(buildRunState => (this.isTriggeringBuildAll = buildRunState === BuildRunState.RUNNING)))
+            .subscribe();
+    }
+}
+
+/**
+ * The warning modal of the trigger all button that informs the user about the cost and effects of the operation.
+ */
+@Component({
+    template: `
+        <form name="triggerAllForm" (ngSubmit)="confirmTrigger()">
+            <div class="modal-header">
+                <h4 class="modal-title" jhiTranslate="artemisApp.programmingExercise.resubmitAll">Trigger all</h4>
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true" (click)="cancel()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <jhi-alert-error></jhi-alert-error>
+                <p *ngIf="deadlinePassed" class="text-danger font-weight-bold" jhiTranslate="artemisApp.programmingExercise.resubmitAllConfirmAfterDeadline">
+                    The deadline has passed, some of the student submissions might have received manual results created by teaching assistants. Newly generated automatic results
+                    would replace the manual results as the latest result for the participation.
+                </p>
+                <p jhiTranslate="artemisApp.programmingExercise.resubmitAllDialog">
+                    WARNING: Triggering all participations again is a very expensive operation. This action will start a CI build for every participation in this exercise!
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal" (click)="cancel()">
+                    <fa-icon [icon]="'ban'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
+                </button>
+                <button type="submit" class="btn btn-danger">
+                    <fa-icon [icon]="'times'"></fa-icon>&nbsp;
+                    <span jhiTranslate="entity.action.confirm">Confirm</span>
+                </button>
+            </div>
+        </form>
+    `,
+})
+export class ProgrammingExerciseInstructorTriggerAllDialogComponent {
+    @Input() exerciseId: number;
+    @Input() deadlinePassed: boolean;
+
+    constructor(private activeModal: NgbActiveModal) {}
+
+    cancel() {
+        this.activeModal.dismiss('cancel');
+    }
+
+    confirmTrigger() {
+        this.activeModal.close();
+    }
+}

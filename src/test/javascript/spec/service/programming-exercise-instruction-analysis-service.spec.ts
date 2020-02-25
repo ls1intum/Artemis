@@ -3,7 +3,7 @@ import { MockTranslateService } from '../mocks/mock-translate.service';
 import { ExerciseHint } from 'app/entities/exercise-hint.model';
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
-import { ProgrammingExerciseInstructionAnalysisService } from 'app/exercises/programming/manage/instructions/instructions-editor/analysis/programming-exercise-instruction-analysis.service';
+import { ProgrammingExerciseInstructionAnalysisService } from 'app/exercises/programming/manage/instructions-editor/analysis/programming-exercise-instruction-analysis.service';
 
 chai.use(sinonChai);
 const expect = chai.expect;

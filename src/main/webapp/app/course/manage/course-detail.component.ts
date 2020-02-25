@@ -5,7 +5,7 @@ import { Subscription } from 'rxjs/Subscription';
 import { JhiEventManager } from 'ng-jhipster';
 
 import { Course } from '../../entities/course.model';
-import { CourseService } from './course.service';
+import { CourseManagementService } from './course-management.service';
 import { CachingStrategy } from 'app/shared/image/secured-image.component';
 import { AlertService } from 'app/core/alert/alert.service';
 
@@ -20,7 +20,7 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
     private subscription: Subscription;
     private eventSubscriber: Subscription;
 
-    constructor(private eventManager: JhiEventManager, private courseService: CourseService, private route: ActivatedRoute, private jhiAlertService: AlertService) {}
+    constructor(private eventManager: JhiEventManager, private courseService: CourseManagementService, private route: ActivatedRoute, private jhiAlertService: AlertService) {}
 
     ngOnInit() {
         this.subscription = this.route.params.subscribe(params => {

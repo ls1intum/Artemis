@@ -5,7 +5,7 @@ import { HttpHeaders, HttpResponse } from '@angular/common/http';
 
 import { ArTeMiSTestModule } from '../../../test.module';
 import { FileUploadSubmissionComponent } from 'app/exercises/file-upload-submission/file-upload-submission.component';
-import { FileUploadSubmissionService } from 'app/exercises/file-upload/participate/file-upload-submission/file-upload-submission.service';
+import { FileUploadSubmissionService } from 'app/exercises/file-upload/participate/file-upload-submission.service';
 import { FileUploadSubmission } from 'app/shared/model/file-upload-submission.model';
 
 describe('Component Tests', () => {

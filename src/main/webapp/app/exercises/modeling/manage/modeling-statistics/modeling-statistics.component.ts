@@ -4,7 +4,7 @@ import { Subscription } from 'rxjs/Subscription';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpResponse } from '@angular/common/http';
 import { ModelingStatistic } from 'app/entities/modeling-statistic.model';
-import { ModelingExerciseService } from 'app/exercises/modeling/manage/modeling-exercise/modeling-exercise.service';
+import { ModelingExerciseService } from 'app/exercises/modeling/manage/modeling-exercise.service';
 
 @Component({
     selector: 'jhi-assessment-dashboard',

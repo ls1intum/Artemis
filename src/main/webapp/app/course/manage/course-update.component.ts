@@ -10,7 +10,7 @@ import { base64StringToBlob } from 'blob-util';
 import { regexValidator } from 'app/shared/form/shortname-validator.directive';
 
 import { Course } from 'app/entities/course.model';
-import { CourseService } from './course.service';
+import { CourseManagementService } from './course-management.service';
 import { ColorSelectorComponent } from 'app/shared/color-selector/color-selector.component';
 import { ARTEMIS_DEFAULT_COLOR } from 'app/app.constants';
 import { FileUploaderService } from 'app/shared/http/file-uploader.service';
@@ -41,7 +41,7 @@ export class CourseUpdateComponent implements OnInit {
     presentationScorePattern = /^[0-9]{0,4}$/; // makes sure that the presentation score is a positive natural integer greater than 0 and not too large
 
     constructor(
-        private courseService: CourseService,
+        private courseService: CourseManagementService,
         private activatedRoute: ActivatedRoute,
         private fileUploaderService: FileUploaderService,
         private jhiAlertService: AlertService,

@@ -4,7 +4,7 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { AlertService } from 'app/core/alert/alert.service';
 import { LectureService } from './lecture.service';
-import { CourseService } from 'app/course/manage/course.service';
+import { CourseManagementService } from '../course/manage/course-management.service';
 import { Lecture } from 'app/entities/lecture.model';
 import { EditorMode } from 'app/shared/markdown-editor/markdown-editor.component';
 import { Course } from 'app/entities/course.model';
@@ -29,7 +29,7 @@ export class LectureUpdateComponent implements OnInit {
     constructor(
         protected jhiAlertService: AlertService,
         protected lectureService: LectureService,
-        protected courseService: CourseService,
+        protected courseService: CourseManagementService,
         protected activatedRoute: ActivatedRoute,
     ) {}
 

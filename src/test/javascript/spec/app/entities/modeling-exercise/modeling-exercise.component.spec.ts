@@ -4,8 +4,8 @@ import { of } from 'rxjs';
 import { HttpHeaders, HttpResponse } from '@angular/common/http';
 
 import { ArtemisTestModule } from '../../../test.module';
-import { ModelingExerciseComponent } from 'app/exercises/modeling/manage/modeling-exercise/modeling-exercise.component';
-import { ModelingExerciseService } from 'app/exercises/modeling/manage/modeling-exercise/modeling-exercise.service';
+import { ModelingExerciseComponent } from 'app/exercises/modeling/manage/modeling-exercise.component';
+import { ModelingExerciseService } from 'app/exercises/modeling/manage/modeling-exercise.service';
 import { ModelingExercise } from 'app/shared/model/modeling-exercise.model';
 
 describe('Component Tests', () => {

@@ -28,13 +28,13 @@ import { completedTour } from 'app/guided-tour/tours/general-tour';
 import { SinonStub, stub } from 'sinon';
 import { HttpResponse } from '@angular/common/http';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
-import { CourseService } from 'app/course/manage/course.service';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { InitializationState } from 'app/entities/participation/participation.model';
 import { NavbarComponent } from 'app/shared/layouts/navbar/navbar.component';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { MockSyncStorage } from '../mocks/mock-sync.storage';
 import { MockCookieService } from '../mocks/mock-cookie.service';
+import { CourseManagementService } from 'app/course/manage/course-management.service';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -135,7 +135,7 @@ describe('GuidedTourService', () => {
         let router: Router;
         let guidedTourService: GuidedTourService;
         let participationService: ParticipationService;
-        let courseService: CourseService;
+        let courseService: CourseManagementService;
 
         let findParticipationStub: SinonStub;
         let deleteParticipationStub: SinonStub;
@@ -149,7 +149,7 @@ describe('GuidedTourService', () => {
                     ArtemisSharedModule,
                     RouterTestingModule.withRoutes([
                         {
-                            path: 'overview',
+                            path: 'courses',
                             component: NavbarComponent,
                         },
                     ]),
@@ -174,10 +174,10 @@ describe('GuidedTourService', () => {
                     const navBarComponentFixture = TestBed.createComponent(NavbarComponent);
                     const navBarComponent = navBarComponentFixture.componentInstance;
 
-                    router = TestBed.get(Router);
-                    guidedTourService = TestBed.get(GuidedTourService);
-                    participationService = TestBed.get(ParticipationService);
-                    courseService = TestBed.get(CourseService);
+                    router = TestBed.inject(Router);
+                    guidedTourService = TestBed.inject(GuidedTourService);
+                    participationService = TestBed.inject(ParticipationService);
+                    courseService = TestBed.inject(CourseManagementService);
 
                     findParticipationStub = stub(participationService, 'findParticipation');
                     deleteParticipationStub = stub(participationService, 'deleteForGuidedTour');
@@ -204,7 +204,7 @@ describe('GuidedTourService', () => {
             guidedTourComponent.ngAfterViewInit();
 
             await guidedTourComponentFixture.ngZone!.run(() => {
-                router.navigateByUrl('/overview');
+                router.navigateByUrl('/courses');
             });
 
             // Start course overview tour
@@ -409,7 +409,7 @@ describe('GuidedTourService', () => {
                     expect(findParticipationStub).to.have.been.calledOnceWithExactly(1);
                     expect(deleteParticipationStub).to.have.been.calledOnceWithExactly(1, { deleteBuildPlan: true, deleteRepository: true });
                     expect(deleteGuidedTourSettingStub).to.have.been.calledOnceWith('tour_with_course_and_exercise');
-                    expect(navigationStub).to.have.been.calledOnceWith('/overview/1/exercises');
+                    expect(navigationStub).to.have.been.calledOnceWith('/courses/1/exercises');
 
                     prepareParticipation(exercise4, studentParticipation2, httpResponse2);
                     guidedTourService.enableTourForExercise(exercise4, tourWithCourseAndExercise, true);
@@ -417,7 +417,7 @@ describe('GuidedTourService', () => {
                     expect(findParticipationStub).to.have.been.calledOnceWithExactly(4);
                     expect(deleteParticipationStub).to.have.been.calledOnceWithExactly(2, { deleteBuildPlan: false, deleteRepository: false });
                     expect(deleteGuidedTourSettingStub).to.have.been.calledOnceWith('tour_with_course_and_exercise');
-                    expect(navigationStub).to.have.been.calledOnceWith('/overview/1/exercises');
+                    expect(navigationStub).to.have.been.calledOnceWith('/courses/1/exercises');
 
                     const index = course1.exercises.findIndex(exercise => (exercise.id = exercise4.id));
                     course1.exercises.splice(index, 1);

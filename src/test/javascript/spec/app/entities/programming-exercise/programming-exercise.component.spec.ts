@@ -4,7 +4,7 @@ import { of } from 'rxjs';
 import { HttpHeaders, HttpResponse } from '@angular/common/http';
 
 import { ArtemisTestModule } from '../../../test.module';
-import { ProgrammingExerciseComponent } from 'app/exercises/programming/manage/programming-exercise.component';
+import { ProgrammingExerciseComponent } from 'app/exercises/programming/shared/programming-exercise.component';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 

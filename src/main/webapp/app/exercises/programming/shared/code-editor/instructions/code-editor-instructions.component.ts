@@ -6,9 +6,9 @@ import { ArtemisMarkdown } from 'app/shared/markdown.service';
 import { WindowRef } from 'app/core/websocket/window.service';
 import { Participation } from 'app/entities/participation/participation.model';
 import { CodeEditorGridService } from 'app/exercises/programming/shared/code-editor/service/code-editor-grid.service';
-import { ProgrammingExerciseInstructionComponent } from 'app/exercises/programming/manage/instructions/instructions-render/programming-exercise-instruction.component';
+import { ProgrammingExerciseInstructionComponent } from 'app/exercises/programming/shared/instructions-render/programming-exercise-instruction.component';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
-import { ProgrammingExerciseEditableInstructionComponent } from 'app/exercises/programming/manage/instructions/instructions-editor/programming-exercise-editable-instruction.component';
+import { ProgrammingExerciseEditableInstructionComponent } from 'app/exercises/programming/manage/instructions-editor/programming-exercise-editable-instruction.component';
 import { ResizeType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 
 @Component({

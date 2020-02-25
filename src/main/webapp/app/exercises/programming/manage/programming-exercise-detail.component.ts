@@ -7,7 +7,7 @@ import { ProgrammingExercise, ProgrammingLanguage } from '../../../entities/prog
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { Result } from 'app/entities/result.model';
 import { AlertService } from 'app/core/alert/alert.service';
-import { ProgrammingExerciseParticipationType } from './programming-exercise-participation.model';
+import { ProgrammingExerciseParticipationType } from '../../../entities/programming-exercise-participation.model';
 import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { HttpErrorResponse } from '@angular/common/http';
