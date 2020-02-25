@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.authentication;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.verifyNoInteractions;
 
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -249,5 +250,13 @@ public class UserIntegrationTest extends AbstractSpringIntegrationTest {
         final String userLogin = "student1";
         UserDTO userDTO = request.get("/api/users/" + userLogin, HttpStatus.OK, UserDTO.class);
         assertThat(userDTO.getLogin()).isEqualTo(userLogin);
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void updateUserNotificationDate_asStudent_isSuccessful() throws Exception {
+        UserDTO userDTO = request.putWithResponseBody("/api/users/notification-date", null, UserDTO.class, HttpStatus.OK);
+        User userInDB = userRepository.findById(userDTO.getId()).get();
+        assertThat(userInDB.getLastNotificationRead()).isAfterOrEqualTo(ZonedDateTime.now().minusMinutes(1));
     }
 }
