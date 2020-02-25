@@ -302,7 +302,7 @@ public class ModelFactory {
         studentParticipation.setInitializationState(initializationState);
         studentParticipation.setInitializationDate(ZonedDateTime.now().minusDays(5));
         studentParticipation.setExercise(exercise);
-        studentParticipation.setStudent(user);
+        studentParticipation.setParticipant(user);
         return studentParticipation;
     }
 
@@ -312,7 +312,7 @@ public class ModelFactory {
         studentParticipation.setInitializationState(initializationState);
         studentParticipation.setInitializationDate(ZonedDateTime.now().minusDays(5));
         studentParticipation.setExercise(exercise);
-        studentParticipation.setStudent(user);
+        studentParticipation.setParticipant(user);
         return studentParticipation;
     }
 

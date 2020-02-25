@@ -204,7 +204,7 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationTest
         // connect it with the user
         User user = database.getUserByLogin("tutor1");
         studentParticipation.setInitializationDate(ZonedDateTime.now());
-        studentParticipation.setStudent(user);
+        studentParticipation.setParticipant(user);
         studentParticipationRepository.save(studentParticipation);
 
         Participation participationWithoutAssessment = request.get("/api/exercise/" + textExercise.getId() + "/participation-without-assessment", HttpStatus.OK,

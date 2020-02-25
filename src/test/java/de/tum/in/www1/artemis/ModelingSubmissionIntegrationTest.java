@@ -450,7 +450,7 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
     public void getSubmissionForModelingEditor_badRequest() throws Exception {
         User user = database.getUserByLogin("student1");
         StudentParticipation participation = new StudentParticipation();
-        participation.setStudent(user);
+        participation.setParticipant(user);
         participation.setExercise(null);
         StudentParticipation studentParticipation = studentParticipationRepository.save(participation);
         request.get("/api/modeling-editor/" + studentParticipation.getId(), HttpStatus.BAD_REQUEST, ModelingSubmission.class);

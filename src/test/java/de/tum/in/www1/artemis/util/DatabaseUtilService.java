@@ -256,7 +256,7 @@ public class DatabaseUtilService {
             final var buildPlanId = exercise.getProjectKey().toUpperCase() + "-" + login.toUpperCase();
             final var repoName = (exercise.getProjectKey() + "-" + login).toLowerCase();
             participation.setInitializationDate(ZonedDateTime.now());
-            participation.setStudent(user);
+            participation.setParticipant(user);
             participation.setBuildPlanId(buildPlanId);
             participation.setProgrammingExercise(exercise);
             participation.setInitializationState(InitializationState.INITIALIZED);
@@ -427,7 +427,7 @@ public class DatabaseUtilService {
             User user = getUserByLogin(login);
             StudentParticipation participation = new StudentParticipation();
             participation.setInitializationDate(ZonedDateTime.now());
-            participation.setStudent(user);
+            participation.setParticipant(user);
             participation.setExercise(exercise);
             studentParticipationRepo.save(participation);
             storedParticipation = studentParticipationRepo.findByExerciseIdAndStudentLogin(exercise.getId(), login);
@@ -448,7 +448,7 @@ public class DatabaseUtilService {
         final var buildPlanId = exercise.getProjectKey().toUpperCase() + "-" + login.toUpperCase();
         final var repoName = (exercise.getProjectKey() + "-" + login).toLowerCase();
         participation.setInitializationDate(ZonedDateTime.now());
-        participation.setStudent(user);
+        participation.setParticipant(user);
         participation.setBuildPlanId(buildPlanId);
         participation.setProgrammingExercise(exercise);
         participation.setInitializationState(InitializationState.INITIALIZED);
