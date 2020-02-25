@@ -699,47 +699,50 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
             return;
         }
 
+        if (nextIndex < this.maxDots) {
+            this.transformCount = 0;
+            this.renderer.setStyle(this.dotNavigation.nativeElement, 'transform', 'translateX(0px)');
+        }
+
         if (isForwardNavigation) {
             this.handleForwardNavigation(nextDot.nativeElement, nextPlusOneDot.nativeElement, nextIndex);
         } else {
             this.handleBackwardNavigation(nextDot.nativeElement, nextPlusOneDot.nativeElement, nextIndex);
         }
-        this.renderer.setStyle(this.dotNavigation.nativeElement, 'transform', 'translateX(' + this.transformCount + 'px)');
     }
 
     private handleForwardNavigation(next: HTMLElement, nextPlusOne: HTMLElement, nextIndex: number) {
         // Moves the n-small and p-small class one dot further
         const lastDot = this.dotElements.last.nativeElement;
+        this.dotArray.forEach((node: ElementRef, index: number) => {
+            node.nativeElement.classList.remove('p-small');
+            if (index === nextIndex - (this.maxDots - 2)) {
+                node.nativeElement.classList.add('p-small');
+            }
+        });
         if (next && next.classList.contains('n-small') && lastDot && !lastDot.classList.contains('n-small')) {
             this.transformCount += this.transformXIntervalNext;
+            this.renderer.setStyle(this.dotNavigation.nativeElement, 'transform', 'translateX(' + this.transformCount + 'px)');
             next.classList.remove('n-small');
             nextPlusOne.classList.add('n-small');
-
-            this.dotArray.forEach((node: ElementRef, index: number) => {
-                if (index === nextIndex - 9) {
-                    node.nativeElement.classList.remove('p-small');
-                } else if (index === nextIndex - 8) {
-                    node.nativeElement.classList.add('p-small');
-                }
-            });
         }
+
     }
 
     private handleBackwardNavigation(next: HTMLElement, nextPlusOne: HTMLElement, nextIndex: number) {
         // Handles backwards navigation
         const firstDot = this.dotElements.first.nativeElement;
+        this.dotArray.forEach((node: ElementRef, index: number) => {
+            node.nativeElement.classList.remove('n-small');
+            if (this.transformCount !== 0 && index === nextIndex + 1 || this.transformCount === 0 && index === this.maxDots - 1) {
+                node.nativeElement.classList.add('n-small');
+            }
+        });
+        this.transformCount += this.transformXIntervalPrev;
         if (next && next.classList.contains('p-small') && firstDot && !firstDot.classList.contains('p-small')) {
-            this.transformCount += this.transformXIntervalPrev;
+            this.renderer.setStyle(this.dotNavigation.nativeElement, 'transform', 'translateX(' + this.transformCount + 'px)');
             next.classList.remove('p-small');
             nextPlusOne.classList.add('p-small');
-
-            this.dotArray.forEach((node: ElementRef, index: number) => {
-                if (index === nextIndex + 9) {
-                    node.nativeElement.classList.remove('n-small');
-                } else if (index === nextIndex + 8) {
-                    node.nativeElement.classList.add('n-small');
-                }
-            });
         }
     }
 

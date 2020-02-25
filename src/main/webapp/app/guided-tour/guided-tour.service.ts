@@ -59,6 +59,7 @@ export class GuidedTourService {
     private isUserInteractionFinishedSubject = new Subject<boolean>();
     private checkModelingComponentSubject = new Subject<string | null>();
     public isBackPageNavigation = new BehaviorSubject<boolean>(false);
+    private isComponentPageLoaded = new Subject<boolean>();
 
     constructor(
         private http: HttpClient,
@@ -81,6 +82,15 @@ export class GuidedTourService {
             if (user) {
                 this.guidedTourSettings = user ? user.guidedTourSettings : [];
             }
+        });
+
+        this.isComponentPageLoaded.subscribe(isLoaded => {
+            setTimeout(() => {
+                if (isLoaded) {
+                    this.resetUserInteractionFinishedState(this.currentStep);
+                    this.setPreparedTourStep();
+                }
+            }, 1200);
         });
 
         // Retrieve the guided tour mapping from the profile service
@@ -138,16 +148,12 @@ export class GuidedTourService {
         if (!this.currentTour) {
             return;
         }
-
         const currentStep = this.currentTour.steps[this.currentTourStepIndex] as UserInterActionTourStep;
         const nextStep = this.currentTour.steps[this.currentTourStepIndex + 1];
 
         // Prepares previous tour step for backward navigation
         if (this.isBackPageNavigation.value) {
-            setTimeout(() => {
-                this.resetUserInteractionFinishedState(currentStep);
-                this.setPreparedTourStep();
-            }, 300);
+            this.resetUserInteractionFinishedState(currentStep);
         } else {
             // Prepares next tour step
             if (currentStep && currentStep.userInteractionEvent && currentStep.userInteractionEvent === UserInteractionEvent.CLICK && nextStep && nextStep.pageUrl) {
@@ -156,10 +162,6 @@ export class GuidedTourService {
                     this.nextDotSubject.next(this.currentTourStepIndex + 1);
                     this.currentTourStepIndex += 1;
                     this.pageUrls.set(nextStep.pageUrl, this.router.url);
-                    setTimeout(() => {
-                        this.resetUserInteractionFinishedState(nextStep);
-                        this.setPreparedTourStep();
-                    }, 600);
                 } else if (this.currentTour) {
                     // Ends guided tour if the navigation is done through a multi-page tutorial
                     this.guidedTourAvailabilitySubject.next(false);
@@ -223,6 +225,17 @@ export class GuidedTourService {
                 this.checkModelingComponentSubject.next(null);
             }, 0);
         }
+    }
+
+    /**
+     * Helper method for multi-page tutorials that notifies the guided-tour service when the current component has
+     * been fully loaded
+     */
+    public componentPageLoaded() {
+        if (!this.currentTour) {
+            return;
+        }
+        this.isComponentPageLoaded.next(true);
     }
 
     /**
@@ -318,7 +331,7 @@ export class GuidedTourService {
 
         const currentStep = this.currentTour.steps[this.currentTourStepIndex];
         const nextStep = this.currentTour.steps[this.currentTourStepIndex + 1];
-        const timeout = currentStep instanceof UserInterActionTourStep ? 500 : 0;
+        const timeout = currentStep instanceof UserInterActionTourStep && this.checkSelectorValidity() ? 600 : 0;
         this.currentDotSubject.next(this.currentTourStepIndex);
         this.nextDotSubject.next(this.currentTourStepIndex + 1);
         this.isBackPageNavigation.next(false);
@@ -612,9 +625,10 @@ export class GuidedTourService {
                 targetNode.addEventListener(
                     'click',
                     () => {
-                        this.enableNextStepClick();
                         if (currentStep.triggerNextStep) {
                             this.nextStep();
+                        } else {
+                            this.enableNextStepClick();
                         }
                     },
                     false,
