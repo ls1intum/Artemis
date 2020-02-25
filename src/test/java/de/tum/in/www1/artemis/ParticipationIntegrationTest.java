@@ -25,6 +25,7 @@ import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
+import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.feature.Feature;
@@ -520,6 +521,43 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationTest 
     public void cleanupBuildPlan() throws Exception {
         var participation = database.addStudentParticipationForProgrammingExercise(programmingExercise, "student1");
         var actualParticipation = request.putWithResponseBody("/api/participations/" + participation.getId() + "/cleanupBuildPlan", null, Participation.class, HttpStatus.OK);
+        assertThat(actualParticipation).isEqualTo(participation);
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void getParticipation() throws Exception {
+        var participation = database.addParticipationForExercise(textExercise, "student1");
+        var actualParticipation = request.get("/api/exercises/" + textExercise.getId() + "/participation", HttpStatus.OK, StudentParticipation.class);
+        assertThat(actualParticipation).isEqualTo(participation);
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void getParticipation_quizExerciseNotStarted() throws Exception {
+        var quizEx = ModelFactory.generateQuizExercise(ZonedDateTime.now().plusHours(2), ZonedDateTime.now().plusDays(1), course).isPlannedToStart(false);
+        quizEx = exerciseRepo.save(quizEx);
+        var actualParticipation = request.get("/api/exercises/" + quizEx.getId() + "/participation", HttpStatus.OK, StudentParticipation.class);
+        assertThat(actualParticipation.getExercise()).isEqualTo(quizEx);
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void getParticipation_quizExerciseStartedAndSubmissionAllowed() throws Exception {
+        var quizEx = ModelFactory.generateQuizExercise(ZonedDateTime.now().minusMinutes(2), ZonedDateTime.now().plusMinutes(10), course).isPlannedToStart(true);
+        quizEx = exerciseRepo.save(quizEx);
+        request.getNullable("/api/exercises/" + quizEx.getId() + "/participation", HttpStatus.NO_CONTENT, StudentParticipation.class);
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void getParticipation_quizExerciseFinished() throws Exception {
+        var quizEx = ModelFactory.generateQuizExercise(ZonedDateTime.now().minusMinutes(20), ZonedDateTime.now().minusMinutes(20), course).isPlannedToStart(true);
+        quizEx = exerciseRepo.save(quizEx);
+        var participation = database.addParticipationForExercise(quizEx, "student1");
+        var submission = database.addSubmission(participation, new QuizSubmission().scoreInPoints(11D).submitted(true), "student1");
+        var result = database.addResultToParticipation(participation, submission);
+        var actualParticipation = request.get("/api/exercises/" + quizEx.getId() + "/participation", HttpStatus.OK, StudentParticipation.class);
         assertThat(actualParticipation).isEqualTo(participation);
     }
 }
