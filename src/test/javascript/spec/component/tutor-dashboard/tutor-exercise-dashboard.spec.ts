@@ -17,24 +17,24 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { SidePanelComponent } from 'app/shared/side-panel/side-panel.component';
 import { CollapsableAssessmentInstructionsComponent } from 'app/assessment/assessment-instructions/collapsable-assessment-instructions/collapsable-assessment-instructions.component';
 import { AssessmentInstructionsComponent } from 'app/assessment/assessment-instructions/assessment-instructions/assessment-instructions.component';
-import { TutorParticipationGraphComponent } from 'app/course/tutor-course-dashboard/tutor-participation-graph/tutor-participation-graph.component';
-import { TutorLeaderboardComponent } from 'app/course/instructor-course-dashboard/tutor-leaderboard/tutor-leaderboard.component';
+import { TutorParticipationGraphComponent } from 'app/shared/dashboards/tutor-participation-graph/tutor-participation-graph.component';
+import { TutorLeaderboardComponent } from 'app/shared/dashboards/tutor-leaderboard/tutor-leaderboard.component';
 import { TranslateModule } from '@ngx-translate/core';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
-import { ArtemisProgrammingAssessmentModule } from 'app/exercises/programming/assess/programming-assessment/programming-assessment.module';
+import { ArtemisProgrammingAssessmentModule } from 'app/exercises/programming/assess/programming-assessment.module';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { ArtemisAssessmentSharedModule } from 'app/assessment/assessment-shared.module';
 import { GuidedTourMapping } from 'app/guided-tour/guided-tour-setting.model';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { DeviceDetectorService } from 'ngx-device-detector';
 import { ModelingSubmission } from 'app/entities/modeling-submission.model';
-import { ArtemisProgrammingExerciseInstructionsRenderModule } from 'app/exercises/programming/manage/instructions/instructions-render/programming-exercise-instructions-render.module';
+import { ArtemisProgrammingExerciseInstructionsRenderModule } from 'app/exercises/programming/shared/instructions-render/programming-exercise-instructions-render.module';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { HeaderExercisePageWithDetailsComponent } from 'app/exercises/shared/exercise-headers/header-exercise-page-with-details.component';
-import { TutorExerciseDashboardComponent } from 'app/exercises/shared/tutor-exercise-dashboard/tutor-exercise-dashboard.component';
+import { TutorExerciseDashboardComponent } from 'app/exercises/shared/dashboards/tutor/tutor-exercise-dashboard.component';
 import { ExerciseType } from 'app/entities/exercise.model';
-import { ModelingEditorComponent } from 'app/exercises/modeling/shared/modeling-editor/modeling-editor.component';
-import { ModelingSubmissionService } from 'app/exercises/modeling/participate/modeling-submission/modeling-submission.service';
+import { ModelingEditorComponent } from 'app/exercises/modeling/shared/modeling-editor.component';
+import { ModelingSubmissionService } from 'app/exercises/modeling/participate/modeling-submission.service';
 import { TutorParticipationStatus } from 'app/entities/participation/tutor-participation.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { ArtemisResultModule } from 'app/exercises/shared/result/result.module';
@@ -108,8 +108,8 @@ describe('TutorExerciseDashboardComponent', () => {
                 fixture = TestBed.createComponent(TutorExerciseDashboardComponent);
                 comp = fixture.componentInstance;
 
-                modelingSubmissionService = TestBed.get(ModelingSubmissionService);
-                guidedTourService = TestBed.get(GuidedTourService);
+                modelingSubmissionService = TestBed.inject(ModelingSubmissionService);
+                guidedTourService = TestBed.inject(GuidedTourService);
 
                 comp.exerciseId = exercise.id;
 

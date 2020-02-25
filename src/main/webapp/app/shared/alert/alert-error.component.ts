@@ -1,6 +1,6 @@
 import { Component, OnDestroy } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
-import { JhiEventManager, JhiAlert, JhiEventWithContent } from 'ng-jhipster';
+import { JhiAlert, JhiEventManager, JhiEventWithContent } from 'ng-jhipster';
 import { Subscription } from 'rxjs/Subscription';
 import { AlertService } from 'app/core/alert/alert.service';
 import { AlertError } from 'app/shared/alert/alert-error.model';

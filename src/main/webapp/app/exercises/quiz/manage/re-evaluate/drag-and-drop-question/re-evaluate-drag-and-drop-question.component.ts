@@ -4,7 +4,7 @@ import { DragAndDropQuestion } from 'app/entities/quiz/drag-and-drop-question.mo
 @Component({
     selector: 'jhi-re-evaluate-drag-and-drop-question',
     template: `
-        <jhi-edit-drag-and-drop-question
+        <jhi-drag-and-drop-question-edit
             [question]="question"
             [questionIndex]="questionIndex"
             [reEvaluationInProgress]="true"
@@ -13,7 +13,7 @@ import { DragAndDropQuestion } from 'app/entities/quiz/drag-and-drop-question.mo
             (questionMoveUp)="questionMoveUp.emit()"
             (questionMoveDown)="questionMoveDown.emit()"
         >
-        </jhi-edit-drag-and-drop-question>
+        </jhi-drag-and-drop-question-edit>
     `,
     providers: [],
 })

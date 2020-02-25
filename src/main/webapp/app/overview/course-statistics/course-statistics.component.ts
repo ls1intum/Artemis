@@ -5,7 +5,7 @@ import { HttpResponse } from '@angular/common/http';
 import { LangChangeEvent, TranslateService } from '@ngx-translate/core';
 import { sortBy } from 'lodash';
 import { Course } from 'app/entities/course.model';
-import { CourseService } from 'app/course/manage/course.service';
+import { CourseManagementService } from '../../course/manage/course-management.service';
 import { Result } from 'app/entities/result.model';
 import * as moment from 'moment';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
@@ -173,7 +173,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
     };
 
     constructor(
-        private courseService: CourseService,
+        private courseService: CourseManagementService,
         private courseCalculationService: CourseScoreCalculationService,
         private translateService: TranslateService,
         private route: ActivatedRoute,

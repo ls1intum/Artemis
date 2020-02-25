@@ -5,7 +5,7 @@
         <button
             *ngIf="course && course.isAtLeastInstructor"
             class="btn mr-2 btn-primary float-right jh-create-entity create-quiz-exercise"
-            [routerLink]="['/course', courseId, 'quiz-exercise', 'new']"
+            [routerLink]="['/course-management', courseId, 'quiz-exercises', 'new']"
             id="create-quiz-button"
         >
             <fa-icon [icon]="'plus'"></fa-icon>
@@ -16,7 +16,7 @@
         <button
             *ngIf="quizExercises && quizExercises.length > 0 && course.isAtLeastInstructor"
             class="btn mr-2 btn-primary float-right jh-create-entity create-quiz-exercise"
-            [routerLink]="['/course', courseId, 'quiz-exercise', 'export']"
+            [routerLink]="['/course-management', courseId, 'quiz-exercises', 'export']"
         >
             <fa-icon [icon]="'plus'"></fa-icon>
             <span jhiTranslate="artemisApp.quizExercise.home.exportLabel">
@@ -50,10 +50,10 @@
             <tbody>
                 <tr *ngFor="let quizExercise of quizExercises | sortBy: predicate:reverse; trackBy: trackId">
                     <td *ngIf="!quizIsOver(quizExercise) || !quizExercise.isAtLeastInstructor">
-                        <a [routerLink]="['/course', quizExercise.course.id, 'quiz-exercise', 'edit', quizExercise.id]">{{ quizExercise.id }}</a>
+                        <a [routerLink]="['/course-management', quizExercise.course?.id, 'quiz-exercises', quizExercise.id, 'edit']">{{ quizExercise.id }}</a>
                     </td>
                     <td *ngIf="quizIsOver(quizExercise) && quizExercise.isAtLeastInstructor">
-                        <a [routerLink]="['/course', quizExercise.course.id, 'quiz-exercise', 're-evaluate', quizExercise.id]">{{ quizExercise.id }}</a>
+                        <a [routerLink]="['/course-management', quizExercise.course?.id, 'quiz-exercises', quizExercise.id, 're-evaluate']">{{ quizExercise.id }}</a>
                     </td>
                     <td>{{ quizExercise.title }}</td>
                     <td>
@@ -112,7 +112,7 @@
                                 <button
                                     *ngIf="quizExercise.isAtLeastTutor"
                                     type="submit"
-                                    [routerLink]="['/quiz', quizExercise.id, 'preview']"
+                                    [routerLink]="['/course-management', quizExercise.course?.id, 'quiz-exercises', quizExercise.id, 'preview']"
                                     class="btn btn-success btn-sm mr-1 mb-1"
                                 >
                                     <fa-icon [icon]="'eye'"></fa-icon>
@@ -121,7 +121,7 @@
                                 <button
                                     *ngIf="quizExercise.isAtLeastTutor"
                                     type="submit"
-                                    [routerLink]="['/quiz', quizExercise.id, 'solution']"
+                                    [routerLink]="['/course-management', quizExercise.course?.id, 'quiz-exercises', quizExercise.id, 'solution']"
                                     class="btn btn-success btn-sm mr-1 mb-1"
                                 >
                                     <fa-icon [icon]="'eye'"></fa-icon>
@@ -132,7 +132,7 @@
                                 <button
                                     *ngIf="quizExercise.isAtLeastTutor"
                                     type="submit"
-                                    [routerLink]="['/quiz', quizExercise.id, 'quiz-point-statistic']"
+                                    [routerLink]="['/course-management', quizExercise.course?.id, 'quiz-exercises', quizExercise.id, 'quiz-point-statistic']"
                                     class="btn btn-info btn-sm mr-1 mb-1"
                                 >
                                     <fa-icon [icon]="'signal'"></fa-icon>
@@ -141,7 +141,7 @@
                                 <button
                                     *ngIf="quizExercise.isAtLeastTutor"
                                     type="submit"
-                                    [routerLink]="['/course', quizExercise.course.id, 'exercise', quizExercise.id, 'dashboard']"
+                                    [routerLink]="['/course-management', quizExercise.course.id, 'exercises', quizExercise.id, 'scores']"
                                     class="btn btn-info btn-sm mr-1 mb-1"
                                 >
                                     <fa-icon [icon]="'eye'"></fa-icon>
@@ -163,7 +163,7 @@
                                     type="submit"
                                     [hidden]="quizIsOver(quizExercise)"
                                     [disabled]="quizExercise.status === QuizStatus.ACTIVE || quizIsOver(quizExercise)"
-                                    [routerLink]="['/course', quizExercise.course.id, 'quiz-exercise', 'edit', quizExercise.id]"
+                                    [routerLink]="['/course-management', quizExercise.course?.id, 'quiz-exercises', quizExercise.id, 'edit']"
                                     class="btn btn-primary btn-sm mr-1 mb-1"
                                 >
                                     <fa-icon [icon]="'pencil-alt'"></fa-icon>
@@ -173,7 +173,7 @@
                                     *ngIf="quizExercise.isAtLeastInstructor"
                                     type="submit"
                                     [hidden]="!quizIsOver(quizExercise)"
-                                    [routerLink]="['/course', quizExercise.course.id, 'quiz-exercise', 're-evaluate', quizExercise.id]"
+                                    [routerLink]="['/course-management', quizExercise.course?.id, 'quiz-exercises', quizExercise.id, 're-evaluate']"
                                     class="btn btn-primary btn-sm mr-1 mb-1"
                                 >
                                     <fa-icon [icon]="'pencil-alt'"></fa-icon>

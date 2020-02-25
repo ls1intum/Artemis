@@ -5,7 +5,7 @@ import { DebugElement } from '@angular/core';
 import { of } from 'rxjs';
 
 import { ArtemisTestModule } from '../../test.module';
-import { FileUploadExerciseDetailComponent } from 'app/exercises/file-upload/manage/file-upload-exercise/file-upload-exercise-detail.component';
+import { FileUploadExerciseDetailComponent } from 'app/exercises/file-upload/manage/file-upload-exercise-detail.component';
 import { By } from '@angular/platform-browser';
 
 import * as sinonChai from 'sinon-chai';
@@ -21,7 +21,7 @@ import { MockSyncStorage } from '../../mocks/mock-sync.storage';
 import { MockCookieService } from '../../mocks/mock-cookie.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { CookieService } from 'ngx-cookie-service';
-import { FileUploadExerciseService } from 'app/exercises/file-upload/manage/file-upload-exercise/file-upload-exercise.service';
+import { FileUploadExerciseService } from 'app/exercises/file-upload/manage/file-upload-exercise.service';
 
 chai.use(sinonChai);
 const expect = chai.expect;

@@ -7,7 +7,7 @@ import { JhiEventManager } from 'ng-jhipster';
 
 import { ArtemisTestModule } from '../../../test.module';
 import { ModelingSubmissionDialogComponent } from '../../../../../../main/webapp/app/exercises/modeling-submission/modeling-submission-dialog.component';
-import { ModelingSubmissionService } from 'app/exercises/modeling/participate/modeling-submission/modeling-submission.service';
+import { ModelingSubmissionService } from 'app/exercises/modeling/participate/modeling-submission.service';
 import { ModelingSubmission } from 'app/entities/modeling-submission.model';
 
 describe('Component Tests', () => {
