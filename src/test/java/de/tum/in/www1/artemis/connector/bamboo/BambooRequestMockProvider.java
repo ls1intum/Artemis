@@ -33,6 +33,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import com.appfire.bamboo.cli.BambooClient;
 import com.appfire.bamboo.cli.helpers.PlanHelper;
+import com.appfire.bamboo.cli.helpers.ProjectHelper;
 import com.appfire.bamboo.cli.helpers.RepositoryHelper;
 import com.appfire.bamboo.cli.helpers.TriggerHelper;
 import com.appfire.bamboo.cli.objects.RemoteRepository;
@@ -61,6 +62,9 @@ public class BambooRequestMockProvider {
 
     @Mock
     private TriggerHelper triggerHelper;
+
+    @Mock
+    private ProjectHelper projectHelper;
 
     @Value("${artemis.continuous-integration.url}")
     private URL BAMBOO_SERVER_URL;
@@ -313,5 +317,15 @@ public class BambooRequestMockProvider {
         doReturn("foobar").when(planHelper).enablePlan(planKey, true);
 
         return () -> verify(planHelper, times(1)).enablePlan(eq(planKey), eq(true));
+    }
+
+    public Verifiable mockDeleteProject(String projectKey) throws CliClient.RemoteRestException, CliClient.ClientException {
+        doReturn("foobar").when(projectHelper).deleteProject(projectKey);
+        return () -> verify(projectHelper).deleteProject(projectKey);
+    }
+
+    public Verifiable mockDeletePlan(String planKey) throws CliClient.RemoteRestException, CliClient.ClientException {
+        doReturn("foobar").when(planHelper).deletePlan(planKey);
+        return () -> verify(planHelper).deletePlan(planKey);
     }
 }
