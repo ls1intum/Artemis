@@ -99,7 +99,7 @@ public class FileUploadExerciseIntegrationTest extends AbstractSpringIntegration
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void deleteFileUploadExercise() throws Exception {
+    public void deleteFileUploadExercise_asInstructor() throws Exception {
         database.addCourseWithTwoFileUploadExercise();
         FileUploadExercise fileUploadExercise = (FileUploadExercise) exerciseRepo.findAll().get(0);
         FileUploadExercise fileUploadExercise2 = (FileUploadExercise) exerciseRepo.findAll().get(1);
@@ -111,8 +111,21 @@ public class FileUploadExerciseIntegrationTest extends AbstractSpringIntegration
     }
 
     @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void deleteFileUploadExercise_asStudent() throws Exception {
+        database.addCourseWithTwoFileUploadExercise();
+        FileUploadExercise fileUploadExercise = (FileUploadExercise) exerciseRepo.findAll().get(0);
+        FileUploadExercise fileUploadExercise2 = (FileUploadExercise) exerciseRepo.findAll().get(1);
+
+        request.delete("/api/file-upload-exercises/" + fileUploadExercise.getId(), HttpStatus.FORBIDDEN);
+        request.delete("/api/file-upload-exercises/" + fileUploadExercise2.getId(), HttpStatus.FORBIDDEN);
+
+        assertThat(exerciseRepo.findAll().size() == 2);
+    }
+
+    @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void updateFileUploadExercise() throws Exception {
+    public void updateFileUploadExercise_asInstructor() throws Exception {
         database.addCourseWithTwoFileUploadExercise();
         FileUploadExercise fileUploadExercise = (FileUploadExercise) exerciseRepo.findAll().get(0);
         fileUploadExercise.setDueDate(ZonedDateTime.now().plusDays(10));
