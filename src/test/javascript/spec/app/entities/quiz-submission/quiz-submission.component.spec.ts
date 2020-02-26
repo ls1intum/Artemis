@@ -5,14 +5,14 @@ import { HttpHeaders, HttpResponse } from '@angular/common/http';
 
 import { ArtemisTestModule } from '../../../test.module';
 import { QuizSubmissionComponent } from 'app/exercises/quiz/participate/quiz-submission/quiz-submission.component';
-import { QuizSubmissionService } from 'app/exercises/quiz/participate/quiz-submission/quiz-submission.service';
+import { QuizParticipationService } from 'app/exercises/quiz/participate/quiz-participation.service';
 import { QuizSubmission } from 'app/shared/model/quiz-submission.model';
 
 describe('Component Tests', () => {
     describe('QuizSubmission Management Component', () => {
         let comp: QuizSubmissionComponent;
         let fixture: ComponentFixture<QuizSubmissionComponent>;
-        let service: QuizSubmissionService;
+        let service: QuizParticipationService;
 
         beforeEach(() => {
             TestBed.configureTestingModule({
@@ -25,7 +25,7 @@ describe('Component Tests', () => {
 
             fixture = TestBed.createComponent(QuizSubmissionComponent);
             comp = fixture.componentInstance;
-            service = fixture.debugElement.injector.get(QuizSubmissionService);
+            service = fixture.debugElement.injector.get(QuizParticipationService);
         });
 
         it('Should call load all on init', () => {

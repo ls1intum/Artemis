@@ -3,8 +3,8 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
 
 import { ArtemisTestModule } from '../../test.module';
-import { ModelingSubmissionComponent } from 'app/exercises/modeling/participate/modeling-submission/modeling-submission.component';
-import { ModelingSubmissionService } from 'app/exercises/modeling/participate/modeling-submission/modeling-submission.service';
+import { ModelingSubmissionComponent } from 'app/exercises/modeling/participate/modeling-submission.component';
+import { ModelingSubmissionService } from 'app/exercises/modeling/participate/modeling-submission.service';
 import { ModelingSubmission } from 'app/entities/modeling-submission.model';
 import { MockSyncStorage } from '../../mocks/mock-sync.storage';
 import { MockParticipationWebsocketService } from '../../mocks/mock-participation-websocket.service';
@@ -13,7 +13,6 @@ import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { CookieService } from 'ngx-cookie-service';
 import { TranslateModule } from '@ngx-translate/core';
 import { RouterTestingModule } from '@angular/router/testing';
-import { modelingSubmissionRoute } from 'app/exercises/modeling/participate/modeling-submission/modeling-submission.route';
 import { ActivatedRoute } from '@angular/router';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import { DebugElement } from '@angular/core';
@@ -29,14 +28,15 @@ import * as moment from 'moment';
 import * as sinon from 'sinon';
 import { MockComponent } from 'ng-mocks';
 import { DeviceDetectorService } from 'ngx-device-detector';
-import { ModelingEditorComponent } from 'app/exercises/modeling/shared/modeling-editor/modeling-editor.component';
+import { ModelingEditorComponent } from 'app/exercises/modeling/shared/modeling-editor.component';
 import { ArtemisResultModule } from 'app/exercises/shared/result/result.module';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { ArtemisComplaintsModule } from 'app/complaints/complaints.module';
 import { ComplaintService } from 'app/complaints/complaint.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { Result } from 'app/entities/result.model';
-import { ModelingAssessmentModule } from 'app/exercises/modeling/assess/modeling-assessment/modeling-assessment.module';
+import { ModelingAssessmentModule } from 'app/exercises/modeling/assess/modeling-assessment.module';
+import { routes } from 'app/exercises/modeling/participate/modeling-participation.route';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -48,7 +48,7 @@ describe('Component Tests', () => {
         let debugElement: DebugElement;
         let service: ModelingSubmissionService;
 
-        const route = ({ params: of({ participationId: 123 }) } as any) as ActivatedRoute;
+        const route = ({ params: of({ courseId: 5, exerciseId: 22, participationId: 123 }) } as any) as ActivatedRoute;
         const participation = new StudentParticipation();
         participation.exercise = new ModelingExercise('ClassDiagram');
         const submission = <ModelingSubmission>(<unknown>{ id: 20, submitted: true, participation });
@@ -64,7 +64,7 @@ describe('Component Tests', () => {
                     ArtemisSharedComponentModule,
                     ModelingAssessmentModule,
                     ArtemisComplaintsModule,
-                    RouterTestingModule.withRoutes([modelingSubmissionRoute[0]]),
+                    RouterTestingModule.withRoutes([routes[0]]),
                 ],
                 declarations: [ModelingSubmissionComponent, MockComponent(ModelingEditorComponent)],
                 providers: [

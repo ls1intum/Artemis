@@ -1,5 +1,4 @@
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
-import { AlertService } from 'app/core/alert/alert.service';
 import { AfterViewInit, Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, SimpleChanges } from '@angular/core';
 import { WindowRef } from 'app/core/websocket/window.service';
 import { Observable, of, Subscription } from 'rxjs';

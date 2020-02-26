@@ -7,14 +7,14 @@ import { JhiEventManager } from 'ng-jhipster';
 
 import { ArtemisTestModule } from '../../../test.module';
 import { QuizSubmissionDialogComponent } from '../../../../../../main/webapp/app/exercises/quiz/participate/quiz-submission/quiz-submission-dialog.component';
-import { QuizSubmissionService } from '../../../../../../main/webapp/app/exercises/quiz/participate/quiz-submission/quiz-submission.service';
+import { QuizParticipationService } from 'app/exercises/quiz/participate/quiz-participation.service';
 import { QuizSubmission } from 'app/entities/quiz/quiz-submission.model';
 
 describe('Component Tests', () => {
     describe('QuizSubmission Management Dialog Component', () => {
         let comp: QuizSubmissionDialogComponent;
         let fixture: ComponentFixture<QuizSubmissionDialogComponent>;
-        let service: QuizSubmissionService;
+        let service: QuizParticipationService;
         let mockEventManager: any;
         let mockActiveModal: any;
 
@@ -22,7 +22,7 @@ describe('Component Tests', () => {
             TestBed.configureTestingModule({
                 imports: [ArtemisTestModule],
                 declarations: [QuizSubmissionDialogComponent],
-                providers: [QuizSubmissionService],
+                providers: [QuizParticipationService],
             })
                 .overrideTemplate(QuizSubmissionDialogComponent, '')
                 .compileComponents();
@@ -31,7 +31,7 @@ describe('Component Tests', () => {
         beforeEach(() => {
             fixture = TestBed.createComponent(QuizSubmissionDialogComponent);
             comp = fixture.componentInstance;
-            service = fixture.debugElement.injector.get(QuizSubmissionService);
+            service = fixture.debugElement.injector.get(QuizParticipationService);
             mockEventManager = fixture.debugElement.injector.get(JhiEventManager);
             mockActiveModal = fixture.debugElement.injector.get(NgbActiveModal);
         });

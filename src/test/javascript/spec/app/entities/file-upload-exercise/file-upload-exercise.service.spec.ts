@@ -2,7 +2,7 @@
 import { getTestBed, TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { map, take } from 'rxjs/operators';
-import { FileUploadExerciseService } from 'app/exercises/file-upload/manage/file-upload-exercise/file-upload-exercise.service';
+import { FileUploadExerciseService } from 'app/exercises/file-upload/manage/file-upload-exercise.service';
 import { FileUploadExercise, IFileUploadExercise } from 'app/shared/model/file-upload-exercise.model';
 
 describe('Service Tests', () => {

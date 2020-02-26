@@ -1,5 +1,4 @@
 import { NgModule } from '@angular/core';
-import { AlertService } from 'app/core/alert/alert.service';
 
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 
@@ -39,8 +38,5 @@ import { ArtemisComplaintsForTutorModule } from 'app/complaints/complaints-for-t
         AssessmentWarningComponent,
         ExternalSubmissionButtonComponent,
     ],
-    entryComponents: [ExternalSubmissionDialogComponent],
-
-    providers: [],
 })
 export class ArtemisAssessmentSharedModule {}

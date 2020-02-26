@@ -110,19 +110,15 @@ public class ProgrammingExerciseParticipationService {
      * @throws EntityNotFoundException if there is no participation for the given exercise and user.
      */
     @Transactional(readOnly = true)
+    @NotNull
     public ProgrammingExerciseStudentParticipation findStudentParticipationByExerciseIdAndStudentId(Long exerciseId, String username) throws EntityNotFoundException {
-        Optional<ProgrammingExerciseStudentParticipation> optionalParticipation = studentParticipationRepository.findByExerciseIdAndStudentLogin(exerciseId, username);
-        if (optionalParticipation.isEmpty()) {
+        Optional<ProgrammingExerciseStudentParticipation> participation = studentParticipationRepository.findByExerciseIdAndStudentLogin(exerciseId, username);
+        if (participation.isEmpty()) {
             throw new EntityNotFoundException("participation could not be found by exerciseId " + exerciseId + " and user " + username);
         }
-        var participation = optionalParticipation.get();
-        // If the exercise associated with participation is not programming exercise return null
-        if (participation.getProgrammingExercise() == null) {
-            return null;
-        }
         // Make sure the template participation is not a proxy object in this case
-        Hibernate.initialize(participation.getProgrammingExercise().getTemplateParticipation());
-        return participation;
+        Hibernate.initialize(participation.get().getProgrammingExercise().getTemplateParticipation());
+        return participation.get();
     }
 
     public List<ProgrammingExerciseStudentParticipation> findByExerciseId(Long exerciseId) {

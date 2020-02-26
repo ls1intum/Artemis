@@ -160,19 +160,13 @@ export class QuizStatisticsFooterComponent implements OnInit, OnDestroy {
      */
     previousStatistic() {
         if (this.isQuizStatistic) {
-            this.router.navigateByUrl(`/quiz/${this.quizExercise.id}/quiz-point-statistic`);
+            this.router.navigateByUrl(`/course-management/${this.quizExercise.course?.id}/quiz-exercises/${this.quizExercise.id}/quiz-point-statistic`);
         } else if (this.isQuizPointStatistic) {
             if (this.quizExercise.quizQuestions === null || this.quizExercise.quizQuestions.length === 0) {
-                this.router.navigateByUrl(`/quiz/${this.quizExercise.id}/quiz-statistic`);
+                this.router.navigateByUrl(`/course-management/${this.quizExercise.course?.id}/quiz-exercises/${this.quizExercise.id}/quiz-statistic`);
             } else {
-                const previousQuestion = this.quizExercise.quizQuestions[this.quizExercise.quizQuestions.length - 1];
-                if (previousQuestion.type === QuizQuestionType.MULTIPLE_CHOICE) {
-                    this.router.navigateByUrl(`/quiz/${this.quizExercise.id}/multiple-choice-question-statistic/${previousQuestion.id}`);
-                } else if (previousQuestion.type === QuizQuestionType.DRAG_AND_DROP) {
-                    this.router.navigateByUrl(`/quiz/${this.quizExercise.id}/drag-and-drop-question-statistic/${previousQuestion.id}`);
-                } else if (previousQuestion.type === QuizQuestionType.SHORT_ANSWER) {
-                    this.router.navigateByUrl(`/quiz/${this.quizExercise.id}/short-answer-question-statistic/${previousQuestion.id}`);
-                }
+                // go to previous question-statistic
+                this.quizStatisticUtil.navigateToStatisticOf(this.quizExercise, this.quizExercise.quizQuestions[this.quizExercise.quizQuestions.length - 1]);
             }
         } else {
             this.quizStatisticUtil.previousStatistic(this.quizExercise, this.question);
@@ -185,21 +179,14 @@ export class QuizStatisticsFooterComponent implements OnInit, OnDestroy {
      */
     nextStatistic() {
         if (this.isQuizPointStatistic) {
-            this.router.navigateByUrl(`/quiz/${this.quizExercise.id}/quiz-statistic`);
+            this.router.navigateByUrl(`/course-management/${this.quizExercise.course?.id}/quiz-exercises/${this.quizExercise.id}/quiz-statistic`);
         } else if (this.isQuizStatistic) {
             // go to quiz-statistic if the position = last position
             if (this.quizExercise.quizQuestions === null || this.quizExercise.quizQuestions.length === 0) {
-                this.router.navigateByUrl(`/quiz/${this.quizExercise.id}/quiz-point-statistic`);
+                this.router.navigateByUrl(`/course-management/${this.quizExercise.course?.id}/quiz-exercises/${this.quizExercise.id}/quiz-point-statistic`);
             } else {
                 // go to next question-statistic
-                const nextQuestion = this.quizExercise.quizQuestions[0];
-                if (nextQuestion.type === QuizQuestionType.MULTIPLE_CHOICE) {
-                    this.router.navigateByUrl(`/quiz/${this.quizExercise.id}/multiple-choice-question-statistic/${nextQuestion.id}`);
-                } else if (nextQuestion.type === QuizQuestionType.DRAG_AND_DROP) {
-                    this.router.navigateByUrl(`/quiz/${this.quizExercise.id}/drag-and-drop-question-statistic/${nextQuestion.id}`);
-                } else if (nextQuestion.type === QuizQuestionType.SHORT_ANSWER) {
-                    this.router.navigateByUrl(`/quiz/${this.quizExercise.id}/short-answer-question-statistic/${nextQuestion.id}`);
-                }
+                this.quizStatisticUtil.navigateToStatisticOf(this.quizExercise, this.quizExercise.quizQuestions[0]);
             }
         } else {
             this.quizStatisticUtil.nextStatistic(this.quizExercise, this.question);

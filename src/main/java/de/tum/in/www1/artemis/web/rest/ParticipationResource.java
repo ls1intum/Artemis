@@ -104,32 +104,6 @@ public class ParticipationResource {
     }
 
     /**
-     * POST /participations : Create a new participation.
-     *
-     * @param participation the participation to create
-     * @return the ResponseEntity with status 201 (Created) and with body the new participation, or with status 400 (Bad Request) if the participation has already an ID
-     * @throws URISyntaxException if the Location URI syntax is incorrect
-     */
-    @PostMapping("/participations")
-    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Participation> createParticipation(@RequestBody StudentParticipation participation) throws URISyntaxException {
-        log.debug("REST request to save Participation : {}", participation);
-
-        if (participation instanceof ProgrammingExerciseParticipation && !Feature.PROGRAMMING_EXERCISES.isEnabled()) {
-            return forbidden();
-        }
-
-        User user = userService.getUserWithGroupsAndAuthorities();
-        checkAccessPermissionAtLeastTA(participation, user);
-        if (participation.getId() != null) {
-            throw new BadRequestAlertException("A new participation cannot already have an ID", ENTITY_NAME, "idexists");
-        }
-        Participation result = participationService.save(participation);
-        return ResponseEntity.created(new URI("/api/participations/" + result.getId()))
-                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);
-    }
-
-    /**
      * POST /courses/:courseId/exercises/:exerciseId/participations : start the "participationId" exercise for the current user.
      *
      * @param courseId   only included for API consistency, not actually used
@@ -197,9 +171,10 @@ public class ParticipationResource {
         ProgrammingExerciseStudentParticipation participation = programmingExerciseParticipationService.findStudentParticipationByExerciseIdAndStudentId(exerciseId,
                 principal.getName());
 
-        if (participation != null) {
-            User user = userService.getUserWithGroupsAndAuthorities();
-            checkAccessPermissionOwner(participation, user);
+        User user = userService.getUserWithGroupsAndAuthorities();
+        checkAccessPermissionOwner(participation, user);
+        if (exercise instanceof ProgrammingExercise) {
+
             // users cannot resume the programming exercises if test run after due date or semi automatic grading is active and the due date has passed
             var pExercise = (ProgrammingExercise) exercise;
             if ((pExercise.getDueDate() != null && ZonedDateTime.now().isAfter(pExercise.getDueDate())
@@ -210,16 +185,21 @@ public class ParticipationResource {
             participation = participationService.resumeExercise(participation);
             // Note: in this case we might need an empty commit to make sure the build plan works correctly for subsequent student commits
             participation = participationService.performEmptyCommit(participation);
-            addLatestResultToParticipation(participation);
+            if (participation != null) {
+                addLatestResultToParticipation(participation);
+                participation.getExercise().filterSensitiveInformation();
+                return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, participation.getStudent().getName()))
+                        .body(participation);
+            }
+        }
+        // error case
+        log.info("Exercise with participationId {} is not an instance of ProgrammingExercise. Ignoring the request to resume participation", exerciseId);
+        // remove sensitive information before sending participation to the client
+        if (participation != null && participation.getExercise() != null) {
             participation.getExercise().filterSensitiveInformation();
-            return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, participation.getStudent().getName())).body(participation);
         }
-        else {
-            // error case
-            log.info("Exercise with participationId {} is not an instance of ProgrammingExercise. Ignoring the request to resume participation", exerciseId);
-            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "notProgrammingExercise",
-                    "Exercise is not an instance of ProgrammingExercise. Ignoring the request to resume participation")).body(null);
-        }
+        return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "notProgrammingExercise",
+                "Exercise is not an instance of ProgrammingExercise. Ignoring the request to resume participation")).body(participation);
     }
 
     /**
@@ -245,6 +225,7 @@ public class ParticipationResource {
      *         500 (Internal Server Error) if the participation couldn't be updated
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
+    // TODO we should not use this global resource here, instead we should use /courses/:courseId/exercises/:exerciseId/participations
     @PutMapping("/participations")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Participation> updateParticipation(@RequestBody StudentParticipation participation) throws URISyntaxException {
@@ -255,7 +236,7 @@ public class ParticipationResource {
             throw new AccessForbiddenException("You are not allowed to access this resource");
         }
         if (participation.getId() == null) {
-            return createParticipation(participation);
+            throw new BadRequestAlertException("The participation object needs to have an id to be changed", ENTITY_NAME, "idmissing");
         }
         if (participation.getPresentationScore() == null || participation.getPresentationScore() < 0) {
             participation.setPresentationScore(0);
@@ -545,28 +526,6 @@ public class ParticipationResource {
             }
             return new MappingJacksonValue(participation);
         }
-    }
-
-    /**
-     * GET /participations/:participationId/status: get build status of the user's participation for the "participationId" participation.
-     *
-     * @param participationId the participation participationId
-     * @return the ResponseEntity with status 200 (OK) and with body the participation, or with status 404 (Not Found)
-     */
-    @GetMapping("/participations/{participationId}/status")
-    public ResponseEntity<?> getParticipationStatus(@PathVariable Long participationId) {
-        StudentParticipation participation = participationService.findOneStudentParticipation(participationId);
-        // NOTE: Disable Authorization check for increased performance
-        // (Unauthorized users being unable to see any participation's status is not a priority!)
-        if (participation.getExercise() instanceof QuizExercise) {
-            QuizExercise.Status status = QuizExercise.statusForQuiz((QuizExercise) participation.getExercise());
-            return new ResponseEntity<>(status, HttpStatus.OK);
-        }
-        else if (participation.getExercise() instanceof ProgrammingExercise) {
-            ContinuousIntegrationService.BuildStatus buildStatus = continuousIntegrationService.get().getBuildStatus((ProgrammingExerciseParticipation) participation);
-            return Optional.ofNullable(buildStatus).map(status -> new ResponseEntity<>(status, HttpStatus.OK)).orElse(ResponseUtil.notFound());
-        }
-        return ResponseEntity.unprocessableEntity().build();
     }
 
     /**

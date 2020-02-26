@@ -1,4 +1,3 @@
-import { AlertService } from 'app/core/alert/alert.service';
 import { Component, OnDestroy, OnInit, ViewEncapsulation } from '@angular/core';
 import { Subscription } from 'rxjs/Subscription';
 import { ActivatedRoute } from '@angular/router';
@@ -6,12 +5,12 @@ import { DifferencePipe } from 'ngx-moment';
 import { HttpResponse } from '@angular/common/http';
 import { Moment } from 'moment';
 import { Course } from 'app/entities/course.model';
-import { CourseService } from 'app/course/manage/course.service';
-import { SourceTreeService } from 'app/exercises/programming/shared/sourceTree.service';
+import { CourseManagementService } from '../../../course/manage/course-management.service';
+import { SourceTreeService } from 'app/exercises/programming/shared/service/sourceTree.service';
 import { take, tap } from 'rxjs/operators';
 import { of, zip } from 'rxjs';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
-import { ProgrammingSubmissionService } from 'app/exercises/programming/participate/programming-submission/programming-submission.service';
+import { ProgrammingSubmissionService } from 'app/exercises/programming/participate/programming-submission.service';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { areManualResultsAllowed } from 'app/exercises/shared/exercise/exercise-utils';
 import { ResultService } from 'app/exercises/shared/result/result.service';
@@ -19,7 +18,7 @@ import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { Result } from 'app/entities/result.model';
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
-import { ModelingAssessmentService } from 'app/exercises/modeling/assess/modeling-assessment/modeling-assessment.service';
+import { ModelingAssessmentService } from 'app/exercises/modeling/assess/modeling-assessment.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
@@ -66,7 +65,7 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
     constructor(
         private route: ActivatedRoute,
         private momentDiff: DifferencePipe,
-        private courseService: CourseService,
+        private courseService: CourseManagementService,
         private exerciseService: ExerciseService,
         private resultService: ResultService,
         private profileService: ProfileService,

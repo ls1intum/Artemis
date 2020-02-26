@@ -16,8 +16,12 @@ const LAYOUT_ROUTES: Routes = [navbarRoute, ...errorRoute];
                     loadChildren: () => import('./admin/admin.module').then(m => m.ArtemisAdminModule),
                 },
                 {
-                    path: 'code-editor',
-                    loadChildren: () => import('./exercises/programming/shared/code-editor/code-editor.module').then(m => m.ArtemisCodeEditorModule),
+                    path: 'courses/:courseId/programming-exercises/:exerciseId/code-editor',
+                    loadChildren: () => import('./exercises/programming/participate/programming-participation.module').then(m => m.ArtemisProgrammingParticipationModule),
+                },
+                {
+                    path: 'course-management/:courseId/programming-exercises/:exerciseId/code-editor',
+                    loadChildren: () => import('./exercises/programming/manage/code-editor/code-editor-management.module').then(m => m.ArtemisCodeEditorManagementModule),
                 },
                 {
                     path: 'account',
