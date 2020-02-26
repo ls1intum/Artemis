@@ -7,10 +7,10 @@ import { TranslateModule } from '@ngx-translate/core';
 import { ArtemisTestModule } from '../../test.module';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { MockComponent } from 'ng-mocks';
-import { ProgrammingExerciseLifecycleComponent } from 'app/exercises/programming/manage/programming-exercise-test-schedule-picker/programming-exercise-lifecycle.component';
+import { ProgrammingExerciseLifecycleComponent } from 'app/exercises/programming/manage/update/programming-exercise-lifecycle.component';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
-import { ProgrammingExerciseTestScheduleDatePickerComponent } from 'app/exercises/programming/manage/programming-exercise-test-schedule-picker/programming-exercise-test-schedule-date-picker.component';
+import { ProgrammingExerciseTestScheduleDatePickerComponent } from 'app/exercises/programming/manage/update/programming-exercise-test-schedule-date-picker.component';
 
 chai.use(sinonChai);
 const expect = chai.expect;

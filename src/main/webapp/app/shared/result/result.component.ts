@@ -7,7 +7,7 @@ import { MIN_POINTS_GREEN, MIN_POINTS_ORANGE } from 'app/app.constants';
 import { TranslateService } from '@ngx-translate/core';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import * as moment from 'moment';
-import { isProgrammingExerciseStudentParticipation, isResultPreliminary } from 'app/exercises/programming/manage/utils/programming-exercise.utils';
+import { isProgrammingExerciseStudentParticipation, isResultPreliminary } from 'app/exercises/programming/shared/utils/programming-exercise.utils';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { getExercise, Participation } from 'app/entities/participation/participation.model';
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';

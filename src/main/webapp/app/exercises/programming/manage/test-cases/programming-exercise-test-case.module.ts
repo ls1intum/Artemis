@@ -3,7 +3,7 @@ import { RouterModule } from '@angular/router';
 import { NgxDatatableModule } from '@swimlane/ngx-datatable';
 import { ArtemisTableModule } from 'app/shared/table/table.module';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
-import { ArtemisProgrammingExerciseActionsModule } from 'app/exercises/programming/manage/actions/programming-exercise-actions.module';
+import { ArtemisProgrammingExerciseActionsModule } from 'app/exercises/programming/shared/actions/programming-exercise-actions.module';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { ProgrammingExerciseManageTestCasesComponent } from 'app/exercises/programming/manage/test-cases/programming-exercise-manage-test-cases.component';
 import { ProgrammingExerciseManageTestCasesStatusComponent } from 'app/exercises/programming/manage/test-cases/programming-exercise-manage-test-cases-status.component';

@@ -5,7 +5,6 @@ import { ConnectionNotificationComponent } from 'app/shared/layouts/connection-n
 @NgModule({
     imports: [ArtemisSharedModule],
     declarations: [ConnectionNotificationComponent],
-    entryComponents: [],
     exports: [ConnectionNotificationComponent],
 })
 export class ArtemisConnectionNotificationModule {}

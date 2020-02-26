@@ -1,5 +1,4 @@
 import { NgModule } from '@angular/core';
-import { AlertService } from 'app/core/alert/alert.service';
 import { MomentModule } from 'ngx-moment';
 import { ClipboardModule } from 'ngx-clipboard';
 import { ArtemisSharedModule } from 'app/shared/shared.module';

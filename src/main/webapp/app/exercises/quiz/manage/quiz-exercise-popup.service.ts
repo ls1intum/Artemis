@@ -1,7 +1,6 @@
 import { Component, Injectable } from '@angular/core';
 import { Router } from '@angular/router';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
-import { HttpResponse } from '@angular/common/http';
 import { QuizExerciseService } from './quiz-exercise.service';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 
@@ -13,30 +12,12 @@ export class QuizExercisePopupService {
         this.ngbModalRef = null;
     }
 
-    open(component: Component, id?: string | object | any): Promise<NgbModalRef> {
+    open(component: Component, quizExercise: QuizExercise): Promise<NgbModalRef> {
         return new Promise<NgbModalRef>((resolve, reject) => {
-            if (this.ngbModalRef != null) {
-                resolve(this.ngbModalRef);
+            if (this.ngbModalRef == null) {
+                this.ngbModalRef = this.quizExerciseModalRef(component, quizExercise);
             }
-
-            // For re-evaluate id parameter is of type QuizExercise - regardless this fact instanceof QuizExercise does not work
-            // the type check instanceof Object is not redundant (as intellij might want to tell you)
-            if (id instanceof Object) {
-                this.ngbModalRef = this.quizExerciseModalRef(component, id);
-                resolve(this.ngbModalRef);
-            } else if (id) {
-                this.quizExerciseService.find(id).subscribe((quizExerciseResponse: HttpResponse<QuizExercise>) => {
-                    const quizExercise: QuizExercise = quizExerciseResponse.body!;
-                    this.ngbModalRef = this.quizExerciseModalRef(component, quizExercise);
-                    resolve(this.ngbModalRef);
-                });
-            } else {
-                // setTimeout used as a workaround for getting ExpressionChangedAfterItHasBeenCheckedError
-                setTimeout(() => {
-                    this.ngbModalRef = this.quizExerciseModalRef(component, new QuizExercise());
-                    resolve(this.ngbModalRef);
-                }, 0);
-            }
+            resolve(this.ngbModalRef);
         });
     }
 
@@ -46,7 +27,7 @@ export class QuizExercisePopupService {
         modalRef.result.then(
             result => {
                 if (result === 're-evaluate') {
-                    this.router.navigate(['/course/' + quizExercise.course!.id + '/quiz-exercise']);
+                    this.router.navigate(['/course-management/' + quizExercise.course!.id + '/quiz-exercises']);
                 } else {
                     this.router.navigate([{ outlets: { popup: null } }], { replaceUrl: true, queryParamsHandling: 'merge' });
                     this.ngbModalRef = null;

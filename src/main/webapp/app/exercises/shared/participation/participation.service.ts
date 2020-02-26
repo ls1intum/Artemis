@@ -21,13 +21,6 @@ export class ParticipationService {
 
     constructor(private http: HttpClient) {}
 
-    create(participation: StudentParticipation): Observable<EntityResponseType> {
-        const copy = this.convertDateFromClient(participation);
-        return this.http
-            .post<StudentParticipation>(this.resourceUrl, copy, { observe: 'response' })
-            .map((res: EntityResponseType) => this.convertDateFromServer(res));
-    }
-
     update(participation: StudentParticipation): Observable<EntityResponseType> {
         const copy = this.convertDateFromClient(participation);
         return this.http
