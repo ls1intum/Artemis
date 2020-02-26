@@ -12,7 +12,6 @@ import javax.validation.constraints.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -111,7 +110,7 @@ public class TextSubmissionResource {
         // fetch course from database to make sure client didn't change groups
         final Course course = courseService.findOne(textExercise.getCourse().getId());
         if (!authorizationCheckService.isAtLeastStudentInCourse(course, user)) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            return forbidden();
         }
 
         textSubmission = textSubmissionService.handleTextSubmission(textSubmission, textExercise, principal);
@@ -213,7 +212,7 @@ public class TextSubmissionResource {
 
         final TextSubmission textSubmission;
         if (lockSubmission) {
-            textSubmission = textSubmissionService.getLockedTextSubmissionWithoutResult((TextExercise) exercise);
+            textSubmission = textSubmissionService.findAndLockTextSubmissionToBeAssessed((TextExercise) exercise);
         }
         else {
             final Optional<TextSubmission> optionalTextSubmission = this.textSubmissionService.getTextSubmissionWithoutManualResult((TextExercise) exercise);

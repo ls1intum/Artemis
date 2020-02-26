@@ -94,9 +94,7 @@ public class SubmissionService {
     }
 
     /**
-     * Creates a new Result object, assigns it to the given submission and stores the changes to the database. Note, that this method is also called for example submissions which
-     * do not have a participation. Therefore, we check if the given submission has a participation and only then update the participation with the new result.
-     *
+     * Creates a new Result object, assigns it to the given submission and stores the changes to the database.
      * @param submission the submission for which a new result should be created
      * @return the newly created result
      */
@@ -104,9 +102,7 @@ public class SubmissionService {
         Result result = new Result();
         result.setSubmission(submission);
         submission.setResult(result);
-        if (submission.getParticipation() != null) {
-            result.setParticipation(submission.getParticipation());
-        }
+        result.setParticipation(submission.getParticipation());
         result = resultRepository.save(result);
         submissionRepository.save(submission);
         return result;
@@ -128,7 +124,6 @@ public class SubmissionService {
             result.setAssessor(userService.getUser());
         }
 
-        result.setAssessmentType(AssessmentType.MANUAL);
         result.setAssessmentType(AssessmentType.MANUAL);
         result = resultRepository.save(result);
         log.debug("Assessment locked with result id: " + result.getId() + " for assessor: " + result.getAssessor().getName());

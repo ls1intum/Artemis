@@ -219,12 +219,12 @@ public class TextSubmissionService extends SubmissionService {
     }
 
     /**
-     * Get a text submission of the given exercise that still needs to be assessed and lock the submission to prevent other tutors from receiving and assessing it.
+     * Find a text submission of the given exercise that still needs to be assessed and lock it to prevent other tutors from receiving and assessing it.
      *
      * @param textExercise the exercise the submission should belong to
      * @return a locked modeling submission that needs an assessment
      */
-    public TextSubmission getLockedTextSubmissionWithoutResult(TextExercise textExercise) {
+    public TextSubmission findAndLockTextSubmissionToBeAssessed(TextExercise textExercise) {
         TextSubmission textSubmission = getTextSubmissionWithoutManualResult(textExercise)
                 .orElseThrow(() -> new EntityNotFoundException("Text submission for exercise " + textExercise.getId() + " could not be found"));
         super.lockSubmission(textSubmission);
