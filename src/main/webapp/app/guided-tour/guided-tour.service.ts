@@ -113,7 +113,7 @@ export class GuidedTourService {
                 if (this.availableTourForComponent && this.currentTour) {
                     this.guidedTourCurrentStepSubject.next(null);
                     this.checkNextTourStepOnNavigation();
-                } else {
+                } else if (this.currentTour) {
                     this.skipTour();
                     this.guidedTourAvailabilitySubject.next(false);
                 }
