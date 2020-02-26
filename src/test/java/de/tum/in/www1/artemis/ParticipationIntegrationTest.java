@@ -483,10 +483,21 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationTest 
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void getParticipation_quizExerciseStartedAndSubmissionAllowed() throws Exception {
+    public void getParticipation_quizExerciseStartedAndNoParticipation() throws Exception {
         var quizEx = ModelFactory.generateQuizExercise(ZonedDateTime.now().minusMinutes(2), ZonedDateTime.now().plusMinutes(10), course).isPlannedToStart(true);
         quizEx = exerciseRepo.save(quizEx);
         request.getNullable("/api/exercises/" + quizEx.getId() + "/participation", HttpStatus.NO_CONTENT, StudentParticipation.class);
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void getParticipation_quizExerciseStartedAndSubmissionAllowed() throws Exception {
+        var quizEx = ModelFactory.generateQuizExercise(ZonedDateTime.now().minusMinutes(1), ZonedDateTime.now().plusMinutes(5), course).isPlannedToStart(true).duration(360);
+        quizEx = exerciseRepo.save(quizEx);
+        var participation = request.get("/api/exercises/" + quizEx.getId() + "/participation", HttpStatus.OK, StudentParticipation.class);
+        assertThat(participation.getExercise()).as("Participation contains exercise").isEqualTo(quizEx);
+        assertThat(participation.getResults().size()).as("New result was added to the participation").isEqualTo(1);
+        assertThat(participation.getInitializationState()).as("Participation was initialized").isEqualTo(InitializationState.INITIALIZED);
     }
 
     @Test
