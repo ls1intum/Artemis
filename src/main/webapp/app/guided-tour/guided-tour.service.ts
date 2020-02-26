@@ -112,8 +112,9 @@ export class GuidedTourService {
             if (event instanceof NavigationEnd) {
                 if (this.availableTourForComponent && this.currentTour) {
                     this.guidedTourCurrentStepSubject.next(null);
+                    this.assessmentObject = new AssessmentObject(0, 0);
                     this.checkNextTourStepOnNavigation();
-                } else if (this.currentTour) {
+                } else {
                     this.skipTour();
                     this.guidedTourAvailabilitySubject.next(false);
                 }
@@ -313,6 +314,7 @@ export class GuidedTourService {
             // Usually an action is opening something so we need to give it time to render.
             setTimeout(() => {
                 if (!this.isBackPageNavigation.value) {
+                    this.resetUserInteractionFinishedState(previousStep);
                     this.setPreparedTourStep();
                 }
             });
@@ -331,7 +333,7 @@ export class GuidedTourService {
 
         const currentStep = this.currentTour.steps[this.currentTourStepIndex];
         const nextStep = this.currentTour.steps[this.currentTourStepIndex + 1];
-        const timeout = currentStep instanceof UserInterActionTourStep && this.checkSelectorValidity() ? 600 : 0;
+        const timeout = currentStep instanceof UserInterActionTourStep && currentStep.userInteractionEvent === UserInteractionEvent.CLICK && this.checkSelectorValidity() ? 600 : 0;
         this.currentDotSubject.next(this.currentTourStepIndex);
         this.nextDotSubject.next(this.currentTourStepIndex + 1);
         this.isBackPageNavigation.next(false);
@@ -396,11 +398,14 @@ export class GuidedTourService {
      * Skip current guided tour after updating the guided tour settings in the database and calling the reset tour method to remove current tour elements.
      */
     public skipTour(): void {
-        if (this.currentTour) {
-            if (this.currentTour.skipCallback) {
-                this.currentTour.skipCallback(this.currentTourStepIndex);
-            }
+        if (!this.currentTour) {
+            return;
         }
+
+        if (this.currentTour.skipCallback) {
+            this.currentTour.skipCallback(this.currentTourStepIndex);
+        }
+
         if (this.currentTour === cancelTour || this.currentTour === completedTour) {
             this.resetTour();
             return;
