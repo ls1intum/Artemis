@@ -1,25 +1,27 @@
 package de.tum.in.www1.artemis;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.*;
 
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.HashMap;
+import java.util.Optional;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.config.audit.AuditEventConverter;
 import de.tum.in.www1.artemis.domain.PersistentAuditEvent;
+import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
+import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.repository.PersistenceAuditEventRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.service.AuditEventService;
@@ -27,7 +29,6 @@ import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.RequestUtilService;
-import de.tum.in.www1.artemis.web.rest.dto.RepositoryExportOptionsDTO;
 
 public class ManagementResourceIntegrationTest extends AbstractSpringIntegrationTest {
 
@@ -81,27 +82,36 @@ public class ManagementResourceIntegrationTest extends AbstractSpringIntegration
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     public void toggleFeatures() throws Exception {
+        // This setup only needed in this test case
         var course = database.addCourseWithOneProgrammingExercise();
         var programmingExercise1 = programmingExerciseRepository.findAll().get(0);
         var programmingExercise2 = ModelFactory.generateProgrammingExercise(ZonedDateTime.now(), ZonedDateTime.now().plusHours(2), course);
-        var participation = database.addStudentParticipationForProgrammingExercise(programmingExercise1, "student1");
-        var repoExportOptions = new RepositoryExportOptionsDTO();
-        request.postWithResponseBody("/api/programming-exercises/" + programmingExercise1.getId() + "/export-repos-by-participation-ids/" + participation.getId(),
-                repoExportOptions, Resource.class);
+        var participation = database.addStudentParticipationForProgrammingExercise(programmingExercise1, "admin");
+        database.addProgrammingSubmission(programmingExercise1, new ProgrammingSubmission(), "admin");
+        doNothing().when(continuousIntegrationService).performEmptySetupCommit(any());
+        doReturn(Optional.of(new Result())).when(continuousIntegrationService).retrieveLatestBuildResult(any(), any());
+
+        // Try to access 5 different endpoints with programming feature toggle enabled
+        request.put("/api/courses/" + course.getId() + "/exercises/" + programmingExercise1.getId() + "/resume-programming-participation", null, HttpStatus.OK);
+        request.put("/api/participations/" + participation.getId() + "/cleanupBuildPlan", null, HttpStatus.OK);
+        request.postWithoutLocation("/api/programming-submissions/" + participation.getId() + "/trigger-failed-build", null, HttpStatus.OK, null);
+        request.delete("/api/exercises/" + programmingExercise1.getId() + "/cleanup", HttpStatus.OK);
         programmingExercise2 = programmingExerciseRepository.save(programmingExercise2);
-        request.delete("/api/programming-exercises/" + programmingExercise1.getId(), HttpStatus.OK);
+        request.delete("/api/programming-exercises/" + programmingExercise2.getId(), HttpStatus.OK);
 
         var features = new HashMap<Feature, Boolean>();
         features.put(Feature.PROGRAMMING_EXERCISES, false);
         request.put("/api/management/feature-toggle", features, HttpStatus.OK);
         verify(this.websocketMessagingService).sendMessage("/topic/management/feature-toggles", Feature.enabledFeatures());
-        assertThat(Feature.PROGRAMMING_EXERCISES.isEnabled()).isFalse();
+        assertThat(Feature.PROGRAMMING_EXERCISES.isEnabled()).as("Feature was disabled").isFalse();
 
+        // Try to access 5 different endpoints with programming feature toggle disabled
+        request.put("/api/courses/" + course.getId() + "/exercises/" + programmingExercise1.getId() + "/resume-programming-participation", null, HttpStatus.FORBIDDEN);
+        request.put("/api/participations/" + participation.getId() + "/cleanupBuildPlan", null, HttpStatus.FORBIDDEN);
+        request.postWithoutLocation("/api/programming-submissions/" + participation.getId() + "/trigger-failed-build", null, HttpStatus.FORBIDDEN, null);
+        request.delete("/api/exercises/" + programmingExercise1.getId() + "/cleanup", HttpStatus.FORBIDDEN);
         programmingExercise2 = programmingExerciseRepository.save(programmingExercise2);
-        request.postWithResponseBody("/api/programming-exercises/" + programmingExercise1.getId() + "/export-repos-by-participation-ids/" + participation.getId(),
-                repoExportOptions, Resource.class);
         request.delete("/api/programming-exercises/" + programmingExercise2.getId(), HttpStatus.FORBIDDEN);
-
     }
 
     @Test
