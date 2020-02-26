@@ -27,7 +27,6 @@ import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.ModelFactory;
@@ -178,34 +177,6 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationTest 
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
-    public void createParticipation() throws Exception {
-        var participation = ModelFactory.generateStudentParticipation(InitializationState.INITIALIZED, textExercise, database.getUserByLogin("student1"));
-        var actualParticipation = request.postWithResponseBody("/api/participations", participation, Participation.class, HttpStatus.CREATED);
-        var expectedParticipation = participationRepo.findById(actualParticipation.getId()).get();
-        assertThat(actualParticipation).isEqualTo(expectedParticipation);
-    }
-
-    @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
-    public void createParticipation_idExists() throws Exception {
-        var participation = ModelFactory.generateStudentParticipation(InitializationState.INITIALIZED, textExercise, database.getUserByLogin("student1"));
-        participation.setId(1L);
-        request.postWithResponseBody("/api/participations", participation, Participation.class, HttpStatus.BAD_REQUEST);
-    }
-
-    @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
-    public void createParticipation_programmingExercisesFeatureDisabled() throws Exception {
-        var programmingExercise = ModelFactory.generateProgrammingExercise(ZonedDateTime.now(), ZonedDateTime.now(), course);
-        exerciseRepo.save(programmingExercise);
-        var participation = ModelFactory.generateProgrammingExerciseStudentParticipation(InitializationState.INITIALIZED, programmingExercise, database.getUserByLogin("student1"));
-        participation.setId(1L);
-        Feature.PROGRAMMING_EXERCISES.disable();
-        request.postWithResponseBody("/api/participations", participation, Participation.class, HttpStatus.FORBIDDEN);
-    }
-
-    @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void deleteParticipation() throws Exception {
         Submission submissionWithResult = database.addSubmission(modelingExercise, new ModelingSubmission(), "student1");
@@ -321,16 +292,6 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationTest 
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
-    public void resumeProgrammingExerciseParticipation_noParticipation() throws Exception {
-        var participation = ModelFactory.generateProgrammingExerciseStudentParticipation(InitializationState.INITIALIZED, programmingExercise, database.getUserByLogin("student1"));
-        participation.setExercise(textExercise);
-        participationRepo.save(participation);
-        request.putWithResponseBody("/api/courses/" + course.getId() + "/exercises/" + textExercise.getId() + "/resume-programming-participation", null,
-                ProgrammingExerciseStudentParticipation.class, HttpStatus.BAD_REQUEST);
-    }
-
-    @Test
     @WithMockUser(username = "tutor1", roles = "TA")
     public void getAllParticipationsForExercise() throws Exception {
         database.addParticipationForExercise(textExercise, "student1");
@@ -440,7 +401,7 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationTest 
     @WithMockUser(username = "tutor1", roles = "TA")
     public void updateParticipation_notStored() throws Exception {
         var participation = ModelFactory.generateStudentParticipation(InitializationState.INITIALIZED, textExercise, database.getUserByLogin("student1"));
-        request.putWithResponseBody("/api/participations", participation, StudentParticipation.class, HttpStatus.CREATED);
+        request.putWithResponseBody("/api/participations", participation, StudentParticipation.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -483,27 +444,6 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationTest 
         doReturn(new ResponseEntity<>(null, HttpStatus.OK)).when(continuousIntegrationService).retrieveLatestArtifact(participation);
         request.getNullable("/api/participations/" + participation.getId() + "/buildArtifact", HttpStatus.OK, Object.class);
         verify(continuousIntegrationService).retrieveLatestArtifact(participation);
-    }
-
-    @Test
-    @WithMockUser(username = "admin", roles = "ADMIN")
-    public void getParticipationStatus_programmingExercise() throws Exception {
-        var participation = database.addStudentParticipationForProgrammingExercise(programmingExercise, "student1");
-        var expectedBuildStatus = ContinuousIntegrationService.BuildStatus.QUEUED;
-        doReturn(expectedBuildStatus).when(continuousIntegrationService).getBuildStatus(participation);
-        var buildStatus = request.get("/api/participations/" + participation.getId() + "/status", HttpStatus.OK, ContinuousIntegrationService.BuildStatus.class);
-        verify(continuousIntegrationService).getBuildStatus(participation);
-        assertThat(buildStatus).isEqualTo(expectedBuildStatus);
-    }
-
-    @Test
-    @WithMockUser(username = "admin", roles = "ADMIN")
-    public void getParticipationStatus_quizExercise() throws Exception {
-        var quizEx = ModelFactory.generateQuizExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(1), course);
-        exerciseRepo.save(quizEx);
-        var participation = database.addParticipationForExercise(quizEx, "student1");
-        var quizStatus = request.get("/api/participations/" + participation.getId() + "/status", HttpStatus.OK, QuizExercise.Status.class);
-        assertThat(quizStatus).isEqualTo(QuizExercise.Status.FINISHED);
     }
 
     @Test
