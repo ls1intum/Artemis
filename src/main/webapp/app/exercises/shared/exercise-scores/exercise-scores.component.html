@@ -35,7 +35,7 @@
         </div>
         <div class="d-flex justify-content-end">
             <div class="button-toolbar">
-                <button type="submit" routerLink="/exercise/{{ exercise.id }}/participation" class="btn btn-primary btn-sm mr-1">
+                <button type="submit" routerLink="/course-management/{{ course.id }}/exercises/{{ exercise.id }}/participations" class="btn btn-primary btn-sm mr-1">
                     <fa-icon [icon]="'list-alt'"></fa-icon>
                     <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.participations">Participations</span>
                 </button>
@@ -101,7 +101,7 @@
                     </ng-template>
                     <ng-template ngx-datatable-cell-template let-value="value">
                         <span *ngIf="exercise.isAtLeastInstructor">
-                            <a routerLink="/participation/{{ value.id }}/submissions">
+                            <a routerLink="../participations/{{ value.id }}/submissions">
                                 {{ value.student.name }}
                             </a>
                         </span>
@@ -168,7 +168,7 @@
                     </ng-template>
                     <ng-template ngx-datatable-cell-template let-value="value">
                         <div class="text-center">
-                            <a *ngIf="exercise.isAtLeastInstructor; else displayTextOnly" routerLink="/participation/{{ value.id }}/submissions">
+                            <a *ngIf="exercise.isAtLeastInstructor; else displayTextOnly" routerLink="../participations/{{ value.id }}/submissions">
                                 {{ value.submissionCount }}
                             </a>
                             <ng-template #displayTextOnly>
@@ -226,7 +226,10 @@
                     [width]="180"
                 >
                     <ng-template ngx-datatable-cell-template let-value="value">
-                        <button routerLink="/file-upload-exercise/{{ exercise.id }}/submission/{{ value.submission.id }}/assessment" class="btn btn-primary btn-sm mr-1">
+                        <button
+                            [routerLink]="['/course-management', exercise.course?.id, 'file-upload-exercises', exercise.id, 'submissions', value.submission.id, 'assessment']"
+                            class="btn btn-primary btn-sm mr-1"
+                        >
                             <fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>
                             {{ 'artemisApp.fileUploadSubmission.view' | translate }}
                         </button>
@@ -236,7 +239,7 @@
                 <ngx-datatable-column prop="" *ngIf="exercise.type === ExerciseType.MODELING && exercise.isAtLeastInstructor" [resizeable]="false" [minWidth]="180" [width]="180">
                     <ng-template ngx-datatable-cell-template let-value="value">
                         <button
-                            routerLink="/modeling-exercise/{{ exercise.id }}/submissions/{{ value.submission.id }}/assessment"
+                            [routerLink]="['/course-management', exercise.course?.id, 'modeling-exercises', exercise.id, 'submissions', value.submission.id, 'assessment']"
                             [queryParams]="{ optimal: false, hideBackButton: true }"
                             class="btn btn-primary btn-sm mr-1"
                         >
@@ -248,7 +251,10 @@
 
                 <ngx-datatable-column prop="" *ngIf="exercise.type === ExerciseType.TEXT && exercise.isAtLeastInstructor" [resizeable]="false" [minWidth]="180" [width]="180">
                     <ng-template ngx-datatable-cell-template let-value="value">
-                        <button routerLink="/text/{{ exercise.id }}/assessment/{{ value.submission.id }}" class="btn btn-primary btn-sm mr-1">
+                        <button
+                            [routerLink]="['/course-management', exercise.course?.id, 'text-exercises', exercise.id, 'submissions', value.submission.id, 'assessment']"
+                            class="btn btn-primary btn-sm mr-1"
+                        >
                             <fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>
                             {{ 'artemisApp.textSubmission.view' | translate }}
                         </button>

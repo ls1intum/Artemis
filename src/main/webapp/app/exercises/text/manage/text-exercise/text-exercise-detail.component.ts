@@ -30,7 +30,7 @@ export class TextExerciseDetailComponent implements OnInit, OnDestroy {
 
     ngOnInit() {
         this.subscription = this.route.params.subscribe(params => {
-            this.load(params['id']);
+            this.load(params['exerciseId']);
         });
         this.registerChangeInTextExercises();
     }

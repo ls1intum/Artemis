@@ -110,6 +110,7 @@ public class ProgrammingExerciseParticipationService {
      * @throws EntityNotFoundException if there is no participation for the given exercise and user.
      */
     @Transactional(readOnly = true)
+    @NotNull
     public ProgrammingExerciseStudentParticipation findStudentParticipationByExerciseIdAndStudentId(Long exerciseId, String username) throws EntityNotFoundException {
         Optional<ProgrammingExerciseStudentParticipation> participation = studentParticipationRepository.findByExerciseIdAndStudentLogin(exerciseId, username);
         if (participation.isEmpty()) {

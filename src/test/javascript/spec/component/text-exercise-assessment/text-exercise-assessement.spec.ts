@@ -8,27 +8,27 @@ import * as moment from 'moment';
 import { SinonStub, stub } from 'sinon';
 import { ArtemisTestModule } from '../../test.module';
 import { MockSyncStorage } from '../../mocks/mock-sync.storage';
-import { Result } from 'app/entities/result/result.model';
+import { Result } from 'app/entities/result.model';
 import { MockComponent } from 'ng-mocks';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { MockAlertService } from '../../helpers/mock-alert.service';
 import { AlertService } from 'app/core/alert/alert.service';
 import { Router, ActivatedRoute } from '@angular/router';
 import { of, throwError } from 'rxjs';
-import { TextAssessmentComponent } from 'app/exercises/text/assess/text-assessment/text-assessment.component';
-import { TextAssessmentEditorComponent } from 'app/exercises/text/assess/text-assessment/text-assessment-editor/text-assessment-editor.component';
-import { ResizableInstructionsComponent } from 'app/exercises/text/assess/text-assessment/resizable-instructions/resizable-instructions.component';
+import { TextAssessmentComponent } from 'app/exercises/text/assess/text-assessment.component';
+import { TextAssessmentEditorComponent } from 'app/exercises/text/assess/text-assessment-editor/text-assessment-editor.component';
+import { ResizableInstructionsComponent } from 'app/exercises/text/assess/resizable-instructions/resizable-instructions.component';
 import { AssessmentDetailComponent } from 'app/assessment/assessment-detail/assessment-detail.component';
 import { DebugElement } from '@angular/core';
 import { By } from '@angular/platform-browser';
 import { MockAccountService } from '../../mocks/mock-account.service';
 import { Location } from '@angular/common';
-import { textAssessmentRoutes } from 'app/exercises/text/assess/text-assessment/text-assessment.route';
+import { textAssessmentRoutes } from 'app/exercises/text/assess/text-assessment.route';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { ComplaintService } from 'app/complaints/complaint.service';
 import { MockComplaintService } from '../../mocks/mock-complaint.service';
 import { TranslateModule } from '@ngx-translate/core';
-import { TextSubmissionService } from 'app/exercises/text/participate/text-submission/text-submission.service';
+import { TextSubmissionService } from 'app/exercises/text/participate/text-submission.service';
 import { ComplaintsForTutorComponent } from 'app/complaints/complaints-for-tutor/complaints-for-tutor.component';
 import { ResultComponent } from 'app/shared/result/result.component';
 import { SubmissionExerciseType, SubmissionType } from 'app/entities/submission.model';
@@ -115,16 +115,15 @@ describe('TextAssessmentComponent', () => {
                 submissionDate: moment('2019-07-09T10:47:33.244Z'),
                 text: 'asdfasdfasdfasdf',
             } as TextSubmission;
-            comp.result = {
-                id: 2374,
-                resultString: '1 of 12 points',
-                completionDate: moment('2019-07-09T11:51:23.251Z'),
-                successful: false,
-                score: 8,
-                rated: true,
-                hasFeedback: false,
-                submission: comp.submission,
-            };
+            comp.result = new Result();
+            comp.result.id = 2374;
+            comp.result.resultString = '1 of 12 points';
+            comp.result.completionDate = moment('2019-07-09T11:51:23.251Z');
+            comp.result.successful = false;
+            comp.result.score = 8;
+            comp.result.rated = true;
+            comp.result.hasFeedback = false;
+            comp.result.submission = comp.submission;
             comp.isAssessor = true;
             comp.isAtLeastInstructor = true;
             comp.assessmentsAreValid = true;
@@ -144,7 +143,9 @@ describe('TextAssessmentComponent', () => {
 
             // check if the url changes when you clicked on assessNextAssessmentButton
             tick();
-            expect(location.path()).to.be.equal('/text/' + comp.exercise.id + '/assessment/' + comp.unassessedSubmission.id);
+            expect(location.path()).to.be.equal(
+                `/course-management/${comp.exercise.course?.id}/text-exercises/${comp.exercise.id}/submissions/${comp.unassessedSubmission.id}/assessment`,
+            );
 
             fixture.destroy();
             flush();

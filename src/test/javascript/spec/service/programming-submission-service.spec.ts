@@ -12,7 +12,7 @@ import {
     ProgrammingSubmissionService,
     ProgrammingSubmissionState,
     ProgrammingSubmissionStateObj,
-} from 'app/exercises/programming/participate/programming-submission/programming-submission.service';
+} from 'app/exercises/programming/participate/programming-submission.service';
 import { IParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import { MockAlertService } from '../mocks/mock-alert.service';
 import { Result } from 'app/entities/result.model';

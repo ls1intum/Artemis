@@ -4,7 +4,7 @@ import * as sinonChai from 'sinon-chai';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { DebugElement } from '@angular/core';
 import { OrionConnectorService } from 'app/shared/orion/orion-connector.service';
-import { CourseExerciseService } from 'app/course/manage/course.service';
+import { CourseExerciseService } from 'app/course/manage/course-management.service';
 import { SinonSpy, SinonStub, spy, stub } from 'sinon';
 import { TranslateModule } from '@ngx-translate/core';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';

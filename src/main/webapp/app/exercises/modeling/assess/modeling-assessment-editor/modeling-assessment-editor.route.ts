@@ -1,12 +1,13 @@
-import { Routes } from '@angular/router';
+import { NgModule } from '@angular/core';
+import { RouterModule, Routes } from '@angular/router';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { ModelingAssessmentEditorComponent } from 'app/exercises/modeling/assess/modeling-assessment-editor/modeling-assessment-editor.component';
-import { ModelingAssessmentConflictComponent } from 'app/exercises/modeling/assess/modeling-assessment-editor/modeling-assessment-conflict/modeling-assessment-conflict.component';
-import { ModelingAssessmentDashboardComponent } from 'app/exercises/modeling/assess/modeling-assessment-editor/modeling-assessment-dashboard/modeling-assessment-dashboard.component';
+import { ModelingAssessmentDashboardComponent } from 'app/exercises/modeling/assess/modeling-assessment-editor/modeling-assessment-dashboard.component';
+import { ModelingAssessmentConflictComponent } from 'app/exercises/modeling/assess/modeling-assessment-editor/modeling-assessment-conflict.component';
 
-export const modelingAssessmentRoutes: Routes = [
+const routes: Routes = [
     {
-        path: 'modeling-exercise/:exerciseId/submissions/:submissionId/assessment',
+        path: 'course-management/:courseId/modeling-exercises/:exerciseId/submissions/:submissionId/assessment',
         component: ModelingAssessmentEditorComponent,
         data: {
             authorities: ['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'],
@@ -15,7 +16,7 @@ export const modelingAssessmentRoutes: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
-        path: 'modeling-exercise/:exerciseId/submissions/:submissionId/assessment/conflict',
+        path: 'course-management/:courseId/modeling-exercises/:exerciseId/submissions/:submissionId/assessment/conflict',
         component: ModelingAssessmentConflictComponent,
         data: {
             authorities: ['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'],
@@ -24,7 +25,7 @@ export const modelingAssessmentRoutes: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
-        path: 'course/:courseId/exercise/:exerciseId/assessment',
+        path: 'course-management/:courseId/modeling-exercises/:exerciseId/assessment',
         component: ModelingAssessmentDashboardComponent,
         data: {
             authorities: ['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'],
@@ -33,3 +34,9 @@ export const modelingAssessmentRoutes: Routes = [
         canActivate: [UserRouteAccessService],
     },
 ];
+
+@NgModule({
+    imports: [RouterModule.forChild(routes)],
+    exports: [RouterModule],
+})
+export class ArtemisModelingAssessmentEditorRoutingModule {}
