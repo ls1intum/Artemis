@@ -56,9 +56,9 @@ export class ProfileService {
     }
 
     private mapAllowedOrionVersions(data: any, profileInfo: ProfileInfo) {
-        const orionVersions = data['orion-versions'];
+        const orionVersions = data['allowed-orion-versions'];
         if (orionVersions) {
-            profileInfo.allowedOrionVersions = orionVersions;
+            profileInfo.allowedOrionVersionRange = orionVersions;
         }
     }
 

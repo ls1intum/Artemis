@@ -12,5 +12,5 @@ export class ProfileInfo {
     buildPlanURLTemplate: string;
     imprint: string;
     contact: string;
-    allowedOrionVersions: AllowedOrionVersionRange;
+    allowedOrionVersionRange: AllowedOrionVersionRange;
 }

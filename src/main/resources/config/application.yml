@@ -151,6 +151,12 @@ info:
     display-ribbon-on-profiles: "dev"
     sentry:
         dsn: https://8c6b41ec2d4245e8bd3ec9541d53f625@sentry.io/1440029
+    # Allowed Orion version range. Should only be changed on major version releases
+    allowed-orion-versions:
+        # Inclusive
+        from: 1.0.0
+        # Exclusive
+        to: 2.0.0
 
 # ===================================================================
 # JHipster specific properties

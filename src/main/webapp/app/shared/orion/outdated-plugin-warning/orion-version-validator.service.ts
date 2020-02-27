@@ -5,11 +5,17 @@ import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { Router } from '@angular/router';
 import { filter, first, map } from 'rxjs/operators';
 import { compare } from 'compare-versions';
-import { BehaviorSubject, Observable, of } from 'rxjs';
+import { Observable, of, Subject } from 'rxjs';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 
 export type AllowedOrionVersionRange = {
+    /**
+     * Inclusive
+     */
     from: string;
+    /**
+     * Exclusive
+     */
     to: string;
 };
 
@@ -30,7 +36,7 @@ export class OrionVersionValidator {
      * Otherwise, checks the loaded profile, which includes the allowed version range and automatically routes
      * to an error page if the installed version is incompatible.
      */
-    validateOrionVersion(): Observable<boolean | undefined> {
+    validateOrionVersion(): Observable<boolean> {
         if (this.isOrion) {
             return this.validate();
         } else {
@@ -38,7 +44,7 @@ export class OrionVersionValidator {
         }
     }
 
-    private validate(): Observable<boolean | undefined> {
+    private validate(): Observable<boolean> {
         if (this.isValidVersion !== undefined) {
             return of(this.isValidVersion);
         }
@@ -55,16 +61,16 @@ export class OrionVersionValidator {
         }
     }
 
-    private fetchProfileInfoAndCompareVersions(usedVersion: string): Observable<boolean | undefined> {
-        const validationSubject = new BehaviorSubject<boolean | undefined>(undefined);
+    private fetchProfileInfoAndCompareVersions(usedVersion: string): Observable<boolean> {
+        const validationSubject = new Subject<boolean>();
         this.profileService
             .getProfileInfo()
             .pipe(
                 filter(Boolean),
                 first(),
                 map((info: ProfileInfo) => {
-                    this.minVersion = info.allowedOrionVersions.from;
-                    this.maxVersion = info.allowedOrionVersions.to;
+                    this.minVersion = info.allowedOrionVersionRange.from;
+                    this.maxVersion = info.allowedOrionVersionRange.to;
                     this.isValidVersion = this.versionInBounds(usedVersion);
                     return this.isValidVersion;
                 }),
@@ -82,7 +88,7 @@ export class OrionVersionValidator {
     }
 
     private versionInBounds(usedVersion: string): boolean {
-        if (!(compare(usedVersion, this.minVersion, '>=') && compare(usedVersion, this.maxVersion, '<='))) {
+        if (!(compare(usedVersion, this.minVersion, '>=') && compare(usedVersion, this.maxVersion, '<'))) {
             this.router.navigateByUrl(`/orionOutdated?versionString=${usedVersion}`);
             return false;
         }

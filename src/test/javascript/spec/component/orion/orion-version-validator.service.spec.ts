@@ -23,7 +23,7 @@ describe('OrionValidatorService', () => {
     let navigateSpy: SinonSpy;
 
     const allowedVersion = { from: '1.0.0', to: '1.1.0' } as AllowedOrionVersionRange;
-    const profileInfo = { allowedOrionVersions: allowedVersion } as ProfileInfo;
+    const profileInfo = { allowedMajorOrionVersion: allowedVersion } as ProfileInfo;
     const userAgent = 'Some user agent ';
     const versionTooLow = 'Orion/0.9.0';
     const versionTooHigh = 'Orion/1.1.1';
