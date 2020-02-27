@@ -507,8 +507,20 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationTest 
         quizEx = exerciseRepo.save(quizEx);
         var participation = database.addParticipationForExercise(quizEx, "student1");
         var submission = database.addSubmission(participation, new QuizSubmission().scoreInPoints(11D).submitted(true), "student1");
-        var result = database.addResultToParticipation(participation, submission);
+        database.addResultToParticipation(participation, submission);
         var actualParticipation = request.get("/api/exercises/" + quizEx.getId() + "/participation", HttpStatus.OK, StudentParticipation.class);
         assertThat(actualParticipation).isEqualTo(participation);
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void getParticipation_noParticipation() throws Exception {
+        request.get("/api/exercises/" + textExercise.getId() + "/participation", HttpStatus.FAILED_DEPENDENCY, StudentParticipation.class);
+    }
+
+    @Test
+    @WithMockUser(username = "student3", roles = "USER")
+    public void getParticipation_notStudentInCourse() throws Exception {
+        request.get("/api/exercises/" + textExercise.getId() + "/participation", HttpStatus.FORBIDDEN, StudentParticipation.class);
     }
 }
