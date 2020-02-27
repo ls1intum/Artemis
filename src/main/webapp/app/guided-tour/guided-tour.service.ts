@@ -390,15 +390,19 @@ export class GuidedTourService {
      * Skip current guided tour after updating the guided tour settings in the database and calling the reset tour method to remove current tour elements.
      */
     public skipTour(): void {
-        if (this.currentTour) {
-            if (this.currentTour.skipCallback) {
-                this.currentTour.skipCallback(this.currentTourStepIndex);
-            }
+        if (!this.currentTour) {
+            return;
         }
+
+        if (this.currentTour.skipCallback) {
+            this.currentTour.skipCallback(this.currentTourStepIndex);
+        }
+
         if (this.currentTour === cancelTour || this.currentTour === completedTour) {
             this.resetTour();
             return;
         }
+
         if (this.currentTourStepIndex + 1 === this.getFilteredTourSteps().length) {
             this.finishGuidedTour();
         } else {

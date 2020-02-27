@@ -46,14 +46,14 @@ export const courseExerciseOverviewTour: GuidedTour = {
             orientation: Orientation.TOP,
         }),
         new TextTourStep({
-            highlightSelector: '.guided-tour .exercise-row-icon',
+            highlightSelector: '.row.guided-tour .exercise-row-icon',
             headlineTranslateKey: 'tour.courseExerciseOverview.exerciseType.headline',
             contentTranslateKey: 'tour.courseExerciseOverview.exerciseType.content',
             highlightPadding: 10,
             orientation: Orientation.TOPLEFT,
         }),
         new TextTourStep({
-            highlightSelector: '.guided-tour .exercise-tags',
+            highlightSelector: '.row.guided-tour .exercise-tags',
             headlineTranslateKey: 'tour.courseExerciseOverview.exerciseTags.headline',
             contentTranslateKey: 'tour.courseExerciseOverview.exerciseTags.content',
             highlightPadding: 10,
@@ -74,7 +74,7 @@ export const courseExerciseOverviewTour: GuidedTour = {
             orientation: Orientation.LEFT,
         }),
         new UserInterActionTourStep({
-            highlightSelector: '.guided-tour .start-exercise div',
+            highlightSelector: '.row.guided-tour .start-exercise div',
             headlineTranslateKey: 'tour.courseExerciseOverview.startExercise.headline',
             contentTranslateKey: 'tour.courseExerciseOverview.startExercise.content',
             highlightPadding: 15,
