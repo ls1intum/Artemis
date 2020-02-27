@@ -15,7 +15,7 @@ class FakeLoader implements TranslateLoader {
 }
 
 @Pipe({
-    name: 'translate'
+    name: 'translate',
 })
 export class TranslatePipeMock implements PipeTransform {
     public name = 'translate';
@@ -33,9 +33,7 @@ export class TranslateServiceStub {
 }
 
 @NgModule({
-    declarations: [
-        TranslatePipeMock
-    ],
+    declarations: [TranslatePipeMock],
     providers: [
         { provide: TranslateService, useClass: TranslateServiceStub },
         { provide: TranslatePipe, useClass: TranslatePipeMock },
@@ -43,13 +41,8 @@ export class TranslateServiceStub {
     imports: [
         TranslateModule.forRoot({
             loader: { provide: TranslateLoader, useClass: FakeLoader },
-        })
+        }),
     ],
-    exports: [
-        TranslatePipeMock,
-        TranslateModule
-    ]
+    exports: [TranslatePipeMock, TranslateModule],
 })
-export class TranslateTestingModule {
-
-}
+export class TranslateTestingModule {}

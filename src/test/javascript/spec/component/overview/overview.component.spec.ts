@@ -1,12 +1,11 @@
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
-import { ComponentFixture, TestBed, tick, inject, fakeAsync } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { Router } from '@angular/router';
 import { of } from 'rxjs';
 import { CookieService } from 'ngx-cookie-service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { ArtemisTestModule } from '../../test.module';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { GuidedTourComponent } from 'app/guided-tour/guided-tour.component';
@@ -19,34 +18,50 @@ import { RouterTestingModule } from '@angular/router/testing';
 import { courseOverviewTour } from 'app/guided-tour/tours/course-overview-tour';
 import { CourseExerciseService } from 'app/course/manage/course-management.service';
 import { CoursesComponent } from 'app/overview/courses.component';
-import { ArtemisCoursesModule } from 'app/overview/courses.module';
 import { TranslateTestingModule } from '../../mocks/mock-translate.service';
 import { NavbarComponent } from 'app/shared/layouts/navbar/navbar.component';
 import { ActiveMenuDirective } from 'app/shared/layouts/navbar/active-menu.directive';
 import { NotificationContainerComponent } from 'app/shared/layouts/notification-container/notification-container.component';
+import { User } from 'app/core/user/user.model';
+import { MockHasAnyAuthorityDirective } from '../../mocks/mock-has-any-authority.directive';
+import { ArtemisSharedPipesModule } from 'app/shared/pipes/shared-pipes.module';
+import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
+import { CourseCardComponent } from 'app/overview/course-card.component';
+import { Course } from 'app/entities/course.model';
+import { ARTEMIS_DEFAULT_COLOR } from 'app/app.constants';
+import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
+import { FooterComponent } from 'app/shared/layouts/footer/footer.component';
+import { ArtemisCoursesModule } from 'app/overview/courses.module';
 
 chai.use(sinonChai);
 const expect = chai.expect;
 
 describe('Courses Component', () => {
+    const user = { id: 1 } as User;
+    const course = { id: 1, color: ARTEMIS_DEFAULT_COLOR } as Course;
+
     describe('Guided Tour', () => {
         let guidedTourComponent: GuidedTourComponent;
         let guidedTourComponentFixture: ComponentFixture<GuidedTourComponent>;
         let navBarComponent: NavbarComponent;
         let navBarComponentFixture: ComponentFixture<NavbarComponent>;
-        let courseComponent: CoursesComponent;
-        let courseComponentFixture: ComponentFixture<CoursesComponent>;
+        let courseCardComponent: CourseCardComponent;
+        let courseCardComponentFixture: ComponentFixture<CourseCardComponent>;
+        let footerComponent: FooterComponent;
+        let footerComponentFixture: ComponentFixture<FooterComponent>;
 
         let guidedTourService: GuidedTourService;
         let courseExerciseService: CourseExerciseService;
+        let exerciseService: ExerciseService;
         let router: Router;
 
         beforeEach(() => {
             TestBed.configureTestingModule({
                 imports: [
-                    ArtemisTestModule,
-                    ArtemisSharedModule,
                     ArtemisCoursesModule,
+                    ArtemisSharedCommonModule,
+                    ArtemisSharedPipesModule,
+                    ArtemisTestModule,
                     TranslateTestingModule,
                     RouterTestingModule.withRoutes([
                         {
@@ -55,33 +70,39 @@ describe('Courses Component', () => {
                         },
                     ]),
                 ],
-                declarations: [ GuidedTourComponent, NavbarComponent, ActiveMenuDirective, NotificationContainerComponent ],
+                declarations: [GuidedTourComponent, NavbarComponent, NotificationContainerComponent, FooterComponent, ActiveMenuDirective, MockHasAnyAuthorityDirective],
                 providers: [
                     { provide: AccountService, useClass: MockAccountService },
                     { provide: CookieService, useClass: MockCookieService },
                     { provide: DeviceDetectorService },
                     { provide: LocalStorageService, useClass: MockSyncStorage },
-                    { provide: SessionStorageService, useClass: MockSyncStorage }
+                    { provide: SessionStorageService, useClass: MockSyncStorage },
                 ],
             })
                 .overrideModule(ArtemisTestModule, { set: { declarations: [], exports: [] } })
                 .compileComponents()
                 .then(() => {
                     guidedTourComponentFixture = TestBed.createComponent(GuidedTourComponent);
-                    guidedTourComponent = guidedTourComponentFixture.componentInstance;
-
-                    courseComponentFixture = TestBed.createComponent(CoursesComponent);
-                    courseComponent = courseComponentFixture.componentInstance;
-
+                    courseCardComponentFixture = TestBed.createComponent(CourseCardComponent);
                     navBarComponentFixture = TestBed.createComponent(NavbarComponent);
+                    footerComponentFixture = TestBed.createComponent(FooterComponent);
+
+                    guidedTourComponent = guidedTourComponentFixture.componentInstance;
                     navBarComponent = navBarComponentFixture.componentInstance;
+                    courseCardComponent = courseCardComponentFixture.componentInstance;
+                    footerComponent = footerComponentFixture.componentInstance;
 
                     router = TestBed.inject(Router);
                     guidedTourService = TestBed.inject(GuidedTourService);
                     courseExerciseService = TestBed.inject(CourseExerciseService);
+                    exerciseService = TestBed.inject(ExerciseService);
 
-                    spyOn(navBarComponent, 'ngOnInit').and.callFake(() => { });
+                    spyOn(courseCardComponent, 'displayTotalRelativeScore').and.returnValue(of());
+                    spyOn(navBarComponentFixture.componentInstance, 'ngOnInit').and.callFake(() => {
+                        navBarComponent.currAccount = user;
+                    });
 
+                    spyOn(exerciseService, 'getNextExerciseForDays').and.returnValue(of());
                     spyOn(guidedTourService, 'init').and.returnValue(of());
                     spyOn<any>(guidedTourService, 'updateGuidedTourSettings').and.returnValue(of());
 
@@ -92,16 +113,11 @@ describe('Courses Component', () => {
                         guidedTourService['availableTourForComponent'] = courseOverviewTour;
                         guidedTourService.currentTour = courseOverviewTour;
                     });
-
                 });
         });
 
         async function startGuidedTour() {
-            guidedTourComponent.ngAfterViewInit();
-
-            await guidedTourComponentFixture.ngZone!.run(() => {
-                router.navigateByUrl('/courses');
-            });
+            guidedTourComponentFixture.componentInstance.ngAfterViewInit();
 
             // Start course overview tour
             guidedTourService['enableTour'](courseOverviewTour, true);
@@ -114,31 +130,56 @@ describe('Courses Component', () => {
         describe('Course Overview Tour', () => {
             beforeEach(async () => {
                 await startGuidedTour();
+
+                courseCardComponent.course = course;
+                courseCardComponent.hasGuidedTour = true;
             });
 
             it('should start the course overview guided tour', () => {
                 window.scrollTo = () => {};
 
+                const guidedTourSteps = guidedTourService['getFilteredTourSteps']().length;
+                guidedTourComponentFixture.autoDetectChanges(true);
+                courseCardComponentFixture.autoDetectChanges(true);
+                navBarComponentFixture.autoDetectChanges(true);
+
                 expect(guidedTourService.isOnFirstStep).to.be.true;
-                expect(guidedTourService['getFilteredTourSteps']().length).to.equal(9);
+                expect(guidedTourSteps).to.equal(9);
 
-                // Navigate to next step
-                const hintText = guidedTourComponentFixture.debugElement.query(By.css('.step-hint.alert-success'));
-                const nextButton = guidedTourComponentFixture.debugElement.query(By.css('.next-button'));
-                nextButton.nativeElement.click();
-                expect(guidedTourService.isOnFirstStep).to.be.false;
+                // Click through tour steps in NavComponent
+                for (let i = 1; i < 6; i++) {
+                    guidedTourService.nextStep();
+                    expect(guidedTourService.isOnFirstStep).to.be.false;
+                    guidedTourComponent.currentTourStep = guidedTourService.currentStep;
 
-                guidedTourComponentFixture.detectChanges();
-                courseComponentFixture.detectChanges();
-                navBarComponentFixture.detectChanges();
-
-                // Click through tour steps
-                for (let i = 2; i < 9; i++) {
-                    nextButton.nativeElement.click();
-                    guidedTourComponentFixture.detectChanges();
-                    courseComponentFixture.detectChanges();
-                    navBarComponentFixture.detectChanges();
+                    if (guidedTourComponent.currentTourStep.highlightSelector) {
+                        const selectedElement = navBarComponentFixture.debugElement.query(By.css(guidedTourComponent.currentTourStep.highlightSelector));
+                        expect(selectedElement).to.exist;
+                    }
                 }
+
+                // Click through tour steps in CourseCardComponent
+                for (let i = 6; i < 8; i++) {
+                    guidedTourService.nextStep();
+                    guidedTourComponent.currentTourStep = guidedTourService.currentStep;
+
+                    if (guidedTourComponent.currentTourStep.highlightSelector) {
+                        const selectedElement = courseCardComponentFixture.debugElement.query(By.css(guidedTourComponent.currentTourStep.highlightSelector));
+                        expect(selectedElement).to.exist;
+                    }
+                }
+
+                // Click through tour steps in CourseCardComponent
+                for (let i = 8; i < guidedTourSteps; i++) {
+                    guidedTourService.nextStep();
+                    guidedTourComponent.currentTourStep = guidedTourService.currentStep;
+
+                    if (guidedTourComponent.currentTourStep.highlightSelector) {
+                        const selectedElement = footerComponentFixture.debugElement.query(By.css(guidedTourComponent.currentTourStep.highlightSelector));
+                        expect(selectedElement).to.exist;
+                    }
+                }
+
                 expect(guidedTourService.isOnLastStep).to.be.true;
             });
         });
