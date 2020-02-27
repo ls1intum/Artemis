@@ -169,7 +169,7 @@ describe('Courses Component', () => {
                     }
                 }
 
-                // Click through tour steps in CourseCardComponent
+                // Click through tour steps in FooterComponent
                 for (let i = 8; i < guidedTourSteps; i++) {
                     guidedTourService.nextStep();
                     guidedTourComponent.currentTourStep = guidedTourService.currentStep;
