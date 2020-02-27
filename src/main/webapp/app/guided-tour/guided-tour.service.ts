@@ -480,7 +480,7 @@ export class GuidedTourService {
      * Get the last step that the user visited during the given tour
      */
     public getLastSeenTourStepIndex(): number {
-        if (!this.availableTourForComponent) {
+        if (!this.availableTourForComponent || !this.guidedTourSettings) {
             return 0;
         }
         const tourSettings = this.guidedTourSettings.filter(setting => setting.guidedTourKey === this.availableTourForComponent!.settingsKey);

@@ -45,15 +45,6 @@ export const courseOverviewTour: GuidedTour = {
             orientation: Orientation.BOTTOMRIGHT,
             highlightPadding: 10,
         }),
-        new UserInterActionTourStep({
-            highlightSelector: '.guided-tour-account',
-            headlineTranslateKey: 'tour.courseOverview.accountMenuClick.headline',
-            contentTranslateKey: 'tour.courseOverview.accountMenuClick.content',
-            orientation: Orientation.BOTTOMRIGHT,
-            highlightPadding: 10,
-            userInteractionEvent: UserInteractionEvent.CLICK,
-            disableStep: true,
-        }),
         new TextTourStep({
             highlightSelector: '.guided-tour-account',
             headlineTranslateKey: 'tour.courseOverview.accountMenu.headline',
