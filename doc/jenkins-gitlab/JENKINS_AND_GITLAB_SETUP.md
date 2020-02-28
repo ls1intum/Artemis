@@ -8,7 +8,7 @@ If you have one single server, or your own NGINX instance, just skip all NGINX r
 
 1. [GitLab](#gitlab)
 2. [Jenkins](#jenkins)
-3. [Separate NIGNX Configurations](#separate-nginx-configurations)
+3. [Separate NGINX Configurations](#separate-nginx-configurations)
 
 ## GitLab
 1. Pull the latest GitLab Docker image
