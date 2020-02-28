@@ -120,8 +120,40 @@ Go to _Credentials → Jenkins → Global credentials_ and create the following 
 #### GitLab API Token
 1. Login to GitLab using the Artemis admin account and go to the profile settings (upper right corned → _Settings_)
 
-   <details><summary>Screenshot</summary>
-   ![](gitlab_setting_button.png)
-   </details>
+    <details><summary>Screenshot</summary>
+   
+    ![](gitlab_setting_button.png)
+   
+    </details>
 
 2. Go to _Access Tokens_
+
+    <details><summary>Screenshot</summary>
+   
+    ![](gitlab_access_tokens_button.png)
+   
+    </details>
+3. Create a new token named "Jenkins" and give it **api** rights and **read_repository** rights.
+
+    <details><summary>Screenshot</summary>
+    
+    ![](gitlab_jenkins_token_rights.png)
+    
+    </details>
+
+4. Copy the generated token and create new Jenkins credentials:\
+    a. **Kind**: GitLab API token\
+    b. **API token**: _your.copied.token_\
+    c. Leave the ID field blank\
+    d. The description is up to you
+    
+5. Go to the Jenkins settings _Manage Jenkins → Configure System_. 
+There you will find the GitLab settings.
+Fill in the url of your GitLab instance and select the just created API token in the credentials dropdown. 
+After you click on "Test Connection", everything should work fine.
+
+    <details><summary>Screenshot</summary>
+    
+    ![](jenkins_gitlab_configuration.png)
+    
+    </details>
