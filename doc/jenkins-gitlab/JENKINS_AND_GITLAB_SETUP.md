@@ -1,7 +1,7 @@
 # Setup for Programming Exercises with Jenkins and GitLab
 
 This page describes how to set up a programming exercise environment based on Jenkins and GitLab. 
-Optional commands, partially optional commands are in curly brackets <code>{}</code>.
+Optional commands are in curly brackets <code>{}</code>.
 
 <b>The following assumes that all instances run on separate servers. 
 If you have one single server, or your own NGINX instance, just skip all NGINX related steps and use the configurations provided under _Separate NGINX Configurations_</b>
