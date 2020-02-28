@@ -16,7 +16,7 @@
                 <dt><span jhiTranslate="artemisApp.exerciseHint.exercise">Exercise</span></dt>
                 <dd>
                     <div *ngIf="exerciseHint.exercise">
-                        <a routerLink="../../../view">{{ exerciseHint.exercise?.id }}</a>
+                        <a [routerLink]="['/course-management', courseId, exerciseHint.exercise.type + '-exercises', exerciseId]">{{ exerciseHint.exercise?.id }}</a>
                     </div>
                 </dd>
             </dl>
