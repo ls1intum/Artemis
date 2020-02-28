@@ -40,10 +40,8 @@ Use the same password in the Artemis configuration file _application-prod.yml_
 5. **If you run your own NGINX, then skip the next steps (6-7)**
 
 6. Create the SSL directory in the GitLab Docker image, where you will store the certificate and key of your server and copy the certificate (fullchain) and key
-mkdir -p /etc/gitlab/ssl
 
-        docker exec -it gitlab /bin/bash
-        exit
+        docker exec gitlab mkdir -p /etc/gitlab/ssl
         docker cp path.to.your.fullchain.cert gitlab:/etc/gitlab/ssl/your.gitlab.domain.crt
         docker cp path.to.your.key gitlab:/etc/gitlab/ssl/your.gitlab.domain.key
         
