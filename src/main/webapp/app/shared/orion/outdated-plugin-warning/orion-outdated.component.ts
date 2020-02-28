@@ -13,13 +13,13 @@ import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
             >!
         </div>
         <div>
-            {{ 'artemisApp.orion.version.allowedVersion' | translate }}<span class="badge badge-pill badge-info">{{ allowedVersionStart }}</span>
+            {{ 'artemisApp.orion.version.allowedVersion' | translate }}<span class="badge badge-pill badge-info">{{ allowedMinimumVersion }}</span>
         </div>
     `,
 })
 export class OrionOutdatedComponent implements OnInit {
     versionString: string;
-    allowedVersionStart: string;
+    allowedMinimumVersion: string;
 
     constructor(private activatedRoute: ActivatedRoute, private profileService: ProfileService) {}
 
@@ -31,7 +31,7 @@ export class OrionOutdatedComponent implements OnInit {
                 .pipe(
                     filter(Boolean),
                     tap((info: ProfileInfo) => {
-                        this.allowedVersionStart = info.allowedOrionVersionRange.from;
+                        this.allowedMinimumVersion = info.allowedMinimumOrionVersion;
                     }),
                 )
                 .subscribe();

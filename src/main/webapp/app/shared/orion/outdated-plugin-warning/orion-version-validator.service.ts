@@ -25,7 +25,6 @@ export type AllowedOrionVersionRange = {
 export class OrionVersionValidator {
     isOrion = isOrion;
     private minVersion: string;
-    private maxVersion: string;
     private isValidVersion: boolean;
 
     constructor(private profileService: ProfileService, private window: WindowRef, private router: Router) {}
@@ -55,7 +54,7 @@ export class OrionVersionValidator {
             const usedVersion = orionVersionArray[1];
             return this.fetchProfileInfoAndCompareVersions(usedVersion);
         } else {
-            this.router.navigateByUrl(`/orionOutdated?versionString=soOldThatThereIsNoVersion`);
+            this.router.navigateByUrl(`/orion-outdated?versionString=soOldThatThereIsNoVersion`);
             this.isValidVersion = false;
             return of(this.isValidVersion);
         }
@@ -66,8 +65,7 @@ export class OrionVersionValidator {
             filter(Boolean),
             first(),
             map((info: ProfileInfo) => {
-                this.minVersion = info.allowedOrionVersionRange.from;
-                this.maxVersion = info.allowedOrionVersionRange.to;
+                this.minVersion = info.allowedMinimumOrionVersion;
                 this.isValidVersion = this.versionInBounds(usedVersion);
                 return this.isValidVersion;
             }),
@@ -82,8 +80,8 @@ export class OrionVersionValidator {
     }
 
     private versionInBounds(usedVersion: string): boolean {
-        if (!(compare(usedVersion, this.minVersion, '>=') && compare(usedVersion, this.maxVersion, '<'))) {
-            this.router.navigateByUrl(`/orionOutdated?versionString=${usedVersion}`);
+        if (!compare(usedVersion, this.minVersion, '>=')) {
+            this.router.navigateByUrl(`/orion-outdated?versionString=${usedVersion}`);
             return false;
         }
         return true;

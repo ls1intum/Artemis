@@ -62,6 +62,8 @@ info:
             -   programming_exercise_fail_tour: 'test'
             -   programming_exercise_success_tour: 'test'
             -   tutor_assessment_tour: 'Patterns in Software Engineering'
+    # Allowed Orion version range. Should only be changed on major version releases
+    allowed-minimum-orion-version: 1.0.0
 
 jhipster:
     clientApp:
