@@ -5,7 +5,7 @@ import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { Router } from '@angular/router';
 import { filter, first, map } from 'rxjs/operators';
 import { compare } from 'compare-versions';
-import { Observable, of, Subject } from 'rxjs';
+import { Observable, of } from 'rxjs';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 
 export type AllowedOrionVersionRange = {
@@ -62,22 +62,16 @@ export class OrionVersionValidator {
     }
 
     private fetchProfileInfoAndCompareVersions(usedVersion: string): Observable<boolean> {
-        const validationSubject = new Subject<boolean>();
-        this.profileService
-            .getProfileInfo()
-            .pipe(
-                filter(Boolean),
-                first(),
-                map((info: ProfileInfo) => {
-                    this.minVersion = info.allowedOrionVersionRange.from;
-                    this.maxVersion = info.allowedOrionVersionRange.to;
-                    this.isValidVersion = this.versionInBounds(usedVersion);
-                    return this.isValidVersion;
-                }),
-            )
-            .subscribe(valid => validationSubject.next(valid));
-
-        return validationSubject;
+        return this.profileService.getProfileInfo().pipe(
+            filter(Boolean),
+            first(),
+            map((info: ProfileInfo) => {
+                this.minVersion = info.allowedOrionVersionRange.from;
+                this.maxVersion = info.allowedOrionVersionRange.to;
+                this.isValidVersion = this.versionInBounds(usedVersion);
+                return this.isValidVersion;
+            }),
+        );
     }
 
     private extractVersionFromUserAgent(userAgent: string): string[] {
