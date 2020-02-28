@@ -8,6 +8,7 @@ If you have one single server, or your own NGINX instance, just skip all NGINX r
 
 1. [GitLab](#gitlab)
 2. [Jenkins](#jenkins)
+3. [Separate NIGNX Configurations](#separate-nginx-configurations)
 
 ## GitLab
 1. Pull the latest GitLab Docker image
@@ -157,3 +158,168 @@ After you click on "Test Connection", everything should work fine.
     ![](jenkins_gitlab_configuration.png)
     
     </details>
+
+6. Copy the ID of the API token and put it into the Artemis configuration _application-prod.yml_:
+
+        artemis:
+            continuous-integration:
+                vcs-credentials: the.id.of.the.gitlab.api.token.credential
+                
+    <details><summary>Where to find the ID</summary>
+    
+    ![](jeknins_credentials_overview.png)
+    ![](jenkins_credential_single_select.png)
+    ![](jenkins_credential_details.png)
+    
+    </details>
+
+#### Server Notification Token
+1. Create a new Jenkins credential containing the token, which gets send by the server notification plugin to Artemis with every build result:\
+    a. **Kind**: Secret text\
+    b. **Secret**: _your.secret_token_value_ (choose any value you want, copy it for the nex step)
+    c. Leave the ID field blank
+    d. The description is up to you
+
+2. Copy the generated ID of the new credentials and put it into the Artemis configuration _application-prod.yml_
+
+        artemis:
+            continuous-integration:
+                artemis-authentication-token-key: the.id.of.the.notification.token.credential
+                
+3. Copy the actual value you chose for the token and put it into the Artemis configuration _application-prod.yml_
+
+        artemis:
+            continuous-integration:
+                artemis-authentication-token-value: the.actual.value.of.the.notification.token
+    
+#### GitLab Repository Access
+1. Create a new Jenkins credentials containing the username and password of the GitLab administrator account:\
+    a. **Kind**: Username with password\
+    b. **Username**: _the_username_you_chose_for_the_gitlab_admin_user_\
+    c. **Password**: _the_password_you_chose_for_the_gitlab_admin_user_\
+    d. Leave the ID field blank\
+    e. The description is up to you
+
+2. Copy the generated ID of the new credentials and put it into the Artemis configuration file _application-prod.yml_
+
+        artemis:
+            continuous-integration:
+                vcs-credentials: the.id.of.the.username.and.password.credentials.from.jenkins
+                
+### GitLab to Jenkins push notification token
+GitLab has to notify Jenkins build plans if there are any new commits to the repository. 
+The push notification that gets sent here is secured by a by Jenkins generated token. 
+In order to get this token, you have to do the following steps:
+
+1. Create a new project in Jenkins (use the Freestyle project type) and name it **TestProject**
+2. In the project configuration, go to _Build Triggers → Build when a change is pushed to GitLab_ and activate this option
+3. Click on _Advanced_.
+4. You will now have a couple of new options here, one of them being a "**Secret token**".
+5. Click on the "_Generate_" button right below the text box for that token.
+6. Copy the generated value, let's call it **$gitlab-push-token**
+7. Apply these change to the plan (i.e. click on _Apply_)
+8. Perform a _GET_ request to the following URL (e.g. with Postman) using Basic Authentication and the username and password you chose for the Jenkins admin account:
+
+        GET https://your.jenkins.domain/job/TestProject/config.xml
+        
+9. You will get the whole configuration XML of the just created build plan, there you will find the following tag:
+
+        <secretToken>{$some-long-encrypted-value}</secretToken>
+
+10. Copy the value of **$some-long-encrypted-value**. This is the encrypted value of the **$gitlab-push-token** you generated in step 5.
+11. Now, you can delete this test project and input the following values into your Artemis configuration _application-prod.yml_ (replace the placeholders with the actual values you wrote down)
+
+        artemis:
+            version-control:
+                ci-token: $gitlab-push-token
+            continuous-integration:
+                secret-push-token: $some-long-encrytped-value
+                
+## Separate NGINX Configurations
+There are some placeholders in the following configurations. Replace them with your setup specific values
+### GitLab
+```
+server {
+    listen 443 ssl http2;
+    server_name your.gitlab.domain;
+    ssl_session_cache shared:GitLabSSL:10m;
+    include /etc/nginx/common/common_ssl.conf;
+    add_header Strict-Transport-Security "max-age=63072000; includeSubDomains; preload";
+    add_header X-Frame-Options DENY;
+    add_header Referrer-Policy same-origin;
+    client_max_body_size 10m;
+    client_body_buffer_size 1m;
+ 
+    location / {
+        proxy_pass              http://localhost:<your exposed GitLab HTTP port (default 80)>;
+        proxy_read_timeout      300;
+        proxy_connect_timeout   300;
+        proxy_http_version      1.1;
+        proxy_redirect          http://         https://;
+ 
+        proxy_set_header    Host                $http_host;
+        proxy_set_header    X-Real-IP           $remote_addr;
+        proxy_set_header    X-Forwarded-For     $proxy_add_x_forwarded_for;
+        proxy_set_header    X-Forwarded-Proto   $scheme;
+ 
+        gzip off;
+    }
+}
+```
+
+### Jenkins
+```
+server {
+    listen 443 ssl http2;
+    server_name your.jenkins.domain;
+    ssl_session_cache shared:JenkinsSSL:10m;
+    include /etc/nginx/common/common_ssl.conf;
+    add_header Strict-Transport-Security "max-age=63072000; includeSubDomains; preload";
+    add_header X-Frame-Options DENY;
+    add_header Referrer-Policy same-origin;
+    client_max_body_size 10m;
+    client_body_buffer_size 1m;
+ 
+    location / {
+        proxy_pass              http://localhost:<your exposed Jenkins HTTP port (default 8080)>;
+        proxy_set_header        Host                $host:$server_port;
+        proxy_set_header        X-Real-IP           $remote_addr;
+        proxy_set_header        X-Forwarded-For     $proxy_add_x_forwarded_for;
+        proxy_set_header        X-Forwarded-Proto   $scheme;
+        proxy_redirect          http://             https://;
+ 
+        # Required for new HTTP-based CLI
+        proxy_http_version 1.1;
+        proxy_request_buffering off;
+        proxy_buffering off; # Required for HTTP-based CLI to work over SSL
+ 
+        # workaround for https://issues.jenkins-ci.org/browse/JENKINS-45651
+        add_header 'X-SSH-Endpoint' 'your.jenkins.domain.com:50022' always;
+    }
+ 
+    error_page 502 /502.html;
+    location /502.html {
+        root /usr/share/nginx/html;
+        internal;
+    }
+}
+```
+
+### /etc/nginx/common/common_ssl.conf
+If you haven't done so, generate the DH param file: `sudo openssl dhparam -out /etc/nginx/dhparam.pem 4096`
+```
+ssl_certificate     <path to your fullchain certificate>;
+ssl_certificate_key <path to the private key of your certificate>;
+ssl_protocols       TLSv1.2 TLSv1.3;
+ssl_dhparam /etc/nginx/dhparam.pem;
+ssl_prefer_server_ciphers   on;
+ssl_ciphers ECDH+CHACHA20:EECDH+AESGCM:EDH+AESGCM:!AES128;
+ssl_ecdh_curve secp384r1;
+ssl_session_timeout  10m;
+ssl_session_cache shared:SSL:10m;
+ssl_session_tickets off;
+ssl_stapling on;
+ssl_stapling_verify on;
+resolver <if you have any, specify them here> valid=300s;
+resolver_timeout 5s;
+```
