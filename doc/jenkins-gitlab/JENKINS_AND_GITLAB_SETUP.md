@@ -252,7 +252,7 @@ In order to get this token, you have to do the following steps:
     
     </details>
 
-10. Copy the value of **$some-long-encrypted-value**. This is the encrypted value of the **$gitlab-push-token** you generated in step 5.
+10. Copy the value of **$some-long-encrypted-value without the curly brackets!**. This is the encrypted value of the **$gitlab-push-token** you generated in step 5.
 11. Now, you can delete this test project and input the following values into your Artemis configuration _application-prod.yml_ (replace the placeholders with the actual values you wrote down)
 
         artemis:
