@@ -4,7 +4,7 @@ This page describes how to set up a programming exercise environment based on Je
 Optional commands, partially optional commands are in curly brackets <code>{}</code>.
 
 <b>The following assumes that all instances run on separate servers. 
-If you have one single server, or your own NGINX instance, just skip all NGINX related steps and us the configurations provided under _Separate NGINX Configurations_</b>
+If you have one single server, or your own NGINX instance, just skip all NGINX related steps and use the configurations provided under _Separate NGINX Configurations_</b>
 
 1. [GitLab](#gitlab)
 2. [Jenkins](#jenkins)
