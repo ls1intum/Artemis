@@ -218,6 +218,13 @@ In order to get this token, you have to do the following steps:
 5. Click on the "_Generate_" button right below the text box for that token.
 6. Copy the generated value, let's call it **$gitlab-push-token**
 7. Apply these change to the plan (i.e. click on _Apply_)
+    
+    <details><summary>Test Project Screenshot</summary>
+    
+    ![](jenkins_test_project.png)
+    
+    </details>
+    
 8. Perform a _GET_ request to the following URL (e.g. with Postman) using Basic Authentication and the username and password you chose for the Jenkins admin account:
 
         GET https://your.jenkins.domain/job/TestProject/config.xml
@@ -225,6 +232,12 @@ In order to get this token, you have to do the following steps:
 9. You will get the whole configuration XML of the just created build plan, there you will find the following tag:
 
         <secretToken>{$some-long-encrypted-value}</secretToken>
+        
+    <details><summary>Job configuration XML</summary>
+    
+    ![](jenkins_project_config_xml.png)
+    
+    </details>
 
 10. Copy the value of **$some-long-encrypted-value**. This is the encrypted value of the **$gitlab-push-token** you generated in step 5.
 11. Now, you can delete this test project and input the following values into your Artemis configuration _application-prod.yml_ (replace the placeholders with the actual values you wrote down)
@@ -234,6 +247,7 @@ In order to get this token, you have to do the following steps:
                 ci-token: $gitlab-push-token
             continuous-integration:
                 secret-push-token: $some-long-encrytped-value
+                
                 
 ## Separate NGINX Configurations
 There are some placeholders in the following configurations. Replace them with your setup specific values
