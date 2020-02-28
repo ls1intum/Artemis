@@ -120,6 +120,8 @@ Go to _Credentials → Jenkins → Global credentials_ and create the following 
 #### GitLab API Token
 1. Login to GitLab using the Artemis admin account and go to the profile settings (upper right corned → _Settings_)
 
-![](gitlab_setting_button.png)
+   <details><summary>Screenshot</summary>
+   ![](gitlab_setting_button.png)
+   </details>
 
-2.
+2. Go to _Access Tokens_
