@@ -15,7 +15,7 @@ export class ExerciseHintResolve implements Resolve<ExerciseHint | null> {
     constructor(private service: ExerciseHintService) {}
 
     resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<ExerciseHint | null> {
-        const id = route.params['id'] ? route.params['id'] : null;
+        const id = route.params['hintId'] ? route.params['hintId'] : null;
         if (id) {
             return this.service.find(id).pipe(
                 filter((response: HttpResponse<ExerciseHint>) => response.ok),
@@ -28,16 +28,7 @@ export class ExerciseHintResolve implements Resolve<ExerciseHint | null> {
 
 export const exerciseHintRoute: Routes = [
     {
-        path: 'exercise/:exerciseId/hints',
-        component: ExerciseHintComponent,
-        data: {
-            authorities: ['ROLE_ADMIN'],
-            pageTitle: 'artemisApp.exerciseHint.home.title',
-        },
-        canActivate: [UserRouteAccessService],
-    },
-    {
-        path: 'exercise/:exerciseId/hints/:id/view',
+        path: 'course-management/:courseId/exercises/:exerciseId/hints/:hintId/view',
         component: ExerciseHintDetailComponent,
         resolve: {
             exerciseHint: ExerciseHintResolve,
@@ -49,7 +40,7 @@ export const exerciseHintRoute: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
-        path: 'exercise/:exerciseId/hints/new',
+        path: 'course-management/:courseId/exercises/:exerciseId/hints/new',
         component: ExerciseHintUpdateComponent,
         resolve: {
             exerciseHint: ExerciseHintResolve,
@@ -61,11 +52,20 @@ export const exerciseHintRoute: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
-        path: 'exercise/:exerciseId/hints/:id/edit',
+        path: 'course-management/:courseId/exercises/:exerciseId/hints/:hintId/edit',
         component: ExerciseHintUpdateComponent,
         resolve: {
             exerciseHint: ExerciseHintResolve,
         },
+        data: {
+            authorities: ['ROLE_ADMIN'],
+            pageTitle: 'artemisApp.exerciseHint.home.title',
+        },
+        canActivate: [UserRouteAccessService],
+    },
+    {
+        path: 'course-management/:courseId/exercises/:exerciseId/hints',
+        component: ExerciseHintComponent,
         data: {
             authorities: ['ROLE_ADMIN'],
             pageTitle: 'artemisApp.exerciseHint.home.title',
