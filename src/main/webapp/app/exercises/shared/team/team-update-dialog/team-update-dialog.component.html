@@ -1,0 +1,127 @@
+<form name="editForm" role="form" novalidate (ngSubmit)="save()" #editForm="ngForm">
+    <div class="modal-header">
+        <h4 class="modal-title">
+            <span [jhiTranslate]="pendingTeam.id ? 'artemisApp.team.updateTeam.label' : 'artemisApp.team.createTeam.label'">
+                {{ pendingTeam.id ? 'Update Team' : 'Create Team' }}
+            </span>
+            ({{ exercise.title }})
+        </h4>
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true" (click)="clear()">&times;</button>
+    </div>
+    <div class="modal-body">
+        <jhi-alert-error></jhi-alert-error>
+        <jhi-alert></jhi-alert>
+        <div class="form-group">
+            <label class="label-narrow" jhiTranslate="artemisApp.team.name.label" for="teamName">Name</label>
+            <input
+                type="text"
+                class="form-control"
+                name="name"
+                id="teamName"
+                required
+                minlength="3"
+                [(ngModel)]="pendingTeam.name"
+                (ngModelChange)="onTeamNameChanged($event)"
+                #name="ngModel"
+            />
+            <ng-container *ngFor="let e of name.errors! | keyvalue | removekeys: ['required']">
+                <div class="form-control-error text-danger" *ngIf="name.invalid && (name.dirty || name.touched)">
+                    <span [jhiTranslate]="'artemisApp.team.name' + '.' + e.key"></span>
+                </div>
+            </ng-container>
+        </div>
+        <div class="form-group">
+            <div>
+                <label class="label-narrow" jhiTranslate="artemisApp.team.shortName.label" for="teamShortName">Name</label>
+                <jhi-help-icon placement="right" text="artemisApp.team.shortName.tooltip"></jhi-help-icon>
+            </div>
+            <input
+                type="text"
+                class="form-control"
+                name="shortName"
+                id="teamShortName"
+                required
+                minlength="3"
+                [pattern]="shortNamePattern"
+                [(ngModel)]="pendingTeam.shortName"
+                (ngModelChange)="onTeamShortNameChanged($event)"
+                [readonly]="shortNameReadOnly"
+                #shortName="ngModel"
+            />
+            <ng-container *ngFor="let e of shortName.errors! | keyvalue | removekeys: ['required']">
+                <div class="form-control-error text-danger" *ngIf="shortName.invalid && (shortName.dirty || shortName.touched)">
+                    <span [jhiTranslate]="'artemisApp.team.shortName' + '.' + e.key"></span>
+                </div>
+            </ng-container>
+        </div>
+        <div class="form-group">
+            <div class="d-flex align-items-end">
+                <label class="label-narrow mr-1" jhiTranslate="artemisApp.team.students">Students</label>
+                <fa-icon class="student-search-searching" [icon]="'spinner'" [spin]="true" *ngIf="searchingStudents"></fa-icon>
+                <span *ngIf="searchingStudentsFailed" class="student-search-failed text-muted" jhiTranslate="artemisApp.team.studentSearch.failed">
+                    Search failed. Please try again.
+                </span>
+            </div>
+            <jhi-team-student-search
+                [course]="exercise.course"
+                [exercise]="exercise"
+                (selectStudent)="onAddStudent($event)"
+                (searching)="searchingStudents = $event"
+                (searchFailed)="searchingStudentsFailed = $event"
+            >
+            </jhi-team-student-search>
+            <ul class="list-group list-group--students my-3">
+                <li *ngFor="let student of pendingTeam.students; index as i" class="list-group-item-container d-flex align-items-center">
+                    <div class="list-group-item-index">
+                        {{ i + 1 }}
+                    </div>
+                    <div class="list-group-item d-flex align-items-center" [class.has-error]="hasConflictingTeam(student)">
+                        <div class="student-name">{{ student.firstName }} {{ student.lastName }}</div>
+                        <fa-icon class="student-remove-link ml-4" [icon]="'trash-alt'" (click)="onRemoveStudent(student)"></fa-icon>
+                    </div>
+                    <div class="list-group-item-error" *ngIf="hasConflictingTeam(student)">
+                        <fa-icon class="mr-1" [icon]="'exclamation-triangle'"></fa-icon>
+                        Already assigned to team {{ getConflictingTeam(student) }}.
+                    </div>
+                </li>
+                <li *ngIf="pendingTeam.students.length === 0" class="list-group-item-container d-flex align-items-center">
+                    <div class="list-group-item-index text-muted">1</div>
+                    <div class="list-group-item d-flex align-items-center">
+                        <div class="text-muted" jhiTranslate="artemisApp.team.noStudentsAddedYet">No students added yet.</div>
+                    </div>
+                </li>
+            </ul>
+            <div class="alert mt-3" [class.alert-info]="!showIgnoreTeamSizeRecommendationOption" [class.alert-warning]="showIgnoreTeamSizeRecommendationOption" role="alert">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <span class="font-weight-bold" jhiTranslate="artemisApp.team.teamSizeNote">Recommended team size:</span>
+                        {{ config.minTeamSize }} - {{ config.maxTeamSize }}
+                        <span jhiTranslate="artemisApp.team.teamSizeUnit">students</span>
+                    </div>
+                    <div *ngIf="showIgnoreTeamSizeRecommendationOption" class="form-check">
+                        <input
+                            class="form-check-input"
+                            type="checkbox"
+                            value=""
+                            id="ignoreTeamSizeRecommendation"
+                            [(ngModel)]="ignoreTeamSizeRecommendation"
+                            [ngModelOptions]="{ standalone: true }"
+                        />
+                        <label class="form-check-label" for="ignoreTeamSizeRecommendation">
+                            <span jhiTranslate="artemisApp.team.ignoreTeamSizeRecommendation">Proceed against recommendation</span>
+                            <fa-icon class="ml-1" [icon]="'exclamation-triangle'"></fa-icon>
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal" (click)="clear()">
+            <fa-icon [icon]="'ban'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
+        </button>
+        <button type="submit" [disabled]="editForm.invalid || isSaving || teamSizeViolationUnconfirmed" class="btn btn-primary">
+            <fa-icon [icon]="'save'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.save">Save</span>
+        </button>
+    </div>
+</form>

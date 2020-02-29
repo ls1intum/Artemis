@@ -3,10 +3,7 @@ package de.tum.in.www1.artemis.web.rest;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.badRequest;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,10 +13,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import de.tum.in.www1.artemis.domain.ExampleSubmission;
-import de.tum.in.www1.artemis.domain.Exercise;
-import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
 import de.tum.in.www1.artemis.domain.enumeration.TutorParticipationStatus;
@@ -76,10 +70,12 @@ public class ExerciseResource {
 
     private final ProgrammingExerciseService programmingExerciseService;
 
+    private final GradingCriterionService gradingCriterionService;
+
     public ExerciseResource(ExerciseService exerciseService, ParticipationService participationService, UserService userService, AuthorizationCheckService authCheckService,
             TutorParticipationService tutorParticipationService, ExampleSubmissionRepository exampleSubmissionRepository, ComplaintRepository complaintRepository,
             SubmissionRepository submissionRepository, ResultService resultService, TutorLeaderboardService tutorLeaderboardService,
-            ComplaintResponseRepository complaintResponseRepository, ProgrammingExerciseService programmingExerciseService) {
+            ComplaintResponseRepository complaintResponseRepository, ProgrammingExerciseService programmingExerciseService, GradingCriterionService gradingCriterionService) {
         this.exerciseService = exerciseService;
         this.participationService = participationService;
         this.userService = userService;
@@ -92,6 +88,7 @@ public class ExerciseResource {
         this.resultService = resultService;
         this.tutorLeaderboardService = tutorLeaderboardService;
         this.programmingExerciseService = programmingExerciseService;
+        this.gradingCriterionService = gradingCriterionService;
     }
 
     /**
@@ -309,7 +306,7 @@ public class ExerciseResource {
         User user = userService.getUserWithGroupsAndAuthorities();
         log.debug(user.getLogin() + " requested access for exercise with exerciseId " + exerciseId, exerciseId);
 
-        Exercise exercise = exerciseService.findOne(exerciseId);
+        Exercise exercise = exerciseService.findOneWithCriteria(exerciseId);
         // if exercise is not yet released to the students they should not have any access to it
         if (!authCheckService.isAllowedToSeeExercise(exercise, user)) {
             return forbidden();
@@ -317,9 +314,7 @@ public class ExerciseResource {
 
         if (exercise != null) {
             List<StudentParticipation> participations = participationService.findByExerciseIdAndStudentIdWithEagerResultsAndSubmissions(exercise.getId(), user.getId());
-
             exercise.setStudentParticipations(new HashSet<>());
-
             for (StudentParticipation participation : participations) {
 
                 participation.setResults(exercise.findResultsFilteredForStudents(participation));

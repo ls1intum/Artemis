@@ -6,9 +6,9 @@ import { Observable } from 'rxjs/Observable';
 import { JhiEventManager } from 'ng-jhipster';
 
 import { ArtemisTestModule } from '../../../test.module';
-import { CourseDialogComponent } from '../../../../../../main/webapp/app/entities/course/course-dialog.component';
-import { CourseService } from '../../../../../../main/webapp/app/entities/course/course.service';
-import { Course } from '../../../../../../main/webapp/app/entities/course/course.model';
+import { CourseDialogComponent } from '../../../../../../main/webapp/app/entities/manage/course-dialog.component';
+import { CourseService } from '../../../../../../main/webapp/app/entities/manage/course.service';
+import { Course } from 'app/entities/course.model';
 
 describe('Component Tests', () => {
     describe('Course Management Dialog Component', () => {

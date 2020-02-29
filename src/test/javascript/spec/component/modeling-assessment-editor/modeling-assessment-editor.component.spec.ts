@@ -1,9 +1,7 @@
 import { async, ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateModule } from '@ngx-translate/core';
-import { AlertService } from 'app/core/alert/alert.service';
 
 import { ArtemisTestModule } from '../../test.module';
-import { ArtemisModelingAssessmentEditorModule } from 'app/modeling-assessment-editor/modeling-assessment-editor.module';
 import { By } from '@angular/platform-browser';
 import { mockedActivatedRoute } from '../../helpers/mock-activated-route-query-param-map';
 import { ActivatedRoute, convertToParamMap, ParamMap } from '@angular/router';
@@ -14,11 +12,12 @@ import { User } from 'app/core/user/user.model';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../helpers/mock-account.service';
-import { AssessmentLayoutComponent } from 'app/assessment-shared/assessment-layout/assessment-layout.component';
-import { AssessmentHeaderComponent } from 'app/assessment-shared/assessment-header/assessment-header.component';
-import { Course } from 'app/entities/course/course.model';
-import { ModelingExercise } from 'app/entities/modeling-exercise/modeling-exercise.model';
-import { ModelingAssessmentEditorComponent } from 'app/modeling-assessment-editor/modeling-assessment-editor.component';
+import { AssessmentLayoutComponent } from 'app/assessment/assessment-layout/assessment-layout.component';
+import { AssessmentHeaderComponent } from 'app/assessment/assessment-header/assessment-header.component';
+import { Course } from 'app/entities/course.model';
+import { ModelingExercise } from 'app/entities/modeling-exercise.model';
+import { ModelingAssessmentEditorComponent } from 'app/exercises/modeling/assess/modeling-assessment-editor/modeling-assessment-editor.component';
+import { ArtemisModelingAssessmentEditorModule } from 'app/exercises/modeling/assess/modeling-assessment-editor/modeling-assessment-editor.module';
 
 describe('ModelingAssessmentEditorComponent', () => {
     let component: ModelingAssessmentEditorComponent;

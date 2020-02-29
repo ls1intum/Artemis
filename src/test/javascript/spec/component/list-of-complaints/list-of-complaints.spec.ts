@@ -3,14 +3,14 @@ import { TranslateModule } from '@ngx-translate/core';
 import { ArtemisTestModule } from '../../test.module';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { RouterTestingModule } from '@angular/router/testing';
-import { SortByModule } from 'app/components/pipes/sort-by.module';
+import { SortByModule } from 'app/shared/pipes/sort-by.module';
 import { AlertService } from 'app/core/alert/alert.service';
 import { MockAlertService } from '../../helpers/mock-alert.service';
-import { ComplaintService } from 'app/entities/complaint/complaint.service';
+import { ComplaintService } from 'app/complaints/complaint.service';
 import { DifferencePipe } from 'ngx-moment';
 import { ActivatedRoute } from '@angular/router';
 import { MockActivatedRoute } from '../../helpers/mock-route.service';
-import { ListOfComplaintsComponent } from 'app/list-of-complaints/list-of-complaints.component';
+import { ListOfComplaintsComponent } from 'app/complaints/list-of-complaints/list-of-complaints.component';
 
 describe('ListOfComplaintsComponent', () => {
     let comp: ListOfComplaintsComponent;

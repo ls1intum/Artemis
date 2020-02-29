@@ -10,6 +10,8 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
@@ -35,6 +37,9 @@ public class ExerciseIntegrationTest extends AbstractSpringIntegrationTest {
 
     @Autowired
     RequestUtilService request;
+
+    @Autowired
+    UserRepository userRepository;
 
     @Autowired
     CourseRepository courseRepository;
@@ -266,17 +271,29 @@ public class ExerciseIntegrationTest extends AbstractSpringIntegrationTest {
         }
     }
 
+    private List<User> findTutors(Course course) {
+        List<User> tutors = new ArrayList<>();
+        Page<User> allUsers = userRepository.findAllWithGroups(Pageable.unpaged());
+        for (User user : allUsers) {
+            if (user.getGroups().contains(course.getTeachingAssistantGroupName())) {
+                tutors.add(user);
+            }
+        }
+        return tutors;
+    }
+
     @Test
     @WithMockUser(value = "tutor1", roles = "TA")
     public void testGetStatsForTutorExerciseDashboard() throws Exception {
         List<Course> courses = database.createCoursesWithExercisesAndLectures();
         for (Course course : courses) {
+            var tutors = findTutors(course);
             for (Exercise exercise : course.getExercises()) {
                 StatsForInstructorDashboardDTO stats = request.get("/api/exercises/" + exercise.getId() + "/stats-for-tutor-dashboard", HttpStatus.OK,
                         StatsForInstructorDashboardDTO.class);
                 assertThat(stats.getNumberOfAssessments()).as("Number of assessments is correct").isEqualTo(0);
 
-                assertThat(stats.getTutorLeaderboardEntries().size()).as("Number of tutor leaderboard entries is correct").isEqualTo(5);
+                assertThat(stats.getTutorLeaderboardEntries().size()).as("Number of tutor leaderboard entries is correct").isEqualTo(tutors.size());
                 assertThat(stats.getNumberOfOpenComplaints()).as("Number of open complaints should be available to tutor").isNotNull();
                 assertThat(stats.getNumberOfOpenMoreFeedbackRequests()).as("Number of open more feedback requests should be available to tutor").isNotNull();
 
@@ -304,11 +321,12 @@ public class ExerciseIntegrationTest extends AbstractSpringIntegrationTest {
     public void testGetStatsForInstructorExerciseDashboard() throws Exception {
         List<Course> courses = database.createCoursesWithExercisesAndLectures();
         for (Course course : courses) {
+            var tutors = findTutors(course);
             for (Exercise exercise : course.getExercises()) {
                 StatsForInstructorDashboardDTO stats = request.get("/api/exercises/" + exercise.getId() + "/stats-for-instructor-dashboard", HttpStatus.OK,
                         StatsForInstructorDashboardDTO.class);
                 assertThat(stats.getNumberOfAssessments()).as("Number of assessments is correct").isEqualTo(0);
-                assertThat(stats.getTutorLeaderboardEntries().size()).as("Number of tutor leaderboard entries is correct").isEqualTo(5);
+                assertThat(stats.getTutorLeaderboardEntries().size()).as("Number of tutor leaderboard entries is correct").isEqualTo(tutors.size());
                 assertThat(stats.getNumberOfOpenComplaints()).as("Number of open complaints is zero").isZero();
                 assertThat(stats.getNumberOfOpenMoreFeedbackRequests()).as("Number of open more feedback requests is zero").isZero();
 

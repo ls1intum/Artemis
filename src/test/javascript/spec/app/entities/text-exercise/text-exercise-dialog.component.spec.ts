@@ -6,9 +6,9 @@ import { Observable } from 'rxjs/Observable';
 import { JhiEventManager } from 'ng-jhipster';
 
 import { ArtemisTestModule } from '../../../test.module';
-import { TextExerciseDialogComponent } from '../../../../../../main/webapp/app/entities/text-exercise/text-exercise-dialog.component';
-import { TextExerciseService } from '../../../../../../main/webapp/app/entities/text-exercise/text-exercise.service';
-import { TextExercise } from '../../../../../../main/webapp/app/entities/text-exercise/text-exercise.model';
+import { TextExerciseDialogComponent } from '../../../../../../main/webapp/app/exercises/text/manage/text-exercise/text-exercise-dialog.component';
+import { TextExerciseService } from '../../../../../../main/webapp/app/exercises/text/manage/text-exercise/text-exercise.service';
+import { TextExercise } from 'app/entities/text-exercise.model';
 
 describe('Component Tests', () => {
     describe('TextExercise Management Dialog Component', () => {

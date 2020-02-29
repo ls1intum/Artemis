@@ -1,10 +1,11 @@
 import { GuidedTour } from 'app/guided-tour/guided-tour.model';
 import { TextTourStep, UserInterActionTourStep } from 'app/guided-tour/guided-tour-step.model';
-import { Orientation, UserInteractionEvent } from 'app/guided-tour/guided-tour.constants';
+import { Orientation, ResetParticipation, UserInteractionEvent } from 'app/guided-tour/guided-tour.constants';
 import { clickOnElement } from 'app/guided-tour/guided-tour.utils';
 
 export const programmingExerciseFail: GuidedTour = {
     settingsKey: 'programming_exercise_fail_tour',
+    resetParticipation: ResetParticipation.EXERCISE_PARTICIPATION,
     steps: [
         new TextTourStep({
             highlightSelector: 'jhi-programming-exercise-instructions-task-status .failed',
@@ -43,6 +44,7 @@ export const programmingExerciseFail: GuidedTour = {
 
 export const programmingExerciseSuccess: GuidedTour = {
     settingsKey: 'programming_exercise_success_tour',
+    resetParticipation: ResetParticipation.EXERCISE_PARTICIPATION,
     steps: [
         new TextTourStep({
             highlightSelector: '#programming-exercise-instructions-content',

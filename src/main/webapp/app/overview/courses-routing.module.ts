@@ -1,0 +1,89 @@
+import { RouterModule, Routes } from '@angular/router';
+import { CoursesComponent } from 'app/overview/courses.component';
+import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
+import { CourseOverviewComponent } from 'app/overview/course-overview.component';
+import { CourseExercisesComponent } from 'app/overview/course-exercises/course-exercises.component';
+import { CourseLecturesComponent } from 'app/overview/course-lectures/course-lectures.component';
+import { CourseStatisticsComponent } from 'app/overview/course-statistics/course-statistics.component';
+import { CourseExerciseDetailsComponent } from 'app/overview/exercise-details/course-exercise-details.component';
+import { CourseLectureDetailsComponent } from 'app/overview/course-lectures/course-lecture-details.component';
+import { NgModule } from '@angular/core';
+
+const routes: Routes = [
+    {
+        path: 'courses',
+        component: CoursesComponent,
+        data: {
+            authorities: ['ROLE_USER'],
+            pageTitle: 'overview.title',
+        },
+        canActivate: [UserRouteAccessService],
+    },
+    {
+        path: 'courses/:courseId',
+        component: CourseOverviewComponent,
+        data: {
+            authorities: ['ROLE_USER'],
+            pageTitle: 'overview.course',
+        },
+        canActivate: [UserRouteAccessService],
+        children: [
+            {
+                path: 'exercises',
+                component: CourseExercisesComponent,
+                data: {
+                    authorities: ['ROLE_USER'],
+                    pageTitle: 'overview.course',
+                },
+                canActivate: [UserRouteAccessService],
+            },
+            {
+                path: 'lectures',
+                component: CourseLecturesComponent,
+                data: {
+                    authorities: ['ROLE_USER'],
+                    pageTitle: 'overview.lectures',
+                },
+                canActivate: [UserRouteAccessService],
+            },
+            {
+                path: 'statistics',
+                component: CourseStatisticsComponent,
+                data: {
+                    authorities: ['ROLE_USER'],
+                    pageTitle: 'overview.statistics',
+                },
+                canActivate: [UserRouteAccessService],
+            },
+            {
+                path: '',
+                redirectTo: 'exercises',
+                pathMatch: 'full',
+            },
+        ],
+    },
+    {
+        path: 'courses/:courseId/exercises/:exerciseId',
+        component: CourseExerciseDetailsComponent,
+        data: {
+            authorities: ['ROLE_USER'],
+            pageTitle: 'overview.exercise',
+        },
+        canActivate: [UserRouteAccessService],
+    },
+    {
+        path: 'courses/:courseId/lectures/:lectureId',
+        component: CourseLectureDetailsComponent,
+        data: {
+            authorities: ['ROLE_USER'],
+            pageTitle: 'overview.lectures',
+        },
+        canActivate: [UserRouteAccessService],
+    },
+];
+
+@NgModule({
+    imports: [RouterModule.forChild(routes)],
+    exports: [RouterModule],
+})
+export class ArtemisCoursesRoutingModule {}

@@ -1,7 +1,7 @@
 import { async, ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import * as chai from 'chai';
 import { BrowserModule, By } from '@angular/platform-browser';
-import { ComplaintService } from 'app/entities/complaint/complaint.service';
+import { ComplaintService } from 'app/complaints/complaint.service';
 import { MockComplaintResponse, MockComplaintService } from '../../mocks/mock-complaint.service';
 import { MockAlertService } from '../../helpers/mock-alert.service';
 import { AlertService } from 'app/core/alert/alert.service';

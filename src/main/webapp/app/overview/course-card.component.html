@@ -1,0 +1,20 @@
+<div class="card" [class.guided-tour]="hasGuidedTour">
+    <div class="card-header text-white" routerLink="/courses/{{ course.id }}" [ngStyle]="{ backgroundColor: course.color || ARTEMIS_DEFAULT_COLOR }">
+        <h5 class="card-title text-center">
+            {{ course.title }}
+        </h5>
+    </div>
+    <div class="card-body" routerLink="/courses/{{ course.id }}">
+        <h4 jhiTranslate="artemisApp.studentDashboard.cardTitle">Your current score:</h4>
+        <h2>{{ displayTotalRelativeScore() }}%</h2>
+    </div>
+
+    <div class="card-footer text-muted" *ngIf="nextRelevantExercise" (click)="startExercise(nextRelevantExercise)">
+        <h6 jhiTranslate="artemisApp.studentDashboard.cardExerciseLabel">Next exercise:</h6>
+        <h5>{{ nextRelevantExercise.title }}</h5>
+        <h6>{{ nextRelevantExercise.dueDate | date: 'dd/MM/yy HH:mm' }}</h6>
+    </div>
+    <div class="card-footer text-muted" *ngIf="!nextRelevantExercise">
+        <h6 jhiTranslate="artemisApp.studentDashboard.cardNoExerciseLabel">No Exercise planned</h6>
+    </div>
+</div>

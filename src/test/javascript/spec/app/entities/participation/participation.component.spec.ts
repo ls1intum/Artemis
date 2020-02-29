@@ -4,8 +4,8 @@ import { of } from 'rxjs';
 import { HttpHeaders, HttpResponse } from '@angular/common/http';
 
 import { ArtemisTestModule } from '../../../test.module';
-import { ParticipationComponent } from 'app/entities/participation/participation.component';
-import { ParticipationService } from 'app/entities/participation/participation.service';
+import { ParticipationComponent } from 'app/exercises/shared/participation/participation.component';
+import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import { Participation } from 'app/shared/model/participation.model';
 
 describe('Component Tests', () => {

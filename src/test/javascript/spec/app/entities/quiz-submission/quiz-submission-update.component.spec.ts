@@ -4,15 +4,15 @@ import { HttpResponse } from '@angular/common/http';
 import { of } from 'rxjs';
 
 import { ArtemisTestModule } from '../../../test.module';
-import { QuizSubmissionUpdateComponent } from 'app/entities/quiz-submission/quiz-submission-update.component';
-import { QuizSubmissionService } from 'app/entities/quiz-submission/quiz-submission.service';
+import { QuizSubmissionUpdateComponent } from 'app/exercises/quiz/participate/quiz-submission/quiz-submission-update.component';
+import { QuizParticipationService } from 'app/exercises/quiz/participate/quiz-participation.service';
 import { QuizSubmission } from 'app/shared/model/quiz-submission.model';
 
 describe('Component Tests', () => {
     describe('QuizSubmission Management Update Component', () => {
         let comp: QuizSubmissionUpdateComponent;
         let fixture: ComponentFixture<QuizSubmissionUpdateComponent>;
-        let service: QuizSubmissionService;
+        let service: QuizParticipationService;
 
         beforeEach(() => {
             TestBed.configureTestingModule({
@@ -24,7 +24,7 @@ describe('Component Tests', () => {
 
             fixture = TestBed.createComponent(QuizSubmissionUpdateComponent);
             comp = fixture.componentInstance;
-            service = fixture.debugElement.injector.get(QuizSubmissionService);
+            service = fixture.debugElement.injector.get(QuizParticipationService);
         });
 
         describe('save', () => {

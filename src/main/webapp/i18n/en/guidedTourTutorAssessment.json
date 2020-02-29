@@ -1,0 +1,92 @@
+{
+    "tour": {
+        "courseAdministration": {
+            "tutorCourseDashboardButton": {
+                "headline": "Tutor Course Dashboard",
+                "content": "If you navigate to the <tt>Tutor Course Dashboard</tt> you will be able to get an overview of several student submissions and grade them."
+            }
+        },
+        "tutorCourseDashboard": {
+            "overview": {
+                "headline": "Overview",
+                "content": "Here you can see the statistics of your <tt>assessments</tt> and received <tt>complaints</tt> and <tt>feedback requests</tt> about your assessments."
+            },
+            "showFinished": {
+                "headline": "Show Finished Exercises",
+                "content": "Finished exercises are not displayed in the exercise table. In order to see all exercises, including the finished ones, just have tick the checkbox <tt>Show finished exercises</tt>."
+            },
+            "exerciseTable": {
+                "headline": "Exercise Table",
+                "content": "This table displays all exercises of this course, including their <tt>exercise type</tt>, <tt>exercise title</tt>, the <tt>status</tt> of the grading process and the exercise and assessment <tt>due dates</tt>."
+            },
+            "gradingProcess": {
+                "headline": "Grading Process",
+                "content": "This graph visualizes your current grading process and marks the nodes in green, if the underlying process steps are finished: <ol><li>Read the grading instructions</li><li>Train on the example submissions (if available)</li><li>Assess student submissions</li><li>Evaluate students' complaints and feedback requests</li></ol>"
+            },
+            "exerciseDashboardButton": {
+                "headline": "Exercise Dashboard",
+                "content": "Let's head over to the exercise dashboard to view the exercise details and student submissions."
+            }
+        },
+        "tutorExerciseDashboard": {
+            "instructions": {
+                "headline": "Instructions",
+                "content": "This section contains the <tt>Problem statement</tt>, <tt>Example solution</tt> and <tt>Grading instructions</tt> of the exercise. Please read through them carefully and then proceed to the next step."
+            },
+            "instructionsButton": {
+                "headline": "Confirm instructions",
+                "content": "Click on this button and confirm only after you have read and understood the instructions."
+            },
+            "reviewExampleSubmission": {
+                "headline": "Review Example Submission",
+                "content": "Click here to see how a text submission and its assessment could look like."
+            },
+            "assessExampleSubmission": {
+                "headline": "Assess Example Submission",
+                "content": "Click here to work on your first assessment for a text exercise."
+            },
+            "submissionsAndComplaints": {
+                "headline": "Student submission",
+                "content": "The student submissions that have to be assessed will be displayed here after the exercise due date."
+            },
+            "assessSubmissions": {
+                "headline": "Assess Student Submissions",
+                "content": "To start an actual assessment you need to click on the button <tt>Start new assessment</tt>. In this case the button is disabled for tutorial reasons."
+            }
+        },
+        "exampleReview": {
+            "reviewSubmission": {
+                "headline": "Review Example Submission",
+                "content": "This is an example submission where three text blocks are already marked for assessment."
+            },
+            "reviewAssessment": {
+                "headline": "Review Example Assessment",
+                "content": "This is an example assessment of the submission. Each text block is graded with the score 1."
+            },
+            "confirm": {
+                "headline": "Confirm",
+                "content": "Confirm only after you have read and understood the example."
+            }
+        },
+        "exampleAssessment": {
+            "addAssessment": {
+                "headline": "Assess Example Submission",
+                "content": "Now you can start assessing this text exercise.",
+                "task": "Mark the text of one software pattern and click on the <tt>Assess</tt> button. Do the same for the remaining two patterns. In the end you should have three highlighted text blocks."
+            },
+            "addScore": {
+                "headline": "Add Score",
+                "content": "Here you can add a score and additional feedback for each assessment element.",
+                "task": "Add the score '1' for each assessment element."
+            },
+            "submit": {
+                "headline": "Submit Assessment",
+                "content": "Now you can submit your assessment."
+            },
+            "back": {
+                "headline": "Complete Assessment Tour",
+                "content": "Navigate back to the exercise dashboard to complete your tour."
+            }
+        }
+    }
+}

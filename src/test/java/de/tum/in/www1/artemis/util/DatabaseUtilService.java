@@ -11,6 +11,13 @@ import java.util.stream.Collectors;
 
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.test.context.TestSecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ResourceUtils;
 
@@ -77,6 +84,9 @@ public class DatabaseUtilService {
 
     @Autowired
     UserRepository userRepo;
+
+    @Autowired
+    TeamRepository teamRepo;
 
     @Autowired
     ResultRepository resultRepo;
@@ -163,6 +173,7 @@ public class DatabaseUtilService {
     private TextClusterRepository textClusterRepository;
 
     public void resetDatabase() {
+
         conflictRepo.deleteAll();
         conflictingResultRepo.deleteAll();
         complaintResponseRepo.deleteAll();
@@ -180,6 +191,7 @@ public class DatabaseUtilService {
         submissionRepository.deleteAll();
         participationRepo.deleteAll();
         assertThat(participationRepo.findAll()).as("participation data has been cleared").isEmpty();
+        teamRepo.deleteAll();
         ltiOutcomeUrlRepository.deleteAll();
         programmingExerciseRepository.deleteAll();
         groupNotificationRepository.deleteAll();
@@ -188,6 +200,8 @@ public class DatabaseUtilService {
         attachmentRepo.deleteAll();
         lectureRepo.deleteAll();
         courseRepo.deleteAll();
+
+        assertThat(resultRepo.findAll()).as("result data has been cleared").isEmpty();
         assertThat(courseRepo.findAll()).as("course data has been cleared").isEmpty();
         ltiUserIdRepository.deleteAll();
         userRepo.deleteAll();
@@ -196,13 +210,29 @@ public class DatabaseUtilService {
         assertThat(testCaseRepository.findAll()).as("test case data has been cleared").isEmpty();
     }
 
+    // TODO: this should probably be moved into another service
+    public void changeUser(String username) {
+        User user = getUserByLogin(username);
+        List<GrantedAuthority> grantedAuthorities = new ArrayList<>();
+        for (Authority authority : user.getAuthorities()) {
+            grantedAuthorities.add(new SimpleGrantedAuthority(authority.getName()));
+        }
+        org.springframework.security.core.userdetails.User securityContextUser = new org.springframework.security.core.userdetails.User(user.getLogin(), user.getPassword(),
+                grantedAuthorities);
+        Authentication authentication = new UsernamePasswordAuthenticationToken(securityContextUser, securityContextUser.getPassword(), grantedAuthorities);
+        SecurityContext context = SecurityContextHolder.createEmptyContext();
+        context.setAuthentication(authentication);
+        TestSecurityContextHolder.setContext(context);
+    }
+
     /**
      * Adds the provided number of students and tutors into the user repository. Students login is a concatenation of the prefix "student" and a number counting from 1 to
      * numberOfStudents Tutors login is a concatenation of the prefix "tutor" and a number counting from 1 to numberOfStudents Tutors are all in the "tutor" group and students in
      * the "tumuser" group
      *
-     * @param numberOfStudents
-     * @param numberOfTutors
+     * @param numberOfStudents the number of students that will be added to the database
+     * @param numberOfTutors the number of tutors that will be added to the database
+     * @param numberOfInstructors the number of instructors that will be added to the database
      */
     public List<User> addUsers(int numberOfStudents, int numberOfTutors, int numberOfInstructors) {
 
@@ -227,6 +257,16 @@ public class DatabaseUtilService {
         users.addAll(instructors);
         users.add(admin);
         return users;
+    }
+
+    public List<Team> addTeamsForExercise(Exercise exercise, int numberOfTeams) {
+        List<Team> teams = ModelFactory.generateTeamsForExercise(exercise, numberOfTeams);
+        userRepo.saveAll(teams.stream().map(Team::getStudents).flatMap(Collection::stream).collect(Collectors.toList()));
+        return teamRepo.saveAll(teams);
+    }
+
+    public Team addTeamForExercise(Exercise exercise) {
+        return addTeamsForExercise(exercise, 1).get(0);
     }
 
     public Result addProgrammingParticipationWithResultForExercise(ProgrammingExercise exercise, String login) {
@@ -291,21 +331,25 @@ public class DatabaseUtilService {
 
         ModelingExercise modelingExercise = ModelFactory.generateModelingExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, DiagramType.ClassDiagram, course1);
         modelingExercise.setGradingInstructions("some grading instructions");
+        addGradingInstructionsToExercise(modelingExercise);
         modelingExercise.getCategories().add("Modeling");
         course1.addExercises(modelingExercise);
 
         TextExercise textExercise = ModelFactory.generateTextExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, course1);
         textExercise.setGradingInstructions("some grading instructions");
+        addGradingInstructionsToExercise(textExercise);
         textExercise.getCategories().add("Text");
         course1.addExercises(textExercise);
 
         FileUploadExercise fileUploadExercise = ModelFactory.generateFileUploadExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, "png", course1);
         fileUploadExercise.setGradingInstructions("some grading instructions");
+        addGradingInstructionsToExercise(fileUploadExercise);
         fileUploadExercise.getCategories().add("File");
         course1.addExercises(fileUploadExercise);
 
         ProgrammingExercise programmingExercise = ModelFactory.generateProgrammingExercise(pastTimestamp, futureTimestamp, course1);
         programmingExercise.setGradingInstructions("some grading instructions");
+        addGradingInstructionsToExercise(programmingExercise);
         programmingExercise.getCategories().add("Programming");
         course1.addExercises(programmingExercise);
 
@@ -486,6 +530,22 @@ public class DatabaseUtilService {
         return result;
     }
 
+    public List<GradingCriterion> addGradingInstructionsToExercise(Exercise exercise) {
+        GradingCriterion emptyCriterion = ModelFactory.generateGradingCriterion(null);
+        List<GradingInstruction> instructionWithNoCriteria = ModelFactory.generateGradingInstructions(emptyCriterion, 1);
+        emptyCriterion.setExercise(exercise);
+        emptyCriterion.setStructuredGradingInstructions(instructionWithNoCriteria);
+        GradingCriterion testCriterion = ModelFactory.generateGradingCriterion("test title");
+        List<GradingInstruction> instructions = ModelFactory.generateGradingInstructions(testCriterion, 3);
+        testCriterion.setStructuredGradingInstructions(instructions);
+        testCriterion.setExercise(exercise);
+        var criteria = new ArrayList<GradingCriterion>();
+        criteria.add(emptyCriterion);
+        criteria.add(testCriterion);
+        exercise.setGradingCriteria(criteria);
+        return exercise.getGradingCriteria();
+    }
+
     public void addCourseWithOneModelingExercise() {
         long currentCourseRepoSize = courseRepo.count();
         long currentExerciseRepoSize = exerciseRepo.count();
@@ -583,6 +643,7 @@ public class DatabaseUtilService {
         programmingExercise.setPublishBuildPlanUrl(true);
         programmingExercise.setMaxScore(42.0);
         programmingExercise.setDifficulty(DifficultyLevel.EASY);
+        programmingExercise.setMode(ExerciseMode.INDIVIDUAL);
         programmingExercise.setProblemStatement("Lorem Ipsum");
         programmingExercise.setAssessmentType(AssessmentType.AUTOMATIC);
         programmingExercise.setGradingInstructions("Lorem Ipsum");
@@ -665,8 +726,10 @@ public class DatabaseUtilService {
         Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "instructor");
         FileUploadExercise fileUploadExercise = ModelFactory.generateFileUploadExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, "png,pdf", course);
         FileUploadExercise afterDueDateFileUploadExercise = ModelFactory.generateFileUploadExercise(pastTimestamp, pastTimestamp, futureFutureTimestamp, "png,pdf", course);
+        FileUploadExercise afterAssessmentDateFileUploadExercise = ModelFactory.generateFileUploadExercise(pastTimestamp, pastTimestamp, pastTimestamp, "png,pdf", course);
         course.addExercises(fileUploadExercise);
         course.addExercises(afterDueDateFileUploadExercise);
+        course.addExercises(afterAssessmentDateFileUploadExercise);
         courseRepo.save(course);
         List<Course> courseRepoContent = courseRepo.findAllActiveWithEagerExercisesAndLectures();
         assertThat(courseRepoContent.size()).as("a course got stored").isEqualTo(1);
@@ -674,6 +737,7 @@ public class DatabaseUtilService {
         var fileUploadExercises = new ArrayList<FileUploadExercise>();
         fileUploadExercises.add(fileUploadExercise);
         fileUploadExercises.add(afterDueDateFileUploadExercise);
+        fileUploadExercises.add(afterAssessmentDateFileUploadExercise);
         return fileUploadExercises;
     }
 
@@ -681,9 +745,10 @@ public class DatabaseUtilService {
         var fileUploadExercises = createFileUploadExercisesWithCourse();
         exerciseRepo.save(fileUploadExercises.get(0));
         exerciseRepo.save(fileUploadExercises.get(1));
+        exerciseRepo.save(fileUploadExercises.get(2));
         List<Course> courseRepoContent = courseRepo.findAllActiveWithEagerExercisesAndLectures();
         List<Exercise> exerciseRepoContent = exerciseRepo.findAll();
-        assertThat(exerciseRepoContent.size()).as("one exercise got stored").isEqualTo(2);
+        assertThat(exerciseRepoContent.size()).as("one exercise got stored").isEqualTo(3);
         assertThat(courseRepoContent.size()).as("a course got stored").isEqualTo(1);
         assertThat(courseRepoContent.get(0).getExercises()).as("course contains the exercises").containsExactlyInAnyOrder(exerciseRepoContent.toArray(new Exercise[] {}));
     }
