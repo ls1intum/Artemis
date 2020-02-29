@@ -7,9 +7,9 @@ import { CodeEditorInstructorOrionContainerComponent } from 'app/exercises/progr
 import { ArtemisProgrammingExerciseStatusModule } from 'app/exercises/programming/manage/status/programming-exercise-status.module';
 import { ArtemisResultModule } from 'app/exercises/shared/result/result.module';
 import { ArtemisProgrammingExerciseActionsModule } from 'app/exercises/programming/shared/actions/programming-exercise-actions.module';
-import { ArtemisExerciseHintModule } from 'app/exercises/shared/exercise-hint/exercise-hint.module';
 import { OrionModule } from 'app/shared/orion/orion.module';
 import { ArtemisProgrammingExerciseInstructionsEditorModule } from 'app/exercises/programming/manage/instructions-editor/programming-exercise-instructions-editor.module';
+import { ArtemisExerciseHintParticipationModule } from 'app/exercises/shared/exercise-hint/participate/exercise-hint-participation.module';
 
 @NgModule({
     imports: [
@@ -19,7 +19,7 @@ import { ArtemisProgrammingExerciseInstructionsEditorModule } from 'app/exercise
         ArtemisProgrammingExerciseStatusModule,
         ArtemisResultModule,
         ArtemisProgrammingExerciseActionsModule,
-        ArtemisExerciseHintModule,
+        ArtemisExerciseHintParticipationModule,
         OrionModule,
         ArtemisProgrammingExerciseInstructionsEditorModule,
     ],

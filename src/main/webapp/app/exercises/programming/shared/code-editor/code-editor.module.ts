@@ -10,7 +10,6 @@ import { CodeEditorAceComponent } from 'app/exercises/programming/shared/code-ed
 import { CodeEditorFileBrowserDeleteComponent } from 'app/exercises/programming/shared/code-editor/file-browser/code-editor-file-browser-delete';
 import { CodeEditorInstructionsComponent } from 'app/exercises/programming/shared/code-editor/instructions/code-editor-instructions.component';
 import { CodeEditorResolveConflictModalComponent } from 'app/exercises/programming/shared/code-editor/actions/code-editor-resolve-conflict-modal.component';
-import { ExerciseHintStudentDialogComponent } from 'app/exercises/shared/exercise-hint/exercise-hint-student-dialog.component';
 import { ArtemisProgrammingExerciseInstructionsEditorModule } from 'app/exercises/programming/manage/instructions-editor/programming-exercise-instructions-editor.module';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { CodeEditorRepositoryIsLockedComponent } from 'app/exercises/programming/shared/code-editor/layout/code-editor-repository-is-locked.component';
@@ -46,7 +45,7 @@ import { FeatureToggleModule } from 'app/shared/feature-toggle/feature-toggle.mo
         CodeEditorInstructionsComponent,
         CodeEditorBuildOutputComponent,
     ],
-    entryComponents: [CodeEditorFileBrowserDeleteComponent, ExerciseHintStudentDialogComponent, CodeEditorResolveConflictModalComponent],
+    entryComponents: [CodeEditorFileBrowserDeleteComponent, CodeEditorResolveConflictModalComponent],
     providers: [],
 })
 export class ArtemisCodeEditorModule {}
