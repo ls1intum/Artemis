@@ -12,6 +12,7 @@ import { UsageCountCommand } from 'app/shared/markdown-editor/domainCommands/usa
 import { CreditsCommand } from 'app/shared/markdown-editor/domainCommands/credits.command';
 import { FeedbackCommand } from 'app/shared/markdown-editor/domainCommands/feedback.command';
 import { DomainCommand } from 'app/shared/markdown-editor/domainCommands/domainCommand';
+import { GradingInstruction } from 'app/exercises/shared/structured-grading-instruction/grading-instruction.model';
 
 @Component({
     selector: 'jhi-edit-structured-grading-instruction',
@@ -25,10 +26,11 @@ export class EditStructuredGradingInstructionComponent implements OnInit {
     @ViewChild('markdownEditor', { static: false })
     private markdownEditor: MarkdownEditorComponent;
     private criteria: GradingCriterion[];
+    private instruction: GradingInstruction;
     @Input()
     exercise: Exercise;
+    entity: GradingCriterion[];
     isLoading: boolean;
-    hasLoadedPendingSubmissions = false;
 
     katexCommand = new KatexCommand();
     gradingCriteriaCommand = new GradingCriteriaCommand();
@@ -38,21 +40,21 @@ export class EditStructuredGradingInstructionComponent implements OnInit {
     usageCountCommand = new UsageCountCommand();
 
     domainCommands: DomainCommand[] = [this.katexCommand, this.creditsCommand, this.instructionCommand, this.feedbackCommand, this.usageCountCommand, this.gradingCriteriaCommand];
+
     constructor(private route: ActivatedRoute, private exerciseService: ExerciseService) {}
 
     ngOnInit() {
-        //  this.questionEditorText = this.generateMarkdown();
         this.criteria = this.exercise.gradingCriteria;
+        this.init();
     }
-    credits = new Array();
-    instructions = new Array();
-    feedback = new Array();
-    usageCount = new Array();
+
+    private newEntity: GradingCriterion;
+
     /**
      * @function generateMarkdown
      * @desc Generate the markdown text for this grading instruction
 
-    generateMarkdown(): string {
+     generateMarkdown(): string {
         const markdownText =
             CreditsCommand.identifier +
             ' ' +
@@ -76,6 +78,7 @@ export class EditStructuredGradingInstructionComponent implements OnInit {
     prepareForSave(): void {
         this.markdownEditor.parse();
     }
+
     /**
      * @function domainCommandsFound
      * @desc 1. Gets a tuple of text and domainCommandIdentifiers and assigns text values according to the domainCommandIdentifiers
@@ -83,20 +86,52 @@ export class EditStructuredGradingInstructionComponent implements OnInit {
      * @param domainCommands containing tuples of [text, domainCommandIdentifiers]
      */
     domainCommandsFound(domainCommands: [string, DomainCommand][]): void {
-        this.credits = [];
-        this.instructions = [];
-        this.feedback = [];
-        this.usageCount = [];
         for (const [text, command] of domainCommands) {
             if (command instanceof CreditsCommand) {
-                this.credits.push(text);
+                this.instruction.credit = parseFloat(text);
             } else if (command instanceof InstructionCommand) {
-                this.instructions.push(text);
+                this.instruction.instructionDescription = text;
             } else if (command instanceof FeedbackCommand) {
-                this.feedback.push(text);
+                this.instruction.feedback = text;
             } else {
-                this.usageCount.push(text);
+                this.instruction.usageCount = parseInt(text, 10);
             }
         }
+    }
+    /**
+     * @function init
+     * @desc Initializes local constants and prepares the QuizExercise entity
+     */
+    init(): void {
+        if (this.criteria) {
+            this.entity = this.criteria;
+        } else {
+            this.newEntity = new GradingCriterion();
+            this.newEntity.title = 'test';
+            this.entity.push(this.newEntity);
+            this.exercise.gradingCriteria = this.entity;
+        }
+    }
+    /**
+     * @function addGradingCriteria
+     * @desc Add an empty grading criteria to the exercise
+     */
+    addGradingCriteria() {
+        if (typeof this.criteria === 'undefined') {
+            this.criteria = this.entity;
+        }
+        this.newEntity = new GradingCriterion();
+        this.newEntity.title = '';
+        this.entity.push(this.newEntity);
+        this.criteria = this.entity;
+        this.exercise.gradingCriteria = this.criteria;
+    }
+    /**
+     * @function deleteCriterion
+     * @desc Remove criterion from the exercise grading instructions
+     * @param criterionToDelete {GradingCriterion} the criterion to remove
+     */
+    deleteCriterion(criterionToDelete: GradingCriterion): void {
+        this.exercise.gradingCriteria = this.exercise.gradingCriteria.filter(criterion => criterion !== criterionToDelete);
     }
 }

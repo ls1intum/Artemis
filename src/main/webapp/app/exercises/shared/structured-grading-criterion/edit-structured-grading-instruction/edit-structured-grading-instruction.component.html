@@ -1,24 +1,22 @@
-<div class="edit-mc-question">
-    <div class="question-options card-header question-card-header">
-        <div *ngIf="criteria !== undefined">
-            <div *ngFor="let criterion of criteria">
-                <div class="form-group-narrow">
-                    <label class="form-control-label" jhiTranslate="artemisApp.exercise.title" for="field_title">Title</label>
-                    <input class="form-control" name="title" id="field_title" [(ngModel)]="criterion.title" />
-                </div>
-                <br />
-                <jhi-markdown-editor
-                    #markdownEditor
-                    style=" height: 350px;"
-                    class="markdown-editor"
-                    [markdown]="questionEditorText"
-                    [showPreviewButton]="true"
-                    [hideGradingInstructionDomainCommand]="[true, true, true, true, true, false]"
-                    [domainCommands]="domainCommands"
-                    (markdownChange)="prepareForSave()"
-                    (textWithDomainCommandsFound)="domainCommandsFound($event)"
-                >
-                    <!-- Preview -->
+<div *ngIf="criteria !== undefined">
+    <div *ngFor="let criterion of criteria">
+        <div class="question-options card-header question-card-header">
+            <label class="form-control-label" jhiTranslate="artemisApp.exercise.title" for="field_title">Title</label>
+            <input class="form-control" name="title" id="field_title" [(ngModel)]="criterion.title" />
+
+            <br />
+            <jhi-markdown-editor
+                #markdownEditor
+                style=" height: 350px;"
+                class="markdown-editor"
+                [markdown]="questionEditorText"
+                [showPreviewButton]="true"
+                [hideGradingInstructionDomainCommand]="[true, true, true, true, true, false]"
+                [domainCommands]="domainCommands"
+                (markdownChange)="prepareForSave()"
+                (textWithDomainCommandsFound)="domainCommandsFound($event)"
+            >
+                <!-- Preview
                     <div #preview>
                         <div class="container" *ngFor="let credit of credits; let i = index" id="credit-{{ i }}">
                             <tr>
@@ -41,17 +39,19 @@
                             </tr>
                         </div>
                     </div>
-                </jhi-markdown-editor>
-                <!-- End of Preview-->
-            </div>
+                    -->
+            </jhi-markdown-editor>
+            <br />
+            <!-- End of Preview-->
         </div>
         <br />
-        <div class="col-12 col-sm-6 col-xl-3 mb-1">
-            <button class="btn btn-block btn-success">
-                <!-- todo on click add new criteria component-->
-                <fa-icon [icon]="'plus'"></fa-icon>
-                <span jhiTranslate="artemisApp.exercise.addCriterion"></span>
-            </button>
-        </div>
+        <br />
     </div>
+</div>
+<div class="col-12 col-sm-6 col-xl-3 mb-1">
+    <button class="btn btn-block btn-success" (click)="addGradingCriteria()">
+        <!-- todo on click add new criteria component-->
+        <fa-icon [icon]="'plus'"></fa-icon>
+        <span jhiTranslate="artemisApp.exercise.addCriterion"></span>
+    </button>
 </div>
