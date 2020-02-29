@@ -17,6 +17,7 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.test.context.TestSecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ResourceUtils;
 
@@ -216,9 +217,12 @@ public class DatabaseUtilService {
         for (Authority authority : user.getAuthorities()) {
             grantedAuthorities.add(new SimpleGrantedAuthority(authority.getName()));
         }
-        Authentication authentication = new UsernamePasswordAuthenticationToken(user, user.getPassword(), grantedAuthorities);
+        org.springframework.security.core.userdetails.User securityContextUser = new org.springframework.security.core.userdetails.User(user.getLogin(), user.getPassword(),
+                grantedAuthorities);
+        Authentication authentication = new UsernamePasswordAuthenticationToken(securityContextUser, securityContextUser.getPassword(), grantedAuthorities);
         SecurityContext context = SecurityContextHolder.createEmptyContext();
         context.setAuthentication(authentication);
+        TestSecurityContextHolder.setContext(context);
     }
 
     /**
