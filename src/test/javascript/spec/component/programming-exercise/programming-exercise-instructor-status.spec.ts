@@ -9,7 +9,7 @@ import { TranslateModule } from '@ngx-translate/core';
 import { By } from '@angular/platform-browser';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { MockSyncStorage } from '../../mocks/mock-sync.storage';
-import { MockCookieService } from '../../mocks/mock-cookie.service.ts';
+import { MockCookieService } from '../../mocks/mock-cookie.service';
 import { SinonStub, stub } from 'sinon';
 import { Result } from 'app/entities/result.model';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';

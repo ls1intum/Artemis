@@ -21,6 +21,10 @@ All these exercises are supposed to be run either live in the lecture with insta
 
 Find here a guide on [how to set up your local development environment](/doc/setup/SETUP.md).
 
+## Server Setup for Programming Exercises
+
+You can find the guide for setting up Artemis in conjunction with Jenkins and GitLab [here](doc/jenkins-gitlab/JENKINS_AND_GITLAB_SETUP.md)
+
 ## Contributing 
 
 Find here a guide on [how to contribute](/CONTRIBUTING.md) to Artemis.

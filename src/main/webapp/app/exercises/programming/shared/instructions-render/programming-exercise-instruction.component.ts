@@ -20,7 +20,7 @@ import { problemStatementHasChanged } from 'app/exercises/shared/exercise/exerci
 import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
 import { hasParticipationChanged } from 'app/overview/participation-utils';
 import { Result } from 'app/entities/result.model';
-import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/exercise-hint.service';
+import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/manage/exercise-hint.service';
 
 @Component({
     selector: 'jhi-programming-exercise-instructions',
