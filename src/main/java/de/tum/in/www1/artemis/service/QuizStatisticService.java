@@ -100,7 +100,7 @@ public class QuizStatisticService {
 
             for (Result result : results) {
                 // check if the result is rated
-                // NOTE: where is never an old Result if the new result is rated
+                // NOTE: there is never an old Result if the new result is rated
                 if (result.isRated() == Boolean.FALSE) {
                     removeResultFromAllStatistics(quiz, getPreviousResult(result));
                 }
@@ -132,7 +132,8 @@ public class QuizStatisticService {
     private Result getPreviousResult(Result newResult) {
         Result oldResult = null;
 
-        for (Result result : resultRepository.findAllByParticipationIdOrderByCompletionDateDesc(newResult.getParticipation().getId())) {
+        List<Result> allResultsForParticipation = resultRepository.findAllByParticipationIdOrderByCompletionDateDesc(newResult.getParticipation().getId());
+        for (Result result : allResultsForParticipation) {
             // find the latest Result, which is presented in the Statistics
             if (result.isRated() == newResult.isRated() && result.getCompletionDate().isBefore(newResult.getCompletionDate()) && !result.equals(newResult)
                     && (oldResult == null || result.getCompletionDate().isAfter(oldResult.getCompletionDate()))) {
