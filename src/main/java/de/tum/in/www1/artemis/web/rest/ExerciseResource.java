@@ -22,7 +22,6 @@ import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
 import de.tum.in.www1.artemis.repository.ComplaintRepository;
 import de.tum.in.www1.artemis.repository.ComplaintResponseRepository;
 import de.tum.in.www1.artemis.repository.ExampleSubmissionRepository;
-import de.tum.in.www1.artemis.repository.SubmissionRepository;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
@@ -60,7 +59,7 @@ public class ExerciseResource {
 
     private final ComplaintRepository complaintRepository;
 
-    private final SubmissionRepository submissionRepository;
+    private final SubmissionService submissionService;
 
     private final ComplaintResponseRepository complaintResponseRepository;
 
@@ -74,7 +73,7 @@ public class ExerciseResource {
 
     public ExerciseResource(ExerciseService exerciseService, ParticipationService participationService, UserService userService, AuthorizationCheckService authCheckService,
             TutorParticipationService tutorParticipationService, ExampleSubmissionRepository exampleSubmissionRepository, ComplaintRepository complaintRepository,
-            SubmissionRepository submissionRepository, ResultService resultService, TutorLeaderboardService tutorLeaderboardService,
+            SubmissionService submissionService, ResultService resultService, TutorLeaderboardService tutorLeaderboardService,
             ComplaintResponseRepository complaintResponseRepository, ProgrammingExerciseService programmingExerciseService, GradingCriterionService gradingCriterionService) {
         this.exerciseService = exerciseService;
         this.participationService = participationService;
@@ -83,7 +82,7 @@ public class ExerciseResource {
         this.tutorParticipationService = tutorParticipationService;
         this.exampleSubmissionRepository = exampleSubmissionRepository;
         this.complaintRepository = complaintRepository;
-        this.submissionRepository = submissionRepository;
+        this.submissionService = submissionService;
         this.complaintResponseRepository = complaintResponseRepository;
         this.resultService = resultService;
         this.tutorLeaderboardService = tutorLeaderboardService;
@@ -190,7 +189,7 @@ public class ExerciseResource {
             numberOfSubmissions = programmingExerciseService.countSubmissionsByExerciseIdSubmitted(exerciseId);
         }
         else {
-            numberOfSubmissions = submissionRepository.countByExerciseIdSubmittedBeforeDueDate(exerciseId);
+            numberOfSubmissions = submissionService.countSubmissionsForExercise(exerciseId);
         }
         stats.setNumberOfSubmissions(numberOfSubmissions);
 

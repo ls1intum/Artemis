@@ -82,7 +82,7 @@ public class CourseResource {
 
     private final NotificationService notificationService;
 
-    private final SubmissionRepository submissionRepository;
+    private final SubmissionService submissionService;
 
     private final ResultService resultService;
 
@@ -101,7 +101,7 @@ public class CourseResource {
     public CourseResource(Environment env, UserService userService, CourseService courseService, ParticipationService participationService, CourseRepository courseRepository,
             ExerciseService exerciseService, AuthorizationCheckService authCheckService, TutorParticipationService tutorParticipationService,
             Optional<ArtemisAuthenticationProvider> artemisAuthenticationProvider, ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository,
-            LectureService lectureService, NotificationService notificationService, SubmissionRepository submissionRepository, ResultService resultService,
+            LectureService lectureService, NotificationService notificationService, SubmissionService submissionService, ResultService resultService,
             ComplaintService complaintService, TutorLeaderboardService tutorLeaderboardService, ExampleSubmissionRepository exampleSubmissionRepository,
             ProgrammingExerciseService programmingExerciseService, AuditEventRepository auditEventRepository, Optional<VcsUserManagementService> vcsUserManagementService) {
         this.env = env;
@@ -117,7 +117,7 @@ public class CourseResource {
         this.complaintResponseRepository = complaintResponseRepository;
         this.lectureService = lectureService;
         this.notificationService = notificationService;
-        this.submissionRepository = submissionRepository;
+        this.submissionService = submissionService;
         this.resultService = resultService;
         this.complaintService = complaintService;
         this.tutorLeaderboardService = tutorLeaderboardService;
@@ -344,7 +344,7 @@ public class CourseResource {
      */
     @GetMapping("/courses/{courseId}/for-tutor-dashboard")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Course> getCourseForTutorDashboard(@PathVariable Long courseId) {
+    public ResponseEntity<Course> getCourseForTutorDashboard(@PathVariable long courseId) {
         log.debug("REST request /courses/{courseId}/for-tutor-dashboard");
         Course course = courseService.findOneWithExercises(courseId);
         User user = userService.getUserWithGroupsAndAuthorities();
@@ -363,7 +363,7 @@ public class CourseResource {
                 numberOfSubmissions = programmingExerciseService.countSubmissionsByExerciseIdSubmitted(exercise.getId());
             }
             else {
-                numberOfSubmissions = submissionRepository.countByExerciseIdSubmittedBeforeDueDate(exercise.getId());
+                numberOfSubmissions = submissionService.countSubmissionsForExercise(exercise.getId());
             }
             final long numberOfAssessments = resultService.countNumberOfFinishedAssessmentsForExercise(exercise.getId());
 
@@ -398,7 +398,7 @@ public class CourseResource {
      */
     @GetMapping("/courses/{courseId}/stats-for-tutor-dashboard")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<StatsForInstructorDashboardDTO> getStatsForTutorDashboard(@PathVariable Long courseId) {
+    public ResponseEntity<StatsForInstructorDashboardDTO> getStatsForTutorDashboard(@PathVariable long courseId) {
         log.debug("REST request /courses/{courseId}/stats-for-tutor-dashboard");
 
         Course course = courseService.findOne(courseId);
@@ -408,8 +408,7 @@ public class CourseResource {
         }
         StatsForInstructorDashboardDTO stats = new StatsForInstructorDashboardDTO();
 
-        final long numberOfSubmissions = submissionRepository.countByCourseIdSubmittedBeforeDueDate(courseId)
-                + programmingExerciseService.countSubmissionsByCourseIdSubmitted(courseId);
+        final long numberOfSubmissions = submissionService.countSubmissionsForCourse(courseId) + programmingExerciseService.countSubmissionsByCourseIdSubmitted(courseId);
         stats.setNumberOfSubmissions(numberOfSubmissions);
 
         final long numberOfAssessments = resultService.countNumberOfAssessments(courseId);
@@ -492,7 +491,7 @@ public class CourseResource {
                 numberOfSubmissions = programmingExerciseService.countSubmissionsByExerciseIdSubmitted(exercise.getId());
             }
             else {
-                numberOfSubmissions = submissionRepository.countByExerciseIdSubmittedBeforeDueDate(exercise.getId());
+                numberOfSubmissions = submissionService.countSubmissionsForExercise(exercise.getId());
             }
             final long numberOfAssessments = resultService.countNumberOfFinishedAssessmentsForExercise(exercise.getId());
             final long numberOfMoreFeedbackRequests = complaintService.countMoreFeedbackRequestsByExerciseId(exercise.getId());
@@ -545,8 +544,7 @@ public class CourseResource {
 
         stats.setNumberOfStudents(courseService.countNumberOfStudentsForCourse(course));
 
-        final long numberOfSubmissions = submissionRepository.countByCourseIdSubmittedBeforeDueDate(courseId)
-                + programmingExerciseService.countSubmissionsByCourseIdSubmitted(courseId);
+        final long numberOfSubmissions = submissionService.countSubmissionsForCourse(courseId) + programmingExerciseService.countSubmissionsByCourseIdSubmitted(courseId);
 
         stats.setNumberOfSubmissions(numberOfSubmissions);
         stats.setNumberOfAssessments(resultService.countNumberOfAssessments(courseId));
