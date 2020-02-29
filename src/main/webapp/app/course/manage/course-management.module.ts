@@ -26,6 +26,7 @@ import { ArtemisLectureModule } from 'app/lecture/lecture.module';
 import { ArtemisTextExerciseManagementModule } from 'app/exercises/text/manage/text-exercise-management.module';
 import { ArtemisDashboardsModule } from 'app/shared/dashboards/dashboards.module';
 import { ArtemisParticipationModule } from 'app/exercises/shared/participation/participation.module';
+import { ArtemisExerciseHintManagementModule } from 'app/exercises/shared/exercise-hint/manage/exercise-hint-management.module';
 
 const ENTITY_STATES = [...courseMangementRoute];
 
@@ -50,6 +51,7 @@ const ENTITY_STATES = [...courseMangementRoute];
         ArtemisModelingExerciseModule,
         ArtemisColorSelectorModule,
         ArtemisDashboardsModule,
+        ArtemisExerciseHintManagementModule,
         ArtemisParticipationModule,
     ],
     declarations: [CourseManagementComponent, CourseDetailComponent, CourseUpdateComponent, CourseExerciseCardComponent, CourseExercisesOverviewComponent],
