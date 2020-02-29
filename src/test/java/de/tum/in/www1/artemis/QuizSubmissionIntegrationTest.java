@@ -7,9 +7,7 @@ import static org.mockito.Mockito.verify;
 import java.security.Principal;
 import java.time.ZonedDateTime;
 import java.util.List;
-import java.util.concurrent.ThreadLocalRandom;
 
-import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -24,7 +22,6 @@ import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.QuizExerciseService;
 import de.tum.in.www1.artemis.service.scheduled.QuizScheduleService;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
-import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.RequestUtilService;
 import de.tum.in.www1.artemis.web.websocket.QuizSubmissionWebsocketService;
 
@@ -66,6 +63,8 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationTest
     @BeforeEach
     public void init() {
         database.addUsers(10, 5, 1);
+        // do not use the schedule service based on a time interval in the tests, because this would result in flaky tests that run much slower
+        scheduleService.stopSchedule();
     }
 
     @AfterEach
@@ -77,8 +76,6 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationTest
     @WithMockUser(value = "student1", roles = "USER")
     public void testQuizSubmit() throws Exception {
         // change config to make test faster
-        scheduleService.stopSchedule();
-        scheduleService.startSchedule(2 * 1000); // every 1 second
         List<Course> courses = database.createCoursesWithExercisesAndLectures();
         Course course = courses.get(0);
         QuizExercise quizExercise = database.createQuiz(course, ZonedDateTime.now(), null);
@@ -111,15 +108,15 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationTest
             verify(messagingTemplate, times(1)).convertAndSendToUser(username, "/topic/quizExercise/" + quizExercise.getId() + "/submission", quizSubmission);
         }
 
-        // before the quiz has ended, no submission is saved to the database
+        // before the quiz submissions are processed, none of them ends up in the database
         assertThat(quizSubmissionRepository.findAll().size()).isEqualTo(0);
 
-        // wait until the quiz has finished
-        Thread.sleep(4000);
+        scheduleService.processCachedQuizSubmissions();
 
-        // after the quiz has ended, all submission are saved to the database
+        // after the quiz submissions have been processed, all submission are saved to the database
         assertThat(quizSubmissionRepository.findAll().size()).isEqualTo(numberOfParticipants);
 
+        // Test the statistics directly from the database
         QuizExercise quizExerciseWithStatistic = quizExerciseService.findOneWithQuestionsAndStatistics(quizExercise.getId());
         assertThat(quizExerciseWithStatistic.getQuizPointStatistic().getParticipantsUnrated()).isEqualTo(0);
         assertThat(quizExerciseWithStatistic.getQuizPointStatistic().getParticipantsRated()).isEqualTo(numberOfParticipants);
@@ -147,9 +144,6 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationTest
     @Test
     @WithMockUser(value = "student1", roles = "USER")
     public void testQuizSubmitPractice() throws Exception {
-        // change config to make test faster
-        scheduleService.stopSchedule();
-        scheduleService.startSchedule(2 * 1000); // every 2 seconds
         List<Course> courses = database.createCoursesWithExercisesAndLectures();
         Course course = courses.get(0);
         QuizExercise quizExercise = database.createQuiz(course, ZonedDateTime.now().minusSeconds(4), null);
@@ -162,20 +156,25 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationTest
 
         assertThat(quizSubmissionRepository.findAll().size()).isEqualTo(0);
 
-        var numberOfParticipants = 1;
+        var numberOfParticipants = 10;
         var quizSubmission = wrongQuizSubmissionFor(quizExercise);
         // TODO: add more submitted answers
         quizSubmission.setSubmitted(true);
-        Result result = request.postWithResponseBody("/api/exercises/" + quizExercise.getId() + "/submissions/practice", quizSubmission, Result.class, HttpStatus.OK);
-        // TODO: check the result
-        // TODO: can we simulate more students submitting here?
+
+        // submit 10 times for 10 different students
+        for (int i = 1; i <= numberOfParticipants; i++) {
+            database.changeUser("student" + i);
+            request.postWithResponseBody("/api/exercises/" + quizExercise.getId() + "/submissions/practice", quizSubmission, Result.class, HttpStatus.OK);
+            // TODO: check the result
+        }
 
         // after the quiz has ended, all submission are saved to the database
         assertThat(quizSubmissionRepository.findAll().size()).isEqualTo(numberOfParticipants);
 
-        // wait until statistics have been updated
-        Thread.sleep(4000);
+        // processing the quiz submissions will update the statistics
+        scheduleService.processCachedQuizSubmissions();
 
+        // Test the statistics directly from the database
         QuizExercise quizExerciseWithStatistic = quizExerciseService.findOneWithQuestionsAndStatistics(quizExercise.getId());
         assertThat(quizExerciseWithStatistic.getQuizPointStatistic().getParticipantsRated()).isEqualTo(0);
         assertThat(quizExerciseWithStatistic.getQuizPointStatistic().getParticipantsUnrated()).isEqualTo(numberOfParticipants);
@@ -203,9 +202,6 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationTest
     @Test
     @WithMockUser(value = "student1", roles = "USER")
     public void testQuizSubmitPractice_badRequest() throws Exception {
-        // change config to make test faster
-        scheduleService.stopSchedule();
-        scheduleService.startSchedule(2 * 1000); // every 2 seconds
         List<Course> courses = database.createCoursesWithExercisesAndLectures();
         Course course = courses.get(0);
         QuizExercise quizExerciseServer = database.createQuiz(course, ZonedDateTime.now().minusSeconds(4), null);
@@ -229,9 +225,6 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationTest
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void testQuizSubmitPreview() throws Exception {
-        // change config to make test faster
-        scheduleService.stopSchedule();
-        scheduleService.startSchedule(2 * 1000); // every 1 second
         List<Course> courses = database.createCoursesWithExercisesAndLectures();
         Course course = courses.get(0);
         QuizExercise quizExercise = database.createQuiz(course, ZonedDateTime.now().minusSeconds(4), null);
@@ -242,13 +235,13 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationTest
         Result result = request.postWithResponseBody("/api/exercises/" + quizExercise.getId() + "/submissions/preview", quizSubmission, Result.class, HttpStatus.OK);
         // TODO: check the result
 
-        // after the quiz has ended, all submission are saved to the database
+        // in the preview the submission will not be saved to the database
         assertThat(quizSubmissionRepository.findAll().size()).isEqualTo(0);
 
-        // wait until statistics might have been updated
-        Thread.sleep(4000);
+        scheduleService.processCachedQuizSubmissions();
 
         // all stats must be 0 because we have a preview here
+        // Test the statistics directly from the database
         QuizExercise quizExerciseWithStatistic = quizExerciseService.findOneWithQuestionsAndStatistics(quizExercise.getId());
         assertThat(quizExerciseWithStatistic.getQuizPointStatistic().getParticipantsRated()).isEqualTo(0);
         assertThat(quizExerciseWithStatistic.getQuizPointStatistic().getParticipantsUnrated()).isEqualTo(0);
@@ -277,70 +270,9 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationTest
         List<Course> courses = database.createCoursesWithExercisesAndLectures();
         Course course = courses.get(0);
 
-        QuizExercise quizExercise = createQuiz(course);
+        QuizExercise quizExercise = database.createQuiz(course, ZonedDateTime.now().plusHours(5), null);
         return request.postWithResponseBody("/api/quiz-exercises", quizExercise, QuizExercise.class, HttpStatus.CREATED);
         // TODO: add some checks
-    }
-
-    @NotNull
-    private QuizExercise createQuiz(Course course) {
-        QuizExercise quizExercise = ModelFactory.generateQuizExercise(ZonedDateTime.now().plusHours(5), null, course);
-        quizExercise.addQuestions(createMultipleChoiceQuestion());
-        quizExercise.addQuestions(createDragAndDropQuestion());
-        quizExercise.addQuestions(createShortAnswerQuestion());
-        return quizExercise;
-    }
-
-    @NotNull
-    private ShortAnswerQuestion createShortAnswerQuestion() {
-        ShortAnswerQuestion sa = (ShortAnswerQuestion) new ShortAnswerQuestion().title("SA").score(2).text("This is a long answer text");
-        var shortAnswerSpot1 = new ShortAnswerSpot().spotNr(0).width(1);
-        shortAnswerSpot1.setTempID(generateTempId());
-        var shortAnswerSpot2 = new ShortAnswerSpot().spotNr(2).width(2);
-        shortAnswerSpot2.setTempID(generateTempId());
-        sa.getSpots().add(shortAnswerSpot1);
-        sa.getSpots().add(shortAnswerSpot2);
-        var shortAnswerSolution1 = new ShortAnswerSolution().text("is");
-        shortAnswerSolution1.setTempID(generateTempId());
-        var shortAnswerSolution2 = new ShortAnswerSolution().text("long");
-        shortAnswerSolution2.setTempID(generateTempId());
-        sa.getSolutions().add(shortAnswerSolution1);
-        sa.getSolutions().add(shortAnswerSolution2);
-        sa.getCorrectMappings().add(new ShortAnswerMapping().spot(sa.getSpots().get(0)).solution(sa.getSolutions().get(0)));
-        sa.getCorrectMappings().add(new ShortAnswerMapping().spot(sa.getSpots().get(1)).solution(sa.getSolutions().get(1)));
-        return sa;
-    }
-
-    @NotNull
-    private DragAndDropQuestion createDragAndDropQuestion() {
-        DragAndDropQuestion dnd = (DragAndDropQuestion) new DragAndDropQuestion().title("DnD").score(1).text("Q2");
-        var dropLocation1 = new DropLocation().posX(10).posY(10).height(10).width(10);
-        dropLocation1.setTempID(generateTempId());
-        var dropLocation2 = new DropLocation().posX(20).posY(20).height(10).width(10);
-        dropLocation2.setTempID(generateTempId());
-        dnd.getDropLocations().add(dropLocation1);
-        dnd.getDropLocations().add(dropLocation2);
-        var dragItem1 = new DragItem().text("D1");
-        dragItem1.setTempID(generateTempId());
-        var dragItem2 = new DragItem().text("D2");
-        dragItem2.setTempID(generateTempId());
-        dnd.getDragItems().add(dragItem1);
-        dnd.getDragItems().add(dragItem2);
-        dnd.getCorrectMappings().add(new DragAndDropMapping().dragItem(dragItem1).dropLocation(dropLocation1));
-        dnd.getCorrectMappings().add(new DragAndDropMapping().dragItem(dragItem2).dropLocation(dropLocation2));
-        return dnd;
-    }
-
-    private Long generateTempId() {
-        return ThreadLocalRandom.current().nextLong(Long.MAX_VALUE);
-    }
-
-    @NotNull
-    private MultipleChoiceQuestion createMultipleChoiceQuestion() {
-        MultipleChoiceQuestion mc = (MultipleChoiceQuestion) new MultipleChoiceQuestion().title("MC").score(1).text("Q1");
-        mc.getAnswerOptions().add(new AnswerOption().text("A").hint("H1").explanation("E1").isCorrect(true));
-        mc.getAnswerOptions().add(new AnswerOption().text("B").hint("H2").explanation("E2").isCorrect(false));
-        return mc;
     }
 
     private QuizSubmission wrongQuizSubmissionFor(QuizExercise quizExercise) {
