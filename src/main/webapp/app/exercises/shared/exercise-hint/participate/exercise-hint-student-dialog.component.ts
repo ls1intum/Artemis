@@ -5,7 +5,7 @@ import { catchError, map, tap } from 'rxjs/operators';
 
 import { NgbActiveModal, NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 
-import { ExerciseHintService } from './exercise-hint.service';
+import { ExerciseHintService } from '../manage/exercise-hint.service';
 import { ExerciseHint } from 'app/entities/exercise-hint.model';
 
 /**
