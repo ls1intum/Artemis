@@ -35,7 +35,7 @@ import { ProgrammingAssessmentManualResultService } from 'app/exercises/programm
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { Complaint } from 'app/entities/complaint.model';
 import { ComplaintService } from 'app/complaints/complaint.service';
-import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/exercise-hint.service';
+import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/manage/exercise-hint.service';
 import { MockRepositoryFileService } from '../../mocks/mock-repository-file.service';
 import { MockExerciseHintService } from '../../mocks/mock-exercise-hint.service';
 import { MockNgbModalService } from '../../mocks/mock-ngb-modal.service';
