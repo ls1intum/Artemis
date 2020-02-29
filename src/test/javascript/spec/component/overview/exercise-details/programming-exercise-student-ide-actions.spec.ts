@@ -74,7 +74,7 @@ describe('ProgrammingExerciseStudentIdeActionsComponent', () => {
                 startExerciseStub = stub(courseExerciseService, 'startExercise');
                 forwardBuildSpy = spy(ideBuildService, 'listenOnBuildOutputAndForwardChanges');
                 cloneSpy = spy(orionConnector, 'importParticipation');
-                submitSpy = spy(orionConnector, 'submitChanges');
+                submitSpy = spy(orionConnector, 'submit');
                 ideStateStub = stub(orionConnector, 'state');
             });
     });
