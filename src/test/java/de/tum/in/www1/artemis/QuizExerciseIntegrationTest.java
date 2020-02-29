@@ -1,10 +1,7 @@
 package de.tum.in.www1.artemis;
 
 import static org.assertj.core.api.Assertions.*;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
 
-import java.security.Principal;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
@@ -17,7 +14,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.DifficultyLevel;
 import de.tum.in.www1.artemis.domain.quiz.*;
@@ -254,6 +250,43 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationTest {
 
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void testUpdateNotExistingQuizExercise() throws Exception {
+        List<Course> courses = database.createCoursesWithExercisesAndLectures();
+        Course course = courses.get(0);
+
+        QuizExercise quizExercise = database.createQuiz(course, ZonedDateTime.now().plusHours(5), null);
+        QuizExercise quizExerciseServer = request.putWithResponseBody("/api/quiz-exercises", quizExercise, QuizExercise.class, HttpStatus.CREATED);
+        assertThat(quizExercise.equals(quizExerciseServer));
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void testUpdateRunningQuizExercise() throws Exception {
+        List<Course> courses = database.createCoursesWithExercisesAndLectures();
+        Course course = courses.get(0);
+        // create QuizExercise that already started
+        QuizExercise startedQuizExercise = database.createQuiz(course, ZonedDateTime.now().minusHours(1), null);
+        QuizExercise startedQuizExerciseServer = request.postWithResponseBody("/api/quiz-exercises", startedQuizExercise, QuizExercise.class, HttpStatus.CREATED);
+
+        MultipleChoiceQuestion mc = (MultipleChoiceQuestion) startedQuizExerciseServer.getQuizQuestions().get(0);
+        mc.getAnswerOptions().remove(0);
+        mc.getAnswerOptions().add(new AnswerOption().text("C").hint("H3").explanation("E3").isCorrect(true));
+        mc.getAnswerOptions().add(new AnswerOption().text("D").hint("H4").explanation("E4").isCorrect(true));
+
+        QuizExercise updatedQuizExercise = request.putWithResponseBody("/api/quiz-exercises", startedQuizExerciseServer, QuizExercise.class, HttpStatus.BAD_REQUEST);
+        assertThat(updatedQuizExercise).isNull();
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void testCreateExistingQuizExercise() throws Exception {
+        QuizExercise quizExerciseServer = createQuizOnServer();
+        QuizExercise newQuizExerciseServer = request.postWithResponseBody("/api/quiz-exercises", quizExerciseServer, QuizExercise.class, HttpStatus.BAD_REQUEST);
+        assertThat(newQuizExerciseServer).isNull();
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void testGetQuizExercise() throws Exception {
         QuizExercise quizExercise = createQuizOnServer();
         QuizExercise quizExerciseGet = request.get("/api/quiz-exercises/" + quizExercise.getId(), HttpStatus.OK, QuizExercise.class);
@@ -314,207 +347,6 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationTest {
         // actually the two dates should be "exactly" the same, but for the sake of slow CI testing machines and to prevent flaky tests, we live with the following rule
         assertThat(millis).isCloseTo(0, byLessThan(2000L));
         assertThat(updatedQuizExercise.isIsPlannedToStart()).isTrue();
-    }
-
-    private QuizSubmission wrongQuizSubmissionFor(QuizExercise quizExercise) {
-        var quizSubmission = new QuizSubmission();
-        for (var question : quizExercise.getQuizQuestions()) {
-            if (question instanceof MultipleChoiceQuestion) {
-                var submittedAnswer = new MultipleChoiceSubmittedAnswer();
-                submittedAnswer.setQuizQuestion(question);
-                for (var answerOption : ((MultipleChoiceQuestion) question).getAnswerOptions()) {
-                    if (!answerOption.isIsCorrect()) {
-                        submittedAnswer.addSelectedOptions(answerOption);
-                    }
-                }
-                quizSubmission.addSubmittedAnswers(submittedAnswer);
-            }
-            else if (question instanceof DragAndDropQuestion) {
-                var submittedAnswer = new DragAndDropSubmittedAnswer();
-                submittedAnswer.setQuizQuestion(question);
-                quizSubmission.addSubmittedAnswers(submittedAnswer);
-            }
-            else if (question instanceof ShortAnswerQuestion) {
-                var submittedAnswer = new ShortAnswerSubmittedAnswer();
-                submittedAnswer.setQuizQuestion(question);
-                quizSubmission.addSubmittedAnswers(submittedAnswer);
-            }
-        }
-        return quizSubmission;
-    }
-
-    @Test
-    @WithMockUser(value = "student1", roles = "USER")
-    public void testQuizSubmit() throws Exception {
-        // change config to make test faster
-        scheduleService.stopSchedule();
-        scheduleService.startSchedule(2 * 1000); // every 2 seconds
-        List<Course> courses = database.createCoursesWithExercisesAndLectures();
-        Course course = courses.get(0);
-        QuizExercise quizExercise = database.createQuiz(course, ZonedDateTime.now(), null);
-        quizExercise.setDueDate(ZonedDateTime.now().plusSeconds(2));
-        quizExercise.setDuration(2);
-        quizExercise.setIsPlannedToStart(true);
-        quizExercise.setIsVisibleBeforeStart(true);
-        quizExerciseService.save(quizExercise);
-
-        int numberOfParticipants = 10;
-
-        for (int i = 1; i <= numberOfParticipants; i++) {
-            var quizSubmission = wrongQuizSubmissionFor(quizExercise);
-            // TODO: add more submitted answers
-            final var username = "student" + i;
-            final Principal principal = () -> username;
-            // save
-            quizSubmissionWebsocketService.saveSubmission(quizExercise.getId(), quizSubmission, principal);
-            verify(messagingTemplate, times(1)).convertAndSendToUser(username, "/topic/quizExercise/" + quizExercise.getId() + "/submission", quizSubmission);
-        }
-
-        for (int i = 1; i <= numberOfParticipants; i++) {
-            var quizSubmission = wrongQuizSubmissionFor(quizExercise);
-            // TODO: add more submitted answers
-            quizSubmission.setSubmitted(true);
-            final var username = "student" + i;
-            final Principal principal = () -> username;
-            // submit
-            quizSubmissionWebsocketService.saveSubmission(quizExercise.getId(), quizSubmission, principal);
-            verify(messagingTemplate, times(1)).convertAndSendToUser(username, "/topic/quizExercise/" + quizExercise.getId() + "/submission", quizSubmission);
-        }
-
-        // before the quiz has ended, no submission is saved to the database
-        assertThat(quizSubmissionRepository.findAll().size()).isEqualTo(0);
-
-        // wait until the quiz has finished
-        Thread.sleep(6000);
-
-        // after the quiz has ended, all submission are saved to the database
-        assertThat(quizSubmissionRepository.findAll().size()).isEqualTo(numberOfParticipants);
-
-        QuizExercise quizExerciseWithStatistic = quizExerciseService.findOneWithQuestionsAndStatistics(quizExercise.getId());
-        assertThat(quizExerciseWithStatistic.getQuizPointStatistic().getParticipantsUnrated()).isEqualTo(0);
-        assertThat(quizExerciseWithStatistic.getQuizPointStatistic().getParticipantsRated()).isEqualTo(numberOfParticipants);
-        int questionScore = quizExerciseWithStatistic.getQuizQuestions().stream().map(QuizQuestion::getScore).reduce(0, Integer::sum);
-        assertThat(quizExerciseWithStatistic.getMaxScore()).isEqualTo(questionScore);
-        assertThat(quizExerciseWithStatistic.getQuizPointStatistic().getPointCounters().size()).isEqualTo(questionScore + 1);
-        for (var pointCounter : quizExerciseWithStatistic.getQuizPointStatistic().getPointCounters()) {
-            if (pointCounter.getPoints() == 0.0f) {
-                // all participants have 0 points (and are rated)
-                assertThat(pointCounter.getRatedCounter()).isEqualTo(numberOfParticipants);
-                assertThat(pointCounter.getUnRatedCounter()).isEqualTo(0);
-            }
-            else {
-                assertThat(pointCounter.getRatedCounter()).isEqualTo(0);
-                assertThat(pointCounter.getUnRatedCounter()).isEqualTo(0);
-            }
-        }
-        for (var question : quizExerciseWithStatistic.getQuizQuestions()) {
-            assertThat(question.getQuizQuestionStatistic().getRatedCorrectCounter()).isEqualTo(0);
-            assertThat(question.getQuizQuestionStatistic().getUnRatedCorrectCounter()).isEqualTo(0);
-        }
-        // TODO: check more statistics (e.g. for each question)
-    }
-
-    @Test
-    @WithMockUser(value = "student1", roles = "USER")
-    public void testQuizSubmitPractice() throws Exception {
-        // change config to make test faster
-        scheduleService.stopSchedule();
-        scheduleService.startSchedule(1000); // every second
-        List<Course> courses = database.createCoursesWithExercisesAndLectures();
-        Course course = courses.get(0);
-        QuizExercise quizExercise = database.createQuiz(course, ZonedDateTime.now().minusSeconds(4), null);
-        quizExercise.setDueDate(ZonedDateTime.now().minusSeconds(2));
-        quizExercise.setDuration(2);
-        quizExercise.setIsPlannedToStart(true);
-        quizExercise.setIsVisibleBeforeStart(true);
-        quizExercise.setIsOpenForPractice(true);
-        quizExerciseService.save(quizExercise);
-
-        assertThat(quizSubmissionRepository.findAll().size()).isEqualTo(0);
-
-        var numberOfParticipants = 1;
-        var quizSubmission = wrongQuizSubmissionFor(quizExercise);
-        // TODO: add more submitted answers
-        quizSubmission.setSubmitted(true);
-        Result result = request.postWithResponseBody("/api/exercises/" + quizExercise.getId() + "/submissions/practice", quizSubmission, Result.class, HttpStatus.OK);
-        // TODO: check the result
-        // TODO: can we simulate more students submitting here?
-
-        // after the quiz has ended, all submission are saved to the database
-        assertThat(quizSubmissionRepository.findAll().size()).isEqualTo(numberOfParticipants);
-
-        // wait until statistics have been updated
-        Thread.sleep(5000);
-
-        QuizExercise quizExerciseWithStatistic = quizExerciseService.findOneWithQuestionsAndStatistics(quizExercise.getId());
-        assertThat(quizExerciseWithStatistic.getQuizPointStatistic().getParticipantsRated()).isEqualTo(0);
-        assertThat(quizExerciseWithStatistic.getQuizPointStatistic().getParticipantsUnrated()).isEqualTo(numberOfParticipants);
-        int questionScore = quizExerciseWithStatistic.getQuizQuestions().stream().map(QuizQuestion::getScore).reduce(0, Integer::sum);
-        assertThat(quizExerciseWithStatistic.getMaxScore()).isEqualTo(questionScore);
-        assertThat(quizExerciseWithStatistic.getQuizPointStatistic().getPointCounters().size()).isEqualTo(questionScore + 1);
-        for (var pointCounter : quizExerciseWithStatistic.getQuizPointStatistic().getPointCounters()) {
-            if (pointCounter.getPoints() == 0.0f) {
-                // all participants have 0 points (and are unrated)
-                assertThat(pointCounter.getRatedCounter()).isEqualTo(0);
-                assertThat(pointCounter.getUnRatedCounter()).isEqualTo(numberOfParticipants);
-            }
-            else {
-                assertThat(pointCounter.getRatedCounter()).isEqualTo(0);
-                assertThat(pointCounter.getUnRatedCounter()).isEqualTo(0);
-            }
-        }
-        for (var question : quizExerciseWithStatistic.getQuizQuestions()) {
-            assertThat(question.getQuizQuestionStatistic().getRatedCorrectCounter()).isEqualTo(0);
-            assertThat(question.getQuizQuestionStatistic().getUnRatedCorrectCounter()).isEqualTo(0);
-        }
-        // TODO: check more statistics (e.g. for each question)
-    }
-
-    @Test
-    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
-    public void testQuizSubmitPreview() throws Exception {
-        // change config to make test faster
-        scheduleService.stopSchedule();
-        scheduleService.startSchedule(1000); // every second
-        List<Course> courses = database.createCoursesWithExercisesAndLectures();
-        Course course = courses.get(0);
-        QuizExercise quizExercise = database.createQuiz(course, ZonedDateTime.now().minusSeconds(4), null);
-        quizExerciseService.save(quizExercise);
-
-        var quizSubmission = wrongQuizSubmissionFor(quizExercise);
-        // TODO: add more submitted answers
-        Result result = request.postWithResponseBody("/api/exercises/" + quizExercise.getId() + "/submissions/preview", quizSubmission, Result.class, HttpStatus.OK);
-        // TODO: check the result
-
-        // in the preview nothing should be stored in thee database
-        assertThat(quizSubmissionRepository.findAll().size()).isEqualTo(0);
-
-        // wait until statistics might have been updated
-        Thread.sleep(5000);
-
-        // all stats must be 0 because we have a preview here
-        QuizExercise quizExerciseWithStatistic = quizExerciseService.findOneWithQuestionsAndStatistics(quizExercise.getId());
-        assertThat(quizExerciseWithStatistic.getQuizPointStatistic().getParticipantsRated()).isEqualTo(0);
-        assertThat(quizExerciseWithStatistic.getQuizPointStatistic().getParticipantsUnrated()).isEqualTo(0);
-        int questionScore = quizExerciseWithStatistic.getQuizQuestions().stream().map(QuizQuestion::getScore).reduce(0, Integer::sum);
-        assertThat(quizExerciseWithStatistic.getMaxScore()).isEqualTo(questionScore);
-        assertThat(quizExerciseWithStatistic.getQuizPointStatistic().getPointCounters().size()).isEqualTo(questionScore + 1);
-        for (var pointCounter : quizExerciseWithStatistic.getQuizPointStatistic().getPointCounters()) {
-            if (pointCounter.getPoints() == 0.0f) {
-                // all participants have 0 points (and are unrated)
-                assertThat(pointCounter.getRatedCounter()).isEqualTo(0);
-                assertThat(pointCounter.getUnRatedCounter()).isEqualTo(0);
-            }
-            else {
-                assertThat(pointCounter.getRatedCounter()).isEqualTo(0);
-                assertThat(pointCounter.getUnRatedCounter()).isEqualTo(0);
-            }
-        }
-        for (var question : quizExerciseWithStatistic.getQuizQuestions()) {
-            assertThat(question.getQuizQuestionStatistic().getRatedCorrectCounter()).isEqualTo(0);
-            assertThat(question.getQuizQuestionStatistic().getUnRatedCorrectCounter()).isEqualTo(0);
-        }
-        // TODO: check more statistics (e.g. for each question)
     }
 
     @Test
