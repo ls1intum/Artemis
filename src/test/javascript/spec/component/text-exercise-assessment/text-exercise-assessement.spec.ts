@@ -13,7 +13,7 @@ import { MockComponent } from 'ng-mocks';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { MockAlertService } from '../../helpers/mock-alert.service';
 import { AlertService } from 'app/core/alert/alert.service';
-import { Router, ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { TextAssessmentComponent } from 'app/exercises/text/assess/text-assessment.component';
 import { TextAssessmentEditorComponent } from 'app/exercises/text/assess/text-assessment-editor/text-assessment-editor.component';
@@ -35,10 +35,12 @@ import { SubmissionExerciseType, SubmissionType } from 'app/entities/submission.
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { TextSubmission } from 'app/entities/text-submission.model';
-import { Participation } from 'app/entities/participation/participation.model';
+import { Participation, ParticipationType } from 'app/entities/participation/participation.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
-import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { MockActivatedRoute } from '../../helpers/mock-route.service';
+import { MockActivatedRoute } from '../../mocks/mock-activated-route';
+import { TextAssessmentsService } from 'app/exercises/text/assess/text-assessments.service';
+import { Course } from 'app/entities/course.model';
+import * as sinon from 'sinon';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -47,12 +49,38 @@ describe('TextAssessmentComponent', () => {
     let comp: TextAssessmentComponent;
     let fixture: ComponentFixture<TextAssessmentComponent>;
     let textSubmissionService: TextSubmissionService;
+    let assessmentsService: TextAssessmentsService;
     let getTextSubmissionForExerciseWithoutAssessmentStub: SinonStub;
+    let getFeedbackDataForExerciseSubmissionStub: SinonStub;
     let debugElement: DebugElement;
     let router: Router;
     let location: Location;
+    let activatedRouteMock: MockActivatedRoute = new MockActivatedRoute();
 
     const exercise = { id: 20, type: ExerciseType.TEXT, assessmentType: AssessmentType.MANUAL } as TextExercise;
+    const participation: Participation = <Participation>(<unknown>{ type: ParticipationType.STUDENT, exercise: exercise });
+    const submission = {
+        submissionExerciseType: SubmissionExerciseType.TEXT,
+        id: 2278,
+        submitted: true,
+        type: SubmissionType.MANUAL,
+        submissionDate: moment('2019-07-09T10:47:33.244Z'),
+        text: 'asdfasdfasdfasdf',
+        participation: participation,
+    } as TextSubmission;
+    const result = ({
+        id: 2374,
+        resultString: '1 of 12 points',
+        completionDate: moment('2019-07-09T11:51:23.251Z'),
+        successful: false,
+        score: 8,
+        rated: true,
+        hasFeedback: false,
+        hasComplaint: false,
+        submission: submission,
+        participation: participation,
+    } as unknown) as Result;
+    submission.result = result;
 
     beforeEach(async () => {
         return TestBed.configureTestingModule({
@@ -72,7 +100,7 @@ describe('TextAssessmentComponent', () => {
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: ComplaintService, useClass: MockComplaintService },
-                { provide: ActivatedRoute, useValue: new MockActivatedRoute({ exerciseId: 1, submissionId: 'new' }) },
+                { provide: ActivatedRoute, useValue: activatedRouteMock },
             ],
         })
             .overrideModule(ArtemisTestModule, { set: { declarations: [], exports: [] } })
@@ -86,7 +114,8 @@ describe('TextAssessmentComponent', () => {
                 location = debugElement.injector.get(Location);
                 textSubmissionService = TestBed.inject(TextSubmissionService);
                 getTextSubmissionForExerciseWithoutAssessmentStub = stub(textSubmissionService, 'getTextSubmissionForExerciseWithoutAssessment');
-
+                assessmentsService = TestBed.inject(TextAssessmentsService);
+                getFeedbackDataForExerciseSubmissionStub = stub(assessmentsService, 'getFeedbackDataForExerciseSubmission');
                 router.initialNavigation();
             });
     });
@@ -98,6 +127,7 @@ describe('TextAssessmentComponent', () => {
     it(
         'AssessNextButton should be visible, the method assessNextOptimal should be invoked ' + 'and the url should change after clicking on the button',
         fakeAsync(() => {
+            activatedRouteMock.testParams = { exerciseId: 1, submissionId: 'new' };
             getTextSubmissionForExerciseWithoutAssessmentStub.returns(throwError({ status: 404 }));
             // set all attributes for comp
             comp.ngOnInit();
@@ -107,23 +137,8 @@ describe('TextAssessmentComponent', () => {
             expect(comp.notFound).to.be.true;
 
             comp.userId = 99;
-            comp.submission = {
-                submissionExerciseType: SubmissionExerciseType.TEXT,
-                id: 2278,
-                submitted: true,
-                type: SubmissionType.MANUAL,
-                submissionDate: moment('2019-07-09T10:47:33.244Z'),
-                text: 'asdfasdfasdfasdf',
-            } as TextSubmission;
-            comp.result = new Result();
-            comp.result.id = 2374;
-            comp.result.resultString = '1 of 12 points';
-            comp.result.completionDate = moment('2019-07-09T11:51:23.251Z');
-            comp.result.successful = false;
-            comp.result.score = 8;
-            comp.result.rated = true;
-            comp.result.hasFeedback = false;
-            comp.result.submission = comp.submission;
+            comp.submission = submission;
+            comp.result = result;
             comp.isAssessor = true;
             comp.isAtLeastInstructor = true;
             comp.assessmentsAreValid = true;
@@ -153,19 +168,7 @@ describe('TextAssessmentComponent', () => {
     );
 
     it('Should set the result and participation properly for new submission', fakeAsync(() => {
-        const result = { hasComplaint: false } as Result;
-        const participation = new StudentParticipation() as Participation;
-        participation.exercise = exercise;
-        const submission = {
-            submissionExerciseType: SubmissionExerciseType.TEXT,
-            id: 2278,
-            submitted: true,
-            type: SubmissionType.MANUAL,
-            submissionDate: moment('2019-07-09T10:47:33.244Z'),
-            text: 'asdfasdfasdfasdf',
-            participation,
-            result,
-        } as TextSubmission;
+        activatedRouteMock.testParams = { exerciseId: 1, submissionId: 'new' };
         getTextSubmissionForExerciseWithoutAssessmentStub.returns(of(submission));
         comp.ngOnInit();
         tick();
@@ -173,6 +176,29 @@ describe('TextAssessmentComponent', () => {
         expect(comp.result).to.be.deep.equal(result);
         expect(comp.exercise).to.be.deep.equal(exercise);
         expect(comp.participation).to.be.deep.equal(participation);
+        expect(comp.isAtLeastInstructor).to.be.true;
+    }));
+
+    it('Should navigate to tutor dashboard when locked submission limit reached', fakeAsync(() => {
+        const course = new Course();
+        course.id = 1;
+        exercise.course = course;
+        comp.exercise = exercise;
+        activatedRouteMock.testParams = { exerciseId: 1, submissionId: 'new' };
+        getTextSubmissionForExerciseWithoutAssessmentStub.returns(throwError({ error: { errorKey: 'lockedSubmissionsLimitReached' } }));
+        const spy = sinon.stub(router, 'navigateByUrl');
+        spy.returns(new Promise(resolve => true));
+        comp.ngOnInit();
+        tick();
+        expect(spy.called).to.be.true;
+    }));
+
+    it('Should set the result and participation properly for existing submission', fakeAsync(() => {
+        activatedRouteMock.testParams = { exerciseId: 1, submissionId: 1 };
+        getFeedbackDataForExerciseSubmissionStub.returns(of(participation));
+        comp.ngOnInit();
+        tick();
+        expect(comp.exercise).to.be.deep.equal(exercise);
         expect(comp.isAtLeastInstructor).to.be.true;
     }));
 });
