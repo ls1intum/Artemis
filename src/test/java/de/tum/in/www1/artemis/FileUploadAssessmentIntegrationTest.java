@@ -64,7 +64,7 @@ public class FileUploadAssessmentIntegrationTest extends AbstractSpringIntegrati
 
     @BeforeEach
     public void initTestCase() {
-        database.addUsers(1, 2, 1);
+        database.addUsers(2, 2, 1);
         database.addCourseWithTwoFileUploadExercise();
         fileUploadExercise = (FileUploadExercise) exerciseRepo.findAll().get(0);
     }
@@ -271,4 +271,23 @@ public class FileUploadAssessmentIntegrationTest extends AbstractSpringIntegrati
     public void testCancelAssessmentOfOtherTutorAsInstructor() throws Exception {
         cancelAssessment(HttpStatus.OK);
     }
+
+    @Test
+    @WithMockUser(value = "student1", roles = "USER")
+    public void getOwnAssessmentAsStudent() throws Exception {
+        FileUploadExercise fileUploadExerciseAfterAssessmentDate = (FileUploadExercise) exerciseRepo.findAll().get(2);
+        FileUploadSubmission fileUploadSubmission = ModelFactory.generateFileUploadSubmission(true);
+        fileUploadSubmission = database.addFileUploadSubmissionWithResultAndAssessor(fileUploadExerciseAfterAssessmentDate, fileUploadSubmission, "student1", "tutor1");
+        Result result = request.get("/api/file-upload-submissions/" + fileUploadSubmission.getId() + "/result", HttpStatus.OK, Result.class);
+    }
+
+    @Test
+    @WithMockUser(value = "student2", roles = "USER")
+    public void getAssessmentOfOtherStudentAsStudent() throws Exception {
+        FileUploadExercise fileUploadExerciseAfterAssessmentDate = (FileUploadExercise) exerciseRepo.findAll().get(2);
+        FileUploadSubmission fileUploadSubmission = ModelFactory.generateFileUploadSubmission(true);
+        fileUploadSubmission = database.addFileUploadSubmissionWithResultAndAssessor(fileUploadExerciseAfterAssessmentDate, fileUploadSubmission, "student1", "tutor1");
+        Result result = request.get("/api/file-upload-submissions/" + fileUploadSubmission.getId() + "/result", HttpStatus.FORBIDDEN, Result.class);
+    }
+
 }

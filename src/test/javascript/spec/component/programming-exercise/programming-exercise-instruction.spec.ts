@@ -26,7 +26,7 @@ import { HttpResponse } from '@angular/common/http';
 import { triggerChanges } from '../../utils/general.utils';
 import { LocalStorageService } from 'ngx-webstorage';
 import { Participation } from 'app/entities/participation/participation.model';
-import { ExerciseHintService, IExerciseHintService } from 'app/exercises/shared/exercise-hint/exercise-hint.service';
+import { ExerciseHintService, IExerciseHintService } from 'app/exercises/shared/exercise-hint/manage/exercise-hint.service';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { ResultService } from 'app/exercises/shared/result/result.service';
 import { RepositoryFileService } from 'app/shared/result/repository.service';
