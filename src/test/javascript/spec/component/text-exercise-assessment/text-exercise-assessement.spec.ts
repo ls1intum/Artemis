@@ -186,8 +186,22 @@ describe('TextAssessmentComponent', () => {
         comp.exercise = exercise;
         activatedRouteMock.testParams = { exerciseId: 1, submissionId: 'new' };
         getTextSubmissionForExerciseWithoutAssessmentStub.returns(throwError({ error: { errorKey: 'lockedSubmissionsLimitReached' } }));
-        const spy = sinon.stub(router, 'navigateByUrl');
+        const spy = stub(router, 'navigateByUrl');
         spy.returns(new Promise(resolve => true));
+        comp.ngOnInit();
+        tick();
+        expect(spy.called).to.be.true;
+    }));
+
+    it('Should alert error message on error response', fakeAsync(() => {
+        const course = new Course();
+        course.id = 1;
+        exercise.course = course;
+        comp.exercise = exercise;
+        activatedRouteMock.testParams = { exerciseId: 1, submissionId: 'new' };
+        getTextSubmissionForExerciseWithoutAssessmentStub.returns(throwError({ headers: { get: (s: string) => 'error' } }));
+        const spy = stub(TestBed.inject(AlertService), 'error');
+        spy.returns({ type: 'danger', msg: '' });
         comp.ngOnInit();
         tick();
         expect(spy.called).to.be.true;
