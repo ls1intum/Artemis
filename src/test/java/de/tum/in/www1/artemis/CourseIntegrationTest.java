@@ -56,6 +56,10 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationTest {
     @BeforeEach
     public void initTestCase() {
         database.addUsers(1, 5, 1);
+
+        // Add users that are not in the course
+        userRepo.save(ModelFactory.generateActivatedUser("tutor6"));
+        userRepo.save(ModelFactory.generateActivatedUser("instructor2"));
     }
 
     @AfterEach
@@ -149,6 +153,21 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationTest {
     @WithMockUser(username = "student1", roles = "USER")
     public void testGetCourseWithoutPermission() throws Exception {
         request.getList("/api/courses", HttpStatus.FORBIDDEN, Course.class);
+    }
+
+    @Test
+    @WithMockUser(username = "tutor6", roles = "TA")
+    public void testGetCourse_tutorNotInCourse() throws Exception {
+        var courses = database.createCoursesWithExercisesAndLectures();
+        request.getList("/api/courses/" + courses.get(0).getId(), HttpStatus.FORBIDDEN, Course.class);
+        request.get("/api/courses/" + courses.get(0).getId() + "/with-exercises", HttpStatus.FORBIDDEN, Course.class);
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void testGetCourseWithExercisesAndRelevantParticipationsWithoutPermissions() throws Exception {
+        var courses = database.createCoursesWithExercisesAndLectures();
+        request.get("/api/courses/" + courses.get(0).getId() + "/with-exercises-and-relevant-participations", HttpStatus.FORBIDDEN, Course.class);
     }
 
     @Test
@@ -288,6 +307,22 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationTest {
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testGetCourseForInstructorDashboardWithStats() throws Exception {
         getCourseForDashboardWithStats(true);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor2", roles = "INSTRUCTOR")
+    public void testGetCourseForInstructorDashboardWithStats_instructorNotInCourse() throws Exception {
+        List<Course> testCourses = database.createCoursesWithExercisesAndLectures();
+        request.get("/api/courses/" + testCourses.get(0).getId() + "/for-tutor-dashboard", HttpStatus.FORBIDDEN, Course.class);
+        request.get("/api/courses/" + testCourses.get(0).getId() + "/stats-for-instructor-dashboard", HttpStatus.FORBIDDEN, StatsForInstructorDashboardDTO.class);
+    }
+
+    @Test
+    @WithMockUser(username = "tutor6", roles = "TA")
+    public void testGetCourseForTutorDashboardWithStats_tutorNotInCourse() throws Exception {
+        List<Course> testCourses = database.createCoursesWithExercisesAndLectures();
+        request.get("/api/courses/" + testCourses.get(0).getId() + "/for-tutor-dashboard", HttpStatus.FORBIDDEN, Course.class);
+        request.get("/api/courses/" + testCourses.get(0).getId() + "/stats-for-tutor-dashboard", HttpStatus.FORBIDDEN, StatsForInstructorDashboardDTO.class);
     }
 
     @Test
