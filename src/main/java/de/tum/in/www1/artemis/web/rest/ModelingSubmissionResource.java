@@ -121,7 +121,7 @@ public class ModelingSubmissionResource {
         checkAuthorization(modelingExercise, user);
 
         // Check that the modeling submission id is correct
-        modelingSubmissionService.existsById(submissionId);
+        modelingSubmissionService.validateExerciseIdExists(submissionId);
         if (modelingSubmission.getId() == null || !modelingSubmission.getId().equals(submissionId)) {
             throw new EntityNotFoundException("The updated modeling submission doesn't match the given id" + submissionId);
         }

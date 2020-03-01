@@ -129,7 +129,7 @@ public class ModelingExerciseResource {
         }
 
         // Check that the modeling exercise id is correct
-        modelingExerciseService.existsById(exerciseId);
+        modelingExerciseService.validateExerciseIdExists(exerciseId);
         if (modelingExercise.getId() == null || !modelingExercise.getId().equals(exerciseId)) {
             throw new EntityNotFoundException("The updated modeling exercise doesn't match the given id" + exerciseId);
         }
