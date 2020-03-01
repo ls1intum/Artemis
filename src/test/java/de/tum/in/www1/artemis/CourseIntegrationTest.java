@@ -91,6 +91,12 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationTest {
     }
 
     @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    public void testDeleteNotExistingCourse() throws Exception {
+        request.delete("/api/courses/1", HttpStatus.NOT_FOUND);
+    }
+
+    @Test
     @WithMockUser(username = "student1", roles = "USER")
     public void testCreateCourseWithoutPermission() throws Exception {
         Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>());
@@ -164,7 +170,7 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
+    @WithMockUser(username = "instructor2", roles = "INSTRUCTOR")
     public void testGetCourseWithExercisesAndRelevantParticipationsWithoutPermissions() throws Exception {
         var courses = database.createCoursesWithExercisesAndLectures();
         request.get("/api/courses/" + courses.get(0).getId() + "/with-exercises-and-relevant-participations", HttpStatus.FORBIDDEN, Course.class);
@@ -372,6 +378,13 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationTest {
         assertThat(categories1).as("Correct categories in course1").containsExactlyInAnyOrder("Category", "Modeling", "Quiz", "File", "Text", "Programming");
         Set<String> categories2 = request.get("/api/courses/" + course2.getId() + "/categories", HttpStatus.OK, Set.class);
         assertThat(categories2).as("No categories in course2").isEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void testGetCategoriesInCourseWithoutPermissions() throws Exception {
+        List<Course> testCourses = database.createCoursesWithExercisesAndLectures();
+        request.get("/api/courses/" + testCourses.get(0).getId() + "/categories", HttpStatus.FORBIDDEN, Set.class);
     }
 
     @Test
