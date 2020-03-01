@@ -381,8 +381,8 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
-    public void testGetCategoriesInCourseWithoutPermissions() throws Exception {
+    @WithMockUser(username = "instructor2", roles = "INSTRUCTOR")
+    public void testGetCategoriesInCourse_instructorNotInCourse() throws Exception {
         List<Course> testCourses = database.createCoursesWithExercisesAndLectures();
         request.get("/api/courses/" + testCourses.get(0).getId() + "/categories", HttpStatus.FORBIDDEN, Set.class);
     }
@@ -447,5 +447,14 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationTest {
         request.put("/api/courses", course, HttpStatus.OK);
 
         verifyNoInteractions(versionControlService);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor2", roles = "INSTRUCTOR")
+    public void updateCourse_instructorNotInCourse() throws Exception {
+        var course = ModelFactory.generateCourse(1L, null, null, new HashSet<>(), "tumuser", "tutor", "instructor");
+        course = courseRepo.save(course);
+
+        request.put("/api/courses", course, HttpStatus.FORBIDDEN);
     }
 }
