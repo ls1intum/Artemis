@@ -24,10 +24,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.config.Constants;
-import de.tum.in.www1.artemis.domain.Authority;
-import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.GuidedTourSetting;
-import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.exception.UsernameAlreadyUsedException;
 import de.tum.in.www1.artemis.repository.AuthorityRepository;
 import de.tum.in.www1.artemis.repository.GuidedTourSettingsRepository;
@@ -41,6 +38,7 @@ import de.tum.in.www1.artemis.service.dto.UserDTO;
 import de.tum.in.www1.artemis.service.ldap.LdapUserDto;
 import de.tum.in.www1.artemis.service.ldap.LdapUserService;
 import de.tum.in.www1.artemis.web.rest.errors.EmailAlreadyUsedException;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.rest.errors.InvalidPasswordException;
 import de.tum.in.www1.artemis.web.rest.vm.ManagedUserVM;
 import io.github.jhipster.security.RandomUtil;
@@ -539,14 +537,6 @@ public class UserService {
     }
 
     /**
-     * @return existing user object by current user login
-     */
-    public User getUser() {
-        String currentUserLogin = SecurityUtils.getCurrentUserLogin().get();
-        return userRepository.findOneByLogin(currentUserLogin).get();
-    }
-
-    /**
      * Get current user for login string
      * @param login user login string
      * @return existing user for the given login string or null
@@ -556,13 +546,24 @@ public class UserService {
     }
 
     /**
+     * @return existing user object by current user login
+     */
+    @NotNull
+    public User getUser() {
+        String currentUserLogin = getCurrentUserLogin();
+        Optional<User> user = userRepository.findOneByLogin(currentUserLogin);
+        return unwrapOptionalUser(user, currentUserLogin);
+    }
+
+    /**
      * Get user with user groups and authorities of currently logged in user
      * @return currently logged in user
      */
+    @NotNull
     public User getUserWithGroupsAndAuthorities() {
-        String currentUserLogin = SecurityUtils.getCurrentUserLogin().get();
-        User user = userRepository.findOneWithGroupsAndAuthoritiesByLogin(currentUserLogin).get();
-        return user;
+        String currentUserLogin = getCurrentUserLogin();
+        Optional<User> user = userRepository.findOneWithGroupsAndAuthoritiesByLogin(currentUserLogin);
+        return unwrapOptionalUser(user, currentUserLogin);
     }
 
     /**
@@ -570,10 +571,27 @@ public class UserService {
      * Note: this method should only be invoked if the guided tour settings are really needed
      * @return currently logged in user
      */
+    @NotNull
     public User getUserWithGroupsAuthoritiesAndGuidedTourSettings() {
-        String currentUserLogin = SecurityUtils.getCurrentUserLogin().get();
-        User user = userRepository.findOneWithGroupsAuthoritiesAndGuidedTourSettingsByLogin(currentUserLogin).get();
-        return user;
+        String currentUserLogin = getCurrentUserLogin();
+        Optional<User> user = userRepository.findOneWithGroupsAuthoritiesAndGuidedTourSettingsByLogin(currentUserLogin);
+        return unwrapOptionalUser(user, currentUserLogin);
+    }
+
+    @NotNull
+    private User unwrapOptionalUser(Optional<User> optionalUser, String currentUserLogin) {
+        if (optionalUser.isPresent()) {
+            return optionalUser.get();
+        }
+        throw new EntityNotFoundException("No user found with login: " + currentUserLogin);
+    }
+
+    private String getCurrentUserLogin() {
+        Optional<String> currentUserLogin = SecurityUtils.getCurrentUserLogin();
+        if (currentUserLogin.isPresent()) {
+            return currentUserLogin.get();
+        }
+        throw new EntityNotFoundException("ERROR: No current user login found!");
     }
 
     /**
@@ -582,7 +600,8 @@ public class UserService {
      * @return the user that belongs to the given principal with eagerly loaded groups and authorities
      */
     public User getUserWithGroupsAndAuthorities(@NotNull Principal principal) {
-        return userRepository.findOneWithGroupsAndAuthoritiesByLogin(principal.getName()).get();
+        Optional<User> user = userRepository.findOneWithGroupsAndAuthoritiesByLogin(principal.getName());
+        return unwrapOptionalUser(user, principal.getName());
     }
 
     /**

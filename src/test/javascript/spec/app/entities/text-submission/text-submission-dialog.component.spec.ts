@@ -6,9 +6,9 @@ import { Observable } from 'rxjs/Observable';
 import { JhiEventManager } from 'ng-jhipster';
 
 import { ArtemisTestModule } from '../../../test.module';
-import { TextSubmissionDialogComponent } from '../../../../../../main/webapp/app/entities/text-submission/text-submission-dialog.component';
-import { TextSubmissionService } from '../../../../../../main/webapp/app/entities/text-submission/text-submission.service';
-import { TextSubmission } from '../../../../../../main/webapp/app/entities/text-submission/text-submission.model';
+import { TextSubmissionDialogComponent } from '../../../../../../main/webapp/app/exercises/text/participate/text-submission/text-submission-dialog.component';
+import { TextSubmissionService } from 'app/exercises/text/participate/text-submission.service';
+import { TextSubmission } from 'app/entities/text-submission.model';
 
 describe('Component Tests', () => {
     describe('TextSubmission Management Dialog Component', () => {

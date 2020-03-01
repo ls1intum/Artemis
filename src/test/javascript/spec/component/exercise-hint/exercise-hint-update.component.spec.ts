@@ -4,9 +4,9 @@ import { HttpResponse } from '@angular/common/http';
 import { FormBuilder } from '@angular/forms';
 import { of } from 'rxjs';
 
-import { ExerciseHintUpdateComponent } from 'app/entities/exercise-hint/exercise-hint-update.component';
-import { ExerciseHintService } from 'app/entities/exercise-hint/exercise-hint.service';
-import { ExerciseHint } from 'app/entities/exercise-hint/exercise-hint.model';
+import { ExerciseHintUpdateComponent } from 'app/exercises/shared/exercise-hint/manage/exercise-hint-update.component';
+import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/manage/exercise-hint.service';
+import { ExerciseHint } from 'app/entities/exercise-hint.model';
 import { ArtemisTestModule } from '../../test.module';
 
 describe('Component Tests', () => {

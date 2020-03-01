@@ -1,9 +1,9 @@
 import { Component, HostBinding, Input, OnInit } from '@angular/core';
 import * as moment from 'moment';
 import { Moment } from 'moment';
-import { Course } from 'app/entities/course/course.model';
+import { Course } from 'app/entities/course.model';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Lecture } from 'app/entities/lecture/lecture.model';
+import { Lecture } from 'app/entities/lecture.model';
 
 @Component({
     selector: 'jhi-course-lecture-row',

@@ -13,9 +13,9 @@ import de.tum.in.www1.artemis.domain.PersistentAuditEvent;
 public class AuditEventConverter {
 
     /**
-     * Convert a list of PersistentAuditEvent to a list of AuditEvent
+     * Convert a list of {@link PersistentAuditEvent}s to a list of {@link AuditEvent}s.
      *
-     * @param persistentAuditEvents the list to convert
+     * @param persistentAuditEvents the list to convert.
      * @return the converted list.
      */
     public List<AuditEvent> convertToAuditEvent(Iterable<PersistentAuditEvent> persistentAuditEvents) {
@@ -30,9 +30,9 @@ public class AuditEventConverter {
     }
 
     /**
-     * Convert a PersistentAuditEvent to an AuditEvent
+     * Convert a {@link PersistentAuditEvent} to an {@link AuditEvent}.
      *
-     * @param persistentAuditEvent the event to convert
+     * @param persistentAuditEvent the event to convert.
      * @return the converted list.
      */
     public AuditEvent convertToAuditEvent(PersistentAuditEvent persistentAuditEvent) {
@@ -83,11 +83,8 @@ public class AuditEventConverter {
                     Pair authenticationPair = (Pair) object;
                     results.put(authenticationPair.getFirst().toString(), authenticationPair.getSecond().toString());
                 }
-                else if (object != null) {
-                    results.put(entry.getKey(), object.toString());
-                }
                 else {
-                    results.put(entry.getKey(), "null");
+                    results.put(entry.getKey(), Objects.toString(object));
                 }
             }
         }

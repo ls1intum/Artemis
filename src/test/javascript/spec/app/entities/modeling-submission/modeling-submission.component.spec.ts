@@ -4,8 +4,8 @@ import { of } from 'rxjs';
 import { HttpHeaders, HttpResponse } from '@angular/common/http';
 
 import { ArtemisTestModule } from '../../../test.module';
-import { ModelingSubmissionComponent } from 'app/entities/modeling-submission/modeling-submission.component';
-import { ModelingSubmissionService } from 'app/entities/modeling-submission/modeling-submission.service';
+import { ModelingSubmissionComponent } from 'app/exercises/modeling-submission/modeling-submission.component';
+import { ModelingSubmissionService } from 'app/exercises/modeling/participate/modeling-submission.service';
 import { ModelingSubmission } from 'app/shared/model/modeling-submission.model';
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';

@@ -5,8 +5,8 @@ import { of } from 'rxjs';
 import { JhiEventManager } from 'ng-jhipster';
 
 import { ArTeMiSTestModule } from '../../../test.module';
-import { TextExerciseDeleteDialogComponent } from 'app/entities/text-exercise/text-exercise-delete-dialog.component';
-import { TextExerciseService } from 'app/entities/text-exercise/text-exercise.service';
+import { TextExerciseDeleteDialogComponent } from 'app/exercises/text/manage/text-exercise/text-exercise-delete-dialog.component';
+import { TextExerciseService } from 'app/exercises/text/manage/text-exercise/text-exercise.service';
 
 describe('Component Tests', () => {
     describe('TextExercise Management Delete Component', () => {

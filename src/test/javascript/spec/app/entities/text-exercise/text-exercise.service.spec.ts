@@ -2,7 +2,7 @@
 import { getTestBed, TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { map, take } from 'rxjs/operators';
-import { TextExerciseService } from 'app/entities/text-exercise/text-exercise.service';
+import { TextExerciseService } from 'app/exercises/text/manage/text-exercise/text-exercise.service';
 import { ITextExercise, TextExercise } from 'app/shared/model/text-exercise.model';
 
 describe('Service Tests', () => {
