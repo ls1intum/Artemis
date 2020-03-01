@@ -62,5 +62,6 @@ export class EditStructuredGradingInstructionComponent implements OnInit {
      */
     deleteCriterion(criterionToDelete: GradingCriterion): void {
         this.exercise.gradingCriteria = this.exercise.gradingCriteria.filter(criterion => criterion !== criterionToDelete);
+        this.ngOnInit();
     }
 }
