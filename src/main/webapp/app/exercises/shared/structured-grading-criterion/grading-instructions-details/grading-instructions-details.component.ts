@@ -53,6 +53,8 @@ export class GradingInstructionsDetailsComponent implements OnInit {
                     '\n' +
                     this.generateUsageCount(instruction) +
                     '\n' +
+                    '[gradingInstruction]' +
+                    '\n' +
                     '\n';
             }
         } else {
@@ -71,13 +73,15 @@ export class GradingInstructionsDetailsComponent implements OnInit {
                 '\n' +
                 UsageCountCommand.identifier +
                 ' ' +
-                UsageCountCommand.text;
+                UsageCountCommand.text +
+                '\n' +
+                '[gradingInstruction]';
         }
         return markdownText;
     }
 
     generateCreditsText(instruction: GradingInstruction): string {
-        return CreditsCommand.identifier + ' ' + instruction.credit;
+        return CreditsCommand.identifier + ' ' + instruction.credits;
     }
 
     generateInstructionDescriptionText(instruction: GradingInstruction): string {
@@ -103,17 +107,22 @@ export class GradingInstructionsDetailsComponent implements OnInit {
      */
     domainCommandsFound(domainCommands: [string, DomainCommand][]): void {
         let index = 0;
-        for (const [text, command] of domainCommands) {
-            if (command instanceof CreditsCommand) {
-                this.instructions[index].credit = parseFloat(text);
-            } else if (command instanceof InstructionCommand) {
-                this.instructions[index].instructionDescription = text;
-            } else if (command instanceof FeedbackCommand) {
-                this.instructions[index].feedback = text;
-            } else {
-                this.instructions[index].usageCount = parseInt(text, 10);
+        while (index < this.instructions.length) {
+            for (const [text, command] of domainCommands) {
+                if (command instanceof CreditsCommand) {
+                    this.instructions[index].credits = parseFloat(text);
+                } else if (command instanceof InstructionCommand) {
+                    this.instructions[index].instructionDescription = text;
+                } else if (command instanceof FeedbackCommand) {
+                    this.instructions[index].feedback = text;
+                } else if (command instanceof UsageCountCommand) {
+                    this.instructions[index].usageCount = parseInt(text, 10);
+                } else {
+                    // if GradingCriteriaCommand Identifier then break as it indicates the end of the grading instruction
+                    index++;
+                    continue;
+                }
             }
-            index++;
         }
     }
 }

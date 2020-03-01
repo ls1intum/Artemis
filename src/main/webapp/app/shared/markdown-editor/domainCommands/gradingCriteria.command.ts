@@ -5,14 +5,13 @@ import { FeedbackCommand } from 'app/shared/markdown-editor/domainCommands/feedb
 import { CreditsCommand } from 'app/shared/markdown-editor/domainCommands/credits.command';
 import { ArtemisMarkdown } from 'app/shared/markdown.service';
 
-
 export class GradingCriteriaCommand extends DomainTagCommand {
     creditsCommand = new CreditsCommand();
     instructionCommand = new InstructionCommand();
     feedbackCommand = new FeedbackCommand();
     usageCountCommand = new UsageCountCommand();
 
-    public static readonly identifier = CreditsCommand.identifier + InstructionCommand.identifier + FeedbackCommand.identifier + UsageCountCommand.identifier;
+    public static readonly identifier = '[gradingInstruction]';
     // public static readonly text = ' Add grading instruction here';
 
     buttonTranslationString = 'assessmentInstructions.instructions.editor.addInstruction';
@@ -23,8 +22,6 @@ export class GradingCriteriaCommand extends DomainTagCommand {
      */
     execute(): void {
         const text =
-            '\n' +
-            '\n' +
             this.creditsCommand.getOpeningIdentifier() +
             CreditsCommand.text +
             '\n' +
@@ -35,7 +32,9 @@ export class GradingCriteriaCommand extends DomainTagCommand {
             FeedbackCommand.text +
             '\n' +
             this.usageCountCommand.getOpeningIdentifier() +
-            UsageCountCommand.text;
+            UsageCountCommand.text +
+            '\n' +
+            this.getOpeningIdentifier();
 
         ArtemisMarkdown.addTextAtCursor(text, this.aceEditorContainer);
     }
@@ -53,11 +52,6 @@ export class GradingCriteriaCommand extends DomainTagCommand {
      * @desc identify the end of the hint
      */
     getClosingIdentifier(): string {
-        return (
-            this.creditsCommand.getClosingIdentifier() +
-            this.instructionCommand.getClosingIdentifier() +
-            this.feedbackCommand.getClosingIdentifier() +
-            this.usageCountCommand.getClosingIdentifier()
-        );
+        return '[/gradingInstruction]';
     }
 }
