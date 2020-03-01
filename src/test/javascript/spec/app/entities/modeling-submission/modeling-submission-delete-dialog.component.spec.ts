@@ -5,8 +5,8 @@ import { of } from 'rxjs';
 import { JhiEventManager } from 'ng-jhipster';
 
 import { ArtemisTestModule } from '../../../test.module';
-import { ModelingSubmissionDeleteDialogComponent } from 'app/entities/modeling-submission/modeling-submission-delete-dialog.component';
-import { ModelingSubmissionService } from 'app/entities/modeling-submission/modeling-submission.service';
+import { ModelingSubmissionDeleteDialogComponent } from 'app/exercises/modeling-submission/modeling-submission-delete-dialog.component';
+import { ModelingSubmissionService } from 'app/exercises/modeling/participate/modeling-submission.service';
 
 describe('Component Tests', () => {
     describe('ModelingSubmission Management Delete Component', () => {

@@ -1,8 +1,9 @@
 package de.tum.in.www1.artemis;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.*;
 
 import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 import org.junit.jupiter.api.AfterEach;
@@ -13,17 +14,23 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.DifficultyLevel;
 import de.tum.in.www1.artemis.domain.quiz.*;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.QuizExerciseService;
+import de.tum.in.www1.artemis.service.scheduled.QuizScheduleService;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.RequestUtilService;
+import de.tum.in.www1.artemis.web.websocket.QuizSubmissionWebsocketService;
 
 public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationTest {
 
     @Autowired
     DatabaseUtilService database;
+
+    @Autowired
+    QuizScheduleService scheduleService;
 
     @Autowired
     RequestUtilService request;
@@ -45,6 +52,12 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationTest {
 
     @Autowired
     ResultRepository resultRepository;
+
+    @Autowired
+    QuizSubmissionWebsocketService quizSubmissionWebsocketService;
+
+    @Autowired
+    QuizSubmissionRepository quizSubmissionRepository;
 
     @BeforeEach
     public void init() {
@@ -237,6 +250,43 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationTest {
 
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void testUpdateNotExistingQuizExercise() throws Exception {
+        List<Course> courses = database.createCoursesWithExercisesAndLectures();
+        Course course = courses.get(0);
+
+        QuizExercise quizExercise = database.createQuiz(course, ZonedDateTime.now().plusHours(5), null);
+        QuizExercise quizExerciseServer = request.putWithResponseBody("/api/quiz-exercises", quizExercise, QuizExercise.class, HttpStatus.CREATED);
+        assertThat(quizExercise.equals(quizExerciseServer));
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void testUpdateRunningQuizExercise() throws Exception {
+        List<Course> courses = database.createCoursesWithExercisesAndLectures();
+        Course course = courses.get(0);
+        // create QuizExercise that already started
+        QuizExercise startedQuizExercise = database.createQuiz(course, ZonedDateTime.now().minusHours(1), null);
+        QuizExercise startedQuizExerciseServer = request.postWithResponseBody("/api/quiz-exercises", startedQuizExercise, QuizExercise.class, HttpStatus.CREATED);
+
+        MultipleChoiceQuestion mc = (MultipleChoiceQuestion) startedQuizExerciseServer.getQuizQuestions().get(0);
+        mc.getAnswerOptions().remove(0);
+        mc.getAnswerOptions().add(new AnswerOption().text("C").hint("H3").explanation("E3").isCorrect(true));
+        mc.getAnswerOptions().add(new AnswerOption().text("D").hint("H4").explanation("E4").isCorrect(true));
+
+        QuizExercise updatedQuizExercise = request.putWithResponseBody("/api/quiz-exercises", startedQuizExerciseServer, QuizExercise.class, HttpStatus.BAD_REQUEST);
+        assertThat(updatedQuizExercise).isNull();
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void testCreateExistingQuizExercise() throws Exception {
+        QuizExercise quizExerciseServer = createQuizOnServer();
+        QuizExercise newQuizExerciseServer = request.postWithResponseBody("/api/quiz-exercises", quizExerciseServer, QuizExercise.class, HttpStatus.BAD_REQUEST);
+        assertThat(newQuizExerciseServer).isNull();
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void testGetQuizExercise() throws Exception {
         QuizExercise quizExercise = createQuizOnServer();
         QuizExercise quizExerciseGet = request.get("/api/quiz-exercises/" + quizExercise.getId(), HttpStatus.OK, QuizExercise.class);
@@ -263,9 +313,28 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationTest {
         quizExercise.setReleaseDate(ZonedDateTime.now().minusSeconds(60));
         quizExercise.setDueDate(ZonedDateTime.now().minusSeconds(20));
         quizExercise = request.putWithResponseBody("/api/quiz-exercises", quizExercise, QuizExercise.class, HttpStatus.OK);
+
+        var now = ZonedDateTime.now();
+
+        for (int i = 1; i <= 10; i++) {
+            QuizSubmission quizSubmission = new QuizSubmission();
+
+            // TODO: add some values to the quiz submission
+
+            quizSubmission.submitted(true);
+            quizSubmission.submissionDate(now.minusMinutes(3));
+            database.addSubmission(quizExercise, quizSubmission, "student" + i);
+            if (i % 3 == 0) {
+                database.addResultToSubmission(quizSubmission, AssessmentType.AUTOMATIC, null, 10L, true);
+            }
+            else if (i % 4 == 0) {
+                database.addResultToSubmission(quizSubmission, AssessmentType.AUTOMATIC, null, 20L, true);
+            }
+        }
+
         request.putWithResponseBody("/api/quiz-exercises-re-evaluate/", quizExercise, QuizExercise.class, HttpStatus.OK);
         // TODO: actually set some question elements invalid, remove them, etc. and check that afert the reevaluation everything is ok
-        // TODO: also add submissions and check that they are correct afer reevaluation
+
     }
 
     @Test
@@ -274,7 +343,10 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationTest {
         QuizExercise quizExercise = createQuizOnServer();
         QuizExercise updatedQuizExercise = request.putWithResponseBody("/api/quiz-exercises/" + quizExercise.getId() + "/start-now", quizExercise, QuizExercise.class,
                 HttpStatus.OK);
-        // TODO: add some additional checks for the retrieved data
+        long millis = ChronoUnit.MILLIS.between(updatedQuizExercise.getReleaseDate(), ZonedDateTime.now());
+        // actually the two dates should be "exactly" the same, but for the sake of slow CI testing machines and to prevent flaky tests, we live with the following rule
+        assertThat(millis).isCloseTo(0, byLessThan(2000L));
+        assertThat(updatedQuizExercise.isIsPlannedToStart()).isTrue();
     }
 
     @Test
@@ -283,7 +355,11 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationTest {
         QuizExercise quizExercise = createQuizOnServer();
         // we expect a bad request because the quiz is already visible
         request.putWithResponseBody("/api/quiz-exercises/" + quizExercise.getId() + "/set-visible", quizExercise, QuizExercise.class, HttpStatus.BAD_REQUEST);
-        // TODO: also write one test that expects HttpStatus.OK
+        quizExercise.setIsVisibleBeforeStart(false);
+        quizExerciseService.save(quizExercise);
+        QuizExercise updatedQuizExercise = request.putWithResponseBody("/api/quiz-exercises/" + quizExercise.getId() + "/set-visible", quizExercise, QuizExercise.class,
+                HttpStatus.OK);
+        assertThat(updatedQuizExercise.isVisibleToStudents()).isTrue();
     }
 
     @Test
@@ -292,7 +368,13 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationTest {
         QuizExercise quizExercise = createQuizOnServer();
         // we expect a bad request because the quiz has not ended yet
         request.putWithResponseBody("/api/quiz-exercises/" + quizExercise.getId() + "/open-for-practice", quizExercise, QuizExercise.class, HttpStatus.BAD_REQUEST);
-        // TODO: also write one test that expects HttpStatus.OK
+        quizExercise.setReleaseDate(ZonedDateTime.now().minusMinutes(5));
+        quizExercise.setDueDate(ZonedDateTime.now().minusMinutes(2));
+        quizExercise.setDuration(180);
+        quizExerciseService.save(quizExercise);
+        QuizExercise updatedQuizExercise = request.putWithResponseBody("/api/quiz-exercises/" + quizExercise.getId() + "/open-for-practice", quizExercise, QuizExercise.class,
+                HttpStatus.OK);
+        assertThat(updatedQuizExercise.isIsOpenForPractice()).isTrue();
     }
 
 }

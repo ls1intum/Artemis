@@ -2,29 +2,31 @@ import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { DebugElement } from '@angular/core';
-import { JavaBridgeService } from 'app/intellij/java-bridge.service';
-import { CourseExerciseService, CourseService } from 'app/entities/course/course.service';
+import { OrionConnectorService } from 'app/shared/orion/orion-connector.service';
 import { SinonStub, stub } from 'sinon';
-import { ParticipationWebsocketService } from 'app/entities/participation/participation-websocket.service';
+import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import { ArtemisTestModule } from '../../../test.module';
 import { TranslateModule } from '@ngx-translate/core';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
-import { MockJavaBridgeService } from '../../../mocks/mock-java-bridge.service';
+import { MockOrionConnectorService } from '../../../mocks/mock-orion-connector.service';
 import { MockCourseExerciseService } from '../../../mocks/mock-course-exercise.service';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/alert/alert.service';
 import { MockAlertService } from '../../../helpers/mock-alert.service';
-import { ArtemisOverviewModule, CourseExerciseRowComponent } from 'app/overview';
-import { MockParticipationWebsocketService } from '../../../mocks';
-import { Result } from 'app/entities/result';
+import { MockParticipationWebsocketService } from '../../../mocks/mock-participation-websocket.service';
+import { Result } from 'app/entities/result.model';
 import { DeviceDetectorService } from 'ngx-device-detector';
-import { Exercise, ExerciseType, ParticipationStatus } from 'app/entities/exercise';
 import { of } from 'rxjs';
-import { InitializationState, StudentParticipation } from 'app/entities/participation';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../../mocks/mock-account.service';
 import * as moment from 'moment';
-import { QuizExercise } from 'app/entities/quiz-exercise';
 import { MockCourseService } from '../../../mocks/mock-course.service';
+import { Exercise, ExerciseType, ParticipationStatus } from 'app/entities/exercise.model';
+import { ArtemisCoursesModule } from 'app/overview/courses.module';
+import { InitializationState } from 'app/entities/participation/participation.model';
+import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { CourseExerciseRowComponent } from 'app/overview/course-exercises/course-exercise-row.component';
+import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
+import { CourseExerciseService, CourseManagementService } from 'app/course/manage/course-management.service';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -38,15 +40,15 @@ describe('CourseExerciseRowComponent', () => {
 
     beforeEach(async () => {
         return TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, TranslateModule.forRoot(), NgbModule, ArtemisOverviewModule],
+            imports: [ArtemisTestModule, TranslateModule.forRoot(), NgbModule, ArtemisCoursesModule],
             providers: [
                 DeviceDetectorService,
                 { provide: ParticipationWebsocketService, useClass: MockParticipationWebsocketService },
-                { provide: CourseService, useClass: MockCourseService },
+                { provide: CourseManagementService, useClass: MockCourseService },
                 { provide: CourseExerciseService, useClass: MockCourseExerciseService },
                 { provide: AccountService, useClass: MockAccountService },
-                { provide: JavaBridgeService, useClass: MockJavaBridgeService },
-                { provide: JhiAlertService, useClass: MockAlertService },
+                { provide: OrionConnectorService, useClass: MockOrionConnectorService },
+                { provide: AlertService, useClass: MockAlertService },
             ],
         })
             .overrideModule(ArtemisTestModule, { set: { declarations: [], exports: [] } })

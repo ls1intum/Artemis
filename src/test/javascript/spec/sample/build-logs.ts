@@ -1,4 +1,4 @@
-import { AnnotationArray } from 'app/entities/ace-editor';
+import { AnnotationArray } from 'app/entities/annotation.model';
 
 export const buildLogs = [
     {

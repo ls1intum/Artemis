@@ -1,7 +1,7 @@
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockComponent } from 'ng-mocks';
-import { CookieService } from 'ngx-cookie';
+import { CookieService } from 'ngx-cookie-service';
 import { By } from '@angular/platform-browser';
 import { TranslateModule } from '@ngx-translate/core';
 import { WindowRef } from 'app/core/websocket/window.service';
@@ -12,24 +12,23 @@ import { AceEditorModule } from 'ng2-ace-editor';
 import { TreeviewItem, TreeviewModule } from 'ngx-treeview';
 import { SinonStub, spy, stub } from 'sinon';
 import { Observable, Subject } from 'rxjs';
-import {
-    CodeEditorConflictStateService,
-    CodeEditorFileBrowserComponent,
-    CodeEditorFileBrowserCreateNodeComponent,
-    CodeEditorFileBrowserFileComponent,
-    CodeEditorFileBrowserFolderComponent,
-    CodeEditorFileService,
-    CodeEditorRepositoryFileService,
-    CodeEditorRepositoryService,
-    CodeEditorStatusComponent,
-    CommitState,
-    GitConflictState,
-} from 'app/code-editor';
 import { ArtemisTestModule } from '../../test.module';
-import { MockCodeEditorConflictStateService, MockCodeEditorRepositoryFileService, MockCodeEditorRepositoryService, MockCookieService, MockSyncStorage } from '../../mocks';
-import { FileType } from 'app/entities/ace-editor/file-change.model';
+import { CommitState, FileType, GitConflictState } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { triggerChanges } from '../../utils/general.utils';
 import { DeviceDetectorService } from 'ngx-device-detector';
+import { CodeEditorRepositoryFileService, CodeEditorRepositoryService } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
+import { CodeEditorConflictStateService } from 'app/exercises/programming/shared/code-editor/service/code-editor-conflict-state.service';
+import { CodeEditorFileService } from 'app/exercises/programming/shared/code-editor/service/code-editor-file.service';
+import { CodeEditorFileBrowserFolderComponent } from 'app/exercises/programming/shared/code-editor/file-browser/code-editor-file-browser-folder.component';
+import { CodeEditorFileBrowserCreateNodeComponent } from 'app/exercises/programming/shared/code-editor/file-browser/code-editor-file-browser-create-node.component';
+import { CodeEditorFileBrowserFileComponent } from 'app/exercises/programming/shared/code-editor/file-browser/code-editor-file-browser-file.component';
+import { CodeEditorFileBrowserComponent } from 'app/exercises/programming/shared/code-editor/file-browser/code-editor-file-browser.component';
+import { CodeEditorStatusComponent } from 'app/exercises/programming/shared/code-editor/status/code-editor-status.component';
+import { MockCodeEditorRepositoryService } from '../../mocks/mock-code-editor-repository.service';
+import { MockCodeEditorRepositoryFileService } from '../../mocks/mock-code-editor-repository-file.service';
+import { MockCodeEditorConflictStateService } from '../../mocks/mock-code-editor-conflict-state.service';
+import { MockSyncStorage } from '../../mocks/mock-sync.storage';
+import { MockCookieService } from '../../mocks/mock-cookie.service';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -193,22 +192,22 @@ describe('CodeEditorFileBrowserComponent', () => {
         comp.repositoryFiles = repositoryFiles;
         comp.setupTreeview();
         fixture.detectChanges();
-        const folder = comp.filesTreeViewItem.find(({ value }) => value === 'folder');
+        const folder = comp.filesTreeViewItem.find(({ value }) => value === 'folder')!;
         expect(folder).to.exist;
         expect(folder.children).to.have.lengthOf(1);
-        const file1 = folder.children.find(({ value }) => value === 'folder/file1');
+        const file1 = folder.children.find(({ value }) => value === 'folder/file1')!;
         expect(file1).to.exist;
         expect(file1.children).to.be.undefined;
-        const folder2 = comp.filesTreeViewItem.find(({ value }) => value === 'folder2');
+        const folder2 = comp.filesTreeViewItem.find(({ value }) => value === 'folder2')!;
         expect(folder2).to.exist;
         expect(folder2.children).to.have.lengthOf(2);
-        const file2 = folder2.children.find(({ value }) => value === 'folder2/file2');
+        const file2 = folder2.children.find(({ value }) => value === 'folder2/file2')!;
         expect(file2).to.exist;
         expect(file2.children).to.be.undefined;
-        const folder3 = folder2.children.find(({ value }) => value === 'folder2/folder3');
+        const folder3 = folder2.children.find(({ value }) => value === 'folder2/folder3')!;
         expect(folder3).to.exist;
         expect(folder3.children).to.have.lengthOf(1);
-        const file3 = folder3.children.find(({ value }) => value === 'folder2/folder3/file3');
+        const file3 = folder3.children.find(({ value }) => value === 'folder2/folder3/file3')!;
         expect(file3).to.exist;
         expect(file3.children).to.be.undefined;
         const renderedFolders = debugElement.queryAll(By.css('jhi-code-editor-file-browser-folder'));
@@ -334,7 +333,7 @@ describe('CodeEditorFileBrowserComponent', () => {
         triggerChanges(comp, { property: 'selectedFile', currentValue: 'folder/file2', firstChange: false });
         fixture.detectChanges();
         expect(comp.selectedFile).to.equal(selectedFile);
-        const selectedTreeItem = comp.filesTreeViewItem.find(({ value }) => value === 'folder').children.find(({ value }) => value === selectedFile);
+        const selectedTreeItem = comp.filesTreeViewItem.find(({ value }) => value === 'folder')!.children.find(({ value }) => value === selectedFile)!;
         expect(selectedTreeItem).to.exist;
         expect(selectedTreeItem.checked).to.be.true;
         const renderedFolders = debugElement.queryAll(By.css('jhi-code-editor-file-browser-folder'));
@@ -682,7 +681,7 @@ describe('CodeEditorFileBrowserComponent', () => {
 
         // Wait for focus of input element
         tick();
-        let focusedElement = debugElement.query(By.css(':focus')).nativeElement;
+        const focusedElement = debugElement.query(By.css(':focus')).nativeElement;
         expect(renamingInput.nativeElement).to.deep.equal(focusedElement);
 
         renamingInput.nativeElement.dispatchEvent(new Event('focusout'));

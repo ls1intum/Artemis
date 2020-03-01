@@ -16,7 +16,9 @@ import org.springframework.core.env.Profiles;
 import io.github.jhipster.config.JHipsterConstants;
 
 /**
- * Aspect for logging execution of service and repository Spring components. By default, it only runs with the "dev" profile.
+ * Aspect for logging execution of service and repository Spring components.
+ *
+ * By default, it only runs with the "dev" profile.
  */
 @Aspect
 public class LoggingAspect {
@@ -49,8 +51,8 @@ public class LoggingAspect {
     /**
      * Advice that logs methods throwing exceptions.
      *
-     * @param joinPoint join point for advice
-     * @param e         exception
+     * @param joinPoint join point for advice.
+     * @param e exception.
      */
     @AfterThrowing(pointcut = "applicationPackagePointcut() && springBeanPointcut()", throwing = "e")
     public void logAfterThrowing(JoinPoint joinPoint, Throwable e) {
@@ -68,9 +70,9 @@ public class LoggingAspect {
     /**
      * Advice that logs when a method is entered and exited.
      *
-     * @param joinPoint join point for advice
-     * @return result
-     * @throws Throwable throws IllegalArgumentException
+     * @param joinPoint join point for advice.
+     * @return result.
+     * @throws Throwable throws {@link IllegalArgumentException}.
      */
     @Around("applicationPackagePointcut() && springBeanPointcut()")
     public Object logAround(ProceedingJoinPoint joinPoint) throws Throwable {

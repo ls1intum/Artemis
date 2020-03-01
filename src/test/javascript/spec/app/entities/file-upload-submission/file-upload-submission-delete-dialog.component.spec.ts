@@ -5,8 +5,8 @@ import { of } from 'rxjs';
 import { JhiEventManager } from 'ng-jhipster';
 
 import { ArTeMiSTestModule } from '../../../test.module';
-import { FileUploadSubmissionDeleteDialogComponent } from 'app/entities/file-upload-submission/file-upload-submission-delete-dialog.component';
-import { FileUploadSubmissionService } from 'app/entities/file-upload-submission/file-upload-submission.service';
+import { FileUploadSubmissionDeleteDialogComponent } from 'app/exercises/file-upload-submission/file-upload-submission-delete-dialog.component';
+import { FileUploadSubmissionService } from 'app/exercises/file-upload/participate/file-upload-submission.service';
 
 describe('Component Tests', () => {
     describe('FileUploadSubmission Management Delete Component', () => {

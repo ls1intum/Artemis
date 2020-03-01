@@ -1,4 +1,4 @@
-import { Component, AfterViewInit, Input, HostBinding } from '@angular/core';
+import { AfterViewInit, Component, HostBinding, Input } from '@angular/core';
 import interact from 'interactjs';
 
 /**
@@ -10,7 +10,7 @@ import interact from 'interactjs';
  *    <span left-header>Header Left</span>
  *    <p left-body>Body Left</p>
  *
- *    <fa-icon icon="exclamation-triangle" right-header></fa-icon>
+ *    <fa-icon [icon]="'exclamation-triangle'" right-header></fa-icon>
  *    <span right-header>Header Right</span>
  *    <p right-body>Body Right</p>
  *

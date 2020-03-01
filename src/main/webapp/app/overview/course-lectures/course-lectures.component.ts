@@ -1,14 +1,14 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { Course } from 'app/entities/course';
-import { CourseService } from 'app/entities/course/course.service';
+import { Course } from 'app/entities/course.model';
+import { CourseManagementService } from '../../course/manage/course-management.service';
 import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs/Subscription';
 import { LangChangeEvent, TranslateService } from '@ngx-translate/core';
 import { HttpResponse } from '@angular/common/http';
 import * as moment from 'moment';
-import { ExerciseService } from 'app/entities/exercise';
-import { Lecture } from 'app/entities/lecture';
-import { CourseScoreCalculationService } from 'app/overview';
+import { Lecture } from 'app/entities/lecture.model';
+import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
+import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 
 @Component({
     selector: 'jhi-course-lectures',
@@ -29,9 +29,9 @@ export class CourseLecturesComponent implements OnInit, OnDestroy {
     public totalAttachmentCount: number;
 
     constructor(
-        private courseService: CourseService,
+        private courseService: CourseManagementService,
         private courseCalculationService: CourseScoreCalculationService,
-        private courseServer: CourseService,
+        private courseServer: CourseManagementService,
         private translateService: TranslateService,
         private exerciseService: ExerciseService,
         private route: ActivatedRoute,

@@ -1,29 +1,29 @@
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
-import { ProgrammingSubmissionService } from 'app/programming-submission/programming-submission.service';
-import { ParticipationWebsocketService } from 'app/entities/participation/participation-websocket.service';
-import { JavaBridgeService } from 'app/intellij/java-bridge.service';
-import { CodeEditorBuildLogService } from 'app/code-editor';
+import { IProgrammingSubmissionService } from 'app/exercises/programming/participate/programming-submission.service';
+import { IParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import { SinonSpy, SinonStub, spy, stub } from 'sinon';
 import { MockProgrammingSubmissionService } from '../mocks/mock-programming-submission.service';
-import { MockCodeEditorBuildLogService, MockParticipationWebsocketService } from '../mocks';
-import { MockJavaBridgeService } from '../mocks/mock-java-bridge.service';
-import { IdeBuildAndTestService } from 'app/intellij/ide-build-and-test.service';
-import { Result } from 'app/entities/result';
-import { Feedback } from 'app/entities/feedback';
+import { Result } from 'app/entities/result.model';
 import { BehaviorSubject, of } from 'rxjs';
-import { ProgrammingExercise } from 'app/entities/programming-exercise';
-import { buildLogs } from '../sample/build-logs';
+import { Feedback } from 'app/entities/feedback.model';
+import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { IBuildLogService } from 'app/exercises/programming/shared/service/build-log.service';
+import { MockParticipationWebsocketService } from '../mocks/mock-participation-websocket.service';
+import { MockCodeEditorBuildLogService } from '../mocks/mock-code-editor-build-log.service';
+import { OrionBuildAndTestService } from 'app/shared/orion/orion-build-and-test.service';
+import { OrionConnectorService } from 'app/shared/orion/orion-connector.service';
+import { MockOrionConnectorService } from '../mocks/mock-orion-connector.service';
 
 chai.use(sinonChai);
 const expect = chai.expect;
 
 describe('IdeBuildAndTestService', () => {
-    let submissionService: ProgrammingSubmissionService;
-    let participationService: ParticipationWebsocketService;
-    let javaBridge: JavaBridgeService;
-    let buildLogService: CodeEditorBuildLogService;
-    let ideBuildAndTestService: IdeBuildAndTestService;
+    let submissionService: IProgrammingSubmissionService;
+    let participationService: IParticipationWebsocketService;
+    let javaBridge: OrionConnectorService;
+    let buildLogService: IBuildLogService;
+    let ideBuildAndTestService: OrionBuildAndTestService;
 
     let onBuildFinishedSpy: SinonSpy;
     let onBuildStartedSpy: SinonSpy;
@@ -32,20 +32,17 @@ describe('IdeBuildAndTestService', () => {
     let buildLogsStub: SinonStub;
     let participationSubscriptionStub: SinonStub;
 
-    const feedbacks = [
-        { id: 2, positive: false, detailText: 'abc' },
-        { id: 3, positive: true, detailText: 'cde' },
-    ] as [Feedback];
+    const feedbacks = [{ id: 2, positive: false, detailText: 'abc' } as Feedback, { id: 3, positive: true, detailText: 'cde' } as Feedback];
     const result = { id: 1 } as Result;
     const exercise = { id: 42, studentParticipations: [{ id: 32 }] } as ProgrammingExercise;
 
     beforeEach(() => {
         submissionService = new MockProgrammingSubmissionService();
         participationService = new MockParticipationWebsocketService();
-        javaBridge = new MockJavaBridgeService();
+        javaBridge = new MockOrionConnectorService();
         buildLogService = new MockCodeEditorBuildLogService();
 
-        ideBuildAndTestService = new IdeBuildAndTestService(submissionService, participationService, javaBridge, buildLogService);
+        ideBuildAndTestService = new OrionBuildAndTestService(submissionService, participationService, javaBridge, buildLogService);
 
         onBuildFinishedSpy = spy(javaBridge, 'onBuildFinished');
         onBuildStartedSpy = spy(javaBridge, 'onBuildStarted');
@@ -106,8 +103,8 @@ describe('IdeBuildAndTestService', () => {
             },
         ];
         buildLogsStub.returns(of(logs));
+        result.feedbacks = [];
         result.successful = false;
-        result.feedbacks = undefined;
         result.hasFeedback = false;
         const subject = new BehaviorSubject(result);
         participationSubscriptionStub.returns(subject);

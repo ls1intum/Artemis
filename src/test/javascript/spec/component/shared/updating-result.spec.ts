@@ -11,17 +11,20 @@ import { SinonStub, spy, stub } from 'sinon';
 import { BehaviorSubject, of } from 'rxjs';
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
-import { CodeEditorFileService } from 'app/code-editor';
 import { ArtemisTestModule } from '../../test.module';
-import { MockParticipationWebsocketService, MockSyncStorage } from '../../mocks';
-import { Result, ResultComponent, UpdatingResultComponent } from 'app/entities/result';
-import { ArtemisSharedModule } from 'app/shared';
-import { ParticipationWebsocketService } from 'app/entities/participation/participation-websocket.service';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
+import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import { MockAccountService } from '../../mocks/mock-account.service';
-import { Exercise, ExerciseType } from 'app/entities/exercise';
-import { ProgrammingSubmissionService, ProgrammingSubmissionState } from 'app/programming-submission/programming-submission.service';
+import { ProgrammingSubmissionService, ProgrammingSubmissionState } from 'app/exercises/programming/participate/programming-submission.service';
 import { MockProgrammingSubmissionService } from '../../mocks/mock-programming-submission.service';
 import { triggerChanges } from '../../utils/general.utils';
+import { Exercise, ExerciseType } from 'app/entities/exercise.model';
+import { UpdatingResultComponent } from 'app/shared/result/updating-result.component';
+import { ResultComponent } from 'app/shared/result/result.component';
+import { CodeEditorFileService } from 'app/exercises/programming/shared/code-editor/service/code-editor-file.service';
+import { Result } from 'app/entities/result.model';
+import { MockParticipationWebsocketService } from '../../mocks/mock-participation-websocket.service';
+import { MockSyncStorage } from '../../mocks/mock-sync.storage';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -139,9 +142,9 @@ describe('UpdatingResultComponent', () => {
     it('should react to both rated and unrated results if showUngradedResults is true', async () => {
         cleanInitializeUngraded();
         subscribeForLatestResultOfParticipationSubject.next(newUngradedResult);
-        expect(comp.result.id).to.equal(newUngradedResult.id);
+        expect(comp.result!.id).to.equal(newUngradedResult.id);
         subscribeForLatestResultOfParticipationSubject.next(newGradedResult);
-        expect(comp.result.id).to.equal(newGradedResult.id);
+        expect(comp.result!.id).to.equal(newGradedResult.id);
     });
 
     it('should update result and establish new websocket connection on participation change', () => {

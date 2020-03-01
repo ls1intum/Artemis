@@ -8,7 +8,7 @@ import { JhiEventManager } from 'ng-jhipster';
 import { ArtemisTestModule } from '../../../test.module';
 import { ProgrammingSubmissionDialogComponent } from '../../../../../../main/webapp/app/entities/programming-submission/programming-submission-dialog.component';
 import { ProgrammingSubmissionService } from '../../../../../../main/webapp/app/entities/programming-submission/programming-submission.service';
-import { ProgrammingSubmission } from '../../../../../../main/webapp/app/entities/programming-submission/programming-submission.model';
+import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
 
 describe('Component Tests', () => {
     describe('ProgrammingSubmission Management Dialog Component', () => {
