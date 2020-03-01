@@ -79,24 +79,24 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationTest {
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     public void testCreateCourseWithOptions() throws Exception {
-        // Generate POST Request Body with maxComplaints = 5, maxComplaintTimeWeeks = 2, qnaEnabled = false
-        Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>(), "tumuser", "tutor", "instructor", 5, 2, false);
+        // Generate POST Request Body with maxComplaints = 5, maxComplaintTimeDays = 14, studentQuestionsEnabled = false
+        Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>(), "tumuser", "tutor", "instructor", 5, 14, false);
         request.post("/api/courses", course, HttpStatus.CREATED);
         // Because the courseId is automatically generated we cannot use the findById method to retrieve the saved course.
         Course getFromRepo = courseRepo.findAll().get(0);
         assertThat(getFromRepo.getMaxComplaints()).as("Course has right maxComplaints Value").isEqualTo(5);
-        assertThat(getFromRepo.getMaxComplaintTimeWeeks()).as("Course has right maxComplaintTimeWeeks Value").isEqualTo(2);
-        assertThat(getFromRepo.getQnaEnabled()).as("Course has right qnaEnabled Value").isFalse();
+        assertThat(getFromRepo.getMaxComplaintTimeDays()).as("Course has right maxComplaintTimeDays Value").isEqualTo(14);
+        assertThat(getFromRepo.getStudentQuestionsEnabled()).as("Course has right studentQuestionsEnabled Value").isFalse();
 
         // Test edit course
         course.setId(getFromRepo.getId());
         course.setMaxComplaints(1);
-        course.setMaxComplaintTimeWeeks(1);
-        course.setQnaEnabled(true);
+        course.setMaxComplaintTimeDays(7);
+        course.setStudentQuestionsEnabled(true);
         Course updatedCourse = request.putWithResponseBody("/api/courses", course, Course.class, HttpStatus.OK);
         assertThat(updatedCourse.getMaxComplaints()).as("maxComplaints Value updated successfully").isEqualTo(course.getMaxComplaints());
-        assertThat(updatedCourse.getMaxComplaintTimeWeeks()).as("maxComplaintTimeWeeks Value updated successfully").isEqualTo(course.getMaxComplaintTimeWeeks());
-        assertThat(updatedCourse.getQnaEnabled()).as("qnaEnabled Value updated successfully").isTrue();
+        assertThat(updatedCourse.getMaxComplaintTimeDays()).as("maxComplaintTimeDays Value updated successfully").isEqualTo(course.getMaxComplaintTimeDays());
+        assertThat(updatedCourse.getStudentQuestionsEnabled()).as("studentQuestionsEnabled Value updated successfully").isTrue();
     }
 
     @Test

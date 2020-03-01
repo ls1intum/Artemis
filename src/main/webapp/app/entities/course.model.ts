@@ -20,8 +20,8 @@ export class Course implements BaseEntity {
     public registrationEnabled = false; // default value
     public presentationScore = 0; // default value
     public maxComplaints = 3; // default value
-    public maxComplaintTimeWeeks = 1; // default value
-    public qnaEnabled = true; // default value
+    public maxComplaintTimeDays = 7; // default value
+    public studentQuestionsEnabled = true; // default value
 
     public exercises: Exercise[];
     public lectures: Lecture[];

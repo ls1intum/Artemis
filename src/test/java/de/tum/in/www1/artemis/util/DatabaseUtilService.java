@@ -530,7 +530,7 @@ public class DatabaseUtilService {
         Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "instructor");
         ModelingExercise modelingExercise = ModelFactory.generateModelingExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, DiagramType.ClassDiagram, course);
         course.addExercises(modelingExercise);
-        course.setMaxComplaintTimeWeeks(2);
+        course.setMaxComplaintTimeDays(14);
         course = courseRepo.save(course);
         modelingExercise = exerciseRepo.save(modelingExercise);
         assertThat(exerciseRepo.count()).as("one exercise got stored").isEqualTo(currentExerciseRepoSize + 1L);

@@ -1,8 +1,5 @@
 package de.tum.in.www1.artemis.service;
 
-import static de.tum.in.www1.artemis.config.Constants.MAX_COMPLAINT_NUMBER_PER_STUDENT;
-import static de.tum.in.www1.artemis.config.Constants.MAX_COMPLAINT_TIME_WEEKS;
-
 import java.security.Principal;
 import java.time.ZonedDateTime;
 import java.util.List;
@@ -61,16 +58,9 @@ public class ComplaintService {
 
         // Retrieve course to get Max Complaint Number and Max Complaint Time per Student
         Course course = courseService.findOne(courseId);
-        int maxComplaints;
-
-        // Value may not exist in DB
-        if (course.getMaxComplaints() == null)
-            maxComplaints = (int) MAX_COMPLAINT_NUMBER_PER_STUDENT;
-        else
-            maxComplaints = course.getMaxComplaints();
 
         long numberOfUnacceptedComplaints = countUnacceptedComplaintsByStudentIdAndCourseId(student.getId(), courseId);
-        if (numberOfUnacceptedComplaints >= maxComplaints && complaint.getComplaintType() == ComplaintType.COMPLAINT) {
+        if (numberOfUnacceptedComplaints >= course.getMaxComplaints() && complaint.getComplaintType() == ComplaintType.COMPLAINT) {
             throw new BadRequestAlertException("You cannot have more than " + course.getMaxComplaints() + " open or rejected complaints at the same time.", ENTITY_NAME,
                     "toomanycomplaints");
         }
@@ -187,18 +177,11 @@ public class ComplaintService {
      * before the assessment due date, the assessment due date is checked, as the student can only see the result after the assessment due date.
      */
     private boolean isTimeOfComplaintValid(Result result, Exercise exercise, Course course) {
-        int maxComplaintTimeWeeks;
-
-        // Value may not exist in DB
-        if (course.getMaxComplaintTimeWeeks() == null)
-            maxComplaintTimeWeeks = MAX_COMPLAINT_TIME_WEEKS;
-        else
-            maxComplaintTimeWeeks = course.getMaxComplaintTimeWeeks();
 
         if (exercise.getAssessmentDueDate() == null || result.getCompletionDate().isAfter(exercise.getAssessmentDueDate())) {
-            return result.getCompletionDate().isAfter(ZonedDateTime.now().minusWeeks(maxComplaintTimeWeeks));
+            return result.getCompletionDate().isAfter(ZonedDateTime.now().minusDays(course.getMaxComplaintTimeDays()));
         }
-        return exercise.getAssessmentDueDate().isAfter(ZonedDateTime.now().minusWeeks(maxComplaintTimeWeeks));
+        return exercise.getAssessmentDueDate().isAfter(ZonedDateTime.now().minusDays(course.getMaxComplaintTimeDays()));
     }
 
 }

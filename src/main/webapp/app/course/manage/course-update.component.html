@@ -47,19 +47,21 @@
                         </div>
                     </ng-container>
                 </div>
-                <div class="form-group">
+                <div class="form-group" *ngIf="course && course.maxComplaints > 0">
                     <label class="form-control-label" jhiTranslate="artemisApp.course.maxComplaints" for="field_maxComplaints">Maximum Number of Complaints</label>
                     <input required type="number" class="form-control" name="maxComplaints" id="field_maxComplaints" formControlName="maxComplaints" />
                 </div>
                 <div class="form-group">
-                    <label class="form-control-label" jhiTranslate="artemisApp.course.maxComplaintTimeWeeks" for="field_maxComplaintTimeWeeks"
-                        >Deadline for complaints in weeks after result date</label
+                    <label class="form-control-label" jhiTranslate="artemisApp.course.maxComplaintTimeDays" for="field_maxComplaintTimeDays"
+                        >Deadline for complaints in days after result date</label
                     >
-                    <input required type="number" class="form-control" name="maxComplaintTimeWeeks" id="field_maxComplaintTimeWeeks" formControlName="maxComplaintTimeWeeks" />
+                    <input required type="number" class="form-control" name="maxComplaintTimeDays" id="field_maxComplaintTimeDays" formControlName="maxComplaintTimeDays" />
                 </div>
                 <div class="form-check">
-                    <input type="checkbox" class="form-check-input" name="qnaEnabled" id="field_qnaEnabled" formControlName="qnaEnabled" />
-                    <label class="form-control-label" jhiTranslate="artemisApp.course.qnaEnabled" for="field_qnaEnabled">Enable Questions and Answers</label>
+                    <input type="checkbox" class="form-check-input" name="studentQuestionsEnabled" id="field_studentQuestionsEnabled" formControlName="studentQuestionsEnabled" />
+                    <label class="form-control-label" jhiTranslate="artemisApp.course.studentQuestionsEnabled" for="field_studentQuestionsEnabled"
+                        >Enable Questions and Answers</label
+                    >
                 </div>
                 <div class="form-group">
                     <label class="form-control-label" jhiTranslate="artemisApp.course.courseIcon" for="field_shortName">Course Icon</label>

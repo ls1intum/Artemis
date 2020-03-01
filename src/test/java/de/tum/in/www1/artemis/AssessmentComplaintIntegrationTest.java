@@ -18,7 +18,6 @@ import org.springframework.util.LinkedMultiValueMap;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
@@ -149,8 +148,8 @@ public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegratio
     @WithMockUser(username = "student1")
     public void submitComplaintAboutModelingAssessment_validDeadline() throws Exception {
         // Mock object initialized with 2 weeks deadline. One week after result date is fine.
-        database.updateAssessmentDueDate(modelingExercise.getId(), ZonedDateTime.now().minusWeeks(Constants.MAX_COMPLAINT_TIME_WEEKS));
-        database.updateResultCompletionDate(modelingAssessment.getId(), ZonedDateTime.now().minusWeeks(Constants.MAX_COMPLAINT_TIME_WEEKS));
+        database.updateAssessmentDueDate(modelingExercise.getId(), ZonedDateTime.now().minusWeeks(1));
+        database.updateResultCompletionDate(modelingAssessment.getId(), ZonedDateTime.now().minusWeeks(1));
 
         request.post("/api/complaints", complaint, HttpStatus.CREATED);
 
@@ -163,8 +162,8 @@ public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegratio
     @WithMockUser(username = "student1")
     public void submitComplaintAboutModelingAssessment_assessmentTooOld() throws Exception {
         // 3 weeks is already past the deadline
-        database.updateAssessmentDueDate(modelingExercise.getId(), ZonedDateTime.now().minusWeeks(Constants.MAX_COMPLAINT_TIME_WEEKS + 2));
-        database.updateResultCompletionDate(modelingAssessment.getId(), ZonedDateTime.now().minusWeeks(Constants.MAX_COMPLAINT_TIME_WEEKS + 2));
+        database.updateAssessmentDueDate(modelingExercise.getId(), ZonedDateTime.now().minusWeeks(3));
+        database.updateResultCompletionDate(modelingAssessment.getId(), ZonedDateTime.now().minusWeeks(3));
 
         request.post("/api/complaints", complaint, HttpStatus.BAD_REQUEST);
 

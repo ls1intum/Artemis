@@ -106,7 +106,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Assigns the attribute course to be able to access the attribute qnaEnabled
+     * Assigns the attribute course to be able to access the attribute studentQuestionsEnabled
      */
     getCourse(courseId: number) {
         // We do not want to subscribe but instead just take the value at initialization

@@ -87,13 +87,13 @@ public class Course implements Serializable {
     @JsonView(QuizView.Before.class)
     private Integer maxComplaints;
 
-    @Column(name = "max_complaint_time_weeks")
+    @Column(name = "max_complaint_time_days")
     @JsonView(QuizView.Before.class)
-    private Integer maxComplaintTimeWeeks;
+    private Integer maxComplaintTimeDays;
 
-    @Column(name = "qna_enabled")
+    @Column(name = "student_questions_enabled")
     @JsonView(QuizView.Before.class)
-    private Boolean qnaEnabled;
+    private Boolean studentQuestionsEnabled;
 
     @Column(name = "color")
     private String color;
@@ -260,30 +260,30 @@ public class Course implements Serializable {
         this.maxComplaints = maxComplaints;
     }
 
-    public Integer getMaxComplaintTimeWeeks() {
-        return maxComplaintTimeWeeks;
+    public Integer getMaxComplaintTimeDays() {
+        return maxComplaintTimeDays;
     }
 
-    public Course maxComplaintTimeWeeks(Integer maxComplaintTimeWeeks) {
-        this.maxComplaintTimeWeeks = maxComplaintTimeWeeks;
+    public Course maxComplaintTimeDays(Integer maxComplaintTimeDays) {
+        this.maxComplaintTimeDays = maxComplaintTimeDays;
         return this;
     }
 
-    public void setMaxComplaintTimeWeeks(Integer maxComplaintTimeWeeks) {
-        this.maxComplaintTimeWeeks = maxComplaintTimeWeeks;
+    public void setMaxComplaintTimeDays(Integer maxComplaintTimeDays) {
+        this.maxComplaintTimeDays = maxComplaintTimeDays;
     }
 
-    public Boolean getQnaEnabled() {
-        return qnaEnabled;
+    public Boolean getStudentQuestionsEnabled() {
+        return studentQuestionsEnabled;
     }
 
-    public Course qnaEnabled(Boolean qnaEnabled) {
-        this.qnaEnabled = qnaEnabled;
+    public Course studentQuestionsEnabled(Boolean studentQuestionsEnabled) {
+        this.studentQuestionsEnabled = studentQuestionsEnabled;
         return this;
     }
 
-    public void setQnaEnabled(Boolean qnaEnabled) {
-        this.qnaEnabled = qnaEnabled;
+    public void setStudentQuestionsEnabled(Boolean studentQuestionsEnabled) {
+        this.studentQuestionsEnabled = studentQuestionsEnabled;
     }
 
     public String getColor() {
