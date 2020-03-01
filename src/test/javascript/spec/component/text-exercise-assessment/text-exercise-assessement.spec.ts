@@ -26,7 +26,7 @@ import { Location } from '@angular/common';
 import { textAssessmentRoutes } from 'app/exercises/text/assess/text-assessment.route';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { ComplaintService } from 'app/complaints/complaint.service';
-import { MockComplaintService } from '../../mocks/mock-complaint.service';
+import { MockComplaintResponse, MockComplaintService } from '../../mocks/mock-complaint.service';
 import { TranslateModule } from '@ngx-translate/core';
 import { TextSubmissionService } from 'app/exercises/text/participate/text-submission.service';
 import { ComplaintsForTutorComponent } from 'app/complaints/complaints-for-tutor/complaints-for-tutor.component';
@@ -40,7 +40,6 @@ import { AssessmentType } from 'app/entities/assessment-type.model';
 import { MockActivatedRoute } from '../../mocks/mock-activated-route';
 import { TextAssessmentsService } from 'app/exercises/text/assess/text-assessments.service';
 import { Course } from 'app/entities/course.model';
-import * as sinon from 'sinon';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -116,12 +115,14 @@ describe('TextAssessmentComponent', () => {
                 getTextSubmissionForExerciseWithoutAssessmentStub = stub(textSubmissionService, 'getTextSubmissionForExerciseWithoutAssessment');
                 assessmentsService = TestBed.inject(TextAssessmentsService);
                 getFeedbackDataForExerciseSubmissionStub = stub(assessmentsService, 'getFeedbackDataForExerciseSubmission');
+
                 router.initialNavigation();
             });
     });
 
     afterEach(() => {
         getTextSubmissionForExerciseWithoutAssessmentStub.restore();
+        getFeedbackDataForExerciseSubmissionStub.restore();
     });
 
     it(
@@ -169,6 +170,7 @@ describe('TextAssessmentComponent', () => {
 
     it('Should set the result and participation properly for new submission', fakeAsync(() => {
         activatedRouteMock.testParams = { exerciseId: 1, submissionId: 'new' };
+        result.hasComplaint = true;
         getTextSubmissionForExerciseWithoutAssessmentStub.returns(of(submission));
         comp.ngOnInit();
         tick();
@@ -177,6 +179,7 @@ describe('TextAssessmentComponent', () => {
         expect(comp.exercise).to.be.deep.equal(exercise);
         expect(comp.participation).to.be.deep.equal(participation);
         expect(comp.isAtLeastInstructor).to.be.true;
+        expect(comp.complaint).to.be.deep.equal(MockComplaintResponse.body);
     }));
 
     it('Should navigate to tutor dashboard when locked submission limit reached', fakeAsync(() => {
