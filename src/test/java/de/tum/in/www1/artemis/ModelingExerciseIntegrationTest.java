@@ -14,7 +14,9 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
+import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.ModelingExerciseUtilService;
 import de.tum.in.www1.artemis.util.RequestUtilService;
 
@@ -32,6 +34,9 @@ public class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationTe
     @Autowired
     ModelingExerciseUtilService modelingExerciseUtilService;
 
+    @Autowired
+    UserRepository userRepo;
+
     private ModelingExercise classExercise;
 
     @BeforeEach
@@ -39,6 +44,10 @@ public class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationTe
         database.addUsers(1, 1, 1);
         database.addCourseWithOneModelingExercise();
         classExercise = (ModelingExercise) exerciseRepo.findAll().get(0);
+
+        // Add users that are not in course
+        userRepo.save(ModelFactory.generateActivatedUser("instructor2"));
+        userRepo.save(ModelFactory.generateActivatedUser("tutor2"));
     }
 
     @AfterEach
@@ -83,9 +92,21 @@ public class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationTe
     }
 
     @Test
+    @WithMockUser(username = "tutor2", roles = "TA")
+    public void testGetModelingExercise_tutorNotInCourse() throws Exception {
+        request.get("/api/modeling-exercises/" + classExercise.getId(), HttpStatus.FORBIDDEN, ModelingExercise.class);
+    }
+
+    @Test
     @WithMockUser(username = "tutor1", roles = "TA")
     public void testGetModelingExerciseForCourse_asTA() throws Exception {
         request.get("/api/courses/" + classExercise.getCourse().getId() + "/modeling-exercises", HttpStatus.OK, List.class);
+    }
+
+    @Test
+    @WithMockUser(username = "tutor2", roles = "TA")
+    public void testGetModelingExerciseForCourse_tutorNotInCourse() throws Exception {
+        request.get("/api/courses/" + classExercise.getCourse().getId() + "/modeling-exercises", HttpStatus.FORBIDDEN, List.class);
     }
 
     @Test
@@ -100,6 +121,12 @@ public class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationTe
     }
 
     @Test
+    @WithMockUser(username = "tutor2", roles = "TA")
+    public void testGetModelingExerciseStatistics_tutorNotInCourse() throws Exception {
+        request.get("/api/modeling-exercises/" + classExercise.getId() + "/statistics", HttpStatus.FORBIDDEN, String.class);
+    }
+
+    @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testCreateModelingExercise_asInstructor() throws Exception {
         ModelingExercise modelingExercise = modelingExerciseUtilService.createModelingExercise(classExercise.getCourse().getId());
@@ -110,6 +137,13 @@ public class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationTe
 
         modelingExercise = modelingExerciseUtilService.createModelingExercise(2L);
         request.post("/api/modeling-exercises", modelingExercise, HttpStatus.NOT_FOUND);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor2", roles = "INSTRUCTOR")
+    public void testCreateModelingExercise_instructorNotInCourse() throws Exception {
+        ModelingExercise modelingExercise = modelingExerciseUtilService.createModelingExercise(classExercise.getCourse().getId());
+        request.post("/api/modeling-exercises", modelingExercise, HttpStatus.FORBIDDEN);
     }
 
     @Test
@@ -129,6 +163,12 @@ public class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationTe
     }
 
     @Test
+    @WithMockUser(username = "instructor2", roles = "INSTRUCTOR")
+    public void testUpdateModelingExercise_instructorNotInCourse() throws Exception {
+        request.put("/api/modeling-exercises/" + classExercise.getId(), classExercise, HttpStatus.FORBIDDEN);
+    }
+
+    @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testDeleteModelingExercise_asInstructor() throws Exception {
         request.delete("/api/modeling-exercises/" + classExercise.getId(), HttpStatus.OK);
@@ -138,6 +178,12 @@ public class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationTe
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
     public void testDeleteModelingExercise_asTutor_Forbidden() throws Exception {
+        request.delete("/api/modeling-exercises/" + classExercise.getId(), HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor2", roles = "INSTRUCTOR")
+    public void testDeleteModelingExercise_notInstructorInCourse() throws Exception {
         request.delete("/api/modeling-exercises/" + classExercise.getId(), HttpStatus.FORBIDDEN);
     }
 }
