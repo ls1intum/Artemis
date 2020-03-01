@@ -1,7 +1,6 @@
-/* tslint:disable:no-unused-expression */
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { CookieService } from 'ngx-cookie';
+import { CookieService } from 'ngx-cookie-service';
 import { TranslateModule } from '@ngx-translate/core';
 import { By } from '@angular/platform-browser';
 import { DebugElement } from '@angular/core';
@@ -12,16 +11,21 @@ import { Subject } from 'rxjs';
 import { isEqual as _isEqual } from 'lodash';
 
 import { AceEditorModule } from 'ng2-ace-editor';
-import { CodeEditorActionsComponent, CodeEditorConflictStateService, CommitState, EditorState } from 'app/code-editor';
-import { CommitState, EditorState } from 'app/code-editor/model';
-import { CodeEditorRepositoryFileService, CodeEditorRepositoryService } from 'app/code-editor/service/code-editor-repository.service';
+import { CodeEditorRepositoryFileService, CodeEditorRepositoryService } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
 import { ArtemisTestModule } from '../../test.module';
-import { FeatureToggleModule } from 'app/feature-toggle/feature-toggle.module';
-import { FeatureToggleService } from 'app/feature-toggle/feature-toggle.service';
+import { FeatureToggleModule } from 'app/shared/feature-toggle/feature-toggle.module';
+import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 import { MockFeatureToggleService } from '../../mocks/mock-feature-toggle-service';
 
 import { cartesianProduct } from 'app/shared/util/utils';
-import { MockCodeEditorConflictStateService, MockCodeEditorRepositoryFileService, MockCodeEditorRepositoryService, MockCookieService, MockSyncStorage } from '../../mocks';
+import { MockSyncStorage } from '../../mocks/mock-sync.storage';
+import { CodeEditorConflictStateService } from 'app/exercises/programming/shared/code-editor/service/code-editor-conflict-state.service';
+import { CodeEditorActionsComponent } from 'app/exercises/programming/shared/code-editor/actions/code-editor-actions.component';
+import { MockCodeEditorConflictStateService } from '../../mocks/mock-code-editor-conflict-state.service';
+import { MockCodeEditorRepositoryFileService } from '../../mocks/mock-code-editor-repository-file.service';
+import { MockCodeEditorRepositoryService } from '../../mocks/mock-code-editor-repository.service';
+import { MockCookieService } from '../../mocks/mock-cookie.service';
+import { CommitState, EditorState } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 
 chai.use(sinonChai);
 const expect = chai.expect;

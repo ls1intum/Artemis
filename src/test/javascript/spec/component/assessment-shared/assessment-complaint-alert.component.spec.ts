@@ -1,10 +1,10 @@
 import { async, ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateModule } from '@ngx-translate/core';
 
-import { AssessmentComplaintAlertComponent } from 'app/assessment-shared/assessment-complaint-alert/assessment-complaint-alert.component';
+import { AssessmentComplaintAlertComponent } from 'app/assessment/assessment-complaint-alert/assessment-complaint-alert.component';
 import { ArtemisTestModule } from '../../test.module';
-import { ArtemisSharedModule } from 'app/shared';
-import { Complaint, ComplaintType } from 'app/entities/complaint';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
+import { Complaint, ComplaintType } from 'app/entities/complaint.model';
 
 describe('AssessmentComplaintAlertComponent', () => {
     let component: AssessmentComplaintAlertComponent;

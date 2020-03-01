@@ -5,8 +5,8 @@ import { of } from 'rxjs';
 import { JhiEventManager } from 'ng-jhipster';
 
 import { ArtemisTestModule } from '../../../test.module';
-import { ParticipationDeleteDialogComponent } from 'app/entities/participation/participation-delete-dialog.component';
-import { ParticipationService } from 'app/entities/participation/participation.service';
+import { ParticipationDeleteDialogComponent } from 'app/exercises/shared/participation/participation-delete-dialog.component';
+import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 
 describe('Component Tests', () => {
     describe('Participation Management Delete Component', () => {

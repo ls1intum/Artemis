@@ -5,8 +5,10 @@ import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
 
 import { AceEditorModule } from 'ng2-ace-editor';
-import { KatexCommand } from 'app/markdown-editor/commands';
-import { ArtemisMarkdownEditorModule, MarkdownEditorComponent } from 'app/markdown-editor';
+import { MarkdownEditorComponent } from 'app/shared/markdown-editor/markdown-editor.component';
+import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown-editor.module';
+import { KatexCommand } from 'app/shared/markdown-editor/commands/katex.command';
+import { ArtemisTestModule } from '../../test.module';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -17,7 +19,7 @@ describe('KatexCommand', () => {
 
     beforeEach(async () => {
         return TestBed.configureTestingModule({
-            imports: [TranslateModule.forRoot(), AceEditorModule, ArtemisMarkdownEditorModule],
+            imports: [ArtemisTestModule, TranslateModule.forRoot(), AceEditorModule, ArtemisMarkdownEditorModule],
         })
             .compileComponents()
             .then(() => {

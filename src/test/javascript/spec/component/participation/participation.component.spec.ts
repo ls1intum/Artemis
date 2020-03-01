@@ -4,14 +4,15 @@ import { ActivatedRoute } from '@angular/router';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { ArtemisTestModule } from '../../test.module';
-import { ArtemisSharedModule } from 'app/shared';
-import { MockSyncStorage, MockActivatedRoute } from '../../mocks';
-import { StudentParticipation } from 'app/entities/participation';
-import { ParticipationService } from 'app/entities/participation/participation.service';
-import { ParticipationComponent } from 'app/entities/participation/participation.component';
-import { Course } from 'app/entities/course';
-import { Exercise } from 'app/entities/exercise';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
+import { MockActivatedRoute } from '../../mocks/mock-activated.route';
+import { MockSyncStorage } from '../../mocks/mock-sync.storage';
+import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
+import { ParticipationComponent } from 'app/exercises/shared/participation/participation.component';
+import { Course } from 'app/entities/course.model';
+import { Exercise } from 'app/entities/exercise.model';
 import { of } from 'rxjs';
+import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -36,7 +37,7 @@ describe('ParticipationComponent', () => {
             .then(() => {
                 componentFixture = TestBed.createComponent(ParticipationComponent);
                 component = componentFixture.componentInstance;
-                service = TestBed.get(ParticipationService);
+                service = TestBed.inject(ParticipationService);
             });
     });
 

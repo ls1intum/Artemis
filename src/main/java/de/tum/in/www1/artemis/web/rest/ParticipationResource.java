@@ -104,32 +104,6 @@ public class ParticipationResource {
     }
 
     /**
-     * POST /participations : Create a new participation.
-     *
-     * @param participation the participation to create
-     * @return the ResponseEntity with status 201 (Created) and with body the new participation, or with status 400 (Bad Request) if the participation has already an ID
-     * @throws URISyntaxException if the Location URI syntax is incorrect
-     */
-    @PostMapping("/participations")
-    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Participation> createParticipation(@RequestBody StudentParticipation participation) throws URISyntaxException {
-        log.debug("REST request to save Participation : {}", participation);
-
-        if (participation instanceof ProgrammingExerciseParticipation && !Feature.PROGRAMMING_EXERCISES.isEnabled()) {
-            return forbidden();
-        }
-
-        User user = userService.getUserWithGroupsAndAuthorities();
-        checkAccessPermissionAtLeastTA(participation, user);
-        if (participation.getId() != null) {
-            throw new BadRequestAlertException("A new participation cannot already have an ID", ENTITY_NAME, "idexists");
-        }
-        Participation result = participationService.save(participation);
-        return ResponseEntity.created(new URI("/api/participations/" + result.getId()))
-                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);
-    }
-
-    /**
      * POST /courses/:courseId/exercises/:exerciseId/participations : start the "participationId" exercise for the current user.
      *
      * @param courseId   only included for API consistency, not actually used
@@ -196,24 +170,29 @@ public class ParticipationResource {
 
         ProgrammingExerciseStudentParticipation participation = programmingExerciseParticipationService.findStudentParticipationByExerciseIdAndStudentId(exerciseId,
                 principal.getName());
-        if (participation == null) {
-            log.info("Request to resume participation that is non-existing of Exercise with participationId {}.", exerciseId);
-            throw new BadRequestAlertException("No participation was found for the given exercise and user.", "editor", "participationNotFound");
-        }
 
         User user = userService.getUserWithGroupsAndAuthorities();
         checkAccessPermissionOwner(participation, user);
         if (exercise instanceof ProgrammingExercise) {
+
+            // users cannot resume the programming exercises if test run after due date or semi automatic grading is active and the due date has passed
+            var pExercise = (ProgrammingExercise) exercise;
+            if ((pExercise.getDueDate() != null && ZonedDateTime.now().isAfter(pExercise.getDueDate())
+                    && (pExercise.getBuildAndTestStudentSubmissionsAfterDueDate() != null || pExercise.getAssessmentType() != AssessmentType.AUTOMATIC))) {
+                return forbidden();
+            }
+
             participation = participationService.resumeExercise(participation);
             // Note: in this case we might need an empty commit to make sure the build plan works correctly for subsequent student commits
             participation = participationService.performEmptyCommit(participation);
             if (participation != null) {
                 addLatestResultToParticipation(participation);
                 participation.getExercise().filterSensitiveInformation();
-                return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, participation.getStudent().getFirstName()))
+                return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, participation.getStudent().getName()))
                         .body(participation);
             }
         }
+        // error case
         log.info("Exercise with participationId {} is not an instance of ProgrammingExercise. Ignoring the request to resume participation", exerciseId);
         // remove sensitive information before sending participation to the client
         if (participation != null && participation.getExercise() != null) {
@@ -246,6 +225,7 @@ public class ParticipationResource {
      *         500 (Internal Server Error) if the participation couldn't be updated
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
+    // TODO we should not use this global resource here, instead we should use /courses/:courseId/exercises/:exerciseId/participations
     @PutMapping("/participations")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Participation> updateParticipation(@RequestBody StudentParticipation participation) throws URISyntaxException {
@@ -256,15 +236,14 @@ public class ParticipationResource {
             throw new AccessForbiddenException("You are not allowed to access this resource");
         }
         if (participation.getId() == null) {
-            return createParticipation(participation);
+            throw new BadRequestAlertException("The participation object needs to have an id to be changed", ENTITY_NAME, "idmissing");
+        }
+        if (participation.getPresentationScore() == null || participation.getPresentationScore() < 0) {
+            participation.setPresentationScore(0);
         }
         if (participation.getPresentationScore() > 1) {
             participation.setPresentationScore(1);
         }
-        if (participation.getPresentationScore() < 0 || participation.getPresentationScore() == null) {
-            participation.setPresentationScore(0);
-        }
-
         StudentParticipation currentParticipation = participationService.findOneStudentParticipation(participation.getId());
         if (currentParticipation.getPresentationScore() != null && currentParticipation.getPresentationScore() > participation.getPresentationScore()) {
             log.info(user.getLogin() + " removed the presentation score of " + participation.getStudent().getLogin() + " for exercise with participationId "
@@ -272,7 +251,7 @@ public class ParticipationResource {
         }
 
         Participation result = participationService.save(participation);
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, participation.getStudent().getFirstName())).body(result);
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, participation.getStudent().getName())).body(result);
     }
 
     /**
@@ -302,6 +281,9 @@ public class ParticipationResource {
             participations = participationService.findByExerciseId(exerciseId);
         }
         participations = participations.stream().filter(participation -> participation.getStudent() != null).collect(Collectors.toList());
+
+        Map<Long, Integer> submissionCountMap = participationService.countSubmissionsPerParticipationByExerciseId(exerciseId);
+        participations.forEach(participation -> participation.setSubmissionCount(submissionCountMap.get(participation.getId())));
 
         return ResponseEntity.ok(participations);
     }
@@ -384,6 +366,7 @@ public class ParticipationResource {
             exercise.setStudentQuestions(null);
             exercise.setGradingInstructions(null);
             exercise.setDifficulty(null);
+            exercise.setMode(null);
             if (exercise instanceof ProgrammingExercise) {
                 ProgrammingExercise programmingExercise = (ProgrammingExercise) exercise;
                 programmingExercise.setSolutionParticipation(null);
@@ -546,28 +529,6 @@ public class ParticipationResource {
     }
 
     /**
-     * GET /participations/:participationId/status: get build status of the user's participation for the "participationId" participation.
-     *
-     * @param id the participation participationId
-     * @return the ResponseEntity with status 200 (OK) and with body the participation, or with status 404 (Not Found)
-     */
-    @GetMapping(value = "/participations/{participationId}/status")
-    public ResponseEntity<?> getParticipationStatus(@PathVariable Long id) {
-        StudentParticipation participation = participationService.findOneStudentParticipation(id);
-        // NOTE: Disable Authorization check for increased performance
-        // (Unauthorized users being unable to see any participation's status is not a priority!)
-        if (participation.getExercise() instanceof QuizExercise) {
-            QuizExercise.Status status = QuizExercise.statusForQuiz((QuizExercise) participation.getExercise());
-            return new ResponseEntity<>(status, HttpStatus.OK);
-        }
-        else if (participation.getExercise() instanceof ProgrammingExercise) {
-            ContinuousIntegrationService.BuildStatus buildStatus = continuousIntegrationService.get().getBuildStatus((ProgrammingExerciseParticipation) participation);
-            return Optional.ofNullable(buildStatus).map(status -> new ResponseEntity<>(status, HttpStatus.OK)).orElse(ResponseUtil.notFound());
-        }
-        return ResponseEntity.unprocessableEntity().build();
-    }
-
-    /**
      * DELETE /participations/:participationId : delete the "participationId" participation. This only works for student participations - other participations should not be deleted here!
      *
      * @param participationId the participationId of the participation to delete
@@ -590,13 +551,14 @@ public class ParticipationResource {
 
         checkAccessPermissionAtLeastInstructor(participation, user);
 
-        String username = participation.getStudent().getFirstName();
-        var auditEvent = new AuditEvent(user.getLogin(), Constants.DELETE_PARTICIPATION, "participation=" + participation.getId());
+        String name = participation.getStudent().getName();
+        var logMessage = "Delete Participation " + participationId + " of exercise " + participation.getExercise().getTitle() + " for " + name + ", deleteBuildPlan: "
+                + deleteBuildPlan + ", deleteRepository: " + deleteRepository + " by " + principal.getName();
+        var auditEvent = new AuditEvent(user.getLogin(), Constants.DELETE_PARTICIPATION, logMessage);
         auditEventRepository.add(auditEvent);
-        log.info("Delete Participation {} of exercise {} for {}, deleteBuildPlan: {}, deleteRepository: {} by {}", participationId, participation.getExercise().getTitle(),
-                username, deleteBuildPlan, deleteRepository, principal.getName());
+        log.info(logMessage);
         participationService.delete(participationId, deleteBuildPlan, deleteRepository);
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, "participation", username)).build();
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, "participation", name)).build();
     }
 
     /**
@@ -632,13 +594,14 @@ public class ParticipationResource {
             return forbidden();
         }
 
-        String username = participation.getStudent().getFirstName();
-        var auditEvent = new AuditEvent(user.getLogin(), Constants.DELETE_PARTICIPATION, "participation=" + participation.getId());
+        String name = participation.getStudent().getName();
+        var logMessage = "Delete Participation " + participationId + " of exercise " + participation.getExercise().getTitle() + " for " + name + ", deleteBuildPlan: "
+                + deleteBuildPlan + ", deleteRepository: " + deleteRepository + " by " + principal.getName();
+        var auditEvent = new AuditEvent(user.getLogin(), Constants.DELETE_PARTICIPATION, logMessage);
         auditEventRepository.add(auditEvent);
-        log.info("Delete Participation {} of exercise {} for {}, deleteBuildPlan: {}, deleteRepository: {} by {}", participationId, participation.getExercise().getTitle(),
-                username, deleteBuildPlan, deleteRepository, principal.getName());
+        log.info(logMessage);
         participationService.delete(participationId, deleteBuildPlan, deleteRepository);
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, "participation", username)).build();
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, "participation", name)).build();
     }
 
     /**

@@ -61,7 +61,7 @@ public class ApollonDiagramResource {
      * PUT /apollon-diagrams : Updates an existing apollonDiagram.
      *
      * @param apollonDiagram the apollonDiagram to update
-     * @return the ResponseEntity with status 200 (OK) and with body the updated apollonDiagram, or with status 400 (Bad Request) if the apollonDiagram is not valid, or with status
+     * @return the ResponseEntity with status 200 (OK) and with body the updated apollonDiagram, or with status 201 (CREATED) if the apollonDiagram has not been created before, or with status
      *         500 (Internal Server Error) if the apollonDiagram couldn't be updated
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
@@ -98,8 +98,8 @@ public class ApollonDiagramResource {
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<ApollonDiagram> getApollonDiagram(@PathVariable Long id) {
         log.debug("REST request to get ApollonDiagram : {}", id);
-        ApollonDiagram apollonDiagram = apollonDiagramRepository.findById(id).get();
-        return ResponseUtil.wrapOrNotFound(Optional.ofNullable(apollonDiagram));
+        Optional<ApollonDiagram> apollonDiagram = apollonDiagramRepository.findById(id);
+        return ResponseUtil.wrapOrNotFound(apollonDiagram);
     }
 
     /**

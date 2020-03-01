@@ -8,17 +8,18 @@ import { ChartsModule } from 'ng2-charts';
 import { TreeviewModule } from 'ngx-treeview';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { ArtemisTestModule } from '../../../test.module';
-import { ArtemisSharedModule } from 'app/shared';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { ActivatedRoute } from '@angular/router';
-import { Attachment } from 'app/entities/attachment';
-import { CourseScoreCalculationService, CourseStatisticsComponent } from 'app/overview';
 import { By } from '@angular/platform-browser';
-import { Course } from 'app/entities/course';
-import { ModelingExercise } from 'app/entities/modeling-exercise';
-import { MockSyncStorage } from '../../../mocks';
-import { Result } from 'app/entities/result';
-import { ProgrammingSubmission } from 'app/entities/programming-submission';
-import { SubmissionExerciseType } from 'app/entities/submission';
+import { Course } from 'app/entities/course.model';
+import { MockSyncStorage } from '../../../mocks/mock-sync.storage';
+import { Result } from 'app/entities/result.model';
+import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
+import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
+import { ModelingExercise } from 'app/entities/modeling-exercise.model';
+import { Attachment } from 'app/entities/attachment.model';
+import { SubmissionExerciseType } from 'app/entities/submission.model';
+import { CourseStatisticsComponent } from 'app/overview/course-statistics/course-statistics.component';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -184,7 +185,7 @@ describe('CourseStatisticsComponent', () => {
             .then(() => {
                 fixture = TestBed.createComponent(CourseStatisticsComponent);
                 comp = fixture.componentInstance;
-                courseScoreCalculationService = TestBed.get(CourseScoreCalculationService);
+                courseScoreCalculationService = TestBed.inject(CourseScoreCalculationService);
             });
     });
 

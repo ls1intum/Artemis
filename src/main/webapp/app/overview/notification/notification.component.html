@@ -1,0 +1,54 @@
+<div>
+    <h2 id="page-heading">
+        <span jhiTranslate="artemisApp.notificationManagement.home.title">Notifications</span>
+    </h2>
+    <jhi-alert></jhi-alert>
+    <br />
+    <div class="table-responsive" *ngIf="notifications">
+        <table class="table table-striped">
+            <thead>
+                <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" [callback]="transition.bind(this)">
+                    <th>
+                        <span jhiTranslate="artemisApp.notificationManagement.title">Title</span>
+                    </th>
+                    <th>
+                        <span jhiTranslate="artemisApp.notificationManagement.text">Text</span>
+                    </th>
+                    <th jhiSortBy="notificationDate">
+                        <span jhiTranslate="artemisApp.notificationManagement.notificationDate">Date</span>
+                        <fa-icon [icon]="'sort'"></fa-icon>
+                    </th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr *ngFor="let notification of notifications; trackBy: trackId">
+                    <td>{{ notification.title }}</td>
+                    <td>{{ notification.text }}</td>
+                    <td>{{ notification.notificationDate | date: 'medium' }}</td>
+                    <td>
+                        <button class="btn btn-block btn-primary" *ngIf="getTargetMessage(notification.target)" (click)="notificationService.interpretNotification(notification)">
+                            {{ 'artemisApp.notificationManagement.' + getTargetMessage(notification.target) | translate }}
+                        </button>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    <div *ngIf="notifications">
+        <div class="row justify-content-center">
+            <jhi-item-count [page]="page" [total]="totalItems" [itemsPerPage]="itemsPerPage"></jhi-item-count>
+        </div>
+        <div class="row justify-content-center">
+            <ngb-pagination
+                [collectionSize]="totalItems"
+                [(page)]="page"
+                [pageSize]="itemsPerPage"
+                [maxSize]="5"
+                [rotate]="true"
+                [boundaryLinks]="true"
+                (pageChange)="loadPage(page)"
+            ></ngb-pagination>
+        </div>
+    </div>
+</div>

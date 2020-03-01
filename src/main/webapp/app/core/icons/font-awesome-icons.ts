@@ -169,6 +169,7 @@ export const fontAwesomeIcons = [
     faBell,
     faTasks,
     faBook,
+    faBold,
     faHdd,
     faFlag,
     faWrench,
@@ -231,7 +232,6 @@ export const fontAwesomeIcons = [
     faFile,
     faCodeBranch,
     faCircle,
-    faBold,
     faUnderline,
     faItalic,
     faQuoteLeft,
@@ -269,4 +269,5 @@ export const fontAwesomeIcons = [
     faVideo,
     faClipboardList,
     faToggleOn,
+    faEdit,
 ];

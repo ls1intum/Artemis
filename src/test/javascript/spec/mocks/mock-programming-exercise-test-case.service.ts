@@ -1,6 +1,6 @@
 import { BehaviorSubject, Observable, of } from 'rxjs';
-import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise/programming-exercise-test-case.model';
-import { IProgrammingExerciseTestCaseService, ProgrammingExerciseTestCaseUpdate } from 'app/entities/programming-exercise/services';
+import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise-test-case.model';
+import { IProgrammingExerciseTestCaseService, ProgrammingExerciseTestCaseUpdate } from 'app/exercises/programming/manage/services/programming-exercise-test-case.service';
 
 export class MockProgrammingExerciseTestCaseService implements IProgrammingExerciseTestCaseService {
     private subject = new BehaviorSubject<ProgrammingExerciseTestCase[] | null>(null);

@@ -5,13 +5,17 @@ import java.util.*;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.*;
+import de.tum.in.www1.artemis.domain.modeling.ApollonDiagram;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
+import de.tum.in.www1.artemis.security.AuthoritiesConstants;
 
 public class ModelFactory {
+
+    public static final String USER_PASSWORD = "0000";
 
     public static Lecture generateLecture(ZonedDateTime startDate, ZonedDateTime endDate, Course course) {
         Lecture lecture = new Lecture();
@@ -86,6 +90,7 @@ public class ModelFactory {
         exercise.assessmentDueDate(assessmentDueDate);
         exercise.setCourse(course);
         exercise.setDifficulty(DifficultyLevel.MEDIUM);
+        exercise.setMode(ExerciseMode.INDIVIDUAL);
         exercise.getCategories().add("Category");
         exercise.setPresentationScoreEnabled(course.getPresentationScore() != 0);
         return exercise;
@@ -104,10 +109,10 @@ public class ModelFactory {
         return generatedUsers;
     }
 
-    public static User generateActivatedUser(String login) {
+    public static User generateActivatedUser(String login, String password) {
         User user = new User();
         user.setLogin(login);
-        user.setPassword("0000");
+        user.setPassword(password);
         user.setFirstName(login + "First");
         user.setLastName(login + "Last");
         user.setEmail(login + "@test.de");
@@ -116,6 +121,32 @@ public class ModelFactory {
         user.setGroups(new HashSet<>());
         user.setAuthorities(new HashSet<>());
         return user;
+    }
+
+    public static User generateActivatedUser(String login) {
+        return generateActivatedUser(login, USER_PASSWORD);
+    }
+
+    public static Team generateTeamForExercise(Exercise exercise, String name, String shortName, int numberOfStudents) {
+        List<User> students = generateActivatedUsers(shortName + "student", new String[] { "tumuser", "testgroup" }, Set.of(new Authority(AuthoritiesConstants.USER)),
+                numberOfStudents);
+
+        Team team = new Team();
+        team.setName(name);
+        team.setShortName(shortName);
+        team.setExercise(exercise);
+        team.setStudents(new HashSet<>(students));
+
+        return team;
+    }
+
+    public static List<Team> generateTeamsForExercise(Exercise exercise, int numberOfTeams) {
+        List<Team> teams = new ArrayList<>();
+        for (int i = 1; i <= numberOfTeams; i++) {
+            int numberOfStudents = new Random().nextInt(4) + 1; // range: 1-4 students
+            teams.add(generateTeamForExercise(exercise, "Team " + i, "team" + i, numberOfStudents));
+        }
+        return teams;
     }
 
     public static Course generateCourse(Long id, ZonedDateTime startDate, ZonedDateTime endDate, Set<Exercise> exercises) {
@@ -188,6 +219,28 @@ public class ModelFactory {
         return course;
     }
 
+    public static GradingCriterion generateGradingCriterion(String title) {
+        var criterion = new GradingCriterion();
+        criterion.setTitle(title);
+        return criterion;
+    }
+
+    public static List<GradingInstruction> generateGradingInstructions(GradingCriterion criterion, int numberOfTestInstructions) {
+        var instructions = new ArrayList<GradingInstruction>();
+        var exampleInstruction1 = new GradingInstruction();
+        while (numberOfTestInstructions > 0) {
+            exampleInstruction1.setGradingCriterion(criterion);
+            exampleInstruction1.setCredits(0.5);
+            exampleInstruction1.setGradingScale("good test");
+            exampleInstruction1.setInstructionDescription("created first instruction with empty criteria for testing");
+            exampleInstruction1.setFeedback("test feedback");
+            exampleInstruction1.setUsageCount(3);
+            instructions.add(exampleInstruction1);
+            numberOfTestInstructions--;
+        }
+        return instructions;
+    }
+
     public static List<Feedback> generateFeedback() {
         List<Feedback> feedbacks = new ArrayList<>();
         Feedback positiveFeedback = new Feedback();
@@ -221,6 +274,7 @@ public class ModelFactory {
         toBeImported.setMaxScore(template.getMaxScore());
         toBeImported.setGradingInstructions(template.getGradingInstructions());
         toBeImported.setDifficulty(template.getDifficulty());
+        toBeImported.setMode(template.getMode());
         toBeImported.setAssessmentType(template.getAssessmentType());
         toBeImported.setCategories(template.getCategories());
         toBeImported.setPackageName(template.getPackageName());
@@ -287,5 +341,12 @@ public class ModelFactory {
         systemNotification.setExpireDate(expireDate);
         systemNotification.setNotificationDate(notificationDate);
         return systemNotification;
+    }
+
+    public static ApollonDiagram generateApollonDiagram(DiagramType diagramType, String title) {
+        ApollonDiagram apollonDiagram = new ApollonDiagram();
+        apollonDiagram.setDiagramType(diagramType);
+        apollonDiagram.setTitle(title);
+        return apollonDiagram;
     }
 }

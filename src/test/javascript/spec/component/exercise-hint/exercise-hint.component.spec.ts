@@ -3,9 +3,9 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
 import { HttpHeaders, HttpResponse } from '@angular/common/http';
 
-import { ExerciseHintComponent } from 'app/entities/exercise-hint/exercise-hint.component';
-import { ExerciseHintService } from 'app/entities/exercise-hint/exercise-hint.service';
-import { ExerciseHint } from 'app/entities/exercise-hint/exercise-hint.model';
+import { ExerciseHintComponent } from 'app/exercises/shared/exercise-hint/manage/exercise-hint.component';
+import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/manage/exercise-hint.service';
+import { ExerciseHint } from 'app/entities/exercise-hint.model';
 import { ArtemisTestModule } from '../../test.module';
 
 describe('Component Tests', () => {

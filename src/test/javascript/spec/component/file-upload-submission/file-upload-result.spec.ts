@@ -3,19 +3,19 @@ import { AccountService } from 'app/core/auth/account.service';
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
 import { ArtemisTestModule } from '../../test.module';
-import { Result } from 'app/entities/result';
-import { ArtemisSharedModule } from 'app/shared';
+import { Result } from 'app/entities/result.model';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { MockAlertService } from '../../helpers/mock-alert.service';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/alert/alert.service';
 import { DebugElement } from '@angular/core';
 import { By } from '@angular/platform-browser';
 import { MockAccountService } from '../../mocks/mock-account.service';
 import { NgxDatatableModule } from '@swimlane/ngx-datatable';
-import { FileUploadSubmissionComponent } from 'app/file-upload-submission/file-upload-submission.component';
+import { FileUploadSubmissionComponent } from 'app/exercises/file-upload/participate/file-upload-submission.component';
 import { TranslateModule } from '@ngx-translate/core';
-import { FileUploadResultComponent } from 'app/file-upload-submission/file-upload-result/file-upload-result.component';
+import { FileUploadResultComponent } from 'app/exercises/file-upload/participate/file-upload-result.component';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
-import { Feedback } from 'app/entities/feedback';
+import { Feedback } from 'app/entities/feedback.model';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -30,7 +30,7 @@ describe('FileUploadSubmissionComponent', () => {
             imports: [ArtemisTestModule, NgxDatatableModule, ArtemisSharedModule, TranslateModule.forRoot(), ArtemisSharedComponentModule],
             declarations: [FileUploadResultComponent],
             providers: [
-                { provide: JhiAlertService, useClass: MockAlertService },
+                { provide: AlertService, useClass: MockAlertService },
                 { provide: AccountService, useClass: MockAccountService },
             ],
         })

@@ -13,7 +13,7 @@ buildscript {
         classpath "org.springframework.boot:spring-boot-gradle-plugin:${spring_boot_version}"
         classpath "io.spring.gradle:propdeps-plugin:0.0.10.RELEASE"
         // this allows us to find outdated dependencies via ./gradlew dependencyUpdates
-        classpath "com.github.ben-manes:gradle-versions-plugin:0.27.0"
+        classpath "com.github.ben-manes:gradle-versions-plugin:0.28.0"
         //jhipster-needle-gradle-buildscript-dependency - JHipster will add additional gradle build script plugins here
     }
 }
@@ -25,7 +25,7 @@ plugins {
     id "idea"
     id "jacoco"
     id "org.springframework.boot"
-    id "com.google.cloud.tools.jib" version "1.8.0"
+    id "com.google.cloud.tools.jib" version "2.1.0"
     id "com.gorylenko.gradle-git-properties"
     id "com.github.node-gradle.node"
     id "net.ltgt.apt-eclipse"
@@ -37,7 +37,7 @@ plugins {
 }
 
 group = "de.tum.in.www1.artemis"
-version = "3.10.1"
+version = "3.11.0"
 description = "Interactive Learning with Individual Feedback"
 
 sourceCompatibility=12
@@ -148,7 +148,7 @@ jacocoTestCoverageVerification {
             limit {
                 counter = 'LINE'
                 value = 'COVEREDRATIO'
-                minimum = 0.50
+                minimum = 0.60
             }
         }
     }
@@ -172,10 +172,10 @@ repositories {
 
 dependencies {
     implementation 'com.offbytwo.jenkins:jenkins-client:0.3.8'
-    implementation group: 'org.gitlab4j', name: 'gitlab4j-api', version: '4.14.14'
+    implementation group: 'org.gitlab4j', name: 'gitlab4j-api', version: '4.14.17'
     implementation fileTree(dir: "libs", include: "*.jar")
     // https://mvnrepository.com/artifact/org.eclipse.jgit/org.eclipse.jgit
-    implementation "org.eclipse.jgit:org.eclipse.jgit:5.6.0.201912101111-r"
+    implementation "org.eclipse.jgit:org.eclipse.jgit:5.6.1.202002131546-r"
     // https://mvnrepository.com/artifact/net.sourceforge.plantuml/plantuml
     implementation "net.sourceforge.plantuml:plantuml:8059"
     implementation "org.imsglobal:basiclti-util:1.2.0"
@@ -183,15 +183,15 @@ dependencies {
     implementation "me.xdrop:fuzzywuzzy:1.2.0"
     implementation "com.atlassian.bamboo:bamboo-specs:6.10.3"
     implementation "com.thoughtworks.qdox:qdox:2.0.0"
-    implementation "io.sentry:sentry-spring:1.7.29"
-    implementation "io.sentry:sentry-logback:1.7.29"
+    implementation "io.sentry:sentry-spring:1.7.30"
+    implementation "io.sentry:sentry-logback:1.7.30"
 
     // import JHipster dependencies BOM
     implementation platform("io.github.jhipster:jhipster-dependencies:${jhipster_dependencies_version}" )
 
     implementation "io.github.jhipster:jhipster-framework"
     implementation "org.springframework.boot:spring-boot-starter-cache"
-    implementation "io.micrometer:micrometer-registry-prometheus:1.3.3"
+    implementation "io.micrometer:micrometer-registry-prometheus:1.3.5"
     implementation "net.logstash.logback:logstash-logback-encoder:6.3"
     implementation "com.fasterxml.jackson.datatype:jackson-datatype-hppc:2.10.2"
     implementation "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.10.2"
@@ -209,8 +209,8 @@ dependencies {
     implementation "org.ehcache:ehcache"
     implementation "org.hibernate:hibernate-jcache"
     implementation "org.hibernate:hibernate-entitymanager"
-    implementation "org.hibernate.validator:hibernate-validator:6.1.1.Final"
-    implementation "org.liquibase:liquibase-core"
+    implementation "org.hibernate.validator:hibernate-validator:6.1.2.Final"
+    implementation "org.liquibase:liquibase-core:3.8.7"
     implementation "org.springframework.boot:spring-boot-loader-tools"
     implementation "org.springframework.boot:spring-boot-starter-mail"
     implementation "org.springframework.boot:spring-boot-starter-logging"
@@ -226,15 +226,15 @@ dependencies {
     implementation "org.springframework.boot:spring-boot-starter-thymeleaf"
 
     implementation "org.springframework.ldap:spring-ldap-core"
-    implementation "org.springframework.data:spring-data-ldap:2.2.4.RELEASE"
+    implementation "org.springframework.data:spring-data-ldap:2.2.5.RELEASE"
 
     implementation "org.springframework.security:spring-security-config"
     implementation "org.springframework.security:spring-security-data"
     implementation "org.springframework.security:spring-security-web"
     implementation "org.springframework.security:spring-security-messaging"
-    implementation "io.jsonwebtoken:jjwt-api"
-    runtimeOnly "io.jsonwebtoken:jjwt-impl"
-    runtimeOnly "io.jsonwebtoken:jjwt-jackson"
+    implementation "io.jsonwebtoken:jjwt-api:0.11.0"
+    runtimeOnly "io.jsonwebtoken:jjwt-impl:0.11.0"
+    runtimeOnly "io.jsonwebtoken:jjwt-jackson:0.11.0"
     implementation ("io.springfox:springfox-swagger2") {
         exclude module: "mapstruct"
     }
@@ -257,14 +257,14 @@ dependencies {
     }
     testImplementation "org.springframework.security:spring-security-test"
     testImplementation "org.springframework.boot:spring-boot-test"
-    testImplementation "org.assertj:assertj-core:3.14.0"
+    testImplementation "org.assertj:assertj-core:3.15.0"
     testImplementation "org.junit.jupiter:junit-jupiter-api:5.5.2"
     testImplementation "org.junit.jupiter:junit-jupiter-params:5.5.2"
     testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:5.5.2"
-    testImplementation 'com.tngtech.archunit:archunit-junit5-api:0.13.0'
-    testRuntimeOnly 'com.tngtech.archunit:archunit-junit5-engine:0.13.0'
-    testImplementation "org.mockito:mockito-core:3.2.4"
-    testImplementation "org.mockito:mockito-junit-jupiter:3.2.4"
+    testImplementation 'com.tngtech.archunit:archunit-junit5-api:0.13.1'
+    testRuntimeOnly 'com.tngtech.archunit:archunit-junit5-engine:0.13.1'
+    testImplementation "org.mockito:mockito-core:3.3.1"
+    testImplementation "org.mockito:mockito-junit-jupiter:3.3.1"
     testImplementation "org.hamcrest:hamcrest-library:2.2"
     testImplementation "com.h2database:h2:1.4.200"
     testImplementation "org.awaitility:awaitility:4.0.2"
@@ -319,7 +319,7 @@ tasks.withType(Test) {
 }
 
 wrapper {
-    gradleVersion = "6.1.1"
+    gradleVersion = "6.2.1"
 }
 
 task stage(dependsOn: "bootWar") {

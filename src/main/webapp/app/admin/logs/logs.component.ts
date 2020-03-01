@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
-
-import { Log, LogsService } from 'app/admin';
+import { Log } from 'app/admin/logs/log.model';
+import { LogsService } from 'app/admin/logs/logs.service';
 
 @Component({
     selector: 'jhi-logs',

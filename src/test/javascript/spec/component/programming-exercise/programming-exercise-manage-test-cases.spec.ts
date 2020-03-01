@@ -8,26 +8,30 @@ import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { of, Subject } from 'rxjs';
 import { ActivatedRoute, Params } from '@angular/router';
 import { SinonSpy, SinonStub, spy, stub } from 'sinon';
-import { CookieService } from 'ngx-cookie';
-import { JhiAlertService } from 'ng-jhipster';
+import { CookieService } from 'ngx-cookie-service';
+import { AlertService } from 'app/core/alert/alert.service';
 import * as chai from 'chai';
-import { ProgrammingExercise } from 'app/entities/programming-exercise';
 import { ArtemisTestModule } from '../../test.module';
 import { TranslateModule } from '@ngx-translate/core';
-import { MockActivatedRoute, MockCookieService, MockProgrammingExerciseService, MockSyncStorage } from '../../mocks';
+import { MockSyncStorage } from '../../mocks/mock-sync.storage';
 import { MockProgrammingExerciseTestCaseService } from '../../mocks/mock-programming-exercise-test-case.service';
-import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise/programming-exercise-test-case.model';
-import { ArtemisSharedModule } from 'app/shared';
-import { ArtemisProgrammingExerciseTestCaseModule } from 'app/entities/programming-exercise/test-cases/programming-exercise-test-case.module';
+import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise-test-case.model';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
+import { ArtemisProgrammingExerciseTestCaseModule } from 'app/exercises/programming/manage/test-cases/programming-exercise-test-case.module';
 import { expectElementToBeDisabled, expectElementToBeEnabled, getElement } from '../../utils/general.utils';
-import { ProgrammingExerciseWebsocketService } from 'app/entities/programming-exercise/services/programming-exercise-websocket.service';
+import { ProgrammingExerciseWebsocketService } from 'app/exercises/programming/manage/services/programming-exercise-websocket.service';
 import { MockProgrammingExerciseWebsocketService } from '../../mocks/mock-programming-exercise-websocket.service';
-import { ProgrammingBuildRunService } from 'app/programming-submission/programming-build-run.service';
+import { ProgrammingBuildRunService } from 'app/exercises/programming/participate/programming-build-run.service';
 import { MockProgrammingBuildRunService } from '../../mocks/mock-programming-build-run.service';
-import { FeatureToggleService } from 'app/feature-toggle/feature-toggle.service';
+import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 import { MockFeatureToggleService } from '../../mocks/mock-feature-toggle-service';
-import { EditableField, ProgrammingExerciseManageTestCasesComponent } from 'app/entities/programming-exercise/test-cases';
-import { ProgrammingExerciseService, ProgrammingExerciseTestCaseService, ProgrammingExerciseTestCaseStateDTO } from 'app/entities/programming-exercise/services';
+import { EditableField, ProgrammingExerciseManageTestCasesComponent } from 'app/exercises/programming/manage/test-cases/programming-exercise-manage-test-cases.component';
+import { ProgrammingExerciseService, ProgrammingExerciseTestCaseStateDTO } from 'app/exercises/programming/manage/services/programming-exercise.service';
+import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { ProgrammingExerciseTestCaseService } from 'app/exercises/programming/manage/services/programming-exercise-test-case.service';
+import { MockActivatedRoute } from '../../mocks/mock-activated.route';
+import { MockCookieService } from '../../mocks/mock-cookie.service';
+import { MockProgrammingExerciseService } from '../../mocks/mock-programming-exercise.service';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -121,7 +125,7 @@ describe('ProgrammingExerciseManageTestCases', () => {
         TestBed.configureTestingModule({
             imports: [TranslateModule.forRoot(), ArtemisTestModule, ArtemisSharedModule, ArtemisProgrammingExerciseTestCaseModule],
             providers: [
-                JhiAlertService,
+                AlertService,
                 { provide: ProgrammingExerciseService, useClass: MockProgrammingExerciseService },
                 { provide: ProgrammingExerciseWebsocketService, useClass: MockProgrammingExerciseWebsocketService },
                 { provide: ProgrammingExerciseTestCaseService, useClass: MockProgrammingExerciseTestCaseService },
