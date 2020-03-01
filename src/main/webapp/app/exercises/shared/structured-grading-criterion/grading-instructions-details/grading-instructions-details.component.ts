@@ -43,7 +43,7 @@ export class GradingInstructionsDetailsComponent implements OnInit {
     generateMarkdown(): string {
         let markdownText = '';
         if (this.instructions !== undefined && this.instructions.length !== 0) {
-            for (let instruction of this.instructions) {
+            for (const instruction of this.instructions) {
                 markdownText +=
                     this.generateCreditsText(instruction) +
                     '\n' +
