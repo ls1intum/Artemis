@@ -20,7 +20,7 @@ import { ProgrammingExerciseParticipationService } from 'app/exercises/programmi
 import { DomainCommand } from 'app/shared/markdown-editor/domainCommands/domainCommand';
 import { ProgrammingExerciseTestCaseService } from 'app/exercises/programming/manage/services/programming-exercise-test-case.service';
 import { KatexCommand } from 'app/shared/markdown-editor/commands/katex.command';
-import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/exercise-hint.service';
+import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/manage/exercise-hint.service';
 import { Result } from 'app/entities/result.model';
 
 @Component({

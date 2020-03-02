@@ -13,7 +13,7 @@ buildscript {
         classpath "org.springframework.boot:spring-boot-gradle-plugin:${spring_boot_version}"
         classpath "io.spring.gradle:propdeps-plugin:0.0.10.RELEASE"
         // this allows us to find outdated dependencies via ./gradlew dependencyUpdates
-        classpath "com.github.ben-manes:gradle-versions-plugin:0.27.0"
+        classpath "com.github.ben-manes:gradle-versions-plugin:0.28.0"
         //jhipster-needle-gradle-buildscript-dependency - JHipster will add additional gradle build script plugins here
     }
 }
@@ -25,7 +25,7 @@ plugins {
     id "idea"
     id "jacoco"
     id "org.springframework.boot"
-    id "com.google.cloud.tools.jib" version "2.0.0"
+    id "com.google.cloud.tools.jib" version "2.1.0"
     id "com.gorylenko.gradle-git-properties"
     id "com.github.node-gradle.node"
     id "net.ltgt.apt-eclipse"
@@ -210,7 +210,7 @@ dependencies {
     implementation "org.hibernate:hibernate-jcache"
     implementation "org.hibernate:hibernate-entitymanager"
     implementation "org.hibernate.validator:hibernate-validator:6.1.2.Final"
-    implementation "org.liquibase:liquibase-core:3.8.6"
+    implementation "org.liquibase:liquibase-core:3.8.7"
     implementation "org.springframework.boot:spring-boot-loader-tools"
     implementation "org.springframework.boot:spring-boot-starter-mail"
     implementation "org.springframework.boot:spring-boot-starter-logging"
@@ -226,7 +226,7 @@ dependencies {
     implementation "org.springframework.boot:spring-boot-starter-thymeleaf"
 
     implementation "org.springframework.ldap:spring-ldap-core"
-    implementation "org.springframework.data:spring-data-ldap:2.2.4.RELEASE"
+    implementation "org.springframework.data:spring-data-ldap:2.2.5.RELEASE"
 
     implementation "org.springframework.security:spring-security-config"
     implementation "org.springframework.security:spring-security-data"
@@ -263,8 +263,8 @@ dependencies {
     testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:5.5.2"
     testImplementation 'com.tngtech.archunit:archunit-junit5-api:0.13.1'
     testRuntimeOnly 'com.tngtech.archunit:archunit-junit5-engine:0.13.1'
-    testImplementation "org.mockito:mockito-core:3.2.4"
-    testImplementation "org.mockito:mockito-junit-jupiter:3.2.4"
+    testImplementation "org.mockito:mockito-core:3.3.1"
+    testImplementation "org.mockito:mockito-junit-jupiter:3.3.1"
     testImplementation "org.hamcrest:hamcrest-library:2.2"
     testImplementation "com.h2database:h2:1.4.200"
     testImplementation "org.awaitility:awaitility:4.0.2"
@@ -319,7 +319,7 @@ tasks.withType(Test) {
 }
 
 wrapper {
-    gradleVersion = "6.2"
+    gradleVersion = "6.2.1"
 }
 
 task stage(dependsOn: "bootWar") {

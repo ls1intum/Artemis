@@ -238,13 +238,12 @@ public class ParticipationResource {
         if (participation.getId() == null) {
             throw new BadRequestAlertException("The participation object needs to have an id to be changed", ENTITY_NAME, "idmissing");
         }
+        if (participation.getPresentationScore() == null || participation.getPresentationScore() < 0) {
+            participation.setPresentationScore(0);
+        }
         if (participation.getPresentationScore() > 1) {
             participation.setPresentationScore(1);
         }
-        if (participation.getPresentationScore() < 0 || participation.getPresentationScore() == null) {
-            participation.setPresentationScore(0);
-        }
-
         StudentParticipation currentParticipation = participationService.findOneStudentParticipation(participation.getId());
         if (currentParticipation.getPresentationScore() != null && currentParticipation.getPresentationScore() > participation.getPresentationScore()) {
             log.info(user.getLogin() + " removed the presentation score of " + participation.getStudent().getLogin() + " for exercise with participationId "
@@ -635,13 +634,6 @@ public class ParticipationResource {
     private void checkAccessPermissionAtLeastInstructor(StudentParticipation participation, User user) {
         Course course = findCourseFromParticipation(participation);
         if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
-            throw new AccessForbiddenException("You are not allowed to access this resource");
-        }
-    }
-
-    private void checkAccessPermissionAtLeastTA(StudentParticipation participation, User user) {
-        Course course = findCourseFromParticipation(participation);
-        if (!authorizationCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
             throw new AccessForbiddenException("You are not allowed to access this resource");
         }
     }
