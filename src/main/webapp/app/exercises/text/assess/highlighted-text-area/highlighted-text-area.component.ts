@@ -2,6 +2,7 @@ import { Component, DoCheck, Input, IterableDiffers, OnChanges, SimpleChanges } 
 import { Feedback } from 'app/entities/feedback.model';
 import { HighlightColors } from 'app/exercises/text/assess/highlight-colors';
 import { TextBlock } from 'app/entities/text-block.model';
+import { escapeString, convertToHtmlLinebreaks, sanitize } from 'app/utils/text.utils';
 
 @Component({
     selector: 'jhi-highlighted-text-area',
@@ -19,27 +20,24 @@ export class HighlightedTextAreaComponent implements OnChanges, DoCheck {
         this.differ = differs.find([]).create(undefined);
     }
 
-    get submissionTextWithHtmlLinebreaks(): string {
-        if (!this.submissionText) {
-            return '';
-        }
-        return this.submissionText.replace(/(?:\r\n|\r|\n)/g, '<br>');
+    private get submissionTextWithHtmlLinebreaks(): string {
+        return convertToHtmlLinebreaks(escapeString(this.submissionText || ''));
     }
 
     ngOnChanges(changes: SimpleChanges): void {
         if (changes) {
-            this.displayedText = this.highlightText();
+            this.displayedText = this.highlightText;
         }
     }
 
     ngDoCheck(): void {
         const changes = this.differ.diff(this.assessments);
         if (changes) {
-            this.displayedText = this.highlightText();
+            this.displayedText = this.highlightText;
         }
     }
 
-    highlightText(): string {
+    private get highlightText(): string {
         if (!this.assessments) {
             return this.submissionTextWithHtmlLinebreaks;
         }
@@ -56,8 +54,9 @@ export class HighlightedTextAreaComponent implements OnChanges, DoCheck {
              * Matching for ids is done in the `TextAssessmentComponent` and `this.blocks[currentIndex]` is only defined for case (2).
              */
             const replacementString: string = this.blocks && this.blocks[currentIndex] ? this.blocks[currentIndex]!.text : assessment.reference;
+            const escapedReplacementString = sanitize(replacementString);
 
-            return content.replace(replacementString, `<span class="highlight ${HighlightColors.forIndex(currentIndex)}">${replacementString}</span>`);
+            return content.replace(escapedReplacementString, `<span class="highlight ${HighlightColors.forIndex(currentIndex)}">${escapedReplacementString}</span>`);
         }, this.submissionTextWithHtmlLinebreaks);
     }
 }
