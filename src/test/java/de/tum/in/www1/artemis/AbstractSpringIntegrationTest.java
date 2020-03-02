@@ -25,11 +25,9 @@ public abstract class AbstractSpringIntegrationTest {
     @SpyBean
     protected LtiService ltiService;
 
-    // TODO: we should not really mock BambooService, but only the API calls to Bamboo (e.g. based on the used RestTemplate)
     @SpyBean
     protected BambooService continuousIntegrationService;
 
-    // TODO: we should not really mock BitbucketService, but only the API calls to Bitbucket (e.g. based on the used RestTemplate)
     @SpyBean
     protected BitbucketService versionControlService;
 
