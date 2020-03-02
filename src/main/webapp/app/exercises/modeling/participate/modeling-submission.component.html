@@ -13,7 +13,7 @@
             </div>
             <br />
             <jhi-button
-                class="submission-button"
+                class="guided-tour submission-button"
                 [disabled]="(!isActive && !isLate) || !submission || !!result"
                 [title]="!isLate ? 'entity.action.submit' : 'entity.action.submitDeadlineMissed'"
                 (onClick)="submit()"
