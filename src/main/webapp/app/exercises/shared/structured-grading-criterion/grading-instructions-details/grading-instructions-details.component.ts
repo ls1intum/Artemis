@@ -111,6 +111,9 @@ export class GradingInstructionsDetailsComponent implements OnInit {
         }
         while (index < this.instructions.length) {
             for (const [text, command] of domainCommands) {
+                if (index >= this.instructions.length) {
+                    break;
+                }
                 if (command instanceof CreditsCommand) {
                     this.instructions[index].credits = parseFloat(text);
                 } else if (command instanceof InstructionCommand) {
