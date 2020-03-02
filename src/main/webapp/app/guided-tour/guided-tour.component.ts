@@ -138,6 +138,7 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
                 this.transformCount = 0;
                 this.currentStepIndex = null;
                 this.nextStepIndex = null;
+                this.calculateTranslateValue();
                 return;
             }
 
@@ -717,12 +718,14 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
     private handleForwardNavigation(next: HTMLElement, nextPlusOne: HTMLElement, nextIndex: number) {
         // Moves the n-small and p-small class one dot further
         const lastDot = this.dotElements.last.nativeElement;
-        this.dotArray.forEach((node: ElementRef, index: number) => {
-            node.nativeElement.classList.remove('p-small');
-            if (index === nextIndex - (this.maxDots - 2)) {
-                node.nativeElement.classList.add('p-small');
-            }
-        });
+        if (!lastDot.classList.contains('n-small')) {
+            this.dotArray.forEach((node: ElementRef, index: number) => {
+                node.nativeElement.classList.remove('p-small');
+                if (index === nextIndex - (this.maxDots - 2)) {
+                    node.nativeElement.classList.add('p-small');
+                }
+            });
+        }
         if (next && next.classList.contains('n-small') && lastDot && !lastDot.classList.contains('n-small')) {
             this.transformCount += this.transformXIntervalNext;
             this.renderer.setStyle(this.dotNavigation.nativeElement, 'transform', 'translateX(' + this.transformCount + 'px)');
@@ -740,11 +743,15 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
                 node.nativeElement.classList.add('n-small');
             }
         });
-        this.transformCount += this.transformXIntervalPrev;
-        if (next && next.classList.contains('p-small') && firstDot && !firstDot.classList.contains('p-small')) {
-            this.transformX = this.transformCount;
-            next.classList.remove('p-small');
-            nextPlusOne.classList.add('p-small');
+        if (next && firstDot && !firstDot.classList.contains('p-small') && nextIndex > this.maxDots - 2) {
+            this.transformCount += this.transformXIntervalPrev;
+            if (this.transformCount !== 0) {
+                this.transformX = this.transformCount;
+            }
+            if (next.classList.contains('p-small')) {
+                next.classList.remove('p-small');
+                nextPlusOne.classList.add('p-small');
+            }
         }
     }
 
