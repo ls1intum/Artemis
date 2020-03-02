@@ -210,4 +210,12 @@ public class BitbucketRequestMockProvider {
 
         mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.DELETE)).andRespond(withStatus(HttpStatus.OK));
     }
+
+    public void mockSetRepositoryPermissionsToReadOnly(String projectKey, String username) throws URISyntaxException {
+        final var uri = UriComponentsBuilder.fromUri(BITBUCKET_SERVER_URL.toURI()).path("/rest/api/1.0/projects").pathSegment(projectKey).path("repos")
+                .pathSegment((projectKey + "-" + username).toLowerCase()).path("permissions/users").queryParam("name", username).queryParam("permission", "REPO_READ").build()
+                .toUri();
+
+        mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.PUT)).andRespond(withStatus(HttpStatus.OK));
+    }
 }
