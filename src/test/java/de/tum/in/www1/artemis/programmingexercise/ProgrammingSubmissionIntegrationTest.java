@@ -88,9 +88,11 @@ public class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrat
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     void triggerBuildStudent() throws Exception {
+        bambooRequestMockProvider.enableMockingOfRequests();
         doReturn(COMMIT_HASH_OBJECT_ID).when(gitService).getLastCommitHash(any());
         String login = "student1";
         StudentParticipation participation = database.addStudentParticipationForProgrammingExercise(exercise, login);
+        bambooRequestMockProvider.mockTriggerBuild((ProgrammingExerciseParticipation) participation);
         request.postWithoutLocation("/api/programming-submissions/" + participation.getId() + "/trigger-build", null, HttpStatus.OK, new HttpHeaders());
 
         List<ProgrammingSubmission> submissions = submissionRepository.findAll();
@@ -105,9 +107,11 @@ public class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrat
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void triggerBuildInstructor() throws Exception {
+        bambooRequestMockProvider.enableMockingOfRequests();
         doReturn(COMMIT_HASH_OBJECT_ID).when(gitService).getLastCommitHash(any());
         String login = "student1";
         StudentParticipation participation = database.addStudentParticipationForProgrammingExercise(exercise, login);
+        bambooRequestMockProvider.mockTriggerBuild((ProgrammingExerciseParticipation) participation);
         request.postWithoutLocation("/api/programming-submissions/" + participation.getId() + "/trigger-build?submissionType=INSTRUCTOR", null, HttpStatus.OK, new HttpHeaders());
 
         List<ProgrammingSubmission> submissions = submissionRepository.findAll();
