@@ -2,6 +2,7 @@ import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { SelectionRectangle, TextSelectEvent } from './text-select.directive';
 import { Feedback } from 'app/entities/feedback.model';
 import { TextBlock } from 'app/entities/text-block.model';
+import { convertToHtmlLinebreaks } from 'app/utils/text.utils';
 
 @Component({
     selector: 'jhi-text-assessment-editor',
@@ -26,7 +27,7 @@ export class TextAssessmentEditorComponent {
         // exist. Or, if a selection is being removed, the rectangles will be null.
         if (event.hostRectangle) {
             this.hostRectangle = event.hostRectangle;
-            this.selectedText = event.text.replace(/(?:\r\n|\r|\n)/g, '<br>');
+            this.selectedText = convertToHtmlLinebreaks(event.text.trim());
         } else {
             this.hostRectangle = null;
             this.selectedText = null;
@@ -44,11 +45,11 @@ export class TextAssessmentEditorComponent {
             return;
         }
 
-        if (this.selectedText.trim().length === 0) {
+        if (this.selectedText.length === 0) {
             return;
         }
 
-        this.assessedText.emit(this.selectedText.trim());
+        this.assessedText.emit(this.selectedText);
         this.deselectText();
     }
 }

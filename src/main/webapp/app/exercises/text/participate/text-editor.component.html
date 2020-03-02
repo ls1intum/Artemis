@@ -57,8 +57,9 @@
         <ng-template #hasFeedback>
             <div class="col-md-12 col-lg-10 col-xl-8">
                 <b><span jhiTranslate="artemisApp.textExercise.assessedSubmission">Your assessed submission</span>:</b>
-                <br />
+                <hr />
                 <jhi-text-result [result]="result"></jhi-text-result>
+                <hr />
             </div>
 
             <div class="col-md-12 col-lg-10 col-xl-8 feedback-text mt-5 alert alert-info" *ngIf="generalFeedback">
