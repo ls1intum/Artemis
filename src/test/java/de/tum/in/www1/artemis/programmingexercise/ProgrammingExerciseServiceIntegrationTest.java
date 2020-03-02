@@ -1,13 +1,12 @@
 package de.tum.in.www1.artemis.programmingexercise;
 
-import static de.tum.in.www1.artemis.config.Constants.ASSIGNMENT_REPO_NAME;
-import static de.tum.in.www1.artemis.config.Constants.TEST_REPO_NAME;
+import static de.tum.in.www1.artemis.config.Constants.*;
 import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.SOLUTION;
 import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.TEMPLATE;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.when;
 
 import java.net.MalformedURLException;
 import java.util.LinkedList;
@@ -19,6 +18,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
@@ -28,9 +28,11 @@ import com.google.gson.reflect.TypeToken;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationTest;
 import de.tum.in.www1.artemis.connector.bamboo.BambooRequestMockProvider;
+import de.tum.in.www1.artemis.connector.bitbucket.BitbucketRequestMockProvider;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.enumeration.SortingOrder;
+import de.tum.in.www1.artemis.repository.ParticipationRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.service.ProgrammingExerciseImportService;
 import de.tum.in.www1.artemis.service.ProgrammingExerciseService;
@@ -46,6 +48,9 @@ public class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringInt
     private static final String BASE_RESOURCE = "/api/programming-exercises/";
 
     private static final String DUMMY_URL = "https://te12ste@repobruegge.in.tum.de/scm/TEST2019TEST/testexercise-%s.git";
+
+    @Value("${server.url}")
+    protected String ARTEMIS_BASE_URL;
 
     @Autowired
     ProgrammingExerciseService programmingExerciseService;
@@ -65,13 +70,20 @@ public class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringInt
     @Autowired
     private BambooRequestMockProvider bambooRequestMockProvider;
 
+    @Autowired
+    private ParticipationRepository participationRepository;
+
+    @Autowired
+    private BitbucketRequestMockProvider bitbucketRequestMockProvider;
+
     private Course additionalEmptyCourse;
 
     private ProgrammingExercise programmingExercise;
 
     @BeforeEach
-    public void setUp() throws MalformedURLException {
+    public void setUp() {
         bambooRequestMockProvider.enableMockingOfRequests();
+        bitbucketRequestMockProvider.enableMockingOfRequests();
         databse.addUsers(1, 1, 1);
         databse.addInstructor("other-instructors", "instructorother");
         databse.addCourseWithOneProgrammingExerciseAndTestCases();
@@ -166,14 +178,23 @@ public class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringInt
         final var templateRepoName = (projectKey + "-" + RepositoryType.TEMPLATE.getName()).toLowerCase();
         final var solutionRepoName = (projectKey + "-" + RepositoryType.SOLUTION.getName()).toLowerCase();
         final var testsRepoName = (projectKey + "-" + RepositoryType.TESTS.getName()).toLowerCase();
+        var nextParticipationId = programmingExercise.getTemplateParticipation().getId() + 1;
+        final var artemisSolutionHookPath = ARTEMIS_BASE_URL + PROGRAMMING_SUBMISSION_RESOURCE_API_PATH + nextParticipationId++;
+        final var artemisTemplateHookPath = ARTEMIS_BASE_URL + PROGRAMMING_SUBMISSION_RESOURCE_API_PATH + nextParticipationId++;
+        final var artemisTestsHookPath = ARTEMIS_BASE_URL + TEST_CASE_CHANGED_API_PATH + (programmingExercise.getId() + 1);
 
         verifications.add(bambooRequestMockProvider.mockCopyBuildPlan(programmingExercise.getProjectKey(), TEMPLATE.getName(), projectKey, TEMPLATE.getName()));
         verifications.add(bambooRequestMockProvider.mockCopyBuildPlan(programmingExercise.getProjectKey(), SOLUTION.getName(), projectKey, SOLUTION.getName()));
         verifications.add(bambooRequestMockProvider.mockEnablePlan(projectKey, TEMPLATE.getName()));
         verifications.add(bambooRequestMockProvider.mockEnablePlan(projectKey, SOLUTION.getName()));
-        doNothing().when(versionControlService).createProjectForExercise(any());
+        bitbucketRequestMockProvider.mockCreateProjectForExercise(toBeImported);
         doReturn(new DummyRepositoryUrl(DUMMY_URL)).when(versionControlService).copyRepository(anyString(), anyString(), anyString(), anyString());
-        doNothing().when(versionControlService).addWebHooksForExercise(any());
+        bitbucketRequestMockProvider.mockGetExistingWebhooks(projectKey, templateRepoName);
+        bitbucketRequestMockProvider.mockAddWebhook(projectKey, templateRepoName, artemisTemplateHookPath);
+        bitbucketRequestMockProvider.mockGetExistingWebhooks(projectKey, solutionRepoName);
+        bitbucketRequestMockProvider.mockAddWebhook(projectKey, solutionRepoName, artemisSolutionHookPath);
+        bitbucketRequestMockProvider.mockGetExistingWebhooks(projectKey, testsRepoName);
+        bitbucketRequestMockProvider.mockAddWebhook(projectKey, testsRepoName, artemisTestsHookPath);
         bambooRequestMockProvider.mockGiveProjectPermissions(toBeImported);
         bambooRequestMockProvider.mockUpdatePlanRepository(toBeImported, TEMPLATE.getName(), ASSIGNMENT_REPO_NAME, templateRepoName, List.of(ASSIGNMENT_REPO_NAME));
         bambooRequestMockProvider.mockUpdatePlanRepository(toBeImported, TEMPLATE.getName(), TEST_REPO_NAME, testsRepoName, List.of());

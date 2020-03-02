@@ -172,4 +172,21 @@ public class BitbucketRequestMockProvider {
         mockServer.expect(requestTo(uniqueUri)).andExpect(method(HttpMethod.GET))
                 .andRespond(withStatus(HttpStatus.OK).contentType(MediaType.APPLICATION_JSON).body(mapper.writeValueAsString(searchResults)));
     }
+
+    public void mockGetExistingWebhooks(String projectKey, String repositoryName) throws URISyntaxException {
+        final var uri = UriComponentsBuilder.fromUri(BITBUCKET_SERVER_URL.toURI()).path("/rest/api/1.0/projects").pathSegment(projectKey).path("repos").pathSegment(repositoryName)
+                .path("webhooks").build().toUri();
+        final var existingHooks = "{\"values\": []}";
+
+        mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.GET)).andRespond(withStatus(HttpStatus.OK).body(existingHooks).contentType(MediaType.APPLICATION_JSON));
+    }
+
+    public void mockAddWebhook(String projectKey, String repositoryName, String url) throws JsonProcessingException, URISyntaxException {
+        final var uri = UriComponentsBuilder.fromUri(BITBUCKET_SERVER_URL.toURI()).path("/rest/api/1.0/projects").pathSegment(projectKey).path("repos").pathSegment(repositoryName)
+                .path("webhooks").build().toUri();
+        final var body = Map.of("name", "Artemis WebHook", "url", url, "events", List.of("repo:refs_changed"));
+
+        mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.POST)).andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(content().json(mapper.writeValueAsString(body))).andRespond(withStatus(HttpStatus.OK));
+    }
 }
