@@ -17,9 +17,9 @@ span {
     padding-left: 20px;
     margin-right: 0.5em;
 }
-label {
-    display: inline-block;
-}
 button {
     float: right;
+}
+#addButton {
+    display: inline-flex;
 }

@@ -12,7 +12,6 @@ export class EditStructuredGradingInstructionComponent implements OnInit {
     /** Ace Editor configuration constants **/
     questionEditorText = '';
     private criteria: GradingCriterion[];
-    private instruction: GradingInstruction;
     @Input()
     exercise: Exercise;
     entity: GradingCriterion[];
@@ -35,10 +34,14 @@ export class EditStructuredGradingInstructionComponent implements OnInit {
         if (this.criteria) {
             this.entity = this.criteria;
         } else {
+            if (this.criteria === undefined) {
+                this.entity = [];
+            }
             this.newEntity = new GradingCriterion();
             this.newEntity.title = 'test';
             this.entity.push(this.newEntity);
-            this.exercise.gradingCriteria = this.entity;
+            this.criteria = this.entity;
+            this.exercise.gradingCriteria = this.criteria;
         }
     }
     /**
@@ -47,6 +50,7 @@ export class EditStructuredGradingInstructionComponent implements OnInit {
      */
     addGradingCriteria() {
         if (typeof this.criteria === 'undefined') {
+            this.entity = [];
             this.criteria = this.entity;
         }
         this.newEntity = new GradingCriterion();

@@ -58,6 +58,10 @@ export class GradingInstructionsDetailsComponent implements OnInit {
                     '\n';
             }
         } else {
+            this.instructions = [];
+            const newInstruction = new GradingInstruction();
+            this.instructions.push(newInstruction);
+            this.criterion.structuredGradingInstructions = this.instructions;
             markdownText =
                 CreditsCommand.identifier +
                 ' ' +
@@ -107,6 +111,11 @@ export class GradingInstructionsDetailsComponent implements OnInit {
      */
     domainCommandsFound(domainCommands: [string, DomainCommand][]): void {
         let index = 0;
+        if (this.markdownEditor.gradingCriteriaCommandFired) {
+            const newInstruction = new GradingInstruction();
+            this.instructions.push(newInstruction);
+            this.criterion.structuredGradingInstructions = this.instructions;
+        }
         while (index < this.instructions.length) {
             for (const [text, command] of domainCommands) {
                 if (command instanceof CreditsCommand) {

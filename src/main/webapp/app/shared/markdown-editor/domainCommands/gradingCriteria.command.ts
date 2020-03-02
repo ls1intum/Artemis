@@ -34,7 +34,8 @@ export class GradingCriteriaCommand extends DomainTagCommand {
             this.usageCountCommand.getOpeningIdentifier() +
             UsageCountCommand.text +
             '\n' +
-            this.getOpeningIdentifier();
+            this.getOpeningIdentifier() +
+            '\n';
 
         ArtemisMarkdown.addTextAtCursor(text, this.aceEditorContainer);
     }
