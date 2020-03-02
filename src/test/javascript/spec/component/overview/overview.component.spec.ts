@@ -152,7 +152,7 @@ describe('Courses Component', () => {
                 for (let i = 1; i < 6; i++) {
                     guidedTourService.nextStep();
                     expect(guidedTourService.isOnFirstStep).to.be.false;
-                    guidedTourComponent.currentTourStep = guidedTourService.currentStep;
+                    guidedTourComponent.currentTourStep = guidedTourService['currentStep'];
 
                     if (guidedTourComponent.currentTourStep.highlightSelector) {
                         const selectedElement = navBarComponentFixture.debugElement.query(By.css(guidedTourComponent.currentTourStep.highlightSelector));
@@ -163,7 +163,7 @@ describe('Courses Component', () => {
                 // Click through tour steps in CourseCardComponent
                 for (let i = 6; i < 8; i++) {
                     guidedTourService.nextStep();
-                    guidedTourComponent.currentTourStep = guidedTourService.currentStep;
+                    guidedTourComponent.currentTourStep = guidedTourService['currentStep'];
 
                     if (guidedTourComponent.currentTourStep.highlightSelector) {
                         const selectedElement = courseCardComponentFixture.debugElement.query(By.css(guidedTourComponent.currentTourStep.highlightSelector));
@@ -174,7 +174,7 @@ describe('Courses Component', () => {
                 // Click through tour steps in FooterComponent
                 for (let i = 8; i < guidedTourSteps; i++) {
                     guidedTourService.nextStep();
-                    guidedTourComponent.currentTourStep = guidedTourService.currentStep;
+                    guidedTourComponent.currentTourStep = guidedTourService['currentStep'];
 
                     if (guidedTourComponent.currentTourStep.highlightSelector) {
                         const selectedElement = footerComponentFixture.debugElement.query(By.css(guidedTourComponent.currentTourStep.highlightSelector));
