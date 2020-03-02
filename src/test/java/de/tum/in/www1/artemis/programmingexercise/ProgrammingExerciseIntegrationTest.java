@@ -14,6 +14,8 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.time.ZonedDateTime;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.apache.commons.io.FileUtils;
@@ -28,6 +30,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+
 import de.tum.in.www1.artemis.AbstractSpringIntegrationTest;
 import de.tum.in.www1.artemis.connector.bamboo.BambooRequestMockProvider;
 import de.tum.in.www1.artemis.connector.bitbucket.BitbucketRequestMockProvider;
@@ -41,6 +45,7 @@ import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.RequestUtilService;
 import de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResource.Endpoints;
 import de.tum.in.www1.artemis.web.rest.ProgrammingExerciseTestCaseResource;
+import de.tum.in.www1.artemis.web.rest.dto.ProgrammingExerciseTestCaseDTO;
 import de.tum.in.www1.artemis.web.rest.dto.RepositoryExportOptionsDTO;
 import de.tum.in.www1.artemis.web.websocket.dto.ProgrammingExerciseTestCaseStateDTO;
 
@@ -523,5 +528,48 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationTest {
     public void getTestCases_asStudent_forbidden() throws Exception {
         final var endpoint = ProgrammingExerciseTestCaseResource.Endpoints.TEST_CASES.replace("{exerciseId}", programmingExercise.getId() + "");
         request.getList(ROOT + endpoint, HttpStatus.FORBIDDEN, ProgrammingExerciseTestCase.class);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void updateTestCases_asInstrutor() throws Exception {
+        final var testCases = programmingExerciseTestCaseRepository.findByExerciseId(programmingExercise.getId());
+        final var updates = testCases.stream().map(testCase -> {
+            final var testCaseUpdate = new ProgrammingExerciseTestCaseDTO();
+            testCaseUpdate.setId(testCase.getId());
+            testCaseUpdate.setAfterDueDate(true);
+            testCaseUpdate.setWeight((int) (testCase.getId() + 42));
+            return testCaseUpdate;
+        }).collect(Collectors.toList());
+        final var endpoint = ProgrammingExerciseTestCaseResource.Endpoints.UPDATE_TEST_CASES.replace("{exerciseId}", programmingExercise.getId() + "");
+
+        final var testCasesResponse = request.patchWithResponseBody(ROOT + endpoint, updates, new TypeReference<Set<ProgrammingExerciseTestCase>>() {
+        }, HttpStatus.OK);
+        final var testCasesInDB = programmingExerciseTestCaseRepository.findByExerciseId(programmingExercise.getId());
+        testCasesInDB.forEach(testCase -> testCase.setExercise(null));
+
+        assertThat(testCasesResponse).isEqualTo(testCasesInDB);
+        assertThat(testCasesResponse).allSatisfy(testCase -> {
+            assertThat(testCase.isAfterDueDate()).isTrue();
+            assertThat(testCase.getWeight()).isEqualTo(testCase.getId() + 42);
+        });
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void updateTestCases_nonExistingExercise_notFound() throws Exception {
+        final var update = new ProgrammingExerciseTestCaseDTO();
+        final var endpoint = ProgrammingExerciseTestCaseResource.Endpoints.UPDATE_TEST_CASES.replace("{exerciseId}", (programmingExercise.getId() + 1) + "");
+        request.patchWithResponseBody(ROOT + endpoint, List.of(update), String.class, HttpStatus.NOT_FOUND);
+    }
+
+    @Test
+    @WithMockUser(username = "other-instructor1", roles = "INSTRUCTOR")
+    public void updateTestCases_instructorInWrongCourse_forbidden() throws Exception {
+        database.addInstructor("other-instructors", "other-instructor");
+        final var update = new ProgrammingExerciseTestCaseDTO();
+        final var endpoint = ProgrammingExerciseTestCaseResource.Endpoints.UPDATE_TEST_CASES.replace("{exerciseId}", programmingExercise.getId() + "");
+
+        request.patchWithResponseBody(ROOT + endpoint, List.of(update), String.class, HttpStatus.FORBIDDEN);
     }
 }
