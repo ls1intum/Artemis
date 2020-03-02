@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.security;
+package de.tum.in.www1.artemis.service.connectors;
 
 import static de.tum.in.www1.artemis.config.Constants.TUM_USERNAME_PATTERN;
 
@@ -34,6 +34,8 @@ import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import com.fasterxml.jackson.databind.JsonNode;
+
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.Authority;
 import de.tum.in.www1.artemis.domain.Course;
@@ -41,6 +43,8 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.exception.ArtemisAuthenticationException;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
+import de.tum.in.www1.artemis.security.AuthoritiesConstants;
 import de.tum.in.www1.artemis.service.UserService;
 import de.tum.in.www1.artemis.service.connectors.jira.dto.JiraUserDTO;
 import de.tum.in.www1.artemis.service.connectors.jira.dto.JiraUserDTO.JiraUserGroupDTO;
@@ -85,6 +89,20 @@ public class JiraAuthenticationProvider implements ArtemisAuthenticationProvider
         this.restTemplate = restTemplate;
         this.ldapUserService = ldapUserService;
         this.auditEventRepository = auditEventRepository;
+    }
+
+    public ConnectorHealth health() {
+        ConnectorHealth health;
+        try {
+            final var status = restTemplate.getForObject(JIRA_URL + "/status", JsonNode.class);
+            health = status.get("state").asText().equals("RUNNING") ? new ConnectorHealth(true) : new ConnectorHealth(false);
+        }
+        catch (Exception emAll) {
+            health = new ConnectorHealth(emAll);
+        }
+
+        health.setAdditionalInfo(Map.of("url", JIRA_URL));
+        return health;
     }
 
     @Override

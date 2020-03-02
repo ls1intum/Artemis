@@ -20,7 +20,8 @@
             "db": "Datenbank",
             "ping": "Ping",
             "continuousIntegrationServer": "Kontinuierlicher Integrationsserver",
-            "versionControlServer": "Versionskontrollserver"
+            "versionControlServer": "Versionskontrollserver",
+            "userManagement": "Nutzerverwaltung"
         },
         "table": {
             "service": "Dienst Name",
