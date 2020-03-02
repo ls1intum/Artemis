@@ -4,7 +4,10 @@ This page describes how to set up a programming exercise environment based on Je
 Optional commands are in curly brackets <code>{}</code>.
 
 <b>The following assumes that all instances run on separate servers. 
-If you have one single server, or your own NGINX instance, just skip all NGINX related steps and use the configurations provided under _Separate NGINX Configurations_</b>
+If you have one single server, or your own NGINX instance, just skip all NGINX related steps and use the configurations provided under _Separate NGINX Configurations_</b>\
+
+**If you want to setup everything on your local machine, you can also just ignore all NGINX related steps.**
+**Just make sure that you use unique port mappings for your Docker containers (e.g. 80 for GitLab, 8080 for Jenkins, 8081 for Artemis)**
 
 1. [GitLab](#gitlab)
 2. [Jenkins](#jenkins)
@@ -83,6 +86,16 @@ Use the same password in the Artemis configuration file _application-prod.yml_
         artemis:
             version-control:
                 token: your.generated.api.token
+
+### Upgrade GitLab
+You can upgrade GitLab by downloading the latest Docker image and starting a new container with the old volumes:
+```shell script
+docker stop gitlab
+docker rename gitlab gitlab_old
+docker pull gitlab/gitlab-ce:<the tag of the version you want>
+```
+Start a GitLab container just as described in **step 2** of the setup process and wait for a couple of minutes.
+GitLab should configure itself automatically. If there are no issues, you can delete the old container using `docker rm gitlab_old`.
 
 ## Jenkins
 
@@ -276,6 +289,37 @@ In order to get this token, you have to do the following steps:
             continuous-integration:
                 secret-push-token: $some-long-encrytped-value
                 
+### Jenkins + Maven + Java 12
+In order to install and use Maven with Java 12 in the Jenkins container, you have to first install maven, then download Java 12
+and findall configure Maven to use Java 12 instead of the default version:
+
+```shell script
+docker exec -it -u root jenkins /bin/bash
+apt update
+apt install maven
+cd /usr/lib/jvm
+wget https://github.com/AdoptOpenJDK/openjdk12-binaries/releases/download/jdk-12.0.2%2B10/OpenJDK12U-jdk_x64_linux_hotspot_12.0.2_10.tar.gz
+tar -zxf OpenJDK12U-jdk_x64_linux_hotspot_12.0.2_10.tar.gz && mv jdk-12.0.2+10 java-12-openjdk-amd64
+chown -R root:root java-12-openjdk-amd64
+```
+
+While still having the shell in the Jenkins container open, install your preferred editor and open _/usr/share/maven/bin/mvn_ and paste
+the following into the first line:
+
+```
+JAVA_HOME="/usr/lib/jvm/java-12-openjdk-amd64"
+```
+
+### Upgrade Jenkins
+Pull the latest LTS version, stop the running container and mount the Jenkins data volume to the new LTS container:
+```shell script
+docker stop jenkins
+docker pull jenkins/jenkins:lts
+docker rename jenkins jenkins_old
+```
+Now start a new Jenkins container just as described in **step 3** of the setup process.\
+You will have to re-install Maven as described in the previous section, we can only migrate the data, but no installed binaries.\
+Jenkins should be up and running again. If there are no problems, you can delete the old container with `docker rm jenkins_old`.
                 
 ## Separate NGINX Configurations
 There are some placeholders in the following configurations. Replace them with your setup specific values
