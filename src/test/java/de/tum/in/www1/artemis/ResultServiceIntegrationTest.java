@@ -142,9 +142,9 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationTest 
         result.setParticipation(programmingExerciseStudentParticipation);
 
         Set<ProgrammingExerciseTestCase> expectedTestCases = new HashSet<>();
-        expectedTestCases.add(new ProgrammingExerciseTestCase().exercise(programmingExercise).testName("test1").active(true).weight(1).id(1L));
-        expectedTestCases.add(new ProgrammingExerciseTestCase().exercise(programmingExercise).testName("test2").active(true).weight(1).id(2L));
-        expectedTestCases.add(new ProgrammingExerciseTestCase().exercise(programmingExercise).testName("test4").active(true).weight(1).id(3L));
+        expectedTestCases.add(new ProgrammingExerciseTestCase().exercise(programmingExercise).testName("test1").active(true).weight(1));
+        expectedTestCases.add(new ProgrammingExerciseTestCase().exercise(programmingExercise).testName("test2").active(true).weight(1));
+        expectedTestCases.add(new ProgrammingExerciseTestCase().exercise(programmingExercise).testName("test4").active(true).weight(1));
 
         Object requestDummy = new Object();
 
@@ -152,7 +152,9 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationTest 
         resultService.processNewProgrammingExerciseResult(solutionParticipation, requestDummy);
 
         Set<ProgrammingExerciseTestCase> testCases = programmingExerciseTestCaseService.findByExerciseId(programmingExercise.getId());
-        assertThat(testCases).isEqualTo(expectedTestCases);
+        testCases.forEach(testCase -> testCase.setId(null));    // remove ID for comparison as it gets generated and we cannot know it beforehand
+        assertThat(testCases).containsAll(expectedTestCases);
+        assertThat(testCases).hasSameSizeAs(expectedTestCases);
         assertThat(result.getScore()).isEqualTo(100L);
     }
 
