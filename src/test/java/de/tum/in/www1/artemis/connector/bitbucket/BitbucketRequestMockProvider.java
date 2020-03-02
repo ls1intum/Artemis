@@ -110,9 +110,17 @@ public class BitbucketRequestMockProvider {
         final var projectKey = exercise.getProjectKey();
         final var templateRepoName = exercise.getProjectKey().toLowerCase() + "-" + RepositoryType.TEMPLATE.getName();
         final var clonedRepoName = projectKey.toLowerCase() + "-" + username.toLowerCase();
-        final var copyRepoPath = UriComponentsBuilder.fromUri(BITBUCKET_SERVER_URL.toURI()).path("/rest/api/1.0/projects/").pathSegment(projectKey).path("/repos/")
-                .pathSegment(templateRepoName).build().toUri();
-        final var cloneBody = new BitbucketCloneDTO(clonedRepoName, new BitbucketCloneDTO.CloneDetailsDTO(projectKey));
+
+        mockCopyRepository(projectKey, projectKey, templateRepoName, clonedRepoName);
+    }
+
+    public void mockCopyRepository(String sourceProjectKey, String targetProjectKey, String sourceRepoName, String targetRepoName)
+            throws JsonProcessingException, URISyntaxException {
+        sourceRepoName = sourceRepoName.toLowerCase();
+        targetRepoName = targetRepoName.toLowerCase();
+        final var copyRepoPath = UriComponentsBuilder.fromUri(BITBUCKET_SERVER_URL.toURI()).path("/rest/api/1.0/projects/").pathSegment(sourceProjectKey).path("/repos/")
+                .pathSegment(sourceRepoName).build().toUri();
+        final var cloneBody = new BitbucketCloneDTO(targetRepoName, new BitbucketCloneDTO.CloneDetailsDTO(targetProjectKey));
 
         mockServer.expect(requestTo(copyRepoPath)).andExpect(method(HttpMethod.POST)).andExpect(content().json(mapper.writeValueAsString(cloneBody)))
                 .andRespond(withStatus(HttpStatus.CREATED));

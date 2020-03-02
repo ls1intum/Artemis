@@ -4,9 +4,6 @@ import static de.tum.in.www1.artemis.config.Constants.*;
 import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.SOLUTION;
 import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.TEMPLATE;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.when;
 
 import java.net.MalformedURLException;
 import java.util.LinkedList;
@@ -175,6 +172,7 @@ public class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringInt
         final var toBeImported = createToBeImported();
         final var verifications = new LinkedList<Verifiable>();
         final var projectKey = toBeImported.getProjectKey();
+        final var sourceProjectKey = programmingExercise.getProjectKey();
         final var templateRepoName = (projectKey + "-" + RepositoryType.TEMPLATE.getName()).toLowerCase();
         final var solutionRepoName = (projectKey + "-" + RepositoryType.SOLUTION.getName()).toLowerCase();
         final var testsRepoName = (projectKey + "-" + RepositoryType.TESTS.getName()).toLowerCase();
@@ -188,7 +186,9 @@ public class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringInt
         verifications.add(bambooRequestMockProvider.mockEnablePlan(projectKey, TEMPLATE.getName()));
         verifications.add(bambooRequestMockProvider.mockEnablePlan(projectKey, SOLUTION.getName()));
         bitbucketRequestMockProvider.mockCreateProjectForExercise(toBeImported);
-        doReturn(new DummyRepositoryUrl(DUMMY_URL)).when(versionControlService).copyRepository(anyString(), anyString(), anyString(), anyString());
+        bitbucketRequestMockProvider.mockCopyRepository(sourceProjectKey, projectKey, programmingExercise.getTemplateRepositoryName(), templateRepoName);
+        bitbucketRequestMockProvider.mockCopyRepository(sourceProjectKey, projectKey, programmingExercise.getSolutionRepositoryName(), solutionRepoName);
+        bitbucketRequestMockProvider.mockCopyRepository(sourceProjectKey, projectKey, programmingExercise.getTestRepositoryName(), testsRepoName);
         bitbucketRequestMockProvider.mockGetExistingWebhooks(projectKey, templateRepoName);
         bitbucketRequestMockProvider.mockAddWebhook(projectKey, templateRepoName, artemisTemplateHookPath);
         bitbucketRequestMockProvider.mockGetExistingWebhooks(projectKey, solutionRepoName);
@@ -230,15 +230,8 @@ public class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringInt
         assertThat(result.getResultsOnPage()).isEmpty();
     }
 
-    private ProgrammingExercise importExerciseBase() throws MalformedURLException {
+    private ProgrammingExercise importExerciseBase() {
         final var toBeImported = createToBeImported();
-        final var templateRepoName = toBeImported.getProjectKey().toLowerCase() + "-" + RepositoryType.TEMPLATE.getName();
-        final var solutionRepoName = toBeImported.getProjectKey().toLowerCase() + "-" + RepositoryType.SOLUTION.getName();
-        final var testRepoName = toBeImported.getProjectKey().toLowerCase() + "-" + RepositoryType.TESTS.getName();
-        when(versionControlService.getCloneRepositoryUrl(toBeImported.getProjectKey(), templateRepoName)).thenReturn(new DummyRepositoryUrl(DUMMY_URL));
-        when(versionControlService.getCloneRepositoryUrl(toBeImported.getProjectKey(), solutionRepoName)).thenReturn(new DummyRepositoryUrl(DUMMY_URL));
-        when(versionControlService.getCloneRepositoryUrl(toBeImported.getProjectKey(), testRepoName)).thenReturn(new DummyRepositoryUrl(DUMMY_URL));
-
         return programmingExerciseImportService.importProgrammingExerciseBasis(programmingExercise, toBeImported);
     }
 
