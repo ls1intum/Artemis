@@ -35,6 +35,7 @@ import de.tum.in.www1.artemis.AbstractSpringIntegrationTest;
 import de.tum.in.www1.artemis.connector.bamboo.BambooRequestMockProvider;
 import de.tum.in.www1.artemis.connector.bitbucket.BitbucketRequestMockProvider;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
@@ -104,8 +105,7 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationTest {
         doNothing().when(gitService).commitAndPush(any(), anyString(), any());
 
         bambooRequestMockProvider.enableMockingOfRequests();
-        doNothing().when(versionControlService).deleteRepository(any(URL.class));
-        doNothing().when(versionControlService).deleteProject(anyString());
+        bitbucketRequestMockProvider.enableMockingOfRequests();
     }
 
     @AfterEach
@@ -214,10 +214,14 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationTest {
         params.add("deleteStudentReposBuildPlans", "true");
         params.add("deleteBaseReposBuildPlans", "true");
 
-        verifiables.add(bambooRequestMockProvider.mockDeleteProject(programmingExercise.getProjectKey()));
+        verifiables.add(bambooRequestMockProvider.mockDeleteProject(projectKey));
         for (final var planName : List.of("student1", "student2", TEMPLATE.getName(), SOLUTION.getName())) {
             verifiables.add(bambooRequestMockProvider.mockDeletePlan(projectKey + "-" + planName.toUpperCase()));
         }
+        for (final var repoName : List.of("student1", "student2", RepositoryType.TEMPLATE.getName(), RepositoryType.SOLUTION.getName(), RepositoryType.TESTS.getName())) {
+            bitbucketRequestMockProvider.mockDeleteRepository(projectKey, (projectKey + "-" + repoName).toLowerCase());
+        }
+        bitbucketRequestMockProvider.mockDeleteProject(projectKey);
 
         request.delete(path, HttpStatus.OK, params);
 
