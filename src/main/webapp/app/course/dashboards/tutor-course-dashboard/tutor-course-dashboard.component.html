@@ -16,7 +16,7 @@
 <jhi-alert></jhi-alert>
 
 <div *ngIf="course">
-    <div id="assessment-statistics">
+    <div id="assessment-statistics" class="guided-tour-assessment-stats">
         <div class="row mt-3 justify-content-around">
             <div class="col-4 text-center">
                 <p class="font-weight-bold">{{ 'artemisApp.tutorCourseDashboard.yourAssessments' | translate }}:</p>
@@ -56,13 +56,13 @@
     </div>
 
     <div class="table-responsive">
-        <div class="form-check col-6 align-baseline">
+        <div class="guided-tour-form-check form-check col-6 align-baseline">
             <input type="checkbox" name="showFinishedExercise" id="field_showFinishedExercise" [ngModel]="showFinishedExercises" (ngModelChange)="triggerFinishedExercises()" />
             <label class="form-check-label" for="field_showFinishedExercise">
                 {{ 'artemisApp.tutorCourseDashboard.showFinishedExercises' | translate }}
             </label>
         </div>
-        <table class="table exercise-table" [hidden]="exercises.length === 0">
+        <table class="table exercise-table guided-tour-exercise-table" [hidden]="exercises.length === 0">
             <thead>
                 <tr jhiSort [(predicate)]="exercisesSortingPredicate" [(ascending)]="exercisesReverseOrder" [callback]="callback">
                     <th jhiSortBy="type">
