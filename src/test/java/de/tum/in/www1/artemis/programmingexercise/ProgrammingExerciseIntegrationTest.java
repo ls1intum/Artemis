@@ -531,8 +531,20 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationTest {
     }
 
     @Test
+    @WithMockUser(username = "other-teaching-assistant1", roles = "TA")
+    public void getTestCases_tutorInOtherCourse_forbidden() throws Exception {
+        database.addTeachingAssistant("other-teaching-assistants", "other-teaching-assistant");
+        final var endpoint = ProgrammingExerciseTestCaseResource.Endpoints.TEST_CASES.replace("{exerciseId}", programmingExercise.getId() + "");
+
+        request.getList(ROOT + endpoint, HttpStatus.FORBIDDEN, ProgrammingExerciseTestCase.class);
+    }
+
+    @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void updateTestCases_asInstrutor() throws Exception {
+        bambooRequestMockProvider.enableMockingOfRequests();
+        programmingExercise = programmingExerciseRepository.findWithTemplateParticipationAndSolutionParticipationById(programmingExercise.getId()).get();
+        bambooRequestMockProvider.mockTriggerBuild(programmingExercise.getSolutionParticipation());
         final var testCases = programmingExerciseTestCaseRepository.findByExerciseId(programmingExercise.getId());
         final var updates = testCases.stream().map(testCase -> {
             final var testCaseUpdate = new ProgrammingExerciseTestCaseDTO();
@@ -571,5 +583,34 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationTest {
         final var endpoint = ProgrammingExerciseTestCaseResource.Endpoints.UPDATE_TEST_CASES.replace("{exerciseId}", programmingExercise.getId() + "");
 
         request.patchWithResponseBody(ROOT + endpoint, List.of(update), String.class, HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void resetTestCaseWeights_asInstructor() throws Exception {
+        bambooRequestMockProvider.enableMockingOfRequests();
+        programmingExercise = programmingExerciseRepository.findWithTemplateParticipationAndSolutionParticipationById(programmingExercise.getId()).get();
+        bambooRequestMockProvider.mockTriggerBuild(programmingExercise.getSolutionParticipation());
+        final var endpoint = ProgrammingExerciseTestCaseResource.Endpoints.RESET_WEIGHTS.replace("{exerciseId}", programmingExercise.getId() + "");
+        programmingExerciseTestCaseRepository.findByExerciseId(programmingExercise.getId()).forEach(test -> {
+            test.setWeight(42);
+            programmingExerciseTestCaseRepository.saveAndFlush(test);
+        });
+
+        final var testCasesResponse = request.patchWithResponseBody(ROOT + endpoint, "{}", new TypeReference<Set<ProgrammingExerciseTestCase>>() {
+        }, HttpStatus.OK);
+        final var testsInDB = programmingExerciseTestCaseRepository.findByExerciseId(programmingExercise.getId());
+
+        assertThat(testCasesResponse).isEqualTo(testsInDB);
+        assertThat(testsInDB).allSatisfy(test -> assertThat(test.getWeight()).isEqualTo(1));
+    }
+
+    @Test
+    @WithMockUser(username = "other-instructor1", roles = "INSTRUCTOR")
+    public void resetTestCaseWeights_instructorInWrongCourse_forbidden() throws Exception {
+        database.addInstructor("other-instructors", "other-instructor");
+        final var endpoint = ProgrammingExerciseTestCaseResource.Endpoints.RESET_WEIGHTS.replace("{exerciseId}", programmingExercise.getId() + "");
+
+        request.patchWithResponseBody(ROOT + endpoint, "{}", String.class, HttpStatus.FORBIDDEN);
     }
 }
