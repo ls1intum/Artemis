@@ -1,7 +1,6 @@
 import { Component, OnInit, ViewChild, Input } from '@angular/core';
 import { GradingCriterion } from 'app/exercises/shared/structured-grading-criterion/grading-criterion.model';
 import { Exercise } from 'app/entities/exercise.model';
-import { GradingInstruction } from 'app/exercises/shared/structured-grading-instruction/grading-instruction.model';
 
 @Component({
     selector: 'jhi-edit-structured-grading-instruction',
@@ -38,7 +37,7 @@ export class EditStructuredGradingInstructionComponent implements OnInit {
                 this.entity = [];
             }
             this.newEntity = new GradingCriterion();
-            this.newEntity.title = 'test';
+            this.newEntity.title = '';
             this.entity.push(this.newEntity);
             this.criteria = this.entity;
             this.exercise.gradingCriteria = this.criteria;

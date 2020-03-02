@@ -42,61 +42,54 @@ export class GradingInstructionsDetailsComponent implements OnInit {
      */
     generateMarkdown(): string {
         let markdownText = '';
-        if (this.instructions !== undefined && this.instructions.length !== 0) {
-            for (const instruction of this.instructions) {
-                markdownText +=
-                    this.generateCreditsText(instruction) +
-                    '\n' +
-                    this.generateInstructionDescriptionText(instruction) +
-                    '\n' +
-                    this.generateInstructionFeedback(instruction) +
-                    '\n' +
-                    this.generateUsageCount(instruction) +
-                    '\n' +
-                    '[gradingInstruction]' +
-                    '\n' +
-                    '\n';
-            }
-        } else {
+        if (this.instructions === undefined || this.instructions.length === 0) {
             this.instructions = [];
             const newInstruction = new GradingInstruction();
             this.instructions.push(newInstruction);
             this.criterion.structuredGradingInstructions = this.instructions;
-            markdownText =
-                CreditsCommand.identifier +
-                ' ' +
-                CreditsCommand.text +
+        }
+        for (const instruction of this.instructions) {
+            markdownText +=
+                this.generateCreditsText(instruction) +
                 '\n' +
-                InstructionCommand.identifier +
-                ' ' +
-                InstructionCommand.text +
+                this.generateInstructionDescriptionText(instruction) +
                 '\n' +
-                FeedbackCommand.identifier +
-                ' ' +
-                FeedbackCommand.text +
+                this.generateInstructionFeedback(instruction) +
                 '\n' +
-                UsageCountCommand.identifier +
-                ' ' +
-                UsageCountCommand.text +
+                this.generateUsageCount(instruction) +
                 '\n' +
-                '[gradingInstruction]';
+                '[gradingInstruction]' +
+                '\n' +
+                '\n';
         }
         return markdownText;
     }
 
     generateCreditsText(instruction: GradingInstruction): string {
+        if (instruction.credits === undefined) {
+            return CreditsCommand.identifier + ' ' + CreditsCommand.text;
+        }
         return CreditsCommand.identifier + ' ' + instruction.credits;
     }
 
     generateInstructionDescriptionText(instruction: GradingInstruction): string {
+        if (instruction.instructionDescription === undefined) {
+            return InstructionCommand.identifier + ' ' + InstructionCommand.text;
+        }
         return InstructionCommand.identifier + ' ' + instruction.instructionDescription;
     }
 
     generateInstructionFeedback(instruction: GradingInstruction): string {
+        if (instruction.feedback === undefined) {
+            return FeedbackCommand.identifier + ' ' + FeedbackCommand.text;
+        }
         return FeedbackCommand.identifier + ' ' + instruction.feedback;
     }
 
     generateUsageCount(instruction: GradingInstruction): string {
+        if (instruction.feedback === undefined) {
+            return UsageCountCommand.identifier + ' ' + UsageCountCommand.text;
+        }
         return UsageCountCommand.identifier + ' ' + instruction.usageCount;
     }
 
