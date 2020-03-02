@@ -785,7 +785,11 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
      * @param stepNumber tour step number of the <li> item
      */
     public calculatePSmallDot(stepNumber: number): boolean {
-        if (this.guidedTourService.currentTourStepIndex > this.maxDots && this.nextStepIndex) {
+        if (
+            this.guidedTourService.currentTourStepIndex > this.maxDots &&
+            this.guidedTourService.currentTourStepIndex < this.guidedTourService.getFilteredTourSteps().length &&
+            this.nextStepIndex
+        ) {
             return this.nextStepIndex + 1 - stepNumber === 8;
         }
         return false;

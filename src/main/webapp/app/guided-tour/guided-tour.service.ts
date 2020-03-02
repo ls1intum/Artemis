@@ -855,7 +855,7 @@ export class GuidedTourService {
         }
     }
 
-    private getFilteredTourSteps(): TourStep[] {
+    public getFilteredTourSteps(): TourStep[] {
         if (!this.availableTourForComponent) {
             return [];
         }
