@@ -146,11 +146,12 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
                 this.scrollToAndSetElement();
                 this.handleTransition();
                 this.guidedTourService.isBackPageNavigation.next(false);
-                this.calculateTranslateValue();
                 if (this.currentStepIndex !== undefined && this.nextStepIndex !== undefined) {
                     setTimeout(() => {
                         this.calculateAndDisplayDotNavigation(this.currentStepIndex, this.nextStepIndex);
                     }, 0);
+                } else {
+                    this.calculateTranslateValue();
                 }
                 return;
             }
@@ -700,8 +701,7 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
         }
 
         if (nextIndex < this.maxDots) {
-            this.transformCount = 0;
-            this.renderer.setStyle(this.dotNavigation.nativeElement, 'transform', 'translateX(0px)');
+            this.transformX = 0;
         }
 
         if (isForwardNavigation) {
@@ -739,7 +739,7 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
         });
         this.transformCount += this.transformXIntervalPrev;
         if (next && next.classList.contains('p-small') && firstDot && !firstDot.classList.contains('p-small')) {
-            this.renderer.setStyle(this.dotNavigation.nativeElement, 'transform', 'translateX(' + this.transformCount + 'px)');
+            this.transformX = this.transformCount;
             next.classList.remove('p-small');
             nextPlusOne.classList.add('p-small');
         }
@@ -749,12 +749,11 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
      * Defines the translateX value for the <ul> transform style
      */
     private calculateTranslateValue(): void {
-        let transform = 0;
         const currentTourStep = this.guidedTourService.currentTourStepIndex + 1;
-        if (currentTourStep > this.maxDots) {
-            transform = ((currentTourStep % this.maxDots) + 1) * this.transformXIntervalNext;
+        if (currentTourStep >= this.maxDots) {
+            this.transformCount = Math.round(currentTourStep / this.maxDots) * this.transformXIntervalNext;
         }
-        this.transformX = transform;
+        this.transformX = this.transformCount;
     }
 
     /**
