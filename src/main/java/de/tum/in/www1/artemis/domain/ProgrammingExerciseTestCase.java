@@ -138,20 +138,25 @@ public class ProgrammingExerciseTestCase implements Serializable {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o)
+        if (this == o) {
             return true;
-        if (o == null || getClass() != o.getClass())
+        }
+        if (o == null || getClass() != o.getClass()) {
             return false;
-        ProgrammingExerciseTestCase that = (ProgrammingExerciseTestCase) o;
-        final var thisExerciseId = exercise != null ? exercise.getId() : null;
-        final var thatExerciseId = that.exercise != null ? that.exercise.getId() : null;
-        return Objects.equals(thisExerciseId, thatExerciseId) && Objects.equals(id, that.id) && Objects.equals(testName, that.testName) && Objects.equals(weight, that.weight)
-                && Objects.equals(active, that.active) && Objects.equals(afterDueDate, that.afterDueDate);
+        }
+        ProgrammingExerciseTestCase programmingExerciseTestCase = (ProgrammingExerciseTestCase) o;
+        if (programmingExerciseTestCase.getTestName().equals(this.getTestName()) && this.getExercise().getId().equals(programmingExerciseTestCase.getExercise().getId())) {
+            return true;
+        }
+        if (getId() == null && programmingExerciseTestCase.getId() == null) {
+            return false;
+        }
+        return Objects.equals(getId(), programmingExerciseTestCase.getId());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, testName, weight, active, afterDueDate, exercise != null ? exercise.getId() : null);
+        return Objects.hashCode(testName) + Objects.hashCode(getExercise().getId());
     }
 
     @Override

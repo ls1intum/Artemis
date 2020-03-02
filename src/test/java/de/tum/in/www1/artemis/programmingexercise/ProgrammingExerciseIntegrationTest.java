@@ -518,7 +518,7 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationTest {
         final var endpoint = ProgrammingExerciseTestCaseResource.Endpoints.TEST_CASES.replace("{exerciseId}", programmingExercise.getId() + "");
         final var returnedTests = request.getList(ROOT + endpoint, HttpStatus.OK, ProgrammingExerciseTestCase.class);
         final var testsInDB = programmingExerciseTestCaseRepository.findByExerciseId(programmingExercise.getId());
-        testsInDB.forEach(test -> test.setExercise(null));
+        returnedTests.forEach(testCase -> testCase.setExercise(programmingExercise));
 
         assertThat(new HashSet<>(returnedTests)).isEqualTo(testsInDB);
     }
@@ -555,12 +555,12 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationTest {
         }).collect(Collectors.toList());
         final var endpoint = ProgrammingExerciseTestCaseResource.Endpoints.UPDATE_TEST_CASES.replace("{exerciseId}", programmingExercise.getId() + "");
 
-        final var testCasesResponse = request.patchWithResponseBody(ROOT + endpoint, updates, new TypeReference<Set<ProgrammingExerciseTestCase>>() {
+        final var testCasesResponse = request.patchWithResponseBody(ROOT + endpoint, updates, new TypeReference<List<ProgrammingExerciseTestCase>>() {
         }, HttpStatus.OK);
+        testCasesResponse.forEach(testCase -> testCase.setExercise(programmingExercise));
         final var testCasesInDB = programmingExerciseTestCaseRepository.findByExerciseId(programmingExercise.getId());
-        testCasesInDB.forEach(testCase -> testCase.setExercise(null));
 
-        assertThat(testCasesResponse).isEqualTo(testCasesInDB);
+        assertThat(new HashSet<>(testCasesResponse)).isEqualTo(testCasesInDB);
         assertThat(testCasesResponse).allSatisfy(testCase -> {
             assertThat(testCase.isAfterDueDate()).isTrue();
             assertThat(testCase.getWeight()).isEqualTo(testCase.getId() + 42);
