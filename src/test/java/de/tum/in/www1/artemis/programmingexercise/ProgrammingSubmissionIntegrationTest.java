@@ -75,8 +75,6 @@ public class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrat
         exercise.setTestCasesChanged(true);
         programmingExerciseRepository.save(exercise);
 
-        doNothing().when(continuousIntegrationService).triggerBuild(any());
-
         var newObjectId = new ObjectId(4, 5, 2, 5, 3);
         doReturn(newObjectId).when(gitService).getLastCommitHash(null);
         doReturn(newObjectId).when(gitService).getLastCommitHash(exercise.getTemplateParticipation().getRepositoryUrlAsUrl());
@@ -143,16 +141,20 @@ public class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrat
     @Timeout(5)
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void triggerBuildForExercise_Instructor() throws Exception {
+        bambooRequestMockProvider.enableMockingOfRequests();
         doReturn(COMMIT_HASH_OBJECT_ID).when(gitService).getLastCommitHash(any());
         String login1 = "student1";
         String login2 = "student2";
         String login3 = "student3";
-        database.addStudentParticipationForProgrammingExercise(exercise, login1);
-        database.addStudentParticipationForProgrammingExercise(exercise, login2);
-        database.addStudentParticipationForProgrammingExercise(exercise, login3);
+        final var firstParticipation = database.addStudentParticipationForProgrammingExercise(exercise, login1);
+        final var secondParticipation = database.addStudentParticipationForProgrammingExercise(exercise, login2);
+        final var thirdParticipation = database.addStudentParticipationForProgrammingExercise(exercise, login3);
         // Set test cases changed to true; after the build run it should be false);
         exercise.setTestCasesChanged(true);
         programmingExerciseRepository.save(exercise);
+        bambooRequestMockProvider.mockTriggerBuild(firstParticipation);
+        bambooRequestMockProvider.mockTriggerBuild(secondParticipation);
+        bambooRequestMockProvider.mockTriggerBuild(thirdParticipation);
         request.postWithoutLocation("/api/programming-exercises/" + exercise.getId() + "/trigger-instructor-build-all", null, HttpStatus.OK, new HttpHeaders());
 
         await().until(() -> submissionRepository.count() == 3);
@@ -168,9 +170,6 @@ public class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrat
             // There should be no participation assigned to two submissions.
             assertThat(participations.stream().noneMatch(p -> p.equals(submission.getParticipation()))).isTrue();
             participations.add((ProgrammingExerciseParticipation) submission.getParticipation());
-
-            // Check that the CI build was triggered for the given submission.
-            verify(continuousIntegrationService).triggerBuild((ProgrammingExerciseParticipation) submission.getParticipation());
         }
 
         ProgrammingExercise updatedProgrammingExercise = programmingExerciseRepository.findWithTemplateParticipationAndSolutionParticipationById(exercise.getId()).get();
@@ -194,6 +193,7 @@ public class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrat
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void triggerBuildForParticipations_instructor() throws Exception {
+        bambooRequestMockProvider.enableMockingOfRequests();
         String login1 = "student1";
         String login2 = "student2";
         String login3 = "student3";
@@ -202,6 +202,8 @@ public class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrat
         ProgrammingExerciseStudentParticipation participation3 = database.addStudentParticipationForProgrammingExercise(exercise, login3);
 
         // We only trigger two participations here: 1 and 3.
+        bambooRequestMockProvider.mockTriggerBuild(participation1);
+        bambooRequestMockProvider.mockTriggerBuild(participation3);
         List<Long> participationsToTrigger = new ArrayList<>(Arrays.asList(participation1.getId(), participation3.getId()));
 
         doReturn(COMMIT_HASH_OBJECT_ID).when(gitService).getLastCommitHash(any());
@@ -221,9 +223,6 @@ public class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrat
             // There should be no participation assigned to two submissions.
             assertThat(participations.stream().noneMatch(p -> p.equals(submission.getParticipation()))).isTrue();
             participations.add((ProgrammingExerciseStudentParticipation) submission.getParticipation());
-
-            // Check that the CI build was triggered for the given submission.
-            verify(continuousIntegrationService).triggerBuild((ProgrammingExerciseStudentParticipation) submission.getParticipation());
         }
     }
 
