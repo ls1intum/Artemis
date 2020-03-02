@@ -4,7 +4,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { ShowdownExtension } from 'showdown';
 import { catchError, filter, flatMap, map, switchMap, tap } from 'rxjs/operators';
 import { merge, Observable, of, Subscription } from 'rxjs';
-import { ProgrammingExercise } from '../../../../entities/programming-exercise.model';
+import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import { ArtemisMarkdown } from 'app/shared/markdown.service';
 import { ProgrammingExerciseTaskExtensionWrapper } from './extensions/programming-exercise-task.extension';
@@ -148,6 +148,9 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
     }
 
     private loadExerciseHints(exerciseId: number) {
+        if (this.exercise && this.exercise.exerciseHints) {
+            return of(this.exercise.exerciseHints);
+        }
         return this.exerciseHintService.findByExerciseId(exerciseId).pipe(
             map(({ body }) => body),
             catchError(() => []),
