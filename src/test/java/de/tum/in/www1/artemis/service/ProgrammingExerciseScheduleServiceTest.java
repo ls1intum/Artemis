@@ -1,10 +1,7 @@
 package de.tum.in.www1.artemis.service;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.*;
 
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
@@ -53,8 +50,6 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationTe
 
     @BeforeEach
     void init() throws HttpException {
-
-        doNothing().when(continuousIntegrationService).triggerBuild(any());
         doNothing().when(versionControlService).setRepositoryPermissionsToReadOnly(any(), any(), any());
         doReturn(ObjectId.fromString("fffb09455885349da6e19d3ad7fd9c3404c5a0df")).when(gitService).getLastCommitHash(any());
 
