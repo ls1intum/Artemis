@@ -4,7 +4,7 @@
             "version": {
                 "outdated": "Das installierte Orion Plugin ist veraltet!",
                 "usedVersion": "Installierte Version: ",
-                "allowedVersion": "Erlaubte Versione (mindestens): "
+                "allowedVersion": "Erlaubte Version (mindestens): "
             }
         }
     }
