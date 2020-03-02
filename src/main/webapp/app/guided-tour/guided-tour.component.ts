@@ -50,8 +50,8 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
     private transformXIntervalNext = -26;
     private transformXIntervalPrev = 26;
     private dotArray: Array<ElementRef>;
-    public currentStepIndex: number;
-    public nextStepIndex: number;
+    public currentStepIndex: number | null;
+    public nextStepIndex: number | null;
 
     constructor(public guidedTourService: GuidedTourService, private accountService: AccountService, private renderer: Renderer2) {}
 
@@ -135,6 +135,9 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
         this.guidedTourService.getGuidedTourCurrentStepStream().subscribe((step: TextTourStep | ImageTourStep | VideoTourStep) => {
             this.currentTourStep = step;
             if (!this.currentTourStep) {
+                this.transformCount = 0;
+                this.currentStepIndex = null;
+                this.nextStepIndex = null;
                 return;
             }
 
@@ -146,9 +149,9 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
                 this.scrollToAndSetElement();
                 this.handleTransition();
                 this.guidedTourService.isBackPageNavigation.next(false);
-                if (this.currentStepIndex !== undefined && this.nextStepIndex !== undefined) {
+                if (this.currentStepIndex && this.nextStepIndex) {
                     setTimeout(() => {
-                        this.calculateAndDisplayDotNavigation(this.currentStepIndex, this.nextStepIndex);
+                        this.calculateAndDisplayDotNavigation(this.currentStepIndex!, this.nextStepIndex!);
                     }, 0);
                 } else {
                     this.calculateTranslateValue();
@@ -751,7 +754,7 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
     private calculateTranslateValue(): void {
         const currentTourStep = this.guidedTourService.currentTourStepIndex + 1;
         if (currentTourStep >= this.maxDots) {
-            this.transformCount = Math.round(currentTourStep / this.maxDots) * this.transformXIntervalNext;
+            this.transformCount = ((currentTourStep % this.maxDots) + 1) * this.transformXIntervalNext;
         }
         this.transformX = this.transformCount;
     }
@@ -764,7 +767,10 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
         if (this.guidedTourService.currentTourStepIndex < this.maxDots) {
             return stepNumber === this.maxDots;
         }
-        return stepNumber === this.nextStepIndex + 1;
+        if (this.nextStepIndex) {
+            return stepNumber === this.nextStepIndex + 1;
+        }
+        return false;
     }
 
     /**
@@ -772,7 +778,7 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
      * @param stepNumber tour step number of the <li> item
      */
     public calculatePSmallDot(stepNumber: number): boolean {
-        if (this.guidedTourService.currentTourStepIndex > this.maxDots) {
+        if (this.guidedTourService.currentTourStepIndex > this.maxDots && this.nextStepIndex) {
             return this.nextStepIndex + 1 - stepNumber === 8;
         }
         return false;
