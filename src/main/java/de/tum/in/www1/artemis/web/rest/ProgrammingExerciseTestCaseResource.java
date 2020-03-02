@@ -127,4 +127,18 @@ public class ProgrammingExerciseTestCaseResource {
         Set<ProgrammingExerciseTestCase> testCases = programmingExerciseTestCaseService.resetWeights(exerciseId);
         return ResponseEntity.ok(testCases);
     }
+
+    public static final class Endpoints {
+
+        private static final String PROGRAMMING_EXERCISE = "/programming-exercise/{exerciseId}";
+
+        public static final String TEST_CASES = PROGRAMMING_EXERCISE + "/test-cases";
+
+        public static final String RESET_WEIGHTS = PROGRAMMING_EXERCISE + "/reset-weights";
+
+        public static final String UPDATE_TEST_CASES = PROGRAMMING_EXERCISE + "/update-test-cases";
+
+        private Endpoints() {
+        }
+    }
 }

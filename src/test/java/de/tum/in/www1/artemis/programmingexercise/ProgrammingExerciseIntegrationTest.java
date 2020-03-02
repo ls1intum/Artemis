@@ -13,6 +13,7 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.time.ZonedDateTime;
+import java.util.HashSet;
 import java.util.stream.Collectors;
 
 import org.apache.commons.io.FileUtils;
@@ -31,12 +32,15 @@ import de.tum.in.www1.artemis.AbstractSpringIntegrationTest;
 import de.tum.in.www1.artemis.connector.bamboo.BambooRequestMockProvider;
 import de.tum.in.www1.artemis.connector.bitbucket.BitbucketRequestMockProvider;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.ProgrammingExerciseTestCase;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestCaseRepository;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.RequestUtilService;
 import de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResource.Endpoints;
+import de.tum.in.www1.artemis.web.rest.ProgrammingExerciseTestCaseResource;
 import de.tum.in.www1.artemis.web.rest.dto.RepositoryExportOptionsDTO;
 import de.tum.in.www1.artemis.web.websocket.dto.ProgrammingExerciseTestCaseStateDTO;
 
@@ -59,6 +63,9 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationTest {
 
     @Autowired
     private BitbucketRequestMockProvider bitbucketRequestMockProvider;
+
+    @Autowired
+    private ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository;
 
     ProgrammingExercise programmingExercise;
 
@@ -498,5 +505,23 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationTest {
     public void hasAtLeastOneStudentResult_isNotTeachingAssistant_forbidden() throws Exception {
         database.addTeachingAssistant("other-tutors", "tutoralt");
         request.get(ROOT + TEST_CASE_STATE.replace("{exerciseId}", programmingExercise.getId() + ""), HttpStatus.FORBIDDEN, String.class);
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void getTestCases_asTutor() throws Exception {
+        final var endpoint = ProgrammingExerciseTestCaseResource.Endpoints.TEST_CASES.replace("{exerciseId}", programmingExercise.getId() + "");
+        final var returnedTests = request.getList(ROOT + endpoint, HttpStatus.OK, ProgrammingExerciseTestCase.class);
+        final var testsInDB = programmingExerciseTestCaseRepository.findByExerciseId(programmingExercise.getId());
+        testsInDB.forEach(test -> test.setExercise(null));
+
+        assertThat(new HashSet<>(returnedTests)).isEqualTo(testsInDB);
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "STUDENT")
+    public void getTestCases_asStudent_forbidden() throws Exception {
+        final var endpoint = ProgrammingExerciseTestCaseResource.Endpoints.TEST_CASES.replace("{exerciseId}", programmingExercise.getId() + "");
+        request.getList(ROOT + endpoint, HttpStatus.FORBIDDEN, ProgrammingExerciseTestCase.class);
     }
 }
