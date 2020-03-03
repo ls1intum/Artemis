@@ -841,19 +841,14 @@ export class GuidedTourService {
      * Navigate to page after resetting a guided tour participation
      */
     private navigateToUrlAfterRestart(url: string) {
-        if (window.location.href.endsWith(url)) {
-            this.router.navigateByUrl(url).then(() => {
-                location.reload();
-            });
+        this.router.navigateByUrl(url).then(() => {
+            location.reload();
+        });
 
-            // Keep loading icon until the page is being refreshed
-            window.onload = function() {
-                this['restartIsLoading'] = false;
-            };
-        } else {
-            this.router.navigateByUrl(url).then();
+        // Keep loading icon until the page is being refreshed
+        window.onload = function() {
             this['restartIsLoading'] = false;
-        }
+        };
     }
 
     public getFilteredTourSteps(): TourStep[] {
