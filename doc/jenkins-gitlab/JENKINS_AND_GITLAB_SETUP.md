@@ -324,7 +324,7 @@ docker rename jenkins jenkins_old
 ```
 Now start a new Jenkins container just as described in **step 3** of the setup process.\
 You will have to re-install Maven as described in the previous section, we can only migrate the data, but no installed binaries.\
-Jenkins should be up and running again. If there are no problems, you can delete the old container with `docker rm jenkins_old`.
+Jenkins should be up and running again. If there are no issues, you can delete the old container using `docker rm jenkins_old` and the old image (see `docker images`) using `docker rmi <old-image-id>`.
                 
 ## Separate NGINX Configurations
 There are some placeholders in the following configurations. Replace them with your setup specific values
