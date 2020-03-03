@@ -313,12 +313,15 @@ tar -zxf OpenJDK12U-jdk_x64_linux_hotspot_12.0.2_10.tar.gz && mv jdk-12.0.2+10 j
 chown -R root:root java-12-openjdk-amd64
 ```
 
-While still having the shell in the Jenkins container open, install your preferred editor and open _/usr/share/maven/bin/mvn_ and paste
-the following into the first line:
+While still having the shell in the Jenkins container open, install your preferred editor (e.g. vim using `apt install vim`) and open _/usr/share/maven/bin/mvn_ and paste
+the following into the first line (after the header comments):
 
 ```
 JAVA_HOME="/usr/lib/jvm/java-12-openjdk-amd64"
 ```
+
+Save and close the file. Run the command `mvn --version` to verify that Maven with Java 12 works as expected.
+You can now delete `OpenJDK12U-jdk_x64_linux_hotspot_12.0.2_10.tar.gz`.
 
 ### Upgrade Jenkins
 Pull the latest LTS version, stop the running container and mount the Jenkins data volume to the new LTS container:
