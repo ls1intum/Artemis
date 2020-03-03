@@ -32,7 +32,6 @@ export class UserRouteAccessService implements CanActivate {
         return this.orionVersionValidator
             .validateOrionVersion()
             .pipe(
-                filter(Boolean),
                 first(),
                 switchMap(isValidOrNoIDE => {
                     if (isValidOrNoIDE) {
