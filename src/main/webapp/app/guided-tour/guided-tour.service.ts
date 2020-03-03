@@ -842,8 +842,8 @@ export class GuidedTourService {
      */
     private navigateToUrlAfterRestart(url: string) {
         this.router.navigateByUrl(url).then(() => {
-                location.reload();
-            });
+            location.reload();
+        });
 
         // Keep loading icon until the page is being refreshed
         window.onload = function() {
