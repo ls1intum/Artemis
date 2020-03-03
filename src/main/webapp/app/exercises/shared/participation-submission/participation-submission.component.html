@@ -36,7 +36,7 @@
                 <span jhiTranslate="artemisApp.participation.participationSubmission.submissionDate"></span>
             </ng-template>
             <ng-template ngx-datatable-cell-template let-value="value">
-                {{ value }}
+                {{ value | date: 'medium' }}
             </ng-template>
         </ngx-datatable-column>
         <ngx-datatable-column prop="result">
