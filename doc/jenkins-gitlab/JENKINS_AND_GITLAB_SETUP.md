@@ -20,13 +20,13 @@ If you have one single server, or your own NGINX instance, just skip all NGINX r
 
         docker pull gitlab/gitlab:ce-latest
         
-2. Run the image
+2. Run the image (and change the values for hostname and ports)
 
-        docker run -itd --name gitlab
-            --hostname your.gitlab.domain.com \
+        docker run -itd --name gitlab \
+            --hostname your.gitlab.domain.com \   # Specific the hostname
             --restart always \
-            -p 80:80 -p 443:443 {-p 22:22} \     # If you are NOT running your own NGINX instance
-            -p <some port of your choosing>:80    # If you ARE running your own NGINX instance
+            -p 80:80 -p 443:443 {-p 22:22} \     # Alternative 1: If you are NOT running your own NGINX instance
+            -p <some port of your choosing>:80    # Alternative 2: If you ARE running your own NGINX instance
             -v gitlab_data:/var/opt/gitlab \
             -v gitlab_logs:/var/log/gitlab \
             -v gitlab_config:/etc/gitlab gitlab/gitlab-ce:latest
@@ -94,8 +94,11 @@ You can upgrade GitLab by downloading the latest Docker image and starting a new
 ```shell script
 docker stop gitlab
 docker rename gitlab gitlab_old
-docker pull gitlab/gitlab-ce:<the tag of the version you want>
+docker pull gitlab/gitlab-ce:latest
 ```
+
+See https://hub.docker.com/r/gitlab/gitlab-ce/ for the latest version. You can also speficy an earler one.
+
 Start a GitLab container just as described in **step 2** of the setup process and wait for a couple of minutes.
 GitLab should configure itself automatically. If there are no issues, you can delete the old container using `docker rm gitlab_old`.
 
