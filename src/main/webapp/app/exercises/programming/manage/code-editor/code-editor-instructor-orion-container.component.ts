@@ -83,7 +83,7 @@ export class CodeEditorInstructorOrionContainerComponent extends CodeEditorInstr
      * Submitting means committing all changes and pushing them to the remote.
      */
     submit(): void {
-        this.javaBridge.submitChanges();
+        this.javaBridge.submit();
         if (this.selectedRepository !== REPOSITORY.TEST) {
             this.orionState.building = true;
             this.orionBuildAndTestService.listenOnBuildOutputAndForwardChanges(this.exercise, this.selectedParticipation);
