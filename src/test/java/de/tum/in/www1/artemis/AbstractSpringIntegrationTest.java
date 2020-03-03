@@ -25,9 +25,11 @@ public abstract class AbstractSpringIntegrationTest {
     @SpyBean
     protected LtiService ltiService;
 
+    // please only use this to verify method calls using Mockito. Do not mock methods, instead mock the communication with Bamboo using the corresponding RestTemplate.
     @SpyBean
     protected BambooService continuousIntegrationService;
 
+    // please only use this to verify method calls using Mockito. Do not mock methods, instead mock the communication with Bitbucket using the corresponding RestTemplate.
     @SpyBean
     protected BitbucketService versionControlService;
 
