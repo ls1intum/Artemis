@@ -25,8 +25,8 @@ A tutorial can have different types of tutorial steps:
 ![](user-interaction-step.png "UserInteractionTourStep")
 ###### ModelingTaskTourStep
 ![](modeling-task-tour-step.png "ModelingTaskTourStep")
-###### ModelingTaskTourStep
-![](assessment-task-step.png "ModelingTaskTourStep")
+###### AssessmentTaskTourStep
+![](assessment-task-step.png "AssessmentTaskTourStep")
 
 
 ### Example implementation of a GuidedTour object
