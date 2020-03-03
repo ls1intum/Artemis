@@ -72,7 +72,7 @@ describe('GuidedTourComponent', () => {
                 ArtemisSharedModule,
                 RouterTestingModule.withRoutes([
                     {
-                        path: 'overview',
+                        path: 'courses',
                         component: GuidedTourComponent,
                     },
                 ]),
