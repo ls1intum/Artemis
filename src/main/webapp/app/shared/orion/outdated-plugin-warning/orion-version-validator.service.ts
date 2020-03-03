@@ -8,17 +8,6 @@ import { compare } from 'compare-versions';
 import { Observable, of } from 'rxjs';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 
-export type AllowedOrionVersionRange = {
-    /**
-     * Inclusive
-     */
-    from: string;
-    /**
-     * Exclusive
-     */
-    to: string;
-};
-
 @Injectable({
     providedIn: 'root',
 })
