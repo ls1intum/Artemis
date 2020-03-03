@@ -51,7 +51,6 @@ public abstract class AbstractVersionControlService implements VersionControlSer
 
     @Override
     public void addWebHooksForExercise(ProgrammingExercise exercise) {
-        final var projectKey = exercise.getProjectKey();
         final var artemisTemplateHookPath = ARTEMIS_BASE_URL + PROGRAMMING_SUBMISSION_RESOURCE_API_PATH + exercise.getTemplateParticipation().getId();
         final var artemisSolutionHookPath = ARTEMIS_BASE_URL + PROGRAMMING_SUBMISSION_RESOURCE_API_PATH + exercise.getSolutionParticipation().getId();
         final var artemisTestsHookPath = ARTEMIS_BASE_URL + TEST_CASE_CHANGED_API_PATH + exercise.getId();
