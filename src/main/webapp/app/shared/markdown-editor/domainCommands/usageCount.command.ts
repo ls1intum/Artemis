@@ -11,7 +11,7 @@ export class UsageCountCommand extends DomainTagCommand {
 
     /**
      * @function execute
-     * @desc Add a new hint to the answer option or question title in the editor at the location of the cursor
+     * @desc Add a new usage count for the corresponding instruction in the editor at the location of the cursor
      */
     execute(): void {
         const text = '\n' + this.getOpeningIdentifier() + UsageCountCommand.text;
@@ -20,7 +20,7 @@ export class UsageCountCommand extends DomainTagCommand {
 
     /**
      * @function getOpeningIdentifier
-     * @desc identify the start of the hint
+     * @desc identify the start of the usage count
      */
     getOpeningIdentifier(): string {
         return UsageCountCommand.identifier;
@@ -28,7 +28,7 @@ export class UsageCountCommand extends DomainTagCommand {
 
     /**
      * @function getClosingIdentifier
-     * @desc identify the end of the hint
+     * @desc identify the end of the usage count
      */
     getClosingIdentifier(): string {
         return '[/count]';

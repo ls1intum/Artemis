@@ -6,6 +6,7 @@
                 "addCredits": "[credits] Punkte",
                 "addInstruction": "[instruction] Bewertung Instruktionen",
                 "addFeedback": "[feedback] Feedback",
+                "addGradingScale": "[gradingScale] Bewertungsmaßstab",
                 "addCountUsage": "[count] Anzahl Anwendung"
             }
         },

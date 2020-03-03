@@ -4,9 +4,11 @@ import { UsageCountCommand } from 'app/shared/markdown-editor/domainCommands/usa
 import { FeedbackCommand } from 'app/shared/markdown-editor/domainCommands/feedback.command';
 import { CreditsCommand } from 'app/shared/markdown-editor/domainCommands/credits.command';
 import { ArtemisMarkdown } from 'app/shared/markdown.service';
+import { GradingScaleCommand } from 'app/shared/markdown-editor/domainCommands/gradingScaleCommand';
 
 export class GradingCriteriaCommand extends DomainTagCommand {
     creditsCommand = new CreditsCommand();
+    gradingScaleCommand = new GradingScaleCommand();
     instructionCommand = new InstructionCommand();
     feedbackCommand = new FeedbackCommand();
     usageCountCommand = new UsageCountCommand();
@@ -24,6 +26,9 @@ export class GradingCriteriaCommand extends DomainTagCommand {
         const text =
             this.creditsCommand.getOpeningIdentifier() +
             CreditsCommand.text +
+            '\n' +
+            this.gradingScaleCommand.getOpeningIdentifier() +
+            GradingScaleCommand.text +
             '\n' +
             this.instructionCommand.getOpeningIdentifier() +
             InstructionCommand.text +

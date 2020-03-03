@@ -9,7 +9,7 @@ export class FeedbackCommand extends DomainTagCommand {
 
     /**
      * @function execute
-     * @desc Add a new hint to the answer option or question title in the editor at the location of the cursor
+     * @desc Add a new feedback for he corresponding instruction in the editor at the location of the cursor
      */
     execute(): void {
         const text = '\n' + this.getOpeningIdentifier() + FeedbackCommand.text;
@@ -18,7 +18,7 @@ export class FeedbackCommand extends DomainTagCommand {
 
     /**
      * @function getOpeningIdentifier
-     * @desc identify the start of the hint
+     * @desc identify the start of the feedback
      */
     getOpeningIdentifier(): string {
         return FeedbackCommand.identifier;
@@ -26,7 +26,7 @@ export class FeedbackCommand extends DomainTagCommand {
 
     /**
      * @function getClosingIdentifier
-     * @desc identify the end of the hint
+     * @desc identify the end of the feedback
      */
     getClosingIdentifier(): string {
         return '[/feedback]';

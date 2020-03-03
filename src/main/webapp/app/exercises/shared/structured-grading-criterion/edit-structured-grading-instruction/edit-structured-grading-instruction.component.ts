@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild, Input } from '@angular/core';
+import { Component, OnInit, Input } from '@angular/core';
 import { GradingCriterion } from 'app/exercises/shared/structured-grading-criterion/grading-criterion.model';
 import { Exercise } from 'app/entities/exercise.model';
 
@@ -27,7 +27,7 @@ export class EditStructuredGradingInstructionComponent implements OnInit {
 
     /**
      * @function init
-     * @desc Initializes local constants and prepares the QuizExercise entity
+     * @desc Initializes local constants and prepares the Criterion entity
      */
     init(): void {
         if (this.criteria) {
@@ -45,7 +45,7 @@ export class EditStructuredGradingInstructionComponent implements OnInit {
     }
     /**
      * @function addGradingCriteria
-     * @desc Add an empty grading criteria to the exercise
+     * @desc Add an empty grading criteria to the exercise with a dummy instruction
      */
     addGradingCriteria() {
         if (typeof this.criteria === 'undefined') {
@@ -60,7 +60,7 @@ export class EditStructuredGradingInstructionComponent implements OnInit {
     }
     /**
      * @function deleteCriterion
-     * @desc Remove criterion from the exercise grading instructions
+     * @desc Remove criterion from the exercise
      * @param criterionToDelete {GradingCriterion} the criterion to remove
      */
     deleteCriterion(criterionToDelete: GradingCriterion): void {

@@ -10,7 +10,7 @@ export class CreditsCommand extends DomainTagCommand {
 
     /**
      * @function execute
-     * @desc Add a new hint to the answer option or question title in the editor at the location of the cursor
+     * @desc Add a credits for the corresponding instruction in the editor at the location of the cursor
      */
     execute(): void {
         const text = '\n' + this.getOpeningIdentifier() + CreditsCommand.text;

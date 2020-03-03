@@ -1,5 +1,5 @@
-import { GradingInstruction } from 'app/exercises/shared/structured-grading-instruction/grading-instruction.model';
 import { BaseEntity } from 'app/shared/model/base-entity';
+import { GradingInstruction } from 'app/exercises/shared/structured-grading-criterion/grading-instruction.model';
 
 export class GradingCriterion implements BaseEntity {
     id: number;

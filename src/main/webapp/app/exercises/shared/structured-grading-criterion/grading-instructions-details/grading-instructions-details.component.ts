@@ -1,6 +1,5 @@
 import { Component, OnInit, Input, ViewChild } from '@angular/core';
 import { GradingCriterion } from 'app/exercises/shared/structured-grading-criterion/grading-criterion.model';
-import { GradingInstruction } from 'app/exercises/shared/structured-grading-instruction/grading-instruction.model';
 import { KatexCommand } from 'app/shared/markdown-editor/commands/katex.command';
 import { GradingCriteriaCommand } from 'app/shared/markdown-editor/domainCommands/gradingCriteria.command';
 import { InstructionCommand } from 'app/shared/markdown-editor/domainCommands/instruction.command';
@@ -9,6 +8,8 @@ import { CreditsCommand } from 'app/shared/markdown-editor/domainCommands/credit
 import { FeedbackCommand } from 'app/shared/markdown-editor/domainCommands/feedback.command';
 import { DomainCommand } from 'app/shared/markdown-editor/domainCommands/domainCommand';
 import { MarkdownEditorComponent } from 'app/shared/markdown-editor/markdown-editor.component';
+import { GradingInstruction } from 'app/exercises/shared/structured-grading-criterion/grading-instruction.model';
+import { GradingScaleCommand } from 'app/shared/markdown-editor/domainCommands/gradingScaleCommand';
 @Component({
     selector: 'jhi-grading-instructions-details',
     templateUrl: './grading-instructions-details.component.html',
@@ -24,11 +25,20 @@ export class GradingInstructionsDetailsComponent implements OnInit {
     katexCommand = new KatexCommand();
     gradingCriteriaCommand = new GradingCriteriaCommand();
     creditsCommand = new CreditsCommand();
+    gradingScaleCommand = new GradingScaleCommand();
     instructionCommand = new InstructionCommand();
     feedbackCommand = new FeedbackCommand();
     usageCountCommand = new UsageCountCommand();
 
-    domainCommands: DomainCommand[] = [this.katexCommand, this.creditsCommand, this.instructionCommand, this.feedbackCommand, this.usageCountCommand, this.gradingCriteriaCommand];
+    domainCommands: DomainCommand[] = [
+        this.katexCommand,
+        this.creditsCommand,
+        this.gradingScaleCommand,
+        this.instructionCommand,
+        this.feedbackCommand,
+        this.usageCountCommand,
+        this.gradingCriteriaCommand,
+    ];
 
     constructor() {}
 
@@ -52,6 +62,8 @@ export class GradingInstructionsDetailsComponent implements OnInit {
             markdownText +=
                 this.generateCreditsText(instruction) +
                 '\n' +
+                this.generateGradingScaleText(instruction) +
+                '\n' +
                 this.generateInstructionDescriptionText(instruction) +
                 '\n' +
                 this.generateInstructionFeedback(instruction) +
@@ -67,13 +79,21 @@ export class GradingInstructionsDetailsComponent implements OnInit {
 
     generateCreditsText(instruction: GradingInstruction): string {
         if (instruction.credits === undefined) {
+            instruction.credits = parseFloat(CreditsCommand.text);
             return CreditsCommand.identifier + ' ' + CreditsCommand.text;
         }
         return CreditsCommand.identifier + ' ' + instruction.credits;
     }
-
+    generateGradingScaleText(instruction: GradingInstruction): string {
+        if (instruction.gradingScale === undefined) {
+            instruction.gradingScale = GradingScaleCommand.text;
+            return GradingScaleCommand.identifier + ' ' + GradingScaleCommand.text;
+        }
+        return GradingScaleCommand.identifier + ' ' + instruction.gradingScale;
+    }
     generateInstructionDescriptionText(instruction: GradingInstruction): string {
         if (instruction.instructionDescription === undefined) {
+            instruction.instructionDescription = InstructionCommand.text;
             return InstructionCommand.identifier + ' ' + InstructionCommand.text;
         }
         return InstructionCommand.identifier + ' ' + instruction.instructionDescription;
@@ -81,13 +101,15 @@ export class GradingInstructionsDetailsComponent implements OnInit {
 
     generateInstructionFeedback(instruction: GradingInstruction): string {
         if (instruction.feedback === undefined) {
+            instruction.feedback = FeedbackCommand.text;
             return FeedbackCommand.identifier + ' ' + FeedbackCommand.text;
         }
         return FeedbackCommand.identifier + ' ' + instruction.feedback;
     }
 
     generateUsageCount(instruction: GradingInstruction): string {
-        if (instruction.feedback === undefined) {
+        if (instruction.usageCount === undefined) {
+            instruction.usageCount = parseInt(UsageCountCommand.text, 10);
             return UsageCountCommand.identifier + ' ' + UsageCountCommand.text;
         }
         return UsageCountCommand.identifier + ' ' + instruction.usageCount;
@@ -116,6 +138,8 @@ export class GradingInstructionsDetailsComponent implements OnInit {
                 }
                 if (command instanceof CreditsCommand) {
                     this.instructions[index].credits = parseFloat(text);
+                } else if (command instanceof GradingScaleCommand) {
+                    this.instructions[index].gradingScale = text;
                 } else if (command instanceof InstructionCommand) {
                     this.instructions[index].instructionDescription = text;
                 } else if (command instanceof FeedbackCommand) {
