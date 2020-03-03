@@ -4,7 +4,6 @@ import static de.tum.in.www1.artemis.config.Constants.*;
 import static de.tum.in.www1.artemis.constants.ProgrammingSubmissionConstants.*;
 import static de.tum.in.www1.artemis.util.TestConstants.COMMIT_HASH_OBJECT_ID;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doReturn;
 
 import java.net.URL;
@@ -109,7 +108,6 @@ class ProgrammingSubmissionAndResultIntegrationTest extends AbstractSpringIntegr
 
     @BeforeEach
     void setUp() {
-        doReturn(true).when(continuousIntegrationService).isBuildPlanEnabled(anyString(), anyString());
         bambooRequestMockProvider.enableMockingOfRequests();
 
         database.addUsers(3, 2, 2);
