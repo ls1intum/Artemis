@@ -9,13 +9,18 @@ If you have one single server, or your own NGINX instance, just skip all NGINX r
 **If you want to setup everything on your local machine, you can also just ignore all NGINX related steps.**
 **Just make sure that you use unique port mappings for your Docker containers (e.g. 80 for GitLab, 8080 for Jenkins, 8081 for Artemis)**\
 
-**Prerequisites:** [Docker](https://docs.docker.com/install/)
+**Prerequisites:** 
+* [Docker](https://docs.docker.com/install/)
+
+# Content of this document
 
 1. [GitLab](#gitlab)
 2. [Jenkins](#jenkins)
 3. [Separate NGINX Configurations](#separate-nginx-configurations)
 
 ## GitLab
+### Gitlab Server Setup
+
 1. Pull the latest GitLab Docker image
 
         docker pull gitlab/gitlab:ce-latest
@@ -44,7 +49,7 @@ Use the same password in the Artemis configuration file _application-prod.yml_
             
 5. **If you run your own NGINX, then skip the next steps (6-7)**
 
-6. Create the SSL directory in the GitLab Docker image, where you will store the certificate and key of your server and copy the certificate (fullchain) and key
+6. Create the SSL directory in the GitLab Docker image, where you will store the certificate and privatet key of the certificate (see e.g. [Let's Encrypt](https://letsencrypt.org/docs/)) of your server and copy the certificate (fullchain) and private key
 
         docker exec gitlab mkdir -p /etc/gitlab/ssl
         docker cp path.to.your.fullchain.cert gitlab:/etc/gitlab/ssl/your.gitlab.domain.crt
@@ -109,16 +114,16 @@ GitLab should configure itself automatically. If there are no issues, you can de
 
         docker pull jenkins/jenkins:lts
         
-2. Create a folder on your host machine containing your fullchain certificate and key
+2. Create a folder on your host machine containing your fullchain certificate and private certificate key (see e.g. [Let's Encrypt](https://letsencrypt.org/docs/))
 
-3. Run Jenkins
+3. Run Jenkins by executing the following command (change the hostname and choose which port alternative you need)
 
         docker run -itd --name jenkins \
             --restart always \
             -v jenkins_data:/var/jenkins_home \
             -v /var/run/docker.sock:/var/run/docker.sock \
-            -e VIRTUAL_HOST=your.jenkins.domain -e VIRTUAL_PORT=8080 \ # If you are NOT using a separate NGINX instance
-            -p 8080:8080                                               # If you ARE using a separate NGINX instance
+            -e VIRTUAL_HOST=your.jenkins.domain -e VIRTUAL_PORT=8080 \ # Alternative 1: If you are NOT using a separate NGINX instance
+            -p 8080:8080                                               # Alternative 2: If you ARE using a separate NGINX instance
             jenkins/jenkins:lts
             
 4. Run the NGINX proxy docker container, this will automatically setup all reverse proxies and force https on all connections. 
@@ -325,6 +330,8 @@ docker rename jenkins jenkins_old
 Now start a new Jenkins container just as described in **step 3** of the setup process.\
 You will have to re-install Maven as described in the previous section, we can only migrate the data, but no installed binaries.\
 Jenkins should be up and running again. If there are no issues, you can delete the old container using `docker rm jenkins_old` and the old image (see `docker images`) using `docker rmi <old-image-id>`.
+
+You should also update the Jenkins plugins regurlarly due to security reasons. You can update them directly in the Web User Interface in the Plugin Manager.
                 
 ## Separate NGINX Configurations
 There are some placeholders in the following configurations. Replace them with your setup specific values
