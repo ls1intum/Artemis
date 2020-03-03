@@ -42,7 +42,7 @@ export const exampleTutorial: GuidedTour = {
     settingsKey: 'example_tutorial',
     steps: [
         new TextTourStep({
-            highlightSelector: '#overview-menu',
+            highlightSelector: '.guided-tour-overview',
             headlineTranslateKey: 'tour.courseOverview.overviewMenu.headline',
             contentTranslateKey: 'tour.courseOverview.overviewMenu.content',
             highlightPadding: 10,
@@ -61,7 +61,7 @@ export const exampleTutorial: GuidedTour = {
             videoUrl: 'tour.courseExerciseOverview.installPrerequisites.sourceTreeSetup.videoUrl',
         }),
         new ModelingTaskTourStep({
-            highlightSelector: 'jhi-modeling-editor .modeling-editor .modeling-editor',
+            highlightSelector: 'jhi-modeling-editor .guided-tour.modeling-editor .modeling-editor',
             headlineTranslateKey: 'tour.modelingExercise.executeTasks.headline',
             contentTranslateKey: 'tour.modelingExercise.executeTasks.content',
             highlightPadding: 5,
@@ -85,7 +85,7 @@ export const exampleTutorial: GuidedTour = {
 ### Optional attributes`
 There are many optional attributes that can be defined for a tour step. These attributes and their definition can be found in the `abstract class TourStep`.
 Below, you can find a list of attributes that are used more often:
-1. `highlightSelector`: For the `highlightSelector` you have to enter a CSS selector for the HTML element that you want to highlight for this step.   
+1. `highlightSelector`: For the `highlightSelector` you have to enter a CSS selector for the HTML element that you want to highlight for this step. For better maintainability of the guided tutorials, it is strongly advised to create new selectors with the prefix `guided-tour` within the DOM and use it as the highlight selector.   
 2. `orientation`: We can define an orientation for every tour step individually. The tour step orientation is used to define the position of the tour step next to highlighted element.
 3. `highlightPadding`: This attribute sets the additional padding around the highlight element.
 4. `userInteractionEvent`: Some steps require user interactions, e.g. certain click events, before the next tour step can be enabled. The supported user interactions are defined in the enum `UserInteractionEvent`.
@@ -145,3 +145,6 @@ info:
             - tutor_assessment_tour: 'Patterns in Software Engineering'
 ```
 
+### Writing test cases for guided tutorials
+Through Jest client tests it is possible to start the guided tutorials and go through all the tutorial steps while checking for the highlight selectors.
+An example test suite for the `courseOverviewTour` can be found in the `overview.component.spec.ts` file.
