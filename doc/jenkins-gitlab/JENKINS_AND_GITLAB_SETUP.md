@@ -100,7 +100,7 @@ docker pull gitlab/gitlab-ce:latest
 See https://hub.docker.com/r/gitlab/gitlab-ce/ for the latest version. You can also speficy an earler one.
 
 Start a GitLab container just as described in **step 2** of the setup process and wait for a couple of minutes.
-GitLab should configure itself automatically. If there are no issues, you can delete the old container using `docker rm gitlab_old`.
+GitLab should configure itself automatically. If there are no issues, you can delete the old container using `docker rm gitlab_old` and the olf image (see `docker images`) using `docker rmi <old-image-id>`.
 
 ## Jenkins
 
