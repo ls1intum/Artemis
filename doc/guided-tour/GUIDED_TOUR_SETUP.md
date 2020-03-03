@@ -9,7 +9,9 @@ A tutorial can have different types of tutorial steps:
 1. `TextTourStep`: tutorial step with only text content 
 2. `ImageTourStep`: tutorial step with text content and embedded image
 3. `VideoTourStep`: tutorial step with text content and embedded video
-4. `ModelingTaskTourStep`: tutorial step with text content and modeling task for the Apollon editor that is assessed for the step
+4. `UserInteractionTourStep`: tutorial step which requires a certain interaction from the user to proceed to the next step.
+5. `ModelingTaskTourStep`: tutorial step with text content and modeling task for the Apollon editor that is assessed for the step
+6. `AssessmentTaskTourStep`: tutorial step with text content and a tutor assessment task for example submissions (currently only implemented for text assessments).
 
 ###### TextTourStep with highlighted element
 ![](text-tour-step.png "TextTourStep with highlighted element")
@@ -19,8 +21,13 @@ A tutorial can have different types of tutorial steps:
 ![](image-tour-step.png "ImageTourStep")
 ###### VideoTourStep
 ![](video-tour-step.png "VideoTourStep")
+###### UserInteractionTourStep
+![](user-interaction-step.png "UserInteractionTourStep")
 ###### ModelingTaskTourStep
 ![](modeling-task-tour-step.png "ModelingTaskTourStep")
+###### ModelingTaskTourStep
+![](assessment-task-step.png "ModelingTaskTourStep")
+
 
 ### Example implementation of a GuidedTour object
 In this example, the `GuidedTour` object is created and assigned to the constant `exampleTutorial`, which one can use to embed the tutorial to a component of choice.
