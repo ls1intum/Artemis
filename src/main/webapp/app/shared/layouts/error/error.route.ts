@@ -22,7 +22,7 @@ export const errorRoute: Routes = [
         },
     },
     {
-        path: 'orionOutdated',
+        path: 'orion-outdated',
         component: OrionOutdatedComponent,
         data: {
             authorities: [],
