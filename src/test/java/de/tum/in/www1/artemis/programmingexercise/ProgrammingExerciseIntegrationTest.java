@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.programmingexercise;
 
+import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.SOLUTION;
+import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.TEMPLATE;
 import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResource.Endpoints.*;
 import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResource.ErrorKeys.*;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -13,6 +15,8 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.time.ZonedDateTime;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.stream.Collectors;
 
 import org.apache.commons.io.FileUtils;
@@ -31,11 +35,13 @@ import de.tum.in.www1.artemis.AbstractSpringIntegrationTest;
 import de.tum.in.www1.artemis.connector.bamboo.BambooRequestMockProvider;
 import de.tum.in.www1.artemis.connector.bitbucket.BitbucketRequestMockProvider;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.RequestUtilService;
+import de.tum.in.www1.artemis.util.Verifiable;
 import de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResource.Endpoints;
 import de.tum.in.www1.artemis.web.rest.dto.RepositoryExportOptionsDTO;
 import de.tum.in.www1.artemis.web.websocket.dto.ProgrammingExerciseTestCaseStateDTO;
@@ -98,10 +104,8 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationTest {
         doNothing().when(gitService).pullIgnoreConflicts(any());
         doNothing().when(gitService).commitAndPush(any(), anyString(), any());
 
-        doNothing().when(continuousIntegrationService).deleteBuildPlan(anyString(), anyString());
-        doNothing().when(continuousIntegrationService).deleteProject(anyString());
-        doNothing().when(versionControlService).deleteRepository(any(URL.class));
-        doNothing().when(versionControlService).deleteProject(anyString());
+        bambooRequestMockProvider.enableMockingOfRequests();
+        bitbucketRequestMockProvider.enableMockingOfRequests();
     }
 
     @AfterEach
@@ -203,11 +207,27 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationTest {
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void testProgrammingExerciseDelete() throws Exception {
+        final var verifiables = new LinkedList<Verifiable>();
+        final var projectKey = programmingExercise.getProjectKey();
         final var path = Endpoints.ROOT + Endpoints.PROGRAMMING_EXERCISE.replace("{exerciseId}", "" + programmingExercise.getId());
         var params = new LinkedMultiValueMap<String, String>();
         params.add("deleteStudentReposBuildPlans", "true");
         params.add("deleteBaseReposBuildPlans", "true");
+
+        verifiables.add(bambooRequestMockProvider.mockDeleteProject(projectKey));
+        for (final var planName : List.of("student1", "student2", TEMPLATE.getName(), SOLUTION.getName())) {
+            verifiables.add(bambooRequestMockProvider.mockDeletePlan(projectKey + "-" + planName.toUpperCase()));
+        }
+        for (final var repoName : List.of("student1", "student2", RepositoryType.TEMPLATE.getName(), RepositoryType.SOLUTION.getName(), RepositoryType.TESTS.getName())) {
+            bitbucketRequestMockProvider.mockDeleteRepository(projectKey, (projectKey + "-" + repoName).toLowerCase());
+        }
+        bitbucketRequestMockProvider.mockDeleteProject(projectKey);
+
         request.delete(path, HttpStatus.OK, params);
+
+        for (final var verifiable : verifiables) {
+            verifiable.performVerification();
+        }
     }
 
     @Test
@@ -262,7 +282,6 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationTest {
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void updateProgrammingExercise_invalidTemplateBuildPlan_badRequest() throws Exception {
         database.addTemplateParticipationForProgrammingExercise(programmingExercise);
-        bambooRequestMockProvider.enableMockingOfRequests();
         bambooRequestMockProvider.mockBuildPlanIsValid(programmingExercise.getTemplateBuildPlanId(), false);
 
         request.putAndExpectError(ROOT + PROGRAMMING_EXERCISES, programmingExercise, HttpStatus.BAD_REQUEST, INVALID_TEMPLATE_BUILD_PLAN_ID);
@@ -272,7 +291,6 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationTest {
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void updateProgrammingExercise_invalidTemplateVcs_badRequest() throws Exception {
         database.addTemplateParticipationForProgrammingExercise(programmingExercise);
-        bambooRequestMockProvider.enableMockingOfRequests();
         bitbucketRequestMockProvider.enableMockingOfRequests();
         bambooRequestMockProvider.mockBuildPlanIsValid(programmingExercise.getTemplateBuildPlanId(), true);
         bitbucketRequestMockProvider.mockRepositoryUrlIsValid(programmingExercise.getTemplateRepositoryUrlAsUrl(), programmingExercise.getProjectKey(), false);
@@ -285,7 +303,6 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationTest {
     public void updateProgrammingExercise_invalidSolutionBuildPlan_badRequest() throws Exception {
         database.addTemplateParticipationForProgrammingExercise(programmingExercise);
         database.addSolutionParticipationForProgrammingExercise(programmingExercise);
-        bambooRequestMockProvider.enableMockingOfRequests();
         bitbucketRequestMockProvider.enableMockingOfRequests();
         bambooRequestMockProvider.mockBuildPlanIsValid(programmingExercise.getTemplateBuildPlanId(), true);
         bitbucketRequestMockProvider.mockRepositoryUrlIsValid(programmingExercise.getTemplateRepositoryUrlAsUrl(), programmingExercise.getProjectKey(), true);
@@ -299,7 +316,6 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationTest {
     public void updateProgrammingExercisei_invalidSolutionRepository_badRequest() throws Exception {
         database.addTemplateParticipationForProgrammingExercise(programmingExercise);
         database.addSolutionParticipationForProgrammingExercise(programmingExercise);
-        bambooRequestMockProvider.enableMockingOfRequests();
         bitbucketRequestMockProvider.enableMockingOfRequests();
         bambooRequestMockProvider.mockBuildPlanIsValid(programmingExercise.getTemplateBuildPlanId(), true);
         bambooRequestMockProvider.mockBuildPlanIsValid(programmingExercise.getSolutionBuildPlanId(), true);
