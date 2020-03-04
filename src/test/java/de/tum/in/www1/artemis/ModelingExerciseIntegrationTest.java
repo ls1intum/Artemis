@@ -212,7 +212,7 @@ public class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationTe
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testUpdateModelingExercise_wrongId() throws Exception {
         ModelingExercise modelingExercise = modelingExerciseUtilService.createModelingExercise(classExercise.getCourse().getId());
-        request.putWithResponseBody("/api/modeling-exercises/200", modelingExercise, ModelingExercise.class, HttpStatus.NOT_FOUND);
+        request.putWithResponseBody("/api/modeling-exercises/" + classExercise.getId(), modelingExercise, ModelingExercise.class, HttpStatus.NOT_FOUND);
     }
 
     @Test

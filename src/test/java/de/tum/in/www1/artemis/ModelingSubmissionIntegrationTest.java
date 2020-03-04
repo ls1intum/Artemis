@@ -228,6 +228,22 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
     }
 
     @Test
+    @WithMockUser(value = "student2")
+    public void updateModelSubmission_incorrectId() throws Exception {
+        database.addParticipationForExercise(classExercise, "student2");
+        ModelingSubmission submission = ModelFactory.generateModelingSubmission(emptyModel, true);
+        ModelingSubmission returnedSubmission = performInitialModelSubmission(classExercise.getId(), submission);
+        database.checkModelingSubmissionCorrectlyStored(returnedSubmission.getId(), emptyModel);
+
+        var submissionId = returnedSubmission.getId();
+        returnedSubmission.setModel(validModel);
+        returnedSubmission.setSubmitted(false);
+        returnedSubmission.setId(null);
+        request.putWithResponseBody("/api/exercises/" + classExercise.getId() + "/modeling-submissions/" + submissionId, returnedSubmission, ModelingSubmission.class,
+                HttpStatus.NOT_FOUND);
+    }
+
+    @Test
     @WithMockUser(value = "student1")
     public void injectResultOnSubmissionUpdate() throws Exception {
         User user = database.getUserByLogin("student1");
@@ -376,6 +392,12 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
         assertThat(storedSubmission).as("submission was found").isEqualToIgnoringGivenFields(submission, "result");
         assertThat(storedSubmission.getResult()).as("result is not set").isNull();
         checkDetailsHidden(storedSubmission, false);
+    }
+
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void getModelSubmissionWithoutAssessment_wrongExerciseType() throws Exception {
+        request.get("/api/exercises/" + textExercise.getId() + "/modeling-submission-without-assessment", HttpStatus.BAD_REQUEST, ModelingSubmission.class);
     }
 
     @Test
@@ -536,6 +558,15 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
         exerciseRepo.save(classExercise);
         database.addModelingSubmission(classExercise, submission, "student1");
         request.getList("/api/exercises/" + classExercise.getId() + "/optimal-model-submissions", HttpStatus.OK, Long.class);
+    }
+
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void getNextOptimalModelSubmission_noSubmissions() throws Exception {
+        List<Long> optimalSubmissionIds = request.getList("/api/exercises/" + classExercise.getId() + "/optimal-model-submissions", HttpStatus.OK, Long.class);
+        assertThat(optimalSubmissionIds).as("No submissions found").isEmpty();
+        optimalSubmissionIds = request.getList("/api/exercises/" + objectExercise.getId() + "/optimal-model-submissions", HttpStatus.OK, Long.class);
+        assertThat(optimalSubmissionIds).as("No submissions found").isEmpty();
     }
 
     @Test
