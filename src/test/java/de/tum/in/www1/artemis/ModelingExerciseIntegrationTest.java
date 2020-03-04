@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis;
 
 import static de.tum.in.www1.artemis.domain.enumeration.DiagramType.CommunicationDiagram;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.verify;
 
 import java.util.List;
 
@@ -11,6 +12,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.in.www1.artemis.domain.GradingCriterion;
 import de.tum.in.www1.artemis.domain.GradingInstruction;
@@ -169,9 +171,13 @@ public class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationTe
         gradingCriteria = database.addGradingInstructionsToExercise(modelingExercise);
 
         ModelingExercise modelingExerciseWithSubmission = modelingExerciseUtilService.addExampleSubmission(createdModelingExercise);
-        ModelingExercise returnedModelingExercise = request.putWithResponseBody("/api/modeling-exercises/" + createdModelingExercise.getId(), modelingExerciseWithSubmission,
-                ModelingExercise.class, HttpStatus.OK);
+        var params = new LinkedMultiValueMap<String, String>();
+        var notificationText = "notified!";
+        params.add("notificationText", notificationText);
+        ModelingExercise returnedModelingExercise = request.putWithResponseBodyAndParams("/api/modeling-exercises/" + createdModelingExercise.getId(),
+                modelingExerciseWithSubmission, ModelingExercise.class, HttpStatus.OK, params);
         assertThat(returnedModelingExercise.getExampleSubmissions().size()).isEqualTo(1);
+        verify(groupNotificationService).notifyStudentGroupAboutExerciseUpdate(returnedModelingExercise, notificationText);
 
         // use an arbitrary course id that was not yet stored on the server to get a bad request in the PUT call
         modelingExercise = modelingExerciseUtilService.createModelingExercise(100L, classExercise.getId());
@@ -200,6 +206,13 @@ public class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationTe
         modelingExercise.setGradingCriteria(null);
         createdModelingExercise = request.postWithResponseBody("/api/modeling-exercises", modelingExercise, ModelingExercise.class, HttpStatus.CREATED);
         assertThat(createdModelingExercise.getGradingCriteria().size()).isEqualTo(0);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testUpdateModelingExercise_wrongId() throws Exception {
+        ModelingExercise modelingExercise = modelingExerciseUtilService.createModelingExercise(classExercise.getCourse().getId());
+        request.putWithResponseBody("/api/modeling-exercises/200", modelingExercise, ModelingExercise.class, HttpStatus.NOT_FOUND);
     }
 
     @Test
