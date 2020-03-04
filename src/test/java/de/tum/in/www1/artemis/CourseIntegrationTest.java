@@ -27,6 +27,7 @@ import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.CustomAuditEventRepository;
+import de.tum.in.www1.artemis.repository.NotificationRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.ModelFactory;
@@ -52,6 +53,9 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationTest {
 
     @Autowired
     UserRepository userRepo;
+
+    @Autowired
+    NotificationRepository notificationRepo;
 
     @BeforeEach
     public void initTestCase() {
@@ -85,9 +89,13 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationTest {
     public void testDeleteCourseWithPermission() throws Exception {
         List<Course> courses = database.createCoursesWithExercisesAndLectures();
         for (Course course : courses) {
+            if (!course.getExercises().isEmpty()) {
+                groupNotificationService.notifyStudentGroupAboutExerciseUpdate(course.getExercises().iterator().next(), "notify");
+            }
             request.delete("/api/courses/" + course.getId(), HttpStatus.OK);
         }
         assertThat(courseRepo.findAll()).as("All courses deleted").hasSize(0);
+        assertThat(notificationRepo.findAll()).as("All notifications are deleted").isEmpty();
     }
 
     @Test
