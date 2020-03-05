@@ -4,6 +4,7 @@ import { ArtemisMarkdown } from 'app/shared/markdown.service';
 export class InstructionCommand extends DomainTagCommand {
     public static readonly identifier = '[instruction]';
     public static readonly text = ' Add grading instruction here (only visible for tutors)';
+    displayCommandButton = false;
 
     buttonTranslationString = 'assessmentInstructions.instructions.editor.addInstruction';
 

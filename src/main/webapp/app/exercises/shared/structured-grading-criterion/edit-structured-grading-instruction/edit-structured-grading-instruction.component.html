@@ -1,6 +1,6 @@
 <div *ngIf="criteria !== undefined">
     <div *ngFor="let criterion of criteria">
-        <div class="question-options card-header question-card-header">
+        <div class=" card-header question-card-header">
             <label class="form-control-label" jhiTranslate="artemisApp.exercise.title" for="field_title">Title</label>
             <button (click)="deleteCriterion(criterion)" class="btn btn-danger btn-sm">
                 <fa-icon [icon]="'trash-alt'"></fa-icon>

@@ -6,6 +6,7 @@ export class FeedbackCommand extends DomainTagCommand {
     public static readonly text = ' Add feedback for students here (visible for students)';
 
     buttonTranslationString = 'assessmentInstructions.instructions.editor.addFeedback';
+    displayCommandButton = false;
 
     /**
      * @function execute

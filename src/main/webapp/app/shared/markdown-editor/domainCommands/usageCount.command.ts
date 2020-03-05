@@ -8,6 +8,7 @@ export class UsageCountCommand extends DomainTagCommand {
     // ' x of type int -> credits will be added x times only, if instruction occurs more than x times it will not be counted and instead marked as subsequent fault';
 
     buttonTranslationString = 'assessmentInstructions.instructions.editor.addCountUsage';
+    displayCommandButton = false;
 
     /**
      * @function execute

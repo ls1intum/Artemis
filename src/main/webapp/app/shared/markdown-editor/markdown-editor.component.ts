@@ -61,7 +61,6 @@ const getAceMode = (mode: EditorMode) => {
     encapsulation: ViewEncapsulation.None,
 })
 export class MarkdownEditorComponent implements AfterViewInit {
-    @Input() hideGradingInstructionDomainCommand = Array(7).fill(false); // hides all domain commands apart from grading criteria command
     public DomainMultiOptionCommand = DomainMultiOptionCommand;
     public DomainTagCommand = DomainTagCommand;
     // This ref is used for entering the fullscreen mode.

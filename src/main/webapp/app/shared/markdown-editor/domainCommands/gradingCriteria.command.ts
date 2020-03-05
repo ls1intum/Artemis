@@ -24,22 +24,27 @@ export class GradingCriteriaCommand extends DomainTagCommand {
      */
     execute(): void {
         const text =
-            this.creditsCommand.getOpeningIdentifier() +
-            CreditsCommand.text +
-            '\n' +
-            this.gradingScaleCommand.getOpeningIdentifier() +
-            GradingScaleCommand.text +
-            '\n' +
-            this.instructionCommand.getOpeningIdentifier() +
-            InstructionCommand.text +
-            '\n' +
-            this.feedbackCommand.getOpeningIdentifier() +
-            FeedbackCommand.text +
-            '\n' +
-            this.usageCountCommand.getOpeningIdentifier() +
-            UsageCountCommand.text +
-            '\n' +
             this.getOpeningIdentifier() +
+            '\n' +
+            '\t' +
+            (this.creditsCommand.getOpeningIdentifier() +
+                CreditsCommand.text +
+                '\n' +
+                '\t' +
+                this.gradingScaleCommand.getOpeningIdentifier() +
+                GradingScaleCommand.text +
+                '\n' +
+                '\t' +
+                this.instructionCommand.getOpeningIdentifier() +
+                InstructionCommand.text +
+                '\n' +
+                '\t' +
+                this.feedbackCommand.getOpeningIdentifier() +
+                FeedbackCommand.text +
+                '\n' +
+                '\t' +
+                this.usageCountCommand.getOpeningIdentifier() +
+                UsageCountCommand.text) +
             '\n';
 
         ArtemisMarkdown.addTextAtCursor(text, this.aceEditorContainer);

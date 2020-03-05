@@ -5,6 +5,7 @@ export class CreditsCommand extends DomainTagCommand {
     public static readonly identifier = '[credits]';
     public static readonly text = ' 0';
     // ' Add points students should get for this instruction here';
+    displayCommandButton = false;
 
     buttonTranslationString = 'assessmentInstructions.instructions.editor.addCredits';
 
