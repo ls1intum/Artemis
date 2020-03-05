@@ -55,7 +55,7 @@ export class GradingInstructionsDetailsComponent implements OnInit {
 
         if (this.instructions === undefined || this.instructions.length === 0) {
             this.instructions = [];
-            let newInstruction = new GradingInstruction();
+            const newInstruction = new GradingInstruction();
             this.instructions.push(newInstruction);
             this.criterion.structuredGradingInstructions = this.instructions;
         }
@@ -137,7 +137,6 @@ export class GradingInstructionsDetailsComponent implements OnInit {
             this.instructions.push(newInstruction);
             this.criterion.structuredGradingInstructions = this.instructions;
         }
-        //this.scanForGradingInstructionCommand(domainCommands);
         let index = 0;
         this.instructions = [];
         for (const [text, command] of domainCommands) {
@@ -153,7 +152,7 @@ export class GradingInstructionsDetailsComponent implements OnInit {
                 this.instructions[index].usageCount = parseInt(text, 10);
                 index++; // index must be elevated after the last parameter of the instruction to continue with the next instruction object
             } else {
-                let newInstruction = new GradingInstruction();
+                const newInstruction = new GradingInstruction();
                 this.instructions.push(newInstruction);
                 continue;
             }
