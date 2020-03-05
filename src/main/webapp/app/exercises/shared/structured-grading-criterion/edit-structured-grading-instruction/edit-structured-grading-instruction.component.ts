@@ -10,7 +10,7 @@ import { Exercise } from 'app/entities/exercise.model';
 export class EditStructuredGradingInstructionComponent implements OnInit {
     /** Ace Editor configuration constants **/
     questionEditorText = '';
-    private criteria: GradingCriterion[];
+    criteria: GradingCriterion[];
     @Input()
     exercise: Exercise;
     entity: GradingCriterion[];

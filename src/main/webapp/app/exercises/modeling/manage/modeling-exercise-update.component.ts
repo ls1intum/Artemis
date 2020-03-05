@@ -151,7 +151,7 @@ export class ModelingExerciseUpdateComponent implements OnInit {
     /**
      * gets the flag of the structured grading instructions slide toggle
      */
-    private getCheckedFlag(event: boolean) {
+    getCheckedFlag(event: boolean) {
         this.checkedFlag = event;
     }
 }
