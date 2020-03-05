@@ -334,6 +334,12 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationTest
     }
 
     @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void cancelAssessment_wrongSubmissionId() throws Exception {
+        request.put("/api/text-assessments/exercise/" + textExercise.getId() + "/submission/100/cancel-assessment", null, HttpStatus.NOT_FOUND);
+    }
+
+    @Test
     @WithMockUser(value = "tutor2", roles = "TA")
     public void testOverrideAssessment_saveOtherTutorForbidden() throws Exception {
         overrideAssessment("student1", "tutor1", HttpStatus.FORBIDDEN, "false", true);
