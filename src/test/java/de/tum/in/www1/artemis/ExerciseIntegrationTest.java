@@ -294,6 +294,18 @@ public class ExerciseIntegrationTest extends AbstractSpringIntegrationTest {
     }
 
     @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void testGetExerciseForTutorDashboard_submissionsWithoutAssessments() throws Exception {
+        var validModel = database.loadFileFromResources("test-data/model-submission/model.54727.json");
+        database.addCourseWithOneModelingExercise();
+        var exercise = exerciseRepository.findAll().get(0);
+        var exampleSubmission = database.generateExampleSubmission(validModel, exercise, true);
+        database.addExampleSubmission(exampleSubmission);
+        Exercise receivedExercise = request.get("/api/exercises/" + exercise.getId() + "/for-tutor-dashboard", HttpStatus.OK, Exercise.class);
+        assertThat(receivedExercise.getExampleSubmissions()).as("Example submission without assessment is removed from exercise").isEmpty();
+    }
+
+    @Test
     @WithMockUser(value = "tutor6", roles = "TA")
     public void testGetExerciseForTutorDashboard_forbidden() throws Exception {
         database.addCourseWithOneTextExercise();
