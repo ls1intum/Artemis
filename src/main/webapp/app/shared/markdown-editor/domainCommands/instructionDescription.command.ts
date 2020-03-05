@@ -1,8 +1,8 @@
 import { DomainTagCommand } from 'app/shared/markdown-editor/domainCommands/domainTag.command';
 import { ArtemisMarkdown } from 'app/shared/markdown.service';
 
-export class InstructionCommand extends DomainTagCommand {
-    public static readonly identifier = '[instruction]';
+export class InstructionDescriptionCommand extends DomainTagCommand {
+    public static readonly identifier = '[description]';
     public static readonly text = ' Add grading instruction here (only visible for tutors)';
     displayCommandButton = false;
 
@@ -13,7 +13,7 @@ export class InstructionCommand extends DomainTagCommand {
      * @desc Add a new hint to the answer option or question title in the editor at the location of the cursor
      */
     execute(): void {
-        const text = '\n' + this.getOpeningIdentifier() + InstructionCommand.text;
+        const text = '\n' + this.getOpeningIdentifier() + InstructionDescriptionCommand.text;
         ArtemisMarkdown.addTextAtCursor(text, this.aceEditorContainer);
     }
 
@@ -22,7 +22,7 @@ export class InstructionCommand extends DomainTagCommand {
      * @desc identify the start of the hint
      */
     getOpeningIdentifier(): string {
-        return InstructionCommand.identifier;
+        return InstructionDescriptionCommand.identifier;
     }
 
     /**
@@ -30,6 +30,6 @@ export class InstructionCommand extends DomainTagCommand {
      * @desc identify the end of the hint
      */
     getClosingIdentifier(): string {
-        return '[/instruction]';
+        return '[/description]';
     }
 }

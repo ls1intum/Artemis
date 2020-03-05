@@ -1,15 +1,15 @@
 import { DomainTagCommand } from 'app/shared/markdown-editor/domainCommands/domainTag.command';
-import { InstructionCommand } from 'app/shared/markdown-editor/domainCommands/instruction.command';
 import { UsageCountCommand } from 'app/shared/markdown-editor/domainCommands/usageCount.command';
 import { FeedbackCommand } from 'app/shared/markdown-editor/domainCommands/feedback.command';
 import { CreditsCommand } from 'app/shared/markdown-editor/domainCommands/credits.command';
 import { ArtemisMarkdown } from 'app/shared/markdown.service';
 import { GradingScaleCommand } from 'app/shared/markdown-editor/domainCommands/gradingScaleCommand';
+import { InstructionDescriptionCommand } from 'app/shared/markdown-editor/domainCommands/instructionDescription.command';
 
-export class GradingCriteriaCommand extends DomainTagCommand {
+export class GradingInstructionCommand extends DomainTagCommand {
     creditsCommand = new CreditsCommand();
     gradingScaleCommand = new GradingScaleCommand();
-    instructionCommand = new InstructionCommand();
+    instructionCommand = new InstructionDescriptionCommand();
     feedbackCommand = new FeedbackCommand();
     usageCountCommand = new UsageCountCommand();
 
@@ -18,12 +18,8 @@ export class GradingCriteriaCommand extends DomainTagCommand {
 
     buttonTranslationString = 'assessmentInstructions.instructions.editor.addInstruction';
 
-    /**
-     * @function execute
-     * @desc Add a new hint to the answer option or question title in the editor at the location of the cursor
-     */
-    execute(): void {
-        const text =
+    instructionText(): string {
+        return (
             this.getOpeningIdentifier() +
             '\n' +
             '\t' +
@@ -36,7 +32,7 @@ export class GradingCriteriaCommand extends DomainTagCommand {
                 '\n' +
                 '\t' +
                 this.instructionCommand.getOpeningIdentifier() +
-                InstructionCommand.text +
+                InstructionDescriptionCommand.text +
                 '\n' +
                 '\t' +
                 this.feedbackCommand.getOpeningIdentifier() +
@@ -45,22 +41,30 @@ export class GradingCriteriaCommand extends DomainTagCommand {
                 '\t' +
                 this.usageCountCommand.getOpeningIdentifier() +
                 UsageCountCommand.text) +
-            '\n';
+            '\n'
+        );
+    }
+    /**
+     * @function execute
+     * @desc Add a new grading instruction in the editor at the location of the cursor
+     */
+    execute(): void {
+        const text = this.instructionText();
 
         ArtemisMarkdown.addTextAtCursor(text, this.aceEditorContainer);
     }
 
     /**
      * @function getOpeningIdentifier
-     * @desc identify the start of the hint
+     * @desc identify the start of the grading instruction
      */
     getOpeningIdentifier(): string {
-        return GradingCriteriaCommand.identifier;
+        return GradingInstructionCommand.identifier;
     }
 
     /**
      * @function getClosingIdentifier
-     * @desc identify the end of the hint
+     * @desc identify the end of the grading instruction
      */
     getClosingIdentifier(): string {
         return '[/gradingInstruction]';

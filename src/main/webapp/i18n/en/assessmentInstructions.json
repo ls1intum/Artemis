@@ -7,7 +7,8 @@
                 "addInstruction": "[instruction] Grading Instructions",
                 "addFeedback": "[feedback] Feedback",
                 "addGradingScale": "[gradingScale] Grading Scale",
-                "addCountUsage": "[count] Usage Number"
+                "addCountUsage": "[count] Usage Number",
+                "addCriterion": "[criterion] Grading Criterion"
             }
         },
         "problemStatement": "Problem Statement",

@@ -1,8 +1,6 @@
 import { Component, OnInit, Input, ViewChild } from '@angular/core';
 import { GradingCriterion } from 'app/exercises/shared/structured-grading-criterion/grading-criterion.model';
 import { KatexCommand } from 'app/shared/markdown-editor/commands/katex.command';
-import { GradingCriteriaCommand } from 'app/shared/markdown-editor/domainCommands/gradingCriteria.command';
-import { InstructionCommand } from 'app/shared/markdown-editor/domainCommands/instruction.command';
 import { UsageCountCommand } from 'app/shared/markdown-editor/domainCommands/usageCount.command';
 import { CreditsCommand } from 'app/shared/markdown-editor/domainCommands/credits.command';
 import { FeedbackCommand } from 'app/shared/markdown-editor/domainCommands/feedback.command';
@@ -10,6 +8,9 @@ import { DomainCommand } from 'app/shared/markdown-editor/domainCommands/domainC
 import { MarkdownEditorComponent } from 'app/shared/markdown-editor/markdown-editor.component';
 import { GradingInstruction } from 'app/exercises/shared/structured-grading-criterion/grading-instruction.model';
 import { GradingScaleCommand } from 'app/shared/markdown-editor/domainCommands/gradingScaleCommand';
+import { GradingInstructionCommand } from 'app/shared/markdown-editor/domainCommands/gradingInstruction.command';
+import { InstructionDescriptionCommand } from 'app/shared/markdown-editor/domainCommands/instructionDescription.command';
+import { GradingCriterionCommand } from 'app/shared/markdown-editor/domainCommands/gradingCriterionCommand';
 @Component({
     selector: 'jhi-grading-instructions-details',
     templateUrl: './grading-instructions-details.component.html',
@@ -23,10 +24,11 @@ export class GradingInstructionsDetailsComponent implements OnInit {
     criterion: GradingCriterion;
     private instructions: GradingInstruction[];
     katexCommand = new KatexCommand();
-    gradingCriteriaCommand = new GradingCriteriaCommand();
+    gradingCriterionCommand = new GradingCriterionCommand();
+    gradingInstructionCommand = new GradingInstructionCommand();
     creditsCommand = new CreditsCommand();
     gradingScaleCommand = new GradingScaleCommand();
-    instructionCommand = new InstructionCommand();
+    instructionDescriptionCommand = new InstructionDescriptionCommand();
     feedbackCommand = new FeedbackCommand();
     usageCountCommand = new UsageCountCommand();
 
@@ -34,10 +36,11 @@ export class GradingInstructionsDetailsComponent implements OnInit {
         this.katexCommand,
         this.creditsCommand,
         this.gradingScaleCommand,
-        this.instructionCommand,
+        this.instructionDescriptionCommand,
         this.feedbackCommand,
         this.usageCountCommand,
-        this.gradingCriteriaCommand,
+        this.gradingCriterionCommand,
+        this.gradingInstructionCommand,
     ];
 
     constructor() {}
@@ -99,10 +102,10 @@ export class GradingInstructionsDetailsComponent implements OnInit {
     }
     generateInstructionDescriptionText(instruction: GradingInstruction): string {
         if (instruction.instructionDescription === undefined) {
-            instruction.instructionDescription = InstructionCommand.text;
-            return InstructionCommand.identifier + ' ' + InstructionCommand.text;
+            instruction.instructionDescription = InstructionDescriptionCommand.text;
+            return InstructionDescriptionCommand.identifier + ' ' + InstructionDescriptionCommand.text;
         }
-        return InstructionCommand.identifier + ' ' + instruction.instructionDescription;
+        return InstructionDescriptionCommand.identifier + ' ' + instruction.instructionDescription;
     }
 
     generateInstructionFeedback(instruction: GradingInstruction): string {
@@ -132,7 +135,7 @@ export class GradingInstructionsDetailsComponent implements OnInit {
      * @param domainCommands containing tuples of [text, domainCommandIdentifiers]
      */
     domainCommandsFound(domainCommands: [string, DomainCommand][]): void {
-        if (this.markdownEditor.gradingCriteriaCommandFired) {
+        if (this.markdownEditor.gradingInstructionCommandFired) {
             const newInstruction = new GradingInstruction();
             this.instructions.push(newInstruction);
             this.criterion.structuredGradingInstructions = this.instructions;
@@ -144,7 +147,7 @@ export class GradingInstructionsDetailsComponent implements OnInit {
                 this.instructions[index].credits = parseFloat(text);
             } else if (command instanceof GradingScaleCommand) {
                 this.instructions[index].gradingScale = text;
-            } else if (command instanceof InstructionCommand) {
+            } else if (command instanceof InstructionDescriptionCommand) {
                 this.instructions[index].instructionDescription = text;
             } else if (command instanceof FeedbackCommand) {
                 this.instructions[index].feedback = text;

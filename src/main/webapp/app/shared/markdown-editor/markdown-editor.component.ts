@@ -29,7 +29,7 @@ import { CodeCommand } from 'app/shared/markdown-editor/commands/code.command';
 import { DomainCommand } from 'app/shared/markdown-editor/domainCommands/domainCommand';
 import { UnorderedListCommand } from 'app/shared/markdown-editor/commands/unorderedListCommand';
 import { HeadingThreeCommand } from 'app/shared/markdown-editor/commands/headingThree.command';
-import { GradingCriteriaCommand } from 'app/shared/markdown-editor/domainCommands/gradingCriteria.command';
+import { GradingInstructionCommand } from 'app/shared/markdown-editor/domainCommands/gradingInstruction.command';
 
 export enum MarkdownEditorHeight {
     SMALL = 200,
@@ -79,7 +79,7 @@ export class MarkdownEditorComponent implements AfterViewInit {
     @Input() showLineNumbers = false;
     @Output() markdownChange = new EventEmitter<string>();
     @Output() html = new EventEmitter<SafeHtml | null>();
-    @Input() gradingCriteriaCommandFired: boolean;
+    @Input() gradingInstructionCommandFired: boolean;
 
     /** default colors for the markdown editor*/
     markdownColors = ['#ca2024', '#3ea119', '#ffffff', '#000000', '#fffa5c', '#0d3cc2', '#b05db8', '#d86b1f'];
@@ -359,8 +359,8 @@ export class MarkdownEditorComponent implements AfterViewInit {
         }
     }
     setFlag(command: DomainCommand): void {
-        if (command instanceof GradingCriteriaCommand) {
-            this.gradingCriteriaCommandFired = true;
+        if (command instanceof GradingInstructionCommand) {
+            this.gradingInstructionCommandFired = true;
         }
     }
 }
