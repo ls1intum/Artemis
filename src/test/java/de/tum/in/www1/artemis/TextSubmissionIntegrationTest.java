@@ -73,7 +73,10 @@ public class TextSubmissionIntegrationTest extends AbstractSpringIntegrationTest
         database.addParticipationForExercise(textExerciseBeforeDueDate, student.getLogin());
 
         textSubmission = ModelFactory.generateTextSubmission("example text", Language.ENGLISH, true);
+
+        // Add users that are not in exercise/course
         userRepository.save(ModelFactory.generateActivatedUser("tutor2"));
+        userRepository.save(ModelFactory.generateActivatedUser("student2"));
     }
 
     @AfterEach
@@ -260,6 +263,12 @@ public class TextSubmissionIntegrationTest extends AbstractSpringIntegrationTest
         participationRepository.save(afterDueDateParticipation);
 
         request.put("/api/exercises/" + textExerciseBeforeDueDate.getId() + "/text-submissions", textSubmission, HttpStatus.OK);
+    }
+
+    @Test
+    @WithMockUser(value = "student2", roles = "USER")
+    public void submitExercise_notStudentInCourse() throws Exception {
+        request.post("/api/exercises/" + textExerciseBeforeDueDate.getId() + "/text-submissions", textSubmission, HttpStatus.FORBIDDEN);
     }
 
     @Test
