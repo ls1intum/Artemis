@@ -107,7 +107,7 @@
                 [(markdown)]="modelingExercise.gradingInstructions"
                 [editorMode]="EditorMode.LATEX"
             ></jhi-markdown-editor>
-            <jhi-edit-structured-grading-instruction *ngIf="this.checkedFlag" [exercise]="modelingExercise"></jhi-edit-structured-grading-instruction>
+            <jhi-grading-instructions-details *ngIf="this.checkedFlag" [exercise]="modelingExercise"></jhi-grading-instructions-details>
         </div>
         <div class="form-group">
             <span jhiTranslate="artemisApp.modelingExercise.exampleSolution">Example Solution</span>

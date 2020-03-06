@@ -11,6 +11,7 @@ import { GradingScaleCommand } from 'app/shared/markdown-editor/domainCommands/g
 import { GradingInstructionCommand } from 'app/shared/markdown-editor/domainCommands/gradingInstruction.command';
 import { InstructionDescriptionCommand } from 'app/shared/markdown-editor/domainCommands/instructionDescription.command';
 import { GradingCriterionCommand } from 'app/shared/markdown-editor/domainCommands/gradingCriterionCommand';
+import { Exercise } from 'app/entities/exercise.model';
 @Component({
     selector: 'jhi-grading-instructions-details',
     templateUrl: './grading-instructions-details.component.html',
@@ -21,8 +22,10 @@ export class GradingInstructionsDetailsComponent implements OnInit {
     @ViewChild('markdownEditor', { static: false })
     private markdownEditor: MarkdownEditorComponent;
     @Input()
-    criterion: GradingCriterion;
+    exercise: Exercise;
     private instructions: GradingInstruction[];
+    private criteria: GradingCriterion[];
+
     katexCommand = new KatexCommand();
     gradingCriterionCommand = new GradingCriterionCommand();
     gradingInstructionCommand = new GradingInstructionCommand();
@@ -46,23 +49,34 @@ export class GradingInstructionsDetailsComponent implements OnInit {
     constructor() {}
 
     ngOnInit() {
-        this.instructions = this.criterion.structuredGradingInstructions;
+        this.criteria = this.exercise.gradingCriteria;
         this.questionEditorText = this.generateMarkdown();
+    }
+    generateMarkdown(): string {
+        let markdownText = '';
+        if (this.criteria === undefined || this.criteria.length === 0) {
+            this.criteria = [];
+            const newCriteria = new GradingCriterion();
+            this.criteria.push(newCriteria);
+        }
+        for (const criterion of this.criteria) {
+            markdownText = this.generateInstructionsMarkdown(criterion);
+        }
+        return markdownText;
     }
     /**
      * @function generateMarkdown
      * @desc Generate the markdown text for this grading instruction
      */
-    generateMarkdown(): string {
+    generateInstructionsMarkdown(criterion: GradingCriterion): string {
         let markdownText = '';
-
-        if (this.instructions === undefined || this.instructions.length === 0) {
+        if (criterion.structuredGradingInstructions === undefined || criterion.structuredGradingInstructions.length === 0) {
             this.instructions = [];
             const newInstruction = new GradingInstruction();
             this.instructions.push(newInstruction);
-            this.criterion.structuredGradingInstructions = this.instructions;
+            criterion.structuredGradingInstructions = this.instructions;
         }
-        for (const instruction of this.instructions) {
+        for (const instruction of criterion.structuredGradingInstructions) {
             markdownText +=
                 '[gradingInstruction]' +
                 '\n' +
@@ -128,6 +142,33 @@ export class GradingInstructionsDetailsComponent implements OnInit {
         this.markdownEditor.parse();
     }
 
+    createSubInstructionCommands(domainCommands: [string, DomainCommand][]): void {
+        const instructionCommands = [];
+        let startOfInstructionCommands = 0;
+        let endOfInstructionsCommand = 0;
+        const found = domainCommands.filter(([text, command]) => command instanceof GradingCriterionCommand === false);
+        for (const [text, command] of found) {
+            endOfInstructionsCommand++;
+            if (command instanceof UsageCountCommand) {
+                instructionCommands.push(found.slice(startOfInstructionCommands, endOfInstructionsCommand));
+                startOfInstructionCommands = +endOfInstructionsCommand;
+            }
+        }
+    }
+
+    scanForCriteria(domainCommands: [string, DomainCommand][]): void {
+        this.criteria = [];
+        const newCriterion = new GradingCriterion();
+        for (const [text, command] of domainCommands) {
+            if (command instanceof GradingCriterion) {
+                newCriterion.title = text;
+                this.criteria.push(newCriterion);
+                continue;
+            }
+        }
+        this.exercise.gradingCriteria = this.criteria;
+    }
+
     /**
      * @function domainCommandsFound
      * @desc 1. Gets a tuple of text and domainCommandIdentifiers and assigns text values according to the domainCommandIdentifiers
@@ -135,15 +176,22 @@ export class GradingInstructionsDetailsComponent implements OnInit {
      * @param domainCommands containing tuples of [text, domainCommandIdentifiers]
      */
     domainCommandsFound(domainCommands: [string, DomainCommand][]): void {
-        if (this.markdownEditor.gradingInstructionCommandFired) {
-            const newInstruction = new GradingInstruction();
-            this.instructions.push(newInstruction);
-            this.criterion.structuredGradingInstructions = this.instructions;
-        }
         let index = 0;
         this.instructions = [];
+        this.criteria = [];
         for (const [text, command] of domainCommands) {
-            if (command instanceof CreditsCommand) {
+            if (command === null) {
+                this.exercise.gradingCriteria = [];
+            }
+            if (command instanceof GradingInstructionCommand) {
+                const newCriterion = new GradingCriterion();
+                const newInstruction = new GradingInstruction();
+                this.instructions.push(newInstruction);
+                newCriterion.structuredGradingInstructions = this.instructions;
+                this.criteria.push(newCriterion);
+                this.exercise.gradingCriteria = this.criteria;
+                continue;
+            } else if (command instanceof CreditsCommand) {
                 this.instructions[index].credits = parseFloat(text);
             } else if (command instanceof GradingScaleCommand) {
                 this.instructions[index].gradingScale = text;
@@ -154,12 +202,7 @@ export class GradingInstructionsDetailsComponent implements OnInit {
             } else if (command instanceof UsageCountCommand) {
                 this.instructions[index].usageCount = parseInt(text, 10);
                 index++; // index must be elevated after the last parameter of the instruction to continue with the next instruction object
-            } else {
-                const newInstruction = new GradingInstruction();
-                this.instructions.push(newInstruction);
-                continue;
             }
         }
-        this.criterion.structuredGradingInstructions = this.instructions;
     }
 }

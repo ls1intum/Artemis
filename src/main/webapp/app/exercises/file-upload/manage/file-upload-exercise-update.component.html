@@ -117,7 +117,7 @@
                         [(markdown)]="fileUploadExercise.gradingInstructions"
                         [editorMode]="EditorMode.LATEX"
                     ></jhi-markdown-editor>
-                    <jhi-edit-structured-grading-instruction *ngIf="this.checkedFlag" [exercise]="fileUploadExercise"></jhi-edit-structured-grading-instruction>
+                    <jhi-grading-instructions-details *ngIf="this.checkedFlag" [exercise]="fileUploadExercise"></jhi-grading-instructions-details>
                 </div>
             </div>
             <div>
