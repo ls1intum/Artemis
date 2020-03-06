@@ -146,6 +146,9 @@ public class DatabaseUtilService {
     TutorParticipationRepository tutorParticipationRepo;
 
     @Autowired
+    StudentQuestionRepository studentQuestionRepository;
+
+    @Autowired
     ModelingSubmissionService modelSubmissionService;
 
     @Autowired
@@ -434,6 +437,24 @@ public class DatabaseUtilService {
         submissionRepository.save(textSubmission);
 
         return Arrays.asList(course1, course2);
+    }
+
+    public List<StudentQuestion> createExercisesAndLecturesWithStudentQuestions() throws Exception {
+        List<Course> courses = createCoursesWithExercisesAndLectures();
+        Course course1 = courses.get(0);
+        List <StudentQuestion> studentQuestions = new ArrayList<>();
+        for(int i = 1; i < 6; i++) {
+            StudentQuestion studentQuestion = new StudentQuestion();
+            studentQuestion.setExercise(course1.getExercises().iterator().next());
+            studentQuestion.setLecture(course1.getLectures().iterator().next());
+            studentQuestion.setQuestionText("Test Student Question" + i);
+            studentQuestion.setVisibleForStudents(true);
+            studentQuestion.setAuthor(getUserByLogin("student" + i));
+            studentQuestionRepository.save(studentQuestion);
+            studentQuestions.add(studentQuestion);
+        }
+
+        return studentQuestions;
     }
 
     /**
