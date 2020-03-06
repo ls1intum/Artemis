@@ -2,15 +2,8 @@ package de.tum.in.www1.artemis;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.util.ArrayList;
 import java.util.List;
 
-import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.Exercise;
-import de.tum.in.www1.artemis.domain.StudentQuestion;
-import de.tum.in.www1.artemis.repository.StudentQuestionRepository;
-import de.tum.in.www1.artemis.service.StudentQuestionService;
-import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -18,9 +11,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import de.tum.in.www1.artemis.domain.GradingCriterion;
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.StudentQuestion;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
+import de.tum.in.www1.artemis.repository.StudentQuestionRepository;
+import de.tum.in.www1.artemis.service.StudentQuestionService;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.RequestUtilService;
 
@@ -120,7 +116,7 @@ public class StudentQuestionIntegrationTest extends AbstractSpringIntegrationTes
         request.delete("/api/student-questions/" + studentQuestion.getId(), HttpStatus.OK);
         assertThat(studentQuestionRepository.count()).isEqualTo(4);
 
-        //try to delete not existing question
+        // try to delete not existing question
         request.delete("/api/student-questions/999", HttpStatus.NOT_FOUND);
 
         StudentQuestion studentQuestion1 = studentQuestions.get(1);
@@ -138,6 +134,5 @@ public class StudentQuestionIntegrationTest extends AbstractSpringIntegrationTes
         request.delete("/api/student-questions/" + studentQuestion.getId(), HttpStatus.FORBIDDEN);
         assertThat(studentQuestionRepository.count()).isEqualTo(5);
     }
-
 
 }
