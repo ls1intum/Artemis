@@ -15,8 +15,10 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.time.ZonedDateTime;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.apache.commons.io.FileUtils;
@@ -31,18 +33,24 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+
 import de.tum.in.www1.artemis.AbstractSpringIntegrationTest;
 import de.tum.in.www1.artemis.connector.bamboo.BambooRequestMockProvider;
 import de.tum.in.www1.artemis.connector.bitbucket.BitbucketRequestMockProvider;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.ProgrammingExerciseTestCase;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestCaseRepository;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.RequestUtilService;
 import de.tum.in.www1.artemis.util.Verifiable;
 import de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResource.Endpoints;
+import de.tum.in.www1.artemis.web.rest.ProgrammingExerciseTestCaseResource;
+import de.tum.in.www1.artemis.web.rest.dto.ProgrammingExerciseTestCaseDTO;
 import de.tum.in.www1.artemis.web.rest.dto.RepositoryExportOptionsDTO;
 import de.tum.in.www1.artemis.web.websocket.dto.ProgrammingExerciseTestCaseStateDTO;
 
@@ -65,6 +73,9 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationTest {
 
     @Autowired
     private BitbucketRequestMockProvider bitbucketRequestMockProvider;
+
+    @Autowired
+    private ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository;
 
     ProgrammingExercise programmingExercise;
 
@@ -514,5 +525,107 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationTest {
     public void hasAtLeastOneStudentResult_isNotTeachingAssistant_forbidden() throws Exception {
         database.addTeachingAssistant("other-tutors", "tutoralt");
         request.get(ROOT + TEST_CASE_STATE.replace("{exerciseId}", programmingExercise.getId() + ""), HttpStatus.FORBIDDEN, String.class);
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void getTestCases_asTutor() throws Exception {
+        final var endpoint = ProgrammingExerciseTestCaseResource.Endpoints.TEST_CASES.replace("{exerciseId}", programmingExercise.getId() + "");
+        final var returnedTests = request.getList(ROOT + endpoint, HttpStatus.OK, ProgrammingExerciseTestCase.class);
+        final var testsInDB = programmingExerciseTestCaseRepository.findByExerciseId(programmingExercise.getId());
+        returnedTests.forEach(testCase -> testCase.setExercise(programmingExercise));
+
+        assertThat(new HashSet<>(returnedTests)).isEqualTo(testsInDB);
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "STUDENT")
+    public void getTestCases_asStudent_forbidden() throws Exception {
+        final var endpoint = ProgrammingExerciseTestCaseResource.Endpoints.TEST_CASES.replace("{exerciseId}", programmingExercise.getId() + "");
+        request.getList(ROOT + endpoint, HttpStatus.FORBIDDEN, ProgrammingExerciseTestCase.class);
+    }
+
+    @Test
+    @WithMockUser(username = "other-teaching-assistant1", roles = "TA")
+    public void getTestCases_tutorInOtherCourse_forbidden() throws Exception {
+        database.addTeachingAssistant("other-teaching-assistants", "other-teaching-assistant");
+        final var endpoint = ProgrammingExerciseTestCaseResource.Endpoints.TEST_CASES.replace("{exerciseId}", programmingExercise.getId() + "");
+
+        request.getList(ROOT + endpoint, HttpStatus.FORBIDDEN, ProgrammingExerciseTestCase.class);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void updateTestCases_asInstrutor() throws Exception {
+        bambooRequestMockProvider.enableMockingOfRequests();
+        programmingExercise = programmingExerciseRepository.findWithTemplateParticipationAndSolutionParticipationById(programmingExercise.getId()).get();
+        bambooRequestMockProvider.mockTriggerBuild(programmingExercise.getSolutionParticipation());
+        final var testCases = programmingExerciseTestCaseRepository.findByExerciseId(programmingExercise.getId());
+        final var updates = testCases.stream().map(testCase -> {
+            final var testCaseUpdate = new ProgrammingExerciseTestCaseDTO();
+            testCaseUpdate.setId(testCase.getId());
+            testCaseUpdate.setAfterDueDate(true);
+            testCaseUpdate.setWeight((int) (testCase.getId() + 42));
+            return testCaseUpdate;
+        }).collect(Collectors.toList());
+        final var endpoint = ProgrammingExerciseTestCaseResource.Endpoints.UPDATE_TEST_CASES.replace("{exerciseId}", programmingExercise.getId() + "");
+
+        final var testCasesResponse = request.patchWithResponseBody(ROOT + endpoint, updates, new TypeReference<List<ProgrammingExerciseTestCase>>() {
+        }, HttpStatus.OK);
+        testCasesResponse.forEach(testCase -> testCase.setExercise(programmingExercise));
+        final var testCasesInDB = programmingExerciseTestCaseRepository.findByExerciseId(programmingExercise.getId());
+
+        assertThat(new HashSet<>(testCasesResponse)).isEqualTo(testCasesInDB);
+        assertThat(testCasesResponse).allSatisfy(testCase -> {
+            assertThat(testCase.isAfterDueDate()).isTrue();
+            assertThat(testCase.getWeight()).isEqualTo(testCase.getId() + 42);
+        });
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void updateTestCases_nonExistingExercise_notFound() throws Exception {
+        final var update = new ProgrammingExerciseTestCaseDTO();
+        final var endpoint = ProgrammingExerciseTestCaseResource.Endpoints.UPDATE_TEST_CASES.replace("{exerciseId}", (programmingExercise.getId() + 1) + "");
+        request.patchWithResponseBody(ROOT + endpoint, List.of(update), String.class, HttpStatus.NOT_FOUND);
+    }
+
+    @Test
+    @WithMockUser(username = "other-instructor1", roles = "INSTRUCTOR")
+    public void updateTestCases_instructorInWrongCourse_forbidden() throws Exception {
+        database.addInstructor("other-instructors", "other-instructor");
+        final var update = new ProgrammingExerciseTestCaseDTO();
+        final var endpoint = ProgrammingExerciseTestCaseResource.Endpoints.UPDATE_TEST_CASES.replace("{exerciseId}", programmingExercise.getId() + "");
+
+        request.patchWithResponseBody(ROOT + endpoint, List.of(update), String.class, HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void resetTestCaseWeights_asInstructor() throws Exception {
+        bambooRequestMockProvider.enableMockingOfRequests();
+        programmingExercise = programmingExerciseRepository.findWithTemplateParticipationAndSolutionParticipationById(programmingExercise.getId()).get();
+        bambooRequestMockProvider.mockTriggerBuild(programmingExercise.getSolutionParticipation());
+        final var endpoint = ProgrammingExerciseTestCaseResource.Endpoints.RESET_WEIGHTS.replace("{exerciseId}", programmingExercise.getId() + "");
+        programmingExerciseTestCaseRepository.findByExerciseId(programmingExercise.getId()).forEach(test -> {
+            test.setWeight(42);
+            programmingExerciseTestCaseRepository.saveAndFlush(test);
+        });
+
+        final var testCasesResponse = request.patchWithResponseBody(ROOT + endpoint, "{}", new TypeReference<Set<ProgrammingExerciseTestCase>>() {
+        }, HttpStatus.OK);
+        final var testsInDB = programmingExerciseTestCaseRepository.findByExerciseId(programmingExercise.getId());
+
+        assertThat(testCasesResponse).isEqualTo(testsInDB);
+        assertThat(testsInDB).allSatisfy(test -> assertThat(test.getWeight()).isEqualTo(1));
+    }
+
+    @Test
+    @WithMockUser(username = "other-instructor1", roles = "INSTRUCTOR")
+    public void resetTestCaseWeights_instructorInWrongCourse_forbidden() throws Exception {
+        database.addInstructor("other-instructors", "other-instructor");
+        final var endpoint = ProgrammingExerciseTestCaseResource.Endpoints.RESET_WEIGHTS.replace("{exerciseId}", programmingExercise.getId() + "");
+
+        request.patchWithResponseBody(ROOT + endpoint, "{}", String.class, HttpStatus.FORBIDDEN);
     }
 }
