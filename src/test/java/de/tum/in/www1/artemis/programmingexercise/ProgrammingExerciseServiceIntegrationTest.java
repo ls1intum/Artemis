@@ -238,16 +238,4 @@ public class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringInt
     private ProgrammingExercise createToBeImported() {
         return ModelFactory.generateToBeImportedProgrammingExercise("Test", "TST", programmingExercise, additionalEmptyCourse);
     }
-
-    private static final class DummyRepositoryUrl extends VcsRepositoryUrl {
-
-        public DummyRepositoryUrl(String url) throws MalformedURLException {
-            super(url);
-        }
-
-        @Override
-        public VcsRepositoryUrl withUser(String username) {
-            return null;
-        }
-    }
 }

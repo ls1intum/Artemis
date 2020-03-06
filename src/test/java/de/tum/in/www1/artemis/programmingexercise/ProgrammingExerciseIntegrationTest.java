@@ -6,7 +6,6 @@ import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResource.Endpoi
 import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResource.ErrorKeys.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 
 import java.io.File;
@@ -23,7 +22,7 @@ import java.util.stream.Collectors;
 
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.Git;
-import org.eclipse.jgit.api.errors.GitAPIException;
+import org.eclipse.jgit.lib.StoredConfig;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -46,6 +45,7 @@ import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestCaseRepository;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
+import de.tum.in.www1.artemis.util.GitUtilService;
 import de.tum.in.www1.artemis.util.RequestUtilService;
 import de.tum.in.www1.artemis.util.Verifiable;
 import de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResource.Endpoints;
@@ -61,6 +61,9 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationTest {
 
     @Autowired
     RequestUtilService request;
+
+    @Autowired
+    GitUtilService gitUtilService;
 
     @Autowired
     ProgrammingExerciseRepository programmingExerciseRepository;
@@ -81,39 +84,52 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationTest {
 
     File downloadedFile;
 
-    File repoFile;
+    File localRepoFile;
 
-    Git git;
+    File originRepoFile;
+
+    Git localGit;
+
+    Git remoteGit;
 
     @BeforeEach
-    void initTestCase() throws GitAPIException, InterruptedException, IOException {
+    void initTestCase() throws Exception {
         database.addUsers(3, 2, 2);
         database.addCourseWithOneProgrammingExerciseAndTestCases();
         programmingExercise = programmingExerciseRepository.findAllWithEagerParticipations().get(0);
         database.addStudentParticipationForProgrammingExercise(programmingExercise, "student1");
         database.addStudentParticipationForProgrammingExercise(programmingExercise, "student2");
 
-        repoFile = Files.createTempDirectory("repo").toFile();
-        git = Git.init().setDirectory(repoFile).call();
+        localRepoFile = Files.createTempDirectory("repo").toFile();
+        localGit = Git.init().setDirectory(localRepoFile).call();
+
+        originRepoFile = Files.createTempDirectory("repoOrigin").toFile();
+        remoteGit = Git.init().setDirectory(originRepoFile).call();
+        StoredConfig config = localGit.getRepository().getConfig();
+        config.setString("remote", "origin", "url", originRepoFile.getAbsolutePath());
+        config.save();
 
         // TODO use setupProgrammingExercise or setupTemplateAndPush to create actual content (based on the template repos) in this repository
         // so that e.g. addStudentIdToProjectName in ProgrammingExerciseExportService is tested properly as well
 
         // the following 2 lines prepare the generation of the structural test oracle
-        var testjsonFilePath = Paths.get(repoFile.getPath(), "test", programmingExercise.getPackageFolderName(), "test.json");
-        testjsonFilePath.toFile().getParentFile().mkdirs();
-
+        var testjsonFilePath = Paths.get(localRepoFile.getPath(), "test", programmingExercise.getPackageFolderName(), "test.json");
+        gitUtilService.writeEmptyJsonFileToPath(testjsonFilePath);
         // create two empty commits
-        git.commit().setMessage("empty").setAllowEmpty(true).setAuthor("test", "test@test.com").call();
-        git.commit().setMessage("empty").setAllowEmpty(true).setAuthor("test", "test@test.com").call();
-        var repository = gitService.getRepositoryByLocalPath(repoFile.toPath());
-        doReturn(repository).when(gitService).getOrCheckoutRepository(any(URL.class), anyBoolean(), anyString());
-        doNothing().when(gitService).fetchAll(any());
-        var objectId = git.reflog().call().iterator().next().getNewId();
-        doReturn(objectId).when(gitService).getLastCommitHash(any());
-        doNothing().when(gitService).resetToOriginMaster(any());
-        doNothing().when(gitService).pullIgnoreConflicts(any());
-        doNothing().when(gitService).commitAndPush(any(), anyString(), any());
+        localGit.commit().setMessage("empty").setAllowEmpty(true).setAuthor("test", "test@test.com").call();
+        localGit.push().call();
+
+        // we use the temp repository as remote origing for all repositories that are created during the
+        // TODO: distinguish between template, test and solution
+        doReturn(new GitUtilService.FileRepositoryUrl(originRepoFile)).when(versionControlService).getCloneRepositoryUrl(anyString(), anyString());
+        // var repository = gitService.getRepositoryByLocalPath(localRepoFile.toPath());
+        // doReturn(repository).when(gitService).getOrCheckoutRepository(any(URL.class), anyBoolean(), anyString());
+        // doNothing().when(gitService).fetchAll(any());
+        // var objectId = localGit.reflog().call().iterator().next().getNewId();
+        // doReturn(objectId).when(gitService).getLastCommitHash(any());
+        // doNothing().when(gitService).resetToOriginMaster(any());
+        // doNothing().when(gitService).pullIgnoreConflicts(any());
+        // doNothing().when(gitService).commitAndPush(any(), anyString(), any());
 
         bambooRequestMockProvider.enableMockingOfRequests();
         bitbucketRequestMockProvider.enableMockingOfRequests();
@@ -125,11 +141,11 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationTest {
         if (downloadedFile != null && downloadedFile.exists()) {
             FileUtils.forceDelete(downloadedFile);
         }
-        if (repoFile != null && repoFile.exists()) {
-            FileUtils.deleteDirectory(repoFile);
+        if (localRepoFile != null && localRepoFile.exists()) {
+            FileUtils.deleteDirectory(localRepoFile);
         }
-        if (git != null) {
-            git.close();
+        if (localGit != null) {
+            localGit.close();
         }
     }
 
@@ -186,6 +202,8 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationTest {
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void textExportSubmissionsByParticipationIds() throws Exception {
+        var repository = gitService.getRepositoryByLocalPath(localRepoFile.toPath());
+        doReturn(repository).when(gitService).getOrCheckoutRepository(any(URL.class), anyBoolean(), anyString());
         var participationIds = programmingExerciseStudentParticipationRepository.findAll().stream().map(participation -> participation.getId().toString())
                 .collect(Collectors.toList());
         final var path = Endpoints.ROOT + Endpoints.EXPORT_SUBMISSIONS_BY_PARTICIPATIONS.replace("{exerciseId}", "" + programmingExercise.getId()).replace("{participationIds}",
@@ -198,6 +216,8 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationTest {
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void textExportSubmissionsByStudentLogins() throws Exception {
+        var repository = gitService.getRepositoryByLocalPath(localRepoFile.toPath());
+        doReturn(repository).when(gitService).getOrCheckoutRepository(any(URL.class), anyBoolean(), anyString());
         final var path = Endpoints.ROOT
                 + Endpoints.EXPORT_SUBMISSIONS_BY_STUDENT.replace("{exerciseId}", "" + programmingExercise.getId()).replace("{studentIds}", "student1,student2");
         downloadedFile = request.postWithResponseBodyFile(path, getOptions(), HttpStatus.OK);
@@ -275,18 +295,12 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationTest {
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void testGenerateStructureOracle() throws Exception {
+        var repository = gitService.getRepositoryByLocalPath(localRepoFile.toPath());
+        doReturn(repository).when(gitService).getOrCheckoutRepository(any(URL.class), anyBoolean(), anyString());
         final var path = Endpoints.ROOT + Endpoints.GENERATE_TESTS.replace("{exerciseId}", "" + programmingExercise.getId());
         var result = request.get(path, HttpStatus.OK, String.class);
         assertThat(result).startsWith("Successfully generated the structure oracle");
         request.get(path, HttpStatus.BAD_REQUEST, String.class);
-    }
-
-    @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    void testCombineTemplateRepositoryCommits() throws Exception {
-        final var path = Endpoints.ROOT + Endpoints.COMBINE_COMMITS.replace("{exerciseId}", "" + programmingExercise.getId());
-        request.put(path, Void.class, HttpStatus.OK);
-        // TODO add more assertions, when we use actual git repos
     }
 
     @Test
@@ -625,7 +639,6 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationTest {
     public void resetTestCaseWeights_instructorInWrongCourse_forbidden() throws Exception {
         database.addInstructor("other-instructors", "other-instructor");
         final var endpoint = ProgrammingExerciseTestCaseResource.Endpoints.RESET_WEIGHTS.replace("{exerciseId}", programmingExercise.getId() + "");
-
         request.patchWithResponseBody(ROOT + endpoint, "{}", String.class, HttpStatus.FORBIDDEN);
     }
 }

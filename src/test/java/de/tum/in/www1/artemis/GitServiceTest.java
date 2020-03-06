@@ -24,7 +24,7 @@ public class GitServiceTest extends AbstractSpringIntegrationTest {
     GitUtilService gitUtilService;
 
     @BeforeEach
-    public void beforeEach() throws GitAPIException, InterruptedException {
+    public void beforeEach() {
         gitUtilService.initRepo();
     }
 
