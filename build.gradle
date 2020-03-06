@@ -32,8 +32,8 @@ plugins {
     id "net.ltgt.apt-idea"
     id "net.ltgt.apt"
     //jhipster-needle-gradle-plugins - JHipster will add additional gradle plugins here
-    id "com.diffplug.gradle.spotless" version "3.27.1"
-    id "com.github.spotbugs" version "4.0.0"
+    id "com.diffplug.gradle.spotless" version "3.27.2"
+    id "com.github.spotbugs" version "4.0.1"
 }
 
 group = "de.tum.in.www1.artemis"
@@ -86,7 +86,7 @@ spotless {
 }
 
 spotbugs {
-    toolVersion = '4.0.0'
+    toolVersion = '4.0.1'
     ignoreFailures = true
     effort = 'max'
     showProgress = true
@@ -148,7 +148,7 @@ jacocoTestCoverageVerification {
             limit {
                 counter = 'LINE'
                 value = 'COVEREDRATIO'
-                minimum = 0.60
+                minimum = 0.70
             }
         }
     }
@@ -228,10 +228,10 @@ dependencies {
     implementation "org.springframework.ldap:spring-ldap-core"
     implementation "org.springframework.data:spring-data-ldap:2.2.5.RELEASE"
 
-    implementation "org.springframework.security:spring-security-config"
-    implementation "org.springframework.security:spring-security-data"
-    implementation "org.springframework.security:spring-security-web"
-    implementation "org.springframework.security:spring-security-messaging"
+    implementation "org.springframework.security:spring-security-config:${spring_security_version}"
+    implementation "org.springframework.security:spring-security-data:${spring_security_version}"
+    implementation "org.springframework.security:spring-security-web:${spring_security_version}"
+    implementation "org.springframework.security:spring-security-messaging:${spring_security_version}"
     implementation "io.jsonwebtoken:jjwt-api:0.11.0"
     runtimeOnly "io.jsonwebtoken:jjwt-impl:0.11.0"
     runtimeOnly "io.jsonwebtoken:jjwt-jackson:0.11.0"
@@ -255,7 +255,7 @@ dependencies {
         exclude module: "junit"
         exclude group: "com.vaadin.external.google", module: "android-json"
     }
-    testImplementation "org.springframework.security:spring-security-test"
+    testImplementation "org.springframework.security:spring-security-test:${spring_security_version}"
     testImplementation "org.springframework.boot:spring-boot-test:${spring_boot_version}"
     testImplementation "org.assertj:assertj-core:3.15.0"
     testImplementation "org.junit.jupiter:junit-jupiter-api:5.5.2"
@@ -319,7 +319,7 @@ tasks.withType(Test) {
 }
 
 wrapper {
-    gradleVersion = "6.2.1"
+    gradleVersion = "6.2.2"
 }
 
 task stage(dependsOn: "bootWar") {
