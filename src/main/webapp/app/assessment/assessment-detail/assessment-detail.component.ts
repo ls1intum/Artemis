@@ -2,6 +2,7 @@ import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { HighlightColors } from 'app/exercises/text/assess/highlight-colors';
 import { TextBlock } from 'app/entities/text-block.model';
 import { Feedback, FeedbackType } from 'app/entities/feedback.model';
+import { convertFromHtmlLinebreaks, sanitize } from 'app/utils/text.utils';
 
 @Component({
     selector: 'jhi-assessment-detail',
@@ -26,11 +27,19 @@ export class AssessmentDetailComponent {
     }
 
     public delete() {
-        const referencedText = this.block ? this.block.text : this.assessment.reference;
-        const confirmationMessage = referencedText ? `Delete Assessment for ${referencedText}?` : 'Delete Assessment?';
+        const referencedText = convertFromHtmlLinebreaks(this.text);
+        const confirmationMessage = referencedText ? `Delete Assessment for "${referencedText}"?` : 'Delete Assessment?';
         const confirmation = confirm(confirmationMessage);
         if (confirmation) {
             this.deleteAssessment.emit(this.assessment);
         }
+    }
+
+    private get text(): string {
+        return this.block?.text || this.assessment.reference || '';
+    }
+
+    public get sanitizedText(): string {
+        return sanitize(this.text);
     }
 }

@@ -35,7 +35,7 @@ export class GuidedTourService {
 
     /** Helper variables */
     public restartIsLoading = false;
-    private currentTourStepIndex = 0;
+    public currentTourStepIndex = 0;
     private availableTourForComponent: GuidedTour | null;
     private onResizeMessage = false;
     private modelingResultCorrect = false;
@@ -45,6 +45,8 @@ export class GuidedTourService {
     public guidedTourMapping: GuidedTourMapping | null;
 
     /** Helper variables for multi-page tours */
+    public currentDotSubject = new Subject<number>();
+    public nextDotSubject = new Subject<number>();
     private pageUrls = new Map<string, string>();
 
     /** Current course and exercise */
@@ -55,15 +57,9 @@ export class GuidedTourService {
     private guidedTourCurrentStepSubject = new Subject<TourStep | null>();
     private guidedTourAvailabilitySubject = new Subject<boolean>();
     private isUserInteractionFinishedSubject = new Subject<boolean>();
-    private transformSubject = new Subject<number>();
     private checkModelingComponentSubject = new Subject<string | null>();
     public isBackPageNavigation = new BehaviorSubject<boolean>(false);
-
-    /** Variables for the dot navigation */
-    public maxDots = 10;
-    private transformCount = 0;
-    private transformXIntervalNext = -26;
-    private transformXIntervalPrev = 26;
+    private isComponentPageLoaded = new Subject<boolean>();
 
     constructor(
         private http: HttpClient,
@@ -88,6 +84,15 @@ export class GuidedTourService {
             }
         });
 
+        this.isComponentPageLoaded.subscribe(isLoaded => {
+            setTimeout(() => {
+                if (isLoaded) {
+                    this.resetUserInteractionFinishedState(this.currentStep);
+                    this.setPreparedTourStep();
+                }
+            }, 1200);
+        });
+
         // Retrieve the guided tour mapping from the profile service
         this.profileService.getProfileInfo().subscribe(profileInfo => {
             if (profileInfo && profileInfo.guidedTourMapping) {
@@ -107,6 +112,7 @@ export class GuidedTourService {
             if (event instanceof NavigationEnd) {
                 if (this.availableTourForComponent && this.currentTour) {
                     this.guidedTourCurrentStepSubject.next(null);
+                    this.assessmentObject = new AssessmentObject(0, 0);
                     this.checkNextTourStepOnNavigation();
                 } else {
                     this.skipTour();
@@ -143,26 +149,20 @@ export class GuidedTourService {
         if (!this.currentTour) {
             return;
         }
-
         const currentStep = this.currentTour.steps[this.currentTourStepIndex] as UserInterActionTourStep;
         const nextStep = this.currentTour.steps[this.currentTourStepIndex + 1];
 
         // Prepares previous tour step for backward navigation
         if (this.isBackPageNavigation.value) {
-            setTimeout(() => {
-                this.resetUserInteractionFinishedState(currentStep);
-                this.setPreparedTourStep();
-            }, 300);
+            this.resetUserInteractionFinishedState(currentStep);
         } else {
             // Prepares next tour step
             if (currentStep && currentStep.userInteractionEvent && currentStep.userInteractionEvent === UserInteractionEvent.CLICK && nextStep && nextStep.pageUrl) {
                 if (determineUrlMatching(this.router.url, nextStep.pageUrl)) {
+                    this.currentDotSubject.next(this.currentTourStepIndex);
+                    this.nextDotSubject.next(this.currentTourStepIndex + 1);
                     this.currentTourStepIndex += 1;
                     this.pageUrls.set(nextStep.pageUrl, this.router.url);
-                    setTimeout(() => {
-                        this.resetUserInteractionFinishedState(nextStep);
-                        this.setPreparedTourStep();
-                    }, 300);
                 } else if (this.currentTour) {
                     // Ends guided tour if the navigation is done through a multi-page tutorial
                     this.guidedTourAvailabilitySubject.next(false);
@@ -229,10 +229,14 @@ export class GuidedTourService {
     }
 
     /**
-     * @return Observable of the initial translateX value for <ul> so that the right dots are displayed
+     * Helper method for multi-page tutorials that notifies the guided-tour service when the current component has
+     * been fully loaded
      */
-    public calculateTransformValue(): Observable<number> {
-        return this.transformSubject.asObservable();
+    public componentPageLoaded() {
+        if (!this.currentTour) {
+            return;
+        }
+        this.isComponentPageLoaded.next(true);
     }
 
     /**
@@ -260,7 +264,7 @@ export class GuidedTourService {
     /**
      * Check if the provided tour step is the currently active one
      */
-    public get currentStep(): any | null {
+    private get currentStep(): any | null {
         if (!this.currentTour || !this.currentTour.steps) {
             return null;
         }
@@ -289,15 +293,17 @@ export class GuidedTourService {
 
         const currentStep = this.currentTour.steps[this.currentTourStepIndex];
         const previousStep = this.currentTour.steps[this.currentTourStepIndex - 1];
-        this.calculateAndDisplayDotNavigation(this.currentTourStepIndex, this.currentTourStepIndex - 1);
+        this.currentDotSubject.next(this.currentTourStepIndex);
+        this.nextDotSubject.next(this.currentTourStepIndex - 1);
 
         if (currentStep.closeAction) {
             currentStep.closeAction();
         }
 
-        if (currentStep.pageUrl && this.determinePreviousStepLocation() !== this.router.url) {
+        const previousStepLocation = this.determinePreviousStepLocation();
+        if (currentStep.pageUrl && previousStepLocation !== this.router.url) {
             this.isBackPageNavigation.next(true);
-            this.router.navigate([this.determinePreviousStepLocation()]).then();
+            this.router.navigateByUrl(this.determinePreviousStepLocation()).then();
         }
 
         if (previousStep) {
@@ -308,6 +314,7 @@ export class GuidedTourService {
             // Usually an action is opening something so we need to give it time to render.
             setTimeout(() => {
                 if (!this.isBackPageNavigation.value) {
+                    this.resetUserInteractionFinishedState(previousStep);
                     this.setPreparedTourStep();
                 }
             });
@@ -326,8 +333,9 @@ export class GuidedTourService {
 
         const currentStep = this.currentTour.steps[this.currentTourStepIndex];
         const nextStep = this.currentTour.steps[this.currentTourStepIndex + 1];
-        const timeout = currentStep instanceof UserInterActionTourStep ? 500 : 0;
-        this.calculateAndDisplayDotNavigation(this.currentTourStepIndex, this.currentTourStepIndex + 1);
+        const timeout = currentStep instanceof UserInterActionTourStep && currentStep.userInteractionEvent === UserInteractionEvent.CLICK && this.checkSelectorValidity() ? 600 : 0;
+        this.currentDotSubject.next(this.currentTourStepIndex);
+        this.nextDotSubject.next(this.currentTourStepIndex + 1);
         this.isBackPageNavigation.next(false);
 
         if (currentStep.closeAction) {
@@ -390,15 +398,19 @@ export class GuidedTourService {
      * Skip current guided tour after updating the guided tour settings in the database and calling the reset tour method to remove current tour elements.
      */
     public skipTour(): void {
-        if (this.currentTour) {
-            if (this.currentTour.skipCallback) {
-                this.currentTour.skipCallback(this.currentTourStepIndex);
-            }
+        if (!this.currentTour) {
+            return;
         }
+
+        if (this.currentTour.skipCallback) {
+            this.currentTour.skipCallback(this.currentTourStepIndex);
+        }
+
         if (this.currentTour === cancelTour || this.currentTour === completedTour) {
             this.resetTour();
             return;
         }
+
         if (this.currentTourStepIndex + 1 === this.getFilteredTourSteps().length) {
             this.finishGuidedTour();
         } else {
@@ -480,7 +492,7 @@ export class GuidedTourService {
      * Get the last step that the user visited during the given tour
      */
     public getLastSeenTourStepIndex(): number {
-        if (!this.availableTourForComponent) {
+        if (!this.availableTourForComponent || !this.guidedTourSettings) {
             return 0;
         }
         const tourSettings = this.guidedTourSettings.filter(setting => setting.guidedTourKey === this.availableTourForComponent!.settingsKey);
@@ -619,9 +631,10 @@ export class GuidedTourService {
                 targetNode.addEventListener(
                     'click',
                     () => {
-                        this.enableNextStepClick();
                         if (currentStep.triggerNextStep) {
                             this.nextStep();
+                        } else {
+                            this.enableNextStepClick();
                         }
                     },
                     false,
@@ -766,7 +779,6 @@ export class GuidedTourService {
             }
             this.resetUserInteractionFinishedState(currentStep);
             this.setPreparedTourStep();
-            this.calculateTranslateValue(currentStep);
         }
     }
 
@@ -829,22 +841,17 @@ export class GuidedTourService {
      * Navigate to page after resetting a guided tour participation
      */
     private navigateToUrlAfterRestart(url: string) {
-        if (window.location.href.endsWith(url)) {
-            this.router.navigateByUrl(url).then(() => {
-                location.reload();
-            });
+        this.router.navigateByUrl(url).then(() => {
+            location.reload();
+        });
 
-            // Keep loading icon until the page is being refreshed
-            window.onload = function() {
-                this['restartIsLoading'] = false;
-            };
-        } else {
-            this.router.navigateByUrl(url).then();
+        // Keep loading icon until the page is being refreshed
+        window.onload = function() {
             this['restartIsLoading'] = false;
-        }
+        };
     }
 
-    private getFilteredTourSteps(): TourStep[] {
+    public getFilteredTourSteps(): TourStep[] {
         if (!this.availableTourForComponent) {
             return [];
         }
@@ -1167,94 +1174,6 @@ export class GuidedTourService {
             exerciseMatches = this.guidedTourMapping.tours[settingsKey] === exercise.title;
         }
         return exerciseMatches;
-    }
-
-    /**
-     * Display only as many dots as defined in GuidedTourComponent.maxDots
-     * @param currentIndex index of the current step
-     * @param nextIndex index of the next step, this should (current step -/+ 1) depending on whether the user navigates forwards or backwards
-     */
-    private calculateAndDisplayDotNavigation(currentIndex: number, nextIndex: number) {
-        if (this.currentTour && this.currentTour.steps.length < this.maxDots) {
-            return;
-        }
-
-        const dotList = document.querySelector('.dotstyle--scaleup ul') as HTMLElement;
-        const nextDot = dotList.querySelector(`li.dot-index-${nextIndex}`) as HTMLElement;
-        const nextPlusOneDot = dotList.querySelector(`li.dot-index-${nextIndex > currentIndex ? nextIndex + 1 : nextIndex - 1}`) as HTMLElement;
-        const firstDot = dotList.querySelector('li:first-child') as HTMLElement;
-        const lastDot = dotList.querySelector('li:last-child') as HTMLElement;
-
-        // Handles forward navigation
-        if (currentIndex < nextIndex) {
-            // Moves the n-small and p-small class one dot further
-            if (nextDot && nextDot.classList.contains('n-small') && lastDot && !lastDot.classList.contains('n-small')) {
-                this.transformCount += this.transformXIntervalNext;
-                nextDot.classList.remove('n-small');
-                nextPlusOneDot.classList.add('n-small');
-                dotList.style.transform = 'translateX(' + this.transformCount + 'px)';
-                dotList.querySelectorAll('li').forEach((node, index) => {
-                    if (index === nextIndex - 9) {
-                        node.classList.remove('p-small');
-                    } else if (index === nextIndex - 8) {
-                        node.classList.add('p-small');
-                    }
-                });
-            }
-        } else {
-            // Handles backwards navigation
-            if (nextDot && nextDot.classList.contains('p-small') && firstDot && !firstDot.classList.contains('p-small')) {
-                this.transformCount += this.transformXIntervalPrev;
-                nextDot.classList.remove('p-small');
-                nextPlusOneDot.classList.add('p-small');
-                dotList.style.transform = 'translateX(' + this.transformCount + 'px)';
-                dotList.querySelectorAll('li').forEach((node, index) => {
-                    if (index === nextIndex + 9) {
-                        node.classList.remove('n-small');
-                    } else if (index === nextIndex + 8) {
-                        node.classList.add('n-small');
-                    }
-                });
-            }
-        }
-    }
-
-    /**
-     * Defines the translateX value for the <ul> transform style
-     * @param step  last seen tour step
-     */
-    private calculateTranslateValue(step: TourStep): void {
-        let transform = 0;
-        const lastSeenStep = this.getLastSeenTourStepIndex() + 1;
-        if (lastSeenStep > this.maxDots) {
-            transform = ((lastSeenStep % this.maxDots) + 1) * this.transformXIntervalNext;
-        }
-        this.transformCount = transform;
-        this.transformSubject.next(transform);
-    }
-
-    /**
-     * Defines if an <li> item should have the 'n-small' class
-     * @param stepNumber tour step number of the <li> item
-     */
-    public calculateNSmallDot(stepNumber: number): boolean {
-        if (this.getLastSeenTourStepIndex() < this.maxDots) {
-            return stepNumber === this.maxDots;
-        } else if (stepNumber > this.maxDots) {
-            return stepNumber - (this.getLastSeenTourStepIndex() + 1) === 1;
-        }
-        return false;
-    }
-
-    /**
-     * Defines if an <li> item should have the 'p-small' class
-     * @param stepNumber tour step number of the <li> item
-     */
-    public calculatePSmallDot(stepNumber: number): boolean {
-        if (this.getLastSeenTourStepIndex() < this.maxDots) {
-            return false;
-        }
-        return this.getLastSeenTourStepIndex() + 1 - stepNumber === 8;
     }
 
     /**

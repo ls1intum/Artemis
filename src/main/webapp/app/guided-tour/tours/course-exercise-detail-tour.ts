@@ -8,7 +8,7 @@ export const programmingExerciseFail: GuidedTour = {
     resetParticipation: ResetParticipation.EXERCISE_PARTICIPATION,
     steps: [
         new TextTourStep({
-            highlightSelector: 'jhi-programming-exercise-instructions-task-status .failed',
+            highlightSelector: 'jhi-programming-exercise-instructions-task-status .guided-tour.failed',
             headlineTranslateKey: 'tour.programmingExercise.testFailure.headline',
             contentTranslateKey: 'tour.programmingExercise.testFailure.content',
             highlightPadding: 20,
@@ -16,7 +16,7 @@ export const programmingExerciseFail: GuidedTour = {
             skipStepIfNoSelector: true,
         }),
         new UserInterActionTourStep({
-            highlightSelector: 'jhi-programming-exercise-instructions-task-status .text-danger.test-status--linked',
+            highlightSelector: 'jhi-programming-exercise-instructions-task-status .text-danger.guided-tour.test-status--linked',
             headlineTranslateKey: 'tour.programmingExercise.testFailure.headline',
             contentTranslateKey: 'tour.programmingExercise.testFailure.content',
             highlightPadding: 5,
@@ -47,7 +47,7 @@ export const programmingExerciseSuccess: GuidedTour = {
     resetParticipation: ResetParticipation.EXERCISE_PARTICIPATION,
     steps: [
         new TextTourStep({
-            highlightSelector: '#programming-exercise-instructions-content',
+            highlightSelector: '.guided-tour.instructions__content__markdown',
             headlineTranslateKey: 'tour.programmingExercise.reviewResult.headline',
             contentTranslateKey: 'tour.programmingExercise.reviewResult.content',
             orientation: Orientation.TOP,

@@ -60,7 +60,12 @@ export class GradingInstructionsDetailsComponent implements OnInit {
             this.criteria.push(newCriteria);
         }
         for (const criterion of this.criteria) {
-            markdownText = this.generateInstructionsMarkdown(criterion);
+            if (criterion.title === null || criterion.title === undefined) {
+                // if it is a dummy criterion, leave out the command identifier
+                markdownText += this.generateInstructionsMarkdown(criterion);
+            } else {
+                markdownText += '[gradingCriterion]' + criterion.title + '\n' + '\t' + this.generateInstructionsMarkdown(criterion);
+            }
         }
         return markdownText;
     }
@@ -142,56 +147,110 @@ export class GradingInstructionsDetailsComponent implements OnInit {
         this.markdownEditor.parse();
     }
 
-    createSubInstructionCommands(domainCommands: [string, DomainCommand][]): void {
-        const instructionCommands = [];
-        let startOfInstructionCommands = 0;
-        let endOfInstructionsCommand = 0;
-        const found = domainCommands.filter(([text, command]) => command instanceof GradingCriterionCommand === false);
-        for (const [text, command] of found) {
-            endOfInstructionsCommand++;
-            if (command instanceof UsageCountCommand) {
-                instructionCommands.push(found.slice(startOfInstructionCommands, endOfInstructionsCommand));
-                startOfInstructionCommands = +endOfInstructionsCommand;
-            }
-        }
-    }
-
-    scanForCriteria(domainCommands: [string, DomainCommand][]): void {
-        this.criteria = [];
-        const newCriterion = new GradingCriterion();
+    hasCriterionCommand(domainCommands: [string, DomainCommand][]): boolean {
         for (const [text, command] of domainCommands) {
-            if (command instanceof GradingCriterion) {
-                newCriterion.title = text;
-                this.criteria.push(newCriterion);
-                continue;
+            if (command instanceof GradingCriterionCommand) {
+                return true;
             }
         }
-        this.exercise.gradingCriteria = this.criteria;
+        return false;
     }
 
     /**
-     * @function domainCommandsFound
-     * @desc 1. Gets a tuple of text and domainCommandIdentifiers and assigns text values according to the domainCommandIdentifiers
-     *       2. The tupple order is the same as the order of the commands in the markdown text inserted by the user
+     * @function createSubInstructionCommands
+     * @desc 1. divides the input: domainCommands in two subarrays:
+     *          instructionCommands, which consists of all stand-alone instructions
+     *          criteriaCommands, which consists of instructions that belong to a criterion
+     *       2. for each subarrray a method is called to create the criterion and instruction objects
      * @param domainCommands containing tuples of [text, domainCommandIdentifiers]
      */
-    domainCommandsFound(domainCommands: [string, DomainCommand][]): void {
-        let index = 0;
-        this.instructions = [];
-        this.criteria = [];
-        for (const [text, command] of domainCommands) {
-            if (command === null) {
-                this.exercise.gradingCriteria = [];
+    createSubInstructionCommands(domainCommands: [string, DomainCommand][]): void {
+        let instructionCommands;
+        let criteriaCommands;
+        let endOfInstructionsCommand = 0;
+        if (this.hasCriterionCommand(domainCommands) === false) {
+            this.setParentForInstructionsWithNoCriterion(domainCommands);
+        } else {
+            for (const [text, command] of domainCommands) {
+                endOfInstructionsCommand++;
+                if (command instanceof GradingCriterionCommand) {
+                    instructionCommands = domainCommands.slice(0, endOfInstructionsCommand - 1);
+                    if (instructionCommands.length !== 0) {
+                        this.setParentForInstructionsWithNoCriterion(instructionCommands);
+                    }
+                    criteriaCommands = domainCommands.slice(endOfInstructionsCommand - 1);
+                    if (criteriaCommands.length !== 0) {
+                        this.instructions = []; // resets the instructions array to be filled with the instructions of the criteria
+                        this.groupInstructionsToCriteria(criteriaCommands); // creates criterion object for each criterion and their corresponding instruction objects
+                    }
+                    break;
+                }
             }
+        }
+    }
+    /**
+     * @function setParentForInstructionsWithNoCriterion
+     * @desc 1. creates a dummy criterion object for each stand-alone instruction
+     * @param domainCommands containing tuples of [text, domainCommandIdentifiers]
+     */
+    setParentForInstructionsWithNoCriterion(domainCommands: [string, DomainCommand][]): void {
+        for (const [text, command] of domainCommands) {
             if (command instanceof GradingInstructionCommand) {
-                const newCriterion = new GradingCriterion();
+                const dummyCriterion = new GradingCriterion();
                 const newInstruction = new GradingInstruction();
+                dummyCriterion.structuredGradingInstructions = [];
+                dummyCriterion.structuredGradingInstructions.push(newInstruction);
                 this.instructions.push(newInstruction);
-                newCriterion.structuredGradingInstructions = this.instructions;
-                this.criteria.push(newCriterion);
-                this.exercise.gradingCriteria = this.criteria;
-                continue;
-            } else if (command instanceof CreditsCommand) {
+                this.criteria.push(dummyCriterion);
+            }
+        }
+        this.exercise.gradingCriteria = this.criteria;
+        this.setInstructionParameters(domainCommands);
+    }
+
+    /**
+     * @function groupInstructionsToCriteria
+     * @desc 1. creates a criterion for each GradingCriterionCommandIdentifier
+     *          and creates the instruction objects of this criterion then assigns them to their parent criterion
+     * @param domainCommands containing tuples of [text, domainCommandIdentifiers]
+     */
+    groupInstructionsToCriteria(domainCommands: [string, DomainCommand][]): void {
+        if (this.exercise.gradingCriteria === undefined) {
+            this.exercise.gradingCriteria = [];
+        }
+        for (const [text, command] of domainCommands) {
+            if (command instanceof GradingCriterionCommand) {
+                const newCriterion = new GradingCriterion();
+                newCriterion.title = text;
+                this.exercise.gradingCriteria.push(newCriterion);
+                newCriterion.structuredGradingInstructions = [];
+                const modifiedArray = domainCommands.slice(1); // remove GradingCriterionCommandIdentifier after creating its criterion object
+                for (const [instrText, instrCommand] of modifiedArray) {
+                    if (instrCommand instanceof GradingInstructionCommand) {
+                        const newInstruction = new GradingInstruction(); // create instruction objects that belong to the above created criterion
+                        newCriterion.structuredGradingInstructions.push(newInstruction);
+                        this.instructions.push(newInstruction);
+                    }
+                    if (instrCommand instanceof GradingCriterionCommand) {
+                        break;
+                    }
+                }
+            }
+        }
+        this.setInstructionParameters(domainCommands.filter(([text, command]) => command instanceof GradingCriterionCommand === false));
+    }
+
+    /**
+     * @function setInstructionParameters
+     * @desc 1. Gets a tuple of text and domainCommandIdentifiers not including GradingCriterionCommandIdentifiers and assigns text values according to the domainCommandIdentifiers
+     *       2. The tupple order is the same as the order of the commands in the markdown text inserted by the user
+     *       instruction objects must be created before the method gets triggered
+     * @param domainCommands containing tuples of [text, domainCommandIdentifiers]
+     */
+    setInstructionParameters(domainCommands: [string, DomainCommand][]): void {
+        let index = 0;
+        for (const [text, command] of domainCommands) {
+            if (command instanceof CreditsCommand) {
                 this.instructions[index].credits = parseFloat(text);
             } else if (command instanceof GradingScaleCommand) {
                 this.instructions[index].gradingScale = text;
@@ -201,8 +260,22 @@ export class GradingInstructionsDetailsComponent implements OnInit {
                 this.instructions[index].feedback = text;
             } else if (command instanceof UsageCountCommand) {
                 this.instructions[index].usageCount = parseInt(text, 10);
-                index++; // index must be elevated after the last parameter of the instruction to continue with the next instruction object
+                index++; // index must be increased after the last parameter of the instruction to continue with the next instruction object
             }
         }
+    }
+
+    /**
+     * @function domainCommandsFound
+     * @desc 1. Gets a tuple of text and domainCommandIdentifiers and assigns text values according to the domainCommandIdentifiers
+     *       2. The tupple order is the same as the order of the commands in the markdown text inserted by the user
+     * @param domainCommands containing tuples of [text, domainCommandIdentifiers]
+     */
+    domainCommandsFound(domainCommands: [string, DomainCommand][]): void {
+        this.instructions = [];
+        this.criteria = [];
+        this.exercise.gradingCriteria = [];
+        this.createSubInstructionCommands(domainCommands);
+        console.log(this.exercise.gradingCriteria);
     }
 }

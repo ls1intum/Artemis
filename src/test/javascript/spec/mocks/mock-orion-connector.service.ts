@@ -1,5 +1,5 @@
-import { OrionState, ArtemisClientConnector, ArtemisOrionConnector } from 'app/shared/orion/orion';
-import { Observable, of } from 'rxjs';
+import { OrionState, ArtemisOrionConnector } from 'app/shared/orion/orion';
+import { of } from 'rxjs';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { BuildLogErrors } from 'app/exercises/programming/shared/code-editor/build-output/code-editor-build-output.component';
 import { REPOSITORY } from 'app/exercises/programming/manage/code-editor/code-editor-instructor-base-container.component';
@@ -7,7 +7,7 @@ import { REPOSITORY } from 'app/exercises/programming/manage/code-editor/code-ed
 export class MockOrionConnectorService implements ArtemisOrionConnector {
     onExerciseOpened = (exerciseId: number) => of();
     importParticipation = (repository: string, exercise: ProgrammingExercise) => of();
-    submitChanges = () => of();
+    submit = () => of();
     state = () => of({} as OrionState);
     onBuildFinished = () => of();
     onBuildStarted = () => of();

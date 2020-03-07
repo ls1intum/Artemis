@@ -7,7 +7,7 @@ export class GradingCriterionCommand extends DomainTagCommand {
     public static readonly text = ' Add criteria title (only visible for tutors)';
 
     buttonTranslationString = 'assessmentInstructions.instructions.editor.addCriterion';
-    displayCommandButton = false;
+    displayCommandButton = true;
     gradingInstructionCommand = new GradingInstructionCommand();
 
     /**

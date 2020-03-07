@@ -62,7 +62,7 @@ public class SingleUserNotification extends Notification implements Serializable
         target.addProperty("id", studentQuestionAnswer.getQuestion().getExercise().getId());
         target.addProperty("entity", "exercises");
         target.addProperty("course", studentQuestionAnswer.getQuestion().getExercise().getCourse().getId());
-        target.addProperty("mainPage", "overview");
+        target.addProperty("mainPage", "courses");
         return target.toString();
     }
 
@@ -78,7 +78,7 @@ public class SingleUserNotification extends Notification implements Serializable
         target.addProperty("id", studentQuestionAnswer.getQuestion().getLecture().getId());
         target.addProperty("entity", "lectures");
         target.addProperty("course", studentQuestionAnswer.getQuestion().getLecture().getCourse().getId());
-        target.addProperty("mainPage", "overview");
+        target.addProperty("mainPage", "courses");
         return target.toString();
     }
 

@@ -28,17 +28,18 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.exception.UsernameAlreadyUsedException;
 import de.tum.in.www1.artemis.repository.AuthorityRepository;
 import de.tum.in.www1.artemis.repository.GuidedTourSettingsRepository;
-import de.tum.in.www1.artemis.repository.TeamRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
 import de.tum.in.www1.artemis.security.AuthoritiesConstants;
 import de.tum.in.www1.artemis.security.PBEPasswordEncoder;
 import de.tum.in.www1.artemis.security.SecurityUtils;
+import de.tum.in.www1.artemis.service.connectors.JiraAuthenticationProvider;
 import de.tum.in.www1.artemis.service.connectors.VcsUserManagementService;
 import de.tum.in.www1.artemis.service.dto.UserDTO;
 import de.tum.in.www1.artemis.service.ldap.LdapUserDto;
 import de.tum.in.www1.artemis.service.ldap.LdapUserService;
 import de.tum.in.www1.artemis.web.rest.errors.EmailAlreadyUsedException;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.rest.errors.InvalidPasswordException;
 import de.tum.in.www1.artemis.web.rest.vm.ManagedUserVM;
 import io.github.jhipster.security.RandomUtil;
@@ -57,8 +58,6 @@ public class UserService {
 
     private final UserRepository userRepository;
 
-    private final TeamRepository teamRepository;
-
     private final AuthorityRepository authorityRepository;
 
     private final GuidedTourSettingsRepository guidedTourSettingsRepository;
@@ -71,10 +70,9 @@ public class UserService {
 
     private ArtemisAuthenticationProvider artemisAuthenticationProvider;
 
-    public UserService(UserRepository userRepository, TeamRepository teamRepository, AuthorityRepository authorityRepository, CacheManager cacheManager,
-            Optional<LdapUserService> ldapUserService, GuidedTourSettingsRepository guidedTourSettingsRepository) {
+    public UserService(UserRepository userRepository, AuthorityRepository authorityRepository, CacheManager cacheManager, Optional<LdapUserService> ldapUserService,
+            GuidedTourSettingsRepository guidedTourSettingsRepository) {
         this.userRepository = userRepository;
-        this.teamRepository = teamRepository;
         this.authorityRepository = authorityRepository;
         this.cacheManager = cacheManager;
         this.ldapUserService = ldapUserService;
@@ -441,7 +439,7 @@ public class UserService {
 
     /**
      * Updates the user in all connected systems (like GitLab) if necessary. Also updates the user in the used authentication
-     * provider (like {@link de.tum.in.www1.artemis.security.JiraAuthenticationProvider}.
+     * provider (like {@link JiraAuthenticationProvider}.
      *
      * @param user The updated user in Artemis
      * @param oldGroups The old groups of the user before the update
@@ -540,14 +538,6 @@ public class UserService {
     }
 
     /**
-     * @return existing user object by current user login
-     */
-    public User getUser() {
-        String currentUserLogin = SecurityUtils.getCurrentUserLogin().get();
-        return userRepository.findOneByLogin(currentUserLogin).get();
-    }
-
-    /**
      * Get current user for login string
      * @param login user login string
      * @return existing user for the given login string or null
@@ -557,13 +547,24 @@ public class UserService {
     }
 
     /**
+     * @return existing user object by current user login
+     */
+    @NotNull
+    public User getUser() {
+        String currentUserLogin = getCurrentUserLogin();
+        Optional<User> user = userRepository.findOneByLogin(currentUserLogin);
+        return unwrapOptionalUser(user, currentUserLogin);
+    }
+
+    /**
      * Get user with user groups and authorities of currently logged in user
      * @return currently logged in user
      */
+    @NotNull
     public User getUserWithGroupsAndAuthorities() {
-        String currentUserLogin = SecurityUtils.getCurrentUserLogin().get();
-        User user = userRepository.findOneWithGroupsAndAuthoritiesByLogin(currentUserLogin).get();
-        return user;
+        String currentUserLogin = getCurrentUserLogin();
+        Optional<User> user = userRepository.findOneWithGroupsAndAuthoritiesByLogin(currentUserLogin);
+        return unwrapOptionalUser(user, currentUserLogin);
     }
 
     /**
@@ -571,10 +572,27 @@ public class UserService {
      * Note: this method should only be invoked if the guided tour settings are really needed
      * @return currently logged in user
      */
+    @NotNull
     public User getUserWithGroupsAuthoritiesAndGuidedTourSettings() {
-        String currentUserLogin = SecurityUtils.getCurrentUserLogin().get();
-        User user = userRepository.findOneWithGroupsAuthoritiesAndGuidedTourSettingsByLogin(currentUserLogin).get();
-        return user;
+        String currentUserLogin = getCurrentUserLogin();
+        Optional<User> user = userRepository.findOneWithGroupsAuthoritiesAndGuidedTourSettingsByLogin(currentUserLogin);
+        return unwrapOptionalUser(user, currentUserLogin);
+    }
+
+    @NotNull
+    private User unwrapOptionalUser(Optional<User> optionalUser, String currentUserLogin) {
+        if (optionalUser.isPresent()) {
+            return optionalUser.get();
+        }
+        throw new EntityNotFoundException("No user found with login: " + currentUserLogin);
+    }
+
+    private String getCurrentUserLogin() {
+        Optional<String> currentUserLogin = SecurityUtils.getCurrentUserLogin();
+        if (currentUserLogin.isPresent()) {
+            return currentUserLogin.get();
+        }
+        throw new EntityNotFoundException("ERROR: No current user login found!");
     }
 
     /**
@@ -583,7 +601,8 @@ public class UserService {
      * @return the user that belongs to the given principal with eagerly loaded groups and authorities
      */
     public User getUserWithGroupsAndAuthorities(@NotNull Principal principal) {
-        return userRepository.findOneWithGroupsAndAuthoritiesByLogin(principal.getName()).get();
+        Optional<User> user = userRepository.findOneWithGroupsAndAuthoritiesByLogin(principal.getName());
+        return unwrapOptionalUser(user, principal.getName());
     }
 
     /**

@@ -4,7 +4,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.doReturn;
 
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -23,6 +22,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
+import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.DiagramType;
@@ -40,6 +40,7 @@ import de.tum.in.www1.artemis.service.ResultService;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.RequestUtilService;
+import de.tum.in.www1.artemis.util.TestConstants;
 
 public class ResultServiceIntegrationTest extends AbstractSpringIntegrationTest {
 
@@ -128,32 +129,25 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationTest 
     @Test
     @WithMockUser(value = "student1", roles = "USER")
     public void shouldUpdateTestCasesAndResultScoreFromSolutionParticipationResult() throws Exception {
-        Result result = new Result();
-        List<Feedback> feedbacks = new ArrayList<>();
-        feedbacks.add(new Feedback().text("test1").positive(true));
-        feedbacks.add(new Feedback().text("test2").positive(true));
-        feedbacks.add(new Feedback().text("test4").positive(true));
-        result.successful(false).feedbacks(feedbacks).score(20L);
         // TODO: This should be refactoring into the ModelUtilService.
         ProgrammingSubmission programmingSubmission = new ProgrammingSubmission();
         programmingSubmission.type(SubmissionType.MANUAL).submissionDate(ZonedDateTime.now()).setParticipation(programmingExerciseStudentParticipation);
-        programmingSubmission = database.addProgrammingSubmission(programmingExercise, programmingSubmission, "student1");
-        result.setSubmission(programmingSubmission);
-        result.setParticipation(programmingExerciseStudentParticipation);
+        programmingSubmission.setCommitHash(TestConstants.COMMIT_HASH_STRING);
+        programmingSubmission.setParticipation(programmingExercise.getSolutionParticipation());
+        submissionRepository.save(programmingSubmission);
 
         Set<ProgrammingExerciseTestCase> expectedTestCases = new HashSet<>();
         expectedTestCases.add(new ProgrammingExerciseTestCase().exercise(programmingExercise).testName("test1").active(true).weight(1).id(1L));
         expectedTestCases.add(new ProgrammingExerciseTestCase().exercise(programmingExercise).testName("test2").active(true).weight(1).id(2L));
         expectedTestCases.add(new ProgrammingExerciseTestCase().exercise(programmingExercise).testName("test4").active(true).weight(1).id(3L));
 
-        Object requestDummy = new Object();
-
-        doReturn(result).when(continuousIntegrationService).onBuildCompletedNew(solutionParticipation, requestDummy);
-        resultService.processNewProgrammingExerciseResult(solutionParticipation, requestDummy);
+        final var resultNotification = ModelFactory.generateBambooBuildResult(Constants.ASSIGNMENT_REPO_NAME, List.of("test1", "test2", "test4"), List.of());
+        final var optionalResult = resultService.processNewProgrammingExerciseResult(solutionParticipation, resultNotification);
 
         Set<ProgrammingExerciseTestCase> testCases = programmingExerciseTestCaseService.findByExerciseId(programmingExercise.getId());
         assertThat(testCases).isEqualTo(expectedTestCases);
-        assertThat(result.getScore()).isEqualTo(100L);
+        assertThat(optionalResult).isPresent();
+        assertThat(optionalResult.get().getScore()).isEqualTo(100L);
     }
 
     @Test

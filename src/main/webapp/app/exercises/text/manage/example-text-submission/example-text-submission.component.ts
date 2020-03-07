@@ -174,6 +174,8 @@ export class ExampleTextSubmissionComponent implements OnInit, AfterViewInit {
                 target.style.minHeight = event.rect.height + 'px';
                 $('#submission-area').css('min-height', event.rect.height - 100 + 'px');
             });
+
+        this.guidedTourService.componentPageLoaded();
     }
 
     loadAll() {
