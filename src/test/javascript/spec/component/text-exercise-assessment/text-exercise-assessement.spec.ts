@@ -41,6 +41,7 @@ import { MockActivatedRoute } from '../../mocks/mock-activated-route';
 import { TextAssessmentsService } from 'app/exercises/text/assess/text-assessments.service';
 import { Course } from 'app/entities/course.model';
 import { Feedback } from 'app/entities/feedback.model';
+import { TextBlock } from 'app/entities/text-block.model';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -259,5 +260,35 @@ describe('TextAssessmentComponent', () => {
         comp.validateAssessment();
         expect(comp.assessmentsAreValid).to.be.false;
         expect(comp.invalidError).to.be.equal('artemisApp.textAssessment.error.invalidScoreMustBeNumber');
+    }));
+
+    it('Should validate assessment with referenced feedback with credits', fakeAsync(() => {
+        const feedback = new Feedback();
+        feedback.reference = 'reference';
+        feedback.credits = 5;
+        const feedback2 = new Feedback();
+        feedback2.reference = 'reference2';
+        feedback2.credits = 5;
+        comp.referencedFeedback = [feedback, feedback2];
+        comp.validateAssessment();
+        expect(comp.assessmentsAreValid).to.be.true;
+        expect(comp.totalScore).to.be.equal(10);
+    }));
+
+    it('Should delete assessment', fakeAsync(() => {
+        const feedback = new Feedback();
+        feedback.reference = 'reference';
+        feedback.credits = 5;
+        const feedback2 = new Feedback();
+        feedback2.reference = 'reference2';
+        feedback2.credits = 5;
+        comp.referencedFeedback = [feedback, feedback2];
+        comp.referencedTextBlocks = [new TextBlock(), new TextBlock()];
+        comp.deleteAssessment(feedback);
+        expect(comp.referencedFeedback.length).to.be.equal(1);
+        expect(comp.referencedFeedback).to.contain(feedback2);
+        expect(comp.referencedTextBlocks.length).to.be.equal(1);
+        expect(comp.totalScore).to.be.equal(5);
+        expect(comp.assessmentsAreValid).to.be.true;
     }));
 });
