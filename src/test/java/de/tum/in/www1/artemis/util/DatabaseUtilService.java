@@ -192,6 +192,7 @@ public class DatabaseUtilService {
         fileUploadSubmissionRepo.deleteAll();
         programmingSubmissionRepo.deleteAll();
         submissionRepository.deleteAll();
+        studentQuestionRepository.deleteAll();
         participationRepo.deleteAll();
         assertThat(participationRepo.findAll()).as("participation data has been cleared").isEmpty();
         teamRepo.deleteAll();
