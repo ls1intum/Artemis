@@ -23,9 +23,22 @@
             "color": "Color",
             "courseIcon": "Course Icon",
             "shortName": "Short Name",
-            "maxComplaints": "Maximum Amount of Complaints",
-            "maxComplaintTimeDays": "Deadline for complaints in days after result date",
-            "studentQuestionsEnabled": "Enable Questions and Answers",
+            "maxComplaints": {
+                "title": "Maximum Amount of Complaints",
+                "description": "Set the maximum amount of complaints allowed"
+            },
+            "maxComplaintTimeDays": {
+                "title": "Deadline for complaints in days after result date",
+                "description": "Maximum Complaint Deadline for student complaints. When the complaint is submitted after the deadline, it will be rejected."
+            },
+            "studentQuestionsEnabled": {
+                "title": "Enable Questions and Answers by students",
+                "description": "Enable Questions and Answers section on lecture and exercise page"
+            },
+            "maxComplaintSettingEnabled": {
+                "title": "Enable Setting Max Complaints Amount",
+                "description": "Enabling this tickbox allows you to set maximum number of student complaints"
+            },
             "studentGroupName": "Student Group",
             "teachingAssistantGroupName": "Tutor Group",
             "instructorGroupName": "Instructor Group",

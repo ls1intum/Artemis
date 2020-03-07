@@ -23,9 +23,22 @@
             "color": "Farbe",
             "courseIcon": "Kursicon",
             "shortName": "Kurzname",
-            "maxComplaints": "Maximale Anzahl von Beschwerden",
-            "maxComplaintTimeDays": "Beschwerdefrist in Tagen nach dem Ergebnis",
-            "studentQuestionsEnabled": "Fragen und Antworten aktivieren",
+            "maxComplaints": {
+                "title": "Maximale Anzahl von Beschwerden",
+                "description": "Erlaubte Anzahl von Studentenbeschwerden setzen"
+            },
+            "maxComplaintTimeDays": {
+                "title": "Beschwerdefrist in Tagen nach dem Ergebnis",
+                "description": "Maximale Beschwerdefrist von Studentenbeschwerden setzen. Wenn die Beschwerde nach der Frist eingereicht würde, wird es abgelehnt."
+            },
+            "studentQuestionsEnabled": {
+                "title": "Fragen und Antworten von Studierenden aktivieren",
+                "description": "Fragen und Antworten Abschnitt in Vorlesung- und Übungsseite aktivieren / deaktivieren"
+            },
+            "maxComplaintSettingEnabled": {
+                "title": "Setzen der maximalen Anzahl von Studentenbeschwerden aktivieren",
+                "description": "Wenn Sie diese Option aktivieren, können Sie die maximale Anzahl von Studentenbeschwerden setzen."
+            },
             "studentGroupName": "Studenten Gruppe",
             "teachingAssistantGroupName": "Tutor Gruppe",
             "instructorGroupName": "Instructor Gruppe",
