@@ -40,6 +40,7 @@ import { AssessmentType } from 'app/entities/assessment-type.model';
 import { MockActivatedRoute } from '../../mocks/mock-activated-route';
 import { TextAssessmentsService } from 'app/exercises/text/assess/text-assessments.service';
 import { Course } from 'app/entities/course.model';
+import { Feedback } from 'app/entities/feedback.model';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -217,5 +218,46 @@ describe('TextAssessmentComponent', () => {
         tick();
         expect(comp.exercise).to.be.deep.equal(exercise);
         expect(comp.isAtLeastInstructor).to.be.true;
+    }));
+
+    it('Should invalidate assessment without general and referenced feedback', fakeAsync(() => {
+        comp.validateAssessment();
+        expect(comp.assessmentsAreValid).to.be.false;
+        expect(comp.totalScore).to.be.equal(0);
+    }));
+
+    it('Should validate assessment with general feedback', fakeAsync(() => {
+        const feedback = new Feedback();
+        feedback.detailText = 'General Feedback';
+        comp.generalFeedback = feedback;
+        comp.validateAssessment();
+        expect(comp.assessmentsAreValid).to.be.true;
+        expect(comp.totalScore).to.be.equal(0);
+    }));
+
+    it('Should invalidate assessment with referenced feedback without reference', fakeAsync(() => {
+        comp.referencedFeedback = [new Feedback()];
+        comp.validateAssessment();
+        expect(comp.assessmentsAreValid).to.be.false;
+        expect(comp.invalidError).to.be.equal('artemisApp.textAssessment.error.feedbackReferenceTooLong');
+    }));
+
+    it('Should invalidate assessment with referenced feedback with undefined credits', fakeAsync(() => {
+        const feedback = new Feedback();
+        feedback.reference = 'reference';
+        comp.referencedFeedback = [feedback];
+        comp.validateAssessment();
+        expect(comp.assessmentsAreValid).to.be.false;
+        expect(comp.invalidError).to.be.equal('artemisApp.textAssessment.error.invalidNeedScoreOrFeedback');
+    }));
+
+    it('Should invalidate assessment with referenced feedback without credits', fakeAsync(() => {
+        const feedback = new Feedback();
+        feedback.reference = 'reference';
+        feedback.credits = null as any;
+        comp.referencedFeedback = [feedback];
+        comp.validateAssessment();
+        expect(comp.assessmentsAreValid).to.be.false;
+        expect(comp.invalidError).to.be.equal('artemisApp.textAssessment.error.invalidScoreMustBeNumber');
     }));
 });
