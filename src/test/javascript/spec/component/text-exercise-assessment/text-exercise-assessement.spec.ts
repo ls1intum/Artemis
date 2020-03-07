@@ -291,4 +291,14 @@ describe('TextAssessmentComponent', () => {
         expect(comp.totalScore).to.be.equal(5);
         expect(comp.assessmentsAreValid).to.be.true;
     }));
+
+    it('Should add assessment', fakeAsync(() => {
+        const assessmentText = 'new assessment';
+        comp.referencedTextBlocks = [];
+        comp.addAssessment(assessmentText);
+        expect(comp.referencedFeedback.length).to.be.equal(1);
+        expect(comp.referencedFeedback[0].reference).to.be.equal(assessmentText);
+        expect(comp.referencedFeedback[0].credits).to.be.equal(0);
+        expect(comp.referencedTextBlocks.length).to.be.equal(1);
+    }));
 });
