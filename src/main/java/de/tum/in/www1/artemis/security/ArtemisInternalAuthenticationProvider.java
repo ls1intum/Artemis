@@ -21,6 +21,7 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.UserService;
+import de.tum.in.www1.artemis.service.connectors.ConnectorHealth;
 
 @Component
 @ConditionalOnProperty(value = "artemis.user-management.use-external", havingValue = "false")
@@ -117,6 +118,12 @@ public class ArtemisInternalAuthenticationProvider implements ArtemisAuthenticat
         final var auditEvent = new AuditEvent(user.getLogin(), "REGISTER_FOR_COURSE", "course=" + course.getTitle());
         auditEventRepository.add(auditEvent);
         log.info("User " + user.getLogin() + " has successfully registered for course " + course.getTitle());
+    }
+
+    @Override
+    public ConnectorHealth health() {
+        // the internal authentication provider is always running when Artemis is running
+        return new ConnectorHealth(true);
     }
 
     @Override

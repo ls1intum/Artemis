@@ -59,7 +59,7 @@ export class QuizStatisticsFooterComponent implements OnInit, OnDestroy {
         this.sub = this.route.params.subscribe(params => {
             this.questionIdParam = +params['questionId'];
             if (this.accountService.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'])) {
-                this.quizExerciseService.find(params['quizId']).subscribe((res: HttpResponse<QuizExercise>) => {
+                this.quizExerciseService.find(params['exerciseId']).subscribe((res: HttpResponse<QuizExercise>) => {
                     this.loadQuiz(res.body!);
                 });
             }

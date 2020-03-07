@@ -1,10 +1,11 @@
 package de.tum.in.www1.artemis.programmingexercise;
 
+import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.SOLUTION;
+import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.TEMPLATE;
 import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResource.Endpoints.*;
 import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResource.ErrorKeys.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 
 import java.io.File;
@@ -13,11 +14,15 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.time.ZonedDateTime;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.Git;
-import org.eclipse.jgit.api.errors.GitAPIException;
+import org.eclipse.jgit.lib.StoredConfig;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -27,16 +32,25 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+
 import de.tum.in.www1.artemis.AbstractSpringIntegrationTest;
 import de.tum.in.www1.artemis.connector.bamboo.BambooRequestMockProvider;
 import de.tum.in.www1.artemis.connector.bitbucket.BitbucketRequestMockProvider;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.ProgrammingExerciseTestCase;
+import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestCaseRepository;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
+import de.tum.in.www1.artemis.util.GitUtilService;
 import de.tum.in.www1.artemis.util.RequestUtilService;
+import de.tum.in.www1.artemis.util.Verifiable;
 import de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResource.Endpoints;
+import de.tum.in.www1.artemis.web.rest.ProgrammingExerciseTestCaseResource;
+import de.tum.in.www1.artemis.web.rest.dto.ProgrammingExerciseTestCaseDTO;
 import de.tum.in.www1.artemis.web.rest.dto.RepositoryExportOptionsDTO;
 import de.tum.in.www1.artemis.web.websocket.dto.ProgrammingExerciseTestCaseStateDTO;
 
@@ -47,6 +61,9 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationTest {
 
     @Autowired
     RequestUtilService request;
+
+    @Autowired
+    GitUtilService gitUtilService;
 
     @Autowired
     ProgrammingExerciseRepository programmingExerciseRepository;
@@ -60,48 +77,62 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationTest {
     @Autowired
     private BitbucketRequestMockProvider bitbucketRequestMockProvider;
 
+    @Autowired
+    private ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository;
+
     ProgrammingExercise programmingExercise;
 
     File downloadedFile;
 
-    File repoFile;
+    File localRepoFile;
 
-    Git git;
+    File originRepoFile;
+
+    Git localGit;
+
+    Git remoteGit;
 
     @BeforeEach
-    void initTestCase() throws GitAPIException, InterruptedException, IOException {
+    void initTestCase() throws Exception {
         database.addUsers(3, 2, 2);
         database.addCourseWithOneProgrammingExerciseAndTestCases();
         programmingExercise = programmingExerciseRepository.findAllWithEagerParticipations().get(0);
         database.addStudentParticipationForProgrammingExercise(programmingExercise, "student1");
         database.addStudentParticipationForProgrammingExercise(programmingExercise, "student2");
 
-        repoFile = Files.createTempDirectory("repo").toFile();
-        git = Git.init().setDirectory(repoFile).call();
+        localRepoFile = Files.createTempDirectory("repo").toFile();
+        localGit = Git.init().setDirectory(localRepoFile).call();
+
+        originRepoFile = Files.createTempDirectory("repoOrigin").toFile();
+        remoteGit = Git.init().setDirectory(originRepoFile).call();
+        StoredConfig config = localGit.getRepository().getConfig();
+        config.setString("remote", "origin", "url", originRepoFile.getAbsolutePath());
+        config.save();
 
         // TODO use setupProgrammingExercise or setupTemplateAndPush to create actual content (based on the template repos) in this repository
         // so that e.g. addStudentIdToProjectName in ProgrammingExerciseExportService is tested properly as well
 
         // the following 2 lines prepare the generation of the structural test oracle
-        var testjsonFilePath = Paths.get(repoFile.getPath(), "test", programmingExercise.getPackageFolderName(), "test.json");
-        testjsonFilePath.toFile().getParentFile().mkdirs();
-
+        var testjsonFilePath = Paths.get(localRepoFile.getPath(), "test", programmingExercise.getPackageFolderName(), "test.json");
+        gitUtilService.writeEmptyJsonFileToPath(testjsonFilePath);
         // create two empty commits
-        git.commit().setMessage("empty").setAllowEmpty(true).setAuthor("test", "test@test.com").call();
-        git.commit().setMessage("empty").setAllowEmpty(true).setAuthor("test", "test@test.com").call();
-        var repository = gitService.getRepositoryByLocalPath(repoFile.toPath());
-        doReturn(repository).when(gitService).getOrCheckoutRepository(any(URL.class), anyBoolean(), anyString());
-        doNothing().when(gitService).fetchAll(any());
-        var objectId = git.reflog().call().iterator().next().getNewId();
-        doReturn(objectId).when(gitService).getLastCommitHash(any());
-        doNothing().when(gitService).resetToOriginMaster(any());
-        doNothing().when(gitService).pullIgnoreConflicts(any());
-        doNothing().when(gitService).commitAndPush(any(), anyString(), any());
+        localGit.commit().setMessage("empty").setAllowEmpty(true).setAuthor("test", "test@test.com").call();
+        localGit.push().call();
 
-        doNothing().when(continuousIntegrationService).deleteBuildPlan(anyString(), anyString());
-        doNothing().when(continuousIntegrationService).deleteProject(anyString());
-        doNothing().when(versionControlService).deleteRepository(any(URL.class));
-        doNothing().when(versionControlService).deleteProject(anyString());
+        // we use the temp repository as remote origing for all repositories that are created during the
+        // TODO: distinguish between template, test and solution
+        doReturn(new GitUtilService.FileRepositoryUrl(originRepoFile)).when(versionControlService).getCloneRepositoryUrl(anyString(), anyString());
+        // var repository = gitService.getRepositoryByLocalPath(localRepoFile.toPath());
+        // doReturn(repository).when(gitService).getOrCheckoutRepository(any(URL.class), anyBoolean(), anyString());
+        // doNothing().when(gitService).fetchAll(any());
+        // var objectId = localGit.reflog().call().iterator().next().getNewId();
+        // doReturn(objectId).when(gitService).getLastCommitHash(any());
+        // doNothing().when(gitService).resetToOriginMaster(any());
+        // doNothing().when(gitService).pullIgnoreConflicts(any());
+        // doNothing().when(gitService).commitAndPush(any(), anyString(), any());
+
+        bambooRequestMockProvider.enableMockingOfRequests();
+        bitbucketRequestMockProvider.enableMockingOfRequests();
     }
 
     @AfterEach
@@ -110,11 +141,11 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationTest {
         if (downloadedFile != null && downloadedFile.exists()) {
             FileUtils.forceDelete(downloadedFile);
         }
-        if (repoFile != null && repoFile.exists()) {
-            FileUtils.deleteDirectory(repoFile);
+        if (localRepoFile != null && localRepoFile.exists()) {
+            FileUtils.deleteDirectory(localRepoFile);
         }
-        if (git != null) {
-            git.close();
+        if (localGit != null) {
+            localGit.close();
         }
     }
 
@@ -171,6 +202,8 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationTest {
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void textExportSubmissionsByParticipationIds() throws Exception {
+        var repository = gitService.getRepositoryByLocalPath(localRepoFile.toPath());
+        doReturn(repository).when(gitService).getOrCheckoutRepository(any(URL.class), anyBoolean(), anyString());
         var participationIds = programmingExerciseStudentParticipationRepository.findAll().stream().map(participation -> participation.getId().toString())
                 .collect(Collectors.toList());
         final var path = Endpoints.ROOT + Endpoints.EXPORT_SUBMISSIONS_BY_PARTICIPATIONS.replace("{exerciseId}", "" + programmingExercise.getId()).replace("{participationIds}",
@@ -183,6 +216,8 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationTest {
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void textExportSubmissionsByStudentLogins() throws Exception {
+        var repository = gitService.getRepositoryByLocalPath(localRepoFile.toPath());
+        doReturn(repository).when(gitService).getOrCheckoutRepository(any(URL.class), anyBoolean(), anyString());
         final var path = Endpoints.ROOT
                 + Endpoints.EXPORT_SUBMISSIONS_BY_STUDENT.replace("{exerciseId}", "" + programmingExercise.getId()).replace("{studentIds}", "student1,student2");
         downloadedFile = request.postWithResponseBodyFile(path, getOptions(), HttpStatus.OK);
@@ -203,11 +238,27 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationTest {
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void testProgrammingExerciseDelete() throws Exception {
+        final var verifiables = new LinkedList<Verifiable>();
+        final var projectKey = programmingExercise.getProjectKey();
         final var path = Endpoints.ROOT + Endpoints.PROGRAMMING_EXERCISE.replace("{exerciseId}", "" + programmingExercise.getId());
         var params = new LinkedMultiValueMap<String, String>();
         params.add("deleteStudentReposBuildPlans", "true");
         params.add("deleteBaseReposBuildPlans", "true");
+
+        verifiables.add(bambooRequestMockProvider.mockDeleteProject(projectKey));
+        for (final var planName : List.of("student1", "student2", TEMPLATE.getName(), SOLUTION.getName())) {
+            verifiables.add(bambooRequestMockProvider.mockDeletePlan(projectKey + "-" + planName.toUpperCase()));
+        }
+        for (final var repoName : List.of("student1", "student2", RepositoryType.TEMPLATE.getName(), RepositoryType.SOLUTION.getName(), RepositoryType.TESTS.getName())) {
+            bitbucketRequestMockProvider.mockDeleteRepository(projectKey, (projectKey + "-" + repoName).toLowerCase());
+        }
+        bitbucketRequestMockProvider.mockDeleteProject(projectKey);
+
         request.delete(path, HttpStatus.OK, params);
+
+        for (final var verifiable : verifiables) {
+            verifiable.performVerification();
+        }
     }
 
     @Test
@@ -244,6 +295,8 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationTest {
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void testGenerateStructureOracle() throws Exception {
+        var repository = gitService.getRepositoryByLocalPath(localRepoFile.toPath());
+        doReturn(repository).when(gitService).getOrCheckoutRepository(any(URL.class), anyBoolean(), anyString());
         final var path = Endpoints.ROOT + Endpoints.GENERATE_TESTS.replace("{exerciseId}", "" + programmingExercise.getId());
         var result = request.get(path, HttpStatus.OK, String.class);
         assertThat(result).startsWith("Successfully generated the structure oracle");
@@ -252,17 +305,8 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationTest {
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    void testCombineTemplateRepositoryCommits() throws Exception {
-        final var path = Endpoints.ROOT + Endpoints.COMBINE_COMMITS.replace("{exerciseId}", "" + programmingExercise.getId());
-        request.put(path, Void.class, HttpStatus.OK);
-        // TODO add more assertions, when we use actual git repos
-    }
-
-    @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void updateProgrammingExercise_invalidTemplateBuildPlan_badRequest() throws Exception {
         database.addTemplateParticipationForProgrammingExercise(programmingExercise);
-        bambooRequestMockProvider.enableMockingOfRequests();
         bambooRequestMockProvider.mockBuildPlanIsValid(programmingExercise.getTemplateBuildPlanId(), false);
 
         request.putAndExpectError(ROOT + PROGRAMMING_EXERCISES, programmingExercise, HttpStatus.BAD_REQUEST, INVALID_TEMPLATE_BUILD_PLAN_ID);
@@ -272,7 +316,6 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationTest {
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void updateProgrammingExercise_invalidTemplateVcs_badRequest() throws Exception {
         database.addTemplateParticipationForProgrammingExercise(programmingExercise);
-        bambooRequestMockProvider.enableMockingOfRequests();
         bitbucketRequestMockProvider.enableMockingOfRequests();
         bambooRequestMockProvider.mockBuildPlanIsValid(programmingExercise.getTemplateBuildPlanId(), true);
         bitbucketRequestMockProvider.mockRepositoryUrlIsValid(programmingExercise.getTemplateRepositoryUrlAsUrl(), programmingExercise.getProjectKey(), false);
@@ -285,7 +328,6 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationTest {
     public void updateProgrammingExercise_invalidSolutionBuildPlan_badRequest() throws Exception {
         database.addTemplateParticipationForProgrammingExercise(programmingExercise);
         database.addSolutionParticipationForProgrammingExercise(programmingExercise);
-        bambooRequestMockProvider.enableMockingOfRequests();
         bitbucketRequestMockProvider.enableMockingOfRequests();
         bambooRequestMockProvider.mockBuildPlanIsValid(programmingExercise.getTemplateBuildPlanId(), true);
         bitbucketRequestMockProvider.mockRepositoryUrlIsValid(programmingExercise.getTemplateRepositoryUrlAsUrl(), programmingExercise.getProjectKey(), true);
@@ -299,7 +341,6 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationTest {
     public void updateProgrammingExercisei_invalidSolutionRepository_badRequest() throws Exception {
         database.addTemplateParticipationForProgrammingExercise(programmingExercise);
         database.addSolutionParticipationForProgrammingExercise(programmingExercise);
-        bambooRequestMockProvider.enableMockingOfRequests();
         bitbucketRequestMockProvider.enableMockingOfRequests();
         bambooRequestMockProvider.mockBuildPlanIsValid(programmingExercise.getTemplateBuildPlanId(), true);
         bambooRequestMockProvider.mockBuildPlanIsValid(programmingExercise.getSolutionBuildPlanId(), true);
@@ -498,5 +539,106 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationTest {
     public void hasAtLeastOneStudentResult_isNotTeachingAssistant_forbidden() throws Exception {
         database.addTeachingAssistant("other-tutors", "tutoralt");
         request.get(ROOT + TEST_CASE_STATE.replace("{exerciseId}", programmingExercise.getId() + ""), HttpStatus.FORBIDDEN, String.class);
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void getTestCases_asTutor() throws Exception {
+        final var endpoint = ProgrammingExerciseTestCaseResource.Endpoints.TEST_CASES.replace("{exerciseId}", programmingExercise.getId() + "");
+        final var returnedTests = request.getList(ROOT + endpoint, HttpStatus.OK, ProgrammingExerciseTestCase.class);
+        final var testsInDB = programmingExerciseTestCaseRepository.findByExerciseId(programmingExercise.getId());
+        returnedTests.forEach(testCase -> testCase.setExercise(programmingExercise));
+
+        assertThat(new HashSet<>(returnedTests)).isEqualTo(testsInDB);
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "STUDENT")
+    public void getTestCases_asStudent_forbidden() throws Exception {
+        final var endpoint = ProgrammingExerciseTestCaseResource.Endpoints.TEST_CASES.replace("{exerciseId}", programmingExercise.getId() + "");
+        request.getList(ROOT + endpoint, HttpStatus.FORBIDDEN, ProgrammingExerciseTestCase.class);
+    }
+
+    @Test
+    @WithMockUser(username = "other-teaching-assistant1", roles = "TA")
+    public void getTestCases_tutorInOtherCourse_forbidden() throws Exception {
+        database.addTeachingAssistant("other-teaching-assistants", "other-teaching-assistant");
+        final var endpoint = ProgrammingExerciseTestCaseResource.Endpoints.TEST_CASES.replace("{exerciseId}", programmingExercise.getId() + "");
+
+        request.getList(ROOT + endpoint, HttpStatus.FORBIDDEN, ProgrammingExerciseTestCase.class);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void updateTestCases_asInstrutor() throws Exception {
+        bambooRequestMockProvider.enableMockingOfRequests();
+        programmingExercise = programmingExerciseRepository.findWithTemplateParticipationAndSolutionParticipationById(programmingExercise.getId()).get();
+        bambooRequestMockProvider.mockTriggerBuild(programmingExercise.getSolutionParticipation());
+        final var testCases = programmingExerciseTestCaseRepository.findByExerciseId(programmingExercise.getId());
+        final var updates = testCases.stream().map(testCase -> {
+            final var testCaseUpdate = new ProgrammingExerciseTestCaseDTO();
+            testCaseUpdate.setId(testCase.getId());
+            testCaseUpdate.setAfterDueDate(true);
+            testCaseUpdate.setWeight((int) (testCase.getId() + 42));
+            return testCaseUpdate;
+        }).collect(Collectors.toList());
+        final var endpoint = ProgrammingExerciseTestCaseResource.Endpoints.UPDATE_TEST_CASES.replace("{exerciseId}", programmingExercise.getId() + "");
+
+        final var testCasesResponse = request.patchWithResponseBody(ROOT + endpoint, updates, new TypeReference<List<ProgrammingExerciseTestCase>>() {
+        }, HttpStatus.OK);
+        testCasesResponse.forEach(testCase -> testCase.setExercise(programmingExercise));
+        final var testCasesInDB = programmingExerciseTestCaseRepository.findByExerciseId(programmingExercise.getId());
+
+        assertThat(new HashSet<>(testCasesResponse)).isEqualTo(testCasesInDB);
+        assertThat(testCasesResponse).allSatisfy(testCase -> {
+            assertThat(testCase.isAfterDueDate()).isTrue();
+            assertThat(testCase.getWeight()).isEqualTo(testCase.getId() + 42);
+        });
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void updateTestCases_nonExistingExercise_notFound() throws Exception {
+        final var update = new ProgrammingExerciseTestCaseDTO();
+        final var endpoint = ProgrammingExerciseTestCaseResource.Endpoints.UPDATE_TEST_CASES.replace("{exerciseId}", (programmingExercise.getId() + 1) + "");
+        request.patchWithResponseBody(ROOT + endpoint, List.of(update), String.class, HttpStatus.NOT_FOUND);
+    }
+
+    @Test
+    @WithMockUser(username = "other-instructor1", roles = "INSTRUCTOR")
+    public void updateTestCases_instructorInWrongCourse_forbidden() throws Exception {
+        database.addInstructor("other-instructors", "other-instructor");
+        final var update = new ProgrammingExerciseTestCaseDTO();
+        final var endpoint = ProgrammingExerciseTestCaseResource.Endpoints.UPDATE_TEST_CASES.replace("{exerciseId}", programmingExercise.getId() + "");
+
+        request.patchWithResponseBody(ROOT + endpoint, List.of(update), String.class, HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void resetTestCaseWeights_asInstructor() throws Exception {
+        bambooRequestMockProvider.enableMockingOfRequests();
+        programmingExercise = programmingExerciseRepository.findWithTemplateParticipationAndSolutionParticipationById(programmingExercise.getId()).get();
+        bambooRequestMockProvider.mockTriggerBuild(programmingExercise.getSolutionParticipation());
+        final var endpoint = ProgrammingExerciseTestCaseResource.Endpoints.RESET_WEIGHTS.replace("{exerciseId}", programmingExercise.getId() + "");
+        programmingExerciseTestCaseRepository.findByExerciseId(programmingExercise.getId()).forEach(test -> {
+            test.setWeight(42);
+            programmingExerciseTestCaseRepository.saveAndFlush(test);
+        });
+
+        final var testCasesResponse = request.patchWithResponseBody(ROOT + endpoint, "{}", new TypeReference<Set<ProgrammingExerciseTestCase>>() {
+        }, HttpStatus.OK);
+        final var testsInDB = programmingExerciseTestCaseRepository.findByExerciseId(programmingExercise.getId());
+
+        assertThat(testCasesResponse).isEqualTo(testsInDB);
+        assertThat(testsInDB).allSatisfy(test -> assertThat(test.getWeight()).isEqualTo(1));
+    }
+
+    @Test
+    @WithMockUser(username = "other-instructor1", roles = "INSTRUCTOR")
+    public void resetTestCaseWeights_instructorInWrongCourse_forbidden() throws Exception {
+        database.addInstructor("other-instructors", "other-instructor");
+        final var endpoint = ProgrammingExerciseTestCaseResource.Endpoints.RESET_WEIGHTS.replace("{exerciseId}", programmingExercise.getId() + "");
+        request.patchWithResponseBody(ROOT + endpoint, "{}", String.class, HttpStatus.FORBIDDEN);
     }
 }

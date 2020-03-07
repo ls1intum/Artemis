@@ -155,11 +155,18 @@ public class RequestUtilService {
             return null;
         }
 
-        return mapper.readValue(res.getResponse().getContentAsString(), responseType);
+        final var resString = res.getResponse().getContentAsString();
+        return responseType != String.class ? mapper.readValue(resString, responseType) : (R) resString;
     }
 
     public <R> R patchWithResponseBody(String path, Object body, Class<R> responseType, HttpStatus expectedStatus) throws Exception {
         return patchWithResponseBody(path, mapper.writeValueAsString(body), responseType, expectedStatus, MediaType.APPLICATION_JSON);
+    }
+
+    public <T> T patchWithResponseBody(String path, Object body, TypeReference<T> responseType, HttpStatus expectedStatus) throws Exception {
+        final var stringResponse = patchWithResponseBody(path, body, String.class, expectedStatus);
+
+        return mapper.readValue(stringResponse, responseType);
     }
 
     public <T, R> List<R> putWithResponseBodyList(String path, T body, Class<R> listElementType, HttpStatus expectedStatus) throws Exception {

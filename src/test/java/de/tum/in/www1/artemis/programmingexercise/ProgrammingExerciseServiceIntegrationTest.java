@@ -1,10 +1,13 @@
 package de.tum.in.www1.artemis.programmingexercise;
 
+import static de.tum.in.www1.artemis.config.Constants.*;
+import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.SOLUTION;
+import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.TEMPLATE;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
 
 import java.net.MalformedURLException;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -12,6 +15,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
@@ -20,16 +24,19 @@ import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationTest;
+import de.tum.in.www1.artemis.connector.bamboo.BambooRequestMockProvider;
+import de.tum.in.www1.artemis.connector.bitbucket.BitbucketRequestMockProvider;
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.BuildPlanType;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.enumeration.SortingOrder;
+import de.tum.in.www1.artemis.repository.ParticipationRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.service.ProgrammingExerciseImportService;
 import de.tum.in.www1.artemis.service.ProgrammingExerciseService;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.RequestUtilService;
+import de.tum.in.www1.artemis.util.Verifiable;
 import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 
@@ -37,7 +44,10 @@ public class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringInt
 
     private static final String BASE_RESOURCE = "/api/programming-exercises/";
 
-    private static final String DUMMY_URL = "https://te12ste@repobruegge.in.tum.de/scm/TEST2019TEST/testexercise-te12ste.git";
+    private static final String DUMMY_URL = "https://te12ste@repobruegge.in.tum.de/scm/TEST2019TEST/testexercise-%s.git";
+
+    @Value("${server.url}")
+    protected String ARTEMIS_BASE_URL;
 
     @Autowired
     ProgrammingExerciseService programmingExerciseService;
@@ -54,12 +64,23 @@ public class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringInt
     @Autowired
     RequestUtilService request;
 
+    @Autowired
+    private BambooRequestMockProvider bambooRequestMockProvider;
+
+    @Autowired
+    private ParticipationRepository participationRepository;
+
+    @Autowired
+    private BitbucketRequestMockProvider bitbucketRequestMockProvider;
+
     private Course additionalEmptyCourse;
 
     private ProgrammingExercise programmingExercise;
 
     @BeforeEach
-    public void setUp() throws MalformedURLException {
+    public void setUp() {
+        bambooRequestMockProvider.enableMockingOfRequests();
+        bitbucketRequestMockProvider.enableMockingOfRequests();
         databse.addUsers(1, 1, 1);
         databse.addInstructor("other-instructors", "instructorother");
         databse.addCourseWithOneProgrammingExerciseAndTestCases();
@@ -149,21 +170,44 @@ public class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringInt
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void importExercise_instructor_correctBuildPlansAndRepositories() throws Exception {
         final var toBeImported = createToBeImported();
+        final var verifications = new LinkedList<Verifiable>();
+        final var projectKey = toBeImported.getProjectKey();
+        final var sourceProjectKey = programmingExercise.getProjectKey();
+        final var templateRepoName = (projectKey + "-" + RepositoryType.TEMPLATE.getName()).toLowerCase();
+        final var solutionRepoName = (projectKey + "-" + RepositoryType.SOLUTION.getName()).toLowerCase();
+        final var testsRepoName = (projectKey + "-" + RepositoryType.TESTS.getName()).toLowerCase();
+        var nextParticipationId = programmingExercise.getTemplateParticipation().getId() + 1;
+        final var artemisSolutionHookPath = ARTEMIS_BASE_URL + PROGRAMMING_SUBMISSION_RESOURCE_API_PATH + nextParticipationId++;
+        final var artemisTemplateHookPath = ARTEMIS_BASE_URL + PROGRAMMING_SUBMISSION_RESOURCE_API_PATH + nextParticipationId++;
+        final var artemisTestsHookPath = ARTEMIS_BASE_URL + TEST_CASE_CHANGED_API_PATH + (programmingExercise.getId() + 1);
 
-        doReturn(toBeImported.getTemplateBuildPlanId()).when(continuousIntegrationService).copyBuildPlan(anyString(), eq(BuildPlanType.TEMPLATE.getName()), anyString(),
-                anyString(), eq(BuildPlanType.TEMPLATE.getName()));
-        doReturn(toBeImported.getSolutionBuildPlanId()).when(continuousIntegrationService).copyBuildPlan(anyString(), eq(BuildPlanType.SOLUTION.getName()), anyString(),
-                anyString(), eq(BuildPlanType.SOLUTION.getName()));
-        doNothing().when(continuousIntegrationService).enablePlan(anyString(), anyString());
-        doReturn(new DummyRepositoryUrl(DUMMY_URL)).when(versionControlService).getCloneRepositoryUrl(anyString(), anyString());
-        doNothing().when(versionControlService).createProjectForExercise(any());
-        doReturn(new DummyRepositoryUrl(DUMMY_URL)).when(versionControlService).copyRepository(anyString(), anyString(), anyString(), anyString());
-        doNothing().when(versionControlService).addWebHooksForExercise(any());
-        doNothing().when(continuousIntegrationService).giveProjectPermissions(anyString(), any(), any());
-        doNothing().when(continuousIntegrationService).updatePlanRepository(any(), any(), any(), any(), any(), any());
-        doNothing().when(continuousIntegrationService).triggerBuild(any());
+        verifications.add(bambooRequestMockProvider.mockCopyBuildPlan(programmingExercise.getProjectKey(), TEMPLATE.getName(), projectKey, TEMPLATE.getName()));
+        verifications.add(bambooRequestMockProvider.mockCopyBuildPlan(programmingExercise.getProjectKey(), SOLUTION.getName(), projectKey, SOLUTION.getName()));
+        verifications.add(bambooRequestMockProvider.mockEnablePlan(projectKey, TEMPLATE.getName()));
+        verifications.add(bambooRequestMockProvider.mockEnablePlan(projectKey, SOLUTION.getName()));
+        bitbucketRequestMockProvider.mockCreateProjectForExercise(toBeImported);
+        bitbucketRequestMockProvider.mockCopyRepository(sourceProjectKey, projectKey, programmingExercise.getTemplateRepositoryName(), templateRepoName);
+        bitbucketRequestMockProvider.mockCopyRepository(sourceProjectKey, projectKey, programmingExercise.getSolutionRepositoryName(), solutionRepoName);
+        bitbucketRequestMockProvider.mockCopyRepository(sourceProjectKey, projectKey, programmingExercise.getTestRepositoryName(), testsRepoName);
+        bitbucketRequestMockProvider.mockGetExistingWebhooks(projectKey, templateRepoName);
+        bitbucketRequestMockProvider.mockAddWebhook(projectKey, templateRepoName, artemisTemplateHookPath);
+        bitbucketRequestMockProvider.mockGetExistingWebhooks(projectKey, solutionRepoName);
+        bitbucketRequestMockProvider.mockAddWebhook(projectKey, solutionRepoName, artemisSolutionHookPath);
+        bitbucketRequestMockProvider.mockGetExistingWebhooks(projectKey, testsRepoName);
+        bitbucketRequestMockProvider.mockAddWebhook(projectKey, testsRepoName, artemisTestsHookPath);
+        bambooRequestMockProvider.mockGiveProjectPermissions(toBeImported);
+        bambooRequestMockProvider.mockUpdatePlanRepository(toBeImported, TEMPLATE.getName(), ASSIGNMENT_REPO_NAME, templateRepoName, List.of(ASSIGNMENT_REPO_NAME));
+        bambooRequestMockProvider.mockUpdatePlanRepository(toBeImported, TEMPLATE.getName(), TEST_REPO_NAME, testsRepoName, List.of());
+        bambooRequestMockProvider.mockUpdatePlanRepository(toBeImported, SOLUTION.getName(), ASSIGNMENT_REPO_NAME, solutionRepoName, List.of());
+        bambooRequestMockProvider.mockUpdatePlanRepository(toBeImported, SOLUTION.getName(), TEST_REPO_NAME, testsRepoName, List.of());
+        bambooRequestMockProvider.mockTriggerBuild(toBeImported.getProjectKey() + "-" + TEMPLATE.getName());
+        bambooRequestMockProvider.mockTriggerBuild(toBeImported.getProjectKey() + "-" + SOLUTION.getName());
 
         request.postWithResponseBody(BASE_RESOURCE + "import/" + programmingExercise.getId(), toBeImported, ProgrammingExercise.class, HttpStatus.OK);
+
+        for (final var verifiable : verifications) {
+            verifiable.performVerification();
+        }
     }
 
     @Test
@@ -186,31 +230,12 @@ public class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringInt
         assertThat(result.getResultsOnPage()).isEmpty();
     }
 
-    private ProgrammingExercise importExerciseBase() throws MalformedURLException {
+    private ProgrammingExercise importExerciseBase() {
         final var toBeImported = createToBeImported();
-        final var templateRepoName = toBeImported.getProjectKey().toLowerCase() + "-" + RepositoryType.TEMPLATE.getName();
-        final var solutionRepoName = toBeImported.getProjectKey().toLowerCase() + "-" + RepositoryType.SOLUTION.getName();
-        final var testRepoName = toBeImported.getProjectKey().toLowerCase() + "-" + RepositoryType.TESTS.getName();
-        when(versionControlService.getCloneRepositoryUrl(toBeImported.getProjectKey(), templateRepoName)).thenReturn(new DummyRepositoryUrl(DUMMY_URL));
-        when(versionControlService.getCloneRepositoryUrl(toBeImported.getProjectKey(), solutionRepoName)).thenReturn(new DummyRepositoryUrl(DUMMY_URL));
-        when(versionControlService.getCloneRepositoryUrl(toBeImported.getProjectKey(), testRepoName)).thenReturn(new DummyRepositoryUrl(DUMMY_URL));
-
         return programmingExerciseImportService.importProgrammingExerciseBasis(programmingExercise, toBeImported);
     }
 
     private ProgrammingExercise createToBeImported() {
         return ModelFactory.generateToBeImportedProgrammingExercise("Test", "TST", programmingExercise, additionalEmptyCourse);
-    }
-
-    private static final class DummyRepositoryUrl extends VcsRepositoryUrl {
-
-        public DummyRepositoryUrl(String url) throws MalformedURLException {
-            super(url);
-        }
-
-        @Override
-        public VcsRepositoryUrl withUser(String username) {
-            return null;
-        }
     }
 }

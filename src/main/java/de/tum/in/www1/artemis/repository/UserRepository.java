@@ -65,7 +65,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
     Page<User> findAllWithGroups(Pageable pageable);
 
     @Modifying
-    @Query("Update User user set user.lastNotificationRead = utc_timestamp where user.id = :#{#userId}")
+    @Query("Update User user set user.lastNotificationRead = current_timestamp() where user.id = :#{#userId}")
     void updateUserNotificationReadDate(@Param("userId") Long userId);
 
     @EntityGraph(attributePaths = { "groups" })

@@ -33,6 +33,7 @@ import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
 import de.tum.in.www1.artemis.security.AuthoritiesConstants;
 import de.tum.in.www1.artemis.security.PBEPasswordEncoder;
 import de.tum.in.www1.artemis.security.SecurityUtils;
+import de.tum.in.www1.artemis.service.connectors.JiraAuthenticationProvider;
 import de.tum.in.www1.artemis.service.connectors.VcsUserManagementService;
 import de.tum.in.www1.artemis.service.dto.UserDTO;
 import de.tum.in.www1.artemis.service.ldap.LdapUserDto;
@@ -438,7 +439,7 @@ public class UserService {
 
     /**
      * Updates the user in all connected systems (like GitLab) if necessary. Also updates the user in the used authentication
-     * provider (like {@link de.tum.in.www1.artemis.security.JiraAuthenticationProvider}.
+     * provider (like {@link JiraAuthenticationProvider}.
      *
      * @param user The updated user in Artemis
      * @param oldGroups The old groups of the user before the update

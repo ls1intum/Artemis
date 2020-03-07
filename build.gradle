@@ -32,8 +32,8 @@ plugins {
     id "net.ltgt.apt-idea"
     id "net.ltgt.apt"
     //jhipster-needle-gradle-plugins - JHipster will add additional gradle plugins here
-    id "com.diffplug.gradle.spotless" version "3.27.1"
-    id "com.github.spotbugs" version "3.0.0"
+    id "com.diffplug.gradle.spotless" version "3.27.2"
+    id "com.github.spotbugs" version "4.0.1"
 }
 
 group = "de.tum.in.www1.artemis"
@@ -86,13 +86,13 @@ spotless {
 }
 
 spotbugs {
-    toolVersion = '4.0.0-beta4'
+    toolVersion = '4.0.1'
     ignoreFailures = true
     effort = 'max'
     showProgress = true
 }
 
-tasks.withType(com.github.spotbugs.SpotBugsTask) {
+spotbugsMain {
     reports {
         xml.enabled = false
         html.enabled = true
@@ -148,7 +148,7 @@ jacocoTestCoverageVerification {
             limit {
                 counter = 'LINE'
                 value = 'COVEREDRATIO'
-                minimum = 0.60
+                minimum = 0.70
             }
         }
     }
@@ -172,7 +172,7 @@ repositories {
 
 dependencies {
     implementation 'com.offbytwo.jenkins:jenkins-client:0.3.8'
-    implementation group: 'org.gitlab4j', name: 'gitlab4j-api', version: '4.14.17'
+    implementation group: 'org.gitlab4j', name: 'gitlab4j-api', version: '4.14.18'
     implementation fileTree(dir: "libs", include: "*.jar")
     // https://mvnrepository.com/artifact/org.eclipse.jgit/org.eclipse.jgit
     implementation "org.eclipse.jgit:org.eclipse.jgit:5.6.1.202002131546-r"
@@ -190,15 +190,15 @@ dependencies {
     implementation platform("io.github.jhipster:jhipster-dependencies:${jhipster_dependencies_version}" )
 
     implementation "io.github.jhipster:jhipster-framework"
-    implementation "org.springframework.boot:spring-boot-starter-cache"
+    implementation "org.springframework.boot:spring-boot-starter-cache:${spring_boot_version}"
     implementation "io.micrometer:micrometer-registry-prometheus:1.3.5"
     implementation "net.logstash.logback:logstash-logback-encoder:6.3"
-    implementation "com.fasterxml.jackson.datatype:jackson-datatype-hppc:2.10.2"
-    implementation "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.10.2"
-    implementation "com.fasterxml.jackson.datatype:jackson-datatype-hibernate5:2.10.2"
-    implementation "com.fasterxml.jackson.core:jackson-annotations:2.10.2"
-    implementation "com.fasterxml.jackson.core:jackson-databind:2.10.2"
-    implementation "com.fasterxml.jackson.module:jackson-module-afterburner:2.10.2"
+    implementation "com.fasterxml.jackson.datatype:jackson-datatype-hppc:2.10.3"
+    implementation "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.10.3"
+    implementation "com.fasterxml.jackson.datatype:jackson-datatype-hibernate5:2.10.3"
+    implementation "com.fasterxml.jackson.core:jackson-annotations:2.10.3"
+    implementation "com.fasterxml.jackson.core:jackson-databind:2.10.3"
+    implementation "com.fasterxml.jackson.module:jackson-module-afterburner:2.10.3"
     implementation "javax.cache:cache-api:1.1.1"
     implementation "org.hibernate:hibernate-core"
     implementation "com.zaxxer:HikariCP:3.4.2"
@@ -211,27 +211,27 @@ dependencies {
     implementation "org.hibernate:hibernate-entitymanager"
     implementation "org.hibernate.validator:hibernate-validator:6.1.2.Final"
     implementation "org.liquibase:liquibase-core:3.8.7"
-    implementation "org.springframework.boot:spring-boot-loader-tools"
-    implementation "org.springframework.boot:spring-boot-starter-mail"
-    implementation "org.springframework.boot:spring-boot-starter-logging"
-    implementation "org.springframework.boot:spring-boot-starter-actuator"
-    implementation "org.springframework.boot:spring-boot-starter-aop"
-    implementation "org.springframework.boot:spring-boot-starter-data-jpa"
-    implementation "org.springframework.boot:spring-boot-starter-security"
-    implementation ("org.springframework.boot:spring-boot-starter-web") {
+    implementation "org.springframework.boot:spring-boot-loader-tools:${spring_boot_version}"
+    implementation "org.springframework.boot:spring-boot-starter-mail:${spring_boot_version}"
+    implementation "org.springframework.boot:spring-boot-starter-logging:${spring_boot_version}"
+    implementation "org.springframework.boot:spring-boot-starter-actuator:${spring_boot_version}"
+    implementation "org.springframework.boot:spring-boot-starter-aop:${spring_boot_version}"
+    implementation "org.springframework.boot:spring-boot-starter-data-jpa:${spring_boot_version}"
+    implementation "org.springframework.boot:spring-boot-starter-security:${spring_boot_version}"
+    implementation ("org.springframework.boot:spring-boot-starter-web:${spring_boot_version}") {
         exclude module: "spring-boot-starter-undertow"
     }
-    implementation "org.springframework.boot:spring-boot-starter-tomcat"
-    implementation "org.springframework.boot:spring-boot-starter-websocket"
-    implementation "org.springframework.boot:spring-boot-starter-thymeleaf"
+    implementation "org.springframework.boot:spring-boot-starter-tomcat:${spring_boot_version}"
+    implementation "org.springframework.boot:spring-boot-starter-websocket:${spring_boot_version}"
+    implementation "org.springframework.boot:spring-boot-starter-thymeleaf:${spring_boot_version}"
 
     implementation "org.springframework.ldap:spring-ldap-core"
     implementation "org.springframework.data:spring-data-ldap:2.2.5.RELEASE"
 
-    implementation "org.springframework.security:spring-security-config"
-    implementation "org.springframework.security:spring-security-data"
-    implementation "org.springframework.security:spring-security-web"
-    implementation "org.springframework.security:spring-security-messaging"
+    implementation "org.springframework.security:spring-security-config:${spring_security_version}"
+    implementation "org.springframework.security:spring-security-data:${spring_security_version}"
+    implementation "org.springframework.security:spring-security-web:${spring_security_version}"
+    implementation "org.springframework.security:spring-security-messaging:${spring_security_version}"
     implementation "io.jsonwebtoken:jjwt-api:0.11.0"
     runtimeOnly "io.jsonwebtoken:jjwt-impl:0.11.0"
     runtimeOnly "io.jsonwebtoken:jjwt-jackson:0.11.0"
@@ -251,12 +251,12 @@ dependencies {
     annotationProcessor ("org.springframework.boot:spring-boot-configuration-processor:${spring_boot_version}") {
         exclude group: "com.vaadin.external.google", module: "android-json"
     }
-    testImplementation ("org.springframework.boot:spring-boot-starter-test") {
+    testImplementation ("org.springframework.boot:spring-boot-starter-test:${spring_boot_version}") {
         exclude module: "junit"
         exclude group: "com.vaadin.external.google", module: "android-json"
     }
-    testImplementation "org.springframework.security:spring-security-test"
-    testImplementation "org.springframework.boot:spring-boot-test"
+    testImplementation "org.springframework.security:spring-security-test:${spring_security_version}"
+    testImplementation "org.springframework.boot:spring-boot-test:${spring_boot_version}"
     testImplementation "org.assertj:assertj-core:3.15.0"
     testImplementation "org.junit.jupiter:junit-jupiter-api:5.5.2"
     testImplementation "org.junit.jupiter:junit-jupiter-params:5.5.2"
@@ -319,7 +319,7 @@ tasks.withType(Test) {
 }
 
 wrapper {
-    gradleVersion = "6.2.1"
+    gradleVersion = "6.2.2"
 }
 
 task stage(dependsOn: "bootWar") {

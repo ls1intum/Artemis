@@ -20,7 +20,7 @@
     <button
         id="save_button"
         type="button"
-        class="btn btn-primary navbar-btn mr-3"
+        class="guided-tour-save-button btn btn-primary navbar-btn mr-3"
         [jhiFeatureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
         [overwriteDisabled]="
             disableActions ||
@@ -42,7 +42,7 @@
     <button
         id="submit_button"
         type="button"
-        class="btn btn-success navbar-btn"
+        class="guided-tour-submit-button btn btn-success navbar-btn"
         [jhiFeatureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
         [overwriteDisabled]="
             disableActions || editorState === EditorState.SAVING || isBuilding || (commitState !== CommitState.UNCOMMITTED_CHANGES && commitState !== CommitState.CLEAN)
