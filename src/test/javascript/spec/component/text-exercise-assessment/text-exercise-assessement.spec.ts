@@ -53,6 +53,7 @@ describe('TextAssessmentComponent', () => {
     let assessmentsService: TextAssessmentsService;
     let getTextSubmissionForExerciseWithoutAssessmentStub: SinonStub;
     let getFeedbackDataForExerciseSubmissionStub: SinonStub;
+    let saveAssessmentStub: SinonStub;
     let debugElement: DebugElement;
     let router: Router;
     let location: Location;
@@ -117,6 +118,7 @@ describe('TextAssessmentComponent', () => {
                 getTextSubmissionForExerciseWithoutAssessmentStub = stub(textSubmissionService, 'getTextSubmissionForExerciseWithoutAssessment');
                 assessmentsService = TestBed.inject(TextAssessmentsService);
                 getFeedbackDataForExerciseSubmissionStub = stub(assessmentsService, 'getFeedbackDataForExerciseSubmission');
+                saveAssessmentStub = stub(assessmentsService, 'save');
 
                 router.initialNavigation();
             });
@@ -300,5 +302,10 @@ describe('TextAssessmentComponent', () => {
         expect(comp.referencedFeedback[0].reference).to.be.equal(assessmentText);
         expect(comp.referencedFeedback[0].credits).to.be.equal(0);
         expect(comp.referencedTextBlocks.length).to.be.equal(1);
+    }));
+
+    it('Should not save invalid assessments', fakeAsync(() => {
+        comp.save();
+        expect(saveAssessmentStub.called).to.be.false;
     }));
 });
