@@ -36,7 +36,7 @@ export class CourseUpdateComponent implements OnInit {
     croppedImage: any = '';
     showCropper = false;
     presentationScoreEnabled = false;
-    setMaxComplaintsEnabled = false;
+    setMaxComplaintsEnabled = true;
 
     shortNamePattern = /^[a-zA-Z][a-zA-Z0-9]*$/; // must start with a letter and cannot contain special characters
     presentationScorePattern = /^[0-9]{0,4}$/; // makes sure that the presentation score is a positive natural integer greater than 0 and not too large
@@ -64,7 +64,7 @@ export class CourseUpdateComponent implements OnInit {
                 validators: [Validators.required, Validators.min(0)],
             }),
             maxComplaintTimeDays: new FormControl(this.course.maxComplaintTimeDays, {
-                validators: [Validators.required, Validators.min(7)],
+                validators: [Validators.required, Validators.min(0)],
             }),
             studentQuestionsEnabled: new FormControl(this.course.studentQuestionsEnabled),
             studentGroupName: new FormControl(this.course.studentGroupName, [Validators.required]),
@@ -210,9 +210,12 @@ export class CourseUpdateComponent implements OnInit {
         // @ts-ignore
         if (event.target.checked) {
             this.setMaxComplaintsEnabled = true;
+            this.courseForm.controls.maxComplaints.setValue(3);
+            this.courseForm.controls.maxComplaintTimeDays.setValue(7);
         } else {
             this.setMaxComplaintsEnabled = false;
             this.courseForm.controls.maxComplaints.setValue(0);
+            this.courseForm.controls.maxComplaintTimeDays.setValue(0);
         }
     }
 }

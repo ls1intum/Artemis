@@ -29,7 +29,7 @@
             },
             "maxComplaintTimeDays": {
                 "title": "Deadline for complaints in days after result date",
-                "description": "Maximum Complaint Deadline for student complaints. When the complaint is submitted after the deadline, it will be rejected."
+                "description": "Maximum Complaint Deadline for student complaints. This refers to days after the result is available (assessment due date or after the result date depending on which one is later). Students will not be able to complain anymore after the deadline."
             },
             "studentQuestionsEnabled": {
                 "title": "Enable Questions and Answers by students",

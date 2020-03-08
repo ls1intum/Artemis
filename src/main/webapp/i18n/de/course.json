@@ -29,7 +29,7 @@
             },
             "maxComplaintTimeDays": {
                 "title": "Beschwerdefrist in Tagen nach dem Ergebnis",
-                "description": "Maximale Beschwerdefrist von Studentenbeschwerden setzen. Wenn die Beschwerde nach der Frist eingereicht würde, wird es abgelehnt."
+                "description": "Maximale Beschwerdefrist von Studentenbeschwerden setzen. Diese Anzahl bezieht sich auf die Tage, nachdem das Ergebnis verfügbar ist (Fälligkeitsdatum der Bewertung oder nach dem Ergebnisdatum, je nachdem, welches später liegt). Studenten können sich nach Ablauf der Frist nicht mehr beschweren."
             },
             "studentQuestionsEnabled": {
                 "title": "Fragen und Antworten von Studierenden aktivieren",
