@@ -8,4 +8,24 @@
     (markdownChange)="prepareForSave()"
     (textWithDomainCommandsFound)="domainCommandsFound($event)"
 >
+    <!-- Preview -->
+    <ng-container #preview>
+        <div class="pt-1 background-editor-high markdown-preview">
+            <div *ngFor="let criterion of exercise.gradingCriteria">
+                <label class="font-weight-bold">{{ criterion.title }}</label>
+                <table class="table table-bordered">
+                    <tbody>
+                        <tr *ngFor="let instruction of criterion.structuredGradingInstructions">
+                            <td style="width: 5%">{{ instruction.credits }}</td>
+                            <td style="width: 10%">{{ instruction.gradingScale }}</td>
+                            <td style="width: 40%">{{ instruction.instructionDescription }}</td>
+                            <td style="width: 40%">{{ instruction.feedback }}</td>
+                            <td style="width: 5%">{{ instruction.usageCount }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </ng-container>
+    <!-- End of Preview-->
 </jhi-markdown-editor>
