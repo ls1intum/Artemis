@@ -56,10 +56,17 @@ public class StudentQuestionAnswerIntegrationTest extends AbstractSpringIntegrat
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void createStudentQuestionAnswer() throws Exception {
-        StudentQuestionAnswer studentQuestionAnswer = createStudentQuestionAnswerOnServer();
+        StudentQuestion studentQuestion = database.createExercisesAndLecturesWithStudentQuestions().get(0);
+
+        StudentQuestionAnswer studentQuestionAnswer = new StudentQuestionAnswer();
+        studentQuestionAnswer.setAuthor(database.getUserByLogin("tutor1"));
+        studentQuestionAnswer.setAnswerText("Test Answer");
+        studentQuestionAnswer.setAnswerDate(ZonedDateTime.now());
+        studentQuestionAnswer.setQuestion(studentQuestion);
+        StudentQuestionAnswer response = request.postWithResponseBody("/api/student-question-answers", studentQuestionAnswer, StudentQuestionAnswer.class, HttpStatus.CREATED);
 
         // trying to create same studentQuestionAnswer again --> bad request
-        request.postWithResponseBody("/api/student-question-answers", studentQuestionAnswer, StudentQuestionAnswer.class, HttpStatus.BAD_REQUEST);
+        request.postWithResponseBody("/api/student-question-answers", response, StudentQuestionAnswer.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -127,6 +134,8 @@ public class StudentQuestionAnswerIntegrationTest extends AbstractSpringIntegrat
         studentQuestionAnswer.setAnswerText("Test Answer");
         studentQuestionAnswer.setAnswerDate(ZonedDateTime.now());
         studentQuestionAnswer.setQuestion(studentQuestion);
-        return request.postWithResponseBody("/api/student-question-answers", studentQuestionAnswer, StudentQuestionAnswer.class, HttpStatus.CREATED);
+        studentQuestionAnswerRepository.save(studentQuestionAnswer);
+        return studentQuestionAnswer;
+        //return request.postWithResponseBody("/api/student-question-answers", studentQuestionAnswer, StudentQuestionAnswer.class, HttpStatus.CREATED);
     }
 }
