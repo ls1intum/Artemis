@@ -81,7 +81,20 @@ public class StudentQuestionIntegrationTest extends AbstractSpringIntegrationTes
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void editStudentQuestion() throws Exception {
+    public void editStudentQuestion_asInstructor() throws Exception {
+        StudentQuestion studentQuestion = database.createCourseWithExerciseAndStudentQuestions().get(0);
+
+        studentQuestion.setVisibleForStudents(false);
+        studentQuestion.setQuestionText("New Test Student Question");
+
+        StudentQuestion updatedStudentQuestion = request.putWithResponseBody("/api/student-questions", studentQuestion, StudentQuestion.class, HttpStatus.OK);
+        assertThat(updatedStudentQuestion.getQuestionText().equals("New Test Student Question"));
+        assertThat(updatedStudentQuestion.isVisibleForStudents()).isFalse();
+    }
+
+    @Test
+    @WithMockUser(username = "student3", roles = "USER")
+    public void editStudentQuestion_asStudent() throws Exception {
         StudentQuestion studentQuestion = database.createCourseWithExerciseAndStudentQuestions().get(0);
 
         studentQuestion.setVisibleForStudents(false);

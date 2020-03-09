@@ -71,7 +71,7 @@ public class StudentQuestionAnswerIntegrationTest extends AbstractSpringIntegrat
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void editStudentQuestionAnswer() throws Exception {
+    public void editStudentQuestionAnswer_asInstructor() throws Exception {
         StudentQuestionAnswer studentQuestionAnswer = createStudentQuestionAnswerOnServer();
 
         studentQuestionAnswer.setAuthor(database.getUserByLogin("tutor2"));
@@ -86,6 +86,19 @@ public class StudentQuestionAnswerIntegrationTest extends AbstractSpringIntegrat
         StudentQuestionAnswer newStudentQuestionAnswerServer = request.putWithResponseBody("/api/student-question-answers", newStudentQuestionAnswer, StudentQuestionAnswer.class,
                 HttpStatus.BAD_REQUEST);
         assertThat(newStudentQuestionAnswerServer).isNull();
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void editStudentQuestionAnswer_asStudent() throws Exception {
+        StudentQuestionAnswer studentQuestionAnswer = createStudentQuestionAnswerOnServer();
+
+        studentQuestionAnswer.setAuthor(database.getUserByLogin("tutor2"));
+        studentQuestionAnswer.setAnswerText("New Answer Text");
+        studentQuestionAnswer.setAnswerDate(ZonedDateTime.now().minusHours(1));
+        StudentQuestionAnswer updatedStudentQuestionAnswerServer = request.putWithResponseBody("/api/student-question-answers", studentQuestionAnswer, StudentQuestionAnswer.class,
+                HttpStatus.OK);
+        assertThat(updatedStudentQuestionAnswerServer).isEqualTo(studentQuestionAnswer);
     }
 
     @Test
