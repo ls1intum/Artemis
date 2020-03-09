@@ -69,7 +69,7 @@ public class StudentQuestionIntegrationTest extends AbstractSpringIntegrationTes
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void createExistingStudentQuestion() throws Exception {
-        StudentQuestion studentQuestion = database.createExercisesAndLecturesWithStudentQuestions().get(0);
+        StudentQuestion studentQuestion = database.createExerciseAndLectureWithStudentQuestions().get(0);
 
         request.postWithResponseBody("/api/student-questions", studentQuestion, StudentQuestion.class, HttpStatus.BAD_REQUEST);
     }
@@ -77,7 +77,7 @@ public class StudentQuestionIntegrationTest extends AbstractSpringIntegrationTes
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void editStudentQuestion() throws Exception {
-        StudentQuestion studentQuestion = database.createExercisesAndLecturesWithStudentQuestions().get(0);
+        StudentQuestion studentQuestion = database.createExerciseAndLectureWithStudentQuestions().get(0);
 
         studentQuestion.setVisibleForStudents(false);
         studentQuestion.setQuestionText("New Test Student Question");
@@ -90,31 +90,31 @@ public class StudentQuestionIntegrationTest extends AbstractSpringIntegrationTes
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void getAllStudentQuestionsForExercise() throws Exception {
-        StudentQuestion studentQuestion = database.createExercisesAndLecturesWithStudentQuestions().get(0);
+        StudentQuestion studentQuestion = database.createExerciseAndLectureWithStudentQuestions().get(0);
         Long exerciseID = studentQuestion.getExercise().getId();
 
         List<StudentQuestion> returnedStudentQuestions = request.getList("/api/exercises/" + exerciseID + "/student-questions", HttpStatus.OK, StudentQuestion.class);
-        assertThat(returnedStudentQuestions.size()).isEqualTo(5);
+        assertThat(returnedStudentQuestions.size()).isEqualTo(2);
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void getAllStudentQuestionsForLecture() throws Exception {
-        StudentQuestion studentQuestion = database.createExercisesAndLecturesWithStudentQuestions().get(0);
+        StudentQuestion studentQuestion = database.createExerciseAndLectureWithStudentQuestions().get(0);
         Long lectureID = studentQuestion.getLecture().getId();
 
         List<StudentQuestion> returnedStudentQuestions = request.getList("/api/lectures/" + lectureID + "/student-questions", HttpStatus.OK, StudentQuestion.class);
-        assertThat(returnedStudentQuestions.size()).isEqualTo(5);
+        assertThat(returnedStudentQuestions.size()).isEqualTo(2);
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void deleteStudentQuestion() throws Exception {
-        List<StudentQuestion> studentQuestions = database.createExercisesAndLecturesWithStudentQuestions();
+        List<StudentQuestion> studentQuestions = database.createExerciseAndLectureWithStudentQuestions();
         StudentQuestion studentQuestion = studentQuestions.get(0);
 
         request.delete("/api/student-questions/" + studentQuestion.getId(), HttpStatus.OK);
-        assertThat(studentQuestionRepository.count()).isEqualTo(4);
+        assertThat(studentQuestionRepository.count()).isEqualTo(1);
 
         // try to delete not existing question
         request.delete("/api/student-questions/999", HttpStatus.NOT_FOUND);
@@ -123,16 +123,16 @@ public class StudentQuestionIntegrationTest extends AbstractSpringIntegrationTes
         studentQuestion1.setLecture(null);
         studentQuestionRepository.save(studentQuestion1);
         request.delete("/api/student-questions/" + studentQuestion1.getId(), HttpStatus.OK);
-        assertThat(studentQuestionRepository.count()).isEqualTo(3);
+        assertThat(studentQuestionRepository.count()).isEqualTo(0);
     }
 
     @Test
     @WithMockUser(username = "student5", roles = "USER")
     public void deleteStudentQuestionFromOtherStudent() throws Exception {
-        StudentQuestion studentQuestion = database.createExercisesAndLecturesWithStudentQuestions().get(0);
+        StudentQuestion studentQuestion = database.createExerciseAndLectureWithStudentQuestions().get(0);
 
         request.delete("/api/student-questions/" + studentQuestion.getId(), HttpStatus.FORBIDDEN);
-        assertThat(studentQuestionRepository.count()).isEqualTo(5);
+        assertThat(studentQuestionRepository.count()).isEqualTo(2);
     }
 
 }

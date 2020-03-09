@@ -440,20 +440,49 @@ public class DatabaseUtilService {
         return Arrays.asList(course1, course2);
     }
 
-    public List<StudentQuestion> createExercisesAndLecturesWithStudentQuestions() throws Exception {
-        List<Course> courses = createCoursesWithExercisesAndLectures();
-        Course course1 = courses.get(0);
+    public List<StudentQuestion> createExerciseAndLectureWithStudentQuestions() throws Exception {
+        ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(5);
+        ZonedDateTime futureTimestamp = ZonedDateTime.now().plusDays(5);
+        ZonedDateTime futureFutureTimestamp = ZonedDateTime.now().plusDays(8);
+
+        Course course1 = ModelFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "tumuser", "tutor", "instructor");
+
+        TextExercise textExercise = ModelFactory.generateTextExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, course1);
+        textExercise.setGradingInstructions("some grading instructions");
+        addGradingInstructionsToExercise(textExercise);
+        textExercise.getCategories().add("Text");
+        course1.addExercises(textExercise);
+
+        Lecture lecture1 = ModelFactory.generateLecture(pastTimestamp, futureFutureTimestamp, course1);
+        Attachment attachment1 = ModelFactory.generateAttachment(pastTimestamp, lecture1);
+        lecture1.addAttachments(attachment1);
+        course1.addLectures(lecture1);
+
+        courseRepo.save(course1);
+        lectureRepo.save(lecture1);
+        attachmentRepo.save(attachment1);
+
+        textExercise = exerciseRepo.save(textExercise);
+
         List<StudentQuestion> studentQuestions = new ArrayList<>();
-        for (int i = 1; i < 6; i++) {
-            StudentQuestion studentQuestion = new StudentQuestion();
-            studentQuestion.setExercise(course1.getExercises().iterator().next());
-            studentQuestion.setLecture(course1.getLectures().iterator().next());
-            studentQuestion.setQuestionText("Test Student Question" + i);
-            studentQuestion.setVisibleForStudents(true);
-            studentQuestion.setAuthor(getUserByLogin("student" + i));
-            studentQuestionRepository.save(studentQuestion);
-            studentQuestions.add(studentQuestion);
-        }
+
+        StudentQuestion studentQuestion1 = new StudentQuestion();
+        studentQuestion1.setLecture(lecture1);
+        studentQuestion1.setExercise(textExercise);
+        studentQuestion1.setQuestionText("Test Student Question 1");
+        studentQuestion1.setVisibleForStudents(true);
+        studentQuestion1.setAuthor(getUserByLogin("student1"));
+        studentQuestionRepository.save(studentQuestion1);
+        studentQuestions.add(studentQuestion1);
+
+        StudentQuestion studentQuestion2 = new StudentQuestion();
+        studentQuestion2.setLecture(lecture1);
+        studentQuestion2.setExercise(textExercise);
+        studentQuestion2.setQuestionText("Test Student Question 2");
+        studentQuestion2.setVisibleForStudents(true);
+        studentQuestion2.setAuthor(getUserByLogin("student2"));
+        studentQuestionRepository.save(studentQuestion2);
+        studentQuestions.add(studentQuestion2);
 
         return studentQuestions;
     }
