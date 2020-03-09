@@ -10,7 +10,7 @@ export class InstructionDescriptionCommand extends DomainTagCommand {
 
     /**
      * @function execute
-     * @desc Add a new hint to the answer option or question title in the editor at the location of the cursor
+     * @desc Add a new description of the instruction in the editor at the location of the cursor
      */
     execute(): void {
         const text = '\n' + this.getOpeningIdentifier() + InstructionDescriptionCommand.text;
@@ -19,7 +19,7 @@ export class InstructionDescriptionCommand extends DomainTagCommand {
 
     /**
      * @function getOpeningIdentifier
-     * @desc identify the start of the hint
+     * @desc identify the start of the instruction description
      */
     getOpeningIdentifier(): string {
         return InstructionDescriptionCommand.identifier;
@@ -27,7 +27,7 @@ export class InstructionDescriptionCommand extends DomainTagCommand {
 
     /**
      * @function getClosingIdentifier
-     * @desc identify the end of the hint
+     * @desc identify the end of the instruction description
      */
     getClosingIdentifier(): string {
         return '[/description]';
