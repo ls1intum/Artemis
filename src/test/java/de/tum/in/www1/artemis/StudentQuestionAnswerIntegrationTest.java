@@ -56,7 +56,7 @@ public class StudentQuestionAnswerIntegrationTest extends AbstractSpringIntegrat
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void createStudentQuestionAnswer() throws Exception {
-        StudentQuestion studentQuestion = database.createExerciseAndLectureWithStudentQuestions().get(0);
+        StudentQuestion studentQuestion = database.createCourseWithExerciseAndStudentQuestions().get(0);
 
         StudentQuestionAnswer studentQuestionAnswer = new StudentQuestionAnswer();
         studentQuestionAnswer.setAuthor(database.getUserByLogin("tutor1"));
@@ -127,7 +127,7 @@ public class StudentQuestionAnswerIntegrationTest extends AbstractSpringIntegrat
     }
 
     private StudentQuestionAnswer createStudentQuestionAnswerOnServer() throws Exception {
-        StudentQuestion studentQuestion = database.createExerciseAndLectureWithStudentQuestions().get(0);
+        StudentQuestion studentQuestion = database.createCourseWithExerciseAndStudentQuestions().get(0);
 
         StudentQuestionAnswer studentQuestionAnswer = new StudentQuestionAnswer();
         studentQuestionAnswer.setAuthor(database.getUserByLogin("tutor1"));

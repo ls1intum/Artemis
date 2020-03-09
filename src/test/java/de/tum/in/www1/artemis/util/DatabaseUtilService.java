@@ -440,7 +440,7 @@ public class DatabaseUtilService {
         return Arrays.asList(course1, course2);
     }
 
-    public List<StudentQuestion> createExerciseAndLectureWithStudentQuestions() throws Exception {
+    public List<StudentQuestion> createCourseWithExerciseAndStudentQuestions() throws Exception {
         ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(5);
         ZonedDateTime futureTimestamp = ZonedDateTime.now().plusDays(5);
         ZonedDateTime futureFutureTimestamp = ZonedDateTime.now().plusDays(8);
@@ -453,21 +453,11 @@ public class DatabaseUtilService {
         textExercise.getCategories().add("Text");
         course1.addExercises(textExercise);
 
-        Lecture lecture1 = ModelFactory.generateLecture(pastTimestamp, futureFutureTimestamp, course1);
-        Attachment attachment1 = ModelFactory.generateAttachment(pastTimestamp, lecture1);
-        lecture1.addAttachments(attachment1);
-        course1.addLectures(lecture1);
-
         courseRepo.save(course1);
-        lectureRepo.save(lecture1);
-        attachmentRepo.save(attachment1);
-
         textExercise = exerciseRepo.save(textExercise);
 
         List<StudentQuestion> studentQuestions = new ArrayList<>();
-
         StudentQuestion studentQuestion1 = new StudentQuestion();
-        studentQuestion1.setLecture(lecture1);
         studentQuestion1.setExercise(textExercise);
         studentQuestion1.setQuestionText("Test Student Question 1");
         studentQuestion1.setVisibleForStudents(true);
@@ -476,7 +466,6 @@ public class DatabaseUtilService {
         studentQuestions.add(studentQuestion1);
 
         StudentQuestion studentQuestion2 = new StudentQuestion();
-        studentQuestion2.setLecture(lecture1);
         studentQuestion2.setExercise(textExercise);
         studentQuestion2.setQuestionText("Test Student Question 2");
         studentQuestion2.setVisibleForStudents(true);
