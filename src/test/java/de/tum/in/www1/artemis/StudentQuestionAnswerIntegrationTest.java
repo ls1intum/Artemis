@@ -136,6 +136,5 @@ public class StudentQuestionAnswerIntegrationTest extends AbstractSpringIntegrat
         studentQuestionAnswer.setQuestion(studentQuestion);
         studentQuestionAnswerRepository.save(studentQuestionAnswer);
         return studentQuestionAnswer;
-        //return request.postWithResponseBody("/api/student-question-answers", studentQuestionAnswer, StudentQuestionAnswer.class, HttpStatus.CREATED);
     }
 }
