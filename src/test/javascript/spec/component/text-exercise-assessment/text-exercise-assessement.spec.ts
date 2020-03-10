@@ -114,9 +114,11 @@ describe('TextAssessmentComponent', () => {
                 debugElement = fixture.debugElement;
                 router = debugElement.injector.get(Router);
                 location = debugElement.injector.get(Location);
-                textSubmissionService = TestBed.inject(TextSubmissionService);
+
+                textSubmissionService = debugElement.injector.get(TextSubmissionService);
+                assessmentsService = debugElement.injector.get(TextAssessmentsService);
+
                 getTextSubmissionForExerciseWithoutAssessmentStub = stub(textSubmissionService, 'getTextSubmissionForExerciseWithoutAssessment');
-                assessmentsService = TestBed.inject(TextAssessmentsService);
                 getFeedbackDataForExerciseSubmissionStub = stub(assessmentsService, 'getFeedbackDataForExerciseSubmission');
                 saveAssessmentStub = stub(assessmentsService, 'save');
 
@@ -127,6 +129,7 @@ describe('TextAssessmentComponent', () => {
     afterEach(() => {
         getTextSubmissionForExerciseWithoutAssessmentStub.restore();
         getFeedbackDataForExerciseSubmissionStub.restore();
+        saveAssessmentStub.restore();
     });
 
     it(
@@ -307,5 +310,21 @@ describe('TextAssessmentComponent', () => {
     it('Should not save invalid assessments', fakeAsync(() => {
         comp.save();
         expect(saveAssessmentStub.called).to.be.false;
+    }));
+
+    it('Should save valid assessments', fakeAsync(() => {
+        const feedback = new Feedback();
+        feedback.reference = 'reference';
+        feedback.credits = 5;
+        comp.referencedFeedback = [feedback];
+        comp.result = { id: 1 } as any;
+        participation.results = [];
+        comp.participation = participation;
+        saveAssessmentStub.onCall(0).returns(of({ body: result }));
+        comp.save();
+        expect(saveAssessmentStub.called).to.be.true;
+        expect(comp.result).to.be.equal(result);
+        expect(comp.participation.results[0]).to.be.equal(result);
+        expect(comp.showResult).to.be.true;
     }));
 });
