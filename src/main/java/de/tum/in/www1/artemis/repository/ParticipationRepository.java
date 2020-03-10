@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.repository;
 
+import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
+
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.EntityGraph;
@@ -26,6 +28,6 @@ public interface ParticipationRepository extends JpaRepository<Participation, Lo
      * @param participationId the id of the participation
      * @return the participation with eager submissions or an empty Optional
      */
-    @EntityGraph(attributePaths = { "submissions" })
+    @EntityGraph(type = LOAD, attributePaths = { "submissions" })
     Optional<Participation> findWithEagerSubmissionsById(Long participationId);
 }

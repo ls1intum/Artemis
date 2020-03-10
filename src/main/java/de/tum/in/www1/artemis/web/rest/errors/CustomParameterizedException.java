@@ -34,6 +34,11 @@ public class CustomParameterizedException extends AbstractThrowableProblem {
         super(ErrorConstants.PARAMETERIZED_TYPE, "Parameterized Exception", BAD_REQUEST, null, null, null, toProblemParameters(message, paramMap));
     }
 
+    /**
+     * converts a string array to a param map
+     * @param params params as strings
+     * @return a map of params
+     */
     public static Map<String, Object> toParamMap(String... params) {
         Map<String, Object> paramMap = new HashMap<>();
         if (params != null && params.length > 0) {

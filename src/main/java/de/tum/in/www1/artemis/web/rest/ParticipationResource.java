@@ -113,7 +113,6 @@ public class ParticipationResource {
      */
     @PostMapping(Endpoints.START_PARTICIPATION)
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    // TODO: remove courseId attribute
     public ResponseEntity<Participation> startParticipation(@PathVariable Long courseId, @PathVariable Long exerciseId) throws URISyntaxException {
         log.debug("REST request to start Exercise : {}", exerciseId);
         Exercise exercise = exerciseService.findOneWithAdditionalElements(exerciseId);
@@ -655,6 +654,11 @@ public class ParticipationResource {
         return participationService.findOneWithEagerCourse(participation.getId()).getExercise().getCourse();
     }
 
+    /**
+     * fetches all submissions of a specific participation
+     * @param participationId the id of the participation
+     * @return all submissions that belong to the participation
+     */
     @GetMapping(value = "/participations/{participationId}/submissions")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<List<Submission>> getSubmissionsOfParticipation(@PathVariable Long participationId) {
