@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.repository;
 
+import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
+
 import java.util.List;
 import java.util.Optional;
 
@@ -17,14 +19,14 @@ import de.tum.in.www1.artemis.domain.Submission;
 @Repository
 public interface SubmissionRepository extends JpaRepository<Submission, Long> {
 
-    @EntityGraph(attributePaths = { "result", "result.assessor" })
+    @EntityGraph(type = LOAD, attributePaths = { "result", "result.assessor" })
     Optional<Submission> findWithEagerResultById(Long submissionId);
 
     @Query("select distinct submission from Submission submission left join fetch submission.result r left join fetch r.feedbacks where submission.exampleSubmission = true and submission.id = :#{#submissionId}")
     Optional<Submission> findSubmissionWithExampleSubmissionByIdWithEagerResult(long submissionId);
 
     /* Get all submissions from a participation_id and load result at the same time */
-    @EntityGraph(attributePaths = { "result" })
+    @EntityGraph(type = LOAD, attributePaths = { "result" })
     List<Submission> findAllByParticipationId(Long participationId);
 
     /**

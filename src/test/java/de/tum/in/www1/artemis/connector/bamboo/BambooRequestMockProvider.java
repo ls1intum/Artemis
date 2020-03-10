@@ -174,12 +174,12 @@ public class BambooRequestMockProvider {
         final var verifications = new LinkedList<Verifiable>();
         final var projectKey = exercise.getProjectKey();
         final var planKey = (projectKey + "-" + planName).toUpperCase();
-        final var repositoryResponse = new RemoteRepository(null, null, "testName");
+        final var repositoryResponse = new RemoteRepository(null, 12345678L, "testName");
 
-        when(repositoryHelper.getRemoteRepository(bambooRepoName, planKey, false)).thenReturn(repositoryResponse);
+        doReturn(repositoryResponse).when(repositoryHelper).getRemoteRepository(bambooRepoName, planKey, false);
         verifications.add(() -> verify(repositoryHelper, times(1)).getRemoteRepository(bambooRepoName, planKey, false));
 
-        doNothing().when(bambooBuildPlanUpdateProvider).updateRepository(any(), eq(bitbucketRepoName), eq(projectKey.toUpperCase()), eq(planKey));
+        doNothing().when(bambooBuildPlanUpdateProvider).updateRepository(any(), anyString(), anyString(), anyString());
 
         if (!triggeredBy.isEmpty()) {
             // Bamboo specific format for the used CLI dependency. Nothing we can improve here

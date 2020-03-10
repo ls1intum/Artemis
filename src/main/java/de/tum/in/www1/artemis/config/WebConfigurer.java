@@ -141,6 +141,9 @@ public class WebConfigurer implements ServletContextInitializer, WebServerFactor
         loggingFilter.setAsyncSupported(true);
     }
 
+    /**
+     * @return register the cors filter bean
+     */
     @Bean
     public CorsFilter corsFilter() {
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();

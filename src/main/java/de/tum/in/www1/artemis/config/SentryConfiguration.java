@@ -29,6 +29,9 @@ public class SentryConfiguration {
     @Value("${info.sentry.dsn}")
     private String SENTRY_DSN;
 
+    /**
+     * init sentry with the correct pacakge name and Artemis version
+     */
     @PostConstruct
     public void init() {
         final String dsn = SENTRY_DSN + "?stacktrace.app.packages=de.tum.in.www1.artemis";
