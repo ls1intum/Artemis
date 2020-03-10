@@ -125,7 +125,7 @@ export class CourseExerciseRowComponent implements OnInit, OnDestroy {
         const isClickResult = event.target.closest('jhi-result') && event.target.closest('.result');
         if (!isClickOnAction && !isClickResult) {
             if (this.extendedLink) {
-                this.router.navigate(['overview', this.course.id, 'exercises', this.exercise.id]);
+                this.router.navigate(['courses', this.course.id, 'exercises', this.exercise.id]);
             } else {
                 this.router.navigate([this.exercise.id], { relativeTo: this.route });
             }

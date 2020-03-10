@@ -9,8 +9,10 @@ import { ExerciseHint } from 'app/entities/exercise-hint.model';
     templateUrl: './exercise-hint-detail.component.html',
 })
 export class ExerciseHintDetailComponent implements OnInit, OnDestroy {
-    exerciseId: number;
     exerciseHint: ExerciseHint;
+
+    courseId: number;
+    exerciseId: number;
 
     paramSub: Subscription;
 
@@ -18,6 +20,7 @@ export class ExerciseHintDetailComponent implements OnInit, OnDestroy {
 
     ngOnInit() {
         this.paramSub = this.route.params.subscribe(params => {
+            this.courseId = params['courseId'];
             this.exerciseId = params['exerciseId'];
         });
         this.route.data.subscribe(({ exerciseHint }) => {

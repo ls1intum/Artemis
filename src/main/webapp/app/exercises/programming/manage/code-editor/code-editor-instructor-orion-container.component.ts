@@ -3,7 +3,7 @@ import { ProgrammingExerciseParticipationService } from 'app/exercises/programmi
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import { ActivatedRoute, Router } from '@angular/router';
-import { CourseExerciseService } from '../../../../course/manage/course-management.service';
+import { CourseExerciseService } from 'app/course/manage/course-management.service';
 import { TranslateService } from '@ngx-translate/core';
 import { AlertService } from 'app/core/alert/alert.service';
 import { CodeEditorInstructorBaseContainerComponent, REPOSITORY } from 'app/exercises/programming/manage/code-editor/code-editor-instructor-base-container.component';
@@ -83,7 +83,7 @@ export class CodeEditorInstructorOrionContainerComponent extends CodeEditorInstr
      * Submitting means committing all changes and pushing them to the remote.
      */
     submit(): void {
-        this.javaBridge.submitChanges();
+        this.javaBridge.submit();
         if (this.selectedRepository !== REPOSITORY.TEST) {
             this.orionState.building = true;
             this.orionBuildAndTestService.listenOnBuildOutputAndForwardChanges(this.exercise, this.selectedParticipation);

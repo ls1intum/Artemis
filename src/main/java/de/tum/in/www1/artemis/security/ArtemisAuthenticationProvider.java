@@ -8,6 +8,7 @@ import org.springframework.security.core.Authentication;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.service.connectors.ConnectorHealth;
 
 public interface ArtemisAuthenticationProvider extends AuthenticationProvider {
 
@@ -66,4 +67,12 @@ public interface ArtemisAuthenticationProvider extends AuthenticationProvider {
      */
     // TODO why is this in the authentication provider? I think we should move this to the course service.
     void registerUserForCourse(User user, Course course);
+
+    /**
+     * Checks if the underlying user management server is up and running and gives some additional information about the running
+     * services if available
+     *
+     * @return The health of the user management service containing if it is up and running and any additional data, or the throwing exception otherwise
+     */
+    ConnectorHealth health();
 }

@@ -181,19 +181,19 @@ export class QuizStatisticComponent implements OnInit, OnDestroy, DataSetProvide
         this.sub = this.route.params.subscribe(params => {
             // use different REST-call if the User is a Student
             if (this.accountService.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'])) {
-                this.quizExerciseService.find(params['quizId']).subscribe((res: HttpResponse<QuizExercise>) => {
+                this.quizExerciseService.find(params['exerciseId']).subscribe((res: HttpResponse<QuizExercise>) => {
                     this.loadQuizSuccess(res.body!);
                 });
             }
 
             // subscribe websocket for new statistical data
-            this.websocketChannelForData = '/topic/statistic/' + params['quizId'];
+            this.websocketChannelForData = '/topic/statistic/' + params['exerciseId'];
             this.jhiWebsocketService.subscribe(this.websocketChannelForData);
 
             // ask for new Data if the websocket for new statistical data was notified
             this.jhiWebsocketService.receive(this.websocketChannelForData).subscribe(() => {
                 if (this.accountService.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'])) {
-                    this.quizExerciseService.find(params['quizId']).subscribe(res => {
+                    this.quizExerciseService.find(params['exerciseId']).subscribe(res => {
                         this.loadQuizSuccess(res.body!);
                     });
                 }

@@ -56,10 +56,7 @@ export class ProfileService {
     }
 
     private mapAllowedOrionVersions(data: any, profileInfo: ProfileInfo) {
-        const orionVersions = data['orion-versions'];
-        if (orionVersions) {
-            profileInfo.allowedOrionVersions = orionVersions;
-        }
+        profileInfo.allowedMinimumOrionVersion = data['allowed-minimum-orion-version'];
     }
 
     private mapGuidedTourConfig(data: any, profileInfo: ProfileInfo) {

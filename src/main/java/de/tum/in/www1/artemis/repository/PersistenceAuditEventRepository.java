@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.repository;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -21,5 +22,9 @@ public interface PersistenceAuditEventRepository extends JpaRepository<Persisten
     @EntityGraph(attributePaths = { "data" })
     Page<PersistentAuditEvent> findAllByAuditEventDateBetween(Instant fromDate, Instant toDate, Pageable pageable);
 
-    List<PersistentAuditEvent> findByAuditEventDateBefore(Instant before);
+    @EntityGraph(attributePaths = { "data" })
+    Page<PersistentAuditEvent> findAll(Pageable pageable);
+
+    @EntityGraph(attributePaths = { "data" })
+    Optional<PersistentAuditEvent> findById(Long auditEventId);
 }
