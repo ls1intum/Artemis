@@ -26,7 +26,6 @@ export class GradingInstructionsDetailsComponent implements OnInit {
     private instructions: GradingInstruction[];
     private criteria: GradingCriterion[];
 
-    katexCommand = new KatexCommand();
     gradingCriterionCommand = new GradingCriterionCommand();
     gradingInstructionCommand = new GradingInstructionCommand();
     creditsCommand = new CreditsCommand();
@@ -36,7 +35,6 @@ export class GradingInstructionsDetailsComponent implements OnInit {
     usageCountCommand = new UsageCountCommand();
 
     domainCommands: DomainCommand[] = [
-        this.katexCommand,
         this.creditsCommand,
         this.gradingScaleCommand,
         this.instructionDescriptionCommand,

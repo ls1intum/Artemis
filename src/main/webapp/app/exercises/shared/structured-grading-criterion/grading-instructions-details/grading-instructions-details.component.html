@@ -12,15 +12,15 @@
     <ng-container #preview>
         <div class="pt-1 background-editor-high markdown-preview">
             <div *ngFor="let criterion of exercise.gradingCriteria">
-                <label class="font-weight-bold">{{ criterion.title }}</label>
+                <label class="font-weight-bold" [innerHTML]="criterion!.title! | htmlForMarkdown"></label>
                 <table class="table table-bordered">
                     <tbody>
                         <tr *ngFor="let instruction of criterion.structuredGradingInstructions">
-                            <td style="width: 5%">{{ instruction.credits }}</td>
-                            <td style="width: 10%">{{ instruction.gradingScale }}</td>
-                            <td style="width: 40%">{{ instruction.instructionDescription }}</td>
-                            <td style="width: 40%">{{ instruction.feedback }}</td>
-                            <td style="width: 5%">{{ instruction.usageCount }}</td>
+                            <td style="width: 5%" [innerHTML]="instruction.credits"></td>
+                            <td style="width: 10%" [innerHTML]="instruction!.gradingScale! | htmlForMarkdown"></td>
+                            <td style="width: 40%" [innerHTML]="instruction!.instructionDescription! | htmlForMarkdown"></td>
+                            <td style="width: 40%" [innerHTML]="instruction!.feedback! | htmlForMarkdown"></td>
+                            <td style="width: 5%" [innerHTML]="instruction.usageCount"></td>
                         </tr>
                     </tbody>
                 </table>
