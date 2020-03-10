@@ -686,7 +686,7 @@ public class BitbucketService extends AbstractVersionControlService {
      * @param repositorySlug The repository's slug.
      */
     private void deleteRepositoryImpl(String projectKey, String repositorySlug) {
-        String baseUrl = BITBUCKET_SERVER_URL + "/rest/api/1.0/projects/" + projectKey + "/repos/" + repositorySlug;
+        String baseUrl = BITBUCKET_SERVER_URL + "/rest/api/1.0/projects/" + projectKey + "/repos/" + repositorySlug.toLowerCase();
         log.info("Delete repository " + baseUrl);
         HttpHeaders headers = HeaderUtil.createAuthorization(BITBUCKET_USER, BITBUCKET_PASSWORD);
         HttpEntity<?> entity = new HttpEntity<>(headers);

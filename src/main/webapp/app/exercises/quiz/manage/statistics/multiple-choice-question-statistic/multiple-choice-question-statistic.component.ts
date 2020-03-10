@@ -71,13 +71,13 @@ export class MultipleChoiceQuestionStatisticComponent implements OnInit, OnDestr
             this.questionIdParam = +params['questionId'];
             // use different REST-call if the User is a Student
             if (this.accountService.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'])) {
-                this.quizExerciseService.find(params['quizId']).subscribe(res => {
+                this.quizExerciseService.find(params['exerciseId']).subscribe(res => {
                     this.loadQuiz(res.body!, false);
                 });
             }
 
             // subscribe websocket for new statistical data
-            this.websocketChannelForData = '/topic/statistic/' + params['quizId'];
+            this.websocketChannelForData = '/topic/statistic/' + params['exerciseId'];
             this.jhiWebsocketService.subscribe(this.websocketChannelForData);
 
             // ask for new Data if the websocket for new statistical data was notified

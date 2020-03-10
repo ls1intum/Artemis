@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, AfterViewInit } from '@angular/core';
 import { partition } from 'lodash';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CourseManagementService } from '../../manage/course-management.service';
@@ -17,7 +17,7 @@ import { Course } from 'app/entities/course.model';
     templateUrl: './tutor-course-dashboard.component.html',
     providers: [CourseManagementService],
 })
-export class TutorCourseDashboardComponent implements OnInit {
+export class TutorCourseDashboardComponent implements OnInit, AfterViewInit {
     course: Course;
     courseId: number;
     unfinishedExercises: Exercise[] = [];
@@ -60,6 +60,10 @@ export class TutorCourseDashboardComponent implements OnInit {
         this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
         this.loadAll();
         this.accountService.identity().then(user => (this.tutor = user!));
+    }
+
+    ngAfterViewInit(): void {
+        this.guidedTourService.componentPageLoaded();
     }
 
     loadAll() {

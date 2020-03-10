@@ -19,7 +19,7 @@ export const tutorAssessmentTour: GuidedTour = {
         }),
         // new page
         new TextTourStep({
-            highlightSelector: '#assessment-statistics',
+            highlightSelector: '.guided-tour-assessment-stats',
             headlineTranslateKey: 'tour.tutorCourseDashboard.overview.headline',
             contentTranslateKey: 'tour.tutorCourseDashboard.overview.content',
             highlightPadding: 10,
@@ -28,7 +28,7 @@ export const tutorAssessmentTour: GuidedTour = {
             pageUrl: '/course-management/(\\d+)+/tutor-dashboard',
         }),
         new TextTourStep({
-            highlightSelector: '.table-responsive .form-check',
+            highlightSelector: '.guided-tour-form-check',
             headlineTranslateKey: 'tour.tutorCourseDashboard.showFinished.headline',
             contentTranslateKey: 'tour.tutorCourseDashboard.showFinished.content',
             highlightPadding: 10,
@@ -36,7 +36,7 @@ export const tutorAssessmentTour: GuidedTour = {
             permission: ['ROLE_TA'],
         }),
         new TextTourStep({
-            highlightSelector: '.exercise-table',
+            highlightSelector: '.guided-tour-exercise-table',
             headlineTranslateKey: 'tour.tutorCourseDashboard.exerciseTable.headline',
             contentTranslateKey: 'tour.tutorCourseDashboard.exerciseTable.content',
             highlightPadding: 25,
@@ -62,7 +62,7 @@ export const tutorAssessmentTour: GuidedTour = {
         }),
         // new page
         new TextTourStep({
-            highlightSelector: '.markdown-preview',
+            highlightSelector: '.guided-tour-markdown-preview',
             headlineTranslateKey: 'tour.tutorExerciseDashboard.instructions.headline',
             contentTranslateKey: 'tour.tutorExerciseDashboard.instructions.content',
             highlightPadding: 10,
@@ -71,7 +71,7 @@ export const tutorAssessmentTour: GuidedTour = {
             pageUrl: '/course-management/(\\d+)+/exercises/(\\d+)+/tutor-dashboard',
         }),
         new UserInterActionTourStep({
-            highlightSelector: '.instructions-button',
+            highlightSelector: '.guided-tour-instructions-button',
             headlineTranslateKey: 'tour.tutorExerciseDashboard.instructionsButton.headline',
             contentTranslateKey: 'tour.tutorExerciseDashboard.instructionsButton.content',
             highlightPadding: 10,
@@ -91,7 +91,7 @@ export const tutorAssessmentTour: GuidedTour = {
         }),
         // new page
         new TextTourStep({
-            highlightSelector: '.col-12 > .row.flex-nowrap',
+            highlightSelector: '.guided-tour-assessment-editor',
             headlineTranslateKey: 'tour.exampleReview.reviewSubmission.headline',
             contentTranslateKey: 'tour.exampleReview.reviewSubmission.content',
             orientation: Orientation.TOP,
@@ -99,14 +99,14 @@ export const tutorAssessmentTour: GuidedTour = {
             pageUrl: 'course-management/(\\d+)+/text-exercises/(\\d+)+/example-submissions/(\\d+)+?readOnly=true',
         }),
         new TextTourStep({
-            highlightSelector: '.text-assessments',
+            highlightSelector: '.guided-tour-text-assessment',
             headlineTranslateKey: 'tour.exampleReview.reviewAssessment.headline',
             contentTranslateKey: 'tour.exampleReview.reviewAssessment.content',
             orientation: Orientation.TOP,
             permission: ['ROLE_TA'],
         }),
         new UserInterActionTourStep({
-            highlightSelector: 'jhi-example-text-submission .btn-success',
+            highlightSelector: 'jhi-example-text-submission .guided-tour-read',
             headlineTranslateKey: 'tour.exampleReview.confirm.headline',
             contentTranslateKey: 'tour.exampleReview.confirm.content',
             userInteractionEvent: UserInteractionEvent.CLICK,
@@ -127,7 +127,7 @@ export const tutorAssessmentTour: GuidedTour = {
         }),
         // new page
         new AssessmentTaskTourStep({
-            highlightSelector: '.col-12 > .row.flex-nowrap',
+            highlightSelector: '.guided-tour-assessment-editor',
             headlineTranslateKey: 'tour.exampleAssessment.addAssessment.headline',
             contentTranslateKey: 'tour.exampleAssessment.addAssessment.content',
             orientation: Orientation.TOP,
@@ -138,7 +138,7 @@ export const tutorAssessmentTour: GuidedTour = {
             pageUrl: 'course-management/(\\d+)+/text-exercises/(\\d+)+/example-submissions/(\\d+)+?toComplete=true',
         }),
         new AssessmentTaskTourStep({
-            highlightSelector: '.text-assessments .row',
+            highlightSelector: '.guided-tour-text-assessment .row',
             headlineTranslateKey: 'tour.exampleAssessment.addScore.headline',
             contentTranslateKey: 'tour.exampleAssessment.addScore.content',
             userInteractionEvent: UserInteractionEvent.ASSESS_SUBMISSION,
@@ -148,7 +148,7 @@ export const tutorAssessmentTour: GuidedTour = {
             assessmentTask: new GuidedTourAssessmentTask('tour.exampleAssessment.addScore.task', new AssessmentObject(3, 3)),
         }),
         new UserInterActionTourStep({
-            highlightSelector: 'jhi-example-text-submission .btn-primary',
+            highlightSelector: 'jhi-example-text-submission .guided-tour-check-assessment',
             headlineTranslateKey: 'tour.exampleAssessment.submit.headline',
             contentTranslateKey: 'tour.exampleAssessment.submit.content',
             orientation: Orientation.TOPRIGHT,
@@ -157,7 +157,7 @@ export const tutorAssessmentTour: GuidedTour = {
             permission: ['ROLE_TA'],
         }),
         new UserInterActionTourStep({
-            highlightSelector: 'jhi-example-text-submission .back-button',
+            highlightSelector: 'jhi-example-text-submission .guided-tour-back',
             headlineTranslateKey: 'tour.exampleAssessment.back.headline',
             contentTranslateKey: 'tour.exampleAssessment.back.content',
             orientation: Orientation.RIGHT,
@@ -167,7 +167,7 @@ export const tutorAssessmentTour: GuidedTour = {
         }),
         // new page
         new TextTourStep({
-            highlightSelector: '.d-flex .flex-grow-1',
+            highlightSelector: '.guided-tour-exercise-dashboard-table',
             headlineTranslateKey: 'tour.tutorExerciseDashboard.submissionsAndComplaints.headline',
             contentTranslateKey: 'tour.tutorExerciseDashboard.submissionsAndComplaints.content',
             highlightPadding: 10,
@@ -176,7 +176,7 @@ export const tutorAssessmentTour: GuidedTour = {
             pageUrl: '/course-management/(\\d+)+/exercises/(\\d+)+/tutor-dashboard',
         }),
         new TextTourStep({
-            highlightSelector: '.exercise-table button.guided-tour',
+            highlightSelector: '.guided-tour-exercise-table button.guided-tour',
             headlineTranslateKey: 'tour.tutorExerciseDashboard.assessSubmissions.headline',
             contentTranslateKey: 'tour.tutorExerciseDashboard.assessSubmissions.content',
             highlightPadding: 10,

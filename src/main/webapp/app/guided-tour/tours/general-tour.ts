@@ -8,7 +8,7 @@ export const cancelTour: GuidedTour = {
     resetParticipation: ResetParticipation.NONE,
     steps: [
         new TextTourStep({
-            highlightSelector: '.dropdown-item.guided-tour',
+            highlightSelector: '.guided-tour.dropdown-item',
             headlineTranslateKey: 'tour.cancel.headline',
             contentTranslateKey: 'tour.cancel.content',
             highlightPadding: 10,

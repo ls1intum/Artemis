@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, AfterViewInit } from '@angular/core';
 import { SafeHtml } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CourseManagementService } from '../../../../course/manage/course-management.service';
@@ -46,7 +46,7 @@ export interface ExampleSubmissionQueryParams {
     styles: ['jhi-collapsable-assessment-instructions { max-height: 100vh }'],
     providers: [CourseManagementService],
 })
-export class TutorExerciseDashboardComponent implements OnInit {
+export class TutorExerciseDashboardComponent implements OnInit, AfterViewInit {
     exercise: Exercise;
     modelingExercise: ModelingExercise;
     courseId: number;
@@ -129,6 +129,10 @@ export class TutorExerciseDashboardComponent implements OnInit {
         this.loadAll();
 
         this.accountService.identity().then((user: User) => (this.tutor = user));
+    }
+
+    ngAfterViewInit(): void {
+        this.guidedTourService.componentPageLoaded();
     }
 
     loadAll() {

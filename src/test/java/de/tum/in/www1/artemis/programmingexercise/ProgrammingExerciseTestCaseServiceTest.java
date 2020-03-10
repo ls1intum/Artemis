@@ -22,7 +22,6 @@ import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.connector.bamboo.BambooRequestMockProvider;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
-import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestCaseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
@@ -140,7 +139,6 @@ public class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegr
         List<ProgrammingSubmission> submissions = programmingSubmissionRepository.findAll();
         assertThat(submissions).hasSize(1);
         assertThat(submissions.get(0).getCommitHash()).isEqualTo(dummyHash);
-        verify(continuousIntegrationService, times(1)).triggerBuild(ArgumentMatchers.any(SolutionProgrammingExerciseParticipation.class));
     }
 
     @Test
@@ -175,7 +173,6 @@ public class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegr
         List<ProgrammingSubmission> submissions = programmingSubmissionRepository.findAll();
         assertThat(submissions).hasSize(1);
         assertThat(submissions.get(0).getCommitHash()).isEqualTo(dummyHash);
-        verify(continuousIntegrationService, times(1)).triggerBuild(ArgumentMatchers.any(SolutionProgrammingExerciseParticipation.class));
     }
 
     @Test

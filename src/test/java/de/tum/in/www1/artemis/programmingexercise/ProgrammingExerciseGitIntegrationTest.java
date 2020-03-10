@@ -1,0 +1,123 @@
+package de.tum.in.www1.artemis.programmingexercise;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doReturn;
+
+import java.io.File;
+import java.io.IOException;
+import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
+
+import org.apache.commons.io.FileUtils;
+import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.lib.StoredConfig;
+import org.eclipse.jgit.revwalk.RevCommit;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.test.context.support.WithMockUser;
+
+import de.tum.in.www1.artemis.AbstractSpringIntegrationTest;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
+import de.tum.in.www1.artemis.util.DatabaseUtilService;
+import de.tum.in.www1.artemis.util.GitUtilService;
+import de.tum.in.www1.artemis.util.RequestUtilService;
+import de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResource;
+
+public class ProgrammingExerciseGitIntegrationTest extends AbstractSpringIntegrationTest {
+
+    @Autowired
+    DatabaseUtilService database;
+
+    @Autowired
+    RequestUtilService request;
+
+    @Autowired
+    GitUtilService gitUtilService;
+
+    @Autowired
+    ProgrammingExerciseRepository programmingExerciseRepository;
+
+    File localRepoFile;
+
+    Git localGit;
+
+    ProgrammingExercise programmingExercise;
+
+    @BeforeEach
+    void initTestCase() throws Exception {
+        database.addUsers(3, 2, 2);
+        database.addCourseWithOneProgrammingExerciseAndTestCases();
+        programmingExercise = programmingExerciseRepository.findAllWithEagerParticipations().get(0);
+        database.addStudentParticipationForProgrammingExercise(programmingExercise, "student1");
+        database.addStudentParticipationForProgrammingExercise(programmingExercise, "student2");
+
+        localRepoFile = Files.createTempDirectory("repo").toFile();
+        localGit = Git.init().setDirectory(localRepoFile).call();
+
+        // create commits
+        // the following 2 lines prepare the generation of the structural test oracle
+        var testjsonFilePath = Paths.get(localRepoFile.getPath(), "test", programmingExercise.getPackageFolderName(), "test.json");
+        gitUtilService.writeEmptyJsonFileToPath(testjsonFilePath);
+        localGit.commit().setMessage("add test.json").setAuthor("test", "test@test.com").call();
+        var testjsonFilePath2 = Paths.get(localRepoFile.getPath(), "test", programmingExercise.getPackageFolderName(), "test2.json");
+        gitUtilService.writeEmptyJsonFileToPath(testjsonFilePath2);
+        localGit.commit().setMessage("add test2.json").setAuthor("test", "test@test.com").call();
+        var testjsonFilePath3 = Paths.get(localRepoFile.getPath(), "test", programmingExercise.getPackageFolderName(), "test3.json");
+        gitUtilService.writeEmptyJsonFileToPath(testjsonFilePath3);
+        localGit.commit().setMessage("add test3.json").setAuthor("test", "test@test.com").call();
+
+        var repository = gitService.getRepositoryByLocalPath(localRepoFile.toPath());
+        doReturn(repository).when(gitService).getOrCheckoutRepository(any(URL.class), anyBoolean(), anyString());
+        doNothing().when(gitService).fetchAll(any());
+        var objectId = localGit.reflog().call().iterator().next().getNewId();
+        doReturn(objectId).when(gitService).getLastCommitHash(any());
+        doNothing().when(gitService).resetToOriginMaster(any());
+        doNothing().when(gitService).pullIgnoreConflicts(any());
+        doNothing().when(gitService).commitAndPush(any(), anyString(), any());
+    }
+
+    @AfterEach
+    void tearDown() throws IOException {
+        database.resetDatabase();
+        if (localRepoFile != null && localRepoFile.exists()) {
+            FileUtils.deleteDirectory(localRepoFile);
+        }
+        if (localGit != null) {
+            localGit.close();
+        }
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    void testCombineTemplateRepositoryCommits() throws Exception {
+        File originRepoFile = Files.createTempDirectory("repoOrigin").toFile();
+        Git remoteGit = Git.init().setDirectory(originRepoFile).call();
+        StoredConfig config = localGit.getRepository().getConfig();
+        config.setString("remote", "origin", "url", originRepoFile.getAbsolutePath());
+        config.save();
+        localGit.push().call();
+        assertThat(getAllCommits(localGit).size()).isEqualTo(3);
+        assertThat(getAllCommits(remoteGit).size()).isEqualTo(3);
+
+        final var path = ProgrammingExerciseResource.Endpoints.ROOT
+                + ProgrammingExerciseResource.Endpoints.COMBINE_COMMITS.replace("{exerciseId}", "" + programmingExercise.getId());
+        request.put(path, Void.class, HttpStatus.OK);
+        assertThat(getAllCommits(localGit).size()).isEqualTo(1);
+        assertThat(getAllCommits(remoteGit).size()).isEqualTo(1);
+    }
+
+    public List<RevCommit> getAllCommits(Git gitRepo) throws Exception {
+        return StreamSupport.stream(gitRepo.log().call().spliterator(), false).collect(Collectors.toList());
+    }
+}

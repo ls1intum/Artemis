@@ -8,6 +8,7 @@ import { ExampleSubmission } from 'app/entities/example-submission.model';
 import { Attachment } from 'app/entities/attachment.model';
 import { StudentQuestion } from 'app/entities/student-question.model';
 import { TeamAssignmentConfig } from 'app/entities/team-assignment-config.model';
+import { ExerciseHint } from 'app/entities/exercise-hint.model';
 
 export const enum DifficultyLevel {
     EASY = 'EASY',
@@ -74,6 +75,7 @@ export abstract class Exercise implements BaseEntity {
     public exampleSubmissions: ExampleSubmission[];
     public attachments: Attachment[];
     public studentQuestions: StudentQuestion[];
+    public exerciseHints: ExerciseHint[];
 
     // transient objects which might not be set
     public numberOfParticipations?: number;

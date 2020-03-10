@@ -638,13 +638,6 @@ public class ParticipationResource {
         }
     }
 
-    private void checkAccessPermissionAtLeastTA(StudentParticipation participation, User user) {
-        Course course = findCourseFromParticipation(participation);
-        if (!authorizationCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
-            throw new AccessForbiddenException("You are not allowed to access this resource");
-        }
-    }
-
     private void checkAccessPermissionOwner(StudentParticipation participation, User user) {
         Course course = findCourseFromParticipation(participation);
         if (!authCheckService.isOwnerOfParticipation(participation)) {
