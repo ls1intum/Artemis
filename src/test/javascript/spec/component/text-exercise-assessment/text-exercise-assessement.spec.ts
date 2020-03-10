@@ -42,6 +42,7 @@ import { TextAssessmentsService } from 'app/exercises/text/assess/text-assessmen
 import { Course } from 'app/entities/course.model';
 import { Feedback } from 'app/entities/feedback.model';
 import { TextBlock } from 'app/entities/text-block.model';
+import { ComplaintResponse } from 'app/entities/complaint-response.model';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -56,6 +57,7 @@ describe('TextAssessmentComponent', () => {
     let saveAssessmentStub: SinonStub;
     let submitAsssessmentStub: SinonStub;
     let getResultWithPredefinedTextblocksStub: SinonStub;
+    let updateAssessmentAfterComplaintStub: SinonStub;
     let debugElement: DebugElement;
     let router: Router;
     let location: Location;
@@ -85,6 +87,8 @@ describe('TextAssessmentComponent', () => {
         participation: participation,
     } as unknown) as Result;
     submission.result = result;
+    const refFeedback = { reference: 'reference', credits: 5 } as Feedback;
+    const refFeedback2 = { reference: 'reference2', credits: 5 } as Feedback;
 
     beforeEach(async () => {
         return TestBed.configureTestingModule({
@@ -114,9 +118,9 @@ describe('TextAssessmentComponent', () => {
                 comp = fixture.componentInstance;
                 comp.exercise = exercise;
                 debugElement = fixture.debugElement;
+
                 router = debugElement.injector.get(Router);
                 location = debugElement.injector.get(Location);
-
                 textSubmissionService = debugElement.injector.get(TextSubmissionService);
                 assessmentsService = debugElement.injector.get(TextAssessmentsService);
 
@@ -125,6 +129,7 @@ describe('TextAssessmentComponent', () => {
                 saveAssessmentStub = stub(assessmentsService, 'save');
                 submitAsssessmentStub = stub(assessmentsService, 'submit');
                 getResultWithPredefinedTextblocksStub = stub(assessmentsService, 'getResultWithPredefinedTextblocks');
+                updateAssessmentAfterComplaintStub = stub(assessmentsService, 'updateAssessmentAfterComplaint');
 
                 router.initialNavigation();
             });
@@ -134,6 +139,9 @@ describe('TextAssessmentComponent', () => {
         getTextSubmissionForExerciseWithoutAssessmentStub.restore();
         getFeedbackDataForExerciseSubmissionStub.restore();
         saveAssessmentStub.restore();
+        submitAsssessmentStub.restore();
+        getResultWithPredefinedTextblocksStub.restore();
+        updateAssessmentAfterComplaintStub.restore();
     });
 
     it(
@@ -272,30 +280,18 @@ describe('TextAssessmentComponent', () => {
     }));
 
     it('Should validate assessment with referenced feedback with credits', fakeAsync(() => {
-        const feedback = new Feedback();
-        feedback.reference = 'reference';
-        feedback.credits = 5;
-        const feedback2 = new Feedback();
-        feedback2.reference = 'reference2';
-        feedback2.credits = 5;
-        comp.referencedFeedback = [feedback, feedback2];
+        comp.referencedFeedback = [refFeedback, refFeedback2];
         comp.validateAssessment();
         expect(comp.assessmentsAreValid).to.be.true;
         expect(comp.totalScore).to.be.equal(10);
     }));
 
     it('Should delete assessment', fakeAsync(() => {
-        const feedback = new Feedback();
-        feedback.reference = 'reference';
-        feedback.credits = 5;
-        const feedback2 = new Feedback();
-        feedback2.reference = 'reference2';
-        feedback2.credits = 5;
-        comp.referencedFeedback = [feedback, feedback2];
+        comp.referencedFeedback = [refFeedback, refFeedback2];
         comp.referencedTextBlocks = [new TextBlock(), new TextBlock()];
-        comp.deleteAssessment(feedback);
+        comp.deleteAssessment(refFeedback);
         expect(comp.referencedFeedback.length).to.be.equal(1);
-        expect(comp.referencedFeedback).to.contain(feedback2);
+        expect(comp.referencedFeedback).to.contain(refFeedback2);
         expect(comp.referencedTextBlocks.length).to.be.equal(1);
         expect(comp.totalScore).to.be.equal(5);
         expect(comp.assessmentsAreValid).to.be.true;
@@ -316,11 +312,17 @@ describe('TextAssessmentComponent', () => {
         expect(saveAssessmentStub.called).to.be.false;
     }));
 
+    it('Should handle error on save assessment', fakeAsync(() => {
+        comp.referencedFeedback = [refFeedback];
+        comp.result = { id: 1 } as any;
+        saveAssessmentStub.returns(throwError(throwError({ headers: { get: (s: string) => 'error' } })));
+        comp.save();
+        expect(saveAssessmentStub.called).to.be.true;
+        expect(comp.result).to.be.equal(result);
+    }));
+
     it('Should save valid assessments', fakeAsync(() => {
-        const feedback = new Feedback();
-        feedback.reference = 'reference';
-        feedback.credits = 5;
-        comp.referencedFeedback = [feedback];
+        comp.referencedFeedback = [refFeedback];
         comp.result = { id: 1 } as any;
         participation.results = [];
         comp.participation = participation;
@@ -333,10 +335,7 @@ describe('TextAssessmentComponent', () => {
     }));
 
     it('Should submit valid assessments', fakeAsync(() => {
-        const feedback = new Feedback();
-        feedback.reference = 'reference';
-        feedback.credits = 5;
-        comp.referencedFeedback = [feedback];
+        comp.referencedFeedback = [refFeedback];
         comp.result = { id: 1 } as any;
         participation.results = [];
         comp.participation = participation;
@@ -376,5 +375,35 @@ describe('TextAssessmentComponent', () => {
         expect(comp.referencedFeedback.length).to.be.equal(1);
         expect(comp.referencedFeedback).to.contain(referencedFeedback);
         expect(comp.referencedTextBlocks.length).to.be.equal(1);
+    }));
+
+    it('Should update assessment after complaint', fakeAsync(() => {
+        comp.referencedFeedback = [refFeedback];
+        comp.submission = { id: 2 } as any;
+        participation.results = [];
+        comp.participation = participation;
+        updateAssessmentAfterComplaintStub.returns(of({ body: result }));
+        comp.onUpdateAssessmentAfterComplaint(new ComplaintResponse());
+        expect(updateAssessmentAfterComplaintStub.called).to.be.true;
+        expect(comp.result).to.be.equal(result);
+        expect(comp.participation.results[0]).to.be.equal(result);
+        expect(comp.showResult).to.be.true;
+    }));
+
+    it('Should not update assessment after complaint when assessments not valid', fakeAsync(() => {
+        updateAssessmentAfterComplaintStub.returns(of({ body: result }));
+        comp.onUpdateAssessmentAfterComplaint(new ComplaintResponse());
+        expect(updateAssessmentAfterComplaintStub.called).to.be.false;
+        expect(comp.result).to.be.undefined;
+    }));
+
+    it('Should handle error on update assessment after complaint', fakeAsync(() => {
+        comp.referencedFeedback = [refFeedback];
+        comp.submission = { id: 2 } as any;
+        participation.results = [];
+        updateAssessmentAfterComplaintStub.returns(throwError({}));
+        comp.onUpdateAssessmentAfterComplaint(new ComplaintResponse());
+        expect(updateAssessmentAfterComplaintStub.called).to.be.true;
+        expect(comp.result).to.be.undefined;
     }));
 });
