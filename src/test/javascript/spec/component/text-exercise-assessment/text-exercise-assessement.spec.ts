@@ -54,6 +54,7 @@ describe('TextAssessmentComponent', () => {
     let getTextSubmissionForExerciseWithoutAssessmentStub: SinonStub;
     let getFeedbackDataForExerciseSubmissionStub: SinonStub;
     let saveAssessmentStub: SinonStub;
+    let getResultWithPredefinedTextblocksStub: SinonStub;
     let debugElement: DebugElement;
     let router: Router;
     let location: Location;
@@ -121,6 +122,7 @@ describe('TextAssessmentComponent', () => {
                 getTextSubmissionForExerciseWithoutAssessmentStub = stub(textSubmissionService, 'getTextSubmissionForExerciseWithoutAssessment');
                 getFeedbackDataForExerciseSubmissionStub = stub(assessmentsService, 'getFeedbackDataForExerciseSubmission');
                 saveAssessmentStub = stub(assessmentsService, 'save');
+                getResultWithPredefinedTextblocksStub = stub(assessmentsService, 'getResultWithPredefinedTextblocks');
 
                 router.initialNavigation();
             });
@@ -326,5 +328,21 @@ describe('TextAssessmentComponent', () => {
         expect(comp.result).to.be.equal(result);
         expect(comp.participation.results[0]).to.be.equal(result);
         expect(comp.showResult).to.be.true;
+    }));
+
+    it('Should set predefined text blocks', fakeAsync(() => {
+        submission.blocks = [{ id: '1' } as TextBlock];
+        comp.submission = submission;
+        const generalFeedback = { id: 1, detailText: 'general' } as Feedback;
+        const referencedFeedback = { id: 2, referenceId: '1' } as Feedback;
+        comp.result = { id: 1 } as Result;
+        getResultWithPredefinedTextblocksStub.returns(of({ body: { submission, feedbacks: [generalFeedback, referencedFeedback] } }));
+        comp.predefineTextBlocks();
+        tick();
+        expect(comp.submission.blocks?.length).to.be.equal(1);
+        expect(comp.generalFeedback).to.be.equal(generalFeedback);
+        expect(comp.referencedFeedback.length).to.be.equal(1);
+        expect(comp.referencedFeedback).to.contain(referencedFeedback);
+        expect(comp.referencedTextBlocks.length).to.be.equal(1);
     }));
 });
