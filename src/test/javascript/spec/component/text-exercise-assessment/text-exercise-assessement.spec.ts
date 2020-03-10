@@ -315,10 +315,12 @@ describe('TextAssessmentComponent', () => {
     it('Should handle error on save assessment', fakeAsync(() => {
         comp.referencedFeedback = [refFeedback];
         comp.result = { id: 1 } as any;
-        saveAssessmentStub.returns(throwError(throwError({ headers: { get: (s: string) => 'error' } })));
+        saveAssessmentStub.returns(throwError({ headers: { get: (s: string) => 'error' } }));
+        const spy = stub(TestBed.inject(AlertService), 'error');
+        spy.returns({ type: 'danger', msg: '' });
         comp.save();
+        tick();
         expect(saveAssessmentStub.called).to.be.true;
-        expect(comp.result).to.be.equal(result);
     }));
 
     it('Should save valid assessments', fakeAsync(() => {
