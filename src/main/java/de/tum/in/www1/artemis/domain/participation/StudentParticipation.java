@@ -51,7 +51,7 @@ public class StudentParticipation extends Participation {
 
     @JsonIgnore
     public Set<User> getStudents() {
-        return getStudent().map(Set::of).orElse(team.getStudents());
+        return getStudent().map(Set::of).orElseGet(() -> team.getStudents());
     }
 
     @JsonIgnore
@@ -106,7 +106,7 @@ public class StudentParticipation extends Participation {
     }
 
     public boolean isOwnedBy(String userLogin) {
-        return getStudent().map(student -> student.getLogin().equals(userLogin)).orElse(team.hasStudentWithLogin(userLogin));
+        return getStudent().map(student -> student.getLogin().equals(userLogin)).orElseGet(() -> team.hasStudentWithLogin(userLogin));
     }
 
     public boolean isOwnedBy(User user) {
