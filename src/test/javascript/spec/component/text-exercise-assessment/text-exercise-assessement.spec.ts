@@ -54,6 +54,7 @@ describe('TextAssessmentComponent', () => {
     let getTextSubmissionForExerciseWithoutAssessmentStub: SinonStub;
     let getFeedbackDataForExerciseSubmissionStub: SinonStub;
     let saveAssessmentStub: SinonStub;
+    let submitAsssessmentStub: SinonStub;
     let getResultWithPredefinedTextblocksStub: SinonStub;
     let debugElement: DebugElement;
     let router: Router;
@@ -122,6 +123,7 @@ describe('TextAssessmentComponent', () => {
                 getTextSubmissionForExerciseWithoutAssessmentStub = stub(textSubmissionService, 'getTextSubmissionForExerciseWithoutAssessment');
                 getFeedbackDataForExerciseSubmissionStub = stub(assessmentsService, 'getFeedbackDataForExerciseSubmission');
                 saveAssessmentStub = stub(assessmentsService, 'save');
+                submitAsssessmentStub = stub(assessmentsService, 'submit');
                 getResultWithPredefinedTextblocksStub = stub(assessmentsService, 'getResultWithPredefinedTextblocks');
 
                 router.initialNavigation();
@@ -322,12 +324,42 @@ describe('TextAssessmentComponent', () => {
         comp.result = { id: 1 } as any;
         participation.results = [];
         comp.participation = participation;
-        saveAssessmentStub.onCall(0).returns(of({ body: result }));
+        saveAssessmentStub.returns(of({ body: result }));
         comp.save();
         expect(saveAssessmentStub.called).to.be.true;
         expect(comp.result).to.be.equal(result);
         expect(comp.participation.results[0]).to.be.equal(result);
         expect(comp.showResult).to.be.true;
+    }));
+
+    it('Should submit valid assessments', fakeAsync(() => {
+        const feedback = new Feedback();
+        feedback.reference = 'reference';
+        feedback.credits = 5;
+        comp.referencedFeedback = [feedback];
+        comp.result = { id: 1 } as any;
+        participation.results = [];
+        comp.participation = participation;
+        submitAsssessmentStub.returns(of({ body: result }));
+        comp.submit();
+        expect(submitAsssessmentStub.called).to.be.true;
+        expect(comp.result).to.be.equal(result);
+        expect(comp.participation.results[0]).to.be.equal(result);
+        expect(comp.showResult).to.be.true;
+    }));
+
+    it('Should not submit without already existing result', fakeAsync(() => {
+        comp.result = {} as any;
+        submitAsssessmentStub.returns(of({ body: result }));
+        comp.submit();
+        expect(submitAsssessmentStub.called).to.be.false;
+    }));
+
+    it('Should not submit without valid assessments', fakeAsync(() => {
+        comp.result = { id: 1 } as any;
+        submitAsssessmentStub.returns(of({ body: result }));
+        comp.submit();
+        expect(submitAsssessmentStub.called).to.be.false;
     }));
 
     it('Should set predefined text blocks', fakeAsync(() => {
