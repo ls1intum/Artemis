@@ -95,7 +95,7 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationTest
         assertThat(participationWithoutAssessment).as("participation without assessment was found").isNotNull();
         assertThat(participationWithoutAssessment.getSubmissions().iterator().next().getId()).as("participation with correct text submission was found")
                 .isEqualTo(textSubmission.getId());
-        assertThat(participationWithoutAssessment.getStudent()).as("student of participation is hidden").isNull();
+        assertThat(participationWithoutAssessment.getStudent()).as("student of participation is hidden").isEmpty();
     }
 
     @Test
@@ -109,7 +109,7 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationTest
         assertThat(participationWithoutAssessment).as("participation with submission was found").isNotNull();
         assertThat(participationWithoutAssessment.getSubmissions().iterator().next().getId()).as("participation with correct text submission was found")
                 .isEqualTo(textSubmission.getId());
-        assertThat(participationWithoutAssessment.getStudent()).as("student of participation is hidden").isNull();
+        assertThat(participationWithoutAssessment.getStudent()).as("student of participation is hidden").isEmpty();
     }
 
     @Test
@@ -149,7 +149,7 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationTest
                 Result.class, HttpStatus.OK);
 
         assertThat(updatedResult).as("updated result found").isNotNull();
-        assertThat(((StudentParticipation) updatedResult.getParticipation()).getStudent()).as("student of participation is hidden").isNull();
+        assertThat(((StudentParticipation) updatedResult.getParticipation()).getStudent()).as("student of participation is hidden").isEmpty();
     }
 
     @Test
@@ -166,7 +166,7 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationTest
                 new ArrayList<String>(), Result.class, HttpStatus.OK);
 
         assertThat(result).as("saved result found").isNotNull();
-        assertThat(((StudentParticipation) result.getParticipation()).getStudent()).as("student of participation is hidden").isNull();
+        assertThat(((StudentParticipation) result.getParticipation()).getStudent()).as("student of participation is hidden").isEmpty();
     }
 
     @Test
@@ -183,7 +183,7 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationTest
                 new ArrayList<String>(), Result.class, HttpStatus.OK);
 
         assertThat(result).as("saved result found").isNotNull();
-        assertThat(((StudentParticipation) result.getParticipation()).getStudent()).as("student of participation is hidden").isNull();
+        assertThat(((StudentParticipation) result.getParticipation()).getStudent()).as("student of participation is hidden").isEmpty();
     }
 
     @Test
@@ -214,7 +214,7 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationTest
                 Result.class);
 
         assertThat(result).as("saved result found").isNotNull();
-        assertThat(((StudentParticipation) result.getParticipation()).getStudent()).as("student of participation is hidden").isNull();
+        assertThat(((StudentParticipation) result.getParticipation()).getStudent()).as("student of participation is hidden").isEmpty();
     }
 
     @Test
@@ -266,7 +266,7 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationTest
 
         assertThat(participation).as("participation found").isNotNull();
         assertThat(participation.getResults().iterator().next()).as("result found").isNotNull();
-        assertThat(participation.getStudent()).as("student of participation is hidden").isNull();
+        assertThat(participation.getStudent()).as("student of participation is hidden").isEmpty();
     }
 
     @Test
