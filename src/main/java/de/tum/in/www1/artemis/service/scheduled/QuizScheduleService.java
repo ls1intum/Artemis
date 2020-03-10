@@ -191,7 +191,7 @@ public class QuizScheduleService {
      */
     public void startSchedule(long delayInMillis) {
         log.info("QuizScheduleService was started to run repeatedly with {} second delay.", delayInMillis / 1000.0);
-        scheduledFuture = threadPoolTaskScheduler.scheduleWithFixedDelay(this::run, delayInMillis);
+        scheduledFuture = threadPoolTaskScheduler.scheduleWithFixedDelay(this::processCachedQuizSubmissions, delayInMillis);
 
         // schedule quiz start for all existing quizzes that are planned to start in the future
         List<QuizExercise> quizExercises = quizExerciseService.findAllPlannedToStartInTheFutureWithQuestions();
@@ -254,7 +254,7 @@ public class QuizScheduleService {
      * Result) from ParticipationHashMap via WebSocket to each user and remove them from ParticipationHashMap (WebSocket Send) 3. Update Statistics with Results from ResultHashMap
      * (DB Read and DB Write) and remove from ResultHashMap 4. Send out new Statistics over WebSocket (WebSocket Send)
      */
-    private void run() {
+    public void processCachedQuizSubmissions() {
         // global try-catch for error logging
         try {
             long start = System.currentTimeMillis();

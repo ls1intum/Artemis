@@ -138,6 +138,7 @@ public class ProgrammingExerciseService {
         programmingExercise.generateAndSetProjectKey();
         final var user = userService.getUser();
         final var projectKey = programmingExercise.getProjectKey();
+        // TODO: the following code is used quite often and should be done in only one place
         final var exerciseRepoName = projectKey.toLowerCase() + "-" + RepositoryType.TEMPLATE.getName();
         final var testRepoName = projectKey.toLowerCase() + "-" + RepositoryType.TESTS.getName();
         final var solutionRepoName = projectKey.toLowerCase() + "-" + RepositoryType.SOLUTION.getName();
@@ -733,6 +734,10 @@ public class ProgrammingExerciseService {
         return new SearchResultPageDTO<>(exercisePage.getContent(), exercisePage.getTotalPages());
     }
 
+    /**
+     * add project permissions to project of the build plans of the given exercise
+     * @param exercise the exercise whose build plans projects should be configured with permissions
+     */
     public void giveCIProjectPermissions(ProgrammingExercise exercise) {
         final var instructorGroup = exercise.getCourse().getInstructorGroupName();
         final var teachingAssistantGroup = exercise.getCourse().getTeachingAssistantGroupName();

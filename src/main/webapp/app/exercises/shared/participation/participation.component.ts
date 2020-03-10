@@ -5,11 +5,7 @@ import { Participation } from '../../../entities/participation/participation.mod
 import { ParticipationService } from './participation.service';
 import { ActivatedRoute } from '@angular/router';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import {
-    ExerciseSubmissionState,
-    ProgrammingSubmissionService,
-    ProgrammingSubmissionState,
-} from 'app/exercises/programming/participate/programming-submission/programming-submission.service';
+import { ExerciseSubmissionState, ProgrammingSubmissionService, ProgrammingSubmissionState } from 'app/exercises/programming/participate/programming-submission.service';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Subject } from 'rxjs';

@@ -1,7 +1,7 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Location } from '@angular/common';
 import { HttpResponse } from '@angular/common/http';
-import { CourseService } from 'app/course/manage/course.service';
+import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs/Subscription';
 import { Result } from 'app/entities/result.model';
@@ -12,7 +12,7 @@ import { ParticipationWebsocketService } from 'app/overview/participation-websoc
 import { AccountService } from 'app/core/auth/account.service';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { programmingExerciseFail, programmingExerciseSuccess } from 'app/guided-tour/tours/course-exercise-detail-tour';
-import { SourceTreeService } from 'app/exercises/programming/shared/sourceTree.service';
+import { SourceTreeService } from 'app/exercises/programming/shared/service/sourceTree.service';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
 import { InitializationState, Participation } from 'app/entities/participation/participation.model';
@@ -56,14 +56,14 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     constructor(
         private $location: Location,
         private exerciseService: ExerciseService,
-        private courseService: CourseService,
+        private courseService: CourseManagementService,
         private jhiWebsocketService: JhiWebsocketService,
         private accountService: AccountService,
         private courseCalculationService: CourseScoreCalculationService,
         private participationWebsocketService: ParticipationWebsocketService,
         private participationService: ParticipationService,
         private sourceTreeService: SourceTreeService,
-        private courseServer: CourseService,
+        private courseServer: CourseManagementService,
         private route: ActivatedRoute,
         private profileService: ProfileService,
         private guidedTourService: GuidedTourService,
@@ -104,12 +104,6 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     loadExercise() {
         this.exercise = null;
         this.studentParticipation = this.participationWebsocketService.getParticipationForExercise(this.exerciseId);
-        // TODO: we should refactor this because we are sending multiple requests to the server. It would be better to create a new REST call for exercise details including:
-        // * the exercise (without the course, no template / solution participations)
-        // * all submissions (with their result) of the user (to be displayed in the result history)
-        // * the student questions
-        // * the hints
-        // --> The retrieved data then needs to be passed correctly into the sub components
         this.exerciseService.getExerciseDetails(this.exerciseId).subscribe((exerciseResponse: HttpResponse<Exercise>) => {
             this.handleNewExercise(exerciseResponse.body!);
         });
@@ -229,15 +223,11 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     }
 
     get exerciseRouterLink(): string | null {
-        if (this.exercise && this.exercise.type === ExerciseType.MODELING) {
-            return `/course/${this.courseId}/exercise/${this.exercise!.id}/assessment`;
-        } else if (this.exercise && this.exercise.type === ExerciseType.TEXT) {
-            return `/text/${this.exercise.id}/assessment`;
-        } else if (this.exercise && this.exercise.type === ExerciseType.FILE_UPLOAD) {
-            return `/file-upload-exercise/${this.exercise.id}/assessment`;
-        } else {
-            return null;
+        if (this.exercise && [ExerciseType.MODELING, ExerciseType.TEXT, ExerciseType.FILE_UPLOAD].includes(this.exercise.type)) {
+            return `/course-management/${this.courseId}/${this.exercise.type}-exercises/${this.exercise!.id}/assessment`;
         }
+
+        return null;
     }
 
     get showResults(): boolean {

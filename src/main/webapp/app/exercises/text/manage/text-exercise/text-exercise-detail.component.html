@@ -37,7 +37,7 @@
                 <dt><span jhiTranslate="artemisApp.exercise.course">Course</span></dt>
                 <dd>
                     <div *ngIf="textExercise.course">
-                        <a [routerLink]="['/course', textExercise.course?.id]">{{ textExercise.course?.title }}</a>
+                        <a [routerLink]="['/course-management', textExercise.course?.id]">{{ textExercise.course?.title }}</a>
                     </div>
                 </dd>
                 <dt><span jhiTranslate="artemisApp.exercise.problemStatement">Problem Statement</span></dt>
@@ -52,7 +52,13 @@
                 <fa-icon [icon]="'arrow-left'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.back"> Back</span>
             </button>
 
-            <button type="button" [routerLink]="['/text-exercise', textExercise.id, 'edit']" replaceUrl="true" queryParamsHandling="merge" class="btn btn-primary">
+            <button
+                type="button"
+                [routerLink]="['/course-management', textExercise.course?.id, 'text-exercises', textExercise.id, 'edit']"
+                replaceUrl="true"
+                queryParamsHandling="merge"
+                class="btn btn-primary"
+            >
                 <fa-icon [icon]="'pencil-alt'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.edit"> Edit</span>
             </button>
         </div>

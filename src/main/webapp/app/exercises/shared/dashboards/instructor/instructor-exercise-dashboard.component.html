@@ -1,0 +1,55 @@
+<jhi-header-exercise-page-with-details [exercise]="exercise" [onBackClick]="back.bind(this)">
+    <span pagetitle>{{ 'artemisApp.instructorExerciseDashboard.pageHeader' | translate }} {{ exercise?.title }}</span>
+</jhi-header-exercise-page-with-details>
+
+<jhi-alert></jhi-alert>
+
+<div *ngIf="exercise">
+    <div class="container-fluid mt-3">
+        <div class="row">
+            <div class="col-md-8">
+                <jhi-side-panel [panelHeader]="'artemisApp.tutorExerciseDashboard.exerciseInformation' | translate">
+                    <div class="row mb-1">
+                        <div class="col-8">{{ 'artemisApp.tutorExerciseDashboard.numberOfTotalSubmissions' | translate }}</div>
+                        <div class="col-4">{{ stats.numberOfSubmissions }}</div>
+                    </div>
+                    <div class="row mb-1">
+                        <div class="col-8">{{ 'artemisApp.tutorExerciseDashboard.numberOfManualAssessedSubmissions' | translate }}</div>
+                        <div class="col-4">{{ stats.numberOfAssessments - stats.numberOfAutomaticAssistedAssessments }} ({{ totalManualAssessmentPercentage }}%)</div>
+                    </div>
+                    <div class="row mb-1">
+                        <div class="col-8">{{ 'artemisApp.tutorExerciseDashboard.numberOfAutomaticAssistedSubmissions' | translate }}</div>
+                        <div class="col-4">{{ stats.numberOfAutomaticAssistedAssessments }} ({{ totalAutomaticAssessmentPercentage }}%)</div>
+                    </div>
+                    <div class="row mb-1">
+                        <div class="col-8">{{ 'artemisApp.tutorExerciseDashboard.numberOfUnassessedSubmissions' | translate }}</div>
+                        <div class="col-4">
+                            {{ stats.numberOfSubmissions - stats.numberOfAssessments }} ({{ 100 - totalAutomaticAssessmentPercentage - totalManualAssessmentPercentage }}%)
+                        </div>
+                    </div>
+                    <div class="row mb-1">
+                        <div class="col-8">{{ 'artemisApp.tutorCourseDashboard.totalComplaints' | translate }}</div>
+                        <div class="col-4">
+                            <a [routerLink]="['/course-management', courseId, 'exercises', exercise.id, 'complaints']">{{ stats.numberOfComplaints }}</a>
+                        </div>
+                    </div>
+                    <div class="row mb-1">
+                        <div class="col-8">{{ 'artemisApp.tutorCourseDashboard.totalMoreFeedbackRequests' | translate }}</div>
+                        <div class="col-4">
+                            <a [routerLink]="['/course-management', courseId, 'exercises', exercise.id, 'more-feedback-requests']">{{ stats.numberOfMoreFeedbackRequests }}</a>
+                        </div>
+                    </div>
+                </jhi-side-panel>
+            </div>
+
+            <div class="col-md-4" *ngIf="stats.numberOfSubmissions > 0">
+                <canvas baseChart [data]="dataForAssessmentPieChart" [labels]="['Open assessments', 'Manual assessments', 'Assessments with Automatic Assistance']" chartType="pie">
+                </canvas>
+            </div>
+        </div>
+
+        <h2>{{ 'artemisApp.instructorExerciseDashboard.leaderboardTitle' | translate }}</h2>
+
+        <jhi-tutor-leaderboard [tutorsData]="stats.tutorLeaderboardEntries" [exercise]="exercise"></jhi-tutor-leaderboard>
+    </div>
+</div>

@@ -10,7 +10,7 @@ import { MockComponent } from 'ng-mocks';
 import { MockAlertService } from '../../helpers/mock-alert.service';
 import { AlertService } from 'app/core/alert/alert.service';
 import { Router } from '@angular/router';
-import { ResizableInstructionsComponent } from 'app/exercises/text/assess/text-assessment/resizable-instructions/resizable-instructions.component';
+import { ResizableInstructionsComponent } from 'app/exercises/text/assess/resizable-instructions/resizable-instructions.component';
 import { DebugElement } from '@angular/core';
 import { By } from '@angular/platform-browser';
 import { MockAccountService } from '../../mocks/mock-account.service';
@@ -19,8 +19,8 @@ import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { ComplaintService } from 'app/complaints/complaint.service';
 import { MockComplaintService } from '../../mocks/mock-complaint.service';
 import { NgxDatatableModule } from '@swimlane/ngx-datatable';
-import { fileUploadSubmissionRoute } from 'app/exercises/file-upload/participate/file-upload-submission/file-upload-submission.route';
-import { FileUploadSubmissionComponent } from 'app/exercises/file-upload/participate/file-upload-submission/file-upload-submission.component';
+import { fileUploadSubmissionRoute, routes } from 'app/exercises/file-upload/participate/file-upload-participation.route';
+import { FileUploadSubmissionComponent } from 'app/exercises/file-upload/participate/file-upload-submission.component';
 import { MomentModule } from 'ngx-moment';
 import { createFileUploadSubmission, MockFileUploadSubmissionService } from '../../mocks/mock-file-upload-submission.service';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
@@ -29,7 +29,7 @@ import { MAX_SUBMISSION_FILE_SIZE } from 'app/shared/constants/input.constants';
 import { TranslateModule } from '@ngx-translate/core';
 import * as sinon from 'sinon';
 import { stub } from 'sinon';
-import { FileUploadResultComponent } from 'app/exercises/file-upload/participate/file-upload-submission/file-upload-result/file-upload-result.component';
+import { FileUploadResultComponent } from 'app/exercises/file-upload/participate/file-upload-result.component';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import * as moment from 'moment';
 import { of } from 'rxjs';
@@ -37,7 +37,7 @@ import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { FileUploaderService } from 'app/shared/http/file-uploader.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { Result } from 'app/entities/result.model';
-import { FileUploadSubmissionService } from 'app/exercises/file-upload/participate/file-upload-submission/file-upload-submission.service';
+import { FileUploadSubmissionService } from 'app/exercises/file-upload/participate/file-upload-submission.service';
 import { ComplaintsForTutorComponent } from 'app/complaints/complaints-for-tutor/complaints-for-tutor.component';
 import { ArtemisResultModule } from 'app/exercises/shared/result/result.module';
 import { ArtemisComplaintsModule } from 'app/complaints/complaints.module';
@@ -67,7 +67,7 @@ describe('FileUploadSubmissionComponent', () => {
                 MomentModule,
                 ArtemisComplaintsModule,
                 TranslateModule.forRoot(),
-                RouterTestingModule.withRoutes([fileUploadSubmissionRoute[0]]),
+                RouterTestingModule.withRoutes([routes[0]]),
                 ArtemisSharedComponentModule,
             ],
             declarations: [

@@ -1,7 +1,7 @@
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
 import { SinonSpy, SinonStub, spy, stub } from 'sinon';
-import { AllowedOrionVersionRange, OrionVersionValidator } from 'app/shared/orion/outdated-plugin-warning/orion-version-validator.service';
+import { OrionVersionValidator } from 'app/shared/orion/outdated-plugin-warning/orion-version-validator.service';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { Router } from '@angular/router';
 import { MockProfileService } from '../../mocks/mock-profile.service';
@@ -22,11 +22,10 @@ describe('OrionValidatorService', () => {
     let profileInfoStub: SinonStub;
     let navigateSpy: SinonSpy;
 
-    const allowedVersion = { from: '1.0.0', to: '1.1.0' } as AllowedOrionVersionRange;
-    const profileInfo = { allowedOrionVersions: allowedVersion } as ProfileInfo;
+    const allowedVersion = '1.0.0';
+    const profileInfo = { allowedMinimumOrionVersion: allowedVersion } as ProfileInfo;
     const userAgent = 'Some user agent ';
     const versionTooLow = 'Orion/0.9.0';
-    const versionTooHigh = 'Orion/1.1.1';
     const versionCorrect = 'Orion/1.0.5';
     const legacy = 'IntelliJ';
 
@@ -54,27 +53,17 @@ describe('OrionValidatorService', () => {
         orionVersionValidator.validateOrionVersion();
 
         expect(profileInfoStub).to.not.have.been.called;
-        expect(navigateSpy).to.have.been.calledOnceWithExactly('/orionOutdated?versionString=soOldThatThereIsNoVersion');
-    });
-
-    it('should route to the error page if the version is too high', () => {
-        windowRef.mockUserAgent = userAgent + versionTooHigh;
-        orionVersionValidator.isOrion = true;
-
-        orionVersionValidator.validateOrionVersion();
-
-        expect(profileInfoStub).to.have.been.calledOnce;
-        expect(navigateSpy).to.have.been.called.calledOnceWithExactly(`/orionOutdated?versionString=1.1.1`);
+        expect(navigateSpy).to.have.been.calledOnceWithExactly('/orion-outdated?versionString=soOldThatThereIsNoVersion');
     });
 
     it('should route to the error page if the version is too low', () => {
         windowRef.mockUserAgent = userAgent + versionTooLow;
         orionVersionValidator.isOrion = true;
 
-        orionVersionValidator.validateOrionVersion();
+        orionVersionValidator.validateOrionVersion().subscribe();
 
         expect(profileInfoStub).to.have.been.calledOnce;
-        expect(navigateSpy).to.have.been.calledOnceWithExactly(`/orionOutdated?versionString=0.9.0`);
+        expect(navigateSpy).to.have.been.calledOnceWithExactly(`/orion-outdated?versionString=0.9.0`);
     });
 
     it('should accept the correct version', () => {

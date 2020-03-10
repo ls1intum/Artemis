@@ -124,7 +124,7 @@ public class GroupNotification extends Notification implements Serializable {
         target.addProperty("id", exercise.getId());
         target.addProperty("entity", "exercises");
         target.addProperty("course", exercise.getCourse().getId());
-        target.addProperty("mainPage", "overview");
+        target.addProperty("mainPage", "courses");
         return target.toString();
     }
 
@@ -141,7 +141,7 @@ public class GroupNotification extends Notification implements Serializable {
         target.addProperty("id", lecture.getId());
         target.addProperty("entity", "lectures");
         target.addProperty("course", lecture.getCourse().getId());
-        target.addProperty("mainPage", "overview");
+        target.addProperty("mainPage", "courses");
         return target.toString();
     }
 

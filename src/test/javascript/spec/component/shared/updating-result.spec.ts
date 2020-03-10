@@ -15,7 +15,7 @@ import { ArtemisTestModule } from '../../test.module';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import { MockAccountService } from '../../mocks/mock-account.service';
-import { ProgrammingSubmissionService, ProgrammingSubmissionState } from 'app/exercises/programming/participate/programming-submission/programming-submission.service';
+import { ProgrammingSubmissionService, ProgrammingSubmissionState } from 'app/exercises/programming/participate/programming-submission.service';
 import { MockProgrammingSubmissionService } from '../../mocks/mock-programming-submission.service';
 import { triggerChanges } from '../../utils/general.utils';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';

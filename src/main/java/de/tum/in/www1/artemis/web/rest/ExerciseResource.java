@@ -308,17 +308,11 @@ public class ExerciseResource {
     @GetMapping(value = "/exercises/{exerciseId}/details")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Exercise> getExerciseDetails(@PathVariable Long exerciseId) {
-        // TODO: refactor this and load
-        // * the exercise (without the course, no template / solution participations)
-        // * all submissions (with their result) of the user (to be displayed in the result history)
-        // * the student questions
-        // * the hints
-        // also see exercise.service.ts and course-exercise-details.component.ts
         long start = System.currentTimeMillis();
         User user = userService.getUserWithGroupsAndAuthorities();
         log.debug(user.getLogin() + " requested access for exercise with exerciseId " + exerciseId, exerciseId);
 
-        Exercise exercise = exerciseService.findOneWithCriteria(exerciseId);
+        Exercise exercise = exerciseService.findOneWithDetailsForStudents(exerciseId);
         // if exercise is not yet released to the students they should not have any access to it
         if (!authCheckService.isAllowedToSeeExercise(exercise, user)) {
             return forbidden();

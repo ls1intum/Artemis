@@ -180,7 +180,7 @@ public class BitbucketService extends AbstractVersionControlService {
     @Override
     public VcsRepositoryUrl getCloneRepositoryUrl(String projectKey, String repositorySlug) {
         final var cloneUrl = new BitbucketRepositoryUrl(projectKey, repositorySlug);
-        log.debug("getCloneURL: " + cloneUrl.toString());
+        log.debug("getCloneRepositoryUrl: " + cloneUrl.toString());
         return cloneUrl;
     }
 
@@ -211,7 +211,7 @@ public class BitbucketService extends AbstractVersionControlService {
                 try {
                     final var response = restTemplate.postForEntity(new URI(repoUrl), entity, Map.class);
                     if (response.getStatusCode().equals(HttpStatus.CREATED)) {
-                        return new BitbucketRepositoryUrl(targetProjectKey, targetRepoSlug);
+                        return getCloneRepositoryUrl(targetProjectKey, targetRepoSlug);
                     }
                     else {
                         log.warn("Invalid response code from Bitbucket while trying to fork repository {}: {}. Body from Bitbucket: {}", sourceRepositoryName,
@@ -239,7 +239,7 @@ public class BitbucketService extends AbstractVersionControlService {
         catch (HttpClientErrorException e) {
             if (e.getStatusCode().equals(HttpStatus.CONFLICT)) {
                 log.info("Repository already exists. Going to recover repository information...");
-                return new BitbucketRepositoryUrl(targetProjectKey, targetRepoSlug);
+                return getCloneRepositoryUrl(targetProjectKey, targetRepoSlug);
             }
             else {
                 var bodyString = Joiner.on(",").withKeyValueSeparator("=").join(body);
@@ -269,11 +269,15 @@ public class BitbucketService extends AbstractVersionControlService {
     /**
      * Gets the project key from the given URL
      *
+     * TODO: rework this!
+     *
+     * Example: https://ga42xab@repobruegge.in.tum.de/scm/EIST2016RME/RMEXERCISE-ga42xab.git will return EIST2016RME
+     *
      * @param repositoryUrl The complete repository-url (including protocol, host and the complete path)
      * @return The project key
      * @throws BitbucketException if the URL is invalid and no project key could be extracted
      */
-    private String getProjectKeyFromUrl(URL repositoryUrl) throws BitbucketException {
+    public String getProjectKeyFromUrl(URL repositoryUrl) throws BitbucketException {
         // https://ga42xab@repobruegge.in.tum.de/scm/EIST2016RME/RMEXERCISE-ga42xab.git
         String[] urlParts = repositoryUrl.getFile().split("/");
         if (urlParts.length > 2) {
@@ -285,14 +289,16 @@ public class BitbucketService extends AbstractVersionControlService {
     }
 
     /**
-     * Gets the repository slug from the given URL
+     * TODO: this is duplicated code from BambooService. Think about how to reuse it while being able to test and mock it properly
+     *
+     * Gets the repository slug from the given URL.
+     * Example: https://ga42xab@repobruegge.in.tum.de/scm/EIST2016RME/RMEXERCISE-ga42xab.git will return RMEXERCISE-ga42xab
      *
      * @param repositoryUrl The complete repository-url (including protocol, host and the complete path)
      * @return The repository slug
      * @throws BitbucketException if the URL is invalid and no repository slug could be extracted
      */
     public String getRepositorySlugFromUrl(URL repositoryUrl) throws BitbucketException {
-        // https://ga42xab@repobruegge.in.tum.de/scm/EIST2016RME/RMEXERCISE-ga42xab.git
         String[] urlParts = repositoryUrl.getFile().split("/");
         if (urlParts[urlParts.length - 1].endsWith(".git")) {
             String repositorySlug = urlParts[urlParts.length - 1];
@@ -689,7 +695,7 @@ public class BitbucketService extends AbstractVersionControlService {
      * @param repositorySlug The repository's slug.
      */
     private void deleteRepositoryImpl(String projectKey, String repositorySlug) {
-        String baseUrl = BITBUCKET_SERVER_URL + "/rest/api/1.0/projects/" + projectKey + "/repos/" + repositorySlug;
+        String baseUrl = BITBUCKET_SERVER_URL + "/rest/api/1.0/projects/" + projectKey + "/repos/" + repositorySlug.toLowerCase();
         log.info("Delete repository " + baseUrl);
         HttpHeaders headers = HeaderUtil.createAuthorization(BITBUCKET_USER, BITBUCKET_PASSWORD);
         HttpEntity<?> entity = new HttpEntity<>(headers);
@@ -816,7 +822,7 @@ public class BitbucketService extends AbstractVersionControlService {
                 this.url = new URL(urlString);
             }
             catch (MalformedURLException e) {
-                throw new BitbucketException("Could not build clone URL", e);
+                throw new BitbucketException("Could not Bitbucket Repository URL", e);
             }
         }
 
@@ -825,7 +831,7 @@ public class BitbucketService extends AbstractVersionControlService {
                 this.url = new URL(urlString);
             }
             catch (MalformedURLException e) {
-                throw new BitbucketException("Could not build clone URL", e);
+                throw new BitbucketException("Could not Bitbucket Repository URL", e);
             }
         }
 

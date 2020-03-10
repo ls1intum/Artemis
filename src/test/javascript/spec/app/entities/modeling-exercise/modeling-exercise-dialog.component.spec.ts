@@ -7,7 +7,7 @@ import { JhiEventManager } from 'ng-jhipster';
 
 import { ArtemisTestModule } from '../../../test.module';
 import { ModelingExerciseDialogComponent } from '../../../../../../main/webapp/app/exercises/modeling/manage/modeling-exercise/modeling-exercise-dialog.component';
-import { ModelingExerciseService } from '../../../../../../main/webapp/app/exercises/modeling/manage/modeling-exercise/modeling-exercise.service';
+import { ModelingExerciseService } from 'app/exercises/modeling/manage/modeling-exercise.service';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { UMLDiagramType } from '@ls1intum/apollon';
 

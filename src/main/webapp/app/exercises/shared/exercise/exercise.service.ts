@@ -9,7 +9,7 @@ import { Exercise, ExerciseCategory } from '../../../entities/exercise.model';
 import { ParticipationService } from '../participation/participation.service';
 import { map } from 'rxjs/operators';
 import { AccountService } from 'app/core/auth/account.service';
-import { StatsForDashboard } from 'app/course/instructor-course-dashboard/stats-for-dashboard.model';
+import { StatsForDashboard } from 'app/course/dashboards/instructor-course-dashboard/stats-for-dashboard.model';
 import { LtiConfiguration } from 'app/entities/lti-configuration.model';
 
 export type EntityResponseType = HttpResponse<Exercise>;
@@ -68,6 +68,18 @@ export class ExerciseService {
         return this.http
             .get<Exercise>(`${this.resourceUrl}/${exerciseId}/details`, { observe: 'response' })
             .map((res: EntityResponseType) => this.convertDateFromServer(res))
+            .map((res: EntityResponseType) => {
+                if (res.body) {
+                    // insert an empty list to avoid additional calls in case the list is empty on the server (because then it would be undefined in the client)
+                    if (res.body.exerciseHints === undefined) {
+                        res.body.exerciseHints = [];
+                    }
+                    if (res.body.studentQuestions === undefined) {
+                        res.body.studentQuestions = [];
+                    }
+                }
+                return res;
+            })
             .map((res: EntityResponseType) => this.checkPermission(res));
     }
 

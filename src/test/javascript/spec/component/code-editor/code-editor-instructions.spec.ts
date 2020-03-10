@@ -13,9 +13,9 @@ import { MockCodeEditorGridService } from '../../mocks/mock-code-editor-grid.ser
 import { CodeEditorRepositoryFileService } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
 import { CodeEditorGridService } from 'app/exercises/programming/shared/code-editor/service/code-editor-grid.service';
 import { CodeEditorInstructionsComponent } from 'app/exercises/programming/shared/code-editor/instructions/code-editor-instructions.component';
-import { ProgrammingExerciseInstructionComponent } from 'app/exercises/programming/manage/instructions/instructions-render/programming-exercise-instruction.component';
+import { ProgrammingExerciseInstructionComponent } from 'app/exercises/programming/shared/instructions-render/programming-exercise-instruction.component';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
-import { ProgrammingExerciseEditableInstructionComponent } from 'app/exercises/programming/manage/instructions/instructions-editor/programming-exercise-editable-instruction.component';
+import { ProgrammingExerciseEditableInstructionComponent } from 'app/exercises/programming/manage/instructions-editor/programming-exercise-editable-instruction.component';
 import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown-editor.module';
 import { MockCodeEditorRepositoryFileService } from '../../mocks/mock-code-editor-repository-file.service';
 

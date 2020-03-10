@@ -1,16 +1,14 @@
 package de.tum.in.www1.artemis.service;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.*;
 
+import java.net.URISyntaxException;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.Set;
+import java.util.stream.Collectors;
 
-import org.apache.http.HttpException;
 import org.eclipse.jgit.lib.ObjectId;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -20,6 +18,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationTest;
+import de.tum.in.www1.artemis.connector.bitbucket.BitbucketRequestMockProvider;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
@@ -45,6 +44,9 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationTe
     @Autowired
     TimeService timeService;
 
+    @Autowired
+    private BitbucketRequestMockProvider bitbucketRequestMockProvider;
+
     private ProgrammingExercise programmingExercise;
 
     // When the scheduler is invoked, there is a small delay until the runnable is called.
@@ -52,10 +54,8 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationTe
     private final long SCHEDULER_TASK_TRIGGER_DELAY_MS = 1200;
 
     @BeforeEach
-    void init() throws HttpException {
-
-        doNothing().when(continuousIntegrationService).triggerBuild(any());
-        doNothing().when(versionControlService).setRepositoryPermissionsToReadOnly(any(), any(), any());
+    void init() {
+        bitbucketRequestMockProvider.enableMockingOfRequests();
         doReturn(ObjectId.fromString("fffb09455885349da6e19d3ad7fd9c3404c5a0df")).when(gitService).getLastCommitHash(any());
 
         database.addUsers(2, 2, 2);
@@ -73,7 +73,6 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationTe
     }
 
     private void verifyLockStudentRepositoryOperation(boolean wasCalled) {
-
         int callCount = wasCalled ? 1 : 0;
         Set<StudentParticipation> studentParticipations = programmingExercise.getStudentParticipations();
         for (StudentParticipation studentParticipation : studentParticipations) {
@@ -85,8 +84,15 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationTe
         }
     }
 
+    private void mockStudentRepoLocks() throws URISyntaxException {
+        for (final var login : programmingExercise.getStudentParticipations().stream().map(p -> p.getStudent().getLogin()).collect(Collectors.toList())) {
+            bitbucketRequestMockProvider.mockSetRepositoryPermissionsToReadOnly(programmingExercise.getProjectKey(), login);
+        }
+    }
+
     @Test
     void shouldExecuteScheduledBuildAndTestAfterDueDate() throws Exception {
+        mockStudentRepoLocks();
         long delayMS = 800;
         final var dueDateDelayMS = 200;
         programmingExercise.setDueDate(ZonedDateTime.now().plus(dueDateDelayMS / 2, ChronoUnit.MILLIS));
@@ -127,6 +133,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationTe
 
     @Test
     void shouldNotExecuteScheduledTwiceIfSameExercise() throws Exception {
+        mockStudentRepoLocks();
         long delayMS = 100; // 100 ms.
         programmingExercise.setDueDate(ZonedDateTime.now().plusNanos(timeService.milliSecondsToNanoSeconds(delayMS / 2)));
         // Setting it the first time.
@@ -163,6 +170,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationTe
 
     @Test
     void shouldScheduleExercisesWithBuildAndTestDateInFuture() throws Exception {
+        mockStudentRepoLocks();
         long delayMS = 200;
         programmingExercise.setDueDate(ZonedDateTime.now().plusNanos(timeService.milliSecondsToNanoSeconds(delayMS / 2)));
         programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().plusNanos(timeService.milliSecondsToNanoSeconds(delayMS)));

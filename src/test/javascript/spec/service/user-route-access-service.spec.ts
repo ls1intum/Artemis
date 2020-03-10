@@ -27,7 +27,7 @@ describe('UserRouteAccessService', () => {
     let fixture: ComponentFixture<CourseExerciseDetailsComponent>;
     let service: UserRouteAccessService;
     let routeStateMock: any = { snapshot: {}, url: '/' };
-    let route = 'overview/:courseId/exercises/:exerciseId';
+    let route = 'courses/:courseId/exercises/:exerciseId';
 
     beforeEach(async(() => {
         TestBed.configureTestingModule({

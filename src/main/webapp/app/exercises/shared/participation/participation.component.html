@@ -69,7 +69,7 @@
                     </ng-template>
                     <ng-template ngx-datatable-cell-template let-value="value">
                         <div *ngIf="exercise.isAtLeastInstructor; else displayId">
-                            <a routerLink="/participation/{{ value }}/submissions">{{ value }}</a>
+                            <a routerLink="{{ value }}/submissions">{{ value }}</a>
                         </div>
                         <ng-template #displayId>
                             {{ value }}
@@ -150,7 +150,7 @@
                     </ng-template>
                     <ng-template ngx-datatable-cell-template let-value="row">
                         <div class="text-center">
-                            <a *ngIf="exercise.isAtLeastInstructor; else displayTextOnly" routerLink="/participation/{{ value.id }}/submissions">
+                            <a *ngIf="exercise.isAtLeastInstructor; else displayTextOnly" routerLink="{{ value.id }}/submissions">
                                 {{ value.submissionCount }}
                             </a>
                             <ng-template #displayTextOnly>

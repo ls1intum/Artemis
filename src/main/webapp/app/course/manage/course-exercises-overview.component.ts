@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { Course } from 'app/entities/course.model';
-import { CourseService } from 'app/course/manage/course.service';
+import { CourseManagementService } from './course-management.service';
 import { ActivatedRoute } from '@angular/router';
 
 @Component({
@@ -16,7 +16,7 @@ export class CourseExercisesOverviewComponent implements OnInit {
     modelingExercisesCount = 0;
     fileUploadExercisesCount = 0;
 
-    constructor(private courseService: CourseService, private route: ActivatedRoute) {}
+    constructor(private courseService: CourseManagementService, private route: ActivatedRoute) {}
 
     ngOnInit(): void {
         this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));

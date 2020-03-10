@@ -591,7 +591,7 @@ public class GitService {
         }
         // This exception occurrs when there was no change to the repo and a commit is done, so it is ignored.
         catch (JGitInternalException ex) {
-            log.debug("Did not combine the repository {} as there were no changes to commit.", repo);
+            log.debug("Did not combine the repository {} as there were no changes to commit. Exception: {}", repo, ex.getMessage());
         }
         catch (GitAPIException ex) {
             log.error("Could not combine repository {} due to exception: {}", repo, ex);

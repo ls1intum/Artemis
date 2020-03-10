@@ -59,6 +59,10 @@ public class StudentParticipation extends Participation {
         return Optional.ofNullable((Participant) student).orElse(team);
     }
 
+    /**
+     * allows to set the participant independent whether it is a team or user
+     * @param participant either a team or user
+     */
     public void setParticipant(Participant participant) {
         if (participant instanceof User) {
             this.student = (User) participant;
