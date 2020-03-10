@@ -316,7 +316,7 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationTest 
         assertThat(participations.size()).as("Exactly 2 participations are returned").isEqualTo(2);
         assertThat(participations.stream().allMatch(p -> p.getStudent() != null)).as("Only participation that has student are returned").isTrue();
         assertThat(participations.stream().allMatch(p -> p.getSubmissionCount() == 0)).as("No submissions should exist for participations").isTrue();
-        var participationWithResult = participations.stream().filter(p -> p.getStudent().equals(database.getUserByLogin("student2"))).findFirst().get();
+        var participationWithResult = participations.stream().filter(p -> p.getParticipant().equals(database.getUserByLogin("student2"))).findFirst().get();
         assertThat(participationWithResult.getResults().size()).isEqualTo(1);
         assertThat(participationWithResult.getResults().stream().findFirst().get()).isEqualTo(result);
     }
