@@ -6,6 +6,7 @@
                 "createLabel": "Übung erstellen",
                 "createOrEditLabel": "Übung erstellen oder bearbeiten"
             },
+            "addCriterion": "BewertungKriterium hinzufügen",
             "resultCount": "{{resultsLength}} Ergebnisse",
             "resultsPerPage": "{{number}} Ergebnisse pro Seite",
             "showAllResults": "Zeige alle Ergebnisse",
@@ -31,6 +32,7 @@
             "problemStatement": "Aufgabenstellung",
             "sampleSolution": "Beispiel Lösung",
             "gradingInstructions": "Benotungshinweise",
+            "structuredGradingInstructions": "Strukturierte Benotungshinweise",
             "title": "Titel",
             "shortName": "Kurzname",
             "releaseDate": "Veröffentlichungsdatum",

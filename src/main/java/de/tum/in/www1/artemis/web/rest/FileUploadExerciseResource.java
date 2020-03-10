@@ -15,10 +15,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.Exercise;
-import de.tum.in.www1.artemis.domain.FileUploadExercise;
-import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.repository.FileUploadExerciseRepository;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
@@ -48,14 +45,17 @@ public class FileUploadExerciseResource {
 
     private final GroupNotificationService groupNotificationService;
 
+    private final GradingCriterionService gradingCriterionService;
+
     public FileUploadExerciseResource(FileUploadExerciseRepository fileUploadExerciseRepository, UserService userService, AuthorizationCheckService authCheckService,
-            CourseService courseService, GroupNotificationService groupNotificationService, ExerciseService exerciseService) {
+            CourseService courseService, GroupNotificationService groupNotificationService, ExerciseService exerciseService, GradingCriterionService gradingCriterionService) {
         this.fileUploadExerciseRepository = fileUploadExerciseRepository;
         this.userService = userService;
         this.courseService = courseService;
         this.authCheckService = authCheckService;
         this.groupNotificationService = groupNotificationService;
         this.exerciseService = exerciseService;
+        this.gradingCriterionService = gradingCriterionService;
     }
 
     /**
@@ -183,6 +183,8 @@ public class FileUploadExerciseResource {
     public ResponseEntity<FileUploadExercise> getFileUploadExercise(@PathVariable Long exerciseId) {
         log.debug("REST request to get FileUploadExercise : {}", exerciseId);
         Optional<FileUploadExercise> fileUploadExercise = fileUploadExerciseRepository.findById(exerciseId);
+        List<GradingCriterion> gradingCriteria = gradingCriterionService.findByExerciseIdWithEagerGradingCriteria(exerciseId);
+        fileUploadExercise.ifPresent(exercise -> exercise.setGradingCriteria(gradingCriteria));
         Course course = fileUploadExercise.get().getCourse();
         User user = userService.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {

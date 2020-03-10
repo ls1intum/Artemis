@@ -35,9 +35,11 @@ import { ArtemisTeamModule } from 'app/exercises/shared/team/team.module';
 import { ArtemisModelingAssessmentEditorModule } from 'app/exercises/modeling/assess/modeling-assessment-editor/modeling-assessment-editor.module';
 import { ArtemisCourseManagementModule } from 'app/course/manage/course-management.module';
 import { ArtemisExerciseParticipationModule } from 'app/exercises/exercise-participation.module';
+import { StructuredGradingCriterionModule } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.module';
 
 @NgModule({
     imports: [
+        StructuredGradingCriterionModule,
         BrowserModule,
         BrowserAnimationsModule,
         ArtemisSharedModule,
