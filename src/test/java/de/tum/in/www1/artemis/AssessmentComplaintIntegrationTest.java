@@ -503,7 +503,7 @@ public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegratio
 
         complaints.forEach(compl -> {
             final var participation = (StudentParticipation) compl.getResult().getParticipation();
-            assertThat(participation.getStudent()).as("No student information").isNull();
+            assertThat(participation.getStudent()).as("No student information").isEmpty();
             assertThat(compl.getStudent()).as("No student information").isNull();
             assertThat(participation.getExercise()).as("No additional exercise information").isNull();
             assertThat(compl.getResultBeforeComplaint()).as("No old result information").isNull();
