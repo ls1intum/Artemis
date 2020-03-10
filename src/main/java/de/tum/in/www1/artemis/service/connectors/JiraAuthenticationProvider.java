@@ -9,6 +9,7 @@ import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.actuate.audit.AuditEvent;
@@ -69,7 +70,7 @@ public class JiraAuthenticationProvider implements ArtemisAuthenticationProvider
     @Value("${artemis.user-management.external.url}")
     private URL JIRA_URL;
 
-    private final UserService userService;
+    private UserService userService;
 
     private final UserRepository userRepository;
 
@@ -81,14 +82,19 @@ public class JiraAuthenticationProvider implements ArtemisAuthenticationProvider
 
     private final AuditEventRepository auditEventRepository;
 
-    public JiraAuthenticationProvider(UserService userService, UserRepository userRepository, CourseRepository courseRepository,
-            @Qualifier("jiraRestTemplate") RestTemplate restTemplate, Optional<LdapUserService> ldapUserService, AuditEventRepository auditEventRepository) {
-        this.userService = userService;
+    public JiraAuthenticationProvider(UserRepository userRepository, CourseRepository courseRepository, @Qualifier("jiraRestTemplate") RestTemplate restTemplate,
+            Optional<LdapUserService> ldapUserService, AuditEventRepository auditEventRepository) {
         this.userRepository = userRepository;
         this.courseRepository = courseRepository;
         this.restTemplate = restTemplate;
         this.ldapUserService = ldapUserService;
         this.auditEventRepository = auditEventRepository;
+    }
+
+    @Autowired
+    // break the dependency cycle
+    public void setUserService(UserService userService) {
+        this.userService = userService;
     }
 
     /**
