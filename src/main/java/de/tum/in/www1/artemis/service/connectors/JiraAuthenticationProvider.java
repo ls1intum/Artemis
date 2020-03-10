@@ -91,6 +91,9 @@ public class JiraAuthenticationProvider implements ArtemisAuthenticationProvider
         this.auditEventRepository = auditEventRepository;
     }
 
+    /**
+     * @return the health of the connected JIRA instance
+     */
     public ConnectorHealth health() {
         ConnectorHealth health;
         try {

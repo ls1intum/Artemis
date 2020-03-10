@@ -234,15 +234,16 @@ public class GitUtilService {
         return null;
     }
 
-    public static final class FileRepositoryUrl extends VcsRepositoryUrl {
+    public static final class MockFileRepositoryUrl extends VcsRepositoryUrl {
 
-        public FileRepositoryUrl(File file) throws MalformedURLException {
+        public MockFileRepositoryUrl(File file) throws MalformedURLException {
             super(file.toURI().toURL().toString());
         }
 
         @Override
         public VcsRepositoryUrl withUser(String username) {
-            return null;
+            // the mocked url should already include the user specific part
+            return this;
         }
     }
 
