@@ -83,7 +83,7 @@ public class Team implements Serializable, Participant {
     }
 
     public String getParticipantIdentifier() {
-        return this.shortName;
+        return shortName;
     }
 
     public String getImage() {

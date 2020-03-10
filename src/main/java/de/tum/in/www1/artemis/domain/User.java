@@ -135,7 +135,7 @@ public class User extends AbstractAuditingEntity implements Serializable, Partic
     }
 
     public String getParticipantIdentifier() {
-        return this.login;
+        return login;
     }
 
     public String getPassword() {
