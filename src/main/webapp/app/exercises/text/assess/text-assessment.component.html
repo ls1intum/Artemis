@@ -108,6 +108,7 @@
             class="resizable-submission card"
             id="instructions"
             [ngStyle]="{ 'width.px': 400, 'min-width.px': 400 }"
+            [criteria]="this.exercise.gradingCriteria"
             [problemStatement]="this.exercise.problemStatement"
             [gradingInstructions]="this.exercise.gradingInstructions"
             [sampleSolution]="this.exercise.sampleSolution"

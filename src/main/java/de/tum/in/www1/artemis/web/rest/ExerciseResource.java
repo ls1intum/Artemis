@@ -150,6 +150,9 @@ public class ExerciseResource {
         exampleSubmissions.removeIf(exampleSubmission -> exampleSubmission.getSubmission().getResult() == null);
         exercise.setExampleSubmissions(new HashSet<>(exampleSubmissions));
 
+        List<GradingCriterion> gradingCriteria = gradingCriterionService.findByExerciseIdWithEagerGradingCriteria(exerciseId);
+        exercise.setGradingCriteria(gradingCriteria);
+
         TutorParticipation tutorParticipation = tutorParticipationService.findByExerciseAndTutor(exercise, user);
         if (exampleSubmissions.size() == 0 && tutorParticipation.getStatus().equals(TutorParticipationStatus.REVIEWED_INSTRUCTIONS)) {
             tutorParticipation.setStatus(TutorParticipationStatus.TRAINED);

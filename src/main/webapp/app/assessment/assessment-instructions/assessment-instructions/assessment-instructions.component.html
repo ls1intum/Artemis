@@ -17,4 +17,19 @@
 
 <jhi-expandable-section headerKey="assessmentInstructions.gradingCriteria">
     <p class="markdown-preview" [innerHTML]="gradingInstructions"></p>
+    <div *ngFor="let criterion of criteria">
+        <p class="font-weight-bold" [innerHTML]="criterion!.title! | htmlForMarkdown"></p>
+        <div class="card-header" *ngFor="let instruction of criterion!.structuredGradingInstructions" draggable="true" ondragstart="drag(event)">
+            <table class="table table-bordered">
+                <tbody>
+                    <tr>
+                        <td [innerHTML]="instruction.credits"></td>
+                        <td [innerHTML]="instruction!.gradingScale! | htmlForMarkdown"></td>
+                        <td [innerHTML]="instruction!.instructionDescription! | htmlForMarkdown"></td>
+                        <td [innerHTML]="instruction!.feedback! | htmlForMarkdown"></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
 </jhi-expandable-section>

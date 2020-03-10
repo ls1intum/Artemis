@@ -61,6 +61,7 @@
             <jhi-resizable-instructions
                 class="resizable-submission card resizable-instructions"
                 id="instructions"
+                [criteria]="this.exercise.gradingCriteria"
                 [problemStatement]="this.exercise.problemStatement"
                 [gradingInstructions]="this.exercise.gradingInstructions"
                 [sampleSolution]="this.exercise.sampleSolution"

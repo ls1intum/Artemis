@@ -7,6 +7,7 @@ import { TextExercise } from 'app/entities/text-exercise.model';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { GradingCriterion } from 'app/exercises/shared/structured-grading-criterion/grading-criterion.model';
 
 @Component({
     selector: 'jhi-assessment-instructions',
@@ -20,6 +21,7 @@ export class AssessmentInstructionsComponent {
     sampleSolution?: SafeHtml;
     sampleSolutionModel?: UMLModel;
     sampleSolutionDiagramType?: UMLDiagramType;
+    criteria: GradingCriterion[];
 
     readonly ExerciseType = ExerciseType;
 
@@ -29,6 +31,7 @@ export class AssessmentInstructionsComponent {
         this.exercise = exercise;
         this.problemStatement = this.markdownService.safeHtmlForMarkdown(exercise.problemStatement);
         this.gradingInstructions = this.markdownService.safeHtmlForMarkdown(exercise.gradingInstructions);
+        this.criteria = exercise.gradingCriteria;
 
         let sampleSolutionMarkdown: string | undefined;
         switch (exercise.type) {

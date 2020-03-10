@@ -61,9 +61,11 @@ public class ModelingSubmissionResource {
 
     private final UserService userService;
 
+    private final GradingCriterionService gradingCriterionService;
+
     public ModelingSubmissionResource(ModelingSubmissionService modelingSubmissionService, ModelingExerciseService modelingExerciseService,
-            ParticipationService participationService, CourseService courseService, AuthorizationCheckService authCheckService, CompassService compassService,
-            ExerciseService exerciseService, UserService userService) {
+                                      ParticipationService participationService, CourseService courseService, AuthorizationCheckService authCheckService, CompassService compassService,
+                                      ExerciseService exerciseService, UserService userService, GradingCriterionService gradingCriterionService) {
         this.modelingSubmissionService = modelingSubmissionService;
         this.modelingExerciseService = modelingExerciseService;
         this.participationService = participationService;
@@ -72,6 +74,7 @@ public class ModelingSubmissionResource {
         this.compassService = compassService;
         this.exerciseService = exerciseService;
         this.userService = userService;
+        this.gradingCriterionService = gradingCriterionService;
     }
 
     /**
@@ -194,14 +197,16 @@ public class ModelingSubmissionResource {
         ModelingSubmission modelingSubmission = modelingSubmissionService.findOne(submissionId);
         final StudentParticipation studentParticipation = (StudentParticipation) modelingSubmission.getParticipation();
         final ModelingExercise modelingExercise = (ModelingExercise) studentParticipation.getExercise();
+        List<GradingCriterion> gradingCriteria = gradingCriterionService.findByExerciseIdWithEagerGradingCriteria(modelingExercise.getId());
+        modelingExercise.setGradingCriteria(gradingCriteria);
         final User user = userService.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(modelingExercise, user)) {
             return forbidden();
         }
         modelingSubmission = modelingSubmissionService.getLockedModelingSubmission(submissionId, modelingExercise);
         // Make sure the exercise is connected to the participation in the json response
-
         studentParticipation.setExercise(modelingExercise);
+        modelingSubmission.getParticipation().getExercise().setGradingCriteria(gradingCriteria);
         this.modelingSubmissionService.hideDetails(modelingSubmission, user);
         return ResponseEntity.ok(modelingSubmission);
     }

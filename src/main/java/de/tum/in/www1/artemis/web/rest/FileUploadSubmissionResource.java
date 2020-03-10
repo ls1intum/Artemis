@@ -53,8 +53,10 @@ public class FileUploadSubmissionResource {
 
     private final ParticipationService participationService;
 
+    private final GradingCriterionService  gradingCriterionService;
+
     public FileUploadSubmissionResource(CourseService courseService, FileUploadSubmissionService fileUploadSubmissionService, FileUploadExerciseService fileUploadExerciseService,
-            AuthorizationCheckService authCheckService, UserService userService, ExerciseService exerciseService, ParticipationService participationService) {
+                                        AuthorizationCheckService authCheckService, UserService userService, ExerciseService exerciseService, ParticipationService participationService, GradingCriterionService gradingCriterionService) {
         this.userService = userService;
         this.exerciseService = exerciseService;
         this.courseService = courseService;
@@ -62,6 +64,7 @@ public class FileUploadSubmissionResource {
         this.fileUploadExerciseService = fileUploadExerciseService;
         this.authCheckService = authCheckService;
         this.participationService = participationService;
+        this.gradingCriterionService = gradingCriterionService;
     }
 
     /**
@@ -139,6 +142,8 @@ public class FileUploadSubmissionResource {
         var fileUploadSubmission = fileUploadSubmissionService.findOne(submissionId);
         var studentParticipation = (StudentParticipation) fileUploadSubmission.getParticipation();
         var fileUploadExercise = (FileUploadExercise) studentParticipation.getExercise();
+        List<GradingCriterion> gradingCriteria = gradingCriterionService.findByExerciseIdWithEagerGradingCriteria(fileUploadExercise.getId());
+        fileUploadExercise.setGradingCriteria(gradingCriteria);
         User user = userService.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(fileUploadExercise, user)) {
             return forbidden();
@@ -146,6 +151,7 @@ public class FileUploadSubmissionResource {
         fileUploadSubmission = fileUploadSubmissionService.getLockedFileUploadSubmission(submissionId, fileUploadExercise);
         // Make sure the exercise is connected to the participation in the json response
         studentParticipation.setExercise(fileUploadExercise);
+        fileUploadSubmission.getParticipation().getExercise().setGradingCriteria(gradingCriteria);
         this.fileUploadSubmissionService.hideDetails(fileUploadSubmission, user);
         return ResponseEntity.ok(fileUploadSubmission);
     }
