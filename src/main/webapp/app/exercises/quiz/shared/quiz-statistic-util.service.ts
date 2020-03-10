@@ -22,7 +22,7 @@ export class QuizStatisticUtil {
         });
         // go to quiz-statistic if the position = 0
         if (index === 0) {
-            this.router.navigateByUrl('/quiz/' + quizExercise.id + '/quiz-statistic');
+            this.router.navigateByUrl('/course-management/' + quizExercise.course?.id + '/quiz-exercises/' + quizExercise.id + '/quiz-point-statistic');
         } else {
             // go to previous Question-statistic
             this.navigateToStatisticOf(quizExercise, quizExercise.quizQuestions[index - 1]);
@@ -43,7 +43,7 @@ export class QuizStatisticUtil {
         });
         // go to quiz-statistic if the position = last position
         if (index === quizExercise.quizQuestions.length - 1) {
-            this.router.navigateByUrl('/quiz/' + quizExercise.id + '/quiz-point-statistic');
+            this.router.navigateByUrl('/course-management/' + quizExercise.course?.id + '/quiz-exercises/' + quizExercise.id + '/quiz-point-statistic');
         } else {
             // go to next Question-statistic
             this.navigateToStatisticOf(quizExercise, quizExercise.quizQuestions[index + 1]);

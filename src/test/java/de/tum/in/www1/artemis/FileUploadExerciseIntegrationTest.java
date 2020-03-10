@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.time.ZonedDateTime;
 import java.util.List;
 
 import org.junit.jupiter.api.AfterEach;
@@ -96,7 +97,7 @@ public class FileUploadExerciseIntegrationTest extends AbstractSpringIntegration
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void deleteFileUploadExercise() throws Exception {
+    public void deleteFileUploadExercise_asInstructor() throws Exception {
         database.addCourseWithTwoFileUploadExercise();
         FileUploadExercise fileUploadExercise = (FileUploadExercise) exerciseRepo.findAll().get(0);
         FileUploadExercise fileUploadExercise2 = (FileUploadExercise) exerciseRepo.findAll().get(1);
@@ -104,6 +105,54 @@ public class FileUploadExerciseIntegrationTest extends AbstractSpringIntegration
         request.delete("/api/file-upload-exercises/" + fileUploadExercise.getId(), HttpStatus.OK);
         request.delete("/api/file-upload-exercises/" + fileUploadExercise2.getId(), HttpStatus.OK);
 
-        assertThat(exerciseRepo.findAll().isEmpty()).isTrue();
+        assertThat(exerciseRepo.findAll().isEmpty());
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void deleteFileUploadExercise_asStudent() throws Exception {
+        database.addCourseWithTwoFileUploadExercise();
+        FileUploadExercise fileUploadExercise = (FileUploadExercise) exerciseRepo.findAll().get(0);
+        FileUploadExercise fileUploadExercise2 = (FileUploadExercise) exerciseRepo.findAll().get(1);
+
+        request.delete("/api/file-upload-exercises/" + fileUploadExercise.getId(), HttpStatus.FORBIDDEN);
+        request.delete("/api/file-upload-exercises/" + fileUploadExercise2.getId(), HttpStatus.FORBIDDEN);
+
+        assertThat(exerciseRepo.findAll().size() == 2);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void updateFileUploadExercise_asInstructor() throws Exception {
+        database.addCourseWithTwoFileUploadExercise();
+        FileUploadExercise fileUploadExercise = (FileUploadExercise) exerciseRepo.findAll().get(0);
+        fileUploadExercise.setDueDate(ZonedDateTime.now().plusDays(10));
+
+        FileUploadExercise receivedFileUploadExercise = request.putWithResponseBody("/api/file-upload-exercises/" + fileUploadExercise.getId(), fileUploadExercise,
+                FileUploadExercise.class, HttpStatus.OK);
+        assertThat(receivedFileUploadExercise.getDueDate().equals(ZonedDateTime.now().plusDays(10)));
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void getAllFileUploadExercisesForCourse_asInstructor() throws Exception {
+        database.addCourseWithTwoFileUploadExercise();
+        long courseID = courseRepo.findAllActiveWithEagerExercisesAndLectures().get(0).getId();
+
+        List<FileUploadExercise> receivedFileUploadExercises = request.getList("/api/courses/" + courseID + "/file-upload-exercises", HttpStatus.OK, FileUploadExercise.class);
+
+        assertThat(receivedFileUploadExercises.size() == courseRepo.findAllActiveWithEagerExercisesAndLectures().get(0).getExercises().size());
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void getAllFileUploadExercisesForCourse_asStudent() throws Exception {
+        database.addCourseWithTwoFileUploadExercise();
+        long courseID = courseRepo.findAllActiveWithEagerExercisesAndLectures().get(0).getId();
+
+        List<FileUploadExercise> receivedFileUploadExercises = request.getList("/api/courses/" + courseID + "/file-upload-exercises", HttpStatus.FORBIDDEN,
+                FileUploadExercise.class);
+
+        assertThat(receivedFileUploadExercises).isNull();
     }
 }

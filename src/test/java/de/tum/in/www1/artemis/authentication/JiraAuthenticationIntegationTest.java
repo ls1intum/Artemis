@@ -16,8 +16,8 @@ import org.springframework.test.context.ActiveProfiles;
 
 import de.tum.in.www1.artemis.connector.jira.JiraRequestMockProvider;
 import de.tum.in.www1.artemis.security.ArtemisInternalAuthenticationProvider;
-import de.tum.in.www1.artemis.security.JiraAuthenticationProvider;
 import de.tum.in.www1.artemis.service.UserService;
+import de.tum.in.www1.artemis.service.connectors.JiraAuthenticationProvider;
 
 @ActiveProfiles({ "artemis", "jira" })
 public class JiraAuthenticationIntegationTest extends AuthenticationIntegrationTest {

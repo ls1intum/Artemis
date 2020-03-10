@@ -13,7 +13,7 @@ import { ExerciseHint } from 'app/entities/exercise-hint.model';
 import { TaskCommand } from 'app/shared/markdown-editor/domainCommands/programming-exercise/task.command';
 import { HttpResponse } from '@angular/common/http';
 import { triggerChanges } from '../../utils/general.utils';
-import { ExerciseHintService, IExerciseHintService } from 'app/exercises/shared/exercise-hint/exercise-hint.service';
+import { ExerciseHintService, IExerciseHintService } from 'app/exercises/shared/exercise-hint/manage/exercise-hint.service';
 import { ProgrammingExerciseInstructionAnalysisComponent } from 'app/exercises/programming/manage/instructions-editor/analysis/programming-exercise-instruction-analysis.component';
 import { ProgrammingExerciseInstructionAnalysisService } from 'app/exercises/programming/manage/instructions-editor/analysis/programming-exercise-instruction-analysis.service';
 

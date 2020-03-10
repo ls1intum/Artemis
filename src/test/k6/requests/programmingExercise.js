@@ -55,6 +55,7 @@ export function createExercise(artemis, courseId) {
         problemStatement: programmingExerciseProblemStatement,
         presentationScoreEnabled: false,
         sequentialTestRuns: true,
+        mode: 'INDIVIDUAL',
         course: {
             id: courseId
         }

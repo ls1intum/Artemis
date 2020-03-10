@@ -22,7 +22,7 @@ public class JWTFilter extends GenericFilterBean {
 
     public static final String AUTHORIZATION_TOKEN = "access_token";
 
-    private TokenProvider tokenProvider;
+    private final TokenProvider tokenProvider;
 
     public JWTFilter(TokenProvider tokenProvider) {
         this.tokenProvider = tokenProvider;

@@ -4,7 +4,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { ShowdownExtension } from 'showdown';
 import { catchError, filter, flatMap, map, switchMap, tap } from 'rxjs/operators';
 import { merge, Observable, of, Subscription } from 'rxjs';
-import { ProgrammingExercise } from '../../../../entities/programming-exercise.model';
+import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import { ArtemisMarkdown } from 'app/shared/markdown.service';
 import { ProgrammingExerciseTaskExtensionWrapper } from './extensions/programming-exercise-task.extension';
@@ -20,7 +20,7 @@ import { problemStatementHasChanged } from 'app/exercises/shared/exercise/exerci
 import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
 import { hasParticipationChanged } from 'app/overview/participation-utils';
 import { Result } from 'app/entities/result.model';
-import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/exercise-hint.service';
+import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/manage/exercise-hint.service';
 
 @Component({
     selector: 'jhi-programming-exercise-instructions',
@@ -148,6 +148,9 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
     }
 
     private loadExerciseHints(exerciseId: number) {
+        if (this.exercise && this.exercise.exerciseHints) {
+            return of(this.exercise.exerciseHints);
+        }
         return this.exerciseHintService.findByExerciseId(exerciseId).pipe(
             map(({ body }) => body),
             catchError(() => []),

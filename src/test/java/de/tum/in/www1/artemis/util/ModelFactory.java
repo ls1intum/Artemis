@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.util;
 
 import java.time.ZonedDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.*;
@@ -12,6 +13,7 @@ import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentPar
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.security.AuthoritiesConstants;
+import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildResultNotificationDTO;
 
 public class ModelFactory {
 
@@ -348,5 +350,59 @@ public class ModelFactory {
         apollonDiagram.setDiagramType(diagramType);
         apollonDiagram.setTitle(title);
         return apollonDiagram;
+    }
+
+    public static BambooBuildResultNotificationDTO generateBambooBuildResult(String repoName, List<String> successfulTestNames, List<String> failedTestNames) {
+        final var notification = new BambooBuildResultNotificationDTO();
+        final var build = new BambooBuildResultNotificationDTO.BambooBuildDTO();
+        final var summary = new BambooBuildResultNotificationDTO.BambooTestSummaryDTO();
+        final var job = new BambooBuildResultNotificationDTO.BambooJobDTO();
+        final var successfulTests = successfulTestNames.stream().map(name -> generateBambooTestJob(name, true)).collect(Collectors.toList());
+        final var failedTests = failedTestNames.stream().map(name -> generateBambooTestJob(name, false)).collect(Collectors.toList());
+        final var vcs = new BambooBuildResultNotificationDTO.BambooVCSDTO();
+
+        vcs.setRepositoryName(repoName);
+        vcs.setId(TestConstants.COMMIT_HASH_STRING);
+
+        job.setId(42);
+        job.setFailedTests(failedTests);
+        job.setSuccessfulTests(successfulTests);
+
+        summary.setTotalCount(successfulTestNames.size() + failedTestNames.size());
+        summary.setSuccessfulCount(successfulTestNames.size());
+        summary.setSkippedCount(0);
+        summary.setQuarantineCount(0);
+        summary.setNewFailedCount(failedTestNames.size());
+        summary.setIgnoreCount(0);
+        summary.setFixedCount(0);
+        summary.setFailedCount(failedTestNames.size());
+        summary.setExistingFailedCount(failedTestNames.size());
+        summary.setDuration(42);
+        summary.setDescription("foobar");
+
+        build.setNumber(42);
+        build.setReason("foobar");
+        build.setSuccessful(failedTestNames.isEmpty());
+        build.setBuildCompletedDate(ZonedDateTime.now().minusSeconds(5));
+        build.setArtifact(false);
+        build.setTestSummary(summary);
+        build.setJobs(List.of(job));
+        build.setVcs(List.of(vcs));
+
+        notification.setSecret("secret");
+        notification.setNotificationType("TestNotification");
+        notification.setBuild(build);
+
+        return notification;
+    }
+
+    private static BambooBuildResultNotificationDTO.BambooTestJobDTO generateBambooTestJob(String name, boolean successful) {
+        final var test = new BambooBuildResultNotificationDTO.BambooTestJobDTO();
+        test.setErrors(successful ? List.of() : List.of("bad solution, did not work"));
+        test.setMethodName(name);
+        test.setClassName("SpringTestClass");
+        test.setName(name);
+
+        return test;
     }
 }
