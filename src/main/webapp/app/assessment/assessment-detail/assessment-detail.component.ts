@@ -42,4 +42,16 @@ export class AssessmentDetailComponent {
     public get sanitizedText(): string {
         return sanitize(this.text);
     }
+    allowDrop(ev: any) {
+        ev.preventDefault();
+    }
+    drop(ev: any) {
+        ev.preventDefault();
+        const data = ev.dataTransfer.getData('text');
+        const instruction = JSON.parse(data);
+        const credits = instruction.credits;
+        const feedback = instruction.feedback;
+        this.assessment.credits = credits;
+        this.assessment.detailText = feedback;
+    }
 }

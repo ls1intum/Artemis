@@ -28,9 +28,15 @@
         <div *ngIf="gradingInstructions">
             <h4 jhiTranslate="artemisApp.exercise.gradingInstructions">Grading instructions</h4>
             <p class="markdown-preview" [innerHTML]="gradingInstructions | htmlForMarkdown"></p>
-            <div *ngFor="let criterion of criteria">
+            <div *ngFor="let criterion of criteria; let criterionIndex = index">
                 <p class="font-weight-bold" [innerHTML]="criterion!.title! | htmlForMarkdown"></p>
-                <div class="card-header" *ngFor="let instruction of criterion!.structuredGradingInstructions" draggable="true" ondragstart="drag(event)">
+                <div
+                    class="card-header"
+                    *ngFor="let instruction of criterion!.structuredGradingInstructions; let instructionIndex = index"
+                    draggable="true"
+                    (dragstart)="drag($event, instruction)"
+                    id="criterion-{{ criterionIndex }}-instruction-{{ instructionIndex }}"
+                >
                     <table class="table table-bordered">
                         <tbody>
                             <tr>
