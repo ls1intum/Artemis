@@ -40,6 +40,8 @@ export class ProfileService {
                         profileInfo.sentry = data.sentry;
                         profileInfo.features = data.features;
                         profileInfo.buildPlanURLTemplate = data.buildPlanURLTemplate;
+                        profileInfo.externalUserManagementName = data.externalUserManagementName;
+                        profileInfo.externalUserManagementURL = data.externalUserManagementURL;
                         profileInfo.imprint = data.imprint;
                         profileInfo.contact = data.contact;
 
@@ -56,10 +58,7 @@ export class ProfileService {
     }
 
     private mapAllowedOrionVersions(data: any, profileInfo: ProfileInfo) {
-        const orionVersions = data['orion-versions'];
-        if (orionVersions) {
-            profileInfo.allowedOrionVersions = orionVersions;
-        }
+        profileInfo.allowedMinimumOrionVersion = data['allowed-minimum-orion-version'];
     }
 
     private mapGuidedTourConfig(data: any, profileInfo: ProfileInfo) {

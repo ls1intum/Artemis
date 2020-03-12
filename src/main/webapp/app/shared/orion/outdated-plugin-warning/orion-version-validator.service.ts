@@ -5,13 +5,8 @@ import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { Router } from '@angular/router';
 import { filter, first, map } from 'rxjs/operators';
 import { compare } from 'compare-versions';
-import { BehaviorSubject, Observable, of } from 'rxjs';
+import { Observable, of } from 'rxjs';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
-
-export type AllowedOrionVersionRange = {
-    from: string;
-    to: string;
-};
 
 @Injectable({
     providedIn: 'root',
@@ -19,7 +14,6 @@ export type AllowedOrionVersionRange = {
 export class OrionVersionValidator {
     isOrion = isOrion;
     private minVersion: string;
-    private maxVersion: string;
     private isValidVersion: boolean;
 
     constructor(private profileService: ProfileService, private window: WindowRef, private router: Router) {}
@@ -30,7 +24,7 @@ export class OrionVersionValidator {
      * Otherwise, checks the loaded profile, which includes the allowed version range and automatically routes
      * to an error page if the installed version is incompatible.
      */
-    validateOrionVersion(): Observable<boolean | undefined> {
+    validateOrionVersion(): Observable<boolean> {
         if (this.isOrion) {
             return this.validate();
         } else {
@@ -38,7 +32,7 @@ export class OrionVersionValidator {
         }
     }
 
-    private validate(): Observable<boolean | undefined> {
+    private validate(): Observable<boolean> {
         if (this.isValidVersion !== undefined) {
             return of(this.isValidVersion);
         }
@@ -49,29 +43,22 @@ export class OrionVersionValidator {
             const usedVersion = orionVersionArray[1];
             return this.fetchProfileInfoAndCompareVersions(usedVersion);
         } else {
-            this.router.navigateByUrl(`/orionOutdated?versionString=soOldThatThereIsNoVersion`);
+            this.router.navigateByUrl(`/orion-outdated?versionString=soOldThatThereIsNoVersion`);
             this.isValidVersion = false;
             return of(this.isValidVersion);
         }
     }
 
-    private fetchProfileInfoAndCompareVersions(usedVersion: string): Observable<boolean | undefined> {
-        const validationSubject = new BehaviorSubject<boolean | undefined>(undefined);
-        this.profileService
-            .getProfileInfo()
-            .pipe(
-                filter(Boolean),
-                first(),
-                map((info: ProfileInfo) => {
-                    this.minVersion = info.allowedOrionVersions.from;
-                    this.maxVersion = info.allowedOrionVersions.to;
-                    this.isValidVersion = this.versionInBounds(usedVersion);
-                    return this.isValidVersion;
-                }),
-            )
-            .subscribe(valid => validationSubject.next(valid));
-
-        return validationSubject;
+    private fetchProfileInfoAndCompareVersions(usedVersion: string): Observable<boolean> {
+        return this.profileService.getProfileInfo().pipe(
+            filter(Boolean),
+            first(),
+            map((info: ProfileInfo) => {
+                this.minVersion = info.allowedMinimumOrionVersion;
+                this.isValidVersion = this.versionInBounds(usedVersion);
+                return this.isValidVersion;
+            }),
+        );
     }
 
     private extractVersionFromUserAgent(userAgent: string): string[] {
@@ -82,8 +69,8 @@ export class OrionVersionValidator {
     }
 
     private versionInBounds(usedVersion: string): boolean {
-        if (!(compare(usedVersion, this.minVersion, '>=') && compare(usedVersion, this.maxVersion, '<='))) {
-            this.router.navigateByUrl(`/orionOutdated?versionString=${usedVersion}`);
+        if (!compare(usedVersion, this.minVersion, '>=')) {
+            this.router.navigateByUrl(`/orion-outdated?versionString=${usedVersion}`);
             return false;
         }
         return true;

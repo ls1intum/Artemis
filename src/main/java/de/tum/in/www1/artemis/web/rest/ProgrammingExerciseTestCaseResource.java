@@ -61,7 +61,7 @@ public class ProgrammingExerciseTestCaseResource {
      * @param exerciseId of the the exercise.
      * @return the found test cases or an empty list if no test cases were found.
      */
-    @GetMapping(value = "programming-exercise/{exerciseId}/test-cases")
+    @GetMapping(Endpoints.TEST_CASES)
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Set<ProgrammingExerciseTestCase>> getTestCases(@PathVariable Long exerciseId) {
         log.debug("REST request to get test cases for programming exercise {}", exerciseId);
@@ -85,7 +85,7 @@ public class ProgrammingExerciseTestCaseResource {
      * @param testCaseProgrammingExerciseTestCaseDTOS of the test cases to update the weights and afterDueDate flag of.
      * @return the set of test cases for the given programming exercise.
      */
-    @PatchMapping(value = "programming-exercise/{exerciseId}/update-test-cases")
+    @PatchMapping(Endpoints.UPDATE_TEST_CASES)
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Set<ProgrammingExerciseTestCase>> updateTestCases(@PathVariable Long exerciseId,
             @RequestBody Set<ProgrammingExerciseTestCaseDTO> testCaseProgrammingExerciseTestCaseDTOS) {
@@ -112,7 +112,7 @@ public class ProgrammingExerciseTestCaseResource {
      * @param exerciseId the id of the exercise to reset the test case weights of.
      * @return the updated set of test cases for the programming exercise.
      */
-    @PatchMapping(value = "programming-exercise/{exerciseId}/test-cases/reset-weights")
+    @PatchMapping(Endpoints.RESET_WEIGHTS)
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Set<ProgrammingExerciseTestCase>> resetWeights(@PathVariable Long exerciseId) {
         log.debug("REST request to reset the weights of exercise {}", exerciseId);
@@ -126,5 +126,19 @@ public class ProgrammingExerciseTestCaseResource {
 
         Set<ProgrammingExerciseTestCase> testCases = programmingExerciseTestCaseService.resetWeights(exerciseId);
         return ResponseEntity.ok(testCases);
+    }
+
+    public static final class Endpoints {
+
+        private static final String PROGRAMMING_EXERCISE = "/programming-exercise/{exerciseId}";
+
+        public static final String TEST_CASES = PROGRAMMING_EXERCISE + "/test-cases";
+
+        public static final String RESET_WEIGHTS = PROGRAMMING_EXERCISE + "/reset-weights";
+
+        public static final String UPDATE_TEST_CASES = PROGRAMMING_EXERCISE + "/update-test-cases";
+
+        private Endpoints() {
+        }
     }
 }

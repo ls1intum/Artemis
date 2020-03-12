@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, AfterViewInit } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Subscription } from 'rxjs/Subscription';
 import { JhiEventManager } from 'ng-jhipster';
@@ -16,7 +16,7 @@ import { AlertService } from 'app/core/alert/alert.service';
     templateUrl: './course-management.component.html',
     styles: ['.course-table {padding-bottom: 5rem}'],
 })
-export class CourseManagementComponent implements OnInit, OnDestroy {
+export class CourseManagementComponent implements OnInit, OnDestroy, AfterViewInit {
     predicate: string;
     reverse: boolean;
     showOnlyActive = true;
@@ -55,6 +55,10 @@ export class CourseManagementComponent implements OnInit, OnDestroy {
     ngOnInit() {
         this.loadAll();
         this.registerChangeInCourses();
+    }
+
+    ngAfterViewInit(): void {
+        this.guidedTourService.componentPageLoaded();
     }
 
     ngOnDestroy() {

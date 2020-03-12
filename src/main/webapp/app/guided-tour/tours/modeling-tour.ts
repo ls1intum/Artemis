@@ -24,7 +24,7 @@ export const modelingTour: GuidedTour = {
             imageUrl: '/../../../content/images/guided-tour-images/apollon-add-association.gif',
         }),
         new ModelingTaskTourStep({
-            highlightSelector: 'jhi-modeling-editor .modeling-editor .modeling-editor',
+            highlightSelector: 'jhi-modeling-editor .guided-tour.modeling-editor .modeling-editor',
             headlineTranslateKey: 'tour.modelingExercise.executeTasks.headline',
             contentTranslateKey: 'tour.modelingExercise.executeTasks.content',
             highlightPadding: 5,
@@ -33,7 +33,7 @@ export const modelingTour: GuidedTour = {
             modelingTask: new GuidedTourModelingTask(personUML.name, 'tour.modelingExercise.executeTasks.personClass'),
         }),
         new ModelingTaskTourStep({
-            highlightSelector: 'jhi-modeling-editor .modeling-editor .modeling-editor',
+            highlightSelector: 'jhi-modeling-editor .guided-tour.modeling-editor .modeling-editor',
             headlineTranslateKey: 'tour.modelingExercise.executeTasks.headline',
             contentTranslateKey: 'tour.modelingExercise.executeTasks.content',
             orientation: Orientation.TOP,
@@ -41,7 +41,7 @@ export const modelingTour: GuidedTour = {
             modelingTask: new GuidedTourModelingTask(studentUML.name, 'tour.modelingExercise.executeTasks.studentClass'),
         }),
         new ModelingTaskTourStep({
-            highlightSelector: 'jhi-modeling-editor .modeling-editor .modeling-editor',
+            highlightSelector: 'jhi-modeling-editor .guided-tour.modeling-editor .modeling-editor',
             headlineTranslateKey: 'tour.modelingExercise.executeTasks.headline',
             contentTranslateKey: 'tour.modelingExercise.executeTasks.content',
             orientation: Orientation.TOP,
@@ -49,7 +49,7 @@ export const modelingTour: GuidedTour = {
             modelingTask: new GuidedTourModelingTask(associationUML.name, 'tour.modelingExercise.executeTasks.association'),
         }),
         new UserInterActionTourStep({
-            highlightSelector: 'jhi-modeling-submission .submission-button',
+            highlightSelector: 'jhi-modeling-submission .guided-tour.submission-button',
             headlineTranslateKey: 'tour.modelingExercise.submit.headline',
             contentTranslateKey: 'tour.modelingExercise.submit.content',
             hintTranslateKey: 'tour.modelingExercise.submit.hint',

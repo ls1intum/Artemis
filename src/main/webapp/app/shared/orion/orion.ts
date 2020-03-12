@@ -19,20 +19,23 @@ export interface ArtemisOrionConnector extends ArtemisClientConnector, OrionConn
     state(): Observable<OrionState>;
 }
 
-export interface OrionExerciseConnector {
+export interface OrionSharedUtilConnector {
     login(username: string, password: string): void;
     log(message: string): void;
+}
+
+export interface OrionExerciseConnector {
     editExercise(exerciseJson: string): void;
     importParticipation(repository: string, exerciseJson: string): void;
-    submitChanges(): void;
 }
 
-export interface OrionInstructorConnector {
+export interface OrionVCSConnector {
     selectRepository(repository: REPOSITORY): void;
-    buildAndTestLocally(): void;
+    submit(): void;
 }
 
-export interface OrionTestResultConnector {
+export interface OrionBuildConnector {
+    buildAndTestLocally(): void;
     onBuildStarted(problemStatement: string): void;
     onBuildFinished(): void;
     onBuildFailed(buildLogsJsonString: string): void;
@@ -44,7 +47,7 @@ export interface OrionConnectorFacade {
     log(message: string): void;
     editExercise(exercise: ProgrammingExercise): void;
     importParticipation(repositoryUrl: string, exercise: ProgrammingExercise): void;
-    submitChanges(): void;
+    submit(): void;
 
     selectRepository(repository: REPOSITORY): void;
     buildAndTestLocally(): void;
@@ -63,9 +66,10 @@ export interface ArtemisClientConnector {
 }
 
 export interface Window {
-    orionCoreConnector: OrionExerciseConnector;
-    orionTestResultsConnector: OrionTestResultConnector;
-    orionInstructorConnector: OrionInstructorConnector;
+    orionExerciseConnector: OrionExerciseConnector;
+    orionSharedUtilConnector: OrionSharedUtilConnector;
+    orionBuildConnector: OrionBuildConnector;
+    orionVCSConnector: OrionVCSConnector;
     artemisClientConnector: ArtemisClientConnector;
 }
 

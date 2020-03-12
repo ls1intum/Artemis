@@ -107,7 +107,7 @@ export class ProgrammingExerciseStudentIdeActionsComponent implements OnInit {
      * Submits the changes made in the IDE by staging everything, committing the changes and pushing them to master.
      */
     submitChanges() {
-        this.javaBridge.submitChanges();
+        this.javaBridge.submit();
         this.ideBuildAndTestService.listenOnBuildOutputAndForwardChanges(this.exercise as ProgrammingExercise);
     }
 

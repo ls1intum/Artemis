@@ -42,7 +42,7 @@ export class CourseLectureRowComponent implements OnInit {
             },
         };
         if (this.extendedLink) {
-            this.router.navigate(['overview', this.course.id, 'lectures', this.lecture.id], {
+            this.router.navigate(['courses', this.course.id, 'lectures', this.lecture.id], {
                 state: {
                     lecture: lectureToAttach,
                 },

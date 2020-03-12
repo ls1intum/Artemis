@@ -29,6 +29,15 @@ public class LiquibaseConfiguration {
         this.env = env;
     }
 
+    /**
+     * reads properties and configures liquibase
+     *
+     * @param liquibaseDataSource the liquibase sql data source
+     * @param liquibaseProperties the liquibase properties
+     * @param dataSource the sql data source
+     * @param dataSourceProperties data source properties
+     * @return the configured spring liquibase object
+     */
     @Bean
     public SpringLiquibase liquibase(@LiquibaseDataSource ObjectProvider<DataSource> liquibaseDataSource, LiquibaseProperties liquibaseProperties,
             ObjectProvider<DataSource> dataSource, DataSourceProperties dataSourceProperties) {

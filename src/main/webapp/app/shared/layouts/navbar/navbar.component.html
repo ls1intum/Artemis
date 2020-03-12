@@ -21,7 +21,7 @@
     <div class="navbar-collapse collapse" id="navbarResponsive" [ngbCollapse]="isNavbarCollapsed" [ngSwitch]="isAuthenticated()">
         <ul class="navbar-nav ml-auto">
             <li *ngIf="currAccount" class="nav-item" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
-                <a class="nav-link" routerLink="courses" (click)="collapseNavbar()" id="overview-menu">
+                <a class="guided-tour-overview nav-link" routerLink="courses" (click)="collapseNavbar()" id="overview-menu">
                     <span>
                         <fa-icon [icon]="'th-large'"></fa-icon>
                         <span jhiTranslate="global.menu.overview">Overview</span>
@@ -36,7 +36,7 @@
                 routerLinkActive="active"
                 [routerLinkActiveOptions]="{ exact: true }"
             >
-                <a class="nav-link" routerLink="course-management" (click)="collapseNavbar()" id="course-admin-menu">
+                <a class="guided-tour-course-admin nav-link" routerLink="course-management" (click)="collapseNavbar()" id="course-admin-menu">
                     <span>
                         <fa-icon [icon]="'th-list'"></fa-icon>
                         <span jhiTranslate="global.menu.course">Course Administration</span>
@@ -52,7 +52,7 @@
                 routerLinkActive="active"
                 [routerLinkActiveOptions]="{ exact: true }"
             >
-                <a class="nav-link dropdown-toggle" ngbDropdownToggle href="javascript:void(0);" id="admin-menu">
+                <a class="guided-tour-admin nav-link dropdown-toggle" ngbDropdownToggle href="javascript:void(0);" id="admin-menu">
                     <span>
                         <fa-icon [icon]="'user-plus'"></fa-icon>
                         <span jhiTranslate="global.menu.admin.main">Server Administration</span>
@@ -145,7 +145,7 @@
                 [routerLinkActiveOptions]="{ exact: true }"
                 [autoClose]="true"
             >
-                <a class="nav-link dropdown-toggle" ngbDropdownToggle href="javascript:void(0);" id="account-menu">
+                <a class="guided-tour-account nav-link dropdown-toggle" ngbDropdownToggle href="javascript:void(0);" id="account-menu">
                     <span *ngIf="!getImageUrl()">
                         <fa-icon [icon]="'user'"></fa-icon>
                         <span jhiTranslate="global.menu.account.main" *ngIf="!currAccount">Account</span>

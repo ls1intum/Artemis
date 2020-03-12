@@ -19,9 +19,18 @@ import de.tum.in.www1.artemis.validation.TeamAssignmentConfigValidator;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface TeamAssignmentConfigConstraints {
 
+    /**
+     * @return the message of the violated constraint
+     */
     String message() default "{de.tum.in.www1.artemis.validation.constraints.TeamAssignmentConfigConstraints}";
 
+    /**
+     * @return the groups, default is empty
+     */
     Class<?>[] groups() default {};
 
+    /**
+     * @return the payload, default is empty
+     */
     Class<? extends Payload>[] payload() default {};
 }

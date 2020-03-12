@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.security;
+package de.tum.in.www1.artemis.service.connectors;
 
 import static de.tum.in.www1.artemis.config.Constants.TUM_USERNAME_PATTERN;
 
@@ -9,6 +9,7 @@ import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.actuate.audit.AuditEvent;
@@ -34,6 +35,8 @@ import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import com.fasterxml.jackson.databind.JsonNode;
+
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.Authority;
 import de.tum.in.www1.artemis.domain.Course;
@@ -41,6 +44,8 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.exception.ArtemisAuthenticationException;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
+import de.tum.in.www1.artemis.security.AuthoritiesConstants;
 import de.tum.in.www1.artemis.service.UserService;
 import de.tum.in.www1.artemis.service.connectors.jira.dto.JiraUserDTO;
 import de.tum.in.www1.artemis.service.connectors.jira.dto.JiraUserDTO.JiraUserGroupDTO;
@@ -65,7 +70,7 @@ public class JiraAuthenticationProvider implements ArtemisAuthenticationProvider
     @Value("${artemis.user-management.external.url}")
     private URL JIRA_URL;
 
-    private final UserService userService;
+    private UserService userService;
 
     private final UserRepository userRepository;
 
@@ -77,14 +82,36 @@ public class JiraAuthenticationProvider implements ArtemisAuthenticationProvider
 
     private final AuditEventRepository auditEventRepository;
 
-    public JiraAuthenticationProvider(UserService userService, UserRepository userRepository, CourseRepository courseRepository,
-            @Qualifier("jiraRestTemplate") RestTemplate restTemplate, Optional<LdapUserService> ldapUserService, AuditEventRepository auditEventRepository) {
-        this.userService = userService;
+    public JiraAuthenticationProvider(UserRepository userRepository, CourseRepository courseRepository, @Qualifier("jiraRestTemplate") RestTemplate restTemplate,
+            Optional<LdapUserService> ldapUserService, AuditEventRepository auditEventRepository) {
         this.userRepository = userRepository;
         this.courseRepository = courseRepository;
         this.restTemplate = restTemplate;
         this.ldapUserService = ldapUserService;
         this.auditEventRepository = auditEventRepository;
+    }
+
+    @Autowired
+    // break the dependency cycle
+    public void setUserService(UserService userService) {
+        this.userService = userService;
+    }
+
+    /**
+     * @return the health of the connected JIRA instance
+     */
+    public ConnectorHealth health() {
+        ConnectorHealth health;
+        try {
+            final var status = restTemplate.getForObject(JIRA_URL + "/status", JsonNode.class);
+            health = status.get("state").asText().equals("RUNNING") ? new ConnectorHealth(true) : new ConnectorHealth(false);
+        }
+        catch (Exception emAll) {
+            health = new ConnectorHealth(emAll);
+        }
+
+        health.setAdditionalInfo(Map.of("url", JIRA_URL));
+        return health;
     }
 
     @Override
