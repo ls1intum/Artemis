@@ -3,6 +3,8 @@ package de.tum.in.www1.artemis;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -72,7 +74,7 @@ public class StudentQuestionAnswerIntegrationTest extends AbstractSpringIntegrat
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void editStudentQuestionAnswer_asInstructor() throws Exception {
-        StudentQuestionAnswer studentQuestionAnswer = createStudentQuestionAnswerOnServer();
+        StudentQuestionAnswer studentQuestionAnswer = createStudentQuestionAnswersOnServer().get(0);
 
         studentQuestionAnswer.setAuthor(database.getUserByLogin("tutor2"));
         studentQuestionAnswer.setAnswerText("New Answer Text");
@@ -89,22 +91,61 @@ public class StudentQuestionAnswerIntegrationTest extends AbstractSpringIntegrat
     }
 
     @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void editStudentQuestionAnswer_asTA() throws Exception {
+        List<StudentQuestionAnswer> answers = createStudentQuestionAnswersOnServer();
+        StudentQuestionAnswer studentQuestionAnswer_tutor1 = answers.get(0);
+        StudentQuestionAnswer studentQuestionAnswer_tutor2 = answers.get(1);
+        StudentQuestionAnswer studentQuestionAnswer_student1 = answers.get(2);
+
+        //edit own answer --> OK
+        studentQuestionAnswer_tutor1.setAnswerText("New Answer Text");
+        studentQuestionAnswer_tutor1.setAnswerDate(ZonedDateTime.now().minusHours(1));
+        StudentQuestionAnswer updatedStudentQuestionAnswerServer1 = request.putWithResponseBody("/api/student-question-answers", studentQuestionAnswer_tutor1, StudentQuestionAnswer.class,
+            HttpStatus.OK);
+        assertThat(updatedStudentQuestionAnswerServer1).isEqualTo(studentQuestionAnswer_tutor1);
+
+        //edit answer of other TA --> OK
+        studentQuestionAnswer_tutor2.setAnswerText("New Answer Text");
+        studentQuestionAnswer_tutor2.setAnswerDate(ZonedDateTime.now().minusHours(1));
+        StudentQuestionAnswer updatedStudentQuestionAnswerServer2 = request.putWithResponseBody("/api/student-question-answers", studentQuestionAnswer_tutor2, StudentQuestionAnswer.class,
+            HttpStatus.OK);
+        assertThat(updatedStudentQuestionAnswerServer2).isEqualTo(studentQuestionAnswer_tutor2);
+
+        //edit answer of other student --> OK
+        studentQuestionAnswer_student1.setAnswerText("New Answer Text");
+        studentQuestionAnswer_student1.setAnswerDate(ZonedDateTime.now().minusHours(1));
+        StudentQuestionAnswer updatedStudentQuestionAnswerServer3 = request.putWithResponseBody("/api/student-question-answers", studentQuestionAnswer_student1, StudentQuestionAnswer.class,
+            HttpStatus.OK);
+        assertThat(updatedStudentQuestionAnswerServer3).isEqualTo(studentQuestionAnswer_student1);
+    }
+
+    @Test
     @WithMockUser(username = "student1", roles = "USER")
     public void editStudentQuestionAnswer_asStudent() throws Exception {
-        StudentQuestionAnswer studentQuestionAnswer = createStudentQuestionAnswerOnServer();
+        List<StudentQuestionAnswer> answers = createStudentQuestionAnswersOnServer();
+        StudentQuestionAnswer studentQuestionAnswer_tutor1 = answers.get(0);
+        StudentQuestionAnswer studentQuestionAnswer_student1 = answers.get(2);
 
-        studentQuestionAnswer.setAuthor(database.getUserByLogin("tutor2"));
-        studentQuestionAnswer.setAnswerText("New Answer Text");
-        studentQuestionAnswer.setAnswerDate(ZonedDateTime.now().minusHours(1));
-        StudentQuestionAnswer updatedStudentQuestionAnswerServer = request.putWithResponseBody("/api/student-question-answers", studentQuestionAnswer, StudentQuestionAnswer.class,
-                HttpStatus.OK);
-        assertThat(updatedStudentQuestionAnswerServer).isEqualTo(studentQuestionAnswer);
+        //update own answer --> OK
+        studentQuestionAnswer_student1.setAnswerText("New Answer Text");
+        studentQuestionAnswer_student1.setAnswerDate(ZonedDateTime.now().minusHours(1));
+        StudentQuestionAnswer updatedStudentQuestionAnswerServer1 = request.putWithResponseBody("/api/student-question-answers", studentQuestionAnswer_student1, StudentQuestionAnswer.class,
+            HttpStatus.OK);
+        assertThat(updatedStudentQuestionAnswerServer1).isEqualTo(studentQuestionAnswer_student1);
+
+        //update answer of other user --> forbidden
+        studentQuestionAnswer_tutor1.setAnswerText("New Answer Text");
+        studentQuestionAnswer_tutor1.setAnswerDate(ZonedDateTime.now().minusHours(1));
+        StudentQuestionAnswer updatedStudentQuestionAnswerServer = request.putWithResponseBody("/api/student-question-answers", studentQuestionAnswer_tutor1, StudentQuestionAnswer.class,
+                HttpStatus.FORBIDDEN);
+        assertThat(updatedStudentQuestionAnswerServer).isNull();
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void getStudentQuestionAnswer() throws Exception {
-        StudentQuestionAnswer studentQuestionAnswer = createStudentQuestionAnswerOnServer();
+        StudentQuestionAnswer studentQuestionAnswer = createStudentQuestionAnswersOnServer().get(0);
 
         StudentQuestionAnswer returnedStudentQuestionAnswer = request.get("/api/student-question-answers/" + studentQuestionAnswer.getId(), HttpStatus.OK,
                 StudentQuestionAnswer.class);
@@ -113,34 +154,60 @@ public class StudentQuestionAnswerIntegrationTest extends AbstractSpringIntegrat
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void deleteStudentQuestionAnswer() throws Exception {
-        StudentQuestionAnswer studentQuestionAnswer = createStudentQuestionAnswerOnServer();
+    public void deleteStudentQuestionAnswer_asInstructor() throws Exception {
+        List<StudentQuestionAnswer> answers = createStudentQuestionAnswersOnServer();
+        StudentQuestionAnswer studentQuestionAnswer_tutor1 = answers.get(0);
+        StudentQuestionAnswer studentQuestionAnswer_tutor2 = answers.get(1);
 
-        request.delete("/api/student-question-answers/" + studentQuestionAnswer.getId(), HttpStatus.OK);
-        assertThat(studentQuestionAnswerRepository.findById(studentQuestionAnswer.getId())).isEmpty();
+        request.delete("/api/student-question-answers/" + studentQuestionAnswer_tutor1.getId(), HttpStatus.OK);
+        assertThat(studentQuestionAnswerRepository.findById(studentQuestionAnswer_tutor1.getId())).isEmpty();
 
         // try to delete not existing answer --> not found
         request.delete("/api/student-question-answers/999", HttpStatus.NOT_FOUND);
 
-        // create and delete answer without lecture id --> OK
-        StudentQuestionAnswer studentQuestionAnswer1 = createStudentQuestionAnswerOnServer();
-        StudentQuestion question = studentQuestionAnswer1.getQuestion();
+        //delete answer without lecture id --> OK
+        StudentQuestion question = studentQuestionAnswer_tutor2.getQuestion();
         question.setLecture(null);
         studentQuestionRepository.save(question);
-        request.delete("/api/student-question-answers/" + studentQuestionAnswer1.getId(), HttpStatus.OK);
+        request.delete("/api/student-question-answers/" + studentQuestionAnswer_tutor2.getId(), HttpStatus.OK);
+        assertThat(studentQuestionAnswerRepository.findById(studentQuestionAnswer_tutor2.getId())).isEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void deleteStudentQuestionAnswer_AsTA() throws Exception {
+        List<StudentQuestionAnswer> answers = createStudentQuestionAnswersOnServer();
+        StudentQuestionAnswer studentQuestionAnswer_tutor1 = answers.get(0);
+        StudentQuestionAnswer studentQuestionAnswer_student2 = answers.get(3);
+
+        //delete own answer --> OK
+        request.delete("/api/student-question-answers/" + studentQuestionAnswer_tutor1.getId(), HttpStatus.OK);
+        assertThat(studentQuestionAnswerRepository.findById(studentQuestionAnswer_tutor1.getId())).isEmpty();
+
+        //delete answer of other student --> OK
+        request.delete("/api/student-question-answers/" + studentQuestionAnswer_student2.getId(), HttpStatus.OK);
+        assertThat(studentQuestionAnswerRepository.findById(studentQuestionAnswer_student2.getId())).isEmpty();
     }
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void deleteStudentQuestionAnswerAsStudent() throws Exception {
-        StudentQuestionAnswer studentQuestionAnswer = createStudentQuestionAnswerOnServer();
+    public void deleteStudentQuestionAnswer_AsStudent() throws Exception {
+        List<StudentQuestionAnswer> answers = createStudentQuestionAnswersOnServer();
+        StudentQuestionAnswer studentQuestionAnswer_student1 = answers.get(2);
+        StudentQuestionAnswer studentQuestionAnswer_student2 = answers.get(3);
 
-        request.delete("/api/student-question-answers/" + studentQuestionAnswer.getId(), HttpStatus.FORBIDDEN);
-        assertThat(studentQuestionAnswerRepository.findById(studentQuestionAnswer.getId())).isNotEmpty();
+        //delete own answer --> OK
+        request.delete("/api/student-question-answers/" + studentQuestionAnswer_student1.getId(), HttpStatus.OK);
+        assertThat(studentQuestionAnswerRepository.findById(studentQuestionAnswer_student1.getId())).isEmpty();
+
+        //delete answer of other student --> forbidden
+        request.delete("/api/student-question-answers/" + studentQuestionAnswer_student2.getId(), HttpStatus.FORBIDDEN);
+        assertThat(studentQuestionAnswerRepository.findById(studentQuestionAnswer_student2.getId())).isNotEmpty();
     }
 
-    private StudentQuestionAnswer createStudentQuestionAnswerOnServer() throws Exception {
+    private List<StudentQuestionAnswer> createStudentQuestionAnswersOnServer() throws Exception {
         StudentQuestion studentQuestion = database.createCourseWithExerciseAndStudentQuestions().get(0);
+        List<StudentQuestionAnswer> answers = new ArrayList<>();
 
         StudentQuestionAnswer studentQuestionAnswer = new StudentQuestionAnswer();
         studentQuestionAnswer.setAuthor(database.getUserByLogin("tutor1"));
@@ -148,6 +215,32 @@ public class StudentQuestionAnswerIntegrationTest extends AbstractSpringIntegrat
         studentQuestionAnswer.setAnswerDate(ZonedDateTime.now());
         studentQuestionAnswer.setQuestion(studentQuestion);
         studentQuestionAnswerRepository.save(studentQuestionAnswer);
-        return studentQuestionAnswer;
+        answers.add(studentQuestionAnswer);
+
+        StudentQuestionAnswer studentQuestionAnswer1 = new StudentQuestionAnswer();
+        studentQuestionAnswer1.setAuthor(database.getUserByLogin("tutor2"));
+        studentQuestionAnswer1.setAnswerText("Test Answer");
+        studentQuestionAnswer1.setAnswerDate(ZonedDateTime.now());
+        studentQuestionAnswer1.setQuestion(studentQuestion);
+        studentQuestionAnswerRepository.save(studentQuestionAnswer1);
+        answers.add(studentQuestionAnswer1);
+
+        StudentQuestionAnswer studentQuestionAnswer2 = new StudentQuestionAnswer();
+        studentQuestionAnswer2.setAuthor(database.getUserByLogin("student1"));
+        studentQuestionAnswer2.setAnswerText("Test Answer");
+        studentQuestionAnswer2.setAnswerDate(ZonedDateTime.now());
+        studentQuestionAnswer2.setQuestion(studentQuestion);
+        studentQuestionAnswerRepository.save(studentQuestionAnswer2);
+        answers.add(studentQuestionAnswer2);
+
+        StudentQuestionAnswer studentQuestionAnswer3 = new StudentQuestionAnswer();
+        studentQuestionAnswer3.setAuthor(database.getUserByLogin("student2"));
+        studentQuestionAnswer3.setAnswerText("Test Answer");
+        studentQuestionAnswer3.setAnswerDate(ZonedDateTime.now());
+        studentQuestionAnswer3.setQuestion(studentQuestion);
+        studentQuestionAnswerRepository.save(studentQuestionAnswer3);
+        answers.add(studentQuestionAnswer3);
+
+        return answers;
     }
 }
