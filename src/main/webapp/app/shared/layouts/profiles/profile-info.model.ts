@@ -9,6 +9,8 @@ export class ProfileInfo {
     features: ActiveFeatureToggles;
     guidedTourMapping?: GuidedTourMapping;
     buildPlanURLTemplate: string;
+    externalUserManagementURL: string;
+    externalUserManagementName: string;
     imprint: string;
     contact: string;
     allowedMinimumOrionVersion: string;

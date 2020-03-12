@@ -122,6 +122,11 @@ public class ExceptionTranslator implements ProblemHandling, SecurityAdviceTrait
         return create(ex, problem, request);
     }
 
+    /**
+     * @param e a specific exception
+     * @param request the request
+     * @return the exception wrapped into a http entity
+     */
     @ExceptionHandler(IOException.class)
     @ResponseStatus(HttpStatus.SERVICE_UNAVAILABLE)
     // taken from https://mtyurt.net/post/spring-how-to-handle-ioexception-broken-pipe.html
@@ -136,6 +141,11 @@ public class ExceptionTranslator implements ProblemHandling, SecurityAdviceTrait
         }
     }
 
+    /**
+     * @param e a specific exception
+     * @param request the request
+     * @return the exception wrapped into a http entity
+     */
     @ExceptionHandler(SockJsMessageDeliveryException.class)
     @ResponseStatus(HttpStatus.SERVICE_UNAVAILABLE)
     public Object exceptionHandler(SockJsMessageDeliveryException e, HttpServletRequest request) {

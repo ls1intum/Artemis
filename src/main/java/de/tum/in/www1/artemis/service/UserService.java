@@ -80,11 +80,13 @@ public class UserService {
     }
 
     @Autowired
+    // break the dependency cycle
     public void setOptionalVcsUserManagementService(Optional<VcsUserManagementService> optionalVcsUserManagementService) {
         this.optionalVcsUserManagementService = optionalVcsUserManagementService;
     }
 
     @Autowired
+    // break the dependency cycle
     public void setArtemisAuthenticationProvider(ArtemisAuthenticationProvider artemisAuthenticationProvider) {
         this.artemisAuthenticationProvider = artemisAuthenticationProvider;
     }
