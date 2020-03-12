@@ -35,7 +35,7 @@ export function setup() {
     exerciseId = createExercise(artemis, courseId);
 
     // Wait some time for builds to finish and test results to come in
-    sleep(15);
+    sleep(20);
 
     return { exerciseId: exerciseId, courseId: courseId };
 }

@@ -64,7 +64,7 @@ adminUsername=${adminUsername:?You have to specify the username of one admin}
 adminPassword=${adminPassword:?You have to specify the password of one admin}
 tests=${tests:?You have to specify which tests to run}
 iterations=${iterations:-10}
-timeout=${timeout:-40}
+timeout=${timeout:-60}
 
 echo "################### STARTING API Tests ###################"
 result=$(docker run -i --rm --network=host --name api-tests -v "$baseDir":/src -e BASE_USERNAME="$baseUsername" -e BASE_URL="$baseUrl" \

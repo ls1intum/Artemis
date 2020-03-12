@@ -17,7 +17,7 @@ public interface JenkinsXmlConfigBuilder {
      * @return The parsed XML doxument containing the Jenkins build config
      * @throws IOException If the template XML build config could not be read
      */
-    Document buildBasicConfig(URL testRepositoryURL, URL assignmentRepositoryURL) throws IOException;
+    Document buildBasicConfig(URL testRepositoryURL, URL assignmentRepositoryURL);
 
     /**
      * Creates a basic build config for Jenkins based on the given repository URLs. I.e. a build that tests the assignemnt
@@ -29,5 +29,5 @@ public interface JenkinsXmlConfigBuilder {
      * @return The parsed XML doxument containing the Jenkins build config
      * @throws IOException If the template XML build config could not be read
      */
-    Document buildBasicConfig(URL testRepositoryURL, URL assignmentRepositoryURL, boolean isSequential) throws IOException;
+    Document buildBasicConfig(URL testRepositoryURL, URL assignmentRepositoryURL, boolean isSequential);
 }
