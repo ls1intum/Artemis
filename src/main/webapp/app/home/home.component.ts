@@ -38,6 +38,10 @@ export class HomeComponent implements OnInit, AfterViewInit {
     signInMessage = 'home.pleaseSignInTUM'; // default, might be overridden in ngOnInit
     errorMesssageUsername = 'home.errors.tumWarning'; // default, might be overridden in ngOnInit
 
+    externalUserManagementActive = true;
+    externalUserManagementUrl: string;
+    externalUserManagementName: string;
+
     isSubmittingLogin = false;
 
     constructor(
@@ -65,6 +69,10 @@ export class HomeComponent implements OnInit, AfterViewInit {
                         this.usernameRegexPattern = /^[a-z0-9_-]{3,100}$/;
                         this.signInMessage = 'home.pleaseSignIn';
                         this.errorMesssageUsername = 'home.errors.usernameIncorrect';
+                        this.externalUserManagementActive = false;
+                    } else {
+                        this.externalUserManagementUrl = info.externalUserManagementURL;
+                        this.externalUserManagementName = info.externalUserManagementName;
                     }
                 }),
             )

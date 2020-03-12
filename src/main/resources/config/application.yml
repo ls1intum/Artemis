@@ -115,6 +115,7 @@ spring:
         basename: i18n/messages
     main:
         allow-bean-definition-overriding: true
+        lazy-initialization: false
     mvc:
         favicon:
             enabled: false

@@ -58,6 +58,10 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
         this.remoteUserAuthenticationProvider = remoteUserAuthenticationProvider;
     }
 
+    /**
+     * initialize the security configuration by specifying that the (internal) user details service and (if available) an external authentication provider (e.g. JIRA)
+     * should be used
+     */
     @PostConstruct
     public void init() {
         try {

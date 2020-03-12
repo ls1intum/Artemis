@@ -92,8 +92,31 @@ public class BambooService implements ContinuousIntegrationService {
     }
 
     @Override
-    public void createBuildPlanForExercise(ProgrammingExercise programmingExercise, String planKey, URL repositoryURL, URL testRepositoryURL) {
-        bambooBuildPlanService.createBuildPlanForExercise(programmingExercise, planKey, VcsUtil.getRepositorySlugFromUrl(repositoryURL), VcsUtil.getRepositorySlugFromUrl(testRepositoryURL));
+    public void createBuildPlanForExercise(ProgrammingExercise programmingExercise, String planKey, URL sourceCodeRepositoryURL, URL testRepositoryURL) {
+        bambooBuildPlanService.createBuildPlanForExercise(programmingExercise, planKey, getRepositorySlugFromUrl(sourceCodeRepositoryURL), getRepositorySlugFromUrl(testRepositoryURL));
+    }
+
+    /**
+     * TODO: this method is not ideal here, but should als not be static in some util class. Think about improving the passing of URL arguments with slugs between
+     * programming exercise generation and the CI services (BambooService and JenkinsService) who need to handle these
+     *
+     * Gets the repository slug from the given URL
+     *
+     * @param repositoryUrl The complete repository-url (including protocol, host and the complete path)
+     * @return The repository slug
+     */
+    public String getRepositorySlugFromUrl(URL repositoryUrl) {
+        // https://ga42xab@repobruegge.in.tum.de/scm/EIST2016RME/RMEXERCISE-ga42xab.git
+        String[] urlParts = repositoryUrl.getFile().split("/");
+        String repositorySlug = urlParts[urlParts.length - 1];
+        if (repositorySlug.endsWith(".git")) {
+            repositorySlug = repositorySlug.substring(0, repositorySlug.length() - 4);
+        }
+        else {
+            throw new IllegalArgumentException("No repository slug could be found");
+        }
+
+        return repositorySlug;
     }
 
     /**
@@ -398,7 +421,6 @@ public class BambooService implements ContinuousIntegrationService {
      * @param participation The participation for which the build finished.
      * @param requestBody   The result notification received from the CI-Server.
      * @return the created result.
-     * @throws Exception when the request body cannot be parsed, this method throws an exception
      */
     @Override
     public Result onBuildCompletedNew(ProgrammingExerciseParticipation participation, Object requestBody) {
