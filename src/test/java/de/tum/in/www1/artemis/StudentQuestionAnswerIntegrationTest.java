@@ -98,25 +98,25 @@ public class StudentQuestionAnswerIntegrationTest extends AbstractSpringIntegrat
         StudentQuestionAnswer studentQuestionAnswer_tutor2 = answers.get(1);
         StudentQuestionAnswer studentQuestionAnswer_student1 = answers.get(2);
 
-        //edit own answer --> OK
+        // edit own answer --> OK
         studentQuestionAnswer_tutor1.setAnswerText("New Answer Text");
         studentQuestionAnswer_tutor1.setAnswerDate(ZonedDateTime.now().minusHours(1));
-        StudentQuestionAnswer updatedStudentQuestionAnswerServer1 = request.putWithResponseBody("/api/student-question-answers", studentQuestionAnswer_tutor1, StudentQuestionAnswer.class,
-            HttpStatus.OK);
+        StudentQuestionAnswer updatedStudentQuestionAnswerServer1 = request.putWithResponseBody("/api/student-question-answers", studentQuestionAnswer_tutor1,
+                StudentQuestionAnswer.class, HttpStatus.OK);
         assertThat(updatedStudentQuestionAnswerServer1).isEqualTo(studentQuestionAnswer_tutor1);
 
-        //edit answer of other TA --> OK
+        // edit answer of other TA --> OK
         studentQuestionAnswer_tutor2.setAnswerText("New Answer Text");
         studentQuestionAnswer_tutor2.setAnswerDate(ZonedDateTime.now().minusHours(1));
-        StudentQuestionAnswer updatedStudentQuestionAnswerServer2 = request.putWithResponseBody("/api/student-question-answers", studentQuestionAnswer_tutor2, StudentQuestionAnswer.class,
-            HttpStatus.OK);
+        StudentQuestionAnswer updatedStudentQuestionAnswerServer2 = request.putWithResponseBody("/api/student-question-answers", studentQuestionAnswer_tutor2,
+                StudentQuestionAnswer.class, HttpStatus.OK);
         assertThat(updatedStudentQuestionAnswerServer2).isEqualTo(studentQuestionAnswer_tutor2);
 
-        //edit answer of other student --> OK
+        // edit answer of other student --> OK
         studentQuestionAnswer_student1.setAnswerText("New Answer Text");
         studentQuestionAnswer_student1.setAnswerDate(ZonedDateTime.now().minusHours(1));
-        StudentQuestionAnswer updatedStudentQuestionAnswerServer3 = request.putWithResponseBody("/api/student-question-answers", studentQuestionAnswer_student1, StudentQuestionAnswer.class,
-            HttpStatus.OK);
+        StudentQuestionAnswer updatedStudentQuestionAnswerServer3 = request.putWithResponseBody("/api/student-question-answers", studentQuestionAnswer_student1,
+                StudentQuestionAnswer.class, HttpStatus.OK);
         assertThat(updatedStudentQuestionAnswerServer3).isEqualTo(studentQuestionAnswer_student1);
     }
 
@@ -127,18 +127,18 @@ public class StudentQuestionAnswerIntegrationTest extends AbstractSpringIntegrat
         StudentQuestionAnswer studentQuestionAnswer_tutor1 = answers.get(0);
         StudentQuestionAnswer studentQuestionAnswer_student1 = answers.get(2);
 
-        //update own answer --> OK
+        // update own answer --> OK
         studentQuestionAnswer_student1.setAnswerText("New Answer Text");
         studentQuestionAnswer_student1.setAnswerDate(ZonedDateTime.now().minusHours(1));
-        StudentQuestionAnswer updatedStudentQuestionAnswerServer1 = request.putWithResponseBody("/api/student-question-answers", studentQuestionAnswer_student1, StudentQuestionAnswer.class,
-            HttpStatus.OK);
+        StudentQuestionAnswer updatedStudentQuestionAnswerServer1 = request.putWithResponseBody("/api/student-question-answers", studentQuestionAnswer_student1,
+                StudentQuestionAnswer.class, HttpStatus.OK);
         assertThat(updatedStudentQuestionAnswerServer1).isEqualTo(studentQuestionAnswer_student1);
 
-        //update answer of other user --> forbidden
+        // update answer of other user --> forbidden
         studentQuestionAnswer_tutor1.setAnswerText("New Answer Text");
         studentQuestionAnswer_tutor1.setAnswerDate(ZonedDateTime.now().minusHours(1));
-        StudentQuestionAnswer updatedStudentQuestionAnswerServer = request.putWithResponseBody("/api/student-question-answers", studentQuestionAnswer_tutor1, StudentQuestionAnswer.class,
-                HttpStatus.FORBIDDEN);
+        StudentQuestionAnswer updatedStudentQuestionAnswerServer = request.putWithResponseBody("/api/student-question-answers", studentQuestionAnswer_tutor1,
+                StudentQuestionAnswer.class, HttpStatus.FORBIDDEN);
         assertThat(updatedStudentQuestionAnswerServer).isNull();
     }
 
@@ -165,7 +165,7 @@ public class StudentQuestionAnswerIntegrationTest extends AbstractSpringIntegrat
         // try to delete not existing answer --> not found
         request.delete("/api/student-question-answers/999", HttpStatus.NOT_FOUND);
 
-        //delete answer without lecture id --> OK
+        // delete answer without lecture id --> OK
         StudentQuestion question = studentQuestionAnswer_tutor2.getQuestion();
         question.setLecture(null);
         studentQuestionRepository.save(question);
@@ -180,11 +180,11 @@ public class StudentQuestionAnswerIntegrationTest extends AbstractSpringIntegrat
         StudentQuestionAnswer studentQuestionAnswer_tutor1 = answers.get(0);
         StudentQuestionAnswer studentQuestionAnswer_student2 = answers.get(3);
 
-        //delete own answer --> OK
+        // delete own answer --> OK
         request.delete("/api/student-question-answers/" + studentQuestionAnswer_tutor1.getId(), HttpStatus.OK);
         assertThat(studentQuestionAnswerRepository.findById(studentQuestionAnswer_tutor1.getId())).isEmpty();
 
-        //delete answer of other student --> OK
+        // delete answer of other student --> OK
         request.delete("/api/student-question-answers/" + studentQuestionAnswer_student2.getId(), HttpStatus.OK);
         assertThat(studentQuestionAnswerRepository.findById(studentQuestionAnswer_student2.getId())).isEmpty();
     }
@@ -196,11 +196,11 @@ public class StudentQuestionAnswerIntegrationTest extends AbstractSpringIntegrat
         StudentQuestionAnswer studentQuestionAnswer_student1 = answers.get(2);
         StudentQuestionAnswer studentQuestionAnswer_student2 = answers.get(3);
 
-        //delete own answer --> OK
+        // delete own answer --> OK
         request.delete("/api/student-question-answers/" + studentQuestionAnswer_student1.getId(), HttpStatus.OK);
         assertThat(studentQuestionAnswerRepository.findById(studentQuestionAnswer_student1.getId())).isEmpty();
 
-        //delete answer of other student --> forbidden
+        // delete answer of other student --> forbidden
         request.delete("/api/student-question-answers/" + studentQuestionAnswer_student2.getId(), HttpStatus.FORBIDDEN);
         assertThat(studentQuestionAnswerRepository.findById(studentQuestionAnswer_student2.getId())).isNotEmpty();
     }

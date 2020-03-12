@@ -112,14 +112,14 @@ public class StudentQuestionIntegrationTest extends AbstractSpringIntegrationTes
         StudentQuestion studentQuestion_student1 = questions.get(0);
         StudentQuestion studentQuestion_student2 = questions.get(1);
 
-        //update own question --> OK
+        // update own question --> OK
         studentQuestion_student1.setVisibleForStudents(false);
         studentQuestion_student1.setQuestionText("New Test Student Question");
         StudentQuestion updatedStudentQuestion1 = request.putWithResponseBody("/api/student-questions", studentQuestion_student1, StudentQuestion.class, HttpStatus.OK);
         assertThat(updatedStudentQuestion1.getQuestionText().equals("New Test Student Question"));
         assertThat(updatedStudentQuestion1.isVisibleForStudents()).isFalse();
 
-        //update question from another student --> forbidden
+        // update question from another student --> forbidden
         studentQuestion_student2.setVisibleForStudents(false);
         studentQuestion_student2.setQuestionText("New Test Student Question");
         StudentQuestion updatedStudentQuestion2 = request.putWithResponseBody("/api/student-questions", studentQuestion_student2, StudentQuestion.class, HttpStatus.FORBIDDEN);
@@ -176,7 +176,7 @@ public class StudentQuestionIntegrationTest extends AbstractSpringIntegrationTes
         // try to delete not existing question
         request.delete("/api/student-questions/999", HttpStatus.NOT_FOUND);
 
-        //delete question with no lecture id --> OK
+        // delete question with no lecture id --> OK
         studentQuestion1.setLecture(null);
         studentQuestionRepository.save(studentQuestion1);
         request.delete("/api/student-questions/" + studentQuestion1.getId(), HttpStatus.OK);
@@ -190,11 +190,11 @@ public class StudentQuestionIntegrationTest extends AbstractSpringIntegrationTes
         StudentQuestion studentQuestion_student1 = studentQuestions.get(0);
         StudentQuestion studentQuestion1_student2 = studentQuestions.get(1);
 
-        //delete own question --> OK
+        // delete own question --> OK
         request.delete("/api/student-questions/" + studentQuestion_student1.getId(), HttpStatus.OK);
         assertThat(studentQuestionRepository.count()).isEqualTo(1);
 
-        //delete question from another user --> OK
+        // delete question from another user --> OK
         request.delete("/api/student-questions/" + studentQuestion1_student2.getId(), HttpStatus.OK);
         assertThat(studentQuestionRepository.count()).isEqualTo(0);
     }
@@ -206,11 +206,11 @@ public class StudentQuestionIntegrationTest extends AbstractSpringIntegrationTes
         StudentQuestion studentQuestion_student1 = studentQuestions.get(0);
         StudentQuestion studentQuestion1_student2 = studentQuestions.get(1);
 
-        //delete own question --> OK
+        // delete own question --> OK
         request.delete("/api/student-questions/" + studentQuestion_student1.getId(), HttpStatus.OK);
         assertThat(studentQuestionRepository.count()).isEqualTo(1);
 
-        //delete question from another student --> forbidden
+        // delete question from another student --> forbidden
         request.delete("/api/student-questions/" + studentQuestion1_student2.getId(), HttpStatus.FORBIDDEN);
         assertThat(studentQuestionRepository.count()).isEqualTo(1);
     }
