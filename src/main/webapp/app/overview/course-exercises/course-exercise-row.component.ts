@@ -1,5 +1,4 @@
 import { Component, HostBinding, Input, OnDestroy, OnInit } from '@angular/core';
-import { AlertService } from 'app/core/alert/alert.service';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import * as moment from 'moment';
@@ -43,7 +42,6 @@ export class CourseExerciseRowComponent implements OnInit, OnDestroy {
 
     constructor(
         private accountService: AccountService,
-        private jhiAlertService: AlertService,
         private $window: WindowRef,
         private participationService: ParticipationService,
         private exerciseService: ExerciseService,

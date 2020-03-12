@@ -421,7 +421,6 @@ public class BambooService implements ContinuousIntegrationService {
      * @param participation The participation for which the build finished.
      * @param requestBody   The result notification received from the CI-Server.
      * @return the created result.
-     * @throws Exception when the request body cannot be parsed, this method throws an exception
      */
     @Override
     public Result onBuildCompletedNew(ProgrammingExerciseParticipation participation, Object requestBody) {
