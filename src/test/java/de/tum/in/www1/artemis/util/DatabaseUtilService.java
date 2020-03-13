@@ -146,6 +146,9 @@ public class DatabaseUtilService {
     TutorParticipationRepository tutorParticipationRepo;
 
     @Autowired
+    StudentQuestionRepository studentQuestionRepository;
+
+    @Autowired
     ModelingSubmissionService modelSubmissionService;
 
     @Autowired
@@ -189,6 +192,7 @@ public class DatabaseUtilService {
         fileUploadSubmissionRepo.deleteAll();
         programmingSubmissionRepo.deleteAll();
         submissionRepository.deleteAll();
+        studentQuestionRepository.deleteAll();
         participationRepo.deleteAll();
         assertThat(participationRepo.findAll()).as("participation data has been cleared").isEmpty();
         teamRepo.deleteAll();
@@ -401,7 +405,7 @@ public class DatabaseUtilService {
         }
 
         User user = (userRepo.findOneByLogin("student1")).get();
-        StudentParticipation participation1 = ModelFactory.generateStudentParticipation(InitializationState.INITIALIZED, textExercise, user);
+        StudentParticipation participation1 = ModelFactory.generateStudentParticipation(InitializationState.INITIALIZED, modelingExercise, user);
         StudentParticipation participation2 = ModelFactory.generateStudentParticipation(InitializationState.FINISHED, textExercise, user);
         StudentParticipation participation3 = ModelFactory.generateStudentParticipation(InitializationState.UNINITIALIZED, modelingExercise, user);
 
@@ -426,7 +430,7 @@ public class DatabaseUtilService {
         participation3 = participationRepo.save(participation3);
 
         modelingSubmission1.setParticipation(participation1);
-        textSubmission.setParticipation(participation1);
+        textSubmission.setParticipation(participation2);
         modelingSubmission2.setParticipation(participation3);
 
         submissionRepository.save(modelingSubmission1);
@@ -434,6 +438,42 @@ public class DatabaseUtilService {
         submissionRepository.save(textSubmission);
 
         return Arrays.asList(course1, course2);
+    }
+
+    public List<StudentQuestion> createCourseWithExerciseAndStudentQuestions() throws Exception {
+        ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(5);
+        ZonedDateTime futureTimestamp = ZonedDateTime.now().plusDays(5);
+        ZonedDateTime futureFutureTimestamp = ZonedDateTime.now().plusDays(8);
+
+        Course course1 = ModelFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "tumuser", "tutor", "instructor");
+
+        TextExercise textExercise = ModelFactory.generateTextExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, course1);
+        textExercise.setGradingInstructions("some grading instructions");
+        addGradingInstructionsToExercise(textExercise);
+        textExercise.getCategories().add("Text");
+        course1.addExercises(textExercise);
+
+        courseRepo.save(course1);
+        textExercise = exerciseRepo.save(textExercise);
+
+        List<StudentQuestion> studentQuestions = new ArrayList<>();
+        StudentQuestion studentQuestion1 = new StudentQuestion();
+        studentQuestion1.setExercise(textExercise);
+        studentQuestion1.setQuestionText("Test Student Question 1");
+        studentQuestion1.setVisibleForStudents(true);
+        studentQuestion1.setAuthor(getUserByLogin("student1"));
+        studentQuestionRepository.save(studentQuestion1);
+        studentQuestions.add(studentQuestion1);
+
+        StudentQuestion studentQuestion2 = new StudentQuestion();
+        studentQuestion2.setExercise(textExercise);
+        studentQuestion2.setQuestionText("Test Student Question 2");
+        studentQuestion2.setVisibleForStudents(true);
+        studentQuestion2.setAuthor(getUserByLogin("student2"));
+        studentQuestionRepository.save(studentQuestion2);
+        studentQuestions.add(studentQuestion2);
+
+        return studentQuestions;
     }
 
     /**

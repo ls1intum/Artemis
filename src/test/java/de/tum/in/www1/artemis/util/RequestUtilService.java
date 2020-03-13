@@ -219,7 +219,6 @@ public class RequestUtilService {
             }
             return null;
         }
-
         if (responseType == String.class) {
             return (T) contentAsString;
         }

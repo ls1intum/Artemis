@@ -53,6 +53,26 @@ public class SubmissionService {
     }
 
     /**
+     * Count number of submissions for course. Only submissions for Text, Modeling and File Upload exercises are included.
+     * @param courseId the course id we are interested in
+     * @return the number of submissions belonging to the course id, which have the submitted flag set to true and the submission date before the exercise due date, or no exercise
+     *         due date at all
+     */
+    public long countSubmissionsForCourse(long courseId) {
+        return submissionRepository.countByCourseIdSubmittedBeforeDueDate(courseId);
+    }
+
+    /**
+     * Count number of submissions for exercise.
+     * @param exerciseId the exercise id we are interested in
+     * @return the number of submissions belonging to the exercise id, which have the submitted flag set to true and the submission date before the exercise due date, or no
+     *         exercise due date at all
+     */
+    public long countSubmissionsForExercise(long exerciseId) {
+        return submissionRepository.countByExerciseIdSubmittedBeforeDueDate(exerciseId);
+    }
+
+    /**
      * Removes sensitive information (e.g. example solution of the exercise) from the submission based on the role of the current user. This should be called before sending a
      * submission to the client.
      * ***IMPORTANT***: Do not call this method from a transactional context as this would remove the sensitive information also from the entities in the

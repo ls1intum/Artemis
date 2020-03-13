@@ -33,7 +33,7 @@ plugins {
     id "net.ltgt.apt"
     //jhipster-needle-gradle-plugins - JHipster will add additional gradle plugins here
     id "com.diffplug.gradle.spotless" version "3.27.2"
-    id "com.github.spotbugs" version "4.0.1"
+    id "com.github.spotbugs" version "4.0.0"
 }
 
 group = "de.tum.in.www1.artemis"
@@ -86,7 +86,7 @@ spotless {
 }
 
 spotbugs {
-    toolVersion = '4.0.1'
+    toolVersion = '4.0.0'
     ignoreFailures = true
     effort = 'max'
     showProgress = true
@@ -174,7 +174,10 @@ repositories {
 dependencies {
     implementation 'com.offbytwo.jenkins:jenkins-client:0.3.8'
     implementation group: 'org.gitlab4j', name: 'gitlab4j-api', version: '4.14.19'
-    implementation fileTree(dir: "libs", include: "*.jar")
+    // TODO: at the moment we cannot upgrade to a higher version of acli due to conflicts with the used LoggerFactory
+    // the problem is that newer versions integrate the logging framework directly into the jar file instead of referencing
+    // a dependency. This leads to 2 logging frameworks available at the same time.
+    implementation files('libs/acli-9.0.0.jar')
     // https://mvnrepository.com/artifact/org.eclipse.jgit/org.eclipse.jgit
     implementation "org.eclipse.jgit:org.eclipse.jgit:5.6.1.202002131546-r"
     // https://mvnrepository.com/artifact/net.sourceforge.plantuml/plantuml

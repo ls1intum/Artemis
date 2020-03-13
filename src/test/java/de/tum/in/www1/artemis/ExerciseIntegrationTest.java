@@ -19,14 +19,17 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.DiagramType;
 import de.tum.in.www1.artemis.domain.enumeration.DifficultyLevel;
+import de.tum.in.www1.artemis.domain.enumeration.TutorParticipationStatus;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
+import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.RequestUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.StatsForInstructorDashboardDTO;
 
@@ -65,6 +68,11 @@ public class ExerciseIntegrationTest extends AbstractSpringIntegrationTest {
     @BeforeEach
     public void init() {
         database.addUsers(10, 5, 1);
+
+        // Add users that are not in exercise/course
+        userRepository.save(ModelFactory.generateActivatedUser("student11"));
+        userRepository.save(ModelFactory.generateActivatedUser("tutor6"));
+        userRepository.save(ModelFactory.generateActivatedUser("instructor2"));
     }
 
     @AfterEach
@@ -186,6 +194,13 @@ public class ExerciseIntegrationTest extends AbstractSpringIntegrationTest {
     }
 
     @Test
+    @WithMockUser(value = "student11", roles = "USER")
+    public void testGetExercise_forbidden() throws Exception {
+        database.addCourseWithOneTextExercise();
+        request.get("/api/exercises/" + exerciseRepository.findAll().get(0).getId(), HttpStatus.FORBIDDEN, Exercise.class);
+    }
+
+    @Test
     @WithMockUser(value = "student1", roles = "USER")
     public void testGetExerciseDetails() throws Exception {
         List<Course> courses = database.createCoursesWithExercisesAndLectures();
@@ -204,7 +219,7 @@ public class ExerciseIntegrationTest extends AbstractSpringIntegrationTest {
                     assertThat(modelingExercise.getDiagramType()).as("Diagram type was set correctly").isEqualTo(DiagramType.ClassDiagram);
                     assertThat(modelingExercise.getSampleSolutionModel()).as("Sample solution model was filtered out").isNull();
                     assertThat(modelingExercise.getSampleSolutionExplanation()).as("Sample solution explanation was filtered out").isNull();
-                    assertThat(modelingExercise.getStudentParticipations().size()).as("Number of participations is correct").isEqualTo(1);
+                    assertThat(modelingExercise.getStudentParticipations().size()).as("Number of participations is correct").isEqualTo(2);
                 }
                 if (exerciseWithDetails instanceof ProgrammingExercise) {
                     ProgrammingExercise programmingExerciseExercise = (ProgrammingExercise) exerciseWithDetails;
@@ -227,10 +242,17 @@ public class ExerciseIntegrationTest extends AbstractSpringIntegrationTest {
                 if (exerciseWithDetails instanceof TextExercise) {
                     TextExercise textExercise = (TextExercise) exerciseWithDetails;
                     assertThat(textExercise.getSampleSolution()).as("Sample solution was filtered out").isNull();
-                    assertThat(textExercise.getStudentParticipations().size()).as("Number of participations is correct").isEqualTo(2);
+                    assertThat(textExercise.getStudentParticipations().size()).as("Number of participations is correct").isEqualTo(1);
                 }
             }
         }
+    }
+
+    @Test
+    @WithMockUser(value = "student11", roles = "USER")
+    public void testGetExerciseDetails_forbidden() throws Exception {
+        database.addCourseWithOneTextExercise();
+        request.get("/api/exercises/" + exerciseRepository.findAll().get(0).getId() + "/details", HttpStatus.FORBIDDEN, Exercise.class);
     }
 
     @Test
@@ -271,6 +293,44 @@ public class ExerciseIntegrationTest extends AbstractSpringIntegrationTest {
         }
     }
 
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void testGetExerciseForTutorDashboard_submissionsWithoutAssessments() throws Exception {
+        var validModel = database.loadFileFromResources("test-data/model-submission/model.54727.json");
+        database.addCourseWithOneModelingExercise();
+        var exercise = exerciseRepository.findAll().get(0);
+        var exampleSubmission = database.generateExampleSubmission(validModel, exercise, true);
+        database.addExampleSubmission(exampleSubmission);
+        Exercise receivedExercise = request.get("/api/exercises/" + exercise.getId() + "/for-tutor-dashboard", HttpStatus.OK, Exercise.class);
+        assertThat(receivedExercise.getExampleSubmissions()).as("Example submission without assessment is removed from exercise").isEmpty();
+    }
+
+    @Test
+    @WithMockUser(value = "tutor6", roles = "TA")
+    public void testGetExerciseForTutorDashboard_forbidden() throws Exception {
+        database.addCourseWithOneTextExercise();
+        request.get("/api/exercises/" + exerciseRepository.findAll().get(0).getId() + "/for-tutor-dashboard", HttpStatus.FORBIDDEN, Exercise.class);
+    }
+
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void testGetExerciseForTutorDashboard_programmingExerciseWithAutomaticAssessment() throws Exception {
+        database.addCourseWithOneProgrammingExercise();
+        request.get("/api/exercises/" + exerciseRepository.findAll().get(0).getId() + "/for-tutor-dashboard", HttpStatus.BAD_REQUEST, Exercise.class);
+    }
+
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void testGetExerciseForTutorDashboard_exerciseWithTutorParticipation() throws Exception {
+        database.addCourseWithOneTextExercise();
+        var exercise = exerciseRepository.findAll().get(0);
+        var tutorParticipation = new TutorParticipation().tutor(database.getUserByLogin("tutor1")).assessedExercise(exercise)
+                .status(TutorParticipationStatus.REVIEWED_INSTRUCTIONS);
+        tutorParticipationRepo.save(tutorParticipation);
+        var textExercise = request.get("/api/exercises/" + exercise.getId() + "/for-tutor-dashboard", HttpStatus.OK, TextExercise.class);
+        assertThat(textExercise.getTutorParticipations().iterator().next().getStatus()).as("Status was changed to trained").isEqualTo(TutorParticipationStatus.TRAINED);
+    }
+
     private List<User> findTutors(Course course) {
         List<User> tutors = new ArrayList<>();
         Page<User> allUsers = userRepository.findAllWithGroups(Pageable.unpaged());
@@ -301,7 +361,7 @@ public class ExerciseIntegrationTest extends AbstractSpringIntegrationTest {
                     assertThat(stats.getNumberOfSubmissions()).as("Number of submissions for file upload exercise is correct").isEqualTo(0);
                 }
                 if (exercise instanceof ModelingExercise) {
-                    assertThat(stats.getNumberOfSubmissions()).as("Number of submissions for modeling exercise is correct").isEqualTo(1);
+                    assertThat(stats.getNumberOfSubmissions()).as("Number of submissions for modeling exercise is correct").isEqualTo(2);
                 }
                 if (exercise instanceof ProgrammingExercise) {
                     assertThat(stats.getNumberOfSubmissions()).as("Number of submissions for programming exercise is correct").isEqualTo(0);
@@ -314,6 +374,13 @@ public class ExerciseIntegrationTest extends AbstractSpringIntegrationTest {
                 }
             }
         }
+    }
+
+    @Test
+    @WithMockUser(value = "tutor6", roles = "TA")
+    public void testGetStatsForTutorExerciseDashboard_forbidden() throws Exception {
+        database.addCourseWithOneTextExercise();
+        request.get("/api/exercises/" + exerciseRepository.findAll().get(0).getId() + "/stats-for-tutor-dashboard", HttpStatus.FORBIDDEN, Exercise.class);
     }
 
     @Test
@@ -334,7 +401,7 @@ public class ExerciseIntegrationTest extends AbstractSpringIntegrationTest {
                     assertThat(stats.getNumberOfSubmissions()).as("Number of submissions for file upload exercise is correct").isEqualTo(0);
                 }
                 if (exercise instanceof ModelingExercise) {
-                    assertThat(stats.getNumberOfSubmissions()).as("Number of submissions for modeling exercise is correct").isEqualTo(1);
+                    assertThat(stats.getNumberOfSubmissions()).as("Number of submissions for modeling exercise is correct").isEqualTo(2);
                 }
                 if (exercise instanceof ProgrammingExercise) {
                     assertThat(stats.getNumberOfSubmissions()).as("Number of submissions for programming exercise is correct").isEqualTo(0);
@@ -350,6 +417,13 @@ public class ExerciseIntegrationTest extends AbstractSpringIntegrationTest {
     }
 
     @Test
+    @WithMockUser(value = "instructor2", roles = "INSTRUCTOR")
+    public void testGetStatsForInstructorExerciseDashboard_forbidden() throws Exception {
+        database.addCourseWithOneTextExercise();
+        request.get("/api/exercises/" + exerciseRepository.findAll().get(0).getId() + "/stats-for-instructor-dashboard", HttpStatus.FORBIDDEN, Exercise.class);
+    }
+
+    @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void testResetExercise() throws Exception {
         List<Course> courses = database.createCoursesWithExercisesAndLectures();
@@ -361,6 +435,13 @@ public class ExerciseIntegrationTest extends AbstractSpringIntegrationTest {
             }
         }
         assertThat(participationRepository.findAll()).hasSize(0);
+    }
+
+    @Test
+    @WithMockUser(value = "instructor2", roles = "INSTRUCTOR")
+    public void testResetExercise_forbidden() throws Exception {
+        database.addCourseWithOneTextExercise();
+        request.delete("/api/exercises/" + exerciseRepository.findAll().get(0).getId() + "/reset", HttpStatus.FORBIDDEN);
     }
 
     @Test
@@ -386,5 +467,12 @@ public class ExerciseIntegrationTest extends AbstractSpringIntegrationTest {
         resultRepository.deleteAll();
         submissionRepository.deleteAll();
         exerciseRepository.deleteAll();
+    }
+
+    @Test
+    @WithMockUser(value = "instructor2", roles = "INSTRUCTOR")
+    public void testCleanupExercise_forbidden() throws Exception {
+        database.addCourseWithOneTextExercise();
+        request.delete("/api/exercises/" + exerciseRepository.findAll().get(0).getId() + "/cleanup", HttpStatus.FORBIDDEN);
     }
 }
