@@ -28,6 +28,17 @@ public class BambooBuildPlanUpdateProvider {
         this.bambooClient = bambooClient;
     }
 
+    /**
+     * Update the build plan repository using the cli plugin. This is e.g. invoked, when a student starts a programming exercise.
+     * Then the build plan (which was cloned before) needs to be updated to work with the student repository
+     *
+     * @param bambooRemoteRepository the remote bamboo repository which was obtained before
+     * @param bitbucketRepositoryName the name of the new bitbucket repository
+     * @param bitbucketProjectKey the key of the corresponding bitbucket project
+     * @param completePlanName the complete name of the plan
+     * @throws CliClient.ClientException a client exception
+     * @throws CliClient.RemoteRestException a server exception
+     */
     public void updateRepository(@Nonnull com.appfire.bamboo.cli.objects.RemoteRepository bambooRemoteRepository, String bitbucketRepositoryName, String bitbucketProjectKey,
             String completePlanName) throws CliClient.ClientException, CliClient.RemoteRestException {
 

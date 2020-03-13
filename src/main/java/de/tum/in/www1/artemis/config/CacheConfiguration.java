@@ -42,6 +42,9 @@ public class CacheConfiguration {
         return hibernateProperties -> hibernateProperties.put(ConfigSettings.CACHE_MANAGER, cacheManager);
     }
 
+    /**
+     * @return the initialized cache manager
+     */
     @Bean
     public JCacheManagerCustomizer cacheManagerCustomizer() {
         return cm -> {

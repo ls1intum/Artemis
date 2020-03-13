@@ -121,16 +121,7 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationTest {
 
         // we use the temp repository as remote origing for all repositories that are created during the
         // TODO: distinguish between template, test and solution
-        doReturn(new GitUtilService.FileRepositoryUrl(originRepoFile)).when(versionControlService).getCloneRepositoryUrl(anyString(), anyString());
-        // var repository = gitService.getRepositoryByLocalPath(localRepoFile.toPath());
-        // doReturn(repository).when(gitService).getOrCheckoutRepository(any(URL.class), anyBoolean(), anyString());
-        // doNothing().when(gitService).fetchAll(any());
-        // var objectId = localGit.reflog().call().iterator().next().getNewId();
-        // doReturn(objectId).when(gitService).getLastCommitHash(any());
-        // doNothing().when(gitService).resetToOriginMaster(any());
-        // doNothing().when(gitService).pullIgnoreConflicts(any());
-        // doNothing().when(gitService).commitAndPush(any(), anyString(), any());
-
+        doReturn(new GitUtilService.MockFileRepositoryUrl(originRepoFile)).when(versionControlService).getCloneRepositoryUrl(anyString(), anyString());
         bambooRequestMockProvider.enableMockingOfRequests();
         bitbucketRequestMockProvider.enableMockingOfRequests();
     }

@@ -78,6 +78,9 @@ public class GradingCriterion implements Serializable {
         return this;
     }
 
+    /**
+     * @param structuredGradingInstructions the list of structured grading instructions which belong to the grading criterion
+     */
     public void setStructuredGradingInstructions(List<GradingInstruction> structuredGradingInstructions) {
         this.structuredGradingInstructions = structuredGradingInstructions;
         if (structuredGradingInstructions != null) {

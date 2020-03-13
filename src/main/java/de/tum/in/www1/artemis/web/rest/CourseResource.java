@@ -74,7 +74,7 @@ public class CourseResource {
 
     private final ExerciseService exerciseService;
 
-    private final Optional<ArtemisAuthenticationProvider> artemisAuthenticationProvider;
+    private final ArtemisAuthenticationProvider artemisAuthenticationProvider;
 
     private final TutorParticipationService tutorParticipationService;
 
@@ -108,7 +108,7 @@ public class CourseResource {
 
     public CourseResource(Environment env, UserService userService, CourseService courseService, ParticipationService participationService, CourseRepository courseRepository,
             ExerciseService exerciseService, AuthorizationCheckService authCheckService, TutorParticipationService tutorParticipationService,
-            Optional<ArtemisAuthenticationProvider> artemisAuthenticationProvider, ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository,
+            ArtemisAuthenticationProvider artemisAuthenticationProvider, ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository,
             LectureService lectureService, NotificationService notificationService, TextSubmissionService textSubmissionService,
             FileUploadSubmissionService fileUploadSubmissionService, ModelingSubmissionService modelingSubmissionService, ResultService resultService,
             ComplaintService complaintService, TutorLeaderboardService tutorLeaderboardService, ProgrammingExerciseService programmingExerciseService,
@@ -226,19 +226,19 @@ public class CourseResource {
         }
         // only execute this method in the production environment because normal developers might not have the right to call this method on the authentication server
         if (course.getInstructorGroupName() != null) {
-            if (!artemisAuthenticationProvider.get().isGroupAvailable(course.getInstructorGroupName())) {
+            if (!artemisAuthenticationProvider.isGroupAvailable(course.getInstructorGroupName())) {
                 throw new ArtemisAuthenticationException(
                         "Cannot save! The group " + course.getInstructorGroupName() + " for instructors does not exist. Please double check the instructor group name!");
             }
         }
         if (course.getTeachingAssistantGroupName() != null) {
-            if (!artemisAuthenticationProvider.get().isGroupAvailable(course.getTeachingAssistantGroupName())) {
+            if (!artemisAuthenticationProvider.isGroupAvailable(course.getTeachingAssistantGroupName())) {
                 throw new ArtemisAuthenticationException("Cannot save! The group " + course.getTeachingAssistantGroupName()
                         + " for teaching assistants does not exist. Please double check the teaching assistants group name!");
             }
         }
         if (course.getStudentGroupName() != null) {
-            if (!artemisAuthenticationProvider.get().isGroupAvailable(course.getStudentGroupName())) {
+            if (!artemisAuthenticationProvider.isGroupAvailable(course.getStudentGroupName())) {
                 throw new ArtemisAuthenticationException(
                         "Cannot save! The group " + course.getStudentGroupName() + " for students does not exist. Please double check the students group name!");
             }
@@ -273,7 +273,7 @@ public class CourseResource {
                     HeaderUtil.createFailureAlert(applicationName, false, ENTITY_NAME, "registrationDisabled", "The course does not allow registration. Cannot register user"))
                     .body(null);
         }
-        artemisAuthenticationProvider.get().registerUserForCourse(user, course);
+        artemisAuthenticationProvider.registerUserForCourse(user, course);
         return ResponseEntity.ok(user);
     }
 

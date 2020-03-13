@@ -4,7 +4,6 @@ import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.Objects;
 import java.util.Optional;
 
 import org.slf4j.Logger;
@@ -97,12 +96,22 @@ public class StudentQuestionAnswerResource {
     // TODO: there are no security checks here. The API endpoint should at least include the course id
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<StudentQuestionAnswer> updateStudentQuestionAnswer(@RequestBody StudentQuestionAnswer studentQuestionAnswer) throws URISyntaxException {
+        User user = userService.getUserWithGroupsAndAuthorities();
         log.debug("REST request to update StudentQuestionAnswer : {}", studentQuestionAnswer);
         if (studentQuestionAnswer.getId() == null) {
             throw new BadRequestAlertException("Invalid id", ENTITY_NAME, "idnull");
         }
-        StudentQuestionAnswer result = studentQuestionAnswerRepository.save(studentQuestionAnswer);
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, studentQuestionAnswer.getId().toString())).body(result);
+        Optional<StudentQuestionAnswer> optionalStudentQuestionAnswer = studentQuestionAnswerRepository.findById(studentQuestionAnswer.getId());
+        if (optionalStudentQuestionAnswer.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+        if (mayUpdateOrDeleteStudentQuestionAnswer(studentQuestionAnswer, user)) {
+            StudentQuestionAnswer result = studentQuestionAnswerRepository.save(studentQuestionAnswer);
+            return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, studentQuestionAnswer.getId().toString())).body(result);
+        }
+        else {
+            return forbidden();
+        }
     }
 
     /**
@@ -136,22 +145,18 @@ public class StudentQuestionAnswerResource {
             return ResponseEntity.notFound().build();
         }
         StudentQuestionAnswer studentQuestionAnswer = optionalStudentQuestionAnswer.get();
-        Course course = null;
+        Course course = studentQuestionAnswer.getQuestion().getCourse();
         String entity = "";
         if (studentQuestionAnswer.getQuestion().getLecture() != null) {
-            course = studentQuestionAnswer.getQuestion().getLecture().getCourse();
             entity = "lecture with id: " + studentQuestionAnswer.getQuestion().getLecture().getId();
         }
         else if (studentQuestionAnswer.getQuestion().getExercise() != null) {
-            course = studentQuestionAnswer.getQuestion().getExercise().getCourse();
             entity = "exercise with id: " + studentQuestionAnswer.getQuestion().getExercise().getId();
         }
         if (course == null) {
             return ResponseEntity.badRequest().build();
         }
-        Boolean hasCourseTAAccess = authorizationCheckService.isAtLeastTeachingAssistantInCourse(course, user);
-        Boolean isUserAuthor = Objects.equals(user.getId(), studentQuestionAnswer.getAuthor().getId());
-        if (hasCourseTAAccess || isUserAuthor) {
+        if (mayUpdateOrDeleteStudentQuestionAnswer(studentQuestionAnswer, user)) {
             log.info("StudentQuestionAnswer deleted by " + user.getLogin() + ". Answer: " + studentQuestionAnswer.getAnswerText() + " for " + entity, user.getLogin());
             studentQuestionAnswerRepository.deleteById(id);
             return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, id.toString())).build();
@@ -159,5 +164,12 @@ public class StudentQuestionAnswerResource {
         else {
             return forbidden();
         }
+    }
+
+    private boolean mayUpdateOrDeleteStudentQuestionAnswer(StudentQuestionAnswer studentQuestionAnswer, User user) {
+        Course course = studentQuestionAnswer.getQuestion().getCourse();
+        Boolean hasCourseTAAccess = authorizationCheckService.isAtLeastTeachingAssistantInCourse(course, user);
+        Boolean isUserAuthor = user.getId().equals(studentQuestionAnswer.getAuthor().getId());
+        return hasCourseTAAccess || isUserAuthor;
     }
 }

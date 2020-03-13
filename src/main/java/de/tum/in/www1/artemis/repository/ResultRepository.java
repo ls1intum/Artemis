@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.repository;
 
+import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
+
 import java.util.List;
 import java.util.Optional;
 
@@ -21,7 +23,7 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
 
     List<Result> findByParticipationIdOrderByCompletionDateDesc(Long participationId);
 
-    @EntityGraph(attributePaths = "submission")
+    @EntityGraph(type = LOAD, attributePaths = "submission")
     List<Result> findAllByParticipationIdOrderByCompletionDateDesc(Long participationId);
 
     List<Result> findByParticipationIdAndRatedOrderByCompletionDateDesc(Long participationId, boolean rated);
@@ -33,7 +35,7 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
     @Query("select r from Result r where r.completionDate = (select max(rr.completionDate) from Result rr where rr.participation.exercise.id = :exerciseId and rr.participation.student.id = r.participation.student.id) and r.participation.exercise.id = :exerciseId order by r.completionDate asc")
     List<Result> findLatestResultsForExercise(@Param("exerciseId") Long exerciseId);
 
-    @EntityGraph(attributePaths = "feedbacks")
+    @EntityGraph(type = LOAD, attributePaths = "feedbacks")
     Optional<Result> findFirstWithFeedbacksByParticipationIdOrderByCompletionDateDesc(Long participationId);
 
     @Query("select r from Result r where r.completionDate = (select min(rr.completionDate) from Result rr where rr.participation.exercise.id = r.participation.exercise.id and rr.participation.student.id = r.participation.student.id and rr.successful = true) and r.participation.exercise.course.id = :courseId and r.successful = true order by r.completionDate asc")
@@ -45,10 +47,10 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
 
     Optional<Result> findDistinctBySubmissionId(Long submissionId);
 
-    @EntityGraph(attributePaths = "assessor")
+    @EntityGraph(type = LOAD, attributePaths = "assessor")
     Optional<Result> findDistinctWithAssessorBySubmissionId(Long submissionId);
 
-    @EntityGraph(attributePaths = "feedbacks")
+    @EntityGraph(type = LOAD, attributePaths = "feedbacks")
     Optional<Result> findDistinctWithFeedbackBySubmissionId(Long submissionId);
 
     List<Result> findAllByParticipationExerciseIdAndAssessorId(Long exerciseId, Long assessorId);
@@ -65,7 +67,7 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
      * @param resultId the id of the result to load from the database
      * @return an optional containing the result with submission, feedback list and assessor, or an empty optional if no result could be found for the given id
      */
-    @EntityGraph(attributePaths = { "submission", "feedbacks", "assessor" })
+    @EntityGraph(type = LOAD, attributePaths = { "submission", "feedbacks", "assessor" })
     Optional<Result> findWithEagerSubmissionAndFeedbackAndAssessorById(Long resultId);
 
     Long countByAssessorIsNotNullAndParticipation_Exercise_CourseIdAndRatedAndCompletionDateIsNotNull(long courseId, boolean rated);
@@ -80,13 +82,13 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
      * @param resultId the id of the result to load from the database
      * @return an optional containing the result with submission and feedback list, or an empty optional if no result could be found for the given id
      */
-    @EntityGraph(attributePaths = { "submission", "feedbacks" })
+    @EntityGraph(type = LOAD, attributePaths = { "submission", "feedbacks" })
     Optional<Result> findWithEagerSubmissionAndFeedbackById(long resultId);
 
     @Query(value = "SELECT COUNT(DISTINCT p) FROM Participation p left join p.results r WHERE p.exercise.id = :exerciseId AND r.assessor IS NOT NULL AND r.rated = TRUE AND r.completionDate IS NOT NULL")
     long countNumberOfFinishedAssessmentsForExercise(@Param("exerciseId") Long exerciseId);
 
-    @EntityGraph(attributePaths = { "feedbacks" })
+    @EntityGraph(type = LOAD, attributePaths = { "feedbacks" })
     List<Result> findAllWithEagerFeedbackByAssessorIsNotNullAndParticipation_ExerciseIdAndCompletionDateIsNotNull(Long exerciseId);
 
     long countByAssessorIsNotNullAndParticipation_ExerciseIdAndRatedAndAssessmentTypeInAndCompletionDateIsNotNull(long exerciseId, boolean rated,
