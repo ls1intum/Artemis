@@ -349,6 +349,21 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
     }
 
     @Test
+    @WithMockUser(username = "instructor1", roles = "ADMIN")
+    public void testStatistics() throws Exception {
+        saveModelingSubmissionAndAssessment(true);
+        database.addParticipationForExercise(classExercise, "instructor1");
+        ModelingSubmission submission = ModelFactory.generateModelingSubmission(database.loadFileFromResources("test-data/model-submission/model.54727.partial.json"), true);
+        ModelingSubmission storedSubmission = request.postWithResponseBody("/api/exercises/" + classExercise.getId() + "/modeling-submissions", submission,
+                ModelingSubmission.class, HttpStatus.OK);
+        compassService.getAutomaticResultForSubmission(storedSubmission.getId(), classExercise.getId());
+
+        request.get("/api/modeling-exercises/" + classExercise.getId() + "/print-statistic", HttpStatus.OK, String.class);   // void == empty string
+        String statistics = request.get("/api/modeling-exercises/" + classExercise.getId() + "/statistics", HttpStatus.OK, String.class);
+        // TODO: assert that the statistics is correct
+    }
+
+    @Test
     @WithMockUser(username = "student2")
     public void testAutomaticAssessmentUponModelSubmission_noSimilarity() throws Exception {
         modelingSubmission = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.54745.json", "student1");
