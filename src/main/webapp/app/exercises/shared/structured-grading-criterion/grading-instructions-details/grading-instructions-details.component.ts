@@ -120,6 +120,7 @@ export class GradingInstructionsDetailsComponent implements OnInit {
         }
         return GradingScaleCommand.identifier + ' ' + instruction.gradingScale;
     }
+
     generateInstructionDescriptionText(instruction: GradingInstruction): string {
         if (instruction.instructionDescription === undefined) {
             instruction.instructionDescription = InstructionDescriptionCommand.text;
