@@ -265,22 +265,24 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationTest {
     }
 
     private void getCourseForDashboardWithStats(boolean isInstructor) throws Exception {
-        List<Course> testCourses = database.createCoursesWithExercisesAndLectures();
+        List<Course> testCourses = database.createCoursesWithExercisesAndLectures(true);
         for (Course testCourse : testCourses) {
             Course course = request.get("/api/courses/" + testCourse.getId() + "/for-tutor-dashboard", HttpStatus.OK, Course.class);
             for (Exercise exercise : course.getExercises()) {
-                assertThat(exercise.getNumberOfAssessments()).as("Number of assessments is correct").isZero();
                 assertThat(exercise.getTutorParticipations().size()).as("Tutor participation was created").isEqualTo(1);
                 // Mock data contains exactly two participations for the modeling exercise
                 if (exercise instanceof ModelingExercise) {
+                    assertThat(exercise.getNumberOfAssessments()).as("Number of assessments is correct").isEqualTo(1);
                     assertThat(exercise.getNumberOfParticipations()).as("Number of participations is correct").isEqualTo(2);
                 }
                 // Mock data contains exactly one participation for the text exercise
                 if (exercise instanceof TextExercise) {
+                    assertThat(exercise.getNumberOfAssessments()).as("Number of assessments is correct").isZero();
                     assertThat(exercise.getNumberOfParticipations()).as("Number of participations is correct").isEqualTo(1);
                 }
                 // Mock data contains no participations for the file upload and programming exercise
                 if (exercise instanceof FileUploadExercise || exercise instanceof ProgrammingExercise) {
+                    assertThat(exercise.getNumberOfAssessments()).as("Number of assessments is correct").isZero();
                     assertThat(exercise.getNumberOfParticipations()).as("Number of participations is correct").isEqualTo(0);
                 }
                 // Check tutor participation
@@ -295,7 +297,6 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationTest {
                     StatsForInstructorDashboardDTO.class);
             long numberOfSubmissions = course.getId().equals(testCourses.get(0).getId()) ? 3 : 0; // course 1 has 3 submissions, course 2 has 0 submissions
             assertThat(stats.getNumberOfSubmissions()).as("Number of submissions is correct").isEqualTo(numberOfSubmissions);
-            assertThat(stats.getNumberOfAssessments()).as("Number of assessments is correct").isEqualTo(0);
             assertThat(stats.getTutorLeaderboardEntries().size()).as("Number of tutor leaderboard entries is correct").isEqualTo(5);
 
             StatsForInstructorDashboardDTO stats2 = request.get("/api/courses/" + testCourse.getId() + "/stats-for-instructor-dashboard",
