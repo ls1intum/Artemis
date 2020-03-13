@@ -101,12 +101,22 @@ public class StudentQuestionResource {
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     // TODO: there are no security checks here. The API endpoint should at least include the course id
     public ResponseEntity<StudentQuestion> updateStudentQuestion(@RequestBody StudentQuestion studentQuestion) throws URISyntaxException {
+        User user = userService.getUserWithGroupsAndAuthorities();
         log.debug("REST request to update StudentQuestion : {}", studentQuestion);
         if (studentQuestion.getId() == null) {
             throw new BadRequestAlertException("Invalid id", ENTITY_NAME, "idnull");
         }
-        StudentQuestion result = studentQuestionRepository.save(studentQuestion);
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, studentQuestion.getId().toString())).body(result);
+        Optional<StudentQuestion> optionalStudentQuestion = studentQuestionRepository.findById(studentQuestion.getId());
+        if (optionalStudentQuestion.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+        if (mayUpdateOrDeleteStudentQuestion(optionalStudentQuestion.get(), user)) {
+            StudentQuestion result = studentQuestionRepository.save(studentQuestion);
+            return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, studentQuestion.getId().toString())).body(result);
+        }
+        else {
+            return forbidden();
+        }
     }
 
     /**
@@ -182,22 +192,18 @@ public class StudentQuestionResource {
             return ResponseEntity.notFound().build();
         }
         StudentQuestion studentQuestion = optionalStudentQuestion.get();
-        Course course = null;
+        Course course = studentQuestion.getCourse();
         String entity = "";
         if (studentQuestion.getLecture() != null) {
-            course = studentQuestion.getLecture().getCourse();
             entity = "lecture with id: " + studentQuestion.getLecture().getId();
         }
         else if (studentQuestion.getExercise() != null) {
-            course = studentQuestion.getExercise().getCourse();
             entity = "exercise with id: " + studentQuestion.getExercise().getId();
         }
         if (course == null) {
             return ResponseEntity.badRequest().build();
         }
-        Boolean hasCourseTAAccess = authorizationCheckService.isAtLeastTeachingAssistantInCourse(course, user);
-        Boolean isUserAuthor = user.getId().equals(studentQuestion.getAuthor().getId());
-        if (hasCourseTAAccess || isUserAuthor) {
+        if (mayUpdateOrDeleteStudentQuestion(studentQuestion, user)) {
             log.info("StudentQuestion deleted by " + user.getLogin() + ". Question: " + studentQuestion.getQuestionText() + " for " + entity, user.getLogin());
             studentQuestionRepository.deleteById(id);
             return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, id.toString())).build();
@@ -205,5 +211,11 @@ public class StudentQuestionResource {
         else {
             return forbidden();
         }
+    }
+
+    private boolean mayUpdateOrDeleteStudentQuestion(StudentQuestion studentQuestion, User user) {
+        Boolean hasCourseTAAccess = authorizationCheckService.isAtLeastTeachingAssistantInCourse(studentQuestion.getCourse(), user);
+        Boolean isUserAuthor = user.getId().equals(studentQuestion.getAuthor().getId());
+        return hasCourseTAAccess || isUserAuthor;
     }
 }
