@@ -168,6 +168,16 @@ public class StudentQuestion implements Serializable {
     }
     // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove
 
+    public Course getCourse() {
+        if (getLecture() != null) {
+            return getLecture().getCourse();
+        }
+        else if (getExercise() != null) {
+            return getExercise().getCourse();
+        }
+        return null;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) {
