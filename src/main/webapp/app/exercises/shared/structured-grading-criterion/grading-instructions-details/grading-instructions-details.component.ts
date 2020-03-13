@@ -190,6 +190,7 @@ export class GradingInstructionsDetailsComponent implements OnInit {
             }
         }
     }
+
     /**
      * @function setParentForInstructionsWithNoCriterion
      * @desc 1. creates a dummy criterion object for each stand-alone instruction
