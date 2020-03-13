@@ -68,6 +68,7 @@ export class GradingInstructionsDetailsComponent implements OnInit {
         }
         return markdownText;
     }
+
     /**
      * @function generateMarkdown
      * @desc Generate the markdown text for this grading instruction
