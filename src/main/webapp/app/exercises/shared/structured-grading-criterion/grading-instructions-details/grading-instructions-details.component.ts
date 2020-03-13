@@ -111,6 +111,7 @@ export class GradingInstructionsDetailsComponent implements OnInit {
         }
         return CreditsCommand.identifier + ' ' + instruction.credits;
     }
+
     generateGradingScaleText(instruction: GradingInstruction): string {
         if (instruction.gradingScale === undefined) {
             instruction.gradingScale = GradingScaleCommand.text;
