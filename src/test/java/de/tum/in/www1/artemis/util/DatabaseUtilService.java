@@ -409,7 +409,7 @@ public class DatabaseUtilService {
         }
 
         User user = (userRepo.findOneByLogin("student1")).get();
-        StudentParticipation participation1 = ModelFactory.generateStudentParticipation(InitializationState.INITIALIZED, textExercise, user);
+        StudentParticipation participation1 = ModelFactory.generateStudentParticipation(InitializationState.INITIALIZED, modelingExercise, user);
         StudentParticipation participation2 = ModelFactory.generateStudentParticipation(InitializationState.FINISHED, textExercise, user);
         StudentParticipation participation3 = ModelFactory.generateStudentParticipation(InitializationState.UNINITIALIZED, modelingExercise, user);
 
@@ -434,7 +434,7 @@ public class DatabaseUtilService {
         participation3 = participationRepo.save(participation3);
 
         modelingSubmission1.setParticipation(participation1);
-        textSubmission.setParticipation(participation1);
+        textSubmission.setParticipation(participation2);
         modelingSubmission2.setParticipation(participation3);
 
         submissionRepository.save(modelingSubmission1);
