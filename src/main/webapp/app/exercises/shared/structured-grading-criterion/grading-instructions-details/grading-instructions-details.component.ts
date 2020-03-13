@@ -83,7 +83,7 @@ export class GradingInstructionsDetailsComponent implements OnInit {
         }
         for (const instruction of criterion.structuredGradingInstructions) {
             markdownText +=
-                GradingCriterionCommand.identifier +
+                GradingInstructionCommand.identifier +
                 '\n' +
                 '\t' +
                 this.generateCreditsText(instruction) +
