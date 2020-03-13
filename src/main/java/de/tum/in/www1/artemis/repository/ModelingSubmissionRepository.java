@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.repository;
 
+import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
+
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -32,7 +34,7 @@ public interface ModelingSubmissionRepository extends JpaRepository<ModelingSubm
      * @param submissionId the id of the modeling submission that should be loaded from the database
      * @return the modeling submission with its result, the feedback list of the result, the assessor of the result, its participation and all results of the participation
      */
-    @EntityGraph(attributePaths = { "result", "result.feedbacks", "result.assessor", "participation", "participation.results" })
+    @EntityGraph(type = LOAD, attributePaths = { "result", "result.feedbacks", "result.assessor", "participation", "participation.results" })
     Optional<ModelingSubmission> findWithEagerResultAndFeedbackAndAssessorAndParticipationResultsById(Long submissionId);
 
     /**
@@ -43,7 +45,7 @@ public interface ModelingSubmissionRepository extends JpaRepository<ModelingSubm
      * @return the list of modeling submissions with their results, the feedback list of the results, the assessor of the results, their participation and all results of the
      *         participations
      */
-    @EntityGraph(attributePaths = { "result", "result.feedbacks", "result.assessor", "participation", "participation.results" })
+    @EntityGraph(type = LOAD, attributePaths = { "result", "result.feedbacks", "result.assessor", "participation", "participation.results" })
     List<ModelingSubmission> findWithEagerResultAndFeedbackAndAssessorAndParticipationResultsByIdIn(Collection<Long> submissionIds);
 
     @Query("select distinct submission from ModelingSubmission submission left join fetch submission.result r left join fetch r.feedbacks where submission.participation.exercise.id = :#{#exerciseId} and submission.submitted = true")

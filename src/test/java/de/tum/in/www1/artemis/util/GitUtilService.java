@@ -19,6 +19,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Repository;
+import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 
 @Service
@@ -59,6 +60,7 @@ public class GitUtilService {
             remoteGit.add().addFilepattern(".").call();
             remoteGit.commit().setMessage("initial commit").call();
 
+            // TODO: use a temp folder instead
             localGit = Git.cloneRepository().setURI(System.getProperty("user.dir") + "/" + remoteRoot + "/" + remoteName + "/.git")
                     .setDirectory(new File(repoRoot + "/" + repositoryName)).call();
 
@@ -230,5 +232,26 @@ public class GitUtilService {
         catch (MalformedURLException ex) {
         }
         return null;
+    }
+
+    public static final class MockFileRepositoryUrl extends VcsRepositoryUrl {
+
+        public MockFileRepositoryUrl(File file) throws MalformedURLException {
+            super(file.toURI().toURL().toString());
+        }
+
+        @Override
+        public VcsRepositoryUrl withUser(String username) {
+            // the mocked url should already include the user specific part
+            return this;
+        }
+    }
+
+    public void writeEmptyJsonFileToPath(Path path) throws Exception {
+        var fileContent = "{}";
+        path.toFile().getParentFile().mkdirs();
+        FileWriter writer = new FileWriter(path.toFile());
+        writer.write(fileContent);
+        writer.close();
     }
 }

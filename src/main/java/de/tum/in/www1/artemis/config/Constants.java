@@ -117,6 +117,10 @@ public final class Constants {
 
     public static final String INFO_BUILD_PLAN_URL_DETAIL = "buildPlanURLTemplate";
 
+    public static final String EXTERNAL_USER_MANAGEMENT_URL = "externalUserManagementURL";
+
+    public static final String EXTERNAL_USER_MANAGEMENT_NAME = "externalUserManagementName";
+
     private Constants() {
     }
 }

@@ -1,5 +1,4 @@
 import { Component, HostBinding, Input, OnDestroy, OnInit } from '@angular/core';
-import { AlertService } from 'app/core/alert/alert.service';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import * as moment from 'moment';
@@ -43,7 +42,6 @@ export class CourseExerciseRowComponent implements OnInit, OnDestroy {
 
     constructor(
         private accountService: AccountService,
-        private jhiAlertService: AlertService,
         private $window: WindowRef,
         private participationService: ParticipationService,
         private exerciseService: ExerciseService,
@@ -125,7 +123,7 @@ export class CourseExerciseRowComponent implements OnInit, OnDestroy {
         const isClickResult = event.target.closest('jhi-result') && event.target.closest('.result');
         if (!isClickOnAction && !isClickResult) {
             if (this.extendedLink) {
-                this.router.navigate(['overview', this.course.id, 'exercises', this.exercise.id]);
+                this.router.navigate(['courses', this.course.id, 'exercises', this.exercise.id]);
             } else {
                 this.router.navigate([this.exercise.id], { relativeTo: this.route });
             }

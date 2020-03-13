@@ -53,25 +53,19 @@ public class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationTe
     @Test
     @WithMockUser(roles = "USER")
     public void getCompassStatistic_asStudent_Forbidden() throws Exception {
-        request.get("/api/exercises/" + classExercise.getId() + "/compass-statistic", HttpStatus.FORBIDDEN, Void.class);
+        request.get("/api/modeling-exercises/" + classExercise.getId() + "/print-statistic", HttpStatus.FORBIDDEN, Void.class);
     }
 
     @Test
     @WithMockUser(roles = "TA")
     public void getCompassStatistic_asTutor_Forbidden() throws Exception {
-        request.get("/api/exercises/" + classExercise.getId() + "/compass-statistic", HttpStatus.FORBIDDEN, Void.class);
+        request.get("/api/modeling-exercises/" + classExercise.getId() + "/print-statistic", HttpStatus.FORBIDDEN, Void.class);
     }
 
     @Test
     @WithMockUser(roles = "INSTRUCTOR")
     public void getCompassStatistic_asInstructor_Forbidden() throws Exception {
-        request.get("/api/exercises/" + classExercise.getId() + "/compass-statistic", HttpStatus.FORBIDDEN, Void.class);
-    }
-
-    @Test
-    @WithMockUser(roles = "ADMIN")
-    public void getCompassStatistic_asAdmin_Success() throws Exception {
-        request.getNullable("/api/exercises/" + classExercise.getId() + "/compass-statistic", HttpStatus.OK, String.class);
+        request.get("/api/modeling-exercises/" + classExercise.getId() + "/print-statistic", HttpStatus.FORBIDDEN, Void.class);
     }
 
     @Test

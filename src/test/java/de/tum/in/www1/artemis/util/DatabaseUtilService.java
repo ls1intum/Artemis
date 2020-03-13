@@ -146,6 +146,9 @@ public class DatabaseUtilService {
     TutorParticipationRepository tutorParticipationRepo;
 
     @Autowired
+    StudentQuestionRepository studentQuestionRepository;
+
+    @Autowired
     ModelingSubmissionService modelSubmissionService;
 
     @Autowired
@@ -189,6 +192,7 @@ public class DatabaseUtilService {
         fileUploadSubmissionRepo.deleteAll();
         programmingSubmissionRepo.deleteAll();
         submissionRepository.deleteAll();
+        studentQuestionRepository.deleteAll();
         participationRepo.deleteAll();
         assertThat(participationRepo.findAll()).as("participation data has been cleared").isEmpty();
         teamRepo.deleteAll();
@@ -436,6 +440,42 @@ public class DatabaseUtilService {
         return Arrays.asList(course1, course2);
     }
 
+    public List<StudentQuestion> createCourseWithExerciseAndStudentQuestions() throws Exception {
+        ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(5);
+        ZonedDateTime futureTimestamp = ZonedDateTime.now().plusDays(5);
+        ZonedDateTime futureFutureTimestamp = ZonedDateTime.now().plusDays(8);
+
+        Course course1 = ModelFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "tumuser", "tutor", "instructor");
+
+        TextExercise textExercise = ModelFactory.generateTextExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, course1);
+        textExercise.setGradingInstructions("some grading instructions");
+        addGradingInstructionsToExercise(textExercise);
+        textExercise.getCategories().add("Text");
+        course1.addExercises(textExercise);
+
+        courseRepo.save(course1);
+        textExercise = exerciseRepo.save(textExercise);
+
+        List<StudentQuestion> studentQuestions = new ArrayList<>();
+        StudentQuestion studentQuestion1 = new StudentQuestion();
+        studentQuestion1.setExercise(textExercise);
+        studentQuestion1.setQuestionText("Test Student Question 1");
+        studentQuestion1.setVisibleForStudents(true);
+        studentQuestion1.setAuthor(getUserByLogin("student1"));
+        studentQuestionRepository.save(studentQuestion1);
+        studentQuestions.add(studentQuestion1);
+
+        StudentQuestion studentQuestion2 = new StudentQuestion();
+        studentQuestion2.setExercise(textExercise);
+        studentQuestion2.setQuestionText("Test Student Question 2");
+        studentQuestion2.setVisibleForStudents(true);
+        studentQuestion2.setAuthor(getUserByLogin("student2"));
+        studentQuestionRepository.save(studentQuestion2);
+        studentQuestions.add(studentQuestion2);
+
+        return studentQuestions;
+    }
+
     /**
      * Stores participation of the user with the given login for the given exercise
      *
@@ -653,7 +693,7 @@ public class DatabaseUtilService {
         programmingExercise.setDueDate(ZonedDateTime.now().plusDays(2));
         programmingExercise.setAssessmentDueDate(ZonedDateTime.now().plusDays(3));
         programmingExercise.setCategories(new HashSet<>(Set.of("cat1", "cat2")));
-        programmingExercise.setTestRepositoryUrl("http://nadnasidni.sgiinssdgdg-tests.git");
+        programmingExercise.setTestRepositoryUrl("http://nadnasidni.tum/scm/" + programmingExercise.getProjectKey() + "/" + programmingExercise.getProjectKey() + "-tests.git");
         programmingExercise.setPresentationScoreEnabled(course.getPresentationScore() != 0);
 
         programmingExercise = programmingExerciseRepository.save(programmingExercise);

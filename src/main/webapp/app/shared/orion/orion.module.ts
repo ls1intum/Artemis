@@ -11,8 +11,8 @@ import { OrionBuildAndTestService } from 'app/shared/orion/orion-build-and-test.
 import { FeatureToggleModule } from 'app/shared/feature-toggle/feature-toggle.module';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 
-export function initOrionConnector(bridge: OrionConnectorService, win: WindowRef) {
-    return () => OrionConnectorService.initBridge(bridge, win);
+export function initOrionConnector(connector: OrionConnectorService, win: WindowRef) {
+    return () => OrionConnectorService.initConnector(connector, win);
 }
 
 @NgModule({

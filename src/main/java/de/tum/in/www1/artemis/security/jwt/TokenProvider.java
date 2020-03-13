@@ -45,6 +45,9 @@ public class TokenProvider {
         this.jHipsterProperties = jHipsterProperties;
     }
 
+    /**
+     * initializes the token provider based on the yml config file
+     */
     @PostConstruct
     public void init() {
         byte[] keyBytes;

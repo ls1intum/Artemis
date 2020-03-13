@@ -1,6 +1,5 @@
 import { ActiveFeatureToggles } from 'app/shared/feature-toggle/feature-toggle.service';
 import { GuidedTourMapping } from 'app/guided-tour/guided-tour-setting.model';
-import { AllowedOrionVersionRange } from 'app/shared/orion/outdated-plugin-warning/orion-version-validator.service';
 
 export class ProfileInfo {
     activeProfiles: string[];
@@ -10,7 +9,9 @@ export class ProfileInfo {
     features: ActiveFeatureToggles;
     guidedTourMapping?: GuidedTourMapping;
     buildPlanURLTemplate: string;
+    externalUserManagementURL: string;
+    externalUserManagementName: string;
     imprint: string;
     contact: string;
-    allowedOrionVersions: AllowedOrionVersionRange;
+    allowedMinimumOrionVersion: string;
 }
