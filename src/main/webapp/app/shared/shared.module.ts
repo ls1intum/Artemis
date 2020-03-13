@@ -12,10 +12,19 @@ import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.dire
 import { FindLanguageFromKeyPipe } from 'app/shared/language/find-language-from-key.pipe';
 import { ArtemisSharedLibsModule } from 'app/shared/shared-libs.module';
 import { JhiAlertErrorComponent } from 'app/shared/alert/alert-error.component';
+import { SlideToggleComponent } from 'app/exercises/shared/slide-toggle/slide-toggle.component';
 
 @NgModule({
     imports: [ArtemisSharedLibsModule, ArtemisSharedCommonModule, ArtemisSharedPipesModule],
-    declarations: [HasAnyAuthorityDirective, SecuredImageComponent, DeleteDialogComponent, DeleteButtonDirective, ResizeableContainerComponent, SecureLinkDirective],
+    declarations: [
+        HasAnyAuthorityDirective,
+        SecuredImageComponent,
+        DeleteDialogComponent,
+        DeleteButtonDirective,
+        ResizeableContainerComponent,
+        SecureLinkDirective,
+        SlideToggleComponent,
+    ],
     providers: [DatePipe],
     entryComponents: [DeleteDialogComponent],
     exports: [
@@ -31,6 +40,7 @@ import { JhiAlertErrorComponent } from 'app/shared/alert/alert-error.component';
         DeleteDialogComponent,
         ResizeableContainerComponent,
         SecureLinkDirective,
+        SlideToggleComponent,
     ],
 })
 export class ArtemisSharedModule {}

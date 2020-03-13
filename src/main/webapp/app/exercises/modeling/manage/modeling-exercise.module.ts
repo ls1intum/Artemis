@@ -14,7 +14,6 @@ import { ModelingExerciseComponent } from 'app/exercises/modeling/manage/modelin
 import { ModelingExerciseDetailComponent } from 'app/exercises/modeling/manage/modeling-exercise-detail.component';
 import { ArtemisTeamConfigFormGroupModule } from 'app/exercises/shared/team-config-form-group/team-config-form-group.module';
 import { StructuredGradingCriterionModule } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.module';
-import { ArtemisSlideToggleModule } from 'app/exercises/shared/slide-toggle/slide-toggle.module';
 
 @NgModule({
     imports: [
@@ -30,7 +29,6 @@ import { ArtemisSlideToggleModule } from 'app/exercises/shared/slide-toggle/slid
         FormDateTimePickerModule,
         SortByModule,
         StructuredGradingCriterionModule,
-        ArtemisSlideToggleModule,
     ],
     declarations: [ModelingExerciseComponent, ModelingExerciseDetailComponent, ModelingExerciseUpdateComponent],
     exports: [ModelingExerciseComponent],
