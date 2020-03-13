@@ -50,6 +50,7 @@ export class GradingInstructionsDetailsComponent implements OnInit {
         this.criteria = this.exercise.gradingCriteria;
         this.questionEditorText = this.generateMarkdown();
     }
+
     generateMarkdown(): string {
         let markdownText = '';
         if (this.criteria === undefined || this.criteria.length === 0) {
