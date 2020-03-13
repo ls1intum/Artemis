@@ -10,12 +10,16 @@ import { AccountService } from 'app/core/auth/account.service';
 import { Subject } from 'rxjs';
 import { ITEMS_PER_PAGE } from 'app/shared/constants/pagination.constants';
 import { AlertService } from 'app/core/alert/alert.service';
+import { debounceTime, switchMap, tap } from 'rxjs/operators';
 
 @Component({
     selector: 'jhi-user-management',
     templateUrl: './user-management.component.html',
 })
 export class UserManagementComponent implements OnInit, OnDestroy {
+    private search = new Subject<void>();
+    loading = false;
+
     currentAccount: User;
     users: User[];
     error: string | null;
@@ -28,6 +32,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
     predicate: string;
     previousPage: number;
     reverse: boolean;
+    searchTermString: string;
 
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
@@ -58,7 +63,31 @@ export class UserManagementComponent implements OnInit, OnDestroy {
             this.currentAccount = user!;
             this.loadAll();
             this.registerChangeInUsers();
+            this.performSearch(this.search, 300);
         });
+    }
+
+    private performSearch(searchSubject: Subject<void>, debounce: number) {
+        searchSubject
+            .pipe(
+                debounceTime(debounce),
+                tap(() => (this.loading = true)),
+                switchMap(() => this.userService.query({
+                    page: this.page - 1,
+                    size: this.itemsPerPage,
+                    sort: this.sort(),
+                    searchTerm: this.searchTermString
+                })),
+            )
+            .subscribe(
+            (res: HttpResponse<User[]>) => {
+                this.loading = false;
+                console.log('HTTP Response');
+                console.log(res);
+                this.onSuccess(res.body!, res.headers);
+            },
+            (res: HttpErrorResponse) => onError(this.alertService, res),
+        );
     }
 
     /**
@@ -177,5 +206,14 @@ export class UserManagementComponent implements OnInit, OnDestroy {
         this.links = this.parseLinks.parse(headers.get('link')!);
         this.totalItems = headers.get('X-Total-Count')!;
         this.users = data;
+    }
+
+    set searchTerm(searchTerm: string) {
+        this.searchTermString = searchTerm;
+        this.search.next();
+    }
+
+    get searchTerm(): string {
+        return this.searchTermString;
     }
 }

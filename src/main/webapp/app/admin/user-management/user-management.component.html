@@ -7,6 +7,10 @@
     </h2>
     <jhi-alert></jhi-alert>
     <div class="table-responsive" *ngIf="users">
+        <div class="form-group form-inline">
+            Search for User: <input class="form-control ml-2" type="text" name="searchExcercise" [(ngModel)]="searchTerm" />
+            <span class="ml-3" *ngIf="loading">Loading...</span>
+        </div>
         <table class="table table-striped">
             <thead>
                 <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" [callback]="transition.bind(this)">
