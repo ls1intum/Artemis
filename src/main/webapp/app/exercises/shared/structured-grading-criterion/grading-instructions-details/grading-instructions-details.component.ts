@@ -63,7 +63,7 @@ export class GradingInstructionsDetailsComponent implements OnInit {
                 // if it is a dummy criterion, leave out the command identifier
                 markdownText += this.generateInstructionsMarkdown(criterion);
             } else {
-                markdownText += '[gradingCriterion]' + criterion.title + '\n' + '\t' + this.generateInstructionsMarkdown(criterion);
+                markdownText += GradingCriterionCommand.identifier + criterion.title + '\n' + '\t' + this.generateInstructionsMarkdown(criterion);
             }
         }
         return markdownText;
