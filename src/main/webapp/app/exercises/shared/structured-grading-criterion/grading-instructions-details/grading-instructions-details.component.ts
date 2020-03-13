@@ -150,12 +150,7 @@ export class GradingInstructionsDetailsComponent implements OnInit {
     }
 
     hasCriterionCommand(domainCommands: [string, DomainCommand][]): boolean {
-        for (const [text, command] of domainCommands) {
-            if (command instanceof GradingCriterionCommand) {
-                return true;
-            }
-        }
-        return false;
+        return domainCommands.some(([text, command]) => command instanceof GradingCriterionCommand);
     }
 
     /**
