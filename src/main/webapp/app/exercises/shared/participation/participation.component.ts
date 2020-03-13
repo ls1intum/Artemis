@@ -226,8 +226,13 @@ export class ParticipationComponent implements OnInit, OnDestroy {
      * @param participation
      */
     searchResultFormatter = (participation: StudentParticipation) => {
-        const { login, name } = participation.student;
-        return `${login} (${name})`;
+        if (participation.student) {
+            const { login, name } = participation.student;
+            return `${login} (${name})`;
+        } else if (participation.team) {
+            const { name, shortName } = participation.team;
+            return `${name} (${shortName})`;
+        }
     };
 
     /**
@@ -237,6 +242,6 @@ export class ParticipationComponent implements OnInit, OnDestroy {
      * @param participation Student participation
      */
     searchTextFromParticipation = (participation: StudentParticipation): string => {
-        return participation.student.login || '';
+        return participation.student?.login || participation.team?.shortName || '';
     };
 }
