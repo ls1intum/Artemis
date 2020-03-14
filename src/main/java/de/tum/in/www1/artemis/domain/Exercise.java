@@ -172,6 +172,10 @@ public abstract class Exercise implements Serializable {
     @Transient
     private Long numberOfOpenMoreFeedbackRequestsTransient;
 
+    // flag whether the logged-in user is already assigned to a team (only relevant if team mode is enabled)
+    @Transient
+    private Boolean isStudentAssignedToTeam;
+
     // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
     public Long getId() {
         return id;
@@ -860,6 +864,14 @@ public abstract class Exercise implements Serializable {
     public boolean isReleased() {
         ZonedDateTime releaseDate = getReleaseDate();
         return releaseDate == null || releaseDate.isBefore(ZonedDateTime.now());
+    }
+
+    public Boolean isStudentAssignedToTeam() {
+        return isStudentAssignedToTeam;
+    }
+
+    public void setIsStudentAssignedToTeam(Boolean isStudentAssignedToTeam) {
+        this.isStudentAssignedToTeam = isStudentAssignedToTeam;
     }
 
     public Boolean getPresentationScoreEnabled() {

@@ -57,10 +57,12 @@ public class ExerciseService {
 
     private final ComplaintResponseRepository complaintResponseRepository;
 
+    private final TeamService teamService;
+
     public ExerciseService(ExerciseRepository exerciseRepository, ParticipationService participationService, AuthorizationCheckService authCheckService,
             ProgrammingExerciseService programmingExerciseService, QuizStatisticService quizStatisticService, QuizScheduleService quizScheduleService,
             TutorParticipationRepository tutorParticipationRepository, ExampleSubmissionService exampleSubmissionService, AuditEventRepository auditEventRepository,
-            ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository) {
+            ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository, TeamService teamService) {
         this.exerciseRepository = exerciseRepository;
         this.participationService = participationService;
         this.authCheckService = authCheckService;
@@ -72,6 +74,7 @@ public class ExerciseService {
         this.auditEventRepository = auditEventRepository;
         this.complaintRepository = complaintRepository;
         this.complaintResponseRepository = complaintResponseRepository;
+        this.teamService = teamService;
     }
 
     /**
@@ -123,9 +126,13 @@ public class ExerciseService {
             exercises = exercises.stream().filter(Exercise::isVisibleToStudents).collect(Collectors.toList());
         }
 
-        // filter out questions and all statistical information about the quizPointStatistic from quizExercises (so users can't see which answer options are correct)
         if (exercises != null) {
             for (Exercise exercise : exercises) {
+                // for team-based exercises: add transient flag whether the user is already part of a team for that exercise
+                if (exercise.isTeamMode()) {
+                    exercise.setIsStudentAssignedToTeam(teamService.isAssignedToTeam(exercise, user));
+                }
+                // filter out questions and all statistical information about the quizPointStatistic from quizExercises (so users can't see which answer options are correct)
                 if (exercise instanceof QuizExercise) {
                     QuizExercise quizExercise = (QuizExercise) exercise;
                     quizExercise.filterSensitiveInformation();

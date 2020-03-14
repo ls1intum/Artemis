@@ -46,7 +46,10 @@ public class TeamService {
      * @param user Student for which to check
      * @return boolean flag whether the student has been assigned already or not yet
      */
-    public boolean isAssignedToTeam(Exercise exercise, User user) {
+    public Boolean isAssignedToTeam(Exercise exercise, User user) {
+        if (!exercise.isTeamMode()) {
+            return null;
+        }
         return teamRepository.findOneByExerciseIdAndUserId(exercise.getId(), user.getId()).isPresent();
     }
 
