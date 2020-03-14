@@ -35,6 +35,7 @@
             "submissions": "Submissions",
             "student": "Student",
             "team": "Team",
+            "students": "Students",
             "exercise": "Exercise",
             "deleteRepository": "Delete repository",
             "deleteBuildPlan": "Delete build plan",

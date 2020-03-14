@@ -11,6 +11,7 @@ import { ProgrammingExerciseUtilsModule } from 'app/exercises/programming/shared
 import { SortByModule } from 'app/shared/pipes/sort-by.module';
 import { ArtemisExerciseScoresModule } from 'app/exercises/shared/exercise-scores/exercise-scores.module';
 import { ArtemisParticipationRoutingModule } from 'app/exercises/shared/participation/participation-routing.module';
+import { ArtemisTeamModule } from 'app/exercises/shared/team/team.module';
 
 @NgModule({
     imports: [
@@ -24,6 +25,7 @@ import { ArtemisParticipationRoutingModule } from 'app/exercises/shared/particip
         ArtemisDataTableModule,
         FeatureToggleModule,
         ProgrammingExerciseUtilsModule,
+        ArtemisTeamModule,
     ],
     declarations: [ParticipationComponent],
 })
