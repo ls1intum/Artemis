@@ -6,6 +6,7 @@ import java.util.Set;
 import javax.persistence.*;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonView;
 
 import de.tum.in.www1.artemis.domain.*;
@@ -79,12 +80,14 @@ public class StudentParticipation extends Participation {
         }
     }
 
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     public String getParticipantIdentifier() {
-        return getParticipant().getParticipantIdentifier();
+        return Optional.ofNullable(getParticipant()).map(Participant::getParticipantIdentifier).orElse(null);
     }
 
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     public String getParticipantName() {
-        return getParticipant().getName();
+        return Optional.ofNullable(getParticipant()).map(Participant::getName).orElse(null);
     }
 
     public Exercise getExercise() {
