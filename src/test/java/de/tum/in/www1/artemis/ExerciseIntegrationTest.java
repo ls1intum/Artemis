@@ -376,7 +376,7 @@ public class ExerciseIntegrationTest extends AbstractSpringIntegrationTest {
                 }
                 if (exercise instanceof ModelingExercise) {
                     assertThat(stats.getNumberOfAssessments()).as("Number of assessments is correct").isEqualTo(1);
-                    assertThat(stats.getNumberOfSubmissions()).as("Number of submissions for modeling exercise is correct").isEqualTo(1);
+                    assertThat(stats.getNumberOfSubmissions()).as("Number of submissions for modeling exercise is correct").isEqualTo(2);
                     var tutorLeaderboardEntry = stats.getTutorLeaderboardEntries().stream().filter(entry -> database.getUserByLogin("tutor1").getId().equals(entry.getUserId()))
                             .findFirst().get();
                     assertThat(tutorLeaderboardEntry.getNumberOfTutorComplaints()).isNotNull();
