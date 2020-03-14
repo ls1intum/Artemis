@@ -44,7 +44,7 @@
                 "submissionDate": "Submission Date",
                 "result": "Result",
                 "assessor": "Assessor",
-                "submissionsForParticipation": "Submissions of {{ student }} for Exercise {{ exercise }}",
+                "submissionsForParticipation": "Submissions of {{ participant }} for Exercise {{ exercise }}",
                 "action": "Action",
                 "delete": "Are you sure you want to delete this submission?"
             }
