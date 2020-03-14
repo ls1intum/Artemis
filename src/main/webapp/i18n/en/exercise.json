@@ -69,6 +69,8 @@
             "startError": "<strong>Uh oh! Something went wrong... Please try again to start the exercise in a few minutes.</strong>",
             "studentName": "Name",
             "studentId": "Login",
+            "teamName": "Team Name",
+            "teamShortName": "Short Name",
             "completionDate": "Completion Date",
             "result": "Result",
             "submissionCount": "Submissions",

@@ -65,8 +65,12 @@
         [allEntities]="results"
         entitiesPerPageTranslation="artemisApp.exercise.resultsPerPage"
         showAllEntitiesTranslation="artemisApp.exercise.showAllResults"
-        searchPlaceholderTranslation="artemisApp.exercise.searchForStudents"
-        [searchFields]="['participation.student.login', 'participation.student.name']"
+        [searchPlaceholderTranslation]="exercise.teamMode ? 'artemisApp.exercise.searchForTeams' : 'artemisApp.exercise.searchForStudents'"
+        [searchFields]="
+            exercise.teamMode
+                ? ['participation.team.shortName', 'participation.team.name', 'participation.team.students.login', 'participation.team.students.name']
+                : ['participation.student.login', 'participation.student.name']
+        "
         [searchTextFromEntity]="searchTextFromResult"
         [searchResultFormatter]="searchResultFormatter"
         [customFilterKey]="resultCriteria.filterProp"
@@ -92,34 +96,52 @@
                     </ng-template>
                 </ngx-datatable-column>
 
-                <ngx-datatable-column prop="participation" [resizeable]="false" [sortable]="true" [minWidth]="100" [width]="200">
+                <ngx-datatable-column prop="participation" [resizeable]="false" [sortable]="true" [minWidth]="100" [width]="180">
                     <ng-template ngx-datatable-header-template>
-                        <span class="datatable-header-cell-wrapper" (click)="controls.onSort('participation.student.name')">
+                        <span *ngIf="exercise.teamMode" class="datatable-header-cell-wrapper" (click)="controls.onSort('participation.team.name')">
+                            <span class="datatable-header-cell-label bold sortable">{{ 'artemisApp.exercise.teamName' | translate }}</span>
+                            <fa-icon [icon]="controls.iconForSortPropField('participation.team.name')"></fa-icon>
+                        </span>
+                        <span *ngIf="!exercise.teamMode" class="datatable-header-cell-wrapper" (click)="controls.onSort('participation.student.name')">
                             <span class="datatable-header-cell-label bold sortable">{{ 'artemisApp.exercise.studentName' | translate }}</span>
                             <fa-icon [icon]="controls.iconForSortPropField('participation.student.name')"></fa-icon>
                         </span>
                     </ng-template>
                     <ng-template ngx-datatable-cell-template let-value="value">
-                        <span *ngIf="exercise.isAtLeastInstructor">
-                            <a routerLink="../participations/{{ value.id }}/submissions">
+                        <span *ngIf="exercise.teamMode; else defaultMode">
+                            {{ value.team.name }}
+                        </span>
+                        <ng-template #defaultMode>
+                            <span *ngIf="exercise.isAtLeastInstructor">
+                                <a routerLink="../participations/{{ value.id }}/submissions">
+                                    {{ value.student.name }}
+                                </a>
+                            </span>
+                            <span *ngIf="!exercise.isAtLeastInstructor">
                                 {{ value.student.name }}
-                            </a>
-                        </span>
-                        <span *ngIf="!exercise.isAtLeastInstructor">
-                            {{ value.student.name }}
-                        </span>
+                            </span>
+                        </ng-template>
                     </ng-template>
                 </ngx-datatable-column>
 
-                <ngx-datatable-column prop="participation.student.login" [resizeable]="false" [sortable]="true" [minWidth]="100" [width]="100">
+                <ngx-datatable-column prop="participation" [resizeable]="false" [sortable]="true" [minWidth]="100" [width]="110">
                     <ng-template ngx-datatable-header-template>
-                        <span class="datatable-header-cell-wrapper" (click)="controls.onSort('participation.student.login')">
+                        <span *ngIf="exercise.teamMode" class="datatable-header-cell-wrapper" (click)="controls.onSort('participation.team.shortName')">
+                            <span class="datatable-header-cell-label bold sortable">{{ 'artemisApp.exercise.teamShortName' | translate }}</span>
+                            <fa-icon [icon]="controls.iconForSortPropField('participation.team.shortName')"></fa-icon>
+                        </span>
+                        <span *ngIf="!exercise.teamMode" class="datatable-header-cell-wrapper" (click)="controls.onSort('participation.student.login')">
                             <span class="datatable-header-cell-label bold sortable">{{ 'artemisApp.exercise.studentId' | translate }}</span>
                             <fa-icon [icon]="controls.iconForSortPropField('participation.student.login')"></fa-icon>
                         </span>
                     </ng-template>
                     <ng-template ngx-datatable-cell-template let-value="value">
-                        {{ value }}
+                        <span *ngIf="exercise.teamMode; else defaultMode">
+                            {{ value.team.shortName }}
+                        </span>
+                        <ng-template #defaultMode>
+                            {{ value.student.login }}
+                        </ng-template>
                     </ng-template>
                 </ngx-datatable-column>
 
@@ -167,7 +189,7 @@
                         </span>
                     </ng-template>
                     <ng-template ngx-datatable-cell-template let-value="value">
-                        <div class="text-center">
+                        <div class="w-100 text-center">
                             <a *ngIf="exercise.isAtLeastInstructor; else displayTextOnly" routerLink="../participations/{{ value.id }}/submissions">
                                 {{ value.submissionCount }}
                             </a>
