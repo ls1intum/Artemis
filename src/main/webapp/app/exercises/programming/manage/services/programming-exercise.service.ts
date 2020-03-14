@@ -35,8 +35,8 @@ export class ProgrammingExerciseService {
             .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
     }
 
-    generateStructureOracle(exerciseId: number) {
-        return this.http.get(this.resourceUrl + '/' + exerciseId + '/generate-tests', { responseType: 'text' });
+    generateStructureOracle(exerciseId: number): Observable<string> {
+        return this.http.put<string>(this.resourceUrl + '/' + exerciseId + '/generate-tests', { responseType: 'text' });
     }
 
     combineTemplateRepositoryCommits(exerciseId: number) {

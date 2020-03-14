@@ -7,6 +7,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import java.io.File;
 import java.net.URI;
 import java.nio.file.Files;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -131,17 +132,34 @@ public class RequestUtilService {
         return mapper.readValue(res.getResponse().getContentAsString(), responseType);
     }
 
+    public <T, R> R putWithResponseBody(String path, T body, Class<R> responseType, HttpStatus expectedStatus, Map<String, String> expectedHeaders) throws Exception {
+        return putWithResponseBodyAndParams(path, body, responseType, expectedStatus, new LinkedMultiValueMap<>(), expectedHeaders);
+    }
+
     public <T, R> R putWithResponseBody(String path, T body, Class<R> responseType, HttpStatus expectedStatus) throws Exception {
-        return putWithResponseBodyAndParams(path, body, responseType, expectedStatus, new LinkedMultiValueMap<String, String>());
+        return putWithResponseBodyAndParams(path, body, responseType, expectedStatus, new LinkedMultiValueMap<>(), new HashMap<>());
     }
 
     public <T, R> R putWithResponseBodyAndParams(String path, T body, Class<R> responseType, HttpStatus expectedStatus, MultiValueMap<String, String> params) throws Exception {
+        return putWithResponseBodyAndParams(path, body, responseType, expectedStatus, params, new HashMap<>());
+    }
+
+    public <T, R> R putWithResponseBodyAndParams(String path, T body, Class<R> responseType, HttpStatus expectedStatus, MultiValueMap<String, String> params,
+            Map<String, String> expectedHeaders) throws Exception {
         String jsonBody = mapper.writeValueAsString(body);
         MvcResult res = mvc.perform(MockMvcRequestBuilders.put(new URI(path)).contentType(MediaType.APPLICATION_JSON).content(jsonBody).params(params).with(csrf()))
                 .andExpect(status().is(expectedStatus.value())).andReturn();
 
+        for (String headerKey : expectedHeaders.keySet()) {
+            assertThat(res.getResponse().getHeaderValues(headerKey).get(0)).isEqualTo(expectedHeaders.get(headerKey));
+        }
+
         if (res.getResponse().getStatus() >= 299) {
             return null;
+        }
+
+        if (responseType == String.class) {
+            return (R) res.getResponse().getContentAsString();
         }
 
         return mapper.readValue(res.getResponse().getContentAsString(), responseType);
@@ -219,7 +237,6 @@ public class RequestUtilService {
             }
             return null;
         }
-
         if (responseType == String.class) {
             return (T) contentAsString;
         }

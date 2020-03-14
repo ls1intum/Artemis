@@ -229,22 +229,4 @@ public class TextSubmissionService extends SubmissionService {
         return textSubmissionRepository.findByIdWithEagerResultAndFeedback(submissionId)
                 .orElseThrow(() -> new EntityNotFoundException("Text submission with id \"" + submissionId + "\" does not exist"));
     }
-
-    /**
-     * @param courseId the course we are interested in
-     * @return the number of text submissions which should be assessed, so we ignore the ones after the exercise due date
-     */
-    @Transactional(readOnly = true)
-    public long countSubmissionsToAssessByCourseId(Long courseId) {
-        return textSubmissionRepository.countByCourseIdSubmittedBeforeDueDate(courseId);
-    }
-
-    /**
-     * @param exerciseId the exercise we are interested in
-     * @return the number of text submissions which should be assessed, so we ignore the ones after the exercise due date
-     */
-    @Transactional(readOnly = true)
-    public long countSubmissionsToAssessByExerciseId(Long exerciseId) {
-        return textSubmissionRepository.countByExerciseIdSubmittedBeforeDueDate(exerciseId);
-    }
 }

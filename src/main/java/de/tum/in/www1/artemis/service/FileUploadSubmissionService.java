@@ -338,24 +338,6 @@ public class FileUploadSubmissionService extends SubmissionService {
     }
 
     /**
-     * @param courseId the course we are interested in
-     * @return the number of file upload submissions which should be assessed, so we ignore the ones after the exercise due date
-     */
-    @Transactional(readOnly = true)
-    public long countSubmissionsToAssessByCourseId(Long courseId) {
-        return fileUploadSubmissionRepository.countByCourseIdSubmittedBeforeDueDate(courseId);
-    }
-
-    /**
-     * @param exerciseId the exercise we are interested in
-     * @return the number of file upload submissions which should be assessed, so we ignore the ones after the exercise due date
-     */
-    @Transactional(readOnly = true)
-    public long countSubmissionsToAssessByExerciseId(Long exerciseId) {
-        return fileUploadSubmissionRepository.countByExerciseIdSubmittedBeforeDueDate(exerciseId);
-    }
-
-    /**
      * Get the file upload submission with the given id from the database. The submission is loaded together with its result, the feedback of the result and the assessor of the
      * result. Throws an EntityNotFoundException if no submission could be found for the given id.
      *
