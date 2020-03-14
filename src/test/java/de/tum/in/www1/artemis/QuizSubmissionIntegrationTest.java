@@ -223,10 +223,34 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationTest
     }
 
     @Test
-    @WithMockUser(value = "student1", roles = "STUDENT")
+    @WithMockUser(value = "student1", roles = "USER")
     public void testQuizSubmitPreview_forbidden() throws Exception {
         List<Course> courses = database.createCoursesWithExercisesAndLectures();
         Course course = courses.get(0);
+        QuizExercise quizExercise = database.createQuiz(course, ZonedDateTime.now().minusSeconds(4), null);
+        quizExerciseService.save(quizExercise);
+        request.postWithResponseBody("/api/exercises/" + quizExercise.getId() + "/submissions/preview", new QuizSubmission(), Result.class, HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(value = "student1", roles = "USER")
+    public void testQuizSubmitPractice_forbidden() throws Exception {
+        List<Course> courses = database.createCoursesWithExercisesAndLectures();
+        Course course = courses.get(0);
+        course.setStudentGroupName("abc");
+        courseRepository.save(course);
+        QuizExercise quizExercise = database.createQuiz(course, ZonedDateTime.now().minusSeconds(4), null);
+        quizExerciseService.save(quizExercise);
+        request.postWithResponseBody("/api/exercises/" + quizExercise.getId() + "/submissions/practice", new QuizSubmission(), Result.class, HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void testQuizSubmitPreview_forbidden_otherTa() throws Exception {
+        List<Course> courses = database.createCoursesWithExercisesAndLectures();
+        Course course = courses.get(0);
+        course.setTeachingAssistantGroupName("tutor2");
+        courseRepository.save(course);
         QuizExercise quizExercise = database.createQuiz(course, ZonedDateTime.now().minusSeconds(4), null);
         quizExerciseService.save(quizExercise);
         request.postWithResponseBody("/api/exercises/" + quizExercise.getId() + "/submissions/preview", new QuizSubmission(), Result.class, HttpStatus.FORBIDDEN);
@@ -240,7 +264,7 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationTest
 
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
-    public void testQuizSubmitPractive_badRequest_noQuiz() throws Exception {
+    public void testQuizSubmitPractice_badRequest_noQuiz() throws Exception {
         request.postWithResponseBody("/api/exercises/" + 11 + "/submissions/practice", new QuizSubmission(), Result.class, HttpStatus.BAD_REQUEST);
     }
 
