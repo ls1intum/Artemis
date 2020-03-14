@@ -35,9 +35,9 @@
                 "title": "Fragen und Antworten von Studierenden aktivieren",
                 "description": "Fragen und Antworten Abschnitt in Vorlesung- und Übungsseite aktivieren / deaktivieren"
             },
-            "maxComplaintSettingEnabled": {
-                "title": "Setzen der maximalen Anzahl von Studentenbeschwerden aktivieren",
-                "description": "Wenn Sie diese Option aktivieren, können Sie die maximale Anzahl von Studentenbeschwerden setzen."
+            "complaintsEnabled": {
+                "title": "Studentenbeschwerden aktivieren",
+                "description": "Wenn du diese Option aktivierst, können sich Studenten über Ergebnisse beschweren."
             },
             "studentGroupName": "Studenten Gruppe",
             "teachingAssistantGroupName": "Tutor Gruppe",
@@ -47,7 +47,7 @@
             "endDate": "Ende",
             "accessGroups": "Zugriffsrechte",
             "onlineCourse": "Online Kurs",
-            "registrationEnabled": "Registrierung aktiviert",
+            "registrationEnabled": "Studenten Registrierung aktiviert",
             "exercises": "Aufgaben",
             "programmingExercises": "Programmieraufgaben",
             "quizExercises": "Quizaufgaben",

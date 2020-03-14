@@ -87,5 +87,11 @@
         <h5><span jhiTranslate="artemisApp.fileUploadExercise.assessedSubmission">Your assessed submission</span>:</h5>
         <jhi-file-upload-result [result]="result"></jhi-file-upload-result>
     </div>
-    <jhi-complaint-interactions *ngIf="fileUploadExercise" [result]="result" [participation]="participation" [exercise]="fileUploadExercise"> </jhi-complaint-interactions>
+    <jhi-complaint-interactions
+        *ngIf="fileUploadExercise.course?.complaintsEnabled && fileUploadExercise"
+        [result]="result"
+        [participation]="participation"
+        [exercise]="fileUploadExercise"
+    >
+    </jhi-complaint-interactions>
 </div>

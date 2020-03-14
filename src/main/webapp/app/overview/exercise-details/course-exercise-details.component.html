@@ -146,7 +146,13 @@
             </div>
             <!-- RESULTS END -->
             <jhi-complaint-interactions
-                *ngIf="exercise.type === PROGRAMMING && studentParticipation && currentResult && currentResult.assessmentType === AssessmentType.MANUAL"
+                *ngIf="
+                    exercise.course?.complaintsEnabled &&
+                    exercise.type === PROGRAMMING &&
+                    studentParticipation &&
+                    currentResult &&
+                    currentResult.assessmentType === AssessmentType.MANUAL
+                "
                 class="mb-2 mt-2 ml-3"
                 [exercise]="exercise"
                 [participation]="studentParticipation"

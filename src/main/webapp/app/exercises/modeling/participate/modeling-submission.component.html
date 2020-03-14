@@ -103,5 +103,11 @@
             </ng-container>
         </div>
     </div>
-    <jhi-complaint-interactions *ngIf="modelingExercise" [exercise]="modelingExercise" [participation]="participation" [result]="result"> </jhi-complaint-interactions>
+    <jhi-complaint-interactions
+        *ngIf="modelingExercise.course?.complaintsEnabled && modelingExercise"
+        [exercise]="modelingExercise"
+        [participation]="participation"
+        [result]="result"
+    >
+    </jhi-complaint-interactions>
 </div>

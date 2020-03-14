@@ -36,7 +36,7 @@ export class CourseUpdateComponent implements OnInit {
     croppedImage: any = '';
     showCropper = false;
     presentationScoreEnabled = false;
-    setMaxComplaintsEnabled = true;
+    complaintsEnabled = true; // default value
 
     shortNamePattern = /^[a-zA-Z][a-zA-Z0-9]*$/; // must start with a letter and cannot contain special characters
     presentationScorePattern = /^[0-9]{0,4}$/; // makes sure that the presentation score is a positive natural integer greater than 0 and not too large
@@ -209,11 +209,11 @@ export class CourseUpdateComponent implements OnInit {
     changeEvent(event: Event) {
         // @ts-ignore
         if (event.target.checked) {
-            this.setMaxComplaintsEnabled = true;
+            this.complaintsEnabled = true;
             this.courseForm.controls.maxComplaints.setValue(3);
             this.courseForm.controls.maxComplaintTimeDays.setValue(7);
         } else {
-            this.setMaxComplaintsEnabled = false;
+            this.complaintsEnabled = false;
             this.courseForm.controls.maxComplaints.setValue(0);
             this.courseForm.controls.maxComplaintTimeDays.setValue(0);
         }

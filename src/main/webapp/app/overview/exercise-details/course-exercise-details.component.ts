@@ -24,8 +24,6 @@ import { participationStatus } from 'app/exercises/shared/exercise/exercise-util
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
-import { take } from 'rxjs/operators';
-import { Course } from 'app/entities/course.model';
 
 const MAX_RESULT_HISTORY_LENGTH = 5;
 

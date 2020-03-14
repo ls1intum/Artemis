@@ -3,7 +3,6 @@ import { Exercise } from 'app/entities/exercise.model';
 import * as moment from 'moment';
 import { MAX_COMPLAINT_TIME_WEEKS } from 'app/complaints/complaint.constants';
 import { ComplaintType } from 'app/entities/complaint.model';
-import { ResultService } from 'app/exercises/shared/result/result.service';
 import { ComplaintService } from 'app/complaints/complaint.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { Result } from 'app/entities/result.model';
@@ -27,7 +26,7 @@ export class ComplaintInteractionsComponent implements OnInit {
     showComplaintForm = false;
     ComplaintType = ComplaintType;
 
-    constructor(private complaintService: ComplaintService, private resultService: ResultService) {}
+    constructor(private complaintService: ComplaintService) {}
 
     ngOnInit(): void {
         if (this.exercise.course) {

@@ -35,9 +35,9 @@
                 "title": "Enable Questions and Answers by students",
                 "description": "Enable Questions and Answers section on lecture and exercise page"
             },
-            "maxComplaintSettingEnabled": {
-                "title": "Enable Setting Max Complaints Amount",
-                "description": "Enabling this tickbox allows you to set maximum number of student complaints"
+            "complaintsEnabled": {
+                "title": "Enable Complaints",
+                "description": "Enabling this allows students to complaint about results"
             },
             "studentGroupName": "Student Group",
             "teachingAssistantGroupName": "Tutor Group",
@@ -47,7 +47,7 @@
             "endDate": "End",
             "accessGroups": "Access Groups",
             "onlineCourse": "Online Course",
-            "registrationEnabled": "Registration Enabled",
+            "registrationEnabled": "Student Registration Enabled",
             "exercises": "Exercises",
             "programmingExercises": "Programming Exercises",
             "quizExercises": "Quiz Exercises",
