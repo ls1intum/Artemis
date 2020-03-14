@@ -10,7 +10,7 @@ import { ArtemisAssessmentSharedModule } from 'app/assessment/assessment-shared.
 import { AssessmentHeaderComponent } from 'app/assessment/assessment-header/assessment-header.component';
 import { AssessmentComplaintAlertComponent } from 'app/assessment/assessment-complaint-alert/assessment-complaint-alert.component';
 import { ComplaintsForTutorComponent } from 'app/complaints/complaints-for-tutor/complaints-for-tutor.component';
-import { JhiAlertComponent } from 'app/shared/alert/alert.component';
+import { AlertComponent } from 'app/shared/alert/alert.component';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { Complaint } from 'app/entities/complaint.model';
 
@@ -37,7 +37,7 @@ describe('AssessmentLayoutComponent', () => {
     });
 
     it('should include jhi-alert', () => {
-        const jhiAlertComponent = fixture.debugElement.query(By.directive(JhiAlertComponent));
+        const jhiAlertComponent = fixture.debugElement.query(By.directive(AlertComponent));
         expect(jhiAlertComponent).toBeTruthy();
     });
 

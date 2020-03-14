@@ -13,7 +13,7 @@ import { NgbActiveModal, NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import * as sinon from 'sinon';
 import { stub } from 'sinon';
 import { Observable, Subject } from 'rxjs';
-import { JhiAlertComponent } from 'app/shared/alert/alert.component';
+import { AlertComponent } from 'app/shared/alert/alert.component';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -27,7 +27,7 @@ describe('DeleteDialogComponent', () => {
     beforeEach(async () => {
         return TestBed.configureTestingModule({
             imports: [TranslateModule.forRoot(), ArtemisTestModule, FormsModule, NgJhipsterModule, NgbModule],
-            declarations: [DeleteDialogComponent, JhiAlertComponent],
+            declarations: [DeleteDialogComponent, AlertComponent],
             providers: [JhiLanguageHelper, JhiAlertService],
         })
             .compileComponents()
