@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, ViewEncapsulation } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Subscription } from 'rxjs/Subscription';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import { JhiAlertService, JhiEventManager } from 'ng-jhipster';
@@ -14,8 +14,6 @@ import { formatTeamAsSearchResult } from 'app/exercises/shared/team/team.utils';
 @Component({
     selector: 'jhi-teams',
     templateUrl: './teams.component.html',
-    styleUrls: ['./teams.component.scss'],
-    encapsulation: ViewEncapsulation.None,
 })
 export class TeamsComponent implements OnInit, OnDestroy {
     ButtonSize = ButtonSize;
