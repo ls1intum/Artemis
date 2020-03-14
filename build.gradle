@@ -173,13 +173,13 @@ repositories {
 
 dependencies {
     implementation 'com.offbytwo.jenkins:jenkins-client:0.3.8'
-    implementation group: 'org.gitlab4j', name: 'gitlab4j-api', version: '4.14.19'
+    implementation group: 'org.gitlab4j', name: 'gitlab4j-api', version: '4.14.20'
     // TODO: at the moment we cannot upgrade to a higher version of acli due to conflicts with the used LoggerFactory
     // the problem is that newer versions integrate the logging framework directly into the jar file instead of referencing
     // a dependency. This leads to 2 logging frameworks available at the same time.
     implementation files('libs/acli-9.0.0.jar')
     // https://mvnrepository.com/artifact/org.eclipse.jgit/org.eclipse.jgit
-    implementation "org.eclipse.jgit:org.eclipse.jgit:5.6.1.202002131546-r"
+    implementation "org.eclipse.jgit:org.eclipse.jgit:5.7.0.202003110725-r"
     // https://mvnrepository.com/artifact/net.sourceforge.plantuml/plantuml
     implementation "net.sourceforge.plantuml:plantuml:8059"
     implementation "org.imsglobal:basiclti-util:1.2.0"
@@ -236,9 +236,9 @@ dependencies {
     implementation "org.springframework.security:spring-security-data:${spring_security_version}"
     implementation "org.springframework.security:spring-security-web:${spring_security_version}"
     implementation "org.springframework.security:spring-security-messaging:${spring_security_version}"
-    implementation "io.jsonwebtoken:jjwt-api:0.11.0"
-    runtimeOnly "io.jsonwebtoken:jjwt-impl:0.11.0"
-    runtimeOnly "io.jsonwebtoken:jjwt-jackson:0.11.0"
+    implementation "io.jsonwebtoken:jjwt-api:0.11.1"
+    runtimeOnly "io.jsonwebtoken:jjwt-impl:0.11.1"
+    runtimeOnly "io.jsonwebtoken:jjwt-jackson:0.11.1"
     implementation ("io.springfox:springfox-swagger2") {
         exclude module: "mapstruct"
     }
@@ -247,7 +247,7 @@ dependencies {
     implementation "org.mapstruct:mapstruct:${mapstruct_version}"
 
     implementation "org.zalando:problem-spring-web:0.25.2"
-    implementation "com.ibm.icu:icu4j:65.1"
+    implementation "com.ibm.icu:icu4j:66.1"
 
     annotationProcessor "org.mapstruct:mapstruct-processor:${mapstruct_version}"
     annotationProcessor "org.hibernate:hibernate-jpamodelgen:${hibernate_version}"
@@ -267,8 +267,8 @@ dependencies {
     testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:5.5.2"
     testImplementation 'com.tngtech.archunit:archunit-junit5-api:0.13.1'
     testRuntimeOnly 'com.tngtech.archunit:archunit-junit5-engine:0.13.1'
-    testImplementation "org.mockito:mockito-core:3.3.1"
-    testImplementation "org.mockito:mockito-junit-jupiter:3.3.1"
+    testImplementation "org.mockito:mockito-core:3.3.3"
+    testImplementation "org.mockito:mockito-junit-jupiter:3.3.3"
     testImplementation "org.hamcrest:hamcrest-library:2.2"
     testImplementation "com.h2database:h2:1.4.200"
     testImplementation "org.awaitility:awaitility:4.0.2"
