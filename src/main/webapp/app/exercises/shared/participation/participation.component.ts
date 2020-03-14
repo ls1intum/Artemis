@@ -15,6 +15,7 @@ import { areManualResultsAllowed } from 'app/exercises/shared/exercise/exercise-
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { AlertService } from 'app/core/alert/alert.service';
+import { formatTeamAsSearchResult } from 'app/exercises/shared/team/team.utils';
 
 enum FilterProp {
     ALL = 'all',
@@ -230,8 +231,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
             const { login, name } = participation.student;
             return `${login} (${name})`;
         } else if (participation.team) {
-            const { name, shortName } = participation.team;
-            return `${name} (${shortName})`;
+            return formatTeamAsSearchResult(participation.team);
         }
     };
 

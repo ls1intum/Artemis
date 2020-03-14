@@ -17,7 +17,7 @@
         entitiesPerPageTranslation="artemisApp.exercise.resultsPerPage"
         showAllEntitiesTranslation="artemisApp.exercise.showAllResults"
         searchPlaceholderTranslation="artemisApp.exercise.searchForTeams"
-        [searchFields]="['name']"
+        [searchFields]="['name', 'shortName', 'students.name', 'students.login']"
         [searchTextFromEntity]="searchTextFromTeam"
         [searchResultFormatter]="searchResultFormatter"
         (entitiesSizeChange)="handleTeamsSizeChange($event)"

@@ -9,6 +9,7 @@ import { TeamService } from 'app/exercises/shared/team/team.service';
 import { ButtonSize } from 'app/shared/components/button.component';
 import { Exercise } from 'app/entities/exercise.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
+import { formatTeamAsSearchResult } from 'app/exercises/shared/team/team.utils';
 
 @Component({
     selector: 'jhi-teams',
@@ -94,10 +95,7 @@ export class TeamsComponent implements OnInit, OnDestroy {
      *
      * @param team
      */
-    searchResultFormatter = (team: Team) => {
-        const { name } = team;
-        return name;
-    };
+    searchResultFormatter = formatTeamAsSearchResult;
 
     /**
      * Converts a team object to a string that can be searched for. This is
@@ -106,7 +104,7 @@ export class TeamsComponent implements OnInit, OnDestroy {
      * @param team Team that was selected
      */
     searchTextFromTeam = (team: Team): string => {
-        return team.name;
+        return team.shortName;
     };
 
     /**
