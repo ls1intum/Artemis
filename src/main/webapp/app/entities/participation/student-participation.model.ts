@@ -8,6 +8,7 @@ export class StudentParticipation extends Participation {
     public team: Team;
     public exercise: Exercise;
     public participantIdentifier: string;
+    public participantName: string;
 
     constructor(type?: ParticipationType) {
         super(type ? type : ParticipationType.STUDENT);

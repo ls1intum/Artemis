@@ -79,9 +79,12 @@ public class StudentParticipation extends Participation {
         }
     }
 
-    @JsonIgnore
     public String getParticipantIdentifier() {
         return getParticipant().getParticipantIdentifier();
+    }
+
+    public String getParticipantName() {
+        return getParticipant().getName();
     }
 
     public Exercise getExercise() {

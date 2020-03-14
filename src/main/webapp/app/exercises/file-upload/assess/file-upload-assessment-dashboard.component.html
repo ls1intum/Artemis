@@ -56,7 +56,9 @@
                         }}
                         {{ 'artemisApp.assessment.dashboard.minutes' | translate }}
                     </td>
-                    <td *ngIf="exercise.isAtLeastInstructor">{{ submission.participation.student?.name }}</td>
+                    <td *ngIf="exercise.isAtLeastInstructor">
+                        {{ submission.participation.participantName }}
+                    </td>
                     <td>
                         <span *ngIf="submission.result && submission.result.assessor">{{ submission.result.assessor.name }}</span>
                     </td>
