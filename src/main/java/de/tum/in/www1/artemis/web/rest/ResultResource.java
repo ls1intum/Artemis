@@ -553,7 +553,7 @@ public class ResultResource {
         }
 
         // Check if a result exists already for this exercise and student. If so, do nothing and just inform the instructor.
-        Optional<StudentParticipation> optionalParticipation = participationService.findOneByExerciseIdAndStudentLoginAnyStateWithEagerResults(exerciseId, studentLogin);
+        Optional<StudentParticipation> optionalParticipation = participationService.findOneByExerciseIdAndStudentLoginAnyStateWithEagerResults(exercise, studentLogin);
         Optional<Result> optionalResult = optionalParticipation.map(Participation::findLatestResult);
         if (optionalResult.isPresent()) {
             return ResponseEntity.badRequest()

@@ -306,7 +306,7 @@ public class ExerciseResource {
         }
 
         if (exercise != null) {
-            List<StudentParticipation> participations = participationService.findByExerciseIdAndStudentIdWithEagerResultsAndSubmissions(exercise.getId(), user.getId());
+            List<StudentParticipation> participations = participationService.findByExerciseIdAndStudentIdWithEagerResultsAndSubmissions(exercise, user.getId());
             exercise.setStudentParticipations(new HashSet<>());
             for (StudentParticipation participation : participations) {
 
