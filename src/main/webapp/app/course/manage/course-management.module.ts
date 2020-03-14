@@ -27,6 +27,7 @@ import { ArtemisTextExerciseManagementModule } from 'app/exercises/text/manage/t
 import { ArtemisDashboardsModule } from 'app/shared/dashboards/dashboards.module';
 import { ArtemisParticipationModule } from 'app/exercises/shared/participation/participation.module';
 import { ArtemisExerciseHintManagementModule } from 'app/exercises/shared/exercise-hint/manage/exercise-hint-management.module';
+import { ArtemisModelingExerciseManagementModule } from 'app/exercises/modeling/manage/modeling-exercise-management.module';
 
 const ENTITY_STATES = [...courseMangementRoute];
 
@@ -46,6 +47,7 @@ const ENTITY_STATES = [...courseMangementRoute];
         ArtemisFileUploadExerciseManagementModule,
         ArtemisQuizManagementModule,
         ArtemisTextExerciseManagementModule,
+        ArtemisModelingExerciseManagementModule,
         ArtemisProgrammingExerciseModule,
         ArtemisTextExerciseModule,
         ArtemisModelingExerciseModule,
