@@ -45,7 +45,7 @@
             "medium": "Medium",
             "hard": "Hard",
             "mode": "Mode",
-            "modeTooltip": "The solving mode of an exercise determines whether students work alone or in teams.",
+            "modeTooltip": "The solving mode of an exercise determines whether students work alone or in teams. NOTE: This cannot be changed later on!",
             "modes": {
                 "individual": "Individual",
                 "team": "Team"

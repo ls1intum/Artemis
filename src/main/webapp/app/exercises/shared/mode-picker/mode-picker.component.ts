@@ -4,13 +4,15 @@ import { Exercise, ExerciseMode } from 'app/entities/exercise.model';
 @Component({
     selector: 'jhi-mode-picker',
     templateUrl: './mode-picker.component.html',
-    styles: ['div { cursor: pointer; }'],
+    styles: ['.btn.disabled { pointer-events: none }', '.btn-group.disabled { cursor: not-allowed; }'],
 })
 export class ModePickerComponent {
     readonly INDIVIDUAL = ExerciseMode.INDIVIDUAL;
     readonly TEAM = ExerciseMode.TEAM;
 
     @Input() exercise: Exercise;
+    @Input() disabled = false;
+
     @Output() ngModelChange = new EventEmitter<ExerciseMode>();
 
     /**
@@ -19,7 +21,7 @@ export class ModePickerComponent {
      * @param mode chosen exercise solving mode of type {ExerciseMode}
      */
     setMode(mode: ExerciseMode) {
-        if (mode !== this.exercise.mode) {
+        if (!this.disabled && mode !== this.exercise.mode) {
             this.exercise.mode = mode;
             this.ngModelChange.emit(mode);
         }
