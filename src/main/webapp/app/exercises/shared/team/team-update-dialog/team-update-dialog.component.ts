@@ -45,10 +45,6 @@ export class TeamUpdateDialogComponent implements OnInit {
 
     private initPendingTeam() {
         this.pendingTeam = cloneDeep(this.team);
-
-        if (!this.pendingTeam.students) {
-            this.pendingTeam.students = [];
-        }
     }
 
     onTeamShortNameChanged(shortName: string) {
@@ -89,7 +85,7 @@ export class TeamUpdateDialogComponent implements OnInit {
     }
 
     private get recommendedTeamSize(): boolean {
-        const pendingTeamSize = (this.pendingTeam.students || []).length;
+        const pendingTeamSize = this.pendingTeam.students.length;
         return pendingTeamSize >= this.config.minTeamSize && pendingTeamSize <= this.config.maxTeamSize;
     }
 
