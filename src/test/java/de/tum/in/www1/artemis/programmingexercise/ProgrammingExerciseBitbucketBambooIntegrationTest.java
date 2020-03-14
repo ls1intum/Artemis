@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.programmingexercise;
 
-import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResource.Endpoints.ROOT;
-import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResource.Endpoints.SETUP;
+import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResource.Endpoints.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
@@ -11,13 +10,21 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.time.ZonedDateTime;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
+import org.eclipse.jgit.diff.DiffEntry;
+import org.eclipse.jgit.lib.ObjectReader;
+import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.lib.StoredConfig;
+import org.eclipse.jgit.revwalk.RevCommit;
+import org.eclipse.jgit.treewalk.CanonicalTreeParser;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -182,6 +189,32 @@ public class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractS
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void setupProgrammingExercise_validExercise_structureOracle() throws Exception {
+        mockConnectorRequestsForSetup(exercise);
+        final var generatedExercise = request.postWithResponseBody(ROOT + SETUP, exercise, ProgrammingExercise.class, HttpStatus.CREATED);
+        String response = request.putWithResponseBody(ROOT + GENERATE_TESTS.replace("{exerciseId}", generatedExercise.getId() + ""), generatedExercise, String.class,
+                HttpStatus.OK);
+        assertThat(response).startsWith("Successfully generated the structure oracle");
+
+        List<RevCommit> testRepoCommits = getAllCommits(testRepo.localGit);
+        assertThat(testRepoCommits.size()).isEqualTo(2);
+
+        assertThat(testRepoCommits.get(0).getFullMessage()).isEqualTo("Update the structure oracle file.");
+        List<DiffEntry> changes = getChanges(testRepo.localGit.getRepository(), testRepoCommits.get(0));
+        assertThat(changes.size()).isEqualTo(1);
+        assertThat(changes.get(0).getChangeType()).isEqualTo(DiffEntry.ChangeType.MODIFY);
+        assertThat(changes.get(0).getOldPath()).endsWith("test.json");
+
+        // Second time leads to a bad request because the file did not change
+        var expectedHeaders = new HashMap<String, String>();
+        expectedHeaders.put("X-artemisApp-alert", "Did not update the oracle because there have not been any changes to it.");
+        request.putWithResponseBody(ROOT + GENERATE_TESTS.replace("{exerciseId}", generatedExercise.getId() + ""), generatedExercise, String.class, HttpStatus.BAD_REQUEST,
+                expectedHeaders);
+        assertThat(response).startsWith("Successfully generated the structure oracle");
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void setupProgrammingExercise_noTutors_created() throws Exception {
         course.setTeachingAssistantGroupName(null);
         courseRepository.save(course);
@@ -241,5 +274,28 @@ public class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractS
 
         // TODO: check the actual plan and plan permissions that get passed here
         doReturn(null).when(bambooServer).publish(any());
+    }
+
+    public List<RevCommit> getAllCommits(Git gitRepo) throws Exception {
+        return StreamSupport.stream(gitRepo.log().call().spliterator(), false).collect(Collectors.toList());
+    }
+
+    public List<DiffEntry> getChanges(Repository repository, RevCommit commit) throws Exception {
+
+        try (ObjectReader reader = repository.newObjectReader()) {
+            CanonicalTreeParser oldTreeIter = new CanonicalTreeParser();
+            oldTreeIter.reset(reader, commit.getParents()[0].getTree());
+            CanonicalTreeParser newTreeIter = new CanonicalTreeParser();
+            newTreeIter.reset(reader, commit.getTree());
+
+            // finally get the list of changed files
+            try (Git git = new Git(repository)) {
+                List<DiffEntry> diffs = git.diff().setNewTree(newTreeIter).setOldTree(oldTreeIter).call();
+                for (DiffEntry entry : diffs) {
+                    System.out.println("Entry: " + entry);
+                }
+                return diffs;
+            }
+        }
     }
 }
