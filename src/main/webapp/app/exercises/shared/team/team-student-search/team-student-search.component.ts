@@ -16,6 +16,7 @@ export class TeamStudentSearchComponent {
 
     @Input() course: Course;
     @Input() exercise: Exercise;
+    @Input() studentsAlreadySelected: User[] = [];
 
     @Output() selectStudent = new EventEmitter<User>();
     @Output() searching = new EventEmitter<boolean>();
@@ -38,7 +39,7 @@ export class TeamStudentSearchComponent {
 
     searchResultFormatter = (student: User) => {
         const { login, name } = student;
-        return `${login} (${name})`;
+        return `${name} (${login})`;
     };
 
     onSearch = (text$: Observable<string>) => {
@@ -64,7 +65,7 @@ export class TeamStudentSearchComponent {
             tap(users => {
                 setTimeout(() => {
                     for (let i = 0; i < this.typeaheadButtons.length; i++) {
-                        if (users[i].assignedToTeam) {
+                        if (users[i].assignedToTeam || this.studentsAlreadySelected.map(s => s.id).includes(users[i].id)) {
                             this.typeaheadButtons[i].setAttribute('disabled', '');
                         }
                     }

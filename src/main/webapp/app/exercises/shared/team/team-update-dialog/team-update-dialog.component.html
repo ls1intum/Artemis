@@ -65,6 +65,7 @@
             <jhi-team-student-search
                 [course]="exercise.course"
                 [exercise]="exercise"
+                [studentsAlreadySelected]="pendingTeam.students"
                 (selectStudent)="onAddStudent($event)"
                 (searching)="searchingStudents = $event"
                 (searchFailed)="searchingStudentsFailed = $event"
@@ -76,7 +77,7 @@
                         {{ i + 1 }}
                     </div>
                     <div class="list-group-item d-flex align-items-center" [class.has-error]="hasConflictingTeam(student)">
-                        <div class="student-name">{{ student.firstName }} {{ student.lastName }}</div>
+                        <div class="student-name">{{ student.name }} ({{ student.login }})</div>
                         <fa-icon class="student-remove-link ml-4" [icon]="'trash-alt'" (click)="onRemoveStudent(student)"></fa-icon>
                     </div>
                     <div class="list-group-item-error" *ngIf="hasConflictingTeam(student)">
