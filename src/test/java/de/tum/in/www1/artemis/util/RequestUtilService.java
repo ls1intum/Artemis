@@ -91,6 +91,11 @@ public class RequestUtilService {
     }
 
     public <T, R> R postWithResponseBody(String path, T body, Class<R> responseType, HttpStatus expectedStatus, @Nullable HttpHeaders httpHeaders) throws Exception {
+        return postWithResponseBody(path, body, responseType, expectedStatus, httpHeaders, null);
+    }
+
+    public <T, R> R postWithResponseBody(String path, T body, Class<R> responseType, HttpStatus expectedStatus, @Nullable HttpHeaders httpHeaders,
+            @Nullable Map<String, String> expectedResponseHeaders) throws Exception {
         String jsonBody = mapper.writeValueAsString(body);
         var request = MockMvcRequestBuilders.post(new URI(path)).contentType(MediaType.APPLICATION_JSON).content(jsonBody);
         if (httpHeaders != null) {
@@ -101,11 +106,16 @@ public class RequestUtilService {
             assertThat(res.getResponse().containsHeader("location")).as("no location header on failed request").isFalse();
             return null;
         }
+        if (expectedResponseHeaders != null) {
+            for (String headerKey : expectedResponseHeaders.keySet()) {
+                assertThat(res.getResponse().getHeaderValues(headerKey).get(0)).isEqualTo(expectedResponseHeaders.get(headerKey));
+            }
+        }
         return mapper.readValue(res.getResponse().getContentAsString(), responseType);
     }
 
     public <T, R> R postWithResponseBody(String path, T body, Class<R> responseType, HttpStatus expectedStatus) throws Exception {
-        return postWithResponseBody(path, body, responseType, expectedStatus, null);
+        return postWithResponseBody(path, body, responseType, expectedStatus, null, null);
     }
 
     public File postWithResponseBodyFile(String path, Object body, HttpStatus expectedStatus) throws Exception {
@@ -132,8 +142,8 @@ public class RequestUtilService {
         return mapper.readValue(res.getResponse().getContentAsString(), responseType);
     }
 
-    public <T, R> R putWithResponseBody(String path, T body, Class<R> responseType, HttpStatus expectedStatus, Map<String, String> expectedHeaders) throws Exception {
-        return putWithResponseBodyAndParams(path, body, responseType, expectedStatus, new LinkedMultiValueMap<>(), expectedHeaders);
+    public <T, R> R putWithResponseBody(String path, T body, Class<R> responseType, HttpStatus expectedStatus, Map<String, String> expectedResponseHeaders) throws Exception {
+        return putWithResponseBodyAndParams(path, body, responseType, expectedStatus, new LinkedMultiValueMap<>(), expectedResponseHeaders);
     }
 
     public <T, R> R putWithResponseBody(String path, T body, Class<R> responseType, HttpStatus expectedStatus) throws Exception {
@@ -144,14 +154,16 @@ public class RequestUtilService {
         return putWithResponseBodyAndParams(path, body, responseType, expectedStatus, params, new HashMap<>());
     }
 
-    public <T, R> R putWithResponseBodyAndParams(String path, T body, Class<R> responseType, HttpStatus expectedStatus, MultiValueMap<String, String> params,
-            Map<String, String> expectedHeaders) throws Exception {
+    public <T, R> R putWithResponseBodyAndParams(String path, T body, Class<R> responseType, HttpStatus expectedStatus, @Nullable MultiValueMap<String, String> params,
+            Map<String, String> expectedResponseHeaders) throws Exception {
         String jsonBody = mapper.writeValueAsString(body);
         MvcResult res = mvc.perform(MockMvcRequestBuilders.put(new URI(path)).contentType(MediaType.APPLICATION_JSON).content(jsonBody).params(params).with(csrf()))
                 .andExpect(status().is(expectedStatus.value())).andReturn();
 
-        for (String headerKey : expectedHeaders.keySet()) {
-            assertThat(res.getResponse().getHeaderValues(headerKey).get(0)).isEqualTo(expectedHeaders.get(headerKey));
+        if (expectedResponseHeaders != null) {
+            for (String headerKey : expectedResponseHeaders.keySet()) {
+                assertThat(res.getResponse().getHeaderValues(headerKey).get(0)).isEqualTo(expectedResponseHeaders.get(headerKey));
+            }
         }
 
         if (res.getResponse().getStatus() >= 299) {
