@@ -32,8 +32,12 @@
                     <td>
                         <a [routerLink]="['./', user.login, 'view']">{{ user.id }}</a>
                     </td>
-                    <td>{{ user.login }}</td>
-                    <td>{{ user.email }}</td>
+                    <td>
+                        <ngb-highlight [result]="user.login" [term]="searchTerm"></ngb-highlight>
+                    </td>
+                    <td>
+                        <ngb-highlight [result]="user.email" [term]="searchTerm"></ngb-highlight>
+                    </td>
                     <td>
                         <button class="btn btn-danger btn-sm" (click)="setActive(user, true)" *ngIf="!user.activated" jhiTranslate="userManagement.deactivated">Deactivated</button>
                         <button

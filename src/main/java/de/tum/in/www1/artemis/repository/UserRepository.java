@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
+import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
@@ -63,6 +64,10 @@ public interface UserRepository extends JpaRepository<User, Long> {
     @EntityGraph(attributePaths = { "groups" })
     @Query("select user from User user")
     Page<User> findAllWithGroups(Pageable pageable);
+
+    @EntityGraph(attributePaths = { "groups" })
+    @Query("select user from User user where user.login like %:partialLogin% or user.email like %:partialEmail%")
+    Page<User> searchByLoginOrNameInGroup(String partialLogin, String partialEmail, Pageable pageable);
 
     @Modifying
     @Query("Update User user set user.lastNotificationRead = current_timestamp() where user.id = :#{#userId}")

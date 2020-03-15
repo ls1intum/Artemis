@@ -9,6 +9,8 @@ import java.util.stream.Collectors;
 
 import javax.validation.constraints.NotNull;
 
+import de.tum.in.www1.artemis.domain.enumeration.SortingOrder;
+import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 import org.jasypt.encryption.pbe.StandardPBEStringEncryptor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,7 +20,9 @@ import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.cache.CacheManager;
 import org.springframework.context.event.EventListener;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -512,11 +516,15 @@ public class UserService {
 
     /**
      * Get all managed users
-     * @param pageable used to find users
+     * @param search used to find users
      * @return all users
      */
-    public Page<UserDTO> getAllManagedUsers(Pageable pageable) {
-        return userRepository.findAllWithGroups(pageable).map(UserDTO::new);
+    public Page<UserDTO> getAllManagedUsers(PageableSearchDTO<String> search) {
+        final var searchTerm = search.getSearchTerm();
+        var sorting = Sort.by(search.getSortedColumn());
+        sorting = search.getSortingOrder() == SortingOrder.ASCENDING ? sorting.ascending() : sorting.descending();
+        final var sorted = PageRequest.of(search.getPage(), search.getPageSize(), sorting);
+        return userRepository.searchByLoginOrNameInGroup(searchTerm, searchTerm, sorted).map(UserDTO::new);
     }
 
     /**

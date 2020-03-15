@@ -7,6 +7,7 @@ import java.util.Optional;
 
 import javax.validation.Valid;
 
+import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -153,13 +154,13 @@ public class UserResource {
     /**
      * GET /users : get all users.
      *
-     * @param pageable the pagination information
+     * @param search the pagination information
      * @return the ResponseEntity with status 200 (OK) and with body all users
      */
     @GetMapping("/users")
     @Secured(AuthoritiesConstants.ADMIN)
-    public ResponseEntity<List<UserDTO>> getAllUsers(@ApiParam Pageable pageable) {
-        final Page<UserDTO> page = userService.getAllManagedUsers(pageable);
+    public ResponseEntity<List<UserDTO>> getAllUsers(@ApiParam PageableSearchDTO<String> search) {
+        final Page<UserDTO> page = userService.getAllManagedUsers(search);
         HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
         return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
     }
