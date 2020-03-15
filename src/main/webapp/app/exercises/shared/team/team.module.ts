@@ -11,12 +11,21 @@ import { TeamStudentSearchComponent } from 'app/exercises/shared/team/team-stude
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { TeamStudentsListComponent } from 'app/exercises/shared/team/team-students-list/team-students-list.component';
 import { TeamComponent } from 'app/exercises/shared/team/team.component';
+import { TeamDeleteButtonComponent } from 'app/exercises/shared/team/team-update-dialog/team-delete-button.component';
 
 const ENTITY_STATES = [...teamRoute];
 
 @NgModule({
     imports: [RouterModule.forChild(ENTITY_STATES), ArtemisSharedModule, NgxDatatableModule, ArtemisDataTableModule, ArtemisSharedComponentModule],
-    declarations: [TeamsComponent, TeamUpdateButtonComponent, TeamUpdateDialogComponent, TeamStudentSearchComponent, TeamStudentsListComponent, TeamComponent],
+    declarations: [
+        TeamsComponent,
+        TeamUpdateButtonComponent,
+        TeamUpdateDialogComponent,
+        TeamDeleteButtonComponent,
+        TeamStudentSearchComponent,
+        TeamStudentsListComponent,
+        TeamComponent,
+    ],
     exports: [TeamUpdateButtonComponent, TeamStudentsListComponent],
     entryComponents: [TeamUpdateDialogComponent],
 })

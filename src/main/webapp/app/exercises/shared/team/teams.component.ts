@@ -59,7 +59,7 @@ export class TeamsComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Called when a team has been added or was updated by UpdateTeamDialogComponent
+     * Called when a team has been added or was updated by TeamUpdateButtonComponent
      *
      * @param team Team that was added or updated
      */
@@ -68,16 +68,13 @@ export class TeamsComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Deleted the provided team on the server and then removes it from the component state.
+     * Called when a team has been deleted by TeamDeleteButtonComponent
      *
-     * @param team Team that should be removed
+     * @param team Team that was deleted
      */
-    removeTeam = (team: Team) => {
-        this.teamService.delete(this.exercise, team.id).subscribe(
-            () => this.deleteTeam(team),
-            () => this.jhiAlertService.error('artemisApp.team.removeTeam.error'),
-        );
-    };
+    onTeamDelete(team: Team) {
+        this.deleteTeam(team);
+    }
 
     /**
      * Update the number of filtered teams

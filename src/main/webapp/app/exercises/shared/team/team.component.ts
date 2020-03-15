@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { Router } from '@angular/router';
 import { Subscription } from 'rxjs/Subscription';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import { JhiAlertService, JhiEventManager } from 'ng-jhipster';
@@ -32,6 +33,7 @@ export class TeamComponent implements OnInit {
         private eventManager: JhiEventManager,
         private exerciseService: ExerciseService,
         private teamService: TeamService,
+        private router: Router,
     ) {}
 
     ngOnInit() {
@@ -52,12 +54,23 @@ export class TeamComponent implements OnInit {
     }
 
     /**
-     * Called when the team was updated by UpdateTeamDialogComponent
+     * Called when the team was updated by TeamUpdateButtonComponent
      *
      * @param team Updated team
      */
     onTeamUpdate(team: Team) {
         this.team = team;
+    }
+
+    /**
+     * Called when the team was deleted by TeamDeleteButtonComponent
+     *
+     * Navigates back to the overviews of teams for the exercise.
+     *
+     * @param team Deleted team
+     */
+    onTeamDelete(team: Team) {
+        this.router.navigate(['/course-management', this.exercise.course?.id, 'exercises', this.exercise.id, 'teams']);
     }
 
     /**

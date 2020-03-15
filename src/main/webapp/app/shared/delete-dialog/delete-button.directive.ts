@@ -3,12 +3,14 @@ import { Directive, ElementRef, EventEmitter, HostListener, Input, OnInit, Outpu
 import { TranslateService } from '@ngx-translate/core';
 import { ActionType, DeleteDialogData } from 'app/shared/delete-dialog/delete-dialog.model';
 import { Observable } from 'rxjs';
+import { ButtonSize } from 'app/shared/components/button.component';
 
 @Directive({ selector: '[jhiDeleteButton]' })
 export class DeleteButtonDirective implements OnInit {
     @Input() entityTitle: string;
     @Input() deleteQuestion: string;
     @Input() deleteConfirmationText: string;
+    @Input() buttonSize: ButtonSize = ButtonSize.SMALL;
     @Input() additionalChecks?: { [key: string]: string };
     @Input() actionType: ActionType = ActionType.Delete;
     @Input() dialogError: Observable<string>;
@@ -26,7 +28,7 @@ export class DeleteButtonDirective implements OnInit {
         // set button classes and submit property
         this.renderer.addClass(this.el.nativeElement, 'btn');
         this.renderer.addClass(this.el.nativeElement, 'btn-danger');
-        this.renderer.addClass(this.el.nativeElement, 'btn-sm');
+        this.renderer.addClass(this.el.nativeElement, this.buttonSize);
         this.renderer.addClass(this.el.nativeElement, 'mr-1');
         this.renderer.setProperty(this.el.nativeElement, 'type', 'submit');
 

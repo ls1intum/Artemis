@@ -7,7 +7,8 @@
             </h2>
         </div>
         <div *ngIf="exercise.isAtLeastTutor" class="d-flex ml-auto">
-            <jhi-team-update-button [exercise]="exercise" [team]="team" [buttonSize]="ButtonSize.MEDIUM" (save)="onTeamUpdate($event)"></jhi-team-update-button>
+            <jhi-team-update-button [exercise]="exercise" [team]="team" [buttonSize]="ButtonSize.MEDIUM" (save)="onTeamUpdate($event)" class="mr-1"></jhi-team-update-button>
+            <jhi-team-delete-button [exercise]="exercise" [team]="team" [buttonSize]="ButtonSize.MEDIUM" (delete)="onTeamDelete($event)"></jhi-team-delete-button>
         </div>
     </div>
     <jhi-alert></jhi-alert>

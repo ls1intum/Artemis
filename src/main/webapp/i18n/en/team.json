@@ -10,7 +10,8 @@
             "updated": "The Team of {{ param }} was updated",
             "deleted": "The Team of {{ param }} was deleted",
             "delete": {
-                "question": "Are you sure you want to delete the team of <strong>{{ name }}</strong>?"
+                "question": "Are you sure you want to delete the team <strong>{{ title }}</strong>? This action can NOT be undone!",
+                "typeNameToConfirm": "Please type in the short name of the team to confirm."
             },
             "detail": {
                 "title": "Team",
@@ -46,11 +47,11 @@
                 "error": "Could not create team. Please try again."
             },
             "updateTeam": {
-                "label": "Edit team",
+                "label": "Edit",
                 "error": "Could not update team. Please try again."
             },
             "removeTeam": {
-                "label": "Remove team",
+                "label": "Delete",
                 "error": "Could not remove team. Please try again."
             },
             "errors": {

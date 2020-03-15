@@ -10,7 +10,8 @@
             "updated": "Team von {{ param }} aktualisiert",
             "deleted": "Team von {{ param }} gelöscht",
             "delete": {
-                "question": "Soll die Team von <strong>{{ name }}</strong> wirklich dauerhaft gelöscht werden?"
+                "question": "Soll das Team <strong>{{ title }}</strong> wirklich dauerhaft gelöscht werden? Diese Aktion kann NICHT rückgängig gemacht werden!",
+                "typeNameToConfirm": "Bitte gib den Kurznamen des Teams zur Bestätigung ein."
             },
             "detail": {
                 "title": "Team",
@@ -46,11 +47,11 @@
                 "error": "Das Team konnte nicht entfernt werden. Bitte versuche es nochmal."
             },
             "updateTeam": {
-                "label": "Bearbeite Team",
+                "label": "Bearbeiten",
                 "error": "Das Team konnte nicht bearbeitet werden. Bitte versuche es nochmal."
             },
             "removeTeam": {
-                "label": "Entferne Team",
+                "label": "Löschen",
                 "error": "Das Team konnte nicht entfernt werden. Bitte versuche es nochmal."
             },
             "errors": {

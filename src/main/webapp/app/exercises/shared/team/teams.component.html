@@ -81,7 +81,7 @@
                     </ng-template>
                 </ngx-datatable-column>
 
-                <ngx-datatable-column prop="students" [minWidth]="200" [width]="400">
+                <ngx-datatable-column prop="students" [minWidth]="200" [width]="500">
                     <ng-template ngx-datatable-header-template>
                         <span class="datatable-header-cell-wrapper" style="cursor: text">
                             <span class="datatable-header-cell-label bold" jhiTranslate="artemisApp.team.students">
@@ -94,14 +94,11 @@
                     </ng-template>
                 </ngx-datatable-column>
 
-                <ngx-datatable-column prop="" [minWidth]="250" [width]="250" [maxWidth]="260">
+                <ngx-datatable-column prop="" [minWidth]="180" [width]="180" [maxWidth]="180">
                     <ng-template ngx-datatable-cell-template let-value="value">
                         <div class="w-100 text-right">
                             <jhi-team-update-button class="mr-1" [exercise]="exercise" [team]="value" (save)="onTeamUpdate($event)"></jhi-team-update-button>
-                            <button (click)="removeTeam(value)" class="btn btn-danger btn-sm">
-                                <fa-icon [icon]="'trash-alt'"></fa-icon>
-                                <span class="d-none d-md-inline ml-1" jhiTranslate="artemisApp.team.removeTeam.label">Remove team</span>
-                            </button>
+                            <jhi-team-delete-button [exercise]="exercise" [team]="value" (delete)="onTeamDelete($event)"></jhi-team-delete-button>
                         </div>
                     </ng-template>
                 </ngx-datatable-column>
