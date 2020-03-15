@@ -160,7 +160,7 @@
                     </ng-template>
                 </ngx-datatable-column>
 
-                <ngx-datatable-column *ngIf="!exercise.teamMode" prop="student" [minWidth]="120" [width]="150">
+                <ngx-datatable-column *ngIf="!exercise.teamMode" prop="student" [minWidth]="120" [width]="120">
                     <ng-template ngx-datatable-header-template>
                         <span class="datatable-header-cell-wrapper" (click)="controls.onSort('student.name')">
                             <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.participation.student">
@@ -174,7 +174,7 @@
                     </ng-template>
                 </ngx-datatable-column>
 
-                <ngx-datatable-column *ngIf="exercise.teamMode" prop="team" [minWidth]="120" [width]="150">
+                <ngx-datatable-column *ngIf="exercise.teamMode" prop="team" [minWidth]="120" [width]="120">
                     <ng-template ngx-datatable-header-template>
                         <span class="datatable-header-cell-wrapper" (click)="controls.onSort('team.name')">
                             <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.participation.team">
@@ -217,7 +217,7 @@
                     </ng-template>
                 </ngx-datatable-column>
 
-                <ngx-datatable-column prop="" [minWidth]="150" [width]="150">
+                <ngx-datatable-column prop="" [minWidth]="350" [width]="350">
                     <ng-template ngx-datatable-cell-template let-value="value">
                         <div class="w-100 text-right">
                             <div class="btn-group">
