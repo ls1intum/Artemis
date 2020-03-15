@@ -35,7 +35,23 @@
                 [rowClass]="settings.rowClass"
                 [scrollbarH]="settings.scrollbarH"
             >
-                <ngx-datatable-column [minWidth]="100" [width]="120" [maxWidth]="120">
+                <ngx-datatable-column prop="id" [minWidth]="60" [width]="60" [maxWidth]="60">
+                    <ng-template ngx-datatable-header-template>
+                        <span class="datatable-header-cell-wrapper" (click)="controls.onSort('id')">
+                            <span class="datatable-header-cell-label bold sortable" jhiTranslate="global.field.id">
+                                ID
+                            </span>
+                            <fa-icon [icon]="controls.iconForSortPropField('id')"></fa-icon>
+                        </span>
+                    </ng-template>
+                    <ng-template ngx-datatable-cell-template let-value="value">
+                        <a [routerLink]="['/course-management', exercise?.course?.id, 'exercises', exercise?.id, 'teams', value]">
+                            {{ value }}
+                        </a>
+                    </ng-template>
+                </ngx-datatable-column>
+
+                <ngx-datatable-column [minWidth]="100" [width]="120" [maxWidth]="160">
                     <ng-template ngx-datatable-header-template>
                         <span class="datatable-header-cell-wrapper" (click)="controls.onSort('shortName')">
                             <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.team.shortName.label">
@@ -51,7 +67,7 @@
                     </ng-template>
                 </ngx-datatable-column>
 
-                <ngx-datatable-column prop="name" [minWidth]="100" [width]="120" [maxWidth]="120">
+                <ngx-datatable-column prop="name" [minWidth]="100" [width]="120" [maxWidth]="160">
                     <ng-template ngx-datatable-header-template>
                         <span class="datatable-header-cell-wrapper" (click)="controls.onSort('name')">
                             <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.team.name.label">
@@ -65,7 +81,7 @@
                     </ng-template>
                 </ngx-datatable-column>
 
-                <ngx-datatable-column prop="students" [minWidth]="200" [width]="200">
+                <ngx-datatable-column prop="students" [minWidth]="200" [width]="400">
                     <ng-template ngx-datatable-header-template>
                         <span class="datatable-header-cell-wrapper" style="cursor: text">
                             <span class="datatable-header-cell-label bold" jhiTranslate="artemisApp.team.students">
@@ -78,7 +94,7 @@
                     </ng-template>
                 </ngx-datatable-column>
 
-                <ngx-datatable-column prop="" [minWidth]="250" [width]="250" [maxWidth]="270">
+                <ngx-datatable-column prop="" [minWidth]="250" [width]="250" [maxWidth]="260">
                     <ng-template ngx-datatable-cell-template let-value="value">
                         <div class="w-100 text-right">
                             <jhi-team-update-button class="mr-1" [exercise]="exercise" [team]="value" (save)="onTeamUpdate($event)"></jhi-team-update-button>

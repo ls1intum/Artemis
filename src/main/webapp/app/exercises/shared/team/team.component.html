@@ -1,8 +1,15 @@
 <div>
-    <h2>
-        <span>{{ exercise?.title }} - {{ team?.name }}</span
-        ><span class="text-muted"> ({{ team?.shortName }})</span>
-    </h2>
+    <div *ngIf="exercise && team" class="d-flex">
+        <div class="mb-3">
+            <h2>
+                <span>{{ exercise.title }} - {{ team.name }}</span>
+                <span class="text-muted"> ({{ team.shortName }})</span>
+            </h2>
+        </div>
+        <div *ngIf="exercise.isAtLeastTutor" class="d-flex ml-auto">
+            <jhi-team-update-button [exercise]="exercise" [team]="team" [buttonSize]="ButtonSize.MEDIUM" (save)="onTeamUpdate($event)"></jhi-team-update-button>
+        </div>
+    </div>
     <jhi-alert></jhi-alert>
     <jhi-data-table
         [isLoading]="isLoading"

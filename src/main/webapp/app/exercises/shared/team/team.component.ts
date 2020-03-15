@@ -8,12 +8,15 @@ import { TeamService } from 'app/exercises/shared/team/team.service';
 import { Exercise } from 'app/entities/exercise.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { User } from 'app/core/user/user.model';
+import { ButtonSize } from 'app/shared/components/button.component';
 
 @Component({
     selector: 'jhi-team',
     templateUrl: './team.component.html',
 })
 export class TeamComponent implements OnInit {
+    ButtonSize = ButtonSize;
+
     team: Team;
     exercise: Exercise;
 
@@ -46,6 +49,15 @@ export class TeamComponent implements OnInit {
                 });
             });
         });
+    }
+
+    /**
+     * Called when the team was updated by UpdateTeamDialogComponent
+     *
+     * @param team Updated team
+     */
+    onTeamUpdate(team: Team) {
+        this.team = team;
     }
 
     /**
