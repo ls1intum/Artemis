@@ -19,7 +19,7 @@ public class TutorLeaderboardAnsweredMoreFeedbackRequestsView {
     private long answeredRequests;
 
     @Column(name = "points")
-    private long points;
+    private Long points;
 
     @Column(name = "course_id")
     private long courseId;
