@@ -94,7 +94,7 @@
             *ngIf="exercise.teamMode && participationStatusWrapper() !== ParticipationStatus.NO_TEAM_ASSIGNED"
             [smallButton]="smallButtons"
             [hideLabelMobile]="true"
-            [routerLink]="['/course-management', courseId, 'exercises', exercise.id, 'teams', exercise.studentAssignedTeamId!]"
+            [routerLink]="['/course-management', courseId, 'exercises', exercise.id, 'teams', assignedTeamId]"
         ></button>
         <button
             jhi-exercise-action-button
@@ -171,7 +171,7 @@
             *ngIf="exercise.teamMode && participationStatusWrapper() !== ParticipationStatus.NO_TEAM_ASSIGNED"
             [smallButton]="smallButtons"
             [hideLabelMobile]="true"
-            [routerLink]="['/course-management', courseId, 'exercises', exercise.id, 'teams', exercise.studentAssignedTeamId!]"
+            [routerLink]="['/course-management', courseId, 'exercises', exercise.id, 'teams', assignedTeamId]"
         ></button>
         <button
             class="start-exercise"
@@ -275,7 +275,7 @@
             *ngIf="exercise.teamMode && participationStatusWrapper() !== ParticipationStatus.NO_TEAM_ASSIGNED"
             [smallButton]="smallButtons"
             [hideLabelMobile]="true"
-            [routerLink]="['/course-management', courseId, 'exercises', exercise.id, 'teams', exercise.studentAssignedTeamId!]"
+            [routerLink]="['/course-management', courseId, 'exercises', exercise.id, 'teams', assignedTeamId]"
         ></button>
         <button
             class="start-exercise"
@@ -352,7 +352,7 @@
             *ngIf="exercise.teamMode && participationStatusWrapper() !== ParticipationStatus.NO_TEAM_ASSIGNED"
             [smallButton]="smallButtons"
             [hideLabelMobile]="true"
-            [routerLink]="['/course-management', courseId, 'exercises', exercise.id, 'teams', exercise.studentAssignedTeamId!]"
+            [routerLink]="['/course-management', courseId, 'exercises', exercise.id, 'teams', assignedTeamId]"
         ></button>
         <button
             jhi-exercise-action-button

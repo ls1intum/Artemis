@@ -170,6 +170,16 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
         return participationStatus(this.exercise);
     }
 
+    /**
+     * Returns the id of the team that the student is assigned to (only applicable to team-based exercises)
+     *
+     * @return {assignedTeamId}
+     */
+    get assignedTeamId(): number | undefined {
+        const participation = this.exercise.studentParticipations[0];
+        return participation ? participation.team?.id : this.exercise.studentAssignedTeamId;
+    }
+
     startPractice() {
         return this.router.navigate(['/courses', this.exercise.course?.id, 'quiz-exercises', this.exercise.id, 'practice']);
     }
