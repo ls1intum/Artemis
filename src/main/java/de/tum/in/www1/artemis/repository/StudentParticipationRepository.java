@@ -33,6 +33,8 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
 
     Optional<StudentParticipation> findByExerciseIdAndTeamId(Long exerciseId, Long teamId);
 
+    List<StudentParticipation> findByTeamId(Long teamId);
+
     @EntityGraph(type = LOAD, attributePaths = "results")
     Optional<StudentParticipation> findWithEagerResultsByExerciseIdAndStudentLogin(Long exerciseId, String username);
 

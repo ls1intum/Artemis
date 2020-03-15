@@ -750,6 +750,16 @@ public class ParticipationService {
     }
 
     /**
+     * Get all programming exercise participations belonging to team.
+     *
+     * @param teamId the id of team
+     * @return the list of programming exercise participations belonging to team
+     */
+    public List<StudentParticipation> findByTeamId(Long teamId) {
+        return studentParticipationRepository.findByTeamId(teamId);
+    }
+
+    /**
      * Get all programming exercise participations belonging to exercise with eager results.
      *
      * @param exerciseId the id of exercise
@@ -981,6 +991,22 @@ public class ParticipationService {
     @Transactional
     public void deleteAllByExerciseId(Long exerciseId, boolean deleteBuildPlan, boolean deleteRepository) {
         List<StudentParticipation> participationsToDelete = findByExerciseId(exerciseId);
+
+        for (StudentParticipation participation : participationsToDelete) {
+            delete(participation.getId(), deleteBuildPlan, deleteRepository);
+        }
+    }
+
+    /**
+     * Delete all participations belonging to the given team
+     *
+     * @param teamId the id of the team
+     * @param deleteBuildPlan specify if build plan should be deleted
+     * @param deleteRepository specify if repository should be deleted
+     */
+    @Transactional
+    public void deleteAllByTeamId(Long teamId, boolean deleteBuildPlan, boolean deleteRepository) {
+        List<StudentParticipation> participationsToDelete = findByTeamId(teamId);
 
         for (StudentParticipation participation : participationsToDelete) {
             delete(participation.getId(), deleteBuildPlan, deleteRepository);

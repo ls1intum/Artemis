@@ -94,11 +94,17 @@
                     </ng-template>
                 </ngx-datatable-column>
 
-                <ngx-datatable-column prop="" [minWidth]="180" [width]="180" [maxWidth]="180">
+                <ngx-datatable-column prop="" [minWidth]="220" [width]="220" [maxWidth]="220">
                     <ng-template ngx-datatable-cell-template let-value="value">
                         <div class="w-100 text-right">
-                            <jhi-team-update-button class="mr-1" [exercise]="exercise" [team]="value" (save)="onTeamUpdate($event)"></jhi-team-update-button>
-                            <jhi-team-delete-button [exercise]="exercise" [team]="value" (delete)="onTeamDelete($event)"></jhi-team-delete-button>
+                            <jhi-team-update-button [exercise]="exercise" [team]="value" (save)="onTeamUpdate($event)"></jhi-team-update-button>
+                            <jhi-team-delete-button
+                                class="ml-1"
+                                *ngIf="exercise.isAtLeastInstructor"
+                                [exercise]="exercise"
+                                [team]="value"
+                                (delete)="onTeamDelete($event)"
+                            ></jhi-team-delete-button>
                         </div>
                     </ng-template>
                 </ngx-datatable-column>

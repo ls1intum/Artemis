@@ -10,7 +10,7 @@
             "updated": "The Team of {{ param }} was updated",
             "deleted": "The Team of {{ param }} was deleted",
             "delete": {
-                "question": "Are you sure you want to delete the team <strong>{{ title }}</strong>? This action can NOT be undone!",
+                "question": "Are you sure you want to delete the team <strong>{{ title }}</strong> and its participation in the exercise? This action can NOT be undone!",
                 "typeNameToConfirm": "Please type in the short name of the team to confirm."
             },
             "detail": {

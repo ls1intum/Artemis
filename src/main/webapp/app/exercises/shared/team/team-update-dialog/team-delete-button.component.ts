@@ -11,6 +11,7 @@ import { JhiAlertService } from 'ng-jhipster';
     template: `
         <button
             jhiDeleteButton
+            *ngIf="exercise.isAtLeastInstructor"
             [buttonSize]="buttonSize"
             [entityTitle]="team.shortName"
             deleteQuestion="artemisApp.team.delete.question"

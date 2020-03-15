@@ -10,7 +10,7 @@
             "updated": "Team von {{ param }} aktualisiert",
             "deleted": "Team von {{ param }} gelöscht",
             "delete": {
-                "question": "Soll das Team <strong>{{ title }}</strong> wirklich dauerhaft gelöscht werden? Diese Aktion kann NICHT rückgängig gemacht werden!",
+                "question": "Soll das Team <strong>{{ title }}</strong> und seine Teilnahme an der Aufgabe wirklich dauerhaft gelöscht werden? Diese Aktion kann NICHT rückgängig gemacht werden!",
                 "typeNameToConfirm": "Bitte gib den Kurznamen des Teams zur Bestätigung ein."
             },
             "detail": {

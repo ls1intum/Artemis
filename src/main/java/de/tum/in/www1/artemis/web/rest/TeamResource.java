@@ -48,18 +48,21 @@ public class TeamResource {
 
     private final ExerciseService exerciseService;
 
-    private final AuthorizationCheckService authCheckService;
-
     private final UserService userService;
 
+    private final AuthorizationCheckService authCheckService;
+
+    private final ParticipationService participationService;
+
     public TeamResource(TeamRepository teamRepository, TeamService teamService, CourseService courseService, ExerciseService exerciseService, UserService userService,
-            AuthorizationCheckService authCheckService) {
+            AuthorizationCheckService authCheckService, ParticipationService participationService) {
         this.teamRepository = teamRepository;
         this.teamService = teamService;
         this.courseService = courseService;
         this.exerciseService = exerciseService;
         this.userService = userService;
         this.authCheckService = authCheckService;
+        this.participationService = participationService;
     }
 
     /**
@@ -187,7 +190,7 @@ public class TeamResource {
      * @return the ResponseEntity with status 200 (OK)
      */
     @DeleteMapping("/exercises/{exerciseId}/teams/{id}")
-    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Void> deleteTeam(@PathVariable long exerciseId, @PathVariable long id) {
         log.debug("REST request to delete Team : {}", id);
         // TODO: Martin Wauligmann - Add audit in db and log info (see delete participation)
@@ -201,9 +204,10 @@ public class TeamResource {
             throw new BadRequestAlertException("The team does not belong to the specified exercise id.", ENTITY_NAME, "wrongExerciseId");
         }
         Exercise exercise = exerciseService.findOne(exerciseId);
-        if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user)) {
+        if (!authCheckService.isAtLeastInstructorForExercise(exercise, user)) {
             return forbidden();
         }
+        participationService.deleteAllByTeamId(id, false, false);
         teamRepository.delete(team);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, Long.toString(id))).build();
     }
