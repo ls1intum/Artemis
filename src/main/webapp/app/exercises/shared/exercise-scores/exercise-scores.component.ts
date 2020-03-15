@@ -188,7 +188,15 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
             this.results.forEach((result, index) => {
                 const studentParticipation = result.participation! as StudentParticipation;
                 const { participantName } = studentParticipation;
-                rows.push(index === 0 ? 'data:text/csv;charset=utf-8,' + participantName : participantName);
+                if (studentParticipation.team) {
+                    if (index === 0) {
+                        rows.push('data:text/csv;charset=utf-8,Team Name,Team Short Name,Students');
+                    }
+                    const { name, shortName, students } = studentParticipation.team;
+                    rows.push(`${name},${shortName},"${students.map(s => s.name).join(', ')}"`);
+                } else {
+                    rows.push(index === 0 ? `data:text/csv;charset=utf-8,${participantName}` : participantName);
+                }
             });
             const csvContent = rows.join('\n');
             const encodedUri = encodeURI(csvContent);
@@ -209,17 +217,20 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
                 const score = result.score;
 
                 if (index === 0) {
+                    const nameAndUserNameColumnHeaders = studentParticipation.team ? 'Team Name,Team Short Name' : 'Name,Username';
+                    const optionalStudentsColumnHeader = studentParticipation.team ? ',Students' : '';
                     if (this.exercise.type !== ExerciseType.PROGRAMMING) {
-                        rows.push('data:text/csv;charset=utf-8,Name, Username, Score');
+                        rows.push(`data:text/csv;charset=utf-8,${nameAndUserNameColumnHeaders},Score${optionalStudentsColumnHeader}`);
                     } else {
-                        rows.push('data:text/csv;charset=utf-8,Name, Username, Score, Repo Link');
+                        rows.push(`data:text/csv;charset=utf-8,${nameAndUserNameColumnHeaders},Score,Repo Link${optionalStudentsColumnHeader}`);
                     }
                 }
+                const optionalStudentsColumnValue = studentParticipation.team ? `,"${studentParticipation.team.students.map(s => s.name).join(', ')}"` : '';
                 if (this.exercise.type !== ExerciseType.PROGRAMMING) {
-                    rows.push(participantName + ', ' + participantIdentifier + ', ' + score);
+                    rows.push(`${participantName},${participantIdentifier},${score}${optionalStudentsColumnValue}`);
                 } else {
                     const repoLink = (studentParticipation as ProgrammingExerciseStudentParticipation).repositoryUrl;
-                    rows.push(participantName + ', ' + participantIdentifier + ', ' + score + ', ' + repoLink);
+                    rows.push(`${participantName},${participantIdentifier},${score},${repoLink}${optionalStudentsColumnValue}`);
                 }
             });
             const csvContent = rows.join('\n');

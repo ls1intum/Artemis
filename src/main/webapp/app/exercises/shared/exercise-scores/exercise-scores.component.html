@@ -108,19 +108,14 @@
                         </span>
                     </ng-template>
                     <ng-template ngx-datatable-cell-template let-value="value">
-                        <span *ngIf="exercise.teamMode; else defaultMode">
-                            {{ value.team.name }}
+                        <span *ngIf="exercise.isAtLeastInstructor">
+                            <a routerLink="../participations/{{ value.id }}/submissions">
+                                {{ value.student?.name || value.team?.name }}
+                            </a>
                         </span>
-                        <ng-template #defaultMode>
-                            <span *ngIf="exercise.isAtLeastInstructor">
-                                <a routerLink="../participations/{{ value.id }}/submissions">
-                                    {{ value.student.name }}
-                                </a>
-                            </span>
-                            <span *ngIf="!exercise.isAtLeastInstructor">
-                                {{ value.student.name }}
-                            </span>
-                        </ng-template>
+                        <span *ngIf="!exercise.isAtLeastInstructor">
+                            {{ value.student?.name || value.team?.name }}
+                        </span>
                     </ng-template>
                 </ngx-datatable-column>
 
@@ -136,11 +131,13 @@
                         </span>
                     </ng-template>
                     <ng-template ngx-datatable-cell-template let-value="value">
-                        <span *ngIf="exercise.teamMode; else defaultMode">
+                        <a *ngIf="exercise.teamMode; else defaultMode" [routerLink]="['/course-management', exercise.course?.id, 'exercises', exercise.id, 'teams', value.team.id]">
                             {{ value.team.shortName }}
-                        </span>
+                        </a>
                         <ng-template #defaultMode>
-                            {{ value.student.login }}
+                            <a [routerLink]="['/admin', 'user-management', value.student.login, 'view']">
+                                {{ value.student.login }}
+                            </a>
                         </ng-template>
                     </ng-template>
                 </ngx-datatable-column>
