@@ -13,7 +13,12 @@
                 "question": "Are you sure you want to delete the team of <strong>{{ name }}</strong>?"
             },
             "detail": {
-                "title": "Team"
+                "title": "Team",
+                "students": {
+                    "login": "Login",
+                    "name": "Name",
+                    "email": "E-Mail"
+                }
             },
             "name": {
                 "label": "Name",

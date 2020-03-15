@@ -86,6 +86,7 @@ public class TeamResource {
             return forbidden();
         }
         Team result = teamService.save(exercise, team);
+        result.filterSensitiveInformation();
         return ResponseEntity.created(new URI("/api/teams/" + result.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);
     }
@@ -126,6 +127,7 @@ public class TeamResource {
             return forbidden();
         }
         Team result = teamService.save(exercise, team);
+        result.filterSensitiveInformation();
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, team.getId().toString())).body(result);
     }
 
@@ -153,6 +155,7 @@ public class TeamResource {
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user) && !team.hasStudent(user)) {
             return forbidden();
         }
+        team.filterSensitiveInformation();
         return ResponseEntity.ok().body(team);
     }
 
@@ -171,7 +174,9 @@ public class TeamResource {
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user)) {
             return forbidden();
         }
-        return ResponseEntity.ok().body(teamRepository.findAllByExerciseIdWithEagerStudents(exerciseId));
+        List<Team> teams = teamRepository.findAllByExerciseIdWithEagerStudents(exerciseId);
+        teams.forEach(Team::filterSensitiveInformation);
+        return ResponseEntity.ok().body(teams);
     }
 
     /**

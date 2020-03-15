@@ -9,7 +9,6 @@
             "viewResults": "View result",
             "statistics": "Quiz Statistics",
             "startExercise": "Start exercise",
-            "startTeamExercise": "Start team exercise",
             "resumeExercise": "Resume exercise",
             "resumeExerciseError": "Error trying to resume the exercise",
             "openCodeEditor": "Open code editor",
@@ -25,7 +24,8 @@
             "openTextEditor": "Open text editor",
             "copyUrl": "Copy URL",
             "copiedUrl": "Copied URL",
-            "uploadFile": "Upload a file"
+            "uploadFile": "Upload a file",
+            "viewTeam": "Team"
         }
     }
 }

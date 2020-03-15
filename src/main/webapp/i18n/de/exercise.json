@@ -10,7 +10,7 @@
             "resultsPerPage": "{{number}} Ergebnisse pro Seite",
             "showAllResults": "Zeige alle Ergebnisse",
             "searchForStudents": "Suche nach Studenten Logins oder Namen (Komma getrennt)",
-            "searchForTeams": "Suche nach Team Namen oder nach Studenten Logins oder Namen (Komma getrennt)",
+            "searchForTeams": "Suche nach Team (Kurz-)Namen oder nach Studenten Logins oder Namen (Komma getrennt)",
             "created": "Übung erstellt mit ID {{ param }}",
             "updated": "Übung aktualisiert mit ID {{ param }}",
             "deleted": "Übung gelöscht mit ID {{ param }}",

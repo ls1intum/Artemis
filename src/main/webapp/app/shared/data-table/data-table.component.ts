@@ -48,6 +48,7 @@ export class DataTableComponent implements OnInit, OnChanges {
 
     /**
      * @property isLoading Loading state of the data that is fetched by the ancestral component
+     * @property showPageSizeDropdownAndSearchField Flag whether to show the "entities per page" dropdown and search input field
      * @property entityType Entity identifier (e.g. 'result' or 'participation') used as a key to differentiate from other tables
      * @property allEntities List of all entities that should be displayed in the table (one entity per row)
      * @property entitiesPerPageTranslation Translation string that has the variable { number } in it (e.g. 'artemisApp.exercise.resultsPerPage')
@@ -60,6 +61,7 @@ export class DataTableComponent implements OnInit, OnChanges {
      * @property customFilterKey Filter state of an ancestral component which triggers a table re-rendering if it changes
      */
     @Input() isLoading = false;
+    @Input() showPageSizeDropdownAndSearchField = true;
     @Input() entityType = 'entity';
     @Input() allEntities: BaseEntity[] = [];
     @Input() entitiesPerPageTranslation: string;

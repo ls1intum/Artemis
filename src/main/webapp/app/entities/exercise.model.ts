@@ -9,6 +9,7 @@ import { Attachment } from 'app/entities/attachment.model';
 import { StudentQuestion } from 'app/entities/student-question.model';
 import { TeamAssignmentConfig } from 'app/entities/team-assignment-config.model';
 import { ExerciseHint } from 'app/entities/exercise-hint.model';
+import { Team } from 'app/entities/team.model';
 
 export const enum DifficultyLevel {
     EASY = 'EASY',
@@ -85,7 +86,7 @@ export abstract class Exercise implements BaseEntity {
     public numberOfOpenComplaints?: number;
     public numberOfMoreFeedbackRequests?: number;
     public numberOfOpenMoreFeedbackRequests?: number;
-    public studentAssignedToTeam?: boolean;
+    public studentAssignedTeamId?: number;
 
     // helper attributes
     public isAtLeastTutor = false; // default value

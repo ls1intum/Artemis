@@ -35,17 +35,19 @@
                 [rowClass]="settings.rowClass"
                 [scrollbarH]="settings.scrollbarH"
             >
-                <ngx-datatable-column prop="id" [minWidth]="60" [width]="80" [maxWidth]="80">
+                <ngx-datatable-column [minWidth]="100" [width]="120" [maxWidth]="120">
                     <ng-template ngx-datatable-header-template>
-                        <span class="datatable-header-cell-wrapper" (click)="controls.onSort('id')">
-                            <span class="datatable-header-cell-label bold sortable" jhiTranslate="global.field.id">
-                                ID
+                        <span class="datatable-header-cell-wrapper" (click)="controls.onSort('shortName')">
+                            <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.team.shortName.label">
+                                Short Name
                             </span>
-                            <fa-icon [icon]="controls.iconForSortPropField('id')"></fa-icon>
+                            <fa-icon [icon]="controls.iconForSortPropField('shortName')"></fa-icon>
                         </span>
                     </ng-template>
-                    <ng-template ngx-datatable-cell-template let-value="value">
-                        <a routerLink="/team/{{ value }}">{{ value }}</a>
+                    <ng-template ngx-datatable-cell-template let-value="row">
+                        <a [routerLink]="['/course-management', exercise?.course?.id, 'exercises', exercise?.id, 'teams', value.id]">
+                            {{ value.shortName }}
+                        </a>
                     </ng-template>
                 </ngx-datatable-column>
 
@@ -65,7 +67,7 @@
 
                 <ngx-datatable-column prop="students" [minWidth]="200" [width]="200">
                     <ng-template ngx-datatable-header-template>
-                        <span class="datatable-header-cell-wrapper">
+                        <span class="datatable-header-cell-wrapper" style="cursor: text">
                             <span class="datatable-header-cell-label bold" jhiTranslate="artemisApp.team.students">
                                 Students
                             </span>

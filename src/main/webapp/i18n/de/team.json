@@ -13,7 +13,12 @@
                 "question": "Soll die Team von <strong>{{ name }}</strong> wirklich dauerhaft gelöscht werden?"
             },
             "detail": {
-                "title": "Team"
+                "title": "Team",
+                "students": {
+                    "login": "Login",
+                    "name": "Name",
+                    "email": "Email"
+                }
             },
             "name": {
                 "label": "Name",

@@ -128,9 +128,11 @@ public class ExerciseService {
 
         if (exercises != null) {
             for (Exercise exercise : exercises) {
-                // for team-based exercises: add transient flag whether the user is already part of a team for that exercise
+                // for team-based exercises: add the team that the user has been assigned to onto the exercise
                 if (exercise.isTeamMode()) {
-                    exercise.setIsStudentAssignedToTeam(teamService.isAssignedToTeam(exercise, user));
+                    teamService.findOneByExerciseAndUser(exercise, user).ifPresent(team -> {
+                        exercise.setStudentAssignedTeamId(team.getId());
+                    });
                 }
                 // filter out questions and all statistical information about the quizPointStatistic from quizExercises (so users can't see which answer options are correct)
                 if (exercise instanceof QuizExercise) {

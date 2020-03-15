@@ -89,8 +89,18 @@
     <div class="btn-group mr-2">
         <button
             jhi-exercise-action-button
+            buttonIcon="users"
+            [buttonLabel]="'artemisApp.exerciseActions.viewTeam' | translate"
+            [buttonLoading]="exercise.loading"
+            *ngIf="exercise.teamMode && participationStatusWrapper() !== ParticipationStatus.NO_TEAM_ASSIGNED"
+            [smallButton]="smallButtons"
+            [hideLabelMobile]="true"
+            [routerLink]="['/course-management', courseId, 'exercises', exercise.id, 'teams', exercise.studentAssignedTeamId!]"
+        ></button>
+        <button
+            jhi-exercise-action-button
             buttonIcon="play-circle"
-            [buttonLabel]="'artemisApp.exerciseActions.start' + (exercise.teamMode ? 'Team' : '') + 'Exercise' | translate"
+            [buttonLabel]="'artemisApp.exerciseActions.startExercise' | translate"
             [buttonLoading]="exercise.loading"
             [smallButton]="smallButtons"
             [hideLabelMobile]="false"
@@ -156,11 +166,21 @@
     <!-- ACTION START -->
     <div class="btn-group">
         <button
+            jhi-exercise-action-button
+            buttonIcon="users"
+            [buttonLabel]="'artemisApp.exerciseActions.viewTeam' | translate"
+            [buttonLoading]="exercise.loading"
+            *ngIf="exercise.teamMode && participationStatusWrapper() !== ParticipationStatus.NO_TEAM_ASSIGNED"
+            [smallButton]="smallButtons"
+            [hideLabelMobile]="true"
+            [routerLink]="['/course-management', courseId, 'exercises', exercise.id, 'teams', exercise.studentAssignedTeamId!]"
+        ></button>
+        <button
             class="start-exercise"
             jhi-exercise-action-button
             buttonIcon="play-circle"
             [jhiFeatureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
-            [buttonLabel]="'artemisApp.exerciseActions.start' + (exercise.teamMode ? 'Team' : '') + 'Exercise' | translate"
+            [buttonLabel]="'artemisApp.exerciseActions.startExercise' | translate"
             [buttonLoading]="exercise.loading"
             [smallButton]="smallButtons"
             [hideLabelMobile]="false"
@@ -251,10 +271,20 @@
     <!-- ACTIONS START -->
     <div class="btn-group mr-2">
         <button
+            jhi-exercise-action-button
+            buttonIcon="users"
+            [buttonLabel]="'artemisApp.exerciseActions.viewTeam' | translate"
+            [buttonLoading]="exercise.loading"
+            *ngIf="exercise.teamMode && participationStatusWrapper() !== ParticipationStatus.NO_TEAM_ASSIGNED"
+            [smallButton]="smallButtons"
+            [hideLabelMobile]="true"
+            [routerLink]="['/course-management', courseId, 'exercises', exercise.id, 'teams', exercise.studentAssignedTeamId!]"
+        ></button>
+        <button
             class="start-exercise"
             jhi-exercise-action-button
             buttonIcon="play-circle"
-            [buttonLabel]="'artemisApp.exerciseActions.start' + (exercise.teamMode ? 'Team' : '') + 'Exercise' | translate"
+            [buttonLabel]="'artemisApp.exerciseActions.startExercise' | translate"
             [buttonLoading]="exercise.loading"
             [smallButton]="smallButtons"
             [hideLabelMobile]="false"
@@ -320,8 +350,18 @@
     <div class="btn-group">
         <button
             jhi-exercise-action-button
+            buttonIcon="users"
+            [buttonLabel]="'artemisApp.exerciseActions.viewTeam' | translate"
+            [buttonLoading]="exercise.loading"
+            *ngIf="exercise.teamMode && participationStatusWrapper() !== ParticipationStatus.NO_TEAM_ASSIGNED"
+            [smallButton]="smallButtons"
+            [hideLabelMobile]="true"
+            [routerLink]="['/course-management', courseId, 'exercises', exercise.id, 'teams', exercise.studentAssignedTeamId!]"
+        ></button>
+        <button
+            jhi-exercise-action-button
             buttonIcon="play-circle"
-            [buttonLabel]="'artemisApp.exerciseActions.start' + (exercise.teamMode ? 'Team' : '') + 'Exercise' | translate"
+            [buttonLabel]="'artemisApp.exerciseActions.startExercise' | translate"
             [buttonLoading]="exercise.loading"
             *ngIf="participationStatusWrapper() === ParticipationStatus.UNINITIALIZED"
             [smallButton]="smallButtons"

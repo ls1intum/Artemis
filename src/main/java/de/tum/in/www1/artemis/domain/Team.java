@@ -144,6 +144,13 @@ public class Team implements Serializable, Participant {
         this.students = users;
     }
 
+    public void filterSensitiveInformation() {
+        this.students.forEach(student -> {
+            student.setLangKey(null);
+            student.setLastNotificationRead(null);
+        });
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) {
