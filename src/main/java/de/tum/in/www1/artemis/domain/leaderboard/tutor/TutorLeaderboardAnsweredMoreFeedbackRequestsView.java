@@ -50,4 +50,15 @@ public class TutorLeaderboardAnsweredMoreFeedbackRequestsView {
     public String getUserFirstName() {
         return userFirstName;
     }
+
+    public TutorLeaderboardAnsweredMoreFeedbackRequestsView() {
+    }
+
+    public TutorLeaderboardAnsweredMoreFeedbackRequestsView(LeaderboardId leaderboardId, long answeredRequests, Long points, long courseId, String userFirstName) {
+        this.leaderboardId = leaderboardId;
+        this.answeredRequests = answeredRequests;
+        this.points = points;
+        this.courseId = courseId;
+        this.userFirstName = userFirstName;
+    }
 }

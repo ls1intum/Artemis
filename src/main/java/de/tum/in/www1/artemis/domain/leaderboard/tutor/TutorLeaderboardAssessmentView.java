@@ -48,4 +48,14 @@ public class TutorLeaderboardAssessmentView {
         return userFirstName;
     }
 
+    public TutorLeaderboardAssessmentView() {
+    }
+
+    public TutorLeaderboardAssessmentView(LeaderboardId leaderboardId, long assessments, Long points, long courseId, String userFirstName) {
+        this.leaderboardId = leaderboardId;
+        this.assessments = assessments;
+        this.points = points;
+        this.courseId = courseId;
+        this.userFirstName = userFirstName;
+    }
 }

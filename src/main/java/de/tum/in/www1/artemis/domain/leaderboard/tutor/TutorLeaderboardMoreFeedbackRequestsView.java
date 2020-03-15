@@ -57,4 +57,16 @@ public class TutorLeaderboardMoreFeedbackRequestsView {
     public String getUserFirstName() {
         return userFirstName;
     }
+
+    public TutorLeaderboardMoreFeedbackRequestsView() {
+    }
+
+    public TutorLeaderboardMoreFeedbackRequestsView(LeaderboardId leaderboardId, long allRequests, long notAnsweredRequests, Long points, long courseId, String userFirstName) {
+        this.leaderboardId = leaderboardId;
+        this.allRequests = allRequests;
+        this.notAnsweredRequests = notAnsweredRequests;
+        this.points = points;
+        this.courseId = courseId;
+        this.userFirstName = userFirstName;
+    }
 }

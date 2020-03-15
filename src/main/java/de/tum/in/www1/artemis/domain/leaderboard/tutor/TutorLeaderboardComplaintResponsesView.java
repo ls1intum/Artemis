@@ -47,4 +47,15 @@ public class TutorLeaderboardComplaintResponsesView {
     public String getUserFirstName() {
         return userFirstName;
     }
+
+    public TutorLeaderboardComplaintResponsesView() {
+    }
+
+    public TutorLeaderboardComplaintResponsesView(LeaderboardId leaderboardId, long complaintResponses, Long points, long courseId, String userFirstName) {
+        this.leaderboardId = leaderboardId;
+        this.complaintResponses = complaintResponses;
+        this.points = points;
+        this.courseId = courseId;
+        this.userFirstName = userFirstName;
+    }
 }
