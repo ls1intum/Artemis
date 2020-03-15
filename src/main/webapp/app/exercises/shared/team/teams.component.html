@@ -51,6 +51,20 @@
                     </ng-template>
                 </ngx-datatable-column>
 
+                <ngx-datatable-column prop="name" [minWidth]="100" [width]="120" [maxWidth]="160">
+                    <ng-template ngx-datatable-header-template>
+                        <span class="datatable-header-cell-wrapper" (click)="controls.onSort('name')">
+                            <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.team.name.label">
+                                Name
+                            </span>
+                            <fa-icon [icon]="controls.iconForSortPropField('name')"></fa-icon>
+                        </span>
+                    </ng-template>
+                    <ng-template ngx-datatable-cell-template let-value="value">
+                        <span>{{ value }}</span>
+                    </ng-template>
+                </ngx-datatable-column>
+
                 <ngx-datatable-column [minWidth]="100" [width]="120" [maxWidth]="160">
                     <ng-template ngx-datatable-header-template>
                         <span class="datatable-header-cell-wrapper" (click)="controls.onSort('shortName')">
@@ -64,20 +78,6 @@
                         <a [routerLink]="['/course-management', exercise?.course?.id, 'exercises', exercise?.id, 'teams', value.id]">
                             {{ value.shortName }}
                         </a>
-                    </ng-template>
-                </ngx-datatable-column>
-
-                <ngx-datatable-column prop="name" [minWidth]="100" [width]="120" [maxWidth]="160">
-                    <ng-template ngx-datatable-header-template>
-                        <span class="datatable-header-cell-wrapper" (click)="controls.onSort('name')">
-                            <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.team.name.label">
-                                Name
-                            </span>
-                            <fa-icon [icon]="controls.iconForSortPropField('name')"></fa-icon>
-                        </span>
-                    </ng-template>
-                    <ng-template ngx-datatable-cell-template let-value="value">
-                        <span>{{ value }}</span>
                     </ng-template>
                 </ngx-datatable-column>
 
