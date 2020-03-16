@@ -49,6 +49,8 @@ const request = function(method, endpoint, authToken, xsrftoken, body, params) {
 export function login(username, password) {
     let req, res;
 
+    console.log('Try to login with ' + username + ':' + password);
+    
     // The user logs in; the authToken gets saved as we need it later
     req = [{
         'method': 'post',
