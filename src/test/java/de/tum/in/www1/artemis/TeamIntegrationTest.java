@@ -153,7 +153,7 @@ public class TeamIntegrationTest extends AbstractSpringIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testDeleteTeam() throws Exception {
         Team team = database.addTeamForExercise(exercise);
 
@@ -161,6 +161,14 @@ public class TeamIntegrationTest extends AbstractSpringIntegrationTest {
 
         Optional<Team> deletedTeam = teamRepo.findById(team.getId());
         assertThat(deletedTeam).as("Team was deleted correctly").isNotPresent();
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void testDeleteTeamAsTutorForbidden() throws Exception {
+        Team team = database.addTeamForExercise(exercise);
+
+        request.delete(resourceUrl() + "/" + team.getId(), HttpStatus.FORBIDDEN);
     }
 
     @Test
