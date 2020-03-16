@@ -2,7 +2,9 @@ const webpack = require('webpack');
 const { BaseHrefWebpackPlugin } = require('base-href-webpack-plugin');
 const CopyWebpackPlugin = require('copy-webpack-plugin');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
+const AngularCompilerPlugin = require('@ngtools/webpack').AngularCompilerPlugin;
 const MergeJsonWebpackPlugin = require("merge-jsons-webpack-plugin");
+
 const utils = require('./utils.js');
 
 module.exports = (options) => ({
@@ -17,6 +19,10 @@ module.exports = (options) => ({
     },
     module: {
         rules: [
+            {
+                test: /(?:\.ngfactory\.js|\.ngstyle\.js|\.ts)$/,
+                loader: '@ngtools/webpack'
+            },
             {
                 test: /\.html$/,
                 loader: 'html-loader',
@@ -90,6 +96,11 @@ module.exports = (options) => ({
             chunksSortMode: 'manual',
             inject: 'body'
         }),
-        new BaseHrefWebpackPlugin({ baseHref: '/' })
+        new BaseHrefWebpackPlugin({ baseHref: '/' }),
+        new AngularCompilerPlugin({
+            mainPath: utils.root('src/main/webapp/app/app.main.ts'),
+            tsConfigPath: utils.root('tsconfig.app.json'),
+            sourceMap: true
+        })
     ]
 });

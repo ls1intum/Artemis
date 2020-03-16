@@ -4,20 +4,20 @@ import { JhiEventManager } from 'ng-jhipster';
 import { TranslateModule } from '@ngx-translate/core';
 
 import { ArtemisTestModule } from '../../../test.module';
-import { JhiAlertErrorComponent } from 'app/shared/alert/alert-error.component';
+import { AlertErrorComponent } from 'app/shared/alert/alert-error.component';
 import { MockAlertService } from '../../../helpers/mock-alert.service';
 import { AlertService } from 'app/core/alert/alert.service';
 
 describe('Component Tests', () => {
     describe('Alert Error Component', () => {
-        let comp: JhiAlertErrorComponent;
-        let fixture: ComponentFixture<JhiAlertErrorComponent>;
+        let comp: AlertErrorComponent;
+        let fixture: ComponentFixture<AlertErrorComponent>;
         let eventManager: JhiEventManager;
 
         beforeEach(async(() => {
             TestBed.configureTestingModule({
                 imports: [ArtemisTestModule, TranslateModule.forRoot()],
-                declarations: [JhiAlertErrorComponent],
+                declarations: [AlertErrorComponent],
                 providers: [
                     JhiEventManager,
                     {
@@ -26,12 +26,12 @@ describe('Component Tests', () => {
                     },
                 ],
             })
-                .overrideTemplate(JhiAlertErrorComponent, '')
+                .overrideTemplate(AlertErrorComponent, '')
                 .compileComponents();
         }));
 
         beforeEach(() => {
-            fixture = TestBed.createComponent(JhiAlertErrorComponent);
+            fixture = TestBed.createComponent(AlertErrorComponent);
             comp = fixture.componentInstance;
             eventManager = fixture.debugElement.injector.get(JhiEventManager);
         });
