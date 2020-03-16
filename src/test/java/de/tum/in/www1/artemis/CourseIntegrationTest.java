@@ -369,33 +369,32 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationTest {
         Course testCourse = database.addCourseWithOneTextExercise();
         var points = withPoints ? 15L : null;
         var leaderboardId = new LeaderboardId(database.getUserByLogin("tutor1").getId(), 1L);
-        var complaintsView = new TutorLeaderboardComplaintsView(leaderboardId, 3L, 1L, points, 1L, "");
+        var complaintsView = new TutorLeaderboardComplaintsView(leaderboardId, 2L, 1L, points, 1L, "");
         tutorLeaderboardComplaintsViewRepo.save(complaintsView);
-        var complaintResponsesView = new TutorLeaderboardComplaintResponsesView(leaderboardId, 2L, points, 1L, "");
+        var complaintResponsesView = new TutorLeaderboardComplaintResponsesView(leaderboardId, 1L, points, 1L, "");
         tutorLeaderboardComplaintResponsesViewRepo.save(complaintResponsesView);
         var answeredMoreFeedbackRequestsView = new TutorLeaderboardAnsweredMoreFeedbackRequestsView(leaderboardId, 1L, points, 1L, "");
         tutorLeaderboardAnsweredMoreFeedbackRequestsViewRepo.save(answeredMoreFeedbackRequestsView);
-        var moreFeedbackRequestsView = new TutorLeaderboardMoreFeedbackRequestsView(leaderboardId, 3L, 2L, points, 1L, "");
+        var moreFeedbackRequestsView = new TutorLeaderboardMoreFeedbackRequestsView(leaderboardId, 3L, 1L, points, 1L, "");
         tutorLeaderboardMoreFeedbackRequestsViewRepo.save(moreFeedbackRequestsView);
         var assessmentsView = new TutorLeaderboardAssessmentView(leaderboardId, 2L, points, 1L, "");
         tutorLeaderboardAssessmentViewRepo.save(assessmentsView);
 
         StatsForInstructorDashboardDTO stats = request.get("/api/courses/" + testCourse.getId() + "/stats-for-tutor-dashboard", HttpStatus.OK,
                 StatsForInstructorDashboardDTO.class);
-        assertThat(stats).isNotNull();
         var currentTutorLeaderboard = stats.getTutorLeaderboardEntries().get(0);
-        assertThat(currentTutorLeaderboard.getNumberOfTutorComplaints()).isEqualTo(3);
+        assertThat(currentTutorLeaderboard.getNumberOfTutorComplaints()).isEqualTo(2);
         assertThat(currentTutorLeaderboard.getNumberOfAcceptedComplaints()).isEqualTo(1);
-        assertThat(currentTutorLeaderboard.getNumberOfComplaintResponses()).isEqualTo(2);
+        assertThat(currentTutorLeaderboard.getNumberOfComplaintResponses()).isEqualTo(1);
         assertThat(currentTutorLeaderboard.getNumberOfAnsweredMoreFeedbackRequests()).isEqualTo(1);
-        assertThat(currentTutorLeaderboard.getNumberOfNotAnsweredMoreFeedbackRequests()).isEqualTo(2);
+        assertThat(currentTutorLeaderboard.getNumberOfNotAnsweredMoreFeedbackRequests()).isEqualTo(1);
         assertThat(currentTutorLeaderboard.getNumberOfTutorMoreFeedbackRequests()).isEqualTo(3);
         assertThat(currentTutorLeaderboard.getNumberOfAssessments()).isEqualTo(2);
         if (withPoints) {
             assertThat(currentTutorLeaderboard.getPoints()).isEqualTo(0);
         }
         else {
-            assertThat(currentTutorLeaderboard.getPoints()).isEqualTo(2);
+            assertThat(currentTutorLeaderboard.getPoints()).isEqualTo(1);
         }
     }
 
