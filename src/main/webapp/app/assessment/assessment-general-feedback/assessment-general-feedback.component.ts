@@ -22,4 +22,16 @@ export class AssessmentGeneralFeedbackComponent {
         this.feedbackClone.detailText = trimmedText.length > 0 ? trimmedText : null;
         this.feedbackChange.emit(this.feedbackClone);
     }
+    allowDrop(ev: any) {
+        ev.preventDefault();
+    }
+    drop(ev: any) {
+        ev.preventDefault();
+        const data = ev.dataTransfer.getData('text');
+        const instruction = JSON.parse(data);
+        const credits = instruction.credits;
+        const feedback = instruction.feedback;
+        this.text += 'Score: ' + credits + ' Feedback: ' + feedback + '\n';
+        this.onTextChange(this.text);
+    }
 }
