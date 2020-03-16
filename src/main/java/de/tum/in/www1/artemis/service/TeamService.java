@@ -10,8 +10,10 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.Team;
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.repository.TeamRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.service.connectors.VersionControlService;
 import de.tum.in.www1.artemis.service.dto.TeamSearchUserDTO;
 import de.tum.in.www1.artemis.web.rest.errors.StudentsAlreadyAssignedException;
 
@@ -24,10 +26,17 @@ public class TeamService {
 
     private final AuthorizationCheckService authCheckService;
 
-    public TeamService(TeamRepository teamRepository, UserRepository userRepository, AuthorizationCheckService authCheckService) {
+    private final Optional<VersionControlService> versionControlService;
+
+    private final ProgrammingExerciseParticipationService programmingExerciseParticipationService;
+
+    public TeamService(TeamRepository teamRepository, UserRepository userRepository, AuthorizationCheckService authCheckService,
+            Optional<VersionControlService> versionControlService, ProgrammingExerciseParticipationService programmingExerciseParticipationService) {
         this.teamRepository = teamRepository;
         this.userRepository = userRepository;
         this.authCheckService = authCheckService;
+        this.versionControlService = versionControlService;
+        this.programmingExerciseParticipationService = programmingExerciseParticipationService;
     }
 
     /**
@@ -68,6 +77,29 @@ public class TeamService {
         HashSet<Long> loginsOfAssignedStudents = (HashSet<Long>) teamRepository.findAssignedUserIdsByExerciseIdAndUserIds(exercise.getId(), userIds);
         teamSearchUsers.forEach(user -> user.setIsAssignedToTeam(loginsOfAssignedStudents.contains(user.getId())));
         return teamSearchUsers;
+    }
+
+    /**
+     * Update the members of a team repository if a participation exists already. Users might need to be removed or added.
+     * @param exerciseId Id of the exercise to which the team belongs
+     * @param existingTeam Old team before update
+     * @param updatedTeam New team after update
+     */
+    public void updateRepositoryMembersIfNeeded(Long exerciseId, Team existingTeam, Team updatedTeam) {
+        Optional<ProgrammingExerciseStudentParticipation> optionalParticipation = this.programmingExerciseParticipationService.findByExerciseIdAndTeamId(exerciseId,
+                existingTeam.getId());
+
+        optionalParticipation.ifPresent(participation -> {
+            // Users in the existing team that are no longer in the updated team need to be removed
+            Set<User> usersToRemove = new HashSet<>(existingTeam.getStudents());
+            usersToRemove.removeAll(updatedTeam.getStudents());
+            usersToRemove.forEach(user -> versionControlService.get().removeMemberFromRepository(participation.getRepositoryUrlAsUrl(), user));
+
+            // Users in the updated team that were not yet part of the existing team need to be added
+            Set<User> usersToAdd = new HashSet<>(updatedTeam.getStudents());
+            usersToAdd.removeAll(existingTeam.getStudents());
+            usersToAdd.forEach(user -> versionControlService.get().addMemberToRepository(participation.getRepositoryUrlAsUrl(), user));
+        });
     }
 
     /**

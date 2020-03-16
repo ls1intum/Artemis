@@ -117,6 +117,22 @@ public interface VersionControlService {
     VcsRepositoryUrl copyRepository(String sourceProjectKey, String sourceRepositoryName, String targetProjectKey, String targetRepositoryName) throws VersionControlException;
 
     /**
+     * Add the user to the repository
+     *
+     * @param repositoryUrl     The repository url of the repository to which to add the user. It contains the project key & the repository name.
+     * @param user              User which to add to the repository
+     */
+    void addMemberToRepository(URL repositoryUrl, User user);
+
+    /**
+     * Remove the user from the repository
+     *
+     * @param repositoryUrl     The repository url of the repository from which to remove the user. It contains the project key & the repository name.
+     * @param user              User which to remove from the repository
+     */
+    void removeMemberFromRepository(URL repositoryUrl, User user);
+
+    /**
      * Removes the user's write permissions for a repository.
      *
      * @param repositoryUrl     The repository url of the repository to update. It contains the project key & the repository name.

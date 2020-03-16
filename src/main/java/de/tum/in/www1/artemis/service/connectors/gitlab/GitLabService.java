@@ -100,15 +100,16 @@ public class GitLabService extends AbstractVersionControlService {
                 }
             }
 
-            addMemberToProject(repositoryUrl, username);
+            addMemberToRepository(repositoryUrl, user);
         }
 
         protectBranch("master", repositoryUrl);
     }
 
-    private void addMemberToProject(URL repositoryUrl, String username) {
+    @Override
+    public void addMemberToRepository(URL repositoryUrl, User user) {
         final var repositoryId = getPathIDFromRepositoryURL(repositoryUrl);
-        final var userId = gitLabUserManagementService.getUserId(username);
+        final var userId = gitLabUserManagementService.getUserId(user.getLogin());
 
         try {
             gitlab.getProjectApi().addMember(repositoryId, userId, DEVELOPER);
@@ -119,8 +120,21 @@ public class GitLabService extends AbstractVersionControlService {
                 log.warn("Member already has the requested permissions! Permission stays the same");
             }
             else {
-                throw new GitLabException("Error while trying to add user to repository: " + username + " to repo " + repositoryUrl, e);
+                throw new GitLabException("Error while trying to add user to repository: " + user.getLogin() + " to repo " + repositoryUrl, e);
             }
+        }
+    }
+
+    @Override
+    public void removeMemberFromRepository(URL repositoryUrl, User user) {
+        final var repositoryId = getPathIDFromRepositoryURL(repositoryUrl);
+        final var userId = gitLabUserManagementService.getUserId(user.getLogin());
+
+        try {
+            gitlab.getProjectApi().removeMember(repositoryId, userId);
+        }
+        catch (GitLabApiException e) {
+            throw new GitLabException("Error while trying to remove user from repository: " + user.getLogin() + " from repo " + repositoryUrl, e);
         }
     }
 

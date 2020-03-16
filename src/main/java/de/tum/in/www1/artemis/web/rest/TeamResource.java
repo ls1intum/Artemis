@@ -16,10 +16,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
-import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.Exercise;
-import de.tum.in.www1.artemis.domain.Team;
-import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.repository.TeamRepository;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.dto.TeamSearchUserDTO;
@@ -128,6 +125,10 @@ public class TeamResource {
         Exercise exercise = exerciseService.findOne(exerciseId);
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user)) {
             return forbidden();
+        }
+        // For programming exercise teams with existing participation, the repository access needs to be updated according to the new team member set
+        if (exercise instanceof ProgrammingExercise) {
+            teamService.updateRepositoryMembersIfNeeded(exerciseId, existingTeam.get(), team);
         }
         Team result = teamService.save(exercise, team);
         result.filterSensitiveInformation();

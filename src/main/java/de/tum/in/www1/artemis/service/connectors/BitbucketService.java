@@ -106,10 +106,21 @@ public class BitbucketService extends AbstractVersionControlService {
 
             }
 
-            giveWritePermission(getProjectKeyFromUrl(repositoryUrl), getRepositorySlugFromUrl(repositoryUrl), username);
+            addMemberToRepository(repositoryUrl, user);
         }
 
         protectBranches(getProjectKeyFromUrl(repositoryUrl), getRepositorySlugFromUrl(repositoryUrl));
+    }
+
+    @Override
+    public void addMemberToRepository(URL repositoryUrl, User user) {
+        giveWritePermission(getProjectKeyFromUrl(repositoryUrl), getRepositorySlugFromUrl(repositoryUrl), user.getLogin());
+    }
+
+    @Override
+    public void removeMemberFromRepository(URL repositoryUrl, User user) {
+        // TODO: Instead of reducing the permissions to readOnly, the user should be removed from the repo entirely
+        setRepositoryPermissionsToReadOnly(repositoryUrl, getProjectKeyFromUrl(repositoryUrl), Set.of(user));
     }
 
     /**

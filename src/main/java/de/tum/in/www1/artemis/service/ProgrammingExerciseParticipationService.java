@@ -134,6 +134,10 @@ public class ProgrammingExerciseParticipationService {
         return studentParticipationRepository.findByExerciseId(exerciseId);
     }
 
+    public Optional<ProgrammingExerciseStudentParticipation> findByExerciseIdAndTeamId(Long exerciseId, Long teamId) {
+        return studentParticipationRepository.findByExerciseIdAndTeamId(exerciseId, teamId);
+    }
+
     public List<ProgrammingExerciseStudentParticipation> findByExerciseAndParticipationIds(Long exerciseId, Set<Long> participationIds) {
         return studentParticipationRepository.findByExerciseIdAndParticipationIds(exerciseId, participationIds);
     }
