@@ -240,7 +240,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         this.autoSaveTimer = 0;
 
         if (this.submission.id) {
-            this.modelingSubmissionService.update(this.submission, this.modelingExercise.id, this.submission.id).subscribe(
+            this.modelingSubmissionService.update(this.submission, this.modelingExercise.id).subscribe(
                 response => {
                     this.submission = response.body!;
                     // reconnect so that the submission status is displayed correctly in the result.component
@@ -291,7 +291,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         this.autoSaveTimer = 0;
         if (this.submission.id) {
             this.modelingSubmissionService
-                .update(this.submission, this.modelingExercise.id, this.submission.id)
+                .update(this.submission, this.modelingExercise.id)
                 .pipe(filter(res => !!res.body))
                 .subscribe(
                     response => {

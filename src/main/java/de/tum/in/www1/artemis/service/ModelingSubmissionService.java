@@ -368,10 +368,4 @@ public class ModelingSubmissionService extends SubmissionService {
         return modelingSubmissionRepository.findWithEagerResultAndFeedbackAndAssessorAndParticipationResultsById(submissionId)
                 .orElseThrow(() -> new EntityNotFoundException("Modeling submission with id \"" + submissionId + "\" does not exist"));
     }
-
-    public void validateExerciseIdExists(long submissionId) {
-        if (!modelingSubmissionRepository.existsById(submissionId)) {
-            throw new EntityNotFoundException("Modeling submission with id \"" + submissionId + "\" does not exist");
-        }
-    }
 }

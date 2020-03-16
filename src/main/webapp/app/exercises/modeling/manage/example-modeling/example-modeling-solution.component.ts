@@ -53,7 +53,7 @@ export class ExampleModelingSolutionComponent implements OnInit {
         }
         this.exampleSolution = this.modelingEditor.getCurrentModel();
         this.exercise.sampleSolutionModel = JSON.stringify(this.exampleSolution);
-        this.exerciseService.update(this.exercise, this.exerciseId).subscribe(
+        this.exerciseService.update(this.exercise).subscribe(
             (exerciseResponse: HttpResponse<ModelingExercise>) => {
                 this.exercise = exerciseResponse.body!;
                 if (this.exercise.sampleSolutionModel) {

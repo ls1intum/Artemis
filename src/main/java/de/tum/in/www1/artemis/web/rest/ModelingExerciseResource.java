@@ -24,7 +24,6 @@ import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.repository.ModelingExerciseRepository;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.compass.CompassService;
-import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import io.github.jhipster.web.util.ResponseUtil;
 
@@ -111,27 +110,20 @@ public class ModelingExerciseResource {
      * PUT /modeling-exercises : Updates an existing modelingExercise.
      *
      * @param modelingExercise the modelingExercise to update
-     * @param exerciseId the id of the exercise
      * @param notificationText the text shown to students
      * @return the ResponseEntity with status 200 (OK) and with body the updated modelingExercise, or with status 400 (Bad Request) if the modelingExercise is not valid, or with
      *         status 500 (Internal Server Error) if the modelingExercise couldn't be updated
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
-    @PutMapping("/modeling-exercises/{exerciseId}")
+    @PutMapping("/modeling-exercises")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<ModelingExercise> updateModelingExercise(@PathVariable long exerciseId, @RequestBody ModelingExercise modelingExercise,
+    public ResponseEntity<ModelingExercise> updateModelingExercise(@RequestBody ModelingExercise modelingExercise,
             @RequestParam(value = "notificationText", required = false) String notificationText) throws URISyntaxException {
         log.debug("REST request to update ModelingExercise : {}", modelingExercise);
 
         ResponseEntity<ModelingExercise> responseFailure = checkModelingExercise(modelingExercise);
         if (responseFailure != null) {
             return responseFailure;
-        }
-
-        // Check that the modeling exercise id is correct
-        modelingExerciseService.validateExerciseIdExists(exerciseId);
-        if (modelingExercise.getId() == null || !modelingExercise.getId().equals(exerciseId)) {
-            throw new EntityNotFoundException("The updated modeling exercise doesn't match the given id" + exerciseId);
         }
 
         // As persisting is cascaded for example submissions we have to set the reference to the exercise in the

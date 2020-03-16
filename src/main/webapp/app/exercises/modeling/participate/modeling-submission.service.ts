@@ -24,10 +24,10 @@ export class ModelingSubmissionService {
             .map((res: EntityResponseType) => this.convertResponse(res));
     }
 
-    update(modelingSubmission: ModelingSubmission, exerciseId: number, submissionId: number): Observable<EntityResponseType> {
+    update(modelingSubmission: ModelingSubmission, exerciseId: number): Observable<EntityResponseType> {
         const copy = this.convert(modelingSubmission);
         return this.http
-            .put<ModelingSubmission>(`api/exercises/${exerciseId}/modeling-submissions/${submissionId}`, stringifyCircular(copy), {
+            .put<ModelingSubmission>(`api/exercises/${exerciseId}/modeling-submissions/`, stringifyCircular(copy), {
                 headers: { 'Content-Type': 'application/json' },
                 observe: 'response',
             })

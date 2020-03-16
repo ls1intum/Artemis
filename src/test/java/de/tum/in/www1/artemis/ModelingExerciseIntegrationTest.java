@@ -168,16 +168,14 @@ public class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationTe
         var params = new LinkedMultiValueMap<String, String>();
         var notificationText = "notified!";
         params.add("notificationText", notificationText);
-        ModelingExercise returnedModelingExercise = request.putWithResponseBodyAndParams("/api/modeling-exercises/" + createdModelingExercise.getId(),
-                modelingExerciseWithSubmission, ModelingExercise.class, HttpStatus.OK, params);
+        ModelingExercise returnedModelingExercise = request.putWithResponseBodyAndParams("/api/modeling-exercises", modelingExerciseWithSubmission, ModelingExercise.class,
+                HttpStatus.OK, params);
         assertThat(returnedModelingExercise.getExampleSubmissions().size()).isEqualTo(1);
         verify(groupNotificationService).notifyStudentGroupAboutExerciseUpdate(returnedModelingExercise, notificationText);
 
         // use an arbitrary course id that was not yet stored on the server to get a bad request in the PUT call
         modelingExercise = modelingExerciseUtilService.createModelingExercise(100L, classExercise.getId());
-        request.put("/api/modeling-exercises/" + createdModelingExercise.getId(), modelingExercise, HttpStatus.NOT_FOUND);
-        request.put("/api/modeling-exercises/" + modelingExercise.getId(), modelingExercise, HttpStatus.NOT_FOUND);
-
+        request.put("/api/modeling-exercises", modelingExercise, HttpStatus.NOT_FOUND);
     }
 
     @Test
@@ -200,13 +198,6 @@ public class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationTe
         modelingExercise.setGradingCriteria(null);
         createdModelingExercise = request.postWithResponseBody("/api/modeling-exercises", modelingExercise, ModelingExercise.class, HttpStatus.CREATED);
         assertThat(createdModelingExercise.getGradingCriteria().size()).isEqualTo(0);
-    }
-
-    @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testUpdateModelingExercise_wrongId() throws Exception {
-        ModelingExercise modelingExercise = modelingExerciseUtilService.createModelingExercise(classExercise.getCourse().getId());
-        request.putWithResponseBody("/api/modeling-exercises/" + classExercise.getId(), modelingExercise, ModelingExercise.class, HttpStatus.NOT_FOUND);
     }
 
     @Test
@@ -235,7 +226,7 @@ public class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationTe
     @Test
     @WithMockUser(username = "instructor2", roles = "INSTRUCTOR")
     public void testUpdateModelingExercise_instructorNotInCourse() throws Exception {
-        request.put("/api/modeling-exercises/" + classExercise.getId(), classExercise, HttpStatus.FORBIDDEN);
+        request.put("/api/modeling-exercises", classExercise, HttpStatus.FORBIDDEN);
     }
 
     @Test

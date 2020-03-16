@@ -139,7 +139,7 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
 
         returnedSubmission.setModel(validModel);
         returnedSubmission.setSubmitted(true);
-        returnedSubmission = performUpdateOnModelSubmission(classExercise.getId(), returnedSubmission, returnedSubmission.getId());
+        returnedSubmission = performUpdateOnModelSubmission(classExercise.getId(), returnedSubmission);
         database.checkModelingSubmissionCorrectlyStored(returnedSubmission.getId(), validModel);
         checkDetailsHidden(returnedSubmission, true);
     }
@@ -157,7 +157,7 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
         String validActivityModel = database.loadFileFromResources("test-data/model-submission/example-activity-diagram.json");
         returnedSubmission.setModel(validActivityModel);
         returnedSubmission.setSubmitted(true);
-        returnedSubmission = performUpdateOnModelSubmission(activityExercise.getId(), returnedSubmission, returnedSubmission.getId());
+        returnedSubmission = performUpdateOnModelSubmission(activityExercise.getId(), returnedSubmission);
         database.checkModelingSubmissionCorrectlyStored(returnedSubmission.getId(), validActivityModel);
         checkDetailsHidden(returnedSubmission, true);
     }
@@ -175,7 +175,7 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
         String validObjectModel = database.loadFileFromResources("test-data/model-submission/object-model.json");
         returnedSubmission.setModel(validObjectModel);
         returnedSubmission.setSubmitted(true);
-        returnedSubmission = performUpdateOnModelSubmission(objectExercise.getId(), returnedSubmission, returnedSubmission.getId());
+        returnedSubmission = performUpdateOnModelSubmission(objectExercise.getId(), returnedSubmission);
         database.checkModelingSubmissionCorrectlyStored(returnedSubmission.getId(), validObjectModel);
         checkDetailsHidden(returnedSubmission, true);
     }
@@ -193,7 +193,7 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
         String validUseCaseModel = database.loadFileFromResources("test-data/model-submission/use-case-model.json");
         returnedSubmission.setModel(validUseCaseModel);
         returnedSubmission.setSubmitted(true);
-        returnedSubmission = performUpdateOnModelSubmission(useCaseExercise.getId(), returnedSubmission, returnedSubmission.getId());
+        returnedSubmission = performUpdateOnModelSubmission(useCaseExercise.getId(), returnedSubmission);
         database.checkModelingSubmissionCorrectlyStored(returnedSubmission.getId(), validUseCaseModel);
         checkDetailsHidden(returnedSubmission, true);
     }
@@ -208,39 +208,19 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
 
         returnedSubmission.setModel(validModel);
         returnedSubmission.setSubmitted(false);
-        request.putWithResponseBody("/api/exercises/" + classExercise.getId() + "/modeling-submissions/" + returnedSubmission.getId(), returnedSubmission, ModelingSubmission.class,
-                HttpStatus.OK);
+        request.putWithResponseBody("/api/exercises/" + classExercise.getId() + "/modeling-submissions", returnedSubmission, ModelingSubmission.class, HttpStatus.OK);
 
         database.checkModelingSubmissionCorrectlyStored(returnedSubmission.getId(), validModel);
 
         returnedSubmission.setSubmitted(true);
-        returnedSubmission = request.putWithResponseBody("/api/exercises/" + classExercise.getId() + "/modeling-submissions/" + returnedSubmission.getId(), returnedSubmission,
-                ModelingSubmission.class, HttpStatus.OK);
+        returnedSubmission = request.putWithResponseBody("/api/exercises/" + classExercise.getId() + "/modeling-submissions", returnedSubmission, ModelingSubmission.class,
+                HttpStatus.OK);
         StudentParticipation studentParticipation = (StudentParticipation) returnedSubmission.getParticipation();
         assertThat(studentParticipation.getResults()).as("do not send old results to the client").isEmpty();
         assertThat(studentParticipation.getSubmissions()).as("do not send old submissions to the client").isEmpty();
         assertThat(studentParticipation.getStudent()).as("sensitive information (student) is hidden").isNull();
         assertThat(studentParticipation.getExercise().getGradingInstructions()).as("sensitive information (grading instructions) is hidden").isNull();
         assertThat(returnedSubmission.getResult()).as("sensitive information (exercise result) is hidden").isNull();
-
-        // the id of submission in the request body and the id in the path should match
-        request.put("/api/exercises/" + classExercise.getId() + "/modeling-submissions/120", returnedSubmission, HttpStatus.NOT_FOUND);
-    }
-
-    @Test
-    @WithMockUser(value = "student2")
-    public void updateModelSubmission_incorrectId() throws Exception {
-        database.addParticipationForExercise(classExercise, "student2");
-        ModelingSubmission submission = ModelFactory.generateModelingSubmission(emptyModel, true);
-        ModelingSubmission returnedSubmission = performInitialModelSubmission(classExercise.getId(), submission);
-        database.checkModelingSubmissionCorrectlyStored(returnedSubmission.getId(), emptyModel);
-
-        var submissionId = returnedSubmission.getId();
-        returnedSubmission.setModel(validModel);
-        returnedSubmission.setSubmitted(false);
-        returnedSubmission.setId(null);
-        request.putWithResponseBody("/api/exercises/" + classExercise.getId() + "/modeling-submissions/" + submissionId, returnedSubmission, ModelingSubmission.class,
-                HttpStatus.NOT_FOUND);
     }
 
     @Test
@@ -653,8 +633,8 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
         return request.postWithResponseBody("/api/exercises/" + exerciseId + "/modeling-submissions", submission, ModelingSubmission.class, HttpStatus.OK);
     }
 
-    private ModelingSubmission performUpdateOnModelSubmission(Long exerciseId, ModelingSubmission submission, long submissionId) throws Exception {
-        return request.putWithResponseBody("/api/exercises/" + exerciseId + "/modeling-submissions/" + submissionId, submission, ModelingSubmission.class, HttpStatus.OK);
+    private ModelingSubmission performUpdateOnModelSubmission(Long exerciseId, ModelingSubmission submission) throws Exception {
+        return request.putWithResponseBody("/api/exercises/" + exerciseId + "/modeling-submissions", submission, ModelingSubmission.class, HttpStatus.OK);
     }
 
     private ModelingSubmission generateSubmittedSubmission() {

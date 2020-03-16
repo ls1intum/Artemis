@@ -29,10 +29,4 @@ public class ModelingExerciseService {
         log.debug("Request to get Modeling Exercise : {}", exerciseId);
         return modelingExerciseRepository.findById(exerciseId).orElseThrow(() -> new EntityNotFoundException("Exercise with id: \"" + exerciseId + "\" does not exist"));
     }
-
-    public void validateExerciseIdExists(long exerciseId) {
-        if (!modelingExerciseRepository.existsById(exerciseId)) {
-            throw new EntityNotFoundException("Modeling exercise with id \"" + exerciseId + "\" does not exist");
-        }
-    }
 }

@@ -93,7 +93,7 @@ export class ModelingExerciseUpdateComponent implements OnInit {
             if (this.notificationText) {
                 requestOptions.notificationText = this.notificationText;
             }
-            this.subscribeToSaveResponse(this.modelingExerciseService.update(this.modelingExercise, this.modelingExercise.id, requestOptions));
+            this.subscribeToSaveResponse(this.modelingExerciseService.update(this.modelingExercise, requestOptions));
         } else {
             this.subscribeToSaveResponse(this.modelingExerciseService.create(this.modelingExercise));
         }
