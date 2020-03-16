@@ -118,7 +118,7 @@ public class TutorLeaderboardService {
 
             for (TutorLeaderboardComplaintsView complaintsView : tutorLeaderboardComplaints) {
                 if (tutor.getId().equals(complaintsView.getUserId())) {
-                    numberOfTutorComplaints = complaintsView.getAllComplaints();
+                    numberOfTutorComplaints += complaintsView.getAllComplaints();
                     numberOfAcceptedComplaints += complaintsView.getAcceptedComplaints();
                     // accepted complaints count 2x negatively
                     if (complaintsView.getPoints() != null) {   // this can happen when max points is null, then we could simply count the accepted complaints
