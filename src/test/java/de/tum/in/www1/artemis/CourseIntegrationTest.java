@@ -278,7 +278,7 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationTest {
     }
 
     private void getCourseForDashboardWithStats(boolean isInstructor) throws Exception {
-        List<Course> testCourses = database.createCoursesWithExercisesAndLectures(true);
+        List<Course> testCourses = database.createCoursesWithExercisesAndLectures();
         for (Course testCourse : testCourses) {
             Course course = request.get("/api/courses/" + testCourse.getId() + "/for-tutor-dashboard", HttpStatus.OK, Course.class);
             for (Exercise exercise : course.getExercises()) {
