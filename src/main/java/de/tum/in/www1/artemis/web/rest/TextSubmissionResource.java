@@ -12,10 +12,8 @@ import javax.validation.constraints.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.*;
@@ -24,7 +22,6 @@ import de.tum.in.www1.artemis.repository.TextSubmissionRepository;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
-import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import io.github.jhipster.web.util.ResponseUtil;
 
 /**
@@ -109,9 +106,11 @@ public class TextSubmissionResource {
     private ResponseEntity<TextSubmission> handleTextSubmission(Long exerciseId, Principal principal, TextSubmission textSubmission) {
         final User user = userService.getUserWithGroupsAndAuthorities();
         final TextExercise textExercise = textExerciseService.findOne(exerciseId);
-        final ResponseEntity<TextSubmission> responseFailure = this.checkExerciseValidity(textExercise);
-        if (responseFailure != null) {
-            return responseFailure;
+
+        // fetch course from database to make sure client didn't change groups
+        final Course course = courseService.findOne(textExercise.getCourse().getId());
+        if (!authorizationCheckService.isAtLeastStudentInCourse(course, user)) {
+            return forbidden();
         }
 
         textSubmission = textSubmissionService.handleTextSubmission(textSubmission, textExercise, principal);
@@ -131,23 +130,6 @@ public class TextSubmissionResource {
         log.debug("REST request to get TextSubmission : {}", id);
         Optional<TextSubmission> textSubmission = textSubmissionRepository.findById(id);
         return ResponseUtil.wrapOrNotFound(textSubmission);
-    }
-
-    private ResponseEntity<TextSubmission> checkExerciseValidity(TextExercise textExercise) {
-        if (textExercise == null) {
-            return ResponseEntity.badRequest()
-                    .headers(HeaderUtil.createFailureAlert(applicationName, true, "submission", "exerciseNotFound", "No exercise was found for the given ID.")).body(null);
-        }
-
-        // fetch course from database to make sure client didn't change groups
-        Course course = courseService.findOne(textExercise.getCourse().getId());
-
-        User user = userService.getUserWithGroupsAndAuthorities();
-        if (!authorizationCheckService.isAtLeastStudentInCourse(course, user)) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-        }
-
-        return null;
     }
 
     /**
@@ -203,12 +185,13 @@ public class TextSubmissionResource {
      * GET /text-submission-without-assessment : get one textSubmission without assessment.
      *
      * @param exerciseId exerciseID  for which a submission should be returned
+     * @param lockSubmission optional value to define if the submission should be locked and has the value of false if not set manually
      * @return the ResponseEntity with status 200 (OK) and the list of textSubmissions in body
      */
     @GetMapping(value = "/exercises/{exerciseId}/text-submission-without-assessment")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    @Transactional(readOnly = true)
-    public ResponseEntity<TextSubmission> getTextSubmissionWithoutAssessment(@PathVariable Long exerciseId) {
+    public ResponseEntity<TextSubmission> getTextSubmissionWithoutAssessment(@PathVariable Long exerciseId,
+            @RequestParam(value = "lock", defaultValue = "false") boolean lockSubmission) {
         log.debug("REST request to get a text submission without assessment");
         Exercise exercise = exerciseService.findOneWithAdditionalElements(exerciseId);
 
@@ -227,14 +210,22 @@ public class TextSubmissionResource {
         // Check if the limit of simultaneously locked submissions has been reached
         textSubmissionService.checkSubmissionLockLimit(exercise.getCourse().getId());
 
-        Optional<TextSubmission> textSubmissionWithoutAssessment = this.textSubmissionService.getTextSubmissionWithoutManualResult((TextExercise) exercise);
-
-        // tutors should not see information about the student of a submission
-        if (textSubmissionWithoutAssessment.isPresent() && textSubmissionWithoutAssessment.get().getParticipation() != null
-                && textSubmissionWithoutAssessment.get().getParticipation() instanceof StudentParticipation) {
-            ((StudentParticipation) textSubmissionWithoutAssessment.get().getParticipation()).filterSensitiveInformation();
+        final TextSubmission textSubmission;
+        if (lockSubmission) {
+            textSubmission = textSubmissionService.findAndLockTextSubmissionToBeAssessed((TextExercise) exercise);
+        }
+        else {
+            final Optional<TextSubmission> optionalTextSubmission = this.textSubmissionService.getTextSubmissionWithoutManualResult((TextExercise) exercise);
+            if (optionalTextSubmission.isEmpty()) {
+                return notFound();
+            }
+            textSubmission = optionalTextSubmission.get();
         }
 
-        return ResponseUtil.wrapOrNotFound(textSubmissionWithoutAssessment);
+        // Make sure the exercise is connected to the participation in the json response
+        final StudentParticipation studentParticipation = (StudentParticipation) textSubmission.getParticipation();
+        studentParticipation.setExercise(exercise);
+        textSubmissionService.hideDetails(textSubmission, userService.getUserWithGroupsAndAuthorities());
+        return ResponseEntity.ok(textSubmission);
     }
 }
