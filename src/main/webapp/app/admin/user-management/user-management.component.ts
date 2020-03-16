@@ -10,7 +10,6 @@ import { AccountService } from 'app/core/auth/account.service';
 import { Subject } from 'rxjs';
 import { ITEMS_PER_PAGE } from 'app/shared/constants/pagination.constants';
 import { AlertService } from 'app/core/alert/alert.service';
-import { debounceTime, switchMap, tap } from 'rxjs/operators';
 import { SortingOrder } from 'app/shared/table/pageable-table';
 
 @Component({
@@ -18,7 +17,6 @@ import { SortingOrder } from 'app/shared/table/pageable-table';
     templateUrl: './user-management.component.html',
 })
 export class UserManagementComponent implements OnInit, OnDestroy {
-    private search = new Subject<void>();
     loading = false;
 
     currentAccount: User;
@@ -65,30 +63,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
             this.currentAccount = user!;
             this.loadAll();
             this.registerChangeInUsers();
-            this.performSearch(this.search, 300);
         });
-    }
-
-    private performSearch(searchSubject: Subject<void>, debounce: number) {
-        searchSubject
-            .pipe(
-                debounceTime(debounce),
-                tap(() => (this.loading = true)),
-                switchMap(() => this.userService.query({
-                    page: this.page - 1,
-                    pageSize: this.itemsPerPage,
-                    searchTerm: this.searchTermString,
-                    sortingOrder: this.reverse ? SortingOrder.DESCENDING : SortingOrder.ASCENDING,
-                    sortedColumn: this.predicate
-                })),
-            )
-            .subscribe(
-            (res: HttpResponse<User[]>) => {
-                this.loading = false;
-                this.onSuccess(res.body!, res.headers);
-            },
-            (res: HttpErrorResponse) => onError(this.alertService, res),
-        );
     }
 
     /**
@@ -130,17 +105,20 @@ export class UserManagementComponent implements OnInit, OnDestroy {
      * Retrieve the list of users from the user service for a single page in the user management based on the page, size and sort configuration
      */
     loadAll() {
+        this.loading = true;
         this.userService
             .query({
                 page: this.page - 1,
                 pageSize: this.itemsPerPage,
-                sort: this.sort(),
                 searchTerm: this.searchTermString,
-                sortingOrder: this.reverse ? SortingOrder.DESCENDING : SortingOrder.ASCENDING,
+                sortingOrder: this.reverse ? SortingOrder.ASCENDING : SortingOrder.DESCENDING,
                 sortedColumn: this.predicate
             })
             .subscribe(
-                (res: HttpResponse<User[]>) => this.onSuccess(res.body!, res.headers),
+                (res: HttpResponse<User[]>) => {
+                    this.loading = false;
+                    this.onSuccess(res.body!, res.headers);
+                    },
                 (res: HttpErrorResponse) => onError(this.alertService, res),
             );
     }
@@ -152,17 +130,6 @@ export class UserManagementComponent implements OnInit, OnDestroy {
      */
     trackIdentity(index: number, item: User) {
         return item.id;
-    }
-
-    /**
-     * Sorts parameters by specified order
-     */
-    sort() {
-        const result = [this.predicate + ',' + (this.reverse ? 'asc' : 'desc')];
-        if (this.predicate !== 'id') {
-            result.push('id');
-        }
-        return result;
     }
 
     /**
@@ -183,7 +150,8 @@ export class UserManagementComponent implements OnInit, OnDestroy {
         this.router.navigate(['/admin/user-management'], {
             queryParams: {
                 page: this.page,
-                sort: this.predicate + ',' + (this.reverse ? 'asc' : 'desc'),
+                sortingOrder: this.reverse ? SortingOrder.ASCENDING : SortingOrder.DESCENDING,
+                sortedColumn: this.predicate
             },
         });
         this.loadAll();
@@ -214,7 +182,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
 
     set searchTerm(searchTerm: string) {
         this.searchTermString = searchTerm;
-        this.search.next();
+        this.loadAll();
     }
 
     get searchTerm(): string {
