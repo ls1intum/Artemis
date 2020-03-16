@@ -56,6 +56,7 @@ export class TextAssessmentsService {
         return this.http.get<StudentParticipation>(`${this.resourceUrl}/submission/${submissionId}`).pipe(
             // Wire up Result and Submission
             tap((sp: StudentParticipation) => (sp.submissions[0].result = sp.results[0])),
+            tap((sp: StudentParticipation) => (sp.submissions[0].participation = sp)),
         );
     }
 

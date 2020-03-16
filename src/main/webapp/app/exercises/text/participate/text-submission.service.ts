@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs/Observable';
+import { tap } from 'rxjs/operators';
 
 import { TextSubmission } from 'app/entities/text-submission.model';
 import { createRequestOption } from 'app/shared/util/request-util';
@@ -46,7 +47,10 @@ export class TextSubmissionService {
         if (lock) {
             url += '?lock=true';
         }
-        return this.http.get<TextSubmission>(url);
+        return this.http.get<TextSubmission>(url).pipe(
+            tap(submission => (submission.participation.submissions = [submission])),
+            tap(submission => (submission.participation.results = [submission.result])),
+        );
     }
 
     private convertResponse(res: EntityResponseType): EntityResponseType {
