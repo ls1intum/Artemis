@@ -35,6 +35,10 @@ while (( "$#" )); do
       adminPassword=$2
       shift 2
       ;;
+    --createUsers)
+      createUsers=true
+      shift 1
+      ;;
     --tests)
       tests=$2
       shift 2
@@ -62,6 +66,7 @@ basePassword=${basePassword:?"You have to specify the test user's base password"
 baseUsername=${baseUsername:?"You have to specify the test user's username"}
 adminUsername=${adminUsername:?You have to specify the username of one admin}
 adminPassword=${adminPassword:?You have to specify the password of one admin}
+createUsers=false
 tests=${tests:?You have to specify which tests to run}
 iterations=${iterations:-10}
 timeout=${timeout:-60}
