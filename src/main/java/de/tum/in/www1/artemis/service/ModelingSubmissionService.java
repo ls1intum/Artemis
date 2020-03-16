@@ -334,7 +334,7 @@ public class ModelingSubmissionService extends SubmissionService {
                 .orElseThrow(() -> new EntityNotFoundException("Modeling submission with id \"" + submissionId + "\" does not exist"));
     }
 
-    public void validateExerciseIdExists(long submissionId) {
+    public void validateSubmissionIdExists(long submissionId) {
         if (!modelingSubmissionRepository.existsById(submissionId)) {
             throw new EntityNotFoundException("Modeling submission with id \"" + submissionId + "\" does not exist");
         }
