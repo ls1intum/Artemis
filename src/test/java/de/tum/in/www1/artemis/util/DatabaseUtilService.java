@@ -326,10 +326,6 @@ public class DatabaseUtilService {
     }
 
     public List<Course> createCoursesWithExercisesAndLectures() throws Exception {
-        return createCoursesWithExercisesAndLectures(false);
-    }
-
-    public List<Course> createCoursesWithExercisesAndLectures(boolean hasComplaint) throws Exception {
         ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(5);
         ZonedDateTime futureTimestamp = ZonedDateTime.now().plusDays(5);
         ZonedDateTime futureFutureTimestamp = ZonedDateTime.now().plusDays(8);
@@ -440,18 +436,6 @@ public class DatabaseUtilService {
         submissionRepository.save(modelingSubmission1);
         submissionRepository.save(modelingSubmission2);
         submissionRepository.save(textSubmission);
-
-        if (hasComplaint) {
-            StudentParticipation participation4 = ModelFactory.generateStudentParticipation(InitializationState.FINISHED, modelingExercise, user);
-            participation4 = participationRepo.save(participation4);
-            result1.assessor(getUserByLogin("tutor1")).completionDate(ZonedDateTime.now()).participation(participation4);
-            resultRepo.save(result1);
-            addComplaintOnResult(user, result1, ComplaintType.COMPLAINT);
-
-            result3.assessor(getUserByLogin("tutor1")).completionDate(ZonedDateTime.now()).participation(participation2);
-            resultRepo.save(result3);
-            addComplaintOnResult(user, result3, ComplaintType.MORE_FEEDBACK);
-        }
 
         return Arrays.asList(course1, course2);
     }
@@ -1107,11 +1091,6 @@ public class DatabaseUtilService {
             Complaint complaint = new Complaint().student(getUserByLogin(studentLogin)).result(dummyResult).complaintType(complaintType);
             complaintRepo.save(complaint);
         }
-    }
-
-    public void addComplaintOnResult(User student, Result result, ComplaintType complaintType) {
-        var complaint = new Complaint().student(student).result(result).complaintType(complaintType);
-        complaintRepo.save(complaint);
     }
 
     public Result addResultToSubmission(Submission submission, AssessmentType assessmentType, User user, Long score, boolean rated) {
