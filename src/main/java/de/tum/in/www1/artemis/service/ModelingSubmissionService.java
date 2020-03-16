@@ -241,7 +241,7 @@ public class ModelingSubmissionService extends SubmissionService {
      * @param modelingExercise   the exercise to which the submission belongs to (needed for Compass)
      */
     private void lockSubmission(ModelingSubmission modelingSubmission, ModelingExercise modelingExercise) {
-        var result = super.lockSubmission(modelingSubmission);
+        var result = lockSubmission(modelingSubmission);
         if (result.getAssessor() == null && compassService.isSupported(modelingExercise.getDiagramType())) {
             compassService.removeModelWaitingForAssessment(modelingExercise.getId(), modelingSubmission.getId());
         }

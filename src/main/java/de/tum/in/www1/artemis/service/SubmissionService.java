@@ -134,7 +134,7 @@ public class SubmissionService {
      *
      * @param submission the submission to lock
      */
-    final Result lockSubmission(Submission submission) {
+    protected Result lockSubmission(Submission submission) {
         Result result = submission.getResult();
         if (result == null) {
             result = setNewResult(submission);

@@ -257,7 +257,7 @@ public class TextSubmissionService extends SubmissionService {
     public TextSubmission findAndLockTextSubmissionToBeAssessed(TextExercise textExercise) {
         TextSubmission textSubmission = getTextSubmissionWithoutManualResult(textExercise)
                 .orElseThrow(() -> new EntityNotFoundException("Text submission for exercise " + textExercise.getId() + " could not be found"));
-        super.lockSubmission(textSubmission);
+        lockSubmission(textSubmission);
         return textSubmission;
     }
 
