@@ -12,9 +12,6 @@ import java.util.Objects;
 
 import javax.persistence.*;
 
-import org.hibernate.annotations.LazyCollection;
-import org.hibernate.annotations.LazyCollectionOption;
-
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
@@ -42,7 +39,6 @@ public class TextCluster implements Serializable {
     @OneToMany(mappedBy = "cluster")
     @OrderBy("position_in_cluster")
     @JsonIgnoreProperties("cluster")
-    @LazyCollection(LazyCollectionOption.FALSE)
     private List<TextBlock> blocks = new ArrayList<>();
 
     @ManyToOne
