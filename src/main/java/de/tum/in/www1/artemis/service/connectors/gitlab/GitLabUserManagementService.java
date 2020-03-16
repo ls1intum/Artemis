@@ -286,7 +286,11 @@ public class GitLabUserManagementService implements VcsUserManagementService {
 
     int getUserId(String username) {
         try {
-            return gitlab.getUserApi().getUser(username).getId();
+            var gitlabUser = gitlab.getUserApi().getUser(username);
+            if (gitlabUser != null) {
+                return gitlabUser.getId();
+            }
+            throw new GitLabException("Unable to get ID for user " + username);
         }
         catch (GitLabApiException e) {
             throw new GitLabException("Unable to get ID for user " + username, e);

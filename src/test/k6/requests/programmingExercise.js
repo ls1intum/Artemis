@@ -54,7 +54,7 @@ export function createExercise(artemis, courseId) {
         packageName: 'de.test',
         problemStatement: programmingExerciseProblemStatement,
         presentationScoreEnabled: false,
-        sequentialTestRuns: true,
+        sequentialTestRuns: false,
         mode: 'INDIVIDUAL',
         course: {
             id: courseId
