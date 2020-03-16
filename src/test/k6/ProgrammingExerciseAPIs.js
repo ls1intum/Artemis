@@ -2,6 +2,7 @@ import { group, sleep } from 'k6';
 import { login } from "./requests/requests.js";
 import { createExercise, startExercise, simulateSubmission, ParticipationSimulation, TestResult, deleteExercise } from "./requests/programmingExercise.js";
 import { deleteCourse, newCourse } from "./requests/course.js";
+import { newUser} from './requests/user.js';
 import { twoSuccessfulErrorContent, allSuccessfulContent, buildErrorContent } from "./resource/constants.js";
 
 export const options = {
@@ -19,10 +20,17 @@ let baseUsername = __ENV.BASE_USERNAME;
 let basePassword = __ENV.BASE_PASSWORD;
 
 export function setup() {
-    let artemis, exerciseId, courseId;
+    let artemis, exerciseId, courseId, userId;
 
     // Create course
     artemis = login(adminUsername, adminPassword);
+
+    if(__ENV.CREATEUSERS) {
+        for (let i = 1; i <= __ENV.ITERATIONS; i++) {
+            userId = newUser(artemis, i, baseUsername, basePassword);
+        }
+    }
+
     courseId = newCourse(artemis);
 
     const instructorUsername = baseUsername.replace('USERID', '1');
