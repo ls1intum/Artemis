@@ -11,7 +11,7 @@ import { Subject } from 'rxjs';
 import { ITEMS_PER_PAGE } from 'app/shared/constants/pagination.constants';
 import { AlertService } from 'app/core/alert/alert.service';
 import { debounceTime, switchMap, tap } from 'rxjs/operators';
-import {SortingOrder} from "app/shared/table/pageable-table";
+import { SortingOrder } from 'app/shared/table/pageable-table';
 
 @Component({
     selector: 'jhi-user-management',
@@ -48,6 +48,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
         private eventManager: JhiEventManager,
     ) {
         this.itemsPerPage = ITEMS_PER_PAGE;
+        this.searchTermString = '';
         this.routeData = this.activatedRoute.data.subscribe(data => {
             this.page = data['pagingParams'].page;
             this.previousPage = data['pagingParams'].page;
@@ -84,8 +85,6 @@ export class UserManagementComponent implements OnInit, OnDestroy {
             .subscribe(
             (res: HttpResponse<User[]>) => {
                 this.loading = false;
-                console.log('HTTP Response');
-                console.log(res);
                 this.onSuccess(res.body!, res.headers);
             },
             (res: HttpErrorResponse) => onError(this.alertService, res),
@@ -136,7 +135,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
                 page: this.page - 1,
                 pageSize: this.itemsPerPage,
                 sort: this.sort(),
-                searchTerm: '',
+                searchTerm: this.searchTermString,
                 sortingOrder: this.reverse ? SortingOrder.DESCENDING : SortingOrder.ASCENDING,
                 sortedColumn: this.predicate
             })
