@@ -87,6 +87,8 @@ describe('TextAssessmentComponent', () => {
         participation: participation,
     } as unknown) as Result;
     submission.result = result;
+    submission.participation.submissions = [submission];
+    submission.participation.results = [submission.result];
     const refFeedback = { reference: 'reference', credits: 5 } as Feedback;
     const refFeedback2 = { reference: 'reference2', credits: 5 } as Feedback;
 
