@@ -21,7 +21,7 @@ export class NotificationContainerComponent implements OnInit {
 
     constructor(private notificationService: NotificationService, private userService: UserService, private accountService: AccountService) {}
 
-    ngOnInit() {
+    ngOnInit(): void {
         if (this.accountService.isAuthenticated()) {
             this.loadNotifications();
         }
@@ -32,7 +32,7 @@ export class NotificationContainerComponent implements OnInit {
         });
     }
 
-    private loadNotifications() {
+    private loadNotifications(): void {
         this.notificationService.getRecentNotificationsForUser().subscribe((notifications: Notification[]) => {
             this.notifications = notifications;
             this.updateNotifications();
@@ -50,28 +50,28 @@ export class NotificationContainerComponent implements OnInit {
         });
     }
 
-    startNotification(notification: Notification) {
+    startNotification(notification: Notification): void {
         this.notificationService.interpretNotification(notification as GroupNotification);
     }
 
-    updateNotifications() {
+    updateNotifications(): void {
         this.sortedNotifications = this.notifications.sort((a: Notification, b: Notification) => {
             return moment(b.notificationDate!).valueOf() - moment(a.notificationDate!).valueOf();
         });
         this.updateNotificationCount();
     }
 
-    updateNotificationCount() {
+    updateNotificationCount(): void {
         if (!this.notifications) {
-            return (this.notificationCount = 0);
+            this.notificationCount = 0;
+        } else if (!this.currentUser) {
+            this.notificationCount = this.notifications.length;
+        } else {
+            this.notificationCount = this.notifications.filter((el: Notification) => el.notificationDate!.isAfter(this.currentUser.lastNotificationRead!)).length;
         }
-        if (!this.currentUser) {
-            return (this.notificationCount = this.notifications.length);
-        }
-        this.notificationCount = this.notifications.filter((el: Notification) => el.notificationDate!.isAfter(this.currentUser.lastNotificationRead!)).length;
     }
 
-    updateNotificationDate() {
+    updateNotificationDate(): void {
         this.userService.updateUserNotificationDate().subscribe((res: HttpResponse<User>) => {
             res.body!.lastNotificationRead = moment();
             setTimeout(() => {

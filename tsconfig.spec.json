@@ -1,30 +1,15 @@
-
 {
     "extends": "./tsconfig.json",
     "compilerOptions": {
-        "module": "es2015",
-        "target": "es2018",
-        "typeRoots": ["node_modules/@types"],
         "types": ["jest", "node"],
         "allowJs": true,
-        "moduleResolution": "node",
-        "sourceMap": true,
         "inlineSourceMap": true,
-        "emitDecoratorMetadata": true,
-        "experimentalDecorators": true,
-        "removeComments": false,
-        "noImplicitAny": true,
-        "suppressImplicitAnyIndexErrors": true,
-        "resolveJsonModule": true,
-        "skipLibCheck": true,
         "outDir": "build/www/app",
-        "lib": ["es2018", "dom"],
         "baseUrl": ".",
         "paths": {
             "@angular/*": ["node_modules/@angular/*"],
             "app/*": ["src/main/webapp/app/*"]
-        },
-        "importHelpers": true
+        }
     },
     "files": ["src/test/javascript/spec/entry.ts"],
     "include": ["src/test/javascript/spec", "src/main/webapp/app"],
