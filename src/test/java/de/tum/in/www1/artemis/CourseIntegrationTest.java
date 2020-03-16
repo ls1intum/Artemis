@@ -282,20 +282,18 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationTest {
         for (Course testCourse : testCourses) {
             Course course = request.get("/api/courses/" + testCourse.getId() + "/for-tutor-dashboard", HttpStatus.OK, Course.class);
             for (Exercise exercise : course.getExercises()) {
+                assertThat(exercise.getNumberOfAssessments()).as("Number of assessments is correct").isZero();
                 assertThat(exercise.getTutorParticipations().size()).as("Tutor participation was created").isEqualTo(1);
                 // Mock data contains exactly two participations for the modeling exercise
                 if (exercise instanceof ModelingExercise) {
-                    assertThat(exercise.getNumberOfAssessments()).as("Number of assessments is correct").isEqualTo(1);
                     assertThat(exercise.getNumberOfParticipations()).as("Number of participations is correct").isEqualTo(2);
                 }
                 // Mock data contains exactly one participation for the text exercise
                 if (exercise instanceof TextExercise) {
-                    assertThat(exercise.getNumberOfAssessments()).as("Number of assessments is correct").isZero();
                     assertThat(exercise.getNumberOfParticipations()).as("Number of participations is correct").isEqualTo(1);
                 }
                 // Mock data contains no participations for the file upload and programming exercise
                 if (exercise instanceof FileUploadExercise || exercise instanceof ProgrammingExercise) {
-                    assertThat(exercise.getNumberOfAssessments()).as("Number of assessments is correct").isZero();
                     assertThat(exercise.getNumberOfParticipations()).as("Number of participations is correct").isEqualTo(0);
                 }
                 // Check tutor participation
@@ -310,6 +308,7 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationTest {
                     StatsForInstructorDashboardDTO.class);
             long numberOfSubmissions = course.getId().equals(testCourses.get(0).getId()) ? 3 : 0; // course 1 has 3 submissions, course 2 has 0 submissions
             assertThat(stats.getNumberOfSubmissions()).as("Number of submissions is correct").isEqualTo(numberOfSubmissions);
+            assertThat(stats.getNumberOfAssessments()).as("Number of assessments is correct").isEqualTo(0);
             assertThat(stats.getTutorLeaderboardEntries().size()).as("Number of tutor leaderboard entries is correct").isEqualTo(5);
 
             StatsForInstructorDashboardDTO stats2 = request.get("/api/courses/" + testCourse.getId() + "/stats-for-instructor-dashboard",
@@ -368,22 +367,17 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationTest {
     private void getTutorDashboardsStatsWithComplaints(boolean withPoints) throws Exception {
         Course testCourse = database.addCourseWithOneTextExercise();
         var points = withPoints ? 15L : null;
-        var leaderboardId = new LeaderboardId(database.getUserByLogin("tutor1").getId(), 1L);
-        var complaintsView = new TutorLeaderboardComplaintsView(leaderboardId, 2L, 1L, points, 1L, "");
-        tutorLeaderboardComplaintsViewRepo.save(complaintsView);
-        var complaintResponsesView = new TutorLeaderboardComplaintResponsesView(leaderboardId, 1L, points, 1L, "");
-        tutorLeaderboardComplaintResponsesViewRepo.save(complaintResponsesView);
-        var answeredMoreFeedbackRequestsView = new TutorLeaderboardAnsweredMoreFeedbackRequestsView(leaderboardId, 1L, points, 1L, "");
-        tutorLeaderboardAnsweredMoreFeedbackRequestsViewRepo.save(answeredMoreFeedbackRequestsView);
-        var moreFeedbackRequestsView = new TutorLeaderboardMoreFeedbackRequestsView(leaderboardId, 3L, 1L, points, 1L, "");
-        tutorLeaderboardMoreFeedbackRequestsViewRepo.save(moreFeedbackRequestsView);
-        var assessmentsView = new TutorLeaderboardAssessmentView(leaderboardId, 2L, points, 1L, "");
-        tutorLeaderboardAssessmentViewRepo.save(assessmentsView);
+        var leaderboardId = new LeaderboardId(database.getUserByLogin("tutor1").getId(), testCourse.getExercises().iterator().next().getId());
+        tutorLeaderboardComplaintsViewRepo.save(new TutorLeaderboardComplaintsView(leaderboardId, 3L, 1L, points, testCourse.getId(), ""));
+        tutorLeaderboardComplaintResponsesViewRepo.save(new TutorLeaderboardComplaintResponsesView(leaderboardId, 1L, points, testCourse.getId(), ""));
+        tutorLeaderboardAnsweredMoreFeedbackRequestsViewRepo.save(new TutorLeaderboardAnsweredMoreFeedbackRequestsView(leaderboardId, 1L, points, testCourse.getId(), ""));
+        tutorLeaderboardMoreFeedbackRequestsViewRepo.save(new TutorLeaderboardMoreFeedbackRequestsView(leaderboardId, 3L, 1L, points, testCourse.getId(), ""));
+        tutorLeaderboardAssessmentViewRepo.save(new TutorLeaderboardAssessmentView(leaderboardId, 2L, points, testCourse.getId(), ""));
 
         StatsForInstructorDashboardDTO stats = request.get("/api/courses/" + testCourse.getId() + "/stats-for-tutor-dashboard", HttpStatus.OK,
                 StatsForInstructorDashboardDTO.class);
         var currentTutorLeaderboard = stats.getTutorLeaderboardEntries().get(0);
-        assertThat(currentTutorLeaderboard.getNumberOfTutorComplaints()).isEqualTo(2);
+        assertThat(currentTutorLeaderboard.getNumberOfTutorComplaints()).isEqualTo(3);
         assertThat(currentTutorLeaderboard.getNumberOfAcceptedComplaints()).isEqualTo(1);
         assertThat(currentTutorLeaderboard.getNumberOfComplaintResponses()).isEqualTo(1);
         assertThat(currentTutorLeaderboard.getNumberOfAnsweredMoreFeedbackRequests()).isEqualTo(1);
