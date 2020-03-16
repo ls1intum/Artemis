@@ -17,7 +17,7 @@ import { AlertError } from 'app/shared/alert/alert-error.model';
         </div>
     `,
 })
-export class JhiAlertErrorComponent implements OnDestroy {
+export class AlertErrorComponent implements OnDestroy {
     alerts: JhiAlert[] = [];
     errorListener: Subscription;
     httpErrorListener: Subscription;

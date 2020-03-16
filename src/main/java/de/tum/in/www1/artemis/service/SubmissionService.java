@@ -2,12 +2,17 @@ package de.tum.in.www1.artemis.service;
 
 import static de.tum.in.www1.artemis.config.Constants.MAX_NUMBER_OF_LOCKED_SUBMISSIONS_PER_TUTOR;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.Submission;
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.SubmissionRepository;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
@@ -15,16 +20,21 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 @Service
 public class SubmissionService {
 
+    private final Logger log = LoggerFactory.getLogger(SubmissionService.class);
+
     protected SubmissionRepository submissionRepository;
+
+    protected ResultRepository resultRepository;
 
     private UserService userService;
 
     protected AuthorizationCheckService authCheckService;
 
-    public SubmissionService(SubmissionRepository submissionRepository, UserService userService, AuthorizationCheckService authCheckService) {
+    public SubmissionService(SubmissionRepository submissionRepository, UserService userService, AuthorizationCheckService authCheckService, ResultRepository resultRepository) {
         this.submissionRepository = submissionRepository;
         this.userService = userService;
         this.authCheckService = authCheckService;
+        this.resultRepository = resultRepository;
     }
 
     /**
@@ -101,5 +111,42 @@ public class SubmissionService {
                 }
             }
         }
+    }
+
+    /**
+     * Creates a new Result object, assigns it to the given submission and stores the changes to the database.
+     * @param submission the submission for which a new result should be created
+     * @return the newly created result
+     */
+    public Result setNewResult(Submission submission) {
+        Result result = new Result();
+        result.setSubmission(submission);
+        submission.setResult(result);
+        result.setParticipation(submission.getParticipation());
+        result = resultRepository.save(result);
+        submissionRepository.save(submission);
+        return result;
+    }
+
+    /**
+     * Soft lock the submission to prevent other tutors from receiving and assessing it. We set the assessor and save the result to soft lock the assessment in the client, i.e. the client will not allow
+     * tutors to assess a submission when an assessor is already assigned. If no result exists for this submission we create one first.
+     *
+     * @param submission the submission to lock
+     */
+    protected Result lockSubmission(Submission submission) {
+        Result result = submission.getResult();
+        if (result == null) {
+            result = setNewResult(submission);
+        }
+
+        if (result.getAssessor() == null) {
+            result.setAssessor(userService.getUser());
+        }
+
+        result.setAssessmentType(AssessmentType.MANUAL);
+        result = resultRepository.save(result);
+        log.debug("Assessment locked with result id: " + result.getId() + " for assessor: " + result.getAssessor().getName());
+        return result;
     }
 }

@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs/Observable';
+import { tap } from 'rxjs/operators';
 
 import { TextSubmission } from 'app/entities/text-submission.model';
 import { createRequestOption } from 'app/shared/util/request-util';
@@ -31,14 +32,6 @@ export class TextSubmissionService {
             .map((res: EntityResponseType) => this.convertResponse(res));
     }
 
-    get(textSubmissionId: number): Observable<HttpResponse<TextSubmission>> {
-        return this.http
-            .get<TextSubmission>(`api/text-submissions/${textSubmissionId}`, {
-                observe: 'response',
-            })
-            .map((res: HttpResponse<TextSubmission>) => this.convertResponse(res));
-    }
-
     getTextSubmissionsForExercise(exerciseId: number, req: { submittedOnly?: boolean; assessedByTutor?: boolean }): Observable<HttpResponse<TextSubmission[]>> {
         const options = createRequestOption(req);
         return this.http
@@ -49,8 +42,15 @@ export class TextSubmissionService {
             .map((res: HttpResponse<TextSubmission[]>) => this.convertArrayResponse(res));
     }
 
-    getTextSubmissionForExerciseWithoutAssessment(exerciseId: number): Observable<TextSubmission> {
-        return this.http.get<TextSubmission>(`api/exercises/${exerciseId}/text-submission-without-assessment`);
+    getTextSubmissionForExerciseWithoutAssessment(exerciseId: number, lock?: boolean): Observable<TextSubmission> {
+        let url = `api/exercises/${exerciseId}/text-submission-without-assessment`;
+        if (lock) {
+            url += '?lock=true';
+        }
+        return this.http.get<TextSubmission>(url).pipe(
+            tap(submission => (submission.participation.submissions = [submission])),
+            tap(submission => (submission.participation.results = [submission.result])),
+        );
     }
 
     private convertResponse(res: EntityResponseType): EntityResponseType {

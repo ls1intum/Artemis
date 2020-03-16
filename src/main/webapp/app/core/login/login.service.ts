@@ -39,7 +39,7 @@ export class LoginService {
         });
     }
 
-    loginWithToken(jwt: string, rememberMe: string) {
+    loginWithToken(jwt: string, rememberMe: boolean) {
         return this.authServerProvider.loginWithToken(jwt, rememberMe);
     }
 

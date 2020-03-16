@@ -6,7 +6,7 @@ import * as moment from 'moment';
 import { AssessmentHeaderComponent } from 'app/assessment/assessment-header/assessment-header.component';
 import { ArtemisTestModule } from '../../test.module';
 import { Result } from 'app/entities/result.model';
-import { JhiAlertComponent } from 'app/shared/alert/alert.component';
+import { AlertComponent } from 'app/shared/alert/alert.component';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 
 describe('AssessmentHeaderComponent', () => {
@@ -34,7 +34,7 @@ describe('AssessmentHeaderComponent', () => {
     });
 
     it('should include jhi-alert', () => {
-        const jhiAlertComponent = fixture.debugElement.query(By.directive(JhiAlertComponent));
+        const jhiAlertComponent = fixture.debugElement.query(By.directive(AlertComponent));
         expect(jhiAlertComponent).toBeTruthy();
     });
 
@@ -43,7 +43,7 @@ describe('AssessmentHeaderComponent', () => {
         alertService.success('test-alert-string');
         fixture.detectChanges();
 
-        const jhiAlertComponent = fixture.debugElement.query(By.directive(JhiAlertComponent));
+        const jhiAlertComponent = fixture.debugElement.query(By.directive(AlertComponent));
         const jhiAlertContent = jhiAlertComponent.nativeElement.textContent;
         expect(jhiAlertContent).toContain('test-alert-string');
     });
