@@ -25,10 +25,14 @@ export function setup() {
     // Create course
     artemis = login(adminUsername, adminPassword);
 
-    if(__ENV.CREATEUSERS) {
+    if(__ENV.CREATE_USERS) {
+        console.log("Try to create " + __ENV.ITERATIONS + " users");
         for (let i = 1; i <= __ENV.ITERATIONS; i++) {
             userId = newUser(artemis, i, baseUsername, basePassword);
         }
+    }
+    else {
+        console.log("Do not create users");
     }
 
     courseId = newCourse(artemis);
@@ -49,8 +53,8 @@ export function setup() {
 }
 
 export default function (data) {
-    // The user is randomly selected
-    const userId = __VU; // Math.floor((Math.random() * maxTestUser)) + 1;
+    // The user id (1, 2, 3) is stored in __VU
+    const userId = __VU;
     const currentUsername = baseUsername.replace('USERID', userId);
     const currentPassword = basePassword.replace('USERID', userId);
     const artemis = login(currentUsername, currentPassword);

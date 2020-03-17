@@ -35,7 +35,7 @@ while (( "$#" )); do
       adminPassword=$2
       shift 2
       ;;
-    --createUsers)
+    -c|--createUsers)
       createUsers=true
       shift 1
       ;;
@@ -63,7 +63,7 @@ eval set -- "$PARAMS"
 # Exceptions and defaults
 baseUrl=${baseUrl:?You have to specify the base URL}
 basePassword=${basePassword:?"You have to specify the test user's base password"}
-baseUsername=${baseUsername:?"You have to specify the test user's username"}
+baseUsername=${baseUsername:?"You have to specify the test user's base username"}
 adminUsername=${adminUsername:?You have to specify the username of one admin}
 adminPassword=${adminPassword:?You have to specify the password of one admin}
 createUsers=false
@@ -74,7 +74,7 @@ timeout=${timeout:-60}
 echo "################### STARTING API Tests ###################"
 result=$(docker run -i --rm --network=host --name api-tests -v "$baseDir":/src -e BASE_USERNAME="$baseUsername" -e BASE_URL="$baseUrl" \
   -e BASE_PASSWORD="$basePassword" -e ITERATIONS="$iterations" -e TIMEOUT="$timeout" \
-  -e ADMIN_USERNAME="$adminUsername" -e ADMIN_PASSWORD="$adminPassword" \
+  -e ADMIN_USERNAME="$adminUsername" -e ADMIN_PASSWORD="$adminPassword" -e CREATE_USERS="$createUsers" \
   loadimpact/k6 run /src/"$tests".js 2>&1)
 
 echo "########## FINISHED testing - evaluating result ##########"
