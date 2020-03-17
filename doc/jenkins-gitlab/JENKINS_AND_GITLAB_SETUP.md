@@ -23,7 +23,7 @@ If you have one single server, or your own NGINX instance, just skip all NGINX r
 
 1. Pull the latest GitLab Docker image
 
-        docker pull gitlab/gitlab:ce-latest
+        docker pull gitlab/gitlab-ce:latest
         
 2. Run the image (and change the values for hostname and ports)
 
