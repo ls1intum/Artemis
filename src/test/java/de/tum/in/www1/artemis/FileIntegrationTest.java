@@ -129,8 +129,8 @@ public class FileIntegrationTest extends AbstractSpringIntegrationTest {
         doReturn(new GitUtilService.FileRepositoryUrl(originRepoFile)).when(versionControlService).getCloneRepositoryUrl(anyString(), anyString());
 
         programmingExercise.setId(null);
-        request.post(ROOT + SETUP, programmingExercise, HttpStatus.OK);
-        // programmingExerciseService.setupProgrammingExercise(programmingExercise);
+        // request.post(ROOT + SETUP, programmingExercise, HttpStatus.OK);
+        programmingExerciseService.setupProgrammingExercise(programmingExercise);
 
         request.get("/files/templates/" + programmingExercise.getProgrammingLanguage().toString().toLowerCase() + "/exercise", HttpStatus.OK, byte[].class);
     }
@@ -221,21 +221,28 @@ public class FileIntegrationTest extends AbstractSpringIntegrationTest {
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void testGetLectureAttachment() throws Exception {
         Lecture lecture = database.createCourseWithLecture(true);
+        lecture.setTitle("Test title");
+        lecture.setDescription("Test");
+        lecture.setStartDate(ZonedDateTime.now().minusHours(1));
 
         Attachment attachment = ModelFactory.generateAttachment(ZonedDateTime.now(), lecture);
 
-        MockMultipartFile file = new MockMultipartFile("file", "attachment.png", "application/json", "some data".getBytes());
+        // create file
+        MockMultipartFile file = new MockMultipartFile("file", "attachment.pdf", "application/json", "some data".getBytes());
+        // upload file
         JsonNode response = request.postWithMultipartFile("/api/fileUpload?keepFileName=true", file.getOriginalFilename(), "file", file, JsonNode.class, HttpStatus.CREATED);
         String responsePath = response.get("path").asText();
+        // move file from temp folder to correct folder
         String attachmentPath = fileService.manageFilesForUpdatedFilePath(null, responsePath, Constants.LECTURE_ATTACHMENT_FILEPATH, lecture.getId(), true);
 
         attachment.setLink(attachmentPath);
         lecture.addAttachments(attachment);
+
         lectureRepo.save(lecture);
         attachmentRepo.save(attachment);
 
         // get access token
-        String accessToken = request.get("/api/files/attachments/access-token/attachment.png", HttpStatus.OK, String.class);
+        String accessToken = request.get("/api/files/attachments/access-token/attachment.pdf", HttpStatus.OK, String.class);
 
         String receivedAttachment = request.get(attachmentPath + "?access_token=" + accessToken, HttpStatus.OK, String.class);
         assertThat(receivedAttachment).isEqualTo("some data");
