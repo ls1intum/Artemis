@@ -52,6 +52,8 @@ export class CourseUpdateComponent implements OnInit {
         this.isSaving = false;
         this.activatedRoute.data.subscribe(({ course }) => {
             this.course = course;
+            // complaints are only enabled when both values are positive
+            this.complaintsEnabled = this.course.maxComplaints > 0 && this.course.maxComplaintTimeDays > 0;
         });
         this.courseForm = new FormGroup({
             id: new FormControl(this.course.id),
@@ -60,13 +62,6 @@ export class CourseUpdateComponent implements OnInit {
                 validators: [Validators.required, Validators.minLength(3), regexValidator(this.shortNamePattern)],
                 updateOn: 'blur',
             }),
-            maxComplaints: new FormControl(this.course.maxComplaints, {
-                validators: [Validators.required, Validators.min(0)],
-            }),
-            maxComplaintTimeDays: new FormControl(this.course.maxComplaintTimeDays, {
-                validators: [Validators.required, Validators.min(0)],
-            }),
-            studentQuestionsEnabled: new FormControl(this.course.studentQuestionsEnabled),
             studentGroupName: new FormControl(this.course.studentGroupName, [Validators.required]),
             teachingAssistantGroupName: new FormControl(this.course.teachingAssistantGroupName),
             instructorGroupName: new FormControl(this.course.instructorGroupName, [Validators.required]),
@@ -74,6 +69,13 @@ export class CourseUpdateComponent implements OnInit {
             startDate: new FormControl(this.course.startDate),
             endDate: new FormControl(this.course.endDate),
             onlineCourse: new FormControl(this.course.onlineCourse),
+            maxComplaints: new FormControl(this.course.maxComplaints, {
+                validators: [Validators.required, Validators.min(0)],
+            }),
+            maxComplaintTimeDays: new FormControl(this.course.maxComplaintTimeDays, {
+                validators: [Validators.required, Validators.min(0)],
+            }),
+            studentQuestionsEnabled: new FormControl(this.course.studentQuestionsEnabled),
             registrationEnabled: new FormControl(this.course.registrationEnabled),
             presentationScore: new FormControl({ value: this.course.presentationScore, disabled: this.course.presentationScore === 0 }, [
                 Validators.min(1),
@@ -206,7 +208,7 @@ export class CourseUpdateComponent implements OnInit {
         }
     }
 
-    changeEvent(event: Event) {
+    changeComplaintsEnabled(event: Event) {
         // @ts-ignore
         if (event.target.checked) {
             this.complaintsEnabled = true;

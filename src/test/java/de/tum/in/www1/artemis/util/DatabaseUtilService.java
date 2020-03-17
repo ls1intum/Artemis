@@ -586,7 +586,7 @@ public class DatabaseUtilService {
         return exercise.getGradingCriteria();
     }
 
-    public void addCourseWithOneModelingExercise() {
+    public Course addCourseWithOneModelingExercise() {
         long currentCourseRepoSize = courseRepo.count();
         long currentExerciseRepoSize = exerciseRepo.count();
         Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "instructor");
@@ -599,6 +599,7 @@ public class DatabaseUtilService {
         assertThat(courseRepo.count()).as("a course got stored").isEqualTo(currentCourseRepoSize + 1L);
         assertThat(course.getExercises()).as("course contains the exercise").containsExactlyInAnyOrder(modelingExercise);
         assertThat(modelingExercise.getPresentationScoreEnabled()).as("presentation score is enabled").isTrue();
+        return course;
     }
 
     public Course addCourseWithOneTextExercise() {

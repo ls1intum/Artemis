@@ -147,6 +147,7 @@
             <!-- RESULTS END -->
             <jhi-complaint-interactions
                 *ngIf="
+                    exercise &&
                     exercise.course?.complaintsEnabled &&
                     exercise.type === PROGRAMMING &&
                     studentParticipation &&

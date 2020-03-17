@@ -69,11 +69,13 @@ public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegratio
 
     private Complaint moreFeedbackRequest;
 
+    private Course course;
+
     @BeforeEach
     public void initTestCase() throws Exception {
         database.addUsers(2, 2, 1);
         // Initialize with 5 max complaints and 2 weeks max complaint deadline
-        database.addCourseWithOneModelingExercise();
+        course = database.addCourseWithOneModelingExercise();
         modelingExercise = (ModelingExercise) exerciseRepo.findAll().get(0);
         saveModelingSubmissionAndAssessment();
         complaint = new Complaint().result(modelingAssessment).complaintText("This is not fair").complaintType(ComplaintType.COMPLAINT);
@@ -514,8 +516,9 @@ public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegratio
     public void getNumberOfAllowedComplaintsInCourse() throws Exception {
         complaint.setStudent(database.getUserByLogin("student1"));
         complaintRepo.save(complaint);
-        long nrOfAllowedComplaints = request.get("/api/" + modelingExercise.getCourse().getId() + "/allowed-complaints", HttpStatus.OK, Long.class);
-        assertThat(nrOfAllowedComplaints).isEqualTo(3l);
+        Long nrOfAllowedComplaints = request.get("/api/" + modelingExercise.getCourse().getId() + "/allowed-complaints", HttpStatus.OK, Long.class);
+        assertThat(nrOfAllowedComplaints.intValue()).isEqualTo(course.getMaxComplaints());
+        // TODO: there should be a second test case where the student already has 2 complaints and the number is reduced
     }
 
     @Test

@@ -104,7 +104,7 @@
         </div>
     </div>
     <jhi-complaint-interactions
-        *ngIf="modelingExercise.course?.complaintsEnabled && modelingExercise"
+        *ngIf="modelingExercise && modelingExercise.course?.complaintsEnabled"
         [exercise]="modelingExercise"
         [participation]="participation"
         [result]="result"

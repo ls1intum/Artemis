@@ -71,7 +71,7 @@
     </div>
 
     <jhi-complaint-interactions
-        *ngIf="textExercise.course?.complaintsEnabled && result && participation"
+        *ngIf="textExercise && textExercise.course?.complaintsEnabled && result && participation"
         [exercise]="textExercise"
         [result]="result"
         [participation]="participation"

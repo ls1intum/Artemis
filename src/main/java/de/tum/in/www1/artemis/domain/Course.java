@@ -273,8 +273,8 @@ public class Course implements Serializable {
         this.maxComplaintTimeDays = maxComplaintTimeDays;
     }
 
-    public Boolean getComplaintsEnabled() {
-        return this.maxComplaints != 0 && this.maxComplaintTimeDays != 0;
+    public boolean getComplaintsEnabled() {
+        return this.maxComplaints > 0 && this.maxComplaintTimeDays > 0;
     }
 
     public boolean getStudentQuestionsEnabled() {

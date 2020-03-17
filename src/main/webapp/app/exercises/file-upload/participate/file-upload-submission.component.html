@@ -88,7 +88,7 @@
         <jhi-file-upload-result [result]="result"></jhi-file-upload-result>
     </div>
     <jhi-complaint-interactions
-        *ngIf="fileUploadExercise.course?.complaintsEnabled && fileUploadExercise"
+        *ngIf="fileUploadExercise && fileUploadExercise.course?.complaintsEnabled"
         [result]="result"
         [participation]="participation"
         [exercise]="fileUploadExercise"
