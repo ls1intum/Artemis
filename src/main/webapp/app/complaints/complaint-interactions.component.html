@@ -25,7 +25,7 @@
             class="flex-grow-1"
             [resultId]="result?.id"
             [allowedComplaints]="numberOfAllowedComplaints"
-            [maxComplaintsPerCourse]="exercise.course.maxComplaints"
+            [maxComplaintsPerCourse]="exercise.course?.maxComplaints"
             [complaintType]="ComplaintType.COMPLAINT"
             (submit)="hasComplaint = true"
         ></jhi-complaint-form>
