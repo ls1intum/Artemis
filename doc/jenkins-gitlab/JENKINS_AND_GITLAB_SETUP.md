@@ -25,10 +25,12 @@ If you have one single server, or your own NGINX instance, just skip all NGINX r
 
         docker pull gitlab/gitlab-ce:latest
         
-2. Run the image (and change the values for hostname and ports)
+2. Run the image (and change the values for hostname and ports).
+Add `-p 22:22` if cloning/pushing via ssh should be possible.
+Make sure to remove the comments from the command before running it.
 
         docker run -itd --name gitlab \
-            --hostname your.gitlab.domain.com \   # Specific the hostname
+            --hostname your.gitlab.domain.com \   # Specify the hostname
             --restart always \
             -p 80:80 -p 443:443 {-p 22:22} \     # Alternative 1: If you are NOT running your own NGINX instance
             -p <some port of your choosing>:80    # Alternative 2: If you ARE running your own NGINX instance
@@ -39,8 +41,9 @@ If you have one single server, or your own NGINX instance, just skip all NGINX r
 3. Wait a couple of minutes until GitLab is set up, then open the instance in you browser and set a first admin password of your choosing. 
 You can then login using the username "root" and you password.
 
-4. We recommend to rename the "root" admin user to "artemis". 
-Use the same password in the Artemis configuration file _application-prod.yml_
+4. We recommend to rename the "root" admin user to "artemis".
+To rename the user, click on the image on the top right and select "Settings". Now select "Account" on the left and change the username.
+Use the same password in the Artemis configuration file _application-artemis.yml_
 
         artemis:
             version-control:
@@ -49,21 +52,29 @@ Use the same password in the Artemis configuration file _application-prod.yml_
             
 5. **If you run your own NGINX, then skip the next steps (6-7)**
 
-6. Create the SSL directory in the GitLab Docker image, where you will store the certificate and privatet key of the certificate (see e.g. [Let's Encrypt](https://letsencrypt.org/docs/)) of your server and copy the certificate (fullchain) and private key
-
-        docker exec gitlab mkdir -p /etc/gitlab/ssl
-        docker cp path.to.your.fullchain.cert gitlab:/etc/gitlab/ssl/your.gitlab.domain.crt
-        docker cp path.to.your.key gitlab:/etc/gitlab/ssl/your.gitlab.domain.key
-        
-7. Update the GitLab config file, so that you force https and redirect all http traffic to https
+6. Configure Gitlab to automatically generate certificates using LetsEncrypt.
+Edit the Gitlab configuration
 
         docker exec -it gitlab /bin/bash
-        vim /etc/gitlab/gitlab.rb
-        # Now, search for the 'external_url' key (should be in the first 30 lines) and use the following values here:
-        external_url 'https://your.gitlab.domain.com'
+        nano /etc/gitlab/gitlab.rb
+
+    And add the following part
+
+        letsencrypt['enable'] = true                      # GitLab 10.5 and 10.6 require this option
+        external_url "https://your.gitlab.domain.com"         # Must use https protocol
+        letsencrypt['contact_emails'] = ['gitlab@your.gitlab.domain.com'] # Optional
+        
         nginx['redirect_http_to_https'] = true
+        nginx['redirect_http_to_https_port'] = 80
+
+6. Reconfigure gitlab to generate the certificate.
+
         # Save your changes and finally run
         gitlab-ctl reconfigure
+        
+    If This command fails, try using
+    
+        gitlab-ctl renew-le-certs
 
 8. Login to GitLab using the Artemis admin account and go to the profile settings (upper right corned → _Settings_)
 
@@ -88,11 +99,30 @@ Use the same password in the Artemis configuration file _application-prod.yml_
     
     </details> 
 
-11. Copy the generated token and insert it into the Artemis configuration file _application-prod.yml_
+11. Copy the generated token and insert it into the Artemis configuration file _application-artemis.yml_
     
         artemis:
             version-control:
                 token: your.generated.api.token
+                
+12. Adjust the monitoring-endpoint whitelist.\
+    Run the following command and 
+    
+    Edit the Gitlab configuration
+    
+            docker exec -it gitlab /bin/bash
+            nano /etc/gitlab/gitlab.rb
+            
+    And add
+        
+        gitlab_rails['monitoring_whitelist'] = ['0.0.0.0/0']
+
+This will disable the firewall for all ip-adresses.\
+If you only want to allow the server that runs Artemis to query the information, replace `0.0.0.0/0` with `ARTEMIS.SERVER.IP.ADRESS/32`
+
+Reconfigure Gitlab
+    
+    gitlab-ctl reconfigure
 
 ### Upgrade GitLab
 You can upgrade GitLab by downloading the latest Docker image and starting a new container with the old volumes:
@@ -109,24 +139,46 @@ GitLab should configure itself automatically. If there are no issues, you can de
 
 ## Jenkins
 
-### Jenkins Server Setup
-1. Pull the latest Jenkins LTS image
+### Jenkins + Maven + Java 12
+In order to install and use Maven with Java 12 in the Jenkins container, you have to first install maven, then download Java 12
+and finally configure Maven to use Java 12 instead of the default version.
 
-        docker pull jenkins/jenkins:lts
-        
-2. Create a folder on your host machine containing your fullchain certificate and private certificate key (see e.g. [Let's Encrypt](https://letsencrypt.org/docs/))
+To save you from performing all these steps manually, we have prepared a Docker image that can be used!
 
-3. Run Jenkins by executing the following command (change the hostname and choose which port alternative you need)
+Copy the following content in a file named `Dockerfile`
 
-        docker run -itd --name jenkins \
-            --restart always \
-            -v jenkins_data:/var/jenkins_home \
-            -v /var/run/docker.sock:/var/run/docker.sock \
-            -e VIRTUAL_HOST=your.jenkins.domain -e VIRTUAL_PORT=8080 \ # Alternative 1: If you are NOT using a separate NGINX instance
-            -p 8080:8080                                               # Alternative 2: If you ARE using a separate NGINX instance
-            jenkins/jenkins:lts
-            
-4. Run the NGINX proxy docker container, this will automatically setup all reverse proxies and force https on all connections. 
+    FROM jenkins/jenkins:lts
+    
+    LABEL description="Jenkins with maven pre-installed for Artemis"
+    
+    USER root
+    
+    RUN apt update
+    RUN apt-get install -y maven
+    RUN cd /usr/lib/jvm && \
+        wget https://github.com/AdoptOpenJDK/openjdk12-binaries/releases/download/jdk-12.0.2%2B10/OpenJDK12U-jdk_x64_linux_hotspot_12.0.2_10.tar.gz && \
+        tar -zxf OpenJDK12U-jdk_x64_linux_hotspot_12.0.2_10.tar.gz \
+        && mv jdk-12.0.2+10 java-12-openjdk-amd64 \
+        && rm OpenJDK12U-jdk_x64_linux_hotspot_12.0.2_10.tar.gz
+    RUN chown -R root:root /usr/lib/jvm/java-12-openjdk-amd64
+    RUN JAVA_HOME="/usr/lib/jvm/java-12-openjdk-amd64" && export JAVA_HOME
+    ENV JAVA_HOME /usr/lib/jvm/java-12-openjdk-amd64
+    
+    USER jenkins
+
+Now run the command `docker build --no-cache -t jenkins-artemis .`
+This might take a while as we download Java, but this is only required once.
+
+### Jenkins Server Setup        
+1. Run steps 2-4 only if you are **not** using a seperate instance, otherwise continue with step 5
+
+2. Create a file increasing the maximum file size for the nginx proxy.
+The nginx-proxy uses a default file limit that is too small for the plugin that will be uploaded later.
+ **Skip this step if you have your own NGINX instance.**
+
+        echo "client_max_body_size 16m;" > client_max_body_size.conf
+
+3. Run the NGINX proxy docker container, this will automatically setup all reverse proxies and force https on all connections. 
 (This image would also setup proxies for all other running containers that have the VIRTUAL_HOST and VIRTUAL_PORT environment variables). 
 **Skip this step if you have your own NGINX instance.**
 
@@ -134,15 +186,41 @@ GitLab should configure itself automatically. If there are no issues, you can de
             -p 80:80 -p 443:443 \
             --restart always \
             -v /var/run/docker.sock:/tmp/docker.sock:ro \
-            -v path.to.your.cert:/etc/nginx/certs jwilder/nginx-proxy
+            -v /etc/nginx/certs \
+            -v /etc/nginx/vhost.d \
+            -v /usr/share/nginx/html \
+            -v $(pwd)/client_max_body_size.conf:/etc/nginx/conf.d/client_max_body_size.conf:ro \
+            jwilder/nginx-proxy
             
-5. Open Jenkins in your browser and setup the admin user account (install all suggested plugins). 
+4. The nginx proxy needs another docker-container to generate letsencrypt certificates.
+Run the following command to start it (make sure to change the email-address).
+**Skip this step if you have your own NGINX instance.**
+
+        docker run --detach \
+            --name nginx_proxy-letsencrypt \
+            --volumes-from nginx_proxy \
+            --volume /var/run/docker.sock:/var/run/docker.sock:ro \
+            --env "DEFAULT_EMAIL=mail@yourdomain.tld" \
+            jrcs/letsencrypt-nginx-proxy-companion
+
+5. Run Jenkins by executing the following command (change the hostname and choose which port alternative you need)
+
+        docker run -itd --name jenkins \
+            --restart always \
+            -v jenkins_data:/var/jenkins_home \
+            -v /var/run/docker.sock:/var/run/docker.sock \
+            -e VIRTUAL_HOST=your.jenkins.domain -e VIRTUAL_PORT=8080 \ # Alternative 1: If you are NOT using a separate NGINX instance
+            -e LETSENCRYPT_HOST=your.jenkins.domain \                  # Only needed if Alternative 1 is used
+            -p 8080:8080                                               # Alternative 2: If you ARE using a separate NGINX instance
+            jenkins-artemis
+            
+6. Open Jenkins in your browser and setup the admin user account (install all suggested plugins). 
 You can get the initial admin password using the following command.
 
         # Jenkins highlights the password in the logs, you can't miss it
         docker logs -f jenkins
 
-6. Set the chosen credentials in the Artemis configuration _application-prod.yml_
+7. Set the chosen credentials in the Artemis configuration _application-prod.yml_
 
         artemis:
             continuous-integration:
@@ -155,13 +233,13 @@ You will need to install the following plugins (apart from the recommended ones 
 * [Multiple SCMs](https://plugins.jenkins.io/multiple-scms/) for combining the exercise test and assignment repositories in one build
 * [Post Build Task](https://plugins.jenkins.io/postbuild-task/) for preparing build results to be exported to Artemis
 * [Xvfb](https://plugins.jenkins.io/xvfb/) for exercises based on GUI libraries, for which tests have to have some virtual display
-* [Timestamper](https://plugins.jenkins.io/timestamper/) for adding the time to every line of the build output
+* [Timestamper](https://plugins.jenkins.io/timestamper/) for adding the time to every line of the build output (Timestamper might already be installed)
 
 ### Timestamper Configuration
 Go to _Manage Jenkins → Configure System_. 
 There you will find the Timestamper configuration, use the following value for both formats:
 
-        '<b>'yyyy-MM-dd'T'HH:mm:ssZ'</b> '
+        '<b>'yyyy-MM-dd'T'HH:mm:ssX'</b> '
 
 ![](timestamper_config.png)
 
@@ -227,17 +305,17 @@ After you click on "Test Connection", everything should work fine.
 #### Server Notification Token
 1. Create a new Jenkins credential containing the token, which gets send by the server notification plugin to Artemis with every build result:\
     a. **Kind**: Secret text\
-    b. **Secret**: _your.secret_token_value_ (choose any value you want, copy it for the nex step)
-    c. Leave the ID field blank
+    b. **Secret**: _your.secret_token_value_ (choose any value you want, copy it for the nex step)\
+    c. Leave the ID field blank\
     d. The description is up to you
 
-2. Copy the generated ID of the new credentials and put it into the Artemis configuration _application-prod.yml_
+2. Copy the generated ID of the new credentials and put it into the Artemis configuration _application-artemis.yml_
 
         artemis:
             continuous-integration:
                 artemis-authentication-token-key: the.id.of.the.notification.token.credential
                 
-3. Copy the actual value you chose for the token and put it into the Artemis configuration _application-prod.yml_
+3. Copy the actual value you chose for the token and put it into the Artemis configuration _application-artemis.yml_
 
         artemis:
             continuous-integration:
@@ -251,7 +329,7 @@ After you click on "Test Connection", everything should work fine.
     d. Leave the ID field blank\
     e. The description is up to you
 
-2. Copy the generated ID of the new credentials and put it into the Artemis configuration file _application-prod.yml_
+2. Copy the generated ID of the new credentials and put it into the Artemis configuration file _application-artemis.yml_
 
         artemis:
             continuous-integration:
@@ -291,7 +369,7 @@ In order to get this token, you have to do the following steps:
     </details>
 
 10. Copy the value of **$some-long-encrypted-value without the curly brackets!**. This is the encrypted value of the **$gitlab-push-token** you generated in step 5.
-11. Now, you can delete this test project and input the following values into your Artemis configuration _application-prod.yml_ (replace the placeholders with the actual values you wrote down)
+11. Now, you can delete this test project and input the following values into your Artemis configuration _application-artemis.yml_ (replace the placeholders with the actual values you wrote down)
 
         artemis:
             version-control:
@@ -299,39 +377,19 @@ In order to get this token, you have to do the following steps:
             continuous-integration:
                 secret-push-token: $some-long-encrytped-value
                 
-### Jenkins + Maven + Java 12
-In order to install and use Maven with Java 12 in the Jenkins container, you have to first install maven, then download Java 12
-and findall configure Maven to use Java 12 instead of the default version:
-
-```shell script
-docker exec -it -u root jenkins /bin/bash
-apt update
-apt install maven
-cd /usr/lib/jvm
-wget https://github.com/AdoptOpenJDK/openjdk12-binaries/releases/download/jdk-12.0.2%2B10/OpenJDK12U-jdk_x64_linux_hotspot_12.0.2_10.tar.gz
-tar -zxf OpenJDK12U-jdk_x64_linux_hotspot_12.0.2_10.tar.gz && mv jdk-12.0.2+10 java-12-openjdk-amd64
-chown -R root:root java-12-openjdk-amd64
-```
-
-While still having the shell in the Jenkins container open, install your preferred editor (e.g. vim using `apt install vim`) and open _/usr/share/maven/bin/mvn_ and paste
-the following into the first line (after the header comments):
-
-```
-JAVA_HOME="/usr/lib/jvm/java-12-openjdk-amd64"
-```
-
-Save and close the file. Run the command `mvn --version` to verify that Maven with Java 12 works as expected.
-You can now delete `OpenJDK12U-jdk_x64_linux_hotspot_12.0.2_10.tar.gz`.
 
 ### Upgrade Jenkins
-Pull the latest LTS version, stop the running container and mount the Jenkins data volume to the new LTS container:
+Build the latest version of the jenkins image, stop the running container and mount the Jenkins data volume to the new LTS container:
 ```shell script
 docker stop jenkins
 docker pull jenkins/jenkins:lts
+docker build --no-cache -t jenkins-artemis .
 docker rename jenkins jenkins_old
 ```
-Now start a new Jenkins container just as described in **step 3** of the setup process.\
-You will have to re-install Maven as described in the previous section, we can only migrate the data, but no installed binaries.\
+Make sure to perform this command in the folder where the `Dockerfile` created in the point **Jenkins + Maven + Java 12** is located.
+
+Now start a new Jenkins container just as described in **step 5** of the setup process.\
+
 Jenkins should be up and running again. If there are no issues, you can delete the old container using `docker rm jenkins_old` and the old image (see `docker images`) using `docker rmi <old-image-id>`.
 
 You should also update the Jenkins plugins regurlarly due to security reasons. You can update them directly in the Web User Interface in the Plugin Manager.
