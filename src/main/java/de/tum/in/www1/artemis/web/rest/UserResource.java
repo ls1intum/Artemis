@@ -7,7 +7,6 @@ import java.util.Optional;
 
 import javax.validation.Valid;
 
-import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -27,6 +26,7 @@ import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
 import de.tum.in.www1.artemis.security.AuthoritiesConstants;
 import de.tum.in.www1.artemis.service.UserService;
 import de.tum.in.www1.artemis.service.dto.UserDTO;
+import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EmailAlreadyUsedException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;

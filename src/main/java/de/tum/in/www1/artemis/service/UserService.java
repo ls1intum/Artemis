@@ -9,8 +9,6 @@ import java.util.stream.Collectors;
 
 import javax.validation.constraints.NotNull;
 
-import de.tum.in.www1.artemis.domain.enumeration.SortingOrder;
-import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 import org.jasypt.encryption.pbe.StandardPBEStringEncryptor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,6 +26,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.SortingOrder;
 import de.tum.in.www1.artemis.exception.UsernameAlreadyUsedException;
 import de.tum.in.www1.artemis.repository.AuthorityRepository;
 import de.tum.in.www1.artemis.repository.GuidedTourSettingsRepository;
@@ -41,6 +40,7 @@ import de.tum.in.www1.artemis.service.connectors.VcsUserManagementService;
 import de.tum.in.www1.artemis.service.dto.UserDTO;
 import de.tum.in.www1.artemis.service.ldap.LdapUserDto;
 import de.tum.in.www1.artemis.service.ldap.LdapUserService;
+import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.errors.EmailAlreadyUsedException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.rest.errors.InvalidPasswordException;
