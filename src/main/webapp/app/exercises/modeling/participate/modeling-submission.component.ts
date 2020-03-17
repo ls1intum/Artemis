@@ -93,7 +93,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     ngOnInit(): void {
         this.subscription = this.route.params.subscribe(params => {
             if (params['participationId']) {
-                this.modelingSubmissionService.getDataForModelingEditor(params['participationId']).subscribe(
+                this.modelingSubmissionService.getLatestSubmissionForModelingEditor(params['participationId']).subscribe(
                     modelingSubmission => {
                         if (!modelingSubmission) {
                             this.jhiAlertService.error('artemisApp.apollonDiagram.submission.noSubmission');

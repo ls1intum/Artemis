@@ -101,6 +101,11 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
 
         database.addCourseWithOneTextExercise();
         textExercise = (TextExercise) exerciseRepo.findAll().get(5);
+
+        // Add users that are not in the course
+        userRepo.save(ModelFactory.generateActivatedUser("student4"));
+        userRepo.save(ModelFactory.generateActivatedUser("tutor2"));
+        userRepo.save(ModelFactory.generateActivatedUser("instructor2"));
     }
 
     @AfterEach
@@ -117,6 +122,13 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
     }
 
     @Test
+    @WithMockUser(value = "student4", roles = "USER")
+    public void createModelingSubmission_studentNotInCourse() throws Exception {
+        ModelingSubmission submission = ModelFactory.generateModelingSubmission(validModel, true);
+        request.postWithResponseBody("/api/exercises/" + classExercise.getId() + "/modeling-submissions", submission, ModelingSubmission.class, HttpStatus.FORBIDDEN);
+    }
+
+    @Test
     @WithMockUser(value = "student1")
     public void saveAndSubmitModelingSubmission_classDiagram() throws Exception {
         database.addParticipationForExercise(classExercise, "student1");
@@ -125,8 +137,9 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
         database.checkModelingSubmissionCorrectlyStored(returnedSubmission.getId(), emptyModel);
         checkDetailsHidden(returnedSubmission, true);
 
-        submission = ModelFactory.generateModelingSubmission(validModel, true);
-        returnedSubmission = performUpdateOnModelSubmission(classExercise.getId(), submission);
+        returnedSubmission.setModel(validModel);
+        returnedSubmission.setSubmitted(true);
+        returnedSubmission = performUpdateOnModelSubmission(classExercise.getId(), returnedSubmission);
         database.checkModelingSubmissionCorrectlyStored(returnedSubmission.getId(), validModel);
         checkDetailsHidden(returnedSubmission, true);
     }
@@ -142,8 +155,9 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
         checkDetailsHidden(returnedSubmission, true);
 
         String validActivityModel = database.loadFileFromResources("test-data/model-submission/example-activity-diagram.json");
-        submission = ModelFactory.generateModelingSubmission(validActivityModel, true);
-        returnedSubmission = performUpdateOnModelSubmission(activityExercise.getId(), submission);
+        returnedSubmission.setModel(validActivityModel);
+        returnedSubmission.setSubmitted(true);
+        returnedSubmission = performUpdateOnModelSubmission(activityExercise.getId(), returnedSubmission);
         database.checkModelingSubmissionCorrectlyStored(returnedSubmission.getId(), validActivityModel);
         checkDetailsHidden(returnedSubmission, true);
     }
@@ -159,8 +173,9 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
         checkDetailsHidden(returnedSubmission, true);
 
         String validObjectModel = database.loadFileFromResources("test-data/model-submission/object-model.json");
-        submission = ModelFactory.generateModelingSubmission(validObjectModel, true);
-        returnedSubmission = performUpdateOnModelSubmission(objectExercise.getId(), submission);
+        returnedSubmission.setModel(validObjectModel);
+        returnedSubmission.setSubmitted(true);
+        returnedSubmission = performUpdateOnModelSubmission(objectExercise.getId(), returnedSubmission);
         database.checkModelingSubmissionCorrectlyStored(returnedSubmission.getId(), validObjectModel);
         checkDetailsHidden(returnedSubmission, true);
     }
@@ -176,8 +191,9 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
         checkDetailsHidden(returnedSubmission, true);
 
         String validUseCaseModel = database.loadFileFromResources("test-data/model-submission/use-case-model.json");
-        submission = ModelFactory.generateModelingSubmission(validUseCaseModel, true);
-        returnedSubmission = performUpdateOnModelSubmission(useCaseExercise.getId(), submission);
+        returnedSubmission.setModel(validUseCaseModel);
+        returnedSubmission.setSubmitted(true);
+        returnedSubmission = performUpdateOnModelSubmission(useCaseExercise.getId(), returnedSubmission);
         database.checkModelingSubmissionCorrectlyStored(returnedSubmission.getId(), validUseCaseModel);
         checkDetailsHidden(returnedSubmission, true);
     }
@@ -190,15 +206,15 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
         ModelingSubmission returnedSubmission = performInitialModelSubmission(classExercise.getId(), submission);
         database.checkModelingSubmissionCorrectlyStored(returnedSubmission.getId(), emptyModel);
 
-        submission = ModelFactory.generateModelingSubmission(validModel, false);
-        request.putWithResponseBody("/api/exercises/" + classExercise.getId() + "/modeling-submissions", submission, ModelingSubmission.class, HttpStatus.OK);
+        returnedSubmission.setModel(validModel);
+        returnedSubmission.setSubmitted(false);
+        request.putWithResponseBody("/api/exercises/" + classExercise.getId() + "/modeling-submissions", returnedSubmission, ModelingSubmission.class, HttpStatus.OK);
 
-        database.checkModelingSubmissionCorrectlyStored(returnedSubmission.getId(), emptyModel);
+        database.checkModelingSubmissionCorrectlyStored(returnedSubmission.getId(), validModel);
 
-        submission = ModelFactory.generateModelingSubmission(validModel, true);
-        modelingSubmissionRepo.save(submission);
-
-        returnedSubmission = request.putWithResponseBody("/api/exercises/" + classExercise.getId() + "/modeling-submissions", submission, ModelingSubmission.class, HttpStatus.OK);
+        returnedSubmission.setSubmitted(true);
+        returnedSubmission = request.putWithResponseBody("/api/exercises/" + classExercise.getId() + "/modeling-submissions", returnedSubmission, ModelingSubmission.class,
+                HttpStatus.OK);
         StudentParticipation studentParticipation = (StudentParticipation) returnedSubmission.getParticipation();
         assertThat(studentParticipation.getResults()).as("do not send old results to the client").isEmpty();
         assertThat(studentParticipation.getSubmissions()).as("do not send old submissions to the client").isEmpty();
@@ -237,6 +253,12 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
     }
 
     @Test
+    @WithMockUser(username = "instructor2", roles = "INSTRUCTOR")
+    public void getAllSubmissionsOfExercise_instructorNotInCourse() throws Exception {
+        request.getList("/api/exercises/" + classExercise.getId() + "/modeling-submissions", HttpStatus.FORBIDDEN, ModelingSubmission.class);
+    }
+
+    @Test
     @WithMockUser(username = "tutor1", roles = "TA")
     public void getAllSubmissionsOfExercise_assessedByTutor() throws Exception {
         List<ModelingSubmission> submissions = request.getList("/api/exercises/" + classExercise.getId() + "/modeling-submissions?assessedByTutor=true", HttpStatus.OK,
@@ -246,6 +268,12 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
         database.addModelingSubmissionWithFinishedResultAndAssessor(classExercise, submittedSubmission, "student1", "tutor1");
         submissions = request.getList("/api/exercises/" + classExercise.getId() + "/modeling-submissions?assessedByTutor=true", HttpStatus.OK, ModelingSubmission.class);
         assertThat(submissions).as("has a modeling submission assessed by the tutor").hasSizeGreaterThanOrEqualTo(1);
+    }
+
+    @Test
+    @WithMockUser(username = "tutor2", roles = "TA")
+    public void getAllSubmissionsOfExercise_assessedByTutor_instructorNotInCourse() throws Exception {
+        request.getList("/api/exercises/" + classExercise.getId() + "/modeling-submissions?assessedByTutor=true", HttpStatus.FORBIDDEN, ModelingSubmission.class);
     }
 
     @Test
@@ -283,6 +311,15 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
         assertThat(storedSubmission.getResult()).as("result has been set").isNotNull();
         assertThat(storedSubmission.getResult().getAssessor()).as("assessor is tutor1").isEqualTo(user);
         checkDetailsHidden(storedSubmission, false);
+    }
+
+    @Test
+    @WithMockUser(value = "tutor2", roles = "TA")
+    public void getModelSubmission_tutorNotInCourse() throws Exception {
+        ModelingSubmission submission = ModelFactory.generateModelingSubmission(validModel, true);
+        submission = database.addModelingSubmission(classExercise, submission, "student1");
+
+        request.get("/api/modeling-submissions/" + submission.getId(), HttpStatus.FORBIDDEN, ModelingSubmission.class);
     }
 
     @Test
@@ -339,6 +376,12 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
 
     @Test
     @WithMockUser(value = "tutor1", roles = "TA")
+    public void getModelSubmissionWithoutAssessment_wrongExerciseType() throws Exception {
+        request.get("/api/exercises/" + textExercise.getId() + "/modeling-submission-without-assessment", HttpStatus.BAD_REQUEST, ModelingSubmission.class);
+    }
+
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
     public void getModelSubmissionWithoutAssessment_lockSubmission() throws Exception {
         User user = database.getUserByLogin("tutor1");
         ModelingSubmission submission = ModelFactory.generateModelingSubmission(validModel, true);
@@ -387,6 +430,16 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
     }
 
     @Test
+    @WithMockUser(value = "tutor2", roles = "TA")
+    public void getModelSubmissionWithoutAssessment_notTutorInCourse() throws Exception {
+        ModelingSubmission submission = ModelFactory.generateModelingSubmission(validModel, true);
+        database.addModelingSubmission(classExercise, submission, "student1");
+        database.updateExerciseDueDate(classExercise.getId(), ZonedDateTime.now().minusHours(1));
+
+        request.get("/api/exercises/" + classExercise.getId() + "/modeling-submission-without-assessment", HttpStatus.FORBIDDEN, ModelingSubmission.class);
+    }
+
+    @Test
     @WithMockUser(value = "student1")
     public void getModelSubmissionWithoutAssessment_asStudent_forbidden() throws Exception {
         ModelingSubmission submission = ModelFactory.generateModelingSubmission(validModel, true);
@@ -430,7 +483,8 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
         ModelingSubmission submission = ModelFactory.generateModelingSubmission(validModel, true);
         submission = database.addModelingSubmissionWithFinishedResultAndAssessor(classExercise, submission, "student1", "tutor1");
 
-        ModelingSubmission receivedSubmission = request.get("/api/modeling-editor/" + submission.getParticipation().getId(), HttpStatus.OK, ModelingSubmission.class);
+        ModelingSubmission receivedSubmission = request.get("/api/participations/" + submission.getParticipation().getId() + "/latest-modeling-submission", HttpStatus.OK,
+                ModelingSubmission.class);
 
         // set dates to UTC and round to milliseconds for comparison
         submission.setSubmissionDate(ZonedDateTime.ofInstant(submission.getSubmissionDate().truncatedTo(ChronoUnit.MILLIS).toInstant(), ZoneId.of("UTC")));
@@ -442,7 +496,7 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
         // students can only see their own models
         submission = ModelFactory.generateModelingSubmission(validModel, true);
         submission = database.addModelingSubmission(classExercise, submission, "student2");
-        request.get("/api/modeling-editor/" + submission.getParticipation().getId(), HttpStatus.FORBIDDEN, ModelingSubmission.class);
+        request.get("/api/participations/" + submission.getParticipation().getId() + "/latest-modeling-submission", HttpStatus.FORBIDDEN, ModelingSubmission.class);
     }
 
     @Test
@@ -453,11 +507,11 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
         participation.setStudent(user);
         participation.setExercise(null);
         StudentParticipation studentParticipation = studentParticipationRepository.save(participation);
-        request.get("/api/modeling-editor/" + studentParticipation.getId(), HttpStatus.BAD_REQUEST, ModelingSubmission.class);
+        request.get("/api/participations/" + studentParticipation.getId() + "/latest-modeling-submission", HttpStatus.BAD_REQUEST, ModelingSubmission.class);
 
         participation.setExercise(textExercise);
         studentParticipation = studentParticipationRepository.save(participation);
-        request.get("/api/modeling-editor/" + studentParticipation.getId(), HttpStatus.BAD_REQUEST, ModelingSubmission.class);
+        request.get("/api/participations/" + studentParticipation.getId() + "/latest-modeling-submission", HttpStatus.BAD_REQUEST, ModelingSubmission.class);
     }
 
     @Test
@@ -465,7 +519,8 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
     public void getSubmissionForModelingEditor_emptySubmission() throws Exception {
         StudentParticipation studentParticipation = database.addParticipationForExercise(classExercise, "student1");
         assertThat(studentParticipation.getSubmissions()).isEmpty();
-        ModelingSubmission returnedSubmission = request.get("/api/modeling-editor/" + studentParticipation.getId(), HttpStatus.OK, ModelingSubmission.class);
+        ModelingSubmission returnedSubmission = request.get("/api/participations/" + studentParticipation.getId() + "/latest-modeling-submission", HttpStatus.OK,
+                ModelingSubmission.class);
         assertThat(returnedSubmission).as("new submission is created").isNotNull();
     }
 
@@ -483,6 +538,15 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
         exerciseRepo.save(classExercise);
         database.addModelingSubmission(classExercise, submission, "student1");
         request.getList("/api/exercises/" + classExercise.getId() + "/optimal-model-submissions", HttpStatus.OK, Long.class);
+    }
+
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void getNextOptimalModelSubmission_noSubmissions() throws Exception {
+        List<Long> optimalSubmissionIds = request.getList("/api/exercises/" + classExercise.getId() + "/optimal-model-submissions", HttpStatus.OK, Long.class);
+        assertThat(optimalSubmissionIds).as("No submissions found").isEmpty();
+        optimalSubmissionIds = request.getList("/api/exercises/" + objectExercise.getId() + "/optimal-model-submissions", HttpStatus.OK, Long.class);
+        assertThat(optimalSubmissionIds).as("No submissions found").isEmpty();
     }
 
     @Test
@@ -515,7 +579,8 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
         StudentParticipation studentParticipation = database.addParticipationForExercise(classExercise, "student1");
         database.addModelingSubmissionWithEmptyResult(classExercise, "", "student1");
 
-        ModelingSubmission returnedSubmission = request.get("/api/modeling-editor/" + studentParticipation.getId(), HttpStatus.OK, ModelingSubmission.class);
+        ModelingSubmission returnedSubmission = request.get("/api/participations/" + studentParticipation.getId() + "/latest-modeling-submission", HttpStatus.OK,
+                ModelingSubmission.class);
         assertThat(returnedSubmission.getResult()).as("the result is not sent to the client if the assessment is not finished").isNull();
     }
 
@@ -524,20 +589,20 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
     public void submitExercise_afterDueDate_forbidden() throws Exception {
         afterDueDateParticipation.setInitializationDate(ZonedDateTime.now().minusDays(2));
         participationService.save(afterDueDateParticipation);
-        request.put("/api/exercises/" + afterDueDateExercise.getId() + "/modeling-submissions", submittedSubmission, HttpStatus.FORBIDDEN);
+        request.post("/api/exercises/" + afterDueDateExercise.getId() + "/modeling-submissions", submittedSubmission, HttpStatus.FORBIDDEN);
     }
 
     @Test
     @WithMockUser(value = "student3", roles = "USER")
     public void submitExercise_beforeDueDate_allowed() throws Exception {
-        request.put("/api/exercises/" + classExercise.getId() + "/modeling-submissions", submittedSubmission, HttpStatus.OK);
+        request.postWithoutLocation("/api/exercises/" + classExercise.getId() + "/modeling-submissions", submittedSubmission, HttpStatus.OK, null);
     }
 
     @Test
     @WithMockUser(value = "student3", roles = "USER")
     public void submitExercise_beforeDueDateSecondSubmission_allowed() throws Exception {
         submittedSubmission.setModel(validModel);
-        submittedSubmission = request.putWithResponseBody("/api/exercises/" + classExercise.getId() + "/modeling-submissions", submittedSubmission, ModelingSubmission.class,
+        submittedSubmission = request.postWithResponseBody("/api/exercises/" + classExercise.getId() + "/modeling-submissions", submittedSubmission, ModelingSubmission.class,
                 HttpStatus.OK);
 
         final var submissionInDb = modelingSubmissionRepo.findById(submittedSubmission.getId());
@@ -551,7 +616,7 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
         afterDueDateParticipation.setInitializationDate(ZonedDateTime.now());
         participationService.save(afterDueDateParticipation);
 
-        request.put("/api/exercises/" + classExercise.getId() + "/modeling-submissions", submittedSubmission, HttpStatus.OK);
+        request.postWithoutLocation("/api/exercises/" + classExercise.getId() + "/modeling-submissions", submittedSubmission, HttpStatus.OK, null);
     }
 
     private void checkDetailsHidden(ModelingSubmission submission, boolean isStudent) {
