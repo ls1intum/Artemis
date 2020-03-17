@@ -301,7 +301,7 @@ public class TextSubmissionIntegrationTest extends AbstractSpringIntegrationTest
             assertThat(submission.getResult()).as("result is hidden").isNull();
         }
         else {
-            assertThat(((StudentParticipation) submission.getParticipation()).getStudent()).as("student of participation is hidden").isNull();
+            assertThat(((StudentParticipation) submission.getParticipation()).getStudent()).as("student of participation is hidden").isEmpty();
         }
     }
 }
