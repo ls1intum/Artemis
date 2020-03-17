@@ -50,7 +50,7 @@ export function login(username, password) {
     let req, res;
 
     console.log('Try to login with ' + username + ':' + password);
-    
+
     // The user logs in; the authToken gets saved as we need it later
     req = [{
         'method': 'post',
@@ -77,7 +77,7 @@ export function login(username, password) {
     }];
     res = http.batch(req);
     const authToken = JSON.parse(res[0].body).id_token;
-    console.log('GOT authToken ' + authToken);
+    console.log('GOT authToken ' + authToken + ' for user ' + username);
 
     // The user requests it own information of the account
     req = [{

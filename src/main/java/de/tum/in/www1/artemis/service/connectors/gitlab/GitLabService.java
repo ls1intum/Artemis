@@ -97,7 +97,12 @@ public class GitLabService extends AbstractVersionControlService {
         }
 
         addMemberToProject(repositoryUrl, username);
-        protectBranch("master", repositoryUrl);
+        try {
+            protectBranch("master", repositoryUrl);
+        }
+        catch (GitLabException ex) {
+            log.warn("Could not protect branch (but will still continue) due to the following reason: " + ex.getMessage());
+        }
     }
 
     private void addMemberToProject(URL repositoryUrl, String username) {
@@ -121,7 +126,12 @@ public class GitLabService extends AbstractVersionControlService {
     private void protectBranch(String branch, URL repositoryUrl) {
         final var repositoryId = getPathIDFromRepositoryURL(repositoryUrl);
         // we have to first unprotect the branch in order to set the correct access level
-        unprotectBranch(repositoryId, branch);
+        try {
+            unprotectBranch(repositoryId, branch);
+        }
+        catch (GitLabException ex) {
+            log.warn("Could not unprotectBranch branch (but will try to protect it) due to the following reason: " + ex.getMessage());
+        }
 
         try {
             gitlab.getProtectedBranchesApi().protectBranch(repositoryId, branch, DEVELOPER, DEVELOPER);
