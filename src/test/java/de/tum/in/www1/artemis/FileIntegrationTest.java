@@ -1,7 +1,5 @@
 package de.tum.in.www1.artemis;
 
-import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResource.Endpoints.ROOT;
-import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResource.Endpoints.SETUP;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doReturn;
@@ -233,7 +231,7 @@ public class FileIntegrationTest extends AbstractSpringIntegrationTest {
         JsonNode response = request.postWithMultipartFile("/api/fileUpload?keepFileName=true", file.getOriginalFilename(), "file", file, JsonNode.class, HttpStatus.CREATED);
         String responsePath = response.get("path").asText();
         // move file from temp folder to correct folder
-        String attachmentPath = fileService.manageFilesForUpdatedFilePath(null, responsePath, Constants.LECTURE_ATTACHMENT_FILEPATH, lecture.getId(), true);
+        String attachmentPath = fileService.manageFilesForUpdatedFilePath(null, responsePath, Constants.LECTURE_ATTACHMENT_FILEPATH + lecture.getId() + '/', lecture.getId(), true);
 
         attachment.setLink(attachmentPath);
         lecture.addAttachments(attachment);
