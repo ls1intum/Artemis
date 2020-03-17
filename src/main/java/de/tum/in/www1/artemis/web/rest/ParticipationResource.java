@@ -438,7 +438,7 @@ public class ParticipationResource {
             response = participationForQuizExercise((QuizExercise) exercise, principal.getName());
         }
         else {
-            Optional<StudentParticipation> optionalParticipation = participationService.findOneByExerciseIdAndStudentLoginAnyStateWithEagerResults(exercise, principal.getName());
+            Optional<StudentParticipation> optionalParticipation = participationService.findOneByExerciseAndStudentLoginAnyStateWithEagerResults(exercise, principal.getName());
             if (optionalParticipation.isEmpty()) {
                 throw new ResponseStatusException(HttpStatus.FAILED_DEPENDENCY, "No participation found for " + principal.getName() + " in exercise " + exerciseId);
             }

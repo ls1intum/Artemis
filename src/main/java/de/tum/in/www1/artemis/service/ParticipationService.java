@@ -184,7 +184,7 @@ public class ParticipationService {
     public StudentParticipation startExercise(Exercise exercise, Participant participant) {
         // common for all exercises
         // Check if participation already exists
-        Optional<StudentParticipation> optionalStudentParticipation = findOneByExerciseIdAndParticipantAnyState(exercise, participant);
+        Optional<StudentParticipation> optionalStudentParticipation = findOneByExerciseAndParticipantAnyState(exercise, participant);
         StudentParticipation participation;
         if (optionalStudentParticipation.isEmpty()) {
             // create a new participation only if no participation can be found
@@ -253,7 +253,7 @@ public class ParticipationService {
      * @return the participation connecting the given exercise and user
      */
     public StudentParticipation createParticipationWithEmptySubmissionIfNotExisting(Exercise exercise, Participant participant, SubmissionType submissionType) {
-        Optional<StudentParticipation> optionalStudentParticipation = findOneByExerciseIdAndParticipantAnyState(exercise, participant);
+        Optional<StudentParticipation> optionalStudentParticipation = findOneByExerciseAndParticipantAnyState(exercise, participant);
         StudentParticipation participation;
         if (optionalStudentParticipation.isEmpty()) {
             // create a new participation only if no participation can be found
@@ -367,7 +367,7 @@ public class ParticipationService {
     public StudentParticipation participationForQuizWithResult(QuizExercise quizExercise, String username) {
         if (quizExercise.isEnded()) {
             // try getting participation from database
-            Optional<StudentParticipation> optionalParticipation = findOneByExerciseIdAndStudentLoginAnyState(quizExercise, username);
+            Optional<StudentParticipation> optionalParticipation = findOneByExerciseAndStudentLoginAnyState(quizExercise, username);
 
             if (optionalParticipation.isEmpty()) {
                 log.error("Participation in quiz " + quizExercise.getTitle() + " not found for user " + username);
@@ -656,7 +656,7 @@ public class ParticipationService {
      * @param username the username of the student
      * @return the participation of the given student and exercise in any state
      */
-    public Optional<StudentParticipation> findOneByExerciseIdAndStudentLoginAnyState(Exercise exercise, String username) {
+    public Optional<StudentParticipation> findOneByExerciseAndStudentLoginAnyState(Exercise exercise, String username) {
         log.debug("Request to get Participation for User {} for Exercise with id: {}", username, exercise.getId());
         if (exercise.isTeamMode()) {
             Optional<Team> optionalTeam = teamRepository.findOneByExerciseIdAndUserLogin(exercise.getId(), username);
@@ -672,7 +672,7 @@ public class ParticipationService {
      * @param teamId the id of the team
      * @return the participation of the given team and exercise in any state
      */
-    public Optional<StudentParticipation> findOneByExerciseIdAndTeamIdAnyState(Exercise exercise, Long teamId) {
+    public Optional<StudentParticipation> findOneByExerciseAndTeamIdAnyState(Exercise exercise, Long teamId) {
         log.debug("Request to get Participation for Team with id {} for Exercise with id: {}", teamId, exercise.getId());
         return studentParticipationRepository.findByExerciseIdAndTeamId(exercise.getId(), teamId);
     }
@@ -684,12 +684,12 @@ public class ParticipationService {
      * @param participant the short name of the team
      * @return the participation of the given team and exercise in any state
      */
-    public Optional<StudentParticipation> findOneByExerciseIdAndParticipantAnyState(Exercise exercise, Participant participant) {
+    public Optional<StudentParticipation> findOneByExerciseAndParticipantAnyState(Exercise exercise, Participant participant) {
         if (participant instanceof User) {
-            return findOneByExerciseIdAndStudentLoginAnyState(exercise, ((User) participant).getLogin());
+            return findOneByExerciseAndStudentLoginAnyState(exercise, ((User) participant).getLogin());
         }
         else if (participant instanceof Team) {
-            return findOneByExerciseIdAndTeamIdAnyState(exercise, ((Team) participant).getId());
+            return findOneByExerciseAndTeamIdAnyState(exercise, ((Team) participant).getId());
         }
         else {
             throw new Error("Unknown Participant type");
@@ -703,7 +703,7 @@ public class ParticipationService {
      * @param username   the username of the student
      * @return the participation of the given student and exercise in any state
      */
-    public Optional<StudentParticipation> findOneByExerciseIdAndStudentLoginAnyStateWithEagerResults(Exercise exercise, String username) {
+    public Optional<StudentParticipation> findOneByExerciseAndStudentLoginAnyStateWithEagerResults(Exercise exercise, String username) {
         log.debug("Request to get Participation for User {} for Exercise with id: {}", username, exercise.getId());
         if (exercise.isTeamMode()) {
             Optional<Team> optionalTeam = teamRepository.findOneByExerciseIdAndUserLogin(exercise.getId(), username);
@@ -719,7 +719,7 @@ public class ParticipationService {
      * @param username   the username of the student
      * @return the participation of the given student and exercise with eager submissions in any state
      */
-    public Optional<StudentParticipation> findOneByExerciseIdAndStudentLoginWithEagerSubmissionsAnyState(Exercise exercise, String username) {
+    public Optional<StudentParticipation> findOneByExerciseAndStudentLoginWithEagerSubmissionsAnyState(Exercise exercise, String username) {
         log.debug("Request to get Participation for User {} for Exercise with id: {}", username, exercise.getId());
         if (exercise.isTeamMode()) {
             Optional<Team> optionalTeam = teamRepository.findOneByExerciseIdAndUserLogin(exercise.getId(), username);
@@ -796,7 +796,7 @@ public class ParticipationService {
      * @param studentId the id of student
      * @return the list of programming exercise participations belonging to exercise and student
      */
-    public List<StudentParticipation> findByExerciseIdAndStudentIdWithEagerResultsAndSubmissions(Exercise exercise, Long studentId) {
+    public List<StudentParticipation> findByExerciseAndStudentIdWithEagerResultsAndSubmissions(Exercise exercise, Long studentId) {
         if (exercise.isTeamMode()) {
             Optional<Team> optionalTeam = teamRepository.findOneByExerciseIdAndUserId(exercise.getId(), studentId);
             return optionalTeam.map(team -> studentParticipationRepository.findByExerciseIdAndTeamIdWithEagerResultsAndSubmissions(exercise.getId(), team.getId()))
