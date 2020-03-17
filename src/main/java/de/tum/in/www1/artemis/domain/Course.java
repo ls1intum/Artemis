@@ -89,11 +89,11 @@ public class Course implements Serializable {
 
     @Column(name = "max_complaint_time_days")
     @JsonView(QuizView.Before.class)
-    private Integer maxComplaintTimeDays;
+    private int maxComplaintTimeDays;
 
     @Column(name = "student_questions_enabled")
     @JsonView(QuizView.Before.class)
-    private Boolean studentQuestionsEnabled;
+    private boolean studentQuestionsEnabled;
 
     @Column(name = "color")
     private String color;
@@ -260,16 +260,16 @@ public class Course implements Serializable {
         this.maxComplaints = maxComplaints;
     }
 
-    public Integer getMaxComplaintTimeDays() {
+    public int getMaxComplaintTimeDays() {
         return maxComplaintTimeDays;
     }
 
-    public Course maxComplaintTimeDays(Integer maxComplaintTimeDays) {
+    public Course maxComplaintTimeDays(int maxComplaintTimeDays) {
         this.maxComplaintTimeDays = maxComplaintTimeDays;
         return this;
     }
 
-    public void setMaxComplaintTimeDays(Integer maxComplaintTimeDays) {
+    public void setMaxComplaintTimeDays(int maxComplaintTimeDays) {
         this.maxComplaintTimeDays = maxComplaintTimeDays;
     }
 
@@ -277,16 +277,16 @@ public class Course implements Serializable {
         return this.maxComplaints != 0 && this.maxComplaintTimeDays != 0;
     }
 
-    public Boolean getStudentQuestionsEnabled() {
+    public boolean getStudentQuestionsEnabled() {
         return studentQuestionsEnabled;
     }
 
-    public Course studentQuestionsEnabled(Boolean studentQuestionsEnabled) {
+    public Course studentQuestionsEnabled(boolean studentQuestionsEnabled) {
         this.studentQuestionsEnabled = studentQuestionsEnabled;
         return this;
     }
 
-    public void setStudentQuestionsEnabled(Boolean studentQuestionsEnabled) {
+    public void setStudentQuestionsEnabled(boolean studentQuestionsEnabled) {
         this.studentQuestionsEnabled = studentQuestionsEnabled;
     }
 
