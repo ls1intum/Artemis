@@ -1,46 +1,41 @@
 package de.tum.in.www1.artemis;
 
+import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResource.Endpoints.ROOT;
+import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResource.Endpoints.SETUP;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doReturn;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import de.tum.in.www1.artemis.config.Constants;
-import de.tum.in.www1.artemis.connector.bamboo.BambooRequestMockProvider;
-import de.tum.in.www1.artemis.connector.bitbucket.BitbucketRequestMockProvider;
-import de.tum.in.www1.artemis.domain.enumeration.AttachmentType;
-import de.tum.in.www1.artemis.domain.quiz.DragAndDropQuestion;
-import de.tum.in.www1.artemis.domain.quiz.DragItem;
-import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
-import de.tum.in.www1.artemis.service.FileService;
-import de.tum.in.www1.artemis.service.ProgrammingExerciseService;
-import de.tum.in.www1.artemis.util.GitUtilService;
-import org.eclipse.jgit.internal.storage.file.FileRepository;
+import java.nio.file.Files;
+import java.time.ZonedDateTime;
+
+import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.lib.StoredConfig;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.mock.web.MockMultipartFile;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.util.LinkedMultiValueMap;
 
+import com.fasterxml.jackson.databind.JsonNode;
+
+import de.tum.in.www1.artemis.config.Constants;
+import de.tum.in.www1.artemis.connector.bamboo.BambooRequestMockProvider;
+import de.tum.in.www1.artemis.connector.bitbucket.BitbucketRequestMockProvider;
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.domain.quiz.DragAndDropQuestion;
+import de.tum.in.www1.artemis.domain.quiz.DragItem;
+import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.service.FileUploadSubmissionService;
+import de.tum.in.www1.artemis.service.FileService;
 import de.tum.in.www1.artemis.service.ParticipationService;
+import de.tum.in.www1.artemis.service.ProgrammingExerciseService;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
+import de.tum.in.www1.artemis.util.GitUtilService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.RequestUtilService;
-import org.springframework.web.multipart.MultipartFile;
-
-import java.net.URI;
-import java.time.ZonedDateTime;
-import java.util.ArrayList;
 
 public class FileIntegrationTest extends AbstractSpringIntegrationTest {
 
@@ -118,10 +113,24 @@ public class FileIntegrationTest extends AbstractSpringIntegrationTest {
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void testGetTemplateFile() throws Exception {
-        Course course = database.addCourseWithOneProgrammingExercise();
-        ProgrammingExercise programmingExercise = (ProgrammingExercise) new ArrayList<>(course.getExercises()).get(0);
+        database.addCourseWithOneProgrammingExerciseAndTestCases();
+        ProgrammingExercise programmingExercise = programmingExerciseRepository.findAllWithEagerParticipations().get(0);
+        database.addStudentParticipationForProgrammingExercise(programmingExercise, "student1");
+        database.addStudentParticipationForProgrammingExercise(programmingExercise, "student2");
 
-        programmingExerciseService.setupProgrammingExercise(programmingExercise);
+        java.io.File localRepoFile = Files.createTempDirectory("repo").toFile();
+        Git localGit = Git.init().setDirectory(localRepoFile).call();
+
+        java.io.File originRepoFile = Files.createTempDirectory("repoOrigin").toFile();
+        Git remoteGit = Git.init().setDirectory(originRepoFile).call();
+        StoredConfig config = localGit.getRepository().getConfig();
+        config.setString("remote", "origin", "url", originRepoFile.getAbsolutePath());
+        config.save();
+        doReturn(new GitUtilService.FileRepositoryUrl(originRepoFile)).when(versionControlService).getCloneRepositoryUrl(anyString(), anyString());
+
+        programmingExercise.setId(null);
+        request.post(ROOT + SETUP, programmingExercise, HttpStatus.OK);
+        // programmingExerciseService.setupProgrammingExercise(programmingExercise);
 
         request.get("/files/templates/" + programmingExercise.getProgrammingLanguage().toString().toLowerCase() + "/exercise", HttpStatus.OK, byte[].class);
     }
@@ -196,11 +205,12 @@ public class FileIntegrationTest extends AbstractSpringIntegrationTest {
         MockMultipartFile file = new MockMultipartFile("file", "file.png", "application/json", "some data".getBytes());
         JsonNode response = request.postWithMultipartFile("/api/fileUpload?keepFileName=true", file.getOriginalFilename(), "file", file, JsonNode.class, HttpStatus.CREATED);
         String responsePath = response.get("path").asText();
-        String filePath = fileService.manageFilesForUpdatedFilePath(null, responsePath, fileUploadSubmission.buildFilePath(fileUploadExercise.getId(), fileUploadSubmission.getId()), fileUploadSubmission.getId(), true);
+        String filePath = fileService.manageFilesForUpdatedFilePath(null, responsePath,
+                fileUploadSubmission.buildFilePath(fileUploadExercise.getId(), fileUploadSubmission.getId()), fileUploadSubmission.getId(), true);
 
         fileUploadSubmission.setFilePath(filePath);
 
-        //get access token
+        // get access token
         String accessToken = request.get("/api/files/attachments/access-token/file.png", HttpStatus.OK, String.class);
 
         String receivedFile = request.get(fileUploadSubmission.getFilePath() + "?access_token=" + accessToken, HttpStatus.OK, String.class);
@@ -211,18 +221,20 @@ public class FileIntegrationTest extends AbstractSpringIntegrationTest {
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void testGetLectureAttachment() throws Exception {
         Lecture lecture = database.createCourseWithLecture(true);
+
+        Attachment attachment = ModelFactory.generateAttachment(ZonedDateTime.now(), lecture);
+
         MockMultipartFile file = new MockMultipartFile("file", "attachment.png", "application/json", "some data".getBytes());
         JsonNode response = request.postWithMultipartFile("/api/fileUpload?keepFileName=true", file.getOriginalFilename(), "file", file, JsonNode.class, HttpStatus.CREATED);
         String responsePath = response.get("path").asText();
         String attachmentPath = fileService.manageFilesForUpdatedFilePath(null, responsePath, Constants.LECTURE_ATTACHMENT_FILEPATH, lecture.getId(), true);
 
-        Attachment attachment = new Attachment();
         attachment.setLink(attachmentPath);
-        attachmentRepo.save(attachment);
         lecture.addAttachments(attachment);
         lectureRepo.save(lecture);
+        attachmentRepo.save(attachment);
 
-        //get access token
+        // get access token
         String accessToken = request.get("/api/files/attachments/access-token/attachment.png", HttpStatus.OK, String.class);
 
         String receivedAttachment = request.get(attachmentPath + "?access_token=" + accessToken, HttpStatus.OK, String.class);
