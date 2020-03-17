@@ -37,7 +37,7 @@ export class ModelingAssessmentService {
     }
 
     saveAssessment(feedbacks: Feedback[], submissionId: number, submit = false, ignoreConflicts = false): Observable<Result> {
-        let url = `${this.resourceUrl}/modeling-submissions/${submissionId}/feedback`;
+        let url = `${this.resourceUrl}/modeling-submissions/${submissionId}/assessment`;
         if (submit) {
             url += '?submit=true';
             if (ignoreConflicts) {
@@ -48,7 +48,7 @@ export class ModelingAssessmentService {
     }
 
     saveExampleAssessment(feedbacks: Feedback[], exampleSubmissionId: number): Observable<Result> {
-        const url = `${this.resourceUrl}/modeling-submissions/${exampleSubmissionId}/exampleAssessment`;
+        const url = `${this.resourceUrl}/modeling-submissions/${exampleSubmissionId}/example-assessment`;
         return this.http.put<Result>(url, feedbacks).map(res => this.convertResult(res));
     }
 
@@ -68,7 +68,7 @@ export class ModelingAssessmentService {
     }
 
     getExampleAssessment(exerciseId: number, submissionId: number): Observable<Result> {
-        const url = `${this.resourceUrl}/exercise/${exerciseId}/submission/${submissionId}/modelingExampleAssessment`;
+        const url = `${this.resourceUrl}/exercise/${exerciseId}/modeling-submissions/${submissionId}/example-assessment`;
         return this.http.get<Result>(url).map(res => this.convertResult(res));
     }
 
