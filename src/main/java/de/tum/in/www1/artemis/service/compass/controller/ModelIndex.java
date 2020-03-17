@@ -79,7 +79,7 @@ public class ModelIndex {
      * @return the model that belong to the submission with the given ID
      */
     public UMLDiagram getModel(long modelSubmissionId) {
-        return modelMap.get(modelSubmissionId); // TODO MJ check if there? return Optional?
+        return modelMap.get(modelSubmissionId);
     }
 
     /**

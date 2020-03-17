@@ -316,10 +316,11 @@ public class GitLabService extends AbstractVersionControlService {
         final var originalNamespace = sourceProjectKey + "%2F" + sourceRepositoryName.toLowerCase();
         final var targetRepoSlug = (targetProjectKey + "-" + targetRepositoryName).toLowerCase();
         final var builder = Endpoints.FORK.buildEndpoint(BASE_API, originalNamespace);
-        final var body = Map.of("namespace", targetProjectKey, "path", targetRepoSlug, "name", targetRepoSlug);
+        final var body = Map.of("namespace_path", targetProjectKey, "path", targetRepoSlug, "name", targetRepoSlug);
 
-        final var errorMessage = "Couldn't fork repository: " + sourceProjectKey + " to " + targetProjectKey;
+        final var errorMessage = "Couldn't fork repository " + originalNamespace + " into " + targetRepoSlug;
         try {
+            log.info("Try to fork " + originalNamespace + " into " + targetRepoSlug);
             final var response = restTemplate.postForEntity(builder.build(true).toUri(), body, String.class);
             if (response.getStatusCode() != HttpStatus.CREATED) {
                 throw new GitLabException(errorMessage + "; response (" + response.getStatusCode() + ") was: " + response.getBody());

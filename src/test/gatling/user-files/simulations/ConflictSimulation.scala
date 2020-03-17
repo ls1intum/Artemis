@@ -85,7 +85,7 @@ class ConflictSimulation extends Simulation {
             .check(jsonPath("$.id").saveAs("submission_id"))
             .check(headerRegex("set-cookie", "XSRF-TOKEN=(.*);[\\s]").saveAs("xsrf_token"))).exitHereIfFailed
         .exec((http("Assess Model"))
-            .put("/api/modeling-submissions/${submission_id}/feedback")
+            .put("/api/modeling-submissions/${submission_id}/assessment")
             .queryParam("submit","true")
             .headers(headers_http_authenticated_JSON)
             .body(StringBody(assessmentModel1)).asJson
