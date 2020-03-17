@@ -109,9 +109,9 @@ public class ModelingAssessmentResource extends AssessmentResource {
      * @param submissionId the id of the example submission
      * @return the result linked to the example submission
      */
-    @GetMapping("/exercise/{exerciseId}/submission/{submissionId}/modelingExampleAssessment")
+    @GetMapping("/exercise/{exerciseId}/modeling-submissions/{submissionId}/example-assessment")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Result> getExampleAssessment(@PathVariable Long exerciseId, @PathVariable Long submissionId) {
+    public ResponseEntity<Result> getExampleAssessment(@PathVariable long exerciseId, @PathVariable long submissionId) {
         log.debug("REST request to get example assessment for tutors text assessment: {}", submissionId);
         ModelingExercise modelingExercise = modelingExerciseService.findOne(exerciseId);
         ExampleSubmission exampleSubmission = exampleSubmissionService.findOneBySubmissionId(submissionId);
@@ -128,7 +128,7 @@ public class ModelingAssessmentResource extends AssessmentResource {
     }
 
     /**
-     * PUT modeling-submissions/:submissionId/feedback : save manual modeling assessment
+     * PUT modeling-submissions/:submissionId/assessment : save manual modeling assessment
      *
      * @param submissionId id of the submission
      * @param feedbacks list of feedbacks
@@ -140,9 +140,9 @@ public class ModelingAssessmentResource extends AssessmentResource {
     @ApiResponses({ @ApiResponse(code = 200, message = PUT_SUBMIT_ASSESSMENT_200_REASON, response = Result.class),
             @ApiResponse(code = 403, message = ErrorConstants.REQ_403_REASON), @ApiResponse(code = 404, message = ErrorConstants.REQ_404_REASON),
             @ApiResponse(code = 409, message = PUT_ASSESSMENT_409_REASON, response = ModelAssessmentConflict.class, responseContainer = "List") })
-    @PutMapping("/modeling-submissions/{submissionId}/feedback")
+    @PutMapping("/modeling-submissions/{submissionId}/assessment")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Object> saveModelingAssessment(@PathVariable Long submissionId, @RequestParam(value = "ignoreConflicts", defaultValue = "false") boolean ignoreConflict,
+    public ResponseEntity<Object> saveModelingAssessment(@PathVariable long submissionId, @RequestParam(value = "ignoreConflicts", defaultValue = "false") boolean ignoreConflict,
             @RequestParam(value = "submit", defaultValue = "false") boolean submit, @RequestBody List<Feedback> feedbacks) {
         User user = userService.getUserWithGroupsAndAuthorities();
         ModelingSubmission modelingSubmission = modelingSubmissionService.findOneWithEagerResultAndFeedback(submissionId);
@@ -192,9 +192,9 @@ public class ModelingAssessmentResource extends AssessmentResource {
     }
 
     /**
-     * PUT modeling-submissions/:exampleSubmissionId/exampleAssessment : save manual example modeling assessment
+     * PUT modeling-submissions/:submissionId/example-assessment : save manual example modeling assessment
      *
-     * @param exampleSubmissionId id of the submission
+     * @param submissionId id of the submission
      * @param feedbacks list of feedbacks
      * @return result after saving example modeling assessment
      */
@@ -202,11 +202,11 @@ public class ModelingAssessmentResource extends AssessmentResource {
     @ApiResponses({ @ApiResponse(code = 200, message = PUT_SUBMIT_ASSESSMENT_200_REASON, response = Result.class),
             @ApiResponse(code = 403, message = ErrorConstants.REQ_403_REASON), @ApiResponse(code = 404, message = ErrorConstants.REQ_404_REASON),
             @ApiResponse(code = 409, message = PUT_ASSESSMENT_409_REASON, response = ModelAssessmentConflict.class, responseContainer = "List") })
-    @PutMapping("/modeling-submissions/{exampleSubmissionId}/exampleAssessment")
+    @PutMapping("/modeling-submissions/{submissionId}/example-assessment")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Object> saveModelingExampleAssessment(@PathVariable Long exampleSubmissionId, @RequestBody List<Feedback> feedbacks) {
+    public ResponseEntity<Object> saveModelingExampleAssessment(@PathVariable long submissionId, @RequestBody List<Feedback> feedbacks) {
         User user = userService.getUserWithGroupsAndAuthorities();
-        ExampleSubmission exampleSubmission = exampleSubmissionService.findOneWithEagerResult(exampleSubmissionId);
+        ExampleSubmission exampleSubmission = exampleSubmissionService.findOneWithEagerResult(submissionId);
         ModelingSubmission modelingSubmission = (ModelingSubmission) exampleSubmission.getSubmission();
         ModelingExercise modelingExercise = (ModelingExercise) exampleSubmission.getExercise();
         checkAuthorization(modelingExercise, user);
