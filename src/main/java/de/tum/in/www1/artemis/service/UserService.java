@@ -21,7 +21,6 @@ import org.springframework.cache.CacheManager;
 import org.springframework.context.event.EventListener;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
@@ -524,7 +523,7 @@ public class UserService {
         var sorting = Sort.by(search.getSortedColumn());
         sorting = search.getSortingOrder() == SortingOrder.ASCENDING ? sorting.ascending() : sorting.descending();
         final var sorted = PageRequest.of(search.getPage(), search.getPageSize(), sorting);
-        return userRepository.searchByLoginOrNameInGroup(searchTerm, searchTerm, sorted).map(UserDTO::new);
+        return userRepository.searchByLoginOrNameWithGroup(searchTerm, searchTerm, sorted).map(UserDTO::new);
     }
 
     /**
