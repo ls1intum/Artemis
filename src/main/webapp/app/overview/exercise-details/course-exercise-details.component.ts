@@ -24,6 +24,7 @@ import { participationStatus } from 'app/exercises/shared/exercise/exercise-util
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { GradingCriterion } from 'app/exercises/shared/structured-grading-criterion/grading-criterion.model';
 
 const MAX_RESULT_HISTORY_LENGTH = 5;
 
@@ -50,6 +51,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     private participationUpdateListener: Subscription;
     studentParticipation: StudentParticipation | null;
     isAfterAssessmentDueDate: boolean;
+    public gradingCriteria: GradingCriterion[];
 
     showWelcomeAlert = false;
 

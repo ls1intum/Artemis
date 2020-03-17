@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.*;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.ExampleSubmissionRepository;
+import de.tum.in.www1.artemis.repository.GradingCriterionRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.TextExerciseRepository;
 import de.tum.in.www1.artemis.service.*;
@@ -46,6 +47,8 @@ public class TextExerciseResource {
 
     private final TextExerciseRepository textExerciseRepository;
 
+    private final GradingCriterionRepository gradingCriterionRepository;
+
     private final UserService userService;
 
     private final CourseService courseService;
@@ -62,10 +65,13 @@ public class TextExerciseResource {
 
     private final Optional<TextClusteringScheduleService> textClusteringScheduleService;
 
+    private final GradingCriterionService gradingCriterionService;
+
     public TextExerciseResource(TextExerciseRepository textExerciseRepository, TextExerciseService textExerciseService, TextAssessmentService textAssessmentService,
             UserService userService, AuthorizationCheckService authCheckService, CourseService courseService, ParticipationService participationService,
             ResultRepository resultRepository, GroupNotificationService groupNotificationService, ExampleSubmissionRepository exampleSubmissionRepository,
-            Optional<TextClusteringScheduleService> textClusteringScheduleService, ExerciseService exerciseService) {
+            Optional<TextClusteringScheduleService> textClusteringScheduleService, ExerciseService exerciseService, GradingCriterionRepository gradingCriterionRepository,
+            GradingCriterionService gradingCriterionService) {
         this.textAssessmentService = textAssessmentService;
         this.textExerciseService = textExerciseService;
         this.textExerciseRepository = textExerciseRepository;
@@ -78,6 +84,8 @@ public class TextExerciseResource {
         this.exampleSubmissionRepository = exampleSubmissionRepository;
         this.textClusteringScheduleService = textClusteringScheduleService;
         this.exerciseService = exerciseService;
+        this.gradingCriterionRepository = gradingCriterionRepository;
+        this.gradingCriterionService = gradingCriterionService;
     }
 
     /**
@@ -151,6 +159,7 @@ public class TextExerciseResource {
         if (textExerciseBeforeUpdate.isAutomaticAssessmentEnabled() != textExercise.isAutomaticAssessmentEnabled() && !authCheckService.isAdmin()) {
             return forbidden();
         }
+
         TextExercise result = textExerciseRepository.save(textExercise);
         textClusteringScheduleService.ifPresent(service -> service.scheduleExerciseForClusteringIfRequired(result));
 
@@ -185,6 +194,9 @@ public class TextExerciseResource {
             // not required in the returned json body
             exercise.setStudentParticipations(null);
             exercise.setCourse(null);
+            List<GradingCriterion> gradingCriteria = gradingCriterionService.findByExerciseIdWithEagerGradingCriteria(exercise.getId());
+            exercise.setGradingCriteria(gradingCriteria);
+
         }
 
         return ResponseEntity.ok().body(exercises);
@@ -206,6 +218,8 @@ public class TextExerciseResource {
         }
 
         Set<ExampleSubmission> exampleSubmissions = new HashSet<>(this.exampleSubmissionRepository.findAllByExerciseId(exerciseId));
+        List<GradingCriterion> gradingCriteria = gradingCriterionService.findByExerciseIdWithEagerGradingCriteria(exerciseId);
+        optionalTextExercise.ifPresent(textExercise -> textExercise.setGradingCriteria(gradingCriteria));
         optionalTextExercise.ifPresent(textExercise -> textExercise.setExampleSubmissions(exampleSubmissions));
 
         return ResponseUtil.wrapOrNotFound(optionalTextExercise);
