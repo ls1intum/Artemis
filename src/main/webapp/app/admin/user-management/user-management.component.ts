@@ -112,13 +112,13 @@ export class UserManagementComponent implements OnInit, OnDestroy {
                 pageSize: this.itemsPerPage,
                 searchTerm: this.searchTermString,
                 sortingOrder: this.reverse ? SortingOrder.ASCENDING : SortingOrder.DESCENDING,
-                sortedColumn: this.predicate
+                sortedColumn: this.predicate,
             })
             .subscribe(
                 (res: HttpResponse<User[]>) => {
                     this.loading = false;
                     this.onSuccess(res.body!, res.headers);
-                    },
+                },
                 (res: HttpErrorResponse) => onError(this.alertService, res),
             );
     }
@@ -151,7 +151,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
             queryParams: {
                 page: this.page,
                 sortingOrder: this.reverse ? SortingOrder.ASCENDING : SortingOrder.DESCENDING,
-                sortedColumn: this.predicate
+                sortedColumn: this.predicate,
             },
         });
         this.loadAll();
