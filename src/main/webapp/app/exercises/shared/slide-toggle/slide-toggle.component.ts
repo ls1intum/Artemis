@@ -4,7 +4,7 @@ import { Component, OnInit, Output, EventEmitter } from '@angular/core';
     selector: 'jhi-slide-toggle',
     template: `
         <!-- Default switch -->
-        <div class="custom-control custom-switch">
+        <div class="custom-control custom-switch" *jhiHasAnyAuthority="'ROLE_ADMIN'">
             <input type="checkbox" class="custom-control-input" id="customSwitches" [(ngModel)]="checked" (change)="getCheckedFlag()" />
             <label class="custom-control-label" for="customSwitches"></label>
         </div>
