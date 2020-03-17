@@ -26,13 +26,17 @@ If you have one single server, or your own NGINX instance, just skip all NGINX r
         docker pull gitlab/gitlab-ce:latest
         
 2. Run the image (and change the values for hostname and ports).
-Add `-p 22:22` if cloning/pushing via ssh should be possible.
-Make sure to remove the comments from the command before running it.
+    Add `-p 2222:22` if cloning/pushing via ssh should be possible.\
+    As Gitlab runs in a docker container and the default port for SSH (22) is typically used by the host running Docker, we change the port Gitlab uses for SSH to `2222`.
+    This can be adjusted if needed.
+
+    Make sure to remove the comments from the command before running it.
 
         docker run -itd --name gitlab \
             --hostname your.gitlab.domain.com \   # Specify the hostname
             --restart always \
-            -p 80:80 -p 443:443 {-p 22:22} \     # Alternative 1: If you are NOT running your own NGINX instance
+            -p 2222:22                # Remove this if cloning via SSH should not be supported
+            -p 80:80 -p 443:443 \     # Alternative 1: If you are NOT running your own NGINX instance
             -p <some port of your choosing>:80    # Alternative 2: If you ARE running your own NGINX instance
             -v gitlab_data:/var/opt/gitlab \
             -v gitlab_logs:/var/log/gitlab \
@@ -116,9 +120,13 @@ Edit the Gitlab configuration
     And add
         
         gitlab_rails['monitoring_whitelist'] = ['0.0.0.0/0']
+        gitlab_rails['gitlab_shell_ssh_port'] = 2222
 
 This will disable the firewall for all ip-adresses.\
 If you only want to allow the server that runs Artemis to query the information, replace `0.0.0.0/0` with `ARTEMIS.SERVER.IP.ADRESS/32`
+
+If you use SSH and use a different port than `2222`, you have to adjust the port above.
+
 
 Reconfigure Gitlab
     
