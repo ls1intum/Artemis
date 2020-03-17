@@ -113,6 +113,9 @@ public class TextSubmissionResource {
             return forbidden();
         }
 
+        // TODO: add one additional check: fetch textSubmission.getId() from the database with the corresponding participation and check that the user of participation is the
+        // same as the user who executes this call. This prevents injecting submissions to other users
+
         textSubmission = textSubmissionService.handleTextSubmission(textSubmission, textExercise, principal);
 
         this.textSubmissionService.hideDetails(textSubmission, user);

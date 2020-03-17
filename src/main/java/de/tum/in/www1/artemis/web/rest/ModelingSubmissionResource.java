@@ -85,8 +85,6 @@ public class ModelingSubmissionResource {
      */
     @PostMapping("/exercises/{exerciseId}/modeling-submissions")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    // TODO MJ return 201 CREATED with location header instead of ModelingSubmission
-    // TODO MJ merge with update
     public ResponseEntity<ModelingSubmission> createModelingSubmission(@PathVariable long exerciseId, Principal principal, @RequestBody ModelingSubmission modelingSubmission) {
         log.debug("REST request to create ModelingSubmission : {}", modelingSubmission.getModel());
         if (modelingSubmission.getId() != null) {
@@ -117,6 +115,9 @@ public class ModelingSubmissionResource {
         final ModelingExercise modelingExercise = modelingExerciseService.findOne(exerciseId);
         final User user = userService.getUserWithGroupsAndAuthorities();
         checkAuthorization(modelingExercise, user);
+
+        // TODO: add one additional check: fetch modelingSubmission.getId() from the database with the corresponding participation and check that the user of participation is the
+        // same as the user who executes this call. This prevents injecting submissions to other users
 
         modelingSubmission = modelingSubmissionService.save(modelingSubmission, modelingExercise, principal.getName());
         modelingSubmissionService.hideDetails(modelingSubmission, user);

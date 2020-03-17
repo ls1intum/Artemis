@@ -120,6 +120,9 @@ public class ModelingExerciseResource {
     public ResponseEntity<ModelingExercise> updateModelingExercise(@RequestBody ModelingExercise modelingExercise,
             @RequestParam(value = "notificationText", required = false) String notificationText) throws URISyntaxException {
         log.debug("REST request to update ModelingExercise : {}", modelingExercise);
+        if (modelingExercise.getId() == null) {
+            return createModelingExercise(modelingExercise);
+        }
 
         ResponseEntity<ModelingExercise> responseFailure = checkModelingExercise(modelingExercise);
         if (responseFailure != null) {

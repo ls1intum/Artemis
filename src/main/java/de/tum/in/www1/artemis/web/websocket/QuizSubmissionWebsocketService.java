@@ -66,6 +66,9 @@ public class QuizSubmissionWebsocketService {
             return;
         }
 
+        // TODO: add one additional check: fetch quizSubmission.getId() with the corresponding participation and check that the user of participation is the
+        // same as the user who executes this call. This prevents injecting submissions to other users
+
         // check if user already submitted for this quiz
         Participation participation = participationService.participationForQuizWithResult(quizExercise.get(), username);
         if (!participation.getResults().isEmpty()) {
