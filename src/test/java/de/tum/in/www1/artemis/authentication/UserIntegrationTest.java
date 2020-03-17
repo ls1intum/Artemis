@@ -57,7 +57,7 @@ public class UserIntegrationTest extends AbstractSpringIntegrationTest {
 
     private User student;
 
-    private final int numberOfStudents = 1;
+    private final int numberOfStudents = 50;
 
     private final int numberOfTutors = 1;
 
@@ -212,11 +212,11 @@ public class UserIntegrationTest extends AbstractSpringIntegrationTest {
     @WithMockUser(username = "admin", roles = "ADMIN")
     public void getUsers_asAdmin_isSuccessful() throws Exception {
         final var params = new LinkedMultiValueMap<String, String>();
-        params.add("page", "1");
+        params.add("page", "0");
         params.add("pageSize", "100");
         params.add("searchTerm", "");
         params.add("sortingOrder", "ASCENDING");
-        params.add("sortingColumn", "ID");
+        params.add("sortedColumn", "id");
         List<User> users = request.getList("/api/users", HttpStatus.OK, User.class, params);
         assertThat(users).hasSize(numberOfStudents + numberOfTutors + numberOfInstructors + 1); // +1 for admin user himself
     }
