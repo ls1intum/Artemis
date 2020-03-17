@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, Input } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs/Observable';
@@ -22,6 +22,7 @@ import { AlertService } from 'app/core/alert/alert.service';
 })
 export class ModelingExerciseUpdateComponent implements OnInit {
     EditorMode = EditorMode;
+    checkedFlag: boolean;
 
     modelingExercise: ModelingExercise;
     isSaving: boolean;
@@ -52,6 +53,7 @@ export class ModelingExerciseUpdateComponent implements OnInit {
     ngOnInit(): void {
         // This is used to scroll page to the top of the page, because the routing keeps the position for the
         // new page from previous page.
+        this.checkedFlag = false; // default value of grading instructions toggle
         this.$window.nativeWindow.scroll(0, 0);
 
         this.activatedRoute.data.subscribe(({ modelingExercise }) => {
@@ -145,5 +147,11 @@ export class ModelingExerciseUpdateComponent implements OnInit {
 
     private onError(error: HttpErrorResponse): void {
         this.jhiAlertService.error(error.message);
+    }
+    /**
+     * gets the flag of the structured grading instructions slide toggle
+     */
+    getCheckedFlag(event: boolean) {
+        this.checkedFlag = event;
     }
 }
