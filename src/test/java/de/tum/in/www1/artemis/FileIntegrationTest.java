@@ -8,6 +8,7 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.connector.bamboo.BambooRequestMockProvider;
 import de.tum.in.www1.artemis.connector.bitbucket.BitbucketRequestMockProvider;
+import de.tum.in.www1.artemis.domain.enumeration.AttachmentType;
 import de.tum.in.www1.artemis.domain.quiz.DragAndDropQuestion;
 import de.tum.in.www1.artemis.domain.quiz.DragItem;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
@@ -39,6 +40,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.net.URI;
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 
 public class FileIntegrationTest extends AbstractSpringIntegrationTest {
 
@@ -51,7 +53,7 @@ public class FileIntegrationTest extends AbstractSpringIntegrationTest {
     ExerciseRepository exerciseRepo;
 
     @Autowired
-    ModelAssessmentConflictRepository conflictRepo;
+    AttachmentRepository attachmentRepo;
 
     @Autowired
     UserRepository userRepo;
@@ -84,7 +86,7 @@ public class FileIntegrationTest extends AbstractSpringIntegrationTest {
     ParticipationService participationService;
 
     @Autowired
-    ComplaintRepository complaintRepo;
+    LectureRepository lectureRepo;
 
     @Autowired
     private BambooRequestMockProvider bambooRequestMockProvider;
@@ -113,18 +115,13 @@ public class FileIntegrationTest extends AbstractSpringIntegrationTest {
         assertThat(responseFile).isEqualTo("some data");
     }
 
-    //@Test
+    @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void testGetTemplateFile() throws Exception {
-        database.addCourseWithOneProgrammingExerciseAndTestCases();
-        ProgrammingExercise programmingExercise = programmingExerciseRepository.findAllWithEagerParticipations().get(0);
-        database.addStudentParticipationForProgrammingExercise(programmingExercise, "student1");
-        database.addStudentParticipationForProgrammingExercise(programmingExercise, "student2");
-        database.addTemplateParticipationForProgrammingExercise(programmingExercise);
-        bitbucketRequestMockProvider.enableMockingOfRequests();
-        bambooRequestMockProvider.enableMockingOfRequests();
-        bambooRequestMockProvider.mockBuildPlanIsValid(programmingExercise.getTemplateBuildPlanId(), true);
-        bitbucketRequestMockProvider.mockRepositoryUrlIsValid(programmingExercise.getTemplateRepositoryUrlAsUrl(), programmingExercise.getProjectKey(), true);
+        Course course = database.addCourseWithOneProgrammingExercise();
+        ProgrammingExercise programmingExercise = (ProgrammingExercise) new ArrayList<>(course.getExercises()).get(0);
+
+        programmingExerciseService.setupProgrammingExercise(programmingExercise);
 
         request.get("/files/templates/" + programmingExercise.getProgrammingLanguage().toString().toLowerCase() + "/exercise", HttpStatus.OK, byte[].class);
     }
@@ -194,16 +191,41 @@ public class FileIntegrationTest extends AbstractSpringIntegrationTest {
         database.addCourseWithTwoFileUploadExercise();
         FileUploadExercise fileUploadExercise = (FileUploadExercise) exerciseRepo.findAll().get(0);
         FileUploadSubmission fileUploadSubmission = ModelFactory.generateFileUploadSubmission(true);
-
-        MockMultipartFile file = new MockMultipartFile("file", "file.png", "application/json", "some data".getBytes());
-        JsonNode response = request.postWithMultipartFile("/api/fileUpload?keepFileName=false", file.getOriginalFilename(), "file", file, JsonNode.class, HttpStatus.CREATED);
-        String responsePath = response.get("path").asText();
-        String filePath = fileService.manageFilesForUpdatedFilePath(null, responsePath, Constants.FILE_UPLOAD_EXERCISES_FILEPATH + fileUploadExercise.getId() + "/", fileUploadSubmission.getId());
-
-
-        fileUploadSubmission.setFilePath(filePath);
         fileUploadSubmission = database.addFileUploadSubmission(fileUploadExercise, fileUploadSubmission, "student1");
 
-        String receivedFilePath = request.get(fileUploadSubmission.getFilePath(), HttpStatus.OK, String.class);
+        MockMultipartFile file = new MockMultipartFile("file", "file.png", "application/json", "some data".getBytes());
+        JsonNode response = request.postWithMultipartFile("/api/fileUpload?keepFileName=true", file.getOriginalFilename(), "file", file, JsonNode.class, HttpStatus.CREATED);
+        String responsePath = response.get("path").asText();
+        String filePath = fileService.manageFilesForUpdatedFilePath(null, responsePath, fileUploadSubmission.buildFilePath(fileUploadExercise.getId(), fileUploadSubmission.getId()), fileUploadSubmission.getId(), true);
+
+        fileUploadSubmission.setFilePath(filePath);
+
+        //get access token
+        String accessToken = request.get("/api/files/attachments/access-token/file.png", HttpStatus.OK, String.class);
+
+        String receivedFile = request.get(fileUploadSubmission.getFilePath() + "?access_token=" + accessToken, HttpStatus.OK, String.class);
+        assertThat(receivedFile).isEqualTo("some data");
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void testGetLectureAttachment() throws Exception {
+        Lecture lecture = database.createCourseWithLecture(true);
+        MockMultipartFile file = new MockMultipartFile("file", "attachment.png", "application/json", "some data".getBytes());
+        JsonNode response = request.postWithMultipartFile("/api/fileUpload?keepFileName=true", file.getOriginalFilename(), "file", file, JsonNode.class, HttpStatus.CREATED);
+        String responsePath = response.get("path").asText();
+        String attachmentPath = fileService.manageFilesForUpdatedFilePath(null, responsePath, Constants.LECTURE_ATTACHMENT_FILEPATH, lecture.getId(), true);
+
+        Attachment attachment = new Attachment();
+        attachment.setLink(attachmentPath);
+        attachmentRepo.save(attachment);
+        lecture.addAttachments(attachment);
+        lectureRepo.save(lecture);
+
+        //get access token
+        String accessToken = request.get("/api/files/attachments/access-token/attachment.png", HttpStatus.OK, String.class);
+
+        String receivedAttachment = request.get(attachmentPath + "?access_token=" + accessToken, HttpStatus.OK, String.class);
+        assertThat(receivedAttachment).isEqualTo("some data");
     }
 }
