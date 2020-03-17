@@ -1,6 +1,6 @@
 package de.tum.in.www1.artemis.web.rest.util;
 
-import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 
 import org.slf4j.Logger;
@@ -55,7 +55,7 @@ public final class HeaderUtil {
             }
         };
         String authorization = username + ":" + password;
-        String basic = new String(Base64.getEncoder().encode(authorization.getBytes(Charset.forName("UTF-8"))));
+        String basic = new String(Base64.getEncoder().encode(authorization.getBytes(StandardCharsets.UTF_8)));
         acceptHeaders.set("Authorization", "Basic " + basic);
 
         return acceptHeaders;
