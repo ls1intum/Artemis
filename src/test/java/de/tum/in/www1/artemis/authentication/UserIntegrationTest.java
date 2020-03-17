@@ -28,6 +28,7 @@ import de.tum.in.www1.artemis.service.dto.UserDTO;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.RequestUtilService;
 import de.tum.in.www1.artemis.web.rest.vm.ManagedUserVM;
+import org.springframework.util.LinkedMultiValueMap;
 
 public class UserIntegrationTest extends AbstractSpringIntegrationTest {
 
@@ -210,7 +211,13 @@ public class UserIntegrationTest extends AbstractSpringIntegrationTest {
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     public void getUsers_asAdmin_isSuccessful() throws Exception {
-        List<User> users = request.getList("/api/users", HttpStatus.OK, User.class);
+        final var params = new LinkedMultiValueMap<String, String>();
+        params.add("page", "1");
+        params.add("pageSize", "100");
+        params.add("searchTerm", "");
+        params.add("sortingOrder", "ASCENDING");
+        params.add("sortingColumn", "ID");
+        List<User> users = request.getList("/api/users", HttpStatus.OK, User.class, params);
         assertThat(users).hasSize(numberOfStudents + numberOfTutors + numberOfInstructors + 1); // +1 for admin user himself
     }
 
