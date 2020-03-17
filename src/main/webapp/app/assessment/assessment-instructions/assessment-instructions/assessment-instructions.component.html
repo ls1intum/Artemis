@@ -17,6 +17,7 @@
 
 <jhi-expandable-section headerKey="assessmentInstructions.gradingCriteria">
     <p class="markdown-preview" [innerHTML]="gradingInstructions"></p>
+    <!-- Todo: hanya refactor the SGI display -->
     <div *ngFor="let criterion of criteria; let criterionIndex = index">
         <p class="font-weight-bold" [innerHTML]="criterion!.title! | htmlForMarkdown"></p>
         <div

@@ -28,6 +28,7 @@
         <div *ngIf="gradingInstructions">
             <h4 jhiTranslate="artemisApp.exercise.gradingInstructions">Grading instructions</h4>
             <p class="markdown-preview" [innerHTML]="gradingInstructions | htmlForMarkdown"></p>
+            <!-- Todo: hanya refactor the SGI display -->
             <div *ngFor="let criterion of criteria; let criterionIndex = index">
                 <p class="font-weight-bold" [innerHTML]="criterion!.title! | htmlForMarkdown"></p>
                 <div
