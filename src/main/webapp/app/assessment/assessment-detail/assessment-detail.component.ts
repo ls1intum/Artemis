@@ -53,5 +53,6 @@ export class AssessmentDetailComponent {
         const feedback = instruction.feedback;
         this.assessment.credits = credits;
         this.assessment.detailText = feedback;
+        this.assessmentChange.emit(this.assessment);
     }
 }
