@@ -260,16 +260,16 @@ public class Course implements Serializable {
         this.maxComplaints = maxComplaints;
     }
 
-    public int getMaxComplaintTimeDays() {
+    public Integer getMaxComplaintTimeDays() {
         return maxComplaintTimeDays;
     }
 
-    public Course maxComplaintTimeDays(int maxComplaintTimeDays) {
+    public Course maxComplaintTimeDays(Integer maxComplaintTimeDays) {
         this.maxComplaintTimeDays = maxComplaintTimeDays;
         return this;
     }
 
-    public void setMaxComplaintTimeDays(int maxComplaintTimeDays) {
+    public void setMaxComplaintTimeDays(Integer maxComplaintTimeDays) {
         this.maxComplaintTimeDays = maxComplaintTimeDays;
     }
 

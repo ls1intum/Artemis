@@ -16,7 +16,9 @@ export function newCourse(artemis) {
         studentGroupName: 'artemis-test',
         teachingAssistantGroupName: 'artemis-test',
         instructorGroupName: 'artemis-test',
-        registrationEnabled: true
+        registrationEnabled: true,
+        maxComplaints: 3,
+        maxComplaintTimeDays: 7,
     };
 
     const res = artemis.post(COURSES, course);
