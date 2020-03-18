@@ -199,16 +199,16 @@ public class CourseResource {
         if (existingCourse.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
-        if (!existingCourse.get().getShortName().equals(updatedCourse.getShortName())) {
+        if (!Objects.equals(existingCourse.get().getShortName(), updatedCourse.getShortName())) {
             throw new BadRequestAlertException("The course short name cannot be changed", ENTITY_NAME, "shortNameCannotChange");
         }
-        if (!existingCourse.get().getStudentGroupName().equals(updatedCourse.getStudentGroupName())) {
+        if (!Objects.equals(existingCourse.get().getStudentGroupName(), updatedCourse.getStudentGroupName())) {
             throw new BadRequestAlertException("The student group name cannot be changed", ENTITY_NAME, "studentGroupNameCannotChange");
         }
-        if (!existingCourse.get().getTeachingAssistantGroupName().equals(updatedCourse.getTeachingAssistantGroupName())) {
+        if (!Objects.equals(existingCourse.get().getTeachingAssistantGroupName(), updatedCourse.getTeachingAssistantGroupName())) {
             throw new BadRequestAlertException("The teaching assistant group name cannot be changed", ENTITY_NAME, "teachingAssistantGroupNameCannotChange");
         }
-        if (!existingCourse.get().getInstructorGroupName().equals(updatedCourse.getInstructorGroupName())) {
+        if (!Objects.equals(existingCourse.get().getInstructorGroupName(), updatedCourse.getInstructorGroupName())) {
             throw new BadRequestAlertException("The instructor group name cannot be changed", ENTITY_NAME, "instructorGroupNameCannotChange");
         }
 

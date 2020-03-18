@@ -271,9 +271,7 @@ public class JiraAuthenticationProvider implements ArtemisAuthenticationProvider
     @Override
     public void createGroup(String groupName) {
         log.info("Create group " + groupName + " in JIRA");
-        Map<String, Object> body = new HashMap<>();
-        body.put("name", groupName);
-        HttpEntity<?> entity = new HttpEntity<>(body);
+        HttpEntity<?> entity = new HttpEntity<>(Map.of("name", groupName));
         try {
             restTemplate.exchange(JIRA_URL + "/rest/api/2/group", HttpMethod.POST, entity, Map.class);
         }
