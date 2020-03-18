@@ -22,6 +22,9 @@ public class LdapConfig {
     @Value("${artemis.user-management.ldap.password}")
     private String ldapPassword;
 
+    /**
+     * @return configure the ldap repository using the values from the yml file
+     */
     @Bean
     public LdapContextSource contextSource() {
         LdapContextSource contextSource = new LdapContextSource();

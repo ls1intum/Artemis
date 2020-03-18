@@ -14,7 +14,7 @@ import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.di
 import { DeleteDialogService } from 'app/shared/delete-dialog/delete-dialog.service';
 import { DeleteDialogComponent } from 'app/shared/delete-dialog/delete-dialog.component';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
-import { JhiAlertComponent } from 'app/shared/alert/alert.component';
+import { AlertComponent } from 'app/shared/alert/alert.component';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -37,7 +37,7 @@ describe('DeleteDialogDirective', () => {
     beforeEach(async () => {
         return TestBed.configureTestingModule({
             imports: [ArtemisTestModule, TranslateModule.forRoot(), FormsModule, NgJhipsterModule, NgbModule],
-            declarations: [TestComponent, DeleteButtonDirective, DeleteDialogComponent, JhiAlertComponent],
+            declarations: [TestComponent, DeleteButtonDirective, DeleteDialogComponent, AlertComponent],
             providers: [JhiLanguageHelper, JhiAlertService],
         })
             .compileComponents()

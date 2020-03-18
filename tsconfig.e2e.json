@@ -1,0 +1,16 @@
+{
+    "extends": "./tsconfig.json",
+    "compilerOptions": {
+        "noImplicitAny": false,
+        "module": "commonjs",
+        "outDir": "build/www/app",
+        "allowJs": true
+    },
+    "include": [
+        "src/main/webapp/app",
+        "src/test/javascript/"
+    ],
+    "exclude": [
+        "node_modules"
+    ]
+}

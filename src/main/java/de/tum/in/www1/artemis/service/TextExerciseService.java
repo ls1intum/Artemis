@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import de.tum.in.www1.artemis.domain.TextExercise;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.repository.TextExerciseRepository;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @Service
 public class TextExerciseService {
@@ -25,12 +26,12 @@ public class TextExerciseService {
     /**
      * Get one quiz exercise by id.
      *
-     * @param id the id of the entity
+     * @param exerciseId the id of the exercise
      * @return the entity
      */
-    public TextExercise findOne(Long id) {
-        log.debug("Request to get Text Exercise : {}", id);
-        return textExerciseRepository.findById(id).get();
+    public TextExercise findOne(long exerciseId) {
+        log.debug("Request to get Text Exercise : {}", exerciseId);
+        return textExerciseRepository.findById(exerciseId).orElseThrow(() -> new EntityNotFoundException("Exercise with id: \"" + exerciseId + "\" does not exist"));
     }
 
     /**

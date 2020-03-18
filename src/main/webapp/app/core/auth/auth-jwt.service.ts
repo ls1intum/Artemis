@@ -1,20 +1,23 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpResponse } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { SERVER_API_URL } from 'app/app.constants';
+import { map } from 'rxjs/operators';
 
-export interface Credentials {
-    username: string | null;
-    password: string | null;
-    rememberMe: boolean;
+export class Credentials {
+    constructor(public username: string, public password: string, public rememberMe: boolean) {}
 }
+
+type JwtToken = {
+    id_token: string;
+};
 
 export interface IAuthServerProvider {
     getToken: () => string;
-    login: (credentials: Credentials) => Observable<string>;
-    loginWithToken: (jwt: string, rememberMe: string) => Promise<string>;
-    storeAuthenticationToken: (jwt: string, rememberMe: string) => void;
+    login: (credentials: Credentials) => Observable<void>;
+    loginWithToken: (jwt: string, rememberMe: boolean) => Promise<string>;
+    storeAuthenticationToken: (jwt: string, rememberMe: boolean) => void;
     removeAuthTokenFromCaches: () => Observable<null>;
     clearCaches: () => Observable<null>;
 }
@@ -27,36 +30,11 @@ export class AuthServerProvider implements IAuthServerProvider {
         return this.localStorage.retrieve('authenticationToken') || this.sessionStorage.retrieve('authenticationToken');
     }
 
-    login(credentials: Credentials): Observable<string> {
-        const data = {
-            username: credentials.username,
-            password: credentials.password,
-            rememberMe: credentials.rememberMe,
-        };
-        return this.http.post(SERVER_API_URL + 'api/authenticate', data, { observe: 'response' }).map(authenticateSuccess.bind(this));
-
-        /**
-         * @function authenticateSuccess
-         * @callback AuthServerProvider.login~authenticateSuccess
-         * @param resp: response returned from the API
-         * @desc This function is used as callback for when the authentication in the backend succeeds.
-         * It prepares and stores the bearerToken in the local storage. This token is used for authentication
-         * purposes and will be added to the header of every API call (via interceptors)
-         */
-        function authenticateSuccess(resp: HttpResponse<string>) {
-            /**
-             * Extract bearer token from response header
-             */
-            const bearerToken = resp.headers.get('Authorization');
-            if (bearerToken && bearerToken.slice(0, 7) === 'Bearer ') {
-                const jwt = bearerToken.slice(7, bearerToken.length);
-                this.storeAuthenticationToken(jwt, credentials.rememberMe);
-                return jwt;
-            }
-        }
+    login(credentials: Credentials): Observable<void> {
+        return this.http.post<JwtToken>(SERVER_API_URL + 'api/authenticate', credentials).pipe(map(response => this.authenticateSuccess(response, credentials.rememberMe)));
     }
 
-    loginWithToken(jwt: string, rememberMe: string) {
+    loginWithToken(jwt: string, rememberMe: boolean): Promise<string> {
         if (jwt) {
             this.storeAuthenticationToken(jwt, rememberMe);
             return Promise.resolve(jwt);
@@ -65,7 +43,12 @@ export class AuthServerProvider implements IAuthServerProvider {
         }
     }
 
-    storeAuthenticationToken(jwt: string, rememberMe: string) {
+    private authenticateSuccess(response: JwtToken, rememberMe: boolean): void {
+        const jwt = response.id_token;
+        this.storeAuthenticationToken(jwt, rememberMe);
+    }
+
+    storeAuthenticationToken(jwt: string, rememberMe: boolean): void {
         if (rememberMe) {
             this.localStorage.store('authenticationToken', jwt);
         } else {

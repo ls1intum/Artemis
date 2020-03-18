@@ -98,7 +98,7 @@ public class CompassCalculationEngine implements CalculationEngine {
         }
 
         modelingAssessment.forEach(currentFeedback -> {
-            UMLElement currentElement = model.getElementByJSONID(currentFeedback.getReferenceElementId()); // TODO MJ return Optional ad throw Exception if no UMLElement found?
+            UMLElement currentElement = model.getElementByJSONID(currentFeedback.getReferenceElementId());
 
             assessmentIndex.getAssessmentForSimilaritySet(currentElement.getSimilarityID()).ifPresent(assessment -> {
                 List<Feedback> feedbacks = assessment.getFeedbackList();
@@ -450,7 +450,7 @@ public class CompassCalculationEngine implements CalculationEngine {
 
     @Override
     public void printStatistic(long exerciseId, List<Result> finishedResults) {
-        log.debug("Statistics for exercise " + exerciseId + "\n\n\n");
+        log.info("Statistics for exercise " + exerciseId + "\n\n\n");
 
         long totalNumberOfFeedback = 0;
         long totalNumberOfAutomaticFeedback = 0;
@@ -545,53 +545,53 @@ public class CompassCalculationEngine implements CalculationEngine {
         }
 
         // General information
-        log.debug("################################################## General information ##################################################" + "\n");
+        log.info("################################################## General information ##################################################" + "\n");
 
-        log.debug("Number of models: " + numberOfModels + "\n");
-        log.debug("Number of model elements: " + numberOfModelElements + "\n");
-        log.debug("Number of classes: " + numberOfClasses + "\n");
-        log.debug("Number of attributes: " + numberOfAttrbutes + "\n");
-        log.debug("Number of methods: " + numberOfMethods + "\n");
-        log.debug("Number of relationships: " + numberOfRelationships + "\n");
-        log.debug("Number of packages: " + numberOfPackages + "\n");
+        log.info("Number of models: " + numberOfModels + "\n");
+        log.info("Number of model elements: " + numberOfModelElements + "\n");
+        log.info("Number of classes: " + numberOfClasses + "\n");
+        log.info("Number of attributes: " + numberOfAttrbutes + "\n");
+        log.info("Number of methods: " + numberOfMethods + "\n");
+        log.info("Number of relationships: " + numberOfRelationships + "\n");
+        log.info("Number of packages: " + numberOfPackages + "\n");
         double elementsPerModel = numberOfModelElements * 1.0 / numberOfModels;
-        log.debug("Average number of elements per model: " + elementsPerModel + "\n");
+        log.info("Average number of elements per model: " + elementsPerModel + "\n");
 
-        log.debug("Number of assessed models: " + finishedResults.size() + "\n");
-        log.debug("Number of assessed model elements: " + totalNumberOfFeedback + "\n");
-        log.debug("Number of assessed classes: " + numberOfAssessedClasses + " (" + Math.round(numberOfAssessedClasses * 10000.0 / numberOfClasses) / 100.0 + "%)" + "\n");
-        log.debug("Number of assessed attributes: " + numberOfAssessedAttrbutes + " (" + Math.round(numberOfAssessedAttrbutes * 10000.0 / numberOfAttrbutes) / 100.0 + "%)" + "\n");
-        log.debug("Number of assessed methods: " + numberOfAssessedMethods + " (" + Math.round(numberOfAssessedMethods * 10000.0 / numberOfMethods) / 100.0 + "%)" + "\n");
-        log.debug("Number of assessed relationships: " + numberOfAssessedRelationships + " (" + Math.round(numberOfAssessedRelationships * 10000.0 / numberOfRelationships) / 100.0
+        log.info("Number of assessed models: " + finishedResults.size() + "\n");
+        log.info("Number of assessed model elements: " + totalNumberOfFeedback + "\n");
+        log.info("Number of assessed classes: " + numberOfAssessedClasses + " (" + Math.round(numberOfAssessedClasses * 10000.0 / numberOfClasses) / 100.0 + "%)" + "\n");
+        log.info("Number of assessed attributes: " + numberOfAssessedAttrbutes + " (" + Math.round(numberOfAssessedAttrbutes * 10000.0 / numberOfAttrbutes) / 100.0 + "%)" + "\n");
+        log.info("Number of assessed methods: " + numberOfAssessedMethods + " (" + Math.round(numberOfAssessedMethods * 10000.0 / numberOfMethods) / 100.0 + "%)" + "\n");
+        log.info("Number of assessed relationships: " + numberOfAssessedRelationships + " (" + Math.round(numberOfAssessedRelationships * 10000.0 / numberOfRelationships) / 100.0
                 + "%)" + "\n");
-        log.debug("Number of assessed packages: " + numberOfAssessedPackages + " (" + Math.round(numberOfAssessedPackages * 10000.0 / numberOfPackages) / 100.0 + "%)" + "\n");
+        log.info("Number of assessed packages: " + numberOfAssessedPackages + " (" + Math.round(numberOfAssessedPackages * 10000.0 / numberOfPackages) / 100.0 + "%)" + "\n");
         double feedbackPerAssessment = totalNumberOfFeedback * 1.0 / finishedResults.size();
-        log.debug("Average number of feedback elements per assessment: " + feedbackPerAssessment + "\n\n\n");
+        log.info("Average number of feedback elements per assessment: " + feedbackPerAssessment + "\n\n\n");
 
         // Feedback type
-        log.debug("################################################## Feedback type ##################################################" + "\n");
+        log.info("################################################## Feedback type ##################################################" + "\n");
 
-        log.debug("Automatic feedback: " + totalNumberOfAutomaticFeedback + " (" + Math.round(totalNumberOfAutomaticFeedback * 10000.0 / totalNumberOfFeedback) / 100.0 + "%)"
+        log.info("Automatic feedback: " + totalNumberOfAutomaticFeedback + " (" + Math.round(totalNumberOfAutomaticFeedback * 10000.0 / totalNumberOfFeedback) / 100.0 + "%)"
                 + "\n");
-        log.debug("Adapted feedback: " + totalNumberOfAdaptedFeedback + " (" + Math.round(totalNumberOfAdaptedFeedback * 10000.0 / totalNumberOfFeedback) / 100.0 + "%)" + "\n");
-        log.debug("Manual feedback: " + totalNumberOfManualFeedback + " (" + Math.round(totalNumberOfManualFeedback * 10000.0 / totalNumberOfFeedback) / 100.0 + "%)" + "\n");
-        log.debug("Amount of automatic feedback that was adapted: "
+        log.info("Adapted feedback: " + totalNumberOfAdaptedFeedback + " (" + Math.round(totalNumberOfAdaptedFeedback * 10000.0 / totalNumberOfFeedback) / 100.0 + "%)" + "\n");
+        log.info("Manual feedback: " + totalNumberOfManualFeedback + " (" + Math.round(totalNumberOfManualFeedback * 10000.0 / totalNumberOfFeedback) / 100.0 + "%)" + "\n");
+        log.info("Amount of automatic feedback that was adapted: "
                 + Math.round(totalNumberOfAdaptedFeedback * 10000.0 / (totalNumberOfAutomaticFeedback + totalNumberOfAdaptedFeedback)) / 100.0 + "%\n\n\n");
 
         // Feedback length
-        log.debug("################################################## Feedback length ##################################################" + "\n");
+        log.info("################################################## Feedback length ##################################################" + "\n");
 
-        log.debug("Total amount of feedback: " + totalNumberOfFeedback + "\n");
-        log.debug("Average length of feedback: " + totalLengthOfFeedback * 1.0 / totalNumberOfFeedback + "\n");
-        log.debug("Total amount of positive feedback: " + totalNumberOfPositiveFeedbackItems + "\n");
-        log.debug("Average length of positive feedback: " + totalLengthOfPositiveFeedback * 1.0 / totalNumberOfPositiveFeedbackItems + "\n");
-        log.debug("Total amount of neutral feedback: " + totalNumberOfNeutralFeedbackItems + "\n");
-        log.debug("Average length of neutral feedback: " + totalLengthOfNeutralFeedback * 1.0 / totalNumberOfNeutralFeedbackItems + "\n");
-        log.debug("Total amount of negative feedback: " + totalNumberOfNegativeFeedbackItems + "\n");
-        log.debug("Average length of negative feedback: " + totalLengthOfNegativeFeedback * 1.0 / totalNumberOfNegativeFeedbackItems + "\n\n\n");
+        log.info("Total amount of feedback: " + totalNumberOfFeedback + "\n");
+        log.info("Average length of feedback: " + totalLengthOfFeedback * 1.0 / totalNumberOfFeedback + "\n");
+        log.info("Total amount of positive feedback: " + totalNumberOfPositiveFeedbackItems + "\n");
+        log.info("Average length of positive feedback: " + totalLengthOfPositiveFeedback * 1.0 / totalNumberOfPositiveFeedbackItems + "\n");
+        log.info("Total amount of neutral feedback: " + totalNumberOfNeutralFeedbackItems + "\n");
+        log.info("Average length of neutral feedback: " + totalLengthOfNeutralFeedback * 1.0 / totalNumberOfNeutralFeedbackItems + "\n");
+        log.info("Total amount of negative feedback: " + totalNumberOfNegativeFeedbackItems + "\n");
+        log.info("Average length of negative feedback: " + totalLengthOfNegativeFeedback * 1.0 / totalNumberOfNegativeFeedbackItems + "\n\n\n");
 
         // Similarity sets
-        log.debug("################################################## Similarity sets ##################################################" + "\n");
+        log.info("################################################## Similarity sets ##################################################" + "\n");
 
         // Note, that these two value refer to all similarity sets that have an assessment, i.e. it is not the total number as it excludes the sets without assessments. This might
         // distort the analysis values below.
@@ -613,40 +613,40 @@ public class CompassCalculationEngine implements CalculationEngine {
             }
         }
 
-        log.debug("Number of unique elements (without context) of submitted models: " + modelIndex.getNumberOfUniqueElements() + "\n");
-        log.debug("Number of similarity sets (including context) of assessed models: " + numberOfSimilaritySets + "\n");
-        log.debug("Average number of elements per similarity set: " + numberOfElementsInSimilaritySets * 1.0 / numberOfSimilaritySets + "\n");
+        log.info("Number of unique elements (without context) of submitted models: " + modelIndex.getNumberOfUniqueElements() + "\n");
+        log.info("Number of similarity sets (including context) of assessed models: " + numberOfSimilaritySets + "\n");
+        log.info("Average number of elements per similarity set: " + numberOfElementsInSimilaritySets * 1.0 / numberOfSimilaritySets + "\n");
         // The optimal correction effort describes the maximum amount of model elements that tutors would have to assess in an optimal scenario
-        log.debug("Optimal correction effort (# similarity sets / # model elements): " + numberOfSimilaritySets * 1.0 / numberOfElementsInSimilaritySets + "\n");
+        log.info("Optimal correction effort (# similarity sets / # model elements): " + numberOfSimilaritySets * 1.0 / numberOfElementsInSimilaritySets + "\n");
 
-        log.debug("Number of similarity sets with positive score: " + numberOfSimilaritySetsPositiveScore + "\n");
-        log.debug("Number of similarity sets with positive score and confidence at least 80%: " + numberOfSimilaritySetsPositiveScoreRegardingConfidence + "\n\n\n");
+        log.info("Number of similarity sets with positive score: " + numberOfSimilaritySetsPositiveScore + "\n");
+        log.info("Number of similarity sets with positive score and confidence at least 80%: " + numberOfSimilaritySetsPositiveScoreRegardingConfidence + "\n\n\n");
 
         // Variability index
-        log.debug("################################################## Variability index ##################################################" + "\n");
+        log.info("################################################## Variability index ##################################################" + "\n");
 
-        log.debug("Variability index #1 (positive score): " + numberOfSimilaritySetsPositiveScore / elementsPerModel + "\n");
-        log.debug("Variability index #2 (positive score and confidence >= 80%): " + numberOfSimilaritySetsPositiveScoreRegardingConfidence / elementsPerModel + "\n");
-        log.debug("Variability index #3 (based on \"all\" similarity sets): " + numberOfSimilaritySets / elementsPerModel + "\n");
+        log.info("Variability index #1 (positive score): " + numberOfSimilaritySetsPositiveScore / elementsPerModel + "\n");
+        log.info("Variability index #2 (positive score and confidence >= 80%): " + numberOfSimilaritySetsPositiveScoreRegardingConfidence / elementsPerModel + "\n");
+        log.info("Variability index #3 (based on \"all\" similarity sets): " + numberOfSimilaritySets / elementsPerModel + "\n");
 
-        log.debug("Normalized variability index #1 (positive score): " + (numberOfSimilaritySetsPositiveScore - elementsPerModel) / (numberOfModelElements - elementsPerModel)
+        log.info("Normalized variability index #1 (positive score): " + (numberOfSimilaritySetsPositiveScore - elementsPerModel) / (numberOfModelElements - elementsPerModel)
                 + "\n");
-        log.debug("Normalized variability index #2 (positive score and confidence >= 80%): "
+        log.info("Normalized variability index #2 (positive score and confidence >= 80%): "
                 + (numberOfSimilaritySetsPositiveScoreRegardingConfidence - elementsPerModel) / (numberOfModelElements - elementsPerModel) + "\n");
-        log.debug("Normalized variability index #3 (based on \"all\" similarity sets): " + (numberOfSimilaritySets - elementsPerModel) / (numberOfModelElements - elementsPerModel)
+        log.info("Normalized variability index #3 (based on \"all\" similarity sets): " + (numberOfSimilaritySets - elementsPerModel) / (numberOfModelElements - elementsPerModel)
                 + "\n");
 
         // Alternative calculation of the variability index considering the average feedback items per assessment instead of the average elements per model
-        log.debug("Alternative variability index #1 (positive score): " + numberOfSimilaritySetsPositiveScore / feedbackPerAssessment + "\n");
-        log.debug("Alternative variability index #2 (positive score and confidence >= 80%): " + numberOfSimilaritySetsPositiveScoreRegardingConfidence / feedbackPerAssessment
+        log.info("Alternative variability index #1 (positive score): " + numberOfSimilaritySetsPositiveScore / feedbackPerAssessment + "\n");
+        log.info("Alternative variability index #2 (positive score and confidence >= 80%): " + numberOfSimilaritySetsPositiveScoreRegardingConfidence / feedbackPerAssessment
                 + "\n");
-        log.debug("Alternative variability index #3 (based on \"all\" similarity sets): " + numberOfSimilaritySets / feedbackPerAssessment + "\n");
+        log.info("Alternative variability index #3 (based on \"all\" similarity sets): " + numberOfSimilaritySets / feedbackPerAssessment + "\n");
 
-        log.debug("Normalized alternative variability index #1 (positive score): "
+        log.info("Normalized alternative variability index #1 (positive score): "
                 + (numberOfSimilaritySetsPositiveScore - feedbackPerAssessment) / (totalNumberOfFeedback - feedbackPerAssessment) + "\n");
-        log.debug("Normalized alternative variability index #2 (positive score and confidence >= 80%): "
+        log.info("Normalized alternative variability index #2 (positive score and confidence >= 80%): "
                 + (numberOfSimilaritySetsPositiveScoreRegardingConfidence - feedbackPerAssessment) / (totalNumberOfFeedback - feedbackPerAssessment) + "\n");
-        log.debug("Normalized alternative variability index #3 (based on \"all\" similarity sets): "
+        log.info("Normalized alternative variability index #3 (based on \"all\" similarity sets): "
                 + (numberOfSimilaritySets - feedbackPerAssessment) / (totalNumberOfFeedback - feedbackPerAssessment) + "\n");
     }
 }

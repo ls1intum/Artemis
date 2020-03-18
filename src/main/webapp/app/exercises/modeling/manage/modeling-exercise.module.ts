@@ -13,6 +13,7 @@ import { ArtemisModelingExerciseRoutingModule } from 'app/exercises/modeling/man
 import { ModelingExerciseComponent } from 'app/exercises/modeling/manage/modeling-exercise.component';
 import { ModelingExerciseDetailComponent } from 'app/exercises/modeling/manage/modeling-exercise-detail.component';
 import { ArtemisTeamConfigFormGroupModule } from 'app/exercises/shared/team-config-form-group/team-config-form-group.module';
+import { StructuredGradingCriterionModule } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.module';
 
 @NgModule({
     imports: [
@@ -27,6 +28,7 @@ import { ArtemisTeamConfigFormGroupModule } from 'app/exercises/shared/team-conf
         ArtemisModelingExerciseRoutingModule,
         FormDateTimePickerModule,
         SortByModule,
+        StructuredGradingCriterionModule,
     ],
     declarations: [ModelingExerciseComponent, ModelingExerciseDetailComponent, ModelingExerciseUpdateComponent],
     exports: [ModelingExerciseComponent],

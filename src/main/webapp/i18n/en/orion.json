@@ -4,7 +4,7 @@
             "version": {
                 "outdated": "The version of Orion you are currently using is outdated!",
                 "usedVersion": "You are using version ",
-                "allowedVersion": "The allowed version range is "
+                "allowedVersion": "The allowed version is (minimum): "
             }
         }
     }

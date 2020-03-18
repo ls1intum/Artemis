@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.badRequest;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 import static java.time.ZonedDateTime.now;
 
@@ -113,7 +112,6 @@ public class ParticipationResource {
      */
     @PostMapping(Endpoints.START_PARTICIPATION)
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    // TODO: remove courseId attribute
     public ResponseEntity<Participation> startParticipation(@PathVariable Long courseId, @PathVariable Long exerciseId) throws URISyntaxException {
         log.debug("REST request to start Exercise : {}", exerciseId);
         Exercise exercise = exerciseService.findOneWithAdditionalElements(exerciseId);
@@ -286,50 +284,6 @@ public class ParticipationResource {
         participations.forEach(participation -> participation.setSubmissionCount(submissionCountMap.get(participation.getId())));
 
         return ResponseEntity.ok(participations);
-    }
-
-    /**
-     * GET /exercise/{exerciseId}/participation-without-assessment Given an exerciseId of a text exercise, retrieve a participation where the latest submission has no assessment
-     * returns 404 If any, it creates the result and assign to the tutor, as a draft. This also involves a soft lock (setting the assessor of the result) so that other tutors
-     * cannot assess the submission. TODO unify this approach with the one for modeling exercises
-     *
-     * @param exerciseId the participationId of the exercise of which we want a submission
-     * @return a student participation
-     */
-    @GetMapping(value = "/exercise/{exerciseId}/participation-without-assessment")
-    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Participation> getParticipationForTextExerciseWithoutAssessment(@PathVariable Long exerciseId) {
-        Exercise exercise = exerciseService.findOneWithAdditionalElements(exerciseId);
-        if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
-            throw new AccessForbiddenException("You are not allowed to access this resource");
-        }
-        if (!(exercise instanceof TextExercise)) {
-            return badRequest();
-        }
-
-        // Check if the limit of simultaneously locked submissions has been reached
-        textSubmissionService.checkSubmissionLockLimit(exercise.getCourse().getId());
-
-        Optional<TextSubmission> textSubmissionWithoutAssessment = textSubmissionService.getTextSubmissionWithoutManualResult((TextExercise) exercise);
-        if (textSubmissionWithoutAssessment.isEmpty()) {
-            // TODO return null and avoid 404 in this case
-            throw new EntityNotFoundException("No text Submission without assessment has been found");
-        }
-
-        Participation participation = textSubmissionWithoutAssessment.get().getParticipation();
-
-        Result result = new Result();
-        result.setParticipation(participation);
-        result.setSubmission(textSubmissionWithoutAssessment.get());
-        resultService.createNewRatedManualResult(result, false);
-        participation.setResults(new HashSet<>());
-        participation.addResult(result);
-
-        if (!authCheckService.isAtLeastInstructorForExercise(exercise) && participation instanceof StudentParticipation) {
-            ((StudentParticipation) participation).filterSensitiveInformation();
-        }
-
-        return ResponseEntity.ok(participation);
     }
 
     /**
@@ -655,6 +609,11 @@ public class ParticipationResource {
         return participationService.findOneWithEagerCourse(participation.getId()).getExercise().getCourse();
     }
 
+    /**
+     * fetches all submissions of a specific participation
+     * @param participationId the id of the participation
+     * @return all submissions that belong to the participation
+     */
     @GetMapping(value = "/participations/{participationId}/submissions")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<List<Submission>> getSubmissionsOfParticipation(@PathVariable Long participationId) {
