@@ -212,11 +212,11 @@ public class CourseResource {
 
     private void validateComplaintsConfig(Course course) {
         if (course.getMaxComplaints() == null) {
-            //set the default value to prevent null pointer exceptions
+            // set the default value to prevent null pointer exceptions
             course.setMaxComplaints(3);
         }
         if (course.getMaxComplaintTimeDays() == null) {
-            //set the default value to prevent null pointer exceptions
+            // set the default value to prevent null pointer exceptions
             course.setMaxComplaintTimeDays(7);
         }
         if (course.getMaxComplaints() < 0) {
