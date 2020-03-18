@@ -64,8 +64,8 @@ public class ModelingSubmissionResource {
     private final GradingCriterionService gradingCriterionService;
 
     public ModelingSubmissionResource(ModelingSubmissionService modelingSubmissionService, ModelingExerciseService modelingExerciseService,
-                                      ParticipationService participationService, CourseService courseService, AuthorizationCheckService authCheckService, CompassService compassService,
-                                      ExerciseService exerciseService, UserService userService, GradingCriterionService gradingCriterionService) {
+            ParticipationService participationService, CourseService courseService, AuthorizationCheckService authCheckService, CompassService compassService,
+            ExerciseService exerciseService, UserService userService, GradingCriterionService gradingCriterionService) {
         this.modelingSubmissionService = modelingSubmissionService;
         this.modelingExerciseService = modelingExerciseService;
         this.participationService = participationService;

@@ -53,10 +53,11 @@ public class FileUploadSubmissionResource {
 
     private final ParticipationService participationService;
 
-    private final GradingCriterionService  gradingCriterionService;
+    private final GradingCriterionService gradingCriterionService;
 
     public FileUploadSubmissionResource(CourseService courseService, FileUploadSubmissionService fileUploadSubmissionService, FileUploadExerciseService fileUploadExerciseService,
-                                        AuthorizationCheckService authCheckService, UserService userService, ExerciseService exerciseService, ParticipationService participationService, GradingCriterionService gradingCriterionService) {
+            AuthorizationCheckService authCheckService, UserService userService, ExerciseService exerciseService, ParticipationService participationService,
+            GradingCriterionService gradingCriterionService) {
         this.userService = userService;
         this.exerciseService = exerciseService;
         this.courseService = courseService;

@@ -65,9 +65,9 @@ public class TextAssessmentResource extends AssessmentResource {
     private final GradingCriterionService gradingCriterionService;
 
     public TextAssessmentResource(AuthorizationCheckService authCheckService, ResultService resultService, TextAssessmentService textAssessmentService,
-                                  TextBlockService textBlockService, TextBlockRepository textBlockRepository, TextExerciseService textExerciseService, TextSubmissionRepository textSubmissionRepository,
-                                  UserService userService, TextSubmissionService textSubmissionService, WebsocketMessagingService messagingService, ExerciseService exerciseService,
-                                  Optional<AutomaticTextFeedbackService> automaticTextFeedbackService, ResultRepository resultRepository, GradingCriterionService gradingCriterionService) {
+            TextBlockService textBlockService, TextBlockRepository textBlockRepository, TextExerciseService textExerciseService, TextSubmissionRepository textSubmissionRepository,
+            UserService userService, TextSubmissionService textSubmissionService, WebsocketMessagingService messagingService, ExerciseService exerciseService,
+            Optional<AutomaticTextFeedbackService> automaticTextFeedbackService, ResultRepository resultRepository, GradingCriterionService gradingCriterionService) {
         super(authCheckService, userService, exerciseService, textSubmissionService, textAssessmentService, resultRepository);
 
         this.resultService = resultService;
