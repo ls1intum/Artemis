@@ -146,7 +146,7 @@
             </div>
             <!-- RESULTS END -->
             <jhi-complaint-interactions
-                *ngIf="exercise.type === PROGRAMMING && studentParticipation && currentResult && currentResult.assessmentType === AssessmentType.MANUAL"
+                *ngIf="exercise && exercise.type === PROGRAMMING && studentParticipation && currentResult && currentResult.assessmentType === AssessmentType.MANUAL"
                 class="mb-2 mt-2 ml-3"
                 [exercise]="exercise"
                 [participation]="studentParticipation"
@@ -154,7 +154,7 @@
             >
             </jhi-complaint-interactions>
         </div>
-        <div class="col-sm-12 col-md-4 col-lg-4" jhiOrionFilter [showInOrionWindow]="false">
+        <div class="col-sm-12 col-md-4 col-lg-4" jhiOrionFilter [showInOrionWindow]="false" *ngIf="exercise.course && exercise.course.studentQuestionsEnabled">
             <jhi-student-questions [exercise]="exercise"></jhi-student-questions>
         </div>
     </div>

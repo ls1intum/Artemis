@@ -70,5 +70,6 @@
         </ng-template>
     </div>
 
-    <jhi-complaint-interactions *ngIf="result && participation" [exercise]="textExercise" [result]="result" [participation]="participation"> </jhi-complaint-interactions>
+    <jhi-complaint-interactions *ngIf="textExercise && result && participation" [exercise]="textExercise" [result]="result" [participation]="participation">
+    </jhi-complaint-interactions>
 </div>
