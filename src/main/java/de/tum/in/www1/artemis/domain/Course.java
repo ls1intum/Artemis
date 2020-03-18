@@ -55,7 +55,7 @@ public class Course implements Serializable {
     @Lob
     private String description;
 
-    @Column(name = "short_name")
+    @Column(name = "short_name", unique = true)
     @JsonView(QuizView.Before.class)
     private String shortName;
 

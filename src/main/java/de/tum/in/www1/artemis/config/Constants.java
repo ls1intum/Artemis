@@ -52,7 +52,8 @@ public final class Constants {
 
     public static final String PROGRAMMING_SUBMISSION_TOPIC = "/newSubmission";
 
-    public static final String SHORT_NAME_REGEX = "^[a-zA-Z][a-zA-Z0-9]*";
+    // short names should have at least 3 characters and must start with a letter
+    public static final String SHORT_NAME_REGEX = "^[a-zA-Z][a-zA-Z0-9]{2,}";
 
     public static final Pattern SHORT_NAME_PATTERN = Pattern.compile(SHORT_NAME_REGEX);
 

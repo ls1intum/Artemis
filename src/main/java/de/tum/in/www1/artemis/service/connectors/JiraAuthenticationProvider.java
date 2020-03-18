@@ -42,6 +42,7 @@ import de.tum.in.www1.artemis.domain.Authority;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.exception.ArtemisAuthenticationException;
+import de.tum.in.www1.artemis.exception.GroupAlreadyExistsException;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
@@ -265,6 +266,38 @@ public class JiraAuthenticationProvider implements ArtemisAuthenticationProvider
             log.error("Could not add user " + username + " to JIRA group " + group + ". Error: " + e.getMessage());
             throw new ArtemisAuthenticationException("Error while adding " + username + " to JIRA group " + group, e);
         }
+    }
+
+    @Override
+    public void createGroup(String groupName) {
+        log.info("Create group " + groupName + " in JIRA");
+        Map<String, Object> body = new HashMap<>();
+        body.put("name", groupName);
+        HttpEntity<?> entity = new HttpEntity<>(body);
+        try {
+            restTemplate.exchange(JIRA_URL + "/rest/api/2/group", HttpMethod.POST, entity, Map.class);
+        }
+        catch (HttpClientErrorException e) {
+            // forward this error to the client because we might not want to create the course, if the group already exists
+            // this prevents problems when multiple Artemis instances use the same JIRA server
+            throw new GroupAlreadyExistsException("Error while creating group " + groupName + " in JIRA", e);
+        }
+    }
+
+    @Override
+    public void deleteGroup(String groupName) {
+        log.info("Delete group " + groupName + " in JIRA");
+        try {
+            restTemplate.exchange(JIRA_URL + "/rest/api/2/group?groupname=" + groupName, HttpMethod.DELETE, null, Map.class);
+        }
+        catch (HttpClientErrorException e) {
+            if (e.getStatusCode().equals(HttpStatus.NOT_FOUND)) {
+                // ignore the error if the group does not exist
+                return;
+            }
+            log.error("Could not delete group " + groupName + " in JIRA. Error: " + e.getMessage());
+        }
+        // TODO: remove the group from all users in the artemis database
     }
 
     @Override
