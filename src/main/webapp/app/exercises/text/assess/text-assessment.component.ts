@@ -117,9 +117,9 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
             const submissionValue = params['submissionId'];
 
             if (submissionValue === 'new') {
-                this.assessmentsService.getParticipationForSubmissionWithoutAssessment(exerciseId).subscribe(
-                    participation => {
-                        this.receiveParticipation(participation);
+                this.textSubmissionService.getTextSubmissionForExerciseWithoutAssessment(exerciseId, true).subscribe(
+                    submission => {
+                        this.receiveParticipation(<StudentParticipation>submission.participation);
 
                         // Update the url with the new id, without reloading the page, to make the history consistent
                         const newUrl = window.location.hash.replace('#', '').replace('new', `${this.submission.id}`);
@@ -357,10 +357,12 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
 
     private receiveParticipation(participation: StudentParticipation): void {
         this.participation = participation;
-        this.submission = <TextSubmission>this.participation.submissions[0];
+        if (this.participation.submissions) {
+            this.submission = <TextSubmission>this.participation.submissions[0];
+        }
         this.exercise = <TextExercise>this.participation.exercise;
+        this.result = this.submission.result || this.participation.results[0];
 
-        this.result = this.participation.results[0];
         if (this.result.hasComplaint) {
             this.getComplaint();
         }

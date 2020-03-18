@@ -91,7 +91,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
      * @param participationId the id of the participation
      * @return the participation with eager submissions, results, exercise and course or an empty Optional
      */
-    @EntityGraph(type = LOAD, attributePaths = { "submissions", "submissions.result", "results", "exercise", "exercise.course" })
+    @EntityGraph(type = LOAD, attributePaths = { "submissions", "submissions.result", "submissions.result.feedbacks", "results", "exercise", "exercise.course" })
     Optional<StudentParticipation> findWithEagerSubmissionsAndResultsAndExerciseAndCourseById(Long participationId);
 
     @EntityGraph(type = LOAD, attributePaths = { "submissions", "results", "results.assessor" })

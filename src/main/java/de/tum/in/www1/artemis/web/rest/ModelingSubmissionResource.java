@@ -88,9 +88,7 @@ public class ModelingSubmissionResource {
      */
     @PostMapping("/exercises/{exerciseId}/modeling-submissions")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    // TODO MJ return 201 CREATED with location header instead of ModelingSubmission
-    // TODO MJ merge with update
-    public ResponseEntity<ModelingSubmission> createModelingSubmission(@PathVariable Long exerciseId, Principal principal, @RequestBody ModelingSubmission modelingSubmission) {
+    public ResponseEntity<ModelingSubmission> createModelingSubmission(@PathVariable long exerciseId, Principal principal, @RequestBody ModelingSubmission modelingSubmission) {
         log.debug("REST request to create ModelingSubmission : {}", modelingSubmission.getModel());
         if (modelingSubmission.getId() != null) {
             throw new BadRequestAlertException("A new modelingSubmission cannot already have an ID", ENTITY_NAME, "idexists");
@@ -99,7 +97,7 @@ public class ModelingSubmissionResource {
         final User user = userService.getUserWithGroupsAndAuthorities();
         checkAuthorization(modelingExercise, user);
         modelingSubmission = modelingSubmissionService.save(modelingSubmission, modelingExercise, principal.getName());
-        this.modelingSubmissionService.hideDetails(modelingSubmission, user);
+        modelingSubmissionService.hideDetails(modelingSubmission, user);
         return ResponseEntity.ok(modelingSubmission);
     }
 
@@ -115,17 +113,17 @@ public class ModelingSubmissionResource {
      */
     @PutMapping("/exercises/{exerciseId}/modeling-submissions")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<ModelingSubmission> updateModelingSubmission(@PathVariable Long exerciseId, Principal principal, @RequestBody ModelingSubmission modelingSubmission) {
+    public ResponseEntity<ModelingSubmission> updateModelingSubmission(@PathVariable long exerciseId, Principal principal, @RequestBody ModelingSubmission modelingSubmission) {
         log.debug("REST request to update ModelingSubmission : {}", modelingSubmission.getModel());
         final ModelingExercise modelingExercise = modelingExerciseService.findOne(exerciseId);
         final User user = userService.getUserWithGroupsAndAuthorities();
         checkAuthorization(modelingExercise, user);
 
-        if (modelingSubmission.getId() == null) {
-            return createModelingSubmission(exerciseId, principal, modelingSubmission);
-        }
+        // TODO: add one additional check: fetch modelingSubmission.getId() from the database with the corresponding participation and check that the user of participation is the
+        // same as the user who executes this call. This prevents injecting submissions to other users
+
         modelingSubmission = modelingSubmissionService.save(modelingSubmission, modelingExercise, principal.getName());
-        this.modelingSubmissionService.hideDetails(modelingSubmission, user);
+        modelingSubmissionService.hideDetails(modelingSubmission, user);
         return ResponseEntity.ok(modelingSubmission);
     }
 
@@ -328,9 +326,9 @@ public class ModelingSubmissionResource {
      * @param participationId the participationId for which to find the submission and data for the modeling editor
      * @return the ResponseEntity with the submission as body
      */
-    @GetMapping("/modeling-editor/{participationId}")
+    @GetMapping("/participations/{participationId}/latest-modeling-submission")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<ModelingSubmission> getSubmissionForModelingEditor(@PathVariable Long participationId) {
+    public ResponseEntity<ModelingSubmission> getLatestSubmissionForModelingEditor(@PathVariable long participationId) {
         StudentParticipation participation = participationService.findOneWithEagerSubmissionsAndResults(participationId);
         ModelingExercise modelingExercise;
 

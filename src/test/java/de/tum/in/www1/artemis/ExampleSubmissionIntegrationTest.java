@@ -184,7 +184,7 @@ public class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationT
         ExampleSubmission storedExampleSubmission = database.addExampleSubmission(database.generateExampleSubmission(validModel, modelingExercise, true));
         List<Feedback> feedbacks = database.loadAssessmentFomResources("test-data/model-assessment/assessment.54727.json");
 
-        request.putWithResponseBody("/api/modeling-submissions/" + storedExampleSubmission.getId() + "/exampleAssessment", feedbacks, Result.class, HttpStatus.OK);
+        request.putWithResponseBody("/api/modeling-submissions/" + storedExampleSubmission.getId() + "/example-assessment", feedbacks, Result.class, HttpStatus.OK);
 
         Result storedResult = resultRepo.findDistinctWithFeedbackBySubmissionId(storedExampleSubmission.getSubmission().getId()).get();
         checkFeedbackCorrectlyStored(feedbacks, storedResult.getFeedbacks(), FeedbackType.MANUAL);

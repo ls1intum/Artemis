@@ -15,17 +15,12 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.GradingCriterion;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.repository.ModelingExerciseRepository;
 import de.tum.in.www1.artemis.service.*;
@@ -201,19 +196,16 @@ public class ModelingExerciseResource {
     }
 
     /**
-     * Return the Compass statistic regarding the automatic assessment of the modeling exercise with the given id.
+     * Prints the Compass statistic regarding the automatic assessment of the modeling exercise with the given id.
      *
      * @param exerciseId the id of the modeling exercise for which we want to get the Compass statistic
      * @return the statistic as key-value pairs in json
      */
-    @GetMapping("/exercises/{exerciseId}/compass-statistic")
+    @GetMapping("/modeling-exercises/{exerciseId}/print-statistic")
     @PreAuthorize("hasAnyRole('ADMIN')")
-    public ResponseEntity<Void> getCompassStatisticForExercise(@PathVariable Long exerciseId) {
+    public ResponseEntity<Void> printCompassStatisticForExercise(@PathVariable Long exerciseId) {
         ModelingExercise modelingExercise = modelingExerciseService.findOne(exerciseId);
         compassService.printStatistic(modelingExercise.getId());
-
-        // TODO: In the future, this endpoint should return the statistics to the client as well.
-
         return ResponseEntity.ok().build();
     }
 

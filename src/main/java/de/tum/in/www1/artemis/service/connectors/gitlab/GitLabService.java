@@ -97,7 +97,12 @@ public class GitLabService extends AbstractVersionControlService {
         }
 
         addMemberToProject(repositoryUrl, username);
-        protectBranch("master", repositoryUrl);
+        try {
+            protectBranch("master", repositoryUrl);
+        }
+        catch (GitLabException ex) {
+            log.warn("Could not protect branch (but will still continue) due to the following reason: " + ex.getMessage());
+        }
     }
 
     private void addMemberToProject(URL repositoryUrl, String username) {
@@ -121,7 +126,12 @@ public class GitLabService extends AbstractVersionControlService {
     private void protectBranch(String branch, URL repositoryUrl) {
         final var repositoryId = getPathIDFromRepositoryURL(repositoryUrl);
         // we have to first unprotect the branch in order to set the correct access level
-        unprotectBranch(repositoryId, branch);
+        try {
+            unprotectBranch(repositoryId, branch);
+        }
+        catch (GitLabException ex) {
+            log.warn("Could not unprotectBranch branch (but will try to protect it) due to the following reason: " + ex.getMessage());
+        }
 
         try {
             gitlab.getProtectedBranchesApi().protectBranch(repositoryId, branch, DEVELOPER, DEVELOPER);
@@ -308,8 +318,9 @@ public class GitLabService extends AbstractVersionControlService {
         final var builder = Endpoints.FORK.buildEndpoint(BASE_API, originalNamespace);
         final var body = Map.of("namespace", targetProjectKey, "path", targetRepoSlug, "name", targetRepoSlug);
 
-        final var errorMessage = "Couldn't fork repository: " + sourceProjectKey + " to " + targetProjectKey;
+        final var errorMessage = "Couldn't fork repository " + originalNamespace + " into " + targetRepoSlug;
         try {
+            log.info("Try to fork " + originalNamespace + " into " + targetRepoSlug);
             final var response = restTemplate.postForEntity(builder.build(true).toUri(), body, String.class);
             if (response.getStatusCode() != HttpStatus.CREATED) {
                 throw new GitLabException(errorMessage + "; response (" + response.getStatusCode() + ") was: " + response.getBody());

@@ -22,7 +22,6 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
@@ -40,10 +39,6 @@ public class FileUploadSubmissionService extends SubmissionService {
 
     private final FileUploadSubmissionRepository fileUploadSubmissionRepository;
 
-    private final ResultService resultService;
-
-    private final ResultRepository resultRepository;
-
     private final ParticipationService participationService;
 
     private final StudentParticipationRepository studentParticipationRepository;
@@ -51,14 +46,13 @@ public class FileUploadSubmissionService extends SubmissionService {
     private final FileService fileService;
 
     public FileUploadSubmissionService(FileUploadSubmissionRepository fileUploadSubmissionRepository, SubmissionRepository submissionRepository, ResultRepository resultRepository,
-            ParticipationService participationService, UserService userService, StudentParticipationRepository studentParticipationRepository, ResultService resultService,
-            FileService fileService, AuthorizationCheckService authCheckService) {
-        super(submissionRepository, userService, authCheckService);
+            ParticipationService participationService, UserService userService, StudentParticipationRepository studentParticipationRepository, FileService fileService,
+            AuthorizationCheckService authCheckService) {
+        super(submissionRepository, userService, authCheckService, resultRepository);
         this.fileUploadSubmissionRepository = fileUploadSubmissionRepository;
         this.resultRepository = resultRepository;
         this.participationService = participationService;
         this.studentParticipationRepository = studentParticipationRepository;
-        this.resultService = resultService;
         this.fileService = fileService;
     }
 
@@ -154,25 +148,6 @@ public class FileUploadSubmissionService extends SubmissionService {
     }
 
     /**
-     * Creates a new Result object, assigns it to the given submission and stores the changes to the database. Note, that this method is also called for example submissions which
-     * do not have a participation. Therefore, we check if the given submission has a participation and only then update the participation with the new result.
-     *
-     * @param submission the submission for which a new result should be created
-     * @return the newly created result
-     */
-    public Result setNewResult(FileUploadSubmission submission) {
-        Result result = new Result();
-        result.setSubmission(submission);
-        submission.setResult(result);
-        if (submission.getParticipation() != null) {
-            result.setParticipation(submission.getParticipation());
-        }
-        result = resultRepository.save(result);
-        fileUploadSubmissionRepository.save(submission);
-        return result;
-    }
-
-    /**
      * Saves the given submission. Is used for creating and updating file upload submissions. Rolls back if inserting fails - occurs for concurrent createFileUploadSubmission() calls.
      *
      * @param fileUploadSubmission the submission that should be saved
@@ -263,26 +238,6 @@ public class FileUploadSubmissionService extends SubmissionService {
     }
 
     /**
-     * Soft lock the submission to prevent other tutors from receiving and assessing it.  We set the assessor and save the result to soft lock the assessment in the client. If no result exists for this submission we create one first.
-     *
-     * @param fileUploadSubmission the submission to lock
-     */
-    private void lockSubmission(FileUploadSubmission fileUploadSubmission) {
-        Result result = fileUploadSubmission.getResult();
-        if (result == null) {
-            result = setNewResult(fileUploadSubmission);
-        }
-
-        if (result.getAssessor() == null) {
-            resultService.setAssessor(result);
-        }
-
-        result.setAssessmentType(AssessmentType.MANUAL);
-        result = resultRepository.save(result);
-        log.debug("Assessment locked with result id: " + result.getId() + " for assessor: " + result.getAssessor().getName());
-    }
-
-    /**
      * Get the file upload submission with the given ID from the database and lock the submission to prevent other tutors from receiving and assessing it. Additionally, check if the
      * submission lock limit has been reached.
      *
@@ -335,24 +290,6 @@ public class FileUploadSubmissionService extends SubmissionService {
         fileUploadSubmission = fileUploadSubmissionRepository.save(fileUploadSubmission);
 
         return fileUploadSubmission;
-    }
-
-    /**
-     * @param courseId the course we are interested in
-     * @return the number of file upload submissions which should be assessed, so we ignore the ones after the exercise due date
-     */
-    @Transactional(readOnly = true)
-    public long countSubmissionsToAssessByCourseId(Long courseId) {
-        return fileUploadSubmissionRepository.countByCourseIdSubmittedBeforeDueDate(courseId);
-    }
-
-    /**
-     * @param exerciseId the exercise we are interested in
-     * @return the number of file upload submissions which should be assessed, so we ignore the ones after the exercise due date
-     */
-    @Transactional(readOnly = true)
-    public long countSubmissionsToAssessByExerciseId(Long exerciseId) {
-        return fileUploadSubmissionRepository.countByExerciseIdSubmittedBeforeDueDate(exerciseId);
     }
 
     /**

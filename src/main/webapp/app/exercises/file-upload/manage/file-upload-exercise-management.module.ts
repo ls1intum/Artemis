@@ -13,7 +13,6 @@ import { ArtemisTeamConfigFormGroupModule } from 'app/exercises/shared/team-conf
 import { ArtemisFileUploadExerciseManagementRoutingModule } from 'app/exercises/file-upload/manage/file-upload-exercise-management.route';
 import { SortByModule } from 'app/shared/pipes/sort-by.module';
 import { StructuredGradingCriterionModule } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.module';
-import { ArtemisSlideToggleModule } from 'app/exercises/shared/slide-toggle/slide-toggle.module';
 
 @NgModule({
     imports: [
@@ -28,7 +27,6 @@ import { ArtemisSlideToggleModule } from 'app/exercises/shared/slide-toggle/slid
         FormDateTimePickerModule,
         SortByModule,
         StructuredGradingCriterionModule,
-        ArtemisSlideToggleModule,
     ],
     declarations: [FileUploadExerciseComponent, FileUploadExerciseDetailComponent, FileUploadExerciseUpdateComponent],
     exports: [FileUploadExerciseComponent],

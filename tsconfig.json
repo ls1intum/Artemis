@@ -8,13 +8,16 @@
         "emitDecoratorMetadata": true,
         "experimentalDecorators": true,
         "removeComments": false,
+        "strict": false,
+        "noImplicitReturns": false,
+        "noFallthroughCasesInSwitch": true,
         "noImplicitAny": true,
         "suppressImplicitAnyIndexErrors": true,
         "strictNullChecks": true,
         "resolveJsonModule": true,
         "skipLibCheck": true,
         "outDir": "build/resources/main/static/app",
-        "lib": ["es2018", "dom"],
+        "lib": ["es7", "dom"],
         "typeRoots": [
             "node_modules/@types"
         ],
@@ -23,6 +26,13 @@
             "app/*": ["src/main/webapp/app/*"]
         },
         "importHelpers": true
+    },
+    "angularCompilerOptions": {
+        "genDir": "build/resources/main/aot",
+        "skipMetadataEmit" : true,
+        "fullTemplateTypeCheck": true,
+        "strictTemplates": false,
+        "preserveWhitespaces": true
     },
     "include": [
         "src/main/webapp/app"
