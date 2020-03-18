@@ -120,7 +120,7 @@ public class ArtemisInternalAuthenticationProvider implements ArtemisAuthenticat
 
     @Override
     public void deleteGroup(String groupName) {
-        // TODO: remove the group from all users in the artemis database
+        userService.removeGroupFromUsers(groupName);
     }
 
     @Override

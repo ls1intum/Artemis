@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.service.connectors;
+package de.tum.in.www1.artemis.service.connectors.jira;
 
 import static de.tum.in.www1.artemis.config.Constants.TUM_USERNAME_PATTERN;
 
@@ -7,6 +7,7 @@ import java.net.URL;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import de.tum.in.www1.artemis.service.connectors.ConnectorHealth;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -291,11 +292,12 @@ public class JiraAuthenticationProvider implements ArtemisAuthenticationProvider
         catch (HttpClientErrorException e) {
             if (e.getStatusCode().equals(HttpStatus.NOT_FOUND)) {
                 // ignore the error if the group does not exist
-                return;
             }
-            log.error("Could not delete group " + groupName + " in JIRA. Error: " + e.getMessage());
+            else {
+                log.error("Could not delete group " + groupName + " in JIRA. Error: " + e.getMessage());
+            }
         }
-        // TODO: remove the group from all users in the artemis database
+        userService.removeGroupFromUsers(groupName);
     }
 
     @Override
