@@ -516,7 +516,7 @@ public class Result implements Serializable {
     public String toString() {
         return "Result{" + "id=" + id + ", resultString='" + resultString + '\'' + ", completionDate=" + completionDate + ", successful=" + successful + ", score=" + score
                 + ", rated=" + rated + ", hasFeedback=" + hasFeedback + ", submission=" + submission + ", feedbacks=" + feedbacks + ", participation=" + participation
-                + ", assessor=" + assessor + ", assessmentType=" + assessmentType + ", hasComplaint=" + hasComplaint + ", exampleResult=" + exampleResult + '}';
+                + ", assessmentType=" + assessmentType + ", hasComplaint=" + hasComplaint + ", exampleResult=" + exampleResult + '}';
     }
 
     /**
