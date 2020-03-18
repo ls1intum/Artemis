@@ -203,6 +203,7 @@ public class ExerciseService {
     /**
      * Get one exercise with all exercise hints and all student questions + answers and with all categories
      * @param exerciseId the id of the exercise to find
+     * @param user the current user
      * @return the exercise
      */
     public Exercise findOneWithDetailsForStudents(Long exerciseId, User user) {
