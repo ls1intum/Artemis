@@ -128,12 +128,8 @@ public class ExerciseService {
 
         if (exercises != null) {
             for (Exercise exercise : exercises) {
-                // for team-based exercises: add the team that the user has been assigned to onto the exercise
-                if (exercise.isTeamMode()) {
-                    teamService.findOneByExerciseAndUser(exercise, user).ifPresent(team -> {
-                        exercise.setStudentAssignedTeamId(team.getId());
-                    });
-                }
+                setAssignedTeamIdForExerciseAndUser(exercise, user);
+
                 // filter out questions and all statistical information about the quizPointStatistic from quizExercises (so users can't see which answer options are correct)
                 if (exercise instanceof QuizExercise) {
                     QuizExercise quizExercise = (QuizExercise) exercise;
@@ -209,12 +205,14 @@ public class ExerciseService {
      * @param exerciseId the id of the exercise to find
      * @return the exercise
      */
-    public Exercise findOneWithDetailsForStudents(Long exerciseId) {
-        Optional<Exercise> exercise = exerciseRepository.findByIdWithDetailsForStudent(exerciseId);
-        if (exercise.isEmpty()) {
+    public Exercise findOneWithDetailsForStudents(Long exerciseId, User user) {
+        Optional<Exercise> optionalExercise = exerciseRepository.findByIdWithDetailsForStudent(exerciseId);
+        if (optionalExercise.isEmpty()) {
             throw new EntityNotFoundException("Exercise with exerciseId " + exerciseId + " does not exist!");
         }
-        return exercise.get();
+        Exercise exercise = optionalExercise.get();
+        setAssignedTeamIdForExerciseAndUser(exercise, user);
+        return exercise;
     }
 
     /**
@@ -357,5 +355,20 @@ public class ExerciseService {
 
         exercise.setNumberOfOpenMoreFeedbackRequests(numberOfMoreFeedbackRequests - numberOfMoreFeedbackComplaintResponses);
         exercise.setNumberOfMoreFeedbackRequests(numberOfMoreFeedbackRequests);
+    }
+
+    /**
+     * Sets the transient attribute "studentAssignedTeamId" that contains the id of the team to which the user is assigned
+     *
+     * @param exercise the exercise for which to set the attribute
+     * @param user the user for which to check to which team (or no team) he belongs to
+     */
+    private void setAssignedTeamIdForExerciseAndUser(Exercise exercise, User user) {
+        // if the exercise is not team-based, there is nothing to do here
+        if (exercise.isTeamMode()) {
+            teamService.findOneByExerciseAndUser(exercise, user).ifPresent(team -> {
+                exercise.setStudentAssignedTeamId(team.getId());
+            });
+        }
     }
 }
