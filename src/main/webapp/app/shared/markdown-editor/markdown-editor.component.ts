@@ -29,7 +29,6 @@ import { CodeCommand } from 'app/shared/markdown-editor/commands/code.command';
 import { DomainCommand } from 'app/shared/markdown-editor/domainCommands/domainCommand';
 import { UnorderedListCommand } from 'app/shared/markdown-editor/commands/unorderedListCommand';
 import { HeadingThreeCommand } from 'app/shared/markdown-editor/commands/headingThree.command';
-import { GradingInstructionCommand } from 'app/shared/markdown-editor/domainCommands/gradingInstruction.command';
 
 export enum MarkdownEditorHeight {
     SMALL = 200,
