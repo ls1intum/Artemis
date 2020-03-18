@@ -141,6 +141,7 @@ public class CourseResource {
         if (course.getId() != null) {
             throw new BadRequestAlertException("A new course cannot already have an ID", ENTITY_NAME, "idexists");
         }
+        validateComplaintsConfig(course);
         try {
             // Check if course shortname matches regex
             Matcher shortNameMatcher = SHORT_NAME_PATTERN.matcher(course.getShortName());
@@ -188,6 +189,7 @@ public class CourseResource {
                     return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "The shortname is invalid", "shortnameInvalid")).body(null);
                 }
                 checkIfGroupsExists(updatedCourse);
+                validateComplaintsConfig(updatedCourse);
 
                 // Based on the old instructors and TAs, we can update all exercises in the course in the VCS (if necessary)
                 // We need the old instructors and TAs, so that the VCS user management service can determine which
@@ -205,6 +207,21 @@ public class CourseResource {
         }
         else {
             return forbidden();
+        }
+    }
+
+    private void validateComplaintsConfig(Course course) {
+        if (course.getMaxComplaints() < 0) {
+            throw new BadRequestAlertException("Max Complaints cannot be negative", ENTITY_NAME, "maxComplaintsInvalid");
+        }
+        if (course.getMaxComplaintTimeDays() < 0) {
+            throw new BadRequestAlertException("Max Complaint Days cannot be negative", ENTITY_NAME, "maxComplaintDaysInvalid");
+        }
+        if (course.getMaxComplaintTimeDays() == 0 && course.getMaxComplaints() != 0) {
+            throw new BadRequestAlertException("Both complaints configs must be 0 (disabled) or must have positive integer values", ENTITY_NAME, "complaintsConfigInvalid");
+        }
+        if (course.getMaxComplaintTimeDays() != 0 && course.getMaxComplaints() == 0) {
+            throw new BadRequestAlertException("Both complaints configs must be 0 (disabled) or must have positive integer values", ENTITY_NAME, "complaintsConfigInvalid");
         }
     }
 

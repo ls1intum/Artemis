@@ -1,8 +1,5 @@
 package de.tum.in.www1.artemis.service;
 
-import static de.tum.in.www1.artemis.config.Constants.MAX_COMPLAINT_NUMBER_PER_STUDENT;
-import static de.tum.in.www1.artemis.config.Constants.MAX_COMPLAINT_TIME_WEEKS;
-
 import java.security.Principal;
 import java.time.ZonedDateTime;
 import java.util.List;
@@ -35,10 +32,13 @@ public class ComplaintService {
 
     private ResultService resultService;
 
-    public ComplaintService(ComplaintRepository complaintRepository, ResultRepository resultRepository, ResultService resultService) {
+    private CourseService courseService;
+
+    public ComplaintService(ComplaintRepository complaintRepository, ResultRepository resultRepository, ResultService resultService, CourseService courseService) {
         this.complaintRepository = complaintRepository;
         this.resultRepository = resultRepository;
         this.resultService = resultService;
+        this.courseService = courseService;
     }
 
     /**
@@ -56,12 +56,15 @@ public class ComplaintService {
         User student = studentParticipation.getStudent();
         Long courseId = studentParticipation.getExercise().getCourse().getId();
 
+        // Retrieve course to get Max Complaint Number and Max Complaint Time per Student
+        Course course = courseService.findOne(courseId);
+
         long numberOfUnacceptedComplaints = countUnacceptedComplaintsByStudentIdAndCourseId(student.getId(), courseId);
-        if (numberOfUnacceptedComplaints >= MAX_COMPLAINT_NUMBER_PER_STUDENT && complaint.getComplaintType() == ComplaintType.COMPLAINT) {
-            throw new BadRequestAlertException("You cannot have more than " + MAX_COMPLAINT_NUMBER_PER_STUDENT + " open or rejected complaints at the same time.", ENTITY_NAME,
+        if (numberOfUnacceptedComplaints >= course.getMaxComplaints() && complaint.getComplaintType() == ComplaintType.COMPLAINT) {
+            throw new BadRequestAlertException("You cannot have more than " + course.getMaxComplaints() + " open or rejected complaints at the same time.", ENTITY_NAME,
                     "toomanycomplaints");
         }
-        if (!isTimeOfComplaintValid(originalResult, studentParticipation.getExercise())) {
+        if (!isTimeOfComplaintValid(originalResult, studentParticipation.getExercise(), course)) {
             throw new BadRequestAlertException("You cannot submit a complaint for a result that is older than one week.", ENTITY_NAME, "resultolderthanaweek");
         }
         if (!student.getLogin().equals(principal.getName())) {
@@ -173,11 +176,12 @@ public class ComplaintService {
      * the result was submitted after the assessment due date or the assessment due date is not set, the completion date of the result is checked. If the result was submitted
      * before the assessment due date, the assessment due date is checked, as the student can only see the result after the assessment due date.
      */
-    private boolean isTimeOfComplaintValid(Result result, Exercise exercise) {
+    private boolean isTimeOfComplaintValid(Result result, Exercise exercise, Course course) {
+
         if (exercise.getAssessmentDueDate() == null || result.getCompletionDate().isAfter(exercise.getAssessmentDueDate())) {
-            return result.getCompletionDate().isAfter(ZonedDateTime.now().minusWeeks(MAX_COMPLAINT_TIME_WEEKS));
+            return result.getCompletionDate().isAfter(ZonedDateTime.now().minusDays(course.getMaxComplaintTimeDays()));
         }
-        return exercise.getAssessmentDueDate().isAfter(ZonedDateTime.now().minusWeeks(MAX_COMPLAINT_TIME_WEEKS));
+        return exercise.getAssessmentDueDate().isAfter(ZonedDateTime.now().minusDays(course.getMaxComplaintTimeDays()));
     }
 
 }

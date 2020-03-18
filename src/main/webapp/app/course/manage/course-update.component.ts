@@ -36,6 +36,7 @@ export class CourseUpdateComponent implements OnInit {
     croppedImage: any = '';
     showCropper = false;
     presentationScoreEnabled = false;
+    complaintsEnabled = true; // default value
 
     shortNamePattern = /^[a-zA-Z][a-zA-Z0-9]*$/; // must start with a letter and cannot contain special characters
     presentationScorePattern = /^[0-9]{0,4}$/; // makes sure that the presentation score is a positive natural integer greater than 0 and not too large
@@ -51,6 +52,8 @@ export class CourseUpdateComponent implements OnInit {
         this.isSaving = false;
         this.activatedRoute.data.subscribe(({ course }) => {
             this.course = course;
+            // complaints are only enabled when both values are positive
+            this.complaintsEnabled = this.course.maxComplaints > 0 && this.course.maxComplaintTimeDays > 0;
         });
         this.courseForm = new FormGroup({
             id: new FormControl(this.course.id),
@@ -66,6 +69,13 @@ export class CourseUpdateComponent implements OnInit {
             startDate: new FormControl(this.course.startDate),
             endDate: new FormControl(this.course.endDate),
             onlineCourse: new FormControl(this.course.onlineCourse),
+            maxComplaints: new FormControl(this.course.maxComplaints, {
+                validators: [Validators.required, Validators.min(0)],
+            }),
+            maxComplaintTimeDays: new FormControl(this.course.maxComplaintTimeDays, {
+                validators: [Validators.required, Validators.min(0)],
+            }),
+            studentQuestionsEnabled: new FormControl(this.course.studentQuestionsEnabled),
             registrationEnabled: new FormControl(this.course.registrationEnabled),
             presentationScore: new FormControl({ value: this.course.presentationScore, disabled: this.course.presentationScore === 0 }, [
                 Validators.min(1),
@@ -195,6 +205,19 @@ export class CourseUpdateComponent implements OnInit {
         } else {
             presentationScoreControl.reset({ value: 0, disabled: true });
             this.presentationScoreEnabled = false;
+        }
+    }
+
+    changeComplaintsEnabled(event: Event) {
+        // @ts-ignore
+        if (event.target.checked) {
+            this.complaintsEnabled = true;
+            this.courseForm.controls.maxComplaints.setValue(3);
+            this.courseForm.controls.maxComplaintTimeDays.setValue(7);
+        } else {
+            this.complaintsEnabled = false;
+            this.courseForm.controls.maxComplaints.setValue(0);
+            this.courseForm.controls.maxComplaintTimeDays.setValue(0);
         }
     }
 }

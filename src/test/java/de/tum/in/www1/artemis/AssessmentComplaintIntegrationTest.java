@@ -18,7 +18,6 @@ import org.springframework.util.LinkedMultiValueMap;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
@@ -70,10 +69,13 @@ public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegratio
 
     private Complaint moreFeedbackRequest;
 
+    private Course course;
+
     @BeforeEach
     public void initTestCase() throws Exception {
         database.addUsers(2, 2, 1);
-        database.addCourseWithOneModelingExercise();
+        // Initialize with 5 max complaints and 2 weeks max complaint deadline
+        course = database.addCourseWithOneModelingExercise();
         modelingExercise = (ModelingExercise) exerciseRepo.findAll().get(0);
         saveModelingSubmissionAndAssessment();
         complaint = new Complaint().result(modelingAssessment).complaintText("This is not fair").complaintType(ComplaintType.COMPLAINT);
@@ -104,8 +106,21 @@ public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegratio
 
     @Test
     @WithMockUser(username = "student1")
-    public void submitComplaintAboutModelingAssessment_complaintLimitReached() throws Exception {
+    public void submitComplaintAboutModellingAssessment_complaintLimitNotReached() throws Exception {
+        // 3 complaints are allowed because the mock object is now initialized with 5 max complaints
         database.addComplaints("student1", modelingAssessment.getParticipation(), 3, ComplaintType.COMPLAINT);
+
+        request.post("/api/complaints", complaint, HttpStatus.CREATED);
+
+        assertThat(complaintRepo.findByResult_Id(modelingAssessment.getId())).as("complaint is saved").isPresent();
+        Result storedResult = resultRepo.findByIdWithEagerFeedbacksAndAssessor(modelingAssessment.getId()).get();
+        assertThat(storedResult.hasComplaint()).as("hasComplaint flag of result is true").isTrue();
+    }
+
+    @Test
+    @WithMockUser(username = "student1")
+    public void submitComplaintAboutModelingAssessment_complaintLimitReached() throws Exception {
+        database.addComplaints("student1", modelingAssessment.getParticipation(), 5, ComplaintType.COMPLAINT);
 
         request.post("/api/complaints", complaint, HttpStatus.BAD_REQUEST);
 
@@ -133,9 +148,24 @@ public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegratio
 
     @Test
     @WithMockUser(username = "student1")
+    public void submitComplaintAboutModelingAssessment_validDeadline() throws Exception {
+        // Mock object initialized with 2 weeks deadline. One week after result date is fine.
+        database.updateAssessmentDueDate(modelingExercise.getId(), ZonedDateTime.now().minusWeeks(1));
+        database.updateResultCompletionDate(modelingAssessment.getId(), ZonedDateTime.now().minusWeeks(1));
+
+        request.post("/api/complaints", complaint, HttpStatus.CREATED);
+
+        assertThat(complaintRepo.findByResult_Id(modelingAssessment.getId())).as("complaint is saved").isPresent();
+        Result storedResult = resultRepo.findByIdWithEagerFeedbacksAndAssessor(modelingAssessment.getId()).get();
+        assertThat(storedResult.hasComplaint()).as("hasComplaint flag of result is true").isTrue();
+    }
+
+    @Test
+    @WithMockUser(username = "student1")
     public void submitComplaintAboutModelingAssessment_assessmentTooOld() throws Exception {
-        database.updateAssessmentDueDate(modelingExercise.getId(), ZonedDateTime.now().minusWeeks(Constants.MAX_COMPLAINT_TIME_WEEKS + 1));
-        database.updateResultCompletionDate(modelingAssessment.getId(), ZonedDateTime.now().minusWeeks(Constants.MAX_COMPLAINT_TIME_WEEKS + 1));
+        // 3 weeks is already past the deadline
+        database.updateAssessmentDueDate(modelingExercise.getId(), ZonedDateTime.now().minusWeeks(3));
+        database.updateResultCompletionDate(modelingAssessment.getId(), ZonedDateTime.now().minusWeeks(3));
 
         request.post("/api/complaints", complaint, HttpStatus.BAD_REQUEST);
 
@@ -486,8 +516,9 @@ public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegratio
     public void getNumberOfAllowedComplaintsInCourse() throws Exception {
         complaint.setStudent(database.getUserByLogin("student1"));
         complaintRepo.save(complaint);
-        long nrOfAllowedComplaints = request.get("/api/" + modelingExercise.getCourse().getId() + "/allowed-complaints", HttpStatus.OK, Long.class);
-        assertThat(nrOfAllowedComplaints).isEqualTo(3l);
+        Long nrOfAllowedComplaints = request.get("/api/" + modelingExercise.getCourse().getId() + "/allowed-complaints", HttpStatus.OK, Long.class);
+        assertThat(nrOfAllowedComplaints.intValue()).isEqualTo(course.getMaxComplaints());
+        // TODO: there should be a second test case where the student already has 2 complaints and the number is reduced
     }
 
     @Test
