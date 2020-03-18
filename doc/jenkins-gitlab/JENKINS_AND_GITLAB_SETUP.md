@@ -14,9 +14,55 @@ If you have one single server, or your own NGINX instance, just skip all NGINX r
 
 # Content of this document
 
-1. [GitLab](#gitlab)
-2. [Jenkins](#jenkins)
-3. [Separate NGINX Configurations](#separate-nginx-configurations)
+1. [Artemis](#artemis)
+2. [GitLab](#GitLab)
+    1. [Initial GitLab Setup](#Gitlab-Server-Setup)
+    2. [Upgrade GitLab Version](#Upgrade-GitLab)
+3. [Jenkins](#Jenkins)
+    1. [Initial Jenkins Setup](#Jenkins-Server-Setup)
+    2. [Upgrade Jenkins Version](#Upgrade-Jenkins)
+4. [Separate NGINX Configurations](#separate-nginx-configurations)
+
+## Artemis
+
+In order to use Artemis with Jenkins as **Continuous Integration** Server and Gitlab as **Version Control** Server, you have to configure the file `application-prod.yml` (Production Server) or `application-artemis.yml` (Local Development) accordingly. 
+Please note that all values in `<..>` have to be configured properly.
+These values will be explained below in the corresponding sections.
+
+    artemis:
+        repo-clone-path: ./repos/
+        repo-download-clone-path: ./repos-download/
+        encryption-password: artemis-encrypt     # arbitrary password for encrypting database values
+        user-management:
+            use-external: false
+        version-control:
+            url: <https://gitlab-url>
+            user: <gitlab-admin-user>
+            password: <gitlab-admin-password>
+            secret: <secret>
+            ci-token: <ci-token>
+        continuous-integration:
+            url: <https://jenkins-url>
+            user: <jenkins-admin-user>
+            password: <jenkins-admin-password>
+            empty-commit-necessary: false
+            secret-push-token: <secret push token>
+            vcs-credentials: <vcs-credentials>
+            artemis-authentication-token-key: <artemis-authentication-token-key>
+            artemis-authentication-token-value: <artemis-authentication-token-value>
+
+In addition, you have to start Artemis with the profiles `gitlab` and `jenkins` so that the correct adapters will be used, e.g.:
+
+    --spring.profiles.active=dev,jenkins,gitlab,artemis
+
+Please read [Development Setup](doc/setup/SETUP.md) for more details.
+
+When you start Artemis for the first time, it will automatically create an admin user based on the default encryption password specified in the yml file above.
+In case you want to use a different encryption password, you can insert users manually into the `jhi_user` table.
+You can use [Jasypt Online Encryption Tool](https://www.devglan.com/online-tools/jasypt-online-encryption-decryption) to generate encryption strings.
+Use Two Way Encryption (With Secret Text).
+
+TODO: make sure the initial scheme includes at least one user
 
 ## GitLab
 ### Gitlab Server Setup
@@ -35,8 +81,8 @@ If you have one single server, or your own NGINX instance, just skip all NGINX r
         docker run -itd --name gitlab \
             --hostname your.gitlab.domain.com \   # Specify the hostname
             --restart always \
-            -p 2222:22                # Remove this if cloning via SSH should not be supported
-            -p 80:80 -p 443:443 \     # Alternative 1: If you are NOT running your own NGINX instance
+            -p 2222:22                            # Remove this if cloning via SSH should not be supported
+            -p 80:80 -p 443:443 \                 # Alternative 1: If you are NOT running your own NGINX instance
             -p <some port of your choosing>:80    # Alternative 2: If you ARE running your own NGINX instance
             -v gitlab_data:/var/opt/gitlab \
             -v gitlab_logs:/var/log/gitlab \
