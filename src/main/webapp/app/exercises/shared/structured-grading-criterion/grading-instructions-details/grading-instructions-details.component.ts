@@ -50,6 +50,7 @@ export class GradingInstructionsDetailsComponent implements OnInit {
         this.criteria = this.exercise.gradingCriteria;
         this.questionEditorText = this.generateMarkdown();
     }
+
     generateMarkdown(): string {
         let markdownText = '';
         if (this.criteria === undefined || this.criteria.length === 0) {
@@ -62,11 +63,12 @@ export class GradingInstructionsDetailsComponent implements OnInit {
                 // if it is a dummy criterion, leave out the command identifier
                 markdownText += this.generateInstructionsMarkdown(criterion);
             } else {
-                markdownText += '[gradingCriterion]' + criterion.title + '\n' + '\t' + this.generateInstructionsMarkdown(criterion);
+                markdownText += GradingCriterionCommand.identifier + criterion.title + '\n' + '\t' + this.generateInstructionsMarkdown(criterion);
             }
         }
         return markdownText;
     }
+
     /**
      * @function generateMarkdown
      * @desc Generate the markdown text for this grading instruction
@@ -81,7 +83,7 @@ export class GradingInstructionsDetailsComponent implements OnInit {
         }
         for (const instruction of criterion.structuredGradingInstructions) {
             markdownText +=
-                '[gradingInstruction]' +
+                GradingInstructionCommand.identifier +
                 '\n' +
                 '\t' +
                 this.generateCreditsText(instruction) +
@@ -110,6 +112,7 @@ export class GradingInstructionsDetailsComponent implements OnInit {
         }
         return CreditsCommand.identifier + ' ' + instruction.credits;
     }
+
     generateGradingScaleText(instruction: GradingInstruction): string {
         if (instruction.gradingScale === undefined) {
             instruction.gradingScale = GradingScaleCommand.text;
@@ -117,6 +120,7 @@ export class GradingInstructionsDetailsComponent implements OnInit {
         }
         return GradingScaleCommand.identifier + ' ' + instruction.gradingScale;
     }
+
     generateInstructionDescriptionText(instruction: GradingInstruction): string {
         if (instruction.instructionDescription === undefined) {
             instruction.instructionDescription = InstructionDescriptionCommand.text;
@@ -146,12 +150,7 @@ export class GradingInstructionsDetailsComponent implements OnInit {
     }
 
     hasCriterionCommand(domainCommands: [string, DomainCommand][]): boolean {
-        for (const [text, command] of domainCommands) {
-            if (command instanceof GradingCriterionCommand) {
-                return true;
-            }
-        }
-        return false;
+        return domainCommands.some(([text, command]) => command instanceof GradingCriterionCommand);
     }
 
     /**
@@ -186,6 +185,7 @@ export class GradingInstructionsDetailsComponent implements OnInit {
             }
         }
     }
+
     /**
      * @function setParentForInstructionsWithNoCriterion
      * @desc 1. creates a dummy criterion object for each stand-alone instruction
