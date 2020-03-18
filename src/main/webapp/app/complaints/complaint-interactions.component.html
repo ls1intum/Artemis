@@ -1,4 +1,4 @@
-<div>
+<div *ngIf="exercise.course?.complaintsEnabled">
     <div class="mt-4" *ngIf="result && result.completionDate && !hasComplaint && !hasRequestMoreFeedback">
         <button
             class="btn btn-primary"
