@@ -620,9 +620,16 @@ public class CourseResource {
         }
         String title = course.getTitle();
 
-        artemisAuthenticationProvider.deleteGroup(course.getStudentGroupName());
-        artemisAuthenticationProvider.deleteGroup(course.getTeachingAssistantGroupName());
-        artemisAuthenticationProvider.deleteGroup(course.getInstructorGroupName());
+        // only delete the groups if they have been created by Artemis before
+        if (course.getStudentGroupName().equals("artemis-" + course.getShortName() + "-students")) {
+            artemisAuthenticationProvider.deleteGroup(course.getStudentGroupName());
+        }
+        if (course.getStudentGroupName().equals("artemis-" + course.getShortName() + "-tutors")) {
+            artemisAuthenticationProvider.deleteGroup(course.getTeachingAssistantGroupName());
+        }
+        if (course.getStudentGroupName().equals("artemis-" + course.getShortName() + "-instructors")) {
+            artemisAuthenticationProvider.deleteGroup(course.getInstructorGroupName());
+        }
 
         courseService.delete(courseId);
 
