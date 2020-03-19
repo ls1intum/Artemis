@@ -624,10 +624,10 @@ public class CourseResource {
         if (course.getStudentGroupName().equals("artemis-" + course.getShortName() + "-students")) {
             artemisAuthenticationProvider.deleteGroup(course.getStudentGroupName());
         }
-        if (course.getStudentGroupName().equals("artemis-" + course.getShortName() + "-tutors")) {
+        if (course.getTeachingAssistantGroupName().equals("artemis-" + course.getShortName() + "-tutors")) {
             artemisAuthenticationProvider.deleteGroup(course.getTeachingAssistantGroupName());
         }
-        if (course.getStudentGroupName().equals("artemis-" + course.getShortName() + "-instructors")) {
+        if (course.getInstructorGroupName().equals("artemis-" + course.getShortName() + "-instructors")) {
             artemisAuthenticationProvider.deleteGroup(course.getInstructorGroupName());
         }
 
