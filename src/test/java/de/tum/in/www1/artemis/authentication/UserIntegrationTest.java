@@ -223,6 +223,20 @@ public class UserIntegrationTest extends AbstractSpringIntegrationTest {
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
+    public void getUserViaFilter_asAdmin_isSuccessful() throws Exception {
+        final var params = new LinkedMultiValueMap<String, String>();
+        params.add("page", "0");
+        params.add("pageSize", "100");
+        params.add("searchTerm", "student1@test.de");
+        params.add("sortingOrder", "ASCENDING");
+        params.add("sortedColumn", "id");
+        List<User> users = request.getList("/api/users", HttpStatus.OK, User.class, params);
+        assertThat(users).hasSize(1);
+        assertThat(users.get(0).getEmail()).isEqualTo("student1@test.de");
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
     public void getAuthorities_asAdmin_isSuccessful() throws Exception {
         List<String> authorities = request.getList("/api/users/authorities", HttpStatus.OK, String.class);
         assertThat(authorities).isEqualTo(List.of("ROLE_ADMIN", "ROLE_INSTRUCTOR", "ROLE_TA", "ROLE_USER"));
