@@ -120,10 +120,17 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationTest {
     public void testDeleteCourseWithPermission() throws Exception {
         jiraRequestMockProvider.enableMockingOfRequests();
         List<Course> courses = database.createCoursesWithExercisesAndLectures();
+        //mock certain requests to JIRA
         for (Course course : courses) {
-            jiraRequestMockProvider.mockDeleteGroup(course.getStudentGroupName());
-            jiraRequestMockProvider.mockDeleteGroup(course.getTeachingAssistantGroupName());
-            jiraRequestMockProvider.mockDeleteGroup(course.getInstructorGroupName());
+            if (course.getStudentGroupName().startsWith("artemis-")) {
+                jiraRequestMockProvider.mockDeleteGroup(course.getStudentGroupName());
+            }
+            if (course.getTeachingAssistantGroupName().startsWith("artemis-")) {
+                jiraRequestMockProvider.mockDeleteGroup(course.getTeachingAssistantGroupName());
+            }
+            if (course.getInstructorGroupName().startsWith("artemis-")) {
+                jiraRequestMockProvider.mockDeleteGroup(course.getInstructorGroupName());
+            }
         }
         for (Course course : courses) {
             if (!course.getExercises().isEmpty()) {
