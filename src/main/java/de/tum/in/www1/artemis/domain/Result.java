@@ -18,7 +18,6 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonView;
 import com.google.common.base.Strings;
 
@@ -58,10 +57,6 @@ public class Result implements Serializable {
     @Column(name = "jhi_successful")
     @JsonView(QuizView.After.class)
     private Boolean successful;
-
-    @Column(name = "build_artifact")
-    @JsonView(QuizView.Before.class)
-    private Boolean buildArtifact;
 
     /**
      * Relative score in %
@@ -121,22 +116,6 @@ public class Result implements Serializable {
 
     @Column(name = "example_result")
     private Boolean exampleResult;
-
-    /**
-     * This property stores the total number of results in the participation this result belongs to. Not stored in the database, computed dynamically and used in showing statistics
-     * to the user in the exercise view.
-     */
-    @Transient
-    @JsonProperty
-    private Integer submissionCount;
-
-    public Integer getSubmissionCount() {
-        return submissionCount;
-    }
-
-    public void setSubmissionCount(Integer submissionCount) {
-        this.submissionCount = submissionCount;
-    }
 
     // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
     public Long getId() {
@@ -200,19 +179,6 @@ public class Result implements Serializable {
 
     public void setSuccessful(Boolean successful) {
         this.successful = successful;
-    }
-
-    public Boolean isBuildArtifact() {
-        return buildArtifact;
-    }
-
-    public Result buildArtifact(Boolean buildArtifact) {
-        this.buildArtifact = buildArtifact;
-        return this;
-    }
-
-    public void setBuildArtifact(Boolean buildArtifact) {
-        this.buildArtifact = buildArtifact;
     }
 
     public Long getScore() {
@@ -548,9 +514,9 @@ public class Result implements Serializable {
 
     @Override
     public String toString() {
-        return "Result{" + "id=" + getId() + ", resultString='" + getResultString() + "'" + ", completionDate='" + getCompletionDate() + "'" + ", successful='" + isSuccessful()
-                + "'" + ", buildArtifact='" + isBuildArtifact() + "'" + ", score=" + getScore() + ", rated='" + isRated() + "'" + ", hasFeedback='" + getHasFeedback() + "'"
-                + ", hasComplaint='" + hasComplaint() + "'" + "}";
+        return "Result{" + "id=" + id + ", resultString='" + resultString + '\'' + ", completionDate=" + completionDate + ", successful=" + successful + ", score=" + score
+                + ", rated=" + rated + ", hasFeedback=" + hasFeedback + ", submission=" + submission + ", feedbacks=" + feedbacks + ", participation=" + participation
+                + ", assessmentType=" + assessmentType + ", hasComplaint=" + hasComplaint + ", exampleResult=" + exampleResult + '}';
     }
 
     /**

@@ -10,7 +10,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -34,7 +33,9 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import com.appfire.bamboo.cli.BambooClient;
 import com.appfire.bamboo.cli.helpers.PlanHelper;
+import com.appfire.bamboo.cli.helpers.ProjectHelper;
 import com.appfire.bamboo.cli.helpers.RepositoryHelper;
+import com.appfire.bamboo.cli.helpers.TriggerHelper;
 import com.appfire.bamboo.cli.objects.RemoteRepository;
 import com.appfire.common.cli.CliClient;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -58,6 +59,12 @@ public class BambooRequestMockProvider {
 
     @Mock
     private RepositoryHelper repositoryHelper;
+
+    @Mock
+    private TriggerHelper triggerHelper;
+
+    @Mock
+    private ProjectHelper projectHelper;
 
     @Value("${artemis.continuous-integration.url}")
     private URL BAMBOO_SERVER_URL;
@@ -89,12 +96,16 @@ public class BambooRequestMockProvider {
         mockServer.reset();
     }
 
-    public void mockCheckIfProjectExists(ProgrammingExercise exercise) throws IOException, URISyntaxException {
+    public void mockCheckIfProjectExists(ProgrammingExercise exercise, final boolean exists) throws IOException, URISyntaxException {
         final var projectKey = exercise.getProjectKey();
         final var projectName = exercise.getProjectName();
         final var bambooSearchDTO = new BambooProjectSearchDTO();
-        bambooSearchDTO.setSize(0);
-        bambooSearchDTO.setSearchResults(new ArrayList<>());
+        final var searchResult = new BambooProjectSearchDTO.SearchResultDTO();
+        final var foundProject = new BambooProjectDTO();
+        foundProject.setProjectName(exercise.getProjectName() + (exists ? "" : "abc"));
+        searchResult.setSearchEntity(foundProject);
+        bambooSearchDTO.setSize(1);
+        bambooSearchDTO.setSearchResults(List.of(searchResult));
 
         mockServer.expect(ExpectedCount.once(), requestTo(BAMBOO_SERVER_URL + "/rest/api/latest/project/" + projectKey)).andExpect(method(HttpMethod.GET))
                 .andRespond(withStatus(HttpStatus.NOT_FOUND));
@@ -151,23 +162,50 @@ public class BambooRequestMockProvider {
 
     public List<Verifiable> mockUpdatePlanRepositoryForParticipation(ProgrammingExercise exercise, String username)
             throws CliClient.RemoteRestException, CliClient.ClientException {
-        final var verifications = new LinkedList<Verifiable>();
         final var projectKey = exercise.getProjectKey();
         final var bambooRepoName = Constants.ASSIGNMENT_REPO_NAME;
-        final var planKey = (projectKey + "-" + username).toUpperCase();
-        final var repositoryResponse = new RemoteRepository(null, null, "testName");
         final var bitbucketRepoName = projectKey.toLowerCase() + "-" + username;
 
-        when(repositoryHelper.getRemoteRepository(anyString(), anyString(), anyBoolean())).thenReturn(repositoryResponse);
+        return mockUpdatePlanRepository(exercise, username, bambooRepoName, bitbucketRepoName, List.of());
+    }
+
+    public List<Verifiable> mockUpdatePlanRepository(ProgrammingExercise exercise, String planName, String bambooRepoName, String bitbucketRepoName, List<String> triggeredBy)
+            throws CliClient.RemoteRestException, CliClient.ClientException {
+        final var verifications = new LinkedList<Verifiable>();
+        final var projectKey = exercise.getProjectKey();
+        final var planKey = (projectKey + "-" + planName).toUpperCase();
+        final var repositoryResponse = new RemoteRepository(null, 12345678L, "testName");
+
+        doReturn(repositoryResponse).when(repositoryHelper).getRemoteRepository(bambooRepoName, planKey, false);
         verifications.add(() -> verify(repositoryHelper, times(1)).getRemoteRepository(bambooRepoName, planKey, false));
 
-        doNothing().when(bambooBuildPlanUpdateProvider).updateRepository(repositoryResponse, bitbucketRepoName, projectKey.toUpperCase(), planKey);
+        doNothing().when(bambooBuildPlanUpdateProvider).updateRepository(any(), anyString(), anyString(), anyString());
+
+        if (!triggeredBy.isEmpty()) {
+            // Bamboo specific format for the used CLI dependency. Nothing we can improve here
+            final var oldTriggers = "foo,123,artemis\nbar,456,artemis";
+            doReturn(oldTriggers).when(triggerHelper).getTriggerList(anyString(), isNull(), isNull(), anyInt(), any());
+            doReturn("foobar").when(triggerHelper).removeTrigger(planKey, null, null, 123L, null, false);
+            doReturn("foobar").when(triggerHelper).removeTrigger(planKey, null, null, 456L, null, false);
+            verifications.add(() -> {
+                verify(triggerHelper).removeTrigger(planKey, null, null, 123L, null, false);
+                verify(triggerHelper).removeTrigger(planKey, null, null, 456L, null, false);
+            });
+            for (final var repo : triggeredBy) {
+                doReturn("foobar").when(triggerHelper).addTrigger(planKey, null, "remoteBitbucketServer", null, null, repo, null, null, false);
+                verifications.add(() -> verify(triggerHelper).addTrigger(planKey, null, "remoteBitbucketServer", null, null, repo, null, null, false));
+            }
+        }
 
         return verifications;
     }
 
     public void mockTriggerBuild(ProgrammingExerciseParticipation participation) throws URISyntaxException {
         final var buildPlan = participation.getBuildPlanId();
+        mockTriggerBuild(buildPlan);
+    }
+
+    public void mockTriggerBuild(String buildPlan) throws URISyntaxException {
         final var triggerBuildPath = UriComponentsBuilder.fromUri(BAMBOO_SERVER_URL.toURI()).path("/rest/api/latest/queue/").pathSegment(buildPlan).build().toUri();
 
         mockServer.expect(requestTo(triggerBuildPath)).andExpect(method(HttpMethod.POST)).andRespond(withStatus(HttpStatus.OK));
@@ -182,10 +220,10 @@ public class BambooRequestMockProvider {
                 .andRespond(withStatus(HttpStatus.OK).contentType(MediaType.APPLICATION_JSON).body(mapper.writeValueAsString(response)));
     }
 
-    private BambooBuildResultDTO createBuildResult(final String planKey) throws JsonProcessingException, MalformedURLException {
-        final var buildResult = new BambooBuildResultDTO();
-        final var testResults = new BambooBuildResultDTO.BambooTestResultsDTO();
-        final var failedTests = new BambooBuildResultDTO.BambooFailedTestsDTO();
+    private QueriedBambooBuildResultDTO createBuildResult(final String planKey) throws JsonProcessingException, MalformedURLException {
+        final var buildResult = new QueriedBambooBuildResultDTO();
+        final var testResults = new QueriedBambooBuildResultDTO.BambooTestResultsDTO();
+        final var failedTests = new QueriedBambooBuildResultDTO.BambooFailedTestsDTO();
         final var changes = new BambooChangesDTO();
         final var artifacts = new BambooArtifactsDTO();
         final var buildArtifact = new BambooArtifactsDTO.BambooArtifactDTO();
@@ -207,7 +245,7 @@ public class BambooRequestMockProvider {
 
         buildResult.setBuildCompletedDate(ZonedDateTime.now().minusMinutes(1));
         buildResult.setBuildReason("Initial clean build");
-        buildResult.setBuildState(BambooBuildResultDTO.BuildState.FAILED);
+        buildResult.setBuildState(QueriedBambooBuildResultDTO.BuildState.FAILED);
         buildResult.setBuildTestSummary("3 of 3 failed");
         buildResult.setVcsRevisionKey(TestConstants.COMMIT_HASH_STRING);
         buildResult.setTestResults(testResults);
@@ -257,5 +295,37 @@ public class BambooRequestMockProvider {
 
         mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.GET))
                 .andRespond(withStatus(HttpStatus.OK).contentType(MediaType.APPLICATION_JSON).body(mapper.writeValueAsString(response)));
+    }
+
+    public void mockBuildPlanIsValid(final String buildPlanId, final boolean isValid) throws URISyntaxException {
+        final var uri = UriComponentsBuilder.fromUri(BAMBOO_SERVER_URL.toURI()).path("/rest/api/latest/plan/").pathSegment(buildPlanId).build().toUri();
+
+        mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.GET)).andRespond(withStatus(isValid ? HttpStatus.OK : HttpStatus.BAD_REQUEST));
+    }
+
+    public Verifiable mockCopyBuildPlan(String sourceProjectKey, String sourcePlanName, String targetProjectKey, String targetPlanName)
+            throws CliClient.RemoteRestException, CliClient.ClientException {
+        final var targetPlanKey = targetProjectKey + "-" + targetPlanName;
+        final var sourcePlanKey = sourceProjectKey + "-" + sourcePlanName;
+        doReturn(targetPlanKey).when(planHelper).clonePlan(eq(sourcePlanKey), eq(targetPlanKey), eq(targetPlanName), eq(""), anyString(), eq(true));
+
+        return () -> verify(planHelper, times(1)).clonePlan(eq(sourcePlanKey), eq(targetPlanKey), eq(targetPlanName), eq(""), anyString(), eq(true));
+    }
+
+    public Verifiable mockEnablePlan(String projectKey, String planName) throws CliClient.RemoteRestException, CliClient.ClientException {
+        final var planKey = projectKey + "-" + planName;
+        doReturn("foobar").when(planHelper).enablePlan(planKey, true);
+
+        return () -> verify(planHelper, times(1)).enablePlan(eq(planKey), eq(true));
+    }
+
+    public Verifiable mockDeleteProject(String projectKey) throws CliClient.RemoteRestException, CliClient.ClientException {
+        doReturn("foobar").when(projectHelper).deleteProject(projectKey);
+        return () -> verify(projectHelper).deleteProject(projectKey);
+    }
+
+    public Verifiable mockDeletePlan(String planKey) throws CliClient.RemoteRestException, CliClient.ClientException {
+        doReturn("foobar").when(planHelper).deletePlan(planKey);
+        return () -> verify(planHelper).deletePlan(planKey);
     }
 }

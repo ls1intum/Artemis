@@ -30,8 +30,14 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.Repository;
 import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.domain.enumeration.*;
-import de.tum.in.www1.artemis.domain.participation.*;
+import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
+import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
+import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
+import de.tum.in.www1.artemis.domain.enumeration.SortingOrder;
+import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
+import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.domain.participation.TemplateProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.SolutionProgrammingExerciseParticipationRepository;
@@ -123,13 +129,16 @@ public class ProgrammingExerciseService {
      *
      * @param programmingExercise The programmingExercise that should be setup
      * @return The newly setup exercise
-     * @throws Exception If anything goes wrong
+     * @throws InterruptedException If something during the communication with the remote Git repository went wrong
+     * @throws GitAPIException If something during the communication with the remote Git repositroy went wrong
+     * @throws IOException If the template files couldn't be read
      */
     @Transactional
-    public ProgrammingExercise setupProgrammingExercise(ProgrammingExercise programmingExercise) throws Exception {
+    public ProgrammingExercise setupProgrammingExercise(ProgrammingExercise programmingExercise) throws InterruptedException, GitAPIException, IOException {
         programmingExercise.generateAndSetProjectKey();
         final var user = userService.getUser();
         final var projectKey = programmingExercise.getProjectKey();
+        // TODO: the following code is used quite often and should be done in only one place
         final var exerciseRepoName = projectKey.toLowerCase() + "-" + RepositoryType.TEMPLATE.getName();
         final var testRepoName = projectKey.toLowerCase() + "-" + RepositoryType.TESTS.getName();
         final var solutionRepoName = projectKey.toLowerCase() + "-" + RepositoryType.SOLUTION.getName();
@@ -198,7 +207,7 @@ public class ProgrammingExerciseService {
     }
 
     private void setupExerciseTemplate(ProgrammingExercise programmingExercise, User user, URL exerciseRepoUrl, URL testsRepoUrl, URL solutionRepoUrl)
-            throws IOException, InterruptedException, GitAPIException {
+            throws IOException, GitAPIException, InterruptedException {
         String programmingLanguage = programmingExercise.getProgrammingLanguage().toString().toLowerCase();
 
         String templatePath = "classpath:templates/" + programmingLanguage;
@@ -725,6 +734,10 @@ public class ProgrammingExerciseService {
         return new SearchResultPageDTO<>(exercisePage.getContent(), exercisePage.getTotalPages());
     }
 
+    /**
+     * add project permissions to project of the build plans of the given exercise
+     * @param exercise the exercise whose build plans projects should be configured with permissions
+     */
     public void giveCIProjectPermissions(ProgrammingExercise exercise) {
         final var instructorGroup = exercise.getCourse().getInstructorGroupName();
         final var teachingAssistantGroup = exercise.getCourse().getTeachingAssistantGroupName();
@@ -756,16 +769,24 @@ public class ProgrammingExerciseService {
     /**
      * @param exerciseId the exercise we are interested in
      * @return the number of programming submissions which should be assessed
+     * We don't need to check for the submission date, because students cannot participate in programming exercises with manual assessment after their due date
      */
-    public long countSubmissions(Long exerciseId) {
-        return programmingExerciseRepository.countSubmissions(exerciseId);
+    public long countSubmissionsByExerciseIdSubmitted(Long exerciseId) {
+        long start = System.currentTimeMillis();
+        var count = programmingExerciseRepository.countSubmissionsByExerciseIdSubmitted(exerciseId);
+        log.debug("countSubmissionsByExerciseIdSubmitted took " + (System.currentTimeMillis() - start) + "ms");
+        return count;
     }
 
     /**
      * @param courseId the course we are interested in
-     * @return the number of programming submissions which should be assessed, so we ignore the ones after the exercise due date
+     * @return the number of programming submissions which should be assessed, so we ignore exercises with only automatic assessment
+     * We don't need to check for the submission date, because students cannot participate in programming exercises with manual assessment after their due date
      */
-    public long countSubmissionsToAssessByCourseId(Long courseId) {
-        return programmingExerciseRepository.countByCourseIdSubmittedBeforeDueDate(courseId);
+    public long countSubmissionsByCourseIdSubmitted(Long courseId) {
+        long start = System.currentTimeMillis();
+        var count = programmingExerciseRepository.countSubmissionsByCourseIdSubmitted(courseId);
+        log.debug("countSubmissionsByCourseIdSubmitted took " + (System.currentTimeMillis() - start) + "ms");
+        return count;
     }
 }

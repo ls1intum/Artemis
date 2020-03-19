@@ -23,6 +23,7 @@ import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.*;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
+import de.tum.in.www1.artemis.exception.VersionControlException;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
@@ -229,7 +230,7 @@ public class ParticipationService {
 
             if (optionalStudentParticipation.isEmpty() || !submissionRepository.existsByParticipationId(participation.getId())) {
                 // initialize a modeling, text or file upload submission (depending on the exercise type), it will not do anything in the case of a quiz exercise
-                initializeSubmission(participation, exercise);
+                initializeSubmission(participation, exercise, null);
             }
         }
         participation = save(participation);
@@ -238,19 +239,102 @@ public class ParticipationService {
     }
 
     /**
+     * This method checks whether a participation exists for a given exercise and user. If not, it creates such a participation with initialization state FINISHED.
+     * If the participation had to be newly created or there were no submissions yet for the existing participation, a new submission is created with the given submission type.
+     * For external submissions, the submission is assumed to be submitted immediately upon creation.
+     *
+     * @param exercise the exercise for which to create a participation and submission
+     * @param user the user for which to create a participation and submission
+     * @param submissionType the type of submission to create if none exist yet
+     * @return the participation connecting the given exercise and user
+     */
+    public StudentParticipation createParticipationWithEmptySubmissionIfNotExisting(Exercise exercise, User user, SubmissionType submissionType) {
+        Optional<StudentParticipation> optionalStudentParticipation = findOneByExerciseIdAndStudentLoginAnyState(exercise.getId(), user.getLogin());
+        StudentParticipation participation;
+        if (optionalStudentParticipation.isEmpty()) {
+            // create a new participation only if no participation can be found
+            if (exercise instanceof ProgrammingExercise) {
+                participation = new ProgrammingExerciseStudentParticipation();
+            }
+            else {
+                participation = new StudentParticipation();
+            }
+            participation.setInitializationState(UNINITIALIZED);
+            participation.setInitializationDate(ZonedDateTime.now());
+            participation.setExercise(exercise);
+            participation.setStudent(user);
+
+            participation = save(participation);
+        }
+        else {
+            participation = optionalStudentParticipation.get();
+        }
+
+        // setup repository in case of programming exercise
+        if (exercise instanceof ProgrammingExercise) {
+            ProgrammingExercise programmingExercise = (ProgrammingExercise) exercise;
+            ProgrammingExerciseStudentParticipation programmingParticipation = (ProgrammingExerciseStudentParticipation) participation;
+            // Note: we need a repository, otherwise the student cannot click resume.
+            programmingParticipation = copyRepository(programmingParticipation);
+            programmingParticipation = configureRepository(programmingParticipation);
+            programmingParticipation = configureRepositoryWebHook(programmingParticipation);
+            participation = programmingParticipation;
+            if (programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate() != null || programmingExercise.getAssessmentType() != AssessmentType.AUTOMATIC) {
+                // restrict access for the student
+                try {
+                    versionControlService.get().setRepositoryPermissionsToReadOnly(programmingParticipation.getRepositoryUrlAsUrl(), programmingExercise.getProjectKey(),
+                            programmingParticipation.getStudent().getLogin());
+                }
+                catch (VersionControlException e) {
+                    log.error("Removing write permissions failed for programming exercise with id " + programmingExercise.getId() + " for student repository with participation id "
+                            + programmingParticipation.getId() + ": " + e.getMessage());
+                }
+            }
+        }
+
+        participation.setInitializationState(FINISHED);
+        participation = save(participation);
+
+        // Take the latest submission or initialize a new empty submission
+        participation = (StudentParticipation) findOneWithEagerSubmissions(participation.getId());
+        Optional<Submission> optionalSubmission = participation.findLatestSubmission();
+        Submission submission;
+        if (optionalSubmission.isPresent()) {
+            submission = optionalSubmission.get();
+        }
+        else {
+            submission = initializeSubmission(participation, exercise, submissionType).get();
+            participation = save(participation);
+        }
+
+        // If the submission has not yet been submitted, submit it now
+        if (!submission.isSubmitted()) {
+            submission.setSubmitted(true);
+            submission.setSubmissionDate(ZonedDateTime.now());
+            submissionRepository.save(submission);
+        }
+
+        return participation;
+    }
+
+    /**
      * Initializes a new text, modeling or file upload submission (depending on the type of the given exercise), connects it with the given participation and stores it in the
      * database.
      *
-     * @param participation the participation for which the submission should be initialized
-     * @param exercise      the corresponding exercise, should be either a text, modeling or file upload exercise, otherwise it will instantly return and not do anything
+     * @param participation                 the participation for which the submission should be initialized
+     * @param exercise                      the corresponding exercise, should be either a text, modeling or file upload exercise, otherwise it will instantly return and not do anything
+     * @param submissionType                type for the submission to be initialized
      */
-    private void initializeSubmission(Participation participation, Exercise exercise) {
-        if (exercise instanceof ProgrammingExercise || exercise instanceof QuizExercise) {
-            return;
+    private Optional<Submission> initializeSubmission(Participation participation, Exercise exercise, SubmissionType submissionType) {
+        if (exercise instanceof QuizExercise) {
+            return Optional.empty();
         }
 
         Submission submission;
-        if (exercise instanceof ModelingExercise) {
+        if (exercise instanceof ProgrammingExercise) {
+            submission = new ProgrammingSubmission();
+        }
+        else if (exercise instanceof ModelingExercise) {
             submission = new ModelingSubmission();
         }
         else if (exercise instanceof TextExercise) {
@@ -260,9 +344,11 @@ public class ParticipationService {
             submission = new FileUploadSubmission();
         }
 
+        submission.setType(submissionType);
         submission.setParticipation(participation);
         submissionRepository.save(submission);
         participation.addSubmissions(submission);
+        return Optional.of(submission);
     }
 
     /**
@@ -368,8 +454,6 @@ public class ParticipationService {
         // Note: the repository webhook already exists so we don't need to set it up again
         participation.setInitializationState(INITIALIZED);
         participation = save(participation);
-        // we need to (optionally) perform the empty commit hook last, because the webhook has already been created and otherwise this would lead to a new programming submission
-        // because in notifyPush we only filter out empty commits when the state is already initialized
         if (participation.getInitializationDate() == null) {
             // only set the date if it was not set before (which should NOT be the case)
             participation.setInitializationDate(ZonedDateTime.now());
@@ -926,5 +1010,19 @@ public class ParticipationService {
      */
     public List<StudentParticipation> findWithSubmissionsWithResultByStudentIdAndExercise(Long studentId, Set<Exercise> exercises) {
         return studentParticipationRepository.findByStudentIdAndExerciseWithEagerSubmissionsResult(studentId, exercises);
+    }
+
+    /**
+     * Get a mapping of participation ids to the number of submission for each participation.
+     *
+     * @param exerciseId the id of the exercise for which to consider participations
+     * @return the number of submissions per participation in the given exercise
+     */
+    public Map<Long, Integer> countSubmissionsPerParticipationByExerciseId(long exerciseId) {
+        List<long[]> participationIdAndSubmissionCountPairs = studentParticipationRepository.countSubmissionsPerParticipationByExerciseId(exerciseId);
+        // convert List<[participationId, submissionCount]> into Map<participationId -> submissionCount>
+        return participationIdAndSubmissionCountPairs.stream().collect(Collectors.toMap(participationIdAndSubmissionCountPair -> participationIdAndSubmissionCountPair[0], // participationId
+                participationIdAndSubmissionCountPair -> Math.toIntExact(participationIdAndSubmissionCountPair[1]) // submissionCount
+        ));
     }
 }

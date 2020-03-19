@@ -31,6 +31,9 @@
             "deleted": "Beispielabgabe gelöscht",
             "assessmentExplanation": "Erklärung",
             "assessmentExplanationInfo": "Zusätzliche Erklärung zu dieser Beispielbewertung"
+        },
+        "tutorParticipation": {
+            "deleted": "Die Tutorteilnahme wurde erfolgreich gelöscht"
         }
     }
 }

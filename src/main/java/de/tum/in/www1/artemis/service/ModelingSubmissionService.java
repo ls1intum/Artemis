@@ -26,22 +26,17 @@ public class ModelingSubmissionService extends SubmissionService {
 
     private final ModelingSubmissionRepository modelingSubmissionRepository;
 
-    private final ResultService resultService;
-
-    private final ResultRepository resultRepository;
-
     private final CompassService compassService;
 
     private final ParticipationService participationService;
 
     private final StudentParticipationRepository studentParticipationRepository;
 
-    public ModelingSubmissionService(ModelingSubmissionRepository modelingSubmissionRepository, SubmissionRepository submissionRepository, ResultService resultService,
-            ResultRepository resultRepository, CompassService compassService, ParticipationService participationService, UserService userService,
-            StudentParticipationRepository studentParticipationRepository, AuthorizationCheckService authCheckService) {
-        super(submissionRepository, userService, authCheckService);
+    public ModelingSubmissionService(ModelingSubmissionRepository modelingSubmissionRepository, SubmissionRepository submissionRepository, ResultRepository resultRepository,
+            CompassService compassService, ParticipationService participationService, UserService userService, StudentParticipationRepository studentParticipationRepository,
+            AuthorizationCheckService authCheckService) {
+        super(submissionRepository, userService, authCheckService, resultRepository);
         this.modelingSubmissionRepository = modelingSubmissionRepository;
-        this.resultService = resultService;
         this.resultRepository = resultRepository;
         this.compassService = compassService;
         this.participationService = participationService;
@@ -246,21 +241,10 @@ public class ModelingSubmissionService extends SubmissionService {
      * @param modelingExercise   the exercise to which the submission belongs to (needed for Compass)
      */
     private void lockSubmission(ModelingSubmission modelingSubmission, ModelingExercise modelingExercise) {
-        Result result = modelingSubmission.getResult();
-        if (result == null) {
-            result = setNewResult(modelingSubmission);
+        var result = lockSubmission(modelingSubmission);
+        if (result.getAssessor() == null && compassService.isSupported(modelingExercise.getDiagramType())) {
+            compassService.removeModelWaitingForAssessment(modelingExercise.getId(), modelingSubmission.getId());
         }
-
-        if (result.getAssessor() == null) {
-            if (compassService.isSupported(modelingExercise.getDiagramType())) {
-                compassService.removeModelWaitingForAssessment(modelingExercise.getId(), modelingSubmission.getId());
-            }
-            resultService.setAssessor(result);
-        }
-
-        result.setAssessmentType(AssessmentType.MANUAL);
-        result = resultRepository.save(result);
-        log.debug("Assessment locked with result id: " + result.getId() + " for assessor: " + result.getAssessor().getFirstName());
     }
 
     /**
@@ -289,25 +273,6 @@ public class ModelingSubmissionService extends SubmissionService {
         }
 
         return modelingSubmission;
-    }
-
-    /**
-     * Creates a new Result object, assigns it to the given submission and stores the changes to the database. Note, that this method is also called for example submissions which
-     * do not have a participation. Therefore, we check if the given submission has a participation and only then update the participation with the new result.
-     *
-     * @param submission the submission for which a new result should be created
-     * @return the newly created result
-     */
-    public Result setNewResult(ModelingSubmission submission) {
-        Result result = new Result();
-        result.setSubmission(submission);
-        submission.setResult(result);
-        if (submission.getParticipation() != null) {
-            result.setParticipation(submission.getParticipation());
-        }
-        result = resultRepository.save(result);
-        modelingSubmissionRepository.save(submission);
-        return result;
     }
 
     /**
@@ -367,23 +332,5 @@ public class ModelingSubmissionService extends SubmissionService {
     private ModelingSubmission findOneWithEagerResultAndFeedbackAndAssessorAndParticipationResults(Long submissionId) {
         return modelingSubmissionRepository.findWithEagerResultAndFeedbackAndAssessorAndParticipationResultsById(submissionId)
                 .orElseThrow(() -> new EntityNotFoundException("Modeling submission with id \"" + submissionId + "\" does not exist"));
-    }
-
-    /**
-     * @param courseId the course we are interested in
-     * @return the number of modeling submissions which should be assessed, so we ignore the ones after the exercise due date
-     */
-    @Transactional(readOnly = true)
-    public long countSubmissionsToAssessByCourseId(Long courseId) {
-        return modelingSubmissionRepository.countByCourseIdSubmittedBeforeDueDate(courseId);
-    }
-
-    /**
-     * @param exerciseId the exercise we are interested in
-     * @return the number of modeling submissions which should be assessed, so we ignore the ones after the exercise due date
-     */
-    @Transactional(readOnly = true)
-    public long countSubmissionsToAssessByExerciseId(Long exerciseId) {
-        return modelingSubmissionRepository.countByExerciseIdSubmittedBeforeDueDate(exerciseId);
     }
 }

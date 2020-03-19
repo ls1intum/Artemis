@@ -10,62 +10,61 @@ import { ChangeDetectorRef, DebugElement } from '@angular/core';
 import { ActivatedRoute, Params } from '@angular/router';
 import { SinonStub, stub } from 'sinon';
 import { BehaviorSubject, Observable, of, Subject } from 'rxjs';
+import * as ace from 'brace';
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
-import {
-    ArtemisCodeEditorModule,
-    CodeEditorBuildLogService,
-    CodeEditorConflictStateService,
-    CodeEditorRepositoryFileService,
-    CodeEditorRepositoryService,
-    CodeEditorSessionService,
-    CodeEditorStudentContainerComponent,
-    CommitState,
-    DomainService,
-    DomainType,
-    EditorState,
-    GitConflictState,
-} from 'app/code-editor';
-import { ExerciseHintService, IExerciseHintService } from 'app/entities/exercise-hint';
 import { ArtemisTestModule } from '../../test.module';
-import {
-    MockActivatedRoute,
-    MockCodeEditorBuildLogService,
-    MockCodeEditorRepositoryFileService,
-    MockCodeEditorRepositoryService,
-    MockCodeEditorSessionService,
-    MockExerciseHintService,
-    MockParticipationWebsocketService,
-    MockResultService,
-    MockSyncStorage,
-} from '../../mocks';
-import { Result, ResultService } from 'app/entities/result';
-import { Participation, StudentParticipation } from 'app/entities/participation';
-import { ParticipationWebsocketService } from 'app/entities/participation/participation-websocket.service';
-import { ProgrammingExercise } from 'app/entities/programming-exercise';
-import { ProgrammingExerciseParticipationService } from 'app/entities/programming-exercise/services/programming-exercise-participation.service';
-import { DeleteFileChange, FileType } from 'app/entities/ace-editor/file-change.model';
+import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
+import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
+import { CommitState, DeleteFileChange, DomainType, EditorState, FileType, GitConflictState } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { buildLogs, extractedBuildLogErrors } from '../../sample/build-logs';
 import { problemStatement } from '../../sample/problemStatement.json';
-import { Feedback } from 'app/entities/feedback';
-import { BuildLogEntryArray } from 'app/entities/build-log';
 import { MockAccountService } from '../../mocks/mock-account.service';
 import { MockProgrammingExerciseParticipationService } from '../../mocks/mock-programming-exercise-participation.service';
-import { ProgrammingSubmissionService, ProgrammingSubmissionState, ProgrammingSubmissionStateObj } from 'app/programming-submission/programming-submission.service';
+import { ProgrammingSubmissionService, ProgrammingSubmissionState, ProgrammingSubmissionStateObj } from 'app/exercises/programming/participate/programming-submission.service';
 import { MockProgrammingSubmissionService } from '../../mocks/mock-programming-submission.service';
-import { ProgrammingSubmission } from 'app/entities/programming-submission';
-import { ExerciseHint } from 'app/entities/exercise-hint/exercise-hint.model';
+import { ExerciseHint } from 'app/entities/exercise-hint.model';
 import { DeviceDetectorService } from 'ngx-device-detector';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { getElement } from '../../utils/general.utils';
 import { GuidedTourMapping } from 'app/guided-tour/guided-tour-setting.model';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { MockWebsocketService } from '../../mocks/mock-websocket.service';
+import { Participation } from 'app/entities/participation/participation.model';
+import { BuildLogEntryArray } from 'app/entities/build-log.model';
+import { CodeEditorConflictStateService } from 'app/exercises/programming/shared/code-editor/service/code-editor-conflict-state.service';
+import { ResultService } from 'app/exercises/shared/result/result.service';
+import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { Result } from 'app/entities/result.model';
+import {
+    CodeEditorBuildLogService,
+    CodeEditorRepositoryFileService,
+    CodeEditorRepositoryService,
+} from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
+import { Feedback } from 'app/entities/feedback.model';
+import { CodeEditorStudentContainerComponent } from 'app/exercises/programming/participate/code-editor-student-container.component';
+import { ExerciseHintService, IExerciseHintService } from 'app/exercises/shared/exercise-hint/manage/exercise-hint.service';
+import { CodeEditorSessionService } from 'app/exercises/programming/shared/code-editor/service/code-editor-session.service';
+import { DomainService } from 'app/exercises/programming/shared/code-editor/service/code-editor-domain.service';
+import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
+import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { MockActivatedRoute } from '../../mocks/mock-activated.route';
+import { MockParticipationWebsocketService } from '../../mocks/mock-participation-websocket.service';
+import { MockSyncStorage } from '../../mocks/mock-sync.storage';
+import { MockResultService } from '../../mocks/mock-result.service';
+import { MockCodeEditorRepositoryService } from '../../mocks/mock-code-editor-repository.service';
+import { MockExerciseHintService } from '../../mocks/mock-exercise-hint.service';
+import { MockCodeEditorRepositoryFileService } from '../../mocks/mock-code-editor-repository-file.service';
+import { MockCodeEditorSessionService } from '../../mocks/mock-code-editor-session.service';
+import { MockCodeEditorBuildLogService } from '../../mocks/mock-code-editor-build-log.service';
+import { ArtemisProgrammingParticipationModule } from 'app/exercises/programming/participate/programming-participation.module';
 
 chai.use(sinonChai);
 const expect = chai.expect;
 
 describe('CodeEditorStudentIntegration', () => {
+    // needed to make sure ace is defined
+    ace.acequire('ace/ext/modelist');
     let container: CodeEditorStudentContainerComponent;
     let containerFixture: ComponentFixture<CodeEditorStudentContainerComponent>;
     let containerDebugElement: DebugElement;
@@ -94,7 +93,7 @@ describe('CodeEditorStudentIntegration', () => {
     let getHintsForExerciseStub: SinonStub;
     let guidedTourService: GuidedTourService;
 
-    let subscribeForLatestResultOfParticipationSubject: BehaviorSubject<Result>;
+    let subscribeForLatestResultOfParticipationSubject: BehaviorSubject<Result | null>;
     let routeSubject: Subject<Params>;
     let getLatestPendingSubmissionSubject = new Subject<ProgrammingSubmissionStateObj>();
 
@@ -103,13 +102,14 @@ describe('CodeEditorStudentIntegration', () => {
 
     beforeEach(async () => {
         return TestBed.configureTestingModule({
-            imports: [TranslateModule.forRoot(), ArtemisTestModule, ArtemisCodeEditorModule],
+            imports: [TranslateModule.forRoot(), ArtemisTestModule, ArtemisProgrammingParticipationModule],
             declarations: [],
             providers: [
                 JhiLanguageHelper,
                 WindowRef,
                 ChangeDetectorRef,
                 DeviceDetectorService,
+                CodeEditorConflictStateService,
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: ActivatedRoute, useClass: MockActivatedRoute },
                 { provide: JhiWebsocketService, useClass: MockWebsocketService },
@@ -132,7 +132,7 @@ describe('CodeEditorStudentIntegration', () => {
                 containerFixture = TestBed.createComponent(CodeEditorStudentContainerComponent);
                 container = containerFixture.componentInstance;
                 containerDebugElement = containerFixture.debugElement;
-                guidedTourService = TestBed.get(GuidedTourService);
+                guidedTourService = TestBed.inject(GuidedTourService);
 
                 codeEditorRepositoryService = containerDebugElement.injector.get(CodeEditorRepositoryService);
                 codeEditorRepositoryFileService = containerDebugElement.injector.get(CodeEditorRepositoryFileService);
@@ -146,7 +146,7 @@ describe('CodeEditorStudentIntegration', () => {
                 submissionService = containerDebugElement.injector.get(ProgrammingSubmissionService);
                 exerciseHintService = containerDebugElement.injector.get(ExerciseHintService);
 
-                subscribeForLatestResultOfParticipationSubject = new BehaviorSubject<Result>(null);
+                subscribeForLatestResultOfParticipationSubject = new BehaviorSubject<Result | null>(null);
 
                 routeSubject = new Subject<Params>();
                 // @ts-ignore
@@ -181,7 +181,7 @@ describe('CodeEditorStudentIntegration', () => {
         commitStub.restore();
         getStudentParticipationWithLatestResultStub.restore();
 
-        subscribeForLatestResultOfParticipationSubject = new BehaviorSubject<Result>(null);
+        subscribeForLatestResultOfParticipationSubject = new BehaviorSubject<Result | null>(null);
         subscribeForLatestResultOfParticipationStub.returns(subscribeForLatestResultOfParticipationSubject);
 
         routeSubject = new Subject<Params>();
@@ -194,7 +194,7 @@ describe('CodeEditorStudentIntegration', () => {
 
     const cleanInitialize = () => {
         const exercise = { id: 1, problemStatement };
-        const participation = { id: 2, exercise, student: { id: 99 }, results: [result] } as Participation;
+        const participation = { id: 2, exercise, student: { id: 99 }, results: [result] } as StudentParticipation;
         const commitState = CommitState.UNDEFINED;
         const isCleanSubject = new Subject();
         const getRepositoryContentSubject = new Subject();
@@ -215,7 +215,7 @@ describe('CodeEditorStudentIntegration', () => {
         isCleanSubject.next({ repositoryStatus: CommitState.CLEAN });
         getBuildLogsSubject.next(buildLogs);
         getRepositoryContentSubject.next({ file: FileType.FILE, folder: FileType.FOLDER, file2: FileType.FILE });
-        getLatestPendingSubmissionSubject.next([ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, null]);
+        getLatestPendingSubmissionSubject.next({ participationId: 1, submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, submission: null });
 
         containerFixture.detectChanges();
 
@@ -299,7 +299,7 @@ describe('CodeEditorStudentIntegration', () => {
 
         isCleanSubject.error('fatal error');
         getBuildLogsSubject.next(buildLogs);
-        getLatestPendingSubmissionSubject.next([ProgrammingSubmissionState.HAS_FAILED_SUBMISSION, null]);
+        getLatestPendingSubmissionSubject.next({ participationId: 1, submissionState: ProgrammingSubmissionState.HAS_FAILED_SUBMISSION, submission: null });
 
         containerFixture.detectChanges();
 
@@ -604,11 +604,8 @@ describe('CodeEditorStudentIntegration', () => {
     });
 
     it('should enter conflict mode if a git conflict between local and remote arises', fakeAsync(() => {
-        const guidedTourMapping = {
-            courseShortName: '',
-            tours: [{ '': '' }],
-        } as GuidedTourMapping;
-        spyOn(guidedTourService, 'checkTourState').and.returnValue(true);
+        const guidedTourMapping = {} as GuidedTourMapping;
+        spyOn<any>(guidedTourService, 'checkTourState').and.returnValue(true);
         guidedTourService.guidedTourMapping = guidedTourMapping;
         container.ngOnInit();
         const exercise = { id: 1, problemStatement };

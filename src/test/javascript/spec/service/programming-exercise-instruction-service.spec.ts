@@ -2,10 +2,7 @@ import { async } from '@angular/core/testing';
 import * as moment from 'moment';
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
-import {
-    ProgrammingExerciseInstructionService,
-    TestCaseState,
-} from 'app/entities/programming-exercise/instructions/instructions-render/service/programming-exercise-instruction.service';
+import { ProgrammingExerciseInstructionService, TestCaseState } from 'app/exercises/programming/shared/instructions-render/service/programming-exercise-instruction.service';
 
 chai.use(sinonChai);
 const expect = chai.expect;

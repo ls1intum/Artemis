@@ -86,6 +86,9 @@ public class FileUploadSubmissionResource {
             return forbidden();
         }
 
+        // TODO: add one additional check: fetch fileUploadSubmission.getId() from the database with the corresponding participation and check that the user of participation is the
+        // same as the user who executes this call. This prevents injecting submissions to other users
+
         // Check if the course hasn't been changed
         final var validityExceptionResponse = this.checkExerciseValidity(exercise);
         if (validityExceptionResponse != null) {
@@ -101,7 +104,7 @@ public class FileUploadSubmissionResource {
         // Check the pattern
         final var splittedFileName = file.getOriginalFilename().split("\\.");
         final var fileSuffix = splittedFileName[splittedFileName.length - 1].toLowerCase();
-        final var filePattern = String.join("|", exercise.getFilePattern().toLowerCase().replace(" ", "").split(","));
+        final var filePattern = String.join("|", exercise.getFilePattern().toLowerCase().replaceAll("\\s", "").split(","));
         if (!fileSuffix.matches(filePattern)) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .headers(HeaderUtil.createAlert(applicationName, "The uploaded file has the wrong type!", "fileUploadSubmissionIllegalFileType")).build();

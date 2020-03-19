@@ -5,11 +5,11 @@ import { Observable, of } from 'rxjs';
 import * as sinonChai from 'sinon-chai';
 import { MockWebsocketService } from '../mocks/mock-websocket.service';
 import { MockLanguageService } from '../helpers/mock-language.service';
-import { MockSyncStorage } from '../mocks';
 import { MockHttpService } from '../mocks/mock-http.service';
 import { MockFeatureToggleService } from '../mocks/mock-feature-toggle-service';
-import { User } from 'app/core';
+import { User } from 'app/core/user/user.model';
 import { AccountService } from 'app/core/auth/account.service';
+import { MockSyncStorage } from '../mocks/mock-sync.storage';
 
 chai.use(sinonChai);
 const expect = chai.expect;

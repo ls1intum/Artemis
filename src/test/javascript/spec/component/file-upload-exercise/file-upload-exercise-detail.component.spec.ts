@@ -5,18 +5,23 @@ import { DebugElement } from '@angular/core';
 import { of } from 'rxjs';
 
 import { ArtemisTestModule } from '../../test.module';
-import { FileUploadExerciseDetailComponent } from 'app/entities/file-upload-exercise/file-upload-exercise-detail.component';
+import { FileUploadExerciseDetailComponent } from 'app/exercises/file-upload/manage/file-upload-exercise-detail.component';
 import { By } from '@angular/platform-browser';
 
 import * as sinonChai from 'sinon-chai';
 import * as chai from 'chai';
-import { FileUploadExerciseService } from 'app/entities/file-upload-exercise';
 import { fileUploadExercise, MockFileUploadExerciseService } from '../../mocks/mock-file-upload-exercise.service';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
-import { JhiAlertService } from 'ng-jhipster';
-import { ArtemisSharedModule } from 'app/shared';
+import { AlertService } from 'app/core/alert/alert.service';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { RouterTestingModule } from '@angular/router/testing';
 import { TranslateModule } from '@ngx-translate/core';
+import { ArtemisAssessmentSharedModule } from 'app/assessment/assessment-shared.module';
+import { MockSyncStorage } from '../../mocks/mock-sync.storage';
+import { MockCookieService } from '../../mocks/mock-cookie.service';
+import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import { CookieService } from 'ngx-cookie-service';
+import { FileUploadExerciseService } from 'app/exercises/file-upload/manage/file-upload-exercise.service';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -34,13 +39,16 @@ describe('Component Tests', () => {
 
         beforeEach(() => {
             TestBed.configureTestingModule({
-                imports: [ArtemisTestModule, ArtemisSharedModule, RouterTestingModule, TranslateModule.forRoot()],
+                imports: [ArtemisTestModule, ArtemisSharedModule, ArtemisAssessmentSharedModule, RouterTestingModule, TranslateModule.forRoot()],
                 declarations: [FileUploadExerciseDetailComponent],
                 providers: [
                     JhiLanguageHelper,
-                    JhiAlertService,
+                    AlertService,
                     { provide: ActivatedRoute, useValue: route },
                     { provide: FileUploadExerciseService, useClass: MockFileUploadExerciseService },
+                    { provide: LocalStorageService, useClass: MockSyncStorage },
+                    { provide: SessionStorageService, useClass: MockSyncStorage },
+                    { provide: CookieService, useClass: MockCookieService },
                 ],
             })
                 .overrideModule(ArtemisTestModule, { set: { declarations: [], exports: [] } })

@@ -1,9 +1,12 @@
 package de.tum.in.www1.artemis;
 
+import org.junit.jupiter.api.AfterEach;
+import org.mockito.Mockito;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.SpyBean;
+import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.test.context.ActiveProfiles;
 
 import com.atlassian.bamboo.specs.util.BambooServer;
@@ -24,11 +27,11 @@ public abstract class AbstractSpringIntegrationTest {
     @SpyBean
     protected LtiService ltiService;
 
-    // TODO: we should not really mock BambooService, but only the API calls to Bamboo (e.g. based on the used RestTemplate)
+    // please only use this to verify method calls using Mockito. Do not mock methods, instead mock the communication with Bamboo using the corresponding RestTemplate.
     @SpyBean
     protected BambooService continuousIntegrationService;
 
-    // TODO: we should not really mock BitbucketService, but only the API calls to Bitbucket (e.g. based on the used RestTemplate)
+    // please only use this to verify method calls using Mockito. Do not mock methods, instead mock the communication with Bitbucket using the corresponding RestTemplate.
     @SpyBean
     protected BitbucketService versionControlService;
 
@@ -46,4 +49,13 @@ public abstract class AbstractSpringIntegrationTest {
 
     @SpyBean
     protected PlantUmlService plantUmlService;
+
+    @SpyBean
+    protected SimpMessageSendingOperations messagingTemplate;
+
+    @AfterEach
+    public void resetSpyBeans() {
+        Mockito.reset(ltiService, continuousIntegrationService, versionControlService, bambooServer, gitService, groupNotificationService, websocketMessagingService,
+                plantUmlService, messagingTemplate);
+    }
 }

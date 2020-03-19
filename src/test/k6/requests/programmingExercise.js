@@ -54,7 +54,8 @@ export function createExercise(artemis, courseId) {
         packageName: 'de.test',
         problemStatement: programmingExerciseProblemStatement,
         presentationScoreEnabled: false,
-        sequentialTestRuns: true,
+        sequentialTestRuns: false,
+        mode: 'INDIVIDUAL',
         course: {
             id: courseId
         }
@@ -82,6 +83,7 @@ export function deleteExercise(artemis, exerciseId) {
 }
 
 export function startExercise(artemis, courseId, exerciseId) {
+    console.log('Try to start exercise for test user ' + __VU);
     const res = artemis.post(PARTICIPATIONS(courseId, exerciseId), null, null);
     // console.log('RESPONSE of starting exercise: ' + res[0].body);
 
@@ -91,9 +93,9 @@ export function startExercise(artemis, courseId, exerciseId) {
     }
 
     if (res[0].status !== 201) {
-        fail('ERROR trying to start exercise for ' + __VU + ':\n #####ERROR (' + res[0].status + ')##### ' + res[0].body);
+        fail('ERROR trying to start exercise for test user ' + __VU + ':\n #####ERROR (' + res[0].status + ')##### ' + res[0].body);
     } else {
-        console.log('SUCCESSFULLY started exercise for ' + __VU);
+        console.log('SUCCESSFULLY started exercise for test user ' + __VU);
     }
 
     return JSON.parse(res[0].body).id;
@@ -137,13 +139,13 @@ export function simulateSubmission(artemis, participationSimulation, expectedRes
 
         socket.setTimeout(function() {
             submitChange(participationSimulation.content);
-            console.log('USED WS for sending file data for ' + __VU)
+            console.log('SEND file data for test user ' + __VU)
         }, 10 * 1000);
 
         // Commit changes
         socket.setTimeout(function() {
             artemis.post(COMMIT(participationSimulation.participationId));
-            console.log('COMMITTED changes for ' + __VU);
+            console.log('COMMIT changes for test user ' + __VU);
         }, 15 * 1000);
 
         // Wait for new result
@@ -151,7 +153,7 @@ export function simulateSubmission(artemis, participationSimulation, expectedRes
             if (message.startsWith('MESSAGE\ndestination:/topic/participation/' + participationSimulation.participationId + '/newResults')) {
                 socket.close();
                 participationSimulation.returnsExpectedResult(message, expectedResult, resultString);
-                console.log(`RECEIVED new result for test user ` + __VU);
+                console.log(`RECEIVE new result for test user ` + __VU);
             }
         });
 

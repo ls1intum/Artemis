@@ -113,25 +113,23 @@ public class ProgrammingExerciseResource {
      */
     private ResponseEntity<ProgrammingExercise> checkProgrammingExerciseForError(ProgrammingExercise exercise) {
         if (!continuousIntegrationService.get().buildPlanIdIsValid(exercise.getProjectKey(), exercise.getTemplateBuildPlanId())) {
-            return ResponseEntity.badRequest()
-                    .headers(HeaderUtil.createFailureAlert(applicationName, true, "exercise", "invalid.template.build.plan.id", "The Template Build Plan ID seems to be invalid."))
+            return ResponseEntity.badRequest().headers(
+                    HeaderUtil.createFailureAlert(applicationName, true, "exercise", ErrorKeys.INVALID_TEMPLATE_BUILD_PLAN_ID, "The Template Build Plan ID seems to be invalid."))
                     .body(null);
         }
         if (exercise.getTemplateRepositoryUrlAsUrl() == null || !versionControlService.get().repositoryUrlIsValid(exercise.getTemplateRepositoryUrlAsUrl())) {
-            return ResponseEntity.badRequest()
-                    .headers(
-                            HeaderUtil.createFailureAlert(applicationName, true, "exercise", "invalid.template.repository.url", "The Template Repository URL seems to be invalid."))
+            return ResponseEntity.badRequest().headers(
+                    HeaderUtil.createFailureAlert(applicationName, true, "exercise", ErrorKeys.INVALID_TEMPLATE_REPOSITORY_URL, "The Template Repository URL seems to be invalid."))
                     .body(null);
         }
         if (exercise.getSolutionBuildPlanId() != null && !continuousIntegrationService.get().buildPlanIdIsValid(exercise.getProjectKey(), exercise.getSolutionBuildPlanId())) {
-            return ResponseEntity.badRequest()
-                    .headers(HeaderUtil.createFailureAlert(applicationName, true, "exercise", "invalid.solution.build.plan.id", "The Solution Build Plan ID seems to be invalid."))
+            return ResponseEntity.badRequest().headers(
+                    HeaderUtil.createFailureAlert(applicationName, true, "exercise", ErrorKeys.INVALID_SOLUTION_BUILD_PLAN_ID, "The Solution Build Plan ID seems to be invalid."))
                     .body(null);
         }
         if (exercise.getSolutionRepositoryUrl() != null && !versionControlService.get().repositoryUrlIsValid(exercise.getSolutionRepositoryUrlAsUrl())) {
-            return ResponseEntity.badRequest()
-                    .headers(
-                            HeaderUtil.createFailureAlert(applicationName, true, "exercise", "invalid.solution.repository.url", "The Solution Repository URL seems to be invalid."))
+            return ResponseEntity.badRequest().headers(
+                    HeaderUtil.createFailureAlert(applicationName, true, "exercise", ErrorKeys.INVALID_SOLUTION_REPOSITORY_URL, "The Solution Repository URL seems to be invalid."))
                     .body(null);
         }
         return null;
@@ -148,10 +146,6 @@ public class ProgrammingExerciseResource {
     @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
     public ResponseEntity<ProgrammingExercise> setupProgrammingExercise(@RequestBody ProgrammingExercise programmingExercise) {
         log.debug("REST request to setup ProgrammingExercise : {}", programmingExercise);
-        if (programmingExercise == null) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "The programming exercise is not set", "programmingExerciseNotSet")).body(null);
-        }
-
         if (programmingExercise.getId() != null) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "A new programmingExercise cannot already have an ID", "idexists")).body(null);
         }
@@ -229,7 +223,7 @@ public class ProgrammingExerciseResource {
         String projectName = programmingExercise.getProjectName();
         boolean projectExists = versionControlService.get().checkIfProjectExists(projectKey, projectName);
         if (projectExists) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "Project does not exist in VCS: " + projectKey, "vcsProjectExists")).body(null);
+            return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "Project already exists in VCS: " + projectName, "vcsProjectExists")).body(null);
         }
 
         String errorMessageCI = continuousIntegrationService.get().checkIfProjectExists(projectKey, projectName);
@@ -242,9 +236,9 @@ public class ProgrammingExerciseResource {
             return ResponseEntity.created(new URI("/api/programming-exercises" + newProgrammingExercise.getId()))
                     .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, newProgrammingExercise.getTitle())).body(newProgrammingExercise);
         }
-        catch (Exception e) {
+        catch (IOException | URISyntaxException | InterruptedException | GitAPIException e) {
             log.error("Error while setting up programming exercise", e);
-            return ResponseEntity.badRequest()
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .headers(HeaderUtil.createAlert(applicationName, "An error occurred while setting up the exercise: " + e.getMessage(), "errorProgrammingExercise")).body(null);
         }
     }
@@ -269,11 +263,10 @@ public class ProgrammingExerciseResource {
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
     public ResponseEntity<ProgrammingExercise> importExercise(@PathVariable long sourceExerciseId, @RequestBody ProgrammingExercise newExercise) {
-        log.debug("REST request to import programming exercise {} into course {}", sourceExerciseId, newExercise.getCourse().getId());
-
         if (sourceExerciseId < 0 || newExercise.getCourse() == null) {
-            return notFound();
+            return badRequest();
         }
+        log.debug("REST request to import programming exercise {} into course {}", sourceExerciseId, newExercise.getCourse().getId());
 
         final var user = userService.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAtLeastInstructorInCourse(newExercise.getCourse(), user)) {
@@ -291,8 +284,9 @@ public class ProgrammingExerciseResource {
         HttpHeaders responseHeaders;
         programmingExerciseImportService.importRepositories(originalProgrammingExercise, importedProgrammingExercise);
         try {
-            // TODO: We have removed the automatic build trigger from test to base for new programming exercises. We need to also remove this build trigger manually on the case of
-            // an import as the source exercise might still have this trigger.
+            // We have removed the automatic build trigger from test to base for new programming exercises.
+            // We also remove this build trigger in the case of an import as the source exercise might still have this trigger.
+            // The importBuildPlans method includes this process
             programmingExerciseImportService.importBuildPlans(originalProgrammingExercise, importedProgrammingExercise);
             responseHeaders = HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, importedProgrammingExercise.getTitle());
         }
@@ -488,7 +482,7 @@ public class ProgrammingExerciseResource {
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
     public ResponseEntity<Void> combineTemplateRepositoryCommits(@PathVariable long exerciseId) {
-        log.debug("REST request to generate the structure oracle for ProgrammingExercise with id: {}", exerciseId);
+        log.debug("REST request to combine the commits of the template repository of ProgrammingExercise with id: {}", exerciseId);
 
         Optional<ProgrammingExercise> programmingExerciseOptional = programmingExerciseRepository.findWithTemplateParticipationAndSolutionParticipationById(exerciseId);
         if (programmingExerciseOptional.isEmpty()) {
@@ -516,10 +510,10 @@ public class ProgrammingExerciseResource {
      * POST /programming-exercises/:exerciseId/export-repos-by-student-logins/:studentIds : sends all submissions from studentlist as zip
      *
      * @param exerciseId the id of the exercise to get the repos from
-     * @param studentIds the studentIds seperated via semicolon to get their submissions
+     * @param studentIds the IDs of the students for whom to zip the submissions, separated by commas
      * @param repositoryExportOptions the options that should be used for the export
      * @return ResponseEntity with status
-     * @throws IOException if submissions can't be zippedRequestBody
+     * @throws IOException if something during the zip process went wrong
      */
     @PostMapping(Endpoints.EXPORT_SUBMISSIONS_BY_STUDENT)
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
@@ -528,11 +522,6 @@ public class ProgrammingExerciseResource {
             @RequestBody RepositoryExportOptionsDTO repositoryExportOptions) throws IOException {
         ProgrammingExercise programmingExercise = programmingExerciseService.findByIdWithEagerStudentParticipationsAndSubmissions(exerciseId);
         User user = userService.getUserWithGroupsAndAuthorities();
-
-        if (Optional.ofNullable(programmingExercise).isEmpty()) {
-            log.debug("Exercise with id {} is not an instance of ProgrammingExercise. Ignoring the request to export repositories", exerciseId);
-            return badRequest();
-        }
 
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(programmingExercise, user)) {
             return forbidden();
@@ -551,8 +540,8 @@ public class ProgrammingExerciseResource {
 
         List<String> studentList = new ArrayList<>();
         if (!repositoryExportOptions.isExportAllStudents()) {
-            studentIds = studentIds.replaceAll(" ", "");
-            studentList = Arrays.asList(studentIds.split("\\s*,\\s*"));
+            studentIds = studentIds.replaceAll("\\s+", "");
+            studentList = Arrays.asList(studentIds.split(","));
         }
 
         // Select the participations that should be exported
@@ -627,7 +616,7 @@ public class ProgrammingExerciseResource {
      * @param exerciseId The ID of the programming exercise for which the structure oracle should get generated
      * @return The ResponseEntity with status 201 (Created) or with status 400 (Bad Request) if the parameters are invalid
      */
-    @GetMapping(value = Endpoints.GENERATE_TESTS, produces = MediaType.TEXT_PLAIN_VALUE)
+    @PutMapping(value = Endpoints.GENERATE_TESTS, produces = MediaType.TEXT_PLAIN_VALUE)
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
     public ResponseEntity<String> generateStructureOracleForExercise(@PathVariable long exerciseId) {
@@ -747,6 +736,20 @@ public class ProgrammingExerciseResource {
         public static final String TEST_CASE_STATE = PROGRAMMING_EXERCISE + "/test-case-state";
 
         private Endpoints() {
+        }
+    }
+
+    public static final class ErrorKeys {
+
+        public static final String INVALID_TEMPLATE_REPOSITORY_URL = "invalid.template.repository.url";
+
+        public static final String INVALID_SOLUTION_REPOSITORY_URL = "invalid.solution.repository.url";
+
+        public static final String INVALID_TEMPLATE_BUILD_PLAN_ID = "invalid.template.build.plan.id";
+
+        public static final String INVALID_SOLUTION_BUILD_PLAN_ID = "invalid.solution.build.plan.id";
+
+        private ErrorKeys() {
         }
     }
 }

@@ -4,8 +4,8 @@ import { HttpResponse } from '@angular/common/http';
 import { of } from 'rxjs';
 
 import { ArtemisTestModule } from '../../../test.module';
-import { ModelingSubmissionUpdateComponent } from 'app/entities/modeling-submission/modeling-submission-update.component';
-import { ModelingSubmissionService } from 'app/entities/modeling-submission/modeling-submission.service';
+import { ModelingSubmissionUpdateComponent } from 'app/exercises/modeling-submission/modeling-submission-update.component';
+import { ModelingSubmissionService } from 'app/exercises/modeling/participate/modeling-submission.service';
 import { ModelingSubmission } from 'app/shared/model/modeling-submission.model';
 
 describe('Component Tests', () => {

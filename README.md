@@ -3,7 +3,7 @@
 [![GitHub Actions Status](https://github.com/ls1intum/Artemis/workflows/Build/badge.svg)](https://github.com/ls1intum/Artemis/actions?query=branch%3Adevelop+workflow%3ABuild)
 [![Dependencies status](https://img.shields.io/david/dev/ls1intum/Artemis.svg?style=flat)](package.json)
 
-This application was generated using JHipster 6.6.0. ([Documentation and help](http://www.jhipster.tech/documentation-archive/v6.6.0))
+This application was generated using JHipster 6.8.0. ([Documentation and help](http://www.jhipster.tech/documentation-archive/v6.8.0))
 
 [![Latest version)](https://img.shields.io/github/v/tag/ls1intum/Artemis?label=%20Latest%20version&sort=semver)](https://github.com/ls1intum/Artemis/releases/latest)
 
@@ -20,6 +20,10 @@ All these exercises are supposed to be run either live in the lecture with insta
 ## Development setup
 
 Find here a guide on [how to set up your local development environment](/doc/setup/SETUP.md).
+
+## Server Setup for Programming Exercises
+
+You can find the guide for setting up Artemis in conjunction with Jenkins and GitLab [here](doc/jenkins-gitlab/JENKINS_AND_GITLAB_SETUP.md)
 
 ## Contributing 
 

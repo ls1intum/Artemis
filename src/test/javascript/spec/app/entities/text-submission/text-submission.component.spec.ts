@@ -4,8 +4,8 @@ import { of } from 'rxjs';
 import { HttpHeaders, HttpResponse } from '@angular/common/http';
 
 import { ArTeMiSTestModule } from '../../../test.module';
-import { TextSubmissionComponent } from 'app/entities/text-submission/text-submission.component';
-import { TextSubmissionService } from 'app/entities/text-submission/text-submission.service';
+import { TextSubmissionComponent } from 'app/exercises/text/participate/text-submission/text-submission.component';
+import { TextSubmissionService } from 'app/exercises/text/participate/text-submission.service';
 import { TextSubmission } from 'app/shared/model/text-submission.model';
 
 describe('Component Tests', () => {

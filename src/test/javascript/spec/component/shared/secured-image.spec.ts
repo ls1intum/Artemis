@@ -7,10 +7,13 @@ import { SinonStub, stub } from 'sinon';
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
 import { ArtemisTestModule } from '../../test.module';
-import { ResultComponent, UpdatingResultComponent } from 'app/entities/result';
-import { ArtemisSharedModule, CacheableImageService, CachingStrategy, ImageLoadingStatus, SecuredImageComponent } from 'app/shared';
 import { MockCacheableImageService } from '../../mocks/mock-cacheable-image.service';
 import { triggerChanges } from '../../utils/general.utils';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
+import { UpdatingResultComponent } from 'app/shared/result/updating-result.component';
+import { CachingStrategy, ImageLoadingStatus, SecuredImageComponent } from 'app/shared/image/secured-image.component';
+import { CacheableImageService } from 'app/shared/image/cacheable-image.service';
+import { ResultComponent } from 'app/shared/result/result.component';
 
 chai.use(sinonChai);
 const expect = chai.expect;

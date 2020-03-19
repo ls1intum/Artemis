@@ -1,19 +1,19 @@
-import { ComponentFixture, TestBed, fakeAsync, flush } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, flush, TestBed } from '@angular/core/testing';
 import { TranslateModule } from '@ngx-translate/core';
 import { DebugElement, EventEmitter } from '@angular/core';
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
 import { ArtemisTestModule } from '../../test.module';
-import { JhiAlertComponent } from 'app/shared';
 import { DeleteDialogComponent } from 'app/shared/delete-dialog/delete-dialog.component';
 import { By } from '@angular/platform-browser';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { JhiAlertService, NgJhipsterModule } from 'ng-jhipster';
 import { FormsModule } from '@angular/forms';
-import { NgbModule, NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { NgbActiveModal, NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import * as sinon from 'sinon';
-import { Observable, Subject } from 'rxjs';
 import { stub } from 'sinon';
+import { Observable, Subject } from 'rxjs';
+import { AlertComponent } from 'app/shared/alert/alert.component';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -27,7 +27,7 @@ describe('DeleteDialogComponent', () => {
     beforeEach(async () => {
         return TestBed.configureTestingModule({
             imports: [TranslateModule.forRoot(), ArtemisTestModule, FormsModule, NgJhipsterModule, NgbModule],
-            declarations: [DeleteDialogComponent, JhiAlertComponent],
+            declarations: [DeleteDialogComponent, AlertComponent],
             providers: [JhiLanguageHelper, JhiAlertService],
         })
             .compileComponents()
@@ -35,7 +35,7 @@ describe('DeleteDialogComponent', () => {
                 fixture = TestBed.createComponent(DeleteDialogComponent);
                 comp = fixture.componentInstance;
                 debugElement = fixture.debugElement;
-                ngbActiveModal = TestBed.get(NgbActiveModal);
+                ngbActiveModal = TestBed.inject(NgbActiveModal);
             });
     });
 

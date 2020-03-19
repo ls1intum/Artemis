@@ -24,10 +24,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.config.Constants;
-import de.tum.in.www1.artemis.domain.Authority;
-import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.GuidedTourSetting;
-import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.exception.UsernameAlreadyUsedException;
 import de.tum.in.www1.artemis.repository.AuthorityRepository;
 import de.tum.in.www1.artemis.repository.GuidedTourSettingsRepository;
@@ -36,11 +33,13 @@ import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
 import de.tum.in.www1.artemis.security.AuthoritiesConstants;
 import de.tum.in.www1.artemis.security.PBEPasswordEncoder;
 import de.tum.in.www1.artemis.security.SecurityUtils;
+import de.tum.in.www1.artemis.service.connectors.JiraAuthenticationProvider;
 import de.tum.in.www1.artemis.service.connectors.VcsUserManagementService;
 import de.tum.in.www1.artemis.service.dto.UserDTO;
 import de.tum.in.www1.artemis.service.ldap.LdapUserDto;
 import de.tum.in.www1.artemis.service.ldap.LdapUserService;
 import de.tum.in.www1.artemis.web.rest.errors.EmailAlreadyUsedException;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.rest.errors.InvalidPasswordException;
 import de.tum.in.www1.artemis.web.rest.vm.ManagedUserVM;
 import io.github.jhipster.security.RandomUtil;
@@ -81,11 +80,13 @@ public class UserService {
     }
 
     @Autowired
+    // break the dependency cycle
     public void setOptionalVcsUserManagementService(Optional<VcsUserManagementService> optionalVcsUserManagementService) {
         this.optionalVcsUserManagementService = optionalVcsUserManagementService;
     }
 
     @Autowired
+    // break the dependency cycle
     public void setArtemisAuthenticationProvider(ArtemisAuthenticationProvider artemisAuthenticationProvider) {
         this.artemisAuthenticationProvider = artemisAuthenticationProvider;
     }
@@ -440,7 +441,7 @@ public class UserService {
 
     /**
      * Updates the user in all connected systems (like GitLab) if necessary. Also updates the user in the used authentication
-     * provider (like {@link de.tum.in.www1.artemis.security.JiraAuthenticationProvider}.
+     * provider (like {@link JiraAuthenticationProvider}.
      *
      * @param user The updated user in Artemis
      * @param oldGroups The old groups of the user before the update
@@ -539,14 +540,6 @@ public class UserService {
     }
 
     /**
-     * @return existing user object by current user login
-     */
-    public User getUser() {
-        String currentUserLogin = SecurityUtils.getCurrentUserLogin().get();
-        return userRepository.findOneByLogin(currentUserLogin).get();
-    }
-
-    /**
      * Get current user for login string
      * @param login user login string
      * @return existing user for the given login string or null
@@ -556,13 +549,24 @@ public class UserService {
     }
 
     /**
+     * @return existing user object by current user login
+     */
+    @NotNull
+    public User getUser() {
+        String currentUserLogin = getCurrentUserLogin();
+        Optional<User> user = userRepository.findOneByLogin(currentUserLogin);
+        return unwrapOptionalUser(user, currentUserLogin);
+    }
+
+    /**
      * Get user with user groups and authorities of currently logged in user
      * @return currently logged in user
      */
+    @NotNull
     public User getUserWithGroupsAndAuthorities() {
-        String currentUserLogin = SecurityUtils.getCurrentUserLogin().get();
-        User user = userRepository.findOneWithGroupsAndAuthoritiesByLogin(currentUserLogin).get();
-        return user;
+        String currentUserLogin = getCurrentUserLogin();
+        Optional<User> user = userRepository.findOneWithGroupsAndAuthoritiesByLogin(currentUserLogin);
+        return unwrapOptionalUser(user, currentUserLogin);
     }
 
     /**
@@ -570,10 +574,27 @@ public class UserService {
      * Note: this method should only be invoked if the guided tour settings are really needed
      * @return currently logged in user
      */
+    @NotNull
     public User getUserWithGroupsAuthoritiesAndGuidedTourSettings() {
-        String currentUserLogin = SecurityUtils.getCurrentUserLogin().get();
-        User user = userRepository.findOneWithGroupsAuthoritiesAndGuidedTourSettingsByLogin(currentUserLogin).get();
-        return user;
+        String currentUserLogin = getCurrentUserLogin();
+        Optional<User> user = userRepository.findOneWithGroupsAuthoritiesAndGuidedTourSettingsByLogin(currentUserLogin);
+        return unwrapOptionalUser(user, currentUserLogin);
+    }
+
+    @NotNull
+    private User unwrapOptionalUser(Optional<User> optionalUser, String currentUserLogin) {
+        if (optionalUser.isPresent()) {
+            return optionalUser.get();
+        }
+        throw new EntityNotFoundException("No user found with login: " + currentUserLogin);
+    }
+
+    private String getCurrentUserLogin() {
+        Optional<String> currentUserLogin = SecurityUtils.getCurrentUserLogin();
+        if (currentUserLogin.isPresent()) {
+            return currentUserLogin.get();
+        }
+        throw new EntityNotFoundException("ERROR: No current user login found!");
     }
 
     /**
@@ -582,7 +603,8 @@ public class UserService {
      * @return the user that belongs to the given principal with eagerly loaded groups and authorities
      */
     public User getUserWithGroupsAndAuthorities(@NotNull Principal principal) {
-        return userRepository.findOneWithGroupsAndAuthoritiesByLogin(principal.getName()).get();
+        Optional<User> user = userRepository.findOneWithGroupsAndAuthoritiesByLogin(principal.getName());
+        return unwrapOptionalUser(user, principal.getName());
     }
 
     /**
@@ -630,13 +652,29 @@ public class UserService {
      * @param guidedTourSettings the updated set of guided tour settings
      * @return the updated user object with the changed guided tour settings
      */
-    @Transactional
     public User updateGuidedTourSettings(Set<GuidedTourSetting> guidedTourSettings) {
         User loggedInUser = getUserWithGroupsAuthoritiesAndGuidedTourSettings();
         loggedInUser.getGuidedTourSettings().clear();
         for (GuidedTourSetting setting : guidedTourSettings) {
             loggedInUser.addGuidedTourSetting(setting);
             guidedTourSettingsRepository.save(setting);
+        }
+        return userRepository.save(loggedInUser);
+    }
+
+    /**
+     * Delete a given guided tour setting of the currently logged in user (e.g. when the user restarts a guided tutorial)
+     * @param guidedTourSettingsKey the key of the guided tour setting that should be deleted
+     * @return the updated user object without the deleted guided tour setting
+     */
+    public User deleteGuidedTourSetting(String guidedTourSettingsKey) {
+        User loggedInUser = getUserWithGroupsAuthoritiesAndGuidedTourSettings();
+        Set<GuidedTourSetting> guidedTourSettings = loggedInUser.getGuidedTourSettings();
+        for (GuidedTourSetting setting : guidedTourSettings) {
+            if (setting.getGuidedTourKey().equals(guidedTourSettingsKey)) {
+                loggedInUser.removeGuidedTourSetting(setting);
+                break;
+            }
         }
         return userRepository.save(loggedInUser);
     }

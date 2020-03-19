@@ -1,19 +1,20 @@
 import { Component, HostBinding, Input, OnDestroy, OnInit } from '@angular/core';
-import { Exercise, ExerciseCategory, ExerciseService, ExerciseType, getIcon, getIconTooltip, ParticipationStatus, participationStatus } from 'app/entities/exercise';
-import { JhiAlertService } from 'ng-jhipster';
-import { QuizExercise } from 'app/entities/quiz-exercise';
-import { StudentParticipation } from 'app/entities/participation';
-import { ParticipationService } from 'app/entities/participation/participation.service';
-import { ParticipationWebsocketService } from 'app/entities/participation/participation-websocket.service';
+import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
+import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import * as moment from 'moment';
 import { Moment } from 'moment';
 import { Subscription } from 'rxjs/Subscription';
-import { Course } from 'app/entities/course';
+import { Course } from 'app/entities/course.model';
 import { WindowRef } from 'app/core/websocket/window.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
-import { ProgrammingExercise } from 'app/entities/programming-exercise';
 import { AccountService } from 'app/core/auth/account.service';
+import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
+import { Exercise, ExerciseCategory, ExerciseType, getIcon, getIconTooltip, ParticipationStatus } from 'app/entities/exercise.model';
+import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
+import { participationStatus } from 'app/exercises/shared/exercise/exercise-utils';
 
 @Component({
     selector: 'jhi-course-exercise-row',
@@ -41,7 +42,6 @@ export class CourseExerciseRowComponent implements OnInit, OnDestroy {
 
     constructor(
         private accountService: AccountService,
-        private jhiAlertService: JhiAlertService,
         private $window: WindowRef,
         private participationService: ParticipationService,
         private exerciseService: ExerciseService,
@@ -123,7 +123,7 @@ export class CourseExerciseRowComponent implements OnInit, OnDestroy {
         const isClickResult = event.target.closest('jhi-result') && event.target.closest('.result');
         if (!isClickOnAction && !isClickResult) {
             if (this.extendedLink) {
-                this.router.navigate(['overview', this.course.id, 'exercises', this.exercise.id]);
+                this.router.navigate(['courses', this.course.id, 'exercises', this.exercise.id]);
             } else {
                 this.router.navigate([this.exercise.id], { relativeTo: this.route });
             }

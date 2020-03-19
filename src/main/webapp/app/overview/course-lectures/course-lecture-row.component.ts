@@ -1,9 +1,9 @@
 import { Component, HostBinding, Input, OnInit } from '@angular/core';
 import * as moment from 'moment';
 import { Moment } from 'moment';
-import { Course } from 'app/entities/course';
+import { Course } from 'app/entities/course.model';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Lecture } from 'app/entities/lecture';
+import { Lecture } from 'app/entities/lecture.model';
 
 @Component({
     selector: 'jhi-course-lecture-row',
@@ -42,7 +42,7 @@ export class CourseLectureRowComponent implements OnInit {
             },
         };
         if (this.extendedLink) {
-            this.router.navigate(['overview', this.course.id, 'lectures', this.lecture.id], {
+            this.router.navigate(['courses', this.course.id, 'lectures', this.lecture.id], {
                 state: {
                     lecture: lectureToAttach,
                 },

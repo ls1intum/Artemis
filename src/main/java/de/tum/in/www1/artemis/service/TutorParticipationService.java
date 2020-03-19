@@ -212,6 +212,28 @@ public class TutorParticipationService {
         return existingTutorParticipation;
     }
 
+    /**
+     * This method emoves the tutor participation for the example submission of an exercise
+     * @param exercise  the exercise to which the example submission and tutor participation are linked to
+     * @param user  the user for which the tutor participation should be removed
+     */
+    public void removeTutorParticipations(Exercise exercise, User user) {
+        if (!tutorParticipationRepository.existsByAssessedExerciseIdAndTutorId(exercise.getId(), user.getId())) {
+            return;
+        }
+
+        List<ExampleSubmission> exampleSubmissions = exampleSubmissionRepository.findAllByExerciseId(exercise.getId());
+        TutorParticipation tutorParticipation = tutorParticipationRepository.findWithEagerExampleSubmissionByAssessedExerciseAndTutor(exercise, user);
+
+        for (ExampleSubmission exampleSubmission : exampleSubmissions) {
+            Optional<ExampleSubmission> exampleSubmissionWithTutorParticipation = exampleSubmissionRepository.findByIdWithEagerTutorParticipations(exampleSubmission.getId());
+            if (exampleSubmissionWithTutorParticipation.isPresent()) {
+                exampleSubmissionWithTutorParticipation.get().removeTutorParticipations(tutorParticipation);
+                tutorParticipationRepository.delete(tutorParticipation);
+            }
+        }
+    }
+
     private float calculateTotalScore(List<Feedback> feedbacks) {
         return (float) feedbacks.stream().mapToDouble(Feedback::getCredits).sum();
     }

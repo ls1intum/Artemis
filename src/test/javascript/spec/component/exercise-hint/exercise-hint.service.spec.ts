@@ -4,8 +4,8 @@ import { HttpClientTestingModule, HttpTestingController } from '@angular/common/
 import { HttpResponse } from '@angular/common/http';
 import * as chai from 'chai';
 import { take } from 'rxjs/operators';
-import { ExerciseHintService } from 'app/entities/exercise-hint/exercise-hint.service';
-import { ExerciseHint } from 'app/entities/exercise-hint/exercise-hint.model';
+import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/manage/exercise-hint.service';
+import { ExerciseHint } from 'app/entities/exercise-hint.model';
 
 const expect = chai.expect;
 
@@ -25,7 +25,10 @@ describe('Service Tests', () => {
             service = injector.get(ExerciseHintService);
             httpMock = injector.get(HttpTestingController);
 
-            elemDefault = new ExerciseHint(0, 'AAAAAAA', 'AAAAAAA');
+            elemDefault = new ExerciseHint();
+            elemDefault.id = 0;
+            elemDefault.title = 'AAAAAAA';
+            elemDefault.content = 'AAAAAAA';
         });
 
         describe('Service methods', () => {

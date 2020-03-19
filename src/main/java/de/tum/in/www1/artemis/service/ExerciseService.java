@@ -196,6 +196,19 @@ public class ExerciseService {
     }
 
     /**
+     * Get one exercise with all exercise hints and all student questions + answers and with all categories
+     * @param exerciseId the id of the exercise to find
+     * @return the exercise
+     */
+    public Exercise findOneWithDetailsForStudents(Long exerciseId) {
+        Optional<Exercise> exercise = exerciseRepository.findByIdWithDetailsForStudent(exerciseId);
+        if (exercise.isEmpty()) {
+            throw new EntityNotFoundException("Exercise with exerciseId " + exerciseId + " does not exist!");
+        }
+        return exercise.get();
+    }
+
+    /**
      * Find exercise by exerciseId and load participations in this exercise.
      *
      * @param exerciseId the exerciseId of the exercise entity

@@ -4,17 +4,15 @@ import { Subscription } from 'rxjs/Subscription';
 import { HttpResponse } from '@angular/common/http';
 import { LangChangeEvent, TranslateService } from '@ngx-translate/core';
 import { sortBy } from 'lodash';
-
-import { Course } from 'app/entities/course';
-import { CourseService } from 'app/entities/course/course.service';
-import { Exercise, ExerciseType } from 'app/entities/exercise';
-
-import { Result } from 'app/entities/result';
+import { Course } from 'app/entities/course.model';
+import { CourseManagementService } from '../../course/manage/course-management.service';
+import { Result } from 'app/entities/result.model';
 import * as moment from 'moment';
-import { InitializationState } from 'app/entities/participation';
-import { ABSOLUTE_SCORE, CourseScoreCalculationService, MAX_SCORE, PRESENTATION_SCORE, RELATIVE_SCORE } from 'app/overview';
-import { SubmissionExerciseType } from 'app/entities/submission';
-import { ProgrammingSubmission } from 'app/entities/programming-submission';
+import { Exercise, ExerciseType } from 'app/entities/exercise.model';
+import { ABSOLUTE_SCORE, CourseScoreCalculationService, MAX_SCORE, PRESENTATION_SCORE, RELATIVE_SCORE } from 'app/overview/course-score-calculation.service';
+import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
+import { InitializationState } from 'app/entities/participation/participation.model';
+import { SubmissionExerciseType } from 'app/entities/submission.model';
 
 const QUIZ_EXERCISE_COLOR = '#17a2b8';
 const PROGRAMMING_EXERCISE_COLOR = '#fd7e14';
@@ -175,7 +173,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
     };
 
     constructor(
-        private courseService: CourseService,
+        private courseService: CourseManagementService,
         private courseCalculationService: CourseScoreCalculationService,
         private translateService: TranslateService,
         private route: ActivatedRoute,

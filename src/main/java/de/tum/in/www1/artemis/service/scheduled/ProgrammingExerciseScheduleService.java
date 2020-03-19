@@ -4,15 +4,14 @@ import static de.tum.in.www1.artemis.config.Constants.EXTERNAL_SYSTEM_REQUEST_BA
 import static de.tum.in.www1.artemis.config.Constants.EXTERNAL_SYSTEM_REQUEST_BATCH_WAIT_TIME_MS;
 
 import java.time.ZonedDateTime;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 import javax.annotation.PostConstruct;
 import javax.validation.constraints.NotNull;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.config.Constants;
@@ -25,6 +24,7 @@ import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
+import io.github.jhipster.config.JHipsterConstants;
 
 @Service
 public class ProgrammingExerciseScheduleService implements IExerciseScheduleService<ProgrammingExercise> {
@@ -32,6 +32,8 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
     private final Logger log = LoggerFactory.getLogger(ProgrammingExerciseScheduleService.class);
 
     private final ScheduleService scheduleService;
+
+    private final Environment env;
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
@@ -41,19 +43,27 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
 
     private final Optional<VersionControlService> versionControlService;
 
-    public ProgrammingExerciseScheduleService(ScheduleService scheduleService, ProgrammingExerciseRepository programmingExerciseRepository,
+    public ProgrammingExerciseScheduleService(ScheduleService scheduleService, ProgrammingExerciseRepository programmingExerciseRepository, Environment env,
             ProgrammingSubmissionService programmingSubmissionService, GroupNotificationService groupNotificationService, Optional<VersionControlService> versionControlService) {
         this.scheduleService = scheduleService;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.programmingSubmissionService = programmingSubmissionService;
         this.groupNotificationService = groupNotificationService;
         this.versionControlService = versionControlService;
+        this.env = env;
     }
 
     @PostConstruct
     @Override
     public void scheduleRunningExercisesOnStartup() {
+        Collection<String> activeProfiles = Arrays.asList(env.getActiveProfiles());
+        if (activeProfiles.contains(JHipsterConstants.SPRING_PROFILE_DEVELOPMENT)) {
+            // only execute this on production server, i.e. when the prod profile is active
+            // NOTE: if you want to test this locally, please comment it out, but do not commit the changes
+            return;
+        }
         SecurityUtils.setAuthorizationObject();
+        // TODO: also take exercises with manual assessments into account here
         List<ProgrammingExercise> programmingExercisesWithBuildAfterDueDate = programmingExerciseRepository
                 .findAllByBuildAndTestStudentSubmissionsAfterDueDateAfterDate(ZonedDateTime.now());
         programmingExercisesWithBuildAfterDueDate.forEach(this::scheduleExercise);
@@ -67,6 +77,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
      */
     @Override
     public void scheduleExerciseIfRequired(ProgrammingExercise exercise) {
+        // TODO: also take exercises with manual assessments into account here
         if (exercise.getBuildAndTestStudentSubmissionsAfterDueDate() == null || exercise.getBuildAndTestStudentSubmissionsAfterDueDate().isBefore(ZonedDateTime.now())) {
             scheduleService.cancelScheduledTaskForLifecycle(exercise, ExerciseLifecycle.DUE);
             scheduleService.cancelScheduledTaskForLifecycle(exercise, ExerciseLifecycle.BUILD_AND_TEST_AFTER_DUE_DATE);
@@ -76,6 +87,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
     }
 
     private void scheduleExercise(ProgrammingExercise exercise) {
+        // TODO: there is small logic error here. When build and run test date is after the due date, the lock operation might be executed even if it is not necessary.
         scheduleService.scheduleTask(exercise, ExerciseLifecycle.DUE, lockStudentRepositories(exercise.getId()));
         scheduleService.scheduleTask(exercise, ExerciseLifecycle.BUILD_AND_TEST_AFTER_DUE_DATE, buildAndTestRunnableForExercise(exercise));
         log.debug("Scheduled build and test for student submissions after due date for Programming Exercise \"" + exercise.getTitle() + "\" (#" + exercise.getId() + ") for "
@@ -163,12 +175,11 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
             }
             catch (Exception e) {
                 log.error("Removing write permissions failed for programming exercise with id " + programmingExerciseId + " for student repository with participation id "
-                        + studentParticipation.getId());
+                        + studentParticipation.getId() + ": " + e.getMessage());
                 failedLockOperations.add(programmingExerciseStudentParticipation);
             }
             index++;
         }
         return failedLockOperations;
     }
-
 }

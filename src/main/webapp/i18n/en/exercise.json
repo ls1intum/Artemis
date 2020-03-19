@@ -6,10 +6,12 @@
                 "createLabel": "Create a new Exercise",
                 "createOrEditLabel": "Create or edit an Exercise"
             },
+            "addCriterion": "Add a Grading Criterion",
             "resultCount": "{{resultsLength}} results",
             "resultsPerPage": "{{number}} results per page",
             "showAllResults": "Show all results",
             "searchForStudents": "Search for students by login or name (comma separated)",
+            "searchForTeams": "Search for teams by name (comma separated)",
             "created": "A new Exercise is created with identifier {{ param }}",
             "updated": "An Exercise is updated with identifier {{ param }}",
             "deleted": "An Exercise is deleted with identifier {{ param }}",
@@ -30,6 +32,7 @@
             "problemStatement": "Problem Statement",
             "sampleSolution": "Example Solution",
             "gradingInstructions": "Grading Instructions",
+            "structuredGradingInstructions": "Structured Grading Instructions",
             "title": "Title",
             "shortName": "Short Name",
             "releaseDate": "Release Date",
@@ -43,8 +46,19 @@
             "easy": "Easy",
             "medium": "Medium",
             "hard": "Hard",
+            "mode": "Mode",
+            "modeTooltip": "The solving mode of an exercise determines whether students work alone or in teams.",
+            "modes": {
+                "individual": "Individual",
+                "team": "Team"
+            },
+            "teamAssignmentConfig": {
+                "teamSize": "Team Size",
+                "teamSizeTooltip": "Stipulation regarding the minimum and maximum number of students per team."
+            },
             "categories": "Categories",
             "participations": "Participations",
+            "teams": "Teams",
             "exportNames": "Export Names",
             "exportResults": "Export Results",
             "refresh": "Refresh",
@@ -64,6 +78,7 @@
             "duration": "Duration",
             "showBuildFailed": "Show Build Failed",
             "showFailed": "Show Failed Submissions (without Result)",
+            "showNoSubmissions": "Show No Submissions",
             "showUnsuccessful": "Show Unsuccessful",
             "showSuccessful": "Show Successful",
             "showManual": "Show Manual",

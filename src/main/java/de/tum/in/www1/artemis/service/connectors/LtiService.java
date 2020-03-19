@@ -90,7 +90,7 @@ public class LtiService {
     // TODO Although this works, this is a bad design practice and we should move all response related code to the controller
     private final HttpServletResponse response;
 
-    public final HashMap<String, Pair<LtiLaunchRequestDTO, Exercise>> launchRequestForSession = new HashMap<>();
+    public final Map<String, Pair<LtiLaunchRequestDTO, Exercise>> launchRequestForSession = new HashMap<>();
 
     public LtiService(UserService userService, UserRepository userRepository, LtiOutcomeUrlRepository ltiOutcomeUrlRepository, ResultRepository resultRepository,
             ArtemisAuthenticationProvider artemisAuthenticationProvider, LtiUserIdRepository ltiUserIdRepository, HttpServletResponse response) {
@@ -382,11 +382,11 @@ public class LtiService {
     }
 
     /**
-     * This method is pinged on new build results. It sends an message to the LTI consumer with the new score.
+     * This method is pinged on new programming exercise results. It sends an message to the LTI consumer with the new score.
      *
      * @param participation The programming exercise participation for which a new build result is available
      */
-    public void onNewBuildResult(ProgrammingExerciseStudentParticipation participation) {
+    public void onNewResult(ProgrammingExerciseStudentParticipation participation) {
 
         // Get the LTI outcome URL
         ltiOutcomeUrlRepository.findByUserAndExercise(participation.getStudent(), participation.getExercise()).ifPresent(ltiOutcomeUrl -> {

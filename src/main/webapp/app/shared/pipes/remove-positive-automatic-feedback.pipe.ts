@@ -1,5 +1,5 @@
 import { Pipe, PipeTransform } from '@angular/core';
-import { Feedback } from 'app/entities/feedback';
+import { Feedback } from 'app/entities/feedback.model';
 
 @Pipe({ name: 'removepositiveautomaticfeedback' })
 export class RemovePositiveAutomaticFeedbackPipe implements PipeTransform {

@@ -3,10 +3,7 @@ package de.tum.in.www1.artemis.web.rest;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.badRequest;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,7 +17,6 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
 import de.tum.in.www1.artemis.domain.enumeration.TutorParticipationStatus;
-import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
 import de.tum.in.www1.artemis.repository.ComplaintRepository;
@@ -63,13 +59,9 @@ public class ExerciseResource {
 
     private final ComplaintRepository complaintRepository;
 
+    private final SubmissionService submissionService;
+
     private final ComplaintResponseRepository complaintResponseRepository;
-
-    private final TextSubmissionService textSubmissionService;
-
-    private final ModelingSubmissionService modelingSubmissionService;
-
-    private final FileUploadSubmissionService fileUploadSubmissionService;
 
     private final ResultService resultService;
 
@@ -77,11 +69,12 @@ public class ExerciseResource {
 
     private final ProgrammingExerciseService programmingExerciseService;
 
+    private final GradingCriterionService gradingCriterionService;
+
     public ExerciseResource(ExerciseService exerciseService, ParticipationService participationService, UserService userService, AuthorizationCheckService authCheckService,
             TutorParticipationService tutorParticipationService, ExampleSubmissionRepository exampleSubmissionRepository, ComplaintRepository complaintRepository,
-            ComplaintResponseRepository complaintResponseRepository, TextSubmissionService textSubmissionService, ModelingSubmissionService modelingSubmissionService,
-            ResultService resultService, FileUploadSubmissionService fileUploadSubmissionService, TutorLeaderboardService tutorLeaderboardService,
-            ProgrammingExerciseService programmingExerciseService) {
+            SubmissionService submissionService, ResultService resultService, TutorLeaderboardService tutorLeaderboardService,
+            ComplaintResponseRepository complaintResponseRepository, ProgrammingExerciseService programmingExerciseService, GradingCriterionService gradingCriterionService) {
         this.exerciseService = exerciseService;
         this.participationService = participationService;
         this.userService = userService;
@@ -89,13 +82,12 @@ public class ExerciseResource {
         this.tutorParticipationService = tutorParticipationService;
         this.exampleSubmissionRepository = exampleSubmissionRepository;
         this.complaintRepository = complaintRepository;
+        this.submissionService = submissionService;
         this.complaintResponseRepository = complaintResponseRepository;
-        this.textSubmissionService = textSubmissionService;
-        this.modelingSubmissionService = modelingSubmissionService;
         this.resultService = resultService;
-        this.fileUploadSubmissionService = fileUploadSubmissionService;
         this.tutorLeaderboardService = tutorLeaderboardService;
         this.programmingExerciseService = programmingExerciseService;
+        this.gradingCriterionService = gradingCriterionService;
     }
 
     /**
@@ -188,34 +180,29 @@ public class ExerciseResource {
      * @return a object node with the stats
      */
     private StatsForInstructorDashboardDTO populateCommonStatistics(Exercise exercise) {
-        Long exerciseId = exercise.getId();
+        final Long exerciseId = exercise.getId();
         StatsForInstructorDashboardDTO stats = new StatsForInstructorDashboardDTO();
 
-        long numberOfSubmissions = 0L;
-        if (exercise instanceof TextExercise) {
-            numberOfSubmissions = textSubmissionService.countSubmissionsToAssessByExerciseId(exercise.getId());
+        long numberOfSubmissions;
+
+        if (exercise instanceof ProgrammingExercise) {
+            numberOfSubmissions = programmingExerciseService.countSubmissionsByExerciseIdSubmitted(exerciseId);
         }
-        else if (exercise instanceof ModelingExercise) {
-            numberOfSubmissions += modelingSubmissionService.countSubmissionsToAssessByExerciseId(exercise.getId());
-        }
-        else if (exercise instanceof FileUploadExercise) {
-            numberOfSubmissions += fileUploadSubmissionService.countSubmissionsToAssessByExerciseId(exercise.getId());
-        }
-        else if (exercise instanceof ProgrammingExercise) {
-            numberOfSubmissions += programmingExerciseService.countSubmissions(exercise.getId());
+        else {
+            numberOfSubmissions = submissionService.countSubmissionsForExercise(exerciseId);
         }
         stats.setNumberOfSubmissions(numberOfSubmissions);
 
-        Long numberOfAssessments = resultService.countNumberOfFinishedAssessmentsForExercise(exerciseId);
+        final long numberOfAssessments = resultService.countNumberOfFinishedAssessmentsForExercise(exerciseId);
         stats.setNumberOfAssessments(numberOfAssessments);
 
-        Long numberOfAutomaticAssistedAssessments = resultService.countNumberOfAutomaticAssistedAssessmentsForExercise(exerciseId);
+        final long numberOfAutomaticAssistedAssessments = resultService.countNumberOfAutomaticAssistedAssessmentsForExercise(exerciseId);
         stats.setNumberOfAutomaticAssistedAssessments(numberOfAutomaticAssistedAssessments);
 
-        Long numberOfMoreFeedbackRequests = complaintRepository.countByResult_Participation_Exercise_IdAndComplaintType(exerciseId, ComplaintType.MORE_FEEDBACK);
+        final long numberOfMoreFeedbackRequests = complaintRepository.countByResult_Participation_Exercise_IdAndComplaintType(exerciseId, ComplaintType.MORE_FEEDBACK);
         stats.setNumberOfMoreFeedbackRequests(numberOfMoreFeedbackRequests);
 
-        Long numberOfComplaints = complaintRepository.countByResult_Participation_Exercise_IdAndComplaintType(exerciseId, ComplaintType.COMPLAINT);
+        final long numberOfComplaints = complaintRepository.countByResult_Participation_Exercise_IdAndComplaintType(exerciseId, ComplaintType.COMPLAINT);
         stats.setNumberOfComplaints(numberOfComplaints);
 
         long numberOfComplaintResponses = complaintResponseRepository.countByComplaint_Result_Participation_Exercise_Id_AndComplaint_ComplaintType(exerciseId,
@@ -308,17 +295,11 @@ public class ExerciseResource {
     @GetMapping(value = "/exercises/{exerciseId}/details")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Exercise> getExerciseDetails(@PathVariable Long exerciseId) {
-        // TODO: refactor this and load
-        // * the exercise (without the course, no template / solution participations)
-        // * all submissions (with their result) of the user (to be displayed in the result history)
-        // * the student questions
-        // * the hints
-        // also see exercise.service.ts and course-exercise-details.component.ts
         long start = System.currentTimeMillis();
         User user = userService.getUserWithGroupsAndAuthorities();
         log.debug(user.getLogin() + " requested access for exercise with exerciseId " + exerciseId, exerciseId);
 
-        Exercise exercise = exerciseService.findOne(exerciseId);
+        Exercise exercise = exerciseService.findOneWithDetailsForStudents(exerciseId);
         // if exercise is not yet released to the students they should not have any access to it
         if (!authCheckService.isAllowedToSeeExercise(exercise, user)) {
             return forbidden();
@@ -326,9 +307,7 @@ public class ExerciseResource {
 
         if (exercise != null) {
             List<StudentParticipation> participations = participationService.findByExerciseIdAndStudentIdWithEagerResultsAndSubmissions(exercise.getId(), user.getId());
-
             exercise.setStudentParticipations(new HashSet<>());
-
             for (StudentParticipation participation : participations) {
 
                 participation.setResults(exercise.findResultsFilteredForStudents(participation));

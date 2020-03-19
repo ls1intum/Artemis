@@ -1,12 +1,13 @@
 import { async, ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/alert/alert.service';
 import * as moment from 'moment';
 
-import { AssessmentHeaderComponent } from 'app/assessment-shared/assessment-header/assessment-header.component';
-import { ArtemisSharedModule, JhiAlertComponent } from 'app/shared';
+import { AssessmentHeaderComponent } from 'app/assessment/assessment-header/assessment-header.component';
 import { ArtemisTestModule } from '../../test.module';
-import { Result } from 'app/entities/result';
+import { Result } from 'app/entities/result.model';
+import { AlertComponent } from 'app/shared/alert/alert.component';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
 
 describe('AssessmentHeaderComponent', () => {
     let component: AssessmentHeaderComponent;
@@ -16,7 +17,7 @@ describe('AssessmentHeaderComponent', () => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, ArtemisSharedModule],
             declarations: [AssessmentHeaderComponent],
-            providers: [JhiAlertService],
+            providers: [],
         })
             .overrideModule(ArtemisTestModule, { set: { declarations: [], exports: [] } })
             .compileComponents();
@@ -33,16 +34,16 @@ describe('AssessmentHeaderComponent', () => {
     });
 
     it('should include jhi-alert', () => {
-        const jhiAlertComponent = fixture.debugElement.query(By.directive(JhiAlertComponent));
+        const jhiAlertComponent = fixture.debugElement.query(By.directive(AlertComponent));
         expect(jhiAlertComponent).toBeTruthy();
     });
 
     it('should display alerts', () => {
-        const alertService = TestBed.get(JhiAlertService);
+        const alertService = TestBed.inject(AlertService);
         alertService.success('test-alert-string');
         fixture.detectChanges();
 
-        const jhiAlertComponent = fixture.debugElement.query(By.directive(JhiAlertComponent));
+        const jhiAlertComponent = fixture.debugElement.query(By.directive(AlertComponent));
         const jhiAlertContent = jhiAlertComponent.nativeElement.textContent;
         expect(jhiAlertContent).toContain('test-alert-string');
     });

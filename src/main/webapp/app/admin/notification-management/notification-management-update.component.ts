@@ -1,8 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-
 import { UserService } from 'app/core/user/user.service';
-import { SystemNotification, SystemNotificationService, SystemNotificationType } from 'app/entities/system-notification';
+import { SystemNotification, SystemNotificationType } from 'app/entities/system-notification.model';
+import { SystemNotificationService } from 'app/core/system-notification/system-notification.service';
 
 @Component({
     selector: 'jhi-notification-mgmt-update',

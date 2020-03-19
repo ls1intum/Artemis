@@ -1,28 +1,32 @@
 import { Component, HostBinding, Input, OnInit } from '@angular/core';
-import { Exercise, isStartExerciseAvailable, ParticipationStatus } from 'app/entities/exercise';
-import { InitializationState, Participation, ProgrammingExerciseStudentParticipation } from 'app/entities/participation';
-import { CourseExerciseService } from 'app/entities/course/course.service';
-import { JhiAlertService } from 'ng-jhipster';
-import { SourceTreeService } from 'app/components/util/sourceTree.service';
-import { IntelliJState } from 'app/intellij/intellij';
-import { JavaBridgeService } from 'app/intellij/java-bridge.service';
-import { IdeBuildAndTestService } from 'app/intellij/ide-build-and-test.service';
-import { ProgrammingExercise } from 'app/entities/programming-exercise';
+import { CourseExerciseService } from '../../course/manage/course-management.service';
+import { AlertService } from 'app/core/alert/alert.service';
+import { SourceTreeService } from 'app/exercises/programming/shared/service/sourceTree.service';
 import { ActivatedRoute } from '@angular/router';
-import { FeatureToggle } from 'app/feature-toggle';
-import { stringifyCircular } from 'app/shared/util/utils';
+import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
+import { Participation } from 'app/entities/participation/participation.model';
+import { Exercise, ParticipationStatus } from 'app/entities/exercise.model';
+import { isStartExerciseAvailable, participationStatus } from 'app/exercises/shared/exercise/exercise-utils';
+import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
+import { OrionState } from 'app/shared/orion/orion';
+import { OrionConnectorService } from 'app/shared/orion/orion-connector.service';
+import { OrionBuildAndTestService } from 'app/shared/orion/orion-build-and-test.service';
+import { catchError, filter, tap } from 'rxjs/operators';
+import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 
 @Component({
     selector: 'jhi-programming-exercise-student-ide-actions',
     templateUrl: './programming-exercise-student-ide-actions.component.html',
     styleUrls: ['../course-overview.scss'],
-    providers: [JhiAlertService, SourceTreeService],
+    providers: [SourceTreeService],
 })
 export class ProgrammingExerciseStudentIdeActionsComponent implements OnInit {
     readonly UNINITIALIZED = ParticipationStatus.UNINITIALIZED;
     readonly INITIALIZED = ParticipationStatus.INITIALIZED;
     readonly INACTIVE = ParticipationStatus.INACTIVE;
-    ideState: IntelliJState;
+    readonly participationStatus = participationStatus;
+    ideState: OrionState;
     FeatureToggle = FeatureToggle;
 
     @Input() @HostBinding('class.col') equalColumns = true;
@@ -34,15 +38,15 @@ export class ProgrammingExerciseStudentIdeActionsComponent implements OnInit {
     @Input() smallButtons: boolean;
 
     constructor(
-        private jhiAlertService: JhiAlertService,
+        private jhiAlertService: AlertService,
         private courseExerciseService: CourseExerciseService,
-        private javaBridge: JavaBridgeService,
-        private ideBuildAndTestService: IdeBuildAndTestService,
+        private javaBridge: OrionConnectorService,
+        private ideBuildAndTestService: OrionBuildAndTestService,
         private route: ActivatedRoute,
     ) {}
 
     ngOnInit(): void {
-        this.javaBridge.state().subscribe((ideState: IntelliJState) => (this.ideState = ideState));
+        this.javaBridge.state().subscribe((ideState: OrionState) => (this.ideState = ideState));
         this.route.queryParams.subscribe(params => {
             if (params['withIdeSubmit']) {
                 this.submitChanges();
@@ -51,35 +55,10 @@ export class ProgrammingExerciseStudentIdeActionsComponent implements OnInit {
     }
 
     /**
-     * Get the participation status of the current exercise depending on if the user has already started the exercise
-     * or not.
-     *
-     * @return The participation status of the current exercise
-     */
-    participationStatus(): ParticipationStatus {
-        if (!this.hasParticipations()) {
-            return ParticipationStatus.UNINITIALIZED;
-        } else if (this.exercise.studentParticipations[0].initializationState === InitializationState.INITIALIZED) {
-            return ParticipationStatus.INITIALIZED;
-        }
-        return ParticipationStatus.INACTIVE;
-    }
-
-    /**
      * see exercise-utils -> isStartExerciseAvailable
      */
     isStartExerciseAvailable(): boolean {
         return isStartExerciseAvailable(this.exercise as ProgrammingExercise);
-    }
-
-    /**
-     * Determines if the current exercise has any participation. This indirectly reflects, whether the exercise has
-     * already been started or not.
-     *
-     * @return True, if the exercise has any participation, false otherwise
-     */
-    hasParticipations(): boolean {
-        return this.exercise.studentParticipations && this.exercise.studentParticipations.length > 0;
     }
 
     /**
@@ -102,10 +81,10 @@ export class ProgrammingExerciseStudentIdeActionsComponent implements OnInit {
             .startExercise(this.courseId, this.exercise.id)
             .finally(() => (this.exercise.loading = false))
             .subscribe(
-                participation => {
+                (participation: StudentParticipation) => {
                     if (participation) {
                         this.exercise.studentParticipations = [participation];
-                        this.exercise.participationStatus = this.participationStatus();
+                        this.exercise.participationStatus = this.participationStatus(this.exercise);
                     }
                     this.jhiAlertService.success('artemisApp.exercise.personalRepository');
                 },
@@ -119,9 +98,9 @@ export class ProgrammingExerciseStudentIdeActionsComponent implements OnInit {
     /**
      * Imports the current exercise in the user's IDE and triggers the opening of the new project in the IDE
      */
-    importIntoIntelliJ() {
+    importIntoIDE() {
         const repo = this.repositoryUrl(this.exercise.studentParticipations[0]);
-        this.javaBridge.clone(repo, stringifyCircular(this.exercise));
+        this.javaBridge.importParticipation(repo, this.exercise as ProgrammingExercise);
     }
 
     /**
@@ -145,6 +124,27 @@ export class ProgrammingExerciseStudentIdeActionsComponent implements OnInit {
     }
 
     private hasInitializedParticipation(): boolean {
-        return this.exercise.studentParticipations && this.participationStatus() === this.INITIALIZED && this.exercise.studentParticipations.length > 0;
+        return this.exercise.studentParticipations && this.participationStatus(this.exercise) === this.INITIALIZED && this.exercise.studentParticipations.length > 0;
+    }
+
+    resumeProgrammingExercise() {
+        this.exercise.loading = true;
+        this.courseExerciseService
+            .resumeProgrammingExercise(this.courseId, this.exercise.id)
+            .pipe(
+                filter(Boolean),
+                tap((participation: StudentParticipation) => {
+                    participation.results = this.exercise.studentParticipations[0] ? this.exercise.studentParticipations[0].results : [];
+                    this.exercise.studentParticipations = [participation];
+                    this.exercise.participationStatus = participationStatus(this.exercise);
+                }),
+                catchError(error => {
+                    console.log('Error: ' + error);
+                    this.jhiAlertService.error('artemisApp.exerciseActions.resumeExercise', { error });
+                    return error;
+                }),
+            )
+            .finally(() => (this.exercise.loading = false))
+            .subscribe();
     }
 }

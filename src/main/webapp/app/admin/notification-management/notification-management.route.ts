@@ -1,9 +1,11 @@
 import { Injectable } from '@angular/core';
 import { ActivatedRouteSnapshot, Resolve, Route, RouterStateSnapshot } from '@angular/router';
 import { JhiResolvePagingParams } from 'ng-jhipster';
-
-import { NotificationMgmtComponent, NotificationMgmtDetailComponent, NotificationMgmtUpdateComponent } from 'app/admin';
-import { SystemNotification, SystemNotificationService } from 'app/entities/system-notification';
+import { NotificationMgmtUpdateComponent } from 'app/admin/notification-management/notification-management-update.component';
+import { SystemNotification } from 'app/entities/system-notification.model';
+import { SystemNotificationService } from 'app/core/system-notification/system-notification.service';
+import { NotificationMgmtComponent } from 'app/admin/notification-management/notification-management.component';
+import { NotificationMgmtDetailComponent } from 'app/admin/notification-management/notification-management-detail.component';
 
 @Injectable({ providedIn: 'root' })
 export class NotificationMgmtResolve implements Resolve<any> {

@@ -2,6 +2,7 @@ import { group, sleep } from 'k6';
 import { login } from "./requests/requests.js";
 import { createExercise, startExercise, simulateSubmission, ParticipationSimulation, TestResult, deleteExercise } from "./requests/programmingExercise.js";
 import { deleteCourse, newCourse } from "./requests/course.js";
+import { newUser} from './requests/user.js';
 import { twoSuccessfulErrorContent, allSuccessfulContent, buildErrorContent } from "./resource/constants.js";
 
 export const options = {
@@ -19,10 +20,21 @@ let baseUsername = __ENV.BASE_USERNAME;
 let basePassword = __ENV.BASE_PASSWORD;
 
 export function setup() {
-    let artemis, exerciseId, courseId;
+    let artemis, exerciseId, courseId, userId;
 
     // Create course
     artemis = login(adminUsername, adminPassword);
+
+    if(__ENV.CREATE_USERS) {
+        console.log("Try to create " + __ENV.ITERATIONS + " users");
+        for (let i = 1; i <= __ENV.ITERATIONS; i++) {
+            userId = newUser(artemis, i, baseUsername, basePassword);
+        }
+    }
+    else {
+        console.log("Do not create users");
+    }
+
     courseId = newCourse(artemis);
 
     const instructorUsername = baseUsername.replace('USERID', '1');
@@ -35,14 +47,14 @@ export function setup() {
     exerciseId = createExercise(artemis, courseId);
 
     // Wait some time for builds to finish and test results to come in
-    sleep(15);
+    sleep(20);
 
     return { exerciseId: exerciseId, courseId: courseId };
 }
 
 export default function (data) {
-    // The user is randomly selected
-    const userId = __VU; // Math.floor((Math.random() * maxTestUser)) + 1;
+    // The user id (1, 2, 3) is stored in __VU
+    const userId = __VU;
     const currentUsername = baseUsername.replace('USERID', userId);
     const currentPassword = basePassword.replace('USERID', userId);
     const artemis = login(currentUsername, currentPassword);

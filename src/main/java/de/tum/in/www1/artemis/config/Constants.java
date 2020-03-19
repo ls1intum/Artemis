@@ -56,6 +56,10 @@ public final class Constants {
 
     public static final Pattern SHORT_NAME_PATTERN = Pattern.compile(SHORT_NAME_REGEX);
 
+    public static final String FILE_ENDING_REGEX = "^[a-zA-Z0-9]{1,5}";
+
+    public static final Pattern FILE_ENDING_PATTERN = Pattern.compile(FILE_ENDING_REGEX);
+
     public static final String TUM_USERNAME_REGEX = "^([a-z]{2}\\d{2}[a-z]{3})";
 
     public static final Pattern TUM_USERNAME_PATTERN = Pattern.compile(TUM_USERNAME_REGEX);
@@ -68,8 +72,6 @@ public final class Constants {
     public static final String TEST_REPO_NAME = "tests";
 
     public static final String ASSIGNMENT_REPO_NAME = "assignment";
-
-    public static final long MAX_COMPLAINT_NUMBER_PER_STUDENT = 3;
 
     public static final long MAX_NUMBER_OF_LOCKED_SUBMISSIONS_PER_TUTOR = 10;
 
@@ -95,9 +97,6 @@ public final class Constants {
 
     public static final int EXTERNAL_SYSTEM_REQUEST_BATCH_SIZE = 100;
 
-    // NOTE: this has to be the same as in complaint.constants.ts on the client
-    public static final int MAX_COMPLAINT_TIME_WEEKS = 1;
-
     // Currently 10s.
     public static final int EXTERNAL_SYSTEM_REQUEST_BATCH_WAIT_TIME_MS = 10 * 1000; // 10s
 
@@ -112,6 +111,10 @@ public final class Constants {
     public static final String DELETE_PARTICIPATION = "DELETE_PARTICIPATION";
 
     public static final String INFO_BUILD_PLAN_URL_DETAIL = "buildPlanURLTemplate";
+
+    public static final String EXTERNAL_USER_MANAGEMENT_URL = "externalUserManagementURL";
+
+    public static final String EXTERNAL_USER_MANAGEMENT_NAME = "externalUserManagementName";
 
     private Constants() {
     }

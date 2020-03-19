@@ -4,7 +4,7 @@ import { of } from 'rxjs';
 
 import { ArtemisTestModule } from '../../../test.module';
 import { UserManagementDetailComponent } from 'app/admin/user-management/user-management-detail.component';
-import { User } from 'app/core';
+import { User } from 'app/core/user/user.model';
 
 describe('Component Tests', () => {
     describe('User Management Detail Component', () => {

@@ -1,15 +1,14 @@
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
-import { stub } from 'sinon';
+import { SinonStub, stub } from 'sinon';
 import { Component, DebugElement } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
-import { SinonStub } from 'sinon';
 import { ArtemisTestModule } from '../../test.module';
-import { ProgrammingExerciseUtilsModule } from 'app/entities/programming-exercise/utils/programming-exercise-utils.module';
-import { ProfileService } from 'app/layouts/profiles/profile.service';
+import { ProgrammingExerciseUtilsModule } from 'app/exercises/programming/shared/utils/programming-exercise-utils.module';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { MockProfileService } from '../../mocks/mock-profile.service';
 import { BehaviorSubject } from 'rxjs';
-import { ProfileInfo } from 'app/layouts';
+import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { By } from '@angular/platform-browser';
 
 chai.use(sinonChai);
@@ -64,12 +63,18 @@ describe('BuildPlanLinkDirective', () => {
     });
 
     it('should inject the correct build plan URL', fakeAsync(() => {
+        const open = stub(window, 'open');
+        window.open = open;
+
         fixture.detectChanges();
         tick();
 
-        const linkEl = debugElement.query(By.css('a'));
-        expect(linkEl.attributes['href']).to.be.equal(correctBuildPlan);
-        expect(linkEl.attributes['target']).to.be.equal('_blank');
-        expect(linkEl.attributes['rel']).to.be.equal('noopener noreferrer');
+        const link = debugElement.query(By.css('a'));
+        link.triggerEventHandler('click', { preventDefault: () => {} });
+
+        fixture.detectChanges();
+        tick();
+
+        expect(open).to.be.calledOnce;
     }));
 });

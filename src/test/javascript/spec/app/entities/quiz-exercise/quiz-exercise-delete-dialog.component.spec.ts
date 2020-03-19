@@ -6,7 +6,7 @@ import { JhiEventManager } from 'ng-jhipster';
 
 import { ArtemisTestModule } from '../../../test.module';
 import { QuizExerciseDeleteDialogComponent } from 'app/entities/quiz-exercise/quiz-exercise-delete-dialog.component';
-import { QuizExerciseService } from 'app/entities/quiz-exercise/quiz-exercise.service';
+import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.service';
 
 describe('Component Tests', () => {
     describe('QuizExercise Management Delete Component', () => {

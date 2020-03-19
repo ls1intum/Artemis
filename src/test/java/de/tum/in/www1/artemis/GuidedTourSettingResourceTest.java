@@ -39,17 +39,7 @@ public class GuidedTourSettingResourceTest extends AbstractSpringIntegrationTest
         database.resetDatabase();
     }
 
-    @Test
-    @WithMockUser(value = "student1")
-    public void guidedTourSettingsIsInitiallyNull() throws Exception {
-        User user = request.get("/api/account", HttpStatus.OK, User.class);
-        assertThat(user.getGuidedTourSettings().isEmpty()).isTrue();
-    }
-
-    @Test
-    @WithMockUser(value = "student1")
-    @SuppressWarnings("unchecked")
-    public void updateGuidedTourSettings() throws Exception {
+    public Set<GuidedTourSetting> createGuidedTourSettings() {
         Set<GuidedTourSetting> guidedTourSettingSet = new HashSet<>();
 
         GuidedTourSetting guidedTourSetting1 = new GuidedTourSetting();
@@ -64,7 +54,21 @@ public class GuidedTourSettingResourceTest extends AbstractSpringIntegrationTest
 
         guidedTourSettingSet.add(guidedTourSetting1);
         guidedTourSettingSet.add(guidedTourSetting2);
-        Set<GuidedTourSetting> serverGuidedTourSettings = request.putWithResponseBody("/api/guided-tour-settings", guidedTourSettingSet, Set.class, HttpStatus.OK);
+        return guidedTourSettingSet;
+    }
+
+    @Test
+    @WithMockUser(value = "student1")
+    public void guidedTourSettingsIsInitiallyNull() throws Exception {
+        User user = request.get("/api/account", HttpStatus.OK, User.class);
+        assertThat(user.getGuidedTourSettings().isEmpty()).isTrue();
+    }
+
+    @Test
+    @WithMockUser(value = "student1")
+    public void updateGuidedTourSettings() throws Exception {
+        Set<GuidedTourSetting> guidedTourSettingSet = this.createGuidedTourSettings();
+        Set serverGuidedTourSettings = request.putWithResponseBody("/api/guided-tour-settings", guidedTourSettingSet, Set.class, HttpStatus.OK);
         assertThat(serverGuidedTourSettings).isNotNull();
         assertThat(serverGuidedTourSettings.isEmpty()).isFalse();
         assertThat(serverGuidedTourSettings.size()).isEqualTo(2);
@@ -73,5 +77,18 @@ public class GuidedTourSettingResourceTest extends AbstractSpringIntegrationTest
         assertThat(user.getGuidedTourSettings()).isNotNull();
         assertThat(user.getGuidedTourSettings().isEmpty()).isFalse();
         assertThat(user.getGuidedTourSettings().size()).isEqualTo(2);
+    }
+
+    @Test
+    @WithMockUser(value = "student1")
+    public void deleteGuidedTourSetting() throws Exception {
+        Set<GuidedTourSetting> guidedTourSettingSet = this.createGuidedTourSettings();
+        request.putWithResponseBody("/api/guided-tour-settings", guidedTourSettingSet, Set.class, HttpStatus.OK);
+        request.delete("/api/guided-tour-settings/new_tour", HttpStatus.OK);
+
+        User user = request.get("/api/account", HttpStatus.OK, User.class);
+        assertThat(user.getGuidedTourSettings()).isNotNull();
+        assertThat(user.getGuidedTourSettings().isEmpty()).isFalse();
+        assertThat(user.getGuidedTourSettings().size()).isEqualTo(1);
     }
 }

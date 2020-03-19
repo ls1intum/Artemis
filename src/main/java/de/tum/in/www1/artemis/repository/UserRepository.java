@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.repository;
 
+import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
+
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -31,33 +33,44 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     Optional<User> findOneByLogin(String login);
 
-    @EntityGraph(attributePaths = { "groups" })
+    @EntityGraph(type = LOAD, attributePaths = { "groups" })
     Optional<User> findOneWithGroupsByLogin(String login);
 
-    @EntityGraph(attributePaths = { "authorities" })
+    @EntityGraph(type = LOAD, attributePaths = { "authorities" })
     Optional<User> findOneWithAuthoritiesByLogin(String login);
 
-    @EntityGraph(attributePaths = { "groups", "authorities" })
+    @EntityGraph(type = LOAD, attributePaths = { "groups", "authorities" })
     Optional<User> findOneWithGroupsAndAuthoritiesByLogin(String login);
 
-    @EntityGraph(attributePaths = { "groups", "authorities", "guidedTourSettings" })
+    @EntityGraph(type = LOAD, attributePaths = { "groups", "authorities", "guidedTourSettings" })
     Optional<User> findOneWithGroupsAuthoritiesAndGuidedTourSettingsByLogin(String login);
 
     Long countByGroupsIsContaining(String group);
 
-    @EntityGraph(attributePaths = { "groups" })
+    @EntityGraph(type = LOAD, attributePaths = { "groups" })
     @Query("select user from User user where :#{#groupName} member user.groups")
     List<User> findAllInGroup(String groupName);
 
-    @EntityGraph(attributePaths = { "groups" })
+    /**
+     * Searches for users in a group by their login or full name.
+     * @param groupName Name of group in which to search for users
+     * @param loginOrName Either a login (e.g. ga12abc) or name (e.g. Max Mustermann) by which to search
+     * @return list of found users that match the search criteria
+     */
+    @EntityGraph(type = LOAD, attributePaths = { "groups" })
+    @Query("select user from User user where :#{#groupName} member user.groups and "
+            + "(user.login like :#{#loginOrName}% or concat_ws(' ', user.firstName, user.lastName) like %:#{#loginOrName}%)")
+    List<User> searchByLoginOrNameInGroup(String groupName, String loginOrName);
+
+    @EntityGraph(type = LOAD, attributePaths = { "groups" })
     @Query("select user from User user")
     Page<User> findAllWithGroups(Pageable pageable);
 
     @Modifying
-    @Query("Update User user set user.lastNotificationRead = utc_timestamp where user.id = :#{#userId}")
+    @Query("Update User user set user.lastNotificationRead = current_timestamp() where user.id = :#{#userId}")
     void updateUserNotificationReadDate(@Param("userId") Long userId);
 
-    @EntityGraph(attributePaths = { "groups" })
+    @EntityGraph(type = LOAD, attributePaths = { "groups" })
     @Query("select user from User user where :#{#groupName} member user.groups and user not in :#{#ignoredUsers}")
     List<User> findAllInGroupContainingAndNotIn(String groupName, Set<User> ignoredUsers);
 }

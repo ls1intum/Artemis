@@ -1,7 +1,10 @@
 package de.tum.in.www1.artemis.domain.participation;
 
+import java.util.Optional;
+
 import javax.persistence.*;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonView;
 
 import de.tum.in.www1.artemis.domain.*;
@@ -19,6 +22,10 @@ public class StudentParticipation extends Participation {
     @ManyToOne
     @JsonView(QuizView.Before.class)
     private User student;
+
+    @ManyToOne
+    @JsonView(QuizView.Before.class)
+    private Team team;
 
     public Integer getPresentationScore() {
         return presentationScore;
@@ -46,6 +53,49 @@ public class StudentParticipation extends Participation {
         this.student = user;
     }
 
+    public Team getTeam() {
+        return team;
+    }
+
+    public Participation team(Team team) {
+        this.team = team;
+        return this;
+    }
+
+    public void setTeam(Team team) {
+        this.team = team;
+    }
+
+    @JsonIgnore
+    public ParticipantInterface getParticipant() {
+        return Optional.ofNullable((ParticipantInterface) student).orElse(team);
+    }
+
+    public Participation participant(ParticipantInterface participant) {
+        setParticipant(participant);
+        return this;
+    }
+
+    /**
+     * allows to set the participant independent whether it is a team or user
+     * @param participant either a team or user
+     */
+    public void setParticipant(ParticipantInterface participant) {
+        if (participant instanceof User) {
+            this.student = (User) participant;
+        }
+        else if (participant instanceof Team) {
+            this.team = (Team) participant;
+        }
+        else if (participant == null) {
+            this.student = null;
+            this.team = null;
+        }
+        else {
+            throw new Error("Unknown ParticipantInterface type.");
+        }
+    }
+
     public Exercise getExercise() {
         return exercise;
     }
@@ -60,16 +110,16 @@ public class StudentParticipation extends Participation {
     }
 
     /**
-     * Removes the student from the participation, can be invoked to make sure that sensitive information is not sent to the client. E.g. tutors should not see information about
-     * the student.
+     * Removes the student or team from the participation, can be invoked to make sure that sensitive information is not sent to the client.
+     * E.g. tutors should not see information about the student.
      */
     public void filterSensitiveInformation() {
-        setStudent(null);
+        setParticipant(null);
     }
 
     @Override
     public String toString() {
-        return "StudentParticipation{" + "id=" + getId() + ", presentationScore=" + presentationScore + ", student=" + student + '}';
+        return "StudentParticipation{" + "id=" + getId() + ", presentationScore=" + presentationScore + ", student=" + student + ", team=" + team + "}";
     }
 
     @Override

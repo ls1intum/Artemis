@@ -1,17 +1,21 @@
-import { AfterViewInit, Component, ElementRef, OnInit, Renderer } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, OnInit, Renderer2 } from '@angular/core';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { JhiEventManager } from 'ng-jhipster';
 import { Router } from '@angular/router';
-
-import { StateStorageService, User } from '../core';
+import { User } from 'app/core/user/user.model';
 import { Credentials } from 'app/core/auth/auth-jwt.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
-import { JavaBridgeService } from 'app/intellij/java-bridge.service';
-import { isIntelliJ } from 'app/intellij/intellij';
-import { ModalConfirmAutofocusComponent } from 'app/intellij/modal-confirm-autofocus/modal-confirm-autofocus.component';
+import { OrionConnectorService } from 'app/shared/orion/orion-connector.service';
+import { isOrion } from 'app/shared/orion/orion';
+import { ModalConfirmAutofocusComponent } from 'app/shared/orion/modal-confirm-autofocus/modal-confirm-autofocus.component';
 import { AccountService } from 'app/core/auth/account.service';
 import { LoginService } from 'app/core/login/login.service';
+import { TUM_USERNAME_REGEX } from 'app/app.constants';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { filter, tap } from 'rxjs/operators';
+import { StateStorageService } from 'app/core/auth/state-storage.service';
+import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 
 @Component({
     selector: 'jhi-home',
@@ -30,6 +34,14 @@ export class HomeComponent implements OnInit, AfterViewInit {
     captchaRequired = false;
     credentials: Credentials;
 
+    usernameRegexPattern = TUM_USERNAME_REGEX; // default, might be overridden in ngOnInit
+    signInMessage = 'home.pleaseSignInTUM'; // default, might be overridden in ngOnInit
+    errorMesssageUsername = 'home.errors.tumWarning'; // default, might be overridden in ngOnInit
+
+    externalUserManagementActive = true;
+    externalUserManagementUrl: string;
+    externalUserManagementName: string;
+
     isSubmittingLogin = false;
 
     constructor(
@@ -38,14 +50,33 @@ export class HomeComponent implements OnInit, AfterViewInit {
         private loginService: LoginService,
         private stateStorageService: StateStorageService,
         private elementRef: ElementRef,
-        private renderer: Renderer,
+        private renderer: Renderer2,
         private eventManager: JhiEventManager,
         private guidedTourService: GuidedTourService,
-        private javaBridge: JavaBridgeService,
+        private javaBridge: OrionConnectorService,
         private modalService: NgbModal,
+        private profileService: ProfileService,
     ) {}
 
     ngOnInit() {
+        this.profileService
+            .getProfileInfo()
+            .pipe(
+                filter(Boolean),
+                tap((info: ProfileInfo) => {
+                    if (!info.activeProfiles.includes('jira')) {
+                        // if the server is not connected to an external user management such as JIRA, we accept all valid username patterns
+                        this.usernameRegexPattern = /^[a-z0-9_-]{3,100}$/;
+                        this.signInMessage = 'home.pleaseSignIn';
+                        this.errorMesssageUsername = 'home.errors.usernameIncorrect';
+                        this.externalUserManagementActive = false;
+                    } else {
+                        this.externalUserManagementUrl = info.externalUserManagementURL;
+                        this.externalUserManagementName = info.externalUserManagementName;
+                    }
+                }),
+            )
+            .subscribe();
         this.accountService.identity().then(user => {
             this.currentUserCallback(user!);
         });
@@ -61,7 +92,7 @@ export class HomeComponent implements OnInit, AfterViewInit {
     }
 
     ngAfterViewInit() {
-        this.renderer.invokeElementMethod(this.elementRef.nativeElement.querySelector('#username'), 'focus', []);
+        this.renderer.selectRootElement('#username', true).focus();
     }
 
     login() {
@@ -94,8 +125,8 @@ export class HomeComponent implements OnInit, AfterViewInit {
                     this.router.navigate([redirect]);
                 }
 
-                // Log in to IntelliJ
-                if (isIntelliJ) {
+                // Log in to Orion
+                if (isOrion) {
                     const modalRef: NgbModalRef = this.modalService.open(ModalConfirmAutofocusComponent as Component, { size: 'lg', backdrop: 'static' });
                     modalRef.componentInstance.text = 'login.ide.confirmation';
                     modalRef.componentInstance.title = 'login.ide.title';
@@ -108,11 +139,7 @@ export class HomeComponent implements OnInit, AfterViewInit {
                 }
             })
             .catch((error: HttpErrorResponse) => {
-                if (error.headers.get('X-artemisApp-error') === 'CAPTCHA required') {
-                    this.captchaRequired = true;
-                } else {
-                    this.captchaRequired = false;
-                }
+                this.captchaRequired = error.headers.get('X-artemisApp-error') === 'CAPTCHA required';
                 this.authenticationError = true;
                 this.authenticationAttempts++;
             })
@@ -122,19 +149,8 @@ export class HomeComponent implements OnInit, AfterViewInit {
     currentUserCallback(account: User) {
         this.account = account;
         if (account) {
-            this.router.navigate(['overview']);
+            this.router.navigate(['courses']);
         }
-    }
-
-    cancel() {
-        this.credentials = {
-            username: null,
-            password: null,
-            rememberMe: true,
-        };
-        this.captchaRequired = false;
-        this.authenticationError = false;
-        this.authenticationAttempts = 0;
     }
 
     isAuthenticated() {

@@ -1,10 +1,10 @@
 import { Component, Input, OnInit } from '@angular/core';
-import { Result, ResultService } from 'app/entities/result';
-import { ComplaintService, ComplaintType } from 'app/entities/complaint';
-import { Exercise } from 'app/entities/exercise';
-import { StudentParticipation } from 'app/entities/participation';
+import { Exercise } from 'app/entities/exercise.model';
 import * as moment from 'moment';
-import { MAX_COMPLAINT_TIME_WEEKS } from 'app/complaints/complaint.constants';
+import { ComplaintType } from 'app/entities/complaint.model';
+import { ComplaintService } from 'app/complaints/complaint.service';
+import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { Result } from 'app/entities/result.model';
 
 @Component({
     selector: 'jhi-complaint-interactions',
@@ -25,7 +25,7 @@ export class ComplaintInteractionsComponent implements OnInit {
     showComplaintForm = false;
     ComplaintType = ComplaintType;
 
-    constructor(private complaintService: ComplaintService, private resultService: ResultService) {}
+    constructor(private complaintService: ComplaintService) {}
 
     ngOnInit(): void {
         if (this.exercise.course) {
@@ -58,9 +58,9 @@ export class ComplaintInteractionsComponent implements OnInit {
         if (this.result && this.result.completionDate) {
             const resultCompletionDate = moment(this.result.completionDate!);
             if (!this.exercise.assessmentDueDate || resultCompletionDate.isAfter(this.exercise.assessmentDueDate)) {
-                return resultCompletionDate.isAfter(moment().subtract(MAX_COMPLAINT_TIME_WEEKS, 'week'));
+                return resultCompletionDate.isAfter(moment().subtract(this.exercise.course?.maxComplaintTimeDays, 'day'));
             }
-            return moment(this.exercise.assessmentDueDate).isAfter(moment().subtract(MAX_COMPLAINT_TIME_WEEKS, 'week'));
+            return moment(this.exercise.assessmentDueDate).isAfter(moment().subtract(this.exercise.course?.maxComplaintTimeDays, 'day'));
         } else {
             return false;
         }

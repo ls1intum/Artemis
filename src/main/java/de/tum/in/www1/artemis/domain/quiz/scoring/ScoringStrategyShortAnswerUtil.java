@@ -24,7 +24,7 @@ public class ScoringStrategyShortAnswerUtil {
 
         // iterate through each spot and compare its correct solutions with the submitted texts
         for (ShortAnswerSpot spot : shortAnswerQuestion.getSpots()) {
-            if (spot.isInvalid()) {
+            if (spot.isInvalid() == Boolean.TRUE) {
                 correctSolutionsCount++;
                 continue;
             }

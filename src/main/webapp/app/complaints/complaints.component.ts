@@ -1,23 +1,24 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
-import { JhiAlertService } from 'ng-jhipster';
-import { ComplaintService } from 'app/entities/complaint/complaint.service';
-import { Complaint, ComplaintType } from 'app/entities/complaint';
-import { Result } from 'app/entities/result';
+import { AlertService } from 'app/core/alert/alert.service';
+import { ComplaintService } from 'app/complaints/complaint.service';
+import { Result } from 'app/entities/result.model';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Moment } from 'moment';
-import { ComplaintResponseService } from 'app/entities/complaint-response/complaint-response.service';
-import { ComplaintResponse } from 'app/entities/complaint-response';
+import { ComplaintResponseService } from 'app/complaints/complaint-response.service';
 import { filter } from 'rxjs/operators';
+import { ComplaintResponse } from 'app/entities/complaint-response.model';
+import { Complaint, ComplaintType } from 'app/entities/complaint.model';
 
 @Component({
     selector: 'jhi-complaint-form',
     templateUrl: './complaints.component.html',
     styleUrls: ['complaints.component.scss'],
-    providers: [JhiAlertService],
+    providers: [],
 })
 export class ComplaintsComponent implements OnInit {
     @Input() resultId: number;
     @Input() allowedComplaints: number; // the number of complaints that a student can still submit in the course
+    @Input() maxComplaintsPerCourse: number;
     @Input() complaintType: ComplaintType;
     @Output() submit: EventEmitter<void> = new EventEmitter();
     complaintText = '';
@@ -29,9 +30,7 @@ export class ComplaintsComponent implements OnInit {
     ComplaintType = ComplaintType;
     loaded = true;
 
-    readonly maxComplaintNumberPerStudent = 3; // please note that this number has to be the same as in Constant.java on the server
-
-    constructor(private complaintService: ComplaintService, private jhiAlertService: JhiAlertService, private complaintResponseService: ComplaintResponseService) {}
+    constructor(private complaintService: ComplaintService, private jhiAlertService: AlertService, private complaintResponseService: ComplaintResponseService) {}
 
     ngOnInit(): void {
         this.complaintService
@@ -76,7 +75,7 @@ export class ComplaintsComponent implements OnInit {
             (err: HttpErrorResponse) => {
                 this.loaded = true;
                 if (err && err.error && err.error.errorKey === 'toomanycomplaints') {
-                    this.jhiAlertService.error('artemisApp.complaint.tooManyComplaints', { maxComplaintNumber: this.maxComplaintNumberPerStudent });
+                    this.jhiAlertService.error('artemisApp.complaint.tooManyComplaints', { maxComplaintNumber: this.maxComplaintsPerCourse });
                 } else {
                     this.onError(err.message);
                 }

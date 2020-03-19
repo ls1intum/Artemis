@@ -10,7 +10,7 @@
             [smallButton]="smallButtons"
             [hideLabelMobile]="false"
             *ngIf="isPracticeModeAvailable()"
-            [routerLink]="['/quiz', exercise.id, 'practice']"
+            [routerLink]="['/courses', courseId, 'quiz-exercises', exercise.id, 'practice']"
         ></button>
         <button
             jhi-exercise-action-button
@@ -76,7 +76,7 @@
             outlined="true"
             [buttonLoading]="exercise.loading"
             [smallButton]="smallButtons"
-            routerLink="/quiz/{{ exercise.id }}/quiz-point-statistic"
+            routerLink="/course-management/{{ courseId }}/quiz-exercises/{{ exercise.id }}/quiz-point-statistic"
         ></button>
     </div>
     <!-- INFORMATION END -->
@@ -105,7 +105,7 @@
             [smallButton]="smallButtons"
             [hideLabelMobile]="false"
             *ngIf="exercise.studentParticipations && exercise.studentParticipations.length > 0 && exercise.studentParticipations[0].initializationState === 'INITIALIZED'"
-            routerLink="/modeling-submission/{{ exercise.studentParticipations[0].id }}"
+            [routerLink]="['/courses', courseId, 'modeling-exercises', exercise.id, 'participate', exercise.studentParticipations[0].id]"
         ></button>
     </div>
     <!-- ACTION END -->
@@ -125,7 +125,7 @@
                     exercise.studentParticipations[0].initializationState === 'FINISHED' &&
                     (!exercise.studentParticipations[0].results || exercise.studentParticipations[0].results.length === 0 || !showResult)
                 "
-                routerLink="/modeling-submission/{{ exercise.studentParticipations[0].id }}"
+                [routerLink]="['/courses', courseId, 'modeling-exercises', exercise.id, 'participate', exercise.studentParticipations[0].id]"
             ></button>
             <!-- TODO improve the distinction, in particular if there are multiple submissions and results -->
             <button
@@ -143,7 +143,7 @@
                     exercise.studentParticipations[0].results.length > 0 &&
                     showResult
                 "
-                routerLink="/modeling-submission/{{ exercise.studentParticipations[0].id }}"
+                [routerLink]="['/courses', courseId, 'modeling-exercises', exercise.id, 'participate', exercise.studentParticipations[0].id]"
             ></button>
         </div>
     </div>
@@ -181,7 +181,7 @@
                 exercise.studentParticipations &&
                 exercise.studentParticipations.length > 0
             "
-            routerLink="/code-editor/{{ exercise.studentParticipations[0].id }}"
+            [routerLink]="['/courses', courseId, 'programming-exercises', exercise.id, 'code-editor', exercise.studentParticipations[0].id]"
         ></button>
         <button
             jhi-exercise-action-button
@@ -198,6 +198,7 @@
             [ngbPopover]="popContent"
             [autoClose]="'outside'"
         ></button>
+        <!-- NOTE: we use the same logic 'isStartExerciseAvailable' in ngIf as above because start and resume are not always possible -->
         <button
             jhi-exercise-action-button
             buttonIcon="play-circle"
@@ -206,7 +207,7 @@
             [buttonLoading]="exercise.loading"
             [smallButton]="smallButtons"
             [hideLabelMobile]="false"
-            *ngIf="participationStatusWrapper() === ParticipationStatus.INACTIVE"
+            *ngIf="participationStatusWrapper() === ParticipationStatus.INACTIVE && isStartExerciseAvailable()"
             (click)="resumeProgrammingExercise()"
         ></button>
         <ng-template #popContent>
@@ -268,7 +269,7 @@
             [smallButton]="smallButtons"
             [hideLabelMobile]="false"
             *ngIf="exercise.studentParticipations && exercise.studentParticipations.length > 0 && exercise.studentParticipations[0].initializationState === 'INITIALIZED'"
-            routerLink="/text/{{ exercise.studentParticipations[0].id }}"
+            [routerLink]="['/courses', courseId, 'text-exercises', exercise.id, 'participate', exercise.studentParticipations[0].id]"
         ></button>
     </div>
     <!-- ACTIONS END -->
@@ -288,7 +289,7 @@
                 exercise.studentParticipations[0].initializationState === 'FINISHED' &&
                 (!exercise.studentParticipations[0].results || exercise.studentParticipations[0].results.length === 0 || !showResult)
             "
-            routerLink="/text/{{ exercise.studentParticipations[0].id }}"
+            [routerLink]="['/courses', courseId, 'text-exercises', exercise.id, 'participate', exercise.studentParticipations[0].id]"
         ></button>
         <!-- TODO improve the distinction, in particular if there are multiple submissions and results -->
         <button
@@ -306,7 +307,7 @@
                 exercise.studentParticipations[0].results.length > 0 &&
                 showResult
             "
-            routerLink="/text/{{ exercise.studentParticipations[0].id }}"
+            [routerLink]="['/courses', courseId, 'text-exercises', exercise.id, 'participate', exercise.studentParticipations[0].id]"
         ></button>
     </div>
     <!-- INFORMATION END -->
@@ -335,7 +336,7 @@
             [smallButton]="smallButtons"
             [hideLabelMobile]="false"
             *ngIf="exercise.studentParticipations && exercise.studentParticipations.length > 0 && exercise.studentParticipations[0].initializationState === 'INITIALIZED'"
-            routerLink="/file-upload-submission/{{ exercise.studentParticipations[0].id }}"
+            [routerLink]="['/courses', courseId, 'file-upload-exercises', exercise.id, 'participate', exercise.studentParticipations[0].id]"
         ></button>
     </div>
     <!-- ACTIONS END-->
@@ -355,7 +356,7 @@
                 exercise.studentParticipations[0].initializationState === 'FINISHED' &&
                 (!exercise.studentParticipations[0].results || exercise.studentParticipations[0].results.length === 0 || !showResult)
             "
-            routerLink="/file-upload-submission/{{ exercise.studentParticipations[0].id }}"
+            [routerLink]="['/courses', courseId, 'file-upload-exercises', exercise.id, 'participate', exercise.studentParticipations[0].id]"
         ></button>
         <button
             jhi-exercise-action-button
@@ -372,10 +373,9 @@
                 exercise.studentParticipations[0].results.length > 0 &&
                 showResult
             "
-            routerLink="/file-upload-submission/{{ exercise.studentParticipations[0].id }}"
+            [routerLink]="['/courses', courseId, 'file-upload-exercises', exercise.id, 'participate', exercise.studentParticipations[0].id]"
         ></button>
     </div>
     <!-- INFORMATION END -->
 </div>
 <!-- FILE UPLOAD EXERCISE ACTIONS END -->
-<jhi-alert></jhi-alert>

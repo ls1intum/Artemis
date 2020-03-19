@@ -24,6 +24,8 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import com.fasterxml.jackson.databind.JsonNode;
+
 import de.tum.in.www1.artemis.domain.Commit;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
@@ -59,6 +61,9 @@ public class GitLabService extends AbstractVersionControlService {
     @Value("${artemis.version-control.ci-token}")
     private String CI_TOKEN;
 
+    @Value("${artemis.version-control.health-api-token}")
+    private String HEALTH_API_TOKEN;
+
     private String BASE_API;
 
     private final UserService userService;
@@ -92,7 +97,12 @@ public class GitLabService extends AbstractVersionControlService {
         }
 
         addMemberToProject(repositoryUrl, username);
-        protectBranch("master", repositoryUrl);
+        try {
+            protectBranch("master", repositoryUrl);
+        }
+        catch (GitLabException ex) {
+            log.warn("Could not protect branch (but will still continue) due to the following reason: " + ex.getMessage());
+        }
     }
 
     private void addMemberToProject(URL repositoryUrl, String username) {
@@ -116,7 +126,12 @@ public class GitLabService extends AbstractVersionControlService {
     private void protectBranch(String branch, URL repositoryUrl) {
         final var repositoryId = getPathIDFromRepositoryURL(repositoryUrl);
         // we have to first unprotect the branch in order to set the correct access level
-        unprotectBranch(repositoryId, branch);
+        try {
+            unprotectBranch(repositoryId, branch);
+        }
+        catch (GitLabException ex) {
+            log.warn("Could not unprotectBranch branch (but will try to protect it) due to the following reason: " + ex.getMessage());
+        }
 
         try {
             gitlab.getProtectedBranchesApi().protectBranch(repositoryId, branch, DEVELOPER, DEVELOPER);
@@ -303,8 +318,9 @@ public class GitLabService extends AbstractVersionControlService {
         final var builder = Endpoints.FORK.buildEndpoint(BASE_API, originalNamespace);
         final var body = Map.of("namespace", targetProjectKey, "path", targetRepoSlug, "name", targetRepoSlug);
 
-        final var errorMessage = "Couldn't fork repository: " + sourceProjectKey + " to " + targetProjectKey;
+        final var errorMessage = "Couldn't fork repository " + originalNamespace + " into " + targetRepoSlug;
         try {
+            log.info("Try to fork " + originalNamespace + " into " + targetRepoSlug);
             final var response = restTemplate.postForEntity(builder.build(true).toUri(), body, String.class);
             if (response.getStatusCode() != HttpStatus.CREATED) {
                 throw new GitLabException(errorMessage + "; response (" + response.getStatusCode() + ") was: " + response.getBody());
@@ -345,7 +361,18 @@ public class GitLabService extends AbstractVersionControlService {
 
     @Override
     public ConnectorHealth health() {
-        return null;
+        try {
+            final var uri = Endpoints.HEALTH.buildEndpoint(GITLAB_SERVER_URL.toString()).queryParam("token", HEALTH_API_TOKEN).build().toUri();
+            final var healthResponse = restTemplate.getForObject(uri, JsonNode.class);
+            final var status = healthResponse.get("status").asText();
+            if (!status.equals("ok")) {
+                return new ConnectorHealth(false, Map.of("status", status, "url", GITLAB_SERVER_URL));
+            }
+            return new ConnectorHealth(true, Map.of("url", GITLAB_SERVER_URL));
+        }
+        catch (Exception emAll) {
+            return new ConnectorHealth(emAll);
+        }
     }
 
     private void defaultExceptionHandling(String message, HttpClientErrorException exception) {
@@ -376,7 +403,7 @@ public class GitLabService extends AbstractVersionControlService {
         PROTECTED_BRANCHES("projects", "<projectId>", "protected_branches"), PROTECTED_BRANCH("projects", "<projectId>", "protected_branches", "<branchName>"),
         GET_WEBHOOKS("projects", "<projectId>", "hooks"), ADD_WEBHOOK("projects", "<projectId>", "hooks"), COMMITS("projects", "<projectId>", "repository", "commits"),
         GROUPS("groups"), NAMESPACES("namespaces", "<groupId>"), DELETE_GROUP("groups", "<groupId>"), DELETE_PROJECT("projects", "<projectId>"), PROJECTS("projects"),
-        GET_PROJECT("projects", "<projectId>"), FORK("projects", "<projectId>", "fork");
+        GET_PROJECT("projects", "<projectId>"), FORK("projects", "<projectId>", "fork"), HEALTH("-", "liveness");
 
         private List<String> pathSegments;
 

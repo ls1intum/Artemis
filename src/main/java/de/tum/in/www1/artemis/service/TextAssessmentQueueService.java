@@ -57,7 +57,7 @@ public class TextAssessmentQueueService {
         if (textSubmissionList.isEmpty()) {
             return Optional.empty();
         }
-        HashMap<TextBlock, Double> smallerClusterMap = calculateSmallerClusterPercentageBatch(textSubmissionList);
+        Map<TextBlock, Double> smallerClusterMap = calculateSmallerClusterPercentageBatch(textSubmissionList);
         Optional<TextSubmission> best = textSubmissionList.stream().filter(textSubmission -> languages == null || languages.contains(textSubmission.getLanguage()))
                 .max(Comparator.comparingDouble(textSubmission -> calculateInformationGain(textSubmission, smallerClusterMap)));
         return best;
@@ -71,7 +71,7 @@ public class TextAssessmentQueueService {
      * @param smallerClusterMap Map of TextBlocks to percentage of smaller clusters the TextBlock Cluster
      * @return information gain for the TextSubmission
      */
-    private double calculateInformationGain(TextSubmission textSubmission, HashMap<TextBlock, Double> smallerClusterMap) {
+    private double calculateInformationGain(TextSubmission textSubmission, Map<TextBlock, Double> smallerClusterMap) {
         List<TextBlock> textBlocks = textSubmission.getBlocks();
         double totalScore = 0.0;
         for (TextBlock textBlock : textBlocks) {
@@ -122,11 +122,11 @@ public class TextAssessmentQueueService {
      * All TextSubmissions must have the same exercise
      * @param textSubmissionList for which the smaller clusters should be calculated
      * @throws IllegalArgumentException if not all TextSubmissions are from the same exercise
-     * @return return a HashMap where the textBlock is the key and smaller cluster percentage is the value
-     * If a textBlock has no cluster or is already assessable, it isn't in the HashMap
+     * @return return a map where the textBlock is the key and smaller cluster percentage is the value
+     * If a textBlock has no cluster or is already assessable, it isn't in the map
      */
-    public HashMap<TextBlock, Double> calculateSmallerClusterPercentageBatch(List<TextSubmission> textSubmissionList) {
-        HashMap<TextBlock, Double> result = new HashMap<>();
+    public Map<TextBlock, Double> calculateSmallerClusterPercentageBatch(List<TextSubmission> textSubmissionList) {
+        Map<TextBlock, Double> result = new HashMap<>();
         if (textSubmissionList.isEmpty()) {
             return result;
         }
