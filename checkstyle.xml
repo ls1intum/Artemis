@@ -9,9 +9,7 @@
     <property name="severity" value="warning" />
 
     <property name="fileExtensions" value="java, properties, xml" />
-    <module name="SuppressionFilter">
-        <property name="file" value="${config_loc}/suppressions.xml"/>
-    </module>
+
     <module name="TreeWalker">
 
         <module name="JavadocMethod">

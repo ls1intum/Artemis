@@ -58,6 +58,9 @@ public class WebsocketConfiguration extends WebSocketMessageBrokerConfigurationS
         this.taskScheduler = taskScheduler;
     }
 
+    /**
+     * initialize the websocket configuration: activate logging when the profile websocketLog is active
+     */
     @PostConstruct
     public void init() {
         // using Autowired leads to a weird bug, because the order of the method execution is changed. This somehow prevents messages send to single clients
@@ -104,6 +107,9 @@ public class WebsocketConfiguration extends WebSocketMessageBrokerConfigurationS
         return converter;
     }
 
+    /**
+     * @return initialize the handshake interceptor stores the remote IP address before handshake
+     */
     @Bean
     public HandshakeInterceptor httpSessionHandshakeInterceptor() {
         return new HandshakeInterceptor() {

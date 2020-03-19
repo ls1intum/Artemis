@@ -33,7 +33,7 @@ plugins {
     id "net.ltgt.apt"
     //jhipster-needle-gradle-plugins - JHipster will add additional gradle plugins here
     id "com.diffplug.gradle.spotless" version "3.27.2"
-    id "com.github.spotbugs" version "4.0.1"
+    id "com.github.spotbugs" version "4.0.0"
 }
 
 group = "de.tum.in.www1.artemis"
@@ -86,7 +86,7 @@ spotless {
 }
 
 spotbugs {
-    toolVersion = '4.0.1'
+    toolVersion = '4.0.0'
     ignoreFailures = true
     effort = 'max'
     showProgress = true
@@ -110,6 +110,7 @@ springBoot {
 test {
     useJUnitPlatform()
     exclude "**/*IT*", "**/*IntTest*", "**/*CucumberIT*"
+    testLogging.showStandardStreams = true
 
     // uncomment if the tests reports are not generated
     // see https://github.com/jhipster/generator-jhipster/pull/2771 and https://github.com/jhipster/generator-jhipster/pull/4484
@@ -172,8 +173,11 @@ repositories {
 
 dependencies {
     implementation 'com.offbytwo.jenkins:jenkins-client:0.3.8'
-    implementation group: 'org.gitlab4j', name: 'gitlab4j-api', version: '4.14.18'
-    implementation fileTree(dir: "libs", include: "*.jar")
+    implementation group: 'org.gitlab4j', name: 'gitlab4j-api', version: '4.14.19'
+    // TODO: at the moment we cannot upgrade to a higher version of acli due to conflicts with the used LoggerFactory
+    // the problem is that newer versions integrate the logging framework directly into the jar file instead of referencing
+    // a dependency. This leads to 2 logging frameworks available at the same time.
+    implementation files('libs/acli-9.0.0.jar')
     // https://mvnrepository.com/artifact/org.eclipse.jgit/org.eclipse.jgit
     implementation "org.eclipse.jgit:org.eclipse.jgit:5.6.1.202002131546-r"
     // https://mvnrepository.com/artifact/net.sourceforge.plantuml/plantuml
@@ -341,8 +345,9 @@ gitProperties {
 
 // Command to execute the JavaDoc checkstyle verification ./gradlew checkstyleMain
 checkstyle {
-    toolVersion = "8.24"
-    configDirectory = new File('checkstyle')
+    toolVersion "8.10"
+    configFile file("checkstyle.xml")
+    checkstyleTest.enabled = true
     maxErrors = 0
 }
 
@@ -358,10 +363,10 @@ task buildJarForDocker (type: Exec) {
 //
 // 1) Build production:                             ./gradlew -Pprod -Pwar clean bootWar
 // 2) Execute tests with code coverage report:      ./gradlew executeTests jacocoTestReport -x yarn_install -x webpack -x generateGitProperties
-// 3) Check Java code format:                       ./gradlew spotlessCheck
-// 4) Apply Java code formatter:                    ./gradlew spotlessApply
+// 3) Check Java code format:                       ./gradlew spotlessCheck -x yarn_install -x webpack
+// 4) Apply Java code formatter:                    ./gradlew spotlessApply -x yarn_install -x webpack
 // 5) Find dependency updates:                      ./gradlew dependencyUpdates
-// 6) Check JavaDoc:                                ./gradlew checkstyleMain
+// 6) Check JavaDoc:                                ./gradlew checkstyleMain -x yarn_install -x webpack
 // 7) Generate Liquibase diff:                      ./gradlew liquibaseDiffChangelog
 // 8) Clear Liquibase checksums:                    ./gradlew liquibaseClearChecksums
 // 9) Enforce code coverage verification:           ./gradlew jacocoTestCoverageVerification

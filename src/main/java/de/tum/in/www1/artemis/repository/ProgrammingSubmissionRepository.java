@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.repository;
 
+import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
+
 import java.util.List;
 import java.util.Optional;
 
@@ -18,10 +20,10 @@ import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
 @Repository
 public interface ProgrammingSubmissionRepository extends JpaRepository<ProgrammingSubmission, Long> {
 
-    @EntityGraph(attributePaths = { "result.feedbacks" })
+    @EntityGraph(type = LOAD, attributePaths = { "result.feedbacks" })
     ProgrammingSubmission findFirstByParticipationIdAndCommitHash(Long participationId, String commitHash);
 
-    @EntityGraph(attributePaths = "result")
+    @EntityGraph(type = LOAD, attributePaths = "result")
     Optional<ProgrammingSubmission> findFirstByParticipationIdOrderBySubmissionDateDesc(Long participationId);
 
     /**
@@ -34,17 +36,17 @@ public interface ProgrammingSubmissionRepository extends JpaRepository<Programmi
      * @param pageable Pageable
      * @return ProgrammingSubmission list (can be empty!)
      */
-    @EntityGraph(attributePaths = "result")
+    @EntityGraph(type = LOAD, attributePaths = "result")
     @Query("select s from ProgrammingSubmission s left join s.participation p left join p.exercise e where p.id = :#{#participationId} and (s.type = 'INSTRUCTOR' or s.type = 'TEST' or e.dueDate is null or s.submissionDate <= e.dueDate) order by s.submissionDate desc")
     List<ProgrammingSubmission> findGradedByParticipationIdOrderBySubmissionDateDesc(@Param("participationId") Long participationId, Pageable pageable);
 
-    @EntityGraph(attributePaths = { "result.feedbacks" })
+    @EntityGraph(type = LOAD, attributePaths = { "result.feedbacks" })
     List<ProgrammingSubmission> findByParticipationIdAndResultIsNullOrderBySubmissionDateDesc(Long participationId);
 
-    @EntityGraph(attributePaths = "result")
+    @EntityGraph(type = LOAD, attributePaths = "result")
     Optional<ProgrammingSubmission> findWithEagerResultById(Long submissionId);
 
-    @EntityGraph(attributePaths = { "result", "result.feedbacks", "result.assessor" })
+    @EntityGraph(type = LOAD, attributePaths = { "result", "result.feedbacks", "result.assessor" })
     Optional<ProgrammingSubmission> findWithEagerResultAssessorFeedbackById(long submissionId);
 
     Optional<ProgrammingSubmission> findByResultId(long resultId);

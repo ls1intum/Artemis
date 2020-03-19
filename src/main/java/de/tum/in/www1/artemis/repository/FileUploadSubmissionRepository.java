@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.repository;
 
+import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
+
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.EntityGraph;
@@ -37,7 +39,7 @@ public interface FileUploadSubmissionRepository extends JpaRepository<FileUpload
      * @param submissionId the id of the file upload submission that should be loaded from the database
      * @return the file upload submission with its result, the feedback list of the result, the assessor of the result, its participation and all results of the participation
      */
-    @EntityGraph(attributePaths = { "result", "result.feedbacks", "result.assessor", "participation", "participation.results" })
+    @EntityGraph(type = LOAD, attributePaths = { "result", "result.feedbacks", "result.assessor", "participation", "participation.results" })
     Optional<FileUploadSubmission> findWithEagerResultAndFeedbackAndAssessorAndParticipationResultsById(Long submissionId);
 
     /**
