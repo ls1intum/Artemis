@@ -709,4 +709,8 @@ public class UserService {
         }
         userRepository.saveAll(users);
     }
+
+    public Long countUserInGroup(String groupName) {
+        return userRepository.countByGroupsIsContaining(groupName);
+    }
 }

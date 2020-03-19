@@ -307,6 +307,24 @@ public class CourseResource {
     }
 
     /**
+     * GET /courses : get all courses for administration purposes with user stats.
+     *
+     * @return the list of courses (the user has access to)
+     */
+    @GetMapping("/courses/with-user-stats")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    public List<Course> getAllCoursesWithUserStats() {
+        List<Course> courses = getAllCourses();
+        for (Course course : courses) {
+            course.setNumberOfInstructors(userService.countUserInGroup(course.getInstructorGroupName()));
+            course.setNumberOfTeachingAssistants(userService.countUserInGroup(course.getTeachingAssistantGroupName()));
+            course.setNumberOfStudents(userService.countUserInGroup(course.getStudentGroupName()));
+        }
+
+        return courses;
+    }
+
+    /**
      * GET /courses : get all courses that the current user can register to. Decided by the start and end date and if the registrationEnabled flag is set correctly
      *
      * @return the list of courses which are active)

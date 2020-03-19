@@ -122,6 +122,16 @@ public class Course implements Serializable {
     @JsonIgnoreProperties("course")
     private Set<TutorGroup> tutorGroups = new HashSet<>();
 
+    // NOTE: Helpers variable names must be different from Getter name, so that Jackson ignores the @Transient annotation, but Hibernate still respects it
+    @Transient
+    private Long numberOfInstructorsTransient;
+
+    @Transient
+    private Long numberOfTeachingAssistantsTransient;
+
+    @Transient
+    private Long numberOfStudentsTransient;
+
     // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
     public Long getId() {
         return id;
@@ -516,5 +526,29 @@ public class Course implements Serializable {
     public Set<Exercise> getInterestingExercisesForAssessmentDashboards() {
         return getExercises().stream().filter(exercise -> exercise instanceof TextExercise || exercise instanceof ModelingExercise || exercise instanceof FileUploadExercise
                 || (exercise instanceof ProgrammingExercise && exercise.getAssessmentType() != AUTOMATIC)).collect(Collectors.toSet());
+    }
+
+    public void setNumberOfInstructors(Long numberOfInstructors) {
+        this.numberOfInstructorsTransient = numberOfInstructors;
+    }
+
+    public void setNumberOfTeachingAssistants(Long numberOfTeachingAssistants) {
+        this.numberOfTeachingAssistantsTransient = numberOfTeachingAssistants;
+    }
+
+    public void setNumberOfStudents(Long numberOfStudents) {
+        this.numberOfStudentsTransient = numberOfStudents;
+    }
+
+    public Long getNumberOfInstructors() {
+        return this.numberOfInstructorsTransient;
+    }
+
+    public Long getNumberOfTeachingAssistants() {
+        return this.numberOfTeachingAssistantsTransient;
+    }
+
+    public Long getNumberOfStudents() {
+        return this.numberOfStudentsTransient;
     }
 }

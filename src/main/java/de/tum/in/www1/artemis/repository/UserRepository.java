@@ -45,7 +45,8 @@ public interface UserRepository extends JpaRepository<User, Long> {
     @EntityGraph(type = LOAD, attributePaths = { "groups", "authorities", "guidedTourSettings" })
     Optional<User> findOneWithGroupsAuthoritiesAndGuidedTourSettingsByLogin(String login);
 
-    Long countByGroupsIsContaining(String group);
+    @Query("select count(*) from User user where :#{#groupName} member of user.groups")
+    Long countByGroupsIsContaining(@Param("groupName") String groupName);
 
     @EntityGraph(type = LOAD, attributePaths = { "groups" })
     @Query("select user from User user where :#{#groupName} member of user.groups")
