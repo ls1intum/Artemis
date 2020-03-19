@@ -1,25 +1,37 @@
 package de.tum.in.www1.artemis.service;
 
+import static java.util.stream.Collectors.toList;
+import static java.util.stream.Collectors.toMap;
+import static java.util.stream.Collectors.toSet;
+
 import java.security.Principal;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Random;
-import java.util.stream.Collectors;
+import java.util.Set;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.Submission;
+import de.tum.in.www1.artemis.domain.TextBlock;
+import de.tum.in.www1.artemis.domain.TextCluster;
+import de.tum.in.www1.artemis.domain.TextExercise;
+import de.tum.in.www1.artemis.domain.TextSubmission;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.SubmissionRepository;
+import de.tum.in.www1.artemis.repository.TextClusterRepository;
 import de.tum.in.www1.artemis.repository.TextSubmissionRepository;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
@@ -28,19 +40,20 @@ public class TextSubmissionService extends SubmissionService {
 
     private final TextSubmissionRepository textSubmissionRepository;
 
+    private final TextClusterRepository textClusterRepository;
+
     private final StudentParticipationRepository studentParticipationRepository;
 
     private final ParticipationService participationService;
 
-    private final ResultRepository resultRepository;
-
     private final Optional<TextAssessmentQueueService> textAssessmentQueueService;
 
-    public TextSubmissionService(TextSubmissionRepository textSubmissionRepository, SubmissionRepository submissionRepository,
+    public TextSubmissionService(TextSubmissionRepository textSubmissionRepository, TextClusterRepository textClusterRepository, SubmissionRepository submissionRepository,
             StudentParticipationRepository studentParticipationRepository, ParticipationService participationService, ResultRepository resultRepository, UserService userService,
             Optional<TextAssessmentQueueService> textAssessmentQueueService, AuthorizationCheckService authCheckService) {
-        super(submissionRepository, userService, authCheckService);
+        super(submissionRepository, userService, authCheckService, resultRepository);
         this.textSubmissionRepository = textSubmissionRepository;
+        this.textClusterRepository = textClusterRepository;
         this.studentParticipationRepository = studentParticipationRepository;
         this.participationService = participationService;
         this.resultRepository = resultRepository;
@@ -141,10 +154,10 @@ public class TextSubmissionService extends SubmissionService {
         if (textExercise.isAutomaticAssessmentEnabled() && textAssessmentQueueService.isPresent()) {
             return textAssessmentQueueService.get().getProposedTextSubmission(textExercise);
         }
+
         Random random = new Random();
         var participations = participationService.findByExerciseIdWithLatestSubmissionWithoutManualResults(textExercise.getId());
-        var submissionsWithoutResult = participations.stream().map(StudentParticipation::findLatestSubmission).filter(Optional::isPresent).map(Optional::get)
-                .collect(Collectors.toList());
+        var submissionsWithoutResult = participations.stream().map(StudentParticipation::findLatestSubmission).filter(Optional::isPresent).map(Optional::get).collect(toList());
 
         if (submissionsWithoutResult.isEmpty()) {
             return Optional.empty();
@@ -161,8 +174,24 @@ public class TextSubmissionService extends SubmissionService {
      *
      */
     public List<TextSubmission> getAllOpenTextSubmissions(TextExercise exercise) {
-        return textSubmissionRepository.findByParticipation_ExerciseIdAndResultIsNullAndSubmittedIsTrue(exercise.getId()).stream()
-                .filter(tS -> tS.getParticipation().findLatestSubmission().isPresent() && tS == tS.getParticipation().findLatestSubmission().get()).collect(Collectors.toList());
+        final List<TextSubmission> submissions = textSubmissionRepository.findByParticipation_ExerciseIdAndResultIsNullAndSubmittedIsTrue(exercise.getId());
+
+        final Set<Long> clusterIds = submissions.stream().flatMap(submission -> submission.getBlocks().stream()).map(TextBlock::getCluster).filter(Objects::nonNull)
+                .map(TextCluster::getId).collect(toSet());
+
+        // To prevent lazy loading many elements later on, we fetch all clusters with text blocks here.
+        final Map<Long, TextCluster> textClusterMap = textClusterRepository.findAllByIdsWithEagerTextBlocks(clusterIds).stream()
+                .collect(toMap(TextCluster::getId, textCluster -> textCluster));
+
+        // link up clusters with eager blocks
+        submissions.stream().flatMap(submission -> submission.getBlocks().stream()).forEach(textBlock -> {
+            if (textBlock.getCluster() != null) {
+                textBlock.setCluster(textClusterMap.get(textBlock.getCluster().getId()));
+            }
+        });
+
+        return submissions.stream().filter(tS -> tS.getParticipation().findLatestSubmission().isPresent() && tS == tS.getParticipation().findLatestSubmission().get())
+                .collect(toList());
     }
 
     /**
@@ -190,7 +219,7 @@ public class TextSubmissionService extends SubmissionService {
             textSubmission.setSubmissionDate(submission.getSubmissionDate());
 
             return textSubmission;
-        }).collect(Collectors.toList());
+        }).collect(toList());
     }
 
     /**
@@ -220,6 +249,19 @@ public class TextSubmissionService extends SubmissionService {
         return textSubmissions;
     }
 
+    /**
+     * Find a text submission of the given exercise that still needs to be assessed and lock it to prevent other tutors from receiving and assessing it.
+     *
+     * @param textExercise the exercise the submission should belong to
+     * @return a locked modeling submission that needs an assessment
+     */
+    public TextSubmission findAndLockTextSubmissionToBeAssessed(TextExercise textExercise) {
+        TextSubmission textSubmission = getTextSubmissionWithoutManualResult(textExercise)
+                .orElseThrow(() -> new EntityNotFoundException("Text submission for exercise " + textExercise.getId() + " could not be found"));
+        lockSubmission(textSubmission);
+        return textSubmission;
+    }
+
     public TextSubmission findOneWithEagerResultAndAssessor(Long submissionId) {
         return textSubmissionRepository.findByIdWithEagerResultAndAssessor(submissionId)
                 .orElseThrow(() -> new EntityNotFoundException("Text submission with id \"" + submissionId + "\" does not exist"));
@@ -228,23 +270,5 @@ public class TextSubmissionService extends SubmissionService {
     public TextSubmission findOneWithEagerResultAndFeedback(Long submissionId) {
         return textSubmissionRepository.findByIdWithEagerResultAndFeedback(submissionId)
                 .orElseThrow(() -> new EntityNotFoundException("Text submission with id \"" + submissionId + "\" does not exist"));
-    }
-
-    /**
-     * @param courseId the course we are interested in
-     * @return the number of text submissions which should be assessed, so we ignore the ones after the exercise due date
-     */
-    @Transactional(readOnly = true)
-    public long countSubmissionsToAssessByCourseId(Long courseId) {
-        return textSubmissionRepository.countByCourseIdSubmittedBeforeDueDate(courseId);
-    }
-
-    /**
-     * @param exerciseId the exercise we are interested in
-     * @return the number of text submissions which should be assessed, so we ignore the ones after the exercise due date
-     */
-    @Transactional(readOnly = true)
-    public long countSubmissionsToAssessByExerciseId(Long exerciseId) {
-        return textSubmissionRepository.countByExerciseIdSubmittedBeforeDueDate(exerciseId);
     }
 }

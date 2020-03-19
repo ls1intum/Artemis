@@ -153,17 +153,6 @@ export class HomeComponent implements OnInit, AfterViewInit {
         }
     }
 
-    cancel() {
-        this.credentials = {
-            username: null,
-            password: null,
-            rememberMe: true,
-        };
-        this.captchaRequired = false;
-        this.authenticationError = false;
-        this.authenticationAttempts = 0;
-    }
-
     isAuthenticated() {
         return this.accountService.isAuthenticated();
     }

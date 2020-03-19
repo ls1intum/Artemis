@@ -2,7 +2,6 @@ const webpack = require('webpack');
 const writeFilePlugin = require('write-file-webpack-plugin');
 const webpackMerge = require('webpack-merge');
 const BrowserSyncPlugin = require('browser-sync-webpack-plugin');
-const ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin');
 const FriendlyErrorsWebpackPlugin = require('friendly-errors-webpack-plugin');
 const SimpleProgressWebpackPlugin = require('simple-progress-webpack-plugin');
 const WebpackNotifierPlugin = require('webpack-notifier');
@@ -13,13 +12,10 @@ const utils = require('./utils.js');
 const commonConfig = require('./webpack.common.js');
 
 const ENV = 'development';
-const isHot = process.argv.includes('--hot');
 
 module.exports = (options) => webpackMerge(commonConfig({ env: ENV }), {
     devtool: 'eval-source-map',
     devServer: {
-        hot: isHot,
-        inline: isHot,
         contentBase: './build/resources/main/static/',
         proxy: [{
             context: [
@@ -44,7 +40,6 @@ module.exports = (options) => webpackMerge(commonConfig({ env: ENV }), {
         historyApiFallback: true
     },
     entry: {
-        polyfills: './src/main/webapp/app/polyfills',
         global: './src/main/webapp/content/scss/global.scss',
         main: './src/main/webapp/app/app.main'
     },
@@ -58,38 +53,11 @@ module.exports = (options) => webpackMerge(commonConfig({ env: ENV }), {
             test: /\.(j|t)s$/,
             enforce: 'pre',
             loader: 'tslint-loader',
-            exclude: [/node_modules/, new RegExp('reflect-metadata\\' + path.sep + 'Reflect\\.ts')]
-        },
-        {
-            test: /\.ts$/,
-            use: [
-                'angular2-template-loader',
-                {
-                    loader: 'cache-loader',
-                    options: {
-                      cacheDirectory: path.resolve('build/cache-loader')
-                    }
-                },
-                {
-                    loader: 'thread-loader',
-                    options: {
-                        // there should be 1 cpu for the fork-ts-checker-webpack-plugin
-                        workers: require('os').cpus().length - 1
-                    }
-                },
-                {
-                    loader: 'ts-loader',
-                    options: {
-                        transpileOnly: true,
-                        happyPackMode: true
-                    }
-                }
-            ],
             exclude: /node_modules/
         },
         {
             test: /\.scss$/,
-            use: ['to-string-loader', 'css-loader', {
+            use: ['to-string-loader', 'css-loader', 'postcss-loader', {
                 loader: 'sass-loader',
                 options: { implementation: sass }
             }],
@@ -111,7 +79,6 @@ module.exports = (options) => webpackMerge(commonConfig({ env: ENV }), {
                 format: options.stats === 'minimal' ? 'compact' : 'expanded'
               }),
         new FriendlyErrorsWebpackPlugin(),
-        new ForkTsCheckerWebpackPlugin(),
         new BrowserSyncPlugin({
             https: options.tls,
             host: 'localhost',

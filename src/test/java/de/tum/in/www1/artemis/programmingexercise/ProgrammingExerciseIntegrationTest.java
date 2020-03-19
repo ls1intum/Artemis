@@ -289,9 +289,9 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationTest {
         var repository = gitService.getRepositoryByLocalPath(localRepoFile.toPath());
         doReturn(repository).when(gitService).getOrCheckoutRepository(any(URL.class), anyBoolean(), anyString());
         final var path = Endpoints.ROOT + Endpoints.GENERATE_TESTS.replace("{exerciseId}", "" + programmingExercise.getId());
-        var result = request.get(path, HttpStatus.OK, String.class);
+        var result = request.putWithResponseBody(path, programmingExercise, String.class, HttpStatus.OK);
         assertThat(result).startsWith("Successfully generated the structure oracle");
-        request.get(path, HttpStatus.BAD_REQUEST, String.class);
+        request.putWithResponseBody(path, programmingExercise, String.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -299,7 +299,6 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationTest {
     public void updateProgrammingExercise_invalidTemplateBuildPlan_badRequest() throws Exception {
         database.addTemplateParticipationForProgrammingExercise(programmingExercise);
         bambooRequestMockProvider.mockBuildPlanIsValid(programmingExercise.getTemplateBuildPlanId(), false);
-
         request.putAndExpectError(ROOT + PROGRAMMING_EXERCISES, programmingExercise, HttpStatus.BAD_REQUEST, INVALID_TEMPLATE_BUILD_PLAN_ID);
     }
 
@@ -497,14 +496,14 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationTest {
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void generateStructureOracleForExercise_exerciseDoesNotExist_badRequest() throws Exception {
-        request.get(ROOT + GENERATE_TESTS.replace("{exerciseId}", programmingExercise.getId() + 1 + ""), HttpStatus.BAD_REQUEST, String.class);
+        request.put(ROOT + GENERATE_TESTS.replace("{exerciseId}", programmingExercise.getId() + 1 + ""), programmingExercise, HttpStatus.BAD_REQUEST);
     }
 
     @Test
     @WithMockUser(username = "instructoralt1", roles = "INSTRUCTOR")
     public void generateStructureOracleForExercise_userIsNotAdminInCourse_badRequest() throws Exception {
         database.addInstructor("other-instructors", "instructoralt");
-        request.get(ROOT + GENERATE_TESTS.replace("{exerciseId}", programmingExercise.getId() + ""), HttpStatus.FORBIDDEN, String.class);
+        request.put(ROOT + GENERATE_TESTS.replace("{exerciseId}", programmingExercise.getId() + ""), programmingExercise, HttpStatus.FORBIDDEN);
     }
 
     @Test
@@ -512,11 +511,11 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationTest {
     public void generateStructureOracleForExercise_invalidPackageName_badRequest() throws Exception {
         programmingExercise.setPackageName(null);
         programmingExerciseRepository.saveAndFlush(programmingExercise);
-        request.get(ROOT + GENERATE_TESTS.replace("{exerciseId}", programmingExercise.getId() + ""), HttpStatus.BAD_REQUEST, String.class);
+        request.put(ROOT + GENERATE_TESTS.replace("{exerciseId}", programmingExercise.getId() + ""), programmingExercise, HttpStatus.BAD_REQUEST);
 
         programmingExercise.setPackageName("ab");
         programmingExerciseRepository.saveAndFlush(programmingExercise);
-        request.get(ROOT + GENERATE_TESTS.replace("{exerciseId}", programmingExercise.getId() + ""), HttpStatus.BAD_REQUEST, String.class);
+        request.put(ROOT + GENERATE_TESTS.replace("{exerciseId}", programmingExercise.getId() + ""), programmingExercise, HttpStatus.BAD_REQUEST);
     }
 
     @Test

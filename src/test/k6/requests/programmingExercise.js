@@ -54,7 +54,7 @@ export function createExercise(artemis, courseId) {
         packageName: 'de.test',
         problemStatement: programmingExerciseProblemStatement,
         presentationScoreEnabled: false,
-        sequentialTestRuns: true,
+        sequentialTestRuns: false,
         mode: 'INDIVIDUAL',
         course: {
             id: courseId
@@ -83,6 +83,7 @@ export function deleteExercise(artemis, exerciseId) {
 }
 
 export function startExercise(artemis, courseId, exerciseId) {
+    console.log('Try to start exercise for test user ' + __VU);
     const res = artemis.post(PARTICIPATIONS(courseId, exerciseId), null, null);
     // console.log('RESPONSE of starting exercise: ' + res[0].body);
 
@@ -92,7 +93,7 @@ export function startExercise(artemis, courseId, exerciseId) {
     }
 
     if (res[0].status !== 201) {
-        fail('ERROR trying to start exercise for ' + __VU + ':\n #####ERROR (' + res[0].status + ')##### ' + res[0].body);
+        fail('ERROR trying to start exercise for test user ' + __VU + ':\n #####ERROR (' + res[0].status + ')##### ' + res[0].body);
     } else {
         console.log('SUCCESSFULLY started exercise for test user ' + __VU);
     }

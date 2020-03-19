@@ -73,8 +73,6 @@ public final class Constants {
 
     public static final String ASSIGNMENT_REPO_NAME = "assignment";
 
-    public static final long MAX_COMPLAINT_NUMBER_PER_STUDENT = 3;
-
     public static final long MAX_NUMBER_OF_LOCKED_SUBMISSIONS_PER_TUTOR = 10;
 
     public static final long MAX_UPLOAD_FILESIZE_BYTES = 2 * 1024 * 1024; // 2 MiB
@@ -98,9 +96,6 @@ public final class Constants {
     public static final String TESTS_CHECKOUT_PATH = "tests";
 
     public static final int EXTERNAL_SYSTEM_REQUEST_BATCH_SIZE = 100;
-
-    // NOTE: this has to be the same as in complaint.constants.ts on the client
-    public static final int MAX_COMPLAINT_TIME_WEEKS = 1;
 
     // Currently 10s.
     public static final int EXTERNAL_SYSTEM_REQUEST_BATCH_WAIT_TIME_MS = 10 * 1000; // 10s
