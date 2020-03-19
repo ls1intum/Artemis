@@ -33,8 +33,8 @@ import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
 import de.tum.in.www1.artemis.security.AuthoritiesConstants;
 import de.tum.in.www1.artemis.security.PBEPasswordEncoder;
 import de.tum.in.www1.artemis.security.SecurityUtils;
-import de.tum.in.www1.artemis.service.connectors.jira.JiraAuthenticationProvider;
 import de.tum.in.www1.artemis.service.connectors.VcsUserManagementService;
+import de.tum.in.www1.artemis.service.connectors.jira.JiraAuthenticationProvider;
 import de.tum.in.www1.artemis.service.dto.UserDTO;
 import de.tum.in.www1.artemis.service.ldap.LdapUserDto;
 import de.tum.in.www1.artemis.service.ldap.LdapUserService;
@@ -695,6 +695,11 @@ public class UserService {
         return userRepository.findAllInGroup(groupName);
     }
 
+    /**
+     * removes the passed group from all users in the Artemis database, e.g. when the group was deleted
+     *
+     * @param groupName the group that should be removed from all existing users
+     */
     public void removeGroupFromUsers(String groupName) {
         log.info("Remove group " + groupName + " from users");
         List<User> users = userRepository.findAllInGroup(groupName);
