@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis;
 
+import static de.tum.in.www1.artemis.config.Constants.ARTEMIS_GROUP_DEFAULT_PREFIX;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.verifyNoInteractions;
 
@@ -76,9 +77,9 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationTest {
     public void testCreateCourseWithPermission() throws Exception {
         Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>());
         jiraRequestMockProvider.enableMockingOfRequests();
-        jiraRequestMockProvider.mockCreateGroup("artemis-" + course.getShortName() + "-students");
-        jiraRequestMockProvider.mockCreateGroup("artemis-" + course.getShortName() + "-tutors");
-        jiraRequestMockProvider.mockCreateGroup("artemis-" + course.getShortName() + "-instructors");
+        jiraRequestMockProvider.mockCreateGroup(course.getDefaultStudentGroupName());
+        jiraRequestMockProvider.mockCreateGroup(course.getDefaultTeachingAssistantGroupName());
+        jiraRequestMockProvider.mockCreateGroup(course.getDefaultInstructorGroupName());
         request.post("/api/courses", course, HttpStatus.CREATED);
         List<Course> repoContent = courseRepo.findAll();
         assertThat(repoContent.size()).as("Course got stored").isEqualTo(1);
@@ -94,9 +95,9 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationTest {
         // Generate POST Request Body with maxComplaints = 5, maxComplaintTimeDays = 14, studentQuestionsEnabled = false
         Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>(), null, null, null, 5, 14, false);
         jiraRequestMockProvider.enableMockingOfRequests();
-        jiraRequestMockProvider.mockCreateGroup("artemis-" + course.getShortName() + "-students");
-        jiraRequestMockProvider.mockCreateGroup("artemis-" + course.getShortName() + "-tutors");
-        jiraRequestMockProvider.mockCreateGroup("artemis-" + course.getShortName() + "-instructors");
+        jiraRequestMockProvider.mockCreateGroup(course.getDefaultStudentGroupName());
+        jiraRequestMockProvider.mockCreateGroup(course.getDefaultTeachingAssistantGroupName());
+        jiraRequestMockProvider.mockCreateGroup(course.getDefaultInstructorGroupName());
         course = request.postWithResponseBody("/api/courses", course, Course.class, HttpStatus.CREATED);
         // Because the courseId is automatically generated we cannot use the findById method to retrieve the saved course.
         Course getFromRepo = courseRepo.findAll().get(0);
@@ -122,13 +123,13 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationTest {
         List<Course> courses = database.createCoursesWithExercisesAndLectures();
         // mock certain requests to JIRA
         for (Course course : courses) {
-            if (course.getStudentGroupName().startsWith("artemis-")) {
+            if (course.getStudentGroupName().startsWith(ARTEMIS_GROUP_DEFAULT_PREFIX)) {
                 jiraRequestMockProvider.mockDeleteGroup(course.getStudentGroupName());
             }
-            if (course.getTeachingAssistantGroupName().startsWith("artemis-")) {
+            if (course.getTeachingAssistantGroupName().startsWith(ARTEMIS_GROUP_DEFAULT_PREFIX)) {
                 jiraRequestMockProvider.mockDeleteGroup(course.getTeachingAssistantGroupName());
             }
-            if (course.getInstructorGroupName().startsWith("artemis-")) {
+            if (course.getInstructorGroupName().startsWith(ARTEMIS_GROUP_DEFAULT_PREFIX)) {
                 jiraRequestMockProvider.mockDeleteGroup(course.getInstructorGroupName());
             }
         }
@@ -178,9 +179,9 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationTest {
     public void testUpdateCourseWithoutId() throws Exception {
         Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>());
         jiraRequestMockProvider.enableMockingOfRequests();
-        jiraRequestMockProvider.mockCreateGroup("artemis-" + course.getShortName() + "-students");
-        jiraRequestMockProvider.mockCreateGroup("artemis-" + course.getShortName() + "-tutors");
-        jiraRequestMockProvider.mockCreateGroup("artemis-" + course.getShortName() + "-instructors");
+        jiraRequestMockProvider.mockCreateGroup(course.getDefaultStudentGroupName());
+        jiraRequestMockProvider.mockCreateGroup(course.getDefaultTeachingAssistantGroupName());
+        jiraRequestMockProvider.mockCreateGroup(course.getDefaultInstructorGroupName());
         request.put("/api/courses", course, HttpStatus.CREATED);
         List<Course> repoContent = courseRepo.findAll();
         assertThat(repoContent.size()).as("Course got stored").isEqualTo(1);

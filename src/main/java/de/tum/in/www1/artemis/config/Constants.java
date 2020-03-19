@@ -117,6 +117,8 @@ public final class Constants {
 
     public static final String EXTERNAL_USER_MANAGEMENT_NAME = "externalUserManagementName";
 
+    public static final String ARTEMIS_GROUP_DEFAULT_PREFIX = "artemis-";
+
     private Constants() {
     }
 }

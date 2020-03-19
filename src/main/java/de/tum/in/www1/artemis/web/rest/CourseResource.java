@@ -162,9 +162,9 @@ public class CourseResource {
 
         validateComplaintsConfig(course);
 
-        course.setStudentGroupName("artemis-" + course.getShortName() + "-students");
-        course.setTeachingAssistantGroupName("artemis-" + course.getShortName() + "-tutors");
-        course.setInstructorGroupName("artemis-" + course.getShortName() + "-instructors");
+        course.setStudentGroupName(course.getDefaultStudentGroupName());
+        course.setTeachingAssistantGroupName(course.getDefaultTeachingAssistantGroupName());
+        course.setInstructorGroupName(course.getDefaultInstructorGroupName());
 
         try {
             artemisAuthenticationProvider.createGroup(course.getStudentGroupName());
@@ -621,13 +621,13 @@ public class CourseResource {
         String title = course.getTitle();
 
         // only delete the groups if they have been created by Artemis before
-        if (course.getStudentGroupName().equals("artemis-" + course.getShortName() + "-students")) {
+        if (course.getStudentGroupName().equals(course.getDefaultStudentGroupName())) {
             artemisAuthenticationProvider.deleteGroup(course.getStudentGroupName());
         }
-        if (course.getTeachingAssistantGroupName().equals("artemis-" + course.getShortName() + "-tutors")) {
+        if (course.getTeachingAssistantGroupName().equals(course.getDefaultTeachingAssistantGroupName())) {
             artemisAuthenticationProvider.deleteGroup(course.getTeachingAssistantGroupName());
         }
-        if (course.getInstructorGroupName().equals("artemis-" + course.getShortName() + "-instructors")) {
+        if (course.getInstructorGroupName().equals(course.getDefaultInstructorGroupName())) {
             artemisAuthenticationProvider.deleteGroup(course.getInstructorGroupName());
         }
 

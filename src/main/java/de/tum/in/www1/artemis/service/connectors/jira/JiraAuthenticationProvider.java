@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service.connectors.jira;
 
+import static de.tum.in.www1.artemis.config.Constants.ARTEMIS_GROUP_DEFAULT_PREFIX;
 import static de.tum.in.www1.artemis.config.Constants.TUM_USERNAME_PATTERN;
 
 import java.net.URISyntaxException;
@@ -287,7 +288,7 @@ public class JiraAuthenticationProvider implements ArtemisAuthenticationProvider
     public void deleteGroup(String groupName) {
         // Important: only delete groups that have been created from artemis
         // we do not want to delete common groups such as tumuser or artemisdev if a course on the test server is deleted
-        if (!groupName.startsWith("artemis-")) {
+        if (!groupName.startsWith(ARTEMIS_GROUP_DEFAULT_PREFIX)) {
             return;
         }
         log.info("Delete group " + groupName + " in JIRA");

@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.domain;
 
+import static de.tum.in.www1.artemis.config.Constants.ARTEMIS_GROUP_DEFAULT_PREFIX;
 import static de.tum.in.www1.artemis.domain.enumeration.AssessmentType.*;
 
 import java.io.Serializable;
@@ -206,6 +207,21 @@ public class Course implements Serializable {
 
     public void setInstructorGroupName(String instructorGroupName) {
         this.instructorGroupName = instructorGroupName;
+    }
+
+    @JsonIgnore
+    public String getDefaultStudentGroupName() {
+        return ARTEMIS_GROUP_DEFAULT_PREFIX + getShortName() + "-students";
+    }
+
+    @JsonIgnore
+    public String getDefaultTeachingAssistantGroupName() {
+        return ARTEMIS_GROUP_DEFAULT_PREFIX + getShortName() + "-tutors";
+    }
+
+    @JsonIgnore
+    public String getDefaultInstructorGroupName() {
+        return ARTEMIS_GROUP_DEFAULT_PREFIX + getShortName() + "-instructors";
     }
 
     public ZonedDateTime getStartDate() {
