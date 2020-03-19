@@ -1,8 +1,5 @@
 package de.tum.in.www1.artemis.exception;
 
-/**
- * Created by Josias Montag on 22.09.16.
- */
 public class ArtemisAuthenticationException extends RuntimeException {
 
     public ArtemisAuthenticationException() {

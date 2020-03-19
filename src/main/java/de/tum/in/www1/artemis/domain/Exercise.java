@@ -150,10 +150,7 @@ public abstract class Exercise implements Serializable {
     @JsonIgnore
     private Set<ExerciseHint> exerciseHints = new HashSet<>();
 
-    // Helpers
-    // variable names must be different from Getter name,
-    // so that Jackson ignores the @Transient annotation,
-    // but Hibernate still respects it
+    // NOTE: Helpers variable names must be different from Getter name, so that Jackson ignores the @Transient annotation, but Hibernate still respects it
     @Transient
     private Long numberOfParticipationsTransient;
 

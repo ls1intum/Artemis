@@ -3,8 +3,8 @@ import { Component, OnInit } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService } from 'app/core/alert/alert.service';
 import { Observable, Subject } from 'rxjs';
-import { CourseManagementService } from '../../../../course/manage/course-management.service';
-import { ProgrammingExercise, ProgrammingLanguage } from '../../../../entities/programming-exercise.model';
+import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { ProgrammingExercise, ProgrammingLanguage } from 'app/entities/programming-exercise.model';
 import { ProgrammingExerciseService } from '../services/programming-exercise.service';
 import { FileService } from 'app/shared/http/file.service';
 import { MAX_SCORE_PATTERN } from 'app/app.constants';
@@ -189,6 +189,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         const jhiAlert = this.jhiAlertService.error(errorMessage);
         jhiAlert.msg = errorMessage;
         this.isSaving = false;
+        window.scrollTo(0, 0);
     }
 
     private onError(error: HttpErrorResponse) {
