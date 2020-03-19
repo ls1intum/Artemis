@@ -18,6 +18,7 @@ import { Complaint, ComplaintType } from 'app/entities/complaint.model';
 export class ComplaintsComponent implements OnInit {
     @Input() resultId: number;
     @Input() allowedComplaints: number; // the number of complaints that a student can still submit in the course
+    @Input() maxComplaintsPerCourse: number;
     @Input() complaintType: ComplaintType;
     @Output() submit: EventEmitter<void> = new EventEmitter();
     complaintText = '';
@@ -28,8 +29,6 @@ export class ComplaintsComponent implements OnInit {
     complaintResponse: ComplaintResponse;
     ComplaintType = ComplaintType;
     loaded = true;
-
-    readonly maxComplaintNumberPerStudent = 3; // please note that this number has to be the same as in Constant.java on the server
 
     constructor(private complaintService: ComplaintService, private jhiAlertService: AlertService, private complaintResponseService: ComplaintResponseService) {}
 
@@ -76,7 +75,7 @@ export class ComplaintsComponent implements OnInit {
             (err: HttpErrorResponse) => {
                 this.loaded = true;
                 if (err && err.error && err.error.errorKey === 'toomanycomplaints') {
-                    this.jhiAlertService.error('artemisApp.complaint.tooManyComplaints', { maxComplaintNumber: this.maxComplaintNumberPerStudent });
+                    this.jhiAlertService.error('artemisApp.complaint.tooManyComplaints', { maxComplaintNumber: this.maxComplaintsPerCourse });
                 } else {
                     this.onError(err.message);
                 }
