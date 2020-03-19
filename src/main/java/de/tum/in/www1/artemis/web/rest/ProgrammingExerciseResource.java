@@ -170,7 +170,7 @@ public class ProgrammingExerciseResource {
                     .headers(HeaderUtil.createAlert(applicationName, "The title of the programming exercise is too short", "programmingExerciseTitleInvalid")).body(null);
         }
 
-        // Cceck if the exercise title matches regex
+        // Check if the exercise title matches regex
         Matcher titleMatcher = TITLE_NAME_PATTERN.matcher(programmingExercise.getTitle());
         if (!titleMatcher.matches()) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "The title is invalid", "titleInvalid")).body(null);
