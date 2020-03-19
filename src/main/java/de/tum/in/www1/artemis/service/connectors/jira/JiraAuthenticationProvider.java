@@ -285,6 +285,11 @@ public class JiraAuthenticationProvider implements ArtemisAuthenticationProvider
 
     @Override
     public void deleteGroup(String groupName) {
+        // Important: only delete groups that have been created from artemis
+        // we do not want to delete common groups such as tumuser or artemisdev if a course on the test server is deleted
+        if (!groupName.startsWith("artemis-")) {
+            return;
+        }
         log.info("Delete group " + groupName + " in JIRA");
         try {
             restTemplate.exchange(JIRA_URL + "/rest/api/2/group?groupname=" + groupName, HttpMethod.DELETE, null, Map.class);
