@@ -8,8 +8,8 @@
     <jhi-alert></jhi-alert>
     <div class="table-responsive" *ngIf="users">
         <div class="form-group form-inline">
-            Search for User: <input class="form-control ml-2" type="text" name="searchUser" [(ngModel)]="searchTerm" />
-            <span class="ml-3" *ngIf="loadingSearchResult">Loading...</span>
+            <span jhiTranslate="userManagement.search">Search for User: </span><input class="form-control ml-2" type="text" name="searchUser" [(ngModel)]="searchTerm" />
+            <span class="ml-3" *ngIf="loadingSearchResult" jhiTranslate="userManagement.loading">Loading...</span>
         </div>
         <table class="table table-striped">
             <thead>
