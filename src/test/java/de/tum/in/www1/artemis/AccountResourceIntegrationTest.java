@@ -5,6 +5,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.util.Map;
 import java.util.Optional;
 
+import de.tum.in.www1.artemis.util.DatabaseUtilService;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -31,6 +34,19 @@ public class AccountResourceIntegrationTest extends AbstractSpringIntegrationTes
 
     @Autowired
     UserService userService;
+
+    @Autowired
+    DatabaseUtilService database;
+
+    @BeforeEach
+    public void init() {
+        database.addUsers(1, 1, 1);
+    }
+
+    @AfterEach
+    public void resetDatabase() {
+        database.resetDatabase();
+    }
 
     @Test
     public void registerAccount() throws Exception {
@@ -82,14 +98,14 @@ public class AccountResourceIntegrationTest extends AbstractSpringIntegrationTes
     @Test
     public void isAuthenticatedWithoutLoggedInUser() throws Exception {
         String user = request.get("/api/authenticate", HttpStatus.OK, String.class);
-        assertThat(user).isNull();
+        assertThat(user).isEmpty();
     }
 
     @Test
-    @WithMockUser("authenticatedUser")
+    @WithMockUser("authenticateduser")
     public void getAccount() throws Exception {
         // create user in repo
-        User user = ModelFactory.generateActivatedUser("authenticatedUser");
+        User user = ModelFactory.generateActivatedUser("authenticateduser");
         user = userRepo.save(user);
 
         UserDTO account = request.get("/api/account", HttpStatus.OK, UserDTO.class);
@@ -98,34 +114,31 @@ public class AccountResourceIntegrationTest extends AbstractSpringIntegrationTes
 
     @Test
     public void getAccountWithoutLoggedInUser() throws Exception {
-        UserDTO user = request.get("/api/account", HttpStatus.INTERNAL_SERVER_ERROR, UserDTO.class);
+        UserDTO user = request.get("/api/account", HttpStatus.NOT_FOUND, UserDTO.class);
         assertThat(user).isNull();
     }
 
     @Test
-    @WithMockUser("authenticatedUser")
+    @WithMockUser(username = "authenticateduser")
     public void getPassword() throws Exception {
         // create user in repo
-        User user = ModelFactory.generateActivatedUser("authenticatedUser");
-        String password = user.getPassword();
-        User createdUser = userService.createUser(new ManagedUserVM(user));
+        User user = ModelFactory.generateActivatedUser("authenticateduser");
+        userService.createUser(new ManagedUserVM(user));
 
         // make request
         Map response = request.get("/api/account/password", HttpStatus.OK, Map.class);
         assertThat(response.get("password")).isNotNull();
         assertThat(response.get("password")).isNotEqualTo("");
-        assertThat(response.get("password")).isEqualTo(password);
     }
 
     // TODO: check invalid calls
 
     @Test
-    @WithMockUser("authenticatedUser")
+    @WithMockUser(username = "authenticateduser", roles = "INSTRUCTOR")
     public void saveAccount() throws Exception {
         // create user in repo
-        User user = ModelFactory.generateActivatedUser("authenticatedUser");
+        User user = ModelFactory.generateActivatedUser("authenticateduser");
         User createdUser = userService.createUser(new ManagedUserVM(user));
-
         // update FirstName
         String updatedFirstName = "UpdatedFirstName";
         createdUser.setFirstName(updatedFirstName);
@@ -134,7 +147,7 @@ public class AccountResourceIntegrationTest extends AbstractSpringIntegrationTes
         request.post("/api/account", new UserDTO(createdUser), HttpStatus.OK);
 
         // check if update successful
-        User updatedUser = userRepo.findOneByLogin("authenticatedUser").get();
+        User updatedUser = userRepo.findOneByLogin("authenticateduser").get();
         assertThat(updatedUser.getFirstName()).isEqualTo(updatedFirstName);
     }
 
@@ -157,12 +170,11 @@ public class AccountResourceIntegrationTest extends AbstractSpringIntegrationTes
     }
 
     @Test
-    @WithMockUser("authenticatedUser")
+    @WithMockUser("authenticateduser")
     public void passwordReset() throws Exception {
         // create user in repo
-        User user = ModelFactory.generateActivatedUser("authenticatedUser");
+        User user = ModelFactory.generateActivatedUser("authenticateduser");
         User createdUser = userService.createUser(new ManagedUserVM(user));
-
         // init password reset
         request.post("/api/reset-password/init", createdUser.getEmail(), HttpStatus.OK);
 
