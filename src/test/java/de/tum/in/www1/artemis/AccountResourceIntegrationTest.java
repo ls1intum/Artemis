@@ -7,7 +7,6 @@ import java.util.Optional;
 
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -37,11 +36,6 @@ public class AccountResourceIntegrationTest extends AbstractSpringIntegrationTes
 
     @Autowired
     DatabaseUtilService database;
-
-    @BeforeEach
-    public void init() {
-        database.addUsers(1, 1, 1);
-    }
 
     @AfterEach
     public void resetDatabase() {
@@ -134,7 +128,7 @@ public class AccountResourceIntegrationTest extends AbstractSpringIntegrationTes
     // TODO: check invalid calls
 
     @Test
-    @WithMockUser(username = "authenticateduser", roles = "INSTRUCTOR")
+    @WithMockUser(username = "authenticateduser")
     public void saveAccount() throws Exception {
         // create user in repo
         User user = ModelFactory.generateActivatedUser("authenticateduser");
@@ -144,7 +138,7 @@ public class AccountResourceIntegrationTest extends AbstractSpringIntegrationTes
         createdUser.setFirstName(updatedFirstName);
 
         // make request
-        request.post("/api/account", new UserDTO(createdUser), HttpStatus.OK);
+        request.postWithoutLocation("/api/account", new UserDTO(createdUser), HttpStatus.OK, null);
 
         // check if update successful
         User updatedUser = userRepo.findOneByLogin("authenticateduser").get();
@@ -152,20 +146,20 @@ public class AccountResourceIntegrationTest extends AbstractSpringIntegrationTes
     }
 
     @Test
-    @WithMockUser("authenticatedUser")
+    @WithMockUser(username = "authenticateduser")
     public void changePassword() throws Exception {
         // create user in repo
-        User user = ModelFactory.generateActivatedUser("authenticatedUser");
+        User user = ModelFactory.generateActivatedUser("authenticateduser");
         User createdUser = userService.createUser(new ManagedUserVM(user));
         // Password Data
         String updatedPassword = "1234";
-        PasswordChangeDTO pwChange = new PasswordChangeDTO(user.getPassword(), updatedPassword);
 
+        PasswordChangeDTO pwChange = new PasswordChangeDTO(user.getPassword(), updatedPassword);
         // make request
-        request.post("/api/account/change-password", pwChange, HttpStatus.OK);
+        request.postWithoutLocation("/api/account/change-password", pwChange, HttpStatus.OK,null);
 
         // check if update successful
-        User updatedUser = userRepo.findOneByLogin("authenticatedUser").get();
+        User updatedUser = userRepo.findOneByLogin("authenticateduser").get();
         assertThat(updatedUser.getPassword()).isEqualTo(updatedPassword);
     }
 
@@ -176,10 +170,10 @@ public class AccountResourceIntegrationTest extends AbstractSpringIntegrationTes
         User user = ModelFactory.generateActivatedUser("authenticateduser");
         User createdUser = userService.createUser(new ManagedUserVM(user));
         // init password reset
-        request.post("/api/reset-password/init", createdUser.getEmail(), HttpStatus.OK);
+        request.postWithoutLocation("/api/account/reset-password/init", createdUser.getEmail(), HttpStatus.OK, null);
 
         // check user data
-        User userPasswordResetInit = userRepo.findOneByLogin("authenticatedUser").get();
+        User userPasswordResetInit = userRepo.findOneByLogin("authenticateduser").get();
         String resetKey = userPasswordResetInit.getResetKey();
 
         // finish password reset
@@ -189,12 +183,11 @@ public class AccountResourceIntegrationTest extends AbstractSpringIntegrationTes
         finishResetData.setNewPassword(newPassword);
 
         // finish password reset
-        request.post("/api/reset-password/finish", finishResetData, HttpStatus.OK);
+        request.postWithoutLocation("/api/account/reset-password/finish", finishResetData, HttpStatus.OK, null);
 
         // get updated user
-        User userPasswordResetFinished = userRepo.findOneByLogin("authenticatedUser").get();
-
-        assertThat(userPasswordResetFinished.getPassword()).isEqualTo(newPassword);
+        User userPasswordResetFinished = userRepo.findOneByLogin("authenticateduser").get();
+        assertThat(userService.encryptor().decrypt(userPasswordResetFinished.getPassword())).isEqualTo(newPassword);
     }
 
 }
