@@ -5,7 +5,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.util.Map;
 import java.util.Optional;
 
-import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,6 +17,7 @@ import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.UserService;
 import de.tum.in.www1.artemis.service.dto.PasswordChangeDTO;
 import de.tum.in.www1.artemis.service.dto.UserDTO;
+import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.RequestUtilService;
 import de.tum.in.www1.artemis.web.rest.vm.KeyAndPasswordVM;
@@ -156,7 +156,7 @@ public class AccountResourceIntegrationTest extends AbstractSpringIntegrationTes
 
         PasswordChangeDTO pwChange = new PasswordChangeDTO(userService.encryptor().decrypt(createdUser.getPassword()), updatedPassword);
         // make request
-        request.postWithoutLocation("/api/account/change-password", pwChange, HttpStatus.OK,null);
+        request.postWithoutLocation("/api/account/change-password", pwChange, HttpStatus.OK, null);
 
         // check if update successful
         User updatedUser = userRepo.findOneByLogin("authenticateduser").get();
