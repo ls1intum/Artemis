@@ -38,6 +38,7 @@ export class LectureAttachmentsComponent implements OnInit, OnDestroy {
     isDownloadingAttachmentLink: string | null;
     notificationText: string | null;
     erroredFile: File | null;
+    errorMessage: string | null;
 
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
@@ -152,7 +153,7 @@ export class LectureAttachmentsComponent implements OnInit, OnDestroy {
     downloadAttachment(downloadUrl: string) {
         if (!this.isDownloadingAttachmentLink) {
             this.isDownloadingAttachmentLink = downloadUrl;
-            this.fileService.downloadAttachment(downloadUrl);
+            this.fileService.downloadFileWithAccessToken(downloadUrl);
             this.isDownloadingAttachmentLink = null;
         }
     }
@@ -188,6 +189,7 @@ export class LectureAttachmentsComponent implements OnInit, OnDestroy {
 
         this.isUploadingAttachment = true;
         this.erroredFile = null;
+        this.errorMessage = null;
         this.fileUploaderService.uploadFile(file, file['name'], { keepFileName: true }).then(
             result => {
                 this.attachmentToBeCreated!.link = result.path;
@@ -196,7 +198,7 @@ export class LectureAttachmentsComponent implements OnInit, OnDestroy {
                 this.saveAttachment();
             },
             error => {
-                console.error('Error during file upload in uploadBackground()', error.message);
+                this.errorMessage = error.message;
                 this.erroredFile = file;
                 this.fileInput.nativeElement.value = '';
                 this.attachmentToBeCreated!.link = null;

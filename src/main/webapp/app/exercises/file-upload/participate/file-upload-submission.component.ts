@@ -195,7 +195,7 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
     }
 
     downloadFile(filePath: string) {
-        this.fileService.downloadAttachment(filePath);
+        this.fileService.downloadFileWithAccessToken(filePath);
     }
 
     /**
