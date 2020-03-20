@@ -108,7 +108,7 @@ public class AccountResourceIntegrationTest extends AbstractSpringIntegrationTes
 
     @Test
     public void getAccountWithoutLoggedInUser() throws Exception {
-        UserDTO user = request.get("/api/account", HttpStatus.NOT_FOUND, UserDTO.class);
+        UserDTO user = request.get("/api/account", HttpStatus.UNAUTHORIZED, UserDTO.class);
         assertThat(user).isNull();
     }
 
