@@ -125,8 +125,6 @@ public class AccountResourceIntegrationTest extends AbstractSpringIntegrationTes
         assertThat(response.get("password")).isNotEqualTo("");
     }
 
-    // TODO: check invalid calls
-
     @Test
     @WithMockUser(username = "authenticateduser")
     public void saveAccount() throws Exception {
@@ -161,6 +159,19 @@ public class AccountResourceIntegrationTest extends AbstractSpringIntegrationTes
         // check if update successful
         User updatedUser = userRepo.findOneByLogin("authenticateduser").get();
         assertThat(userService.encryptor().decrypt(updatedUser.getPassword())).isEqualTo(updatedPassword);
+    }
+
+    @Test
+    @WithMockUser(username = "authenticateduser")
+    public void invalidPassword() throws Exception {
+        User user = ModelFactory.generateActivatedUser("authenticateduser");
+        User createdUser = userService.createUser(new ManagedUserVM(user));
+        String updatedPassword = "123";
+
+        PasswordChangeDTO pwChange = new PasswordChangeDTO(userService.encryptor().decrypt(createdUser.getPassword()), updatedPassword);
+        // make request
+        request.postWithoutLocation("/api/account/change-password", pwChange, HttpStatus.BAD_REQUEST, null);
+
     }
 
     @Test
