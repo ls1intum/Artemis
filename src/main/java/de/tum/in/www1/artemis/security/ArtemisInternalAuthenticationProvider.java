@@ -113,6 +113,17 @@ public class ArtemisInternalAuthenticationProvider implements ArtemisAuthenticat
     }
 
     @Override
+    public void createGroup(String groupName) {
+        // Not needed since we don't have any externally specified groups. If we only use the Artemis DB (which is the case
+        // for this service), creating a group is not necessary, since groups are just referenced as strings when connected to users.
+    }
+
+    @Override
+    public void deleteGroup(String groupName) {
+        userService.removeGroupFromUsers(groupName);
+    }
+
+    @Override
     public void registerUserForCourse(User user, Course course) {
         addUserToGroup(user, course.getStudentGroupName());
         final var auditEvent = new AuditEvent(user.getLogin(), "REGISTER_FOR_COURSE", "course=" + course.getTitle());

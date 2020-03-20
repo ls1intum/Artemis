@@ -23,7 +23,7 @@ import de.tum.in.www1.artemis.connector.jira.JiraRequestMockProvider;
 import de.tum.in.www1.artemis.security.ArtemisInternalAuthenticationProvider;
 import de.tum.in.www1.artemis.security.jwt.TokenProvider;
 import de.tum.in.www1.artemis.service.UserService;
-import de.tum.in.www1.artemis.service.connectors.JiraAuthenticationProvider;
+import de.tum.in.www1.artemis.service.connectors.jira.JiraAuthenticationProvider;
 import de.tum.in.www1.artemis.web.rest.UserJWTController;
 import de.tum.in.www1.artemis.web.rest.vm.LoginVM;
 

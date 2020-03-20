@@ -75,9 +75,11 @@
                             >
                         </td>
                         <td class="d-none d-md-table-cell">
-                            <span class="bold">{{ 'artemisApp.course.students' | translate }}:</span> {{ course.studentGroupName }}<br />
-                            <span class="bold">{{ 'artemisApp.course.tutors' | translate }}:</span> {{ course.teachingAssistantGroupName }}<br />
-                            <span class="bold">{{ 'artemisApp.course.instructors' | translate }}:</span> {{ course.instructorGroupName }}
+                            <span class="bold">{{ 'artemisApp.course.students' | translate }}:</span> {{ course.studentGroupName }} ({{ course.numberOfStudents }})<br />
+                            <span class="bold">{{ 'artemisApp.course.tutors' | translate }}:</span> {{ course.teachingAssistantGroupName }} ({{
+                                course.numberOfTeachingAssistants
+                            }})<br />
+                            <span class="bold">{{ 'artemisApp.course.instructors' | translate }}:</span> {{ course.instructorGroupName }} ({{ course.numberOfInstructors }})
                         </td>
                         <td>{{ course.startDate | date: 'medium' }}</td>
                         <td>{{ course.endDate | date: 'medium' }}</td>
