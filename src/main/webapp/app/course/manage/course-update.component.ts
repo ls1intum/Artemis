@@ -38,7 +38,7 @@ export class CourseUpdateComponent implements OnInit {
     presentationScoreEnabled = false;
     complaintsEnabled = true; // default value
 
-    shortNamePattern = /^[a-zA-Z][a-zA-Z0-9]*$/; // must start with a letter and cannot contain special characters
+    shortNamePattern = /^[a-zA-Z][a-zA-Z0-9]{2,}$/; // must start with a letter and cannot contain special characters, at least 3 characters
     presentationScorePattern = /^[0-9]{0,4}$/; // makes sure that the presentation score is a positive natural integer greater than 0 and not too large
 
     constructor(
@@ -62,9 +62,6 @@ export class CourseUpdateComponent implements OnInit {
                 validators: [Validators.required, Validators.minLength(3), regexValidator(this.shortNamePattern)],
                 updateOn: 'blur',
             }),
-            studentGroupName: new FormControl(this.course.studentGroupName, [Validators.required]),
-            teachingAssistantGroupName: new FormControl(this.course.teachingAssistantGroupName),
-            instructorGroupName: new FormControl(this.course.instructorGroupName, [Validators.required]),
             description: new FormControl(this.course.description),
             startDate: new FormControl(this.course.startDate),
             endDate: new FormControl(this.course.endDate),
@@ -188,6 +185,7 @@ export class CourseUpdateComponent implements OnInit {
         const jhiAlert = this.jhiAlertService.error(errorMessage);
         jhiAlert.msg = errorMessage;
         this.isSaving = false;
+        window.scrollTo(0, 0);
     }
 
     get shortName() {

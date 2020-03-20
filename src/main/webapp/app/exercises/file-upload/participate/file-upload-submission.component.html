@@ -52,14 +52,7 @@
                 <label class="form-control-label" jhiTranslate="artemisApp.fileUploadSubmission.selectFile">Please select </label>
                 <div class="input-group background-file">
                     <div class="custom-file overflow-ellipsis">
-                        <input
-                            #fileInput
-                            id="fileUploadInput"
-                            type="file"
-                            [accept]="acceptedFileExtensions"
-                            class="custom-file-input"
-                            (change)="setFileSubmissionForExercise($event)"
-                        />
+                        <input #fileInput id="fileUploadInput" type="file" class="custom-file-input" (change)="setFileSubmissionForExercise($event)" />
                         <label class="custom-file-label overflow-ellipsis" for="fileUploadInput">{{ submissionFile ? submissionFile!.name : '' }}</label>
                     </div>
                 </div>

@@ -39,9 +39,9 @@
                 "title": "Enable Complaints",
                 "description": "Enabling this allows students to complaint about results"
             },
-            "studentGroupName": "Student Group",
-            "teachingAssistantGroupName": "Tutor Group",
-            "instructorGroupName": "Instructor Group",
+            "studentGroupName": "Students",
+            "teachingAssistantGroupName": "Tutors",
+            "instructorGroupName": "Instructors",
             "description": "Course Description",
             "startDate": "Start",
             "endDate": "End",

@@ -123,6 +123,14 @@ export class CourseManagementService {
             .pipe(map((res: EntityArrayResponseType) => this.subscribeToCourseNotifications(res)));
     }
 
+    getWithUserStats(): Observable<EntityArrayResponseType> {
+        return this.http
+            .get<Course[]>(`${this.resourceUrl}/with-user-stats`, { observe: 'response' })
+            .pipe(map((res: EntityArrayResponseType) => this.convertDateArrayFromServer(res)))
+            .pipe(map((res: EntityArrayResponseType) => this.checkAccessRights(res)))
+            .pipe(map((res: EntityArrayResponseType) => this.subscribeToCourseNotifications(res)));
+    }
+
     delete(courseId: number): Observable<HttpResponse<void>> {
         return this.http.delete<void>(`${this.resourceUrl}/${courseId}`, { observe: 'response' });
     }

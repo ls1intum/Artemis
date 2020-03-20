@@ -418,7 +418,7 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
     }
 
     downloadFile(filePath: string) {
-        this.fileService.downloadAttachment(filePath);
+        this.fileService.downloadFileWithAccessToken(filePath);
     }
 
     private checkPermissions() {

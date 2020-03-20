@@ -75,4 +75,18 @@ public interface ArtemisAuthenticationProvider extends AuthenticationProvider {
      * @return The health of the user management service containing if it is up and running and any additional data, or the throwing exception otherwise
      */
     ConnectorHealth health();
+
+    /**
+     * create a group with the given name
+     *
+     * @param groupName the name of the group which should be created
+     */
+    void createGroup(String groupName);
+
+    /**
+     * delete the group with the given name
+     *
+     * @param groupName the name of the group which should be deleted
+     */
+    void deleteGroup(String groupName);
 }
