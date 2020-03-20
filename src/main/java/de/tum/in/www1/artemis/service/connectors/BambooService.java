@@ -917,7 +917,7 @@ public class BambooService implements ContinuousIntegrationService {
                 return null;
             }
         }
-        return "The project already exists in the CI Server. Please choose a different title and short name!";
+        return "The project already exists on the Continuous Integration Server. Please choose a different title and short name!";
     }
 
     /**

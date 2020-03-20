@@ -98,7 +98,7 @@ public class CompassCalculationEngine implements CalculationEngine {
         }
 
         modelingAssessment.forEach(currentFeedback -> {
-            UMLElement currentElement = model.getElementByJSONID(currentFeedback.getReferenceElementId()); // TODO MJ return Optional ad throw Exception if no UMLElement found?
+            UMLElement currentElement = model.getElementByJSONID(currentFeedback.getReferenceElementId());
 
             assessmentIndex.getAssessmentForSimilaritySet(currentElement.getSimilarityID()).ifPresent(assessment -> {
                 List<Feedback> feedbacks = assessment.getFeedbackList();

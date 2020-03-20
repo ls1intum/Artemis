@@ -7,6 +7,7 @@ import { escapeStringForUseInRegex } from 'app/shared/util/global.utils';
 export abstract class DomainCommand extends Command {
     abstract getOpeningIdentifier(): string; // e.g. [exp]
     abstract getClosingIdentifier(): string; // e.g. [/exp]
+    displayCommandButton = true;
 
     /**
      * Generate a regex that can be used to get the content alone or including the tags.

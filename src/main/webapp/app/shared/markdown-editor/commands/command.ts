@@ -7,6 +7,7 @@ import { AceEditorComponent } from 'ng2-ace-editor';
  * domain commands: Artemis customized commands
  */
 export abstract class Command {
+    displayCommandButton: boolean;
     buttonIcon: string;
     buttonTranslationString: string;
     protected aceEditorContainer: AceEditorComponent;
