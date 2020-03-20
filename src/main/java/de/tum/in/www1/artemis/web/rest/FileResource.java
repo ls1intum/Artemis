@@ -9,10 +9,7 @@ import java.net.URLConnection;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.time.ZonedDateTime;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
 import javax.activation.MimetypesFileTypeMap;
 
@@ -20,7 +17,6 @@ import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.core.io.support.ResourcePatternUtils;
@@ -40,9 +36,7 @@ import de.tum.in.www1.artemis.repository.FileUploadExerciseRepository;
 import de.tum.in.www1.artemis.repository.FileUploadSubmissionRepository;
 import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.security.jwt.TokenProvider;
-import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.FileService;
-import de.tum.in.www1.artemis.service.UserService;
 
 /**
  * REST controller for managing Course.
@@ -57,11 +51,7 @@ public class FileResource {
 
     private final ResourceLoader resourceLoader;
 
-    private final UserService userService;
-
     private final LectureRepository lectureRepository;
-
-    private final AuthorizationCheckService authCheckService;
 
     private final FileUploadSubmissionRepository fileUploadSubmissionRepository;
 
@@ -69,13 +59,21 @@ public class FileResource {
 
     private final FileUploadExerciseRepository fileUploadExerciseRepository;
 
-    public FileResource(FileService fileService, ResourceLoader resourceLoader, UserService userService, AuthorizationCheckService authCheckService,
-            LectureRepository lectureRepository, TokenProvider tokenProvider, FileUploadSubmissionRepository fileUploadSubmissionRepository,
-            FileUploadExerciseRepository fileUploadExerciseRepository) {
+    // NOTE: this list has to be the same as in file-uploader.service.ts
+    private List<String> allowedFileExtensions = new ArrayList<>(Arrays.asList("png", "jpg", "jpeg", "svg", "pdf", "zip"));
+
+    public void addAllowedFileExtension(String fileExtension) {
+        this.allowedFileExtensions.add(fileExtension);
+    }
+
+    public void addRemoveFileExtension(String fileExtension) {
+        this.allowedFileExtensions.remove(fileExtension);
+    }
+
+    public FileResource(FileService fileService, ResourceLoader resourceLoader, LectureRepository lectureRepository, TokenProvider tokenProvider,
+            FileUploadSubmissionRepository fileUploadSubmissionRepository, FileUploadExerciseRepository fileUploadExerciseRepository) {
         this.fileService = fileService;
         this.resourceLoader = resourceLoader;
-        this.userService = userService;
-        this.authCheckService = authCheckService;
         this.lectureRepository = lectureRepository;
         this.tokenProvider = tokenProvider;
         this.fileUploadSubmissionRepository = fileUploadSubmissionRepository;
@@ -100,9 +98,8 @@ public class FileResource {
 
         // check for file type
         String fileExtension = FilenameUtils.getExtension(file.getOriginalFilename());
-        List<String> allowedFileExtensions = Arrays.asList("png", "jpg", "zip", "pdf", "svg", "jpeg");
-        if (!allowedFileExtensions.stream().anyMatch(fileExtension::equalsIgnoreCase)) {
-            return ResponseEntity.badRequest().body("Unsupported file type! Allowed file types: .png, .jpg, .svg, .pdf, .zip");
+        if (fileExtension == null || this.allowedFileExtensions.stream().noneMatch(fileExtension::equalsIgnoreCase)) {
+            return ResponseEntity.badRequest().body("Unsupported file type! Allowed file types: " + String.join(", ", this.allowedFileExtensions));
         }
 
         try {
@@ -111,7 +108,7 @@ public class FileResource {
             if (!folder.exists()) {
                 if (!folder.mkdirs()) {
                     log.error("Could not create directory: {}", Constants.TEMP_FILEPATH);
-                    return ResponseEntity.status(500).build();
+                    return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
                 }
             }
 
@@ -147,7 +144,7 @@ public class FileResource {
         }
         catch (IOException e) {
             e.printStackTrace();
-            return ResponseEntity.status(500).build();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
 
@@ -174,19 +171,19 @@ public class FileResource {
     @GetMapping({ "files/templates/{language}/{filename}", "/files/templates/{filename:.+}" })
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<byte[]> getTemplateFile(@PathVariable Optional<ProgrammingLanguage> language, @PathVariable String filename) {
-        log.debug("REST request to get file : {}", filename);
+        log.debug("REST request to get file '{}' for programming language {}", filename, language);
         try {
             String languagePrefix = language.map(programmingLanguage -> File.separator + programmingLanguage.name().toLowerCase()).orElse("");
             Resource fileResource = ResourcePatternUtils.getResourcePatternResolver(resourceLoader).getResource("classpath:templates" + languagePrefix + File.separator + filename);
-            byte[] fileContent = IOUtils.toByteArray(fileResource.getInputStream());
+            var fileContent = IOUtils.toByteArray(fileResource.getInputStream());
             HttpHeaders responseHeaders = new HttpHeaders();
             responseHeaders.setContentType(MediaType.TEXT_PLAIN);
-            return new ResponseEntity(fileContent, responseHeaders, HttpStatus.OK);
+            return new ResponseEntity<>(fileContent, responseHeaders, HttpStatus.OK);
         }
         catch (IOException ex) {
             log.debug("Error when retrieving template file : {}", ex.getMessage());
             HttpHeaders responseHeaders = new HttpHeaders();
-            return new ResponseEntity(null, responseHeaders, HttpStatus.NOT_FOUND);
+            return new ResponseEntity<>(null, responseHeaders, HttpStatus.NOT_FOUND);
         }
     }
 
@@ -229,7 +226,7 @@ public class FileResource {
      */
     @GetMapping("/files/file-upload-exercises/{exerciseId}/submissions/{submissionId}/{filename:.+}")
     @PreAuthorize("permitAll()")
-    public ResponseEntity getFileUploadSubmission(@PathVariable Long exerciseId, @PathVariable Long submissionId, @PathVariable String filename,
+    public ResponseEntity<byte[]> getFileUploadSubmission(@PathVariable Long exerciseId, @PathVariable Long submissionId, @PathVariable String filename,
             @RequestParam("access_token") String temporaryAccessToken) {
         log.debug("REST request to get file : {}", filename);
         Optional<FileUploadSubmission> optionalSubmission = fileUploadSubmissionRepository.findById(submissionId);
@@ -238,8 +235,9 @@ public class FileResource {
             return ResponseEntity.badRequest().build();
         }
         if (!validateTemporaryAccessToken(temporaryAccessToken, filename)) {
+            // NOTE: this is a special case, because we like to show this error message directly in the browser (without the angular client being active)
             String errorMessage = "You don't have the access rights for this file! Please login to Artemis and download the file in the corresponding exercise";
-            return ResponseEntity.status(403).body(errorMessage);
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(errorMessage.getBytes());
         }
         return buildFileResponse(FileUploadSubmission.buildFilePath(optionalFileUploadExercise.get().getId(), optionalSubmission.get().getId()), filename);
     }
@@ -285,15 +283,16 @@ public class FileResource {
      */
     @GetMapping("files/attachments/lecture/{lectureId}/{filename:.+}")
     @PreAuthorize("permitAll()")
-    public ResponseEntity getLectureAttachment(@PathVariable Long lectureId, @PathVariable String filename, @RequestParam("access_token") String temporaryAccessToken) {
+    public ResponseEntity<byte[]> getLectureAttachment(@PathVariable Long lectureId, @PathVariable String filename, @RequestParam("access_token") String temporaryAccessToken) {
         log.debug("REST request to get file : {}", filename);
         Optional<Lecture> optionalLecture = lectureRepository.findById(lectureId);
-        if (!optionalLecture.isPresent()) {
+        if (optionalLecture.isEmpty()) {
             return ResponseEntity.badRequest().build();
         }
         if (!validateTemporaryAccessToken(temporaryAccessToken, filename)) {
+            // NOTE: this is a special case, because we like to show this error message directly in the browser (without the angular client being active)
             String errorMessage = "You don't have the access rights for this file! Please login to Artemis and download the attachment in the corresponding lecture";
-            return ResponseEntity.status(403).body(errorMessage);
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(errorMessage.getBytes());
         }
         return buildFileResponse(Constants.LECTURE_ATTACHMENT_FILEPATH + optionalLecture.get().getId(), filename);
     }
@@ -314,18 +313,18 @@ public class FileResource {
 
     /**
      * Builds the response with headers, body and content type for specified path and file name
+     *
      * @param path to the file
      * @param filename the name of the file
      * @return response entity
      */
-    private ResponseEntity buildFileResponse(String path, String filename) {
+    private ResponseEntity<byte[]> buildFileResponse(String path, String filename) {
         try {
-            byte[] file = fileService.getFileForPath(path + '/' + filename);
+            var file = fileService.getFileForPath(path + '/' + filename);
             if (file == null) {
                 return ResponseEntity.notFound().build();
             }
 
-            ByteArrayResource resource = new ByteArrayResource(file);
             ContentDisposition contentDisposition = ContentDisposition.builder("inline").filename(filename).build();
             HttpHeaders headers = new HttpHeaders();
             headers.setContentDisposition(contentDisposition);
@@ -338,11 +337,11 @@ public class FileResource {
                 MimetypesFileTypeMap fileTypeMap = new MimetypesFileTypeMap();
                 mimeType = fileTypeMap.getContentType(filename);
             }
-            return ResponseEntity.ok().headers(headers).contentType(MediaType.parseMediaType(mimeType)).header("filename", filename).body(resource);
+            return ResponseEntity.ok().headers(headers).contentType(MediaType.parseMediaType(mimeType)).header("filename", filename).body(file);
         }
         catch (IOException ex) {
             log.error("Download of file: " + filename + "on path: " + path + " let to the following exception", ex);
-            return ResponseEntity.status(500).build();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
 
@@ -350,11 +349,11 @@ public class FileResource {
      * Reads the file and turns it into a ResponseEntity
      *
      * @param path the path for the file to read
-     * @return ResponseEntity with status 200 and the file as byte[], status 404 if the file doesn't exist, or status 500 if there is an error while reading the file
+     * @return ResponseEntity with status 200 and the file as byte stream, status 404 if the file doesn't exist, or status 500 if there is an error while reading the file
      */
     private ResponseEntity<byte[]> responseEntityForFilePath(String path) {
         try {
-            byte[] file = fileService.getFileForPath(path);
+            var file = fileService.getFileForPath(path);
             if (file == null) {
                 return ResponseEntity.notFound().build();
             }
@@ -362,7 +361,8 @@ public class FileResource {
         }
         catch (IOException e) {
             e.printStackTrace();
-            return ResponseEntity.status(500).build();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
+
 }
