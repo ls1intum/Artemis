@@ -174,19 +174,19 @@ public class FileResource {
     @GetMapping({ "files/templates/{language}/{filename}", "/files/templates/{filename:.+}" })
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<byte[]> getTemplateFile(@PathVariable Optional<ProgrammingLanguage> language, @PathVariable String filename) {
-        log.debug("REST request to get file : {}", filename);
+        log.debug("REST request to get file '{}' for programming language {}", filename, language);
         try {
             String languagePrefix = language.map(programmingLanguage -> File.separator + programmingLanguage.name().toLowerCase()).orElse("");
             Resource fileResource = ResourcePatternUtils.getResourcePatternResolver(resourceLoader).getResource("classpath:templates" + languagePrefix + File.separator + filename);
             byte[] fileContent = IOUtils.toByteArray(fileResource.getInputStream());
             HttpHeaders responseHeaders = new HttpHeaders();
             responseHeaders.setContentType(MediaType.TEXT_PLAIN);
-            return new ResponseEntity(fileContent, responseHeaders, HttpStatus.OK);
+            return new ResponseEntity<>(fileContent, responseHeaders, HttpStatus.OK);
         }
         catch (IOException ex) {
             log.debug("Error when retrieving template file : {}", ex.getMessage());
             HttpHeaders responseHeaders = new HttpHeaders();
-            return new ResponseEntity(null, responseHeaders, HttpStatus.NOT_FOUND);
+            return new ResponseEntity<>(null, responseHeaders, HttpStatus.NOT_FOUND);
         }
     }
 

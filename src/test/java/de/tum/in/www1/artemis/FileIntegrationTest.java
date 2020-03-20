@@ -80,13 +80,17 @@ public class FileIntegrationTest extends AbstractSpringIntegrationTest {
         assertThat(responseFile).isEqualTo("some data");
     }
 
-    @Disabled
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void testGetTemplateFile() throws Exception {
-        // TODO: find an efficient way to create a file in the files/templates folder
+        String javaReadme = request.get("/api/files/templates/JAVA/readme", HttpStatus.OK, String.class);
+        assertThat(javaReadme).isNotEmpty();
+        String cReadme = request.get("/api/files/templates/C/readme", HttpStatus.OK, String.class);
+        assertThat(cReadme).isNotEmpty();
+        String pythonReadme = request.get("/api/files/templates/PYTHON/readme", HttpStatus.OK, String.class);
+        assertThat(pythonReadme).isNotEmpty();
 
-        request.get("/files/templates/", HttpStatus.OK, byte[].class);
+        request.get("/api/files/templates/randomnonexistingfile", HttpStatus.NOT_FOUND, String.class);
     }
 
     @Test
