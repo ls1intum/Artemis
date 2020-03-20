@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.domain;
 
+import static de.tum.in.www1.artemis.config.Constants.ARTEMIS_GROUP_DEFAULT_PREFIX;
 import static de.tum.in.www1.artemis.domain.enumeration.AssessmentType.*;
 
 import java.io.Serializable;
@@ -55,7 +56,7 @@ public class Course implements Serializable {
     @Lob
     private String description;
 
-    @Column(name = "short_name")
+    @Column(name = "short_name", unique = true)
     @JsonView(QuizView.Before.class)
     private String shortName;
 
@@ -87,6 +88,14 @@ public class Course implements Serializable {
     @JsonView(QuizView.Before.class)
     private Integer maxComplaints;
 
+    @Column(name = "max_complaint_time_days")
+    @JsonView(QuizView.Before.class)
+    private int maxComplaintTimeDays;
+
+    @Column(name = "student_questions_enabled")
+    @JsonView(QuizView.Before.class)
+    private boolean studentQuestionsEnabled;
+
     @Column(name = "color")
     private String color;
 
@@ -112,6 +121,16 @@ public class Course implements Serializable {
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonIgnoreProperties("course")
     private Set<TutorGroup> tutorGroups = new HashSet<>();
+
+    // NOTE: Helpers variable names must be different from Getter name, so that Jackson ignores the @Transient annotation, but Hibernate still respects it
+    @Transient
+    private Long numberOfInstructorsTransient;
+
+    @Transient
+    private Long numberOfTeachingAssistantsTransient;
+
+    @Transient
+    private Long numberOfStudentsTransient;
 
     // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
     public Long getId() {
@@ -200,6 +219,21 @@ public class Course implements Serializable {
         this.instructorGroupName = instructorGroupName;
     }
 
+    @JsonIgnore
+    public String getDefaultStudentGroupName() {
+        return ARTEMIS_GROUP_DEFAULT_PREFIX + getShortName() + "-students";
+    }
+
+    @JsonIgnore
+    public String getDefaultTeachingAssistantGroupName() {
+        return ARTEMIS_GROUP_DEFAULT_PREFIX + getShortName() + "-tutors";
+    }
+
+    @JsonIgnore
+    public String getDefaultInstructorGroupName() {
+        return ARTEMIS_GROUP_DEFAULT_PREFIX + getShortName() + "-instructors";
+    }
+
     public ZonedDateTime getStartDate() {
         return startDate;
     }
@@ -250,6 +284,36 @@ public class Course implements Serializable {
 
     public void setMaxComplaints(Integer maxComplaints) {
         this.maxComplaints = maxComplaints;
+    }
+
+    public Integer getMaxComplaintTimeDays() {
+        return maxComplaintTimeDays;
+    }
+
+    public Course maxComplaintTimeDays(Integer maxComplaintTimeDays) {
+        this.maxComplaintTimeDays = maxComplaintTimeDays;
+        return this;
+    }
+
+    public void setMaxComplaintTimeDays(Integer maxComplaintTimeDays) {
+        this.maxComplaintTimeDays = maxComplaintTimeDays;
+    }
+
+    public boolean getComplaintsEnabled() {
+        return this.maxComplaints > 0 && this.maxComplaintTimeDays > 0;
+    }
+
+    public boolean getStudentQuestionsEnabled() {
+        return studentQuestionsEnabled;
+    }
+
+    public Course studentQuestionsEnabled(boolean studentQuestionsEnabled) {
+        this.studentQuestionsEnabled = studentQuestionsEnabled;
+        return this;
+    }
+
+    public void setStudentQuestionsEnabled(boolean studentQuestionsEnabled) {
+        this.studentQuestionsEnabled = studentQuestionsEnabled;
     }
 
     public String getColor() {
@@ -462,5 +526,29 @@ public class Course implements Serializable {
     public Set<Exercise> getInterestingExercisesForAssessmentDashboards() {
         return getExercises().stream().filter(exercise -> exercise instanceof TextExercise || exercise instanceof ModelingExercise || exercise instanceof FileUploadExercise
                 || (exercise instanceof ProgrammingExercise && exercise.getAssessmentType() != AUTOMATIC)).collect(Collectors.toSet());
+    }
+
+    public void setNumberOfInstructors(Long numberOfInstructors) {
+        this.numberOfInstructorsTransient = numberOfInstructors;
+    }
+
+    public void setNumberOfTeachingAssistants(Long numberOfTeachingAssistants) {
+        this.numberOfTeachingAssistantsTransient = numberOfTeachingAssistants;
+    }
+
+    public void setNumberOfStudents(Long numberOfStudents) {
+        this.numberOfStudentsTransient = numberOfStudents;
+    }
+
+    public Long getNumberOfInstructors() {
+        return this.numberOfInstructorsTransient;
+    }
+
+    public Long getNumberOfTeachingAssistants() {
+        return this.numberOfTeachingAssistantsTransient;
+    }
+
+    public Long getNumberOfStudents() {
+        return this.numberOfStudentsTransient;
     }
 }

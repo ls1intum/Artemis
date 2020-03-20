@@ -110,4 +110,6 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
     List<ProgrammingExercise> findAllByInstructorOrTAGroupNameIn(@Param("groupNames") Set<String> groupNames);
 
     List<ProgrammingExercise> findAllByCourse(Course course);
+
+    List<ProgrammingExercise> findAllByShortNameAndCourse(String shortName, Course course);
 }

@@ -23,15 +23,31 @@
             "color": "Color",
             "courseIcon": "Course Icon",
             "shortName": "Short Name",
-            "studentGroupName": "Student Group",
-            "teachingAssistantGroupName": "Tutor Group",
-            "instructorGroupName": "Instructor Group",
+            "maxComplaints": {
+                "title": "Maximum Amount of Complaints",
+                "description": "Set the maximum amount of complaints allowed"
+            },
+            "maxComplaintTimeDays": {
+                "title": "Deadline for complaints in days after result date",
+                "description": "Maximum Complaint Deadline for student complaints. This refers to days after the result is available (assessment due date or after the result date depending on which one is later). Students will not be able to complain anymore after the deadline."
+            },
+            "studentQuestionsEnabled": {
+                "title": "Enable Questions and Answers by students",
+                "description": "Enable Questions and Answers section on lecture and exercise page"
+            },
+            "complaintsEnabled": {
+                "title": "Enable Complaints",
+                "description": "Enabling this allows students to complaint about results"
+            },
+            "studentGroupName": "Students",
+            "teachingAssistantGroupName": "Tutors",
+            "instructorGroupName": "Instructors",
             "description": "Course Description",
             "startDate": "Start",
             "endDate": "End",
             "accessGroups": "Access Groups",
             "onlineCourse": "Online Course",
-            "registrationEnabled": "Registration Enabled",
+            "registrationEnabled": "Student Registration Enabled",
             "exercises": "Exercises",
             "programmingExercises": "Programming Exercises",
             "quizExercises": "Quiz Exercises",

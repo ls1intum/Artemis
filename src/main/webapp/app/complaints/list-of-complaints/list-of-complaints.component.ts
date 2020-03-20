@@ -14,6 +14,7 @@ import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { cloneDeep } from 'lodash';
 
 @Component({
+    // TODO this selector is used twice which is not good!!!
     selector: 'jhi-complaint-form',
     templateUrl: './list-of-complaints.component.html',
     providers: [],

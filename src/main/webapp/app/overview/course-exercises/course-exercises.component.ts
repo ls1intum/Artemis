@@ -1,13 +1,13 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Course } from 'app/entities/course.model';
-import { CourseManagementService } from '../../course/manage/course-management.service';
+import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs/Subscription';
 import { TranslateService } from '@ngx-translate/core';
 import { HttpResponse } from '@angular/common/http';
 import * as moment from 'moment';
 import { AccountService } from 'app/core/auth/account.service';
-import { sum } from 'lodash';
+import { sum, flatten, maxBy } from 'lodash';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { courseExerciseOverviewTour } from 'app/guided-tour/tours/course-exercise-overview-tour';
 import { isOrion } from 'app/shared/orion/orion';
@@ -134,13 +134,12 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Checks if the given exercise still needs work, i.e. is not graded with 100%, or wasn't even started, yet.
+     * Checks if the given exercise still needs work, i.e. wasn't even started yet or is not graded with 100%
      * @param exercise The exercise which should get checked
      */
     private needsWork(exercise: Exercise): boolean {
-        const notFullPoints = exercise.studentParticipations.some(participation => participation.results && participation.results.some(result => result.score !== 100));
-        const notStartedYet = exercise.studentParticipations.every(participation => !participation.results.length);
-        return notFullPoints || notStartedYet;
+        const latestResult = maxBy(flatten(exercise.studentParticipations.map(participation => participation.results)), 'completionDate');
+        return !latestResult || latestResult.score !== 100;
     }
 
     /**

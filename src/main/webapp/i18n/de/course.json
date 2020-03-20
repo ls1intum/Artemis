@@ -23,6 +23,22 @@
             "color": "Farbe",
             "courseIcon": "Kursicon",
             "shortName": "Kurzname",
+            "maxComplaints": {
+                "title": "Maximale Anzahl von Beschwerden",
+                "description": "Erlaubte Anzahl von Studentenbeschwerden setzen"
+            },
+            "maxComplaintTimeDays": {
+                "title": "Beschwerdefrist in Tagen nach dem Ergebnis",
+                "description": "Maximale Beschwerdefrist von Studentenbeschwerden setzen. Diese Anzahl bezieht sich auf die Tage, nachdem das Ergebnis verfügbar ist (Fälligkeitsdatum der Bewertung oder nach dem Ergebnisdatum, je nachdem, welches später liegt). Studenten können sich nach Ablauf der Frist nicht mehr beschweren."
+            },
+            "studentQuestionsEnabled": {
+                "title": "Fragen und Antworten von Studierenden aktivieren",
+                "description": "Fragen und Antworten Abschnitt in Vorlesung- und Übungsseite aktivieren / deaktivieren"
+            },
+            "complaintsEnabled": {
+                "title": "Studentenbeschwerden aktivieren",
+                "description": "Wenn du diese Option aktivierst, können sich Studenten über Ergebnisse beschweren."
+            },
             "studentGroupName": "Studenten Gruppe",
             "teachingAssistantGroupName": "Tutor Gruppe",
             "instructorGroupName": "Instructor Gruppe",
@@ -31,7 +47,7 @@
             "endDate": "Ende",
             "accessGroups": "Zugriffsrechte",
             "onlineCourse": "Online Kurs",
-            "registrationEnabled": "Registrierung aktiviert",
+            "registrationEnabled": "Studenten Registrierung aktiviert",
             "exercises": "Aufgaben",
             "programmingExercises": "Programmieraufgaben",
             "quizExercises": "Quizaufgaben",
@@ -40,9 +56,9 @@
             "upload": "Hochladen",
             "uploading": "Lade hoch...",
             "fileUploadExercises": "Datei Upload Aufgabe",
-            "students": "Studenten",
+            "students": "Studierende",
             "tutors": "Tutoren",
-            "instructors": "Instruktoren",
+            "instructors": "Dozenten",
             "onlineCourseFalse": "Nein",
             "onlineCourseTrue": "Ja",
             "form": {
