@@ -154,13 +154,13 @@ public class AccountResourceIntegrationTest extends AbstractSpringIntegrationTes
         // Password Data
         String updatedPassword = "1234";
 
-        PasswordChangeDTO pwChange = new PasswordChangeDTO(user.getPassword(), updatedPassword);
+        PasswordChangeDTO pwChange = new PasswordChangeDTO(userService.encryptor().decrypt(createdUser.getPassword()), updatedPassword);
         // make request
         request.postWithoutLocation("/api/account/change-password", pwChange, HttpStatus.OK,null);
 
         // check if update successful
         User updatedUser = userRepo.findOneByLogin("authenticateduser").get();
-        assertThat(updatedUser.getPassword()).isEqualTo(updatedPassword);
+        assertThat(userService.encryptor().decrypt(updatedUser.getPassword())).isEqualTo(updatedPassword);
     }
 
     @Test
