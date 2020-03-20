@@ -6,7 +6,6 @@ import java.time.ZonedDateTime;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -26,6 +25,7 @@ import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.RequestUtilService;
+import de.tum.in.www1.artemis.web.rest.FileResource;
 
 public class FileIntegrationTest extends AbstractSpringIntegrationTest {
 
@@ -52,6 +52,9 @@ public class FileIntegrationTest extends AbstractSpringIntegrationTest {
 
     @Autowired
     FileService fileService;
+
+    @Autowired
+    FileResource fileResource;
 
     @Autowired
     ParticipationService participationService;
@@ -173,11 +176,46 @@ public class FileIntegrationTest extends AbstractSpringIntegrationTest {
 
         String receivedFile = request.get(fileUploadSubmission.getFilePath() + "?access_token=" + accessToken, HttpStatus.OK, String.class);
         assertThat(receivedFile).isEqualTo("some data");
+        request.get(fileUploadSubmission.getFilePath() + "?access_token=random_non_valid_token", HttpStatus.FORBIDDEN, String.class);
     }
 
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void testGetLectureAttachment() throws Exception {
+        String filename = "attachment.pdf";
+        String attachmentPath = createLectureWithAttachment(filename, HttpStatus.CREATED);
+        // get access token and then request the file using the access token
+        String accessToken = request.get("/api/files/attachments/access-token/" + filename, HttpStatus.OK, String.class);
+        String receivedAttachment = request.get(attachmentPath + "?access_token=" + accessToken, HttpStatus.OK, String.class);
+        assertThat(receivedAttachment).isEqualTo("some data");
+
+        request.get(attachmentPath + "?access_token=random_non_valid_token", HttpStatus.FORBIDDEN, String.class);
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void testGetLectureAttachment_unsupportedFileType() throws Exception {
+        // this should return Unsupported file type
+        createLectureWithAttachment("attachment.abc", HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    public void testGetLectureAttachment_mimeType() throws Exception {
+        // add a new file type to allow to check the mime type detection in FileResource with an exotic extension
+        fileResource.addAllowedFileExtension("exotic");
+
+        String filename = "attachment.exotic";
+        String attachmentPath = createLectureWithAttachment(filename, HttpStatus.CREATED);
+        // get access token and then request the file using the access token
+        String accessToken = request.get("/api/files/attachments/access-token/" + filename, HttpStatus.OK, String.class);
+        String receivedAttachment = request.get(attachmentPath + "?access_token=" + accessToken, HttpStatus.OK, String.class);
+        assertThat(receivedAttachment).isEqualTo("some data");
+
+        fileResource.addRemoveFileExtension("exotic");
+    }
+
+    public String createLectureWithAttachment(String filename, HttpStatus expectedStatus) throws Exception {
         Lecture lecture = database.createCourseWithLecture(true);
         lecture.setTitle("Test title");
         lecture.setDescription("Test");
@@ -186,9 +224,12 @@ public class FileIntegrationTest extends AbstractSpringIntegrationTest {
         Attachment attachment = ModelFactory.generateAttachment(ZonedDateTime.now(), lecture);
 
         // create file
-        MockMultipartFile file = new MockMultipartFile("file", "attachment.pdf", "application/json", "some data".getBytes());
+        MockMultipartFile file = new MockMultipartFile("file", filename, "application/json", "some data".getBytes());
         // upload file
-        JsonNode response = request.postWithMultipartFile("/api/fileUpload?keepFileName=true", file.getOriginalFilename(), "file", file, JsonNode.class, HttpStatus.CREATED);
+        JsonNode response = request.postWithMultipartFile("/api/fileUpload?keepFileName=true", file.getOriginalFilename(), "file", file, JsonNode.class, expectedStatus);
+        if (expectedStatus != HttpStatus.CREATED) {
+            return null;
+        }
         String responsePath = response.get("path").asText();
         // move file from temp folder to correct folder
         String attachmentPath = fileService.manageFilesForUpdatedFilePath(null, responsePath, Constants.LECTURE_ATTACHMENT_FILEPATH + lecture.getId() + '/', lecture.getId(), true);
@@ -198,11 +239,6 @@ public class FileIntegrationTest extends AbstractSpringIntegrationTest {
 
         lectureRepo.save(lecture);
         attachmentRepo.save(attachment);
-
-        // get access token
-        String accessToken = request.get("/api/files/attachments/access-token/attachment.pdf", HttpStatus.OK, String.class);
-
-        String receivedAttachment = request.get(attachmentPath + "?access_token=" + accessToken, HttpStatus.OK, String.class);
-        assertThat(receivedAttachment).isEqualTo("some data");
+        return attachmentPath;
     }
 }

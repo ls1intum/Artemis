@@ -8,6 +8,9 @@ export interface FileUploadResponse {
 
 @Injectable({ providedIn: 'root' })
 export class FileUploaderService {
+    // NOTE: this list has to be the same as in FileResource.java
+    acceptedFileExtensions = 'png,jpg,jpeg,svg,pdf,zip';
+
     constructor(private http: HttpClient) {}
 
     uploadFile(file: Blob | File, fileName?: string, options?: any): Promise<FileUploadResponse> {
@@ -21,9 +24,17 @@ export class FileUploaderService {
                   .split('.')
                   .pop()
                   .toLocaleLowerCase();
-        const supportedImageFormats = 'png,jpg,jpeg,svg,pdf,zip';
-        if (supportedImageFormats.indexOf(fileExtension) === -1) {
-            return Promise.reject(new Error('Unsupported file-type! Only files of type ".png", ".jpg", ".jpeg", ".svg", ".zip" or ".pdf" allowed.'));
+        if (this.acceptedFileExtensions.split(',').indexOf(fileExtension) === -1) {
+            return Promise.reject(
+                new Error(
+                    'Unsupported file type! Only files of type ' +
+                        this.acceptedFileExtensions
+                            .split(',')
+                            .map(extension => `".${extension}"`)
+                            .join(', ') +
+                        ' allowed.',
+                ),
+            );
         }
 
         /** Check file size **/
