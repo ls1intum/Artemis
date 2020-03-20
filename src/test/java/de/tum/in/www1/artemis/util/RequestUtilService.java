@@ -246,7 +246,7 @@ public class RequestUtilService {
         final var contentAsString = res.getResponse().getContentAsString();
         if (!expectedStatus.is2xxSuccessful()) {
             if (res.getResponse().getContentType() != null && !res.getResponse().getContentType().equals("application/problem+json")
-                && !res.getResponse().getContentType().equals("application/octet-stream")) {
+                    && !res.getResponse().getContentType().equals("application/octet-stream")) {
                 assertThat(contentAsString).isNullOrEmpty();
             }
             return null;
