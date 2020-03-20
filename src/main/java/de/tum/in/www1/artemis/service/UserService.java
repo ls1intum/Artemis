@@ -517,15 +517,15 @@ public class UserService {
 
     /**
      * Get all managed users
-     * @param search used to find users
+     * @param userSearch used to find users
      * @return all users
      */
-    public Page<UserDTO> getAllManagedUsers(PageableSearchDTO<String> search) {
-        final var searchTerm = search.getSearchTerm();
-        var sorting = Sort.by(search.getSortedColumn());
-        sorting = search.getSortingOrder() == SortingOrder.ASCENDING ? sorting.ascending() : sorting.descending();
-        final var sorted = PageRequest.of(search.getPage(), search.getPageSize(), sorting);
-        return userRepository.searchByLoginOrNameWithGroup(searchTerm, searchTerm, sorted).map(UserDTO::new);
+    public Page<UserDTO> getAllManagedUsers(PageableSearchDTO<String> userSearch) {
+        final var searchTerm = userSearch.getSearchTerm();
+        var sorting = Sort.by(userSearch.getSortedColumn());
+        sorting = userSearch.getSortingOrder() == SortingOrder.ASCENDING ? sorting.ascending() : sorting.descending();
+        final var sorted = PageRequest.of(userSearch.getPage(), userSearch.getPageSize(), sorting);
+        return userRepository.searchByLoginOrNameWithGroups(searchTerm, sorted).map(UserDTO::new);
     }
 
     /**

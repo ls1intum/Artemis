@@ -8,7 +8,6 @@ import { User } from 'app/core/user/user.model';
 import { UserService } from 'app/core/user/user.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { Subject } from 'rxjs';
-import { ITEMS_PER_PAGE } from 'app/shared/constants/pagination.constants';
 import { AlertService } from 'app/core/alert/alert.service';
 import { SortingOrder } from 'app/shared/table/pageable-table';
 
@@ -17,7 +16,7 @@ import { SortingOrder } from 'app/shared/table/pageable-table';
     templateUrl: './user-management.component.html',
 })
 export class UserManagementComponent implements OnInit, OnDestroy {
-    loading = false;
+    loadingSearchResult = false;
 
     currentAccount: User;
     users: User[];
@@ -45,7 +44,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
         private router: Router,
         private eventManager: JhiEventManager,
     ) {
-        this.itemsPerPage = ITEMS_PER_PAGE;
+        this.itemsPerPage = 50;
         this.searchTermString = '';
         this.routeData = this.activatedRoute.data.subscribe(data => {
             this.page = data['pagingParams'].page;
@@ -105,7 +104,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
      * Retrieve the list of users from the user service for a single page in the user management based on the page, size and sort configuration
      */
     loadAll() {
-        this.loading = true;
+        this.loadingSearchResult = true;
         this.userService
             .query({
                 page: this.page - 1,
@@ -116,10 +115,13 @@ export class UserManagementComponent implements OnInit, OnDestroy {
             })
             .subscribe(
                 (res: HttpResponse<User[]>) => {
-                    this.loading = false;
+                    this.loadingSearchResult = false;
                     this.onSuccess(res.body!, res.headers);
                 },
-                (res: HttpErrorResponse) => onError(this.alertService, res),
+                (res: HttpErrorResponse) => {
+                    this.loadingSearchResult = false;
+                    onError(this.alertService, res);
+                },
             );
     }
 

@@ -31,6 +31,8 @@
         "createdBy": "Created by",
         "createdDate": "Created date",
         "lastModifiedBy": "Modified by",
-        "lastModifiedDate": "Modified date"
+        "lastModifiedDate": "Modified date",
+        "search": "Search for User: ",
+        "loading": "Loading..."
     }
 }

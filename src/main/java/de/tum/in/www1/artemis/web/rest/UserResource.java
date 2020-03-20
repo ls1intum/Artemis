@@ -153,13 +153,13 @@ public class UserResource {
     /**
      * GET /users : get all users.
      *
-     * @param search the pagination information
+     * @param userSearch the pagination information for user search
      * @return the ResponseEntity with status 200 (OK) and with body all users
      */
     @GetMapping("/users")
     @Secured(AuthoritiesConstants.ADMIN)
-    public ResponseEntity<List<UserDTO>> getAllUsers(@ApiParam PageableSearchDTO<String> search) {
-        final Page<UserDTO> page = userService.getAllManagedUsers(search);
+    public ResponseEntity<List<UserDTO>> getAllUsers(@ApiParam PageableSearchDTO<String> userSearch) {
+        final Page<UserDTO> page = userService.getAllManagedUsers(userSearch);
         HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
         return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
     }

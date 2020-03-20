@@ -67,8 +67,9 @@ public interface UserRepository extends JpaRepository<User, Long> {
     Page<User> findAllWithGroups(Pageable pageable);
 
     @EntityGraph(attributePaths = { "groups" })
-    @Query("select user from User user where user.login like %:partialLogin% or user.email like %:partialEmail%")
-    Page<User> searchByLoginOrNameWithGroup(String partialLogin, String partialEmail, Pageable pageable);
+    @Query("select user from User user where user.login like %:searchTerm% or user.email like %:searchTerm% or " +
+        "user.lastName like %:searchTerm%")
+    Page<User> searchByLoginOrNameWithGroups(String searchTerm, Pageable pageable);
 
     @Modifying
     @Query("Update User user set user.lastNotificationRead = current_timestamp() where user.id = :#{#userId}")

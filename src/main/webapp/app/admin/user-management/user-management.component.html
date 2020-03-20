@@ -9,7 +9,7 @@
     <div class="table-responsive" *ngIf="users">
         <div class="form-group form-inline">
             Search for User: <input class="form-control ml-2" type="text" name="searchUser" [(ngModel)]="searchTerm" />
-            <span class="ml-3" *ngIf="loading">Loading...</span>
+            <span class="ml-3" *ngIf="loadingSearchResult">Loading...</span>
         </div>
         <table class="table table-striped">
             <thead>
@@ -17,6 +17,7 @@
                     <th jhiSortBy="id"><span jhiTranslate="global.field.id">ID</span> <fa-icon [icon]="'sort'"></fa-icon></th>
                     <th jhiSortBy="login"><span jhiTranslate="userManagement.login">Login</span> <fa-icon [icon]="'sort'"></fa-icon></th>
                     <th jhiSortBy="email"><span jhiTranslate="userManagement.email">Email</span> <fa-icon [icon]="'sort'"></fa-icon></th>
+                    <th jhiSortBy="name"><span jhiTranslate="userManagement.lastName">Name</span> <fa-icon [icon]="'sort'"></fa-icon></th>
                     <th></th>
                     <th jhiSortBy="langKey"><span jhiTranslate="userManagement.langKey">Lang Key</span> <fa-icon [icon]="'sort'"></fa-icon></th>
                     <th><span jhiTranslate="userManagement.profiles">Profiles</span></th>
@@ -37,6 +38,9 @@
                     </td>
                     <td>
                         <ngb-highlight [result]="user.email" [term]="searchTerm"></ngb-highlight>
+                    </td>
+                    <td>
+                        <ngb-highlight [result]="user.lastName" [term]="searchTerm"></ngb-highlight>
                     </td>
                     <td>
                         <button class="btn btn-danger btn-sm" (click)="setActive(user, true)" *ngIf="!user.activated" jhiTranslate="userManagement.deactivated">Deactivated</button>
