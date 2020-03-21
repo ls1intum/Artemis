@@ -65,7 +65,8 @@
             <jhi-team-student-search
                 [course]="exercise.course"
                 [exercise]="exercise"
-                [studentsAlreadySelected]="pendingTeam.students"
+                [studentsFromTeam]="team.students"
+                [studentsFromPendingTeam]="pendingTeam.students"
                 (selectStudent)="onAddStudent($event)"
                 (searching)="searchingStudents = $event"
                 (searchFailed)="searchingStudentsFailed = $event"

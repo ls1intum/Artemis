@@ -6,6 +6,7 @@ import { get } from 'lodash';
 import { Course } from 'app/entities/course.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { TeamService } from 'app/exercises/shared/team/team.service';
+import { TeamSearchUser } from 'app/entities/team-search-student.model';
 
 @Component({
     selector: 'jhi-team-student-search',
@@ -16,7 +17,8 @@ export class TeamStudentSearchComponent {
 
     @Input() course: Course;
     @Input() exercise: Exercise;
-    @Input() studentsAlreadySelected: User[] = [];
+    @Input() studentsFromTeam: User[] = [];
+    @Input() studentsFromPendingTeam: User[] = [];
 
     @Output() selectStudent = new EventEmitter<User>();
     @Output() searching = new EventEmitter<boolean>();
@@ -65,7 +67,7 @@ export class TeamStudentSearchComponent {
             tap(users => {
                 setTimeout(() => {
                     for (let i = 0; i < this.typeaheadButtons.length; i++) {
-                        if (users[i].assignedToTeam || this.studentsAlreadySelected.map(s => s.id).includes(users[i].id)) {
+                        if (!this.userCanBeAddedToPendingTeam(users[i])) {
                             this.typeaheadButtons[i].setAttribute('disabled', '');
                         }
                     }
@@ -74,6 +76,19 @@ export class TeamStudentSearchComponent {
             tap(() => this.searching.emit(false)),
         );
     };
+
+    private userCanBeAddedToPendingTeam(user: TeamSearchUser): boolean {
+        if (this.studentsFromPendingTeam.map(s => s.id).includes(user.id)) {
+            // If a student is already part of the pending team, they cannot be added again
+            return false;
+        } else if (this.studentsFromTeam.map(s => s.id).includes(user.id)) {
+            // If a student is not part of the pending team but was in the original team, they can be added back
+            return true;
+        }
+        // If a student was neither in the original team nor is in the pending team,
+        // they can be added if they are not assigned to another team yet
+        return !user.assignedToTeam;
+    }
 
     private get typeaheadButtons() {
         return get(this.ngbTypeahead, 'nativeElement.nextSibling.children', []);
