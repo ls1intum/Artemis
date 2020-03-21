@@ -14,6 +14,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
+import com.fasterxml.jackson.databind.module.SimpleModule;
+
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.Team;
@@ -23,6 +25,7 @@ import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.TeamRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.dto.TeamSearchUserDTO;
+import de.tum.in.www1.artemis.service.dto.TeamUnitTestDTO;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.RequestUtilService;
@@ -55,8 +58,14 @@ public class TeamIntegrationTest extends AbstractSpringIntegrationTest {
 
     private final static int numberOfStudentsInCourse = 3;
 
+    private final static long nonExistingId = 123456789L;
+
     private String resourceUrl() {
         return "/api/exercises/" + exercise.getId() + "/teams";
+    }
+
+    private String resourceUrlWithWrongExerciseId() {
+        return "/api/exercises/" + (exercise.getId() + 1) + "/teams";
     }
 
     private String resourceUrlExistsTeamByShortName(String shortName) {
@@ -74,6 +83,11 @@ public class TeamIntegrationTest extends AbstractSpringIntegrationTest {
         course = courseRepo.findAll().get(0);
         exercise = exerciseRepo.findAll().get(0);
         students = new HashSet<>(userRepo.findAllInGroup("tumuser"));
+
+        // Mix-in TeamUnitTestDTO for Team class (needed for serializing write-only attributes when building the request body)
+        SimpleModule module = new SimpleModule();
+        module.setMixInAnnotation(Team.class, TeamUnitTestDTO.class);
+        request.registerObjectMapperModule(module);
     }
 
     @AfterEach
@@ -108,6 +122,35 @@ public class TeamIntegrationTest extends AbstractSpringIntegrationTest {
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
+    public void testCreateTeam_BadRequest() throws Exception {
+        // Try creating a team that already has an id set
+        Team team1 = new Team();
+        team1.setId(1L);
+        request.postWithResponseBody(resourceUrl(), team1, Team.class, HttpStatus.BAD_REQUEST);
+
+        // Try creating a team with an exercise specified that does not match the exercise id param in the route
+        Team team2 = new Team();
+        team2.setExercise(exercise);
+        request.postWithResponseBody(resourceUrlWithWrongExerciseId(), team2, Team.class, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void testCreateTeam_Forbidden_AsTutorOfDifferentCourse() throws Exception {
+        // If the TA is not part of the correct course TA group anymore, he should not be able to create a team for an exercise of that course
+        course.setTeachingAssistantGroupName("Different group name");
+        courseRepo.save(course);
+
+        Team team = new Team();
+        team.setName("Team");
+        team.setShortName("team");
+        team.setExercise(exercise);
+        team.setStudents(students);
+        request.postWithResponseBody(resourceUrl(), team, Team.class, HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
     public void testUpdateTeam() throws Exception {
         final String TEAM_NAME_UPDATED = "Team Updated";
 
@@ -122,7 +165,45 @@ public class TeamIntegrationTest extends AbstractSpringIntegrationTest {
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testUpdateTeamShortNameForbidden() throws Exception {
+    public void testUpdateTeam_BadRequest() throws Exception {
+        // Try updating a team that has no id specified
+        Team team1 = new Team();
+        request.putWithResponseBody(resourceUrl() + "/1", team1, Team.class, HttpStatus.BAD_REQUEST);
+
+        // Try updating a team with an id specified that does not match the team id param in the route
+        Team team2 = database.addTeamForExercise(exercise);
+        request.putWithResponseBody(resourceUrl() + "/" + (team2.getId() + 1), team2, Team.class, HttpStatus.BAD_REQUEST);
+
+        // Try updating a team with an exercise specified that does not match the exercise id param in the route
+        request.putWithResponseBody(resourceUrlWithWrongExerciseId() + "/" + team2.getId(), team2, Team.class, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void testUpdateTeam_NotFound() throws Exception {
+        // Try updating a non-existing team
+        Team team4 = new Team();
+        team4.setId(nonExistingId);
+        team4.setExercise(exercise);
+        request.putWithResponseBody(resourceUrl() + "/" + team4.getId(), team4, Team.class, HttpStatus.NOT_FOUND);
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void testUpdateTeam_Forbidden_AsTutorOfDifferentCourse() throws Exception {
+        // If the TA is not part of the correct course TA group anymore, he should not be able to update a team for an exercise of that course
+        course.setTeachingAssistantGroupName("Different group name");
+        courseRepo.save(course);
+
+        Team team = database.addTeamForExercise(exercise);
+        team.setName("Updated Team Name");
+        request.putWithResponseBody(resourceUrl() + "/" + team.getId(), team, Team.class, HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void testUpdateTeam_Forbidden_ShortNameChanged() throws Exception {
+        // It should not be allowed to change a team's short name (unique identifier) after creation
         Team team = database.addTeamForExercise(exercise);
         team.setShortName(team.getShortName() + " Updated");
         request.putWithResponseBody(resourceUrl() + "/" + team.getId(), team, Team.class, HttpStatus.FORBIDDEN);
@@ -141,6 +222,23 @@ public class TeamIntegrationTest extends AbstractSpringIntegrationTest {
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
+    public void testGetTeam_BadRequest() throws Exception {
+        database.addCourseWithOneProgrammingExercise();
+        Exercise wrongExercise = exerciseRepo.findAll().get(1);
+
+        // Try getting a team with an exercise specified that does not match the exercise id param in the route
+        Team team = database.addTeamForExercise(wrongExercise);
+        request.get(resourceUrl() + "/" + team.getId(), HttpStatus.BAD_REQUEST, Team.class);
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void testGetTeam_NotFound() throws Exception {
+        request.get(resourceUrl() + "/" + nonExistingId, HttpStatus.NOT_FOUND, Team.class);
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
     public void testGetTeamsForExercise() throws Exception {
         int numberOfTeams = 3;
 
@@ -150,6 +248,16 @@ public class TeamIntegrationTest extends AbstractSpringIntegrationTest {
         List<Team> serverTeams = request.getList(resourceUrl(), HttpStatus.OK, Team.class);
         assertThat(serverTeams).as("Correct number of teams was fetched").hasSize(numberOfTeams);
         assertThat(getCountOfStudentsInTeams(serverTeams)).as("Correct number of students were fetched").isEqualTo(numberOfStudents);
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void testGetTeamsForExercise_Forbidden() throws Exception {
+        // If the TA is not part of the correct course TA group anymore, he should not be able to get the teams for an exercise of that course
+        course.setTeachingAssistantGroupName("Different group name");
+        courseRepo.save(course);
+        database.addTeamsForExercise(exercise, 3);
+        request.getList(resourceUrl(), HttpStatus.FORBIDDEN, Team.class);
     }
 
     @Test
@@ -165,10 +273,36 @@ public class TeamIntegrationTest extends AbstractSpringIntegrationTest {
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testDeleteTeamAsTutorForbidden() throws Exception {
+    public void testDeleteTeam_Forbidden_AsTutor() throws Exception {
         Team team = database.addTeamForExercise(exercise);
 
         request.delete(resourceUrl() + "/" + team.getId(), HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testDeleteTeam_Forbidden_AsInstructorOfDifferentCourse() throws Exception {
+        // If the instructor is not part of the correct course instructor group anymore,
+        // he should not be able to delete a team for an exercise of that course
+        course.setInstructorGroupName("Different group name");
+        courseRepo.save(course);
+
+        Team team = database.addTeamForExercise(exercise);
+        request.delete(resourceUrl() + "/" + team.getId(), HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testDeleteTeam_BadRequest() throws Exception {
+        // Try deleting a team with an exercise specified that does not match the exercise id param in the route
+        Team team = database.addTeamForExercise(exercise);
+        request.delete(resourceUrlWithWrongExerciseId() + "/" + team.getId(), HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testDeleteTeam_NotFound() throws Exception {
+        request.delete(resourceUrl() + "/" + nonExistingId, HttpStatus.NOT_FOUND);
     }
 
     @Test
@@ -207,6 +341,23 @@ public class TeamIntegrationTest extends AbstractSpringIntegrationTest {
 
         List<TeamSearchUserDTO> users4 = request.getList(resourceUrlSearchUsersInCourse(teamStudent.getLogin()), HttpStatus.OK, TeamSearchUserDTO.class);
         assertThat(users4).as("User from team was found").hasSize(1);
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void testSearchUsersInCourse_BadRequest() throws Exception {
+        // Search terms that are shorter than 3 characters should lead to bad request
+        request.getList(resourceUrlSearchUsersInCourse("ab"), HttpStatus.BAD_REQUEST, TeamSearchUserDTO.class);
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void testSearchUsersInCourse_Forbidden_AsTutorOfDifferentCourse() throws Exception {
+        // If the TA is not part of the correct course TA group anymore, he should not be able to search for users in the course
+        course.setTeachingAssistantGroupName("Different group name");
+        courseRepo.save(course);
+
+        request.getList(resourceUrlSearchUsersInCourse("student"), HttpStatus.FORBIDDEN, TeamSearchUserDTO.class);
     }
 
     @Test
