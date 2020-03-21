@@ -17,6 +17,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
@@ -174,6 +175,14 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationTest 
         programmingExercise.setDueDate(ZonedDateTime.now().minusHours(2));
         exerciseRepo.save(programmingExercise);
         request.post("/api/courses/" + course.getId() + "/exercises/" + programmingExercise.getId() + "/participations", null, HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = "student1")
+    public void participateInProgrammingTeamExercise_withoutAssignedTeam() throws Exception {
+        programmingExercise.setMode(ExerciseMode.TEAM);
+        exerciseRepo.save(programmingExercise);
+        request.post("/api/courses/" + course.getId() + "/exercises/" + programmingExercise.getId() + "/participations", null, HttpStatus.BAD_REQUEST);
     }
 
     @Test

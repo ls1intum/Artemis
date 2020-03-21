@@ -2,10 +2,8 @@ package de.tum.in.www1.artemis;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.time.ZonedDateTime;
+import java.util.*;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -20,6 +18,7 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.Team;
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.TeamRepository;
@@ -78,10 +77,15 @@ public class TeamIntegrationTest extends AbstractSpringIntegrationTest {
 
     @BeforeEach
     public void initTestCase() {
-        database.addUsers(numberOfStudentsInCourse, 1, 1);
-        database.addCourseWithOneProgrammingExercise();
-        course = courseRepo.findAll().get(0);
-        exercise = exerciseRepo.findAll().get(0);
+        database.addUsers(numberOfStudentsInCourse, 5, 1);
+        course = database.addCourseWithOneProgrammingExercise();
+
+        // Make exercise team-based and already released to students
+        exercise = course.getExercises().iterator().next();
+        exercise.setMode(ExerciseMode.TEAM);
+        exercise.setReleaseDate(ZonedDateTime.now().minusDays(1));
+        exercise = exerciseRepo.save(exercise);
+
         students = new HashSet<>(userRepo.findAllInGroup("tumuser"));
 
         // Mix-in TeamUnitTestDTO for Team class (needed for serializing write-only attributes when building the request body)
@@ -383,8 +387,31 @@ public class TeamIntegrationTest extends AbstractSpringIntegrationTest {
         request.getList(resourceUrlSearchUsersInCourse("student"), HttpStatus.FORBIDDEN, TeamSearchUserDTO.class);
     }
 
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testAssignedTeamIdOnExerciseForCurrentUser() throws Exception {
+        // Create team that contains student "student1" (Team shortName needs to be empty since it is used as a prefix for the generated student logins)
+        Team team = new Team();
+        team.setName("Team");
+        team.setShortName("team");
+        team.setExercise(exercise);
+        team.setStudents(userRepo.findOneByLogin("student1").map(Set::of).orElseThrow());
+        team = teamRepo.save(team);
+
+        // Check for endpoint: @GetMapping("/courses/for-dashboard")
+        List<Course> courses = request.getList("/api/courses/for-dashboard", HttpStatus.OK, Course.class);
+        Exercise serverExercise = courses.stream().filter(c -> c.getId().equals(course.getId())).findAny()
+                .flatMap(c -> c.getExercises().stream().filter(e -> e.getId().equals(exercise.getId())).findAny()).orElseThrow();
+        assertThat(serverExercise.getStudentAssignedTeamId()).as("Assigned team id on exercise from dashboard is correct for student.").isEqualTo(team.getId());
+
+        // Check for endpoint: @GetMapping("/exercises/{exerciseId}/details")
+        Exercise exerciseWithDetails = request.get("/api/exercises/" + exercise.getId() + "/details", HttpStatus.OK, Exercise.class);
+        assertThat(exerciseWithDetails.getStudentAssignedTeamId()).as("Assigned team id on exercise from details is correct for student.").isEqualTo(team.getId());
+    }
+
     /**
      * Sums up the number of students in a list of teams
+     *
      * @param teams Teams for which to count all students
      * @return count of students in all teams
      */
