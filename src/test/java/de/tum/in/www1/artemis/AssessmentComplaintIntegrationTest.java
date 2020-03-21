@@ -107,8 +107,8 @@ public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegratio
     @Test
     @WithMockUser(username = "student1")
     public void submitComplaintAboutModellingAssessment_complaintLimitNotReached() throws Exception {
-        // 3 complaints are allowed because the mock object is now initialized with 5 max complaints
-        database.addComplaints("student1", modelingAssessment.getParticipation(), 3, ComplaintType.COMPLAINT);
+        // 2 complaints are allowed, the course is created with 3 max complaints
+        database.addComplaints("student1", modelingAssessment.getParticipation(), 2, ComplaintType.COMPLAINT);
 
         request.post("/api/complaints", complaint, HttpStatus.CREATED);
 

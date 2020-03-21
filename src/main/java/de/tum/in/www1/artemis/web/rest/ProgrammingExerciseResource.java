@@ -47,6 +47,7 @@ import de.tum.in.www1.artemis.service.feature.FeatureToggle;
 import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.dto.RepositoryExportOptionsDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
+import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import de.tum.in.www1.artemis.web.websocket.dto.ProgrammingExerciseTestCaseStateDTO;
@@ -160,6 +161,7 @@ public class ProgrammingExerciseResource {
         if (!authCheckService.isInstructorInCourse(course, user) && !authCheckService.isAdmin()) {
             return forbidden();
         }
+
         // security mechanism: make sure that we use the values from the database and not the once which might have been altered in the client
         programmingExercise.setCourse(course);
 
@@ -169,7 +171,7 @@ public class ProgrammingExerciseResource {
                     .headers(HeaderUtil.createAlert(applicationName, "The title of the programming exercise is too short", "programmingExerciseTitleInvalid")).body(null);
         }
 
-        // CHeck if the exercise title matches regex
+        // Check if the exercise title matches regex
         Matcher titleMatcher = TITLE_NAME_PATTERN.matcher(programmingExercise.getTitle());
         if (!titleMatcher.matches()) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "The title is invalid", "titleInvalid")).body(null);
@@ -194,6 +196,12 @@ public class ProgrammingExerciseResource {
             return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "The shortname is invalid", "shortnameInvalid")).body(null);
         }
 
+        List<ProgrammingExercise> programmingExercisesWithSameShortName = programmingExerciseRepository.findAllByShortNameAndCourse(programmingExercise.getShortName(), course);
+        if (programmingExercisesWithSameShortName.size() > 0) {
+            return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName,
+                    "A programming exercise with the same short name already exists. Please choose a different short name.", "shortnameAlreadyExists")).body(null);
+        }
+
         // Check if programming language is set
         if (programmingExercise.getProgrammingLanguage() == null) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "No programming language was specified", "programmingLanguageNotSet")).body(null);
@@ -203,13 +211,13 @@ public class ProgrammingExerciseResource {
         if (programmingExercise.getProgrammingLanguage() == ProgrammingLanguage.JAVA) {
             // only Java needs a valid package name at the moment
             if (programmingExercise.getPackageName() == null || programmingExercise.getPackageName().length() < 3) {
-                return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "The packagename is invalid", "packagenameInvalid")).body(null);
+                return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "The package name is invalid", "packagenameInvalid")).body(null);
             }
 
             // Check if package name matches regex
             Matcher packageNameMatcher = packageNamePattern.matcher(programmingExercise.getPackageName());
             if (!packageNameMatcher.matches()) {
-                return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "The packagename is invalid", "packagenameInvalid")).body(null);
+                return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "The package name is invalid", "packagenameInvalid")).body(null);
             }
         }
 
@@ -223,7 +231,10 @@ public class ProgrammingExerciseResource {
         String projectName = programmingExercise.getProjectName();
         boolean projectExists = versionControlService.get().checkIfProjectExists(projectKey, projectName);
         if (projectExists) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "Project already exists in VCS: " + projectName, "vcsProjectExists")).body(null);
+            return ResponseEntity.badRequest()
+                    .headers(HeaderUtil.createAlert(applicationName,
+                            "Project already exists on the Version Control Server: " + projectName + ". Please choose a different title and short name!", "vcsProjectExists"))
+                    .body(null);
         }
 
         String errorMessageCI = continuousIntegrationService.get().checkIfProjectExists(projectKey, projectName);
@@ -304,38 +315,46 @@ public class ProgrammingExerciseResource {
     }
 
     /**
-     * PUT /programming-exercises : Updates an existing programmingExercise.
+     * PUT /programming-exercises : Updates an existing updatedProgrammingExercise.
      *
-     * @param programmingExercise the programmingExercise to update
+     * @param updatedProgrammingExercise the programmingExercise that has been updated on the client
      * @param notificationText to notify the student group about the update on the programming exercise
-     * @return the ResponseEntity with status 200 (OK) and with body the updated programmingExercise, or with status 400 (Bad Request) if the programmingExercise is not valid, or
-     *      *         with status 500 (Internal Server Error) if the programmingExercise couldn't be updated
-     * @throws URISyntaxException if the Location URI syntax is incorrect
+     * @return the ResponseEntity with status 200 (OK) and with body the updated ProgrammingExercise, or with status 400 (Bad Request) if the updated ProgrammingExercise
+     * is not valid, or with status 500 (Internal Server Error) if the updated ProgrammingExercise couldn't be saved to the database
      */
     @PutMapping(Endpoints.PROGRAMMING_EXERCISES)
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
-    public ResponseEntity<ProgrammingExercise> updateProgrammingExercise(@RequestBody ProgrammingExercise programmingExercise,
-            @RequestParam(value = "notificationText", required = false) String notificationText) throws URISyntaxException {
-        log.debug("REST request to update ProgrammingExercise : {}", programmingExercise);
-        if (programmingExercise.getId() == null) {
+    public ResponseEntity<ProgrammingExercise> updateProgrammingExercise(@RequestBody ProgrammingExercise updatedProgrammingExercise,
+            @RequestParam(value = "notificationText", required = false) String notificationText) {
+        log.debug("REST request to update ProgrammingExercise : {}", updatedProgrammingExercise);
+        if (updatedProgrammingExercise.getId() == null) {
             return badRequest();
         }
         // fetch course from database to make sure client didn't change groups
-        Course course = courseService.findOne(programmingExercise.getCourse().getId());
+        Course course = courseService.findOne(updatedProgrammingExercise.getCourse().getId());
         User user = userService.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isInstructorInCourse(course, user) && !authCheckService.isAdmin()) {
             return forbidden();
         }
 
-        ResponseEntity<ProgrammingExercise> errorResponse = checkProgrammingExerciseForError(programmingExercise);
+        ResponseEntity<ProgrammingExercise> errorResponse = checkProgrammingExerciseForError(updatedProgrammingExercise);
         if (errorResponse != null) {
             return errorResponse;
         }
 
+        var existingProgrammingExercise = programmingExerciseRepository.findById(updatedProgrammingExercise.getId());
+        if (existingProgrammingExercise.isEmpty()) {
+            throw new EntityNotFoundException("Cannot update a programming exercise that does not exist in the database");
+        }
+        if (!Objects.equals(existingProgrammingExercise.get().getShortName(), updatedProgrammingExercise.getShortName())) {
+            throw new BadRequestAlertException("The programming exercise short name cannot be changed", ENTITY_NAME, "shortNameCannotChange");
+        }
+
         // Only save after checking for errors
-        ProgrammingExercise savedProgrammingExercise = programmingExerciseService.updateProgrammingExercise(programmingExercise, notificationText);
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, programmingExercise.getTitle())).body(savedProgrammingExercise);
+        ProgrammingExercise savedProgrammingExercise = programmingExerciseService.updateProgrammingExercise(updatedProgrammingExercise, notificationText);
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, updatedProgrammingExercise.getTitle()))
+                .body(savedProgrammingExercise);
     }
 
     /**

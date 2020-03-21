@@ -101,6 +101,7 @@ public class JenkinsService implements ContinuousIntegrationService {
             job(exercise.getProjectKey(), planKey).build(true);
         }
         catch (IOException e) {
+            log.error(e.getMessage(), e);
             throw new JenkinsException("Unable to create new build plan :" + planKey, e);
         }
     }
@@ -154,6 +155,7 @@ public class JenkinsService implements ContinuousIntegrationService {
             job(projectKey, planKey).build(true);
         }
         catch (IOException e) {
+            log.error(e.getMessage(), e);
             throw new JenkinsException("Error triggering build: " + planKey, e);
         }
     }
@@ -164,6 +166,7 @@ public class JenkinsService implements ContinuousIntegrationService {
             jenkinsServer.deleteJob(projectKey, true);
         }
         catch (IOException e) {
+            log.error(e.getMessage(), e);
             throw new JenkinsException("Error while trying to delete folder in Jenkins for " + projectKey, e);
         }
     }
@@ -174,6 +177,7 @@ public class JenkinsService implements ContinuousIntegrationService {
             jenkinsServer.deleteJob(folder(projectKey), buildPlanId, true);
         }
         catch (IOException e) {
+            log.error(e.getMessage(), e);
             throw new JenkinsException("Error while trying to delete job in Jenkins: " + buildPlanId, e);
         }
     }
@@ -187,6 +191,7 @@ public class JenkinsService implements ContinuousIntegrationService {
          * (TESTEXC-SOLUTION) would be: TESTEXC » TESTEXC-SOLUTION #3 ==> This would mean that at index 2, we have the actual job/plan key, i.e. TESTEXC-SOLUTION
          */
         if (nameParams.length != 4) {
+            log.error("Can't extract planKey from requestBody! Not a test notification result!: " + new ObjectMapper().writeValueAsString(requestBody));
             throw new JenkinsException("Can't extract planKey from requestBody! Not a test notification result!: " + new ObjectMapper().writeValueAsString(requestBody));
         }
 
@@ -289,6 +294,7 @@ public class JenkinsService implements ContinuousIntegrationService {
             return jobStatus.get("building").asBoolean() ? BuildStatus.BUILDING : BuildStatus.INACTIVE;
         }
         catch (HttpClientErrorException e) {
+            log.error(e.getMessage(), e);
             throw new JenkinsException("Error while trying to fetch build status from Jenkins for " + planKey, e);
         }
     }
@@ -474,6 +480,7 @@ public class JenkinsService implements ContinuousIntegrationService {
             jenkinsServer.createFolder(programmingExercise.getProjectKey(), true);
         }
         catch (IOException e) {
+            log.error(e.getMessage(), e);
             throw new JenkinsException("Error creating folder for exercise " + programmingExercise, e);
         }
     }
@@ -536,7 +543,7 @@ public class JenkinsService implements ContinuousIntegrationService {
             return response.getBody();
         }
         catch (HttpClientErrorException e) {
-            log.error(messageInCaseOfError);
+            log.error(messageInCaseOfError, e);
             throw new JenkinsException(messageInCaseOfError, e);
         }
     }
@@ -565,7 +572,7 @@ public class JenkinsService implements ContinuousIntegrationService {
             return response.getBody();
         }
         catch (HttpClientErrorException e) {
-            log.error(messagInCaseOfError);
+            log.error(messagInCaseOfError, e);
             throw new JenkinsException(messagInCaseOfError, e);
         }
     }
@@ -581,7 +588,7 @@ public class JenkinsService implements ContinuousIntegrationService {
         }
         catch (TransformerException e) {
             final var errorMessage = "Unable to parse XML document to String! " + doc;
-            log.error(errorMessage);
+            log.error(errorMessage, e);
             throw new JenkinsException(errorMessage, e);
         }
     }

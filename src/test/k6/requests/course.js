@@ -13,10 +13,9 @@ export function newCourse(artemis) {
         title: 'K6 Test Course',
         description: 'K6 performance tests generated course',
         shortName: nextAlphanumeric(5),
-        studentGroupName: 'artemis-test',
-        teachingAssistantGroupName: 'artemis-test',
-        instructorGroupName: 'artemis-test',
-        registrationEnabled: true
+        registrationEnabled: true,
+        maxComplaints: 3,
+        maxComplaintTimeDays: 7,
     };
 
     const res = artemis.post(COURSES, course);

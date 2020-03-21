@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis;
 
+import static de.tum.in.www1.artemis.config.Constants.ARTEMIS_GROUP_DEFAULT_PREFIX;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.verifyNoInteractions;
 
@@ -75,6 +76,10 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationTest {
     @WithMockUser(username = "admin", roles = "ADMIN")
     public void testCreateCourseWithPermission() throws Exception {
         Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>());
+        jiraRequestMockProvider.enableMockingOfRequests();
+        jiraRequestMockProvider.mockCreateGroup(course.getDefaultStudentGroupName());
+        jiraRequestMockProvider.mockCreateGroup(course.getDefaultTeachingAssistantGroupName());
+        jiraRequestMockProvider.mockCreateGroup(course.getDefaultInstructorGroupName());
         request.post("/api/courses", course, HttpStatus.CREATED);
         List<Course> repoContent = courseRepo.findAll();
         assertThat(repoContent.size()).as("Course got stored").isEqualTo(1);
@@ -88,8 +93,12 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationTest {
     @WithMockUser(username = "admin", roles = "ADMIN")
     public void testCreateCourseWithOptions() throws Exception {
         // Generate POST Request Body with maxComplaints = 5, maxComplaintTimeDays = 14, studentQuestionsEnabled = false
-        Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>(), "tumuser", "tutor", "instructor", 5, 14, false);
-        request.post("/api/courses", course, HttpStatus.CREATED);
+        Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>(), null, null, null, 5, 14, false);
+        jiraRequestMockProvider.enableMockingOfRequests();
+        jiraRequestMockProvider.mockCreateGroup(course.getDefaultStudentGroupName());
+        jiraRequestMockProvider.mockCreateGroup(course.getDefaultTeachingAssistantGroupName());
+        jiraRequestMockProvider.mockCreateGroup(course.getDefaultInstructorGroupName());
+        course = request.postWithResponseBody("/api/courses", course, Course.class, HttpStatus.CREATED);
         // Because the courseId is automatically generated we cannot use the findById method to retrieve the saved course.
         Course getFromRepo = courseRepo.findAll().get(0);
         assertThat(getFromRepo.getMaxComplaints()).as("Course has right maxComplaints Value").isEqualTo(5);
@@ -110,7 +119,20 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationTest {
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     public void testDeleteCourseWithPermission() throws Exception {
+        jiraRequestMockProvider.enableMockingOfRequests();
         List<Course> courses = database.createCoursesWithExercisesAndLectures();
+        // mock certain requests to JIRA
+        for (Course course : courses) {
+            if (course.getStudentGroupName().startsWith(ARTEMIS_GROUP_DEFAULT_PREFIX)) {
+                jiraRequestMockProvider.mockDeleteGroup(course.getStudentGroupName());
+            }
+            if (course.getTeachingAssistantGroupName().startsWith(ARTEMIS_GROUP_DEFAULT_PREFIX)) {
+                jiraRequestMockProvider.mockDeleteGroup(course.getTeachingAssistantGroupName());
+            }
+            if (course.getInstructorGroupName().startsWith(ARTEMIS_GROUP_DEFAULT_PREFIX)) {
+                jiraRequestMockProvider.mockDeleteGroup(course.getInstructorGroupName());
+            }
+        }
         for (Course course : courses) {
             if (!course.getExercises().isEmpty()) {
                 groupNotificationService.notifyStudentGroupAboutExerciseUpdate(course.getExercises().iterator().next(), "notify");
@@ -156,6 +178,10 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationTest {
     @WithMockUser(username = "admin", roles = "ADMIN")
     public void testUpdateCourseWithoutId() throws Exception {
         Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>());
+        jiraRequestMockProvider.enableMockingOfRequests();
+        jiraRequestMockProvider.mockCreateGroup(course.getDefaultStudentGroupName());
+        jiraRequestMockProvider.mockCreateGroup(course.getDefaultTeachingAssistantGroupName());
+        jiraRequestMockProvider.mockCreateGroup(course.getDefaultInstructorGroupName());
         request.put("/api/courses", course, HttpStatus.CREATED);
         List<Course> repoContent = courseRepo.findAll();
         assertThat(repoContent.size()).as("Course got stored").isEqualTo(1);
@@ -175,7 +201,6 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationTest {
         Course course = ModelFactory.generateCourse(1L, null, null, new HashSet<>(), "tumuser", "tutor", "instructor");
         course = courseRepo.save(course);
 
-        course.setShortName("test");
         course.setTitle("Test Course");
         course.setStartDate(ZonedDateTime.now().minusDays(5));
         course.setEndDate(ZonedDateTime.now().plusDays(5));
@@ -377,7 +402,7 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationTest {
             assertThat(courseOnly.getTeachingAssistantGroupName()).as("Teaching assistant group name is correct").isEqualTo("tutor");
             assertThat(courseOnly.getInstructorGroupName()).as("Instructor group name is correct").isEqualTo("instructor");
             assertThat(courseOnly.getEndDate()).as("End date is after start date").isAfter(courseOnly.getStartDate());
-            assertThat(courseOnly.getMaxComplaints()).as("Max complaints is correct").isEqualTo(5);
+            assertThat(courseOnly.getMaxComplaints()).as("Max complaints is correct").isEqualTo(3);
             assertThat(courseOnly.getPresentationScore()).as("Presentation score is correct").isEqualTo(2);
             assertThat(courseOnly.getExercises().size()).as("Course without exercises contains no exercises").isZero();
 
