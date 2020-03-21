@@ -273,6 +273,8 @@ You can get the initial admin password using the following command.
 
         # Jenkins highlights the password in the logs, you can't miss it
         docker logs -f jenkins
+        or alternatively
+        docker exec jenkins cat /var/jenkins_home/secrets/initialAdminPassword
 
 7. Set the chosen credentials in the Artemis configuration _application-prod.yml_
 
@@ -387,7 +389,7 @@ After you click on "Test Connection", everything should work fine.
 
         artemis:
             continuous-integration:
-                vcs-credentials: the.id.of.the.username.and.password.credentials.from.jenkins
+                vcs-credentials: the.id.of.the.username.and.password.credentials.from.jenkins (TO CHECK: already set in the previous GitLab API Token step)
                 
 ### GitLab to Jenkins push notification token
 GitLab has to notify Jenkins build plans if there are any new commits to the repository. 
