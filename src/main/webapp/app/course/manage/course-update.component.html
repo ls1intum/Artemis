@@ -38,7 +38,7 @@
                 </div>
                 <div class="form-group">
                     <label class="form-control-label" jhiTranslate="artemisApp.course.shortName" for="field_shortName">Short Name</label>
-                    <input required type="text" class="form-control" name="shortName" id="field_shortName" formControlName="shortName" />
+                    <input required type="text" class="form-control" name="shortName" id="field_shortName" formControlName="shortName" [readOnly]="course.id" />
                     <ng-container *ngIf="shortName.invalid && (shortName.dirty || shortName.touched)">
                         <div class="alert alert-danger">
                             <div *ngFor="let e of shortName.errors! | keyvalue | removekeys: ['required']">
@@ -82,20 +82,6 @@
                             </button>
                         </div>
                     </div>
-                </div>
-                <div class="form-group">
-                    <label class="form-control-label" jhiTranslate="artemisApp.course.studentGroupName" for="field_studentGroupName">Student Group Name</label>
-                    <input required type="text" class="form-control" name="studentGroupName" id="field_studentGroupName" formControlName="studentGroupName" />
-                </div>
-                <div class="form-group">
-                    <label class="form-control-label" jhiTranslate="artemisApp.course.teachingAssistantGroupName" for="field_teachingAssistantGroupName"
-                        >Teaching Assistant Group Name</label
-                    >
-                    <input type="text" class="form-control" name="teachingAssistantGroupName" id="field_teachingAssistantGroupName" formControlName="teachingAssistantGroupName" />
-                </div>
-                <div class="form-group">
-                    <label class="form-control-label" jhiTranslate="artemisApp.course.instructorGroupName" for="field_instructorGroupName">Instructor Group Name</label>
-                    <input type="text" class="form-control" name="instructorGroupName" id="field_instructorGroupName" formControlName="instructorGroupName" required />
                 </div>
                 <div class="form-group">
                     <label class="form-control-label" jhiTranslate="artemisApp.course.description" for="field_description">Course Description</label>

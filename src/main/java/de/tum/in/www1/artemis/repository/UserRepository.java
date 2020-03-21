@@ -45,11 +45,12 @@ public interface UserRepository extends JpaRepository<User, Long> {
     @EntityGraph(type = LOAD, attributePaths = { "groups", "authorities", "guidedTourSettings" })
     Optional<User> findOneWithGroupsAuthoritiesAndGuidedTourSettingsByLogin(String login);
 
-    Long countByGroupsIsContaining(String group);
+    @Query("select count(*) from User user where :#{#groupName} member of user.groups")
+    Long countByGroupsIsContaining(@Param("groupName") String groupName);
 
     @EntityGraph(type = LOAD, attributePaths = { "groups" })
-    @Query("select user from User user where :#{#groupName} member user.groups")
-    List<User> findAllInGroup(String groupName);
+    @Query("select user from User user where :#{#groupName} member of user.groups")
+    List<User> findAllInGroup(@Param("groupName") String groupName);
 
     /**
      * Searches for users in a group by their login or full name.
@@ -58,9 +59,9 @@ public interface UserRepository extends JpaRepository<User, Long> {
      * @return list of found users that match the search criteria
      */
     @EntityGraph(type = LOAD, attributePaths = { "groups" })
-    @Query("select user from User user where :#{#groupName} member user.groups and "
+    @Query("select user from User user where :#{#groupName} member of user.groups and "
             + "(user.login like :#{#loginOrName}% or concat_ws(' ', user.firstName, user.lastName) like %:#{#loginOrName}%)")
-    List<User> searchByLoginOrNameInGroup(String groupName, String loginOrName);
+    List<User> searchByLoginOrNameInGroup(@Param("groupName") String groupName, @Param("loginOrName") String loginOrName);
 
     @EntityGraph(type = LOAD, attributePaths = { "groups" })
     @Query("select user from User user")
@@ -71,6 +72,6 @@ public interface UserRepository extends JpaRepository<User, Long> {
     void updateUserNotificationReadDate(@Param("userId") Long userId);
 
     @EntityGraph(type = LOAD, attributePaths = { "groups" })
-    @Query("select user from User user where :#{#groupName} member user.groups and user not in :#{#ignoredUsers}")
-    List<User> findAllInGroupContainingAndNotIn(String groupName, Set<User> ignoredUsers);
+    @Query("select user from User user where :#{#groupName} member of user.groups and user not in :#{#ignoredUsers}")
+    List<User> findAllInGroupContainingAndNotIn(@Param("groupName") String groupName, @Param("ignoredUsers") Set<User> ignoredUsers);
 }

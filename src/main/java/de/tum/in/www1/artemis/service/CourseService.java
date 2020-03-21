@@ -169,15 +169,4 @@ public class CourseService {
         String groupName = course.getStudentGroupName();
         return userRepository.countByGroupsIsContaining(groupName);
     }
-
-    /**
-     * Given a Course object, it returns the number of tutors assigned to the course
-     *
-     * @param course - the course object we are interested in
-     * @return the number of tutors for that course
-     */
-    public long countNumberOfTutorsForCourse(Course course) {
-        String groupName = course.getTeachingAssistantGroupName();
-        return userRepository.countByGroupsIsContaining(groupName);
-    }
 }

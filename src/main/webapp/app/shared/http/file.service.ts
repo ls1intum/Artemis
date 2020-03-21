@@ -20,7 +20,7 @@ export class FileService {
      *
      * @param downloadUrl url that is stored in the attachment model
      */
-    downloadAttachment(downloadUrl: string) {
+    downloadFileWithAccessToken(downloadUrl: string) {
         const downloadUrlComponents = downloadUrl.split('/');
         // take the last element
         const fileName = downloadUrlComponents.pop()!;

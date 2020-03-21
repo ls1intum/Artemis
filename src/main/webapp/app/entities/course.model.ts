@@ -24,6 +24,11 @@ export class Course implements BaseEntity {
     public complaintsEnabled = true; // default value
     public studentQuestionsEnabled = true; // default value
 
+    // the following values are only used in course administration
+    public numberOfStudents: number;
+    public numberOfTeachingAssistants: number;
+    public numberOfInstructors: number;
+
     public exercises: Exercise[];
     public lectures: Lecture[];
     public tutorGroups: TutorGroup[];
