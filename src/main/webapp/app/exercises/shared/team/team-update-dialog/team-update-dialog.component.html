@@ -80,7 +80,7 @@
                     </div>
                     <div class="list-group-item d-flex align-items-center" [class.has-error]="hasConflictingTeam(student)">
                         <div class="student-name">{{ student.name }} ({{ student.login }})</div>
-                        <button class="student-remove-link ml-4" (click)="onRemoveStudent(student)">
+                        <button class="jest-student-remove-link student-remove-link ml-4" (click)="onRemoveStudent(student)">
                             <fa-icon [icon]="'trash-alt'"></fa-icon>
                         </button>
                     </div>

@@ -1,4 +1,4 @@
-import { ComponentFixture, fakeAsync, TestBed } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { TranslateModule } from '@ngx-translate/core';
 import { DebugElement } from '@angular/core';
 import * as chai from 'chai';
@@ -15,7 +15,7 @@ import { MockAlertService } from '../../helpers/mock-alert.service';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { ArtemisTeamModule } from 'app/exercises/shared/team/team.module';
-import { mockEmptyTeam, mockExercise, MockTeamService, mockTeamStudents } from '../../mocks/mock-team.service';
+import { mockEmptyTeam, mockExercise, mockNonTeamStudents, mockTeam, MockTeamService, mockTeamStudents } from '../../mocks/mock-team.service';
 import { TeamService } from 'app/exercises/shared/team/team.service';
 
 chai.use(sinonChai);
@@ -110,6 +110,64 @@ describe('TeamUpdateDialogComponent', () => {
         otherStudents.forEach(student => comp.onAddStudent(student));
         fixture.detectChanges();
         expect(submitButton.nativeElement.disabled).to.be.false;
+
+        // Click on save
+        const modalCloseSpy = sinon.spy(ngbActiveModal, 'close');
+        fixture.debugElement.query(By.css('#teamUpdateDialogForm')).nativeElement.submit();
+        fixture.detectChanges();
+
+        // Check that saving worked and that modal was closed
+        expect(comp.team).to.deep.equal(comp.pendingTeam);
+        expect(comp.isSaving).to.be.false;
+        expect(modalCloseSpy.callCount).to.equal(1);
+    }));
+
+    it('Team Update Dialog can be used to update team', fakeAsync(() => {
+        comp.team = mockTeam;
+        comp.exercise = mockTeam.exercise;
+        fixture.detectChanges();
+        tick();
+
+        // Check that title is correct for updating a team
+        const modalTitle = fixture.debugElement.query(By.css('.modal-title'));
+        expect(modalTitle).to.exist;
+        expect(modalTitle.nativeElement.textContent.trim()).to.equal(`Update Team (${mockTeam.exercise.title})`);
+
+        // Check that a submit button exists
+        const submitButton = fixture.debugElement.query(By.css('button[type=submit]'));
+        expect(submitButton).to.exist;
+
+        // Check that all necessary elements are present
+        const inputs = {
+            teamName: fixture.debugElement.query(By.css('#teamName')),
+            teamShortName: fixture.debugElement.query(By.css('#teamShortName')),
+            teamStudents: fixture.debugElement.query(By.css('#teamStudents')),
+        };
+        Object.values(inputs).forEach(input => expect(input).to.exist);
+
+        // Update the team name
+        const updatedTeamName = 'Updated team name';
+        inputs.teamName.nativeElement.focus();
+        inputs.teamName.nativeElement.value = updatedTeamName;
+        inputs.teamName.nativeElement.dispatchEvent(new Event('input'));
+        tick();
+        fixture.detectChanges();
+        expect(comp.pendingTeam.name).to.equal(updatedTeamName);
+
+        // Submit button should be enabled (since we just changed the team name)
+        expect(submitButton.nativeElement.disabled).to.be.false;
+
+        // Remove one of the existing team members
+        const studentRemoveLink = fixture.debugElement.query(By.css('.jest-student-remove-link'));
+        studentRemoveLink.nativeElement.dispatchEvent(new Event('click'));
+        tick();
+        fixture.detectChanges();
+        expect(comp.pendingTeam.students).to.deep.equal(comp.team.students.slice(1));
+
+        // Add three new team members
+        mockNonTeamStudents.forEach(student => comp.onAddStudent(student));
+        fixture.detectChanges();
+        expect(comp.pendingTeam.students).to.deep.equal(comp.team.students.slice(1).concat(mockNonTeamStudents));
 
         // Click on save
         const modalCloseSpy = sinon.spy(ngbActiveModal, 'close');

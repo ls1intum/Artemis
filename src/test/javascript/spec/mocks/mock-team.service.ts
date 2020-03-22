@@ -1,6 +1,6 @@
 import { Observable, of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
-import { ITeamService, TeamResponse } from 'app/exercises/shared/team/team.service';
+import { ITeamService } from 'app/exercises/shared/team/team.service';
 import { Exercise } from 'app/entities/exercise.model';
 import { Team } from 'app/entities/team.model';
 import { Course } from 'app/entities/course.model';
@@ -26,7 +26,7 @@ export const mockTeamSearchUsers = [...mockTeamStudents, ...mockNonTeamStudents]
     assignedToTeam: mockTeamStudents.includes(student),
 })) as TeamSearchUser[];
 
-const teamAssignmentConfig = { minTeamSize: 1, maxTeamSize: 5 } as TeamAssignmentConfig;
+const teamAssignmentConfig = { minTeamSize: 1, maxTeamSize: 5 } as TeamAssignmentConfig; // note: size of mockTeamStudents above should conform
 
 export const mockExercise = { id: 1, title: 'Programming exercise', teamAssignmentConfig } as ProgrammingExercise;
 
