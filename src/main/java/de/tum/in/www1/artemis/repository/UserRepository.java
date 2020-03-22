@@ -68,7 +68,8 @@ public interface UserRepository extends JpaRepository<User, Long> {
     Page<User> findAllWithGroups(Pageable pageable);
 
     @EntityGraph(attributePaths = { "groups" })
-    @Query("select user from User user where user.login like %:searchTerm% or user.email like %:searchTerm% or " + "user.lastName like %:searchTerm%")
+    @Query("select user from User user where user.login like %:searchTerm% or user.email like %:searchTerm% "
+            + "or user.lastName like %:searchTerm% or user.firstName like %:searchTerm%")
     Page<User> searchByLoginOrNameWithGroups(String searchTerm, Pageable pageable);
 
     @Modifying

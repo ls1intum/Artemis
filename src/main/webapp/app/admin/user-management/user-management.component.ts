@@ -10,14 +10,15 @@ import { AccountService } from 'app/core/auth/account.service';
 import { Subject } from 'rxjs';
 import { AlertService } from 'app/core/alert/alert.service';
 import { SortingOrder } from 'app/shared/table/pageable-table';
+import { debounceTime, switchMap, tap } from 'rxjs/operators';
 
 @Component({
     selector: 'jhi-user-management',
     templateUrl: './user-management.component.html',
 })
 export class UserManagementComponent implements OnInit, OnDestroy {
+    search = new Subject<string>();
     loadingSearchResult = false;
-
     currentAccount: User;
     users: User[];
     error: string | null;
@@ -52,6 +53,30 @@ export class UserManagementComponent implements OnInit, OnDestroy {
             this.reverse = data['pagingParams'].ascending;
             this.predicate = data['pagingParams'].predicate;
         });
+        this.search
+            .pipe(
+                tap(() => (this.loadingSearchResult = true)),
+                debounceTime(3000),
+                switchMap(() =>
+                    this.userService.query({
+                        page: this.page - 1,
+                        pageSize: this.itemsPerPage,
+                        searchTerm: this.searchTermString,
+                        sortingOrder: this.reverse ? SortingOrder.ASCENDING : SortingOrder.DESCENDING,
+                        sortedColumn: this.predicate,
+                    }),
+                ),
+            )
+            .subscribe(
+                (res: HttpResponse<User[]>) => {
+                    this.loadingSearchResult = false;
+                    this.onSuccess(res.body!, res.headers);
+                },
+                (res: HttpErrorResponse) => {
+                    this.loadingSearchResult = false;
+                    onError(this.alertService, res);
+                },
+            );
     }
 
     /**
@@ -103,26 +128,8 @@ export class UserManagementComponent implements OnInit, OnDestroy {
     /**
      * Retrieve the list of users from the user service for a single page in the user management based on the page, size and sort configuration
      */
-    loadAll() {
-        this.loadingSearchResult = true;
-        this.userService
-            .query({
-                page: this.page - 1,
-                pageSize: this.itemsPerPage,
-                searchTerm: this.searchTermString,
-                sortingOrder: this.reverse ? SortingOrder.ASCENDING : SortingOrder.DESCENDING,
-                sortedColumn: this.predicate,
-            })
-            .subscribe(
-                (res: HttpResponse<User[]>) => {
-                    this.loadingSearchResult = false;
-                    this.onSuccess(res.body!, res.headers);
-                },
-                (res: HttpErrorResponse) => {
-                    this.loadingSearchResult = false;
-                    onError(this.alertService, res);
-                },
-            );
+    private loadAll() {
+        this.search.next();
     }
 
     /**
@@ -184,7 +191,6 @@ export class UserManagementComponent implements OnInit, OnDestroy {
 
     set searchTerm(searchTerm: string) {
         this.searchTermString = searchTerm;
-        this.loadAll();
     }
 
     get searchTerm(): string {
