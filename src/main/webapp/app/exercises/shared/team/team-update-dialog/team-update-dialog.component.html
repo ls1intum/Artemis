@@ -79,7 +79,9 @@
                     </div>
                     <div class="list-group-item d-flex align-items-center" [class.has-error]="hasConflictingTeam(student)">
                         <div class="student-name">{{ student.name }} ({{ student.login }})</div>
-                        <fa-icon class="student-remove-link ml-4" [icon]="'trash-alt'" (click)="onRemoveStudent(student)"></fa-icon>
+                        <button class="student-remove-link ml-4" (click)="onRemoveStudent(student)">
+                            <fa-icon [icon]="'trash-alt'"></fa-icon>
+                        </button>
                     </div>
                     <div class="list-group-item-error" *ngIf="hasConflictingTeam(student)">
                         <fa-icon class="mr-1" [icon]="'exclamation-triangle'"></fa-icon>

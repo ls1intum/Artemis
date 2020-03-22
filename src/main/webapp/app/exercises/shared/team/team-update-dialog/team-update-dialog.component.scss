@@ -75,8 +75,9 @@ $error-bg-color: #f8d7da;
 }
 
 .student-remove-link {
-    display: block;
-    cursor: pointer;
+    background-color: transparent;
+    border: none;
+    -webkit-appearance: none;
 }
 
 .modal-footer {
