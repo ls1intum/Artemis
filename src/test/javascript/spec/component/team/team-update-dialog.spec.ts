@@ -45,13 +45,13 @@ describe('TeamUpdateDialogComponent', () => {
     });
 
     it('Team Update Dialog can be closed and canceled', fakeAsync(() => {
-        const closeButton = fixture.debugElement.query(By.css('button.close'));
+        const closeButton = debugElement.query(By.css('button.close'));
         expect(closeButton).to.exist;
         const modalDismissSpy = sinon.spy(ngbActiveModal, 'dismiss');
         closeButton.nativeElement.click();
         expect(modalDismissSpy.callCount).to.equal(1);
 
-        const cancelButton = fixture.debugElement.query(By.css('button.cancel'));
+        const cancelButton = debugElement.query(By.css('button.cancel'));
         expect(cancelButton).to.exist;
         cancelButton.nativeElement.click();
         expect(modalDismissSpy.callCount).to.equal(2);
@@ -63,20 +63,20 @@ describe('TeamUpdateDialogComponent', () => {
         fixture.detectChanges();
 
         // Check that title is correct for creating a team
-        const modalTitle = fixture.debugElement.query(By.css('.modal-title'));
+        const modalTitle = debugElement.query(By.css('.modal-title'));
         expect(modalTitle).to.exist;
         expect(modalTitle.nativeElement.textContent.trim()).to.equal(`Create Team (${mockExercise.title})`);
 
         // Check that a submit button exists
-        const submitButton = fixture.debugElement.query(By.css('button[type=submit]'));
+        const submitButton = debugElement.query(By.css('button[type=submit]'));
         expect(submitButton).to.exist;
 
         // Check that all necessary elements are present
         const inputs = {
-            teamName: fixture.debugElement.query(By.css('#teamName')),
-            teamShortName: fixture.debugElement.query(By.css('#teamShortName')),
-            teamStudents: fixture.debugElement.query(By.css('#teamStudents')),
-            ignoreTeamSizeRecommendation: fixture.debugElement.query(By.css('#ignoreTeamSizeRecommendation')),
+            teamName: debugElement.query(By.css('#teamName')),
+            teamShortName: debugElement.query(By.css('#teamShortName')),
+            teamStudents: debugElement.query(By.css('#teamStudents')),
+            ignoreTeamSizeRecommendation: debugElement.query(By.css('#ignoreTeamSizeRecommendation')),
         };
         Object.values(inputs).forEach(input => expect(input).to.exist);
 
@@ -113,7 +113,7 @@ describe('TeamUpdateDialogComponent', () => {
 
         // Click on save
         const modalCloseSpy = sinon.spy(ngbActiveModal, 'close');
-        fixture.debugElement.query(By.css('#teamUpdateDialogForm')).nativeElement.submit();
+        debugElement.query(By.css('#teamUpdateDialogForm')).nativeElement.submit();
         fixture.detectChanges();
 
         // Check that saving worked and that modal was closed
@@ -129,19 +129,19 @@ describe('TeamUpdateDialogComponent', () => {
         tick();
 
         // Check that title is correct for updating a team
-        const modalTitle = fixture.debugElement.query(By.css('.modal-title'));
+        const modalTitle = debugElement.query(By.css('.modal-title'));
         expect(modalTitle).to.exist;
         expect(modalTitle.nativeElement.textContent.trim()).to.equal(`Update Team (${mockTeam.exercise.title})`);
 
         // Check that a submit button exists
-        const submitButton = fixture.debugElement.query(By.css('button[type=submit]'));
+        const submitButton = debugElement.query(By.css('button[type=submit]'));
         expect(submitButton).to.exist;
 
         // Check that all necessary elements are present
         const inputs = {
-            teamName: fixture.debugElement.query(By.css('#teamName')),
-            teamShortName: fixture.debugElement.query(By.css('#teamShortName')),
-            teamStudents: fixture.debugElement.query(By.css('#teamStudents')),
+            teamName: debugElement.query(By.css('#teamName')),
+            teamShortName: debugElement.query(By.css('#teamShortName')),
+            teamStudents: debugElement.query(By.css('#teamStudents')),
         };
         Object.values(inputs).forEach(input => expect(input).to.exist);
 
@@ -158,7 +158,7 @@ describe('TeamUpdateDialogComponent', () => {
         expect(submitButton.nativeElement.disabled).to.be.false;
 
         // Remove one of the existing team members
-        const studentRemoveLink = fixture.debugElement.query(By.css('.jest-student-remove-link'));
+        const studentRemoveLink = debugElement.query(By.css('.jest-student-remove-link'));
         studentRemoveLink.nativeElement.dispatchEvent(new Event('click'));
         tick();
         fixture.detectChanges();
@@ -171,7 +171,7 @@ describe('TeamUpdateDialogComponent', () => {
 
         // Click on save
         const modalCloseSpy = sinon.spy(ngbActiveModal, 'close');
-        fixture.debugElement.query(By.css('#teamUpdateDialogForm')).nativeElement.submit();
+        debugElement.query(By.css('#teamUpdateDialogForm')).nativeElement.submit();
         fixture.detectChanges();
 
         // Check that saving worked and that modal was closed

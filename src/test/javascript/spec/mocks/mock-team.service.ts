@@ -42,6 +42,12 @@ export const mockTeam = {
     students: mockTeamStudents,
 } as Team;
 
+export const mockTeams = [
+    mockTeam,
+    { id: 2, name: 'Team 2', shortName: 'team2', exercise: mockExercise, students: [] } as Team,
+    { id: 3, name: 'Team 3', shortName: 'team3', exercise: mockExercise, students: [] } as Team,
+];
+
 export const mockShortNames = {
     existing: 'team1',
     nonExisting: 'team2',
@@ -61,7 +67,7 @@ export class MockTeamService implements ITeamService {
     }
 
     findAllByExerciseId(exerciseId: number) {
-        return MockTeamService.response([{ ...mockTeam, exercise: { ...mockExercise, id: exerciseId } }]);
+        return MockTeamService.response(mockTeams);
     }
 
     delete(exercise: Exercise, teamId: number) {
