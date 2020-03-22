@@ -1,6 +1,5 @@
 import { Component, Input } from '@angular/core';
 import { GradingCriterion } from 'app/exercises/shared/structured-grading-criterion/grading-criterion.model';
-import { GradingInstruction } from 'app/exercises/shared/structured-grading-criterion/grading-instruction.model';
 
 @Component({
     selector: 'jhi-resizable-instructions',
@@ -16,7 +15,4 @@ export class ResizableInstructionsComponent {
     @Input() public toggleCollapseId?: string;
 
     constructor() {}
-    drag(ev: any, instruction: GradingInstruction) {
-        ev.dataTransfer.setData('text', JSON.stringify(instruction));
-    }
 }

@@ -7,10 +7,12 @@ import { ArtemisProgrammingExerciseInstructionsRenderModule } from 'app/exercise
 import { ExpandableSectionComponent } from './expandable-section/expandable-section.component';
 import { CollapsableAssessmentInstructionsComponent } from './collapsable-assessment-instructions/collapsable-assessment-instructions.component';
 import { AssessmentInstructionsComponent } from './assessment-instructions/assessment-instructions.component';
+import { ArtemisAssessmentSharedModule } from 'app/assessment/assessment-shared.module';
+import { StructuredGradingInstructionsAssessmentLayoutComponent } from 'app/assessment/structured-grading-instructions-assessment-layout/structured-grading-instructions-assessment-layout.component';
 
 @NgModule({
-    imports: [CommonModule, NgbModule, ArtemisSharedModule, ArtemisModelingEditorModule, ArtemisProgrammingExerciseInstructionsRenderModule],
-    declarations: [ExpandableSectionComponent, AssessmentInstructionsComponent, CollapsableAssessmentInstructionsComponent],
-    exports: [CollapsableAssessmentInstructionsComponent],
+    imports: [CommonModule, NgbModule, ArtemisSharedModule, ArtemisModelingEditorModule, ArtemisProgrammingExerciseInstructionsRenderModule, ArtemisAssessmentSharedModule],
+    declarations: [ExpandableSectionComponent, AssessmentInstructionsComponent, CollapsableAssessmentInstructionsComponent, StructuredGradingInstructionsAssessmentLayoutComponent],
+    exports: [CollapsableAssessmentInstructionsComponent, ExpandableSectionComponent, StructuredGradingInstructionsAssessmentLayoutComponent],
 })
 export class AssessmentInstructionsModule {}

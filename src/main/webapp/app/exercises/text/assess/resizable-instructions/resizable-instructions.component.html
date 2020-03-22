@@ -28,28 +28,7 @@
         <div *ngIf="gradingInstructions">
             <h4 jhiTranslate="artemisApp.exercise.gradingInstructions">Grading instructions</h4>
             <p class="markdown-preview" [innerHTML]="gradingInstructions | htmlForMarkdown"></p>
-            <!-- Todo: hanya refactor the SGI display -->
-            <div *ngFor="let criterion of criteria; let criterionIndex = index">
-                <p class="font-weight-bold" [innerHTML]="criterion!.title! | htmlForMarkdown"></p>
-                <div
-                    class="card-header"
-                    *ngFor="let instruction of criterion!.structuredGradingInstructions; let instructionIndex = index"
-                    draggable="true"
-                    (dragstart)="drag($event, instruction)"
-                    id="criterion-{{ criterionIndex }}-instruction-{{ instructionIndex }}"
-                >
-                    <table class="table table-bordered">
-                        <tbody>
-                            <tr>
-                                <td [innerHTML]="instruction.credits"></td>
-                                <td [innerHTML]="instruction!.gradingScale! | htmlForMarkdown"></td>
-                                <td [innerHTML]="instruction!.instructionDescription! | htmlForMarkdown"></td>
-                                <td [innerHTML]="instruction!.feedback! | htmlForMarkdown"></td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
+            <jhi-structured-grading-instructions-assessment-layout [criteria]="criteria"></jhi-structured-grading-instructions-assessment-layout>
         </div>
     </div>
 </div>

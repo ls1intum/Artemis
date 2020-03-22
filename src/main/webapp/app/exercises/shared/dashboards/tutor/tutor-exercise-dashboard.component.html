@@ -104,26 +104,7 @@
 
             <p [innerHTML]="formattedGradingInstructions"></p>
         </div>
-        <!-- Todo: hanya refactor the SGI display -->
-        <div *ngFor="let criterion of exercise.gradingCriteria; let criterionIndex = index">
-            <p class="font-weight-bold" [innerHTML]="criterion!.title! | htmlForMarkdown"></p>
-            <div
-                class="card-header"
-                *ngFor="let instruction of criterion!.structuredGradingInstructions; let instructionIndex = index"
-                id="criterion-{{ criterionIndex }}-instruction-{{ instructionIndex }}"
-            >
-                <table class="table table-bordered">
-                    <tbody>
-                        <tr>
-                            <td [innerHTML]="instruction.credits"></td>
-                            <td [innerHTML]="instruction!.gradingScale! | htmlForMarkdown"></td>
-                            <td [innerHTML]="instruction!.instructionDescription! | htmlForMarkdown"></td>
-                            <td [innerHTML]="instruction!.feedback! | htmlForMarkdown"></td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
+        <jhi-structured-grading-instructions-assessment-layout [criteria]="exercise.gradingCriteria"></jhi-structured-grading-instructions-assessment-layout>
     </div>
 
     <div class="col-12 text-center" *ngIf="tutorParticipationStatus === NOT_PARTICIPATED">

@@ -33,6 +33,7 @@
             "sampleSolution": "Beispiel Lösung",
             "gradingInstructions": "Benotungshinweise",
             "structuredGradingInstructions": "Strukturierte Benotungshinweise",
+            "DragDropInstruction": "Drag & Drop Bewetungshinweis zum Feedback Element",
             "title": "Titel",
             "shortName": "Kurzname",
             "releaseDate": "Veröffentlichungsdatum",

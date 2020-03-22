@@ -33,6 +33,7 @@
             "sampleSolution": "Example Solution",
             "gradingInstructions": "Grading Instructions",
             "structuredGradingInstructions": "Structured Grading Instructions",
+            "DragDropInstruction": "Drag & Drop instruction to feedback element",
             "title": "Title",
             "shortName": "Short Name",
             "releaseDate": "Release Date",

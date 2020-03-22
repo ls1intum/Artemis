@@ -11,7 +11,6 @@
     <!-- Preview -->
     <ng-container #preview>
         <div class="pt-1 background-editor-high markdown-preview">
-            <!-- Todo: hanya refactor the SGI display -->
             <div *ngFor="let criterion of exercise.gradingCriteria">
                 <label class="font-weight-bold" [innerHTML]="criterion!.title! | htmlForMarkdown"></label>
                 <table class="table table-bordered">
