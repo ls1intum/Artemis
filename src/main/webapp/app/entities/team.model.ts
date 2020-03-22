@@ -6,7 +6,7 @@ export class Team implements BaseEntity {
     public id: number;
     public name: string;
     public shortName: string;
-    public image: string;
+    public image?: string;
     public exercise: Exercise;
     public students: User[] = []; // default value
 

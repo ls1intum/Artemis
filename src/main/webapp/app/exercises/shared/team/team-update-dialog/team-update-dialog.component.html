@@ -1,10 +1,10 @@
-<form name="editForm" role="form" novalidate (ngSubmit)="save()" #editForm="ngForm">
+<form id="teamUpdateDialogForm" name="editForm" role="form" novalidate (ngSubmit)="save()" #editForm="ngForm">
     <div class="modal-header">
         <h4 class="modal-title">
             <span [jhiTranslate]="pendingTeam.id ? 'artemisApp.team.updateTeam.label' : 'artemisApp.team.createTeam.label'">
                 {{ pendingTeam.id ? 'Update Team' : 'Create Team' }}
             </span>
-            ({{ exercise.title }})
+            <span>({{ exercise.title }})</span>
         </h4>
         <button type="button" class="close" data-dismiss="modal" aria-hidden="true" (click)="clear()">&times;</button>
     </div>
@@ -63,6 +63,7 @@
                 </span>
             </div>
             <jhi-team-student-search
+                id="teamStudents"
                 [course]="exercise.course"
                 [exercise]="exercise"
                 [studentsFromTeam]="team.students"
@@ -104,10 +105,10 @@
                     </div>
                     <div *ngIf="showIgnoreTeamSizeRecommendationOption" class="form-check">
                         <input
+                            id="ignoreTeamSizeRecommendation"
                             class="form-check-input"
                             type="checkbox"
                             value=""
-                            id="ignoreTeamSizeRecommendation"
                             [(ngModel)]="ignoreTeamSizeRecommendation"
                             [ngModelOptions]="{ standalone: true }"
                         />
@@ -121,7 +122,7 @@
         </div>
     </div>
     <div class="modal-footer">
-        <button type="button" class="btn btn-default" data-dismiss="modal" (click)="clear()">
+        <button type="button" class="btn btn-default cancel" data-dismiss="modal" (click)="clear()">
             <fa-icon [icon]="'ban'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
         </button>
         <button type="submit" [disabled]="editForm.invalid || isSaving || teamSizeViolationUnconfirmed" class="btn btn-primary">

@@ -20,6 +20,10 @@ export interface ITeamService {
     findAllByExerciseId(exerciseId: number): Observable<HttpResponse<Team[]>>;
 
     delete(exercise: Exercise, teamId: number): Observable<HttpResponse<any>>;
+
+    existsByShortName(shortName: string): Observable<HttpResponse<boolean>>;
+
+    searchInCourseForExerciseTeam(course: Course, exercise: Exercise, loginOrName: string): Observable<HttpResponse<TeamSearchUser[]>>;
 }
 
 @Injectable({ providedIn: 'root' })
