@@ -56,7 +56,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
         this.search
             .pipe(
                 tap(() => (this.loadingSearchResult = true)),
-                debounceTime(3000),
+                debounceTime(1000),
                 switchMap(() =>
                     this.userService.query({
                         page: this.page - 1,
@@ -128,7 +128,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
     /**
      * Retrieve the list of users from the user service for a single page in the user management based on the page, size and sort configuration
      */
-    private loadAll() {
+    loadAll() {
         this.search.next();
     }
 
