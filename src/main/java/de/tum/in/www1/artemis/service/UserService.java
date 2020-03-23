@@ -128,6 +128,7 @@ public class UserService {
                 userDto.setCreatedBy("system");
                 userDto.setLastModifiedBy("system");
                 userDto.setAuthorities(Set.of(AuthoritiesConstants.ADMIN, AuthoritiesConstants.USER));
+                userDto.setGroups(new HashSet<>());
                 createUser(userDto);
             }
         }
