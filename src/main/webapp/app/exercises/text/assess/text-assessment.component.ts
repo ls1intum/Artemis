@@ -513,14 +513,10 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
         const instruction = JSON.parse(data);
         const credits = instruction.credits;
         const feedback = instruction.feedback;
+        if (this.generalFeedback.detailText === undefined) {
+            this.generalFeedback.detailText = '';
+        }
         this.generalFeedback.detailText += 'Score: ' + credits + ' Feedback: ' + feedback + '\n';
-        this.validateAssessment();
-    }
-    public addReferencedFeedback(): void {
-        const referencedFeedback = new Feedback();
-        referencedFeedback.credits = 0;
-        referencedFeedback.reference = '';
-        this.referencedFeedback.push(referencedFeedback);
         this.validateAssessment();
     }
 }
