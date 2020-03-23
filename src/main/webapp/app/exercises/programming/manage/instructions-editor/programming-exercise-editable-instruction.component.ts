@@ -136,14 +136,14 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
                 ],
                 inertia: true,
             })
-            .on('resizestart', function(event: any) {
+            .on('resizestart', function (event: any) {
                 event.target.classList.add('card-resizable');
             })
             .on('resizeend', (event: any) => {
                 event.target.classList.remove('card-resizable');
                 this.markdownEditor.aceEditorContainer.getEditor().resize();
             })
-            .on('resizemove', function(event: any) {
+            .on('resizemove', function (event: any) {
                 // The first child is the markdown editor.
                 const target = event.target.children && event.target.children[0];
                 if (target) {
@@ -237,7 +237,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
                     }),
                     tap((testCaseNames: string[]) => {
                         this.exerciseTestCases = testCaseNames;
-                        this.testCaseCommand.setValues(this.exerciseTestCases.map(value => ({ value, id: value })));
+                        this.testCaseCommand.setValues(this.exerciseTestCases.map((value) => ({ value, id: value })));
                     }),
                     catchError(() => of()),
                 )
@@ -279,16 +279,11 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
 
         const lineWarnings = compose(flatten, map(mapIssuesToAnnotations), toPairs)(analysis);
 
-        this.markdownEditor.aceEditorContainer
-            .getEditor()
-            .getSession()
-            .clearAnnotations();
-        // We need to wait for the annotations to be removed before we can set the new annotations. Otherwise changes in the editor will trigger the update of the existing annotations.
+        this.markdownEditor.aceEditorContainer.getEditor().getSession().clearAnnotations();
+        // We need to wait for the annotations to be removed before we can set the new annotations.
+        // Otherwise changes in the editor will trigger the update of the existing annotations.
         setTimeout(() => {
-            this.markdownEditor.aceEditorContainer
-                .getEditor()
-                .getSession()
-                .setAnnotations(lineWarnings);
+            this.markdownEditor.aceEditorContainer.getEditor().getSession().setAnnotations(lineWarnings);
         }, 0);
     };
 }

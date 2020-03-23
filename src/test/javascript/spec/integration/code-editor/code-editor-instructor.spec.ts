@@ -217,7 +217,7 @@ describe('CodeEditorInstructorIntegration', () => {
             templateParticipation: { id: 3, repositoryUrl: 'test2', results: [{ id: 9, successful: true }] },
             solutionParticipation: { id: 4, repositoryUrl: 'test3' },
         } as ProgrammingExercise;
-        exercise.studentParticipations = exercise.studentParticipations.map(p => {
+        exercise.studentParticipations = exercise.studentParticipations.map((p) => {
             p.exercise = exercise;
             return p;
         });

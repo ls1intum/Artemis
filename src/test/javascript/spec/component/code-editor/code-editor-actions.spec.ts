@@ -83,7 +83,7 @@ describe('CodeEditorActionsComponent', () => {
 
     cartesianProduct(
         Object.keys(EditorState),
-        Object.keys(CommitState).filter(commitState => commitState !== CommitState.CONFLICT),
+        Object.keys(CommitState).filter((commitState) => commitState !== CommitState.CONFLICT),
         [true, false],
     ).map((combination: [EditorState, CommitState, boolean]) => {
         const enableSaveButton = enableSaveButtonCombinations.some((c: [EditorState, CommitState, boolean]) => _isEqual(combination, c));

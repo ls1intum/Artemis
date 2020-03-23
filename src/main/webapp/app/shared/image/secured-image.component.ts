@@ -55,8 +55,8 @@ export class SecuredImageComponent implements OnChanges {
     // everytime the src changes, the previous call would be canceled and the
     // new resource would be loaded
     dataUrl$ = this.src$.pipe(
-        filter(url => !!url),
-        switchMap(url => this.loadImage(url)),
+        filter((url) => !!url),
+        switchMap((url) => this.loadImage(url)),
     );
 
     ngOnChanges(): void {
@@ -107,7 +107,7 @@ export class SecuredImageComponent implements OnChanges {
             tap(() => {
                 this.endLoadingProcess.emit(ImageLoadingStatus.SUCCESS);
             }),
-            catchError(error => {
+            catchError((error) => {
                 if (this.retryCounter === 0) {
                     this.retryCounter++;
                     return this.loadImage(url);

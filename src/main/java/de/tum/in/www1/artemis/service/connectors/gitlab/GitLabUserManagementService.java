@@ -70,20 +70,22 @@ public class GitLabUserManagementService implements VcsUserManagementService {
         final var userId = getUserIdCreateIfNotExists(user);
 
         // Add user to existing exercises
-        final var instructorExercises = programmingExerciseRepository.findAllByCourse_InstructorGroupNameIn(user.getGroups());
-        final var teachingAssistantExercises = programmingExerciseRepository.findAllByCourse_TeachingAssistantGroupNameIn(user.getGroups()).stream()
-                .filter(programmingExercise -> !instructorExercises.contains(programmingExercise)).collect(Collectors.toList());
-        addUserToGroups(userId, instructorExercises, MAINTAINER);
-        addUserToGroups(userId, teachingAssistantExercises, GUEST);
+        if (user.getGroups() != null && user.getGroups().size() > 0) {
+            final var instructorExercises = programmingExerciseRepository.findAllByCourse_InstructorGroupNameIn(user.getGroups());
+            final var teachingAssistantExercises = programmingExerciseRepository.findAllByCourse_TeachingAssistantGroupNameIn(user.getGroups()).stream()
+                    .filter(programmingExercise -> !instructorExercises.contains(programmingExercise)).collect(Collectors.toList());
+            addUserToGroups(userId, instructorExercises, MAINTAINER);
+            addUserToGroups(userId, teachingAssistantExercises, GUEST);
+        }
     }
 
     @Override
     public void updateUser(User user, Set<String> removedGroups, Set<String> addedGroups) {
-        if (removedGroups.isEmpty() && addedGroups.isEmpty()) {
-            return;
-        }
         try {
             final var gitlabUser = gitlab.getUserApi().getUser(user.getLogin());
+
+            // update the user password
+            gitlab.getUserApi().updateUser(gitlabUser, userService.decryptPasswordByLogin(user.getLogin()).get());
 
             // Add as member to new groups
             if (!addedGroups.isEmpty()) {
@@ -112,7 +114,6 @@ public class GitLabUserManagementService implements VcsUserManagementService {
                         gitlab.getGroupApi().removeMember(exercise.getProjectKey(), gitlabUser.getId());
                     }
                 }
-                gitlab.getUserApi().updateUser(gitlabUser, userService.decryptPasswordByLogin(user.getLogin()).get());
             }
         }
         catch (GitLabApiException e) {

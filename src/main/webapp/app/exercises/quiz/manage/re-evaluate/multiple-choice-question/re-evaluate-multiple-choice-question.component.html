@@ -2,7 +2,7 @@
     <div class="row">
         <div class="col-md-10 text-left">
             <div class="input-group">
-                <input class="form-control" [(ngModel)]="question.title" placeholder="Question Title" style="height: 33px" />
+                <input class="form-control" [(ngModel)]="question.title" placeholder="Question Title" style="height: 33px;" />
                 <span class="input-group-btn">
                     <button class="btn btn-outline-secondary" type="button" (click)="resetQuestionTitle()">
                         <fa-icon [icon]="'undo'"></fa-icon>
@@ -62,18 +62,18 @@
         ></button>
     </div>
     <div class="markupEditorArea">
-        <div class="question-content" style="padding-bottom: 12px">
-            <div class="input-group" style="height: 60px">
+        <div class="question-content" style="padding-bottom: 12px;">
+            <div class="input-group" style="height: 60px;">
                 <ace-editor
                     #questionEditor
                     [(text)]="questionEditorText"
                     [mode]="editorMode"
                     [autoUpdateContent]="editorAutoUpdate"
-                    style="min-height: 40px; width:90%; overflow: auto;"
+                    style="min-height: 40px; width: 90%; overflow: auto;"
                     class="form-control"
                 >
                 </ace-editor>
-                <span class="input-group-btn" style="vertical-align: top">
+                <span class="input-group-btn" style="vertical-align: top;">
                     <button class="btn btn-outline-secondary btn-lg" type="button" (click)="resetQuestionText()">
                         <fa-icon [icon]="'undo'"></fa-icon>
                     </button>
@@ -84,12 +84,12 @@
     <div class="answer-border" dnd-sortable-container [sortableData]="question.answerOptions">
         <div class="answer-border" *ngFor="let answer of question.answerOptions; let i = index" dnd-sortable [sortableIndex]="i">
             <div class="question-options">
-                <span class="answer-handle re-evaluate-order-button text-center" style="width: 5%" dnd-sortable-handle>
+                <span class="answer-handle re-evaluate-order-button text-center" style="width: 5%;" dnd-sortable-handle>
                     <fa-icon [icon]="'arrows-alt-v'" size="2x"></fa-icon>
                 </span>
-                <ace-editor [mode]="editorMode" [autoUpdateContent]="editorAutoUpdate" style="min-height: 40px; height: 60px; width:65%; overflow: auto;" class="form-control">
+                <ace-editor [mode]="editorMode" [autoUpdateContent]="editorAutoUpdate" style="min-height: 40px; height: 60px; width: 65%; overflow: auto;" class="form-control">
                 </ace-editor>
-                <div class="form-group text-center" style="width: 25%">
+                <div class="form-group text-center" style="width: 25%;">
                     <button
                         class="btn btn-outline-secondary"
                         [hidden]="isAnswerInvalid(answer)"

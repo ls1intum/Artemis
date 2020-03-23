@@ -4,6 +4,9 @@ export const PROGRAMMING_EXERCISE = (exerciseId) => `${PROGRAMMING_EXERCISES}/${
 export const COURSES = "/courses";
 export const USERS = "/users";
 export const COURSE = (courseId) => `${COURSES}/${courseId}`;
+export const COURSE_STUDENTS = (courseId, username) => `${COURSES}/${courseId}/students/${username}`;
+export const COURSE_TUTORS = (courseId, username) => `${COURSES}/${courseId}/tutors/${username}`;
+export const COURSE_INSTRUCTORS = (courseId, username) => `${COURSES}/${courseId}/instructors/${username}`;
 export const EXERCISES = (courseId) => `${COURSE(courseId)}/exercises`;
 export const EXERCISE = (courseId, exerciseId) => `${EXERCISES(courseId)}/${exerciseId}`;
 export const PARTICIPATION = (exerciseId) => `/exercises/${exerciseId}/participation`;

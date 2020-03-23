@@ -94,7 +94,7 @@ export class LectureAttachmentsComponent implements OnInit, OnDestroy {
                 this.attachmentToBeCreated = null;
                 this.attachmentBackup = null;
                 this.notificationText = null;
-                this.attachments = this.attachments.map(el => {
+                this.attachments = this.attachments.map((el) => {
                     return el.id === attachmentRes.body!.id ? attachmentRes.body! : el;
                 });
             });
@@ -119,7 +119,7 @@ export class LectureAttachmentsComponent implements OnInit, OnDestroy {
     deleteAttachment(attachment: Attachment) {
         this.attachmentService.delete(attachment.id).subscribe(
             () => {
-                this.attachments = this.attachments.filter(el => el.id !== attachment.id);
+                this.attachments = this.attachments.filter((el) => el.id !== attachment.id);
                 this.dialogErrorSource.next('');
             },
             (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
@@ -136,7 +136,7 @@ export class LectureAttachmentsComponent implements OnInit, OnDestroy {
 
     resetAttachment() {
         if (this.attachmentBackup) {
-            this.attachments = this.attachments.map(attachment => {
+            this.attachments = this.attachments.map((attachment) => {
                 if (attachment.id === this.attachmentBackup!.id) {
                     attachment = this.attachmentBackup as Attachment;
                 }
@@ -191,13 +191,13 @@ export class LectureAttachmentsComponent implements OnInit, OnDestroy {
         this.erroredFile = null;
         this.errorMessage = null;
         this.fileUploaderService.uploadFile(file, file['name'], { keepFileName: true }).then(
-            result => {
+            (result) => {
                 this.attachmentToBeCreated!.link = result.path;
                 this.isUploadingAttachment = false;
                 this.attachmentFile = null;
                 this.saveAttachment();
             },
-            error => {
+            (error) => {
                 this.errorMessage = error.message;
                 this.erroredFile = file;
                 this.fileInput.nativeElement.value = '';

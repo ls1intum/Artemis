@@ -80,7 +80,7 @@ export class ProgrammingExerciseManageTestCasesComponent implements OnInit, OnDe
      * Also checks if a change guard needs to be activated when the test cases where saved.
      */
     ngOnInit(): void {
-        this.paramSub = this.route.params.pipe(distinctUntilChanged()).subscribe(params => {
+        this.paramSub = this.route.params.pipe(distinctUntilChanged()).subscribe((params) => {
             this.isLoading = true;
             const exerciseId = Number(params['exerciseId']);
             this.courseId = Number(params['courseId']);
@@ -93,13 +93,13 @@ export class ProgrammingExerciseManageTestCasesComponent implements OnInit, OnDe
             }
 
             const loadExercise = this.programmingExerciseService.find(exerciseId).pipe(
-                map(res => res.body!),
-                tap(exercise => (this.exercise = exercise)),
+                map((res) => res.body!),
+                tap((exercise) => (this.exercise = exercise)),
                 catchError(() => of(null)),
             );
 
             const loadExerciseTestCaseState = this.getExerciseTestCaseState(exerciseId).pipe(
-                tap(releaseState => {
+                tap((releaseState) => {
                     this.hasUpdatedTestCases = releaseState.testCasesChanged;
                     this.isReleasedAndHasResults = releaseState.released && releaseState.hasStudentResult;
                     this.buildAfterDueDateActive = !!releaseState.buildAndTestStudentSubmissionsAfterDueDate;
@@ -199,7 +199,7 @@ export class ProgrammingExerciseManageTestCasesComponent implements OnInit, OnDe
             return;
         }
         this.changedTestCaseIds = this.changedTestCaseIds.includes(editedTestCase.id) ? this.changedTestCaseIds : [...this.changedTestCaseIds, editedTestCase.id];
-        this.testCases = this.testCases.map(testCase => (testCase.id !== editedTestCase.id ? testCase : { ...testCase, [field]: newValue }));
+        this.testCases = this.testCases.map((testCase) => (testCase.id !== editedTestCase.id ? testCase : { ...testCase, [field]: newValue }));
         this.editing = null;
     }
 
@@ -249,7 +249,7 @@ export class ProgrammingExerciseManageTestCasesComponent implements OnInit, OnDe
     toggleAfterDueDate(rowIndex: number) {
         const testCase = this.filteredTestCases[rowIndex];
         this.changedTestCaseIds = this.changedTestCaseIds.includes(testCase.id) ? this.changedTestCaseIds : [...this.changedTestCaseIds, testCase.id];
-        this.testCases = this.testCases.map(t => (t.id === testCase.id ? { ...t, afterDueDate: !t.afterDueDate } : t));
+        this.testCases = this.testCases.map((t) => (t.id === testCase.id ? { ...t, afterDueDate: !t.afterDueDate } : t));
     }
 
     /**

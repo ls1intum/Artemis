@@ -44,10 +44,7 @@ export class ArtemisMarkdown {
      */
     static removeTextRange(from: { col: number; row: number }, to: { col: number; row: number }, aceEditorContainer: AceEditorComponent) {
         aceEditorContainer.getEditor().focus();
-        aceEditorContainer
-            .getEditor()
-            .getSession()
-            .remove(new Range(from.row, from.col, to.row, to.col));
+        aceEditorContainer.getEditor().getSession().remove(new Range(from.row, from.col, to.row, to.col));
     }
 
     constructor(private sanitizer: DomSanitizer) {}

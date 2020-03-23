@@ -56,6 +56,12 @@ public class UserService {
     @Value("${artemis.encryption-password}")
     private String ENCRYPTION_PASSWORD;
 
+    @Value("${artemis.user-management.internal-admin.username:#{null}}")
+    private Optional<String> artemisInternalAdminUsername;
+
+    @Value("${artemis.user-management.internal-admin.password:#{null}}")
+    private Optional<String> artemisInternalAdminPassword;
+
     private final UserRepository userRepository;
 
     private final AuthorityRepository authorityRepository;
@@ -95,8 +101,40 @@ public class UserService {
      * find all users who do not have registration numbers: in case they are TUM users, try to retrieve their registration number and set a proper first name and last name
      */
     @EventListener(ApplicationReadyEvent.class)
-    public void retrieveAllRegistrationNumbersForTUMUsers() {
+    public void applicationReady() {
+
+        if (artemisInternalAdminUsername.isPresent() && artemisInternalAdminPassword.isPresent()) {
+            Optional<User> existingInternalAdmin = userRepository.findOneWithGroupsAndAuthoritiesByLogin(artemisInternalAdminUsername.get());
+            if (existingInternalAdmin.isPresent()) {
+                log.info("Update internal admin user " + artemisInternalAdminUsername.get());
+                existingInternalAdmin.get().setPassword(passwordEncoder().encode(artemisInternalAdminPassword.get()));
+                var authorities = new HashSet<Authority>();
+                authorities.add(new Authority(AuthoritiesConstants.ADMIN));
+                authorities.add(new Authority(AuthoritiesConstants.USER));
+                existingInternalAdmin.get().setAuthorities(authorities);
+                userRepository.save(existingInternalAdmin.get());
+                updateUserInConnectorsAndAuthProvider(existingInternalAdmin.get(), existingInternalAdmin.get().getGroups());
+            }
+            else {
+                log.info("Create internal admin user " + artemisInternalAdminUsername.get());
+                ManagedUserVM userDto = new ManagedUserVM();
+                userDto.setLogin(artemisInternalAdminUsername.get());
+                userDto.setPassword(artemisInternalAdminPassword.get());
+                userDto.setActivated(true);
+                userDto.setFirstName("Administrator");
+                userDto.setLastName("Administrator");
+                userDto.setEmail("admin@localhost");
+                userDto.setLangKey("en");
+                userDto.setCreatedBy("system");
+                userDto.setLastModifiedBy("system");
+                userDto.setAuthorities(Set.of(AuthoritiesConstants.ADMIN, AuthoritiesConstants.USER));
+                userDto.setGroups(new HashSet<>());
+                createUser(userDto);
+            }
+        }
+
         if (ldapUserService.isPresent()) {
+            // fetch the registration number of all students
             long start = System.currentTimeMillis();
             List<User> users = userRepository.findAllByRegistrationNumberIsNull();
             for (User user : users) {
@@ -215,7 +253,7 @@ public class UserService {
     }
 
     /**
-     * Register user
+     * Register user and create it only in the internal Artemis database. This is a pure service method without any logic with respect to external systems.
      * @param userDTO user data transfer object
      * @param password string
      * @return newly registered user or throw registration exception
@@ -257,6 +295,7 @@ public class UserService {
 
     /**
      * Remove non activated user
+     *
      * @param existingUser user object of an existing user
      * @return true if removal has been executed successfully otherwise false
      */
@@ -271,7 +310,8 @@ public class UserService {
     }
 
     /**
-     * Create user
+     * Create user only in the internal Artemis database. This is a pure service method without any logic with respect to external systems.
+     *
      * @param login     user login string
      * @param password  user password
      * @param firstName first name of user
@@ -286,7 +326,8 @@ public class UserService {
     }
 
     /**
-     * Create user
+     * Create user only in the internal Artemis database. This is a pure service method without any logic with respect to external systems.
+     *
      * @param login     user login string
      * @param groups The groups the user should belong to
      * @param firstName first name of user
@@ -301,7 +342,8 @@ public class UserService {
     }
 
     /**
-     * Create user
+     * Create user only in the internal Artemis database. This is a pure service method without any logic with respect to external systems.
+     *
      * @param login     user login string
      * @param password  user password
      * @param groups The groups the user should belong to
@@ -346,7 +388,11 @@ public class UserService {
     }
 
     /**
-     * Create user based on UserDTO
+     * Create user based on UserDTO. If the user management is done internally by Artemis, also create the user in the (optional) version control system
+     * In case user management is done externally, the users groups are configured in the external user management as well.
+     *
+     * TODO: how should we handle the case, that a new user is created that does not exist in the external user management?
+     *
      * @param userDTO user data transfer object
      * @return newly created user
      */
@@ -376,10 +422,10 @@ public class UserService {
         user.setActivated(true);
         userRepository.save(user);
 
-        // If user management is done by Artemis, we have to also create the user in the CI and VCS systems
-        optionalVcsUserManagementService.ifPresent(userManagementService -> userManagementService.createUser(user));
+        // If user management is done by Artemis, we also have to create the user in the version control system
+        optionalVcsUserManagementService.ifPresent(vcsUserManagementService -> vcsUserManagementService.createUser(user));
 
-        userDTO.getGroups().forEach(group -> artemisAuthenticationProvider.addUserToGroup(userDTO.getLogin(), group));
+        artemisAuthenticationProvider.addUserToGroups(user, userDTO.getGroups());
 
         log.debug("Created Information for User: {}", user);
         return user;
@@ -450,10 +496,9 @@ public class UserService {
         final var updatedGroups = user.getGroups();
         final var removedGroups = oldGroups.stream().filter(group -> !updatedGroups.contains(group)).collect(Collectors.toSet());
         final var addedGroups = updatedGroups.stream().filter(group -> !oldGroups.contains(group)).collect(Collectors.toSet());
-        final var login = user.getLogin();
         optionalVcsUserManagementService.ifPresent(vcsUserManagementService -> vcsUserManagementService.updateUser(user, removedGroups, addedGroups));
-        removedGroups.forEach(group -> artemisAuthenticationProvider.removeUserFromGroup(login, group));
-        addedGroups.forEach(group -> artemisAuthenticationProvider.addUserToGroup(login, group));
+        removedGroups.forEach(group -> artemisAuthenticationProvider.removeUserFromGroup(user, group));
+        addedGroups.forEach(group -> artemisAuthenticationProvider.addUserToGroup(user, group));
     }
 
     /**
@@ -712,5 +757,24 @@ public class UserService {
 
     public Long countUserInGroup(String groupName) {
         return userRepository.countByGroupsIsContaining(groupName);
+    }
+
+    /**
+     * add the user to the specified group
+     * @param user the user
+     * @param group the group
+     */
+    public void addUserToGroup(User user, String group) {
+        artemisAuthenticationProvider.addUserToGroup(user, group);
+    }
+
+    /**
+     * remove the user from the specified group
+     *
+     * @param user the user
+     * @param group the group
+     */
+    public void removeUserFromGroup(User user, String group) {
+        artemisAuthenticationProvider.removeUserFromGroup(user, group);
     }
 }

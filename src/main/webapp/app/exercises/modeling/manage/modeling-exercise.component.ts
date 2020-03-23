@@ -37,7 +37,7 @@ export class ModelingExerciseComponent extends ExerciseComponent {
             (res: HttpResponse<ModelingExercise[]>) => {
                 this.modelingExercises = res.body!;
                 // reconnect exercise with course
-                this.modelingExercises.forEach(exercise => {
+                this.modelingExercises.forEach((exercise) => {
                     exercise.course = this.course;
                     exercise.isAtLeastTutor = this.accountService.isAtLeastTutorInCourse(exercise.course);
                     exercise.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(exercise.course);

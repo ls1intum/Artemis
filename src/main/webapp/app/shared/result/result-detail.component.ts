@@ -73,7 +73,7 @@ export class ResultDetailComponent implements OnInit {
             this.feedbackList = feedbackList;
         } else {
             this.feedbackList = this.feedbackFilter
-                .map(test => {
+                .map((test) => {
                     return feedbackList.find(({ text }) => text === test);
                 })
                 .filter(Boolean) as Feedback[];

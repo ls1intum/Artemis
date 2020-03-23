@@ -103,11 +103,11 @@ export class TeamUpdateDialogComponent implements OnInit {
     }
 
     private findStudentTeamConflict(student: User) {
-        return this.studentTeamConflicts.find(c => c['studentLogin'] === student.login);
+        return this.studentTeamConflicts.find((c) => c['studentLogin'] === student.login);
     }
 
     private isStudentAlreadyInPendingTeam(student: User): boolean {
-        return this.pendingTeam.students.find(s => s.id === student.id) !== undefined;
+        return this.pendingTeam.students.find((s) => s.id === student.id) !== undefined;
     }
 
     onAddStudent(student: User) {
@@ -117,7 +117,7 @@ export class TeamUpdateDialogComponent implements OnInit {
     }
 
     onRemoveStudent(student: User) {
-        this.pendingTeam.students = this.pendingTeam.students.filter(user => user.id !== student.id);
+        this.pendingTeam.students = this.pendingTeam.students.filter((user) => user.id !== student.id);
     }
 
     clear() {
@@ -141,8 +141,8 @@ export class TeamUpdateDialogComponent implements OnInit {
     private subscribeToSaveResponse(team: Observable<HttpResponse<Team>>) {
         this.isSaving = true;
         team.subscribe(
-            res => this.onSaveSuccess(res),
-            error => this.onSaveError(error),
+            (res) => this.onSaveSuccess(res),
+            (error) => this.onSaveError(error),
         );
     }
 
@@ -170,10 +170,10 @@ export class TeamUpdateDialogComponent implements OnInit {
         shortName$
             .pipe(
                 debounceTime(500),
-                switchMap(shortName => this.teamService.existsByShortName(shortName)),
+                switchMap((shortName) => this.teamService.existsByShortName(shortName)),
             )
             .subscribe(
-                alreadyTakenResponse => {
+                (alreadyTakenResponse) => {
                     const alreadyTaken = alreadyTakenResponse.body;
                     const errors = alreadyTaken
                         ? { ...this.shortNameControl.errors, [this.shortNameAlreadyTakenErrorCode]: alreadyTaken }

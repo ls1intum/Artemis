@@ -72,8 +72,8 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
     constructor(private websocketService: JhiWebsocketService, private http: HttpClient, private participationWebsocketService: ParticipationWebsocketService) {}
 
     ngOnDestroy(): void {
-        Object.values(this.resultSubscriptions).forEach(sub => sub.unsubscribe());
-        Object.values(this.resultTimerSubscriptions).forEach(sub => sub.unsubscribe());
+        Object.values(this.resultSubscriptions).forEach((sub) => sub.unsubscribe());
+        Object.values(this.resultTimerSubscriptions).forEach((sub) => sub.unsubscribe());
         this.submissionTopicsSubscribed.forEach((topic, _) => this.websocketService.unsubscribe(topic));
     }
 
@@ -294,7 +294,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
      */
     public initializeCacheForStudent(exercises: Exercise[], forceCacheOverride = false) {
         exercises
-            .filter(exercise => {
+            .filter((exercise) => {
                 // We only process programming exercises in this service.
                 if (exercise.type !== ExerciseType.PROGRAMMING) {
                     return false;
@@ -310,7 +310,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
                 // Without submissions we can't determine if the latest submission is pending.
                 return !!exercise.studentParticipations[0].submissions && !!exercise.studentParticipations[0].submissions.length;
             })
-            .forEach(exercise => {
+            .forEach((exercise) => {
                 const participation = exercise.studentParticipations[0] as ProgrammingExerciseStudentParticipation;
                 const latestSubmission = participation.submissions.reduce((current, next) => (current.id > next.id ? current : next)) as ProgrammingSubmission;
                 const latestResult: Result | null =
@@ -342,21 +342,22 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
     public getLatestPendingSubmissionByParticipationId = (participationId: number, exerciseId: number, forceCacheOverride = false) => {
         const subject = this.submissionSubjects[participationId];
         if (!forceCacheOverride && subject) {
-            return subject.asObservable().pipe(filter(stateObj => stateObj !== undefined)) as Observable<ProgrammingSubmissionStateObj>;
+            return subject.asObservable().pipe(filter((stateObj) => stateObj !== undefined)) as Observable<ProgrammingSubmissionStateObj>;
         }
         // The setup process is difficult, because it should not happen that multiple subscribers trigger the setup process at the same time.
         // There the subject is returned before the REST call is made, but will emit its result as soon as it returns.
         this.submissionSubjects[participationId] = new BehaviorSubject<ProgrammingSubmissionStateObj | undefined>(undefined);
         this.fetchLatestPendingSubmissionByParticipationId(participationId)
-            .pipe(switchMap(submission => this.processPendingSubmission(submission, participationId, exerciseId)))
+            .pipe(switchMap((submission) => this.processPendingSubmission(submission, participationId, exerciseId)))
             .subscribe();
         // We just remove the initial undefined from the pipe as it is only used to make the setup process easier.
-        return this.submissionSubjects[participationId].asObservable().pipe(filter(stateObj => stateObj !== undefined)) as Observable<ProgrammingSubmissionStateObj>;
+        return this.submissionSubjects[participationId].asObservable().pipe(filter((stateObj) => stateObj !== undefined)) as Observable<ProgrammingSubmissionStateObj>;
     };
 
     /**
      * Will retrieve and cache all pending submissions for all student participations of given exercise.
-     * After calling this method, subscribers for single pending submissions will be able to use the cached submissions so that we don't execute a GET request to the server for every participation.
+     * After calling this method, subscribers for single pending submissions will be able to use the cached submissions so that we don't execute a GET request to the server
+     * for every participation.
      *
      * Will emit once at the end so the subscriber knows that the loading & setup process is done.
      * If the user is not an instructor, this method will not be able to retrieve any pending submission.
@@ -369,7 +370,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
         // We need to check if the submissions for the given exercise are already being fetched, otherwise the call would be done multiple times.
         const preloadingSubject = this.exerciseBuildStateSubjects.get(exerciseId);
         if (preloadingSubject) {
-            return preloadingSubject.asObservable().filter(val => val !== undefined) as Observable<ExerciseSubmissionState>;
+            return preloadingSubject.asObservable().filter((val) => val !== undefined) as Observable<ExerciseSubmissionState>;
         }
         this.exerciseBuildStateSubjects.set(exerciseId, new BehaviorSubject<ExerciseSubmissionState | undefined>(undefined));
         this.fetchLatestPendingSubmissionsByExerciseId(exerciseId)
@@ -400,7 +401,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
         return this.exerciseBuildStateSubjects
             .get(exerciseId)!
             .asObservable()
-            .pipe(filter(val => val !== undefined)) as Observable<ExerciseSubmissionState>;
+            .pipe(filter((val) => val !== undefined)) as Observable<ExerciseSubmissionState>;
     };
 
     getResultEtaInMs = () => {
@@ -453,7 +454,8 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
         exerciseId: number,
     ): Observable<ProgrammingSubmissionStateObj> => {
         return of(submissionToBeProcessed).pipe(
-            // When a new submission comes in, make sure that a subscription is set up for new incoming submissions. The new submission would then override the current latest pending submission.
+            // When a new submission comes in, make sure that a subscription is set up for new incoming submissions.
+            // The new submission would then override the current latest pending submission.
             tap(() => {
                 this.setupWebsocketSubscriptionForLatestPendingSubmission(participationId, exerciseId);
             }),
@@ -532,9 +534,9 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
      */
     public unsubscribeAllWebsocketTopics(exercise: Exercise) {
         // TODO: we only should unsubscribe for submissions that belong to the given exerciseId
-        Object.values(this.resultSubscriptions).forEach(sub => sub.unsubscribe());
+        Object.values(this.resultSubscriptions).forEach((sub) => sub.unsubscribe());
         this.resultSubscriptions = {};
-        Object.values(this.resultTimerSubscriptions).forEach(sub => sub.unsubscribe());
+        Object.values(this.resultTimerSubscriptions).forEach((sub) => sub.unsubscribe());
         this.resultTimerSubscriptions = {};
         this.submissionTopicsSubscribed.forEach((topic, _) => this.websocketService.unsubscribe(topic));
         this.submissionTopicsSubscribed.forEach((_, participationId) => this.participationWebsocketService.unsubscribeForLatestResultOfParticipation(participationId, exercise));

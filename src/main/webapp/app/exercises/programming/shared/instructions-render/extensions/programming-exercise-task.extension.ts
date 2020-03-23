@@ -1,6 +1,7 @@
 import { ApplicationRef, ComponentFactoryResolver, EmbeddedViewRef, Injectable, Injector } from '@angular/core';
 import { Observable, Subject } from 'rxjs';
 import * as showdown from 'showdown';
+// tslint:disable-next-line:max-line-length
 import { ProgrammingExerciseInstructionTaskStatusComponent } from 'app/exercises/programming/shared/instructions-render/task/programming-exercise-instruction-task-status.component';
 import { Result } from 'app/entities/result.model';
 import { escapeStringForUseInRegex } from 'app/shared/util/global.utils';
@@ -74,17 +75,17 @@ export class ProgrammingExerciseTaskExtensionWrapper implements ArtemisShowdownE
                 const taskContainer = `<div class="pe-task-${idPlaceholder} d-flex"></div>`;
                 const tasks = text.match(taskRegex) || [];
                 const testsForTask: TaskArray = tasks
-                    .map(task => {
+                    .map((task) => {
                         return task.match(innerTaskRegex);
                     })
                     // Legacy tasks don't contain the hint list, so there are 2 cases (with or without hints).
-                    .filter(testMatch => !!testMatch && (testMatch.length === 3 || testMatch.length === 5))
+                    .filter((testMatch) => !!testMatch && (testMatch.length === 3 || testMatch.length === 5))
                     .map((testMatch: RegExpMatchArray) => {
                         return {
                             completeString: testMatch[0],
                             taskName: testMatch[1],
-                            tests: testMatch[2].split(',').map(s => s.trim()),
-                            hints: testMatch[4] ? testMatch[4].split(',').map(s => s.trim()) : [],
+                            tests: testMatch[2].split(',').map((s) => s.trim()),
+                            hints: testMatch[4] ? testMatch[4].split(',').map((s) => s.trim()) : [],
                         };
                     });
                 this.testsForTaskSubject.next(testsForTask);

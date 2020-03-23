@@ -17,7 +17,7 @@ export class CodeEditorGridService implements ICodeEditorGridService, OnDestroy 
     }
 
     public subscribeForResizeEvents = (byTypes: ResizeType[]) => {
-        return this.resizeSubject.pipe(filter(resizeType => byTypes.includes(resizeType))) as Observable<ResizeType>;
+        return this.resizeSubject.pipe(filter((resizeType) => byTypes.includes(resizeType))) as Observable<ResizeType>;
     };
 
     public submitResizeEvent = (resizeType: ResizeType) => {

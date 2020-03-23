@@ -90,11 +90,11 @@ export class ReEvaluateMultipleChoiceQuestionComponent implements OnInit, AfterV
         /** Array with all answer option Ace Editors
          *  Note: we filter out the question Editor (identified by his width)
          **/
-        const answerEditors = this.aceEditorComponents.toArray().filter(editor => editor.style.indexOf('width:90%') === -1);
+        const answerEditors = this.aceEditorComponents.toArray().filter((editor) => editor.style.indexOf('width:90%') === -1);
 
         this.question.answerOptions!.forEach((answer, index) => {
             requestAnimationFrame(
-                function() {
+                function () {
                     answerEditors[index].setTheme('chrome');
                     answerEditors[index].getEditor().renderer.setShowGutter(false);
                     answerEditors[index].getEditor().renderer.setPadding(10);
@@ -247,7 +247,7 @@ export class ReEvaluateMultipleChoiceQuestionComponent implements OnInit, AfterV
      */
     resetAnswer(answer: AnswerOption) {
         // Find correct answer if they have another order
-        const backupAnswer = this.backupQuestion.answerOptions!.find(answerBackup => answer.id === answerBackup.id)!;
+        const backupAnswer = this.backupQuestion.answerOptions!.find((answerBackup) => answer.id === answerBackup.id)!;
         // Find current index of our AnswerOption
         const answerIndex = this.question.answerOptions!.indexOf(answer);
         // Remove current answerOption at given index and insert the backup at the same position

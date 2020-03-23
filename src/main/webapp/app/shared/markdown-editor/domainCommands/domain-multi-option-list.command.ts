@@ -82,7 +82,7 @@ export abstract class DomainMultiOptionListCommand extends DomainMultiOptionComm
             const wordUnderCursor = stringPositions.find(({ start, end }) => column - 1 - match.matchStart > start && column - 1 - match.matchStart < end);
             if (wordUnderCursor) {
                 // Case 1: Replace value.
-                return currentValues.map(val => (val === wordUnderCursor.word ? valueToAdd : val));
+                return currentValues.map((val) => (val === wordUnderCursor.word ? valueToAdd : val));
             } else if (column >= match.matchEnd - 1) {
                 // Case 2: Add value on left side.
                 return [...currentValues, valueToAdd];

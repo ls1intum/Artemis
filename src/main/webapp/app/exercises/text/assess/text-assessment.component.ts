@@ -93,7 +93,7 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
         this.generalFeedback = new Feedback();
         this.referencedFeedback = [];
         this.assessmentsAreValid = false;
-        translateService.get('artemisApp.textAssessment.confirmCancel').subscribe(text => (this.cancelConfirmationText = text));
+        translateService.get('artemisApp.textAssessment.confirmCancel').subscribe((text) => (this.cancelConfirmationText = text));
     }
 
     get assessments(): Feedback[] {
@@ -104,7 +104,7 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
         this.busy = true;
 
         // Used to check if the assessor is the current user
-        this.accountService.identity().then(user => {
+        this.accountService.identity().then((user) => {
             this.userId = user!.id!;
         });
         this.isAtLeastInstructor = this.accountService.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR']);
@@ -112,13 +112,13 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
         if (this.paramSub) {
             this.paramSub.unsubscribe();
         }
-        this.paramSub = this.route.params.subscribe(params => {
+        this.paramSub = this.route.params.subscribe((params) => {
             const exerciseId = Number(params['exerciseId']);
             const submissionValue = params['submissionId'];
 
             if (submissionValue === 'new') {
                 this.textSubmissionService.getTextSubmissionForExerciseWithoutAssessment(exerciseId, true).subscribe(
-                    submission => {
+                    (submission) => {
                         this.receiveParticipation(<StudentParticipation>submission.participation);
 
                         // Update the url with the new id, without reloading the page, to make the history consistent
@@ -139,7 +139,7 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
             } else {
                 const submissionId = Number(submissionValue);
                 this.assessmentsService.getFeedbackDataForExerciseSubmission(submissionId).subscribe(
-                    participation => this.receiveParticipation(participation),
+                    (participation) => this.receiveParticipation(participation),
                     (error: HttpErrorResponse) => this.onError(error),
                 );
             }
@@ -170,13 +170,13 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
                 ],
                 inertia: true,
             })
-            .on('resizestart', function(event: any) {
+            .on('resizestart', function (event: any) {
                 event.target.classList.add('card-resizable');
             })
-            .on('resizeend', function(event: any) {
+            .on('resizeend', function (event: any) {
                 event.target.classList.remove('card-resizable');
             })
-            .on('resizemove', function(event: any) {
+            .on('resizemove', function (event: any) {
                 const target = event.target;
                 // Update element width
                 target.style.width = event.rect.width + 'px';
@@ -195,13 +195,13 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
                 ],
                 inertia: true,
             })
-            .on('resizestart', function(event: any) {
+            .on('resizestart', function (event: any) {
                 event.target.classList.add('card-resizable');
             })
-            .on('resizeend', function(event: any) {
+            .on('resizeend', function (event: any) {
                 event.target.classList.remove('card-resizable');
             })
-            .on('resizemove', function(event: any) {
+            .on('resizemove', function (event: any) {
                 const target = event.target;
                 // Update element height
                 target.style.minHeight = event.rect.height + 'px';
@@ -238,7 +238,7 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
         }
 
         this.assessmentsService.save(this.assessments, this.exercise.id, this.result.id).subscribe(
-            response => {
+            (response) => {
                 this.result = response.body!;
                 this.updateParticipationWithResult();
                 this.jhiAlertService.success('artemisApp.textAssessment.saveSuccessful');
@@ -259,7 +259,7 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
         }
 
         this.assessmentsService.submit(this.assessments, this.exercise.id, this.result.id).subscribe(
-            response => {
+            (response) => {
                 this.result = response.body!;
                 this.updateParticipationWithResult();
                 this.jhiAlertService.success('artemisApp.textAssessment.submitSuccessful');
@@ -310,7 +310,7 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
 
     public predefineTextBlocks(): void {
         this.assessmentsService.getResultWithPredefinedTextblocks(this.result.id).subscribe(
-            response => {
+            (response) => {
                 const submission = <TextSubmission>response.body!.submission;
                 this.submission.blocks = submission.blocks;
                 this.loadFeedbacks(response.body!.feedbacks || []);
@@ -321,7 +321,7 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
     }
 
     private loadFeedbacks(feedbacks: Feedback[]): void {
-        const generalFeedbackIndex = feedbacks.findIndex(feedback => feedback.reference == null);
+        const generalFeedbackIndex = feedbacks.findIndex((feedback) => feedback.reference == null);
         if (generalFeedbackIndex !== -1) {
             this.generalFeedback = feedbacks[generalFeedbackIndex];
             feedbacks.splice(generalFeedbackIndex, 1);
@@ -337,13 +337,13 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
          *
          * For all feedbacks, feedbacks[i].reference is defined.
          */
-        this.referencedTextBlocks = feedbacks.map(feedback => {
+        this.referencedTextBlocks = feedbacks.map((feedback) => {
             const feedbackReferencesTextBlock = feedback.reference ? this.sha1Regex.test(feedback.reference) : false;
             if (!feedbackReferencesTextBlock) {
                 return undefined;
             }
 
-            return this.submission.blocks!.find(block => block.id === feedback.reference);
+            return this.submission.blocks!.find((block) => block.id === feedback.reference);
         });
     }
 
@@ -381,7 +381,7 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
 
     getComplaint(): void {
         this.complaintService.findByResultId(this.result.id).subscribe(
-            res => {
+            (res) => {
                 if (!res.body) {
                     return;
                 }
@@ -418,20 +418,20 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
             return;
         }
 
-        if (this.referencedFeedback.every(f => f.reference != null && f.reference.length > 2000)) {
+        if (!this.referencedFeedback.every((f) => f.reference != null && f.reference.length <= 2000)) {
             this.invalidError = 'artemisApp.textAssessment.error.feedbackReferenceTooLong';
             this.assessmentsAreValid = false;
         }
 
-        let credits = this.referencedFeedback.map(assessment => assessment.credits);
+        let credits = this.referencedFeedback.map((assessment) => assessment.credits);
 
-        if (!this.invalidError && !credits.every(credit => credit !== null && !isNaN(credit))) {
+        if (!this.invalidError && !credits.every((credit) => credit !== null && !isNaN(credit))) {
             this.invalidError = 'artemisApp.textAssessment.error.invalidScoreMustBeNumber';
             this.assessmentsAreValid = false;
-            credits = credits.filter(credit => credit !== null && !isNaN(credit));
+            credits = credits.filter((credit) => credit !== null && !isNaN(credit));
         }
 
-        if (!this.invalidError && !this.referencedFeedback.every(f => f.credits !== 0 || (f.detailText != null && f.detailText.length > 0))) {
+        if (!this.invalidError && !this.referencedFeedback.every((f) => f.credits !== 0 || (f.detailText != null && f.detailText.length > 0))) {
             this.invalidError = 'artemisApp.textAssessment.error.invalidNeedScoreOrFeedback';
             this.assessmentsAreValid = false;
         }
@@ -485,7 +485,7 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
         }
 
         this.assessmentsService.updateAssessmentAfterComplaint(this.assessments, complaintResponse, this.submission.id).subscribe(
-            response => {
+            (response) => {
                 this.result = response.body!;
                 this.updateParticipationWithResult();
                 this.jhiAlertService.clear();

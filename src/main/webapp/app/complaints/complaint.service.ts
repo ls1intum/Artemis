@@ -135,7 +135,7 @@ export class ComplaintService implements IComplaintService {
 
     private convertDateFromServerArray(res: EntityResponseTypeArray): EntityResponseTypeArray {
         if (res.body) {
-            res.body.forEach(complaint => {
+            res.body.forEach((complaint) => {
                 complaint.submittedTime = complaint.submittedTime != null ? moment(complaint.submittedTime) : null;
             });
         }

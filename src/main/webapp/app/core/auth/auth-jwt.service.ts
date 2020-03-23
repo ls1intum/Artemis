@@ -31,7 +31,7 @@ export class AuthServerProvider implements IAuthServerProvider {
     }
 
     login(credentials: Credentials): Observable<void> {
-        return this.http.post<JwtToken>(SERVER_API_URL + 'api/authenticate', credentials).pipe(map(response => this.authenticateSuccess(response, credentials.rememberMe)));
+        return this.http.post<JwtToken>(SERVER_API_URL + 'api/authenticate', credentials).pipe(map((response) => this.authenticateSuccess(response, credentials.rememberMe)));
     }
 
     loginWithToken(jwt: string, rememberMe: boolean): Promise<string> {
@@ -63,7 +63,7 @@ export class AuthServerProvider implements IAuthServerProvider {
     removeAuthTokenFromCaches(): Observable<null> {
         this.localStorage.clear('authenticationToken');
         this.sessionStorage.clear('authenticationToken');
-        // The local or session storage might have to be cleared asynchronously in future due to updated browser apis. This is why this method is already acting if it was asynchronous.
+        // The local or session storage might have to be cleared asynchronously in future due to updated browser apis. This is why this method is already acting asynchronous.
         return of(null);
     }
 
@@ -73,7 +73,7 @@ export class AuthServerProvider implements IAuthServerProvider {
     clearCaches(): Observable<null> {
         this.localStorage.clear();
         this.sessionStorage.clear();
-        // The local or session storage might have to be cleared asynchronously in future due to updated browser apis. This is why this method is already acting if it was asynchronous.
+        // The local or session storage might have to be cleared asynchronously in future due to updated browser apis. This is why this method is already acting asynchronous.
         return of(null);
     }
 }

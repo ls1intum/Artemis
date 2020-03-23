@@ -49,8 +49,8 @@ export class ProgrammingExerciseInstructorStatusComponent implements OnChanges, 
 
         this.resultSubscription = this.participationWebsocketService
             .subscribeForLatestResultOfParticipation(this.participation.id)
-            .pipe(filter(result => !!result))
-            .subscribe(result => (this.latestResult = result));
+            .pipe(filter((result) => !!result))
+            .subscribe((result) => (this.latestResult = result));
     }
 
     ngOnDestroy(): void {

@@ -95,7 +95,7 @@ export class TextExerciseUpdateComponent implements OnInit {
      * @param categories list of exercise categories
      */
     updateCategories(categories: ExerciseCategory[]) {
-        this.textExercise.categories = categories.map(el => JSON.stringify(el));
+        this.textExercise.categories = categories.map((el) => JSON.stringify(el));
     }
 
     /**

@@ -35,7 +35,7 @@ export class ExerciseHintComponent implements OnInit, OnDestroy {
      * Subscribes to the route params to act on the currently selected exercise.
      */
     ngOnInit() {
-        this.paramSub = this.route.params.subscribe(params => {
+        this.paramSub = this.route.params.subscribe((params) => {
             this.exerciseId = params['exerciseId'];
             this.loadAllByExerciseId();
             this.registerChangeInExerciseHints();

@@ -250,7 +250,7 @@ describe('GuidedTourService', () => {
                 const backdrop = guidedTourComponentFixture.debugElement.queryAll(By.css('.guided-tour-overlay'));
                 expect(backdrop).to.exist;
                 expect(backdrop.length).to.equal(4);
-                backdrop.forEach(overlay => {
+                backdrop.forEach((overlay) => {
                     overlay.nativeElement.click();
                 });
                 guidedTourComponentFixture.detectChanges();
@@ -361,7 +361,7 @@ describe('GuidedTourService', () => {
                 guidedTourService.enableTourForCourseExerciseComponent(course1, tourWithCourseAndExercise, true);
                 expect(guidedTourService.currentTour).to.equal(tourWithCourseAndExercise);
 
-                course1.exercises.forEach(exercise => {
+                course1.exercises.forEach((exercise) => {
                     exercise.course = course1;
                     if (exercise === exercise1) {
                         expect(guidedTourService['isGuidedTourAvailableForExercise'](exercise)).to.be.true;
@@ -420,7 +420,7 @@ describe('GuidedTourService', () => {
                     expect(deleteGuidedTourSettingStub).to.have.been.calledOnceWith('tour_with_course_and_exercise');
                     expect(navigationStub).to.have.been.calledOnceWith('/courses/1/exercises');
 
-                    const index = course1.exercises.findIndex(exercise => (exercise.id = exercise4.id));
+                    const index = course1.exercises.findIndex((exercise) => (exercise.id = exercise4.id));
                     course1.exercises.splice(index, 1);
                 });
             });

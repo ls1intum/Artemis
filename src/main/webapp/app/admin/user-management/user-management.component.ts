@@ -42,7 +42,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
         private eventManager: JhiEventManager,
     ) {
         this.itemsPerPage = ITEMS_PER_PAGE;
-        this.routeData = this.activatedRoute.data.subscribe(data => {
+        this.routeData = this.activatedRoute.data.subscribe((data) => {
             this.page = data['pagingParams'].page;
             this.previousPage = data['pagingParams'].page;
             this.reverse = data['pagingParams'].ascending;
@@ -54,7 +54,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
      * Retrieves the current user and calls the {@link loadAll} and {@link registerChangeInUsers} methods on init
      */
     ngOnInit() {
-        this.accountService.identity().then(user => {
+        this.accountService.identity().then((user) => {
             this.currentAccount = user!;
             this.loadAll();
             this.registerChangeInUsers();
@@ -84,7 +84,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
     setActive(user: User, isActivated: boolean) {
         user.activated = isActivated;
 
-        this.userService.update(user).subscribe(response => {
+        this.userService.update(user).subscribe((response) => {
             if (response.status === 200) {
                 this.error = null;
                 this.success = 'OK';

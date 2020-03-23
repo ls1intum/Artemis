@@ -17,7 +17,7 @@ export class QuizStatisticUtil {
      */
     previousStatistic(quizExercise: QuizExercise, question: QuizQuestion) {
         // find position in quiz
-        const index = quizExercise.quizQuestions.findIndex(function(quiz) {
+        const index = quizExercise.quizQuestions.findIndex(function (quiz) {
             return quiz.id === question.id;
         });
         // go to quiz-statistic if the position = 0
@@ -38,7 +38,7 @@ export class QuizStatisticUtil {
      */
     nextStatistic(quizExercise: QuizExercise, question: QuizQuestion) {
         // find position in quiz
-        const index = quizExercise.quizQuestions.findIndex(function(quiz) {
+        const index = quizExercise.quizQuestions.findIndex(function (quiz) {
             return quiz.id === question.id;
         });
         // go to quiz-statistic if the position = last position

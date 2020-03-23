@@ -102,7 +102,7 @@ export class QuizScoringInfoStudentModalComponent implements AfterViewInit {
             const mcQuizQuestion = question as MultipleChoiceQuestion;
             if (mcQuizQuestion.id === this.question.id) {
                 answerOptionsOfQuestion = mcQuizQuestion.answerOptions!;
-                this.correctMultipleChoiceAnswers = mcQuizQuestion.answerOptions!.filter(option => option.isCorrect).length;
+                this.correctMultipleChoiceAnswers = mcQuizQuestion.answerOptions!.filter((option) => option.isCorrect).length;
             }
         }
 
@@ -188,7 +188,7 @@ export class QuizScoringInfoStudentModalComponent implements AfterViewInit {
         const translationBasePath = 'artemisApp.quizExercise.explanationText.';
         const shortAnswer = this.question as ShortAnswerQuestion;
         this.shortAnswerSpots = shortAnswer.spots.length;
-        this.shortAnswerCorrectAnswers = this.shortAnswerText.filter(option => option.isCorrect).length;
+        this.shortAnswerCorrectAnswers = this.shortAnswerText.filter((option) => option.isCorrect).length;
         this.shortAnswerWrongAnswers = this.shortAnswerSpots - this.shortAnswerCorrectAnswers;
         this.differenceShortAnswer = this.shortAnswerCorrectAnswers - this.shortAnswerWrongAnswers;
 

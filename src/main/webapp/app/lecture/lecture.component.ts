@@ -50,7 +50,7 @@ export class LectureComponent implements OnInit, OnDestroy {
     ngOnInit() {
         this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
         this.loadAll();
-        this.accountService.identity().then(account => {
+        this.accountService.identity().then((account) => {
             this.currentAccount = account;
         });
         this.registerChangeInLectures();

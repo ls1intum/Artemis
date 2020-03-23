@@ -6,7 +6,7 @@
 
     <div class="edit-quiz">
         <div class="input-group">
-            <input type="text" class="form-control" [(ngModel)]="quizExercise.title" placeholder="Quiz Title" style="height: 33px" />
+            <input type="text" class="form-control" [(ngModel)]="quizExercise.title" placeholder="Quiz Title" style="height: 33px;" />
             <span class="input-group-btn">
                 <button class="btn btn-outline-secondary" type="button" (click)="resetQuizTitle()">
                     <fa-icon [icon]="'undo'"></fa-icon>
@@ -70,7 +70,7 @@
         <div class="container">
             <div class="edit-quiz-footer-content">
                 <div></div>
-                <div class="form-group ">
+                <div class="form-group">
                     <span *ngIf="!pendingChanges() && !isSaving" jhiTranslate="artemisApp.quizExercise.edit.saved" class="badge badge-success"> </span>
                     <span *ngIf="pendingChanges() && validQuiz() && !isSaving" jhiTranslate="artemisApp.quizExercise.edit.pendingChanges" class="badge badge-primary"> </span>
                     <span *ngIf="isSaving" jhiTranslate="artemisApp.quizExercise.edit.saving" class="badge badge-primary"> </span>

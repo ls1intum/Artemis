@@ -211,7 +211,7 @@ describe('TextAssessmentComponent', () => {
         activatedRouteMock.testParams = { exerciseId: 1, submissionId: 'new' };
         getTextSubmissionForExerciseWithoutAssessmentStub.returns(throwError({ error: { errorKey: 'lockedSubmissionsLimitReached' } }));
         const spy = stub(router, 'navigateByUrl');
-        spy.returns(new Promise(resolve => true));
+        spy.returns(new Promise((resolve) => true));
         comp.ngOnInit();
         tick();
         expect(spy.called).to.be.true;

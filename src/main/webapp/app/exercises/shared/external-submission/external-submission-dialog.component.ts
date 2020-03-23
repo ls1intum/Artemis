@@ -61,7 +61,7 @@ export class ExternalSubmissionDialogComponent implements OnInit {
 
     private subscribeToSaveResponse(result: Observable<HttpResponse<Result>>) {
         result.subscribe(
-            res => this.onSaveSuccess(res),
+            (res) => this.onSaveSuccess(res),
             () => this.onSaveError(),
         );
     }

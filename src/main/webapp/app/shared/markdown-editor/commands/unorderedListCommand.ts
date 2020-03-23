@@ -21,7 +21,7 @@ export class UnorderedListCommand extends Command {
      */
     splitText(selectedText: string): void {
         const parseArray = selectedText.split('\n');
-        parseArray.forEach(element => this.replaceText(element));
+        parseArray.forEach((element) => this.replaceText(element));
     }
 
     /**

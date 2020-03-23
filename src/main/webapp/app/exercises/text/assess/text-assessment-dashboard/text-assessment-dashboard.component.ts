@@ -34,7 +34,7 @@ export class TextAssessmentDashboardComponent implements OnInit {
         private momentDiff: DifferencePipe,
         private translateService: TranslateService,
     ) {
-        translateService.get('artemisApp.textAssessment.confirmCancel').subscribe(text => (this.cancelConfirmationText = text));
+        translateService.get('artemisApp.textAssessment.confirmCancel').subscribe((text) => (this.cancelConfirmationText = text));
     }
 
     async ngOnInit() {
@@ -42,14 +42,14 @@ export class TextAssessmentDashboardComponent implements OnInit {
         const exerciseId = Number(this.route.snapshot.paramMap.get('exerciseId'));
         this.exerciseService
             .find(exerciseId)
-            .map(exerciseResponse => {
+            .map((exerciseResponse) => {
                 if (exerciseResponse.body!.type !== ExerciseType.TEXT) {
                     throw new Error('Cannot use Text Assessment Dashboard with non-text Exercise type.');
                 }
 
                 return <TextExercise>exerciseResponse.body!;
             })
-            .subscribe(exercise => {
+            .subscribe((exercise) => {
                 this.exercise = exercise;
                 this.getSubmissions();
             });
