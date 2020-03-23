@@ -50,13 +50,13 @@ export class TeamStudentSearchComponent {
             distinctUntilChanged(),
             tap(() => this.searchFailed.emit(false)),
             tap(() => this.searching.emit(true)),
-            switchMap(loginOrName => {
+            switchMap((loginOrName) => {
                 if (loginOrName.length < 3) {
                     return of([]);
                 }
                 return this.teamService
                     .searchInCourseForExerciseTeam(this.course, this.exercise, loginOrName)
-                    .pipe(map(usersResponse => usersResponse.body!))
+                    .pipe(map((usersResponse) => usersResponse.body!))
                     .pipe(
                         catchError(() => {
                             this.searchFailed.emit(true);
@@ -64,7 +64,7 @@ export class TeamStudentSearchComponent {
                         }),
                     );
             }),
-            tap(users => {
+            tap((users) => {
                 setTimeout(() => {
                     for (let i = 0; i < this.typeaheadButtons.length; i++) {
                         if (!this.userCanBeAddedToPendingTeam(users[i])) {
@@ -78,10 +78,10 @@ export class TeamStudentSearchComponent {
     };
 
     private userCanBeAddedToPendingTeam(user: TeamSearchUser): boolean {
-        if (this.studentsFromPendingTeam.map(s => s.id).includes(user.id)) {
+        if (this.studentsFromPendingTeam.map((s) => s.id).includes(user.id)) {
             // If a student is already part of the pending team, they cannot be added again
             return false;
-        } else if (this.studentsFromTeam.map(s => s.id).includes(user.id)) {
+        } else if (this.studentsFromTeam.map((s) => s.id).includes(user.id)) {
             // If a student is not part of the pending team but was in the original team, they can be added back
             return true;
         }

@@ -48,8 +48,8 @@ export class TextSubmissionService {
             url += '?lock=true';
         }
         return this.http.get<TextSubmission>(url).pipe(
-            tap(submission => (submission.participation.submissions = [submission])),
-            tap(submission => (submission.participation.results = [submission.result])),
+            tap((submission) => (submission.participation.submissions = [submission])),
+            tap((submission) => (submission.participation.results = [submission.result])),
         );
     }
 

@@ -35,9 +35,9 @@ export class ComplaintsComponent implements OnInit {
     ngOnInit(): void {
         this.complaintService
             .findByResultId(this.resultId)
-            .pipe(filter(res => !!res.body))
+            .pipe(filter((res) => !!res.body))
             .subscribe(
-                res => {
+                (res) => {
                     this.complaintText = res.body!.complaintText;
                     this.alreadySubmitted = true;
                     this.submittedDate = res.body!.submittedTime!;
@@ -45,7 +45,7 @@ export class ComplaintsComponent implements OnInit {
                     this.handled = this.accepted !== undefined;
 
                     if (this.handled) {
-                        this.complaintResponseService.findByComplaintId(res.body!.id).subscribe(complaintResponse => (this.complaintResponse = complaintResponse.body!));
+                        this.complaintResponseService.findByComplaintId(res.body!.id).subscribe((complaintResponse) => (this.complaintResponse = complaintResponse.body!));
                     }
                 },
                 (err: HttpErrorResponse) => {
@@ -63,7 +63,7 @@ export class ComplaintsComponent implements OnInit {
         complaint.complaintType = this.complaintType;
 
         this.complaintService.create(complaint).subscribe(
-            res => {
+            (res) => {
                 this.submittedDate = res.body!.submittedTime!;
                 this.alreadySubmitted = true;
                 if (complaint.complaintType === ComplaintType.COMPLAINT) {

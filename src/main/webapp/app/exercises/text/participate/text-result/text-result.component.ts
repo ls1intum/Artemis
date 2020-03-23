@@ -41,7 +41,7 @@ export class TextResultComponent {
         const referenceBasedResultBlocks = referenceBasedFeedback.map(this.feedbackToTextResultBlock, this);
         const blockBasedResultBlocks = blockBasedFeedback.map(this.textBlockToTextResultBlock, this);
 
-        const resultBlocks = ([...referenceBasedResultBlocks, ...blockBasedResultBlocks].filter(elem => elem !== undefined) as TextResultBlock[]).sort(
+        const resultBlocks = ([...referenceBasedResultBlocks, ...blockBasedResultBlocks].filter((elem) => elem !== undefined) as TextResultBlock[]).sort(
             (a, b) => b.startIndex - a.startIndex,
         );
 
@@ -86,7 +86,7 @@ export class TextResultComponent {
 
     private textBlockToTextResultBlock(feedback: Feedback): TextResultBlock | undefined {
         if (this.submission.blocks) {
-            const result = this.submission.blocks.find(block => block.id === feedback.reference);
+            const result = this.submission.blocks.find((block) => block.id === feedback.reference);
             if (result) {
                 return new TextResultBlock(result, feedback);
             }

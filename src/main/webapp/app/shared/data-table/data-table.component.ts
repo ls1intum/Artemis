@@ -250,7 +250,7 @@ export class DataTableComponent implements OnInit, OnChanges {
      * @param fields Fields to extract from entity (can be paths such as "student.login")
      */
     private entityFieldValues = (entity: BaseEntity, fields: string[]) => {
-        return flatten(fields.map(field => this.collectEntityFieldValues(entity, field))).filter(Boolean) as string[];
+        return flatten(fields.map((field) => this.collectEntityFieldValues(entity, field))).filter(Boolean) as string[];
     };
 
     /**
@@ -267,7 +267,7 @@ export class DataTableComponent implements OnInit, OnChanges {
         if (tail.length > 0) {
             const resolved = get(entity, head);
             if (Array.isArray(resolved)) {
-                return flatten(resolved.map(subEntity => this.collectEntityFieldValues(subEntity, tail.join(separator))));
+                return flatten(resolved.map((subEntity) => this.collectEntityFieldValues(subEntity, tail.join(separator))));
             }
             return this.collectEntityFieldValues(resolved, tail.join(separator));
         }
@@ -287,7 +287,7 @@ export class DataTableComponent implements OnInit, OnChanges {
         return (
             text &&
             word &&
-            segments.every(segment => {
+            segments.every((segment) => {
                 const regex = segment
                     .replace(/\*/g, '.*') // multiple characters
                     .replace(/\?/g, '.'); // single character
@@ -306,13 +306,13 @@ export class DataTableComponent implements OnInit, OnChanges {
         return text$.pipe(
             debounceTime(200),
             distinctUntilChanged(),
-            map(text => {
-                const searchWords = text.split(',').map(word => word.trim());
+            map((text) => {
+                const searchWords = text.split(',').map((word) => word.trim());
                 // When the entity field is cleared, we translate the resulting empty string to an empty array (otherwise no entities would be found).
                 return searchWords.length === 1 && !searchWords[0] ? [] : searchWords;
             }),
             // For available entities in table.
-            tap(searchWords => {
+            tap((searchWords) => {
                 this.entityCriteria.textSearch = searchWords;
                 this.updateEntities();
             }),
@@ -324,9 +324,9 @@ export class DataTableComponent implements OnInit, OnChanges {
                 if (!lastSearchWord || lastSearchWord.length < 3) {
                     return false;
                 }
-                return this.entities.filter(entity => {
+                return this.entities.filter((entity) => {
                     const fieldValues = this.entityFieldValues(entity, this.searchFields);
-                    return fieldValues.some(fieldValue => this.foundIn(fieldValue)(lastSearchWord));
+                    return fieldValues.some((fieldValue) => this.foundIn(fieldValue)(lastSearchWord));
                 });
             }),
         );

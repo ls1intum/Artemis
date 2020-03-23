@@ -51,7 +51,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
     ngOnInit() {
         this.languages = this.languageHelper.getAll();
 
-        this.profileService.getProfileInfo().subscribe(profileInfo => {
+        this.profileService.getProfileInfo().subscribe((profileInfo) => {
             if (profileInfo) {
                 this.inProduction = profileInfo.inProduction;
             }
@@ -77,7 +77,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
      */
     subscribeForGuidedTourAvailability(): void {
         // Check availability after first subscribe call since the router event been triggered already
-        this.guidedTourService.getGuidedTourAvailabilityStream().subscribe(isAvailable => {
+        this.guidedTourService.getGuidedTourAvailabilityStream().subscribe((isAvailable) => {
             this.isTourAvailable = isAvailable;
         });
     }

@@ -41,11 +41,11 @@ export class TeamComponent implements OnInit {
     }
 
     load() {
-        this.paramSub = this.route.params.subscribe(params => {
+        this.paramSub = this.route.params.subscribe((params) => {
             this.isLoading = true;
-            this.exerciseService.find(params['exerciseId']).subscribe(exerciseResponse => {
+            this.exerciseService.find(params['exerciseId']).subscribe((exerciseResponse) => {
                 this.exercise = exerciseResponse.body!;
-                this.teamService.find(this.exercise, params['teamId']).subscribe(teamResponse => {
+                this.teamService.find(this.exercise, params['teamId']).subscribe((teamResponse) => {
                     this.team = teamResponse.body!;
                     this.isLoading = false;
                 });

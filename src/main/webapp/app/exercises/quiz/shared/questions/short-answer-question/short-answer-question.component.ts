@@ -124,11 +124,11 @@ export class ShortAnswerQuestionComponent implements OnInit, OnDestroy {
     }
 
     getSubmittedTextForSpot(spotTag: string): ShortAnswerSubmittedText {
-        return this.submittedTexts.filter(submittedText => submittedText.spot.spotNr === this.shortAnswerQuestionUtil.getSpotNr(spotTag))[0];
+        return this.submittedTexts.filter((submittedText) => submittedText.spot.spotNr === this.shortAnswerQuestionUtil.getSpotNr(spotTag))[0];
     }
 
     getSampleSolutionForSpot(spotTag: string): ShortAnswerSolution {
-        const index = this.question.spots.findIndex(spot => spot.spotNr === this.shortAnswerQuestionUtil.getSpotNr(spotTag));
+        const index = this.question.spots.findIndex((spot) => spot.spotNr === this.shortAnswerQuestionUtil.getSpotNr(spotTag));
         return this.sampleSolutions[index];
     }
 
@@ -146,7 +146,7 @@ export class ShortAnswerQuestionComponent implements OnInit, OnDestroy {
             this.shortAnswerQuestionUtil.getSpot(this.shortAnswerQuestionUtil.getSpotNr(spotTag), this.question),
         );
 
-        if (solutionsForSpot.filter(solution => solution.text === this.getSubmittedTextForSpot(spotTag).text).length > 0) {
+        if (solutionsForSpot.filter((solution) => solution.text === this.getSubmittedTextForSpot(spotTag).text).length > 0) {
             isTextCorrect = true;
         }
         return isTextCorrect;

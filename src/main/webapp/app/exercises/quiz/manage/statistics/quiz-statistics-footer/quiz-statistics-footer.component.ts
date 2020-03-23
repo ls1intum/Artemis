@@ -56,7 +56,7 @@ export class QuizStatisticsFooterComponent implements OnInit, OnDestroy {
     ) {}
 
     ngOnInit() {
-        this.sub = this.route.params.subscribe(params => {
+        this.sub = this.route.params.subscribe((params) => {
             this.questionIdParam = +params['questionId'];
             if (this.accountService.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'])) {
                 this.quizExerciseService.find(params['exerciseId']).subscribe((res: HttpResponse<QuizExercise>) => {
@@ -148,7 +148,7 @@ export class QuizStatisticsFooterComponent implements OnInit, OnDestroy {
             this.router.navigate(['/courses']);
         }
         this.quizExercise = quiz;
-        const updatedQuestion = this.quizExercise.quizQuestions.filter(question => this.questionIdParam === question.id)[0];
+        const updatedQuestion = this.quizExercise.quizQuestions.filter((question) => this.questionIdParam === question.id)[0];
         this.question = updatedQuestion as QuizQuestion;
         this.quizExercise.adjustedDueDate = moment().add(this.quizExercise.remainingTime, 'seconds');
         this.waitingForQuizStart = !this.quizExercise.started;

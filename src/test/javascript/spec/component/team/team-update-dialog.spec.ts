@@ -78,7 +78,7 @@ describe('TeamUpdateDialogComponent', () => {
             teamStudents: debugElement.query(By.css('#teamStudents')),
             ignoreTeamSizeRecommendation: debugElement.query(By.css('#ignoreTeamSizeRecommendation')),
         };
-        Object.values(inputs).forEach(input => expect(input).to.exist);
+        Object.values(inputs).forEach((input) => expect(input).to.exist);
 
         // Enter a team name and a team short name
         inputs.teamName.nativeElement.value = 'Team 1';
@@ -107,7 +107,7 @@ describe('TeamUpdateDialogComponent', () => {
         expect(submitButton.nativeElement.disabled).to.be.false;
 
         // Add the rest of the students to the team
-        otherStudents.forEach(student => comp.onAddStudent(student));
+        otherStudents.forEach((student) => comp.onAddStudent(student));
         fixture.detectChanges();
         expect(submitButton.nativeElement.disabled).to.be.false;
 
@@ -143,7 +143,7 @@ describe('TeamUpdateDialogComponent', () => {
             teamShortName: debugElement.query(By.css('#teamShortName')),
             teamStudents: debugElement.query(By.css('#teamStudents')),
         };
-        Object.values(inputs).forEach(input => expect(input).to.exist);
+        Object.values(inputs).forEach((input) => expect(input).to.exist);
 
         // Update the team name
         const updatedTeamName = 'Updated team name';
@@ -165,7 +165,7 @@ describe('TeamUpdateDialogComponent', () => {
         expect(comp.pendingTeam.students).to.deep.equal(comp.team.students.slice(1));
 
         // Add three new team members
-        mockNonTeamStudents.forEach(student => comp.onAddStudent(student));
+        mockNonTeamStudents.forEach((student) => comp.onAddStudent(student));
         fixture.detectChanges();
         expect(comp.pendingTeam.students).to.deep.equal(comp.team.students.slice(1).concat(mockNonTeamStudents));
 

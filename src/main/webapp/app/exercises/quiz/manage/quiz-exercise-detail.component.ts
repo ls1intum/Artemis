@@ -195,7 +195,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
     }
 
     updateCategories(categories: ExerciseCategory[]) {
-        this.quizExercise.categories = categories.map(el => JSON.stringify(el));
+        this.quizExercise.categories = categories.map((el) => JSON.stringify(el));
         this.cacheValidation();
     }
 
@@ -331,7 +331,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
      */
     calculateMaxExerciseScore(): number {
         let scoreSum = 0;
-        this.quizExercise.quizQuestions.forEach(question => (scoreSum += question.score));
+        this.quizExercise.quizQuestions.forEach((question) => (scoreSum += question.score));
         return scoreSum;
     }
 
@@ -368,7 +368,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
         }
 
         /** Search the selected course by id in all available courses **/
-        const selectedCourse = this.courses.find(course => course.id === Number(this.selectedCourseId))!;
+        const selectedCourse = this.courses.find((course) => course.id === Number(this.selectedCourseId))!;
 
         // TODO: the following code seems duplicated (see quiz-exercise-export.component.ts in the method loadForCourse). Try to avoid duplication!
         // For the given course, get list of all quiz exercises. And for all quiz exercises, get list of all questions in a quiz exercise,
@@ -480,7 +480,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
      * @param questionToDelete {QuizQuestion} the question to remove
      */
     deleteQuestion(questionToDelete: QuizQuestion): void {
-        this.quizExercise.quizQuestions = this.quizExercise.quizQuestions.filter(question => question !== questionToDelete);
+        this.quizExercise.quizQuestions = this.quizExercise.quizQuestions.filter((question) => question !== questionToDelete);
         this.cacheValidation();
     }
 
@@ -506,7 +506,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
 
         // Unsaved changes if any of the stated object key values are not equal or the questions/release dates differ
         return (
-            keysToCompare.some(key => this.quizExercise[key] !== this.savedEntity[key]) ||
+            keysToCompare.some((key) => this.quizExercise[key] !== this.savedEntity[key]) ||
             !this.areDatesIdentical(this.quizExercise.releaseDate!, this.savedEntity.releaseDate!) ||
             !this.areCategoriesIdentical(this.quizExercise.categories, this.savedEntity.categories) ||
             !this.areQuizExerciseEntityQuestionsIdentical(this.quizExercise.quizQuestions, this.savedEntity.quizQuestions)
@@ -569,10 +569,10 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
             releaseDateValidAndNotInPastCondition &&
             this.quizExercise.quizQuestions &&
             !!this.quizExercise.quizQuestions.length;
-        const areAllQuestionsValid = this.quizExercise.quizQuestions.every(function(question) {
+        const areAllQuestionsValid = this.quizExercise.quizQuestions.every(function (question) {
             if (question.type === QuizQuestionType.MULTIPLE_CHOICE) {
                 const mcQuestion = question as MultipleChoiceQuestion;
-                if (mcQuestion.answerOptions!.some(answerOption => answerOption.isCorrect)) {
+                if (mcQuestion.answerOptions!.some((answerOption) => answerOption.isCorrect)) {
                     return question.title && question.title !== '' && question.title.length < 250;
                 }
             } else if (question.type === QuizQuestionType.DRAG_AND_DROP) {
@@ -597,7 +597,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
                     this.shortAnswerQuestionUtil.validateNoMisleadingCorrectShortAnswerMapping(shortAnswerQuestion) &&
                     this.shortAnswerQuestionUtil.everySpotHasASolution(shortAnswerQuestion.correctMappings, shortAnswerQuestion.spots) &&
                     this.shortAnswerQuestionUtil.everyMappedSolutionHasASpot(shortAnswerQuestion.correctMappings) &&
-                    shortAnswerQuestion.solutions.filter(solution => solution.text.trim() === '').length === 0 &&
+                    shortAnswerQuestion.solutions.filter((solution) => solution.text.trim() === '').length === 0 &&
                     !this.shortAnswerQuestionUtil.hasMappingDuplicateValues(shortAnswerQuestion.correctMappings) &&
                     this.shortAnswerQuestionUtil.atLeastAsManySolutionsAsSpots(shortAnswerQuestion)
                 );
@@ -620,7 +620,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
             ? []
             : this.quizExercise.quizQuestions
                   .map((question, index) => {
-                      if (question.type === QuizQuestionType.MULTIPLE_CHOICE && (<MultipleChoiceQuestion>question).answerOptions!.some(option => !option.explanation)) {
+                      if (question.type === QuizQuestionType.MULTIPLE_CHOICE && (<MultipleChoiceQuestion>question).answerOptions!.some((option) => !option.explanation)) {
                           return {
                               translateKey: 'artemisApp.quizExercise.invalidReasons.explanationIsMissing',
                               translateValues: { index: index + 1 },
@@ -685,7 +685,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
                 }
             }
         }
-        this.quizExercise.quizQuestions.forEach(function(question: QuizQuestion, index: number) {
+        this.quizExercise.quizQuestions.forEach(function (question: QuizQuestion, index: number) {
             if (!question.title || question.title === '') {
                 invalidReasons.push({
                     translateKey: 'artemisApp.quizExercise.invalidReasons.questionTitle',
@@ -694,13 +694,13 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
             }
             if (question.type === QuizQuestionType.MULTIPLE_CHOICE) {
                 const mcQuestion = question as MultipleChoiceQuestion;
-                if (!mcQuestion.answerOptions!.some(answeroption => answeroption.isCorrect)) {
+                if (!mcQuestion.answerOptions!.some((answeroption) => answeroption.isCorrect)) {
                     invalidReasons.push({
                         translateKey: 'artemisApp.quizExercise.invalidReasons.questionCorrectAnswerOption',
                         translateValues: { index: index + 1 },
                     });
                 }
-                if (!mcQuestion.answerOptions!.every(answeroption => answeroption.explanation !== '')) {
+                if (!mcQuestion.answerOptions!.every((answeroption) => answeroption.explanation !== '')) {
                     invalidReasons.push({
                         translateKey: 'artemisApp.quizExercise.invalidReasons.explanationIsMissing',
                         translateValues: { index: index + 1 },
@@ -765,7 +765,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
                         translateValues: { index: index + 1 },
                     });
                 }
-                if (!(shortAnswerQuestion.solutions.filter(solution => solution.text.trim() === '').length === 0)) {
+                if (!(shortAnswerQuestion.solutions.filter((solution) => solution.text.trim() === '').length === 0)) {
                     invalidReasons.push({
                         translateKey: 'artemisApp.quizExercise.invalidReasons.shortAnswerQuestionSolutionHasNoValue',
                         translateValues: { index: index + 1 },
@@ -930,7 +930,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
             ...this.editDragAndDropQuestionComponents.toArray(),
             ...this.editShortAnswerQuestionComponents.toArray(),
         ];
-        editQuestionComponents.forEach(component => component.prepareForSave());
+        editQuestionComponents.forEach((component) => component.prepareForSave());
     }
 
     /**

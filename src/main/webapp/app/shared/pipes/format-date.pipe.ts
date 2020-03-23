@@ -11,9 +11,7 @@ export class DatePipe implements PipeTransform {
         }
         const d = new Date(date);
         if (d && !isNaN(d.getTime())) {
-            return moment(d)
-                .seconds(0)
-                .format('DD MMMM YYYY, hh:mm:ss A Z');
+            return moment(d).seconds(0).format('DD MMMM YYYY, hh:mm:ss A Z');
         } else {
             return 'DD MMMM YYYY, hh:mm:ss PM';
         }

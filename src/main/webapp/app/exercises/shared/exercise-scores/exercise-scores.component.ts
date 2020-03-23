@@ -80,7 +80,7 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
     }
 
     ngOnInit() {
-        this.paramSub = this.route.params.subscribe(params => {
+        this.paramSub = this.route.params.subscribe((params) => {
             this.isLoading = true;
             this.courseService.find(params['courseId']).subscribe((res: HttpResponse<Course>) => {
                 this.course = res.body!;
@@ -113,7 +113,7 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
             })
             .pipe(
                 tap((res: HttpResponse<Result[]>) => {
-                    this.results = res.body!.map(result => {
+                    this.results = res.body!.map((result) => {
                         result.participation!.results = [result];
                         (result.participation! as StudentParticipation).exercise = this.exercise;
                         result.durationInMinutes = this.durationInMinutes(
@@ -193,7 +193,7 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
                         rows.push('data:text/csv;charset=utf-8,Team Name,Team Short Name,Students');
                     }
                     const { name, shortName, students } = studentParticipation.team;
-                    rows.push(`${name},${shortName},"${students.map(s => s.name).join(', ')}"`);
+                    rows.push(`${name},${shortName},"${students.map((s) => s.name).join(', ')}"`);
                 } else {
                     rows.push(index === 0 ? `data:text/csv;charset=utf-8,${participantName}` : participantName);
                 }
@@ -225,7 +225,7 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
                         rows.push(`data:text/csv;charset=utf-8,${nameAndUserNameColumnHeaders},Score,Repo Link${optionalStudentsColumnHeader}`);
                     }
                 }
-                const optionalStudentsColumnValue = studentParticipation.team ? `,"${studentParticipation.team.students.map(s => s.name).join(', ')}"` : '';
+                const optionalStudentsColumnValue = studentParticipation.team ? `,"${studentParticipation.team.students.map((s) => s.name).join(', ')}"` : '';
                 if (this.exercise.type !== ExerciseType.PROGRAMMING) {
                     rows.push(`${participantName},${participantIdentifier},${score}${optionalStudentsColumnValue}`);
                 } else {

@@ -33,7 +33,7 @@ export class CourseOverviewComponent implements OnInit {
     ) {}
 
     ngOnInit() {
-        this.subscription = this.route.params.subscribe(params => {
+        this.subscription = this.route.params.subscribe((params) => {
             this.courseId = parseInt(params['courseId'], 10);
         });
 

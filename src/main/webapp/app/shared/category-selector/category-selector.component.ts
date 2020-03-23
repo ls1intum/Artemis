@@ -23,7 +23,7 @@ export class CategorySelectorComponent implements OnChanges {
         if (!this.existingCategories) {
             return;
         }
-        this.existingCategories.forEach(category => {
+        this.existingCategories.forEach((category) => {
             const categoryIsInArray = (el: ExerciseCategory, index: number, categories: ExerciseCategory[]): boolean => {
                 return el.category === category.category;
             };
@@ -40,7 +40,7 @@ export class CategorySelectorComponent implements OnChanges {
 
     onSelectedColor(selectedColor: string) {
         this.selectedCategory.color = selectedColor;
-        this.exerciseCategories = this.exerciseCategories.map(el => {
+        this.exerciseCategories = this.exerciseCategories.map((el) => {
             if (el.category === this.selectedCategory.category) {
                 return this.selectedCategory;
             }
@@ -60,7 +60,7 @@ export class CategorySelectorComponent implements OnChanges {
 
     onItemRemove(tagItem: ExerciseCategory) {
         this.colorSelector.cancelColorSelector();
-        this.exerciseCategories = this.exerciseCategories.filter(el => el !== tagItem);
+        this.exerciseCategories = this.exerciseCategories.filter((el) => el !== tagItem);
         this.selectedCategories.emit(this.exerciseCategories);
     }
 }

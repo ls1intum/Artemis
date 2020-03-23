@@ -39,7 +39,7 @@
         </noscript>
         <script type="text/javascript" language="javascript">
             // show an error message if the app loading takes more than 5 sec
-            window.onload = function() {
+            window.onload = function () {
                 setTimeout(showError, 4000);
             };
             function showError() {
@@ -66,7 +66,7 @@
             /* tracker methods like "setCustomDimension" should be called before "trackPageView" */
             _paq.push(['setDoNotTrack', true]);
             _paq.push(['enableLinkTracking']);
-            (function() {
+            (function () {
                 var u = 'https://www.piwik.tum.de/';
                 _paq.push(['setTrackerUrl', u + 'matomo.php']);
                 _paq.push(['setSiteId', '125']);

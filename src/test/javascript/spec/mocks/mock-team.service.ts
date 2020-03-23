@@ -21,7 +21,7 @@ export const mockNonTeamStudents = [
     { id: 6, firstName: 'Jeffrey', lastName: 'McGill', name: 'Jeffrey McGill', login: 'ga67ghi', email: 'jeffrey.mcgill@example.com' },
 ] as User[];
 
-export const mockTeamSearchUsers = [...mockTeamStudents, ...mockNonTeamStudents].map(student => ({
+export const mockTeamSearchUsers = [...mockTeamStudents, ...mockNonTeamStudents].map((student) => ({
     ...student,
     assignedToTeam: mockTeamStudents.includes(student),
 })) as TeamSearchUser[];

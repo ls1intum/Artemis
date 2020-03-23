@@ -29,7 +29,7 @@ export class FeatureToggleService {
             this.websocketService.subscribe(this.topic);
             this.websocketService
                 .receive(this.topic)
-                .pipe(tap(activeFeatures => this.notifySubscribers(activeFeatures)))
+                .pipe(tap((activeFeatures) => this.notifySubscribers(activeFeatures)))
                 .subscribe();
             this.subscriptionInitialized = true;
         }
@@ -65,7 +65,7 @@ export class FeatureToggleService {
 
     getFeatureToggleActive(feature: FeatureToggle) {
         return this.subject.asObservable().pipe(
-            map(activeFeatures => activeFeatures.includes(feature)),
+            map((activeFeatures) => activeFeatures.includes(feature)),
             distinctUntilChanged(),
         );
     }

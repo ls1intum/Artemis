@@ -59,11 +59,11 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
             this.programmingExercise.solutionParticipation.programmingExercise = this.programmingExercise;
             this.programmingExercise.templateParticipation.programmingExercise = this.programmingExercise;
 
-            this.loadLatestResultWithFeedback(this.programmingExercise.solutionParticipation.id).subscribe(results => {
+            this.loadLatestResultWithFeedback(this.programmingExercise.solutionParticipation.id).subscribe((results) => {
                 this.programmingExercise.solutionParticipation.results = results;
                 this.loadingSolutionParticipationResults = false;
             });
-            this.loadLatestResultWithFeedback(this.programmingExercise.templateParticipation.id).subscribe(results => {
+            this.loadLatestResultWithFeedback(this.programmingExercise.templateParticipation.id).subscribe((results) => {
                 this.programmingExercise.templateParticipation.results = results;
                 this.loadingTemplateParticipationResults = false;
             });
@@ -105,11 +105,11 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
 
     generateStructureOracle() {
         this.programmingExerciseService.generateStructureOracle(this.programmingExercise.id).subscribe(
-            res => {
+            (res) => {
                 const jhiAlert = this.jhiAlertService.success(res);
                 jhiAlert.msg = res;
             },
-            error => {
+            (error) => {
                 const errorMessage = error.headers.get('X-artemisApp-alert');
                 // TODO: this is a workaround to avoid translation not found issues. Provide proper translations
                 const jhiAlert = this.jhiAlertService.error(errorMessage);

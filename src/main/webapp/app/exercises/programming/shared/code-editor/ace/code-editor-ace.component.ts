@@ -95,10 +95,7 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
             if (this.annotationChange) {
                 this.annotationChange.unsubscribe();
             }
-            this.editor
-                .getEditor()
-                .getSession()
-                .setValue('');
+            this.editor.getEditor().getSession().setValue('');
         }
         if (changes.fileChange && changes.fileChange.currentValue) {
             if (this.fileChange instanceof RenameFileChange || this.fileChange instanceof DeleteFileChange) {
@@ -117,10 +114,7 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
             }
         } else if (changes.buildLogErrors && changes.buildLogErrors.currentValue) {
             // Build log errors have changed - this can be new build results, but also a file change that has updated the object
-            this.editor
-                .getEditor()
-                .getSession()
-                .setAnnotations(this.buildLogErrors.errors[this.selectedFile]);
+            this.editor.getEditor().getSession().setAnnotations(this.buildLogErrors.errors[this.selectedFile]);
         }
     }
 
@@ -133,10 +127,7 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
         if (this.annotationChange) {
             this.annotationChange.unsubscribe();
         }
-        this.editor
-            .getEditor()
-            .getSession()
-            .setValue(this.fileSession[this.selectedFile].code);
+        this.editor.getEditor().getSession().setValue(this.fileSession[this.selectedFile].code);
         this.annotationChange = fromEvent(this.editor.getEditor().getSession(), 'change').subscribe(([change]) => {
             this.editorChangeLog.push(change);
         });
@@ -148,15 +139,9 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
         this.editor.getEditor().resize();
         this.editor.getEditor().focus();
         // Reset the undo stack after file change, otherwise the user can undo back to the old file
-        this.editor
-            .getEditor()
-            .getSession()
-            .setUndoManager(new ace.UndoManager());
+        this.editor.getEditor().getSession().setUndoManager(new ace.UndoManager());
         if (this.buildLogErrors) {
-            this.editor
-                .getEditor()
-                .getSession()
-                .setAnnotations(this.buildLogErrors.errors[this.selectedFile]);
+            this.editor.getEditor().getSession().setAnnotations(this.buildLogErrors.errors[this.selectedFile]);
         }
     }
 
@@ -170,14 +155,14 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
         this.repositoryFileService
             .getFile(fileName)
             .pipe(
-                tap(fileObj => {
+                tap((fileObj) => {
                     this.fileSession[fileName] = { code: fileObj.fileContent, cursor: { column: 0, row: 0 } };
                     // It is possible that the selected file has changed - in this case don't update the editor.
                     if (this.selectedFile === fileName) {
                         this.initEditorAfterFileChange();
                     }
                 }),
-                catchError(err => {
+                catchError((err) => {
                     console.log('There was an error while getting file', this.selectedFile, err);
                     return of(null);
                 }),

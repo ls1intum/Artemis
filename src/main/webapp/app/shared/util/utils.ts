@@ -1,5 +1,5 @@
 // Cartesian product helper function
-const cartesianConcatHelper = (a: any[], b: any[]): any[][] => ([] as any[][]).concat(...a.map(a2 => b.map(b2 => ([] as any[]).concat(a2, b2))));
+const cartesianConcatHelper = (a: any[], b: any[]): any[][] => ([] as any[][]).concat(...a.map((a2) => b.map((b2) => ([] as any[]).concat(a2, b2))));
 
 /**
  * Returns the cartesian product for all arrays provided to the function.

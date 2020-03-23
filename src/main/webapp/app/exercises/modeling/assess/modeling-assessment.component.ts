@@ -54,10 +54,10 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
                     ],
                     inertia: true,
                 })
-                .on('resizestart', function(event: any) {
+                .on('resizestart', function (event: any) {
                     event.target.classList.add('card-resizable');
                 })
-                .on('resizeend', function(event: any) {
+                .on('resizeend', function (event: any) {
                     event.target.classList.remove('card-resizable');
                 })
                 .on('resizemove', (event: any) => {
@@ -181,11 +181,11 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
             return [];
         }
 
-        let availableIds: string[] = this.model.elements.map(element => element.id);
+        let availableIds: string[] = this.model.elements.map((element) => element.id);
         if (this.model.relationships) {
-            availableIds = availableIds.concat(this.model.relationships.map(relationship => relationship.id));
+            availableIds = availableIds.concat(this.model.relationships.map((relationship) => relationship.id));
         }
-        return feedbacks.filter(feedback => availableIds.includes(feedback.referenceId!));
+        return feedbacks.filter((feedback) => availableIds.includes(feedback.referenceId!));
     }
 
     /**
@@ -230,9 +230,7 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
 
     private scrollIntoView(elementId: string) {
         const element = this.editorContainer.nativeElement as HTMLElement;
-        const matchingElement = $(element)
-            .find(`#${elementId}`)
-            .get(0);
+        const matchingElement = $(element).find(`#${elementId}`).get(0);
         if (matchingElement) {
             matchingElement.scrollIntoView({ block: 'center', inline: 'center' });
         }
@@ -246,7 +244,7 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
         if (!feedbacks) {
             return;
         }
-        this.model.assessments = feedbacks.map<Assessment>(feedback => ({
+        this.model.assessments = feedbacks.map<Assessment>((feedback) => ({
             modelElementId: feedback.referenceId!,
             elementType: feedback.referenceType! as UMLElementType | UMLRelationshipType,
             score: feedback.credits!,

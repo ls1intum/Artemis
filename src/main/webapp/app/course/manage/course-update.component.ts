@@ -163,13 +163,13 @@ export class CourseUpdateComponent implements OnInit {
 
         this.isUploadingCourseImage = true;
         this.fileUploaderService.uploadFile(file, file['name']).then(
-            result => {
+            (result) => {
                 this.courseForm.patchValue({ courseIcon: result.path });
                 this.isUploadingCourseImage = false;
                 this.courseImageFile = null;
                 this.courseImageFileName = result.path;
             },
-            error => {
+            (error) => {
                 console.error('Error during file upload in uploadBackground()', error.message);
                 this.isUploadingCourseImage = false;
                 this.courseImageFile = null;

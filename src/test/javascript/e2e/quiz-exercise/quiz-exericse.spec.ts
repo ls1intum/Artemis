@@ -5,7 +5,7 @@ import { QuizExercisePage } from '../page-objects/entities/quiz-exercise-page-ob
 
 const expect = chai.expect;
 
-describe('quiz-exercise', function() {
+describe('quiz-exercise', function () {
     let navBarPage: NavBarPage;
     let signInPage: SignInPage;
     let coursePage: CoursePage;
@@ -16,7 +16,7 @@ describe('quiz-exercise', function() {
 
     let courseName: string;
 
-    before(async function() {
+    before(async function () {
         await browser.get('/');
         navBarPage = new NavBarPage(true);
         signInPage = await navBarPage.getSignInPage();
@@ -43,16 +43,16 @@ describe('quiz-exercise', function() {
         await signInPage.autoSignInUsing(process.env.bamboo_instructor_user, process.env.bamboo_instructor_password);
     });
 
-    beforeEach(async function() {});
+    beforeEach(async function () {});
 
-    it('navigate into course-exercises', async function() {
+    it('navigate into course-exercises', async function () {
         await navBarPage.clickOnCourseAdminMenu();
         courseId = await coursePage.navigateIntoLastCourseExercises();
 
         await expect(browser.wait(ec.urlContains(`/course/${courseId}`), 1000)).to.become(true);
     });
 
-    it('create quiz', async function() {
+    it('create quiz', async function () {
         const createQuizButton = await element(by.id('create-quiz-button'));
         // expect(createQuizButton.isPresent());
         await createQuizButton.click();
@@ -93,15 +93,12 @@ describe('quiz-exercise', function() {
         await backButton.click();
 
         const quizRows = element.all(by.tagName('tbody')).all(by.tagName('tr'));
-        quizId = await quizRows
-            .last()
-            .element(by.css('td:nth-child(1) > a'))
-            .getText();
+        quizId = await quizRows.last().element(by.css('td:nth-child(1) > a')).getText();
 
         //TODO: check that we leave the page and there is a new entry
     });
 
-    it('participate in quiz', async function() {
+    it('participate in quiz', async function () {
         //set visible
         const setVisibleButton = await element(by.id(`quiz-set-visible-${quizId}`));
         expect(setVisibleButton.isPresent());
@@ -157,32 +154,32 @@ describe('quiz-exercise', function() {
 
         await element(by.id('quiz-score-result'))
             .getText()
-            .then(text => {
+            .then((text) => {
                 expect(text).equals('1/1 (100 %)');
             });
 
         await element(by.id('answer-option-0-correct'))
             .getText()
-            .then(text => {
+            .then((text) => {
                 expect(text).equals('Correct');
             })
-            .catch(error => {
+            .catch((error) => {
                 expect.fail('first answer option not found as correct');
             });
 
         await element(by.id('answer-option-1-wrong'))
             .getText()
-            .then(text => {
+            .then((text) => {
                 expect(text).equals('Wrong');
             })
-            .catch(error => {
+            .catch((error) => {
                 expect.fail('second answer option not found as correct');
             });
 
         browser.waitForAngularEnabled(true);
     });
 
-    it('delete quiz', async function() {
+    it('delete quiz', async function () {
         browser.waitForAngularEnabled(false);
         await browser.sleep(500); // let's wait shortly so that the server gets everything right with the database
         //navigate to course administration
@@ -196,7 +193,7 @@ describe('quiz-exercise', function() {
         await element(by.id('delete-quiz-confirmation-button')).click();
     });
 
-    it('create SA quiz', async function() {
+    it('create SA quiz', async function () {
         const createQuizButton = await element(by.id('create-quiz-button'));
         // expect(createQuizButton.isPresent());
         await createQuizButton.click();
@@ -241,7 +238,7 @@ describe('quiz-exercise', function() {
         //TODO: check that we leave the page and there is a new entry
     });
 
-    after(async function() {
+    after(async function () {
         await navBarPage.autoSignOut();
         signInPage = await navBarPage.getSignInPage();
         await signInPage.autoSignInUsing(process.env.bamboo_admin_user, process.env.bamboo_admin_password);

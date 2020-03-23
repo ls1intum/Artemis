@@ -40,7 +40,7 @@ export class CodeEditorFileBrowserDeleteComponent implements OnInit {
                     this.closeModal();
                     this.parent.onFileDeleted(new DeleteFileChange(this.fileType, this.fileNameToDelete));
                 },
-                err => {
+                (err) => {
                     console.log('Error deleting file: ' + this.fileNameToDelete, err);
                 },
             );

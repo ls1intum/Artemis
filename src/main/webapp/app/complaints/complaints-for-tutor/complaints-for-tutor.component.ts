@@ -28,7 +28,7 @@ export class ComplaintsForTutorComponent implements OnInit {
         this.complaintText = this.complaint.complaintText;
         this.handled = this.complaint.accepted !== undefined;
         if (this.handled) {
-            this.complaintResponseService.findByComplaintId(this.complaint.id).subscribe(complaintResponse => {
+            this.complaintResponseService.findByComplaintId(this.complaint.id).subscribe((complaintResponse) => {
                 if (complaintResponse.body) {
                     this.complaintResponse = complaintResponse.body;
                 }
@@ -54,7 +54,7 @@ export class ComplaintsForTutorComponent implements OnInit {
         } else {
             // If the complaint was rejected or it was a more feedback request, just the complaint response is created.
             this.complaintResponseService.create(this.complaintResponse).subscribe(
-                response => {
+                (response) => {
                     this.handled = true;
                     this.complaint.complaintType === ComplaintType.MORE_FEEDBACK
                         ? this.jhiAlertService.success('artemisApp.moreFeedbackResponse.created')

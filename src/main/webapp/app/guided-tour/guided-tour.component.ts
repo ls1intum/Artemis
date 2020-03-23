@@ -124,8 +124,8 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
             this.dotArray = elements.toArray();
         });
 
-        this.guidedTourService.currentDotSubject.pipe(tap(currentIndex => (this.currentStepIndex = currentIndex))).subscribe();
-        this.guidedTourService.nextDotSubject.pipe(tap(currentIndex => (this.nextStepIndex = currentIndex))).subscribe();
+        this.guidedTourService.currentDotSubject.pipe(tap((currentIndex) => (this.currentStepIndex = currentIndex))).subscribe();
+        this.guidedTourService.nextDotSubject.pipe(tap((currentIndex) => (this.nextStepIndex = currentIndex))).subscribe();
     }
 
     /**
@@ -168,7 +168,7 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
      */
     private subscribeToUserInteractionState(): void {
         // Check availability after first subscribe call since the router event been triggered already
-        this.guidedTourService.userInteractionFinishedState().subscribe(isFinished => {
+        this.guidedTourService.userInteractionFinishedState().subscribe((isFinished) => {
             this.userInteractionFinished = isFinished;
         });
     }
@@ -682,7 +682,7 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
             this.guidedTourService
                 .observeMutations(alertElement, { childList: true })
                 .pipe(take(1))
-                .subscribe(mutation => {
+                .subscribe((mutation) => {
                     if (this.getSelectedElement()) {
                         this.scrollToAndSetElement();
                     }

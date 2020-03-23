@@ -26,7 +26,7 @@ export class ProgrammingBuildRunService implements OnDestroy {
     constructor(private websocketService: JhiWebsocketService) {}
 
     ngOnDestroy(): void {
-        Object.values(this.buildRunSubjects).forEach(subject => subject.unsubscribe());
+        Object.values(this.buildRunSubjects).forEach((subject) => subject.unsubscribe());
     }
 
     private notifySubscribers(programmingExerciseId: number, buildRunState: BuildRunState) {
@@ -59,11 +59,11 @@ export class ProgrammingBuildRunService implements OnDestroy {
     getBuildRunUpdates(programmingExerciseId: number) {
         const subject = this.buildRunSubjects[programmingExerciseId];
         if (subject) {
-            return subject.asObservable().pipe(filter(stateObj => stateObj !== undefined)) as Observable<BuildRunState>;
+            return subject.asObservable().pipe(filter((stateObj) => stateObj !== undefined)) as Observable<BuildRunState>;
         }
         const newSubject = new BehaviorSubject<BuildRunState | undefined>(undefined);
         this.buildRunSubjects[programmingExerciseId] = newSubject;
         this.subscribeWebsocket(programmingExerciseId);
-        return newSubject.pipe(filter(stateObj => stateObj !== undefined)) as Observable<BuildRunState>;
+        return newSubject.pipe(filter((stateObj) => stateObj !== undefined)) as Observable<BuildRunState>;
     }
 }

@@ -28,11 +28,11 @@ export class ParticipationSubmissionPopupService {
         modalRef.componentInstance.participationId = participationId;
         modalRef.componentInstance.submissionId = submissionId;
         modalRef.result.then(
-            result => {
+            (result) => {
                 this.router.navigate([{ outlets: { popup: null } }], { replaceUrl: true, queryParamsHandling: 'merge' });
                 this.ngbModalRef = null;
             },
-            reason => {
+            (reason) => {
                 this.router.navigate([{ outlets: { popup: null } }], { replaceUrl: true, queryParamsHandling: 'merge' });
                 this.ngbModalRef = null;
             },

@@ -159,7 +159,7 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
         // This is why we first wait until the repository state was checked and then load the files.
         this.checkIfRepositoryIsClean()
             .pipe(
-                tap(commitState => {
+                tap((commitState) => {
                     this.commitState = commitState;
                 }),
                 switchMap(() => {
@@ -171,7 +171,7 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
                     }
                     return this.loadFiles();
                 }),
-                tap(files => {
+                tap((files) => {
                     this.isLoadingFiles = false;
                     this.repositoryFiles = files;
                     this.setupTreeview();
@@ -179,7 +179,7 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
             )
             .subscribe(
                 () => {},
-                error => {
+                (error) => {
                     this.isLoadingFiles = false;
                     this.onError.emit(error);
                 },
@@ -192,9 +192,9 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
      */
     checkIfRepositoryIsClean = (): Observable<CommitState> => {
         return this.repositoryService.getStatus().pipe(
-            rxMap(res => {
+            rxMap((res) => {
                 // The server sends us the CommitState, however we need to type it here by finding it in the client commitStates.
-                const mappedCommitState = Object.values(CommitState).find(commitState => commitState === res.repositoryStatus);
+                const mappedCommitState = Object.values(CommitState).find((commitState) => commitState === res.repositoryStatus);
                 // This should not happen, but needs to be done so that the compiler is satisfied.
                 return mappedCommitState || CommitState.COULD_NOT_BE_RETRIEVED;
             }),
@@ -297,7 +297,7 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
             // Split file path by slashes
             const fileSplit = file.split('/');
             // Check if the first path part is already in our current tree
-            let node = tree.find(element => element.text === fileSplit[0]);
+            let node = tree.find((element) => element.text === fileSplit[0]);
             // Path part doesn't exist => add it to tree
             if (node == null) {
                 node = {
@@ -473,7 +473,7 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
      */
     loadFiles = (): Observable<{ [fileName: string]: FileType }> => {
         return this.repositoryFileService.getRepositoryContent().pipe(
-            rxMap(files =>
+            rxMap((files) =>
                 compose(
                     fromPairs,
                     // Filter root folder

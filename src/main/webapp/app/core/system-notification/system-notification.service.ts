@@ -56,7 +56,7 @@ export class SystemNotificationService {
             return this.http
                 .get<SystemNotification>(`${this.resourceUrl}/active-notification`, { observe: 'response' })
                 .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)))
-                .pipe(map(res => res.body));
+                .pipe(map((res) => res.body));
         }
         return this.notificationService.getRecentSystemNotification();
     }

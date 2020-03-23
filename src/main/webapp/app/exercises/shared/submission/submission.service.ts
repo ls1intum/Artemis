@@ -29,10 +29,10 @@ export class SubmissionService {
         return this.http
             .get<Submission[]>(`${this.resourceUrlParticipation}/${participationId}/submissions`, { observe: 'response' })
             .pipe(
-                map(res => this.convertDateArrayFromServer(res)),
-                filter(res => !!res.body),
-                tap(res =>
-                    res.body!.forEach(submission => {
+                map((res) => this.convertDateArrayFromServer(res)),
+                filter((res) => !!res.body),
+                tap((res) =>
+                    res.body!.forEach((submission) => {
                         // reconnect results to submissions
                         if (submission.result) {
                             submission.result.submission = submission;

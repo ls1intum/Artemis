@@ -180,7 +180,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
     ) {}
 
     ngOnInit() {
-        this.paramSubscription = this.route.parent!.params.subscribe(params => {
+        this.paramSubscription = this.route.parent!.params.subscribe((params) => {
             this.courseId = parseInt(params['courseId'], 10);
         });
 
@@ -248,7 +248,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
         const exerciseTypes: string[] = [];
         // adding several years to be sure that exercises without due date are sorted at the end. this is necessary for the order inside the statistic charts
         exercises = sortBy(exercises, [(exercise: Exercise) => (exercise.dueDate || moment().add(5, 'year')).valueOf()]);
-        exercises.forEach(exercise => {
+        exercises.forEach((exercise) => {
             if (!exercise.dueDate || exercise.dueDate.isBefore(moment()) || exercise.type === ExerciseType.PROGRAMMING) {
                 let index = exerciseTypes.indexOf(exercise.type);
                 if (index === -1) {
@@ -270,7 +270,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
                     };
                 }
 
-                exercise.studentParticipations.forEach(participation => {
+                exercise.studentParticipations.forEach((participation) => {
                     if (participation.results && participation.results.length > 0) {
                         const participationResult = this.courseCalculationService.getResultForParticipation(participation, exercise.dueDate!);
                         if (participationResult && participationResult.rated) {

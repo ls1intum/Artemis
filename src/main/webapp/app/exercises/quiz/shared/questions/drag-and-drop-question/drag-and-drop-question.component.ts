@@ -22,7 +22,7 @@ polyfill({
     event.preventDefault();
 };
 
-window.addEventListener('touchmove', function() {}, { passive: false });
+window.addEventListener('touchmove', function () {}, { passive: false });
 
 @Component({
     selector: 'jhi-drag-and-drop-question',
@@ -154,7 +154,7 @@ export class DragAndDropQuestionComponent implements OnChanges {
             // remove existing mappings that contain the drop location or drag item and save their old partners
             let oldDragItem;
             let oldDropLocation;
-            this.mappings = this.mappings.filter(function(mapping) {
+            this.mappings = this.mappings.filter(function (mapping) {
                 if (this.dragAndDropQuestionUtil.isSameDropLocation(dropLocation, mapping.dropLocation)) {
                     oldDragItem = mapping.dragItem;
                     return false;
@@ -177,7 +177,7 @@ export class DragAndDropQuestionComponent implements OnChanges {
         } else {
             const lengthBefore = this.mappings.length;
             // remove existing mapping that contains the drag item
-            this.mappings = this.mappings.filter(function(mapping) {
+            this.mappings = this.mappings.filter(function (mapping) {
                 return !this.dragAndDropQuestionUtil.isSameDragItem(mapping.dragItem, dragItem);
             }, this);
             if (this.mappings.length === lengthBefore) {
@@ -202,7 +202,7 @@ export class DragAndDropQuestionComponent implements OnChanges {
     dragItemForDropLocation(dropLocation: DropLocation) {
         const that = this;
         if (this.mappings) {
-            const mapping = this.mappings.find(localMapping => that.dragAndDropQuestionUtil.isSameDropLocation(localMapping.dropLocation!, dropLocation));
+            const mapping = this.mappings.find((localMapping) => that.dragAndDropQuestionUtil.isSameDropLocation(localMapping.dropLocation!, dropLocation));
             if (mapping) {
                 return mapping.dragItem;
             } else {
@@ -223,8 +223,8 @@ export class DragAndDropQuestionComponent implements OnChanges {
      * @return {Array} an array of all unassigned drag items
      */
     getUnassignedDragItems() {
-        return this.question.dragItems.filter(dragItem => {
-            return !this.mappings.some(mapping => {
+        return this.question.dragItems.filter((dragItem) => {
+            return !this.mappings.some((mapping) => {
                 return this.dragAndDropQuestionUtil.isSameDragItem(mapping.dragItem!, dragItem);
             }, this);
         }, this);
@@ -242,10 +242,10 @@ export class DragAndDropQuestionComponent implements OnChanges {
             return false;
         }
         const validDragItems = this.question.correctMappings
-            .filter(function(mapping) {
+            .filter(function (mapping) {
                 return this.dragAndDropQuestionUtil.isSameDropLocation(mapping.dropLocation, dropLocation);
             }, this)
-            .map(function(mapping) {
+            .map(function (mapping) {
                 return mapping.dragItem;
             });
         const selectedItem = this.dragItemForDropLocation(dropLocation);
@@ -253,7 +253,7 @@ export class DragAndDropQuestionComponent implements OnChanges {
         if (selectedItem === null) {
             return validDragItems.length === 0;
         } else {
-            return validDragItems.some(function(dragItem) {
+            return validDragItems.some(function (dragItem) {
                 return this.dragAndDropQuestionUtil.isSameDragItem(dragItem, selectedItem);
             }, this);
         }
@@ -282,7 +282,7 @@ export class DragAndDropQuestionComponent implements OnChanges {
      */
     correctDragItemForDropLocation(dropLocation: DropLocation) {
         const dragAndDropQuestionUtil = this.dragAndDropQuestionUtil;
-        const mapping = this.sampleSolutionMappings.find(function(solutionMapping) {
+        const mapping = this.sampleSolutionMappings.find(function (solutionMapping) {
             return dragAndDropQuestionUtil.isSameDropLocation(solutionMapping.dropLocation!, dropLocation);
         });
         if (mapping) {
@@ -296,6 +296,6 @@ export class DragAndDropQuestionComponent implements OnChanges {
      * counts the amount of right mappings for a question by using the isLocationCorrect Method
      */
     countCorrectMappings(): void {
-        this.correctAnswer = this.question.dropLocations.filter(dropLocation => this.isLocationCorrect(dropLocation)).length;
+        this.correctAnswer = this.question.dropLocations.filter((dropLocation) => this.isLocationCorrect(dropLocation)).length;
     }
 }

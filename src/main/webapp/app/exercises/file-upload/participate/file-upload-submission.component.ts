@@ -57,7 +57,7 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
         private participationWebsocketService: ParticipationWebsocketService,
         private fileUploadAssessmentService: FileUploadAssessmentsService,
     ) {
-        translateService.get('artemisApp.fileUploadSubmission.confirmSubmission').subscribe(text => (this.submissionConfirmationText = text));
+        translateService.get('artemisApp.fileUploadSubmission.confirmSubmission').subscribe((text) => (this.submissionConfirmationText = text));
     }
 
     /**
@@ -94,7 +94,7 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
 
                 this.acceptedFileExtensions = this.fileUploadExercise.filePattern
                     .split(',')
-                    .map(extension => `.${extension}`)
+                    .map((extension) => `.${extension}`)
                     .join(',');
                 this.isAfterAssessmentDueDate = !this.fileUploadExercise.assessmentDueDate || moment().isAfter(this.fileUploadExercise.assessmentDueDate);
 
@@ -126,7 +126,7 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
         this.submission!.submitted = true;
         this.isSaving = true;
         this.fileUploadSubmissionService.update(this.submission!, this.fileUploadExercise.id, file).subscribe(
-            response => {
+            (response) => {
                 this.submission = response.body!;
                 // reconnect so that the submission status is displayed correctly in the result.component
                 this.submission.participation.submissions = [this.submission];
@@ -164,7 +164,7 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
             const fileList: FileList = $event.target.files;
             const submissionFile = fileList[0];
             const allowedFileExtensions = this.fileUploadExercise.filePattern.split(',');
-            if (!allowedFileExtensions.some(extension => submissionFile.name.toLowerCase().endsWith(extension))) {
+            if (!allowedFileExtensions.some((extension) => submissionFile.name.toLowerCase().endsWith(extension))) {
                 this.jhiAlertService.error('artemisApp.fileUploadSubmission.fileExtensionError', null, undefined);
             } else if (submissionFile.size > MAX_SUBMISSION_FILE_SIZE) {
                 this.jhiAlertService.error('artemisApp.fileUploadSubmission.fileTooBigError', { fileName: submissionFile.name });

@@ -34,7 +34,7 @@ export class ExerciseLtiConfigurationPopupComponent implements OnInit, OnDestroy
     constructor(private route: ActivatedRoute, private exercisePopupService: ExercisePopupService) {}
 
     ngOnInit() {
-        this.routeSub = this.route.params.subscribe(params => {
+        this.routeSub = this.route.params.subscribe((params) => {
             this.exercisePopupService.open(ExerciseLtiConfigurationDialogComponent as Component, params['id'], true);
         });
     }
