@@ -10,8 +10,8 @@ export const options = {
     iterations: __ENV.ITERATIONS,
     vus: __ENV.ITERATIONS,
     rps: 4,
-    setupTimeout: '90s',
-    teardownTimeout: '90s'
+    setupTimeout: '120s',
+    teardownTimeout: '120s'
 };
 
 const adminUsername = __ENV.ADMIN_USERNAME;
@@ -30,16 +30,23 @@ export function updateUserWithGroup(artemis, i, baseUsername, course) {
 }
 
 export function setup() {
+
+    console.log("__ENV.CREATE_USERS: " + __ENV.CREATE_USERS);
+    console.log("__ENV.TIMEOUT_PARTICIPATION: " + __ENV.TIMEOUT_PARTICIPATION);
+    console.log("__ENV.TIMEOUT_EXERCISE: " + __ENV.TIMEOUT_EXERCISE);
+    console.log("__ENV.ITERATIONS: " + __ENV.ITERATIONS);
+
     let artemis, exerciseId, course, userId;
+    const iterations = parseInt(__ENV.ITERATIONS);
 
     // Create course
     artemis = login(adminUsername, adminPassword);
 
     course = newCourse(artemis);
 
-    if(__ENV.CREATE_USERS) {
-        console.log("Try to create " + __ENV.ITERATIONS + " users");
-        for (let i = 1; i <= __ENV.ITERATIONS; i++) {
+    if(__ENV.CREATE_USERS === true || __ENV.CREATE_USERS === 'true') {
+        console.log("Try to create " + iterations + " users");
+        for (let i = 1; i <= iterations; i++) {
             userId = newUser(artemis, i, baseUsername, basePassword, course.studentGroupName, course.instructorGroupName);
             if (userId === -1) {
                 // the creation was not successful, most probably because the user already exists, we need to update the group of the user
@@ -49,7 +56,7 @@ export function setup() {
     }
     else {
         console.log("Do not create users, will update their groups");
-        for (let i = 1; i <= __ENV.ITERATIONS; i++) {
+        for (let i = 1; i <= iterations; i++) {
             updateUserWithGroup(artemis, i, baseUsername, course);
         }
 
@@ -62,10 +69,17 @@ export function setup() {
     artemis = login(instructorUsername, instructorPassword);
 
     // it might be necessary that the newly created groups or accounts are synced with the version control and continuous integration servers, so we wait for 1 minute
-    sleep(60);
+    const timeoutExercise = parseFloat(__ENV.TIMEOUT_EXERCISE);
+    if (timeoutExercise > 0) {
+        console.log("Wait " + timeoutExercise + "s before creating the programming exercise so that the setup can finish properly");
+        sleep(timeoutExercise);
+    }
 
     // Create new exercise
     exerciseId = createExercise(artemis, course.id);
+
+    // Wait some time for builds to finish and test results to come in
+    sleep(30);
 
     return { exerciseId: exerciseId, courseId: course.id };
 }
@@ -78,6 +92,7 @@ export default function (data) {
     const artemis = login(currentUsername, currentPassword);
     const exerciseId = data.exerciseId;
     const courseId = data.courseId;
+    const timeoutParticipation = parseFloat(__ENV.TIMEOUT_PARTICIPATION);
 
     // Delay so that not all users start at the same time, batches of 3 users per second
     const startTime = new Date().getTime();
@@ -88,16 +103,16 @@ export default function (data) {
         let participationId = startExercise(artemis, courseId, exerciseId);
         if (participationId) {
             // partial success, then 100%, then build error -- wait some time between submissions in order to the build server time for the result
-            let simulation = new ParticipationSimulation(__ENV.TIMEOUT, exerciseId, participationId, twoSuccessfulErrorContent);
+            let simulation = new ParticipationSimulation(timeoutParticipation, exerciseId, participationId, twoSuccessfulErrorContent);
             simulateSubmission(artemis, simulation, TestResult.FAIL, '2 of 13 passed');
-            simulation = new ParticipationSimulation(__ENV.TIMEOUT, exerciseId, participationId, allSuccessfulContent);
+            simulation = new ParticipationSimulation(timeoutParticipation, exerciseId, participationId, allSuccessfulContent);
             simulateSubmission(artemis, simulation, TestResult.SUCCESS);
-            simulation = new ParticipationSimulation(__ENV.TIMEOUT, exerciseId, participationId, buildErrorContent);
+            simulation = new ParticipationSimulation(timeoutParticipation, exerciseId, participationId, buildErrorContent);
             simulateSubmission(artemis, simulation, TestResult.BUILD_ERROR);
         }
 
         const delta = (new Date().getTime() - startTime) / 1000;
-        sleep(__ENV.TIMEOUT - delta);
+        sleep(timeoutParticipation - delta);
     });
 
     return data;
