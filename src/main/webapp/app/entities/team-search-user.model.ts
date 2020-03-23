@@ -5,5 +5,5 @@ export class TeamSearchUser {
     public firstName: string;
     public lastName: string;
     public email: string;
-    public assignedToTeam: boolean;
+    public assignedTeamId: number | null;
 }

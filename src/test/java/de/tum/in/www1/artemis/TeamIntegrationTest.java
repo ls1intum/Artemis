@@ -333,7 +333,7 @@ public class TeamIntegrationTest extends AbstractSpringIntegrationTest {
         // Check that a student is found by his login and that he is NOT marked as "assignedToTeam" yet
         List<TeamSearchUserDTO> users2 = request.getList(resourceUrlSearchUsersInCourse("student1"), HttpStatus.OK, TeamSearchUserDTO.class);
         assertThat(users2).as("Only user with login 'student1' was found").hasSize(1);
-        assertThat(users2.get(0).isAssignedToTeam()).as("User was correctly marked as not being assigned to a team yet").isFalse();
+        assertThat(users2.get(0).getAssignedTeamId()).as("User was correctly marked as not being assigned to a team yet").isNull();
 
         // Check that no student is returned for non-existing login/name
         List<TeamSearchUserDTO> users3 = request.getList(resourceUrlSearchUsersInCourse("chuckNorris"), HttpStatus.OK, TeamSearchUserDTO.class);
@@ -345,7 +345,7 @@ public class TeamIntegrationTest extends AbstractSpringIntegrationTest {
 
         List<TeamSearchUserDTO> users4 = request.getList(resourceUrlSearchUsersInCourse(teamStudent.getLogin()), HttpStatus.OK, TeamSearchUserDTO.class);
         assertThat(users4).as("User from team was found").hasSize(1);
-        assertThat(users4.get(0).isAssignedToTeam()).as("User from team was correctly marked as being assigned to a team already").isTrue();
+        assertThat(users4.get(0).getAssignedTeamId()).as("User from team was correctly marked as being assigned to a team already").isEqualTo(team.getId());
     }
 
     @Test

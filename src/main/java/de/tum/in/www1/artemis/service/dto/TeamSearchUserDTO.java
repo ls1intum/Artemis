@@ -33,7 +33,7 @@ public class TeamSearchUserDTO {
     @Column(length = 100)
     private String email;
 
-    private boolean assignedToTeam;
+    private Long assignedTeamId;
 
     public TeamSearchUserDTO() {
         // Empty constructor needed for Jackson.
@@ -100,17 +100,17 @@ public class TeamSearchUserDTO {
         this.email = email;
     }
 
-    public boolean isAssignedToTeam() {
-        return assignedToTeam;
+    public Long getAssignedTeamId() {
+        return assignedTeamId;
     }
 
-    public void setIsAssignedToTeam(boolean assignedToTeam) {
-        this.assignedToTeam = assignedToTeam;
+    public void setAssignedTeamId(Long assignedTeamId) {
+        this.assignedTeamId = assignedTeamId;
     }
 
     @Override
     public String toString() {
-        return "TeamSearchUserDTO{" + "login='" + login + "', firstName='" + firstName + "', lastName='" + lastName + "', email='" + email + "', assignedToTeam='" + assignedToTeam
+        return "TeamSearchUserDTO{" + "login='" + login + "', firstName='" + firstName + "', lastName='" + lastName + "', email='" + email + "', assignedTeamId='" + assignedTeamId
                 + "'}";
     }
 }

@@ -7,7 +7,8 @@ import { get } from 'lodash';
 import { Course } from 'app/entities/course.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { TeamService } from 'app/exercises/shared/team/team.service';
-import { TeamSearchUser } from 'app/entities/team-search-student.model';
+import { TeamSearchUser } from 'app/entities/team-search-user.model';
+import { Team } from 'app/entities/team.model';
 
 @Component({
     selector: 'jhi-team-student-search',
@@ -18,7 +19,7 @@ export class TeamStudentSearchComponent {
 
     @Input() course: Course;
     @Input() exercise: Exercise;
-    @Input() studentsFromTeam: User[] = [];
+    @Input() team: Team;
     @Input() studentsFromPendingTeam: User[] = [];
 
     @Output() selectStudent = new EventEmitter<User>();
@@ -98,15 +99,18 @@ export class TeamStudentSearchComponent {
 
     private userCanBeAddedToPendingTeam(user: TeamSearchUser): boolean {
         if (this.studentsFromPendingTeam.map((s) => s.id).includes(user.id)) {
-            // If a student is already part of the pending team, they cannot be added again
+            // If a student is already part of the pending team, they cannot (!) be added again
             return false;
-        } else if (this.studentsFromTeam.map((s) => s.id).includes(user.id)) {
-            // If a student is not part of the pending team but was in the original team, they can be added back
+        } else if (user.assignedTeamId === null) {
+            // If a student is not yet assigned to any team, they can be added
             return true;
+        } else if (this.team.id === undefined) {
+            // If a student is assigned to an existing team but this team is just being created, they cannot (!) be added
+            return false;
         }
-        // If a student was neither in the original team nor is in the pending team,
-        // they can be added if they are not assigned to another team yet
-        return !user.assignedToTeam;
+        // If a student is assigned to a team, they can only be added if they are assigned to this team itself
+        // This can happen if they were removed from the pending team and are then added back again
+        return user.assignedTeamId === this.team.id;
     }
 
     private get typeaheadButtons() {

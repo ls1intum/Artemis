@@ -6,7 +6,7 @@ import { SERVER_API_URL } from 'app/app.constants';
 import { Team } from 'app/entities/team.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { Course } from 'app/entities/course.model';
-import { TeamSearchUser } from 'app/entities/team-search-student.model';
+import { TeamSearchUser } from 'app/entities/team-search-user.model';
 
 export type TeamResponse = HttpResponse<Team>;
 

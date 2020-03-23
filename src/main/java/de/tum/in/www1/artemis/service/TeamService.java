@@ -73,9 +73,18 @@ public class TeamService {
         List<User> users = userRepository.searchByLoginOrNameInGroup(course.getStudentGroupName(), loginOrName);
         List<Long> userIds = users.stream().map(User::getId).collect(Collectors.toList());
         List<TeamSearchUserDTO> teamSearchUsers = users.stream().map(TeamSearchUserDTO::new).collect(Collectors.toList());
-        // Annotate whether the user is already assigned to a team for the given exercise
-        HashSet<Long> loginsOfAssignedStudents = (HashSet<Long>) teamRepository.findAssignedUserIdsByExerciseIdAndUserIds(exercise.getId(), userIds);
-        teamSearchUsers.forEach(user -> user.setIsAssignedToTeam(loginsOfAssignedStudents.contains(user.getId())));
+
+        // Get list of all students (with id of assigned team) that are already assigned to a team for the exercise
+        List<long[]> userIdAndTeamIdPairs = teamRepository.findAssignedUserIdsWithTeamIdsByExerciseIdAndUserIds(exercise.getId(), userIds);
+
+        // convert Set<[userId, teamId]> into Map<userId -> teamId>
+        Map<Long, Long> userIdAndTeamIdMap = userIdAndTeamIdPairs.stream().collect(Collectors.toMap(userIdAndTeamIdPair -> userIdAndTeamIdPair[0], // userId
+                userIdAndTeamIdPair -> userIdAndTeamIdPair[1] // teamId
+        ));
+
+        // Annotate to which team the user is already assigned to for the given exercise (null if not assigned)
+        teamSearchUsers.forEach(user -> user.setAssignedTeamId(userIdAndTeamIdMap.get(user.getId())));
+
         return teamSearchUsers;
     }
 

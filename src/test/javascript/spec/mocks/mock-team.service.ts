@@ -4,7 +4,7 @@ import { ITeamService } from 'app/exercises/shared/team/team.service';
 import { Exercise } from 'app/entities/exercise.model';
 import { Team } from 'app/entities/team.model';
 import { Course } from 'app/entities/course.model';
-import { TeamSearchUser } from 'app/entities/team-search-student.model';
+import { TeamSearchUser } from 'app/entities/team-search-user.model';
 import { User } from 'app/core/user/user.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { TeamAssignmentConfig } from 'app/entities/team-assignment-config.model';
@@ -20,11 +20,6 @@ export const mockNonTeamStudents = [
     { id: 5, firstName: 'Debbie', lastName: 'Roman', name: 'Debbie Roman', login: 'ga56efg', email: 'debbie.roman@example.com' },
     { id: 6, firstName: 'Jeffrey', lastName: 'McGill', name: 'Jeffrey McGill', login: 'ga67ghi', email: 'jeffrey.mcgill@example.com' },
 ] as User[];
-
-export const mockTeamSearchUsers = [...mockTeamStudents, ...mockNonTeamStudents].map((student) => ({
-    ...student,
-    assignedToTeam: mockTeamStudents.includes(student),
-})) as TeamSearchUser[];
 
 const teamAssignmentConfig = { minTeamSize: 1, maxTeamSize: 5 } as TeamAssignmentConfig; // note: size of mockTeamStudents above should conform
 
@@ -52,6 +47,11 @@ export const mockShortNames = {
     existing: 'team1',
     nonExisting: 'team2',
 };
+
+export const mockTeamSearchUsers = [...mockTeamStudents, ...mockNonTeamStudents].map((student) => ({
+    ...student,
+    assignedTeamId: mockTeamStudents.includes(student) ? mockTeam.id : null,
+})) as TeamSearchUser[];
 
 export class MockTeamService implements ITeamService {
     create(exercise: Exercise, team: Team) {

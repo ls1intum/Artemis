@@ -104,6 +104,10 @@ export class TeamUpdateDialogComponent implements OnInit {
         return this.studentTeamConflicts.find((c) => c['studentLogin'] === student.login);
     }
 
+    private resetStudentTeamConflict(student: User) {
+        return (this.studentTeamConflicts = this.studentTeamConflicts.filter((c) => c['studentLogin'] !== student.login));
+    }
+
     private isStudentAlreadyInPendingTeam(student: User): boolean {
         return this.pendingTeam.students.find((s) => s.id === student.id) !== undefined;
     }
@@ -116,6 +120,7 @@ export class TeamUpdateDialogComponent implements OnInit {
 
     onRemoveStudent(student: User) {
         this.pendingTeam.students = this.pendingTeam.students.filter((user) => user.id !== student.id);
+        this.resetStudentTeamConflict(student); // conflict might no longer exist when the student is added again
     }
 
     clear() {
