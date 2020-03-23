@@ -119,7 +119,7 @@ export abstract class ProgrammingExerciseTriggerBuildButtonComponent implements 
         this.resultSubscription = this.participationWebsocketService
             .subscribeForLatestResultOfParticipation(this.participation.id)
             .pipe(
-                filter(result => !!result),
+                filter((result) => !!result),
                 tap((result: Result) => {
                     this.lastResultIsManual = !!result && result.assessmentType === AssessmentType.MANUAL;
                 }),

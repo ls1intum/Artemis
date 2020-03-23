@@ -82,11 +82,11 @@ export class ShortAnswerQuestionStatisticComponent implements OnInit, OnDestroy,
     }
 
     ngOnInit() {
-        this.sub = this.route.params.subscribe(params => {
+        this.sub = this.route.params.subscribe((params) => {
             this.questionIdParam = +params['questionId'];
             // use different REST-call if the User is a Student
             if (this.accountService.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'])) {
-                this.quizExerciseService.find(params['exerciseId']).subscribe(res => {
+                this.quizExerciseService.find(params['exerciseId']).subscribe((res) => {
                     this.loadQuiz(res.body!, false);
                 });
             }
@@ -96,15 +96,15 @@ export class ShortAnswerQuestionStatisticComponent implements OnInit, OnDestroy,
             this.jhiWebsocketService.subscribe(this.websocketChannelForData);
 
             // ask for new Data if the websocket for new statistical data was notified
-            this.jhiWebsocketService.receive(this.websocketChannelForData).subscribe(quiz => {
+            this.jhiWebsocketService.receive(this.websocketChannelForData).subscribe((quiz) => {
                 this.loadQuiz(quiz, true);
             });
 
             // add Axes-labels based on selected language
-            this.translateService.get('showStatistic.quizStatistic.xAxes').subscribe(xLabel => {
+            this.translateService.get('showStatistic.quizStatistic.xAxes').subscribe((xLabel) => {
                 this.options.scales!.xAxes![0].scaleLabel!.labelString = xLabel;
             });
-            this.translateService.get('showStatistic.quizStatistic.yAxes').subscribe(yLabel => {
+            this.translateService.get('showStatistic.quizStatistic.yAxes').subscribe((yLabel) => {
                 this.options.scales!.yAxes![0].scaleLabel!.labelString = yLabel;
             });
         });
@@ -136,7 +136,7 @@ export class ShortAnswerQuestionStatisticComponent implements OnInit, OnDestroy,
         }
         // search selected question in quizExercise based on questionId
         this.quizExercise = quiz;
-        const updatedQuestion = this.quizExercise.quizQuestions.filter(question => this.questionIdParam === question.id)[0];
+        const updatedQuestion = this.quizExercise.quizQuestions.filter((question) => this.questionIdParam === question.id)[0];
         this.question = updatedQuestion as ShortAnswerQuestion;
         // if the Anyone finds a way to the Website,
         // with a wrong combination of QuizId and QuestionId
@@ -176,7 +176,7 @@ export class ShortAnswerQuestionStatisticComponent implements OnInit, OnDestroy,
     }
 
     getSampleSolutionForSpot(spotTag: string): ShortAnswerSolution {
-        const index = this.question.spots.findIndex(spot => spot.spotNr === this.shortAnswerQuestionUtil.getSpotNr(spotTag));
+        const index = this.question.spots.findIndex((spot) => spot.spotNr === this.shortAnswerQuestionUtil.getSpotNr(spotTag));
         return this.sampleSolutions[index];
     }
 
@@ -229,7 +229,7 @@ export class ShortAnswerQuestionStatisticComponent implements OnInit, OnDestroy,
         };
 
         // add Text for last label based on the language
-        this.translateService.get('showStatistic.quizStatistic.yAxes').subscribe(lastLabel => {
+        this.translateService.get('showStatistic.quizStatistic.yAxes').subscribe((lastLabel) => {
             this.label[this.question.spots.length] = lastLabel.split(' ');
             this.labels.length = 0;
             for (let i = 0; i < this.label.length; i++) {
@@ -243,7 +243,7 @@ export class ShortAnswerQuestionStatisticComponent implements OnInit, OnDestroy,
      */
     loadInvalidLayout() {
         // set Background for invalid answers = grey
-        this.translateService.get('showStatistic.invalid').subscribe(invalidLabel => {
+        this.translateService.get('showStatistic.invalid').subscribe((invalidLabel) => {
             this.question.spots.forEach((spot, i) => {
                 if (spot.invalid) {
                     this.backgroundColor[i] = {
@@ -274,8 +274,8 @@ export class ShortAnswerQuestionStatisticComponent implements OnInit, OnDestroy,
         this.unratedData = [];
 
         // set data based on the spots for each spot
-        this.question.spots.forEach(spot => {
-            const spotCounter = this.questionStatistic.shortAnswerSpotCounters.find(sCounter => {
+        this.question.spots.forEach((spot) => {
+            const spotCounter = this.questionStatistic.shortAnswerSpotCounters.find((sCounter) => {
                 return spot.id === sCounter.spot.id;
             })!;
             this.ratedData.push(spotCounter.ratedCounter);
@@ -371,7 +371,7 @@ export class ShortAnswerQuestionStatisticComponent implements OnInit, OnDestroy,
      *                          or null if no solution has been mapped to this location
      */
     correctSolutionForSpot(spot: ShortAnswerSpot) {
-        const currMapping = this.shortAnswerQuestionUtil.solveShortAnswer(this.question, null).filter(mapping => mapping.spot.id === spot.id)[0];
+        const currMapping = this.shortAnswerQuestionUtil.solveShortAnswer(this.question, null).filter((mapping) => mapping.spot.id === spot.id)[0];
         if (currMapping) {
             return currMapping.solution;
         } else {

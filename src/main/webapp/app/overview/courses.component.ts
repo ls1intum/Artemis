@@ -52,7 +52,7 @@ export class CoursesComponent implements OnInit {
     get nextRelevantExercise(): Exercise | null {
         let relevantExercise: Exercise | null = null;
         if (this.courses) {
-            this.courses.forEach(course => {
+            this.courses.forEach((course) => {
                 const relevantExerciseForCourse = this.exerciseService.getNextExerciseForHours(course.exercises);
                 if (relevantExerciseForCourse) {
                     if (!relevantExercise) {

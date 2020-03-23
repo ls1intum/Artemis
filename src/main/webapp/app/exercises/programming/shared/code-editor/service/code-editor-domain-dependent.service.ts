@@ -17,7 +17,7 @@ export abstract class DomainDependentService implements OnDestroy {
         this.domainChangeSubscription = this.domainService
             .subscribeDomainChange()
             .pipe(
-                filter(domain => !!domain),
+                filter((domain) => !!domain),
                 tap((domain: DomainChange) => {
                     this.setDomain(domain);
                 }),

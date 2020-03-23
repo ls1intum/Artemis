@@ -24,22 +24,22 @@ export class DragAndDropQuestionUtil {
         let availableDragItems = question.dragItems;
 
         // filter out dropLocations that do not need to be mapped
-        let remainingDropLocations = question.dropLocations.filter(function(dropLocation) {
-            return question.correctMappings.some(function(mapping) {
+        let remainingDropLocations = question.dropLocations.filter(function (dropLocation) {
+            return question.correctMappings.some(function (mapping) {
                 return this.isSameDropLocation(mapping.dropLocation, dropLocation);
             }, this);
         }, this);
 
         if (mappings) {
             // add mappings that are already correct
-            mappings.forEach(function(mapping) {
+            mappings.forEach(function (mapping) {
                 const correctMapping = this.getMapping(question.correctMappings, mapping.dragItem, mapping.dropLocation);
                 if (correctMapping) {
                     sampleMappings.push(correctMapping);
-                    remainingDropLocations = remainingDropLocations.filter(function(dropLocation) {
+                    remainingDropLocations = remainingDropLocations.filter(function (dropLocation) {
                         return !this.isSameDropLocation(dropLocation, mapping.dropLocation);
                     }, this);
-                    availableDragItems = availableDragItems.filter(function(dragItem) {
+                    availableDragItems = availableDragItems.filter(function (dragItem) {
                         return !this.isSameDragItem(dragItem, mapping.dragItem);
                     }, this);
                 }
@@ -71,7 +71,7 @@ export class DragAndDropQuestionUtil {
         }
 
         const dropLocation = remainingDropLocations[0];
-        return availableDragItems.some(function(dragItem, index) {
+        return availableDragItems.some(function (dragItem, index) {
             const correctMapping = this.getMapping(correctMappings, dragItem, dropLocation);
             if (correctMapping) {
                 sampleMappings.push(correctMapping); // add new mapping
@@ -110,7 +110,7 @@ export class DragAndDropQuestionUtil {
                 // if these two drag items have one common drop location, they must share all drop locations
                 const dragItem1 = question.dragItems[i];
                 const dragItem2 = question.dragItems[j];
-                const shareOneDropLocation = question.dropLocations.some(function(dropLocation) {
+                const shareOneDropLocation = question.dropLocations.some(function (dropLocation) {
                     const isMappedWithDragItem1 = this.isMappedTogether(question.correctMappings, dragItem1, dropLocation);
                     const isMappedWithDragItem2 = this.isMappedTogether(question.correctMappings, dragItem2, dropLocation);
                     return isMappedWithDragItem1 && isMappedWithDragItem2;
@@ -151,7 +151,7 @@ export class DragAndDropQuestionUtil {
      */
     getMapping(mappings: DragAndDropMapping[], dragItem: DragItem, dropLocation: DropLocation) {
         const that = this;
-        return mappings.find(function(mapping: DragAndDropMapping) {
+        return mappings.find(function (mapping: DragAndDropMapping) {
             return that.isSameDropLocation(dropLocation, mapping.dropLocation!) && that.isSameDragItem(dragItem, mapping.dragItem!);
         }, this);
     }
@@ -164,7 +164,7 @@ export class DragAndDropQuestionUtil {
      * @return {Array} the resulting drop locations
      */
     getAllDropLocationsForDragItem(mappings: DragAndDropMapping[], dragItem: DragItem): DropLocation[] {
-        return mappings.filter(mapping => this.isSameDragItem(mapping.dragItem!, dragItem)).map(mapping => mapping.dropLocation!);
+        return mappings.filter((mapping) => this.isSameDragItem(mapping.dragItem!, dragItem)).map((mapping) => mapping.dropLocation!);
     }
 
     /**
@@ -182,13 +182,13 @@ export class DragAndDropQuestionUtil {
         }
         return (
             // for every element in set1 there has to be an identical element in set2 and vice versa
-            set1.every(function(element1: DropLocation) {
-                return set2.some(function(element2: DropLocation) {
+            set1.every(function (element1: DropLocation) {
+                return set2.some(function (element2: DropLocation) {
                     return service.isSameDropLocation(element1, element2);
                 });
             }) &&
-            set2.every(function(element2: DropLocation) {
-                return set1.some(function(element1: DropLocation) {
+            set2.every(function (element2: DropLocation) {
+                return set1.some(function (element1: DropLocation) {
                     return service.isSameDropLocation(element1, element2);
                 });
             })

@@ -48,7 +48,7 @@ export class NotificationMgmtComponent implements OnInit, OnDestroy {
         private eventManager: JhiEventManager,
     ) {
         this.itemsPerPage = ITEMS_PER_PAGE;
-        this.routeData = this.activatedRoute.data.subscribe(data => {
+        this.routeData = this.activatedRoute.data.subscribe((data) => {
             this.page = data['pagingParams'].page;
             this.previousPage = data['pagingParams'].page;
             this.reverse = data['pagingParams'].ascending;
@@ -60,7 +60,7 @@ export class NotificationMgmtComponent implements OnInit, OnDestroy {
      * Initializes current account and system notifications
      */
     ngOnInit() {
-        this.accountService.identity().then(user => {
+        this.accountService.identity().then((user) => {
             this.currentAccount = user!;
             this.loadAll();
             this.registerChangeInUsers();

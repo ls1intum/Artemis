@@ -25,12 +25,12 @@ export class FileUploadExerciseResolve implements Resolve<FileUploadExercise> {
     resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot) {
         if (route.params['exerciseId']) {
             return this.fileUploadExerciseService.find(route.params['exerciseId']).pipe(
-                filter(res => !!res.body),
+                filter((res) => !!res.body),
                 map((fileUploadExercise: HttpResponse<FileUploadExercise>) => fileUploadExercise.body!),
             );
         } else if (route.params['courseId']) {
             return this.courseService.find(route.params['courseId']).pipe(
-                filter(res => !!res.body),
+                filter((res) => !!res.body),
                 map((course: HttpResponse<Course>) => {
                     const fileUploadExercise = new FileUploadExercise(course.body!);
                     fileUploadExercise.filePattern = 'pdf, png';

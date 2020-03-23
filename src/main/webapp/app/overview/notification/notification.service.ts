@@ -112,7 +112,7 @@ export class NotificationService {
     protected filterSystemNotification(res: EntityArrayResponseType): SystemNotification | null {
         let systemNotification: SystemNotification | null = null;
         if (res.body) {
-            const receivedSystemNotifications = res.body.filter(el => el.notificationType === NotificationType.SYSTEM);
+            const receivedSystemNotifications = res.body.filter((el) => el.notificationType === NotificationType.SYSTEM);
             if (receivedSystemNotifications && receivedSystemNotifications.length > 0) {
                 systemNotification = receivedSystemNotifications[0] as SystemNotification;
             }
@@ -142,7 +142,7 @@ export class NotificationService {
                         reject('no User');
                     }
                 })
-                .catch(error => reject(error));
+                .catch((error) => reject(error));
         });
     }
 

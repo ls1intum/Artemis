@@ -33,7 +33,7 @@ export function convertRenderedSVGToPNG(renderedSVG: SVG): Promise<Blob> {
             toPNGBlob(canvas, resolve);
         };
 
-        image.onerror = error => {
+        image.onerror = (error) => {
             reject(error);
         };
     });

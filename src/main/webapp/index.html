@@ -23,7 +23,7 @@
         <![endif]-->
         <jhi-main>
             <div class="app-loading">
-                <div id="jhipster-error" style="display:none">
+                <div id="jhipster-error" style="display: none;">
                     <!-- This content is for troubleshooting purpose and will be removed when app renders -->
                     <h1>An error has occurred while loading and displaying the Artemis website :-(</h1>
                     <p>Troubleshooting:</p>
@@ -39,7 +39,7 @@
         </noscript>
         <script type="text/javascript" language="javascript">
             // show an error message if the app loading takes more than 5 sec
-            window.onload = function() {
+            window.onload = function () {
                 setTimeout(showError, 4000);
             };
             function showError() {
@@ -54,7 +54,7 @@
             if ('serviceWorker' in navigator) {
                 window.addEventListener('load', function() {
                     navigator.serviceWorker.register('/service-worker.js')
-                        .then(function () { });
+                        .then(function() { });
                 });
             }
         </script>
@@ -66,7 +66,7 @@
             /* tracker methods like "setCustomDimension" should be called before "trackPageView" */
             _paq.push(['setDoNotTrack', true]);
             _paq.push(['enableLinkTracking']);
-            (function() {
+            (function () {
                 var u = 'https://www.piwik.tum.de/';
                 _paq.push(['setTrackerUrl', u + 'matomo.php']);
                 _paq.push(['setSiteId', '125']);

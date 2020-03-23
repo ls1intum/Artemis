@@ -69,7 +69,7 @@ export class MultipleChoiceQuestionEditComponent implements OnInit, QuizQuestion
             this.artemisMarkdown.generateTextHintExplanation(this.question) +
             '\n\n' +
             this.question
-                .answerOptions!.map(answerOption => (answerOption.isCorrect ? '[correct]' : '[wrong]') + ' ' + this.artemisMarkdown.generateTextHintExplanation(answerOption))
+                .answerOptions!.map((answerOption) => (answerOption.isCorrect ? '[correct]' : '[wrong]') + ' ' + this.artemisMarkdown.generateTextHintExplanation(answerOption))
                 .join('\n');
         return markdownText;
     }

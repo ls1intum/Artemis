@@ -38,7 +38,7 @@ export class TextExerciseComponent extends ExerciseComponent {
                 this.textExercises = res.body!;
 
                 // reconnect exercise with course
-                this.textExercises.forEach(exercise => {
+                this.textExercises.forEach((exercise) => {
                     exercise.course = this.course;
                     exercise.isAtLeastTutor = this.accountService.isAtLeastTutorInCourse(exercise.course);
                     exercise.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(exercise.course);

@@ -29,7 +29,7 @@ export class SettingsComponent implements OnInit {
     constructor(private accountService: AccountService, private fb: FormBuilder, private languageService: JhiLanguageService, private languageHelper: JhiLanguageHelper) {}
 
     ngOnInit() {
-        this.accountService.identity().then(user => {
+        this.accountService.identity().then((user) => {
             this.updateForm(user!);
         });
         this.languages = this.languageHelper.getAll();
@@ -44,10 +44,10 @@ export class SettingsComponent implements OnInit {
             () => {
                 this.error = null;
                 this.success = 'OK';
-                this.accountService.identity(true).then(user => {
+                this.accountService.identity(true).then((user) => {
                     this.updateForm(user!);
                 });
-                this.languageService.getCurrent().then(current => {
+                this.languageService.getCurrent().then((current) => {
                     if (this.settingsAccount.langKey !== null && this.settingsAccount.langKey !== current) {
                         this.languageService.changeLanguage(this.settingsAccount.langKey);
                     }

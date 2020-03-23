@@ -48,7 +48,7 @@ export class JhiWebsocketService implements IWebsocketService, OnDestroy {
     stompFailureCallback() {
         this.connecting = false;
         this.consecutiveFailedAttempts++;
-        this.disconnectListeners.forEach(listener => {
+        this.disconnectListeners.forEach((listener) => {
             listener();
         });
         if (this.shouldReconnect) {
@@ -107,7 +107,7 @@ export class JhiWebsocketService implements IWebsocketService, OnDestroy {
         };
         this.stompClient = over(socket, options);
         // Note: at the moment, debugging is deactivated to prevent console log statements
-        this.stompClient.debug = function(str) {};
+        this.stompClient.debug = function (str) {};
         const headers = <ConnectionHeaders>{};
         headers['X-CSRF-TOKEN'] = this.csrfService.getCSRF();
 
@@ -116,7 +116,7 @@ export class JhiWebsocketService implements IWebsocketService, OnDestroy {
             () => {
                 this.connectedPromise('success');
                 this.connecting = false;
-                this.connectListeners.forEach(listener => {
+                this.connectListeners.forEach((listener) => {
                     listener();
                 });
                 this.consecutiveFailedAttempts = 0;
@@ -126,7 +126,7 @@ export class JhiWebsocketService implements IWebsocketService, OnDestroy {
                         this.myListeners.forEach((listener, channel) => {
                             this.subscribers.set(
                                 channel,
-                                this.stompClient!.subscribe(channel, data => {
+                                this.stompClient!.subscribe(channel, (data) => {
                                     if (this.listenerObservers.has(channel)) {
                                         this.listenerObservers.get(channel)!.next(JSON.parse(data.body));
                                     }
@@ -138,7 +138,7 @@ export class JhiWebsocketService implements IWebsocketService, OnDestroy {
                     this.alreadyConnectedOnce = true;
                 }
                 if (!this.subscription) {
-                    this.subscription = this.router.events.subscribe(event => {
+                    this.subscription = this.router.events.subscribe((event) => {
                         if (event instanceof NavigationEnd) {
                             this.sendActivity();
                         }
@@ -148,7 +148,7 @@ export class JhiWebsocketService implements IWebsocketService, OnDestroy {
 
                 // Setup periodic logs of websocket connection numbers
                 this.logTimers.push(
-                    timer(0, 10000).subscribe(x => {
+                    timer(0, 10000).subscribe((x) => {
                         console.log('\n\n');
                         console.log(`${this.subscribers.size} websocket subscriptions: `, this.subscribers.keys());
                         // this.subscribers.forEach((sub, topic) => console.log(topic));
@@ -166,9 +166,9 @@ export class JhiWebsocketService implements IWebsocketService, OnDestroy {
     }
 
     disconnect() {
-        this.logTimers.forEach(logTimer => logTimer.unsubscribe());
+        this.logTimers.forEach((logTimer) => logTimer.unsubscribe());
         this.connection = this.createConnection();
-        Object.keys(this.myListeners).forEach(listener => this.unsubscribe(listener), this);
+        Object.keys(this.myListeners).forEach((listener) => this.unsubscribe(listener), this);
         if (this.stompClient) {
             this.stompClient.disconnect();
             this.stompClient = null;
@@ -216,7 +216,7 @@ export class JhiWebsocketService implements IWebsocketService, OnDestroy {
             }
             this.subscribers.set(
                 channel,
-                this.stompClient!.subscribe(channel, data => {
+                this.stompClient!.subscribe(channel, (data) => {
                     if (this.listenerObservers.has(channel)) {
                         this.listenerObservers.get(channel)!.next(JSON.parse(data.body));
                     }
@@ -274,11 +274,11 @@ export class JhiWebsocketService implements IWebsocketService, OnDestroy {
      */
     unbind(event: string, callback: () => void) {
         if (event === 'connect') {
-            this.connectListeners = this.connectListeners.filter(listener => {
+            this.connectListeners = this.connectListeners.filter((listener) => {
                 return listener !== callback;
             });
         } else if (event === 'disconnect') {
-            this.disconnectListeners = this.disconnectListeners.filter(listener => {
+            this.disconnectListeners = this.disconnectListeners.filter((listener) => {
                 return listener !== callback;
             });
         }

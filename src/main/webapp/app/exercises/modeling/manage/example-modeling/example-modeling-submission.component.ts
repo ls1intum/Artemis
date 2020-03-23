@@ -112,7 +112,7 @@ export class ExampleModelingSubmissionComponent implements OnInit {
                 return;
             }
 
-            this.modelingAssessmentService.getExampleAssessment(this.exerciseId, this.modelingSubmission.id).subscribe(result => {
+            this.modelingAssessmentService.getExampleAssessment(this.exerciseId, this.modelingSubmission.id).subscribe((result) => {
                 if (result) {
                     this.result = result;
                     this.feedbacks = this.result.feedbacks || [];
@@ -277,9 +277,9 @@ export class ExampleModelingSubmissionComponent implements OnInit {
             return;
         }
 
-        const credits = this.feedbacks.map(feedback => feedback.credits);
+        const credits = this.feedbacks.map((feedback) => feedback.credits);
 
-        if (!credits.every(credit => credit !== null && !isNaN(credit))) {
+        if (!credits.every((credit) => credit !== null && !isNaN(credit))) {
             this.invalidError = 'The score field must be a number and can not be empty!';
             this.assessmentsAreValid = false;
             return;

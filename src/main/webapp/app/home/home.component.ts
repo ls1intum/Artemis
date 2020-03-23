@@ -77,7 +77,7 @@ export class HomeComponent implements OnInit, AfterViewInit {
                 }),
             )
             .subscribe();
-        this.accountService.identity().then(user => {
+        this.accountService.identity().then((user) => {
             this.currentUserCallback(user!);
         });
         this.registerAuthenticationSuccess();
@@ -85,7 +85,7 @@ export class HomeComponent implements OnInit, AfterViewInit {
 
     registerAuthenticationSuccess() {
         this.eventManager.subscribe('authenticationSuccess', (message: string) => {
-            this.accountService.identity().then(user => {
+            this.accountService.identity().then((user) => {
                 this.currentUserCallback(user!);
             });
         });
@@ -131,10 +131,10 @@ export class HomeComponent implements OnInit, AfterViewInit {
                     modalRef.componentInstance.text = 'login.ide.confirmation';
                     modalRef.componentInstance.title = 'login.ide.title';
                     modalRef.result.then(
-                        result => {
+                        (result) => {
                             this.javaBridge.login(this.username, this.password);
                         },
-                        reason => {},
+                        (reason) => {},
                     );
                 }
             })

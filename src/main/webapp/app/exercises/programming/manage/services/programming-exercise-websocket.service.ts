@@ -26,7 +26,7 @@ export class ProgrammingExerciseWebsocketService implements OnDestroy, IProgramm
      * On destroy unsubscribe all connections.
      */
     ngOnDestroy(): void {
-        Object.values(this.connections).forEach(connection => this.websocketService.unsubscribe(connection));
+        Object.values(this.connections).forEach((connection) => this.websocketService.unsubscribe(connection));
     }
 
     private notifySubscribers(programmingExerciseId: number, testCasesChanged: boolean) {
@@ -40,7 +40,7 @@ export class ProgrammingExerciseWebsocketService implements OnDestroy, IProgramm
         this.subjects[programmingExerciseId] = new BehaviorSubject(undefined);
         this.websocketService
             .receive(testCaseTopic)
-            .pipe(tap(testCasesChanged => this.notifySubscribers(programmingExerciseId, testCasesChanged)))
+            .pipe(tap((testCasesChanged) => this.notifySubscribers(programmingExerciseId, testCasesChanged)))
             .subscribe();
         return this.subjects[programmingExerciseId];
     }
@@ -53,6 +53,6 @@ export class ProgrammingExerciseWebsocketService implements OnDestroy, IProgramm
      */
     getTestCaseState(programmingExerciseId: number) {
         const existingSubject = this.subjects[programmingExerciseId];
-        return (existingSubject || this.initTestCaseStateSubscription(programmingExerciseId)).asObservable().pipe(filter(val => val !== undefined)) as Observable<boolean>;
+        return (existingSubject || this.initTestCaseStateSubscription(programmingExerciseId)).asObservable().pipe(filter((val) => val !== undefined)) as Observable<boolean>;
     }
 }

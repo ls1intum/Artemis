@@ -76,11 +76,11 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
     }
 
     ngOnInit() {
-        this.paramSub = this.route.params.subscribe(params => {
-            this.courseService.findWithExercises(params['courseId']).subscribe(res => {
+        this.paramSub = this.route.params.subscribe((params) => {
+            this.courseService.findWithExercises(params['courseId']).subscribe((res) => {
                 this.course = res.body!;
                 this.exercises = this.course.exercises
-                    .filter(exercise => {
+                    .filter((exercise) => {
                         return exercise.releaseDate == null || exercise.releaseDate.isBefore(moment());
                     })
                     .sort((e1: Exercise, e2: Exercise) => {
@@ -104,7 +104,7 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
     }
 
     getParticipationsWithResults(courseId: number) {
-        this.courseService.findAllParticipationsWithResults(courseId).subscribe(participations => {
+        this.courseService.findAllParticipationsWithResults(courseId).subscribe((participations) => {
             this.participations = participations;
             this.groupExercises();
             this.calculatePointsPerStudent();
@@ -113,15 +113,15 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
 
     groupExercises() {
         for (const exerciseType of this.exerciseTypes) {
-            const exercisesPerType = this.exercises.filter(exercise => exercise.type === exerciseType);
+            const exercisesPerType = this.exercises.filter((exercise) => exercise.type === exerciseType);
             this.exercisesPerType.set(exerciseType, exercisesPerType);
             this.exerciseTitlesPerType.set(
                 exerciseType,
-                exercisesPerType.map(exercise => exercise.title),
+                exercisesPerType.map((exercise) => exercise.title),
             );
             this.exerciseMaxPointsPerType.set(
                 exerciseType,
-                exercisesPerType.map(exercise => exercise.maxScore),
+                exercisesPerType.map((exercise) => exercise.maxScore),
             );
             this.maxNumberOfPointsPerExerciseType.set(
                 exerciseType,
@@ -161,11 +161,11 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
             exercise.numberOfSuccessfulParticipations = 0;
         }
 
-        studentsMap.forEach(student => {
+        studentsMap.forEach((student) => {
             this.students.push(student);
 
             for (const exercise of this.exercises) {
-                const participation = student.participations.find(part => part.exercise.id === exercise.id);
+                const participation = student.participations.find((part) => part.exercise.id === exercise.id);
                 if (participation && participation.results && participation.results.length > 0) {
                     // we found a result, there should only be one
                     const result = participation.results[0];
@@ -448,7 +448,7 @@ class Student {
     overallPoints = 0;
     pointsPerExercise = new Map<number, number>(); // the index is the exercise id
     sumPointsPerExerciseType = new Map<ExerciseType, number>(); // the absolute number (sum) of points the students received per exercise type
-    scorePerExerciseType = new Map<ExerciseType, number>(); // the relative number of points the students received per exercise type (i.e. divided by the max points per exercise type)
+    scorePerExerciseType = new Map<ExerciseType, number>(); // the relative number of points the students received per exercise type (divided by the max points per exercise type)
     pointsPerExerciseType = new Map<ExerciseType, number[]>(); // a string containing the points for all exercises of a specific type
 
     constructor(user: User) {

@@ -178,7 +178,7 @@ describe('Component Tests', () => {
         it('should navigate to access denied page on 403 error status', () => {
             sinon.replace(service, 'getLatestSubmissionForModelingEditor', sinon.fake.returns(throwError({ status: 403 })));
             const spy = stub(router, 'navigate');
-            spy.returns(new Promise(resolve => true));
+            spy.returns(new Promise((resolve) => true));
             fixture.detectChanges();
             expect(spy.called).to.be.true;
         });

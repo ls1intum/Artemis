@@ -35,12 +35,12 @@ export class FileUploadExerciseComponent extends ExerciseComponent {
     protected loadExercises(): void {
         this.courseExerciseService
             .findAllFileUploadExercisesForCourse(this.courseId)
-            .pipe(filter(res => !!res.body))
+            .pipe(filter((res) => !!res.body))
             .subscribe(
                 (res: HttpResponse<FileUploadExercise[]>) => {
                     this.fileUploadExercises = res.body!;
                     // reconnect exercise with course
-                    this.fileUploadExercises.forEach(exercise => {
+                    this.fileUploadExercises.forEach((exercise) => {
                         exercise.course = this.course;
                         exercise.isAtLeastTutor = this.accountService.isAtLeastTutorInCourse(exercise.course);
                         exercise.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(exercise.course);

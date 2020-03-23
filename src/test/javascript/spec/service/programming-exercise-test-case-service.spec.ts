@@ -79,7 +79,7 @@ describe('ProgrammingExerciseTestCaseService', () => {
 
         testCaseService
             .subscribeForTestCases(exercise1.id)
-            .pipe(tap(newTestCases => (testCasesExercise1 = newTestCases)))
+            .pipe(tap((newTestCases) => (testCasesExercise1 = newTestCases)))
             .subscribe();
 
         expect(getStub).to.have.been.calledOnce;
@@ -88,7 +88,7 @@ describe('ProgrammingExerciseTestCaseService', () => {
 
         testCaseService
             .subscribeForTestCases(exercise2.id)
-            .pipe(tap(newTestCases => (testCasesExercise2 = newTestCases)))
+            .pipe(tap((newTestCases) => (testCasesExercise2 = newTestCases)))
             .subscribe();
 
         expect(getStub).to.have.been.calledTwice;
@@ -101,12 +101,12 @@ describe('ProgrammingExerciseTestCaseService', () => {
         // Subscriber 1.
         testCaseService
             .subscribeForTestCases(exercise1.id)
-            .pipe(tap(newTestCases => (testCasesExercise1 = newTestCases)))
+            .pipe(tap((newTestCases) => (testCasesExercise1 = newTestCases)))
             .subscribe();
         // Subscriber 2.
         testCaseService
             .subscribeForTestCases(exercise1.id)
-            .pipe(tap(newTestCases => (testCasesExercise1 = newTestCases)))
+            .pipe(tap((newTestCases) => (testCasesExercise1 = newTestCases)))
             .subscribe();
 
         expect(getStub).to.have.been.calledOnce;
@@ -114,18 +114,18 @@ describe('ProgrammingExerciseTestCaseService', () => {
     });
 
     it('should notify subscribers on new test case value', () => {
-        const newTestCases = testCases1.map(testCase => ({ ...testCase, weight: 30 }));
+        const newTestCases = testCases1.map((testCase) => ({ ...testCase, weight: 30 }));
         let testCasesExercise1Subscriber1;
         let testCasesExercise1Subscriber2;
         // Subscriber 1.
         testCaseService
             .subscribeForTestCases(exercise1.id)
-            .pipe(tap(newTestCases => (testCasesExercise1Subscriber1 = newTestCases)))
+            .pipe(tap((newTestCases) => (testCasesExercise1Subscriber1 = newTestCases)))
             .subscribe();
         // Subscriber 2.
         testCaseService
             .subscribeForTestCases(exercise1.id)
-            .pipe(tap(newTestCases => (testCasesExercise1Subscriber2 = newTestCases)))
+            .pipe(tap((newTestCases) => (testCasesExercise1Subscriber2 = newTestCases)))
             .subscribe();
 
         expect(testCasesExercise1Subscriber1).to.equal(testCases1);

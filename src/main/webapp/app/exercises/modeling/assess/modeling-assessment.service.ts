@@ -44,12 +44,12 @@ export class ModelingAssessmentService {
                 url += '&ignoreConflicts=true';
             }
         }
-        return this.http.put<Result>(url, feedbacks).map(res => this.convertResult(res));
+        return this.http.put<Result>(url, feedbacks).map((res) => this.convertResult(res));
     }
 
     saveExampleAssessment(feedbacks: Feedback[], exampleSubmissionId: number): Observable<Result> {
         const url = `${this.resourceUrl}/modeling-submissions/${exampleSubmissionId}/example-assessment`;
-        return this.http.put<Result>(url, feedbacks).map(res => this.convertResult(res));
+        return this.http.put<Result>(url, feedbacks).map((res) => this.convertResult(res));
     }
 
     updateAssessmentAfterComplaint(feedbacks: Feedback[], complaintResponse: ComplaintResponse, submissionId: number): Observable<EntityResponseType> {
@@ -64,12 +64,12 @@ export class ModelingAssessmentService {
     }
 
     getAssessment(submissionId: number): Observable<Result> {
-        return this.http.get<Result>(`${this.resourceUrl}/modeling-submissions/${submissionId}/result`).map(res => this.convertResult(res));
+        return this.http.get<Result>(`${this.resourceUrl}/modeling-submissions/${submissionId}/result`).map((res) => this.convertResult(res));
     }
 
     getExampleAssessment(exerciseId: number, submissionId: number): Observable<Result> {
         const url = `${this.resourceUrl}/exercise/${exerciseId}/modeling-submissions/${submissionId}/example-assessment`;
-        return this.http.get<Result>(url).map(res => this.convertResult(res));
+        return this.http.get<Result>(url).map((res) => this.convertResult(res));
     }
 
     getOptimalSubmissions(exerciseId: number): Observable<number[]> {
@@ -132,7 +132,7 @@ export class ModelingAssessmentService {
             const referencedModelType = feedback.referenceType!;
             const referencedModelId = feedback.referenceId!;
             if (referencedModelType in UMLElementType) {
-                const element = model.elements.find(elem => elem.id === referencedModelId);
+                const element = model.elements.find((elem) => elem.id === referencedModelId);
                 if (!element) {
                     // prevent errors when element could not be found, should never happen
                     assessmentsNames[referencedModelId] = { name: '', type: '' };
@@ -187,9 +187,9 @@ export class ModelingAssessmentService {
                 }
                 assessmentsNames[referencedModelId] = { type, name };
             } else if (referencedModelType in UMLRelationshipType) {
-                const relationship = model.relationships.find(rel => rel.id === referencedModelId)!;
-                const source = model.elements.find(element => element.id === relationship.source.element)!.name;
-                const target = model.elements.find(element => element.id === relationship.target.element)!.name;
+                const relationship = model.relationships.find((rel) => rel.id === referencedModelId)!;
+                const source = model.elements.find((element) => element.id === relationship.source.element)!.name;
+                const target = model.elements.find((element) => element.id === relationship.target.element)!.name;
                 const relationshipType = relationship.type;
                 let type = 'association';
                 let relation: string;
@@ -236,7 +236,7 @@ export class ModelingAssessmentService {
             return true;
         }
         return feedback.every(
-            feedbackItem =>
+            (feedbackItem) =>
                 (!feedbackItem.text || feedbackItem.text.length <= this.MAX_FEEDBACK_TEXT_LENGTH) &&
                 (!feedbackItem.detailText || feedbackItem.detailText.length <= this.MAX_FEEDBACK_DETAIL_TEXT_LENGTH),
         );
@@ -249,7 +249,7 @@ export class ModelingAssessmentService {
      */
     numberToArray(n: number, startFrom: number): number[] {
         n = Math.floor(Math.abs(n));
-        return [...Array(n).keys()].map(i => i + startFrom);
+        return [...Array(n).keys()].map((i) => i + startFrom);
     }
 }
 
@@ -267,7 +267,7 @@ export const genericRetryStrategy = ({
             const retryAttempt = i + 1;
             // if maximum number of retries have been met
             // or response is a status code we don't wish to retry, throw error
-            if (retryAttempt > maxRetryAttempts || excludedStatusCodes.find(e => e === error.status)) {
+            if (retryAttempt > maxRetryAttempts || excludedStatusCodes.find((e) => e === error.status)) {
                 throw error;
             }
             // retry after 1s, 2s, etc...

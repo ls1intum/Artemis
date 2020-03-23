@@ -26,7 +26,7 @@ export class CodeEditorConflictStateService extends DomainDependentService imple
     }
 
     ngOnDestroy(): void {
-        Object.values(this.websocketConnections).forEach(channel => this.jhiWebsocketService.unsubscribe(channel));
+        Object.values(this.websocketConnections).forEach((channel) => this.jhiWebsocketService.unsubscribe(channel));
     }
 
     /**

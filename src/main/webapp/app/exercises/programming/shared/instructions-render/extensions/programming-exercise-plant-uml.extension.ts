@@ -61,7 +61,7 @@ export class ProgrammingExercisePlantUmlExtensionWrapper implements ArtemisShowd
                         acc.replace(new RegExp(escapeStringForUseInRegex(plantUml), 'g'), plantUmlContainer.replace(idPlaceholder, index.toString())),
                     text,
                 );
-                const plantUmlsValidated = plantUmls.map(plantUml =>
+                const plantUmlsValidated = plantUmls.map((plantUml) =>
                     plantUml.replace(/testsColor\(([^)]+)\)/g, (match: any, capture: string) => {
                         const tests = capture.split(',');
                         const { testCaseState } = this.programmingExerciseInstructionService.testStatusForTask(tests, this.latestResult);

@@ -25,8 +25,8 @@ export class ShortAnswerQuestionUtil {
         let availableSolutions = question.solutions;
 
         // filter out spots that do not need to be mapped
-        let remainingSpots: ShortAnswerSpot[] = question.spots.filter(function(spot) {
-            return question.correctMappings.some(function(mapping) {
+        let remainingSpots: ShortAnswerSpot[] = question.spots.filter(function (spot) {
+            return question.correctMappings.some(function (mapping) {
                 return this.isSameSpot(mapping.spot, spot);
             }, this);
         }, this);
@@ -37,14 +37,14 @@ export class ShortAnswerQuestionUtil {
 
         if (mappings) {
             // add mappings that are already correct
-            mappings.forEach(function(mapping) {
+            mappings.forEach(function (mapping) {
                 const correctMapping = this.getShortAnswerMapping(question.correctMappings, mapping.solution, mapping.spot);
                 if (correctMapping) {
                     sampleMappings.push(correctMapping);
-                    remainingSpots = remainingSpots.filter(function(spot) {
+                    remainingSpots = remainingSpots.filter(function (spot) {
                         return !this.isSameSpot(spot, mapping.spot);
                     }, this);
-                    availableSolutions = availableSolutions.filter(function(solution) {
+                    availableSolutions = availableSolutions.filter(function (solution) {
                         return !this.isSameSolution(solution, mapping.solution);
                     }, this);
                 }
@@ -76,7 +76,7 @@ export class ShortAnswerQuestionUtil {
         }
 
         const spot = remainingSpots[0];
-        return availableSolutions.some(function(solution, index) {
+        return availableSolutions.some(function (solution, index) {
             const correctMapping = this.getShortAnswerMapping(correctMappings, solution, spot);
             if (correctMapping) {
                 sampleMappings.push(correctMapping); // add new mapping
@@ -117,7 +117,7 @@ export class ShortAnswerQuestionUtil {
                 // if these two solutions have one common spot, they must share all spots
                 const solution1 = question.solutions[i];
                 const solution2 = question.solutions[j];
-                const shareOneSpot = question.spots.some(function(spot) {
+                const shareOneSpot = question.spots.some(function (spot) {
                     const isMappedWithSolution1 = this.isMappedTogether(question.correctMappings, solution1, spot);
                     const isMappedWithSolution2 = this.isMappedTogether(question.correctMappings, solution2, spot);
                     return isMappedWithSolution1 && isMappedWithSolution2;
@@ -159,10 +159,10 @@ export class ShortAnswerQuestionUtil {
      */
     getAllSpotsForSolutions(mappings: ShortAnswerMapping[], solution: ShortAnswerSolution): ShortAnswerSpot[] {
         return mappings
-            .filter(function(mapping) {
+            .filter(function (mapping) {
                 return this.isSameSolution(mapping.solution, solution);
             }, this)
-            .map(function(mapping) {
+            .map(function (mapping) {
                 return mapping.spot;
             });
     }
@@ -176,10 +176,10 @@ export class ShortAnswerQuestionUtil {
      */
     getAllSolutionsForSpot(mappings: ShortAnswerMapping[], spot: ShortAnswerSpot): ShortAnswerSolution[] {
         return mappings
-            .filter(function(mapping) {
+            .filter(function (mapping) {
                 return this.isSameSpot(mapping.spot, spot);
             }, this)
-            .map(function(mapping) {
+            .map(function (mapping) {
                 return mapping.solution;
             });
     }
@@ -199,13 +199,13 @@ export class ShortAnswerQuestionUtil {
         }
         return (
             // for every element in set1 there has to be an identical element in set2 and vice versa
-            set1.every(function(element1: ShortAnswerSpot) {
-                return set2.some(function(element2: ShortAnswerSpot) {
+            set1.every(function (element1: ShortAnswerSpot) {
+                return set2.some(function (element2: ShortAnswerSpot) {
                     return service.isSameSpot(element1, element2);
                 });
             }) &&
-            set2.every(function(element2: ShortAnswerSpot) {
-                return set1.some(function(element1: ShortAnswerSpot) {
+            set2.every(function (element2: ShortAnswerSpot) {
+                return set1.some(function (element1: ShortAnswerSpot) {
                     return service.isSameSpot(element1, element2);
                 });
             })
@@ -222,7 +222,7 @@ export class ShortAnswerQuestionUtil {
      */
     getShortAnswerMapping(mappings: ShortAnswerMapping[], solution: ShortAnswerSolution, spot: ShortAnswerSpot) {
         const that = this;
-        return mappings.find(function(mapping: ShortAnswerMapping) {
+        return mappings.find(function (mapping: ShortAnswerMapping) {
             return that.isSameSpot(spot, mapping.spot) && that.isSameSolution(solution, mapping.solution);
         }, this);
     }
@@ -273,7 +273,7 @@ export class ShortAnswerQuestionUtil {
      * @return {boolean}
      */
     everyMappedSolutionHasASpot(mappings: ShortAnswerMapping[]): boolean {
-        return !(mappings.filter(mapping => mapping.spot === undefined).length > 0);
+        return !(mappings.filter((mapping) => mapping.spot === undefined).length > 0);
     }
 
     /**
@@ -308,10 +308,7 @@ export class ShortAnswerQuestionUtil {
 
         // separates the the rest of the text from the question
         if (firstLineHasQuestion) {
-            questionTextSplitAtNewLine = text
-                .split(/\n+/g)
-                .slice(1)
-                .join('\n');
+            questionTextSplitAtNewLine = text.split(/\n+/g).slice(1).join('\n');
         } else {
             questionTextSplitAtNewLine = text.split(/\n+/g).join('\n');
         }
@@ -340,7 +337,7 @@ export class ShortAnswerQuestionUtil {
      * @return {boolean}
      */
     hasMappingDuplicateValues(mappings: ShortAnswerMapping[]): boolean {
-        if (mappings.filter(mapping => mapping.spot === undefined).length > 0) {
+        if (mappings.filter((mapping) => mapping.spot === undefined).length > 0) {
             return false;
         }
         let duplicateValues = 0;
@@ -368,7 +365,7 @@ export class ShortAnswerQuestionUtil {
                 if (
                     mapping.spot.id === spot.id &&
                     !sampleSolutions.some(
-                        sampleSolution => sampleSolution.text === mapping.solution.text && !this.allSolutionsAreInSampleSolution(solutionsForSpot, sampleSolutions),
+                        (sampleSolution) => sampleSolution.text === mapping.solution.text && !this.allSolutionsAreInSampleSolution(solutionsForSpot, sampleSolutions),
                     )
                 ) {
                     sampleSolutions.push(mapping.solution);
@@ -426,12 +423,12 @@ export class ShortAnswerQuestionUtil {
                 : [x, ...interleave(ys, xs)]; // inductive: some x
         }
 
-        return questionText.split(/\n/g).map(line => {
+        return questionText.split(/\n/g).map((line) => {
             const spots = line.match(spotRegExpo) || [];
             const texts = line.split(spotRegExpo);
             return interleave(texts, spots)
-                .map(x => x.trim())
-                .filter(x => x.length > 0);
+                .map((x) => x.trim())
+                .filter((x) => x.length > 0);
         });
     }
 
@@ -461,7 +458,7 @@ export class ShortAnswerQuestionUtil {
      * @param question
      */
     getSpot(spotNr: number, question: ShortAnswerQuestion): ShortAnswerSpot {
-        return question.spots.filter(spot => spot.spotNr === spotNr)[0];
+        return question.spots.filter((spot) => spot.spotNr === spotNr)[0];
     }
 
     /**
@@ -473,6 +470,6 @@ export class ShortAnswerQuestionUtil {
      * @returns {string[][]}
      */
     transformTextPartsIntoHTML(textParts: string[][], artemisMarkdown: ArtemisMarkdown): (string | null)[][] {
-        return textParts.map(textPart => textPart.map(element => artemisMarkdown.htmlForMarkdown(element)));
+        return textParts.map((textPart) => textPart.map((element) => artemisMarkdown.htmlForMarkdown(element)));
     }
 }

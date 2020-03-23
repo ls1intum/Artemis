@@ -37,7 +37,7 @@ export class ProgrammingExercisePlantUmlService {
                 params: new HttpParams({ encoder: this.encoder }).set('plantuml', plantUml),
                 responseType: 'arraybuffer',
             })
-            .map(res => this.convertPlantUmlResponseToBase64(res));
+            .map((res) => this.convertPlantUmlResponseToBase64(res));
     }
 
     /**

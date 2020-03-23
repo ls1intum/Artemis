@@ -23,7 +23,7 @@
         <div class="row" *ngIf="reEvaluationInProgress">
             <div class="col-md-10 text-left">
                 <div class="input-group">
-                    <input class="form-control" [(ngModel)]="question.title" (ngModelChange)="questionUpdated.emit()" placeholder="Question Title" style="height: 33px" />
+                    <input class="form-control" [(ngModel)]="question.title" (ngModelChange)="questionUpdated.emit()" placeholder="Question Title" style="height: 33px;" />
                     <span class="input-group-btn">
                         <button class="btn btn-outline-secondary" type="button" (click)="resetQuestionTitle()">
                             <fa-icon [icon]="'undo'"></fa-icon>
@@ -109,7 +109,7 @@
                         (markdownChange)="changesInMarkdown()"
                         (textWithDomainCommandsFound)="domainCommandsFound($event)"
                     ></jhi-markdown-editor>
-                    <span class="input-group-btn" style="vertical-align: top">
+                    <span class="input-group-btn" style="vertical-align: top;">
                         <button class="btn btn-outline-secondary btn-lg" type="button" (click)="resetQuestionText()">
                             <fa-icon [icon]="'undo'"></fa-icon>
                         </button>
@@ -245,7 +245,7 @@
                     <fa-icon [icon]="'bars'" class="drag-handle" size="lg"></fa-icon>
                 </div>
                 <div class="dimensions" *ngIf="reEvaluationInProgress">
-                    <span style="color:red" *ngIf="dragItem.invalid" jhiTranslate="artemisApp.quizQuestion.invalid"></span>
+                    <span style="color: red;" *ngIf="dragItem.invalid" jhiTranslate="artemisApp.quizQuestion.invalid"></span>
                 </div>
                 <div class="mapping-numbers-wrapper">
                     <div *ngFor="let mapping of getMappingsForDragItem(dragItem)" [ngClass]="'mapping-number mapping-color-' + (getMappingIndex(mapping) % 8)">

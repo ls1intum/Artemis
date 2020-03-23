@@ -49,7 +49,7 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
     ) {}
 
     ngOnInit(): void {
-        this.accountService.identity().then(user => {
+        this.accountService.identity().then((user) => {
             // Only load password if current user login starts with 'edx_' or 'u4i_'
             if (user && user.login && (user.login.startsWith('edx_') || user.login.startsWith('u4i_'))) {
                 this.getRepositoryPassword();
@@ -99,7 +99,7 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
             .startExercise(this.courseId, this.exercise.id)
             .finally(() => (this.exercise.loading = false))
             .subscribe(
-                participation => {
+                (participation) => {
                     if (participation) {
                         this.exercise.studentParticipations = [participation];
                         this.exercise.participationStatus = participationStatus(this.exercise);
@@ -108,7 +108,7 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
                         this.jhiAlertService.success('artemisApp.exercise.personalRepository');
                     }
                 },
-                error => {
+                (error) => {
                     console.log('Error: ' + error);
                     this.jhiAlertService.warning('artemisApp.exercise.startError');
                 },
@@ -133,7 +133,7 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
                         this.exercise.participationStatus = participationStatus(this.exercise);
                     }
                 },
-                error => {
+                (error) => {
                     console.log('Error: ' + error.status + ' ' + error.message);
                     this.jhiAlertService.error(`artemisApp.${error.error.entityName}.errors.${error.error.errorKey}`);
                 },
@@ -154,7 +154,7 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
     }
 
     getRepositoryPassword() {
-        this.sourceTreeService.getRepositoryPassword().subscribe(res => {
+        this.sourceTreeService.getRepositoryPassword().subscribe((res) => {
             const password = res['password'];
             if (password) {
                 this.repositoryPassword = password;

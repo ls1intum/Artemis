@@ -34,7 +34,7 @@ export class ParticipationSubmissionComponent implements OnInit {
     }
 
     setupPage() {
-        this.route.params.subscribe(params => {
+        this.route.params.subscribe((params) => {
             this.participationId = +params['participationId'];
         });
 
@@ -44,7 +44,7 @@ export class ParticipationSubmissionComponent implements OnInit {
                 map(({ body }) => body),
                 catchError(() => of(null)),
             )
-            .subscribe(participation => {
+            .subscribe((participation) => {
                 if (participation) {
                     this.participation = participation;
                     this.isLoading = false;
@@ -59,7 +59,7 @@ export class ParticipationSubmissionComponent implements OnInit {
                 map(({ body }) => body),
                 catchError(() => of([])),
             )
-            .subscribe(submissions => {
+            .subscribe((submissions) => {
                 if (submissions) {
                     this.submissions = submissions;
                     this.isLoading = false;
