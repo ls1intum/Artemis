@@ -45,7 +45,7 @@ export function setup() {
 }
 
 export default function(data) {
-    const websocketConnectionTime = __ENV.TIMEOUT; // Time in seconds the websocket is kept open, if set to 0 no websocket connection is estahblished
+    const websocketConnectionTime = parseFloat(__ENV.TIMEOUT_PARTICIPATION); // Time in seconds the websocket is kept open, if set to 0 no websocket connection is estahblished
 
     // Delay so that not all users start at the same time, batches of 3 users per second
     const delay = Math.floor(__VU / 3);

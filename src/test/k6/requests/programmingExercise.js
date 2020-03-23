@@ -15,6 +15,8 @@ export function ParticipationSimulation(timeout, exerciseId, participationId, co
         const match = resReg.exec(message);
         const result = JSON.parse(match[2]);
 
+        console.log("Received test result " + result.successful + ", " + result.resultString);
+
         switch (expectedResult) {
             case TestResult.SUCCESS: {
                 if(!result.successful) fail(`ERROR: The result for participation ${participationId} was not successful!`);
@@ -50,7 +52,7 @@ export function createExercise(artemis, courseId) {
         type: 'programming',
         programmingLanguage: 'JAVA',
         allowOnlineEditor: true,
-        packageName: 'de.test.in.ase',
+        packageName: 'de.test',
         problemStatement: programmingExerciseProblemStatement,
         presentationScoreEnabled: false,
         sequentialTestRuns: false,

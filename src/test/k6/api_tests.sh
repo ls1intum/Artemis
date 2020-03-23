@@ -7,7 +7,7 @@ baseDir=$currentDir/src/test/k6
 PARAMS=""
 while (( "$#" )); do
   case "$1" in
-    --baseUrl) # URL of the sut
+    -bu|--baseUrl) # URL of the sut
       baseUrl=$2
       shift 2
       ;;
@@ -15,8 +15,12 @@ while (( "$#" )); do
       iterations=$2
       shift 2
       ;;
-    -t|--timeout) # Timeout for participations in seconds
-      timeout=$2
+    -tp|--timeoutParticipation) # Timeout for participations in seconds
+      timeoutParticipation=$2
+      shift 2
+      ;;
+    -te|--timeoutExercise) # Timeout before creating the exercise in seconds
+      timeoutExercise=$2
       shift 2
       ;;
     -p|--password) # Base password for all test users
@@ -27,11 +31,11 @@ while (( "$#" )); do
       baseUsername=$2
       shift 2
       ;;
-    --admin-username)
+    -au|--admin-username)
       adminUsername=$2
       shift 2
       ;;
-    --admin-password)
+    -ap|--admin-password)
       adminPassword=$2
       shift 2
       ;;
@@ -64,17 +68,18 @@ eval set -- "$PARAMS"
 baseUrl=${baseUrl:?You have to specify the base URL}
 basePassword=${basePassword:?"You have to specify the test user's base password"}
 baseUsername=${baseUsername:?"You have to specify the test user's base username"}
-adminUsername=${adminUsername:?You have to specify the username of one admin}
-adminPassword=${adminPassword:?You have to specify the password of one admin}
-createUsers=false
-tests=${tests:?You have to specify which tests to run}
+adminUsername=${adminUsername:?"You have to specify the username of one admin"}
+adminPassword=${adminPassword:?"You have to specify the password of one admin"}
+createUsers=${createUsers:-false}
+tests=${tests:?"You have to specify which tests to run"}
 iterations=${iterations:-10}
-timeout=${timeout:-60}
+timeoutParticipation=${timeoutParticipation:-60}
+timeoutExercise=${timeoutExercise:-10}
 
 echo "################### STARTING API Tests ###################"
 result=$(docker run -i --rm --network=host --name api-tests -v "$baseDir":/src -e BASE_USERNAME="$baseUsername" -e BASE_URL="$baseUrl" \
-  -e BASE_PASSWORD="$basePassword" -e ITERATIONS="$iterations" -e TIMEOUT="$timeout" \
-  -e ADMIN_USERNAME="$adminUsername" -e ADMIN_PASSWORD="$adminPassword" -e CREATE_USERS="$createUsers" \
+  -e BASE_PASSWORD="$basePassword" -e ITERATIONS="$iterations" -e TIMEOUT_PARTICIPATION="$timeoutParticipation" \
+  -e ADMIN_USERNAME="$adminUsername" -e ADMIN_PASSWORD="$adminPassword" -e CREATE_USERS="$createUsers" -e TIMEOUT_EXERCISE="$timeoutExercise"\
   loadimpact/k6 run /src/"$tests".js 2>&1)
 
 echo "########## FINISHED testing - evaluating result ##########"
