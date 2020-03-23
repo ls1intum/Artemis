@@ -129,7 +129,9 @@ export class UserManagementComponent implements OnInit, OnDestroy {
      * Retrieve the list of users from the user service for a single page in the user management based on the page, size and sort configuration
      */
     loadAll() {
-        this.search.next();
+        if (this.searchTerm.length >= 3 || this.searchTerm.length === 0) {
+            this.search.next();
+        }
     }
 
     /**
