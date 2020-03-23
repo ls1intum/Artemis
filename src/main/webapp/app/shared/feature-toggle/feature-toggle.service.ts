@@ -51,7 +51,8 @@ export class FeatureToggleService {
 
     /**
      * Set the initial value of the feature toggles. Use with care as the set value will be sent to all subscribers!
-     * The feature toggle value updates are transmitted from the server to the client with a websocket, so there should be no reason to set the values manually, other than on initialization.
+     * The feature toggle value updates are transmitted from the server to the client with a websocket,
+     * so there should be no reason to set the values manually, other than on initialization.
      * @param activeFeatures
      */
     initializeFeatureToggles(activeFeatures: ActiveFeatureToggles) {

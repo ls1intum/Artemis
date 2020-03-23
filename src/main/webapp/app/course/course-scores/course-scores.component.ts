@@ -451,7 +451,7 @@ class Student {
     overallPoints = 0;
     pointsPerExercise = new Map<number, number>(); // the index is the exercise id
     sumPointsPerExerciseType = new Map<ExerciseType, number>(); // the absolute number (sum) of points the students received per exercise type
-    scorePerExerciseType = new Map<ExerciseType, number>(); // the relative number of points the students received per exercise type (i.e. divided by the max points per exercise type)
+    scorePerExerciseType = new Map<ExerciseType, number>(); // the relative number of points the students received per exercise type (divided by the max points per exercise type)
     pointsPerExerciseType = new Map<ExerciseType, number[]>(); // a string containing the points for all exercises of a specific type
 
     constructor(user: User) {

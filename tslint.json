@@ -1,8 +1,5 @@
-
 {
-    "rulesDirectory": [
-        "node_modules/codelyzer"
-    ],
+    "rulesDirectory": ["node_modules/codelyzer"],
     "extends": [
         "tslint-config-prettier"
     ],
@@ -22,7 +19,7 @@
         "label-position": true,
         "max-line-length": [
             true,
-            250
+            180
         ],
         "member-access": false,
         "no-arg": true,
@@ -91,18 +88,11 @@
             "check-module"
         ],
         "prefer-const": true,
-        "arrow-parens": [true, "ban-single-arg-parens"],
+        "arrow-parens": true,
         "arrow-return-shorthand": [true],
         "import-spacing": true,
         "no-consecutive-blank-lines": [true],
         "object-literal-shorthand": true,
-        "space-before-function-paren": [true, {
-            "asyncArrow": "always",
-            "anonymous": "never",
-            "constructor": "never",
-            "method": "never",
-            "named": "never"
-        }],
         "directive-selector": [true, "attribute", "jhi", "camelCase"],
         "component-selector": [true, "element", "jhi", "kebab-case"],
         "no-inputs-metadata-property": true,
@@ -114,5 +104,6 @@
         "use-pipe-transform-interface": false,
         "component-class-suffix": true,
         "directive-class-suffix": true
+//        "typedef": [true, "call-signature"]
     }
 }

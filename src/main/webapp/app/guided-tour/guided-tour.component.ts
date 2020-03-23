@@ -641,7 +641,8 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
     /**
      * Update tour step location and return selected element as DOMRect
      * @param selectedElement: selected element in DOM
-     * @param isResizeOrScroll: true if this method is called by a resize or scroll event listener: this method should not listen to user interactions when it is called through resizing or scrolling events
+     * @param isResizeOrScroll: true if this method is called by a resize or scroll event listener:
+     *                          this method should not listen to user interactions when it is called through resizing or scrolling events
      * @return selected element as DOMRect or null
      */
     private updateStepLocation(selectedElement: HTMLElement | null, isResizeOrScroll: boolean): DOMRect | null {

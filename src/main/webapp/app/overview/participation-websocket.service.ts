@@ -58,7 +58,8 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
      */
     private notifyResultSubscribers = (result: Result) => {
         const resultObservable = this.resultObservables.get(result.participation!.id);
-        // TODO: We never convert the date strings of the result (e.g. completionDate) to a Moment object - this could be an issue in some parts of app when a formatted date is needed.
+        // TODO: We never convert the date strings of the result (e.g. completionDate) to a Moment object
+        //  this could be an issue in some parts of app when a formatted date is needed.
         if (!resultObservable) {
             this.resultObservables.set(result.participation!.id, new BehaviorSubject(result));
         } else {

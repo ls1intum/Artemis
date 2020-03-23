@@ -295,7 +295,7 @@ export class MarkdownEditorComponent implements AfterViewInit {
              *  m: match the regex over multiple lines*/
             const regex = new RegExp(`(?=\\[(${commandIdentifiersString})\\])`, 'gmi');
 
-            /** iterating loop as long as the remainingMarkdownText of the markdown text exists and split the remainingMarkdownText as soon as a domainCommand identifier is found */
+            /** iterating loop as long as the remainingMarkdownText of the markdown text exists and split the remainingMarkdownText when a domainCommand identifier is found */
             while (remainingMarkdownText.length) {
                 /** As soon as an identifier is with regEx the remainingMarkdownText of the markdown text is split and saved into {array} textWithCommandIdentifier
                  *  split: saves its values into an {array}

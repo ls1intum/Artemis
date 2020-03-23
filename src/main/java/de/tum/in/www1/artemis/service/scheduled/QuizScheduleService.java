@@ -7,6 +7,8 @@ import java.util.concurrent.ScheduledFuture;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.event.EventListener;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.stereotype.Service;
@@ -83,6 +85,12 @@ public class QuizScheduleService {
         this.userService = userService;
         this.quizExerciseService = quizExerciseService;
         this.quizStatisticService = quizStatisticService;
+    }
+
+    @EventListener(ApplicationReadyEvent.class)
+    public void applicationReady() {
+        // activate Quiz Schedule Service
+        startSchedule(3 * 1000);                          // every 3 seconds
     }
 
     /**

@@ -302,7 +302,7 @@ public class LtiService {
             if (!user.getLogin().startsWith("edx")) {
                 // try to sync with authentication service for actual users (not for edx users)
                 try {
-                    artemisAuthenticationProvider.addUserToGroup(user.getLogin(), courseStudentGroupName);
+                    artemisAuthenticationProvider.addUserToGroup(user, courseStudentGroupName);
                 }
                 catch (ArtemisAuthenticationException e) {
                     /*

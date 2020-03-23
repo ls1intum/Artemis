@@ -45,7 +45,8 @@ export class ProgrammingBuildRunService implements OnDestroy {
             this.websocketService.subscribe(newSubmissionTopic);
             this.websocketService
                 .receive(newSubmissionTopic)
-                .pipe(tap((buildRunState: BuildRunState) => this.notifySubscribers(programmingExerciseId, buildRunState))) // Atm we only get the message about completed builds from the server.
+                // Atm we only get the message about completed builds from the server.
+                .pipe(tap((buildRunState: BuildRunState) => this.notifySubscribers(programmingExerciseId, buildRunState)))
                 .subscribe();
         }
     }

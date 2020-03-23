@@ -63,7 +63,7 @@ export class AuthServerProvider implements IAuthServerProvider {
     removeAuthTokenFromCaches(): Observable<null> {
         this.localStorage.clear('authenticationToken');
         this.sessionStorage.clear('authenticationToken');
-        // The local or session storage might have to be cleared asynchronously in future due to updated browser apis. This is why this method is already acting if it was asynchronous.
+        // The local or session storage might have to be cleared asynchronously in future due to updated browser apis. This is why this method is already acting asynchronous.
         return of(null);
     }
 
@@ -73,7 +73,7 @@ export class AuthServerProvider implements IAuthServerProvider {
     clearCaches(): Observable<null> {
         this.localStorage.clear();
         this.sessionStorage.clear();
-        // The local or session storage might have to be cleared asynchronously in future due to updated browser apis. This is why this method is already acting if it was asynchronous.
+        // The local or session storage might have to be cleared asynchronously in future due to updated browser apis. This is why this method is already acting asynchronous.
         return of(null);
     }
 }

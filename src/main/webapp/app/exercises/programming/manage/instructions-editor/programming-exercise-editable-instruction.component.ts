@@ -283,7 +283,8 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
             .getEditor()
             .getSession()
             .clearAnnotations();
-        // We need to wait for the annotations to be removed before we can set the new annotations. Otherwise changes in the editor will trigger the update of the existing annotations.
+        // We need to wait for the annotations to be removed before we can set the new annotations.
+        // Otherwise changes in the editor will trigger the update of the existing annotations.
         setTimeout(() => {
             this.markdownEditor.aceEditorContainer
                 .getEditor()

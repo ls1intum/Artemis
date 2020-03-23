@@ -139,7 +139,8 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy {
                 switchMap(() => this.repositoryService.commit()),
                 tap(() => {
                     this.commitState = CommitState.CLEAN;
-                    // Note: this is not 100% clean, but not setting it here would complicate the state model. We just assume that after the commit a build happens if the repo is buildable.
+                    // Note: this is not 100% clean, but not setting it here would complicate the state model.
+                    // We just assume that after the commit a build happens if the repo is buildable.
                     if (this.buildable) {
                         this.isBuilding = true;
                     }

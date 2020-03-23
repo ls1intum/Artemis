@@ -1,0 +1,38 @@
+{
+    "plugins": [
+        "@typescript-eslint",
+        "@typescript-eslint/tslint"
+    ],
+    "extends": [
+//        "plugin:@typescript-eslint/eslint-recommended",
+//        "plugin:@typescript-eslint/recommended",
+        "prettier/@typescript-eslint",
+        "plugin:prettier/recommended"
+    ],
+    "parser": "@typescript-eslint/parser",
+    "parserOptions": {
+        "ecmaVersion": 6,
+        "project": ["./tsconfig.json", "./tsconfig.app.json", "./tsconfig.spec.json"],
+        "sourceType": "module",
+        "ecmaFeatures": {
+            "modules": true
+        }
+    },
+    "rules": {
+        "@typescript-eslint/tslint/config": [
+            "error",
+            {
+                "lintFile": "./tslint.json"
+            }
+        ],
+        "@typescript-eslint/no-unused-vars": [
+            "warn",
+            {
+                "vars": "all",
+                "args": "after-used",
+                "ignoreRestSiblings": false
+            }
+        ],
+        "@typescript-eslint/no-non-null-assertion": "off"
+    }
+}

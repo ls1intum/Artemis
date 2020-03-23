@@ -356,7 +356,8 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
 
     /**
      * Will retrieve and cache all pending submissions for all student participations of given exercise.
-     * After calling this method, subscribers for single pending submissions will be able to use the cached submissions so that we don't execute a GET request to the server for every participation.
+     * After calling this method, subscribers for single pending submissions will be able to use the cached submissions so that we don't execute a GET request to the server
+     * for every participation.
      *
      * Will emit once at the end so the subscriber knows that the loading & setup process is done.
      * If the user is not an instructor, this method will not be able to retrieve any pending submission.
@@ -453,7 +454,8 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
         exerciseId: number,
     ): Observable<ProgrammingSubmissionStateObj> => {
         return of(submissionToBeProcessed).pipe(
-            // When a new submission comes in, make sure that a subscription is set up for new incoming submissions. The new submission would then override the current latest pending submission.
+            // When a new submission comes in, make sure that a subscription is set up for new incoming submissions.
+            // The new submission would then override the current latest pending submission.
             tap(() => {
                 this.setupWebsocketSubscriptionForLatestPendingSubmission(participationId, exerciseId);
             }),
