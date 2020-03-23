@@ -514,6 +514,7 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
         const credits = instruction.credits;
         const feedback = instruction.feedback;
         this.generalFeedback.detailText += 'Score: ' + credits + ' Feedback: ' + feedback + '\n';
+        this.validateAssessment();
     }
     public addReferencedFeedback(): void {
         const referencedFeedback = new Feedback();
