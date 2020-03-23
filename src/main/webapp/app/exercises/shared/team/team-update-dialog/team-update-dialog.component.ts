@@ -28,7 +28,9 @@ export class TeamUpdateDialogComponent implements OnInit {
     pendingTeam: Team;
     isSaving = false;
     searchingStudents = false;
+    searchingStudentsQueryTooShort = false;
     searchingStudentsFailed = false;
+    searchingStudentsNoResultsForQuery: string | null = null;
     studentTeamConflicts = [];
     ignoreTeamSizeRecommendation = false;
 

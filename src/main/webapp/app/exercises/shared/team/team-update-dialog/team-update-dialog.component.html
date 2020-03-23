@@ -58,7 +58,14 @@
             <div class="d-flex align-items-end">
                 <label class="label-narrow mr-1" jhiTranslate="artemisApp.team.students">Students</label>
                 <fa-icon class="student-search-searching" [icon]="'spinner'" [spin]="true" *ngIf="searchingStudents"></fa-icon>
-                <span *ngIf="searchingStudentsFailed" class="student-search-failed text-muted" jhiTranslate="artemisApp.team.studentSearch.failed">
+                <span *ngIf="searchingStudentsQueryTooShort" class="student-search-error-message text-danger" jhiTranslate="artemisApp.team.studentSearch.queryTooShort">
+                    Please enter at least 3 characters.
+                </span>
+                <span *ngIf="searchingStudentsNoResultsForQuery" class="student-search-error-message text-danger">
+                    <span jhiTranslate="artemisApp.team.studentSearch.noResults">No students found in course for search:</span>
+                    <strong>{{ searchingStudentsNoResultsForQuery }}</strong>
+                </span>
+                <span *ngIf="searchingStudentsFailed" class="student-search-error-message text-danger" jhiTranslate="artemisApp.team.studentSearch.failed">
                     Search failed. Please try again.
                 </span>
             </div>
@@ -70,6 +77,8 @@
                 [studentsFromPendingTeam]="pendingTeam.students"
                 (selectStudent)="onAddStudent($event)"
                 (searching)="searchingStudents = $event"
+                (searchQueryTooShort)="searchingStudentsQueryTooShort = $event"
+                (searchNoResults)="searchingStudentsNoResultsForQuery = $event"
                 (searchFailed)="searchingStudentsFailed = $event"
             >
             </jhi-team-student-search>

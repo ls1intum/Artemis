@@ -2,6 +2,7 @@ import { Component, ElementRef, EventEmitter, Input, Output, ViewChild } from '@
 import { Observable, of } from 'rxjs';
 import { User } from 'app/core/user/user.model';
 import { catchError, debounceTime, distinctUntilChanged, map, switchMap, tap } from 'rxjs/operators';
+import { combineLatest } from 'rxjs';
 import { get } from 'lodash';
 import { Course } from 'app/entities/course.model';
 import { Exercise } from 'app/entities/exercise.model';
@@ -22,7 +23,9 @@ export class TeamStudentSearchComponent {
 
     @Output() selectStudent = new EventEmitter<User>();
     @Output() searching = new EventEmitter<boolean>();
+    @Output() searchQueryTooShort = new EventEmitter<boolean>();
     @Output() searchFailed = new EventEmitter<boolean>();
+    @Output() searchNoResults = new EventEmitter<string | null>();
 
     users: User[] = [];
 
@@ -48,22 +51,39 @@ export class TeamStudentSearchComponent {
         return text$.pipe(
             debounceTime(200),
             distinctUntilChanged(),
-            tap(() => this.searchFailed.emit(false)),
+            tap(() => {
+                this.searchQueryTooShort.emit(false);
+                this.searchFailed.emit(false);
+                this.searchNoResults.emit(null);
+            }),
             tap(() => this.searching.emit(true)),
             switchMap((loginOrName) => {
                 if (loginOrName.length < 3) {
-                    return of([]);
+                    this.searchQueryTooShort.emit(true);
+                    return combineLatest([of(loginOrName), of(null)]);
                 }
-                return this.teamService
-                    .searchInCourseForExerciseTeam(this.course, this.exercise, loginOrName)
-                    .pipe(map((usersResponse) => usersResponse.body!))
-                    .pipe(
-                        catchError(() => {
-                            this.searchFailed.emit(true);
-                            return of([]);
-                        }),
-                    );
+                return combineLatest([
+                    of(loginOrName),
+                    this.teamService
+                        .searchInCourseForExerciseTeam(this.course, this.exercise, loginOrName)
+                        .pipe(map((usersResponse) => usersResponse.body!))
+                        .pipe(
+                            catchError(() => {
+                                this.searchFailed.emit(true);
+                                return of(null);
+                            }),
+                        ),
+                ]);
             }),
+            tap(() => this.searching.emit(false)),
+            tap(([loginOrName, users]) => {
+                // "Query too short" (no request performed) or "Search request failed" => {users} will be null
+                // "Successful search request" => {users} will be an array (length 0 if no students were found)
+                if (users && users.length === 0) {
+                    this.searchNoResults.emit(loginOrName);
+                }
+            }),
+            map(([_, users]) => users || []),
             tap((users) => {
                 setTimeout(() => {
                     for (let i = 0; i < this.typeaheadButtons.length; i++) {
@@ -73,7 +93,6 @@ export class TeamStudentSearchComponent {
                     }
                 });
             }),
-            tap(() => this.searching.emit(false)),
         );
     };
 

@@ -37,7 +37,9 @@
             "noStudentsAddedYet": "Noch keine Studenten hinzugefügt.",
             "addStudentToTeam": "Studenten zum Team hinzufügen (nach Login oder Name suchen)",
             "studentSearch": {
-                "failed": "Suche fehlgeschlagen. Bitte nochmal versuchen."
+                "queryTooShort": "Bitte mindestens 3 Zeichen eingeben.",
+                "failed": "Suche fehlgeschlagen. Bitte nochmal versuchen.",
+                "noResults": "Keine Studenten im Kurs gefunden für Suche:"
             },
             "teamSizeNote": "Empfohlene Team-Größe:",
             "teamSizeUnit": "Studenten",
