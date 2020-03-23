@@ -222,6 +222,8 @@ public class ModelingSubmissionResource {
             @RequestParam(value = "lock", defaultValue = "false") boolean lockSubmission) {
         log.debug("REST request to get a modeling submission without assessment");
         final Exercise exercise = exerciseService.findOneWithAdditionalElements(exerciseId);
+        List<GradingCriterion> gradingCriteria = gradingCriterionService.findByExerciseIdWithEagerGradingCriteria(exerciseId);
+        exercise.setGradingCriteria(gradingCriteria);
         final User user = userService.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user)) {
             return forbidden();
@@ -253,6 +255,7 @@ public class ModelingSubmissionResource {
         // Make sure the exercise is connected to the participation in the json response
         final StudentParticipation studentParticipation = (StudentParticipation) modelingSubmission.getParticipation();
         studentParticipation.setExercise(exercise);
+        modelingSubmission.getParticipation().getExercise().setGradingCriteria(gradingCriteria);
         this.modelingSubmissionService.hideDetails(modelingSubmission, user);
         return ResponseEntity.ok(modelingSubmission);
     }

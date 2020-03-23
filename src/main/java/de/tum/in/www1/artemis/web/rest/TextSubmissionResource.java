@@ -52,8 +52,10 @@ public class TextSubmissionResource {
 
     private final UserService userService;
 
+    private final GradingCriterionService gradingCriterionService;
+
     public TextSubmissionResource(TextSubmissionRepository textSubmissionRepository, ExerciseService exerciseService, TextExerciseService textExerciseService,
-            CourseService courseService, AuthorizationCheckService authorizationCheckService, TextSubmissionService textSubmissionService, UserService userService) {
+                                  CourseService courseService, AuthorizationCheckService authorizationCheckService, TextSubmissionService textSubmissionService, UserService userService, GradingCriterionService gradingCriterionService) {
         this.textSubmissionRepository = textSubmissionRepository;
         this.exerciseService = exerciseService;
         this.textExerciseService = textExerciseService;
@@ -61,6 +63,7 @@ public class TextSubmissionResource {
         this.authorizationCheckService = authorizationCheckService;
         this.textSubmissionService = textSubmissionService;
         this.userService = userService;
+        this.gradingCriterionService = gradingCriterionService;
     }
 
     /**
@@ -197,7 +200,8 @@ public class TextSubmissionResource {
             @RequestParam(value = "lock", defaultValue = "false") boolean lockSubmission) {
         log.debug("REST request to get a text submission without assessment");
         Exercise exercise = exerciseService.findOneWithAdditionalElements(exerciseId);
-
+        List<GradingCriterion> gradingCriteria = gradingCriterionService.findByExerciseIdWithEagerGradingCriteria(exerciseId);
+        exercise.setGradingCriteria(gradingCriteria);
         if (!authorizationCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
             return forbidden();
         }
@@ -228,6 +232,7 @@ public class TextSubmissionResource {
         // Make sure the exercise is connected to the participation in the json response
         final StudentParticipation studentParticipation = (StudentParticipation) textSubmission.getParticipation();
         studentParticipation.setExercise(exercise);
+        textSubmission.getParticipation().getExercise().setGradingCriteria(gradingCriteria);
         textSubmissionService.hideDetails(textSubmission, userService.getUserWithGroupsAndAuthorities());
         return ResponseEntity.ok(textSubmission);
     }
