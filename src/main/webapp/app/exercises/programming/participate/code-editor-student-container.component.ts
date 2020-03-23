@@ -71,13 +71,13 @@ export class CodeEditorStudentContainerComponent extends CodeEditorContainer imp
      * Will load the participation according to participation Id with the latest result and result details.
      */
     ngOnInit(): void {
-        this.paramSub = this.route.params.subscribe(params => {
+        this.paramSub = this.route.params.subscribe((params) => {
             this.loadingParticipation = true;
             this.participationCouldNotBeFetched = false;
             const participationId = Number(params['participationId']);
             this.loadParticipationWithLatestResult(participationId)
                 .pipe(
-                    tap(participationWithResults => {
+                    tap((participationWithResults) => {
                         this.domainService.setDomain([DomainType.PARTICIPATION, participationWithResults!]);
                         this.participation = participationWithResults!;
                         this.exercise = this.participation.exercise as ProgrammingExercise;
@@ -91,7 +91,7 @@ export class CodeEditorStudentContainerComponent extends CodeEditorContainer imp
                         this.loadingParticipation = false;
                         this.guidedTourService.enableTourForExercise(this.exercise, codeEditorTour, true);
                     },
-                    err => {
+                    (err) => {
                         this.participationCouldNotBeFetched = true;
                         this.loadingParticipation = false;
                     },
@@ -114,7 +114,7 @@ export class CodeEditorStudentContainerComponent extends CodeEditorContainer imp
             flatMap((participation: StudentParticipation) =>
                 participation.results && participation.results.length
                     ? this.loadResultDetails(participation.results[0]).pipe(
-                          map(feedback => {
+                          map((feedback) => {
                               if (feedback) {
                                   participation.results[0].feedbacks = feedback;
                               }
@@ -133,6 +133,6 @@ export class CodeEditorStudentContainerComponent extends CodeEditorContainer imp
      * Mutates the input parameter result.
      */
     loadResultDetails(result: Result): Observable<Feedback[] | null> {
-        return this.resultService.getFeedbackDetailsForResult(result.id).pipe(map(res => res && res.body));
+        return this.resultService.getFeedbackDetailsForResult(result.id).pipe(map((res) => res && res.body));
     }
 }

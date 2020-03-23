@@ -80,12 +80,12 @@ export class ParticipationComponent implements OnInit, OnDestroy {
     }
 
     loadAll() {
-        this.paramSub = this.route.params.subscribe(params => {
+        this.paramSub = this.route.params.subscribe((params) => {
             this.isLoading = true;
             this.hasLoadedPendingSubmissions = false;
-            this.exerciseService.find(params['exerciseId']).subscribe(exerciseResponse => {
+            this.exerciseService.find(params['exerciseId']).subscribe((exerciseResponse) => {
                 this.exercise = exerciseResponse.body!;
-                this.participationService.findAllParticipationsByExercise(params['exerciseId'], true).subscribe(participationsResponse => {
+                this.participationService.findAllParticipationsByExercise(params['exerciseId'], true).subscribe((participationsResponse) => {
                     this.participations = participationsResponse.body!;
                     this.isLoading = false;
                 });

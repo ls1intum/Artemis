@@ -13,19 +13,19 @@ const LAYOUT_ROUTES: Routes = [navbarRoute, ...errorRoute];
                 ...LAYOUT_ROUTES,
                 {
                     path: 'admin',
-                    loadChildren: () => import('./admin/admin.module').then(m => m.ArtemisAdminModule),
+                    loadChildren: () => import('./admin/admin.module').then((m) => m.ArtemisAdminModule),
                 },
                 {
                     path: 'courses/:courseId/programming-exercises/:exerciseId/code-editor',
-                    loadChildren: () => import('./exercises/programming/participate/programming-participation.module').then(m => m.ArtemisProgrammingParticipationModule),
+                    loadChildren: () => import('./exercises/programming/participate/programming-participation.module').then((m) => m.ArtemisProgrammingParticipationModule),
                 },
                 {
                     path: 'course-management/:courseId/programming-exercises/:exerciseId/code-editor',
-                    loadChildren: () => import('./exercises/programming/manage/code-editor/code-editor-management.module').then(m => m.ArtemisCodeEditorManagementModule),
+                    loadChildren: () => import('./exercises/programming/manage/code-editor/code-editor-management.module').then((m) => m.ArtemisCodeEditorManagementModule),
                 },
                 {
                     path: 'account',
-                    loadChildren: () => import('./account/account.module').then(m => m.ArtemisAccountModule),
+                    loadChildren: () => import('./account/account.module').then((m) => m.ArtemisAccountModule),
                 },
             ],
             { useHash: true, enableTracing: false },

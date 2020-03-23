@@ -75,14 +75,14 @@ export class ModelingAssessmentDashboardComponent implements OnInit, OnDestroy {
         this.optimalSubmissions = [];
         this.otherSubmissions = [];
         this.canOverrideAssessments = this.accountService.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR']);
-        translateService.get('modelingAssessmentEditor.messages.confirmCancel').subscribe(text => (this.cancelConfirmationText = text));
+        translateService.get('modelingAssessmentEditor.messages.confirmCancel').subscribe((text) => (this.cancelConfirmationText = text));
     }
 
     ngOnInit() {
-        this.accountService.identity().then(user => {
+        this.accountService.identity().then((user) => {
             this.userId = user!.id!;
         });
-        this.paramSub = this.route.params.subscribe(params => {
+        this.paramSub = this.route.params.subscribe((params) => {
             this.courseService.find(params['courseId']).subscribe((res: HttpResponse<Course>) => {
                 this.course = res.body!;
             });
@@ -111,8 +111,8 @@ export class ModelingAssessmentDashboardComponent implements OnInit, OnDestroy {
         this.modelingSubmissionService.getModelingSubmissionsForExercise(this.modelingExercise.id, { submittedOnly: true }).subscribe((res: HttpResponse<ModelingSubmission[]>) => {
             // only use submissions that have already been submitted (this makes sure that unsubmitted submissions are not shown
             // the server should have filtered these submissions already
-            this.submissions = res.body!.filter(submission => submission.submitted);
-            this.submissions.forEach(submission => {
+            this.submissions = res.body!.filter((submission) => submission.submitted);
+            this.submissions.forEach((submission) => {
                 if (submission.result) {
                     // reconnect some associations
                     submission.result.submission = submission;
@@ -122,7 +122,7 @@ export class ModelingAssessmentDashboardComponent implements OnInit, OnDestroy {
             });
             this.filteredSubmissions = this.submissions;
             this.filterSubmissions(forceReload);
-            this.assessedSubmissions = this.submissions.filter(submission => submission.result && submission.result.completionDate && submission.result.score).length;
+            this.assessedSubmissions = this.submissions.filter((submission) => submission.result && submission.result.completionDate && submission.result.score).length;
         });
     }
 
@@ -143,7 +143,7 @@ export class ModelingAssessmentDashboardComponent implements OnInit, OnDestroy {
                     this.nextOptimalSubmissionIds = optimal;
                     this.applyFilter();
                 },
-                error => {
+                (error) => {
                     this.applyFilter();
                 },
             );
@@ -157,15 +157,15 @@ export class ModelingAssessmentDashboardComponent implements OnInit, OnDestroy {
      */
     applyFilter() {
         // A submission is optimal if it is part of nextOptimalSubmissionIds and (nobody is currently assessing it or you are currently assessing it)
-        this.submissions.forEach(submission => {
+        this.submissions.forEach((submission) => {
             submission.optimal =
                 this.nextOptimalSubmissionIds.includes(submission.id) &&
                 (!(submission.result && submission.result.assessor) || (submission.result && submission.result.assessor && submission.result.assessor.id === this.userId));
         });
-        this.optimalSubmissions = this.filteredSubmissions.filter(submission => {
+        this.optimalSubmissions = this.filteredSubmissions.filter((submission) => {
             return submission.optimal;
         });
-        this.otherSubmissions = this.filteredSubmissions.filter(submission => {
+        this.otherSubmissions = this.filteredSubmissions.filter((submission) => {
             return !submission.optimal;
         });
     }

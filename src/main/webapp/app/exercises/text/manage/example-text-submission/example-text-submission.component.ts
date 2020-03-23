@@ -109,13 +109,13 @@ export class ExampleTextSubmissionComponent implements OnInit, AfterViewInit {
                 ],
                 inertia: true,
             })
-            .on('resizestart', function(event: any) {
+            .on('resizestart', function (event: any) {
                 event.target.classList.add('card-resizable');
             })
-            .on('resizeend', function(event: any) {
+            .on('resizeend', function (event: any) {
                 event.target.classList.remove('card-resizable');
             })
-            .on('resizemove', function(event: any) {
+            .on('resizemove', function (event: any) {
                 const target = event.target;
                 // Update element width
                 target.style.width = event.rect.width + 'px';
@@ -136,13 +136,13 @@ export class ExampleTextSubmissionComponent implements OnInit, AfterViewInit {
                 ],
                 inertia: true,
             })
-            .on('resizestart', function(event: any) {
+            .on('resizestart', function (event: any) {
                 event.target.classList.add('card-resizable');
             })
-            .on('resizeend', function(event: any) {
+            .on('resizeend', function (event: any) {
                 event.target.classList.remove('card-resizable');
             })
-            .on('resizemove', function(event: any) {
+            .on('resizemove', function (event: any) {
                 const target = event.target;
                 // Update element width
                 target.style.width = event.rect.width + 'px';
@@ -162,13 +162,13 @@ export class ExampleTextSubmissionComponent implements OnInit, AfterViewInit {
                 ],
                 inertia: true,
             })
-            .on('resizestart', function(event: any) {
+            .on('resizestart', function (event: any) {
                 event.target.classList.add('card-resizable');
             })
-            .on('resizeend', function(event: any) {
+            .on('resizeend', function (event: any) {
                 event.target.classList.remove('card-resizable');
             })
-            .on('resizemove', function(event: any) {
+            .on('resizemove', function (event: any) {
                 const target = event.target;
                 // Update element height
                 target.style.minHeight = event.rect.height + 'px';
@@ -199,7 +199,7 @@ export class ExampleTextSubmissionComponent implements OnInit, AfterViewInit {
                 return;
             }
 
-            this.assessmentsService.getExampleResult(this.exerciseId, this.textSubmission.id).subscribe(result => {
+            this.assessmentsService.getExampleResult(this.exerciseId, this.textSubmission.id).subscribe((result) => {
                 this.result = result;
                 this.assessments = this.result.feedbacks || [];
                 this.areNewAssessments = this.assessments.length <= 0;
@@ -286,7 +286,7 @@ export class ExampleTextSubmissionComponent implements OnInit, AfterViewInit {
     }
 
     public deleteAssessment(assessmentToDelete: Feedback): void {
-        this.assessments = this.assessments.filter(elem => elem !== assessmentToDelete);
+        this.assessments = this.assessments.filter((elem) => elem !== assessmentToDelete);
         this.checkScoreBoundaries();
     }
 
@@ -302,9 +302,9 @@ export class ExampleTextSubmissionComponent implements OnInit, AfterViewInit {
             return;
         }
 
-        const credits = this.assessments.map(assessment => assessment.credits);
+        const credits = this.assessments.map((assessment) => assessment.credits);
 
-        if (!credits.every(credit => credit !== null && !isNaN(credit))) {
+        if (!credits.every((credit) => credit !== null && !isNaN(credit))) {
             this.invalidError = 'The score field must be a number and can not be empty!';
             this.assessmentsAreValid = false;
             return;
@@ -325,7 +325,7 @@ export class ExampleTextSubmissionComponent implements OnInit, AfterViewInit {
             return;
         }
 
-        this.assessmentsService.save(this.assessments, this.exercise.id, this.result.id).subscribe(response => {
+        this.assessmentsService.save(this.assessments, this.exercise.id, this.result.id).subscribe((response) => {
             this.result = response.body!;
             this.areNewAssessments = false;
             this.jhiAlertService.success('artemisApp.textAssessment.saveSuccessful');

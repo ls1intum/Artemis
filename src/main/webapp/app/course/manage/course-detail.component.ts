@@ -23,7 +23,7 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
     constructor(private eventManager: JhiEventManager, private courseService: CourseManagementService, private route: ActivatedRoute, private jhiAlertService: AlertService) {}
 
     ngOnInit() {
-        this.subscription = this.route.params.subscribe(params => {
+        this.subscription = this.route.params.subscribe((params) => {
             this.load(params['id']);
         });
         this.registerChangeInCourses();
@@ -37,7 +37,7 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
 
     registerForCourse() {
         this.courseService.registerForCourse(this.course.id).subscribe(
-            userResponse => {
+            (userResponse) => {
                 if (userResponse.body != null) {
                     const message = 'Registered user for course ' + this.course.title;
                     const jhiAlert = this.jhiAlertService.info(message);

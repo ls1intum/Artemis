@@ -58,11 +58,11 @@ export class ProgrammingExerciseInstructionAnalysisService {
         const invalidTestCaseAnalysis = testCasesInMarkdown
             .map(
                 ([lineNumber, testCases]) =>
-                    [lineNumber, testCases.filter(testCase => !exerciseTestCases.includes(testCase)), ProblemStatementIssue.INVALID_TEST_CASES] as AnalysisItem,
+                    [lineNumber, testCases.filter((testCase) => !exerciseTestCases.includes(testCase)), ProblemStatementIssue.INVALID_TEST_CASES] as AnalysisItem,
             )
             .filter(([, testCases]) => testCases.length);
         // Look for test cases that are part of the test repository but not in the problem statement. Probably forgotten to insert.
-        const missingTestCases = exerciseTestCases.filter(testCase => !testCasesInMarkdown.some(([, foundTestCases]) => foundTestCases.includes(testCase)));
+        const missingTestCases = exerciseTestCases.filter((testCase) => !testCasesInMarkdown.some(([, foundTestCases]) => foundTestCases.includes(testCase)));
 
         const invalidTestCases = compose(
             flatten,
@@ -87,7 +87,7 @@ export class ProgrammingExerciseInstructionAnalysisService {
             .map(
                 ([lineNumber, hints]): AnalysisItem => [
                     lineNumber,
-                    hints.filter(hint => !exerciseHints.some(exerciseHint => exerciseHint.id.toString(10) === hint)),
+                    hints.filter((hint) => !exerciseHints.some((exerciseHint) => exerciseHint.id.toString(10) === hint)),
                     ProblemStatementIssue.INVALID_HINTS,
                 ],
             )
@@ -115,7 +115,7 @@ export class ProgrammingExerciseInstructionAnalysisService {
             }, {}),
             map(([lineNumber, values, issueType]: AnalysisItem) => [
                 lineNumber,
-                values.map(id => this.translateService.instant(this.getTranslationByIssueType(issueType), { id })),
+                values.map((id) => this.translateService.instant(this.getTranslationByIssueType(issueType), { id })),
                 issueType,
             ]),
             flatten,
@@ -150,7 +150,7 @@ export class ProgrammingExerciseInstructionAnalysisService {
             map(([lineNumber, match]) => {
                 const cleanedMatches = compose(
                     uniq,
-                    filter(m => !!m),
+                    filter((m) => !!m),
                     flatten,
                 )(match.split(',').map((m: string) => m.trim()));
                 return [lineNumber, cleanedMatches];

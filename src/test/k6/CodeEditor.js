@@ -30,7 +30,7 @@ let basePassword = __ENV.BASE_PASSWORD;
 export function setup() {
     // Create course
     let artemis = login(adminUsername, adminPassword);
-    const courseId = newCourse(artemis);
+    const courseId = newCourse(artemis).id;
 
     const instructorUsername = baseUsername.replace('USERID', '1');
     const instructorPassword = basePassword.replace('USERID', '1');

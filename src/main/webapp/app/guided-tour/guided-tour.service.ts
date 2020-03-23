@@ -84,7 +84,7 @@ export class GuidedTourService {
             }
         });
 
-        this.isComponentPageLoaded.subscribe(isLoaded => {
+        this.isComponentPageLoaded.subscribe((isLoaded) => {
             setTimeout(() => {
                 if (isLoaded) {
                     this.resetUserInteractionFinishedState(this.currentStep);
@@ -94,14 +94,14 @@ export class GuidedTourService {
         });
 
         // Retrieve the guided tour mapping from the profile service
-        this.profileService.getProfileInfo().subscribe(profileInfo => {
+        this.profileService.getProfileInfo().subscribe((profileInfo) => {
             if (profileInfo && profileInfo.guidedTourMapping) {
                 this.guidedTourMapping = profileInfo.guidedTourMapping;
             }
         });
 
         // Reset guided tour availability on router navigation
-        this.router.events.subscribe(event => {
+        this.router.events.subscribe((event) => {
             // Reset currentExercise and currentCourse for every page
             if (event instanceof NavigationStart) {
                 this.currentExercise = null;
@@ -192,7 +192,7 @@ export class GuidedTourService {
     public getGuidedTourAvailabilityStream(): Observable<boolean> {
         // The guided tour is currently disabled for mobile devices and tablets
         // TODO optimize guided tour layout for mobile devices and tablets
-        return this.guidedTourAvailabilitySubject.map(isTourAvailable => isTourAvailable && this.deviceService.isDesktop());
+        return this.guidedTourAvailabilitySubject.map((isTourAvailable) => isTourAvailable && this.deviceService.isDesktop());
     }
 
     /**
@@ -468,8 +468,8 @@ export class GuidedTourService {
         // If the tour was already finished, then keep the state
         const updatedTourState = this.checkTourState(this.currentTour, GuidedTourState.FINISHED) ? GuidedTourState.FINISHED : guidedTourState;
         this.updateGuidedTourSettings(this.currentTour.settingsKey, this.currentTourStepDisplay, updatedTourState)
-            .pipe(filter(guidedTourSettings => !!guidedTourSettings.body))
-            .subscribe(guidedTourSettings => {
+            .pipe(filter((guidedTourSettings) => !!guidedTourSettings.body))
+            .subscribe((guidedTourSettings) => {
                 this.guidedTourSettings = guidedTourSettings.body!;
             });
         this.resetTour();
@@ -481,7 +481,7 @@ export class GuidedTourService {
      * @param state that should be checked, if no state is given, then true is returned if the tour has been started or finished
      */
     private checkTourState(guidedTour: GuidedTour, state?: GuidedTourState): boolean {
-        const tourSetting = this.guidedTourSettings.filter(setting => setting.guidedTourKey === guidedTour.settingsKey);
+        const tourSetting = this.guidedTourSettings.filter((setting) => setting.guidedTourKey === guidedTour.settingsKey);
         if (state) {
             return tourSetting.length === 1 && tourSetting[0].guidedTourState.toString() === GuidedTourState[state];
         }
@@ -495,7 +495,7 @@ export class GuidedTourService {
         if (!this.availableTourForComponent || !this.guidedTourSettings) {
             return 0;
         }
-        const tourSettings = this.guidedTourSettings.filter(setting => setting.guidedTourKey === this.availableTourForComponent!.settingsKey);
+        const tourSettings = this.guidedTourSettings.filter((setting) => setting.guidedTourKey === this.availableTourForComponent!.settingsKey);
 
         if (tourSettings.length !== 0 && this.hasValidTourStepNumber(tourSettings)) {
             return tourSettings[0].guidedTourStep;
@@ -531,7 +531,7 @@ export class GuidedTourService {
         if (!this.availableTourForComponent) {
             return false;
         }
-        return this.availableTourForComponent.steps.filter(tourStep => tourStep.pageUrl).length > 0;
+        return this.availableTourForComponent.steps.filter((tourStep) => tourStep.pageUrl).length > 0;
     }
 
     /**
@@ -548,7 +548,7 @@ export class GuidedTourService {
      */
     private determineTourStepForComponent(): number | null {
         // Find steps with a pageUrl attribute that matches the current router url
-        const stepsForComponent = this.availableTourForComponent!.steps.filter(tourStep => {
+        const stepsForComponent = this.availableTourForComponent!.steps.filter((tourStep) => {
             const match = tourStep.pageUrl ? determineUrlMatching(this.router.url, tourStep.pageUrl) : [];
             if (match && tourStep.pageUrl && checkPageUrlEnding(this.router.url, match[0])) {
                 return match;
@@ -556,7 +556,7 @@ export class GuidedTourService {
         });
 
         if (stepsForComponent) {
-            const stepForComponent = stepsForComponent.find(step => {
+            const stepForComponent = stepsForComponent.find((step) => {
                 if (step.pageUrl) {
                     // Since we could not include the params in the URL matching we have to do a final check here
                     return getUrlParams(step.pageUrl) === getUrlParams(this.router.url);
@@ -702,9 +702,9 @@ export class GuidedTourService {
      * @param options   the configuration options for the mutation observer
      */
     public observeMutations = (target: any, options: MutationObserverInit) =>
-        new Observable<MutationRecord>(subscribe => {
-            const observer = new MutationObserver(mutations => {
-                mutations.forEach(mutation => {
+        new Observable<MutationRecord>((subscribe) => {
+            const observer = new MutationObserver((mutations) => {
+                mutations.forEach((mutation) => {
                     subscribe.next(mutation);
                 });
             });
@@ -794,7 +794,7 @@ export class GuidedTourService {
                         .findParticipation(this.currentExercise.id)
                         .pipe(
                             map((response: HttpResponse<StudentParticipation>) => response.body!),
-                            flatMap(participation =>
+                            flatMap((participation) =>
                                 this.participationService.deleteForGuidedTour(participation.id, {
                                     deleteBuildPlan: isProgrammingExercise,
                                     deleteRepository: isProgrammingExercise,
@@ -846,7 +846,7 @@ export class GuidedTourService {
         });
 
         // Keep loading icon until the page is being refreshed
-        window.onload = function() {
+        window.onload = function () {
             this['restartIsLoading'] = false;
         };
     }
@@ -855,7 +855,7 @@ export class GuidedTourService {
         if (!this.availableTourForComponent) {
             return [];
         }
-        return this.availableTourForComponent.steps.filter(step => !step.disableStep && (!step.permission || this.accountService.hasAnyAuthorityDirect(step.permission)));
+        return this.availableTourForComponent.steps.filter((step) => !step.disableStep && (!step.permission || this.accountService.hasAnyAuthorityDirect(step.permission)));
     }
 
     /**
@@ -1018,7 +1018,7 @@ export class GuidedTourService {
             this.resetTour();
             throw new Error('Cannot update non existing guided tour settings');
         }
-        const existingSettingIndex = this.guidedTourSettings.findIndex(setting => setting.guidedTourKey === guidedTourKey);
+        const existingSettingIndex = this.guidedTourSettings.findIndex((setting) => setting.guidedTourKey === guidedTourKey);
         if (existingSettingIndex !== -1) {
             this.guidedTourSettings[existingSettingIndex].guidedTourStep = guidedTourStep;
             this.guidedTourSettings[existingSettingIndex].guidedTourState = guidedTourState;
@@ -1039,7 +1039,7 @@ export class GuidedTourService {
             throw new Error('Cannot update non existing guided tour settings');
         }
 
-        const index = this.guidedTourSettings.findIndex(setting => setting.guidedTourKey === guidedTourKey);
+        const index = this.guidedTourSettings.findIndex((setting) => setting.guidedTourKey === guidedTourKey);
         this.guidedTourSettings.splice(index, 1);
 
         return this.http.delete<GuidedTourSetting[]>(`${this.resourceUrl}/${guidedTourKey}`, { observe: 'response' });
@@ -1079,7 +1079,7 @@ export class GuidedTourService {
             return null;
         }
 
-        const exerciseForGuidedTour = course.exercises.find(exercise => this.isGuidedTourAvailableForExercise(exercise, guidedTour));
+        const exerciseForGuidedTour = course.exercises.find((exercise) => this.isGuidedTourAvailableForExercise(exercise, guidedTour));
         if (exerciseForGuidedTour) {
             this.enableTour(guidedTour, init);
             this.currentCourse = course;
@@ -1096,7 +1096,7 @@ export class GuidedTourService {
      * @param init - if true - enables the display of the guided tour on the first visit, this parameter is used for guided tours which navigate through multiple component pages
      */
     public enableTourForCourseOverview(courses: Course[], guidedTour: GuidedTour, init: boolean): Course | null {
-        const courseForTour = courses.find(course => this.isGuidedTourAvailableForCourse(course));
+        const courseForTour = courses.find((course) => this.isGuidedTourAvailableForCourse(course));
         if (!courseForTour) {
             return null;
         }
@@ -1105,9 +1105,9 @@ export class GuidedTourService {
             this.currentCourse = courseForTour;
             this.enableTour(guidedTour, init);
         } else {
-            this.courseService.findWithExercises(courseForTour.id).subscribe(courseWithExercises => {
+            this.courseService.findWithExercises(courseForTour.id).subscribe((courseWithExercises) => {
                 const exercises = courseWithExercises.body!.exercises;
-                const exerciseForTour = exercises.find(exercise => this.isGuidedTourAvailableForExercise(exercise, guidedTour));
+                const exerciseForTour = exercises.find((exercise) => this.isGuidedTourAvailableForExercise(exercise, guidedTour));
 
                 this.currentCourse = courseForTour;
                 this.currentExercise = exerciseForTour ? exerciseForTour : null;

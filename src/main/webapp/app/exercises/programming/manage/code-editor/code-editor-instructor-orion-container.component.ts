@@ -54,7 +54,7 @@ export class CodeEditorInstructorOrionContainerComponent extends CodeEditorInstr
 
     ngOnInit(): void {
         super.ngOnInit();
-        this.javaBridge.state().subscribe(state => (this.orionState = state));
+        this.javaBridge.state().subscribe((state) => (this.orionState = state));
     }
 
     protected applyDomainChange(domainType: any, domainValue: any) {

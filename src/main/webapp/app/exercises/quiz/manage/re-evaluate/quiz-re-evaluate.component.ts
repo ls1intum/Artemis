@@ -47,7 +47,7 @@ export class QuizReEvaluateComponent implements OnInit, OnChanges, OnDestroy {
     ) {}
 
     ngOnInit(): void {
-        this.subscription = this.route.params.subscribe(params => {
+        this.subscription = this.route.params.subscribe((params) => {
             this.quizExerciseService.find(params['exerciseId']).subscribe((response: HttpResponse<QuizExercise>) => {
                 this.quizExercise = response.body!;
                 this.prepareEntity(this.quizExercise);
@@ -77,7 +77,7 @@ export class QuizReEvaluateComponent implements OnInit, OnChanges, OnDestroy {
      * @param questionToBeDeleted {QuizQuestion} the question to remove
      */
     deleteQuestion(questionToBeDeleted: QuizQuestion): void {
-        this.quizExercise.quizQuestions = this.quizExercise.quizQuestions.filter(question => question !== questionToBeDeleted);
+        this.quizExercise.quizQuestions = this.quizExercise.quizQuestions.filter((question) => question !== questionToBeDeleted);
     }
 
     /**

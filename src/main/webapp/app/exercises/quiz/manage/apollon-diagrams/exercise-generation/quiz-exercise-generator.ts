@@ -47,7 +47,7 @@ export async function generateDragAndDropQuizExercise(
 
     // Create Drag Items and Drop Locations
     for (const elementId of interactiveElements) {
-        const element = elements.find(elem => elem.id === elementId);
+        const element = elements.find((elem) => elem.id === elementId);
         if (element == null) {
             continue;
         }
@@ -243,7 +243,7 @@ function computeDropLocation(elementLocation: { x: number; y: number; width: num
 function createCorrectMappings(dragItems: Map<string, DragItem>, dropLocations: Map<string, DropLocation>, model: UMLModel): DragAndDropMapping[] {
     const textualElementTypes: UMLElementType[] = [UMLElementType.ClassAttribute, UMLElementType.ClassMethod, UMLElementType.ObjectAttribute];
     const mappings = new Map<string, DragAndDropMapping[]>();
-    const textualElements = model.elements.filter(element => textualElementTypes.includes(element.type));
+    const textualElements = model.elements.filter((element) => textualElementTypes.includes(element.type));
 
     // Create all one-on-one mappings
     for (const [dragItemElementId, dragItem] of dragItems.entries()) {
@@ -257,11 +257,11 @@ function createCorrectMappings(dragItems: Map<string, DragItem>, dropLocations: 
 
     // Create all mapping permutations for textual based elements within the same parent and same type
     for (const [dragItemElementId, dragItem] of dragItems.entries()) {
-        const dragElement = textualElements.find(element => element.id === dragItemElementId);
+        const dragElement = textualElements.find((element) => element.id === dragItemElementId);
         if (!dragElement || !dragElement.owner) {
             continue;
         }
-        const dragElementSiblings = textualElements.filter(element => element.owner === dragElement.owner && element.type === dragElement.type);
+        const dragElementSiblings = textualElements.filter((element) => element.owner === dragElement.owner && element.type === dragElement.type);
         for (const dragElementSibling of dragElementSiblings) {
             if (dragElementSibling.id === dragItemElementId) {
                 continue;
@@ -277,12 +277,12 @@ function createCorrectMappings(dragItems: Map<string, DragItem>, dropLocations: 
 
     // Create all mapping permutations for textual based elements with the same name and different parents
     for (const [dragItemElementId, dragItem] of dragItems.entries()) {
-        const dragElement = textualElements.find(element => element.id === dragItemElementId);
+        const dragElement = textualElements.find((element) => element.id === dragItemElementId);
         if (!dragElement || !dragElement.name) {
             continue;
         }
         for (const [dropLocationElementId, _] of dropLocations.entries()) {
-            const dropElement = textualElements.find(element => element.id === dropLocationElementId);
+            const dropElement = textualElements.find((element) => element.id === dropLocationElementId);
             if (!dropElement || dropElement.id === dragElement.id || dropElement.owner === dragElement.owner || dropElement.name !== dragElement.name) {
                 continue;
             }

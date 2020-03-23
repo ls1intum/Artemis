@@ -124,9 +124,9 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
 
     ngOnInit() {
         // set correct mode
-        this.subscriptionData = this.route.data.subscribe(data => {
+        this.subscriptionData = this.route.data.subscribe((data) => {
             this.mode = data.mode;
-            this.subscription = this.route.params.subscribe(params => {
+            this.subscription = this.route.params.subscribe((params) => {
                 this.quizId = params['exerciseId'];
                 // init according to mode
                 switch (this.mode) {
@@ -156,7 +156,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
         /**
          * unsubscribe from all subscribed websocket channels when page is closed
          */
-        this.runningTimeouts.forEach(function(timeout) {
+        this.runningTimeouts.forEach(function (timeout) {
             clearTimeout(timeout);
         });
 
@@ -300,7 +300,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
             // submission channel => react to new submissions
             this.jhiWebsocketService.subscribe('/user' + this.submissionChannel);
             this.jhiWebsocketService.receive('/user' + this.submissionChannel).subscribe(
-                payload => {
+                (payload) => {
                     if (payload === 'the quiz is not active') {
                         this.onSaveSuccess(null, payload);
                     } else if (payload === 'you have already submitted the quiz') {
@@ -309,7 +309,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
                         this.onSaveSuccess(payload as QuizSubmission, null);
                     }
                 },
-                error => {
+                (error) => {
                     this.onSubmitError(error);
                 },
             );
@@ -345,12 +345,12 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
             // quizExercise channel => react to changes made to quizExercise (e.g. start date)
             this.jhiWebsocketService.subscribe(this.quizExerciseChannel);
             this.jhiWebsocketService.receive(this.quizExerciseChannel).subscribe(
-                payload => {
+                (payload) => {
                     if (this.waitingForQuizStart) {
                         this.applyQuizFull(payload);
                     }
                 },
-                error => {},
+                (error) => {},
             );
         }
     }
@@ -418,7 +418,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
     initQuiz() {
         // calculate score
         this.totalScore = this.quizExercise.quizQuestions
-            ? this.quizExercise.quizQuestions.reduce(function(score, question) {
+            ? this.quizExercise.quizQuestions.reduce(function (score, question) {
                   return score + question.score;
               }, 0)
             : 0;
@@ -429,7 +429,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
         this.shortAnswerSubmittedTexts = new Map<number, ShortAnswerSubmittedText[]>();
 
         if (this.quizExercise.quizQuestions) {
-            this.quizExercise.quizQuestions.forEach(question => {
+            this.quizExercise.quizQuestions.forEach((question) => {
                 if (question.type === QuizQuestionType.MULTIPLE_CHOICE) {
                     // add the array of selected options to the dictionary (add an empty array, if there is no submittedAnswer for this question)
                     this.selectedAnswerOptions[question.id] = [];
@@ -461,10 +461,10 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
 
         if (this.quizExercise.quizQuestions) {
             // iterate through all questions of this quiz
-            this.quizExercise.quizQuestions.forEach(question => {
+            this.quizExercise.quizQuestions.forEach((question) => {
                 // find the submitted answer that belongs to this question, only when submitted answers already exist
                 const submittedAnswer = this.submission.submittedAnswers
-                    ? this.submission.submittedAnswers.find(answer => {
+                    ? this.submission.submittedAnswers.find((answer) => {
                           return answer.quizQuestion.id === question.id;
                       })
                     : null;
@@ -517,9 +517,9 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
         this.submission.submittedAnswers = [];
 
         // for multiple-choice questions
-        Object.keys(this.selectedAnswerOptions).forEach(questionID => {
+        Object.keys(this.selectedAnswerOptions).forEach((questionID) => {
             // find the question object for the given question id
-            const question = this.quizExercise.quizQuestions.find(function(selectedQuestion) {
+            const question = this.quizExercise.quizQuestions.find(function (selectedQuestion) {
                 return selectedQuestion.id === Number(questionID);
             });
             if (!question) {
@@ -534,9 +534,9 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
         }, this);
 
         // for drag-and-drop questions
-        Object.keys(this.dragAndDropMappings).forEach(questionID => {
+        Object.keys(this.dragAndDropMappings).forEach((questionID) => {
             // find the question object for the given question id
-            const question = this.quizExercise.quizQuestions.find(function(localQuestion) {
+            const question = this.quizExercise.quizQuestions.find(function (localQuestion) {
                 return localQuestion.id === Number(questionID);
             });
             if (!question) {
@@ -550,9 +550,9 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
             this.submission.submittedAnswers.push(dndSubmittedAnswer);
         }, this);
         // for short-answer questions
-        Object.keys(this.shortAnswerSubmittedTexts).forEach(questionID => {
+        Object.keys(this.shortAnswerSubmittedTexts).forEach((questionID) => {
             // find the question object for the given question id
-            const question = this.quizExercise.quizQuestions.find(function(localQuestion) {
+            const question = this.quizExercise.quizQuestions.find(function (localQuestion) {
                 return localQuestion.id === Number(questionID);
             });
             if (!question) {
@@ -667,9 +667,9 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
      * @param fullQuizExerciseFromServer {object} the quizExercise containing additional information
      */
     transferInformationToQuizExercise(fullQuizExerciseFromServer: QuizExercise) {
-        this.quizExercise.quizQuestions.forEach(function(clientQuestion) {
+        this.quizExercise.quizQuestions.forEach(function (clientQuestion) {
             // find updated question
-            const fullQuestionFromServer = fullQuizExerciseFromServer.quizQuestions.find(function(fullQuestion) {
+            const fullQuestionFromServer = fullQuizExerciseFromServer.quizQuestions.find(function (fullQuestion) {
                 return clientQuestion.id === fullQuestion.id;
             });
             if (fullQuestionFromServer) {
@@ -680,9 +680,9 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
                     const mcFullQuestionFromServer = fullQuestionFromServer as MultipleChoiceQuestion;
 
                     const answerOptions = mcClientQuestion.answerOptions!;
-                    answerOptions.forEach(function(clientAnswerOption) {
+                    answerOptions.forEach(function (clientAnswerOption) {
                         // find updated answerOption
-                        const fullAnswerOptionFromServer = mcFullQuestionFromServer.answerOptions!.find(function(option) {
+                        const fullAnswerOptionFromServer = mcFullQuestionFromServer.answerOptions!.find(function (option) {
                             return clientAnswerOption.id === option.id;
                         });
                         if (fullAnswerOptionFromServer) {
@@ -706,13 +706,13 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
         }, this);
 
         // make sure that a possible explanation is updated correctly in all sub components
-        this.mcQuestionComponents.forEach(function(mcQuestionComponent) {
+        this.mcQuestionComponents.forEach(function (mcQuestionComponent) {
             mcQuestionComponent.watchCollection();
         });
-        this.dndQuestionComponents.forEach(function(dndQuestionComponent) {
+        this.dndQuestionComponents.forEach(function (dndQuestionComponent) {
             dndQuestionComponent.watchCollection();
         });
-        this.shortAnswerQuestionComponents.forEach(function(shortAnswerQuestionComponent) {
+        this.shortAnswerQuestionComponents.forEach(function (shortAnswerQuestionComponent) {
             shortAnswerQuestionComponent.watchCollection();
         });
     }
@@ -735,7 +735,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
 
             // create dictionary with scores for each question
             this.questionScores = {};
-            this.submission.submittedAnswers.forEach(submittedAnswer => {
+            this.submission.submittedAnswers.forEach((submittedAnswer) => {
                 // limit decimal places to 2
                 this.questionScores[submittedAnswer.quizQuestion.id] = Math.round(submittedAnswer.scoreInPoints * 100) / 100;
             }, this);
@@ -757,7 +757,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
             }
 
             // shuffle answerOptions / dragItems within questions
-            quizExercise.quizQuestions.forEach(question => {
+            quizExercise.quizQuestions.forEach((question) => {
                 if (question.randomizeOrder) {
                     if (question.type === QuizQuestionType.MULTIPLE_CHOICE) {
                         this.shuffle((question as MultipleChoiceQuestion).answerOptions!);
@@ -805,9 +805,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
      */
     updateSubmissionTime() {
         if (this.submission.submissionDate) {
-            this.submission.adjustedSubmissionDate = moment(this.submission.submissionDate)
-                .subtract(this.timeDifference, 'seconds')
-                .toDate();
+            this.submission.adjustedSubmissionDate = moment(this.submission.submissionDate).subtract(this.timeDifference, 'seconds').toDate();
             if (Math.abs(moment(this.submission.adjustedSubmissionDate).diff(moment(), 'seconds')) < 2) {
                 this.justSaved = true;
                 this.timeoutJustSaved();

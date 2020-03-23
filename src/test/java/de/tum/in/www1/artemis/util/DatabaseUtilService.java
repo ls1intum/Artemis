@@ -253,7 +253,7 @@ public class DatabaseUtilService {
         usersToAdd.addAll(instructors);
         usersToAdd.add(admin);
         userRepo.saveAll(usersToAdd);
-        assertThat(userRepo.findAll().size()).as("all users are created").isEqualTo(numberOfStudents + numberOfTutors + numberOfInstructors + 1);
+        assertThat(userRepo.findAll().size()).as("all users are created").isGreaterThanOrEqualTo(numberOfStudents + numberOfTutors + numberOfInstructors + 1);
         assertThat(userRepo.findAll()).as("users are correctly stored").containsAnyOf(usersToAdd.toArray(new User[0]));
 
         final var users = new ArrayList<>(students);

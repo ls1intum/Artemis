@@ -46,7 +46,7 @@ export class QuizExerciseComponent extends ExerciseComponent {
             (res: HttpResponse<QuizExercise[]>) => {
                 this.quizExercises = res.body!;
                 // reconnect exercise with course
-                this.quizExercises.forEach(exercise => {
+                this.quizExercises.forEach((exercise) => {
                     exercise.course = this.course;
                     exercise.isAtLeastTutor = this.accountService.isAtLeastTutorInCourse(exercise.course);
                     exercise.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(exercise.course);
@@ -112,7 +112,7 @@ export class QuizExerciseComponent extends ExerciseComponent {
     }
 
     setQuizExercisesStatus() {
-        this.quizExercises.forEach(quizExercise => (quizExercise.status = this.quizExerciseService.statusForQuiz(quizExercise)));
+        this.quizExercises.forEach((quizExercise) => (quizExercise.status = this.quizExerciseService.statusForQuiz(quizExercise)));
     }
 
     /**
@@ -144,7 +144,7 @@ export class QuizExerciseComponent extends ExerciseComponent {
     }
 
     private handleNewQuizExercise(newQuizExercise: QuizExercise) {
-        const index = this.quizExercises.findIndex(quizExercise => quizExercise.id === newQuizExercise.id);
+        const index = this.quizExercises.findIndex((quizExercise) => quizExercise.id === newQuizExercise.id);
         newQuizExercise.isAtLeastTutor = this.accountService.isAtLeastTutorInCourse(newQuizExercise.course!);
         newQuizExercise.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(newQuizExercise.course!);
         newQuizExercise.status = this.quizExerciseService.statusForQuiz(newQuizExercise);

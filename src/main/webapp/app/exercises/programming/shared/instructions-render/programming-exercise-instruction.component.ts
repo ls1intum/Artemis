@@ -112,7 +112,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
                         this.isLoading = true;
                         return this.loadInstructions().pipe(
                             // If no instructions can be loaded, abort pipe and hide the instruction panel
-                            tap(problemStatement => {
+                            tap((problemStatement) => {
                                 if (!problemStatement) {
                                     this.onNoInstructionsAvailable.emit();
                                     this.isLoading = false;
@@ -120,10 +120,10 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
                                     return Observable.of(null);
                                 }
                             }),
-                            filter(problemStatement => !!problemStatement),
-                            tap(problemStatement => (this.problemStatement = problemStatement!)),
+                            filter((problemStatement) => !!problemStatement),
+                            tap((problemStatement) => (this.problemStatement = problemStatement!)),
                             switchMap(() => this.loadInitialResult()),
-                            tap(latestResult => {
+                            tap((latestResult) => {
                                 this.latestResult = latestResult;
                             }),
                             tap(() => {
@@ -168,7 +168,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
         this.injectableContentFoundSubscription = merge(
             this.programmingExerciseTaskWrapper.subscribeForInjectableElementsFound(),
             this.programmingExercisePlantUmlWrapper.subscribeForInjectableElementsFound(),
-        ).subscribe(injectableCallback => (this.injectableContentForMarkdownCallbacks = [...this.injectableContentForMarkdownCallbacks, injectableCallback]));
+        ).subscribe((injectableCallback) => (this.injectableContentForMarkdownCallbacks = [...this.injectableContentForMarkdownCallbacks, injectableCallback]));
         if (this.tasksSubscription) {
             this.tasksSubscription.unsubscribe();
         }
@@ -187,7 +187,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
         }
         this.participationSubscription = this.participationWebsocketService
             .subscribeForLatestResultOfParticipation(this.participation.id)
-            .pipe(filter(result => !!result))
+            .pipe(filter((result) => !!result))
             .subscribe((result: Result) => {
                 this.latestResult = result;
                 this.programmingExerciseTaskWrapper.setLatestResult(this.latestResult);
@@ -203,7 +203,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
         this.injectableContentForMarkdownCallbacks = [];
         this.renderedMarkdown = this.markdownService.safeHtmlForMarkdown(this.problemStatement, this.markdownExtensions);
         // Wait a tick for the template to render before injecting the content.
-        setTimeout(() => this.injectableContentForMarkdownCallbacks.forEach(callback => callback()), 0);
+        setTimeout(() => this.injectableContentForMarkdownCallbacks.forEach((callback) => callback()), 0);
     }
 
     /**
@@ -243,7 +243,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
      */
     loadAndAttachResultDetails(result: Result): Observable<Result> {
         return this.resultService.getFeedbackDetailsForResult(result.id).pipe(
-            map(res => res && res.body),
+            map((res) => res && res.body),
             map((feedbacks: Feedback[]) => {
                 result.feedbacks = feedbacks;
                 return result;
@@ -268,7 +268,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
             return this.repositoryFileService.get(this.participation.id, 'README.md').pipe(
                 catchError(() => Observable.of(null)),
                 // Old readme files contain chars instead of our domain command tags - replace them when loading the file
-                map(fileObj => fileObj && fileObj.fileContent.replace(new RegExp(/✅/, 'g'), '[task]')),
+                map((fileObj) => fileObj && fileObj.fileContent.replace(new RegExp(/✅/, 'g'), '[task]')),
             );
         }
     }

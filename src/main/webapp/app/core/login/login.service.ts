@@ -19,18 +19,18 @@ export class LoginService {
     ) {}
 
     login(credentials: Credentials, callback?: any) {
-        const cb = callback || function() {};
+        const cb = callback || function () {};
 
         return new Promise((resolve, reject) => {
             this.authServerProvider.login(credentials).subscribe(
-                data => {
-                    this.accountService.identity(true).then(user => {
+                (data) => {
+                    this.accountService.identity(true).then((user) => {
                         this.websocketService.sendActivity();
                         resolve(data);
                     });
                     return cb();
                 },
-                err => {
+                (err) => {
                     this.logout();
                     reject(err);
                     return cb(err);

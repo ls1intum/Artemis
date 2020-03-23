@@ -178,7 +178,7 @@ export class QuizStatisticComponent implements OnInit, OnDestroy, DataSetProvide
     }
 
     ngOnInit() {
-        this.sub = this.route.params.subscribe(params => {
+        this.sub = this.route.params.subscribe((params) => {
             // use different REST-call if the User is a Student
             if (this.accountService.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'])) {
                 this.quizExerciseService.find(params['exerciseId']).subscribe((res: HttpResponse<QuizExercise>) => {
@@ -193,17 +193,17 @@ export class QuizStatisticComponent implements OnInit, OnDestroy, DataSetProvide
             // ask for new Data if the websocket for new statistical data was notified
             this.jhiWebsocketService.receive(this.websocketChannelForData).subscribe(() => {
                 if (this.accountService.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'])) {
-                    this.quizExerciseService.find(params['exerciseId']).subscribe(res => {
+                    this.quizExerciseService.find(params['exerciseId']).subscribe((res) => {
                         this.loadQuizSuccess(res.body!);
                     });
                 }
             });
 
             // add Axes-labels based on selected language
-            this.translateService.get('showStatistic.quizStatistic.xAxes').subscribe(xLabel => {
+            this.translateService.get('showStatistic.quizStatistic.xAxes').subscribe((xLabel) => {
                 this.options.scales!.xAxes![0].scaleLabel!.labelString = xLabel;
             });
-            this.translateService.get('showStatistic.quizStatistic.yAxes').subscribe(yLabel => {
+            this.translateService.get('showStatistic.quizStatistic.yAxes').subscribe((yLabel) => {
                 this.options.scales!.yAxes![0].scaleLabel!.labelString = yLabel;
             });
         });
@@ -246,7 +246,7 @@ export class QuizStatisticComponent implements OnInit, OnDestroy, DataSetProvide
         let result = 0;
 
         if (this.quizExercise.quizQuestions) {
-            this.quizExercise.quizQuestions.forEach(function(question) {
+            this.quizExercise.quizQuestions.forEach(function (question) {
                 result = result + question.score;
             });
         } else {
@@ -294,7 +294,7 @@ export class QuizStatisticComponent implements OnInit, OnDestroy, DataSetProvide
         this.colors = this.backgroundColor;
 
         // add Text for last label based on the language
-        this.translateService.get('showStatistic.quizStatistic.average').subscribe(lastLabel => {
+        this.translateService.get('showStatistic.quizStatistic.average').subscribe((lastLabel) => {
             this.label.push(lastLabel);
         });
 

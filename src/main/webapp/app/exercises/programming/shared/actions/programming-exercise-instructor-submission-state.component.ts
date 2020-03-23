@@ -39,7 +39,7 @@ export class ProgrammingExerciseInstructorSubmissionStateComponent implements On
     constructor(private programmingSubmissionService: ProgrammingSubmissionService) {}
 
     ngOnInit(): void {
-        this.resultEtaSubscription = this.programmingSubmissionService.getResultEtaInMs().subscribe(resultEta => (this.resultEtaInMs = resultEta));
+        this.resultEtaSubscription = this.programmingSubmissionService.getResultEtaInMs().subscribe((resultEta) => (this.resultEtaInMs = resultEta));
     }
 
     /**

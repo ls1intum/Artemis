@@ -29,7 +29,7 @@ export class ApollonQuizExerciseGenerationComponent implements OnInit {
      * Initializes courses from the server and assigns selected course
      */
     ngOnInit() {
-        this.courseService.query().subscribe(response => {
+        this.courseService.query().subscribe((response) => {
             this.courses = response.body!;
             this.selectedCourse = this.courses[0];
         });

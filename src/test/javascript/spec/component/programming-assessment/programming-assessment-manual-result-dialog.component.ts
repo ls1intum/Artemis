@@ -117,7 +117,7 @@ describe('ProgrammingAssessmentManualResultDialogComponent', () => {
 
     it('should show complaint for result with complaint and check assessor', fakeAsync(() => {
         findByResultId.returns(of({ body: complaint }));
-        getIdentity.returns(new Promise(resolve => resolve(user)));
+        getIdentity.returns(new Promise((resolve) => resolve(user)));
         comp.result = result;
         comp.exercise = exercise;
         comp.ngOnInit();
@@ -132,7 +132,7 @@ describe('ProgrammingAssessmentManualResultDialogComponent', () => {
     }));
 
     it("should not show complaint when result doesn't have it", fakeAsync(() => {
-        getIdentity.returns(new Promise(resolve => resolve(user)));
+        getIdentity.returns(new Promise((resolve) => resolve(user)));
         result.hasComplaint = false;
         comp.result = result;
         comp.exercise = exercise;

@@ -19,7 +19,7 @@ export class ExerciseHintDetailComponent implements OnInit, OnDestroy {
     constructor(protected route: ActivatedRoute) {}
 
     ngOnInit() {
-        this.paramSub = this.route.params.subscribe(params => {
+        this.paramSub = this.route.params.subscribe((params) => {
             this.courseId = params['courseId'];
             this.exerciseId = params['exerciseId'];
         });

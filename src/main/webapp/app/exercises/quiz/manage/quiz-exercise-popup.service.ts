@@ -25,7 +25,7 @@ export class QuizExercisePopupService {
         const modalRef: NgbModalRef = this.modalService.open(component, { size: 'lg', backdrop: 'static' });
         modalRef.componentInstance.quizExercise = quizExercise;
         modalRef.result.then(
-            result => {
+            (result) => {
                 if (result === 're-evaluate') {
                     this.router.navigate(['/course-management/' + quizExercise.course!.id + '/quiz-exercises']);
                 } else {
@@ -33,7 +33,7 @@ export class QuizExercisePopupService {
                     this.ngbModalRef = null;
                 }
             },
-            reason => {
+            (reason) => {
                 this.router.navigate([{ outlets: { popup: null } }], { replaceUrl: true, queryParamsHandling: 'merge' });
                 this.ngbModalRef = null;
             },

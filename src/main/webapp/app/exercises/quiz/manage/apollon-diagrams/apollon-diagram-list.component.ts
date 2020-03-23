@@ -33,10 +33,10 @@ export class ApollonDiagramListComponent implements OnInit {
      */
     ngOnInit() {
         this.apollonDiagramsService.query().subscribe(
-            response => {
+            (response) => {
                 this.apollonDiagrams = response.body!;
             },
-            response => {
+            (response) => {
                 this.jhiAlertService.error('artemisApp.apollonDiagram.home.error.loading');
             },
         );
@@ -58,13 +58,13 @@ export class ApollonDiagramListComponent implements OnInit {
      */
     delete(apollonDiagram: ApollonDiagram) {
         this.apollonDiagramsService.delete(apollonDiagram.id).subscribe(
-            response => {
+            (response) => {
                 this.jhiAlertService.success('artemisApp.apollonDiagram.delete.success', { title: apollonDiagram.title });
-                this.apollonDiagrams = this.apollonDiagrams.filter(diagram => {
+                this.apollonDiagrams = this.apollonDiagrams.filter((diagram) => {
                     return diagram.id !== apollonDiagram.id;
                 });
             },
-            response => {
+            (response) => {
                 this.jhiAlertService.error('artemisApp.apollonDiagram.delete.error', { title: apollonDiagram.title });
             },
         );

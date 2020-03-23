@@ -170,9 +170,9 @@ export class TutorExerciseDashboardComponent implements OnInit, AfterViewInit {
                 this.exampleSubmissionsCompletedByTutor = this.tutorParticipation.trainedExampleSubmissions || [];
 
                 this.stats.toReview.total = this.exampleSubmissionsToReview.length;
-                this.stats.toReview.done = this.exampleSubmissionsCompletedByTutor.filter(e => !e.usedForTutorial).length;
+                this.stats.toReview.done = this.exampleSubmissionsCompletedByTutor.filter((e) => !e.usedForTutorial).length;
                 this.stats.toAssess.total = this.exampleSubmissionsToAssess.length;
-                this.stats.toAssess.done = this.exampleSubmissionsCompletedByTutor.filter(e => e.usedForTutorial).length;
+                this.stats.toAssess.done = this.exampleSubmissionsCompletedByTutor.filter((e) => e.usedForTutorial).length;
 
                 if (this.stats.toReview.done < this.stats.toReview.total) {
                     this.nextExampleSubmissionId = this.exampleSubmissionsToReview[this.stats.toReview.done].id;
@@ -208,7 +208,7 @@ export class TutorExerciseDashboardComponent implements OnInit, AfterViewInit {
                 this.numberOfOpenComplaints = this.statsForDashboard.numberOfOpenComplaints;
                 this.numberOfMoreFeedbackRequests = this.statsForDashboard.numberOfMoreFeedbackRequests;
                 this.numberOfOpenMoreFeedbackRequests = this.statsForDashboard.numberOfOpenMoreFeedbackRequests;
-                const tutorLeaderboardEntry = this.statsForDashboard.tutorLeaderboardEntries.find(entry => entry.userId === this.tutor!.id);
+                const tutorLeaderboardEntry = this.statsForDashboard.tutorLeaderboardEntries.find((entry) => entry.userId === this.tutor!.id);
                 if (tutorLeaderboardEntry) {
                     this.numberOfTutorAssessments = tutorLeaderboardEntry.numberOfAssessments;
                     this.numberOfTutorComplaints = tutorLeaderboardEntry.numberOfAcceptedComplaints;
@@ -252,12 +252,12 @@ export class TutorExerciseDashboardComponent implements OnInit, AfterViewInit {
 
         submissionsObservable
             .pipe(
-                map(res => res.body),
+                map((res) => res.body),
                 map(this.reconnectEntities),
             )
             .subscribe((submissions: Submission[]) => {
                 // Set the received submissions. As the result component depends on the submission we nest it into the participation.
-                this.submissions = submissions.map(submission => {
+                this.submissions = submissions.map((submission) => {
                     submission.participation.submissions = [submission];
                     return submission;
                 });
@@ -328,7 +328,7 @@ export class TutorExerciseDashboardComponent implements OnInit, AfterViewInit {
     }
 
     hasBeenCompletedByTutor(id: number) {
-        return this.exampleSubmissionsCompletedByTutor.filter(e => e.id === id).length > 0;
+        return this.exampleSubmissionsCompletedByTutor.filter((e) => e.id === id).length > 0;
     }
 
     private onError(error: string) {
@@ -377,7 +377,7 @@ export class TutorExerciseDashboardComponent implements OnInit, AfterViewInit {
         modalRef.componentInstance.exercise = this.exercise;
         modalRef.componentInstance.onResultModified.subscribe(() => this.loadAll());
         modalRef.result.then(
-            _ => this.loadAll(),
+            (_) => this.loadAll(),
             () => {},
         );
         return;

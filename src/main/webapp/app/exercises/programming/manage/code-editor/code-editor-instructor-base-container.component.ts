@@ -87,14 +87,14 @@ export abstract class CodeEditorInstructorBaseContainerComponent extends CodeEdi
         if (this.paramSub) {
             this.paramSub.unsubscribe();
         }
-        this.paramSub = this.route.params.subscribe(params => {
+        this.paramSub = this.route.params.subscribe((params) => {
             const exerciseId = Number(params['exerciseId']);
             const participationId = Number(params['participationId']);
             this.loadingState = LOADING_STATE.INITIALIZING;
             this.loadExercise(exerciseId)
                 .pipe(
                     catchError(() => throwError('exerciseNotFound')),
-                    tap(exercise => (this.exercise = exercise)),
+                    tap((exercise) => (this.exercise = exercise)),
                     // Set selected participation
                     tap(() => {
                         if (this.router.url.endsWith('/test')) {
@@ -116,7 +116,7 @@ export abstract class CodeEditorInstructorBaseContainerComponent extends CodeEdi
                 )
                 .subscribe(
                     () => (this.loadingState = LOADING_STATE.CLEAR),
-                    err => {
+                    (err) => {
                         this.loadingState = LOADING_STATE.FETCHING_FAILED;
                         this.onError(err);
                     },
@@ -158,8 +158,8 @@ export abstract class CodeEditorInstructorBaseContainerComponent extends CodeEdi
         return this.domainService
             .subscribeDomainChange()
             .pipe(
-                filter(domain => !!domain),
-                map(domain => domain as DomainChange),
+                filter((domain) => !!domain),
+                map((domain) => domain as DomainChange),
                 tap(([domainType, domainValue]) => {
                     this.applyDomainChange(domainType, domainValue);
                 }),
@@ -252,14 +252,14 @@ export abstract class CodeEditorInstructorBaseContainerComponent extends CodeEdi
             .startExercise(this.exercise.course!.id, this.exercise.id)
             .pipe(
                 catchError(() => throwError('participationCouldNotBeCreated')),
-                tap(participation => {
+                tap((participation) => {
                     this.exercise.studentParticipations = [participation];
                     this.loadingState = LOADING_STATE.CLEAR;
                 }),
             )
             .subscribe(
                 () => {},
-                err => this.onError(err),
+                (err) => this.onError(err),
             );
     }
 
@@ -282,7 +282,7 @@ export abstract class CodeEditorInstructorBaseContainerComponent extends CodeEdi
             )
             .subscribe(
                 () => {},
-                err => this.onError(err),
+                (err) => this.onError(err),
             );
     }
 }

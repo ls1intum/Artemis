@@ -50,11 +50,11 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
      * Initializes Apollon Editor and sets auto save timer
      */
     ngOnInit() {
-        this.route.params.subscribe(params => {
+        this.route.params.subscribe((params) => {
             const id = Number(params['id']);
 
             this.apollonDiagramService.find(id).subscribe(
-                response => {
+                (response) => {
                     const diagram = response.body!;
 
                     this.apollonDiagram = diagram;

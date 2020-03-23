@@ -1,4 +1,6 @@
 node_modules
 target
+package-lock.json
+.git
 src/test/resources
 src/main/resources

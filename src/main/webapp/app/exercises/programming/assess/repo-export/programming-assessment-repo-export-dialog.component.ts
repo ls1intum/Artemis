@@ -53,7 +53,7 @@ export class ProgrammingAssessmentRepoExportDialogComponent implements OnInit {
                 tap(({ body: exercise }) => {
                     this.exercise = exercise!;
                 }),
-                catchError(err => {
+                catchError((err) => {
                     this.jhiAlertService.error(err);
                     this.clear();
                     return of(null);
@@ -74,13 +74,15 @@ export class ProgrammingAssessmentRepoExportDialogComponent implements OnInit {
         if (this.participationIdList) {
             // We anonymize the assessment process ("double-blind").
             this.repositoryExportOptions.addStudentName = false;
-            this.repoExportService.exportReposByParticipations(exerciseId, this.participationIdList, this.repositoryExportOptions).subscribe(this.handleExportRepoResponse, err => {
-                this.exportInProgress = false;
-            });
+            this.repoExportService
+                .exportReposByParticipations(exerciseId, this.participationIdList, this.repositoryExportOptions)
+                .subscribe(this.handleExportRepoResponse, (err) => {
+                    this.exportInProgress = false;
+                });
             return;
         }
-        const studentIdList = this.studentIdList !== undefined && this.studentIdList !== '' ? this.studentIdList.split(',').map(e => e.trim()) : ['ALL'];
-        this.repoExportService.exportReposByStudentLogins(exerciseId, studentIdList, this.repositoryExportOptions).subscribe(this.handleExportRepoResponse, err => {
+        const studentIdList = this.studentIdList !== undefined && this.studentIdList !== '' ? this.studentIdList.split(',').map((e) => e.trim()) : ['ALL'];
+        this.repoExportService.exportReposByStudentLogins(exerciseId, studentIdList, this.repositoryExportOptions).subscribe(this.handleExportRepoResponse, (err) => {
             this.exportInProgress = false;
         });
     }

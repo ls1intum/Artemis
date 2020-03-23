@@ -82,7 +82,7 @@ export class ParticipationService {
     }
 
     downloadArtifact(participationId: number) {
-        return this.http.get(`${this.resourceUrl}/${participationId}/buildArtifact`, { responseType: 'blob' }).map(artifact => {
+        return this.http.get(`${this.resourceUrl}/${participationId}/buildArtifact`, { responseType: 'blob' }).map((artifact) => {
             return artifact;
         });
     }
@@ -193,7 +193,7 @@ export class ParticipationService {
         combinedParticipation.student = participations[0].student;
         combinedParticipation.exercise = participations[0].exercise;
 
-        participations.forEach(participation => {
+        participations.forEach((participation) => {
             if (participation.results) {
                 combinedParticipation.results = combinedParticipation.results ? combinedParticipation.results.concat(participation.results) : participation.results;
             }
@@ -206,12 +206,12 @@ export class ParticipationService {
 
         // make sure that results and submissions are connected with the participation because some components need this
         if (combinedParticipation.results && combinedParticipation.results.length > 0) {
-            combinedParticipation.results.forEach(result => {
+            combinedParticipation.results.forEach((result) => {
                 result.participation = combinedParticipation;
             });
         }
         if (combinedParticipation.submissions && combinedParticipation.submissions.length > 0) {
-            combinedParticipation.submissions.forEach(submission => {
+            combinedParticipation.submissions.forEach((submission) => {
                 submission.participation = combinedParticipation;
             });
         }

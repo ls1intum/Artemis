@@ -94,7 +94,7 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
          * these [ ] brackets.
          * **/
         const textForEachLine = this.question.text!.split(/\n+/g);
-        this.textParts = textForEachLine.map(t => t.split(/\s+(?![^[]]*])/g));
+        this.textParts = textForEachLine.map((t) => t.split(/\s+(?![^[]]*])/g));
 
         /** Assign status booleans and strings **/
         this.showVisualMode = false;
@@ -173,10 +173,10 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
                     break;
                 }
                 if (firstSolution) {
-                    option += this.question.spots.filter(spot => this.shortAnswerQuestionUtil.isSameSpot(spot, spotForSolution))[0].spotNr;
+                    option += this.question.spots.filter((spot) => this.shortAnswerQuestionUtil.isSameSpot(spot, spotForSolution))[0].spotNr;
                     firstSolution = false;
                 } else {
-                    option += ',' + this.question.spots.filter(spot => this.shortAnswerQuestionUtil.isSameSpot(spot, spotForSolution))[0].spotNr;
+                    option += ',' + this.question.spots.filter((spot) => this.shortAnswerQuestionUtil.isSameSpot(spot, spotForSolution))[0].spotNr;
                 }
             }
             option += ']';
@@ -224,23 +224,23 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
         // Split into spots to generated this structure: {"1","2","3"}
         const spotParts = questionText
             .split(/\[-spot/g)
-            .map(splitText => splitText.split(/\]/g))
+            .map((splitText) => splitText.split(/\]/g))
             .slice(1)
-            .map(sliceText => sliceText[0]);
+            .map((sliceText) => sliceText[0]);
 
         // Split new created Array by "]" to generate this structure: {"1,2", " SolutionText"}
-        const solutionParts = questionParts.map(questionPart => questionPart.split(/\]/g)).slice(1);
+        const solutionParts = questionParts.map((questionPart) => questionPart.split(/\]/g)).slice(1);
 
         // Split question into main text, hint and explanation
         this.artemisMarkdown.parseTextHintExplanation(questionText, this.question);
 
         // Extract existing solutions IDs
-        const existingSolutionIDs = this.question.solutions.filter(solution => solution.id != null).map(solution => solution.id);
+        const existingSolutionIDs = this.question.solutions.filter((solution) => solution.id != null).map((solution) => solution.id);
         this.question.solutions = [];
         this.question.correctMappings = [];
 
         // Extract existing spot IDs
-        const existingSpotIDs = this.question.spots.filter(spot => spot.id != null).map(spot => spot.id);
+        const existingSpotIDs = this.question.spots.filter((spot) => spot.id != null).map((spot) => spot.id);
         this.question.spots = [];
 
         // setup spots
@@ -281,7 +281,7 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
         const spotIds = spots.split(',').map(Number);
 
         for (const id of spotIds) {
-            const spotForMapping = this.question.spots.find(spot => spot.spotNr === id)!;
+            const spotForMapping = this.question.spots.find((spot) => spot.spotNr === id)!;
             this.question.correctMappings.push(new ShortAnswerMapping(spotForMapping, solution));
         }
     }
@@ -405,7 +405,7 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
             textOfSelectedRow.substring(0, startOfRange) + '[-spot ' + this.numberOfSpot + ']' + textOfSelectedRow.substring(endOfRange);
 
         // recreation of question text from array and update textParts and parse textParts to html
-        this.question.text = this.textParts.map(textPart => textPart.join(' ')).join('\n');
+        this.question.text = this.textParts.map((textPart) => textPart.join(' ')).join('\n');
         const textParts = this.shortAnswerQuestionUtil.divideQuestionTextIntoTextParts(this.question.text);
         this.textParts = this.shortAnswerQuestionUtil.transformTextPartsIntoHTML(textParts, this.artemisMarkdown);
         editor.setValue(this.generateMarkdown());
@@ -441,7 +441,7 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
      * @param solutionToDelete {object} the solution that should be deleted
      */
     deleteSolution(solutionToDelete: ShortAnswerSolution): void {
-        this.question.solutions = this.question.solutions.filter(solution => solution !== solutionToDelete);
+        this.question.solutions = this.question.solutions.filter((solution) => solution !== solutionToDelete);
         this.deleteMappingsForSolution(solutionToDelete);
         this.questionEditorText = this.generateMarkdown();
     }
@@ -455,7 +455,7 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
     onDragDrop(spot: ShortAnswerSpot, dragEvent: any): void {
         let dragItem = dragEvent.dragData;
         // Replace dragItem with original (because it may be a copy)
-        dragItem = this.question.solutions.find(originalDragItem => (dragItem.id ? originalDragItem.id === dragItem.id : originalDragItem.tempID === dragItem.tempID));
+        dragItem = this.question.solutions.find((originalDragItem) => (dragItem.id ? originalDragItem.id === dragItem.id : originalDragItem.tempID === dragItem.tempID));
 
         if (!dragItem) {
             // Drag item was not found in question => do nothing
@@ -469,11 +469,11 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
         // Check if this mapping already exists
         if (
             !this.question.correctMappings.some(
-                existingMapping =>
+                (existingMapping) =>
                     this.shortAnswerQuestionUtil.isSameSpot(existingMapping.spot, spot) && this.shortAnswerQuestionUtil.isSameSolution(existingMapping.solution, dragItem),
             )
         ) {
-            this.deleteMapping(this.getMappingsForSolution(dragItem).filter(mapping => mapping.spot === undefined)[0]);
+            this.deleteMapping(this.getMappingsForSolution(dragItem).filter((mapping) => mapping.spot === undefined)[0]);
             // Mapping doesn't exit yet => add this mapping
             const saMapping = new ShortAnswerMapping(spot, dragItem);
             this.question.correctMappings.push(saMapping);
@@ -495,7 +495,7 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
         // Save reference to this due to nested some calls
         const that = this;
         if (
-            this.question.correctMappings.some(function(correctMapping) {
+            this.question.correctMappings.some(function (correctMapping) {
                 if (
                     !visitedSpots.some((spot: ShortAnswerSpot) => {
                         return that.shortAnswerQuestionUtil.isSameSpot(spot, correctMapping.spot);
@@ -524,7 +524,7 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
         }
         return (
             this.question.correctMappings
-                .filter(mapping => this.shortAnswerQuestionUtil.isSameSolution(mapping.solution, solution))
+                .filter((mapping) => this.shortAnswerQuestionUtil.isSameSolution(mapping.solution, solution))
                 /** Moved the sorting from the template to the function call*/
                 .sort((m1, m2) => this.getMappingIndex(m1) - this.getMappingIndex(m2))
         );
@@ -539,7 +539,7 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
         if (!this.question.correctMappings) {
             this.question.correctMappings = [];
         }
-        this.question.correctMappings = this.question.correctMappings.filter(mapping => !this.shortAnswerQuestionUtil.isSameSolution(mapping.solution, solution));
+        this.question.correctMappings = this.question.correctMappings.filter((mapping) => !this.shortAnswerQuestionUtil.isSameSolution(mapping.solution, solution));
     }
 
     /**
@@ -551,7 +551,7 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
         if (!this.question.correctMappings) {
             this.question.correctMappings = [];
         }
-        this.question.correctMappings = this.question.correctMappings.filter(mapping => mapping !== mappingToDelete);
+        this.question.correctMappings = this.question.correctMappings.filter((mapping) => mapping !== mappingToDelete);
         this.questionEditorText = this.generateMarkdown();
     }
 
@@ -613,7 +613,7 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
         this.question.spots = JSON.parse(JSON.stringify(this.backupQuestion.spots));
         // split on every whitespace. !!!only exception: [-spot 1] is not split!!! for more details see description in ngOnInit.
         const textForEachLine = this.question.text!.split(/\n+/g);
-        this.textParts = textForEachLine.map(t => t.split(/\s+(?![^[]]*])/g));
+        this.textParts = textForEachLine.map((t) => t.split(/\s+(?![^[]]*])/g));
         this.question.explanation = this.backupQuestion.explanation;
         this.question.hint = this.backupQuestion.hint;
     }
@@ -640,7 +640,7 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
      */
     resetSpot(spot: ShortAnswerSpot): void {
         // Find matching spot in backupQuestion
-        const backupSpot = this.backupQuestion.spots.find(currentSpot => currentSpot.id === spot.id)!;
+        const backupSpot = this.backupQuestion.spots.find((currentSpot) => currentSpot.id === spot.id)!;
         // Find current index of our spot
         const spotIndex = this.question.spots.indexOf(spot);
         // Remove current spot at given index and insert the backup at the same position
@@ -654,16 +654,16 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
      * @param spotToDelete {object} the spot to delete
      */
     deleteSpot(spotToDelete: ShortAnswerSpot): void {
-        this.question.spots = this.question.spots.filter(spot => spot !== spotToDelete);
+        this.question.spots = this.question.spots.filter((spot) => spot !== spotToDelete);
         this.deleteMappingsForSpot(spotToDelete);
 
         // split on every whitespace. !!!only exception: [-spot 1] is not split!!! for more details see description in ngOnInit.
         const textForEachLine = this.question.text!.split(/\n+/g);
-        this.textParts = textForEachLine.map(t => t.split(/\s+(?![^[]]*])/g));
+        this.textParts = textForEachLine.map((t) => t.split(/\s+(?![^[]]*])/g));
 
-        this.textParts = this.textParts.map(part => part.filter(text => text !== '[-spot ' + spotToDelete.spotNr + ']'));
+        this.textParts = this.textParts.map((part) => part.filter((text) => text !== '[-spot ' + spotToDelete.spotNr + ']'));
 
-        this.question.text = this.textParts.map(textPart => textPart.join(' ')).join('\n');
+        this.question.text = this.textParts.map((textPart) => textPart.join(' ')).join('\n');
     }
 
     /**
@@ -675,7 +675,7 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
         if (!this.question.correctMappings) {
             this.question.correctMappings = [];
         }
-        this.question.correctMappings = this.question.correctMappings.filter(mapping => !this.shortAnswerQuestionUtil.isSameSpot(mapping.spot, spot));
+        this.question.correctMappings = this.question.correctMappings.filter((mapping) => !this.shortAnswerQuestionUtil.isSameSpot(mapping.spot, spot));
     }
 
     /**
@@ -686,10 +686,10 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
     setQuestionText(id: string): void {
         const rowColumn: string[] = id.split('-').slice(1);
         this.textParts[rowColumn[0]][rowColumn[1]] = (<HTMLInputElement>document.getElementById(id)).value;
-        this.question.text = this.textParts.map(textPart => textPart.join(' ')).join('\n');
+        this.question.text = this.textParts.map((textPart) => textPart.join(' ')).join('\n');
         // split on every whitespace. !!!only exception: [-spot 1] is not split!!! for more details see description in ngOnInit.
         const textForEachLine = this.question.text.split(/\n+/g);
-        this.textParts = textForEachLine.map(t => t.split(/\s+(?![^[]]*])/g));
+        this.textParts = textForEachLine.map((t) => t.split(/\s+(?![^[]]*])/g));
     }
 
     /**

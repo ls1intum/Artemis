@@ -61,14 +61,14 @@ export class CodeEditorGridComponent implements AfterViewInit {
                 ],
                 inertia: true,
             })
-            .on('resizestart', function(event: any) {
+            .on('resizestart', function (event: any) {
                 event.target.classList.add('card-resizable');
             })
             .on('resizeend', (event: any) => {
                 event.target.classList.remove('card-resizable');
                 this.codeEditorGridService.submitResizeEvent(ResizeType.MAIN_BOTTOM);
             })
-            .on('resizemove', function(event: any) {
+            .on('resizemove', function (event: any) {
                 const target = event.target;
                 // Update element height
                 target.style.height = event.rect.height + 'px';
@@ -89,14 +89,14 @@ export class CodeEditorGridComponent implements AfterViewInit {
                 ],
                 inertia: true,
             })
-            .on('resizestart', function(event: any) {
+            .on('resizestart', function (event: any) {
                 event.target.classList.add('card-resizable');
             })
             .on('resizeend', (event: any) => {
                 event.target.classList.remove('card-resizable');
                 this.codeEditorGridService.submitResizeEvent(ResizeType.SIDEBAR_LEFT);
             })
-            .on('resizemove', function(event: any) {
+            .on('resizemove', function (event: any) {
                 const target = event.target;
                 // Update element height
                 target.style.width = event.rect.width + 'px';
@@ -117,14 +117,14 @@ export class CodeEditorGridComponent implements AfterViewInit {
                 ],
                 inertia: true,
             })
-            .on('resizestart', function(event: any) {
+            .on('resizestart', function (event: any) {
                 event.target.classList.add('card-resizable');
             })
             .on('resizeend', (event: any) => {
                 event.target.classList.remove('card-resizable');
                 this.codeEditorGridService.submitResizeEvent(ResizeType.SIDEBAR_RIGHT);
             })
-            .on('resizemove', function(event: any) {
+            .on('resizemove', function (event: any) {
                 const target = event.target;
                 // Update element height
                 target.style.width = event.rect.width + 'px';
@@ -144,14 +144,14 @@ export class CodeEditorGridComponent implements AfterViewInit {
                 ],
                 inertia: true,
             })
-            .on('resizestart', function(event: any) {
+            .on('resizestart', function (event: any) {
                 event.target.classList.add('card-resizable');
             })
             .on('resizeend', (event: any) => {
                 event.target.classList.remove('card-resizable');
                 this.codeEditorGridService.submitResizeEvent(ResizeType.BOTTOM);
             })
-            .on('resizemove', function(event: any) {
+            .on('resizemove', function (event: any) {
                 const target = event.target;
                 // Update element height
                 target.style.height = event.rect.height + 'px';

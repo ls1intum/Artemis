@@ -32,7 +32,7 @@ export class FeatureToggleDirective implements OnInit, OnDestroy {
                 .getFeatureToggleActive(this.feature)
                 .pipe(
                     // Disable the element if the feature is inactive.
-                    tap(active => {
+                    tap((active) => {
                         this.featureActive = this.skipFeatureToggle || active;
                     }),
                 )

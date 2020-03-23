@@ -117,7 +117,7 @@ export class LectureService {
         if (!lectures) {
             return lectures;
         }
-        return lectures.map(lecture => {
+        return lectures.map((lecture) => {
             return this.convertDatesForLectureFromServer(lecture);
         });
     }

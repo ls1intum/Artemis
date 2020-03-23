@@ -25,12 +25,12 @@ export class TextExerciseResolver implements Resolve<TextExercise> {
     resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot) {
         if (route.params['exerciseId']) {
             return this.textExerciseService.find(route.params['exerciseId']).pipe(
-                filter(res => !!res.body),
+                filter((res) => !!res.body),
                 map((textExercise: HttpResponse<TextExercise>) => textExercise.body!),
             );
         } else if (route.params['courseId']) {
             return this.courseService.find(route.params['courseId']).pipe(
-                filter(res => !!res.body),
+                filter((res) => !!res.body),
                 map((course: HttpResponse<Course>) => new TextExercise(course.body!)),
             );
         }

@@ -67,11 +67,11 @@ export class MultipleChoiceQuestionStatisticComponent implements OnInit, OnDestr
     }
 
     ngOnInit() {
-        this.sub = this.route.params.subscribe(params => {
+        this.sub = this.route.params.subscribe((params) => {
             this.questionIdParam = +params['questionId'];
             // use different REST-call if the User is a Student
             if (this.accountService.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'])) {
-                this.quizExerciseService.find(params['exerciseId']).subscribe(res => {
+                this.quizExerciseService.find(params['exerciseId']).subscribe((res) => {
                     this.loadQuiz(res.body!, false);
                 });
             }
@@ -81,15 +81,15 @@ export class MultipleChoiceQuestionStatisticComponent implements OnInit, OnDestr
             this.jhiWebsocketService.subscribe(this.websocketChannelForData);
 
             // ask for new Data if the websocket for new statistical data was notified
-            this.jhiWebsocketService.receive(this.websocketChannelForData).subscribe(quiz => {
+            this.jhiWebsocketService.receive(this.websocketChannelForData).subscribe((quiz) => {
                 this.loadQuiz(quiz, true);
             });
 
             // add Axes-labels based on selected language
-            this.translateService.get('showStatistic.questionStatistic.xAxes').subscribe(xLabel => {
+            this.translateService.get('showStatistic.questionStatistic.xAxes').subscribe((xLabel) => {
                 this.options.scales!.xAxes![0].scaleLabel!.labelString = xLabel;
             });
-            this.translateService.get('showStatistic.questionStatistic.yAxes').subscribe(yLabel => {
+            this.translateService.get('showStatistic.questionStatistic.yAxes').subscribe((yLabel) => {
                 this.options.scales!.yAxes![0].scaleLabel!.labelString = yLabel;
             });
         });
@@ -121,7 +121,7 @@ export class MultipleChoiceQuestionStatisticComponent implements OnInit, OnDestr
         }
         // search selected question in quizExercise based on questionId
         this.quizExercise = quiz;
-        const updatedQuestion = this.quizExercise.quizQuestions.filter(question => this.questionIdParam === question.id)[0];
+        const updatedQuestion = this.quizExercise.quizQuestions.filter((question) => this.questionIdParam === question.id)[0];
         this.question = updatedQuestion as MultipleChoiceQuestion;
         // if the Anyone finds a way to the Website,
         // with a wrong combination of QuizId and QuestionId
@@ -135,7 +135,7 @@ export class MultipleChoiceQuestionStatisticComponent implements OnInit, OnDestr
         if (!refresh) {
             // render Markdown-text
             this.questionTextRendered = this.artemisMarkdown.safeHtmlForMarkdown(this.question.text);
-            this.answerTextRendered = this.question.answerOptions!.map(answer => this.artemisMarkdown.safeHtmlForMarkdown(answer.text));
+            this.answerTextRendered = this.question.answerOptions!.map((answer) => this.artemisMarkdown.safeHtmlForMarkdown(answer.text));
             this.loadLayout();
         }
         this.loadData();
@@ -172,7 +172,7 @@ export class MultipleChoiceQuestionStatisticComponent implements OnInit, OnDestr
         this.backgroundSolutionColor[answerOptionsLength] = '#5bc0de';
 
         // add Text for last label based on the language
-        this.translateService.get('showStatistic.quizStatistic.yAxes').subscribe(lastLabel => {
+        this.translateService.get('showStatistic.quizStatistic.yAxes').subscribe((lastLabel) => {
             this.solutionLabel[answerOptionsLength] = lastLabel.split(' ');
             this.label[answerOptionsLength] = lastLabel.split(' ');
             this.labels.length = 0;
@@ -187,7 +187,7 @@ export class MultipleChoiceQuestionStatisticComponent implements OnInit, OnDestr
      */
     loadInvalidLayout() {
         // set Background for invalid answers = grey
-        this.translateService.get('showStatistic.invalid').subscribe(invalidLabel => {
+        this.translateService.get('showStatistic.invalid').subscribe((invalidLabel) => {
             this.question.answerOptions!.forEach((answerOption, i) => {
                 if (answerOption.invalid) {
                     this.backgroundColor[i] = '#838383';
@@ -204,7 +204,7 @@ export class MultipleChoiceQuestionStatisticComponent implements OnInit, OnDestr
      */
     loadSolutionLayout() {
         // add correct-text to the label based on the language
-        this.translateService.get('showStatistic.questionStatistic.correct').subscribe(correctLabel => {
+        this.translateService.get('showStatistic.questionStatistic.correct').subscribe((correctLabel) => {
             this.question.answerOptions!.forEach((answerOption, i) => {
                 if (answerOption.isCorrect) {
                     // check if the answer is valid and if true:
@@ -218,7 +218,7 @@ export class MultipleChoiceQuestionStatisticComponent implements OnInit, OnDestr
         });
 
         // add incorrect-text to the label based on the language
-        this.translateService.get('showStatistic.questionStatistic.incorrect').subscribe(incorrectLabel => {
+        this.translateService.get('showStatistic.questionStatistic.incorrect').subscribe((incorrectLabel) => {
             this.question.answerOptions!.forEach((answerOption, i) => {
                 if (!answerOption.isCorrect) {
                     // check if the answer is valid and if false:
@@ -241,8 +241,8 @@ export class MultipleChoiceQuestionStatisticComponent implements OnInit, OnDestr
         this.unratedData = [];
 
         // set data based on the answerCounters for each AnswerOption
-        this.question.answerOptions!.forEach(answerOption => {
-            const answerOptionCounter = this.questionStatistic.answerCounters.filter(answerCounter => answerOption.id === answerCounter.answer.id)[0];
+        this.question.answerOptions!.forEach((answerOption) => {
+            const answerOptionCounter = this.questionStatistic.answerCounters.filter((answerCounter) => answerOption.id === answerCounter.answer.id)[0];
             this.ratedData.push(answerOptionCounter.ratedCounter);
             this.unratedData.push(answerOptionCounter.unRatedCounter);
         });

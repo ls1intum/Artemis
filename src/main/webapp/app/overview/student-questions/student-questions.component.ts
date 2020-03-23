@@ -58,7 +58,7 @@ export class StudentQuestionsComponent implements OnInit, OnDestroy {
     }
 
     deleteQuestionFromList(studentQuestion: StudentQuestion) {
-        this.studentQuestions = this.studentQuestions.filter(el => el.id !== studentQuestion.id);
+        this.studentQuestions = this.studentQuestions.filter((el) => el.id !== studentQuestion.id);
     }
 
     addQuestion(): void {

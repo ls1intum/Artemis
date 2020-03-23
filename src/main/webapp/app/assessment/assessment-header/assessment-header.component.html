@@ -10,13 +10,13 @@
             id="assessmentLocked"
             *ngIf="!isAssessor"
             class="text-danger ml-3"
-            style="font-size: 65%"
+            style="font-size: 65%;"
             jhiTranslate="artemisApp.assessment.assessmentLocked"
             [translateValues]="{ otherUser: result?.assessor?.name + ' (' + result?.assessor?.login + ')' }"
         >
             Assessment locked by another user!
         </span>
-        <span id="assessmentLockedCurrentUser" *ngIf="isAssessor" class="text-danger ml-3" style="font-size: 65%" jhiTranslate="artemisApp.assessment.assessmentLockedCurrentUser">
+        <span id="assessmentLockedCurrentUser" *ngIf="isAssessor" class="text-danger ml-3" style="font-size: 65%;" jhiTranslate="artemisApp.assessment.assessmentLockedCurrentUser">
             You have the lock for this assessment
         </span>
         <ng-container *ngIf="!result?.completionDate">

@@ -54,10 +54,7 @@ export abstract class Command {
     }
 
     protected getLine(row: number) {
-        return this.aceEditorContainer
-            .getEditor()
-            .getSession()
-            .getLine(row);
+        return this.aceEditorContainer.getEditor().getSession().getLine(row);
     }
 
     protected getCurrentLine() {
@@ -67,10 +64,7 @@ export abstract class Command {
 
     protected moveCursorToEndOfRow() {
         const cursor = this.getCursorPosition();
-        const currentLine = this.aceEditorContainer
-            .getEditor()
-            .getSession()
-            .getLine(cursor.row);
+        const currentLine = this.aceEditorContainer.getEditor().getSession().getLine(cursor.row);
         this.clearSelection();
         this.moveCursorTo(cursor.row, currentLine.length);
     }

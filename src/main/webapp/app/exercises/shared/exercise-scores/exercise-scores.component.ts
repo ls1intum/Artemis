@@ -79,7 +79,7 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
     }
 
     ngOnInit() {
-        this.paramSub = this.route.params.subscribe(params => {
+        this.paramSub = this.route.params.subscribe((params) => {
             this.isLoading = true;
             this.courseService.find(params['courseId']).subscribe((res: HttpResponse<Course>) => {
                 this.course = res.body!;
@@ -112,7 +112,7 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
             })
             .pipe(
                 tap((res: HttpResponse<Result[]>) => {
-                    this.results = res.body!.map(result => {
+                    this.results = res.body!.map((result) => {
                         result.participation!.results = [result];
                         (result.participation! as StudentParticipation).exercise = this.exercise;
                         result.durationInMinutes = this.durationInMinutes(

@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.security;
 
 import java.util.Optional;
+import java.util.Set;
 
 import org.springframework.lang.Nullable;
 import org.springframework.security.authentication.AuthenticationProvider;
@@ -27,18 +28,28 @@ public interface ArtemisAuthenticationProvider extends AuthenticationProvider {
     /**
      * Adds a user to the specified group
      *
-     * @param username The login name of the user
+     * @param user the user
      * @param group The group the user should get added to
      */
-    void addUserToGroup(String username, String group);
+    void addUserToGroup(User user, String group);
+
+    /**
+     * Adds a user to the specified set of groups.
+     * NOTE: this method should only be invoked for newly created users!
+     * If you want to update an existing user, please use addUserToGroup(username, group)
+     *
+     * @param user the user who should be added to the given groups
+     * @param groups the groups in which the user should be added
+     */
+    void addUserToGroups(User user, @Nullable Set<String> groups);
 
     /**
      * Removes a user from the specified group
      *
-     * @param username The login of the user
+     * @param user the user
      * @param group The groupname the user should get added to
      */
-    void removeUserFromGroup(String username, String group);
+    void removeUserFromGroup(User user, String group);
 
     /**
      * Searches for a user with the given email address.

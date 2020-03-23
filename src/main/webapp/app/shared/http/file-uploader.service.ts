@@ -15,22 +15,14 @@ export class FileUploaderService {
 
     uploadFile(file: Blob | File, fileName?: string, options?: any): Promise<FileUploadResponse> {
         /** Check file extension **/
-        const fileExtension = fileName
-            ? fileName
-                  .split('.')
-                  .pop()!
-                  .toLocaleLowerCase()
-            : file['name']
-                  .split('.')
-                  .pop()
-                  .toLocaleLowerCase();
+        const fileExtension = fileName ? fileName.split('.').pop()!.toLocaleLowerCase() : file['name'].split('.').pop().toLocaleLowerCase();
         if (this.acceptedFileExtensions.split(',').indexOf(fileExtension) === -1) {
             return Promise.reject(
                 new Error(
                     'Unsupported file type! Only files of type ' +
                         this.acceptedFileExtensions
                             .split(',')
-                            .map(extension => `".${extension}"`)
+                            .map((extension) => `".${extension}"`)
                             .join(', ') +
                         ' allowed.',
                 ),
@@ -57,13 +49,7 @@ export class FileUploaderService {
         // Get file from the backend using filePath,
         const file = await this.http.get(filePath, { responseType: 'blob' }).toPromise();
         // Generate a temp file name with extension. File extension is necessary as backend stores only specific kind of files,
-        const tempFilename =
-            'temp' +
-            filePath
-                .split('/')
-                .pop()!
-                .split('#')[0]
-                .split('?')[0];
+        const tempFilename = 'temp' + filePath.split('/').pop()!.split('#')[0].split('?')[0];
         const formData = new FormData();
         formData.append('file', file, tempFilename);
         // Upload the file to backend. This will make a new file in the backend in the temp folder

@@ -182,13 +182,13 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Quiz
 
         this.isUploadingBackgroundFile = true;
         this.fileUploaderService.uploadFile(file, file['name']).then(
-            result => {
+            (result) => {
                 this.question.backgroundFilePath = result.path;
                 this.isUploadingBackgroundFile = false;
                 this.backgroundFile = null;
                 this.backgroundFileName = '';
             },
-            error => {
+            (error) => {
                 console.error('Error during file upload in uploadBackground()', error.message);
                 this.isUploadingBackgroundFile = false;
                 this.backgroundFile = null;
@@ -347,7 +347,7 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Quiz
      * @param dropLocationToDelete {object} the drop location to delete
      */
     deleteDropLocation(dropLocationToDelete: DropLocation): void {
-        this.question.dropLocations = this.question.dropLocations.filter(dropLocation => dropLocation !== dropLocationToDelete);
+        this.question.dropLocations = this.question.dropLocations.filter((dropLocation) => dropLocation !== dropLocationToDelete);
         this.deleteMappingsForDropLocation(dropLocationToDelete);
     }
 
@@ -449,7 +449,7 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Quiz
 
         this.isUploadingDragItemFile = true;
         this.fileUploaderService.uploadFile(file, file['name']).then(
-            result => {
+            (result) => {
                 // Add drag item to question
                 if (!this.question.dragItems) {
                     this.question.dragItems = [];
@@ -462,7 +462,7 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Quiz
                 this.dragItemFile = null;
                 this.dragItemFileName = '';
             },
-            error => {
+            (error) => {
                 console.error('Error during file upload in uploadDragItem()', error.message);
                 this.isUploadingDragItemFile = false;
                 this.dragItemFile = null;
@@ -480,13 +480,13 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Quiz
 
         this.isUploadingDragItemFile = true;
         this.fileUploaderService.uploadFile(file, file['name']).then(
-            result => {
+            (result) => {
                 this.dragItemPicture = result.path;
                 this.questionUpdated.emit();
                 this.isUploadingDragItemFile = false;
                 this.dragItemFile = null;
             },
-            error => {
+            (error) => {
                 console.error('Error during file upload in uploadPictureForDragItemChange()', error.message);
                 this.isUploadingDragItemFile = false;
                 this.dragItemFile = null;
@@ -500,7 +500,7 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Quiz
      * @param dragItemToDelete {object} the drag item that should be deleted
      */
     deleteDragItem(dragItemToDelete: DragItem): void {
-        this.question.dragItems = this.question.dragItems.filter(dragItem => dragItem !== dragItemToDelete);
+        this.question.dragItems = this.question.dragItems.filter((dragItem) => dragItem !== dragItemToDelete);
         this.deleteMappingsForDragItem(dragItemToDelete);
     }
 
@@ -513,7 +513,7 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Quiz
     onDragDrop(dropLocation: DropLocation, dragEvent: any): void {
         let dragItem = dragEvent.dragData;
         // Replace dragItem with original (because it may be a copy)
-        dragItem = this.question.dragItems.find(originalDragItem => (dragItem.id ? originalDragItem.id === dragItem.id : originalDragItem.tempID === dragItem.tempID));
+        dragItem = this.question.dragItems.find((originalDragItem) => (dragItem.id ? originalDragItem.id === dragItem.id : originalDragItem.tempID === dragItem.tempID));
 
         if (!dragItem) {
             // Drag item was not found in question => do nothing
@@ -527,7 +527,7 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Quiz
         // Check if this mapping already exists
         if (
             !this.question.correctMappings.some(
-                existingMapping =>
+                (existingMapping) =>
                     this.dragAndDropQuestionUtil.isSameDropLocation(existingMapping.dropLocation!, dropLocation) &&
                     this.dragAndDropQuestionUtil.isSameDragItem(existingMapping.dragItem!, dragItem),
             )
@@ -552,7 +552,7 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Quiz
         // Save reference to this due to nested some calls
         const that = this;
         if (
-            this.question.correctMappings.some(function(correctMapping) {
+            this.question.correctMappings.some(function (correctMapping) {
                 if (
                     !visitedDropLocations.some((dropLocation: DropLocation) => {
                         return that.dragAndDropQuestionUtil.isSameDropLocation(dropLocation, correctMapping.dropLocation!);
@@ -579,7 +579,7 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Quiz
         if (!this.question.correctMappings) {
             this.question.correctMappings = [];
         }
-        return this.question.correctMappings.filter(mapping => this.dragAndDropQuestionUtil.isSameDropLocation(mapping.dropLocation!, dropLocation));
+        return this.question.correctMappings.filter((mapping) => this.dragAndDropQuestionUtil.isSameDropLocation(mapping.dropLocation!, dropLocation));
     }
 
     /**
@@ -594,7 +594,7 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Quiz
         }
         return (
             this.question.correctMappings
-                .filter(mapping => this.dragAndDropQuestionUtil.isSameDragItem(mapping.dragItem!, dragItem))
+                .filter((mapping) => this.dragAndDropQuestionUtil.isSameDragItem(mapping.dragItem!, dragItem))
                 /** Moved the sorting from the template to the function call **/
                 .sort((m1, m2) => this.getMappingIndex(m1) - this.getMappingIndex(m2))
         );
@@ -609,7 +609,7 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Quiz
         if (!this.question.correctMappings) {
             this.question.correctMappings = [];
         }
-        this.question.correctMappings = this.question.correctMappings.filter(mapping => !this.dragAndDropQuestionUtil.isSameDropLocation(mapping.dropLocation!, dropLocation));
+        this.question.correctMappings = this.question.correctMappings.filter((mapping) => !this.dragAndDropQuestionUtil.isSameDropLocation(mapping.dropLocation!, dropLocation));
     }
 
     /**
@@ -621,7 +621,7 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Quiz
         if (!this.question.correctMappings) {
             this.question.correctMappings = [];
         }
-        this.question.correctMappings = this.question.correctMappings.filter(mapping => !this.dragAndDropQuestionUtil.isSameDragItem(mapping.dragItem!, dragItem));
+        this.question.correctMappings = this.question.correctMappings.filter((mapping) => !this.dragAndDropQuestionUtil.isSameDragItem(mapping.dragItem!, dragItem));
     }
 
     /**
@@ -633,7 +633,7 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Quiz
         if (!this.question.correctMappings) {
             this.question.correctMappings = [];
         }
-        this.question.correctMappings = this.question.correctMappings.filter(mapping => mapping !== mappingToDelete);
+        this.question.correctMappings = this.question.correctMappings.filter((mapping) => mapping !== mappingToDelete);
     }
 
     /**
@@ -680,7 +680,7 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Quiz
 
         this.isUploadingDragItemFile = true;
         this.fileUploaderService.uploadFile(file, file['name']).then(
-            result => {
+            (result) => {
                 this.dragItemPicture = result.path;
                 this.questionUpdated.emit();
                 this.isUploadingDragItemFile = false;
@@ -689,7 +689,7 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Quiz
                     dragItem.pictureFilePath = this.dragItemPicture;
                 }
             },
-            error => {
+            (error) => {
                 console.error('Error during file upload in changeToPictureDragItem()', error.message);
                 this.isUploadingDragItemFile = false;
                 this.dragItemFile = null;
@@ -749,7 +749,7 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Quiz
      */
     resetDropLocation(dropLocation: DropLocation): void {
         // Find matching DropLocation in backupQuestion
-        const backupDropLocation = this.backupQuestion.dropLocations.find(currentDL => currentDL.id === dropLocation.id)!;
+        const backupDropLocation = this.backupQuestion.dropLocations.find((currentDL) => currentDL.id === dropLocation.id)!;
         // Find current index of our DropLocation
         const dropLocationIndex = this.question.dropLocations.indexOf(dropLocation);
         // Remove current DropLocation at given index and insert the backup at the same position
@@ -764,7 +764,7 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Quiz
      */
     resetDragItem(dragItem: DragItem): void {
         // Find matching DragItem in backupQuestion
-        const backupDragItem = this.backupQuestion.dragItems.find(currentDI => currentDI.id === dragItem.id)!;
+        const backupDragItem = this.backupQuestion.dragItems.find((currentDI) => currentDI.id === dragItem.id)!;
         // Find current index of our DragItem
         const dragItemIndex = this.question.dragItems.indexOf(dragItem);
         // Remove current DragItem at given index and insert the backup at the same position

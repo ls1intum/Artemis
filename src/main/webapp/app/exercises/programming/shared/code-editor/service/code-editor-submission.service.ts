@@ -37,7 +37,8 @@ export class CodeEditorSubmissionService extends DomainDependentService implemen
         // Subscribe to the submission state of the currently selected participation, map the submission to the isBuilding state.
         if (domainType === DomainType.PARTICIPATION) {
             this.participationId = domainValue.id;
-            // There is no differentiation between the participation types atm. This could be implemented in the domain service, but this would make the implementation more complicated, too.
+            // There is no differentiation between the participation types atm.
+            // This could be implemented in the domain service, but this would make the implementation more complicated, too.
             this.exerciseId = (domainValue as StudentParticipation).exercise
                 ? (domainValue as StudentParticipation).exercise.id
                 : (domainValue as SolutionProgrammingExerciseParticipation).programmingExercise.id;

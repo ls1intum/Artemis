@@ -31,7 +31,7 @@ export class ModelingEditorComponent implements AfterViewInit, OnDestroy, OnChan
 
     ngAfterViewInit(): void {
         this.initializeApollonEditor();
-        this.guidedTourService.checkModelingComponent().subscribe(key => {
+        this.guidedTourService.checkModelingComponent().subscribe((key) => {
             if (key) {
                 this.assessModelForGuidedTour(key, this.getCurrentModel());
             }
@@ -51,10 +51,10 @@ export class ModelingEditorComponent implements AfterViewInit, OnDestroy, OnChan
                     ],
                     inertia: true,
                 })
-                .on('resizestart', function(event: any) {
+                .on('resizestart', function (event: any) {
                     event.target.classList.add('card-resizable');
                 })
-                .on('resizeend', function(event: any) {
+                .on('resizeend', function (event: any) {
                     event.target.classList.remove('card-resizable');
                 })
                 .on('resizemove', (event: any) => {
@@ -156,7 +156,7 @@ export class ModelingEditorComponent implements AfterViewInit, OnDestroy, OnChan
             // Check if the Inheritance association is correct
             case associationUML.name: {
                 personStudentAssociation = umlModel.relationships.find(
-                    relationship =>
+                    (relationship) =>
                         relationship.source.element === studentClass!.id &&
                         relationship.target.element === personClass!.id &&
                         relationship.type === UMLRelationshipType.ClassInheritance,
@@ -173,7 +173,7 @@ export class ModelingEditorComponent implements AfterViewInit, OnDestroy, OnChan
      * @param umlModel current model that is assessed
      */
     elementWithClass(name: string, umlModel: UMLModel) {
-        return umlModel.elements.find(element => element.name.trim() === name && element.type === UMLElementType.Class);
+        return umlModel.elements.find((element) => element.name.trim() === name && element.type === UMLElementType.Class);
     }
 
     /**
@@ -182,7 +182,7 @@ export class ModelingEditorComponent implements AfterViewInit, OnDestroy, OnChan
      * @param umlModel current model that is assessed
      */
     elementWithAttribute(attribute: string, umlModel: UMLModel) {
-        return umlModel.elements.find(element => element.name.includes(attribute) && element.type === UMLElementType.ClassAttribute);
+        return umlModel.elements.find((element) => element.name.includes(attribute) && element.type === UMLElementType.ClassAttribute);
     }
 
     /**
@@ -191,6 +191,6 @@ export class ModelingEditorComponent implements AfterViewInit, OnDestroy, OnChan
      * @param umlModel current model that is assessed
      */
     elementWithMethod(method: string, umlModel: UMLModel) {
-        return umlModel.elements.find(element => element.name.includes(method) && element.type === UMLElementType.ClassMethod);
+        return umlModel.elements.find((element) => element.name.includes(method) && element.type === UMLElementType.ClassMethod);
     }
 }

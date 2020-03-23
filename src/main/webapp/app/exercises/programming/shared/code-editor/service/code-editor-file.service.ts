@@ -25,7 +25,7 @@ export class CodeEditorFileService {
             return compose(
                 fromPairs,
                 map(([fileName, refContent]) => [testRegex.test(fileName) ? fileName.replace(replaceRegex, fileChange.newFileName) : fileName, refContent]),
-                filter(entry => !_isEmpty(entry)),
+                filter((entry) => !_isEmpty(entry)),
                 toPairs,
             )(refs);
         } else if (fileChange instanceof DeleteFileChange) {
@@ -33,7 +33,7 @@ export class CodeEditorFileService {
             return compose(
                 fromPairs,
                 filter(([fileName]) => !testRegex.test(fileName)),
-                filter(entry => !_isEmpty(entry)),
+                filter((entry) => !_isEmpty(entry)),
                 toPairs,
             )(refs);
         } else {

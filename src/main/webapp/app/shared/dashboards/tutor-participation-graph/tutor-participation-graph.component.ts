@@ -94,10 +94,10 @@ export class TutorParticipationGraphComponent implements OnInit, OnChanges {
         }
 
         if (step === this.TRAINED && this.exercise.exampleSubmissions && this.tutorParticipation.trainedExampleSubmissions) {
-            const reviewedByTutor = this.tutorParticipation.trainedExampleSubmissions.filter(exampleSubmission => !exampleSubmission.usedForTutorial);
-            const exercisesToReview = this.exercise.exampleSubmissions.filter(exampleSubmission => !exampleSubmission.usedForTutorial);
-            const assessedByTutor = this.tutorParticipation.trainedExampleSubmissions.filter(exampleSubmission => exampleSubmission.usedForTutorial);
-            const exercisesToAssess = this.exercise.exampleSubmissions.filter(exampleSubmission => exampleSubmission.usedForTutorial);
+            const reviewedByTutor = this.tutorParticipation.trainedExampleSubmissions.filter((exampleSubmission) => !exampleSubmission.usedForTutorial);
+            const exercisesToReview = this.exercise.exampleSubmissions.filter((exampleSubmission) => !exampleSubmission.usedForTutorial);
+            const assessedByTutor = this.tutorParticipation.trainedExampleSubmissions.filter((exampleSubmission) => exampleSubmission.usedForTutorial);
+            const exercisesToAssess = this.exercise.exampleSubmissions.filter((exampleSubmission) => exampleSubmission.usedForTutorial);
 
             // Returns 'orange' if there are still open example reviews or assessments
             if (
