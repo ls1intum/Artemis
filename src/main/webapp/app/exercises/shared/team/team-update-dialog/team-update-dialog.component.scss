@@ -88,3 +88,11 @@ $error-bg-color: #f8d7da;
         cursor: not-allowed;
     }
 }
+
+.hidden-md-down {
+    display: none !important;
+
+    @media (min-width: 992px) {
+        display: block !important;
+    }
+}

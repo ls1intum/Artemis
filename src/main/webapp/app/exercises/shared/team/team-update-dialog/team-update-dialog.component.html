@@ -93,9 +93,9 @@
                             <fa-icon [icon]="'trash-alt'"></fa-icon>
                         </button>
                     </div>
-                    <div class="list-group-item-error" *ngIf="hasConflictingTeam(student)">
+                    <div class="list-group-item-error hidden-md-down" *ngIf="hasConflictingTeam(student)">
                         <fa-icon class="mr-1" [icon]="'exclamation-triangle'"></fa-icon>
-                        Already assigned to team {{ getConflictingTeam(student) }}.
+                        Already assigned to team with id {{ getConflictingTeam(student) }}.
                     </div>
                 </li>
                 <li *ngIf="pendingTeam.students.length === 0" class="list-group-item-container d-flex align-items-center">
