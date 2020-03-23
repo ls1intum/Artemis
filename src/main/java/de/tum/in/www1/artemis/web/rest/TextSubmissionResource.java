@@ -55,7 +55,8 @@ public class TextSubmissionResource {
     private final GradingCriterionService gradingCriterionService;
 
     public TextSubmissionResource(TextSubmissionRepository textSubmissionRepository, ExerciseService exerciseService, TextExerciseService textExerciseService,
-                                  CourseService courseService, AuthorizationCheckService authorizationCheckService, TextSubmissionService textSubmissionService, UserService userService, GradingCriterionService gradingCriterionService) {
+            CourseService courseService, AuthorizationCheckService authorizationCheckService, TextSubmissionService textSubmissionService, UserService userService,
+            GradingCriterionService gradingCriterionService) {
         this.textSubmissionRepository = textSubmissionRepository;
         this.exerciseService = exerciseService;
         this.textExerciseService = textExerciseService;
