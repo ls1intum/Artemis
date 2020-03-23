@@ -174,7 +174,7 @@ public class ParticipationResource {
             throw new BadRequestAlertException(e.getMessage(), "exercise", "exerciseNotFound");
         }
 
-        ProgrammingExerciseStudentParticipation participation = programmingExerciseParticipationService.findStudentParticipationByExerciseIdAndStudentId(exercise,
+        ProgrammingExerciseStudentParticipation participation = programmingExerciseParticipationService.findStudentParticipationByExerciseAndStudentId(exercise,
                 principal.getName());
 
         User user = userService.getUserWithGroupsAndAuthorities();
@@ -210,7 +210,7 @@ public class ParticipationResource {
 
     /**
      * This makes sure the client can display the latest result immediately after loading this participation
-     * 
+     *
      * @param participation The participation to which the latest result should get added
      */
     private void addLatestResultToParticipation(Participation participation) {

@@ -113,7 +113,7 @@ public class ProgrammingExerciseParticipationService {
      */
     @Transactional(readOnly = true)
     @NotNull
-    public ProgrammingExerciseStudentParticipation findStudentParticipationByExerciseIdAndStudentId(Exercise exercise, String username) throws EntityNotFoundException {
+    public ProgrammingExerciseStudentParticipation findStudentParticipationByExerciseAndStudentId(Exercise exercise, String username) throws EntityNotFoundException {
         Optional<ProgrammingExerciseStudentParticipation> participation;
         if (exercise.isTeamMode()) {
             Optional<Team> optionalTeam = teamRepository.findOneByExerciseIdAndUserLogin(exercise.getId(), username);
