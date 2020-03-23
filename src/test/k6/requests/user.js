@@ -5,7 +5,7 @@ export function getUser(artemis, i, baseUsername) {
     const username = baseUsername.replace('USERID', i);
     const res = artemis.get(USERS + '/' + username);
     if (res[0].status !== 200) {
-        console.warn('Warning: Unable to get user ' + username + ' (status: ' + res[0].status + ')! response: ' + res[0].body);
+        console.info('Unable to get user ' + username + ' (status: ' + res[0].status + ')!');
     }
     return res[0].body;
 }
@@ -13,7 +13,7 @@ export function getUser(artemis, i, baseUsername) {
 export function updateUser(artemis, user) {
     const res = artemis.put(USERS, user);
     if (res[0].status !== 200) {
-        console.warn('Warning: Unable to update user ' + user.login + ' (status: ' + res[0].status + ')! response: ' + res[0].body);
+        console.info('Unable to update user ' + user.login + ' (status: ' + res[0].status + ')!');
     }
 }
 
@@ -47,11 +47,11 @@ export function newUser(artemis, i, baseUsername, basePassword, studentGroupName
     console.log('Try to create new user ' + username);
     const res = artemis.post(USERS, user);
     if (res[0].status !== 201) {
-        console.warn('Warning: Unable to generate new user ' + username + ' (status: ' + res[0].status + ')! response: ' + res[0].body);
+        console.info('Unable to generate new user ' + username + ' (status: ' + res[0].status + ')!');
         return -1;
     }
     else {
-        console.log('SUCCESS: Created new user ' + username);
+        console.log('SUCCESS: Created new user ' + username + " with groups " + res[0].body.groups);
     }
 
     return JSON.parse(res[0].body).id;
