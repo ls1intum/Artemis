@@ -212,6 +212,7 @@ export class GradingInstructionsDetailsComponent implements OnInit {
      * @param domainCommands containing tuples of [text, domainCommandIdentifiers]
      */
     groupInstructionsToCriteria(domainCommands: [string, DomainCommand][]): void {
+        const initialCriteriaCommands = domainCommands;
         if (this.exercise.gradingCriteria === undefined) {
             this.exercise.gradingCriteria = [];
         }
@@ -222,19 +223,22 @@ export class GradingInstructionsDetailsComponent implements OnInit {
                 this.exercise.gradingCriteria.push(newCriterion);
                 newCriterion.structuredGradingInstructions = [];
                 const modifiedArray = domainCommands.slice(1); // remove GradingCriterionCommandIdentifier after creating its criterion object
+                let endOfCriterion = 0;
                 for (const [instrText, instrCommand] of modifiedArray) {
+                    endOfCriterion++;
                     if (instrCommand instanceof GradingInstructionCommand) {
                         const newInstruction = new GradingInstruction(); // create instruction objects that belong to the above created criterion
                         newCriterion.structuredGradingInstructions.push(newInstruction);
                         this.instructions.push(newInstruction);
                     }
                     if (instrCommand instanceof GradingCriterionCommand) {
+                        domainCommands = domainCommands.slice(endOfCriterion, domainCommands.length);
                         break;
                     }
                 }
             }
         }
-        this.setInstructionParameters(domainCommands.filter(([text, command]) => command instanceof GradingCriterionCommand === false));
+        this.setInstructionParameters(initialCriteriaCommands.filter(([text, command]) => command instanceof GradingCriterionCommand === false));
     }
 
     /**

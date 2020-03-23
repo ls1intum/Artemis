@@ -418,7 +418,7 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
             return;
         }
 
-        if (!this.referencedFeedback.every(f => f.reference != null && f.reference.length <= 2000)) {
+        if (this.referencedFeedback.every(f => f.reference != null && f.reference.length > 2000)) {
             this.invalidError = 'artemisApp.textAssessment.error.feedbackReferenceTooLong';
             this.assessmentsAreValid = false;
         }
@@ -514,5 +514,11 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
         const credits = instruction.credits;
         const feedback = instruction.feedback;
         this.generalFeedback.detailText += 'Score: ' + credits + ' Feedback: ' + feedback + '\n';
+    }
+    public addReferencedFeedback(): void {
+        const referencedFeedback = new Feedback();
+        referencedFeedback.credits = 0;
+        this.referencedFeedback.push(referencedFeedback);
+        this.validateAssessment();
     }
 }
