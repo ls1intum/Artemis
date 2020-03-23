@@ -1,0 +1,24 @@
+<strong jhiTranslate="artemisApp.exercise.DragDropInstruction"> Drag & Drop instruction to feedback element</strong> <br /><br />
+<div *ngFor="let criterion of criteria; let criterionIndex = index">
+    <jhi-expandable-section [hasTranslation]="false" [headerKey]="criterion.title">
+        <div
+            class="rounded"
+            *ngFor="let instruction of criterion!.structuredGradingInstructions; let instructionIndex = index"
+            draggable="true"
+            (dragstart)="drag($event, instruction)"
+            id="criterion-{{ criterionIndex }}-instruction-{{ instructionIndex }}"
+            [ngbTooltip]="setTooltip(instruction)"
+            [style.background-color]="setInstrColour(instruction)"
+        >
+            <table class="table">
+                <tbody>
+                    <tr>
+                        <td width="5%" [innerHTML]="instruction.credits"></td>
+                        <td width="10%" [innerHTML]="instruction!.gradingScale! | htmlForMarkdown"></td>
+                        <td width="85%" [innerHTML]="instruction!.instructionDescription! | htmlForMarkdown"></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </jhi-expandable-section>
+</div>

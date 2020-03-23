@@ -518,6 +518,7 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
     public addReferencedFeedback(): void {
         const referencedFeedback = new Feedback();
         referencedFeedback.credits = 0;
+        referencedFeedback.reference = '';
         this.referencedFeedback.push(referencedFeedback);
         this.validateAssessment();
     }
