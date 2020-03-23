@@ -34,6 +34,7 @@
         "lastModifiedBy": "Bearbeitet von",
         "lastModifiedDate": "Zuletzt bearbeitet",
         "search": "Suche nach Nutzern: ",
-        "loading": "Laden..."
+        "loading": "Laden...",
+        "searchError": "Suchterm muss leer oder mindestens 3 Character lang sein."
     }
 }

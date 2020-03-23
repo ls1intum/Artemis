@@ -34,6 +34,7 @@
         "lastModifiedBy": "Modified by",
         "lastModifiedDate": "Modified date",
         "search": "Search for User: ",
-        "loading": "Loading..."
+        "loading": "Loading...",
+        "searchError": "Search term must be empty or at least 3 character."
     }
 }

@@ -11,6 +11,7 @@ import { Subject } from 'rxjs';
 import { AlertService } from 'app/core/alert/alert.service';
 import { SortingOrder } from 'app/shared/table/pageable-table';
 import { debounceTime, switchMap, tap } from 'rxjs/operators';
+import { FormControl, AbstractControl, FormGroup } from '@angular/forms';
 
 @Component({
     selector: 'jhi-user-management',
@@ -35,7 +36,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
 
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
-
+    userSearchForm: FormGroup;
     constructor(
         private userService: UserService,
         private alertService: AlertService,
@@ -83,6 +84,9 @@ export class UserManagementComponent implements OnInit, OnDestroy {
      * Retrieves the current user and calls the {@link loadAll} and {@link registerChangeInUsers} methods on init
      */
     ngOnInit() {
+        this.userSearchForm = new FormGroup({
+            searchControl: new FormControl('', { validators: [this.validateUserSearch], updateOn: 'blur' }),
+        });
         this.accountService.identity().then(user => {
             this.currentAccount = user!;
             this.loadAll();
@@ -197,5 +201,16 @@ export class UserManagementComponent implements OnInit, OnDestroy {
 
     get searchTerm(): string {
         return this.searchTermString;
+    }
+
+    validateUserSearch(control: AbstractControl) {
+        if (control.value.length >= 1 && control.value.length <= 2) {
+            return { searchControl: true };
+        }
+        return null;
+    }
+
+    get searchControl() {
+        return this.userSearchForm.get('searchControl')!;
     }
 }

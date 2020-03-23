@@ -7,11 +7,26 @@
     </h2>
     <jhi-alert></jhi-alert>
     <div class="table-responsive" *ngIf="users">
-        <div class="form-group form-inline">
-            <span jhiTranslate="userManagement.search">Search for User: </span
-            ><input class="form-control ml-2" type="text" name="searchTerm" [(ngModel)]="searchTerm" (focusout)="loadAll()" />
-            <span class="ml-3" *ngIf="loadingSearchResult" jhiTranslate="userManagement.loading">Loading...</span>
-        </div>
+        <form [formGroup]="userSearchForm">
+            <div class="form-group form-inline">
+                <label for="field_searchTerm" class="form-control-label" jhiTranslate="userManagement.search">Search for User: </label>
+                <input
+                    class="form-control ml-2"
+                    type="text"
+                    name="searchTerm"
+                    id="field_searchTerm"
+                    formControlName="searchControl"
+                    [(ngModel)]="searchTerm"
+                    (focusout)="loadAll()"
+                />
+                <ng-container *ngIf="searchControl.invalid && (searchControl.dirty || searchControl.touched)">
+                    <div class="alert alert-danger">
+                        <div jhiTranslate="userManagement.searchError">Search term must be empty or at least 3 character.</div>
+                    </div>
+                </ng-container>
+                <span class="ml-3" *ngIf="loadingSearchResult" jhiTranslate="userManagement.loading">Loading...</span>
+            </div>
+        </form>
         <table class="table table-striped">
             <thead>
                 <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" [callback]="transition.bind(this)">
