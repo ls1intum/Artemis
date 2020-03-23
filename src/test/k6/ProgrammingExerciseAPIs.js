@@ -55,7 +55,12 @@ export function setup() {
         }
     }
     else {
-        console.log("Do not create users, will update their groups");
+        console.log("Do not create users, assume the user exists in the external system, will update their groups");
+        for (let i = 1; i <= iterations; i++) {
+            // we need to login once with the user, so that the user is synced and available for the update with the groups
+            login(baseUsername.replace('USERID', i), basePassword.replace('USERID', i))
+        }
+        artemis = login(adminUsername, adminPassword);
         for (let i = 1; i <= iterations; i++) {
             updateUserWithGroup(artemis, i, baseUsername, course);
         }
