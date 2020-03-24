@@ -80,11 +80,11 @@ export class DragAndDropQuestionStatisticComponent implements OnInit, OnDestroy,
     }
 
     ngOnInit() {
-        this.sub = this.route.params.subscribe(params => {
+        this.sub = this.route.params.subscribe((params) => {
             this.questionIdParam = +params['questionId'];
             // use different REST-call if the User is a Student
             if (this.accountService.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'])) {
-                this.quizExerciseService.find(params['exerciseId']).subscribe(res => {
+                this.quizExerciseService.find(params['exerciseId']).subscribe((res) => {
                     this.loadQuiz(res.body!, false);
                 });
             }
@@ -94,15 +94,15 @@ export class DragAndDropQuestionStatisticComponent implements OnInit, OnDestroy,
             this.jhiWebsocketService.subscribe(this.websocketChannelForData);
 
             // ask for new Data if the websocket for new statistical data was notified
-            this.jhiWebsocketService.receive(this.websocketChannelForData).subscribe(quiz => {
+            this.jhiWebsocketService.receive(this.websocketChannelForData).subscribe((quiz) => {
                 this.loadQuiz(quiz, true);
             });
 
             // add Axes-labels based on selected language
-            this.translateService.get('showStatistic.quizStatistic.xAxes').subscribe(xLabel => {
+            this.translateService.get('showStatistic.quizStatistic.xAxes').subscribe((xLabel) => {
                 this.options.scales!.xAxes![0].scaleLabel!.labelString = xLabel;
             });
-            this.translateService.get('showStatistic.quizStatistic.yAxes').subscribe(yLabel => {
+            this.translateService.get('showStatistic.quizStatistic.yAxes').subscribe((yLabel) => {
                 this.options.scales!.yAxes![0].scaleLabel!.labelString = yLabel;
             });
         });
@@ -138,7 +138,7 @@ export class DragAndDropQuestionStatisticComponent implements OnInit, OnDestroy,
         }
         // search selected question in quizExercise based on questionId
         this.quizExercise = quiz;
-        const updatedQuestion = this.quizExercise.quizQuestions.filter(question => this.questionIdParam === question.id)[0];
+        const updatedQuestion = this.quizExercise.quizQuestions.filter((question) => this.questionIdParam === question.id)[0];
         this.question = updatedQuestion as DragAndDropQuestion;
         // if the Anyone finds a way to the Website,
         // with a wrong combination of QuizId and QuestionId
@@ -207,7 +207,7 @@ export class DragAndDropQuestionStatisticComponent implements OnInit, OnDestroy,
         };
 
         // add Text for last label based on the language
-        this.translateService.get('showStatistic.quizStatistic.yAxes').subscribe(lastLabel => {
+        this.translateService.get('showStatistic.quizStatistic.yAxes').subscribe((lastLabel) => {
             this.label[this.question.dropLocations.length] = lastLabel.split(' ');
             this.labels = this.label;
         });
@@ -218,7 +218,7 @@ export class DragAndDropQuestionStatisticComponent implements OnInit, OnDestroy,
      */
     loadInvalidLayout() {
         // set Background for invalid answers = grey
-        this.translateService.get('showStatistic.invalid').subscribe(invalidLabel => {
+        this.translateService.get('showStatistic.invalid').subscribe((invalidLabel) => {
             this.question.dropLocations.forEach((dropLocation, i) => {
                 if (dropLocation.invalid) {
                     this.backgroundColor[i] = {
@@ -249,8 +249,8 @@ export class DragAndDropQuestionStatisticComponent implements OnInit, OnDestroy,
         this.unratedData = [];
 
         // set data based on the dropLocations for each dropLocation
-        this.question.dropLocations.forEach(dropLocation => {
-            const dropLocationCounter = this.questionStatistic.dropLocationCounters.find(dlCounter => dropLocation.id === dlCounter.dropLocation.id)!;
+        this.question.dropLocations.forEach((dropLocation) => {
+            const dropLocationCounter = this.questionStatistic.dropLocationCounters.find((dlCounter) => dropLocation.id === dlCounter.dropLocation.id)!;
             this.ratedData.push(dropLocationCounter.ratedCounter);
             this.unratedData.push(dropLocationCounter.unRatedCounter);
         });
@@ -361,7 +361,7 @@ export class DragAndDropQuestionStatisticComponent implements OnInit, OnDestroy,
      *                          or null if no drag item has been mapped to this location
      */
     correctDragItemForDropLocation(dropLocation: DropLocation) {
-        const currMapping = this.dragAndDropQuestionUtil.solve(this.question, undefined).filter(mapping => mapping.dropLocation!.id === dropLocation.id)[0];
+        const currMapping = this.dragAndDropQuestionUtil.solve(this.question, undefined).filter((mapping) => mapping.dropLocation!.id === dropLocation.id)[0];
         if (currMapping) {
             return currMapping.dragItem;
         } else {

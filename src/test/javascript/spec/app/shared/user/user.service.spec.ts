@@ -34,7 +34,7 @@ describe('Service Tests', () => {
                 expect(req.request.url).toEqual(`${resourceUrl}/user`);
             });
             it('should return User', () => {
-                service.find('user').subscribe(received => {
+                service.find('user').subscribe((received) => {
                     expect(received.body.login).toEqual('user');
                 });
 
@@ -43,7 +43,7 @@ describe('Service Tests', () => {
             });
 
             it('should return Authorities', () => {
-                service.authorities().subscribe(_authorities => {
+                service.authorities().subscribe((_authorities) => {
                     expect(_authorities).toEqual(['ROLE_USER', 'ROLE_ADMIN']);
                 });
                 const req = httpMock.expectOne({ method: 'GET' });

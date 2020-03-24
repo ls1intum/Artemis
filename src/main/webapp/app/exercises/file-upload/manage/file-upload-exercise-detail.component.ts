@@ -29,7 +29,7 @@ export class FileUploadExerciseDetailComponent implements OnInit, OnDestroy {
      * Initializes subscription for file upload exercise
      */
     ngOnInit() {
-        this.subscription = this.route.params.subscribe(params => {
+        this.subscription = this.route.params.subscribe((params) => {
             this.load(params['exerciseId']);
         });
         this.registerChangeInFileUploadExercises();
@@ -42,7 +42,7 @@ export class FileUploadExerciseDetailComponent implements OnInit, OnDestroy {
     load(exerciseId: number) {
         this.fileUploadExerciseService
             .find(exerciseId)
-            .pipe(filter(res => !!res.body))
+            .pipe(filter((res) => !!res.body))
             .subscribe(
                 (fileUploadExerciseResponse: HttpResponse<FileUploadExercise>) => {
                     this.fileUploadExercise = fileUploadExerciseResponse.body!;

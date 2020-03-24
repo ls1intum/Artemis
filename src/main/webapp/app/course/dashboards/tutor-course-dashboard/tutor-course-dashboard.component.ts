@@ -59,7 +59,7 @@ export class TutorCourseDashboardComponent implements OnInit, AfterViewInit {
     ngOnInit(): void {
         this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
         this.loadAll();
-        this.accountService.identity().then(user => (this.tutor = user!));
+        this.accountService.identity().then((user) => (this.tutor = user!));
     }
 
     ngAfterViewInit(): void {
@@ -76,7 +76,7 @@ export class TutorCourseDashboardComponent implements OnInit, AfterViewInit {
                 if (this.course.exercises && this.course.exercises.length > 0) {
                     const [finishedExercises, unfinishedExercises] = partition(
                         this.course.exercises,
-                        exercise =>
+                        (exercise) =>
                             exercise.numberOfAssessments === exercise.numberOfParticipations &&
                             exercise.numberOfOpenComplaints === 0 &&
                             exercise.numberOfOpenMoreFeedbackRequests === 0,
@@ -100,7 +100,7 @@ export class TutorCourseDashboardComponent implements OnInit, AfterViewInit {
                 this.numberOfOpenComplaints = this.stats.numberOfOpenComplaints;
                 this.numberOfMoreFeedbackRequests = this.stats.numberOfMoreFeedbackRequests;
                 this.numberOfOpenMoreFeedbackRequests = this.stats.numberOfOpenMoreFeedbackRequests;
-                const tutorLeaderboardEntry = this.stats.tutorLeaderboardEntries.find(entry => entry.userId === this.tutor.id);
+                const tutorLeaderboardEntry = this.stats.tutorLeaderboardEntries.find((entry) => entry.userId === this.tutor.id);
                 if (tutorLeaderboardEntry) {
                     this.numberOfTutorAssessments = tutorLeaderboardEntry.numberOfAssessments;
                     this.numberOfTutorComplaints = tutorLeaderboardEntry.numberOfAcceptedComplaints;

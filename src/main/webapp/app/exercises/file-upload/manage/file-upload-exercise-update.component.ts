@@ -94,7 +94,7 @@ export class FileUploadExerciseUpdateComponent implements OnInit {
      * @param categories list of exercies categories
      */
     updateCategories(categories: ExerciseCategory[]) {
-        this.fileUploadExercise.categories = categories.map(el => JSON.stringify(el));
+        this.fileUploadExercise.categories = categories.map((el) => JSON.stringify(el));
     }
 
     private subscribeToSaveResponse(result: Observable<HttpResponse<FileUploadExercise>>) {

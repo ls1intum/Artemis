@@ -29,7 +29,7 @@ export class TextExerciseDetailComponent implements OnInit, OnDestroy {
     constructor(private eventManager: JhiEventManager, private textExerciseService: TextExerciseService, private route: ActivatedRoute, private artemisMarkdown: ArtemisMarkdown) {}
 
     ngOnInit() {
-        this.subscription = this.route.params.subscribe(params => {
+        this.subscription = this.route.params.subscribe((params) => {
             this.load(params['exerciseId']);
         });
         this.registerChangeInTextExercises();

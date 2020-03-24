@@ -39,7 +39,7 @@ export class CourseLecturesComponent implements OnInit, OnDestroy {
 
     ngOnInit() {
         this.exerciseCountMap = new Map<string, number>();
-        this.paramSubscription = this.route.parent!.params.subscribe(params => {
+        this.paramSubscription = this.route.parent!.params.subscribe((params) => {
             this.courseId = parseInt(params['courseId'], 10);
         });
 
@@ -76,26 +76,18 @@ export class CourseLecturesComponent implements OnInit, OnDestroy {
         const courseLectures = this.course!.lectures ? [...this.course!.lectures] : [];
         const sortedLectures = this.sortLectures(courseLectures, selectedOrder);
         const notAssociatedLectures: Lecture[] = [];
-        sortedLectures.forEach(lecture => {
+        sortedLectures.forEach((lecture) => {
             const dateValue = lecture.startDate ? moment(lecture.startDate) : null;
             if (!dateValue) {
                 notAssociatedLectures.push(lecture);
                 return;
             }
-            const dateIndex = dateValue
-                ? moment(dateValue)
-                      .startOf('week')
-                      .format('YYYY-MM-DD')
-                : 'NoDate';
+            const dateIndex = dateValue ? moment(dateValue).startOf('week').format('YYYY-MM-DD') : 'NoDate';
             if (!groupedLectures[dateIndex]) {
                 indexKeys.push(dateIndex);
                 if (dateValue) {
                     groupedLectures[dateIndex] = {
-                        label: `<b>${moment(dateValue)
-                            .startOf('week')
-                            .format('DD/MM/YYYY')}</b> - <b>${moment(dateValue)
-                            .endOf('week')
-                            .format('DD/MM/YYYY')}</b>`,
+                        label: `<b>${moment(dateValue).startOf('week').format('DD/MM/YYYY')}</b> - <b>${moment(dateValue).endOf('week').format('DD/MM/YYYY')}</b>`,
                         isCollapsed: dateValue.isBefore(moment(), 'week'),
                         isCurrentWeek: dateValue.isSame(moment(), 'week'),
                         lectures: [],

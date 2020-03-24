@@ -95,9 +95,9 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnInit, On
             const latestResult = this.participation.results.reduce((acc, x) => (x.id > acc.id ? x : acc));
             of(latestResult)
                 .pipe(
-                    switchMap(result => (result && !result.feedbacks ? this.loadAndAttachResultDetails(result) : of(result))),
-                    switchMap(result => this.fetchBuildResults(result)),
-                    map(buildLogsFromServer => BuildLogEntryArray.fromBuildLogs(buildLogsFromServer!)),
+                    switchMap((result) => (result && !result.feedbacks ? this.loadAndAttachResultDetails(result) : of(result))),
+                    switchMap((result) => this.fetchBuildResults(result)),
+                    map((buildLogsFromServer) => BuildLogEntryArray.fromBuildLogs(buildLogsFromServer!)),
                     tap((buildLogsFromServer: BuildLogEntryArray) => {
                         this.rawBuildLogs = buildLogsFromServer;
                         const buildLogErrors = this.rawBuildLogs.extractErrors();
@@ -145,8 +145,8 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnInit, On
             .subscribeForLatestResultOfParticipation(this.participation.id)
             .pipe(
                 // Ignore initial null result from service
-                filter(result => !!result),
-                switchMap(result => this.fetchBuildResults(result)),
+                filter((result) => !!result),
+                switchMap((result) => this.fetchBuildResults(result)),
                 tap((buildLogsFromServer: BuildLogEntry[]) => {
                     this.rawBuildLogs = BuildLogEntryArray.fromBuildLogs(buildLogsFromServer);
                     this.buildLogErrors = this.rawBuildLogs.extractErrors();
@@ -168,7 +168,7 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnInit, On
      */
     loadAndAttachResultDetails(result: Result): Observable<Result> {
         return this.resultService.getFeedbackDetailsForResult(result.id).pipe(
-            map(res => res && res.body),
+            map((res) => res && res.body),
             map((feedbacks: Feedback[]) => {
                 result.feedbacks = feedbacks;
                 return result;

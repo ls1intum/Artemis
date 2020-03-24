@@ -74,7 +74,7 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
                 if (data.submissions && data.submissions.length > 0) {
                     this.submission = data.submissions[0] as TextSubmission;
                     if (this.submission && data.results && this.isAfterAssessmentDueDate) {
-                        this.result = data.results.find(r => r.submission!.id === this.submission.id)!;
+                        this.result = data.results.find((r) => r.submission!.id === this.submission.id)!;
                     }
 
                     if (this.submission && this.submission.text) {
@@ -95,7 +95,7 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
             newSubmission.submitted = false;
             newSubmission.text = this.answer;
             if (this.submission.id) {
-                this.textSubmissionService.update(newSubmission, this.textExercise.id).subscribe(response => {
+                this.textSubmissionService.update(newSubmission, this.textExercise.id).subscribe((response) => {
                     this.submission = response.body!;
                     // reconnect so that the submission status is displayed correctly in the result.component
                     this.submission.participation.submissions = [this.submission];
@@ -142,7 +142,7 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
      */
     get generalFeedback(): Feedback | null {
         if (this.result && this.result.feedbacks && Array.isArray(this.result.feedbacks)) {
-            const feedbackWithoutReference = this.result.feedbacks.find(f => f.reference == null) || null;
+            const feedbackWithoutReference = this.result.feedbacks.find((f) => f.reference == null) || null;
             if (feedbackWithoutReference != null && feedbackWithoutReference.detailText != null && feedbackWithoutReference.detailText.length > 0) {
                 return feedbackWithoutReference;
             }
@@ -178,7 +178,7 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
 
         this.submission.submitted = true;
         this.textSubmissionService.update(this.submission, this.textExercise.id).subscribe(
-            response => {
+            (response) => {
                 this.submission = response.body!;
                 // reconnect so that the submission status is displayed correctly in the result.component
                 this.submission.participation.submissions = [this.submission];
@@ -192,7 +192,7 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
                     this.jhiAlertService.warning('entity.action.submitDeadlineMissedAlert');
                 }
             },
-            err => {
+            (err) => {
                 this.jhiAlertService.error('artemisApp.modelingEditor.error');
                 this.submission.submitted = false;
                 this.isSaving = false;

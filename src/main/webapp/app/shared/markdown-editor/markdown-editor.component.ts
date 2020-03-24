@@ -174,7 +174,7 @@ export class MarkdownEditorComponent implements AfterViewInit {
      * @desc customize the user interface of the markdown editor by removing a command
      */
     removeCommand(classRef: typeof Command) {
-        setTimeout(() => (this.defaultCommands = this.defaultCommands.filter(element => !(element instanceof classRef))));
+        setTimeout(() => (this.defaultCommands = this.defaultCommands.filter((element) => !(element instanceof classRef))));
     }
 
     ngAfterViewInit(): void {
@@ -186,12 +186,12 @@ export class MarkdownEditorComponent implements AfterViewInit {
         this.aceEditorContainer.getEditor().completers = [];
 
         if (this.domainCommands == null || this.domainCommands.length === 0) {
-            [...this.defaultCommands, ...this.colorCommands, ...(this.headerCommands || []), ...this.metaCommands].forEach(command => {
+            [...this.defaultCommands, ...this.colorCommands, ...(this.headerCommands || []), ...this.metaCommands].forEach((command) => {
                 command.setEditor(this.aceEditorContainer);
                 command.setMarkdownWrapper(this.wrapper);
             });
         } else {
-            [...this.defaultCommands, ...this.domainCommands, ...this.colorCommands, ...(this.headerCommands || []), ...this.metaCommands].forEach(command => {
+            [...this.defaultCommands, ...this.domainCommands, ...this.colorCommands, ...(this.headerCommands || []), ...this.metaCommands].forEach((command) => {
                 command.setEditor(this.aceEditorContainer);
                 command.setMarkdownWrapper(this.wrapper);
             });
@@ -200,10 +200,7 @@ export class MarkdownEditorComponent implements AfterViewInit {
 
         const selectedAceMode = getAceMode(this.editorMode);
         if (selectedAceMode) {
-            this.aceEditorContainer
-                .getEditor()
-                .getSession()
-                .setMode(selectedAceMode);
+            this.aceEditorContainer.getEditor().getSession().setMode(selectedAceMode);
         }
 
         if (this.enableResize) {
@@ -244,14 +241,14 @@ export class MarkdownEditorComponent implements AfterViewInit {
                 ],
                 inertia: true,
             })
-            .on('resizestart', function(event: any) {
+            .on('resizestart', function (event: any) {
                 event.target.classList.add('card-resizable');
             })
             .on('resizeend', (event: any) => {
                 event.target.classList.remove('card-resizable');
                 this.aceEditorContainer.getEditor().resize();
             })
-            .on('resizemove', function(event: any) {
+            .on('resizemove', function (event: any) {
                 const target = event.target;
                 // Update element height
                 target.style.height = event.rect.height + 'px';
@@ -270,7 +267,7 @@ export class MarkdownEditorComponent implements AfterViewInit {
         }
         if (this.domainCommands && this.domainCommands.length && this.markdown) {
             /** create array with domain command identifier */
-            const domainCommandIdentifiersToParse = this.domainCommands.map(command => command.getOpeningIdentifier());
+            const domainCommandIdentifiersToParse = this.domainCommands.map((command) => command.getOpeningIdentifier());
             /** create empty array which
              * will contain the splitted text with the corresponding domainCommandIdentifier which
              * will be emitted to the parent component */
@@ -280,7 +277,7 @@ export class MarkdownEditorComponent implements AfterViewInit {
 
             /** create string with the identifiers to use for RegEx by deleting the [] of the domainCommandIdentifiers */
             const commandIdentifiersString = domainCommandIdentifiersToParse
-                .map(tag => tag.replace('[', '').replace(']', ''))
+                .map((tag) => tag.replace('[', '').replace(']', ''))
                 .map(escapeStringForUseInRegex)
                 .join('|');
 
@@ -295,7 +292,7 @@ export class MarkdownEditorComponent implements AfterViewInit {
              *  m: match the regex over multiple lines*/
             const regex = new RegExp(`(?=\\[(${commandIdentifiersString})\\])`, 'gmi');
 
-            /** iterating loop as long as the remainingMarkdownText of the markdown text exists and split the remainingMarkdownText as soon as a domainCommand identifier is found */
+            /** iterating loop as long as the remainingMarkdownText of the markdown text exists and split the remainingMarkdownText when a domainCommand identifier is found */
             while (remainingMarkdownText.length) {
                 /** As soon as an identifier is with regEx the remainingMarkdownText of the markdown text is split and saved into {array} textWithCommandIdentifier
                  *  split: saves its values into an {array}
@@ -333,7 +330,7 @@ export class MarkdownEditorComponent implements AfterViewInit {
                 domainCommand.getOpeningIdentifier().toLowerCase(),
                 domainCommand.getOpeningIdentifier().toUpperCase(),
             ];
-            if (possibleOpeningCommandIdentifier.some(identifier => text.indexOf(identifier) !== -1)) {
+            if (possibleOpeningCommandIdentifier.some((identifier) => text.indexOf(identifier) !== -1)) {
                 // TODO when closingIdentifiers are used write a method to extract them from the text
                 const trimmedLineWithoutIdentifier = possibleOpeningCommandIdentifier.reduce((line, identifier) => line.replace(identifier, ''), text).trim();
                 return [trimmedLineWithoutIdentifier, domainCommand];

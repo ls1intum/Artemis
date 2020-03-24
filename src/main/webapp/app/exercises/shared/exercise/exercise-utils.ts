@@ -127,7 +127,8 @@ const participationStatusForQuizExercise = (exercise: Exercise): ParticipationSt
 const participationStatusForModelingTextFileUploadExercise = (exercise: Exercise): ParticipationStatus => {
     const participation = exercise.studentParticipations[0];
 
-    // An exercise is active (EXERCISE_ACTIVE) if it is initialized and has not passed its due date. The more detailed evaluation of active exercises takes place in the result component.
+    // An exercise is active (EXERCISE_ACTIVE) if it is initialized and has not passed its due date.
+    // A more detailed evaluation of active exercises takes place in the result component.
     // An exercise was missed (EXERCISE_MISSED) if it is initialized and has passed its due date (due date lies in the past).
     if (participation.initializationState === InitializationState.INITIALIZED) {
         return hasExerciseDueDatePassed(exercise) ? ParticipationStatus.EXERCISE_MISSED : ParticipationStatus.EXERCISE_ACTIVE;

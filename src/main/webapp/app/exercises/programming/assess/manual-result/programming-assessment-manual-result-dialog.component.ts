@@ -62,7 +62,7 @@ export class ProgrammingAssessmentManualResultDialogComponent implements OnInit 
 
     ngOnInit() {
         // If there already is a manual result, update it instead of creating a new one.
-        this.accountService.identity().then(user => {
+        this.accountService.identity().then((user) => {
             // Used to check if the assessor is the current user
             this.user = user!;
             if (this.result) {
@@ -159,7 +159,7 @@ export class ProgrammingAssessmentManualResultDialogComponent implements OnInit 
 
     private subscribeToSaveResponse(result: Observable<HttpResponse<Result>>) {
         result.subscribe(
-            res => this.onSaveSuccess(res),
+            (res) => this.onSaveSuccess(res),
             () => this.onSaveError(),
         );
     }
@@ -187,9 +187,9 @@ export class ProgrammingAssessmentManualResultDialogComponent implements OnInit 
     private getComplaint(id: number): void {
         this.complaintService
             .findByResultId(id)
-            .pipe(filter(res => !!res.body))
+            .pipe(filter((res) => !!res.body))
             .subscribe(
-                res => {
+                (res) => {
                     this.complaint = res.body!;
                 },
                 (err: HttpErrorResponse) => {

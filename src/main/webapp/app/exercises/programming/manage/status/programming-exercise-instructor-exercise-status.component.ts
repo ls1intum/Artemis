@@ -35,8 +35,8 @@ export class ProgrammingExerciseInstructorExerciseStatusComponent implements OnC
             this.templateParticipationSubscription = this.participationWebsocketService
                 .subscribeForLatestResultOfParticipation(this.templateParticipation.id)
                 .pipe(
-                    filter(result => !!result),
-                    tap(result => (this.templateParticipation.results = [result!])),
+                    filter((result) => !!result),
+                    tap((result) => (this.templateParticipation.results = [result!])),
                     tap(() => this.findIssues()),
                 )
                 .subscribe();
@@ -49,8 +49,8 @@ export class ProgrammingExerciseInstructorExerciseStatusComponent implements OnC
             this.solutionParticipationSubscription = this.participationWebsocketService
                 .subscribeForLatestResultOfParticipation(this.solutionParticipation.id)
                 .pipe(
-                    filter(result => !!result),
-                    tap(result => (this.solutionParticipation.results = [result!])),
+                    filter((result) => !!result),
+                    tap((result) => (this.solutionParticipation.results = [result!])),
                     tap(() => this.findIssues()),
                 )
                 .subscribe();

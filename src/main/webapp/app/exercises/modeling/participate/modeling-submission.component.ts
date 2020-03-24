@@ -91,10 +91,10 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     }
 
     ngOnInit(): void {
-        this.subscription = this.route.params.subscribe(params => {
+        this.subscription = this.route.params.subscribe((params) => {
             if (params['participationId']) {
                 this.modelingSubmissionService.getLatestSubmissionForModelingEditor(params['participationId']).subscribe(
-                    modelingSubmission => {
+                    (modelingSubmission) => {
                         if (!modelingSubmission) {
                             this.jhiAlertService.error('artemisApp.apollonDiagram.submission.noSubmission');
                         }
@@ -139,7 +139,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
                         this.isLoading = false;
                         this.guidedTourService.enableTourForExercise(this.modelingExercise, modelingTour, true);
                     },
-                    error => {
+                    (error) => {
                         if (error.status === 403) {
                             this.router.navigate(['accessdenied']);
                         }
@@ -241,7 +241,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
 
         if (this.submission.id) {
             this.modelingSubmissionService.update(this.submission, this.modelingExercise.id).subscribe(
-                response => {
+                (response) => {
                     this.submission = response.body!;
                     // reconnect so that the submission status is displayed correctly in the result.component
                     this.submission.participation.submissions = [this.submission];
@@ -258,7 +258,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
             );
         } else {
             this.modelingSubmissionService.create(this.submission, this.modelingExercise.id).subscribe(
-                submission => {
+                (submission) => {
                     this.submission = submission.body!;
                     this.result = this.submission.result;
                     this.jhiAlertService.success('artemisApp.modelingEditor.saveSuccessful');
@@ -292,9 +292,9 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         if (this.submission.id) {
             this.modelingSubmissionService
                 .update(this.submission, this.modelingExercise.id)
-                .pipe(filter(res => !!res.body))
+                .pipe(filter((res) => !!res.body))
                 .subscribe(
-                    response => {
+                    (response) => {
                         this.submission = response.body!;
                         // reconnect so that the submission status is displayed correctly in the result.component
                         this.submission.participation.submissions = [this.submission];
@@ -322,9 +322,9 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         } else {
             this.modelingSubmissionService
                 .create(this.submission, this.modelingExercise.id)
-                .pipe(filter(res => !!res.body))
+                .pipe(filter((res) => !!res.body))
                 .subscribe(
-                    submission => {
+                    (submission) => {
                         this.submission = submission.body!;
                         this.result = this.submission.result;
                         if (this.isLate) {
@@ -387,7 +387,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     private filterGeneralFeedback(): void {
         if (this.assessmentResult && this.assessmentResult.feedbacks && this.submission && this.submission.model) {
             const feedback = this.assessmentResult.feedbacks;
-            const generalFeedbackIndex = feedback.findIndex(feedbackElement => feedbackElement.reference == null);
+            const generalFeedbackIndex = feedback.findIndex((feedbackElement) => feedbackElement.reference == null);
             if (generalFeedbackIndex >= 0) {
                 this.generalFeedbackText = feedback[generalFeedbackIndex].detailText;
                 feedback.splice(generalFeedbackIndex, 1);
@@ -430,7 +430,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         if (!this.umlModel || !this.umlModel.elements) {
             return [];
         }
-        return this.umlModel.elements.filter(element => element.owner === elementId).map(element => element.id);
+        return this.umlModel.elements.filter((element) => element.owner === elementId).map((element) => element.id);
     }
 
     /**

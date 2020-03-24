@@ -47,7 +47,7 @@ export class ModelingAssessmentConflictComponent implements OnInit, AfterViewIni
     ) {}
 
     ngOnInit() {
-        this.route.params.subscribe(params => {
+        this.route.params.subscribe((params) => {
             this.courseId = Number(params['courseId']);
             this.submissionId = Number(params['submissionId']);
             this.conflicts = this.modelingAssessmentService.getLocalConflicts(this.submissionId);
@@ -62,7 +62,7 @@ export class ModelingAssessmentConflictComponent implements OnInit, AfterViewIni
                 this.jhiAlertService.error('modelingAssessmentEditor.messages.noConflicts');
             }
         });
-        this.accountService.identity().then(value => (this.user = value));
+        this.accountService.identity().then((value) => (this.user = value));
     }
 
     ngAfterViewInit() {
@@ -107,9 +107,9 @@ export class ModelingAssessmentConflictComponent implements OnInit, AfterViewIni
     }
 
     onFeedbackChanged(feedbacks: Feedback[]) {
-        const elementAssessmentUpdate = feedbacks.find(feedback => feedback.referenceId === this.currentConflict.causingConflictingResult.modelElementId);
+        const elementAssessmentUpdate = feedbacks.find((feedback) => feedback.referenceId === this.currentConflict.causingConflictingResult.modelElementId);
         const originalElementAssessment = this.currentConflict.causingConflictingResult.result.feedbacks.find(
-            feedback => feedback.referenceId === this.currentConflict.causingConflictingResult.modelElementId,
+            (feedback) => feedback.referenceId === this.currentConflict.causingConflictingResult.modelElementId,
         );
         if (originalElementAssessment && elementAssessmentUpdate && elementAssessmentUpdate.credits !== originalElementAssessment.credits) {
             this.updateCurrentState();
@@ -124,10 +124,10 @@ export class ModelingAssessmentConflictComponent implements OnInit, AfterViewIni
         }
 
         this.modelingAssessmentService.saveAssessment(this.mergedFeedbacks, this.submissionId).subscribe(
-            result => {
+            (result) => {
                 this.jhiAlertService.success('modelingAssessmentEditor.messages.saveSuccessful');
             },
-            error => this.jhiAlertService.error('modelingAssessmentEditor.messages.saveFailed'),
+            (error) => this.jhiAlertService.error('modelingAssessmentEditor.messages.saveFailed'),
         );
     }
 
@@ -143,13 +143,13 @@ export class ModelingAssessmentConflictComponent implements OnInit, AfterViewIni
                 escalatedConflicts.push(this.conflicts![i]);
             }
         }
-        this.modelingAssessmentService.escalateConflict(escalatedConflicts).subscribe(value => {
+        this.modelingAssessmentService.escalateConflict(escalatedConflicts).subscribe((value) => {
             this.modelingAssessmentService.saveAssessment(this.mergedFeedbacks, this.submissionId, true).subscribe(
-                result => {
+                (result) => {
                     this.jhiAlertService.success('modelingAssessmentEditor.messages.submitSuccessful');
                     this.router.navigate(['/course-management', this.courseId, 'modeling-exercises', this.modelingExercise.id, 'submissions', this.submissionId, 'assessment']);
                 },
-                error => {
+                (error) => {
                     if (error.status === 409) {
                         this.conflicts = error.error as Conflict[];
                         this.conflicts.forEach((conflict: Conflict) => {
@@ -172,7 +172,7 @@ export class ModelingAssessmentConflictComponent implements OnInit, AfterViewIni
         const feedbacks: Feedback[] = [];
         const feedbackToUse = sourceFeedbacks.find((feedback: Feedback) => feedback.referenceId === elementIdToUpdateWith);
         if (feedbackToUse) {
-            this.mergedFeedbacks.forEach(feedback => {
+            this.mergedFeedbacks.forEach((feedback) => {
                 if (feedback.referenceId === elementIdToUpdate) {
                     feedback.credits = feedbackToUse.credits;
                 }
@@ -244,7 +244,7 @@ export class ModelingAssessmentConflictComponent implements OnInit, AfterViewIni
     }
 
     private updateOverallResolutioState() {
-        const newConflictsAllHandled = this.conflictResolutionStates.every(state => state !== ConflictResolutionState.UNHANDLED);
+        const newConflictsAllHandled = this.conflictResolutionStates.every((state) => state !== ConflictResolutionState.UNHANDLED);
         if (newConflictsAllHandled && !this.conflictsAllHandled) {
             this.jhiAlertService.success('modelingAssessmentEditor.messages.conflictsResolved');
         }

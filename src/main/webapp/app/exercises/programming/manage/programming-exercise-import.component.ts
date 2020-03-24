@@ -51,7 +51,7 @@ export class ProgrammingExerciseImportComponent implements OnInit {
                 tap(() => (this.loading = true)),
                 switchMap(() => this.pagingService.searchForExercises(this.state)),
             )
-            .subscribe(resp => {
+            .subscribe((resp) => {
                 this.content = resp;
                 this.loading = false;
                 this.total = resp.numberOfPages * this.state.pageSize;

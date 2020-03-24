@@ -35,7 +35,7 @@ export class ComplaintInteractionsComponent implements OnInit {
 
             if (this.participation.submissions && this.participation.submissions.length > 0) {
                 if (this.result && this.result.completionDate) {
-                    this.complaintService.findByResultId(this.result.id).subscribe(res => {
+                    this.complaintService.findByResultId(this.result.id).subscribe((res) => {
                         if (res.body) {
                             if (res.body.complaintType == null || res.body.complaintType === ComplaintType.COMPLAINT) {
                                 this.hasComplaint = true;

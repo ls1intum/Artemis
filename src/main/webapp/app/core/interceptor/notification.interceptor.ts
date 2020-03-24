@@ -15,7 +15,7 @@ export class NotificationInterceptor implements HttpInterceptor {
                     let alert: string | null = null;
                     let alertParams: string | null = null;
 
-                    event.headers.keys().forEach(entry => {
+                    event.headers.keys().forEach((entry) => {
                         if (entry.toLowerCase().endsWith('app-alert')) {
                             alert = event.headers.get(entry);
                         } else if (entry.toLowerCase().endsWith('app-params')) {

@@ -19,11 +19,11 @@ export class PrivacyComponent implements AfterViewInit, OnInit {
     constructor(private route: ActivatedRoute, private staticContentService: StaticHtmlContentService) {}
 
     ngOnInit(): void {
-        this.staticContentService.getStaticHtmlFromArtemisServer(privacyStatementFile).subscribe(statement => (this.privacyStatement = statement));
+        this.staticContentService.getStaticHtmlFromArtemisServer(privacyStatementFile).subscribe((statement) => (this.privacyStatement = statement));
     }
 
     ngAfterViewInit(): void {
-        this.route.params.subscribe(params => {
+        this.route.params.subscribe((params) => {
             try {
                 const fragment = document.querySelector('#' + params['fragment']);
                 if (fragment !== null) {

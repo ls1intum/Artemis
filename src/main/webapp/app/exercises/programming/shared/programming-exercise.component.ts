@@ -49,7 +49,7 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
 
     ngOnInit(): void {
         super.ngOnInit();
-        this.javaBridge.state().subscribe(state => (this.orionState = state));
+        this.javaBridge.state().subscribe((state) => (this.orionState = state));
     }
 
     protected loadExercises(): void {
@@ -57,7 +57,7 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
             (res: HttpResponse<ProgrammingExercise[]>) => {
                 this.programmingExercises = res.body!;
                 // reconnect exercise with course
-                this.programmingExercises.forEach(exercise => {
+                this.programmingExercises.forEach((exercise) => {
                     exercise.course = this.course;
                     exercise.isAtLeastTutor = this.accountService.isAtLeastTutorInCourse(exercise.course);
                     exercise.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(exercise.course);
@@ -113,7 +113,7 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
             (result: ProgrammingExercise) => {
                 this.router.navigate(['course-management', this.courseId, 'programming-exercises', 'import', result.id]);
             },
-            reason => {},
+            (reason) => {},
         );
     }
 

@@ -46,7 +46,7 @@ export class HealthComponent implements OnInit {
 
     refresh(): void {
         this.healthService.checkHealth().subscribe(
-            health => (this.health = health),
+            (health) => (this.health = health),
             (error: HttpErrorResponse) => {
                 if (error.status === 503) {
                     this.health = error.error;

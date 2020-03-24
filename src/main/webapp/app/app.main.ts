@@ -14,5 +14,5 @@ if (module['hot']) {
 
 platformBrowserDynamic()
     .bootstrapModule(ArtemisAppModule, { preserveWhitespaces: true })
-    .then(platformRef => {})
-    .catch(err => console.error(err));
+    .then((platformRef) => {})
+    .catch((err) => console.error(err));
