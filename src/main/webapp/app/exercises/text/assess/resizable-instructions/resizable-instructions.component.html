@@ -26,9 +26,9 @@
         </div>
 
         <div *ngIf="gradingInstructions">
-            <h4 jhiTranslate="artemisApp.exercise.gradingInstructions" (click)="test()">Grading instructions</h4>
+            <h4 jhiTranslate="artemisApp.exercise.gradingInstructions">Grading instructions</h4>
             <p class="markdown-preview" [innerHTML]="gradingInstructions | htmlForMarkdown"></p>
-            <jhi-structured-grading-instructions-assessment-layout [criteria]="criteria"></jhi-structured-grading-instructions-assessment-layout>
         </div>
+        <jhi-structured-grading-instructions-assessment-layout [criteria]="criteria"></jhi-structured-grading-instructions-assessment-layout>
     </div>
 </div>

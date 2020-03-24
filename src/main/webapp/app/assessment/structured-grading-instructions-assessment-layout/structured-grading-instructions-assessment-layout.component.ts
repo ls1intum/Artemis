@@ -28,7 +28,4 @@ export class StructuredGradingInstructionsAssessmentLayoutComponent {
         }
         return colour;
     }
-    test() {
-        console.log(this.criteria);
-    }
 }

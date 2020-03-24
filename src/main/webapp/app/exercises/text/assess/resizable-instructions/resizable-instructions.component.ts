@@ -15,7 +15,4 @@ export class ResizableInstructionsComponent {
     @Input() public toggleCollapseId?: string;
 
     constructor() {}
-    test() {
-        console.log(this.criteria);
-    }
 }
