@@ -25,7 +25,6 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.Module;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Service
@@ -43,8 +42,8 @@ public class RequestUtilService {
         this.mapper = mapper;
     }
 
-    public void registerObjectMapperModule(Module module) {
-        mapper.registerModule(module);
+    public void addObjectMapperMixIn(Class<?> target, Class<?> mixinSource) {
+        mapper.addMixIn(target, mixinSource);
     }
 
     public <T, R> R postWithMultipartFile(String path, T paramValue, String paramName, MockMultipartFile file, Class<R> responseType, HttpStatus expectedStatus) throws Exception {
