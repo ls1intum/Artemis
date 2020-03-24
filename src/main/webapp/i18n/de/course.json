@@ -72,7 +72,19 @@
                 "title": "Präsentationsergebnis aktiviert",
                 "description": "Aktiviere diese Checkbox und definiere, wie viele Präsentationen ein Student halten muss, um den Notenbonus für die Vorlesung zu erhalten. Nach der Aktivierung kannst du bei der Erstellung jeder Übung definieren, ob dieses Feature dafür aktiviert sein soll."
             },
-            "presentationScore": "Benötigtes Präsentationsergebnis für den Bonus"
+            "presentationScore": "Benötigtes Präsentationsergebnis für den Bonus",
+            "courseGroup": {
+                "usersPerPage": "{{number}} Benutzer pro Seite",
+                "showAllUsers": "Alle Benutzer anzeigen",
+                "searchForUsers": "Suche nach Benutzer Logins, Namen oder E-Mail Adressen (Komma getrennt)",
+                "login": "Login",
+                "name": "Name",
+                "email": "E-Mail",
+                "removeFromGroup": {
+                    "buttonLabel": "Remove from group",
+                    "modalQuestion": "Are you sure you want to remove the user with login <strong>{{ title }}</strong> from this group?"
+                }
+            }
         }
     }
 }

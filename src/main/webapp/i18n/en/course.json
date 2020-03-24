@@ -72,7 +72,19 @@
                 "title": "Presentation Score",
                 "description": "Activate this checkbox to define the amount of presentations a student has to hold to receive the grade bonus for the course. Afterwards you can define for every created exercise, if this feature should be activated."
             },
-            "presentationScore": "Required Presentation Score for Bonus"
+            "presentationScore": "Required Presentation Score for Bonus",
+            "courseGroup": {
+                "usersPerPage": "{{number}} users per page",
+                "showAllUsers": "Show all users",
+                "searchForUsers": "Search for users by login, name or email (comma separated)",
+                "login": "Login",
+                "name": "Name",
+                "email": "Email",
+                "removeFromGroup": {
+                    "buttonLabel": "Remove from group",
+                    "modalQuestion": "Are you sure you want to remove the user with login <strong>{{ title }}</strong> from this group?"
+                }
+            }
         }
     }
 }

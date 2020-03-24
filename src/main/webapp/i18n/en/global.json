@@ -187,6 +187,7 @@
             "view": "View",
             "preview": "Preview",
             "cleanup": "Cleanup",
+            "remove": "Remove",
             "archive": "Archive",
             "submit": "Submit",
             "submitTooltip": "You can submit multiple times until the exercise deadline. Your last submission will count towards your score.",

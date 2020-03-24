@@ -5,13 +5,13 @@ import * as moment from 'moment';
 import { map } from 'rxjs/operators';
 
 import { SERVER_API_URL } from 'app/app.constants';
-import { Course } from '../../entities/course.model';
-import { ProgrammingExercise } from '../../entities/programming-exercise.model';
-import { ModelingExercise } from '../../entities/modeling-exercise.model';
-import { TextExercise } from '../../entities/text-exercise.model';
-import { FileUploadExercise } from '../../entities/file-upload-exercise.model';
-import { Exercise } from '../../entities/exercise.model';
-import { ExerciseService } from '../../exercises/shared/exercise/exercise.service';
+import { Course, CourseGroup } from 'app/entities/course.model';
+import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { ModelingExercise } from 'app/entities/modeling-exercise.model';
+import { TextExercise } from 'app/entities/text-exercise.model';
+import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
+import { Exercise } from 'app/entities/exercise.model';
+import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { User } from 'app/core/user/user.model';
 import { LectureService } from 'app/lecture/lecture.service';
 import { StatsForDashboard } from 'app/course/dashboards/instructor-course-dashboard/stats-for-dashboard.model';
@@ -33,7 +33,8 @@ export class CourseManagementService {
         private lectureService: LectureService,
         private notificationService: NotificationService,
         private accountService: AccountService,
-    ) {}
+    ) {
+    }
 
     create(course: Course): Observable<EntityResponseType> {
         const copy = this.convertDateFromClient(course);
@@ -143,6 +144,18 @@ export class CourseManagementService {
         return this.http.get<string[]>(`${this.resourceUrl}/${courseId}/categories`, { observe: 'response' });
     }
 
+    getAllUsersInCourseGroup(courseId: number, courseGroup: CourseGroup): Observable<HttpResponse<User[]>> {
+        return this.http.get<User[]>(`${this.resourceUrl}/${courseId}/${courseGroup}`, { observe: 'response' });
+    }
+
+    addUserToCourseGroup(courseId: number, courseGroup: CourseGroup, login: string): Observable<HttpResponse<void>> {
+        return this.http.post<void>(`${this.resourceUrl}/${courseId}/${courseGroup}/${login}`, {}, { observe: 'response' });
+    }
+
+    removeUserFromCourseGroup(courseId: number, courseGroup: CourseGroup, login: string): Observable<HttpResponse<void>> {
+        return this.http.delete<void>(`${this.resourceUrl}/${courseId}/${courseGroup}/${login}`, { observe: 'response' });
+    }
+
     private convertDateFromClient(course: Course): Course {
         const copy: Course = Object.assign({}, course, {
             startDate: course.startDate != null && moment(course.startDate).isValid() ? course.startDate.toJSON() : null,
@@ -212,7 +225,8 @@ export class CourseManagementService {
 export class CourseExerciseService {
     private resourceUrl = SERVER_API_URL + `api/courses`;
 
-    constructor(private http: HttpClient, private participationWebsocketService: ParticipationWebsocketService) {}
+    constructor(private http: HttpClient, private participationWebsocketService: ParticipationWebsocketService) {
+    }
 
     // exercise specific calls
 
