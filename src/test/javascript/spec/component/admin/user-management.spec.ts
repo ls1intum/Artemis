@@ -7,10 +7,10 @@ import * as sinonChai from 'sinon-chai';
 import { ArtemisTestModule } from '../../test.module';
 import { ArtemisAdminModule } from 'app/admin/admin.module';
 import { UserManagementComponent } from 'app/admin/user-management/user-management.component';
-import { UserService } from "app/core/user/user.service";
-import { MockUserService } from "../../mocks/mock-user.service";
-import { AccountService } from "app/core/auth/account.service";
-import { MockAccountService } from "../../mocks/mock-account.service";
+import { UserService } from 'app/core/user/user.service';
+import { MockUserService } from '../../mocks/mock-user.service';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from '../../mocks/mock-account.service';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -25,7 +25,7 @@ describe('UserManagementComponent', () => {
             imports: [TranslateModule.forRoot(), ArtemisTestModule, ArtemisAdminModule],
             providers: [
                 { provide: UserService, useClass: MockUserService },
-                { provide: AccountService, useClass: MockAccountService }
+                { provide: AccountService, useClass: MockAccountService },
             ],
         })
             .compileComponents()
