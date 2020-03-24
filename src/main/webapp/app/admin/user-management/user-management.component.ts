@@ -48,7 +48,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
     ) {
         this.itemsPerPage = 50;
         this.searchTermString = '';
-        this.routeData = this.activatedRoute.data.subscribe(data => {
+        this.routeData = this.activatedRoute.data.subscribe((data) => {
             this.page = data['pagingParams'].page;
             this.previousPage = data['pagingParams'].page;
             this.reverse = data['pagingParams'].ascending;
@@ -87,7 +87,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
         this.userSearchForm = new FormGroup({
             searchControl: new FormControl('', { validators: [this.validateUserSearch], updateOn: 'blur' }),
         });
-        this.accountService.identity().then(user => {
+        this.accountService.identity().then((user) => {
             this.currentAccount = user!;
             this.loadAll();
             this.registerChangeInUsers();
