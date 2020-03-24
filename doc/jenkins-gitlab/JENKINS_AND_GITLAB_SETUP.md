@@ -57,6 +57,14 @@ In addition, you have to start Artemis with the profiles `gitlab` and `jenkins` 
 
 Please read [Development Setup](doc/setup/SETUP.md) for more details.
 
+TODO: adapt the server URL in application-dev.yml
+
+TODO: Known limitation for local setup: webhook URLs for the communication between Artemis and Gitlab cannot include localhost or 127.0.0.1.
+Possible solution: Register a local URL using ngrok, alternative IP Forwarding to localhost
+Can be deactivated on gitlab-url
+
+TODO: add setting to yml file to activate / deactivate crumb in Jenkins
+
 When you start Artemis for the first time, it will automatically create an admin user based on the default encryption password specified in the yml file above.
 In case you want to use a different encryption password, you can insert users manually into the `jhi_user` table.
 You can use [Jasypt Online Encryption Tool](https://www.devglan.com/online-tools/jasypt-online-encryption-decryption) to generate encryption strings.
