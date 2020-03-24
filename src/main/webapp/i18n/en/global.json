@@ -232,6 +232,9 @@
         "cleanup": {
             "title": "Confirm cleanup operation"
         },
+        "remove": {
+            "title": "Confirm remove operation"
+        },
         "archive": {
             "title": "Confirm archive operation"
         },

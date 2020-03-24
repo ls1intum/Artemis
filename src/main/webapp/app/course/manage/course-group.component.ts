@@ -34,8 +34,7 @@ export class CourseGroupComponent implements OnInit, OnDestroy {
         private jhiAlertService: AlertService,
         private eventManager: JhiEventManager,
         private courseService: CourseManagementService,
-    ) {
-    }
+    ) {}
 
     ngOnInit() {
         this.loadAll();
@@ -54,12 +53,10 @@ export class CourseGroupComponent implements OnInit, OnDestroy {
                 if (!courseGroups.includes(this.courseGroup)) {
                     return this.router.navigate(['/course-management']);
                 }
-                this.courseService
-                    .getAllUsersInCourseGroup(this.course.id, this.courseGroup)
-                    .subscribe((usersResponse) => {
-                        this.users = usersResponse.body!;
-                        this.isLoading = false;
-                    });
+                this.courseService.getAllUsersInCourseGroup(this.course.id, this.courseGroup).subscribe((usersResponse) => {
+                    this.users = usersResponse.body!;
+                    this.isLoading = false;
+                });
             });
         });
     }
@@ -71,7 +68,9 @@ export class CourseGroupComponent implements OnInit, OnDestroy {
      */
     removeFromGroup(user: User) {
         if (user.login) {
-            this.courseService.removeUserFromCourseGroup(this.course.id, this.courseGroup, user.login);
+            this.courseService.removeUserFromCourseGroup(this.course.id, this.courseGroup, user.login).subscribe(() => {
+                this.users = this.users.filter((u) => u.login !== user.login);
+            });
         }
     }
 
@@ -111,7 +110,7 @@ export class CourseGroupComponent implements OnInit, OnDestroy {
      * @param user
      */
     searchResultFormatter = (user: User) => {
-        const { login, } = user;
+        const { name, login } = user;
         return `${name} (${login})`;
     };
 

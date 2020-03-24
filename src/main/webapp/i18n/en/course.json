@@ -76,13 +76,12 @@
             "courseGroup": {
                 "usersPerPage": "{{number}} users per page",
                 "showAllUsers": "Show all users",
-                "searchForUsers": "Search for users by login, name or email (comma separated)",
+                "searchForUsers": "Search for users by login or name (comma separated)",
                 "login": "Login",
                 "name": "Name",
                 "email": "Email",
                 "removeFromGroup": {
-                    "buttonLabel": "Remove from group",
-                    "modalQuestion": "Are you sure you want to remove the user with login <strong>{{ title }}</strong> from this group?"
+                    "modalQuestion": "Are you sure you want to remove the user with login <strong>{{ title }}</strong> from this course group?"
                 }
             }
         }

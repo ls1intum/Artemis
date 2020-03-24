@@ -226,6 +226,9 @@
         "cleanup": {
             "title": "Aufräumen bestätigen"
         },
+        "remove": {
+            "title": "Entfernen bestätigen"
+        },
         "archive": {
             "title": "Archivieren bestätigen"
         },
