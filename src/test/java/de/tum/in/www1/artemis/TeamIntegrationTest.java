@@ -391,11 +391,7 @@ public class TeamIntegrationTest extends AbstractSpringIntegrationTest {
     @WithMockUser(username = "student1", roles = "USER")
     public void testAssignedTeamIdOnExerciseForCurrentUser() throws Exception {
         // Create team that contains student "student1" (Team shortName needs to be empty since it is used as a prefix for the generated student logins)
-        Team team = new Team();
-        team.setName("Team");
-        team.setShortName("team");
-        team.setExercise(exercise);
-        team.setStudents(userRepo.findOneByLogin("student1").map(Set::of).orElseThrow());
+        Team team = new Team().name("Team").shortName("team").exercise(exercise).students(userRepo.findOneByLogin("student1").map(Set::of).orElseThrow());
         team = teamRepo.save(team);
 
         // Check for endpoint: @GetMapping("/courses/for-dashboard")

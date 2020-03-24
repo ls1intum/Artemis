@@ -71,15 +71,13 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
     }
 
     /**
-     * The repository url of a team participation has to be modified to match the team member (current user).
-     * This is done by replacing the username part of the url and inserting the current user's login instead
-     * of the team short name which only served as a placeholder.
+     * The user info part of the repository url of a team participation has to be be added with the current user's login.
      *
      * @return repository url with username of current user inserted
      */
     private repositoryUrlForTeam(participation: ProgrammingExerciseStudentParticipation) {
-        // (https://)team1(@bitbucket.ase.in.tum.de/...-team1.git)  =>  (https://)ga12abc(@bitbucket.ase.in.tum.de/...-team1.git)
-        return participation.repositoryUrl.replace(/^(\w*:\/\/)\w*(@.*)$/, `$1${this.user.login}$2`);
+        // (https://)(bitbucket.ase.in.tum.de/...-team1.git)  =>  (https://)ga12abc@(bitbucket.ase.in.tum.de/...-team1.git)
+        return participation.repositoryUrl.replace(/^(\w*:\/\/)(.*)$/, `$1${this.user.login}@$2`);
     }
 
     isPracticeModeAvailable(): boolean {
