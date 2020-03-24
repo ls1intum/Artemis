@@ -12,6 +12,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
+import com.fasterxml.jackson.databind.module.SimpleModule;
+
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.Team;
@@ -53,6 +55,8 @@ public class TeamIntegrationTest extends AbstractSpringIntegrationTest {
 
     private Set<User> students;
 
+    private SimpleModule module;
+
     private final static int numberOfStudentsInCourse = 3;
 
     private final static long nonExistingId = 123456789L;
@@ -87,7 +91,9 @@ public class TeamIntegrationTest extends AbstractSpringIntegrationTest {
         students = new HashSet<>(userRepo.findAllInGroup("tumuser"));
 
         // Mix-in TeamUnitTestDTO for Team class (needed for serializing write-only attributes when building the request body)
-        request.addObjectMapperMixIn(Team.class, TeamUnitTestDTO.class);
+        module = new SimpleModule();
+        module.setMixInAnnotation(Team.class, TeamUnitTestDTO.class);
+        request.registerObjectMapperModule(module);
     }
 
     @AfterEach
@@ -131,6 +137,7 @@ public class TeamIntegrationTest extends AbstractSpringIntegrationTest {
         // Try creating a team with an exercise specified that does not match the exercise id param in the route
         Team team2 = new Team();
         team2.setExercise(exercise);
+        request.registerObjectMapperModule(module);
         request.postWithResponseBody(resourceUrlWithWrongExerciseId(), team2, Team.class, HttpStatus.BAD_REQUEST);
     }
 
@@ -175,6 +182,7 @@ public class TeamIntegrationTest extends AbstractSpringIntegrationTest {
         request.putWithResponseBody(resourceUrl() + "/" + (team2.getId() + 1), team2, Team.class, HttpStatus.BAD_REQUEST);
 
         // Try updating a team with an exercise specified that does not match the exercise id param in the route
+        request.registerObjectMapperModule(module);
         request.putWithResponseBody(resourceUrlWithWrongExerciseId() + "/" + team2.getId(), team2, Team.class, HttpStatus.BAD_REQUEST);
     }
 
