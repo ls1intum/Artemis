@@ -124,14 +124,14 @@ describe('TeamUpdateDialogComponent', () => {
 
     it('Team Update Dialog can be used to update team', fakeAsync(() => {
         comp.team = mockTeam;
-        comp.exercise = mockTeam.exercise;
+        comp.exercise = mockExercise;
         fixture.detectChanges();
         tick();
 
         // Check that title is correct for updating a team
         const modalTitle = debugElement.query(By.css('.modal-title'));
         expect(modalTitle).to.exist;
-        expect(modalTitle.nativeElement.textContent.trim()).to.equal(`Update Team (${mockTeam.exercise.title})`);
+        expect(modalTitle.nativeElement.textContent.trim()).to.equal(`Update Team (${mockExercise.title})`);
 
         // Check that a submit button exists
         const submitButton = debugElement.query(By.css('button[type=submit]'));

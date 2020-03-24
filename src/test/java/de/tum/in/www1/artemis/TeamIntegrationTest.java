@@ -12,8 +12,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import com.fasterxml.jackson.databind.module.SimpleModule;
-
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.Team;
@@ -24,7 +22,6 @@ import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.TeamRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.dto.TeamSearchUserDTO;
-import de.tum.in.www1.artemis.service.dto.TeamUnitTestDTO;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.RequestUtilService;
@@ -87,11 +84,6 @@ public class TeamIntegrationTest extends AbstractSpringIntegrationTest {
         exercise = exerciseRepo.save(exercise);
 
         students = new HashSet<>(userRepo.findAllInGroup("tumuser"));
-
-        // Mix-in TeamUnitTestDTO for Team class (needed for serializing write-only attributes when building the request body)
-        SimpleModule module = new SimpleModule();
-        module.setMixInAnnotation(Team.class, TeamUnitTestDTO.class);
-        request.registerObjectMapperModule(module);
     }
 
     @AfterEach
@@ -131,11 +123,6 @@ public class TeamIntegrationTest extends AbstractSpringIntegrationTest {
         Team team1 = new Team();
         team1.setId(1L);
         request.postWithResponseBody(resourceUrl(), team1, Team.class, HttpStatus.BAD_REQUEST);
-
-        // Try creating a team with an exercise specified that does not match the exercise id param in the route
-        Team team2 = new Team();
-        team2.setExercise(exercise);
-        request.postWithResponseBody(resourceUrlWithWrongExerciseId(), team2, Team.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test

@@ -77,9 +77,6 @@ public class TeamResource {
         if (team.getId() != null) {
             throw new BadRequestAlertException("A new team cannot already have an ID", ENTITY_NAME, "idexists");
         }
-        if (team.getExercise() != null && !team.getExercise().getId().equals(exerciseId)) {
-            throw new BadRequestAlertException("The team does not belong to the specified exercise id.", ENTITY_NAME, "wrongExerciseId");
-        }
         User user = userService.getUserWithGroupsAndAuthorities();
         Exercise exercise = exerciseService.findOne(exerciseId);
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user)) {
@@ -108,15 +105,15 @@ public class TeamResource {
         if (team.getId() == null) {
             throw new BadRequestAlertException("Invalid id", ENTITY_NAME, "idnull");
         }
-        if (team.getExercise() != null && !team.getExercise().getId().equals(exerciseId)) {
-            throw new BadRequestAlertException("The team does not belong to the specified exercise id.", ENTITY_NAME, "wrongExerciseId");
-        }
         if (!team.getId().equals(id)) {
             throw new BadRequestAlertException("The team has an incorrect id.", ENTITY_NAME, "wrongId");
         }
         Optional<Team> existingTeam = teamRepository.findById(id);
         if (existingTeam.isEmpty()) {
             return ResponseEntity.notFound().build();
+        }
+        if (!existingTeam.get().getExercise().getId().equals(exerciseId)) {
+            throw new BadRequestAlertException("The team does not belong to the specified exercise id.", ENTITY_NAME, "wrongExerciseId");
         }
         if (!team.getShortName().equals(existingTeam.get().getShortName())) {
             return forbidden(ENTITY_NAME, "shortNameChangeForbidden", "The team's short name cannot be changed after the team has been created.");

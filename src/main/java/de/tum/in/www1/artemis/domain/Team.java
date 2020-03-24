@@ -10,8 +10,8 @@ import javax.persistence.*;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import de.tum.in.www1.artemis.domain.participation.Participant;
 
 /**
@@ -39,7 +39,7 @@ public class Team implements Serializable, Participant {
     private String image;
 
     @ManyToOne
-    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
+    @JsonIgnore
     private Exercise exercise;
 
     @ManyToMany(fetch = FetchType.EAGER)
