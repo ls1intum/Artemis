@@ -22,8 +22,11 @@
             [inputFormatter]="searchInputFormatter"
         />
     </div>
-    <div *ngIf="entities && !isPreparing; else loadingContainer" class="table-responsive">
+    <div *ngIf="entities && !isPreparing; else loadingContainer" class="table-responsive data-table-container">
         <ng-container *ngTemplateOutlet="templateRef; context: context"></ng-container>
+        <div class="transitioning-container" [class.active]="isTransitioning">
+            <fa-icon size="lg" [icon]="'circle-notch'" [spin]="true"></fa-icon>
+        </div>
     </div>
     <ng-template #loadingContainer>
         <div class="loading-container d-flex justify-content-center align-items-center">

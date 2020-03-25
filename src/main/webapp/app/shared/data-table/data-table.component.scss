@@ -16,11 +16,45 @@
     height: 40vh;
 }
 
+.data-table-container {
+    position: relative;
+}
+
+.transitioning-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    opacity: 0;
+    pointer-events: none;
+    transition: 0.15s ease-in all;
+
+    &.active {
+        background-color: rgba(255, 255, 255, 0.5);
+
+        opacity: 1;
+        pointer-events: auto;
+        transition: 0.1s ease-out all;
+    }
+}
+
 ngb-typeahead-window.dropdown-menu.show {
     max-height: calc(100vh - 380px);
     overflow-y: auto !important;
+    will-change: unset !important;
 }
 
 .dropdown-item.selected {
     background-color: $primary;
+}
+
+.datatable-body-cell-label {
+    display: flex;
+    align-items: center;
+    height: 100%;
 }

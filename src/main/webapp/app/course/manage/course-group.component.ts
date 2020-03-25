@@ -19,10 +19,11 @@ import { iconsAsHTML } from 'app/utils/icons.utils';
     selector: 'jhi-course-group',
     templateUrl: './course-group.component.html',
     styles: [
+        'ngb-typeahead-window { min-width: 400px; }',
+        'ngb-typeahead-window .dropdown-item { display: flex; justify-content: space-between; }',
         'ngb-typeahead-window .dropdown-item.active { background-color: #28a745; }',
         'ngb-typeahead-window .dropdown-item.already-member { color: #212529; background-color: #E9F6EC; }',
         'ngb-typeahead-window .dropdown-item.already-member:hover { background-color: #D4EDD9; }',
-        'ngb-typeahead-window .dropdown-item { display: flex; justify-content: space-between }',
     ],
     encapsulation: ViewEncapsulation.None,
 })
@@ -40,7 +41,8 @@ export class CourseGroupComponent implements OnInit, OnDestroy {
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
 
-    isLoading: boolean;
+    isLoading = false;
+    isTransitioning = false;
 
     constructor(
         private router: Router,
@@ -122,7 +124,26 @@ export class CourseGroupComponent implements OnInit, OnDestroy {
      * @param callback Function that can be called with the selected user to trigger the DataTableComponent default behavior
      */
     onAutocompleteSelect = (user: User, callback: (user: User) => void): void => {
-        callback(user);
+        // If the user is not part of this course group yet, perform the server call to add them
+        // tslint:disable-next-line:no-shadowed-variable
+        if (!this.users.map((user) => user.id).includes(user.id) && user.login) {
+            this.isTransitioning = true;
+            this.courseService.addUserToCourseGroup(this.course.id, this.courseGroup, user.login).subscribe(
+                () => {
+                    this.isTransitioning = false;
+                    this.users.push(user);
+
+                    // Hand back over to the data table
+                    callback(user);
+                },
+                (err) => {
+                    this.isTransitioning = false;
+                },
+            );
+        } else {
+            // Hand back over to the data table
+            callback(user);
+        }
     };
 
     /**
