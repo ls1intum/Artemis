@@ -33,8 +33,9 @@ ngb-typeahead-window {
             background-color: map-get($vars, background-color);
             opacity: 0.5;
 
-            &:hover {
+            &.active {
                 background-color: map-get($vars, background-color-hover);
+                opacity: 0.8;
             }
         }
     }

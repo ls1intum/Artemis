@@ -61,6 +61,7 @@ export class DataTableComponent implements OnInit, OnChanges {
      * @property searchNoResultsTranslation Translation string that has the variable {{ length }} in it (default: 'artemisApp.dataTable.search.noResults')
      * @property searchPlaceholderTranslation Translation string that is used for the placeholder in the search input field
      * @property searchFields Fields of entity whose values will be compared to the user's search string (allows nested attributes, e.g. ['student.login', 'student.name'])
+     * @property searchFiltersEntities Flag whether searching should cause a filtering of the entities (default: true)
      * @function searchTextFromEntity Function that takes an entity and returns a text that is inserted into the search input field when clicking on an autocomplete suggestion
      * @function searchResultFormatter Function that takes an entity and returns the text for the autocomplete suggestion result row
      * @function onSearchWrapper Wrapper around the onSearch method that can be used to modify the items displayed in the autocomplete
@@ -80,6 +81,7 @@ export class DataTableComponent implements OnInit, OnChanges {
     @Input() searchNoResultsTranslation = 'artemisApp.dataTable.search.noResults';
     @Input() searchPlaceholderTranslation: string;
     @Input() searchFields: string[] = [];
+    @Input() searchEntityFilterEnabled = true;
     @Input() searchTextFromEntity: (entity: BaseEntity) => string = entityToString;
     @Input() searchResultFormatter: (entity: BaseEntity) => string = entityToString;
     @Input() onSearchWrapper: (stream: Observable<{ text: string; entities: BaseEntity[] }>) => Observable<BaseEntity[]> = onSearchDefaultWrapper;
@@ -237,10 +239,10 @@ export class DataTableComponent implements OnInit, OnChanges {
      * First performs the filtering, then sorts the remaining entities.
      */
     private updateEntities() {
-        const filteredEntities = compose(
-            filter((entity: BaseEntity) => this.filterEntityByTextSearch(this.entityCriteria.textSearch, entity, this.searchFields)),
-            filter(this.customFilter),
-        )(this.allEntities);
+        const searchPredicate = (entity: BaseEntity) => {
+            return !this.searchEntityFilterEnabled || this.filterEntityByTextSearch(this.entityCriteria.textSearch, entity, this.searchFields);
+        };
+        const filteredEntities = compose(filter(searchPredicate), filter(this.customFilter))(this.allEntities);
         this.entities = this.sortByPipe.transform(filteredEntities, this.entityCriteria.sortProp.field, this.entityCriteria.sortProp.order === SortOrder.ASC);
         // defer execution of change emit to prevent ExpressionChangedAfterItHasBeenCheckedError, see explanation at https://blog.angular-university.io/angular-debugging/
         setTimeout(() => this.entitiesSizeChange.emit(this.entities.length));
@@ -290,6 +292,7 @@ export class DataTableComponent implements OnInit, OnChanges {
             word &&
             segments.every((segment) => {
                 const regex = segment
+                    .replace(/[.+\-^${}()|[\]\\]/g, '\\$&') // escape
                     .replace(/\*/g, '.*') // multiple characters
                     .replace(/\?/g, '.'); // single character
                 return new RegExp(regex).test(text.toLowerCase());

@@ -94,7 +94,7 @@ export const courseMangementRoute: Routes = [
         },
         data: {
             authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
-            pageTitle: 'artemisApp.course.studentGroupName',
+            pageTitle: 'artemisApp.course.detail.title',
         },
         canActivate: [UserRouteAccessService],
     },

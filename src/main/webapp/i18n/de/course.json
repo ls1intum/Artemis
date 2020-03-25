@@ -77,9 +77,10 @@
             },
             "presentationScore": "Benötigtes Präsentationsergebnis für den Bonus",
             "courseGroup": {
+                "outOf": "von",
                 "usersPerPage": "{{number}} Benutzer pro Seite",
                 "showAllUsers": "Alle Benutzer anzeigen",
-                "searchForUsers": "Suche nach Benutzer Logins oder Namen (Komma getrennt)",
+                "searchForUsers": "Benutzer zu dieser Kurs-Gruppe hinzufügen durch Suchen nach Login oder Namen",
                 "searchNoResults": "Keine Benutzer gefunden",
                 "login": "Login",
                 "name": "Name",

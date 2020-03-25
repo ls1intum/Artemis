@@ -1,7 +1,8 @@
 <div>
     <h2>
         <span>{{ course?.title }} - </span>
-        {{ filteredUsersSize }} <span [jhiTranslate]="'artemisApp.course.' + courseGroupEntityName">{{ capitalize(courseGroupEntityName) }}</span>
+        <span *ngIf="filteredUsersSize < allCourseGroupUsers.length"> {{ filteredUsersSize }} <span jhiTranslate="artemisApp.course.courseGroup.outOf">out of</span> </span>
+        {{ allCourseGroupUsers.length }} <span [jhiTranslate]="'artemisApp.course.' + courseGroupEntityName">{{ capitalize(courseGroupEntityName) }}</span>
         <span class="text-muted">({{ courseGroupName }})</span>
     </h2>
     <jhi-alert></jhi-alert>
@@ -12,7 +13,7 @@
         [searchNoResults]="searchNoResults"
         [isTransitioning]="isTransitioning"
         entityType="user"
-        [allEntities]="users"
+        [allEntities]="allCourseGroupUsers"
         entitiesPerPageTranslation="artemisApp.course.courseGroup.usersPerPage"
         showAllEntitiesTranslation="artemisApp.course.courseGroup.showAllUsers"
         searchNoResultsTranslation="artemisApp.course.courseGroup.searchNoResults"

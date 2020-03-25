@@ -77,9 +77,10 @@
             },
             "presentationScore": "Required Presentation Score for Bonus",
             "courseGroup": {
+                "outOf": "out of",
                 "usersPerPage": "{{number}} users per page",
                 "showAllUsers": "Show all users",
-                "searchForUsers": "Search for users by login or name (comma separated)",
+                "searchForUsers": "Add a user to this course group by searching for login or name",
                 "searchNoResults": "No users found",
                 "login": "Login",
                 "name": "Name",

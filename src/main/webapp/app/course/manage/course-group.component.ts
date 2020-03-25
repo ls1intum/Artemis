@@ -34,7 +34,7 @@ export class CourseGroupComponent implements OnInit, OnDestroy {
 
     course: Course;
     courseGroup: CourseGroup;
-    users: User[] = [];
+    allCourseGroupUsers: User[] = [];
     filteredUsersSize = 0;
     paramSub: Subscription;
 
@@ -75,7 +75,7 @@ export class CourseGroupComponent implements OnInit, OnDestroy {
                     return this.router.navigate(['/course-management']);
                 }
                 this.courseService.getAllUsersInCourseGroup(this.course.id, this.courseGroup).subscribe((usersResponse) => {
-                    this.users = usersResponse.body!;
+                    this.allCourseGroupUsers = usersResponse.body!;
                     this.isLoading = false;
                 });
             });
@@ -121,7 +121,7 @@ export class CourseGroupComponent implements OnInit, OnDestroy {
             tap((users) => {
                 setTimeout(() => {
                     for (let i = 0; i < this.dataTable.typeaheadButtons.length; i++) {
-                        const isAlreadyInCourseGroup = this.users.map((user) => user.id).includes(users[i].id);
+                        const isAlreadyInCourseGroup = this.allCourseGroupUsers.map((user) => user.id).includes(users[i].id);
                         this.dataTable.typeaheadButtons[i].insertAdjacentHTML('beforeend', iconsAsHTML[isAlreadyInCourseGroup ? 'users' : 'users-plus']);
                         if (isAlreadyInCourseGroup) {
                             this.dataTable.typeaheadButtons[i].classList.add(cssClasses.alreadyMember);
@@ -141,14 +141,14 @@ export class CourseGroupComponent implements OnInit, OnDestroy {
      */
     onAutocompleteSelect = (user: User, callback: (user: User) => void): void => {
         // If the user is not part of this course group yet, perform the server call to add them
-        if (!this.users.map((u) => u.id).includes(user.id) && user.login) {
+        if (!this.allCourseGroupUsers.map((u) => u.id).includes(user.id) && user.login) {
             this.isTransitioning = true;
             this.courseService.addUserToCourseGroup(this.course.id, this.courseGroup, user.login).subscribe(
                 () => {
                     this.isTransitioning = false;
 
                     // Add newly added user to the list of all users in the course group
-                    this.users.push(user);
+                    this.allCourseGroupUsers.push(user);
 
                     // Hand back over to the data table for updating
                     callback(user);
@@ -174,7 +174,7 @@ export class CourseGroupComponent implements OnInit, OnDestroy {
     removeFromGroup(user: User) {
         if (user.login) {
             this.courseService.removeUserFromCourseGroup(this.course.id, this.courseGroup, user.login).subscribe(() => {
-                this.users = this.users.filter((u) => u.login !== user.login);
+                this.allCourseGroupUsers = this.allCourseGroupUsers.filter((u) => u.login !== user.login);
             });
         }
     }
@@ -195,10 +195,10 @@ export class CourseGroupComponent implements OnInit, OnDestroy {
 
     /**
      * Property that returns the course group entity name, e.g. "students" or "tutors".
-     * If the count of filtered users is exactly 1, singular is used instead of plural.
+     * If the count of users is exactly 1, singular is used instead of plural.
      */
     get courseGroupEntityName(): string {
-        return this.filteredUsersSize === 1 ? this.courseGroup.slice(0, -1) : this.courseGroup;
+        return this.allCourseGroupUsers.length === 1 ? this.courseGroup.slice(0, -1) : this.courseGroup;
     }
 
     /**
