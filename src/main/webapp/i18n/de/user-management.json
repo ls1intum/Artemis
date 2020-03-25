@@ -35,6 +35,6 @@
         "lastModifiedDate": "Zuletzt bearbeitet",
         "search": "Suche nach Nutzern: ",
         "loading": "Laden...",
-        "searchError": "Suchterm muss leer oder mindestens 3 Character lang sein."
+        "searchError": "Der Suchbegriff muss leer oder mindestens 3 Zeichen lang sein."
     }
 }

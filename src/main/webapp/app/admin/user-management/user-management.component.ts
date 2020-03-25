@@ -46,7 +46,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
         private router: Router,
         private eventManager: JhiEventManager,
     ) {
-        this.itemsPerPage = 50;
+        this.itemsPerPage = ITEMS_PER_PAGE;
         this.searchTermString = '';
         this.routeData = this.activatedRoute.data.subscribe((data) => {
             this.page = data['pagingParams'].page;
