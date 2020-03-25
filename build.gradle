@@ -33,7 +33,6 @@ plugins {
     id "net.ltgt.apt"
     //jhipster-needle-gradle-plugins - JHipster will add additional gradle plugins here
     id "com.diffplug.gradle.spotless" version "3.28.0"
-    id "com.github.spotbugs" version "4.0.0"
 }
 
 group = "de.tum.in.www1.artemis"
@@ -82,20 +81,6 @@ spotless {
         importOrderFile "artemis-spotless.importorder"
         removeUnusedImports()
         eclipse().configFile "artemis-spotless-style.xml"
-    }
-}
-
-spotbugs {
-    toolVersion = '4.0.0'
-    ignoreFailures = true
-    effort = 'max'
-    showProgress = true
-}
-
-spotbugsMain {
-    reports {
-        xml.enabled = false
-        html.enabled = true
     }
 }
 
@@ -350,7 +335,7 @@ gitProperties {
 checkstyle {
     toolVersion "8.10"
     configFile file("checkstyle.xml")
-    checkstyleTest.enabled = true
+    checkstyleTest.enabled = false
     maxErrors = 0
 }
 
@@ -359,7 +344,7 @@ task executeCheckstyle (type: Exec) {
 }
 
 task buildJarForDocker (type: Exec) {
-    commandLine "./gradlew", "build", "-x", "webpack", "-x", "test"
+    commandLine "./gradlew", "build", "-x", "webpack", "-x", "test", "-x", "jacocoTestCoverageVerification"
 }
 
 // Available commands:
