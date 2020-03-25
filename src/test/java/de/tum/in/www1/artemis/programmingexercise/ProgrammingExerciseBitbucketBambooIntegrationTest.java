@@ -131,8 +131,8 @@ public class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractS
         exerciseRepo.configureRepos("exerciseLocalRepo", "exerciseOriginRepo");
         testRepo.configureRepos("testLocalRepo", "testOriginRepo");
         solutionRepo.configureRepos("solutionLocalRepo", "solutionOriginRepo");
-        studentRepo.configureRepos("studentRepo", "studentOriginaRepo");
-        studentTeamRepo.configureRepos("studentTeamRepo", "studentTeamOriginaRepo");
+        studentRepo.configureRepos("studentRepo", "studentOriginRepo");
+        studentTeamRepo.configureRepos("studentTeamRepo", "studentTeamOriginRepo");
 
         final var projectKey = exercise.getProjectKey();
         String exerciseRepoName = projectKey.toLowerCase() + "-" + RepositoryType.TEMPLATE.getName();
