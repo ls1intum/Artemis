@@ -10,17 +10,22 @@
                 </button>
             </div>
         </div>
-        <input
-            #ngbTypeahead
-            id="typeahead-basic"
-            type="text"
-            class="form-control"
-            (selectItem)="onAutocompleteSelect($event.item)"
-            [placeholder]="searchPlaceholderTranslation | translate"
-            [ngbTypeahead]="onSearch"
-            [resultFormatter]="searchResultFormatter"
-            [inputFormatter]="searchInputFormatter"
-        />
+        <div class="search-container">
+            <input
+                #ngbTypeahead
+                id="typeahead-basic"
+                type="text"
+                class="form-control"
+                (selectItem)="onAutocompleteSelect($event.item)"
+                [placeholder]="searchPlaceholderTranslation | translate"
+                [ngbTypeahead]="onSearch"
+                [resultFormatter]="searchResultFormatter"
+                [inputFormatter]="searchInputFormatter"
+            />
+            <div class="search-loading-spinner" [class.active]="isSearching">
+                <fa-icon size="md" [icon]="'circle-notch'" [spin]="true"></fa-icon>
+            </div>
+        </div>
     </div>
     <div *ngIf="entities && !isPreparing; else loadingContainer" class="table-responsive data-table-container">
         <ng-container *ngTemplateOutlet="templateRef; context: context"></ng-container>

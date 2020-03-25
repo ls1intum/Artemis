@@ -43,6 +43,31 @@
     }
 }
 
+.search-container {
+    position: relative;
+    width: 100%;
+}
+
+.search-loading-spinner {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 0 0.75rem;
+    pointer-events: none;
+
+    opacity: 0;
+    transition: 0.3s ease-out opacity;
+
+    &.active {
+        opacity: 1;
+        transition: 0.3s ease-in opacity;
+    }
+}
+
 ngb-typeahead-window.dropdown-menu.show {
     max-height: calc(100vh - 380px);
     overflow-y: auto !important;

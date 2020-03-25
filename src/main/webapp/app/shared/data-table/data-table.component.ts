@@ -50,6 +50,7 @@ export class DataTableComponent implements OnInit, OnChanges {
 
     /**
      * @property isLoading Loading state of the data that is fetched by the ancestral component
+     * @property isSearching Whether to show a spinner inside of the input field on the right side (indicating a server search)
      * @property isTransitioning Loading overlay on top of the table indicating that the content is changing
      * @property entityType Entity identifier (e.g. 'result' or 'participation') used as a key to differentiate from other tables
      * @property allEntities List of all entities that should be displayed in the table (one entity per row)
@@ -59,10 +60,13 @@ export class DataTableComponent implements OnInit, OnChanges {
      * @property searchFields Fields of entity whose values will be compared to the user's search string (allows nested attributes, e.g. ['student.login', 'student.name'])
      * @function searchTextFromEntity Function that takes an entity and returns a text that is inserted into the search input field when clicking on an autocomplete suggestion
      * @function searchResultFormatter Function that takes an entity and returns the text for the autocomplete suggestion result row
+     * @function onSearchWrapper Wrapper around the onSearch method that can be used to modify the items displayed in the autocomplete
+     * @function onAutocompleteSelectWrapper Wrapper that can be used to hook into the process when an entity was selected in the autocomplete
      * @function customFilter Function that takes an entity and returns true or false depending on whether this entity should be shown (combine with customFilterKey)
      * @property customFilterKey Filter state of an ancestral component which triggers a table re-rendering if it changes
      */
     @Input() isLoading = false;
+    @Input() isSearching = false;
     @Input() isTransitioning = false;
     @Input() entityType = 'entity';
     @Input() allEntities: BaseEntity[] = [];

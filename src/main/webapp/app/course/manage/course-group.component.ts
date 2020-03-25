@@ -42,6 +42,7 @@ export class CourseGroupComponent implements OnInit, OnDestroy {
     dialogError$ = this.dialogErrorSource.asObservable();
 
     isLoading = false;
+    isSearching = false;
     isTransitioning = false;
     rowClass: string | undefined = undefined;
 
@@ -94,6 +95,7 @@ export class CourseGroupComponent implements OnInit, OnDestroy {
                 if (loginOrName.length < 3) {
                     return of([]);
                 }
+                this.isSearching = true;
                 return this.userService
                     .search(loginOrName)
                     .pipe(map((usersResponse) => usersResponse.body!))
@@ -102,6 +104,9 @@ export class CourseGroupComponent implements OnInit, OnDestroy {
                             return of([]);
                         }),
                     );
+            }),
+            tap(() => {
+                this.isSearching = false;
             }),
             tap((users) => {
                 setTimeout(() => {
