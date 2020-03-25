@@ -582,7 +582,7 @@ export class GuidedTourService {
 
         if (tourStepWithUrl) {
             const lastTourStepWithUrl = tourStepWithUrl[tourStepWithUrl.length - 1];
-            const previousStepLocationKey = lastTourStepWithUrl.pageUrl ? lastTourStepWithUrl.pageUrl : this.router.url;
+            const previousStepLocationKey = lastTourStepWithUrl && lastTourStepWithUrl.pageUrl ? lastTourStepWithUrl.pageUrl : this.router.url;
             if (this.pageUrls.has(previousStepLocationKey)) {
                 previousStepLocation = <string>this.pageUrls.get(previousStepLocationKey);
             }
