@@ -103,13 +103,10 @@ export class CourseGroupComponent implements OnInit, OnDestroy {
             tap((users) => {
                 setTimeout(() => {
                     for (let i = 0; i < this.dataTable.typeaheadButtons.length; i++) {
-                        if (this.users.map((user) => user.id).includes(users[i].id)) {
-                            // Styling for users who are already part of the course group (light green background + users icon)
+                        const isAlreadyInCourseGroup = this.users.map((user) => user.id).includes(users[i].id);
+                        this.dataTable.typeaheadButtons[i].insertAdjacentHTML('beforeend', iconsAsHTML[isAlreadyInCourseGroup ? 'users' : 'users-plus']);
+                        if (isAlreadyInCourseGroup) {
                             this.dataTable.typeaheadButtons[i].classList.add('already-member');
-                            this.dataTable.typeaheadButtons[i].insertAdjacentHTML('beforeend', iconsAsHTML.users);
-                        } else {
-                            // Styling for users who are not (!) yet part of the course group (users plus icon)
-                            this.dataTable.typeaheadButtons[i].insertAdjacentHTML('beforeend', iconsAsHTML['users-plus']);
                         }
                     }
                 });
