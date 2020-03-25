@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { Component, OnDestroy, OnInit, ViewChild, ViewEncapsulation } from '@angular/core';
 import { Subscription } from 'rxjs/Subscription';
 import { JhiEventManager } from 'ng-jhipster';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -17,6 +17,12 @@ import { DataTableComponent } from 'app/shared/data-table/data-table.component';
 @Component({
     selector: 'jhi-course-group',
     templateUrl: './course-group.component.html',
+    styles: [
+        'ngb-typeahead-window .dropdown-item.active { background-color: #28a745; }',
+        'ngb-typeahead-window .dropdown-item.already-member { color: #212529; background-color: #E9F6EC; }',
+        'ngb-typeahead-window .dropdown-item.already-member:hover { background-color: #D4EDD9; }',
+    ],
+    encapsulation: ViewEncapsulation.None,
 })
 export class CourseGroupComponent implements OnInit, OnDestroy {
     @ViewChild(DataTableComponent) dataTable: DataTableComponent;
@@ -80,6 +86,9 @@ export class CourseGroupComponent implements OnInit, OnDestroy {
     searchAllUsers = (stream$: Observable<{ text: string; entities: User[] }>): Observable<User[]> => {
         return stream$.pipe(
             switchMap(({ text: loginOrName, entities: users }) => {
+                if (loginOrName.length < 3) {
+                    return of([]);
+                }
                 return this.userService
                     .search(loginOrName)
                     .pipe(map((usersResponse) => usersResponse.body!))
@@ -93,7 +102,7 @@ export class CourseGroupComponent implements OnInit, OnDestroy {
                 setTimeout(() => {
                     for (let i = 0; i < this.dataTable.typeaheadButtons.length; i++) {
                         if (this.users.map((user) => user.id).includes(users[i].id)) {
-                            this.dataTable.typeaheadButtons[i].setAttribute('disabled', '');
+                            this.dataTable.typeaheadButtons[i].classList.add('already-member');
                         }
                     }
                 });
