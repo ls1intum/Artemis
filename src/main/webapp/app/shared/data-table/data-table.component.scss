@@ -48,7 +48,7 @@
     width: 100%;
 }
 
-.search-loading-spinner {
+.search-info {
     position: absolute;
     top: 0;
     right: 0;
@@ -57,14 +57,15 @@
     justify-content: center;
     align-items: center;
     padding: 0 0.75rem;
+    font-size: 18px;
     pointer-events: none;
 
     opacity: 0;
-    transition: 0.3s ease-out opacity;
+    transition: 0.1s ease-out opacity;
 
     &.active {
         opacity: 1;
-        transition: 0.3s ease-in opacity;
+        transition: 0.2s ease-in opacity;
     }
 }
 

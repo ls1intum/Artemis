@@ -51,11 +51,14 @@ export class DataTableComponent implements OnInit, OnChanges {
     /**
      * @property isLoading Loading state of the data that is fetched by the ancestral component
      * @property isSearching Whether to show a spinner inside of the input field on the right side (indicating a server search)
+     * @property searchFailed Whether to show a badge that indicates that the search has failed
+     * @property searchNoResults Whether to show a badge that indicates that the search did not return any results
      * @property isTransitioning Loading overlay on top of the table indicating that the content is changing
      * @property entityType Entity identifier (e.g. 'result' or 'participation') used as a key to differentiate from other tables
      * @property allEntities List of all entities that should be displayed in the table (one entity per row)
-     * @property entitiesPerPageTranslation Translation string that has the variable { number } in it (e.g. 'artemisApp.exercise.resultsPerPage')
+     * @property entitiesPerPageTranslation Translation string that has the variable {{ number }} in it (e.g. 'artemisApp.exercise.resultsPerPage')
      * @property showAllEntitiesTranslation Translation string if all entities should be displayed (e.g. 'artemisApp.exercise.showAll')
+     * @property searchNoResultsTranslation Translation string that has the variable {{ length }} in it (default: 'artemisApp.dataTable.search.noResults')
      * @property searchPlaceholderTranslation Translation string that is used for the placeholder in the search input field
      * @property searchFields Fields of entity whose values will be compared to the user's search string (allows nested attributes, e.g. ['student.login', 'student.name'])
      * @function searchTextFromEntity Function that takes an entity and returns a text that is inserted into the search input field when clicking on an autocomplete suggestion
@@ -67,11 +70,14 @@ export class DataTableComponent implements OnInit, OnChanges {
      */
     @Input() isLoading = false;
     @Input() isSearching = false;
+    @Input() searchFailed = false;
+    @Input() searchNoResults = false;
     @Input() isTransitioning = false;
     @Input() entityType = 'entity';
     @Input() allEntities: BaseEntity[] = [];
     @Input() entitiesPerPageTranslation: string;
     @Input() showAllEntitiesTranslation: string;
+    @Input() searchNoResultsTranslation = 'artemisApp.dataTable.search.noResults';
     @Input() searchPlaceholderTranslation: string;
     @Input() searchFields: string[] = [];
     @Input() searchTextFromEntity: (entity: BaseEntity) => string = entityToString;
@@ -106,6 +112,13 @@ export class DataTableComponent implements OnInit, OnChanges {
         textSearch: string[];
         sortProp: SortProp;
     };
+
+    /**
+     * @property searchQueryTooShort Whether the entered search term
+     * @property minSearchQueryLength Minimum number of characters before a search is triggered
+     */
+    searchQueryTooShort: boolean;
+    readonly minSearchQueryLength = 3;
 
     constructor(private sortByPipe: SortByPipe, private localStorage: LocalStorageService) {
         this.entities = [];
@@ -295,6 +308,9 @@ export class DataTableComponent implements OnInit, OnChanges {
             text$.pipe(
                 debounceTime(200),
                 distinctUntilChanged(),
+                tap(() => {
+                    this.searchQueryTooShort = false;
+                }),
                 map((text) => {
                     const searchWords = text.split(',').map((word) => word.trim());
                     // When the entity field is cleared, we translate the resulting empty string to an empty array (otherwise no entities would be found).
@@ -310,7 +326,8 @@ export class DataTableComponent implements OnInit, OnChanges {
                     // We only execute the autocomplete for the last keyword in the provided list.
                     const lastSearchWord = searchWords.length ? searchWords[searchWords.length - 1] : null;
                     // Don't execute autocomplete for less then two inputted characters.
-                    if (!lastSearchWord || lastSearchWord.length < 3) {
+                    if (!lastSearchWord || lastSearchWord.length < this.minSearchQueryLength) {
+                        this.searchQueryTooShort = true;
                         return { text, entities: [] };
                     }
                     return {
@@ -324,6 +341,14 @@ export class DataTableComponent implements OnInit, OnChanges {
             ),
         );
     };
+
+    /**
+     * Function that is called when the search input emits a blur event.
+     * Can be used to clear up search-related info messages.
+     */
+    onSearchInputBlur() {
+        this.searchQueryTooShort = false;
+    }
 
     /**
      * Property that exposes the typeahead buttons (= autocomplete suggestion options) as DOM elements

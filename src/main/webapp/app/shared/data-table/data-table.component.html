@@ -21,9 +21,25 @@
                 [ngbTypeahead]="onSearch"
                 [resultFormatter]="searchResultFormatter"
                 [inputFormatter]="searchInputFormatter"
+                (blur)="onSearchInputBlur()"
             />
-            <div class="search-loading-spinner" [class.active]="isSearching">
+            <div class="search-info" [class.active]="isSearching">
                 <fa-icon size="md" [icon]="'circle-notch'" [spin]="true"></fa-icon>
+            </div>
+            <div class="search-info" [class.active]="searchFailed">
+                <span class="badge badge-danger" jhitranslate="artemisApp.dataTable.search.failed">
+                    Search failed
+                </span>
+            </div>
+            <div class="search-info" [class.active]="searchNoResults">
+                <span class="badge badge-warning" [jhitranslate]="searchNoResultsTranslation">
+                    No results
+                </span>
+            </div>
+            <div class="search-info" [class.active]="searchQueryTooShort">
+                <span class="badge badge-info" jhitranslate="artemisApp.dataTable.search.minQueryLengthHint" [translateValues]="{ length: minSearchQueryLength }">
+                    Please enter at least {{ minSearchQueryLength }} characters
+                </span>
             </div>
         </div>
     </div>

@@ -80,6 +80,7 @@
                 "usersPerPage": "{{number}} Benutzer pro Seite",
                 "showAllUsers": "Alle Benutzer anzeigen",
                 "searchForUsers": "Suche nach Benutzer Logins oder Namen (Komma getrennt)",
+                "searchNoResults": "Keine Benutzer gefunden",
                 "login": "Login",
                 "name": "Name",
                 "email": "E-Mail",

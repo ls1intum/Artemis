@@ -43,6 +43,8 @@ export class CourseGroupComponent implements OnInit, OnDestroy {
 
     isLoading = false;
     isSearching = false;
+    searchFailed = false;
+    searchNoResults = false;
     isTransitioning = false;
     rowClass: string | undefined = undefined;
 
@@ -91,7 +93,9 @@ export class CourseGroupComponent implements OnInit, OnDestroy {
      */
     searchAllUsers = (stream$: Observable<{ text: string; entities: User[] }>): Observable<User[]> => {
         return stream$.pipe(
-            switchMap(({ text: loginOrName, entities: users }) => {
+            switchMap(({ text: loginOrName }) => {
+                this.searchFailed = false;
+                this.searchNoResults = false;
                 if (loginOrName.length < 3) {
                     return of([]);
                 }
@@ -100,7 +104,13 @@ export class CourseGroupComponent implements OnInit, OnDestroy {
                     .search(loginOrName)
                     .pipe(map((usersResponse) => usersResponse.body!))
                     .pipe(
+                        tap((users) => {
+                            if (users.length === 0) {
+                                this.searchNoResults = true;
+                            }
+                        }),
                         catchError(() => {
+                            this.searchFailed = true;
                             return of([]);
                         }),
                     );
