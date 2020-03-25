@@ -27,17 +27,17 @@
                 <fa-icon size="md" [icon]="'circle-notch'" [spin]="true"></fa-icon>
             </div>
             <div class="search-info" [class.active]="searchFailed">
-                <span class="badge badge-danger" jhitranslate="artemisApp.dataTable.search.failed">
+                <span class="badge badge-danger" jhiTranslate="artemisApp.dataTable.search.failed">
                     Search failed
                 </span>
             </div>
             <div class="search-info" [class.active]="searchNoResults">
-                <span class="badge badge-warning" [jhitranslate]="searchNoResultsTranslation">
+                <span class="badge badge-warning" [jhiTranslate]="searchNoResultsTranslation">
                     No results
                 </span>
             </div>
             <div class="search-info" [class.active]="searchQueryTooShort">
-                <span class="badge badge-info" jhitranslate="artemisApp.dataTable.search.minQueryLengthHint" [translateValues]="{ length: minSearchQueryLength }">
+                <span class="badge badge-info" jhiTranslate="artemisApp.dataTable.search.minQueryLengthHint" [translateValues]="{ length: minSearchQueryLength }">
                     Please enter at least {{ minSearchQueryLength }} characters
                 </span>
             </div>
