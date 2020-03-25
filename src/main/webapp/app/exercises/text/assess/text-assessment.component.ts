@@ -504,19 +504,4 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
         const jhiAlert = this.jhiAlertService.error(errorMessage);
         jhiAlert.msg = errorMessage;
     }
-    allowDrop(ev: any) {
-        ev.preventDefault();
-    }
-    drop(ev: any) {
-        ev.preventDefault();
-        const data = ev.dataTransfer.getData('text');
-        const instruction = JSON.parse(data);
-        const credits = instruction.credits;
-        const feedback = instruction.feedback;
-        if (this.generalFeedback.detailText === undefined) {
-            this.generalFeedback.detailText = '';
-        }
-        this.generalFeedback.detailText += 'Score: ' + credits + ' Feedback: ' + feedback + '\n';
-        this.validateAssessment();
-    }
 }

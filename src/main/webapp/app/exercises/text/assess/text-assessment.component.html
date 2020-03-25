@@ -142,12 +142,7 @@
             ></jhi-assessment-detail>
         </div>
     </div>
-    <div class="row mt-2">
-        <h4 class="col-12" jhiTranslate="artemisApp.assessment.generalFeedback">General Feedback</h4>
-        <div class="col-12 col-lg-8 col-xl-6" (drop)="drop($event)" (dragover)="allowDrop($event)">
-            <textarea class="form-control" rows="2" maxlength="5000" [(ngModel)]="generalFeedback.detailText" (ngModelChange)="validateAssessment()"></textarea>
-        </div>
-    </div>
+    <jhi-assessment-general-feedback [(feedback)]="generalFeedback" (feedbackChange)="validateAssessment()"></jhi-assessment-general-feedback>
 </ng-container>
 
 <div class="mt-4" *ngIf="complaint">
