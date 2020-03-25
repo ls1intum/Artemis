@@ -59,6 +59,9 @@
             "students": "Studierende",
             "tutors": "Tutoren",
             "instructors": "Dozenten",
+            "student": "Student",
+            "tutor": "Tutor",
+            "instructor": "Dozent",
             "onlineCourseFalse": "Nein",
             "onlineCourseTrue": "Ja",
             "form": {

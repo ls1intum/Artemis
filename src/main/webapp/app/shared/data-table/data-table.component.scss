@@ -32,14 +32,14 @@
 
     opacity: 0;
     pointer-events: none;
-    transition: 0.15s ease-in all;
+    transition: 0.05s ease-out opacity;
 
     &.active {
         background-color: rgba(255, 255, 255, 0.5);
 
         opacity: 1;
         pointer-events: auto;
-        transition: 0.1s ease-out all;
+        transition: 0.15s ease-in opacity;
     }
 }
 

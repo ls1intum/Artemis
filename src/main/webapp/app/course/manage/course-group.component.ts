@@ -15,22 +15,22 @@ import { UserService } from 'app/core/user/user.service';
 import { DataTableComponent } from 'app/shared/data-table/data-table.component';
 import { iconsAsHTML } from 'app/utils/icons.utils';
 
+const cssClasses = {
+    alreadyMember: 'already-member',
+    newlyAddedMember: 'newly-added-member',
+};
+
 @Component({
     selector: 'jhi-course-group',
     templateUrl: './course-group.component.html',
-    styles: [
-        'ngb-typeahead-window { min-width: 400px; }',
-        'ngb-typeahead-window .dropdown-item { display: flex; justify-content: space-between; }',
-        'ngb-typeahead-window .dropdown-item.active { background-color: #28a745; }',
-        'ngb-typeahead-window .dropdown-item.already-member { color: #212529; background-color: #E9F6EC; }',
-        'ngb-typeahead-window .dropdown-item.already-member:hover { background-color: #D4EDD9; }',
-    ],
+    styleUrls: ['./course-group.component.scss'],
     encapsulation: ViewEncapsulation.None,
 })
 export class CourseGroupComponent implements OnInit, OnDestroy {
     @ViewChild(DataTableComponent) dataTable: DataTableComponent;
 
     readonly ActionType = ActionType;
+    readonly capitalize = capitalize;
 
     course: Course;
     courseGroup: CourseGroup;
@@ -43,6 +43,7 @@ export class CourseGroupComponent implements OnInit, OnDestroy {
 
     isLoading = false;
     isTransitioning = false;
+    rowClass: string | undefined = undefined;
 
     constructor(
         private router: Router,
@@ -108,7 +109,7 @@ export class CourseGroupComponent implements OnInit, OnDestroy {
                         const isAlreadyInCourseGroup = this.users.map((user) => user.id).includes(users[i].id);
                         this.dataTable.typeaheadButtons[i].insertAdjacentHTML('beforeend', iconsAsHTML[isAlreadyInCourseGroup ? 'users' : 'users-plus']);
                         if (isAlreadyInCourseGroup) {
-                            this.dataTable.typeaheadButtons[i].classList.add('already-member');
+                            this.dataTable.typeaheadButtons[i].classList.add(cssClasses.alreadyMember);
                         }
                     }
                 });
@@ -125,16 +126,20 @@ export class CourseGroupComponent implements OnInit, OnDestroy {
      */
     onAutocompleteSelect = (user: User, callback: (user: User) => void): void => {
         // If the user is not part of this course group yet, perform the server call to add them
-        // tslint:disable-next-line:no-shadowed-variable
-        if (!this.users.map((user) => user.id).includes(user.id) && user.login) {
+        if (!this.users.map((u) => u.id).includes(user.id) && user.login) {
             this.isTransitioning = true;
             this.courseService.addUserToCourseGroup(this.course.id, this.courseGroup, user.login).subscribe(
                 () => {
                     this.isTransitioning = false;
+
+                    // Add newly added user to the list of all users in the course group
                     this.users.push(user);
 
-                    // Hand back over to the data table
+                    // Hand back over to the data table for updating
                     callback(user);
+
+                    // Flash green background color to signal to the user that this record was added
+                    this.flashRowClass(cssClasses.newlyAddedMember);
                 },
                 (err) => {
                     this.isTransitioning = false;
@@ -174,10 +179,11 @@ export class CourseGroupComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Property that returns the capitalized course group, e.g. "Students" or "Tutors"
+     * Property that returns the course group entity name, e.g. "students" or "tutors".
+     * If the count of filtered users is exactly 1, singular is used instead of plural.
      */
-    get courseGroupCapitalized() {
-        return capitalize(this.courseGroup);
+    get courseGroupEntityName(): string {
+        return this.filteredUsersSize === 1 ? this.courseGroup.slice(0, -1) : this.courseGroup;
     }
 
     /**
@@ -207,5 +213,24 @@ export class CourseGroupComponent implements OnInit, OnDestroy {
      */
     searchTextFromUser = (user: User): string => {
         return user.login || '';
+    };
+
+    /**
+     * Computes the row class that is being added to all rows of the datatable
+     *
+     * @param row Row from ngx datatable
+     */
+    dataTableRowClass = (row: any) => {
+        return this.rowClass;
+    };
+
+    /**
+     * Can be used to highlight rows temporarily by flashing a certain css class
+     *
+     * @param className Name of the class to be applied to all rows
+     */
+    flashRowClass = (className: string) => {
+        this.rowClass = className;
+        setTimeout(() => (this.rowClass = undefined));
     };
 }

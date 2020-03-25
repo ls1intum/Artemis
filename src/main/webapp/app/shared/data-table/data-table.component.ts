@@ -335,17 +335,16 @@ export class DataTableComponent implements OnInit, OnChanges {
      * @param entity Entity that was selected via autocomplete
      */
     onAutocompleteSelect = (entity: BaseEntity) => {
+        this.entityCriteria.textSearch[this.entityCriteria.textSearch.length - 1] = this.searchTextFromEntity(entity);
         this.onAutocompleteSelectWrapper(entity, this.filterAfterAutocompleteSelect);
     };
 
     /**
-     * Method takes the selected entity and inserts its searchable string equivalent into the input.
-     * Then it updates the displayed entities (will be only one entity if the search text is unique per entity).
+     * Method updates the displayed entities (will be only one entity if the search text is unique per entity).
      *
      * @param entity Entity that was selected via autocomplete
      */
     filterAfterAutocompleteSelect = (entity: BaseEntity) => {
-        this.entityCriteria.textSearch[this.entityCriteria.textSearch.length - 1] = this.searchTextFromEntity(entity);
         this.updateEntities();
     };
 
