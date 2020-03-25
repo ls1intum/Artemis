@@ -13,6 +13,7 @@ import { Observable, of } from 'rxjs';
 import { catchError, map, switchMap, tap } from 'rxjs/operators';
 import { UserService } from 'app/core/user/user.service';
 import { DataTableComponent } from 'app/shared/data-table/data-table.component';
+import { iconsAsHTML } from 'app/utils/icons.utils';
 
 @Component({
     selector: 'jhi-course-group',
@@ -21,6 +22,7 @@ import { DataTableComponent } from 'app/shared/data-table/data-table.component';
         'ngb-typeahead-window .dropdown-item.active { background-color: #28a745; }',
         'ngb-typeahead-window .dropdown-item.already-member { color: #212529; background-color: #E9F6EC; }',
         'ngb-typeahead-window .dropdown-item.already-member:hover { background-color: #D4EDD9; }',
+        'ngb-typeahead-window .dropdown-item { display: flex; justify-content: space-between }',
     ],
     encapsulation: ViewEncapsulation.None,
 })
@@ -102,7 +104,12 @@ export class CourseGroupComponent implements OnInit, OnDestroy {
                 setTimeout(() => {
                     for (let i = 0; i < this.dataTable.typeaheadButtons.length; i++) {
                         if (this.users.map((user) => user.id).includes(users[i].id)) {
+                            // Styling for users who are already part of the course group (light green background + users icon)
                             this.dataTable.typeaheadButtons[i].classList.add('already-member');
+                            this.dataTable.typeaheadButtons[i].insertAdjacentHTML('beforeend', iconsAsHTML.users);
+                        } else {
+                            // Styling for users who are not (!) yet part of the course group (users plus icon)
+                            this.dataTable.typeaheadButtons[i].insertAdjacentHTML('beforeend', iconsAsHTML['users-plus']);
                         }
                     }
                 });
