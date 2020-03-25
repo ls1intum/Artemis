@@ -49,8 +49,4 @@ export const enum CourseGroup {
     INSTRUCTORS = 'instructors',
 }
 
-export const courseGroups = [
-    CourseGroup.STUDENTS,
-    CourseGroup.TUTORS,
-    CourseGroup.INSTRUCTORS,
-];
+export const courseGroups = [CourseGroup.STUDENTS, CourseGroup.TUTORS, CourseGroup.INSTRUCTORS];

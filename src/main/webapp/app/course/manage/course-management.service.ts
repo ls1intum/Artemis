@@ -33,8 +33,7 @@ export class CourseManagementService {
         private lectureService: LectureService,
         private notificationService: NotificationService,
         private accountService: AccountService,
-    ) {
-    }
+    ) {}
 
     create(course: Course): Observable<EntityResponseType> {
         const copy = this.convertDateFromClient(course);
@@ -225,8 +224,7 @@ export class CourseManagementService {
 export class CourseExerciseService {
     private resourceUrl = SERVER_API_URL + `api/courses`;
 
-    constructor(private http: HttpClient, private participationWebsocketService: ParticipationWebsocketService) {
-    }
+    constructor(private http: HttpClient, private participationWebsocketService: ParticipationWebsocketService) {}
 
     // exercise specific calls
 
