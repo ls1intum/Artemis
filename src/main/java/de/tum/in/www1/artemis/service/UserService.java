@@ -567,6 +567,15 @@ public class UserService {
     }
 
     /**
+     * Search for all users by login or name
+     * @param loginOrName Search query that will be searched for in login and name field
+     * @return all users matching search criteria
+     */
+    public Page<UserDTO> searchAllUsersByLoginOrName(Pageable pageable, String loginOrName) {
+        return userRepository.searchAllByLoginOrName(pageable, loginOrName).map(UserDTO::new);
+    }
+
+    /**
      * Get user with groups by given login string
      * @param login user login string
      * @return existing user with given login string or null

@@ -63,6 +63,16 @@ public interface UserRepository extends JpaRepository<User, Long> {
             + "(user.login like :#{#loginOrName}% or concat_ws(' ', user.firstName, user.lastName) like %:#{#loginOrName}%)")
     List<User> searchByLoginOrNameInGroup(@Param("groupName") String groupName, @Param("loginOrName") String loginOrName);
 
+    /**
+     * Searches for users by their login or full name.
+     * @param page Pageable related info (e.g. for page size)
+     * @param loginOrName Either a login (e.g. ga12abc) or name (e.g. Max Mustermann) by which to search
+     * @return list of found users that match the search criteria
+     */
+    @EntityGraph(type = LOAD, attributePaths = { "groups" })
+    @Query("select user from User user where user.login like :#{#loginOrName}% or concat_ws(' ', user.firstName, user.lastName) like %:#{#loginOrName}%")
+    Page<User> searchAllByLoginOrName(Pageable page, @Param("loginOrName") String loginOrName);
+
     @EntityGraph(type = LOAD, attributePaths = { "groups" })
     @Query("select user from User user")
     Page<User> findAllWithGroups(Pageable pageable);

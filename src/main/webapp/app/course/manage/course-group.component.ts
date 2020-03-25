@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { Subscription } from 'rxjs/Subscription';
 import { JhiEventManager } from 'ng-jhipster';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -9,12 +9,18 @@ import { CourseManagementService } from 'app/course/manage/course-management.ser
 import { Course, CourseGroup, courseGroups } from 'app/entities/course.model';
 import { capitalize } from 'lodash';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
+import { Observable, of } from 'rxjs';
+import { catchError, map, switchMap, tap } from 'rxjs/operators';
+import { UserService } from 'app/core/user/user.service';
+import { DataTableComponent } from 'app/shared/data-table/data-table.component';
 
 @Component({
     selector: 'jhi-course-group',
     templateUrl: './course-group.component.html',
 })
 export class CourseGroupComponent implements OnInit, OnDestroy {
+    @ViewChild(DataTableComponent) dataTable: DataTableComponent;
+
     readonly ActionType = ActionType;
 
     course: Course;
@@ -34,6 +40,7 @@ export class CourseGroupComponent implements OnInit, OnDestroy {
         private jhiAlertService: AlertService,
         private eventManager: JhiEventManager,
         private courseService: CourseManagementService,
+        private userService: UserService,
     ) {}
 
     ngOnInit() {
@@ -60,6 +67,50 @@ export class CourseGroupComponent implements OnInit, OnDestroy {
             });
         });
     }
+
+    /**
+     * Receives the search text and filter results from DataTableComponent, modifies them and returns the result which will be used by ngbTypeahead.
+     *
+     * 1. Perform server-side search using the search text
+     * 2. Return results from server query that contain all users (instead of only the client-side users who are group members already)
+     *
+     * @param stream$ stream of searches of the format {text, entities} where entities are the results
+     * @return stream of users for the autocomplete
+     */
+    searchAllUsers = (stream$: Observable<{ text: string; entities: User[] }>): Observable<User[]> => {
+        return stream$.pipe(
+            switchMap(({ text: loginOrName, entities: users }) => {
+                return this.userService
+                    .search(loginOrName)
+                    .pipe(map((usersResponse) => usersResponse.body!))
+                    .pipe(
+                        catchError(() => {
+                            return of([]);
+                        }),
+                    );
+            }),
+            tap((users) => {
+                setTimeout(() => {
+                    for (let i = 0; i < this.dataTable.typeaheadButtons.length; i++) {
+                        if (this.users.map((user) => user.id).includes(users[i].id)) {
+                            this.dataTable.typeaheadButtons[i].setAttribute('disabled', '');
+                        }
+                    }
+                });
+            }),
+        );
+    };
+
+    /**
+     * Receives the user that was selected in the autocomplete and the callback from DataTableComponent.
+     * The callback inserts the search term of the selected entity into the search field and updates the displayed users.
+     *
+     * @param user The selected user from the autocomplete suggestions
+     * @param callback Function that can be called with the selected user to trigger the DataTableComponent default behavior
+     */
+    onAutocompleteSelect = (user: User, callback: (user: User) => void): void => {
+        callback(user);
+    };
 
     /**
      * Remove user from course group

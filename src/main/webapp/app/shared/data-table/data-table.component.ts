@@ -1,4 +1,4 @@
-import { Component, ContentChild, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges, TemplateRef, ViewEncapsulation } from '@angular/core';
+import { Component, ContentChild, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges, TemplateRef, ViewEncapsulation, ViewChild, ElementRef } from '@angular/core';
 import { debounceTime, distinctUntilChanged, map, tap } from 'rxjs/operators';
 import { Observable } from 'rxjs';
 import { ColumnMode, SortType } from '@swimlane/ngx-datatable';
@@ -31,8 +31,6 @@ type SortProp = {
 
 type PagingValue = number | 'all';
 
-const entityToString = (entity: BaseEntity) => entity.id.toString();
-
 @Component({
     selector: 'jhi-data-table',
     templateUrl: './data-table.component.html',
@@ -43,8 +41,12 @@ export class DataTableComponent implements OnInit, OnChanges {
     /**
      * @property templateRef Ref to the content child of this component (which is ngx-datatable)
      */
-    @ContentChild(TemplateRef, { read: TemplateRef, static: false })
-    templateRef: TemplateRef<any>;
+    @ContentChild(TemplateRef, { read: TemplateRef, static: false }) templateRef: TemplateRef<any>;
+
+    /**
+     * @property ngbTypeahead Ref to the autocomplete component from Angular
+     */
+    @ViewChild('ngbTypeahead', { static: false }) ngbTypeahead: ElementRef;
 
     /**
      * @property isLoading Loading state of the data that is fetched by the ancestral component
@@ -68,6 +70,8 @@ export class DataTableComponent implements OnInit, OnChanges {
     @Input() searchFields: string[] = [];
     @Input() searchTextFromEntity: (entity: BaseEntity) => string = entityToString;
     @Input() searchResultFormatter: (entity: BaseEntity) => string = entityToString;
+    @Input() onSearchWrapper: (stream: Observable<{ text: string; entities: BaseEntity[] }>) => Observable<BaseEntity[]> = onSearchDefaultWrapper;
+    @Input() onAutocompleteSelectWrapper: (entity: BaseEntity, callback: (entity: BaseEntity) => void) => void = onAutocompleteSelectDefaultWrapper;
     @Input() customFilter: (entity: BaseEntity) => boolean = () => true;
     @Input() customFilterKey: any = {};
 
@@ -280,35 +284,47 @@ export class DataTableComponent implements OnInit, OnChanges {
      *
      * @param text$ stream of text input.
      */
-    onSearch = (text$: Observable<string>) => {
-        return text$.pipe(
-            debounceTime(200),
-            distinctUntilChanged(),
-            map((text) => {
-                const searchWords = text.split(',').map((word) => word.trim());
-                // When the entity field is cleared, we translate the resulting empty string to an empty array (otherwise no entities would be found).
-                return searchWords.length === 1 && !searchWords[0] ? [] : searchWords;
-            }),
-            // For available entities in table.
-            tap((searchWords) => {
-                this.entityCriteria.textSearch = searchWords;
-                this.updateEntities();
-            }),
-            // For autocomplete.
-            map((searchWords: string[]) => {
-                // We only execute the autocomplete for the last keyword in the provided list.
-                const lastSearchWord = searchWords.length ? searchWords[searchWords.length - 1] : null;
-                // Don't execute autocomplete for less then two inputted characters.
-                if (!lastSearchWord || lastSearchWord.length < 3) {
-                    return false;
-                }
-                return this.entities.filter((entity) => {
-                    const fieldValues = this.entityFieldValues(entity, this.searchFields);
-                    return fieldValues.some((fieldValue) => this.foundIn(fieldValue)(lastSearchWord));
-                });
-            }),
+    onSearch = (text$: Observable<string>): Observable<BaseEntity[]> => {
+        return this.onSearchWrapper(
+            text$.pipe(
+                debounceTime(200),
+                distinctUntilChanged(),
+                map((text) => {
+                    const searchWords = text.split(',').map((word) => word.trim());
+                    // When the entity field is cleared, we translate the resulting empty string to an empty array (otherwise no entities would be found).
+                    return { text, searchWords: searchWords.length === 1 && !searchWords[0] ? [] : searchWords };
+                }),
+                // For available entities in table.
+                tap(({ searchWords }) => {
+                    this.entityCriteria.textSearch = searchWords;
+                    this.updateEntities();
+                }),
+                // For autocomplete.
+                map(({ text, searchWords }) => {
+                    // We only execute the autocomplete for the last keyword in the provided list.
+                    const lastSearchWord = searchWords.length ? searchWords[searchWords.length - 1] : null;
+                    // Don't execute autocomplete for less then two inputted characters.
+                    if (!lastSearchWord || lastSearchWord.length < 3) {
+                        return { text, entities: [] };
+                    }
+                    return {
+                        text,
+                        entities: this.entities.filter((entity) => {
+                            const fieldValues = this.entityFieldValues(entity, this.searchFields);
+                            return fieldValues.some((fieldValue) => this.foundIn(fieldValue)(lastSearchWord));
+                        }),
+                    };
+                }),
+            ),
         );
     };
+
+    /**
+     * Property that exposes the typeahead buttons (= autocomplete suggestion options) as DOM elements
+     */
+    get typeaheadButtons() {
+        return get(this.ngbTypeahead, 'nativeElement.nextSibling.children', []);
+    }
 
     /**
      * Method is called when user clicks on an autocomplete suggestion. The input method
@@ -317,6 +333,16 @@ export class DataTableComponent implements OnInit, OnChanges {
      * @param entity Entity that was selected via autocomplete
      */
     onAutocompleteSelect = (entity: BaseEntity) => {
+        this.onAutocompleteSelectWrapper(entity, this.filterAfterAutocompleteSelect);
+    };
+
+    /**
+     * Method takes the selected entity and inserts its searchable string equivalent into the input.
+     * Then it updates the displayed entities (will be only one entity if the search text is unique per entity).
+     *
+     * @param entity Entity that was selected via autocomplete
+     */
+    filterAfterAutocompleteSelect = (entity: BaseEntity) => {
         this.entityCriteria.textSearch[this.entityCriteria.textSearch.length - 1] = this.searchTextFromEntity(entity);
         this.updateEntities();
     };
@@ -363,3 +389,30 @@ export class DataTableComponent implements OnInit, OnChanges {
         return SortOrderIcon[this.entityCriteria.sortProp.order];
     }
 }
+
+const entityToString = (entity: BaseEntity) => entity.id.toString();
+
+/**
+ * Default on search wrapper that simply strips the search text and passes on the results.
+ * This can be customized by supplying your own onSearchWrapper as an Input that e.g. modifies the results.
+ * Just copy the default wrapper below into your consumer component (that uses this component) as a blueprint and adapt it.
+ *
+ * @param stream$ stream of searches of the format {text, entities} where entities are the results
+ */
+const onSearchDefaultWrapper = (stream$: Observable<{ text: string; entities: BaseEntity[] }>): Observable<BaseEntity[]> => {
+    return stream$.map(({ entities }) => {
+        return entities;
+    });
+};
+
+/**
+ * Default on autocomplete select wrapper that simply calls the provided callback (which is this components onAutocompleteSelect).
+ * This can be customized by supplying your own onAutocompleteSelectWrapper as an Input that changes or adds behavior.
+ * Just copy the default wrapper below into your consumer component (that uses this component) as a blueprint and adapt it.
+ *
+ * @param entity The selected entity from the autocomplete suggestions
+ * @param callback Function that can be called with the selected entity to trigger this component's default behavior for on select
+ */
+const onAutocompleteSelectDefaultWrapper = (entity: BaseEntity, callback: (entity: BaseEntity) => void): void => {
+    callback(entity);
+};

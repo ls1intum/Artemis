@@ -29,6 +29,10 @@ export class UserService {
         return this.http.get<User[]>(this.resourceUrl, { params: options, observe: 'response' });
     }
 
+    search(loginOrName: string): Observable<HttpResponse<User[]>> {
+        return this.http.get<User[]>(`${this.resourceUrl}/search?loginOrName=${loginOrName}`, { observe: 'response' });
+    }
+
     delete(login: string): Observable<HttpResponse<void>> {
         return this.http.delete<void>(`${this.resourceUrl}/${login}`, { observe: 'response' });
     }
