@@ -43,6 +43,7 @@ import { Course } from 'app/entities/course.model';
 import { Feedback } from 'app/entities/feedback.model';
 import { TextBlock } from 'app/entities/text-block.model';
 import { ComplaintResponse } from 'app/entities/complaint-response.model';
+import { AssessmentGeneralFeedbackComponent } from 'app/assessment/assessment-general-feedback/assessment-general-feedback.component';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -102,6 +103,7 @@ describe('TextAssessmentComponent', () => {
                 MockComponent(ResizableInstructionsComponent),
                 MockComponent(AssessmentDetailComponent),
                 MockComponent(ComplaintsForTutorComponent),
+                MockComponent(AssessmentGeneralFeedbackComponent),
             ],
             providers: [
                 JhiLanguageHelper,
