@@ -180,7 +180,7 @@ Another possible solution is to register a local URL, e.g. using [ngrok](https:/
         gitlab_rails['monitoring_whitelist'] = ['0.0.0.0/0']
         gitlab_rails['gitlab_shell_ssh_port'] = 2222
 
-This will disable the firewall for all IP adresses.
+This will disable the firewall for all IP addresses.
 If you only want to allow the server that runs Artemis to query the information, replace `0.0.0.0/0` with `ARTEMIS.SERVER.IP.ADRESS/32`
 
 If you use SSH and use a different port than `2222`, you have to adjust the port above.
