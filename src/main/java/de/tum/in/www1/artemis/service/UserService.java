@@ -576,6 +576,7 @@ public class UserService {
 
     /**
      * Search for all users by login or name
+     * @param pageable Pageable configuring paginated access (e.g. to limit the number of records returned)
      * @param loginOrName Search query that will be searched for in login and name field
      * @return all users matching search criteria
      */
