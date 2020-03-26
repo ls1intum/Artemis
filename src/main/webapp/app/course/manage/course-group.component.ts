@@ -2,6 +2,7 @@ import { Component, OnDestroy, OnInit, ViewChild, ViewEncapsulation } from '@ang
 import { Subscription } from 'rxjs/Subscription';
 import { JhiEventManager } from 'ng-jhipster';
 import { ActivatedRoute, Router } from '@angular/router';
+import { HttpErrorResponse } from '@angular/common/http';
 import { Subject } from 'rxjs';
 import { AlertService } from 'app/core/alert/alert.service';
 import { User } from 'app/core/user/user.model';
@@ -173,9 +174,13 @@ export class CourseGroupComponent implements OnInit, OnDestroy {
      */
     removeFromGroup(user: User) {
         if (user.login) {
-            this.courseService.removeUserFromCourseGroup(this.course.id, this.courseGroup, user.login).subscribe(() => {
-                this.allCourseGroupUsers = this.allCourseGroupUsers.filter((u) => u.login !== user.login);
-            });
+            this.courseService.removeUserFromCourseGroup(this.course.id, this.courseGroup, user.login).subscribe(
+                () => {
+                    this.allCourseGroupUsers = this.allCourseGroupUsers.filter((u) => u.login !== user.login);
+                    this.dialogErrorSource.next('');
+                },
+                (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
+            );
         }
     }
 
