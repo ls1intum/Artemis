@@ -207,7 +207,7 @@ GitLab should configure itself automatically. If there are no issues, you can de
 
 ### Jenkins Server Setup 
 
-1. Custom docker image
+1. Custom docker image\
     In order to install and use Maven with Java 12 in the Jenkins container, you have to first install maven, then download Java 12
     and finally configure Maven to use Java 12 instead of the default version.
 
@@ -320,7 +320,7 @@ There you will find the Timestamper configuration, use the following value for b
 Artemis needs to receive a notification after every build, which contains the test results and additional commit information.
 For that purpose, we developed a Jenkins plugin, that can aggregate and _POST_ JUnit formatted results to any URL.
 
-You can download the current release of the plugin [here](https://github.com/ls1intum/jenkins-server-notification-plugin/releases/tag/v1.0.0) (Download the **.hpi** file).
+You can download the current release of the plugin [here](https://github.com/ls1intum/jenkins-server-notification-plugin/releases) (Download the **.hpi** file).
 Go to the Jenkins plugin page (_Manage Jenkins → Manage Plugins_) and install the downloaded file under the _Advanced_ tab under _Upload Plugin_
 
 <details><summary>Screenshot</summary>
