@@ -44,7 +44,9 @@ export function setup() {
 
     course = newCourse(artemis);
 
-    if(__ENV.CREATE_USERS === true || __ENV.CREATE_USERS === 'true') {
+    const shouldCreateUsers = __ENV.CREATE_USERS === true || __ENV.CREATE_USERS === 'true';
+
+    if(shouldCreateUsers) {
         console.log("Try to create " + iterations + " users");
         for (let i = 1; i <= iterations; i++) {
             userId = newUser(artemis, i, baseUsername, basePassword, course.studentGroupName, course.instructorGroupName);
@@ -124,10 +126,14 @@ export default function (data) {
 }
 
 export function teardown(data) {
-   const artemis = login(adminUsername, adminPassword);
-   const courseId = data.courseId;
-   const exerciseId = data.exerciseId;
 
-   deleteExercise(artemis, exerciseId);
-   deleteCourse(artemis, courseId);
+    const shouldCleanup = __ENV.CLEANUP === true || __ENV.CLEANUP === 'true';
+    if (shouldCleanup) {
+        const artemis = login(adminUsername, adminPassword);
+        const courseId = data.courseId;
+        const exerciseId = data.exerciseId;
+
+        deleteExercise(artemis, exerciseId);
+        deleteCourse(artemis, courseId);
+    }
 }

@@ -39,8 +39,12 @@ while (( "$#" )); do
       adminPassword=$2
       shift 2
       ;;
-    -c|--createUsers)
+    -cu|--createUsers)
       createUsers=true
+      shift 1
+      ;;
+    -cl|--cleanup)
+      cleanup=true
       shift 1
       ;;
     --tests)
@@ -71,6 +75,7 @@ baseUsername=${baseUsername:?"You have to specify the test user's base username"
 adminUsername=${adminUsername:?"You have to specify the username of one admin"}
 adminPassword=${adminPassword:?"You have to specify the password of one admin"}
 createUsers=${createUsers:-false}
+cleanup=${cleanup:-false}
 tests=${tests:?"You have to specify which tests to run"}
 iterations=${iterations:-10}
 timeoutParticipation=${timeoutParticipation:-60}
@@ -78,8 +83,8 @@ timeoutExercise=${timeoutExercise:-10}
 
 echo "################### STARTING API Tests ###################"
 result=$(docker run -i --rm --network=host --name api-tests -v "$baseDir":/src -e BASE_USERNAME="$baseUsername" -e BASE_URL="$baseUrl" \
-  -e BASE_PASSWORD="$basePassword" -e ITERATIONS="$iterations" -e TIMEOUT_PARTICIPATION="$timeoutParticipation" \
-  -e ADMIN_USERNAME="$adminUsername" -e ADMIN_PASSWORD="$adminPassword" -e CREATE_USERS="$createUsers" -e TIMEOUT_EXERCISE="$timeoutExercise"\
+  -e BASE_PASSWORD="$basePassword" -e ITERATIONS="$iterations" -e TIMEOUT_PARTICIPATION="$timeoutParticipation" -e CLEANUP="$cleanup" \
+  -e ADMIN_USERNAME="$adminUsername" -e ADMIN_PASSWORD="$adminPassword" -e CREATE_USERS="$createUsers" -e TIMEOUT_EXERCISE="$timeoutExercise" \
   loadimpact/k6 run /src/"$tests".js 2>&1)
 
 echo "########## FINISHED testing - evaluating result ##########"
