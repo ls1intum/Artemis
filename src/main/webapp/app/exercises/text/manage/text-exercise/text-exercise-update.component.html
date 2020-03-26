@@ -130,13 +130,13 @@
                     <fa-icon
                         *ngIf="exampleSubmission.usedForTutorial"
                         [icon]="'chalkboard-teacher'"
-                        style="margin-left: 10px"
+                        style="margin-left: 10px;"
                         [title]="'artemisApp.exampleSubmission.usedForTutorial' | translate"
                     ></fa-icon>
                     <fa-icon
                         *ngIf="exampleSubmission.submission?.result?.exampleResult"
                         [icon]="'check-circle'"
-                        style="margin-left: 10px"
+                        style="margin-left: 10px;"
                         title="An assessment is available"
                     ></fa-icon>
                     <button class="btn btn-danger" (click)="deleteExampleSubmission(exampleSubmission.id, i)">

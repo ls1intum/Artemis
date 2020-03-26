@@ -22,7 +22,7 @@ export class CourseRegistrationSelectorComponent implements OnInit {
     constructor(private accountService: AccountService, private courseService: CourseManagementService, private jhiAlertService: AlertService) {}
 
     ngOnInit(): void {
-        this.accountService.identity().then(user => {
+        this.accountService.identity().then((user) => {
             this.isTumStudent = !!user!.login!.match(TUM_USERNAME_REGEX);
         });
     }
@@ -38,9 +38,9 @@ export class CourseRegistrationSelectorComponent implements OnInit {
     loadAndFilterCourses() {
         return new Promise((resolve, reject) => {
             this.courseService.findAllToRegister().subscribe(
-                registerRes => {
-                    this.coursesToSelect = registerRes.body!.filter(course => {
-                        return !this.courses.find(el => el.id === course.id);
+                (registerRes) => {
+                    this.coursesToSelect = registerRes.body!.filter((course) => {
+                        return !this.courses.find((el) => el.id === course.id);
                     });
                     resolve();
                 },
@@ -89,7 +89,7 @@ export class CourseRegistrationSelectorComponent implements OnInit {
                     }, 3000);
                     this.courseRegistered.emit();
                 },
-                error => {
+                (error) => {
                     console.log(error);
                     this.loading = false;
                     this.courseToRegister = undefined;

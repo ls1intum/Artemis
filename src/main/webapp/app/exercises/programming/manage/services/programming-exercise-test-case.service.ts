@@ -28,7 +28,7 @@ export class ProgrammingExerciseTestCaseService implements IProgrammingExerciseT
      * On destroy unsubscribe all connections.
      */
     ngOnDestroy(): void {
-        Object.values(this.connections).forEach(connection => this.jhiWebsocketService.unsubscribe(connection));
+        Object.values(this.connections).forEach((connection) => this.jhiWebsocketService.unsubscribe(connection));
     }
 
     /**
@@ -45,7 +45,7 @@ export class ProgrammingExerciseTestCaseService implements IProgrammingExerciseT
             return this.subjects[exerciseId] as Observable<ProgrammingExerciseTestCase[] | null>;
         } else {
             return this.getTestCases(exerciseId).pipe(
-                map(testCases => (testCases.length ? testCases : null)),
+                map((testCases) => (testCases.length ? testCases : null)),
                 catchError(() => of(null)),
                 switchMap((testCases: ProgrammingExerciseTestCase[] | null) => this.initTestCaseSubscription(exerciseId, testCases)),
             );
@@ -104,8 +104,8 @@ export class ProgrammingExerciseTestCaseService implements IProgrammingExerciseT
         this.jhiWebsocketService
             .receive(testCaseTopic)
             .pipe(
-                map(testCases => (testCases.length ? testCases : null)),
-                tap(testCases => this.notifySubscribers(exerciseId, testCases)),
+                map((testCases) => (testCases.length ? testCases : null)),
+                tap((testCases) => this.notifySubscribers(exerciseId, testCases)),
             )
             .subscribe();
         return this.subjects[exerciseId];

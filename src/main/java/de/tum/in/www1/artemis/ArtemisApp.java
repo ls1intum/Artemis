@@ -16,7 +16,6 @@ import org.springframework.boot.autoconfigure.liquibase.LiquibaseProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.core.env.Environment;
 
-import de.tum.in.www1.artemis.service.scheduled.QuizScheduleService;
 import io.github.jhipster.config.DefaultProfileUtil;
 import io.github.jhipster.config.JHipsterConstants;
 
@@ -28,11 +27,8 @@ public class ArtemisApp {
 
     private final Environment env;
 
-    private final QuizScheduleService quizScheduleService;
-
-    public ArtemisApp(Environment env, QuizScheduleService quizScheduleService) {
+    public ArtemisApp(Environment env) {
         this.env = env;
-        this.quizScheduleService = quizScheduleService;
     }
 
     /**
@@ -51,10 +47,6 @@ public class ArtemisApp {
         if (activeProfiles.contains(JHipsterConstants.SPRING_PROFILE_DEVELOPMENT) && activeProfiles.contains(JHipsterConstants.SPRING_PROFILE_CLOUD)) {
             log.error("You have misconfigured your application! It should not " + "run with both the 'dev' and 'cloud' profiles at the same time.");
         }
-
-        // activate Quiz Schedule Service
-        quizScheduleService.startSchedule(3 * 1000);                          // every 3 seconds
-
         // TODO: delete all folders in REPO-DOWNLOAD path
     }
 

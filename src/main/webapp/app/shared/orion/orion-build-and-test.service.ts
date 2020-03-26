@@ -64,13 +64,13 @@ export class OrionBuildAndTestService {
             .subscribeForLatestResultOfParticipation(participationId)
             .pipe(
                 filter(Boolean),
-                map(result => result as Result),
-                filter(result => !this.latestResult || this.latestResult.id < result.id),
-                tap(result => {
+                map((result) => result as Result),
+                filter((result) => !this.latestResult || this.latestResult.id < result.id),
+                tap((result) => {
                     this.latestResult = result;
                     // If there was no compile error, we can forward the test results, otherwise we have to fetch the error output
                     if ((result && result.successful) || (result && !result.successful && result.feedbacks && result.feedbacks.length)) {
-                        result.feedbacks.forEach(feedback => this.javaBridge.onTestResult(!!feedback.positive, feedback.text!, feedback.detailText!));
+                        result.feedbacks.forEach((feedback) => this.javaBridge.onTestResult(!!feedback.positive, feedback.text!, feedback.detailText!));
                         this.javaBridge.onBuildFinished();
                         this.buildFinished.next();
                     } else {
@@ -88,7 +88,7 @@ export class OrionBuildAndTestService {
         this.buildLogSubscription = this.buildLogService
             .getBuildLogs(participationId)
             .pipe(
-                map(logs => new BuildLogEntryArray(...logs)),
+                map((logs) => new BuildLogEntryArray(...logs)),
                 tap((logs: BuildLogEntryArray) => {
                     const logErrors = logs.extractErrors();
                     this.javaBridge.onBuildFailed(logErrors);

@@ -18,7 +18,7 @@ export class NotificationMgmtDetailComponent implements OnInit, OnDestroy {
      * Assigns the subscription to system notification service
      */
     ngOnInit() {
-        this.subscription = this.route.params.subscribe(params => {
+        this.subscription = this.route.params.subscribe((params) => {
             this.load(params['id']);
         });
     }
@@ -28,7 +28,7 @@ export class NotificationMgmtDetailComponent implements OnInit, OnDestroy {
      * @param id of the system notification
      */
     load(id: string) {
-        this.systemNotificationService.find(parseInt(id, 10)).subscribe(response => {
+        this.systemNotificationService.find(parseInt(id, 10)).subscribe((response) => {
             this.notification = response.body!;
         });
     }

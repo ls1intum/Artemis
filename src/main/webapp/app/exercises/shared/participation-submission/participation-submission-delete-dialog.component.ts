@@ -44,7 +44,7 @@ export class ParticipationSubmissionDeletePopupComponent implements OnInit, OnDe
     constructor(private route: ActivatedRoute, private participationSubmissionPopupService: ParticipationSubmissionPopupService) {}
 
     ngOnInit() {
-        this.routeSub = this.route.params.subscribe(params => {
+        this.routeSub = this.route.params.subscribe((params) => {
             this.participationSubmissionPopupService.open(ParticipationSubmissionDeleteDialogComponent as Component, params['participationId'], params['submissionId']);
         });
     }

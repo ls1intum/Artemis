@@ -25,7 +25,7 @@ export class UserManagementUpdateComponent implements OnInit {
             this.user = user.body ? user.body : user;
         });
         this.authorities = [];
-        this.userService.authorities().subscribe(authorities => {
+        this.userService.authorities().subscribe((authorities) => {
             this.authorities = authorities;
         });
         this.languages = this.languageHelper.getAll();
@@ -51,12 +51,12 @@ export class UserManagementUpdateComponent implements OnInit {
         this.isSaving = true;
         if (this.user.id !== null) {
             this.userService.update(this.user).subscribe(
-                response => this.onSaveSuccess(response.body!),
+                (response) => this.onSaveSuccess(response.body!),
                 () => this.onSaveError(),
             );
         } else {
             this.userService.create(this.user).subscribe(
-                response => this.onSaveSuccess(response.body!),
+                (response) => this.onSaveSuccess(response.body!),
                 () => this.onSaveError(),
             );
         }

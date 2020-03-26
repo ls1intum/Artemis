@@ -124,8 +124,8 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
             this.dotArray = elements.toArray();
         });
 
-        this.guidedTourService.currentDotSubject.pipe(tap(currentIndex => (this.currentStepIndex = currentIndex))).subscribe();
-        this.guidedTourService.nextDotSubject.pipe(tap(currentIndex => (this.nextStepIndex = currentIndex))).subscribe();
+        this.guidedTourService.currentDotSubject.pipe(tap((currentIndex) => (this.currentStepIndex = currentIndex))).subscribe();
+        this.guidedTourService.nextDotSubject.pipe(tap((currentIndex) => (this.nextStepIndex = currentIndex))).subscribe();
     }
 
     /**
@@ -168,7 +168,7 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
      */
     private subscribeToUserInteractionState(): void {
         // Check availability after first subscribe call since the router event been triggered already
-        this.guidedTourService.userInteractionFinishedState().subscribe(isFinished => {
+        this.guidedTourService.userInteractionFinishedState().subscribe((isFinished) => {
             this.userInteractionFinished = isFinished;
         });
     }
@@ -641,7 +641,8 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
     /**
      * Update tour step location and return selected element as DOMRect
      * @param selectedElement: selected element in DOM
-     * @param isResizeOrScroll: true if this method is called by a resize or scroll event listener: this method should not listen to user interactions when it is called through resizing or scrolling events
+     * @param isResizeOrScroll: true if this method is called by a resize or scroll event listener:
+     *                          this method should not listen to user interactions when it is called through resizing or scrolling events
      * @return selected element as DOMRect or null
      */
     private updateStepLocation(selectedElement: HTMLElement | null, isResizeOrScroll: boolean): DOMRect | null {
@@ -681,7 +682,7 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
             this.guidedTourService
                 .observeMutations(alertElement, { childList: true })
                 .pipe(take(1))
-                .subscribe(mutation => {
+                .subscribe((mutation) => {
                     if (this.getSelectedElement()) {
                         this.scrollToAndSetElement();
                     }

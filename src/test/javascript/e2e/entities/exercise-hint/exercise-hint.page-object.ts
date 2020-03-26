@@ -51,10 +51,7 @@ export class ExerciseHintUpdatePage {
     }
 
     async exerciseSelectLastOption(timeout?: number) {
-        await this.exerciseSelect
-            .all(by.tagName('option'))
-            .last()
-            .click();
+        await this.exerciseSelect.all(by.tagName('option')).last().click();
     }
 
     async exerciseSelectOption(option) {

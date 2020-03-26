@@ -27,13 +27,13 @@ export class CollapsableAssessmentInstructionsComponent implements AfterViewInit
                 ],
                 inertia: true,
             })
-            .on('resizestart', function(event: any) {
+            .on('resizestart', function (event: any) {
                 event.target.classList.add('card-resizable');
             })
-            .on('resizeend', function(event: any) {
+            .on('resizeend', function (event: any) {
                 event.target.classList.remove('card-resizable');
             })
-            .on('resizemove', function(event: any) {
+            .on('resizemove', function (event: any) {
                 const target = event.target;
                 target.style.width = event.rect.width + 'px';
             });

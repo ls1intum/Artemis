@@ -84,26 +84,16 @@ export class ExerciseService {
     }
 
     getNextExerciseForDays(exercises: Exercise[], delayInDays = 7): Exercise {
-        return exercises.find(exercise => {
+        return exercises.find((exercise) => {
             const dueDate = exercise.dueDate!;
-            return (
-                moment().isBefore(dueDate) &&
-                moment()
-                    .add(delayInDays, 'day')
-                    .isSameOrAfter(dueDate)
-            );
+            return moment().isBefore(dueDate) && moment().add(delayInDays, 'day').isSameOrAfter(dueDate);
         })!;
     }
 
     getNextExerciseForHours(exercises: Exercise[], delayInHours = 12): Exercise {
-        return exercises.find(exercise => {
+        return exercises.find((exercise) => {
             const dueDate = exercise.dueDate!;
-            return (
-                moment().isBefore(dueDate) &&
-                moment()
-                    .add(delayInHours, 'hours')
-                    .isSameOrAfter(dueDate)
-            );
+            return moment().isBefore(dueDate) && moment().add(delayInHours, 'hours').isSameOrAfter(dueDate);
         })!;
     }
 
@@ -164,11 +154,11 @@ export class ExerciseService {
         if (!exercise || !exercise.categories) {
             return [];
         }
-        return exercise.categories.map(el => JSON.parse(el));
+        return exercise.categories.map((el) => JSON.parse(el));
     }
 
     convertExerciseCategoriesAsStringFromServer(categories: string[]): ExerciseCategory[] {
-        return categories.map(el => JSON.parse(el));
+        return categories.map((el) => JSON.parse(el));
     }
 
     convertExerciseForServer<E extends Exercise>(exercise: Exercise): Exercise {

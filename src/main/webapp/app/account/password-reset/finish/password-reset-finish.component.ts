@@ -21,7 +21,7 @@ export class PasswordResetFinishComponent implements OnInit, AfterViewInit {
     constructor(private passwordResetFinishService: PasswordResetFinishService, private route: ActivatedRoute, private elementRef: ElementRef, private renderer: Renderer2) {}
 
     ngOnInit() {
-        this.route.queryParams.subscribe(params => {
+        this.route.queryParams.subscribe((params) => {
             this.key = params['key'];
         });
         this.resetAccount = {};

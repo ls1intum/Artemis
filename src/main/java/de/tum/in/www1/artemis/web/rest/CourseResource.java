@@ -12,6 +12,7 @@ import java.util.regex.Matcher;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -668,9 +669,148 @@ public class CourseResource {
         User user = userService.getUserWithGroupsAndAuthorities();
         Course course = courseService.findOne(courseId);
         if (authCheckService.isAdmin() || authCheckService.isInstructorInCourse(course, user)) {
-            // user can see this exercise
             Set<String> categories = exerciseService.findAllExerciseCategoriesForCourse(course);
             return ResponseEntity.ok().body(categories);
+        }
+        else {
+            return forbidden();
+        }
+    }
+
+    /**
+     * Post /courses/:courseId/students/:studentLogin : Add the given user to the students of the course so that the student can access the course
+     *
+     * @param courseId the id of the course
+     * @param studentLogin the login of the user who should get student access
+     * @return empty ResponseEntity with status 200 (OK) or with status 404 (Not Found)
+     */
+    @PostMapping(value = "/courses/{courseId}/students/{studentLogin:" + Constants.LOGIN_REGEX + "}")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<Void> addStudentToCourse(@PathVariable Long courseId, @PathVariable String studentLogin) {
+        log.debug("REST request to add {} as student to course : {}", studentLogin, courseId);
+        var course = courseService.findOne(courseId);
+        return addUserToCourseGroup(studentLogin, userService.getUserWithGroupsAndAuthorities(), course, course.getStudentGroupName());
+    }
+
+    /**
+     * Post /courses/:courseId/tutors/:tutorLogin : Add the given user to the tutors of the course so that the student can access the course administration
+     *
+     * @param courseId the id of the course
+     * @param tutorLogin the login of the user who should get tutor access
+     * @return empty ResponseEntity with status 200 (OK) or with status 404 (Not Found)
+     */
+    @PostMapping(value = "/courses/{courseId}/tutors/{tutorLogin:" + Constants.LOGIN_REGEX + "}")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<Void> addTutorToCourse(@PathVariable Long courseId, @PathVariable String tutorLogin) {
+        log.debug("REST request to add {} as tutors to course : {}", tutorLogin, courseId);
+        var course = courseService.findOne(courseId);
+        return addUserToCourseGroup(tutorLogin, userService.getUserWithGroupsAndAuthorities(), course, course.getTeachingAssistantGroupName());
+    }
+
+    /**
+     * Post /courses/:courseId/instructors/:instructorLogin : Add the given user to the instructors of the course so that the student can access the course administration
+     *
+     * @param courseId the id of the course
+     * @param instructorLogin the login of the user who should get instructors access
+     * @return empty ResponseEntity with status 200 (OK) or with status 404 (Not Found)
+     */
+    @PostMapping(value = "/courses/{courseId}/instructors/{instructorLogin:" + Constants.LOGIN_REGEX + "}")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<Void> addInstructorToCourse(@PathVariable Long courseId, @PathVariable String instructorLogin) {
+        log.debug("REST request to add {} as instructors to course : {}", instructorLogin, courseId);
+        var course = courseService.findOne(courseId);
+        return addUserToCourseGroup(instructorLogin, userService.getUserWithGroupsAndAuthorities(), course, course.getInstructorGroupName());
+    }
+
+    /**
+     * adds the userLogin to the group (student, tutors or instructors) of the given course
+     *
+     * @param userLogin the user login of the student, tutor or instructor who should be added to the group
+     * @param instructorOrAdmin the user who initiates this request who must be an instructor of the given course or an admin
+     * @param course the course which is only passes to check if the instructorOrAdmin is an instructor of the course
+     * @param group the group to which the userLogin should be added
+     *
+     * @return empty ResponseEntity with status 200 (OK) or with status 404 (Not Found) or with status 403 (Forbidden)
+     */
+    @NotNull
+    public ResponseEntity<Void> addUserToCourseGroup(String userLogin, User instructorOrAdmin, Course course, String group) {
+        if (authCheckService.isAdmin() || authCheckService.isInstructorInCourse(course, instructorOrAdmin)) {
+            Optional<User> userToAddToGroup = userService.getUserWithGroupsByLogin(userLogin);
+            if (userToAddToGroup.isEmpty()) {
+                return notFound();
+            }
+            userService.addUserToGroup(userToAddToGroup.get(), group);
+            return ResponseEntity.ok().body(null);
+        }
+        else {
+            return forbidden();
+        }
+    }
+
+    /**
+     * DELETE /courses/:courseId/tutors/:studentLogin : Remove the given user from the students of the course so that the student cannot access the course any more
+     *
+     * @param courseId the id of the course
+     * @param studentLogin the login of the user who should lose student access
+     * @return empty ResponseEntity with status 200 (OK) or with status 404 (Not Found)
+     */
+    @DeleteMapping(value = "/courses/{courseId}/students/{studentLogin:" + Constants.LOGIN_REGEX + "}")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<Void> removeStudentFromCourse(@PathVariable Long courseId, @PathVariable String studentLogin) {
+        log.debug("REST request to remove {} as student from course : {}", studentLogin, courseId);
+        var course = courseService.findOne(courseId);
+        return removeUserFromCourseGroup(studentLogin, userService.getUserWithGroupsAndAuthorities(), course, course.getStudentGroupName());
+    }
+
+    /**
+     * DELETE /courses/:courseId/tutors/:tutorsLogin : Remove the given user from the tutors of the course so that the tutors cannot access the course administration any more
+     *
+     * @param courseId the id of the course
+     * @param tutorLogin the login of the user who should lose student access
+     * @return empty ResponseEntity with status 200 (OK) or with status 404 (Not Found)
+     */
+    @DeleteMapping(value = "/courses/{courseId}/students/{tutorLogin:" + Constants.LOGIN_REGEX + "}")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<Void> removeTutorFromCourse(@PathVariable Long courseId, @PathVariable String tutorLogin) {
+        log.debug("REST request to remove {} as tutor from course : {}", tutorLogin, courseId);
+        var course = courseService.findOne(courseId);
+        return removeUserFromCourseGroup(tutorLogin, userService.getUserWithGroupsAndAuthorities(), course, course.getTeachingAssistantGroupName());
+    }
+
+    /**
+     * DELETE /courses/:courseId/instructors/:instructorLogin : Remove the given user from the instructors of the course so that the instructor cannot access the course administration any more
+     *
+     * @param courseId the id of the course
+     * @param instructorLogin the login of the user who should lose student access
+     * @return empty ResponseEntity with status 200 (OK) or with status 404 (Not Found)
+     */
+    @DeleteMapping(value = "/courses/{courseId}/instructors/{instructorLogin:" + Constants.LOGIN_REGEX + "}")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<Void> removeInstructorFromCourse(@PathVariable Long courseId, @PathVariable String instructorLogin) {
+        log.debug("REST request to remove {} as instructor from course : {}", instructorLogin, courseId);
+        var course = courseService.findOne(courseId);
+        return removeUserFromCourseGroup(instructorLogin, userService.getUserWithGroupsAndAuthorities(), course, course.getInstructorGroupName());
+    }
+
+    /**
+     * removes the userLogin from the group (student, tutors or instructors) of the given course
+     *
+     * @param userLogin the user login of the student, tutor or instructor who should be removed from the group
+     * @param instructorOrAdmin the user who initiates this request who must be an instructor of the given course or an admin
+     * @param course the course which is only passes to check if the instructorOrAdmin is an instructor of the course
+     * @param group the group from which the userLogin should be removed
+     *
+     * @return empty ResponseEntity with status 200 (OK) or with status 404 (Not Found) or with status 403 (Forbidden)
+     */
+    @NotNull
+    public ResponseEntity<Void> removeUserFromCourseGroup(String userLogin, User instructorOrAdmin, Course course, String group) {
+        if (authCheckService.isAdmin() || authCheckService.isInstructorInCourse(course, instructorOrAdmin)) {
+            Optional<User> userToRemoveFromGroup = userService.getUserWithGroupsByLogin(userLogin);
+            if (userToRemoveFromGroup.isEmpty()) {
+                return notFound();
+            }
+            userService.removeUserFromGroup(userToRemoveFromGroup.get(), group);
+            return ResponseEntity.ok().body(null);
         }
         else {
             return forbidden();

@@ -13,7 +13,7 @@ export class ErrorComponent implements OnInit {
     constructor(private route: ActivatedRoute) {}
 
     ngOnInit() {
-        this.route.data.subscribe(routeData => {
+        this.route.data.subscribe((routeData) => {
             if (routeData.error403) {
                 this.error403 = routeData.error403;
             }

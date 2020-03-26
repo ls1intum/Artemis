@@ -36,7 +36,7 @@ export class FileUploadAssessmentDashboardComponent implements OnInit {
         private momentDiff: DifferencePipe,
         private translateService: TranslateService,
     ) {
-        translateService.get('artemisApp.assessment.messages.confirmCancel').subscribe(text => (this.cancelConfirmationText = text));
+        translateService.get('artemisApp.assessment.messages.confirmCancel').subscribe((text) => (this.cancelConfirmationText = text));
     }
 
     /**
@@ -104,11 +104,11 @@ export class FileUploadAssessmentDashboardComponent implements OnInit {
      * @throws Error if exercise id is of other type.
      */
     private getExercise(exerciseId: number): Promise<void> {
-        return new Promise(resolve => {
+        return new Promise((resolve) => {
             this.exerciseService
                 .find(exerciseId)
                 .pipe(
-                    map(exerciseResponse => {
+                    map((exerciseResponse) => {
                         const exercise = exerciseResponse.body!;
                         FileUploadAssessmentDashboardComponent.verifyFileUploadExercise(exercise);
                         return <FileUploadExercise>exercise;

@@ -46,7 +46,7 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
     }
 
     ngOnInit(): void {
-        this.subscription = this.route.params.subscribe(params => {
+        this.subscription = this.route.params.subscribe((params) => {
             if (!this.lecture || this.lecture.id !== params.lectureId) {
                 this.lecture = null;
                 this.lectureService.find(params.lectureId).subscribe((lectureResponse: HttpResponse<Lecture>) => {
@@ -81,7 +81,7 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
     downloadAttachment(downloadUrl: string): void {
         if (!this.isDownloadingLink) {
             this.isDownloadingLink = downloadUrl;
-            this.fileService.downloadAttachment(downloadUrl);
+            this.fileService.downloadFileWithAccessToken(downloadUrl);
             this.isDownloadingLink = null;
         }
     }

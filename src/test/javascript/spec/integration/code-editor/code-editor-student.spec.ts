@@ -271,7 +271,7 @@ describe('CodeEditorStudentIntegration', () => {
         container.fileBrowser.selectedFile = fileName;
     };
 
-    it('should initialize all components correctly if all server calls are successful', done => {
+    it('should initialize all components correctly if all server calls are successful', (done) => {
         cleanInitialize();
         setTimeout(() => {
             expect(subscribeForLatestResultOfParticipationStub).to.have.been.calledThrice;
@@ -366,12 +366,7 @@ describe('CodeEditorStudentIntegration', () => {
         expect(getFileStub).to.have.been.calledOnceWithExactly(selectedFile);
 
         containerFixture.detectChanges();
-        expect(
-            container.aceEditor.editor
-                .getEditor()
-                .getSession()
-                .getValue(),
-        ).to.equal(fileContent);
+        expect(container.aceEditor.editor.getEditor().getSession().getValue()).to.equal(fileContent);
     });
 
     it('should mark file to have unsaved changes in file tree if the file was changed in editor', () => {

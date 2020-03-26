@@ -40,7 +40,7 @@ describe('Service Tests', () => {
                         },
                     },
                 };
-                service.get().subscribe(received => {
+                service.get().subscribe((received) => {
                     expect(received.body[0]).toEqual(angularConfig);
                 });
 
@@ -55,7 +55,7 @@ describe('Service Tests', () => {
                         { name: 'test2', properties: 'test2' },
                     ],
                 });
-                service.get().subscribe(received => {
+                service.get().subscribe((received) => {
                     expect(received.body[0]).toEqual(propertySources);
                 });
 

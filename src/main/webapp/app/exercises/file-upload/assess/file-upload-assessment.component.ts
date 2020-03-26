@@ -83,7 +83,7 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
         private fileService: FileService,
     ) {
         this.assessmentsAreValid = false;
-        translateService.get('artemisApp.assessment.messages.confirmCancel').subscribe(text => (this.cancelConfirmationText = text));
+        translateService.get('artemisApp.assessment.messages.confirmCancel').subscribe((text) => (this.cancelConfirmationText = text));
     }
 
     get assessments(): Feedback[] {
@@ -94,12 +94,12 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
         this.busy = true;
 
         // Used to check if the assessor is the current user
-        this.accountService.identity().then(user => {
+        this.accountService.identity().then((user) => {
             this.userId = user!.id!;
         });
         this.isAtLeastInstructor = this.accountService.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR']);
 
-        this.route.params.subscribe(params => {
+        this.route.params.subscribe((params) => {
             this.courseId = Number(params['courseId']);
             const exerciseId = Number(params['exerciseId']);
             const submissionValue = params['submissionId'];
@@ -145,9 +145,9 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
     private loadSubmission(submissionId: number): void {
         this.fileUploadSubmissionService
             .get(submissionId)
-            .pipe(filter(res => !!res))
+            .pipe(filter((res) => !!res))
             .subscribe(
-                res => {
+                (res) => {
                     this.initializePropertiesFromSubmission(res.body!);
                 },
                 (error: HttpErrorResponse) => {
@@ -210,13 +210,13 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
                 ],
                 inertia: true,
             })
-            .on('resizestart', function(event: any) {
+            .on('resizestart', function (event: any) {
                 event.target.classList.add('card-resizable');
             })
-            .on('resizeend', function(event: any) {
+            .on('resizeend', function (event: any) {
                 event.target.classList.remove('card-resizable');
             })
-            .on('resizemove', function(event: any) {
+            .on('resizemove', function (event: any) {
                 const target = event.target;
                 // Update element width
                 target.style.width = event.rect.width + 'px';
@@ -235,13 +235,13 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
                 ],
                 inertia: true,
             })
-            .on('resizestart', function(event: any) {
+            .on('resizestart', function (event: any) {
                 event.target.classList.add('card-resizable');
             })
-            .on('resizeend', function(event: any) {
+            .on('resizeend', function (event: any) {
                 event.target.classList.remove('card-resizable');
             })
-            .on('resizemove', function(event: any) {
+            .on('resizemove', function (event: any) {
                 const target = event.target;
                 // Update element height
                 target.style.minHeight = event.rect.height + 'px';
@@ -324,7 +324,7 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
             .saveAssessment(this.assessments, this.submission.id, true)
             .pipe(finalize(() => (this.isLoading = false)))
             .subscribe(
-                result => {
+                (result) => {
                     this.result = result;
                     this.updateParticipationWithResult();
                     this.jhiAlertService.clear();
@@ -360,7 +360,7 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
 
     getComplaint(): void {
         this.complaintService.findByResultId(this.result.id).subscribe(
-            res => {
+            (res) => {
                 if (!res.body) {
                     return;
                 }
@@ -401,15 +401,15 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
             return;
         }
 
-        let credits = this.referencedFeedback.map(assessment => assessment.credits);
+        let credits = this.referencedFeedback.map((assessment) => assessment.credits);
 
-        if (!this.invalidError && !credits.every(credit => credit !== null && !isNaN(credit))) {
+        if (!this.invalidError && !credits.every((credit) => credit !== null && !isNaN(credit))) {
             this.invalidError = 'artemisApp.fileUploadAssessment.error.invalidScoreMustBeNumber';
             this.assessmentsAreValid = false;
-            credits = credits.filter(credit => credit !== null && !isNaN(credit));
+            credits = credits.filter((credit) => credit !== null && !isNaN(credit));
         }
 
-        if (!this.invalidError && !this.referencedFeedback.every(f => f.credits !== 0)) {
+        if (!this.invalidError && !this.referencedFeedback.every((f) => f.credits !== 0)) {
             this.invalidError = 'artemisApp.fileUploadAssessment.error.invalidNeedScore';
             this.assessmentsAreValid = false;
         }
@@ -418,7 +418,7 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
     }
 
     downloadFile(filePath: string) {
-        this.fileService.downloadAttachment(filePath);
+        this.fileService.downloadFileWithAccessToken(filePath);
     }
 
     private checkPermissions() {
@@ -461,7 +461,7 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
             .updateAssessmentAfterComplaint(this.assessments, complaintResponse, this.submission.id)
             .pipe(finalize(() => (this.isLoading = false)))
             .subscribe(
-                response => {
+                (response) => {
                     this.result = response.body!;
                     this.updateParticipationWithResult();
                     this.jhiAlertService.clear();
@@ -475,7 +475,7 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
     }
 
     private loadFeedbacks(feedbacks: Feedback[]): void {
-        const generalFeedbackIndex = feedbacks.findIndex(feedback => feedback.credits === 0);
+        const generalFeedbackIndex = feedbacks.findIndex((feedback) => feedback.credits === 0);
         if (generalFeedbackIndex !== -1) {
             this.generalFeedback = feedbacks[generalFeedbackIndex];
             feedbacks.splice(generalFeedbackIndex, 1);

@@ -39,7 +39,7 @@ export class ExerciseHintUpdateComponent implements OnInit, OnDestroy {
 
     ngOnInit() {
         this.isLoading = true;
-        this.paramSub = this.route.params.subscribe(params => {
+        this.paramSub = this.route.params.subscribe((params) => {
             this.exerciseId = params['exerciseId'];
             this.isSaving = false;
             this.exerciseNotFound = false;

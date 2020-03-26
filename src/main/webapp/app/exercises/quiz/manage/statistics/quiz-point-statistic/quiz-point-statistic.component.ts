@@ -64,10 +64,10 @@ export class QuizPointStatisticComponent implements OnInit, OnDestroy, DataSetPr
     }
 
     ngOnInit() {
-        this.sub = this.route.params.subscribe(params => {
+        this.sub = this.route.params.subscribe((params) => {
             // use different REST-call if the User is a Student
             if (this.accountService.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'])) {
-                this.quizExerciseService.find(params['exerciseId']).subscribe(res => {
+                this.quizExerciseService.find(params['exerciseId']).subscribe((res) => {
                     this.loadQuizSuccess(res.body!);
                 });
             }
@@ -82,17 +82,17 @@ export class QuizPointStatisticComponent implements OnInit, OnDestroy, DataSetPr
                 // quizExercise channel => react to changes made to quizExercise (e.g. start date)
                 this.jhiWebsocketService.subscribe(this.quizExerciseChannel);
                 this.jhiWebsocketService.receive(this.quizExerciseChannel).subscribe(
-                    quiz => {
+                    (quiz) => {
                         if (this.waitingForQuizStart) {
                             this.loadQuizSuccess(quiz);
                         }
                     },
-                    error => {},
+                    (error) => {},
                 );
             }
 
             // ask for new Data if the websocket for new statistical data was notified
-            this.jhiWebsocketService.receive(this.websocketChannelForData).subscribe(quiz => {
+            this.jhiWebsocketService.receive(this.websocketChannelForData).subscribe((quiz) => {
                 this.loadNewData(quiz.quizPointStatistic);
             });
 
@@ -111,10 +111,10 @@ export class QuizPointStatisticComponent implements OnInit, OnDestroy, DataSetPr
             });
 
             // add Axes-labels based on selected language
-            this.translateService.get('showStatistic.quizPointStatistic.xAxes').subscribe(xLabel => {
+            this.translateService.get('showStatistic.quizPointStatistic.xAxes').subscribe((xLabel) => {
                 this.options.scales!.xAxes![0].scaleLabel!.labelString = xLabel;
             });
-            this.translateService.get('showStatistic.quizPointStatistic.yAxes').subscribe(yLabel => {
+            this.translateService.get('showStatistic.quizPointStatistic.yAxes').subscribe((yLabel) => {
                 this.options.scales!.yAxes![0].scaleLabel!.labelString = yLabel;
             });
         });
@@ -229,7 +229,7 @@ export class QuizPointStatisticComponent implements OnInit, OnDestroy, DataSetPr
     calculateMaxScore() {
         let result = 0;
 
-        this.quizExercise.quizQuestions.forEach(function(question) {
+        this.quizExercise.quizQuestions.forEach(function (question) {
             result = result + question.score;
         });
         return result;
@@ -245,7 +245,7 @@ export class QuizPointStatisticComponent implements OnInit, OnDestroy, DataSetPr
         this.ratedData = [];
         this.unratedData = [];
         // set data based on the pointCounters
-        this.order(this.quizPointStatistic.pointCounters).forEach(pointCounter => {
+        this.order(this.quizPointStatistic.pointCounters).forEach((pointCounter) => {
             this.label.push(pointCounter.points.toString());
             this.ratedData.push(pointCounter.ratedCounter);
             this.unratedData.push(pointCounter.unRatedCounter);
@@ -286,7 +286,7 @@ export class QuizPointStatisticComponent implements OnInit, OnDestroy, DataSetPr
      *
      */
     recalculate() {
-        this.quizExerciseService.recalculate(this.quizExercise.id).subscribe(res => {
+        this.quizExerciseService.recalculate(this.quizExercise.id).subscribe((res) => {
             this.loadQuizSuccess(res.body!);
         });
     }

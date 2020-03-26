@@ -60,7 +60,7 @@ export class CourseExerciseRowComponent implements OnInit, OnDestroy {
             if (changedParticipation && this.exercise && changedParticipation.exercise.id === this.exercise.id) {
                 this.exercise.studentParticipations =
                     this.exercise.studentParticipations && this.exercise.studentParticipations.length > 0
-                        ? this.exercise.studentParticipations.map(el => {
+                        ? this.exercise.studentParticipations.map((el) => {
                               return el.id === changedParticipation.id ? changedParticipation : el;
                           })
                         : [changedParticipation];

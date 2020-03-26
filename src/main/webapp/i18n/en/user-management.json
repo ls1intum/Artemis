@@ -17,6 +17,7 @@
         "login": "Login",
         "firstName": "First name",
         "lastName": "Last name",
+        "name": "Name",
         "randomPassword": "Random password",
         "keepPassword": "Keep old password",
         "passwordConstraints": "The password has to contain 4-100 characters!",
@@ -31,6 +32,9 @@
         "createdBy": "Created by",
         "createdDate": "Created date",
         "lastModifiedBy": "Modified by",
-        "lastModifiedDate": "Modified date"
+        "lastModifiedDate": "Modified date",
+        "search": "Search for User: ",
+        "loading": "Loading...",
+        "searchError": "Search term must be empty or at least 3 character."
     }
 }

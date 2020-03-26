@@ -47,13 +47,13 @@ export class TeamStudentSearchComponent {
             distinctUntilChanged(),
             tap(() => this.searchFailed.emit(false)),
             tap(() => this.searching.emit(true)),
-            switchMap(loginOrName => {
+            switchMap((loginOrName) => {
                 if (loginOrName.length < 3) {
                     return of([]);
                 }
                 return this.teamService
                     .searchInCourseForExerciseTeam(this.course, this.exercise, loginOrName)
-                    .pipe(map(usersResponse => usersResponse.body!))
+                    .pipe(map((usersResponse) => usersResponse.body!))
                     .pipe(
                         catchError(() => {
                             this.searchFailed.emit(true);
@@ -61,7 +61,7 @@ export class TeamStudentSearchComponent {
                         }),
                     );
             }),
-            tap(users => {
+            tap((users) => {
                 setTimeout(() => {
                     for (let i = 0; i < this.typeaheadButtons.length; i++) {
                         if (users[i].assignedToTeam) {

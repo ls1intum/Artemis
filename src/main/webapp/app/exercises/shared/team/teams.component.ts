@@ -47,11 +47,11 @@ export class TeamsComponent implements OnInit, OnDestroy {
     }
 
     loadAll() {
-        this.paramSub = this.route.params.subscribe(params => {
+        this.paramSub = this.route.params.subscribe((params) => {
             this.isLoading = true;
-            this.exerciseService.find(params['exerciseId']).subscribe(exerciseResponse => {
+            this.exerciseService.find(params['exerciseId']).subscribe((exerciseResponse) => {
                 this.exercise = exerciseResponse.body!;
-                this.teamService.findAllByExerciseId(params['exerciseId']).subscribe(teamsResponse => {
+                this.teamService.findAllByExerciseId(params['exerciseId']).subscribe((teamsResponse) => {
                     this.teams = teamsResponse.body!;
                     this.isLoading = false;
                 });
@@ -116,7 +116,7 @@ export class TeamsComponent implements OnInit, OnDestroy {
      * @param team Team that is added or updated
      */
     private upsertTeam(team: Team) {
-        const index = this.teams.findIndex(t => t.id === team.id);
+        const index = this.teams.findIndex((t) => t.id === team.id);
         if (index === -1) {
             this.teams = [...this.teams, team];
         } else {
@@ -130,6 +130,6 @@ export class TeamsComponent implements OnInit, OnDestroy {
      * @param team Team that is deleted
      */
     private deleteTeam(team: Team) {
-        this.teams = this.teams.filter(t => t.id !== team.id);
+        this.teams = this.teams.filter((t) => t.id !== team.id);
     }
 }
