@@ -12,7 +12,6 @@ import * as moment from 'moment';
 import { NgxWebstorageModule } from 'ngx-webstorage';
 import { DifferencePipe, MomentModule } from 'ngx-moment';
 import { DeviceDetectorModule } from 'ngx-device-detector';
-import { Angulartics2Module } from 'angulartics2';
 import { NgbDateMomentAdapter } from 'app/shared/util/datepicker-adapter';
 import { FaIconLibrary } from '@fortawesome/angular-fontawesome';
 import { fas } from '@fortawesome/free-solid-svg-icons';
@@ -39,10 +38,6 @@ import { CookieService } from 'ngx-cookie-service';
             i18nEnabled: true,
             defaultI18nLang: 'en',
         }),
-        /**
-         * @external Angulartics offers Vendor-agnostic analytics and integration with Matomo
-         */
-        Angulartics2Module.forRoot(),
         TranslateModule.forRoot({
             loader: {
                 provide: TranslateLoader,
