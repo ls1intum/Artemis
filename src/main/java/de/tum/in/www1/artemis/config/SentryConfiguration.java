@@ -21,7 +21,7 @@ public class SentryConfiguration {
     private final Logger log = LoggerFactory.getLogger(SentryConfiguration.class);
 
     @Value("${server.url}")
-    private String SERVER_URL;
+    private String ARTEMIS_SERVER_URL;
 
     @Value("${artemis.version}")
     private String VERSION;
@@ -57,7 +57,7 @@ public class SentryConfiguration {
     }
 
     private String getEnvironment() {
-        switch (SERVER_URL) {
+        switch (ARTEMIS_SERVER_URL) {
         case "https://artemis.ase.in.tum.de":
             return "prod";
         case "https://artemistest.ase.in.tum.de":

@@ -64,7 +64,7 @@ public class BambooBuildPlanService {
     private String ADMIN_GROUP_NAME;
 
     @Value("${server.url}")
-    private URL SERVER_URL;
+    private URL ARTEMIS_SERVER_URL;
 
     @Value("${artemis.continuous-integration.vcs-application-link-name}")
     private String VCS_APPLICATION_LINK_NAME;
@@ -169,8 +169,9 @@ public class BambooBuildPlanService {
     }
 
     private Notification createNotification() {
-        return new Notification().type(new PlanCompletedNotification()).recipients(
-                new AnyNotificationRecipient(new AtlassianModule("de.tum.in.www1.bamboo-server:recipient.server")).recipientString(SERVER_URL + NEW_RESULT_RESOURCE_API_PATH));
+        return new Notification().type(new PlanCompletedNotification())
+                .recipients(new AnyNotificationRecipient(new AtlassianModule("de.tum.in.www1.bamboo-server:recipient.server"))
+                        .recipientString(ARTEMIS_SERVER_URL + NEW_RESULT_RESOURCE_API_PATH));
     }
 
     private BitbucketServerRepository createBuildPlanRepository(String name, String vcsProjectKey, String repositorySlug) {
