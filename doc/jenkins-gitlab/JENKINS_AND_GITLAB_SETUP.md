@@ -75,7 +75,9 @@ Use Two Way Encryption (With Secret Text).
 1. Pull the latest GitLab Docker image
 
         docker pull gitlab/gitlab-ce:latest
-        
+
+#### Start Gitlab
+
 2. Run the image (and change the values for hostname and ports).
     Add `-p 2222:22` if cloning/pushing via ssh should be possible.
     As Gitlab runs in a docker container and the default port for SSH (22) is typically used by the host running Docker, we change the port Gitlab uses for SSH to `2222`.
@@ -86,12 +88,14 @@ Use Two Way Encryption (With Secret Text).
         docker run -itd --name gitlab \
             --hostname your.gitlab.domain.com \   # Specify the hostname
             --restart always \
-            -p 2222:22                            # Remove this if cloning via SSH should not be supported
+            -m 3000m \                            # Optional argument to limit the memory usage of Gitlab
+            -p 2222:22 \                          # Remove this if cloning via SSH should not be supported
             -p 80:80 -p 443:443 \                 # Alternative 1: If you are NOT running your own NGINX instance
-            -p <some port of your choosing>:80    # Alternative 2: If you ARE running your own NGINX instance
+            -p <some port of your choosing>:80 \  # Alternative 2: If you ARE running your own NGINX instance
             -v gitlab_data:/var/opt/gitlab \
             -v gitlab_logs:/var/log/gitlab \
-            -v gitlab_config:/etc/gitlab gitlab/gitlab-ce:latest
+            -v gitlab_config:/etc/gitlab \
+            gitlab/gitlab-ce:latest
             
 3. Wait a couple of minutes until the container is deployed and GitLab is set up, then open the instance in you browser and set a first admin password of your choosing. 
 You can then login using the username "root" and you password.
@@ -138,6 +142,8 @@ Edit the Gitlab configuration
     ![](gitlab_setting_button.png)
    
     </details>
+
+#### Gitlab Access Token
 
 9. Go to _Access Tokens_
 
@@ -200,20 +206,27 @@ docker pull gitlab/gitlab-ce:latest
 
 See https://hub.docker.com/r/gitlab/gitlab-ce/ for the latest version. You can also specify an earlier one.
 
-Start a GitLab container just as described in **step 2** of the setup process and wait for a couple of minutes.
+Start a GitLab container just as described in [Start Gitlab](#Start-Gitlab) and wait for a couple of minutes.
 GitLab should configure itself automatically. If there are no issues, you can delete the old container using `docker rm gitlab_old` and the olf image (see `docker images`) using `docker rmi <old-image-id>`.
 
 ## Jenkins
 
 ### Jenkins Server Setup 
 
-1. Custom docker image\
+1. Pull the latest Jenkins LTS Docker image
+
+        sudo docker pull jenkins/jenkins:lts
+
+2. Create a custom docker image
+
+    Run the following command to get the latest jenkins LTS docker image.
+    
     In order to install and use Maven with Java 12 in the Jenkins container, you have to first install maven, then download Java 12
     and finally configure Maven to use Java 12 instead of the default version.
 
     To perform all these steps automatically, you can prepare a Docker image:
 
-        Copy the following content in a file named `Dockerfile`
+    Copy the following content in a file named `Dockerfile`, e.g. in the folder `/opt/jenkins/` using `vim Dockerfile`.
     
         FROM jenkins/jenkins:lts
         
@@ -238,15 +251,15 @@ GitLab should configure itself automatically. If there are no issues, you can de
 
     This might take a while because Java is downloaded, but this is only required once.
        
-2. Run steps 3-5 only if you are **not** using a separate instance, otherwise continue with step 6.
+3. Run steps 4-6 only if you are **not** using a separate instance, otherwise continue with [Start Jenkins](#Start-Jenkins).
 
-3. Create a file increasing the maximum file size for the nginx proxy.
+4. Create a file increasing the maximum file size for the nginx proxy.
 The nginx-proxy uses a default file limit that is too small for the plugin that will be uploaded later.
  **Skip this step if you have your own NGINX instance.**
 
         echo "client_max_body_size 16m;" > client_max_body_size.conf
 
-4. Run the NGINX proxy docker container, this will automatically setup all reverse proxies and force https on all connections. 
+5. Run the NGINX proxy docker container, this will automatically setup all reverse proxies and force https on all connections. 
 (This image would also setup proxies for all other running containers that have the VIRTUAL_HOST and VIRTUAL_PORT environment variables). 
 **Skip this step if you have your own NGINX instance.**
 
@@ -260,7 +273,7 @@ The nginx-proxy uses a default file limit that is too small for the plugin that 
             -v $(pwd)/client_max_body_size.conf:/etc/nginx/conf.d/client_max_body_size.conf:ro \
             jwilder/nginx-proxy
             
-5. The nginx proxy needs another docker-container to generate letsencrypt certificates.
+6. The nginx proxy needs another docker-container to generate letsencrypt certificates.
 Run the following command to start it (make sure to change the email-address).
 **Skip this step if you have your own NGINX instance.**
 
@@ -271,18 +284,20 @@ Run the following command to start it (make sure to change the email-address).
             --env "DEFAULT_EMAIL=mail@yourdomain.tld" \
             jrcs/letsencrypt-nginx-proxy-companion
 
-6. Run Jenkins by executing the following command (change the hostname and choose which port alternative you need)
+#### Start Jenkins
+
+7. Run Jenkins by executing the following command (change the hostname and choose which port alternative you need)
 
         docker run -itd --name jenkins \
             --restart always \
             -v jenkins_data:/var/jenkins_home \
             -v /var/run/docker.sock:/var/run/docker.sock \
-            -e VIRTUAL_HOST=your.jenkins.domain -e VIRTUAL_PORT=8080 \ # Alternative 1: If you are NOT using a separate NGINX instance
-            -e LETSENCRYPT_HOST=your.jenkins.domain \                  # Only needed if Alternative 1 is used
-            -p 8080:8080                                               # Alternative 2: If you ARE using a separate NGINX instance
+            -e VIRTUAL_HOST=your.jenkins.domain -e VIRTUAL_PORT=8080 \    # Alternative 1: If you are NOT using a separate NGINX instance
+            -e LETSENCRYPT_HOST=your.jenkins.domain \                     # Only needed if Alternative 1 is used
+            -p <some port of your choosing>:8080 \                        # Alternative 2: If you ARE using a separate NGINX instance
             jenkins-artemis
             
-7. Wait until the docker container is deployed and Jenkins is running.
+8. Wait until the docker container is deployed and Jenkins is running.
 Open Jenkins in your browser (e.g. `localhost:8080`) and setup the admin user account (install all suggested plugins). 
 You can get the initial admin password using the following command.
 
@@ -291,7 +306,7 @@ You can get the initial admin password using the following command.
         or alternatively
         docker exec jenkins cat /var/jenkins_home/secrets/initialAdminPassword
 
-8. Set the chosen credentials in the Artemis configuration _application-artemis.yml_
+9. Set the chosen credentials in the Artemis configuration _application-artemis.yml_
 
         artemis:
             continuous-integration:
@@ -335,7 +350,7 @@ Go to _Credentials → Jenkins → Global credentials_ and create the following 
 
 #### GitLab API Token
 1. Create a new access token in GitLab named "Jenkins" and give it **api** rights and **read_repository** rights.
-For detailed instructions on how to create such a token follow the steps 9-10 in the GitLab part of this documentation
+For detailed instructions on how to create such a token follow [Gitlab Access Token](#Gitlab-Access-Token).
 
     <details><summary>Screenshot</summary>
     
@@ -454,20 +469,20 @@ In order to get this token, you have to do the following steps:
 Also disable the option `use-crumb` in `application-jenkins.yml`.
 
 ### Upgrade Jenkins
-Build the latest version of the jenkins image, stop the running container and mount the Jenkins data volume to the new LTS container:
+Build the latest version of the jenkins image, stop the running container and mount the Jenkins data volume to the new LTS container.
+Make sure to perform this command in the folder where the `Dockerfile` was created (e.g. `/opt/jenkins/`).
+
 ```shell script
 docker stop jenkins
-docker pull jenkins/jenkins:lts
-docker build --no-cache -t jenkins-artemis .
 docker rename jenkins jenkins_old
+docker build --no-cache -t jenkins-artemis .
 ```
-Make sure to perform this command in the folder where the `Dockerfile` created in the point **Jenkins + Maven + Java 12** is located.
 
-Now start a new Jenkins container just as described in **step 6** of the setup process.
+Now start a new Jenkins container just as described in [Start Jenkins](#Start-Jenkins).
 
 Jenkins should be up and running again. If there are no issues, you can delete the old container using `docker rm jenkins_old` and the old image (see `docker images`) using `docker rmi <old-image-id>`.
 
-You should also update the Jenkins plugins regurlarly due to security reasons. You can update them directly in the Web User Interface in the Plugin Manager.
+You should also update the Jenkins plugins regularly due to security reasons. You can update them directly in the Web User Interface in the Plugin Manager.
                 
 ## Separate NGINX Configurations
 There are some placeholders in the following configurations. Replace them with your setup specific values
