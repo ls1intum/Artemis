@@ -10,8 +10,8 @@ export const options = {
     iterations: __ENV.ITERATIONS,
     vus: __ENV.ITERATIONS,
     rps: 4,
-    setupTimeout: '120s',
-    teardownTimeout: '120s'
+    setupTimeout: '240s',
+    teardownTimeout: '240s'
 };
 
 const adminUsername = __ENV.ADMIN_USERNAME;
@@ -86,7 +86,7 @@ export function setup() {
     exerciseId = createExercise(artemis, course.id);
 
     // Wait some time for builds to finish and test results to come in
-    sleep(30);
+    sleep(20);
 
     return { exerciseId: exerciseId, courseId: course.id };
 }
