@@ -28,6 +28,12 @@ import { ArtemisDashboardsModule } from 'app/shared/dashboards/dashboards.module
 import { ArtemisParticipationModule } from 'app/exercises/shared/participation/participation.module';
 import { ArtemisExerciseHintManagementModule } from 'app/exercises/shared/exercise-hint/manage/exercise-hint-management.module';
 import { ArtemisModelingExerciseManagementModule } from 'app/exercises/modeling/manage/modeling-exercise-management.module';
+import { ArtemisCourseScoresModule } from 'app/course/course-scores/course-scores.module';
+import { ArtemisExerciseScoresModule } from 'app/exercises/shared/exercise-scores/exercise-scores.module';
+import { ArtemisComplaintsForTutorModule } from 'app/complaints/complaints-for-tutor/complaints-for-tutor.module';
+import { ArtemisTextExerciseAssessmentModule } from 'app/exercises/text/assess/text-assessment.module';
+import { ArtemisFileUploadAssessmentModule } from 'app/exercises/file-upload/assess/file-upload-assessment.module';
+import { ArtemisModelingAssessmentEditorModule } from 'app/exercises/modeling/assess/modeling-assessment-editor/modeling-assessment-editor.module';
 
 const ENTITY_STATES = [...courseMangementRoute];
 
@@ -43,6 +49,8 @@ const ENTITY_STATES = [...courseMangementRoute];
         MomentModule,
         ArtemisExerciseModule,
         ArtemisLectureModule,
+        ArtemisCourseScoresModule,
+        ArtemisExerciseScoresModule,
         ArtemisProgrammingExerciseManagementModule,
         ArtemisFileUploadExerciseManagementModule,
         ArtemisQuizManagementModule,
@@ -55,6 +63,10 @@ const ENTITY_STATES = [...courseMangementRoute];
         ArtemisDashboardsModule,
         ArtemisExerciseHintManagementModule,
         ArtemisParticipationModule,
+        ArtemisComplaintsForTutorModule,
+        ArtemisTextExerciseAssessmentModule,
+        ArtemisFileUploadAssessmentModule,
+        ArtemisModelingAssessmentEditorModule,
     ],
     declarations: [CourseManagementComponent, CourseDetailComponent, CourseUpdateComponent, CourseExerciseCardComponent, CourseExercisesOverviewComponent],
 })

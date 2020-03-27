@@ -7,7 +7,7 @@ import { ExampleTextSubmissionComponent } from 'app/exercises/text/manage/exampl
 import { ArtemisAssessmentSharedModule } from 'app/assessment/assessment-shared.module';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { ArtemisResultModule } from 'app/exercises/shared/result/result.module';
-import { ArtemisTextExerciseAssessmnetModule } from 'app/exercises/text/assess/text-assessment.module';
+import { ArtemisTextExerciseAssessmentModule } from 'app/exercises/text/assess/text-assessment.module';
 
 const ENTITY_STATES = [...exampleTextSubmissionRoute];
 
@@ -18,7 +18,7 @@ const ENTITY_STATES = [...exampleTextSubmissionRoute];
         MomentModule,
         ClipboardModule,
         RouterModule.forChild(ENTITY_STATES),
-        ArtemisTextExerciseAssessmnetModule,
+        ArtemisTextExerciseAssessmentModule,
         ArtemisAssessmentSharedModule,
     ],
     declarations: [ExampleTextSubmissionComponent],

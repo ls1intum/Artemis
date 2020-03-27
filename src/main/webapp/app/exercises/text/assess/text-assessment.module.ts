@@ -35,4 +35,4 @@ const ENTITY_STATES = [...textAssessmentRoutes];
     ],
     exports: [TextAssessmentEditorComponent, ResizableInstructionsComponent],
 })
-export class ArtemisTextExerciseAssessmnetModule {}
+export class ArtemisTextExerciseAssessmentModule {}

@@ -24,6 +24,7 @@ export class ArtemisMarkdown {
      * @param text the text that will be added into the editor of the passed ace editor component
      * @param aceEditorContainer holds the editor in which the text will be added at the current curser position
      */
+    // TODO: we should move this functionality into another service or util class to break some dependencies on root level
     static addTextAtCursor(text: String, aceEditorContainer: AceEditorComponent) {
         aceEditorContainer.getEditor().focus();
         aceEditorContainer.getEditor().clearSelection();
