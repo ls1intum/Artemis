@@ -15,7 +15,7 @@ import { SortByModule } from 'app/shared/pipes/sort-by.module';
 import { CourseExercisesOverviewComponent } from 'app/course/manage/course-exercises-overview.component';
 import { CourseDetailComponent } from 'app/course/manage/course-detail.component';
 import { CourseUpdateComponent } from 'app/course/manage/course-update.component';
-import { courseMangementRoute } from 'app/course/manage/course-mangement.route';
+import { courseManagementState } from 'app/course/manage/course-management.route';
 import { CourseManagementComponent } from 'app/course/manage/course-management.component';
 import { OrionModule } from 'app/shared/orion/orion.module';
 import { ArtemisProgrammingExerciseManagementModule } from 'app/exercises/programming/manage/programming-exercise-management.module';
@@ -35,12 +35,10 @@ import { ArtemisTextExerciseAssessmentModule } from 'app/exercises/text/assess/t
 import { ArtemisFileUploadAssessmentModule } from 'app/exercises/file-upload/assess/file-upload-assessment.module';
 import { ArtemisModelingAssessmentEditorModule } from 'app/exercises/modeling/assess/modeling-assessment-editor/modeling-assessment-editor.module';
 
-const ENTITY_STATES = [...courseMangementRoute];
-
 @NgModule({
     imports: [
         ArtemisSharedModule,
-        RouterModule.forChild(ENTITY_STATES),
+        RouterModule.forChild(courseManagementState),
         SortByModule,
         FormDateTimePickerModule,
         ReactiveFormsModule,
