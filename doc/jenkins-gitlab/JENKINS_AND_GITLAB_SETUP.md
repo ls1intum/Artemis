@@ -291,7 +291,7 @@ You can get the initial admin password using the following command.
         or alternatively
         docker exec jenkins cat /var/jenkins_home/secrets/initialAdminPassword
 
-8. Set the chosen credentials in the Artemis configuration _application-prod.yml_
+8. Set the chosen credentials in the Artemis configuration _application-artemis.yml_
 
         artemis:
             continuous-integration:
@@ -360,7 +360,7 @@ After you click on "Test Connection", everything should work fine.
     
     </details>
 
-4. Copy the ID of the API token and put it into the Artemis configuration _application-prod.yml_:
+4. Copy the ID of the API token and put it into the Artemis configuration _application-artemis.yml_:
 
         artemis:
             continuous-integration:
@@ -584,7 +584,7 @@ Execute the following steps in addition to the ones described above:
 
 2. In `src/main/resources/config/application-dev.yml`
 
-	1. At `spring.profiles.active:` add `gitlab & jenkins`
+	1. At `spring.profiles.active:` add `& gitlab & jenkins`
 	2. At `spring.liquibase:` add the new property `change-log: classpath:config/liquibase/master.xml`
 	3. At `server:` change port to 8081 and
 
