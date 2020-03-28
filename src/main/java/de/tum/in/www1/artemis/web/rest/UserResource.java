@@ -173,7 +173,7 @@ public class UserResource {
      * @return the ResponseEntity with status 200 (OK) and with body all users
      */
     @GetMapping("/users/search")
-    @Secured({ AuthoritiesConstants.INSTRUCTOR, AuthoritiesConstants.ADMIN })
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<List<UserDTO>> searchAllUsers(@RequestParam("loginOrName") String loginOrName) {
         log.debug("REST request to search all Users for {}", loginOrName);
         // restrict result size by only allowing reasonable searches
