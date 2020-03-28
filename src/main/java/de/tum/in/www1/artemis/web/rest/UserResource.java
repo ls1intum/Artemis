@@ -59,6 +59,7 @@ import io.swagger.annotations.ApiParam;
  */
 @RestController
 @RequestMapping("/api")
+@PreAuthorize("hasAnyRole('ADMIN')")
 public class UserResource {
 
     private final Logger log = LoggerFactory.getLogger(UserResource.class);
