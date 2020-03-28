@@ -217,8 +217,30 @@ public class UserIntegrationTest extends AbstractSpringIntegrationTest {
         params.add("searchTerm", "");
         params.add("sortingOrder", "ASCENDING");
         params.add("sortedColumn", "id");
-        List<User> users = request.getList("/api/users", HttpStatus.OK, User.class, params);
+        List<UserDTO> users = request.getList("/api/users", HttpStatus.OK, UserDTO.class, params);
         assertThat(users).hasSize(numberOfStudents + numberOfTutors + numberOfInstructors + 1); // +1 for admin user himself
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void searchUsers_asInstructor_isSuccessful() throws Exception {
+        final String loginOrName = "student1";
+        List<UserDTO> users = request.getList("/api/users/search?loginOrName=" + loginOrName, HttpStatus.OK, UserDTO.class);
+        assertThat(users).hasSize(11); // size([student1, student10, ... student19]) = 11
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    public void searchUsers_asAdmin_badRequest() throws Exception {
+        final String loginOrName = "ab"; // too short (needs at least 3 characters)
+        request.getList("/api/users/search?loginOrName=" + loginOrName, HttpStatus.BAD_REQUEST, UserDTO.class);
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void searchUsers_asTutor_forbidden() throws Exception {
+        final String loginOrName = "student";
+        request.getList("/api/users/search?loginOrName=" + loginOrName, HttpStatus.FORBIDDEN, UserDTO.class);
     }
 
     @Test
