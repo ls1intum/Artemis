@@ -85,8 +85,8 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationTe
     }
 
     private void mockStudentRepoLocks() throws URISyntaxException {
-        for (final var login : programmingExercise.getStudentParticipations().stream().map(StudentParticipation::getParticipantIdentifier).collect(Collectors.toList())) {
-            bitbucketRequestMockProvider.mockSetRepositoryPermissionsToReadOnly(programmingExercise.getProjectKey(), login);
+        for (final var students : programmingExercise.getStudentParticipations().stream().map(StudentParticipation::getStudents).collect(Collectors.toSet())) {
+            bitbucketRequestMockProvider.mockSetRepositoryPermissionsToReadOnly(programmingExercise.getProjectKey(), students);
         }
     }
 

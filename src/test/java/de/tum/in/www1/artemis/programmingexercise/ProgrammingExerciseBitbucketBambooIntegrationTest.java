@@ -35,10 +35,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.in.www1.artemis.AbstractSpringIntegrationTest;
 import de.tum.in.www1.artemis.connector.bamboo.BambooRequestMockProvider;
 import de.tum.in.www1.artemis.connector.bitbucket.BitbucketRequestMockProvider;
-import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.Team;
-import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
@@ -46,6 +43,8 @@ import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentPar
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.security.AuthoritiesConstants;
+import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.service.TeamService;
 import de.tum.in.www1.artemis.util.*;
 import de.tum.in.www1.artemis.web.rest.ParticipationResource;
@@ -75,6 +74,9 @@ public class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractS
 
     @Autowired
     private CourseRepository courseRepository;
+
+    @Autowired
+    private ParticipationService participationService;
 
     private Course course;
 
@@ -302,6 +304,68 @@ public class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractS
         }
 
         assertThat(participation.getInitializationState()).as("Participation should be initialized").isEqualTo(InitializationState.INITIALIZED);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void repositoryAccessIsAdded_whenStudentIsAddedToTeam() throws Exception {
+        exercise.setMode(ExerciseMode.TEAM);
+        programmingExerciseRepository.save(exercise);
+        database.addTemplateParticipationForProgrammingExercise(exercise);
+        database.addSolutionParticipationForProgrammingExercise(exercise);
+
+        // Create a team with students
+        Set<User> students = new HashSet<>(userRepo.findAllInGroup("tumuser"));
+        Team team = new Team().name("Team 1").shortName(teamShortName).exercise(exercise).students(students);
+        team = teamService.save(exercise, team);
+
+        assertThat(team.getStudents()).as("Students were correctly added to team").hasSize(numberOfStudents);
+
+        // Set up mock requests for start participation
+        mockConnectorRequestsForStartParticipation(exercise, team.getParticipantIdentifier(), team.getStudents());
+
+        // Add a new student to the team
+        User newStudent = ModelFactory.generateActivatedUsers("new-student", new String[] { "tumuser", "testgroup" }, Set.of(new Authority(AuthoritiesConstants.USER)), 1).get(0);
+        newStudent = userRepo.save(newStudent);
+        team.addStudents(newStudent);
+
+        // Mock repository write permission give call
+        final var repositoryName = exercise.getProjectKey().toLowerCase() + "-" + team.getParticipantIdentifier().toLowerCase();
+        bitbucketRequestMockProvider.mockGiveWritePermission(exercise, repositoryName, newStudent.getLogin());
+
+        // Start participation with original team
+        participationService.startExercise(exercise, team);
+
+        // Update team with new student after participation has already started
+        Team serverTeam = request.putWithResponseBody("/api/exercises/" + exercise.getId() + "/teams/" + team.getId(), team, Team.class, HttpStatus.OK);
+        assertThat(serverTeam.getStudents()).as("Team students were updated correctly").hasSize(numberOfStudents + 1); // new student was added
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void repositoryAccessIsRemoved_whenStudentIsRemovedFromTeam() throws Exception {
+        exercise.setMode(ExerciseMode.TEAM);
+        programmingExerciseRepository.save(exercise);
+        database.addTemplateParticipationForProgrammingExercise(exercise);
+        database.addSolutionParticipationForProgrammingExercise(exercise);
+
+        // Create a team with students
+        Set<User> students = new HashSet<>(userRepo.findAllInGroup("tumuser"));
+        Team team = new Team().name("Team 1").shortName(teamShortName).exercise(exercise).students(students);
+        team = teamService.save(exercise, team);
+
+        assertThat(team.getStudents()).as("Students were correctly added to team").hasSize(numberOfStudents);
+
+        // Remove the first student from the team
+        User firstStudent = students.iterator().next();
+        team.removeStudents(firstStudent);
+
+        // Mock repository access removal call
+        bitbucketRequestMockProvider.mockRemoveMemberFromRepository(exercise.getProjectKey(), firstStudent);
+
+        // Update team with removed student
+        Team serverTeam = request.putWithResponseBody("/api/exercises/" + exercise.getId() + "/teams/" + team.getId(), team, Team.class, HttpStatus.OK);
+        assertThat(serverTeam.getStudents()).as("Team students were updated correctly").hasSize(numberOfStudents - 1); // first student was removed
     }
 
     private List<Verifiable> mockConnectorRequestsForStartParticipation(ProgrammingExercise exercise, String username, Set<User> users) throws Exception {
