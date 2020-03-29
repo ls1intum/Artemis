@@ -330,8 +330,8 @@ public class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractS
         team.addStudents(newStudent);
 
         // Mock repository write permission give call
-        final var repositoryName = exercise.getProjectKey().toLowerCase() + "-" + team.getParticipantIdentifier().toLowerCase();
-        bitbucketRequestMockProvider.mockGiveWritePermission(exercise, repositoryName, newStudent.getLogin());
+        final var repositorySlug = (exercise.getProjectKey() + "-" + team.getParticipantIdentifier()).toLowerCase();
+        bitbucketRequestMockProvider.mockGiveWritePermission(exercise, repositorySlug, newStudent.getLogin());
 
         // Start participation with original team
         participationService.startExercise(exercise, team);
@@ -360,16 +360,27 @@ public class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractS
 
         assertThat(team.getStudents()).as("Students were correctly added to team").hasSize(numberOfStudents);
 
+        // Set up mock requests for start participation
+        final var verifications = mockConnectorRequestsForStartParticipation(exercise, team.getParticipantIdentifier(), team.getStudents());
+
         // Remove the first student from the team
         User firstStudent = students.iterator().next();
         team.removeStudents(firstStudent);
 
         // Mock repository access removal call
-        bitbucketRequestMockProvider.mockRemoveMemberFromRepository(exercise.getProjectKey(), firstStudent);
+        final var repositorySlug = (exercise.getProjectKey() + "-" + team.getParticipantIdentifier()).toLowerCase();
+        bitbucketRequestMockProvider.mockRemoveMemberFromRepository(repositorySlug, exercise.getProjectKey(), firstStudent);
+
+        // Start participation with original team
+        participationService.startExercise(exercise, team);
 
         // Update team with removed student
         Team serverTeam = request.putWithResponseBody("/api/exercises/" + exercise.getId() + "/teams/" + team.getId(), team, Team.class, HttpStatus.OK);
         assertThat(serverTeam.getStudents()).as("Team students were updated correctly").hasSize(numberOfStudents - 1); // first student was removed
+
+        for (final var verification : verifications) {
+            verification.performVerification();
+        }
     }
 
     private List<Verifiable> mockConnectorRequestsForStartParticipation(ProgrammingExercise exercise, String username, Set<User> users) throws Exception {
