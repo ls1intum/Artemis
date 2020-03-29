@@ -5,7 +5,7 @@ import 'brace/mode/javascript';
 import 'brace/mode/markdown';
 import 'brace/mode/python';
 import 'brace/theme/dreamweaver';
-import { AceEditorComponent } from 'ng2-ace-editor';
+import { AceEditorComponent } from 'ngx-ace-editor-wrapper';
 import { AfterViewInit, Component, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleChanges, ViewChild } from '@angular/core';
 import { fromEvent, of, Subscription } from 'rxjs';
 import { catchError, tap } from 'rxjs/operators';

@@ -1,5 +1,5 @@
 import { async, ComponentFixture, TestBed } from '@angular/core/testing';
-import { AceEditorModule } from 'ng2-ace-editor';
+import { AceEditorModule } from 'ngx-ace-editor-wrapper';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import * as chai from 'chai';
 import { ArtemisTestModule } from '../../test.module';

@@ -10,7 +10,7 @@ import { SinonStub, spy, stub } from 'sinon';
 import { Subject } from 'rxjs';
 import { isEqual as _isEqual } from 'lodash';
 
-import { AceEditorModule } from 'ng2-ace-editor';
+import { AceEditorModule } from 'ngx-ace-editor-wrapper';
 import { CodeEditorRepositoryFileService, CodeEditorRepositoryService } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
 import { ArtemisTestModule } from '../../test.module';
 import { FeatureToggleModule } from 'app/shared/feature-toggle/feature-toggle.module';
