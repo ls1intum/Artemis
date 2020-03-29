@@ -1010,6 +1010,8 @@ public class ParticipationService {
      */
     @Transactional
     public void deleteAllByTeamId(Long teamId, boolean deleteBuildPlan, boolean deleteRepository) {
+        log.info("Request to delete all participations of Team with id : {}", teamId);
+
         List<StudentParticipation> participationsToDelete = findByTeamId(teamId);
 
         for (StudentParticipation participation : participationsToDelete) {
