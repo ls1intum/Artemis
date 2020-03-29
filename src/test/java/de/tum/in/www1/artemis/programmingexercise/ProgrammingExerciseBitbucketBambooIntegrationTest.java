@@ -322,7 +322,7 @@ public class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractS
         assertThat(team.getStudents()).as("Students were correctly added to team").hasSize(numberOfStudents);
 
         // Set up mock requests for start participation
-        mockConnectorRequestsForStartParticipation(exercise, team.getParticipantIdentifier(), team.getStudents());
+        final var verifications = mockConnectorRequestsForStartParticipation(exercise, team.getParticipantIdentifier(), team.getStudents());
 
         // Add a new student to the team
         User newStudent = ModelFactory.generateActivatedUsers("new-student", new String[] { "tumuser", "testgroup" }, Set.of(new Authority(AuthoritiesConstants.USER)), 1).get(0);
@@ -339,6 +339,10 @@ public class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractS
         // Update team with new student after participation has already started
         Team serverTeam = request.putWithResponseBody("/api/exercises/" + exercise.getId() + "/teams/" + team.getId(), team, Team.class, HttpStatus.OK);
         assertThat(serverTeam.getStudents()).as("Team students were updated correctly").hasSize(numberOfStudents + 1); // new student was added
+
+        for (final var verification : verifications) {
+            verification.performVerification();
+        }
     }
 
     @Test
