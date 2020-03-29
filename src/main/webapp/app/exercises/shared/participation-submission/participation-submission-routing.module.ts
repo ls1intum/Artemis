@@ -6,7 +6,7 @@ import { NgModule } from '@angular/core';
 
 const participationSubmissionRoutes: Routes = [
     {
-        path: 'course-management/:courseId/exercises/:exerciseId/participations/:participationId/submissions',
+        path: ':courseId/exercises/:exerciseId/participations/:participationId/submissions',
         component: ParticipationSubmissionComponent,
         data: {
             authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],

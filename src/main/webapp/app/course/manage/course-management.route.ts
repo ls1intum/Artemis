@@ -87,7 +87,6 @@ export const courseManagementRoute: Routes = [
     },
 ];
 
-// TODO: add all routs for course-management here
 const COURSE_MANAGEMENT_ROUTES = [...courseManagementRoute];
 
 export const courseManagementState: Routes = [

@@ -41,7 +41,7 @@ export class TextExerciseResolver implements Resolve<TextExercise> {
 export const textExerciseRoute: Routes = [
     // Create New Text Exercise
     {
-        path: 'course-management/:courseId/text-exercises/new',
+        path: ':courseId/text-exercises/new',
         component: TextExerciseUpdateComponent,
         resolve: {
             textExercise: TextExerciseResolver,
@@ -54,7 +54,7 @@ export const textExerciseRoute: Routes = [
     },
     // View Text Exercise
     {
-        path: 'course-management/:courseId/text-exercises/:exerciseId',
+        path: ':courseId/text-exercises/:exerciseId',
         component: TextExerciseDetailComponent,
         data: {
             authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
@@ -64,7 +64,7 @@ export const textExerciseRoute: Routes = [
     },
     // Edit Text Exercise
     {
-        path: 'course-management/:courseId/text-exercises/:exerciseId/edit',
+        path: ':courseId/text-exercises/:exerciseId/edit',
         component: TextExerciseUpdateComponent,
         resolve: {
             textExercise: TextExerciseResolver,
@@ -77,7 +77,7 @@ export const textExerciseRoute: Routes = [
     },
     // View list of Text Exercises for Course
     {
-        path: 'course-management/:courseId/text-exercises',
+        path: ':courseId/text-exercises',
         component: TextExerciseComponent,
         data: {
             authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],

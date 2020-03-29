@@ -34,7 +34,7 @@ export class ModelingExerciseResolver implements Resolve<ModelingExercise> {
 
 const routes: Routes = [
     {
-        path: 'course-management/:courseId/modeling-exercises/new',
+        path: ':courseId/modeling-exercises/new',
         component: ModelingExerciseUpdateComponent,
         resolve: {
             modelingExercise: ModelingExerciseResolver,
@@ -46,7 +46,7 @@ const routes: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
-        path: 'course-management/:courseId/modeling-exercises/:exerciseId/edit',
+        path: ':courseId/modeling-exercises/:exerciseId/edit',
         component: ModelingExerciseUpdateComponent,
         resolve: {
             modelingExercise: ModelingExerciseResolver,
@@ -58,7 +58,7 @@ const routes: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
-        path: 'course-management/:courseId/modeling-exercises/:exerciseId',
+        path: ':courseId/modeling-exercises/:exerciseId',
         component: ModelingExerciseDetailComponent,
         data: {
             authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
@@ -67,7 +67,7 @@ const routes: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
-        path: 'course-management/:courseId/modeling-exercises',
+        path: ':courseId/modeling-exercises',
         component: ModelingExerciseComponent,
         data: {
             authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],

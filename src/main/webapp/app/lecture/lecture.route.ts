@@ -29,7 +29,7 @@ export class LectureResolve implements Resolve<Lecture> {
 
 export const lectureRoute: Routes = [
     {
-        path: 'course-management/:courseId/lectures',
+        path: ':courseId/lectures',
         component: LectureComponent,
         data: {
             authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
@@ -38,7 +38,7 @@ export const lectureRoute: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
-        path: 'course-management/:courseId/lectures/:id/view',
+        path: ':courseId/lectures/:id/view',
         component: LectureDetailComponent,
         resolve: {
             lecture: LectureResolve,
@@ -50,7 +50,7 @@ export const lectureRoute: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
-        path: 'course-management/:courseId/lectures/:id/attachments',
+        path: ':courseId/lectures/:id/attachments',
         component: LectureAttachmentsComponent,
         resolve: {
             lecture: LectureResolve,
@@ -62,7 +62,7 @@ export const lectureRoute: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
-        path: 'course-management/:courseId/lectures/new',
+        path: ':courseId/lectures/new',
         component: LectureUpdateComponent,
         resolve: {
             lecture: LectureResolve,
@@ -74,7 +74,7 @@ export const lectureRoute: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
-        path: 'course-management/:courseId/lectures/:id/edit',
+        path: ':courseId/lectures/:id/edit',
         component: LectureUpdateComponent,
         resolve: {
             lecture: LectureResolve,

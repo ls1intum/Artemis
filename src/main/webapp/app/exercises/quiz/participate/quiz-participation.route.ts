@@ -24,24 +24,4 @@ export const quizParticipationRoute: Routes = [
         },
         canActivate: [UserRouteAccessService],
     },
-    {
-        path: 'course-management/:courseId/quiz-exercises/:exerciseId/preview',
-        component: QuizParticipationComponent,
-        data: {
-            authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
-            pageTitle: 'artemisApp.quizExercise.home.title',
-            mode: 'preview',
-        },
-        canActivate: [UserRouteAccessService],
-    },
-    {
-        path: 'course-management/:courseId/quiz-exercises/:exerciseId/solution',
-        component: QuizParticipationComponent,
-        data: {
-            authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
-            pageTitle: 'artemisApp.quizExercise.home.title',
-            mode: 'solution',
-        },
-        canActivate: [UserRouteAccessService],
-    },
 ];

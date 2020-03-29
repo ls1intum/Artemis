@@ -5,7 +5,7 @@ import { ExampleModelingSolutionComponent } from './example-modeling-solution.co
 
 const routes: Routes = [
     {
-        path: 'course-management/:courseId/modeling-exercises/:exerciseId/example-solution',
+        path: ':courseId/modeling-exercises/:exerciseId/example-solution',
         component: ExampleModelingSolutionComponent,
         data: {
             authorities: ['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'],
