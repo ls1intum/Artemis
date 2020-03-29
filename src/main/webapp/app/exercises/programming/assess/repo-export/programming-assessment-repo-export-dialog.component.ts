@@ -17,11 +17,11 @@ import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service'
 })
 export class ProgrammingAssessmentRepoExportDialogComponent implements OnInit {
     @Input() exerciseId: number;
-    // Either a participationId list or a studentId list can be provided that is used for exporting the repos.
-    // Priority: participationId >> studentId.
+    // Either a participationId list or a participantIdentifier (student login or team short name) list can be provided that is used for exporting the repos.
+    // Priority: participationId >> participantIdentifier.
     @Input() participationIdList: number[];
-    @Input() studentIdList: string; // TODO: Should be a list and not a comma separated string.
-    @Input() singleStudentMode = false;
+    @Input() participantIdentifierList: string; // TODO: Should be a list and not a comma separated string.
+    @Input() singleParticipantMode = false;
     readonly FeatureToggle = FeatureToggle;
     exercise: Exercise;
     exportInProgress: boolean;
@@ -40,10 +40,10 @@ export class ProgrammingAssessmentRepoExportDialogComponent implements OnInit {
         this.isLoading = true;
         this.exportInProgress = false;
         this.repositoryExportOptions = {
-            exportAllStudents: false,
+            exportAllParticipants: false,
             filterLateSubmissions: false,
             filterLateSubmissionsDate: null,
-            addStudentName: true,
+            addParticipantName: true,
             combineStudentCommits: false,
             normalizeCodeStyle: false, // disabled by default because it is rather unstable
         };
@@ -70,10 +70,10 @@ export class ProgrammingAssessmentRepoExportDialogComponent implements OnInit {
 
     exportRepos(exerciseId: number) {
         this.exportInProgress = true;
-        // The inputted participation ids take priority over the student ids.
+        // The inputted participation ids take priority over the participant identifiers (student login or team names).
         if (this.participationIdList) {
             // We anonymize the assessment process ("double-blind").
-            this.repositoryExportOptions.addStudentName = false;
+            this.repositoryExportOptions.addParticipantName = false;
             this.repoExportService
                 .exportReposByParticipations(exerciseId, this.participationIdList, this.repositoryExportOptions)
                 .subscribe(this.handleExportRepoResponse, (err) => {
@@ -81,10 +81,14 @@ export class ProgrammingAssessmentRepoExportDialogComponent implements OnInit {
                 });
             return;
         }
-        const studentIdList = this.studentIdList !== undefined && this.studentIdList !== '' ? this.studentIdList.split(',').map((e) => e.trim()) : ['ALL'];
-        this.repoExportService.exportReposByStudentLogins(exerciseId, studentIdList, this.repositoryExportOptions).subscribe(this.handleExportRepoResponse, (err) => {
-            this.exportInProgress = false;
-        });
+        const participantIdentifierList =
+            this.participantIdentifierList !== undefined && this.participantIdentifierList !== '' ? this.participantIdentifierList.split(',').map((e) => e.trim()) : ['ALL'];
+
+        this.repoExportService
+            .exportReposByParticipantIdentifiers(exerciseId, participantIdentifierList, this.repositoryExportOptions)
+            .subscribe(this.handleExportRepoResponse, (err) => {
+                this.exportInProgress = false;
+            });
     }
 
     handleExportRepoResponse = (response: HttpResponse<Blob>) => {
