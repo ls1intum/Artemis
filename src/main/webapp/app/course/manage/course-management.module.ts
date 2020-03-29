@@ -34,6 +34,9 @@ import { ArtemisComplaintsForTutorModule } from 'app/complaints/complaints-for-t
 import { ArtemisTextExerciseAssessmentModule } from 'app/exercises/text/assess/text-assessment.module';
 import { ArtemisFileUploadAssessmentModule } from 'app/exercises/file-upload/assess/file-upload-assessment.module';
 import { ArtemisModelingAssessmentEditorModule } from 'app/exercises/modeling/assess/modeling-assessment-editor/modeling-assessment-editor.module';
+import { CourseGroupComponent } from 'app/course/manage/course-group.component';
+import { NgxDatatableModule } from '@swimlane/ngx-datatable';
+import { ArtemisDataTableModule } from 'app/shared/data-table/data-table.module';
 
 @NgModule({
     imports: [
@@ -65,7 +68,9 @@ import { ArtemisModelingAssessmentEditorModule } from 'app/exercises/modeling/as
         ArtemisTextExerciseAssessmentModule,
         ArtemisFileUploadAssessmentModule,
         ArtemisModelingAssessmentEditorModule,
+        NgxDatatableModule,
+        ArtemisDataTableModule,
     ],
-    declarations: [CourseManagementComponent, CourseDetailComponent, CourseUpdateComponent, CourseExerciseCardComponent, CourseExercisesOverviewComponent],
+    declarations: [CourseManagementComponent, CourseDetailComponent, CourseUpdateComponent, CourseExerciseCardComponent, CourseExercisesOverviewComponent, CourseGroupComponent],
 })
 export class ArtemisCourseManagementModule {}
