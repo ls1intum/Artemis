@@ -6,7 +6,7 @@ import { By } from '@angular/platform-browser';
 import { DebugElement } from '@angular/core';
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
-import { AceEditorModule } from 'ngx-ace-editor-wrapper';
+import { AceEditorModule } from 'ng2-ace-editor';
 import { SinonStub, stub } from 'sinon';
 import { Observable, of } from 'rxjs';
 import { ArtemisTestModule } from '../../test.module';

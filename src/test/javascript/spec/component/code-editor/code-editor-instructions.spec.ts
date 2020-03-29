@@ -7,7 +7,7 @@ import { WindowRef } from 'app/core/websocket/window.service';
 import { DebugElement } from '@angular/core';
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
-import { AceEditorModule } from 'ngx-ace-editor-wrapper';
+import { AceEditorModule } from 'ng2-ace-editor';
 import { ArtemisTestModule } from '../../test.module';
 import { MockCodeEditorGridService } from '../../mocks/mock-code-editor-grid.service';
 import { CodeEditorRepositoryFileService } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
