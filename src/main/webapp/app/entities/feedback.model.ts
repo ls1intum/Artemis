@@ -1,5 +1,4 @@
 import { BaseEntity } from 'app/shared/model/base-entity';
-import { UMLModelElementType } from '@ls1intum/apollon';
 import { Result } from 'app/entities/result.model';
 
 export const enum FeedbackHighlightColor {
@@ -27,10 +26,10 @@ export class Feedback implements BaseEntity {
     public positive: boolean | null;
 
     // helper attributes for modeling exercise assessments stored in Feedback
-    public referenceType: UMLModelElementType | null;
+    public referenceType: string | null; // this string needs to follow UMLModelElementType in Apollon in typings.d.ts
     public referenceId: string | null;
 
-    constructor(credits?: number, text?: string, referenceId?: string, referenceType?: UMLModelElementType) {
+    constructor(credits?: number, text?: string, referenceId?: string, referenceType?: string) {
         this.referenceId = referenceId || null;
         this.referenceType = referenceType || null;
         this.credits = credits || 0;

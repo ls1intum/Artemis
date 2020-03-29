@@ -115,7 +115,7 @@ export class ModelingAssessmentService {
         }
         for (const feedback of result.feedbacks) {
             if (feedback.reference) {
-                feedback.referenceType = feedback.reference.split(':')[0] as UMLModelElementType;
+                feedback.referenceType = feedback.reference.split(':')[0];
                 feedback.referenceId = feedback.reference.split(':')[1];
             }
         }
@@ -129,7 +129,7 @@ export class ModelingAssessmentService {
     getNamesForAssessments(result: Result, model: UMLModel): Map<string, Map<string, string>> {
         const assessmentsNames = new Map<string, Map<string, string>>();
         for (const feedback of result.feedbacks) {
-            const referencedModelType = feedback.referenceType!;
+            const referencedModelType = feedback.referenceType! as UMLElementType;
             const referencedModelId = feedback.referenceId!;
             if (referencedModelType in UMLElementType) {
                 const element = model.elements.find((elem) => elem.id === referencedModelId);

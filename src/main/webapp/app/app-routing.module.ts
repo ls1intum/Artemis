@@ -4,7 +4,6 @@ import { navbarRoute } from 'app/shared/layouts/navbar/navbar.route';
 import { errorRoute } from 'app/shared/layouts/error/error.route';
 
 const LAYOUT_ROUTES: Routes = [navbarRoute, ...errorRoute];
-// TODO add future feature routes here, e.g. quiz, modeling, apollon, programming editor
 
 @NgModule({
     imports: [
