@@ -1,10 +1,7 @@
 import { NgModule } from '@angular/core';
 import { ReactiveFormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
-import { ArtemisTextExerciseModule } from 'app/exercises/text/manage/text-exercise/text-exercise.module';
-import { ArtemisModelingExerciseModule } from 'app/exercises/modeling/manage/modeling-exercise.module';
 import { ArtemisFileUploadExerciseManagementModule } from 'app/exercises/file-upload/manage/file-upload-exercise-management.module';
-
 import { CourseExerciseCardComponent } from 'app/course/manage/course-exercise-card.component';
 import { FormDateTimePickerModule } from 'app/shared/date-time-picker/date-time-picker.module';
 import { ArtemisColorSelectorModule } from 'app/shared/color-selector/color-selector.module';
@@ -20,7 +17,6 @@ import { CourseManagementComponent } from 'app/course/manage/course-management.c
 import { OrionModule } from 'app/shared/orion/orion.module';
 import { ArtemisProgrammingExerciseManagementModule } from 'app/exercises/programming/manage/programming-exercise-management.module';
 import { ArtemisQuizManagementModule } from 'app/exercises/quiz/manage/quiz-management.module';
-import { ArtemisProgrammingExerciseModule } from 'app/exercises/programming/shared/programming-exercise.module';
 import { ArtemisExerciseModule } from 'app/exercises/shared/exercise/exercise.module';
 import { ArtemisLectureModule } from 'app/lecture/lecture.module';
 import { ArtemisTextExerciseManagementModule } from 'app/exercises/text/manage/text-exercise-management.module';
@@ -57,9 +53,6 @@ import { ArtemisDataTableModule } from 'app/shared/data-table/data-table.module'
         ArtemisQuizManagementModule,
         ArtemisTextExerciseManagementModule,
         ArtemisModelingExerciseManagementModule,
-        ArtemisProgrammingExerciseModule,
-        ArtemisTextExerciseModule,
-        ArtemisModelingExerciseModule,
         ArtemisColorSelectorModule,
         ArtemisDashboardsModule,
         ArtemisExerciseHintManagementModule,
