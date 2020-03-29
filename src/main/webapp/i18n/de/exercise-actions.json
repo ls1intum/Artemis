@@ -24,7 +24,8 @@
             "openTextEditor": "Text-Editor öffnen",
             "copyUrl": "URL kopieren",
             "copiedUrl": "URL kopiert",
-            "uploadFile": "Datei hochladen"
+            "uploadFile": "Datei hochladen",
+            "viewTeam": "Team"
         }
     }
 }

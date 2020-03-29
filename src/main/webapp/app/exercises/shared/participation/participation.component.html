@@ -37,8 +37,8 @@
         [allEntities]="participations"
         entitiesPerPageTranslation="artemisApp.exercise.resultsPerPage"
         showAllEntitiesTranslation="artemisApp.exercise.showAllResults"
-        searchPlaceholderTranslation="artemisApp.exercise.searchForStudents"
-        [searchFields]="['student.login', 'student.name']"
+        [searchPlaceholderTranslation]="exercise?.teamMode ? 'artemisApp.exercise.searchForTeams' : 'artemisApp.exercise.searchForStudents'"
+        [searchFields]="exercise?.teamMode ? ['team.shortName', 'team.name', 'team.students.login', 'team.students.name'] : ['student.login', 'student.name']"
         [searchTextFromEntity]="searchTextFromParticipation"
         [searchResultFormatter]="searchResultFormatter"
         [customFilterKey]="participationCriteria.filterProp"
@@ -149,7 +149,7 @@
                         </span>
                     </ng-template>
                     <ng-template ngx-datatable-cell-template let-value="row">
-                        <div class="text-center">
+                        <div class="w-100 text-center">
                             <a *ngIf="exercise.isAtLeastInstructor; else displayTextOnly" routerLink="{{ value.id }}/submissions">
                                 {{ value.submissionCount }}
                             </a>
@@ -160,7 +160,7 @@
                     </ng-template>
                 </ngx-datatable-column>
 
-                <ngx-datatable-column prop="student" [minWidth]="120" [width]="120">
+                <ngx-datatable-column *ngIf="!exercise.teamMode" prop="student" [minWidth]="120" [width]="120">
                     <ng-template ngx-datatable-header-template>
                         <span class="datatable-header-cell-wrapper" (click)="controls.onSort('student.name')">
                             <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.participation.student">
@@ -170,7 +170,36 @@
                         </span>
                     </ng-template>
                     <ng-template ngx-datatable-cell-template let-value="value">
-                        <a routerLink="/admin/user-management/{{ value?.login }}/view"> {{ value?.name }} </a>
+                        <a routerLink="/admin/user-management/{{ value?.login }}/view">{{ value?.name }}</a>
+                    </ng-template>
+                </ngx-datatable-column>
+
+                <ngx-datatable-column *ngIf="exercise.teamMode" prop="team" [minWidth]="120" [width]="120">
+                    <ng-template ngx-datatable-header-template>
+                        <span class="datatable-header-cell-wrapper" (click)="controls.onSort('team.name')">
+                            <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.participation.team">
+                                Team
+                            </span>
+                            <fa-icon [icon]="controls.iconForSortPropField('team.name')"></fa-icon>
+                        </span>
+                    </ng-template>
+                    <ng-template ngx-datatable-cell-template let-value="value">
+                        <a [routerLink]="['/course-management', exercise.course?.id, 'exercises', exercise.id, 'teams', value?.id]">
+                            {{ value?.name }}
+                        </a>
+                    </ng-template>
+                </ngx-datatable-column>
+
+                <ngx-datatable-column *ngIf="exercise.teamMode" prop="team.students" [minWidth]="350" [width]="450">
+                    <ng-template ngx-datatable-header-template>
+                        <span class="datatable-header-cell-wrapper" style="cursor: text;">
+                            <span class="datatable-header-cell-label bold" jhiTranslate="artemisApp.participation.students">
+                                Students
+                            </span>
+                        </span>
+                    </ng-template>
+                    <ng-template ngx-datatable-cell-template let-value="value">
+                        <jhi-team-students-list [students]="value"></jhi-team-students-list>
                     </ng-template>
                 </ngx-datatable-column>
 
@@ -190,7 +219,7 @@
 
                 <ngx-datatable-column prop="" [minWidth]="350" [width]="350">
                     <ng-template ngx-datatable-cell-template let-value="value">
-                        <div class="text-right">
+                        <div class="w-100 text-right">
                             <div class="btn-group">
                                 <ng-container *ngIf="exercise?.type === ExerciseType.PROGRAMMING && exercise.isAtLeastInstructor">
                                     <jhi-programming-exercise-instructor-trigger-build-button
@@ -209,7 +238,7 @@
                                     [jhiFeatureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
                                     [skipFeatureToggle]="exercise.type !== ExerciseType.PROGRAMMING"
                                     jhiDeleteButton
-                                    [entityTitle]="value.student.name"
+                                    [entityTitle]="exercise.teamMode ? value.team?.name : value.student?.name"
                                     deleteQuestion="artemisApp.participation.delete.question"
                                     (delete)="deleteParticipation(value.id, $event)"
                                     [dialogError]="dialogError$"
@@ -229,7 +258,7 @@
                                     deleteQuestion="artemisApp.participation.cleanupBuildPlan.question"
                                     (delete)="cleanupProgrammingExerciseParticipation(value)"
                                     [dialogError]="dialogError$"
-                                    [entityTitle]="value.student.name"
+                                    [entityTitle]="exercise.teamMode ? value.team?.name : value.student?.name"
                                 >
                                     <fa-icon [icon]="'eraser'"></fa-icon>
                                 </button>

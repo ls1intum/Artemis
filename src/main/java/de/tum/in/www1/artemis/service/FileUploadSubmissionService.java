@@ -70,7 +70,7 @@ public class FileUploadSubmissionService extends SubmissionService {
     @Transactional
     public FileUploadSubmission handleFileUploadSubmission(FileUploadSubmission fileUploadSubmission, MultipartFile file, FileUploadExercise fileUploadExercise,
             Principal principal) throws IOException, EmptyFileException {
-        Optional<StudentParticipation> optionalParticipation = participationService.findOneByExerciseIdAndStudentLoginAnyState(fileUploadExercise.getId(), principal.getName());
+        Optional<StudentParticipation> optionalParticipation = participationService.findOneByExerciseAndStudentLoginAnyState(fileUploadExercise, principal.getName());
         if (optionalParticipation.isEmpty()) {
             throw new ResponseStatusException(HttpStatus.FAILED_DEPENDENCY, "No participation found for " + principal.getName() + " in exercise " + fileUploadExercise.getId());
         }

@@ -93,7 +93,7 @@ public class FileUploadAssessmentIntegrationTest extends AbstractSpringIntegrati
                 Result.class, HttpStatus.OK);
 
         assertThat(updatedResult).as("updated result found").isNotNull();
-        assertThat(((StudentParticipation) updatedResult.getParticipation()).getStudent()).as("student of participation is hidden").isNull();
+        assertThat(((StudentParticipation) updatedResult.getParticipation()).getStudent()).as("student of participation is hidden").isEmpty();
         assertThat(updatedResult.getFeedbacks().size()).isEqualTo(2);
     }
 
@@ -107,7 +107,7 @@ public class FileUploadAssessmentIntegrationTest extends AbstractSpringIntegrati
 
         assertThat(result).as("saved result found").isNotNull();
         assertThat(result.isRated()).isNull();
-        assertThat(((StudentParticipation) result.getParticipation()).getStudent()).as("student of participation is hidden").isNull();
+        assertThat(((StudentParticipation) result.getParticipation()).getStudent()).as("student of participation is hidden").isEmpty();
     }
 
     @Test
@@ -126,7 +126,7 @@ public class FileUploadAssessmentIntegrationTest extends AbstractSpringIntegrati
         assertThat(result).as("submitted result found").isNotNull();
         assertThat(result.isRated()).isTrue();
 
-        assertThat(((StudentParticipation) result.getParticipation()).getStudent()).as("student of participation is hidden").isNull();
+        assertThat(((StudentParticipation) result.getParticipation()).getStudent()).as("student of participation is hidden").isEmpty();
         assertThat(result.getFeedbacks().size()).isEqualTo(2);
         assertThat(result.getFeedbacks().get(0).getCredits()).isEqualTo(feedbacks.get(0).getCredits());
         assertThat(result.getFeedbacks().get(1).getCredits()).isEqualTo(feedbacks.get(1).getCredits());

@@ -550,7 +550,7 @@ class ProgrammingSubmissionAndResultIntegrationTest extends AbstractSpringIntegr
 
     private String getStudentLoginFromParticipation(int participationNumber) {
         StudentParticipation participation = studentParticipationRepository.findWithStudentById(participationIds.get(participationNumber)).get();
-        return participation.getStudent().getLogin();
+        return participation.getParticipantIdentifier();
     }
 
     private Long getParticipationIdByType(IntegrationTestParticipationType participationType, int participationNumber) {

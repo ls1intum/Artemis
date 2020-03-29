@@ -17,6 +17,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
@@ -111,7 +112,7 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationTest 
         StudentParticipation participation = request.get(location.getPath(), HttpStatus.OK, StudentParticipation.class);
         assertThat(participation.getExercise()).as("participated in correct exercise").isEqualTo(modelingExercise);
         assertThat(participation.getStudent()).as("Student got set").isNotNull();
-        assertThat(participation.getStudent().getLogin()).as("Correct student got set").isEqualTo("student1");
+        assertThat(participation.getParticipantIdentifier()).as("Correct student got set").isEqualTo("student1");
         Participation storedParticipation = participationRepo.findWithEagerSubmissionsByExerciseIdAndStudentLogin(modelingExercise.getId(), "student1").get();
         assertThat(storedParticipation.getSubmissions().size()).as("submission was initialized").isEqualTo(1);
         assertThat(storedParticipation.getSubmissions().iterator().next().getClass()).as("submission is of type modeling submission").isEqualTo(ModelingSubmission.class);
@@ -125,7 +126,7 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationTest 
         StudentParticipation participation = request.get(location.getPath(), HttpStatus.OK, StudentParticipation.class);
         assertThat(participation.getExercise()).as("participated in correct exercise").isEqualTo(textExercise);
         assertThat(participation.getStudent()).as("Student got set").isNotNull();
-        assertThat(participation.getStudent().getLogin()).as("Correct student got set").isEqualTo("student2");
+        assertThat(participation.getParticipantIdentifier()).as("Correct student got set").isEqualTo("student2");
         Participation storedParticipation = participationRepo.findWithEagerSubmissionsByExerciseIdAndStudentLogin(textExercise.getId(), "student2").get();
         assertThat(storedParticipation.getSubmissions().size()).as("submission was initialized").isEqualTo(1);
         assertThat(storedParticipation.getSubmissions().iterator().next().getClass()).as("submission is of type text submission").isEqualTo(TextSubmission.class);
@@ -174,6 +175,14 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationTest 
         programmingExercise.setDueDate(ZonedDateTime.now().minusHours(2));
         exerciseRepo.save(programmingExercise);
         request.post("/api/courses/" + course.getId() + "/exercises/" + programmingExercise.getId() + "/participations", null, HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = "student1")
+    public void participateInProgrammingTeamExercise_withoutAssignedTeam() throws Exception {
+        programmingExercise.setMode(ExerciseMode.TEAM);
+        exerciseRepo.save(programmingExercise);
+        request.post("/api/courses/" + course.getId() + "/exercises/" + programmingExercise.getId() + "/participations", null, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -316,7 +325,7 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationTest 
         assertThat(participations.size()).as("Exactly 2 participations are returned").isEqualTo(2);
         assertThat(participations.stream().allMatch(p -> p.getStudent() != null)).as("Only participation that has student are returned").isTrue();
         assertThat(participations.stream().allMatch(p -> p.getSubmissionCount() == 0)).as("No submissions should exist for participations").isTrue();
-        var participationWithResult = participations.stream().filter(p -> p.getStudent().equals(database.getUserByLogin("student2"))).findFirst().get();
+        var participationWithResult = participations.stream().filter(p -> p.getParticipant().equals(database.getUserByLogin("student2"))).findFirst().get();
         assertThat(participationWithResult.getResults().size()).isEqualTo(1);
         assertThat(participationWithResult.getResults().stream().findFirst().get()).isEqualTo(result);
     }

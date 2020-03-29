@@ -111,9 +111,11 @@
             },
             "export": {
                 "downloadAllStudents": "Oder lade die Repositories aller Studenten herunter",
+                "downloadAllTeams": "Oder lade die Repositories aller Teams herunter",
                 "filterLateSubmissions": "Verspätete Abgaben herausfiltern",
                 "filterLateSubmissionsDate": "Datum zum Filtern verspäteter Abgaben (standardmäßig Abgabedatum der Aufgabe)",
-                "addStudentName": "Name der Studenten zum Projekt hinzufügen (erlaubt es mehrere Projekte gleichzeitig in Eclipse zu importieren)",
+                "addStudentName": "Namen der Studenten zum Projekt hinzufügen (erlaubt es mehrere Projekte gleichzeitig in Eclipse zu importieren)",
+                "addTeamName": "Namen der Teams zum Projekt hinzufügen (erlaubt es mehrere Projekte gleichzeitig in Eclipse zu importieren)",
                 "combineStudentCommits": "Alle Änderungen des Studenten in einem Commit zusammenfassen (um das Review zu vereinfachen)",
                 "normalizeCodeStyle": "Code-Style normalisieren (Zeilenumbrüche, Kodierung)",
                 "successMessage": "Die Repositories wurden erfolgreich exportiert. Die generierte Zip-Datei wird jetzt heruntergeladen."

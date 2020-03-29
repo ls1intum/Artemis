@@ -129,7 +129,11 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         if (!participations) {
             return null;
         }
-        const filteredParticipations = participations.filter((participation: StudentParticipation) => participation.student && participation.student.id === this.currentUser.id);
+        const filteredParticipations = participations.filter((participation: StudentParticipation) => {
+            const personal = participation.student?.id === this.currentUser.id;
+            const team = participation.team?.students.map((s) => s.id).includes(this.currentUser.id);
+            return personal || team;
+        });
         filteredParticipations.forEach((participation: Participation) => {
             if (participation.results) {
                 participation.results = participation.results.filter((result: Result) => result.completionDate);

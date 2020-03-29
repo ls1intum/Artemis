@@ -526,18 +526,18 @@ public class ProgrammingExerciseResource {
     }
 
     /**
-     * POST /programming-exercises/:exerciseId/export-repos-by-student-logins/:studentIds : sends all submissions from studentlist as zip
+     * POST /programming-exercises/:exerciseId/export-repos-by-participant-identifiers/:participantIdentifiers : sends all submissions from participantIdentifiers as zip
      *
      * @param exerciseId the id of the exercise to get the repos from
-     * @param studentIds the IDs of the students for whom to zip the submissions, separated by commas
+     * @param participantIdentifiers the identifiers of the participants (student logins or team short names) for whom to zip the submissions, separated by commas
      * @param repositoryExportOptions the options that should be used for the export
      * @return ResponseEntity with status
      * @throws IOException if something during the zip process went wrong
      */
-    @PostMapping(Endpoints.EXPORT_SUBMISSIONS_BY_STUDENT)
+    @PostMapping(Endpoints.EXPORT_SUBMISSIONS_BY_PARTICIPANTS)
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
-    public ResponseEntity<Resource> exportSubmissionsByStudentLogins(@PathVariable long exerciseId, @PathVariable String studentIds,
+    public ResponseEntity<Resource> exportSubmissionsByStudentLogins(@PathVariable long exerciseId, @PathVariable String participantIdentifiers,
             @RequestBody RepositoryExportOptionsDTO repositoryExportOptions) throws IOException {
         ProgrammingExercise programmingExercise = programmingExerciseService.findByIdWithEagerStudentParticipationsAndSubmissions(exerciseId);
         User user = userService.getUserWithGroupsAndAuthorities();
@@ -546,7 +546,7 @@ public class ProgrammingExerciseResource {
             return forbidden();
         }
 
-        if (repositoryExportOptions.isExportAllStudents()) {
+        if (repositoryExportOptions.isExportAllParticipants()) {
             // only instructors are allowed to download all repos
             if (!authCheckService.isAtLeastInstructorForExercise(programmingExercise, user)) {
                 return forbidden();
@@ -557,18 +557,18 @@ public class ProgrammingExerciseResource {
             repositoryExportOptions.setFilterLateSubmissionsDate(programmingExercise.getDueDate());
         }
 
-        List<String> studentList = new ArrayList<>();
-        if (!repositoryExportOptions.isExportAllStudents()) {
-            studentIds = studentIds.replaceAll("\\s+", "");
-            studentList = Arrays.asList(studentIds.split(","));
+        List<String> participantIdentifierList = new ArrayList<>();
+        if (!repositoryExportOptions.isExportAllParticipants()) {
+            participantIdentifiers = participantIdentifiers.replaceAll("\\s+", "");
+            participantIdentifierList = Arrays.asList(participantIdentifiers.split(","));
         }
 
         // Select the participations that should be exported
         List<ProgrammingExerciseStudentParticipation> exportedStudentParticipations = new ArrayList<>();
         for (StudentParticipation studentParticipation : programmingExercise.getStudentParticipations()) {
             ProgrammingExerciseStudentParticipation programmingStudentParticipation = (ProgrammingExerciseStudentParticipation) studentParticipation;
-            if (repositoryExportOptions.isExportAllStudents() || (programmingStudentParticipation.getRepositoryUrl() != null && studentParticipation.getStudent() != null
-                    && studentList.contains(studentParticipation.getStudent().getLogin()))) {
+            if (repositoryExportOptions.isExportAllParticipants() || (programmingStudentParticipation.getRepositoryUrl() != null && studentParticipation.getParticipant() != null
+                    && participantIdentifierList.contains(studentParticipation.getParticipantIdentifier()))) {
                 exportedStudentParticipations.add(programmingStudentParticipation);
             }
         }
@@ -746,7 +746,7 @@ public class ProgrammingExerciseResource {
 
         public static final String COMBINE_COMMITS = PROGRAMMING_EXERCISE + "/combine-template-commits";
 
-        public static final String EXPORT_SUBMISSIONS_BY_STUDENT = PROGRAMMING_EXERCISE + "/export-repos-by-student-logins/{studentIds}";
+        public static final String EXPORT_SUBMISSIONS_BY_PARTICIPANTS = PROGRAMMING_EXERCISE + "/export-repos-by-participant-identifiers/{participantIdentifiers}";
 
         public static final String EXPORT_SUBMISSIONS_BY_PARTICIPATIONS = PROGRAMMING_EXERCISE + "/export-repos-by-participation-ids/{participationIds}";
 

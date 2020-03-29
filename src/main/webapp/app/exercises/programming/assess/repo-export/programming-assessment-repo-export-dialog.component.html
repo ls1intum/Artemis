@@ -6,8 +6,8 @@
     <div class="modal-body">
         <jhi-alert-error></jhi-alert-error>
         <p
-            *ngIf="!singleStudentMode"
-            jhiTranslate="instructorDashboard.exportRepos.question"
+            *ngIf="!singleParticipantMode"
+            [jhiTranslate]="'instructorDashboard.exportRepos.questions.' + (exercise.teamMode ? 'team' : 'individual')"
             [translateValues]="{ exerciseTitle: exercise.title, courseTitle: exercise.course?.title }"
         >
             Confirm export
@@ -16,23 +16,25 @@
             *ngIf="!participationIdList"
             name="studentIds"
             class="export-textarea"
-            [(ngModel)]="studentIdList"
+            [(ngModel)]="participantIdentifierList"
             required
-            [disabled]="singleStudentMode || repositoryExportOptions.exportAllStudents"
+            [disabled]="singleParticipantMode || repositoryExportOptions.exportAllParticipants"
         ></textarea>
 
         <!--
         Only show download all checkbox for instructors & admins.
         -->
-        <ng-container *ngIf="!singleStudentMode">
+        <ng-container *ngIf="!singleParticipantMode">
             <div *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']" class="checkbox">
                 <label class="control-label">
-                    <input type="checkbox" name="allStudents" [(ngModel)]="repositoryExportOptions.exportAllStudents" />
-                    <strong jhiTranslate="artemisApp.programmingExercise.export.downloadAllStudents">Or download the repositories of all students</strong>
+                    <input type="checkbox" name="allStudents" [(ngModel)]="repositoryExportOptions.exportAllParticipants" />
+                    <strong [jhiTranslate]="'artemisApp.programmingExercise.export.' + (exercise.teamMode ? 'downloadAllTeams' : 'downloadAllStudents')">
+                        Or download the repositories of all {{ exercise.teamMode ? 'teams' : 'students' }}
+                    </strong>
                 </label>
             </div>
         </ng-container>
-        <ng-container *ngIf="!singleStudentMode">
+        <ng-container *ngIf="!singleParticipantMode">
             <div class="checkbox">
                 <label class="control-label">
                     <input type="checkbox" name="filterLateSubmissions" [(ngModel)]="this.repositoryExportOptions.filterLateSubmissions" />
@@ -50,10 +52,12 @@
                 ></jhi-date-time-picker>
             </div>
         </ng-container>
-        <div *ngIf="!singleStudentMode" class="checkbox">
+        <div *ngIf="!singleParticipantMode" class="checkbox">
             <label class="control-label">
-                <input type="checkbox" name="addStudentName" [(ngModel)]="this.repositoryExportOptions.addStudentName" />
-                <strong jhiTranslate="artemisApp.programmingExercise.export.addStudentName">Add student name to project</strong>
+                <input type="checkbox" name="addParticipantName" [(ngModel)]="this.repositoryExportOptions.addParticipantName" />
+                <strong [jhiTranslate]="'artemisApp.programmingExercise.export.' + (exercise.teamMode ? 'addTeamName' : 'addStudentName')">
+                    Add {{ exercise.teamMode ? 'team' : 'student' }} name to project
+                </strong>
             </label>
         </div>
         <div class="checkbox">
@@ -68,7 +72,7 @@
                 <strong jhiTranslate="artemisApp.programmingExercise.export.normalizeCodeStyle">Normalize code style (line endings, encoding)</strong>
             </label>
         </div>
-        <p *ngIf="!singleStudentMode" jhiTranslate="instructorDashboard.exportRepos.timeWarning">
+        <p *ngIf="!singleParticipantMode" jhiTranslate="instructorDashboard.exportRepos.timeWarning">
             <b>Note:</b> This action can take several minutes depending on number and size of repositories.
         </p>
     </div>
@@ -79,7 +83,7 @@
         <button
             [jhiFeatureToggle]="FeatureToggle.PROGRAMMING_EXERCISES"
             type="submit"
-            [disabled]="!participationIdList && !studentIdList && !this.repositoryExportOptions.exportAllStudents && !exportInProgress"
+            [disabled]="!participationIdList && !participantIdentifierList && !this.repositoryExportOptions.exportAllParticipants && !exportInProgress"
             class="btn btn-default"
         >
             <span *ngIf="this.exportInProgress" class="mr-1"><fa-icon [icon]="'circle-notch'" spin="true"></fa-icon></span>

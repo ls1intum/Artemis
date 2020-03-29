@@ -5,10 +5,10 @@ import { SERVER_API_URL } from 'app/app.constants';
 import { Moment } from 'moment';
 
 export type RepositoryExportOptions = {
-    exportAllStudents: boolean;
+    exportAllParticipants: boolean;
     filterLateSubmissions: boolean;
     filterLateSubmissionsDate: Moment | null;
-    addStudentName: boolean;
+    addParticipantName: boolean;
     combineStudentCommits: boolean;
     normalizeCodeStyle: boolean;
 };
@@ -20,8 +20,8 @@ export class ProgrammingAssessmentRepoExportService {
 
     constructor(private http: HttpClient) {}
 
-    exportReposByStudentLogins(exerciseId: number, students: string[], repositoryExportOptions: RepositoryExportOptions): Observable<HttpResponse<Blob>> {
-        return this.http.post(`${this.resourceUrl}/${exerciseId}/export-repos-by-student-logins/${students}`, repositoryExportOptions, {
+    exportReposByParticipantIdentifiers(exerciseId: number, participantIdentifiers: string[], repositoryExportOptions: RepositoryExportOptions): Observable<HttpResponse<Blob>> {
+        return this.http.post(`${this.resourceUrl}/${exerciseId}/export-repos-by-participant-identifiers/${participantIdentifiers}`, repositoryExportOptions, {
             observe: 'response',
             responseType: 'blob',
         });

@@ -15,6 +15,7 @@ import { areManualResultsAllowed } from 'app/exercises/shared/exercise/exercise-
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { AlertService } from 'app/core/alert/alert.service';
+import { formatTeamAsSearchResult } from 'app/exercises/shared/team/team.utils';
 
 enum FilterProp {
     ALL = 'all',
@@ -226,8 +227,12 @@ export class ParticipationComponent implements OnInit, OnDestroy {
      * @param participation
      */
     searchResultFormatter = (participation: StudentParticipation) => {
-        const { login, name } = participation.student;
-        return `${login} (${name})`;
+        if (participation.student) {
+            const { login, name } = participation.student;
+            return `${login} (${name})`;
+        } else if (participation.team) {
+            return formatTeamAsSearchResult(participation.team);
+        }
     };
 
     /**
@@ -237,6 +242,6 @@ export class ParticipationComponent implements OnInit, OnDestroy {
      * @param participation Student participation
      */
     searchTextFromParticipation = (participation: StudentParticipation): string => {
-        return participation.student.login || '';
+        return participation.student?.login || participation.team?.shortName || '';
     };
 }

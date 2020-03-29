@@ -333,7 +333,7 @@ public class ComplaintResource {
 
         if (complaint.getResult() != null && complaint.getResult().getParticipation() != null) {
             StudentParticipation studentParticipation = (StudentParticipation) complaint.getResult().getParticipation();
-            studentParticipation.setStudent(null);
+            studentParticipation.setParticipant(null);
         }
     }
 
@@ -411,7 +411,7 @@ public class ComplaintResource {
             if (assessor.getLogin().equals(submissorName) == assessorSameAsCaller) {
                 // Remove data about the student
                 StudentParticipation studentParticipation = (StudentParticipation) complaint.getResult().getParticipation();
-                studentParticipation.setStudent(null);
+                studentParticipation.setParticipant(null);
                 studentParticipation.setExercise(null);
                 complaint.setStudent(null);
                 complaint.setResultBeforeComplaint(null);

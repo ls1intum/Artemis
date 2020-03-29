@@ -5,7 +5,7 @@ import { DifferencePipe } from 'ngx-moment';
 import { HttpResponse } from '@angular/common/http';
 import { Moment } from 'moment';
 import { Course } from 'app/entities/course.model';
-import { CourseManagementService } from '../../../course/manage/course-management.service';
+import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { SourceTreeService } from 'app/exercises/programming/shared/service/sourceTree.service';
 import { take, tap } from 'rxjs/operators';
 import { of, zip } from 'rxjs';
@@ -24,6 +24,7 @@ import { AssessmentType } from 'app/entities/assessment-type.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { SubmissionExerciseType } from 'app/entities/submission.model';
+import { formatTeamAsSearchResult } from 'app/exercises/shared/team/team.utils';
 
 enum FilterProp {
     ALL = 'all',
@@ -186,8 +187,16 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
             const rows: string[] = [];
             this.results.forEach((result, index) => {
                 const studentParticipation = result.participation! as StudentParticipation;
-                const studentName = studentParticipation.student.name!;
-                rows.push(index === 0 ? 'data:text/csv;charset=utf-8,' + studentName : studentName);
+                const { participantName } = studentParticipation;
+                if (studentParticipation.team) {
+                    if (index === 0) {
+                        rows.push('data:text/csv;charset=utf-8,Team Name,Team Short Name,Students');
+                    }
+                    const { name, shortName, students } = studentParticipation.team;
+                    rows.push(`${name},${shortName},"${students.map((s) => s.name).join(', ')}"`);
+                } else {
+                    rows.push(index === 0 ? `data:text/csv;charset=utf-8,${participantName}` : participantName);
+                }
             });
             const csvContent = rows.join('\n');
             const encodedUri = encodeURI(csvContent);
@@ -204,22 +213,24 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
             const rows: string[] = [];
             this.results.forEach((result, index) => {
                 const studentParticipation = result.participation! as StudentParticipation;
-                const studentName = studentParticipation.student.name!;
-                const studentId = studentParticipation.student.login;
+                const { participantName, participantIdentifier } = studentParticipation;
                 const score = result.score;
 
                 if (index === 0) {
+                    const nameAndUserNameColumnHeaders = studentParticipation.team ? 'Team Name,Team Short Name' : 'Name,Username';
+                    const optionalStudentsColumnHeader = studentParticipation.team ? ',Students' : '';
                     if (this.exercise.type !== ExerciseType.PROGRAMMING) {
-                        rows.push('data:text/csv;charset=utf-8,Name, Username, Score');
+                        rows.push(`data:text/csv;charset=utf-8,${nameAndUserNameColumnHeaders},Score${optionalStudentsColumnHeader}`);
                     } else {
-                        rows.push('data:text/csv;charset=utf-8,Name, Username, Score, Repo Link');
+                        rows.push(`data:text/csv;charset=utf-8,${nameAndUserNameColumnHeaders},Score,Repo Link${optionalStudentsColumnHeader}`);
                     }
                 }
+                const optionalStudentsColumnValue = studentParticipation.team ? `,"${studentParticipation.team.students.map((s) => s.name).join(', ')}"` : '';
                 if (this.exercise.type !== ExerciseType.PROGRAMMING) {
-                    rows.push(studentName + ', ' + studentId + ', ' + score);
+                    rows.push(`${participantName},${participantIdentifier},${score}${optionalStudentsColumnValue}`);
                 } else {
                     const repoLink = (studentParticipation as ProgrammingExerciseStudentParticipation).repositoryUrl;
-                    rows.push(studentName + ', ' + studentId + ', ' + score + ', ' + repoLink);
+                    rows.push(`${participantName},${participantIdentifier},${score},${repoLink}${optionalStudentsColumnValue}`);
                 }
             });
             const csvContent = rows.join('\n');
@@ -238,9 +249,13 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
      * @param result
      */
     searchResultFormatter = (result: Result) => {
-        const login = (result.participation as StudentParticipation).student.login;
-        const name = (result.participation as StudentParticipation).student.name;
-        return `${login} (${name})`;
+        const participation = result.participation as StudentParticipation;
+        if (participation.student) {
+            const { login, name } = participation.student;
+            return `${login} (${name})`;
+        } else if (participation.team) {
+            return formatTeamAsSearchResult(participation.team);
+        }
     };
 
     /**
@@ -250,7 +265,7 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
      * @param result
      */
     searchTextFromResult = (result: Result): string => {
-        return (result.participation as StudentParticipation).student.login || '';
+        return (result.participation as StudentParticipation).participantIdentifier || '';
     };
 
     refresh() {
