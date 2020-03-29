@@ -34,6 +34,8 @@
             "results": "Ergebnisse",
             "submissions": "Einreichungen",
             "student": "Student",
+            "team": "Team",
+            "students": "Studenten",
             "exercise": "Übung",
             "deleteRepository": "Repository löschen",
             "deleteBuildPlan": "Build Plan löschen",
@@ -42,7 +44,7 @@
                 "submissionDate": "Abgabe Datum",
                 "result": "Ergebnis",
                 "assessor": "Bewerter",
-                "submissionsForParticipation": "Abgaben von {{ student }} für die Übung {{ exercise }}",
+                "submissionsForParticipation": "Abgaben von {{ participant }} für die Übung {{ exercise }}",
                 "action": "Aktion",
                 "delete": "Soll diese Abgabe wirklich gelöscht werden?"
             }

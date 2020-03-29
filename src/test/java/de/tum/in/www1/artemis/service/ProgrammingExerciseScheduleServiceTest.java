@@ -78,14 +78,14 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationTe
         for (StudentParticipation studentParticipation : studentParticipations) {
             ProgrammingExerciseStudentParticipation programmingExerciseStudentParticipation = (ProgrammingExerciseStudentParticipation) studentParticipation;
             verify(versionControlService, Mockito.times(callCount)).setRepositoryPermissionsToReadOnly(programmingExerciseStudentParticipation.getRepositoryUrlAsUrl(),
-                    programmingExercise.getProjectKey(), programmingExerciseStudentParticipation.getStudent().getLogin());
+                    programmingExercise.getProjectKey(), programmingExerciseStudentParticipation.getStudents());
             verify(versionControlService, Mockito.times(callCount)).setRepositoryPermissionsToReadOnly(programmingExerciseStudentParticipation.getRepositoryUrlAsUrl(),
-                    programmingExercise.getProjectKey(), programmingExerciseStudentParticipation.getStudent().getLogin());
+                    programmingExercise.getProjectKey(), programmingExerciseStudentParticipation.getStudents());
         }
     }
 
     private void mockStudentRepoLocks() throws URISyntaxException {
-        for (final var login : programmingExercise.getStudentParticipations().stream().map(p -> p.getStudent().getLogin()).collect(Collectors.toList())) {
+        for (final var login : programmingExercise.getStudentParticipations().stream().map(StudentParticipation::getParticipantIdentifier).collect(Collectors.toList())) {
             bitbucketRequestMockProvider.mockSetRepositoryPermissionsToReadOnly(programmingExercise.getProjectKey(), login);
         }
     }

@@ -7,24 +7,24 @@ import java.time.ZonedDateTime;
  */
 public class RepositoryExportOptionsDTO {
 
-    private boolean exportAllStudents;
+    private boolean exportAllParticipants;
 
     private boolean filterLateSubmissions;
 
     private ZonedDateTime filterLateSubmissionsDate;
 
-    private boolean addStudentName;
+    private boolean addParticipantName;
 
     private boolean combineStudentCommits;
 
     private boolean normalizeCodeStyle;
 
-    public boolean isExportAllStudents() {
-        return exportAllStudents;
+    public boolean isExportAllParticipants() {
+        return exportAllParticipants;
     }
 
-    public void setExportAllStudents(boolean exportAllStudents) {
-        this.exportAllStudents = exportAllStudents;
+    public void setExportAllParticipants(boolean exportAllParticipants) {
+        this.exportAllParticipants = exportAllParticipants;
     }
 
     public boolean isFilterLateSubmissions() {
@@ -43,12 +43,12 @@ public class RepositoryExportOptionsDTO {
         this.filterLateSubmissionsDate = filterLateSubmissionsDate;
     }
 
-    public boolean isAddStudentName() {
-        return addStudentName;
+    public boolean isAddParticipantName() {
+        return addParticipantName;
     }
 
-    public void setAddStudentName(boolean addStudentName) {
-        this.addStudentName = addStudentName;
+    public void setAddParticipantName(boolean addParticipantName) {
+        this.addParticipantName = addParticipantName;
     }
 
     public boolean isCombineStudentCommits() {

@@ -171,7 +171,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
             ProgrammingExerciseStudentParticipation programmingExerciseStudentParticipation = (ProgrammingExerciseStudentParticipation) studentParticipation;
             try {
                 versionControlService.get().setRepositoryPermissionsToReadOnly(programmingExerciseStudentParticipation.getRepositoryUrlAsUrl(),
-                        programmingExercise.get().getProjectKey(), programmingExerciseStudentParticipation.getStudent().getLogin());
+                        programmingExercise.get().getProjectKey(), programmingExerciseStudentParticipation.getStudents());
             }
             catch (Exception e) {
                 log.error("Removing write permissions failed for programming exercise with id " + programmingExerciseId + " for student repository with participation id "

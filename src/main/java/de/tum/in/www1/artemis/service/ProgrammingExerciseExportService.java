@@ -83,12 +83,13 @@ public class ProgrammingExerciseExportService {
             RepositoryExportOptionsDTO repositoryExportOptions) {
         ProgrammingExercise programmingExercise = programmingExerciseRepository.findWithTemplateParticipationAndSolutionParticipationById(programmingExerciseId).get();
 
-        if (repositoryExportOptions.isExportAllStudents()) {
-            log.info("Request to export all student repositories of programming exercise " + programmingExerciseId + " with title '" + programmingExercise.getTitle() + "'");
+        if (repositoryExportOptions.isExportAllParticipants()) {
+            log.info(
+                    "Request to export all student or team repositories of programming exercise " + programmingExerciseId + " with title '" + programmingExercise.getTitle() + "'");
         }
         else {
             log.info("Request to export the repositories of programming exercise " + programmingExerciseId + " with title '" + programmingExercise.getTitle()
-                    + "' of the following students: " + participations.stream().map(p -> p.getStudent().getLogin()).collect(Collectors.joining(", ")));
+                    + "' of the following students or teams: " + participations.stream().map(StudentParticipation::getParticipantIdentifier).collect(Collectors.joining(", ")));
         }
 
         List<Path> zippedRepoFiles = new ArrayList<>();
@@ -170,9 +171,9 @@ public class ProgrammingExerciseExportService {
             filterLateSubmissions(repositoryExportOptions.getFilterLateSubmissionsDate(), participation, repo);
         }
 
-        if (repositoryExportOptions.isAddStudentName()) {
-            log.debug("Adding student name to participation {}", participation.toString());
-            addStudentIdToProjectName(repo, programmingExercise, participation);
+        if (repositoryExportOptions.isAddParticipantName()) {
+            log.debug("Adding student or team name to participation {}", participation.toString());
+            addParticipantIdentifierToProjectName(repo, programmingExercise, participation);
         }
 
         if (repositoryExportOptions.isCombineStudentCommits()) {
@@ -277,15 +278,15 @@ public class ProgrammingExerciseExportService {
     }
 
     /**
-     * Adds the student id of the given student participation to the project name in all .project (Eclipse)
+     * Adds the participant identifier (student login or team short name) of the given student participation to the project name in all .project (Eclipse)
      * and pom.xml (Maven) files found in the given repository.
      *
      * @param repo The repository for which the student id should get added
      * @param programmingExercise The checked out exercise in the repository
-     * @param participation The student participation for the student id, which should be added.
+     * @param participation The student participation for the student/team identifier, which should be added.
      */
-    public void addStudentIdToProjectName(Repository repo, ProgrammingExercise programmingExercise, StudentParticipation participation) {
-        String studentId = participation.getStudent().getLogin();
+    public void addParticipantIdentifierToProjectName(Repository repo, ProgrammingExercise programmingExercise, StudentParticipation participation) {
+        String participantIdentifier = participation.getParticipantIdentifier();
 
         // Get all files in repository expect .git files
         List<String> allRepoFiles = listAllFilesInPath(repo.getLocalPath());
@@ -296,26 +297,26 @@ public class ProgrammingExerciseExportService {
             List<String> eclipseProjectFiles = allRepoFiles.stream().filter(file -> file.endsWith(".project")).collect(Collectors.toList());
 
             for (String eclipseProjectFilePath : eclipseProjectFiles) {
-                addStudentIdToEclipseProjectName(repo, studentId, eclipseProjectFilePath);
+                addParticipantIdentifierToEclipseProjectName(repo, participantIdentifier, eclipseProjectFilePath);
             }
 
             // Filter all pom.xml files
             List<String> pomFiles = allRepoFiles.stream().filter(file -> file.endsWith("pom.xml")).collect(Collectors.toList());
             for (String pomFilePath : pomFiles) {
-                addStudentIdToMavenProjectName(repo, studentId, pomFilePath);
+                addParticipantIdentifierToMavenProjectName(repo, participantIdentifier, pomFilePath);
             }
         }
 
         try {
             gitService.stageAllChanges(repo);
-            gitService.commit(repo, "Add Student Id to Project Name");
+            gitService.commit(repo, "Add participant identifier (student login or team short name) to project name");
         }
         catch (GitAPIException ex) {
             log.error("Cannot stage or commit to the repo " + repo.getLocalPath() + " due to the following exception: " + ex);
         }
     }
 
-    private void addStudentIdToMavenProjectName(Repository repo, String studentId, String pomFilePath) {
+    private void addParticipantIdentifierToMavenProjectName(Repository repo, String participantIdentifier, String pomFilePath) {
         File pomFile = new File(pomFilePath);
         // check if file exists and full file name is pom.xml and not just the file ending.
         if (!pomFile.exists() || !pomFile.getName().equals("pom.xml")) {
@@ -332,12 +333,12 @@ public class ProgrammingExerciseExportService {
             Node nameNode = (Node) xPath.compile("/project/name").evaluate(doc, XPathConstants.NODE);
             Node artifactIdNode = (Node) xPath.compile("/project/artifactId").evaluate(doc, XPathConstants.NODE);
 
-            // 3- Append Student Id to Project Names
+            // 3- Append Participant Identifier (student login or team short name) to Project Names
             if (nameNode != null) {
-                nameNode.setTextContent(nameNode.getTextContent() + " " + studentId);
+                nameNode.setTextContent(nameNode.getTextContent() + " " + participantIdentifier);
             }
             if (artifactIdNode != null) {
-                String artifactId = (artifactIdNode.getTextContent() + "-" + studentId).replaceAll(" ", "-").toLowerCase();
+                String artifactId = (artifactIdNode.getTextContent() + "-" + participantIdentifier).replaceAll(" ", "-").toLowerCase();
                 artifactIdNode.setTextContent(artifactId);
             }
 
@@ -351,7 +352,7 @@ public class ProgrammingExerciseExportService {
         }
     }
 
-    private void addStudentIdToEclipseProjectName(Repository repo, String studentId, String eclipseProjectFilePath) {
+    private void addParticipantIdentifierToEclipseProjectName(Repository repo, String participantIdentifier, String eclipseProjectFilePath) {
         File eclipseProjectFile = new File(eclipseProjectFilePath);
         // Check if file exists and full file name is .project and not just the file ending.
         if (!eclipseProjectFile.exists() || !eclipseProjectFile.getName().equals(".project")) {
@@ -367,9 +368,9 @@ public class ProgrammingExerciseExportService {
             XPath xPath = XPathFactory.newInstance().newXPath();
             Node nameNode = (Node) xPath.compile("/projectDescription/name").evaluate(doc, XPathConstants.NODE);
 
-            // 3- Append Student Id to Project Name
+            // 3- Append Participant Identifier (student login or team short name) to Project Name
             if (nameNode != null) {
-                nameNode.setTextContent(nameNode.getTextContent() + " " + studentId);
+                nameNode.setTextContent(nameNode.getTextContent() + " " + participantIdentifier);
             }
 
             // 4- Save the result to a new XML doc

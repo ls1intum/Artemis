@@ -469,9 +469,9 @@ public class GitService {
 
             studentGit.reset().setMode(ResetCommand.ResetType.SOFT).setRef(latestHash.getName()).call();
             studentGit.add().addFilepattern(".").call();
-            var student = ((StudentParticipation) repository.getParticipation()).getStudent();
-            var name = student != null ? student.getName() : ARTEMIS_GIT_NAME;
-            var email = student != null ? student.getEmail() : ARTEMIS_GIT_EMAIL;
+            var optionalStudent = ((StudentParticipation) repository.getParticipation()).getStudents().stream().findFirst();
+            var name = optionalStudent.map(User::getName).orElse(ARTEMIS_GIT_NAME);
+            var email = optionalStudent.map(User::getEmail).orElse(ARTEMIS_GIT_EMAIL);
             studentGit.commit().setMessage("All student changes in one commit").setCommitter(name, email).call();
 
             // if repo is not closed, it causes weird IO issues when trying to delete the repo again
@@ -565,7 +565,7 @@ public class GitService {
 
     /**
      * Combines all commits in the selected repo into the first commit, keeping its commit message. Executes a hard reset to remote before the combine to avoid conflicts.
-     * 
+     *
      * @param repo to combine commits for
      * @throws GitAPIException       on io errors or git exceptions.
      * @throws IllegalStateException if there is no commit in the git repository.

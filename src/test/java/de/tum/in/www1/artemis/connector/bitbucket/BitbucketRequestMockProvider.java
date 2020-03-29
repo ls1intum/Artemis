@@ -10,6 +10,7 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -27,6 +28,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.service.connectors.bitbucket.dto.BitbucketBranchProtectionDTO;
 import de.tum.in.www1.artemis.service.connectors.bitbucket.dto.BitbucketCloneDTO;
@@ -125,10 +127,12 @@ public class BitbucketRequestMockProvider {
                 .andRespond(withStatus(HttpStatus.CREATED));
     }
 
-    public void mockConfigureRepository(ProgrammingExercise exercise, String username) throws URISyntaxException, IOException {
+    public void mockConfigureRepository(ProgrammingExercise exercise, String username, Set<User> users) throws URISyntaxException, IOException {
         final var projectKey = exercise.getProjectKey();
         final var repoName = projectKey.toLowerCase() + "-" + username.toLowerCase();
-        mockGiveWritePermission(exercise, repoName, username);
+        for (User user : users) {
+            mockGiveWritePermission(exercise, repoName, user.getLogin());
+        }
         mockProtectBranches(exercise, repoName);
     }
 

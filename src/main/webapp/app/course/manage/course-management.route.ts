@@ -28,7 +28,7 @@ export class CourseResolve implements Resolve<Course> {
     }
 }
 
-export const courseMangementRoute: Routes = [
+export const courseManagementRoute: Routes = [
     {
         path: 'course-management',
         component: CourseManagementComponent,

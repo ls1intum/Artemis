@@ -50,6 +50,11 @@ export const hasStudentParticipations = (exercise: Exercise) => {
  * @return {ParticipationStatus}
  */
 export const participationStatus = (exercise: Exercise): ParticipationStatus => {
+    // For team exercises check whether the student has been assigned to a team yet
+    if (exercise.teamMode && !exercise.studentAssignedTeamId && !hasStudentParticipations(exercise)) {
+        return ParticipationStatus.NO_TEAM_ASSIGNED;
+    }
+
     // Evaluate the participation status for quiz exercises.
     if (exercise.type === ExerciseType.QUIZ) {
         return participationStatusForQuizExercise(exercise);

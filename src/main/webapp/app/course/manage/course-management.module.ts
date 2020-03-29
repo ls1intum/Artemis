@@ -15,7 +15,7 @@ import { SortByModule } from 'app/shared/pipes/sort-by.module';
 import { CourseExercisesOverviewComponent } from 'app/course/manage/course-exercises-overview.component';
 import { CourseDetailComponent } from 'app/course/manage/course-detail.component';
 import { CourseUpdateComponent } from 'app/course/manage/course-update.component';
-import { courseMangementRoute } from 'app/course/manage/course-mangement.route';
+import { courseManagementRoute } from 'app/course/manage/course-management.route';
 import { CourseManagementComponent } from 'app/course/manage/course-management.component';
 import { OrionModule } from 'app/shared/orion/orion.module';
 import { ArtemisProgrammingExerciseManagementModule } from 'app/exercises/programming/manage/programming-exercise-management.module';
@@ -32,7 +32,7 @@ import { CourseGroupComponent } from 'app/course/manage/course-group.component';
 import { NgxDatatableModule } from '@swimlane/ngx-datatable';
 import { ArtemisDataTableModule } from 'app/shared/data-table/data-table.module';
 
-const ENTITY_STATES = [...courseMangementRoute];
+const ENTITY_STATES = [...courseManagementRoute];
 
 @NgModule({
     imports: [

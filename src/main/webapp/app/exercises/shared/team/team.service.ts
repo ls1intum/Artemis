@@ -6,7 +6,7 @@ import { SERVER_API_URL } from 'app/app.constants';
 import { Team } from 'app/entities/team.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { Course } from 'app/entities/course.model';
-import { TeamSearchUser } from 'app/entities/team-search-student.model';
+import { TeamSearchUser } from 'app/entities/team-search-user.model';
 
 export type TeamResponse = HttpResponse<Team>;
 
@@ -20,6 +20,10 @@ export interface ITeamService {
     findAllByExerciseId(exerciseId: number): Observable<HttpResponse<Team[]>>;
 
     delete(exercise: Exercise, teamId: number): Observable<HttpResponse<any>>;
+
+    existsByShortName(shortName: string): Observable<HttpResponse<boolean>>;
+
+    searchInCourseForExerciseTeam(course: Course, exercise: Exercise, loginOrName: string): Observable<HttpResponse<TeamSearchUser[]>>;
 }
 
 @Injectable({ providedIn: 'root' })

@@ -1,8 +1,8 @@
-<div class="btn-group">
-    <div class="btn" [ngClass]="{ 'btn-secondary': exercise.mode === INDIVIDUAL, 'btn-default': exercise.mode !== INDIVIDUAL }" (click)="setMode(INDIVIDUAL)">
+<div class="btn-group" [ngClass]="{ disabled: disabled }">
+    <div class="btn" [ngClass]="{ 'btn-secondary': exercise.mode === INDIVIDUAL, 'btn-default': exercise.mode !== INDIVIDUAL, disabled: disabled }" (click)="setMode(INDIVIDUAL)">
         {{ 'artemisApp.exercise.modes.individual' | translate }}
     </div>
-    <div class="btn btn-default" [ngClass]="{ 'btn-info': exercise.mode === TEAM, 'btn-default': exercise.mode !== TEAM }" (click)="setMode(TEAM)">
+    <div class="btn btn-default" [ngClass]="{ 'btn-info': exercise.mode === TEAM, 'btn-default': exercise.mode !== TEAM, disabled: disabled }" (click)="setMode(TEAM)">
         {{ 'artemisApp.exercise.modes.team' | translate }}
     </div>
 </div>
