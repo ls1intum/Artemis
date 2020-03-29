@@ -44,7 +44,7 @@ public class User extends AbstractAuditingEntity implements Serializable, Partic
     private String login;
 
     @JsonIgnore
-    @Column(name = "password_hash", length = 60)
+    @Column(name = "password_hash")
     private String password;
 
     @Size(max = 50)

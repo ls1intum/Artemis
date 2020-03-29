@@ -9,7 +9,11 @@ export class SentryErrorHandler extends ErrorHandler {
         switch (window.location.host) {
             case 'artemis.ase.in.tum.de':
                 return 'prod';
+            case 'artemis.university4industry.com':
+                return 'prod';
             case 'artemistest.ase.in.tum.de':
+                return 'test';
+            case 'artemistest2.ase.in.tum.de':
                 return 'test';
             case 'vmbruegge60.in.tum.de':
                 return 'apitests';

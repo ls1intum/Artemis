@@ -186,7 +186,7 @@ public class CourseResource {
      *
      * @param updatedCourse the updatedCourse to update
      * @return the ResponseEntity with status 200 (OK) and with body the updated updatedCourse, or with status 400 (Bad Request) if the updatedCourse is not valid, or with status
-     *         500 (Internal Server Error) if the updatedCourse couldn't be updated
+     * 500 (Internal Server Error) if the updatedCourse couldn't be updated
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PutMapping("/courses")
@@ -263,6 +263,7 @@ public class CourseResource {
      * POST /courses/{courseId}/register : Register for an existing course. This method registers the current user for the given course id in case the course has already started
      * and not finished yet. The user is added to the course student group in the Authentication System and the course student group is added to the user's groups in the Artemis
      * database.
+     *
      * @param courseId to find the course
      * @return response entity for user who has been registered to the course
      */
@@ -678,9 +679,67 @@ public class CourseResource {
     }
 
     /**
-     * Post /courses/:courseId/students/:studentLogin : Add the given user to the students of the course so that the student can access the course
+     * GET /courses/:courseId/students : Returns all users that belong to the student group of the course
      *
      * @param courseId the id of the course
+     * @return list of users with status 200 (OK)
+     */
+    @GetMapping(value = "/courses/{courseId}/students")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<List<User>> getAllStudentsInCourse(@PathVariable Long courseId) {
+        log.debug("REST request to get all students in course : {}", courseId);
+        Course course = courseService.findOne(courseId);
+        return getAllUsersInGroup(course, course.getStudentGroupName());
+    }
+
+    /**
+     * GET /courses/:courseId/tutors : Returns all users that belong to the tutor group of the course
+     *
+     * @param courseId the id of the course
+     * @return list of users with status 200 (OK)
+     */
+    @GetMapping(value = "/courses/{courseId}/tutors")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<List<User>> getAllTutorsInCourse(@PathVariable Long courseId) {
+        log.debug("REST request to get all tutors in course : {}", courseId);
+        Course course = courseService.findOne(courseId);
+        return getAllUsersInGroup(course, course.getTeachingAssistantGroupName());
+    }
+
+    /**
+     * GET /courses/:courseId/instructors : Returns all users that belong to the instructor group of the course
+     *
+     * @param courseId the id of the course
+     * @return list of users with status 200 (OK)
+     */
+    @GetMapping(value = "/courses/{courseId}/instructors")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<List<User>> getAllInstructorsInCourse(@PathVariable Long courseId) {
+        log.debug("REST request to get all instructors in course : {}", courseId);
+        Course course = courseService.findOne(courseId);
+        return getAllUsersInGroup(course, course.getInstructorGroupName());
+    }
+
+    /**
+     * Returns all users in a course that belong to the given group
+     *
+     * @param course    the course
+     * @param groupName the name of the group
+     * @return list of users
+     */
+    @NotNull
+    public ResponseEntity<List<User>> getAllUsersInGroup(Course course, @PathVariable String groupName) {
+        User user = userService.getUserWithGroupsAndAuthorities();
+        if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
+            return forbidden();
+        }
+        return ResponseEntity.ok().body(userService.findAllUsersInGroup(groupName));
+    }
+
+    /**
+     * Post /courses/:courseId/students/:studentLogin : Add the given user to the students of the course so that the student can access the course
+     *
+     * @param courseId     the id of the course
      * @param studentLogin the login of the user who should get student access
      * @return empty ResponseEntity with status 200 (OK) or with status 404 (Not Found)
      */
@@ -695,7 +754,7 @@ public class CourseResource {
     /**
      * Post /courses/:courseId/tutors/:tutorLogin : Add the given user to the tutors of the course so that the student can access the course administration
      *
-     * @param courseId the id of the course
+     * @param courseId   the id of the course
      * @param tutorLogin the login of the user who should get tutor access
      * @return empty ResponseEntity with status 200 (OK) or with status 404 (Not Found)
      */
@@ -710,7 +769,7 @@ public class CourseResource {
     /**
      * Post /courses/:courseId/instructors/:instructorLogin : Add the given user to the instructors of the course so that the student can access the course administration
      *
-     * @param courseId the id of the course
+     * @param courseId        the id of the course
      * @param instructorLogin the login of the user who should get instructors access
      * @return empty ResponseEntity with status 200 (OK) or with status 404 (Not Found)
      */
@@ -725,11 +784,10 @@ public class CourseResource {
     /**
      * adds the userLogin to the group (student, tutors or instructors) of the given course
      *
-     * @param userLogin the user login of the student, tutor or instructor who should be added to the group
+     * @param userLogin         the user login of the student, tutor or instructor who should be added to the group
      * @param instructorOrAdmin the user who initiates this request who must be an instructor of the given course or an admin
-     * @param course the course which is only passes to check if the instructorOrAdmin is an instructor of the course
-     * @param group the group to which the userLogin should be added
-     *
+     * @param course            the course which is only passes to check if the instructorOrAdmin is an instructor of the course
+     * @param group             the group to which the userLogin should be added
      * @return empty ResponseEntity with status 200 (OK) or with status 404 (Not Found) or with status 403 (Forbidden)
      */
     @NotNull
@@ -748,9 +806,9 @@ public class CourseResource {
     }
 
     /**
-     * DELETE /courses/:courseId/tutors/:studentLogin : Remove the given user from the students of the course so that the student cannot access the course any more
+     * DELETE /courses/:courseId/students/:studentLogin : Remove the given user from the students of the course so that the student cannot access the course any more
      *
-     * @param courseId the id of the course
+     * @param courseId     the id of the course
      * @param studentLogin the login of the user who should lose student access
      * @return empty ResponseEntity with status 200 (OK) or with status 404 (Not Found)
      */
@@ -765,11 +823,11 @@ public class CourseResource {
     /**
      * DELETE /courses/:courseId/tutors/:tutorsLogin : Remove the given user from the tutors of the course so that the tutors cannot access the course administration any more
      *
-     * @param courseId the id of the course
+     * @param courseId   the id of the course
      * @param tutorLogin the login of the user who should lose student access
      * @return empty ResponseEntity with status 200 (OK) or with status 404 (Not Found)
      */
-    @DeleteMapping(value = "/courses/{courseId}/students/{tutorLogin:" + Constants.LOGIN_REGEX + "}")
+    @DeleteMapping(value = "/courses/{courseId}/tutors/{tutorLogin:" + Constants.LOGIN_REGEX + "}")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Void> removeTutorFromCourse(@PathVariable Long courseId, @PathVariable String tutorLogin) {
         log.debug("REST request to remove {} as tutor from course : {}", tutorLogin, courseId);
@@ -780,7 +838,7 @@ public class CourseResource {
     /**
      * DELETE /courses/:courseId/instructors/:instructorLogin : Remove the given user from the instructors of the course so that the instructor cannot access the course administration any more
      *
-     * @param courseId the id of the course
+     * @param courseId        the id of the course
      * @param instructorLogin the login of the user who should lose student access
      * @return empty ResponseEntity with status 200 (OK) or with status 404 (Not Found)
      */
@@ -795,11 +853,10 @@ public class CourseResource {
     /**
      * removes the userLogin from the group (student, tutors or instructors) of the given course
      *
-     * @param userLogin the user login of the student, tutor or instructor who should be removed from the group
+     * @param userLogin         the user login of the student, tutor or instructor who should be removed from the group
      * @param instructorOrAdmin the user who initiates this request who must be an instructor of the given course or an admin
-     * @param course the course which is only passes to check if the instructorOrAdmin is an instructor of the course
-     * @param group the group from which the userLogin should be removed
-     *
+     * @param course            the course which is only passes to check if the instructorOrAdmin is an instructor of the course
+     * @param group             the group from which the userLogin should be removed
      * @return empty ResponseEntity with status 200 (OK) or with status 404 (Not Found) or with status 403 (Forbidden)
      */
     @NotNull

@@ -19,6 +19,7 @@ import org.springframework.cache.CacheManager;
 import org.springframework.context.event.EventListener;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
@@ -574,6 +575,16 @@ public class UserService {
     }
 
     /**
+     * Search for all users by login or name
+     * @param pageable Pageable configuring paginated access (e.g. to limit the number of records returned)
+     * @param loginOrName Search query that will be searched for in login and name field
+     * @return all users matching search criteria
+     */
+    public Page<UserDTO> searchAllUsersByLoginOrName(Pageable pageable, String loginOrName) {
+        return userRepository.searchAllByLoginOrName(pageable, loginOrName).map(UserDTO::new);
+    }
+
+    /**
      * Get user with groups by given login string
      * @param login user login string
      * @return existing user with given login string or null
@@ -681,12 +692,21 @@ public class UserService {
     }
 
     /**
+     * Get students by given course
+     * @param course object
+     * @return list of students for given course
+     */
+    public List<User> getStudents(Course course) {
+        return findAllUsersInGroup(course.getStudentGroupName());
+    }
+
+    /**
      * Get tutors by given course
      * @param course object
      * @return list of tutors for given course
      */
     public List<User> getTutors(Course course) {
-        return userRepository.findAllInGroup(course.getTeachingAssistantGroupName());
+        return findAllUsersInGroup(course.getTeachingAssistantGroupName());
     }
 
     /**
@@ -696,7 +716,17 @@ public class UserService {
      * @return A list of all users that have the role of instructor in the course
      */
     public List<User> getInstructors(Course course) {
-        return userRepository.findAllInGroup(course.getInstructorGroupName());
+        return findAllUsersInGroup(course.getInstructorGroupName());
+    }
+
+    /**
+     * Get all users in a given group
+     *
+     * @param groupName The group name for which to return all members
+     * @return A list of all users that belong to the group
+     */
+    public List<User> findAllUsersInGroup(String groupName) {
+        return userRepository.findAllInGroup(groupName);
     }
 
     /**
