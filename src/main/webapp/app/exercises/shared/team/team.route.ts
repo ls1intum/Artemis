@@ -15,7 +15,7 @@ export const teamRoute: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
-        path: 'course-management/:courseId/exercises/:exerciseId/teams/:teamId',
+        path: ':courseId/exercises/:exerciseId/teams/:teamId',
         component: TeamComponent,
         data: {
             authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],

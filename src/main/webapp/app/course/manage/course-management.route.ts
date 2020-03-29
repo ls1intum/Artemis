@@ -87,7 +87,7 @@ export const courseManagementRoute: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
-        path: 'course-management/:id/groups/:courseGroup',
+        path: ':courseId/groups/:courseGroup',
         component: CourseGroupComponent,
         resolve: {
             course: CourseResolve,
