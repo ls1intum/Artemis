@@ -63,7 +63,7 @@ export const courseManagementRoute: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
-        path: ':courseId',
+        path: ':courseId/exercises',
         component: CourseExercisesOverviewComponent,
         resolve: {
             course: CourseResolve,

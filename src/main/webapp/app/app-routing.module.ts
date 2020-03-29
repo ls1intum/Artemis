@@ -5,6 +5,7 @@ import { errorRoute } from 'app/shared/layouts/error/error.route';
 import { ArtemisQuizParticipationModule } from 'app/exercises/quiz/participate/quiz-participation.module';
 import { ArtemisTextParticipationModule } from 'app/exercises/text/participate/text-participation.module';
 import { ArtemisFileUploadParticipationModule } from 'app/exercises/file-upload/participate/file-upload-participation.module';
+import { DEBUG_INFO_ENABLED } from 'app/app.constants';
 
 const LAYOUT_ROUTES: Routes = [navbarRoute, ...errorRoute];
 
@@ -52,7 +53,7 @@ const LAYOUT_ROUTES: Routes = [navbarRoute, ...errorRoute];
                     loadChildren: () => import('./exercises/file-upload/participate/file-upload-participation.module').then((m) => m.ArtemisFileUploadParticipationModule),
                 },
             ],
-            { useHash: true, enableTracing: false },
+            { useHash: true, enableTracing: DEBUG_INFO_ENABLED },
         ),
     ],
     exports: [RouterModule],
