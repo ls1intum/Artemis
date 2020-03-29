@@ -286,7 +286,7 @@ public class ProgrammingExerciseExportService {
      * @param participation The student participation for the student/team identifier, which should be added.
      */
     public void addStudentIdToProjectName(Repository repo, ProgrammingExercise programmingExercise, StudentParticipation participation) {
-        String studentId = participation.getParticipantIdentifier();
+        String participantIdentifier = participation.getParticipantIdentifier();
 
         // Get all files in repository expect .git files
         List<String> allRepoFiles = listAllFilesInPath(repo.getLocalPath());
@@ -297,13 +297,13 @@ public class ProgrammingExerciseExportService {
             List<String> eclipseProjectFiles = allRepoFiles.stream().filter(file -> file.endsWith(".project")).collect(Collectors.toList());
 
             for (String eclipseProjectFilePath : eclipseProjectFiles) {
-                addStudentIdToEclipseProjectName(repo, studentId, eclipseProjectFilePath);
+                addStudentIdToEclipseProjectName(repo, participantIdentifier, eclipseProjectFilePath);
             }
 
             // Filter all pom.xml files
             List<String> pomFiles = allRepoFiles.stream().filter(file -> file.endsWith("pom.xml")).collect(Collectors.toList());
             for (String pomFilePath : pomFiles) {
-                addStudentIdToMavenProjectName(repo, studentId, pomFilePath);
+                addStudentIdToMavenProjectName(repo, participantIdentifier, pomFilePath);
             }
         }
 
