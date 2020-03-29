@@ -13,7 +13,7 @@ export class HintCommand extends DomainTagCommand {
      */
     execute(): void {
         const text = '\n\t' + this.getOpeningIdentifier() + HintCommand.text;
-        addTextAtCursor(text, this.aceEditorContainer);
+        addTextAtCursor(text, this.aceEditor);
     }
 
     /**

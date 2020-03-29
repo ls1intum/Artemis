@@ -51,7 +51,7 @@ export class GradingInstructionCommand extends DomainTagCommand {
     execute(): void {
         const text = this.instructionText();
 
-        addTextAtCursor(text, this.aceEditorContainer);
+        addTextAtCursor(text, this.aceEditor);
     }
 
     /**

@@ -33,6 +33,9 @@ import { ArtemisModelingAssessmentEditorModule } from 'app/exercises/modeling/as
 import { CourseGroupComponent } from 'app/course/manage/course-group.component';
 import { NgxDatatableModule } from '@swimlane/ngx-datatable';
 import { ArtemisDataTableModule } from 'app/shared/data-table/data-table.module';
+import { ArtemisModelingExerciseModule } from 'app/exercises/modeling/manage/modeling-exercise.module';
+import { ArtemisTextExerciseModule } from 'app/exercises/text/manage/text-exercise/text-exercise.module';
+import { ArtemisProgrammingExerciseModule } from 'app/exercises/programming/shared/programming-exercise.module';
 
 @NgModule({
     imports: [
@@ -53,6 +56,9 @@ import { ArtemisDataTableModule } from 'app/shared/data-table/data-table.module'
         ArtemisQuizManagementModule,
         ArtemisTextExerciseManagementModule,
         ArtemisModelingExerciseManagementModule,
+        ArtemisProgrammingExerciseModule,
+        ArtemisTextExerciseModule,
+        ArtemisModelingExerciseModule,
         ArtemisColorSelectorModule,
         ArtemisDashboardsModule,
         ArtemisExerciseHintManagementModule,

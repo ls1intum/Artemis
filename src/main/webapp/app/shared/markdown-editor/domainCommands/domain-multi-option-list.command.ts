@@ -1,4 +1,3 @@
-import { AceEditorComponent } from 'ng2-ace-editor';
 import { DomainMultiOptionCommand } from 'app/shared/markdown-editor/domainCommands/domainMultiOptionCommand';
 import { getStringSegmentPositions } from 'app/shared/util/global.utils';
 import { removeTextRange } from 'app/shared/util/markdown-util';
@@ -9,8 +8,8 @@ import { removeTextRange } from 'app/shared/util/markdown-util';
 export abstract class DomainMultiOptionListCommand extends DomainMultiOptionCommand {
     protected abstract getValueMeta(): string;
 
-    setEditor(aceEditorContainer: AceEditorComponent) {
-        super.setEditor(aceEditorContainer);
+    setEditor(aceEditor: any) {
+        super.setEditor(aceEditor);
 
         const autoCompleter = {
             getCompletions: (editor: any, session: any, pos: any, prefix: any, callback: any) => {
@@ -51,7 +50,7 @@ export abstract class DomainMultiOptionListCommand extends DomainMultiOptionComm
                     col: matchInTag.matchEnd,
                     row: cursorPosition.row,
                 },
-                this.aceEditorContainer,
+                this.aceEditor,
             );
         }
         this.insertText(newValuesStringified);

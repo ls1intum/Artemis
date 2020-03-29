@@ -10,7 +10,7 @@ export class CorrectOptionCommand extends DomainTagCommand {
      */
     execute(): void {
         const text = '\n' + this.getOpeningIdentifier() + ' Enter a correct answer option here';
-        addTextAtCursor(text, this.aceEditorContainer);
+        addTextAtCursor(text, this.aceEditor);
     }
 
     /**

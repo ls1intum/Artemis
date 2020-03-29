@@ -10,7 +10,7 @@ export class KatexCommand extends DomainTagCommand {
     buttonTranslationString = 'artemisApp.markdownEditor.commands.katex';
     execute(input?: string): void {
         const text = `${this.getOpeningIdentifier()}e^{\\frac{1}{4} y^2}${this.getClosingIdentifier()}`;
-        addTextAtCursor(text, this.aceEditorContainer);
+        addTextAtCursor(text, this.aceEditor);
     }
 
     getOpeningIdentifier(): string {

@@ -9,7 +9,7 @@ import { HintCommand } from 'app/shared/markdown-editor/domainCommands/hint.comm
 import { TextHintExplanationInterface } from 'app/entities/quiz/quiz-question.model';
 
 @Injectable({ providedIn: 'root' })
-export class ArtemisMarkdown {
+export class ArtemisMarkdownService {
     static hintOrExpRegex = new RegExp(escapeStringForUseInRegex(`${ExplanationCommand.identifier}`) + '|' + escapeStringForUseInRegex(`${HintCommand.identifier}`), 'g');
 
     constructor(private sanitizer: DomSanitizer) {}
@@ -28,7 +28,7 @@ export class ArtemisMarkdown {
             return;
         }
         // split markdownText into main text, hint and explanation
-        const markdownTextParts = markdownText.split(ArtemisMarkdown.hintOrExpRegex);
+        const markdownTextParts = markdownText.split(ArtemisMarkdownService.hintOrExpRegex);
         targetObject.text = markdownTextParts[0].trim();
         if (markdownText.indexOf(HintCommand.identifier) !== -1 && markdownText.indexOf(ExplanationCommand.identifier) !== -1) {
             if (markdownText.indexOf(HintCommand.identifier) < markdownText.indexOf(ExplanationCommand.identifier)) {

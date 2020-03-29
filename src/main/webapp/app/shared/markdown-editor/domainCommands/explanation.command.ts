@@ -13,7 +13,7 @@ export class ExplanationCommand extends DomainTagCommand {
      */
     execute(): void {
         const text = '\n\t' + this.getOpeningIdentifier() + ExplanationCommand.text;
-        addTextAtCursor(text, this.aceEditorContainer);
+        addTextAtCursor(text, this.aceEditor);
     }
 
     /**

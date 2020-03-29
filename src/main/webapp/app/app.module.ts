@@ -27,12 +27,10 @@ import { ArtemisHomeModule } from 'app/home/home.module';
 import { OrionOutdatedComponent } from 'app/shared/orion/outdated-plugin-warning/orion-outdated.component';
 import { ArtemisTeamModule } from 'app/exercises/shared/team/team.module';
 import { ArtemisExerciseParticipationModule } from 'app/exercises/exercise-participation.module';
-import { StructuredGradingCriterionModule } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.module';
 
 // NOTE: this module should only include the most important modules for normal users, all course management, admin and account functionality should be lazy loaded if possible
 @NgModule({
     imports: [
-        StructuredGradingCriterionModule,
         BrowserModule,
         BrowserAnimationsModule,
         ArtemisSharedModule,

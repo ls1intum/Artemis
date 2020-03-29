@@ -1,5 +1,5 @@
 import { ChangeDetectorRef, Component, ElementRef, EventEmitter, HostListener, Input, OnChanges, OnInit, Output, SimpleChanges, ViewChild, ViewEncapsulation } from '@angular/core';
-import { ArtemisMarkdown } from 'app/shared/markdown.service';
+import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { DragAndDropQuestionUtil } from 'app/exercises/quiz/shared/drag-and-drop-question-util.service';
 import { FileUploaderService } from 'app/shared/http/file-uploader.service';
 import { DragAndDropMouseEvent } from 'app/exercises/quiz/manage/drag-and-drop-question/drag-and-drop-mouse-event.class';
@@ -20,7 +20,7 @@ import { QuizQuestionEdit } from 'app/exercises/quiz/manage/quiz-question-edit.i
 @Component({
     selector: 'jhi-drag-and-drop-question-edit',
     templateUrl: './drag-and-drop-question-edit.component.html',
-    providers: [ArtemisMarkdown, DragAndDropQuestionUtil],
+    providers: [ArtemisMarkdownService, DragAndDropQuestionUtil],
     styleUrls: ['./drag-and-drop-question-edit.component.scss', '../quiz-exercise.scss', '../../shared/quiz.scss'],
     encapsulation: ViewEncapsulation.None,
 })
@@ -94,7 +94,7 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Quiz
     resizeImage = resizeImage();
 
     constructor(
-        private artemisMarkdown: ArtemisMarkdown,
+        private artemisMarkdown: ArtemisMarkdownService,
         private dragAndDropQuestionUtil: DragAndDropQuestionUtil,
         private modalService: NgbModal,
         private fileUploaderService: FileUploaderService,

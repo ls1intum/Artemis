@@ -11,7 +11,7 @@ import { Interactable } from '@interactjs/types/types';
 import { Location } from '@angular/common';
 import { FileUploadAssessmentsService } from 'app/exercises/file-upload/assess/file-upload-assessment.service';
 import { WindowRef } from 'app/core/websocket/window.service';
-import { ArtemisMarkdown } from 'app/shared/markdown.service';
+import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { filter, finalize } from 'rxjs/operators';
 import { AccountService } from 'app/core/auth/account.service';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
@@ -76,7 +76,7 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
         private accountService: AccountService,
         private location: Location,
         private $window: WindowRef,
-        private artemisMarkdown: ArtemisMarkdown,
+        private artemisMarkdown: ArtemisMarkdownService,
         private translateService: TranslateService,
         private fileUploadSubmissionService: FileUploadSubmissionService,
         private complaintService: ComplaintService,
