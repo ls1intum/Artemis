@@ -201,7 +201,7 @@ public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegratio
         Result receivedResult = request.putWithResponseBody("/api/modeling-submissions/" + modelingSubmission.getId() + "/assessment-after-complaint", assessmentUpdate,
                 Result.class, HttpStatus.OK);
 
-        assertThat(((StudentParticipation) receivedResult.getParticipation()).getStudent()).as("student is hidden in response").isNull();
+        assertThat(((StudentParticipation) receivedResult.getParticipation()).getStudent()).as("student is hidden in response").isEmpty();
         Complaint storedComplaint = complaintRepo.findByResult_Id(modelingAssessment.getId()).get();
         assertThat(storedComplaint.isAccepted()).as("complaint is accepted").isTrue();
         Result resultBeforeComplaint = mapper.readValue(storedComplaint.getResultBeforeComplaint(), Result.class);
@@ -493,7 +493,7 @@ public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegratio
 
         if (complaint.getResult() != null && complaint.getResult().getParticipation() != null) {
             assertThat(((StudentParticipation) receivedComplaint.getResult().getParticipation()).getStudent()).as("Result in complaint shouldn't contain student participation")
-                    .isNull();
+                    .isEmpty();
         }
     }
 
@@ -534,7 +534,7 @@ public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegratio
 
         complaints.forEach(compl -> {
             final var participation = (StudentParticipation) compl.getResult().getParticipation();
-            assertThat(participation.getStudent()).as("No student information").isNull();
+            assertThat(participation.getStudent()).as("No student information").isEmpty();
             assertThat(compl.getStudent()).as("No student information").isNull();
             assertThat(participation.getExercise()).as("No additional exercise information").isNull();
             assertThat(compl.getResultBeforeComplaint()).as("No old result information").isNull();

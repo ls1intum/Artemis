@@ -38,6 +38,7 @@ export enum ParticipationStatus {
     QUIZ_NOT_STARTED = 'quiz-not-started',
     QUIZ_NOT_PARTICIPATED = 'quiz-not-participated',
     QUIZ_FINISHED = 'quiz-finished',
+    NO_TEAM_ASSIGNED = 'no-team-assigned',
     UNINITIALIZED = 'uninitialized',
     INITIALIZED = 'initialized',
     INACTIVE = 'inactive',
@@ -86,6 +87,7 @@ export abstract class Exercise implements BaseEntity {
     public numberOfOpenComplaints?: number;
     public numberOfMoreFeedbackRequests?: number;
     public numberOfOpenMoreFeedbackRequests?: number;
+    public studentAssignedTeamId?: number;
 
     // helper attributes
     public isAtLeastTutor = false; // default value

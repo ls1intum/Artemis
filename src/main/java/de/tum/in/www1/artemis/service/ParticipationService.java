@@ -59,6 +59,8 @@ public class ParticipationService {
 
     private final ComplaintRepository complaintRepository;
 
+    private final TeamRepository teamRepository;
+
     private final QuizSubmissionService quizSubmissionService;
 
     private final UserService userService;
@@ -78,8 +80,9 @@ public class ParticipationService {
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, ParticipationRepository participationRepository,
             StudentParticipationRepository studentParticipationRepository, ExerciseRepository exerciseRepository, ResultRepository resultRepository,
             SubmissionRepository submissionRepository, ComplaintResponseRepository complaintResponseRepository, ComplaintRepository complaintRepository,
-            QuizSubmissionService quizSubmissionService, UserService userService, GitService gitService, Optional<ContinuousIntegrationService> continuousIntegrationService,
-            Optional<VersionControlService> versionControlService, ConflictingResultService conflictingResultService, AuthorizationCheckService authCheckService) {
+            TeamRepository teamRepository, QuizSubmissionService quizSubmissionService, UserService userService, GitService gitService,
+            Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService,
+            ConflictingResultService conflictingResultService, AuthorizationCheckService authCheckService) {
         this.participationRepository = participationRepository;
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
         this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
@@ -90,6 +93,7 @@ public class ParticipationService {
         this.submissionRepository = submissionRepository;
         this.complaintResponseRepository = complaintResponseRepository;
         this.complaintRepository = complaintRepository;
+        this.teamRepository = teamRepository;
         this.quizSubmissionService = quizSubmissionService;
         this.userService = userService;
         this.gitService = gitService;
@@ -174,13 +178,13 @@ public class ParticipationService {
      * repository / build plan related stuff for programming exercises. In the case of modeling or text exercises, it also initializes and stores the corresponding submission.
      *
      * @param exercise the exercise which is started
-     * @param user the user who starts the exercise
+     * @param participant the user or team who starts the exercise
      * @return the participation connecting the given exercise and user
      */
-    public StudentParticipation startExercise(Exercise exercise, User user) {
+    public StudentParticipation startExercise(Exercise exercise, Participant participant) {
         // common for all exercises
         // Check if participation already exists
-        Optional<StudentParticipation> optionalStudentParticipation = findOneByExerciseIdAndStudentLoginAnyState(exercise.getId(), user.getLogin());
+        Optional<StudentParticipation> optionalStudentParticipation = findOneByExerciseAndParticipantAnyState(exercise, participant);
         StudentParticipation participation;
         if (optionalStudentParticipation.isEmpty()) {
             // create a new participation only if no participation can be found
@@ -192,7 +196,7 @@ public class ParticipationService {
             }
             participation.setInitializationState(UNINITIALIZED);
             participation.setExercise(exercise);
-            participation.setStudent(user);
+            participation.setParticipant(participant);
 
             participation = save(participation);
         }
@@ -244,12 +248,12 @@ public class ParticipationService {
      * For external submissions, the submission is assumed to be submitted immediately upon creation.
      *
      * @param exercise the exercise for which to create a participation and submission
-     * @param user the user for which to create a participation and submission
+     * @param participant the user/team for which to create a participation and submission
      * @param submissionType the type of submission to create if none exist yet
      * @return the participation connecting the given exercise and user
      */
-    public StudentParticipation createParticipationWithEmptySubmissionIfNotExisting(Exercise exercise, User user, SubmissionType submissionType) {
-        Optional<StudentParticipation> optionalStudentParticipation = findOneByExerciseIdAndStudentLoginAnyState(exercise.getId(), user.getLogin());
+    public StudentParticipation createParticipationWithEmptySubmissionIfNotExisting(Exercise exercise, Participant participant, SubmissionType submissionType) {
+        Optional<StudentParticipation> optionalStudentParticipation = findOneByExerciseAndParticipantAnyState(exercise, participant);
         StudentParticipation participation;
         if (optionalStudentParticipation.isEmpty()) {
             // create a new participation only if no participation can be found
@@ -262,7 +266,7 @@ public class ParticipationService {
             participation.setInitializationState(UNINITIALIZED);
             participation.setInitializationDate(ZonedDateTime.now());
             participation.setExercise(exercise);
-            participation.setStudent(user);
+            participation.setParticipant(participant);
 
             participation = save(participation);
         }
@@ -283,7 +287,7 @@ public class ParticipationService {
                 // restrict access for the student
                 try {
                     versionControlService.get().setRepositoryPermissionsToReadOnly(programmingParticipation.getRepositoryUrlAsUrl(), programmingExercise.getProjectKey(),
-                            programmingParticipation.getStudent().getLogin());
+                            programmingParticipation.getStudents());
                 }
                 catch (VersionControlException e) {
                     log.error("Removing write permissions failed for programming exercise with id " + programmingExercise.getId() + " for student repository with participation id "
@@ -363,7 +367,7 @@ public class ParticipationService {
     public StudentParticipation participationForQuizWithResult(QuizExercise quizExercise, String username) {
         if (quizExercise.isEnded()) {
             // try getting participation from database
-            Optional<StudentParticipation> optionalParticipation = findOneByExerciseIdAndStudentLoginAnyState(quizExercise.getId(), username);
+            Optional<StudentParticipation> optionalParticipation = findOneByExerciseAndStudentLoginAnyState(quizExercise, username);
 
             if (optionalParticipation.isEmpty()) {
                 log.error("Participation in quiz " + quizExercise.getTitle() + " not found for user " + username);
@@ -466,11 +470,15 @@ public class ParticipationService {
         if (!participation.getInitializationState().hasCompletedState(InitializationState.REPO_COPIED) || participation.getRepositoryUrlAsUrl() == null) {
             final var programmingExercise = participation.getProgrammingExercise();
             final var projectKey = programmingExercise.getProjectKey();
-            final var username = participation.getStudent().getLogin();
+            final var participantIdentifier = participation.getParticipantIdentifier();
             // NOTE: we have to get the repository slug of the template participation here, because not all exercises (in particular old ones) follow the naming conventions
             final var repoName = versionControlService.get().getRepositorySlugFromUrl(programmingExercise.getTemplateParticipation().getRepositoryUrlAsUrl());
             // the next action includes recovery, which means if the repository has already been copied, we simply retrieve the repository url and do not copy it again
-            final var newRepoUrl = versionControlService.get().copyRepository(projectKey, repoName, projectKey, username).withUser(username);
+            var newRepoUrl = versionControlService.get().copyRepository(projectKey, repoName, projectKey, participantIdentifier);
+            // add the userInfo part to the repoURL only if the participation belongs to a single student (and not a team of students)
+            if (participation.getStudent().isPresent()) {
+                newRepoUrl = newRepoUrl.withUser(participantIdentifier);
+            }
             participation.setRepositoryUrl(newRepoUrl.toString());
             participation.setInitializationState(REPO_COPIED);
 
@@ -483,7 +491,7 @@ public class ParticipationService {
 
     private ProgrammingExerciseStudentParticipation configureRepository(ProgrammingExerciseStudentParticipation participation) {
         if (!participation.getInitializationState().hasCompletedState(InitializationState.REPO_CONFIGURED)) {
-            versionControlService.get().configureRepository(participation.getRepositoryUrlAsUrl(), participation.getStudent().getLogin());
+            versionControlService.get().configureRepository(participation.getRepositoryUrlAsUrl(), participation.getStudents());
             participation.setInitializationState(InitializationState.REPO_CONFIGURED);
             return save(participation);
         }
@@ -497,7 +505,7 @@ public class ParticipationService {
         if (!participation.getInitializationState().hasCompletedState(InitializationState.BUILD_PLAN_COPIED) || participation.getBuildPlanId() == null) {
             final var projectKey = participation.getProgrammingExercise().getProjectKey();
             final var planName = BuildPlanType.TEMPLATE.getName();
-            final var username = participation.getStudent().getLogin();
+            final var username = participation.getParticipantIdentifier();
             final var buildProjectName = participation.getExercise().getCourse().getShortName().toUpperCase() + " " + participation.getExercise().getTitle();
             // the next action includes recovery, which means if the build plan has already been copied, we simply retrieve the build plan id and do not copy it again
             final var buildPlanId = continuousIntegrationService.get().copyBuildPlan(projectKey, planName, projectKey, buildProjectName, username.toUpperCase());
@@ -648,37 +656,80 @@ public class ParticipationService {
     /**
      * Get one participation (in any state) by its student and exercise.
      *
-     * @param exerciseId the project key of the exercise
-     * @param username   the username of the student
+     * @param exercise the exercise for which to find a participation
+     * @param username the username of the student
      * @return the participation of the given student and exercise in any state
      */
-    public Optional<StudentParticipation> findOneByExerciseIdAndStudentLoginAnyState(Long exerciseId, String username) {
-        log.debug("Request to get Participation for User {} for Exercise with id: {}", username, exerciseId);
-        return studentParticipationRepository.findByExerciseIdAndStudentLogin(exerciseId, username);
+    public Optional<StudentParticipation> findOneByExerciseAndStudentLoginAnyState(Exercise exercise, String username) {
+        log.debug("Request to get Participation for User {} for Exercise with id: {}", username, exercise.getId());
+        if (exercise.isTeamMode()) {
+            Optional<Team> optionalTeam = teamRepository.findOneByExerciseIdAndUserLogin(exercise.getId(), username);
+            return optionalTeam.flatMap(team -> studentParticipationRepository.findByExerciseIdAndTeamId(exercise.getId(), team.getId()));
+        }
+        return studentParticipationRepository.findByExerciseIdAndStudentLogin(exercise.getId(), username);
+    }
+
+    /**
+     * Get one participation (in any state) by its team and exercise.
+     *
+     * @param exercise the exercise for which to find a participation
+     * @param teamId the id of the team
+     * @return the participation of the given team and exercise in any state
+     */
+    public Optional<StudentParticipation> findOneByExerciseAndTeamIdAnyState(Exercise exercise, Long teamId) {
+        log.debug("Request to get Participation for Team with id {} for Exercise with id: {}", teamId, exercise.getId());
+        return studentParticipationRepository.findByExerciseIdAndTeamId(exercise.getId(), teamId);
+    }
+
+    /**
+     * Get one participation (in any state) by its participant and exercise.
+     *
+     * @param exercise the exercise for which to find a participation
+     * @param participant the short name of the team
+     * @return the participation of the given team and exercise in any state
+     */
+    public Optional<StudentParticipation> findOneByExerciseAndParticipantAnyState(Exercise exercise, Participant participant) {
+        if (participant instanceof User) {
+            return findOneByExerciseAndStudentLoginAnyState(exercise, ((User) participant).getLogin());
+        }
+        else if (participant instanceof Team) {
+            return findOneByExerciseAndTeamIdAnyState(exercise, ((Team) participant).getId());
+        }
+        else {
+            throw new Error("Unknown Participant type");
+        }
     }
 
     /**
      * Get one participation (in any state) by its student and exercise with all its results.
      *
-     * @param exerciseId the project key of the exercise
+     * @param exercise the exercise for which to find a participation
      * @param username   the username of the student
      * @return the participation of the given student and exercise in any state
      */
-    public Optional<StudentParticipation> findOneByExerciseIdAndStudentLoginAnyStateWithEagerResults(Long exerciseId, String username) {
-        log.debug("Request to get Participation for User {} for Exercise with id: {}", username, exerciseId);
-        return studentParticipationRepository.findWithEagerResultsByExerciseIdAndStudentLogin(exerciseId, username);
+    public Optional<StudentParticipation> findOneByExerciseAndStudentLoginAnyStateWithEagerResults(Exercise exercise, String username) {
+        log.debug("Request to get Participation for User {} for Exercise with id: {}", username, exercise.getId());
+        if (exercise.isTeamMode()) {
+            Optional<Team> optionalTeam = teamRepository.findOneByExerciseIdAndUserLogin(exercise.getId(), username);
+            return optionalTeam.flatMap(team -> studentParticipationRepository.findWithEagerResultsByExerciseIdAndTeamId(exercise.getId(), team.getId()));
+        }
+        return studentParticipationRepository.findWithEagerResultsByExerciseIdAndStudentLogin(exercise.getId(), username);
     }
 
     /**
      * Get one participation (in any state) by its student and exercise with eager submissions.
      *
-     * @param exerciseId the project key of the exercise
+     * @param exercise the exercise for which to find a participation
      * @param username   the username of the student
      * @return the participation of the given student and exercise with eager submissions in any state
      */
-    public Optional<StudentParticipation> findOneByExerciseIdAndStudentLoginWithEagerSubmissionsAnyState(Long exerciseId, String username) {
-        log.debug("Request to get Participation for User {} for Exercise with id: {}", username, exerciseId);
-        return studentParticipationRepository.findWithEagerSubmissionsByExerciseIdAndStudentLogin(exerciseId, username);
+    public Optional<StudentParticipation> findOneByExerciseAndStudentLoginWithEagerSubmissionsAnyState(Exercise exercise, String username) {
+        log.debug("Request to get Participation for User {} for Exercise with id: {}", username, exercise.getId());
+        if (exercise.isTeamMode()) {
+            Optional<Team> optionalTeam = teamRepository.findOneByExerciseIdAndUserLogin(exercise.getId(), username);
+            return optionalTeam.flatMap(team -> studentParticipationRepository.findWithEagerSubmissionsByExerciseIdAndTeamId(exercise.getId(), team.getId()));
+        }
+        return studentParticipationRepository.findWithEagerSubmissionsByExerciseIdAndStudentLogin(exercise.getId(), username);
     }
 
     /**
@@ -700,6 +751,16 @@ public class ParticipationService {
      */
     public List<StudentParticipation> findByExerciseId(Long exerciseId) {
         return studentParticipationRepository.findByExerciseId(exerciseId);
+    }
+
+    /**
+     * Get all programming exercise participations belonging to team.
+     *
+     * @param teamId the id of team
+     * @return the list of programming exercise participations belonging to team
+     */
+    public List<StudentParticipation> findByTeamId(Long teamId) {
+        return studentParticipationRepository.findByTeamId(teamId);
     }
 
     /**
@@ -735,12 +796,17 @@ public class ParticipationService {
     /**
      * Get all programming exercise participations belonging to exercise and student with eager results and submissions.
      *
-     * @param exerciseId the id of exercise
+     * @param exercise  the exercise
      * @param studentId the id of student
      * @return the list of programming exercise participations belonging to exercise and student
      */
-    public List<StudentParticipation> findByExerciseIdAndStudentIdWithEagerResultsAndSubmissions(Long exerciseId, Long studentId) {
-        return studentParticipationRepository.findByExerciseIdAndStudentIdWithEagerResultsAndSubmissions(exerciseId, studentId);
+    public List<StudentParticipation> findByExerciseAndStudentIdWithEagerResultsAndSubmissions(Exercise exercise, Long studentId) {
+        if (exercise.isTeamMode()) {
+            Optional<Team> optionalTeam = teamRepository.findOneByExerciseIdAndUserId(exercise.getId(), studentId);
+            return optionalTeam.map(team -> studentParticipationRepository.findByExerciseIdAndTeamIdWithEagerResultsAndSubmissions(exercise.getId(), team.getId()))
+                    .orElse(List.of());
+        }
+        return studentParticipationRepository.findByExerciseIdAndStudentIdWithEagerResultsAndSubmissions(exercise.getId(), studentId);
     }
 
     /**
@@ -767,7 +833,7 @@ public class ParticipationService {
 
                 // Filter out participations without Students
                 // These participations are used e.g. to store template and solution build plans in programming exercises
-                .filter(participation -> participation.getStudent() != null)
+                .filter(participation -> participation.getParticipant() != null)
 
                 // filter all irrelevant results, i.e. rated = false or no completion date or no score
                 .peek(participation -> {
@@ -936,6 +1002,24 @@ public class ParticipationService {
     }
 
     /**
+     * Delete all participations belonging to the given team
+     *
+     * @param teamId the id of the team
+     * @param deleteBuildPlan specify if build plan should be deleted
+     * @param deleteRepository specify if repository should be deleted
+     */
+    @Transactional
+    public void deleteAllByTeamId(Long teamId, boolean deleteBuildPlan, boolean deleteRepository) {
+        log.info("Request to delete all participations of Team with id : {}", teamId);
+
+        List<StudentParticipation> participationsToDelete = findByTeamId(teamId);
+
+        for (StudentParticipation participation : participationsToDelete) {
+            delete(participation.getId(), deleteBuildPlan, deleteRepository);
+        }
+    }
+
+    /**
      * Get one participation with eager course.
      *
      * @param participationId id of the participation
@@ -1002,7 +1086,7 @@ public class ParticipationService {
     }
 
     /**
-     * Get all participations for the given student and exercises combined with their submissions with a result
+     * Get all participations (including those for team-based exercises) for the given student and exercises combined with their submissions with a result
      *
      * @param studentId the id of the student for which the participations should be found
      * @param exercises the exercises for which participations should be found

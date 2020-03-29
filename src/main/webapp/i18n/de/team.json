@@ -10,10 +10,16 @@
             "updated": "Team von {{ param }} aktualisiert",
             "deleted": "Team von {{ param }} gelöscht",
             "delete": {
-                "question": "Soll die Team von <strong>{{ name }}</strong> wirklich dauerhaft gelöscht werden?"
+                "question": "Soll das Team <strong>{{ title }}</strong> und seine Teilnahme an der Aufgabe wirklich dauerhaft gelöscht werden? Diese Aktion kann NICHT rückgängig gemacht werden!",
+                "typeNameToConfirm": "Bitte gib den Kurznamen des Teams zur Bestätigung ein."
             },
             "detail": {
-                "title": "Team"
+                "title": "Team",
+                "students": {
+                    "login": "Login",
+                    "name": "Name",
+                    "email": "Email"
+                }
             },
             "name": {
                 "label": "Name",
@@ -31,7 +37,9 @@
             "noStudentsAddedYet": "Noch keine Studenten hinzugefügt.",
             "addStudentToTeam": "Studenten zum Team hinzufügen (nach Login oder Name suchen)",
             "studentSearch": {
-                "failed": "Suche fehlgeschlagen. Bitte nochmal versuchen."
+                "queryTooShort": "Bitte mindestens 3 Zeichen eingeben.",
+                "failed": "Suche fehlgeschlagen. Bitte nochmal versuchen.",
+                "noResults": "Keine Studenten im Kurs gefunden für Suche:"
             },
             "teamSizeNote": "Empfohlene Team-Größe:",
             "teamSizeUnit": "Studenten",
@@ -41,11 +49,11 @@
                 "error": "Das Team konnte nicht entfernt werden. Bitte versuche es nochmal."
             },
             "updateTeam": {
-                "label": "Bearbeite Team",
+                "label": "Bearbeiten",
                 "error": "Das Team konnte nicht bearbeitet werden. Bitte versuche es nochmal."
             },
             "removeTeam": {
-                "label": "Entferne Team",
+                "label": "Löschen",
                 "error": "Das Team konnte nicht entfernt werden. Bitte versuche es nochmal."
             },
             "errors": {

@@ -182,7 +182,7 @@ public class ModelingAssessmentResource extends AssessmentResource {
         }
         // remove information about the student for tutors to ensure double-blind assessment
         if (!authCheckService.isAtLeastInstructorForExercise(modelingExercise, user)) {
-            ((StudentParticipation) result.getParticipation()).setStudent(null);
+            ((StudentParticipation) result.getParticipation()).setParticipant(null);
         }
         if (submit && ((result.getParticipation()).getExercise().getAssessmentDueDate() == null
                 || (result.getParticipation()).getExercise().getAssessmentDueDate().isBefore(ZonedDateTime.now()))) {
@@ -249,7 +249,7 @@ public class ModelingAssessmentResource extends AssessmentResource {
 
         if (result.getParticipation() != null && result.getParticipation() instanceof StudentParticipation
                 && !authCheckService.isAtLeastInstructorForExercise(modelingExercise, user)) {
-            ((StudentParticipation) result.getParticipation()).setStudent(null);
+            ((StudentParticipation) result.getParticipation()).setParticipant(null);
         }
 
         return ResponseEntity.ok(result);

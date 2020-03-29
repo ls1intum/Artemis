@@ -1,10 +1,10 @@
-<form name="editForm" role="form" novalidate (ngSubmit)="save()" #editForm="ngForm">
+<form id="teamUpdateDialogForm" name="editForm" role="form" novalidate (ngSubmit)="save()" #editForm="ngForm">
     <div class="modal-header">
         <h4 class="modal-title">
             <span [jhiTranslate]="pendingTeam.id ? 'artemisApp.team.updateTeam.label' : 'artemisApp.team.createTeam.label'">
                 {{ pendingTeam.id ? 'Update Team' : 'Create Team' }}
             </span>
-            ({{ exercise.title }})
+            <span>({{ exercise.title }})</span>
         </h4>
         <button type="button" class="close" data-dismiss="modal" aria-hidden="true" (click)="clear()">&times;</button>
     </div>
@@ -58,15 +58,27 @@
             <div class="d-flex align-items-end">
                 <label class="label-narrow mr-1" jhiTranslate="artemisApp.team.students">Students</label>
                 <fa-icon class="student-search-searching" [icon]="'spinner'" [spin]="true" *ngIf="searchingStudents"></fa-icon>
-                <span *ngIf="searchingStudentsFailed" class="student-search-failed text-muted" jhiTranslate="artemisApp.team.studentSearch.failed">
+                <span *ngIf="searchingStudentsQueryTooShort" class="student-search-error-message text-danger" jhiTranslate="artemisApp.team.studentSearch.queryTooShort">
+                    Please enter at least 3 characters.
+                </span>
+                <span *ngIf="searchingStudentsNoResultsForQuery" class="student-search-error-message text-danger">
+                    <span jhiTranslate="artemisApp.team.studentSearch.noResults">No students found in course for search:</span>
+                    <strong>{{ searchingStudentsNoResultsForQuery }}</strong>
+                </span>
+                <span *ngIf="searchingStudentsFailed" class="student-search-error-message text-danger" jhiTranslate="artemisApp.team.studentSearch.failed">
                     Search failed. Please try again.
                 </span>
             </div>
             <jhi-team-student-search
+                id="teamStudents"
                 [course]="exercise.course"
                 [exercise]="exercise"
+                [team]="team"
+                [studentsFromPendingTeam]="pendingTeam.students"
                 (selectStudent)="onAddStudent($event)"
                 (searching)="searchingStudents = $event"
+                (searchQueryTooShort)="searchingStudentsQueryTooShort = $event"
+                (searchNoResults)="searchingStudentsNoResultsForQuery = $event"
                 (searchFailed)="searchingStudentsFailed = $event"
             >
             </jhi-team-student-search>
@@ -76,12 +88,14 @@
                         {{ i + 1 }}
                     </div>
                     <div class="list-group-item d-flex align-items-center" [class.has-error]="hasConflictingTeam(student)">
-                        <div class="student-name">{{ student.firstName }} {{ student.lastName }}</div>
-                        <fa-icon class="student-remove-link ml-4" [icon]="'trash-alt'" (click)="onRemoveStudent(student)"></fa-icon>
+                        <div class="student-name">{{ student.name }} ({{ student.login }})</div>
+                        <button class="jest-student-remove-link student-remove-link ml-4" (click)="onRemoveStudent(student)">
+                            <fa-icon [icon]="'trash-alt'"></fa-icon>
+                        </button>
                     </div>
-                    <div class="list-group-item-error" *ngIf="hasConflictingTeam(student)">
+                    <div class="list-group-item-error hidden-md-down" *ngIf="hasConflictingTeam(student)">
                         <fa-icon class="mr-1" [icon]="'exclamation-triangle'"></fa-icon>
-                        Already assigned to team {{ getConflictingTeam(student) }}.
+                        Already assigned to team with id {{ getConflictingTeam(student) }}.
                     </div>
                 </li>
                 <li *ngIf="pendingTeam.students.length === 0" class="list-group-item-container d-flex align-items-center">
@@ -100,10 +114,10 @@
                     </div>
                     <div *ngIf="showIgnoreTeamSizeRecommendationOption" class="form-check">
                         <input
+                            id="ignoreTeamSizeRecommendation"
                             class="form-check-input"
                             type="checkbox"
                             value=""
-                            id="ignoreTeamSizeRecommendation"
                             [(ngModel)]="ignoreTeamSizeRecommendation"
                             [ngModelOptions]="{ standalone: true }"
                         />
@@ -117,7 +131,7 @@
         </div>
     </div>
     <div class="modal-footer">
-        <button type="button" class="btn btn-default" data-dismiss="modal" (click)="clear()">
+        <button type="button" class="btn btn-default cancel" data-dismiss="modal" (click)="clear()">
             <fa-icon [icon]="'ban'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
         </button>
         <button type="submit" [disabled]="editForm.invalid || isSaving || teamSizeViolationUnconfirmed" class="btn btn-primary">

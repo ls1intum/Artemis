@@ -2,7 +2,7 @@ import { Component, ContentChild, EventEmitter, Input, OnChanges, OnInit, Output
 import { debounceTime, distinctUntilChanged, map, tap } from 'rxjs/operators';
 import { Observable } from 'rxjs';
 import { ColumnMode, SortType } from '@swimlane/ngx-datatable';
-import { compose, filter } from 'lodash/fp';
+import { compose, filter, flatten } from 'lodash/fp';
 import { get, isNumber } from 'lodash';
 import { BaseEntity } from 'app/shared/model/base-entity';
 import { LocalStorageService } from 'ngx-webstorage';
@@ -54,6 +54,7 @@ export class DataTableComponent implements OnInit, OnChanges {
      * @property searchFailed Whether to show a badge that indicates that the search has failed
      * @property searchNoResults Whether to show a badge that indicates that the search did not return any results
      * @property isTransitioning Loading overlay on top of the table indicating that the content is changing
+     * @property showPageSizeDropdownAndSearchField Flag whether to show the "entities per page" dropdown and search input field
      * @property entityType Entity identifier (e.g. 'result' or 'participation') used as a key to differentiate from other tables
      * @property allEntities List of all entities that should be displayed in the table (one entity per row)
      * @property entitiesPerPageTranslation Translation string that has the variable {{ number }} in it (e.g. 'artemisApp.exercise.resultsPerPage')
@@ -74,6 +75,7 @@ export class DataTableComponent implements OnInit, OnChanges {
     @Input() searchFailed = false;
     @Input() searchNoResults = false;
     @Input() isTransitioning = false;
+    @Input() showPageSizeDropdownAndSearchField = true;
     @Input() entityType = 'entity';
     @Input() allEntities: BaseEntity[] = [];
     @Input() entitiesPerPageTranslation: string;
@@ -273,8 +275,28 @@ export class DataTableComponent implements OnInit, OnChanges {
      * @param fields Fields to extract from entity (can be paths such as "student.login")
      */
     private entityFieldValues = (entity: BaseEntity, fields: string[]) => {
-        const getEntityFieldValue = (field: string) => get(entity, field, false);
-        return fields.map(getEntityFieldValue).filter(Boolean) as string[];
+        return flatten(fields.map((field) => this.collectEntityFieldValues(entity, field))).filter(Boolean) as string[];
+    };
+
+    /**
+     * Returns the values that the given entity has in the given field.
+     * Usually, this will be one value but if the field path contains an array, the rest of the path will be resolved for each array element.
+     * Values are merged recursively into a flat list.
+     *
+     * @param entity Entity whose field values are extracted
+     * @param field Field to extract from entity (can be paths such as "student.login" or array path such as "students.login")
+     */
+    private collectEntityFieldValues = (entity: BaseEntity, field: string): any[] => {
+        const separator = '.';
+        const [head, ...tail] = field.split(separator);
+        if (tail.length > 0) {
+            const resolved = get(entity, head);
+            if (Array.isArray(resolved)) {
+                return flatten(resolved.map((subEntity) => this.collectEntityFieldValues(subEntity, tail.join(separator))));
+            }
+            return this.collectEntityFieldValues(resolved, tail.join(separator));
+        }
+        return [get(entity, head, false)];
     };
 
     /**
