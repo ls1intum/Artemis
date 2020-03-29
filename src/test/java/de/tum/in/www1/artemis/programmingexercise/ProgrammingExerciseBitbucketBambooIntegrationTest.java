@@ -288,11 +288,11 @@ public class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractS
         database.addSolutionParticipationForProgrammingExercise(exercise);
 
         // create a team for the user (necessary condition before starting an exercise)
-        Set<User> students = new HashSet<>(userRepo.findAllInGroup("tumuser"));
+        Set<User> students = Set.of(userRepo.findOneByLogin(studentLogin).get());
         Team team = new Team().name("Team 1").shortName(teamShortName).exercise(exercise).students(students);
         team = teamService.save(exercise, team);
 
-        assertThat(team.getStudents()).as("Students were correctly added to team").hasSize(numberOfStudents);
+        assertThat(team.getStudents()).as("Student was correctly added to team").hasSize(1);
 
         final var verifications = mockConnectorRequestsForStartParticipation(exercise, team.getParticipantIdentifier(), team.getStudents());
         final var path = ParticipationResource.Endpoints.ROOT
