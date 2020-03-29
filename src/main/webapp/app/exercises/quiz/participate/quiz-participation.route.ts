@@ -5,7 +5,7 @@ import { UserRouteAccessService } from 'app/core/auth/user-route-access-service'
 
 export const quizParticipationRoute: Routes = [
     {
-        path: 'courses/:courseId/quiz-exercises/:exerciseId',
+        path: ':exerciseId',
         component: QuizParticipationComponent,
         data: {
             authorities: [],
@@ -15,7 +15,7 @@ export const quizParticipationRoute: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
-        path: 'courses/:courseId/quiz-exercises/:exerciseId/practice',
+        path: ':exerciseId/practice',
         component: QuizParticipationComponent,
         data: {
             authorities: [],

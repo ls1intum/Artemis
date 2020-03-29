@@ -6,7 +6,7 @@ import { FileUploadSubmissionComponent } from 'app/exercises/file-upload/partici
 
 export const routes: Routes = [
     {
-        path: 'courses/:courseId/file-upload-exercises/:exerciseId/participate/:participationId',
+        path: ':exerciseId/participate/:participationId',
         component: FileUploadSubmissionComponent,
         data: {
             authorities: ['ROLE_USER'],
