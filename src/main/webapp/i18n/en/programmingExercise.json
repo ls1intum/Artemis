@@ -111,7 +111,7 @@
             },
             "export": {
                 "downloadAllStudents": "Or download the repositories of all students",
-                "downloadAllSTeams": "Or download the repositories of all teams",
+                "downloadAllTeams": "Or download the repositories of all teams",
                 "filterLateSubmissions": "Filter late submissions",
                 "filterLateSubmissionsDate": "Date for filter late submissions (defaults to exercise due date if not set)",
                 "addStudentName": "Add student name to project (allows to import multiple projects into Eclipse at the same time)",
