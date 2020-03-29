@@ -7,12 +7,33 @@
     </h2>
     <jhi-alert></jhi-alert>
     <div class="table-responsive" *ngIf="users">
+        <form [formGroup]="userSearchForm">
+            <div class="form-group form-inline">
+                <label for="field_searchTerm" class="form-control-label" jhiTranslate="userManagement.search">Search for User: </label>
+                <input
+                    class="form-control ml-2"
+                    type="text"
+                    name="searchTerm"
+                    id="field_searchTerm"
+                    formControlName="searchControl"
+                    [(ngModel)]="searchTerm"
+                    (focusout)="loadAll()"
+                />
+                <ng-container *ngIf="searchControl.invalid && (searchControl.dirty || searchControl.touched)">
+                    <div class="alert alert-danger">
+                        <div jhiTranslate="userManagement.searchError">Search term must be empty or at least 3 character.</div>
+                    </div>
+                </ng-container>
+                <span class="ml-3" *ngIf="loadingSearchResult" jhiTranslate="userManagement.loading">Loading...</span>
+            </div>
+        </form>
         <table class="table table-striped">
             <thead>
                 <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" [callback]="transition.bind(this)">
                     <th jhiSortBy="id"><span jhiTranslate="global.field.id">ID</span> <fa-icon [icon]="'sort'"></fa-icon></th>
                     <th jhiSortBy="login"><span jhiTranslate="userManagement.login">Login</span> <fa-icon [icon]="'sort'"></fa-icon></th>
                     <th jhiSortBy="email"><span jhiTranslate="userManagement.email">Email</span> <fa-icon [icon]="'sort'"></fa-icon></th>
+                    <th jhiSortBy="lastName"><span jhiTranslate="userManagement.name">Name</span> <fa-icon [icon]="'sort'"></fa-icon></th>
                     <th></th>
                     <th jhiSortBy="langKey"><span jhiTranslate="userManagement.langKey">Lang Key</span> <fa-icon [icon]="'sort'"></fa-icon></th>
                     <th><span jhiTranslate="userManagement.profiles">Profiles</span></th>
@@ -28,8 +49,15 @@
                     <td>
                         <a [routerLink]="['./', user.login, 'view']">{{ user.id }}</a>
                     </td>
-                    <td>{{ user.login }}</td>
-                    <td>{{ user.email }}</td>
+                    <td>
+                        <ngb-highlight [result]="user.login" [term]="searchTerm"></ngb-highlight>
+                    </td>
+                    <td>
+                        <ngb-highlight [result]="user.email" [term]="searchTerm"></ngb-highlight>
+                    </td>
+                    <td>
+                        <ngb-highlight [result]="user.name" [term]="searchTerm"></ngb-highlight>
+                    </td>
                     <td>
                         <button class="btn btn-danger btn-sm" (click)="setActive(user, true)" *ngIf="!user.activated" jhiTranslate="userManagement.deactivated">Deactivated</button>
                         <button
