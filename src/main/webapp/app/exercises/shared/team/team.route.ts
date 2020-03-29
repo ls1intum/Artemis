@@ -18,7 +18,7 @@ export const teamRoute: Routes = [
         path: 'course-management/:courseId/exercises/:exerciseId/teams/:teamId',
         component: TeamComponent,
         data: {
-            authorities: ['ROLE_USER'],
+            authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
             pageTitle: 'artemisApp.team.detail.title',
         },
         canActivate: [UserRouteAccessService],

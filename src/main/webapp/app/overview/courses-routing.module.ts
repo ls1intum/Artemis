@@ -7,6 +7,7 @@ import { CourseLecturesComponent } from 'app/overview/course-lectures/course-lec
 import { CourseStatisticsComponent } from 'app/overview/course-statistics/course-statistics.component';
 import { CourseExerciseDetailsComponent } from 'app/overview/exercise-details/course-exercise-details.component';
 import { CourseLectureDetailsComponent } from 'app/overview/course-lectures/course-lecture-details.component';
+import { TeamComponent } from 'app/exercises/shared/team/team.component';
 import { NgModule } from '@angular/core';
 
 const routes: Routes = [
@@ -68,6 +69,15 @@ const routes: Routes = [
         data: {
             authorities: ['ROLE_USER'],
             pageTitle: 'overview.exercise',
+        },
+        canActivate: [UserRouteAccessService],
+    },
+    {
+        path: 'courses/:courseId/exercises/:exerciseId/teams/:teamId',
+        component: TeamComponent,
+        data: {
+            authorities: ['ROLE_USER'],
+            pageTitle: 'artemisApp.team.detail.title',
         },
         canActivate: [UserRouteAccessService],
     },
