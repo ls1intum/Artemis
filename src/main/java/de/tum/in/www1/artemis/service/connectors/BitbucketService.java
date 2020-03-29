@@ -468,6 +468,14 @@ public class BitbucketService extends AbstractVersionControlService {
         users.forEach(user -> setStudentRepositoryPermission(repositoryUrl, projectKey, user.getLogin(), VersionControlRepositoryPermission.READ_ONLY));
     }
 
+    /**
+     * Set the permission of a student for a repository
+     *
+     * @param repositoryUrl         The complete repository-url (including protocol, host and the complete path)
+     * @param projectKey            The project key of the repository's project.
+     * @param username              The username of the user whom to assign a permission level
+     * @param repositoryPermission  Repository permission to set for the user (e.g. READ_ONLY, WRITE)
+     */
     private void setStudentRepositoryPermission(URL repositoryUrl, String projectKey, String username, VersionControlRepositoryPermission repositoryPermission)
             throws BitbucketException {
         String permissionString = repositoryPermission == VersionControlRepositoryPermission.READ_ONLY ? "READ" : "WRITE";
@@ -485,6 +493,13 @@ public class BitbucketService extends AbstractVersionControlService {
         }
     }
 
+    /**
+     * Remove all permissions of a student for a repository
+     *
+     * @param repositoryUrl  The complete repository-url (including protocol, host and the complete path)
+     * @param projectKey     The project key of the repository's project.
+     * @param username       The username of the user whom to remove access
+     */
     private void removeStudentRepositoryAccess(URL repositoryUrl, String projectKey, String username) throws BitbucketException {
         String repositorySlug = getRepositoryName(repositoryUrl);
         String baseUrl = BITBUCKET_SERVER_URL + "/rest/api/1.0/projects/" + projectKey + "/repos/" + repositorySlug + "/permissions/users?name="; // NAME
