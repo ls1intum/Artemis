@@ -31,6 +31,10 @@ const LAYOUT_ROUTES: Routes = [navbarRoute, ...errorRoute];
                     path: 'course-management',
                     loadChildren: () => import('./course/manage/course-management.module').then((m) => m.ArtemisCourseManagementModule),
                 },
+                {
+                    path: 'courses/:courseId/modeling-exercises/:exerciseId',
+                    loadChildren: () => import('./exercises/modeling/participate/modeling-participation.module').then((m) => m.ArtemisModelingParticipationModule),
+                },
             ],
             { useHash: true, enableTracing: false },
         ),

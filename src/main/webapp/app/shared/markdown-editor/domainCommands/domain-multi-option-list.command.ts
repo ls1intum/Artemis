@@ -1,8 +1,7 @@
 import { AceEditorComponent } from 'ng2-ace-editor';
 import { DomainMultiOptionCommand } from 'app/shared/markdown-editor/domainCommands/domainMultiOptionCommand';
 import { getStringSegmentPositions } from 'app/shared/util/global.utils';
-import { ArtemisMarkdown } from 'app/shared/markdown.service';
-
+import { removeTextRange } from 'app/shared/util/markdown-util';
 /**
  * Allows the insertion of values within a comma separated list.
  * Will e.g. remove duplicates and append new items to the list.
@@ -46,7 +45,7 @@ export abstract class DomainMultiOptionListCommand extends DomainMultiOptionComm
         const newValuesList = this.generateValueList(matchInTag, valueToAdd, cursorPosition);
         const newValuesStringified = `${this.getOpeningIdentifier()}${newValuesList.join(',')}${this.getClosingIdentifier()}`;
         if (matchInTag) {
-            ArtemisMarkdown.removeTextRange(
+            removeTextRange(
                 { col: matchInTag.matchStart, row: cursorPosition.row },
                 {
                     col: matchInTag.matchEnd,
