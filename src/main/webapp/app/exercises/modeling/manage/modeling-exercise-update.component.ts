@@ -121,11 +121,7 @@ export class ModelingExerciseUpdateComponent implements OnInit {
      * Returns to previous state, which is always exercise page
      */
     previousState(): void {
-        if (this.modelingExercise.course) {
-            this.router.navigate(['/course-management', this.modelingExercise.course.id]);
-        } else {
-            window.history.back();
-        }
+        window.history.back();
     }
 
     private subscribeToSaveResponse(result: Observable<HttpResponse<ModelingExercise>>): void {
