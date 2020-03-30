@@ -44,7 +44,7 @@ export class FileUploadExerciseResolve implements Resolve<FileUploadExercise> {
 
 const routes: Routes = [
     {
-        path: 'course-management/:courseId/file-upload-exercises/new',
+        path: ':courseId/file-upload-exercises/new',
         component: FileUploadExerciseUpdateComponent,
         resolve: {
             fileUploadExercise: FileUploadExerciseResolve,
@@ -56,7 +56,7 @@ const routes: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
-        path: 'course-management/:courseId/file-upload-exercises/:exerciseId/edit',
+        path: ':courseId/file-upload-exercises/:exerciseId/edit',
         component: FileUploadExerciseUpdateComponent,
         resolve: {
             fileUploadExercise: FileUploadExerciseResolve,
@@ -68,7 +68,7 @@ const routes: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
-        path: 'course-management/:courseId/file-upload-exercises/:exerciseId',
+        path: ':courseId/file-upload-exercises/:exerciseId',
         component: FileUploadExerciseDetailComponent,
         data: {
             authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
@@ -77,7 +77,7 @@ const routes: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
-        path: 'course-management/:courseId/file-upload-exercises',
+        path: ':courseId/file-upload-exercises',
         component: FileUploadExerciseComponent,
         data: {
             authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],

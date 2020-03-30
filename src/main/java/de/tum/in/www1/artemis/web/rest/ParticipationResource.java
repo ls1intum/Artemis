@@ -261,13 +261,13 @@ public class ParticipationResource {
     }
 
     /**
-     * GET /exercise/:exerciseId/participations : get all the participations for an exercise
+     * GET /exercises/:exerciseId/participations : get all the participations for an exercise
      *
      * @param exerciseId The participationId of the exercise
      * @param withLatestResult Whether the {@link Result results} for the participations should also be fetched
      * @return A list of all participations for the exercise
      */
-    @GetMapping(value = "/exercise/{exerciseId}/participations")
+    @GetMapping(value = "/exercises/{exerciseId}/participations")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<List<StudentParticipation>> getAllParticipationsForExercise(@PathVariable Long exerciseId,
             @RequestParam(defaultValue = "false") boolean withLatestResult) {

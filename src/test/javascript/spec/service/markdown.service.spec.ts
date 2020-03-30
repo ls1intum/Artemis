@@ -1,6 +1,6 @@
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
-import { ArtemisMarkdown } from 'app/shared/markdown.service';
+import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-question.model';
 import { ShortAnswerQuestion } from 'app/entities/quiz/short-answer-question.model';
 
@@ -8,7 +8,7 @@ chai.use(sinonChai);
 const expect = chai.expect;
 
 describe('Markdown Service', () => {
-    let artemisMarkdown = new ArtemisMarkdown();
+    let artemisMarkdown = new ArtemisMarkdownService();
     const hintText = 'Add an explanation here (only visible in feedback after quiz has ended)';
     const markdownHint = '[hint] ' + hintText;
     const explanationText = 'Add an explanation here (only visible in feedback after quiz has ended)';

@@ -16,4 +16,4 @@ const ENTITY_STATES = [...textEditorRoute];
     imports: [ArtemisSharedModule, RouterModule.forChild(ENTITY_STATES), ArtemisResultModule, ArtemisComplaintsModule, ArtemisSharedComponentModule, MomentModule],
     declarations: [TextEditorComponent, TextEditorScoreCardComponent, TextResultComponent],
 })
-export class ArtemisTextExerciseParticipationModule {}
+export class ArtemisTextParticipationModule {}

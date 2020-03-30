@@ -2,7 +2,7 @@ import { Component, HostListener, OnDestroy, OnInit, ViewChild } from '@angular/
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subscription } from 'rxjs/Subscription';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
-import { Selection, UMLDiagramType, UMLModel, UMLRelationshipType } from '@ls1intum/apollon';
+import { Selection, UMLModel, UMLRelationshipType, UMLElementType } from '@ls1intum/apollon';
 import { AlertService } from 'app/core/alert/alert.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { Observable } from 'rxjs/Observable';
@@ -15,7 +15,7 @@ import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 import { ModelingSubmission } from 'app/entities/modeling-submission.model';
 import { ResultService } from 'app/exercises/shared/result/result.service';
-import { ModelingExercise } from 'app/entities/modeling-exercise.model';
+import { ModelingExercise, UMLDiagramType } from 'app/entities/modeling-exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { Result } from 'app/entities/result.model';
 import { ModelingEditorComponent } from 'app/exercises/modeling/shared/modeling-editor.component';
@@ -440,7 +440,8 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         if ((!this.selectedEntities || this.selectedEntities.length === 0) && (!this.selectedRelationships || this.selectedRelationships.length === 0)) {
             return true;
         }
-        if (feedback.referenceType! in UMLRelationshipType) {
+        const referencedModelType = feedback.referenceType! as UMLElementType;
+        if (referencedModelType in UMLRelationshipType) {
             return this.selectedRelationships.indexOf(feedback.referenceId!) > -1;
         } else {
             return this.selectedEntities.indexOf(feedback.referenceId!) > -1;

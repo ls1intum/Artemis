@@ -65,11 +65,7 @@ export class FileUploadExerciseUpdateComponent implements OnInit {
      * Returns to previous state, which should be always the page of selected course
      */
     previousState() {
-        if (this.fileUploadExercise.course) {
-            this.router.navigate(['/course-management', this.fileUploadExercise.course!.id]);
-        } else {
-            window.history.back();
-        }
+        window.history.back();
     }
 
     /**

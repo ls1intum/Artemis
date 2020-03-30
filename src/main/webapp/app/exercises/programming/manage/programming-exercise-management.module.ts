@@ -14,6 +14,7 @@ import { ArtemisSharedComponentModule } from 'app/shared/components/shared-compo
 import { ArtemisProgrammingExerciseStatusModule } from 'app/exercises/programming/manage/status/programming-exercise-status.module';
 import { FeatureToggleModule } from 'app/shared/feature-toggle/feature-toggle.module';
 import { SortByModule } from 'app/shared/pipes/sort-by.module';
+import { ArtemisProgrammingExerciseModule } from 'app/exercises/programming/shared/programming-exercise.module';
 
 @NgModule({
     imports: [
@@ -22,6 +23,7 @@ import { SortByModule } from 'app/shared/pipes/sort-by.module';
         ArtemisSharedComponentModule,
         ArtemisResultModule,
         ArtemisAssessmentSharedModule,
+        ArtemisProgrammingExerciseModule,
         ArtemisProgrammingExerciseManagementRoutingModule,
         ArtemisProgrammingAssessmentModule,
         ArtemisProgrammingExerciseActionsModule,

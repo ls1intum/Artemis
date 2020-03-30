@@ -8,7 +8,7 @@ import { ShortAnswerQuestionStatisticComponent } from './short-answer-question-s
 
 export const quizStatisticRoute: Routes = [
     {
-        path: 'course-management/:courseId/quiz-exercises/:exerciseId/quiz-statistic',
+        path: ':courseId/quiz-exercises/:exerciseId/quiz-statistic',
         component: QuizStatisticComponent,
         data: {
             authorities: ['ROLE_USER'],
@@ -17,7 +17,7 @@ export const quizStatisticRoute: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
-        path: 'course-management/:courseId/quiz-exercises/:exerciseId/quiz-point-statistic',
+        path: ':courseId/quiz-exercises/:exerciseId/quiz-point-statistic',
         component: QuizPointStatisticComponent,
         data: {
             authorities: ['ROLE_USER'],
@@ -26,7 +26,7 @@ export const quizStatisticRoute: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
-        path: 'course-management/:courseId/quiz-exercises/:exerciseId/mc-question-statistic/:questionId',
+        path: ':courseId/quiz-exercises/:exerciseId/mc-question-statistic/:questionId',
         component: MultipleChoiceQuestionStatisticComponent,
         data: {
             authorities: ['ROLE_USER'],
@@ -35,7 +35,7 @@ export const quizStatisticRoute: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
-        path: 'course-management/:courseId/quiz-exercises/:exerciseId/dnd-question-statistic/:questionId',
+        path: ':courseId/quiz-exercises/:exerciseId/dnd-question-statistic/:questionId',
         component: DragAndDropQuestionStatisticComponent,
         data: {
             authorities: ['ROLE_USER'],
@@ -44,7 +44,7 @@ export const quizStatisticRoute: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
-        path: 'course-management/:courseId/quiz-exercises/:exerciseId/sa-question-statistic/:questionId',
+        path: ':courseId/quiz-exercises/:exerciseId/sa-question-statistic/:questionId',
         component: ShortAnswerQuestionStatisticComponent,
         data: {
             authorities: ['ROLE_USER'],

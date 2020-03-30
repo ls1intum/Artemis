@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, OnDestroy, OnInit, Output, ViewEncapsulation } from '@angular/core';
-import { ArtemisMarkdown } from 'app/shared/markdown.service';
+import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { ShortAnswerQuestionUtil } from 'app/exercises/quiz/shared/short-answer-question-util.service';
 import { ShortAnswerSolution } from 'app/entities/quiz/short-answer-solution.model';
 import { ShortAnswerQuestion } from 'app/entities/quiz/short-answer-question.model';
@@ -9,7 +9,7 @@ import { RenderedQuizQuestionMarkDownElement } from 'app/entities/quiz/quiz-ques
 @Component({
     selector: 'jhi-short-answer-question',
     templateUrl: './short-answer-question.component.html',
-    providers: [ArtemisMarkdown, ShortAnswerQuestionUtil],
+    providers: [ArtemisMarkdownService, ShortAnswerQuestionUtil],
     styleUrls: ['./short-answer-question.component.scss', '../../../participate/quiz-participation.scss'],
     encapsulation: ViewEncapsulation.None,
 })
@@ -60,7 +60,7 @@ export class ShortAnswerQuestionComponent implements OnInit, OnDestroy {
     sampleSolutions: ShortAnswerSolution[] = [];
     textParts: (string | null)[][];
 
-    constructor(private artemisMarkdown: ArtemisMarkdown, public shortAnswerQuestionUtil: ShortAnswerQuestionUtil) {}
+    constructor(private artemisMarkdown: ArtemisMarkdownService, public shortAnswerQuestionUtil: ShortAnswerQuestionUtil) {}
 
     ngOnInit() {}
 

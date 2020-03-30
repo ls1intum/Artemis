@@ -17,6 +17,10 @@ module.exports = (options) => ({
     stats: {
         children: false
     },
+    performance: {
+        maxEntrypointSize: 1024*1024,
+        maxAssetSize: 1024*1024,
+    },
     module: {
         rules: [
             {

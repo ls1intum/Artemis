@@ -2,7 +2,7 @@ import { AfterViewInit, Component, EventEmitter, Input, OnDestroy, Output, ViewC
 import Interactable from '@interactjs/core/Interactable';
 import interact from 'interactjs';
 import { Subscription } from 'rxjs';
-import { ArtemisMarkdown } from 'app/shared/markdown.service';
+import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { WindowRef } from 'app/core/websocket/window.service';
 import { Participation } from 'app/entities/participation/participation.model';
 import { CodeEditorGridService } from 'app/exercises/programming/shared/code-editor/service/code-editor-grid.service';
@@ -35,7 +35,7 @@ export class CodeEditorInstructionsComponent implements AfterViewInit, OnDestroy
 
     resizeSubscription: Subscription;
 
-    constructor(private $window: WindowRef, public artemisMarkdown: ArtemisMarkdown, private codeEditorGridService: CodeEditorGridService) {}
+    constructor(private $window: WindowRef, public artemisMarkdown: ArtemisMarkdownService, private codeEditorGridService: CodeEditorGridService) {}
 
     /**
      * @function ngAfterViewInit
