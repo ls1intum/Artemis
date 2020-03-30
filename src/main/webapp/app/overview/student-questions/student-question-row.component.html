@@ -64,7 +64,7 @@
             </div>
         </div>
         <div class="row mb-1 answer-approved" *ngFor="let approvedQuestionAnswer of approvedQuestionAnswers">
-            <div class="col">
+            <div class="col" [ngbTooltip]="'artemisApp.courseOverview.exerciseDetails.faq.approvedLabel' | translate">
                 <div *ngIf="isAnswerMode && selectedQuestionAnswer && approvedQuestionAnswer && selectedQuestionAnswer.id === approvedQuestionAnswer.id">
                     <div class="col-12">
                         <div class="form-group">
