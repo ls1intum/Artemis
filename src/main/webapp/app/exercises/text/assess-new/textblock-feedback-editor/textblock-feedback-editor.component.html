@@ -1,0 +1,35 @@
+<div class="form-row">
+    <div class="form-group col-10">
+        <label jhiTranslate="artemisApp.assessment.detail.feedback" [for]="'detailText-' + textBlock.id"></label>
+        <textarea
+            class="form-control"
+            rows="1"
+            placeholder="Enter Feedback Here"
+            id="detailText-{{ textBlock.id }}"
+            [(ngModel)]="feedback.detailText"
+            #detailText
+            (keyup)="textareaAutogrow()"
+            (keydown.escape)="dismiss()"
+            (focus)="inFocus()"
+            (ngModelChange)="didChange()"
+        ></textarea>
+    </div>
+    <div class="form-group col-2 text-right">
+        <label jhiTranslate="artemisApp.exercise.score" [for]="'score-' + textBlock.id"></label>
+        <input
+            type="number"
+            step="0.5"
+            [(ngModel)]="feedback.credits"
+            id="score-{{ textBlock.id }}"
+            (keydown.escape)="dismiss()"
+            (keydown.backspace)="$event.preventDefault()"
+            (click)="onScoreClick($event)"
+            (focus)="inFocus()"
+            (ngModelChange)="didChange()"
+        />
+    </div>
+</div>
+
+<button type="button" class="close" data-dismiss="alert" aria-label="Close" (click)="dismiss()" *ngIf="canDismiss">
+    <span aria-hidden="true">&times;</span>
+</button>

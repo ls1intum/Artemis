@@ -1,0 +1,34 @@
+@import 'src/main/webapp/content/scss/artemis-variables';
+
+:host {
+    display: block;
+    width: 100%;
+
+    /*  &.alert-success { border-color: $success; }
+    &.alert-danger { border-color: $danger; }
+    &.alert-secondary { border-color: $secondary; }  */
+}
+
+textarea.form-control,
+textarea.form-control:focus,
+input {
+    background: transparent;
+    border: 0;
+    padding-left: 0;
+    padding-right: 0;
+    width: 100%;
+}
+
+textarea {
+    resize: none;
+    overflow: hidden;
+}
+
+input {
+    text-align: right;
+}
+
+label {
+    font-style: italic;
+    width: 100%;
+}

@@ -11,6 +11,6 @@ import { AssessmentInstructionsComponent } from './assessment-instructions/asses
 @NgModule({
     imports: [CommonModule, NgbModule, ArtemisSharedModule, ArtemisModelingEditorModule, ArtemisProgrammingExerciseInstructionsRenderModule],
     declarations: [ExpandableSectionComponent, AssessmentInstructionsComponent, CollapsableAssessmentInstructionsComponent],
-    exports: [CollapsableAssessmentInstructionsComponent],
+    exports: [CollapsableAssessmentInstructionsComponent, AssessmentInstructionsComponent],
 })
 export class AssessmentInstructionsModule {}

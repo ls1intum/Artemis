@@ -1,6 +1,7 @@
 {
     "artemisApp": {
         "textAssessment": {
+            "title": "Bewertungseditor für Textaufgaben",
             "loading": "Bitte warte, bis Artemis die Abgabe findet!",
             "heading": {
                 "assessment": "Bewertungseditor der Textaufgabe {{exerciseTitle}}",

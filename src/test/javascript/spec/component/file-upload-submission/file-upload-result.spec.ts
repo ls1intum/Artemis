@@ -44,9 +44,14 @@ describe('FileUploadSubmissionComponent', () => {
     });
 
     it('should show feedback items', () => {
-        const f1 = new Feedback(-2, 'Example');
-        const f2 = new Feedback(2, 'Example2');
-        const generalFeedback = new Feedback(0, 'General');
+        const f1 = new Feedback();
+        f1.credits = -2;
+        f1.text = 'Example';
+        const f2 = new Feedback();
+        f2.credits = 2;
+        f2.text = 'Example2';
+        const generalFeedback = new Feedback();
+        generalFeedback.text = 'General';
         comp.result = <Result>{ feedbacks: [f1, f2, generalFeedback] };
 
         // check that feedback items are correctly split in the component
