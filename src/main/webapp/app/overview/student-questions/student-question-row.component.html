@@ -63,8 +63,7 @@
                 </div>
             </div>
         </div>
-        <!-- approved answers -->
-        <div class="row mb-1 code-success" *ngFor="let approvedQuestionAnswer of approvedQuestionAnswers">
+        <div class="row mb-1 answer-approved" *ngFor="let approvedQuestionAnswer of approvedQuestionAnswers">
             <div class="col">
                 <div *ngIf="isAnswerMode && selectedQuestionAnswer && approvedQuestionAnswer && selectedQuestionAnswer.id === approvedQuestionAnswer.id">
                     <div class="col-12">
@@ -113,14 +112,23 @@
         </div>
         <div class="row mb-1" *ngIf="approvedQuestionAnswers.length !== 0 && sortedQuestionAnswers.length !== 0 &&!showOtherAnswers" (click)="showOtherAnswers = !showOtherAnswers">
             <div class="col overflow-parent">
-                <p class="overflow-ellipsis">{{ 'artemisApp.courseOverview.exerciseDetails.faq.showAnswers' | translate: { count: sortedQuestionAnswers.length } }}</p>
+                <div class="overflow-ellipsis question-subtitle">{{ 'artemisApp.courseOverview.exerciseDetails.faq.showAnswers' | translate: { count: sortedQuestionAnswers.length } }}</div>
             </div>
             <div class="col-auto">
                 <fa-icon [icon]="'angle-down'"></fa-icon>
             </div>
         </div>
-        <!-- other answers -->
         <div *ngIf="approvedQuestionAnswers.length === 0 || showOtherAnswers">
+            <div *ngIf="approvedQuestionAnswers.length !== 0 && sortedQuestionAnswers.length !== 0 && showOtherAnswers">
+                <div class="row mb-1" (click)="showOtherAnswers = !showOtherAnswers">
+                    <div class="col overflow-parent">
+                        <div class="overflow-ellipsis question-subtitle">{{ 'artemisApp.courseOverview.exerciseDetails.faq.hideAnswers' | translate }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <fa-icon [icon]="'angle-up'"></fa-icon>
+                    </div>
+                </div>
+            </div>
             <div class="row mb-1" *ngFor="let questionAnswer of sortedQuestionAnswers">
                 <div class="col">
                     <div *ngIf="isAnswerMode && selectedQuestionAnswer && questionAnswer && selectedQuestionAnswer.id === questionAnswer.id">
@@ -168,24 +176,12 @@
                     ></fa-icon>
                 </div>
             </div>
-            <div *ngIf="showOtherAnswers">
-                <div class="row mb-1" (click)="showOtherAnswers = !showOtherAnswers">
-                    <div class="col overflow-parent">
-                        <p class="overflow-ellipsis">{{ 'artemisApp.courseOverview.exerciseDetails.faq.hideAnswers' | translate }}</p>
-                    </div>
-                    <div class="col-auto">
-                        <fa-icon [icon]="'angle-up'"></fa-icon>
-                    </div>
-                </div>
-            </div>
         </div>
-        <!-- no answers -->
         <div class="row" *ngIf="!studentQuestion.answers || studentQuestion.answers.length === 0">
             <div class="col">
                 <p>{{ 'artemisApp.courseOverview.exerciseDetails.faq.noAnswers' | translate }}</p>
             </div>
         </div>
-        <!--answer field -->
         <div class="row mb-3" *ngIf="!isAnswerMode">
             <div class="col">
                 <button class="btn btn-primary" (click)="toggleAnswerMode(null)">{{ 'artemisApp.courseOverview.exerciseDetails.faq.answerNow' | translate }}</button>

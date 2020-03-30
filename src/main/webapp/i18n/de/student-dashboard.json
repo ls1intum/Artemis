@@ -159,7 +159,7 @@
                     "confirmDeleteAnswer": "Bitte bestätige, dass du deine Antwort löschen möchtest!",
                     "editAnswer": "Antwort bearbeiten",
                     "approveAnswer": "Antwort bestätigen",
-                    "hideAnswers": "Anworten verbergen",
+                    "hideAnswers": "Weniger Anworten anzeigen",
                     "showAnswers": "Weitere Anworten anzeigen ({{count}})"
                 }
             }
