@@ -5,12 +5,12 @@ import { UserRouteAccessService } from 'app/core/auth/user-route-access-service'
 
 export const quizParticipationRoute: Routes = [
     {
-        path: '',
+        path: 'live',
         component: QuizParticipationComponent,
         data: {
             authorities: [],
             pageTitle: 'artemisApp.quizExercise.home.title',
-            mode: 'default',
+            mode: 'live',
         },
         canActivate: [UserRouteAccessService],
     },
