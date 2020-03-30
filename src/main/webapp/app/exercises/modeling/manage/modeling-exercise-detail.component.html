@@ -64,6 +64,7 @@
                 <dd class="editor-outline-background">
                     <span [innerHTML]="gradingInstructions"></span>
                 </dd>
+                <jhi-structured-grading-instructions-assessment-layout [criteria]="modelingExercise.gradingCriteria"></jhi-structured-grading-instructions-assessment-layout>
             </dl>
 
             <button type="submit" (click)="previousState()" class="btn btn-info">
