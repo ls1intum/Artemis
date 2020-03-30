@@ -22,6 +22,7 @@ import { MockCookieService } from '../../mocks/mock-cookie.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { CookieService } from 'ngx-cookie-service';
 import { FileUploadExerciseService } from 'app/exercises/file-upload/manage/file-upload-exercise.service';
+import { AssessmentInstructionsModule } from 'app/assessment/assessment-instructions/assessment-instructions.module';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -39,7 +40,7 @@ describe('Component Tests', () => {
 
         beforeEach(() => {
             TestBed.configureTestingModule({
-                imports: [ArtemisTestModule, ArtemisSharedModule, ArtemisAssessmentSharedModule, RouterTestingModule, TranslateModule.forRoot()],
+                imports: [ArtemisTestModule, ArtemisSharedModule, ArtemisAssessmentSharedModule, RouterTestingModule, TranslateModule.forRoot(), AssessmentInstructionsModule],
                 declarations: [FileUploadExerciseDetailComponent],
                 providers: [
                     JhiLanguageHelper,
