@@ -15,7 +15,6 @@ import { JhiMainComponent } from 'app/shared/layouts/main/main.component';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { ArtemisCoursesModule } from 'app/overview/courses.module';
 import { ArtemisConnectionNotificationModule } from 'app/shared/layouts/connection-notification/connection-notification.module';
-import { ArtemisListOfComplaintsModule } from 'app/complaints/list-of-complaints/list-of-complaints.module';
 import { FooterComponent } from 'app/shared/layouts/footer/footer.component';
 import { ArtemisLegalModule } from 'app/core/legal/legal.module';
 import { ActiveMenuDirective } from 'app/shared/layouts/navbar/active-menu.directive';
@@ -45,7 +44,6 @@ import { ArtemisTeamModule } from 'app/exercises/shared/team/team.module';
         ArtemisComplaintsModule,
         ArtemisNotificationModule,
         ArtemisHeaderExercisePageWithDetailsModule,
-        ArtemisListOfComplaintsModule,
     ],
     declarations: [
         JhiMainComponent,

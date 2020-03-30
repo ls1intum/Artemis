@@ -36,6 +36,7 @@ import { ArtemisDataTableModule } from 'app/shared/data-table/data-table.module'
 import { ArtemisModelingExerciseModule } from 'app/exercises/modeling/manage/modeling-exercise.module';
 import { ArtemisTextExerciseModule } from 'app/exercises/text/manage/text-exercise/text-exercise.module';
 import { ArtemisProgrammingExerciseModule } from 'app/exercises/programming/shared/programming-exercise.module';
+import { ArtemisListOfComplaintsModule } from 'app/complaints/list-of-complaints/list-of-complaints.module';
 
 @NgModule({
     imports: [
@@ -64,6 +65,7 @@ import { ArtemisProgrammingExerciseModule } from 'app/exercises/programming/shar
         ArtemisExerciseHintManagementModule,
         ArtemisParticipationModule,
         ArtemisComplaintsForTutorModule,
+        ArtemisListOfComplaintsModule,
         ArtemisTextExerciseAssessmentModule,
         ArtemisFileUploadAssessmentModule,
         ArtemisModelingAssessmentEditorModule,
