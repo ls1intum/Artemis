@@ -1,0 +1,11 @@
+<input
+    #ngbTypeahead
+    id="owner-search-input"
+    type="text"
+    class="form-control"
+    [placeholder]="'artemisApp.team.selectOwnerForTeam' | translate"
+    (selectItem)="onAutocompleteSelect($event.item)"
+    [ngbTypeahead]="onSearch"
+    [resultFormatter]="searchResultFormatter"
+    [inputFormatter]="searchInputFormatter"
+/>

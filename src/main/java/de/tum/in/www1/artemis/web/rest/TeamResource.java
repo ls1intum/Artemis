@@ -82,6 +82,7 @@ public class TeamResource {
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user)) {
             return forbidden();
         }
+        team.setOwner(user); // the TA (or above) who creates the team, is the owner of the team
         Team result = teamService.save(exercise, team);
         result.filterSensitiveInformation();
         return ResponseEntity.created(new URI("/api/teams/" + result.getId()))
@@ -118,16 +119,24 @@ public class TeamResource {
         if (!team.getShortName().equals(existingTeam.get().getShortName())) {
             return forbidden(ENTITY_NAME, "shortNameChangeForbidden", "The team's short name cannot be changed after the team has been created.");
         }
+
+        // User must be (1) at least instructor or (2) TA but the owner of the team
         User user = userService.getUserWithGroupsAndAuthorities();
         Exercise exercise = exerciseService.findOne(exerciseId);
-        if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user)) {
+        final boolean isAtLeastInstructor = authCheckService.isAtLeastInstructorForExercise(exercise, user);
+        final boolean isAtLeastTeachingAssistantAndOwner = authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user) && authCheckService.isOwnerOfTeam(team, user);
+        if (!isAtLeastInstructor && !isAtLeastTeachingAssistantAndOwner) {
             return forbidden();
         }
+
+        // Save team (includes check for conflicts that no student is assigned to multiple teams for an exercise)
+        Team result = teamService.save(exercise, team);
+
         // For programming exercise teams with existing participation, the repository access needs to be updated according to the new team member set
         if (exercise instanceof ProgrammingExercise) {
             teamService.updateRepositoryMembersIfNeeded(exerciseId, existingTeam.get(), team);
         }
-        Team result = teamService.save(exercise, team);
+
         result.filterSensitiveInformation();
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, team.getId().toString())).body(result);
     }

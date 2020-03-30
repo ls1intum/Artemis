@@ -165,6 +165,10 @@ export class AccountService implements IAccountService {
         return this.hasGroup(course.instructorGroupName) || this.hasAnyAuthorityDirect(['ROLE_ADMIN']);
     }
 
+    isAdmin(): boolean {
+        return this.hasAnyAuthorityDirect(['ROLE_ADMIN']);
+    }
+
     isAuthenticated(): boolean {
         return this.authenticated;
     }

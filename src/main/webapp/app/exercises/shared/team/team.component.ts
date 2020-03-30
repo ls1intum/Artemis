@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewEncapsulation } from '@angular/core';
 import { Router } from '@angular/router';
 import { Subscription } from 'rxjs/Subscription';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
@@ -10,10 +10,13 @@ import { Exercise } from 'app/entities/exercise.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { User } from 'app/core/user/user.model';
 import { ButtonSize } from 'app/shared/components/button.component';
+import { AccountService } from 'app/core/auth/account.service';
 
 @Component({
     selector: 'jhi-team',
     templateUrl: './team.component.html',
+    styles: ['.date-tooltip { width: 120px !important }'],
+    encapsulation: ViewEncapsulation.None,
 })
 export class TeamComponent implements OnInit {
     ButtonSize = ButtonSize;
@@ -25,6 +28,7 @@ export class TeamComponent implements OnInit {
 
     paramSub: Subscription;
     isLoading: boolean;
+    isAdmin = false;
 
     constructor(
         private route: ActivatedRoute,
@@ -33,8 +37,11 @@ export class TeamComponent implements OnInit {
         private eventManager: JhiEventManager,
         private exerciseService: ExerciseService,
         private teamService: TeamService,
+        private accountService: AccountService,
         private router: Router,
-    ) {}
+    ) {
+        this.isAdmin = this.accountService.isAdmin();
+    }
 
     ngOnInit() {
         this.load();

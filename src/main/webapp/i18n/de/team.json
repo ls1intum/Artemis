@@ -32,14 +32,25 @@
                 "minlength": "Der Kurzname muss mindestens 3 Zeichen lang sein.",
                 "alreadyTaken": "Dieser Kurzname ist bereits an ein anderes Team vergeben."
             },
+            "owner": {
+                "label": "Tutor",
+                "tooltip": "Wenn du dieses Team einem anderen Tutor zuordnest, kannst du es anschließend nicht mehr bearbeiten."
+            },
             "image": "Bild",
             "students": "Studenten",
+            "tutor": "Tutor",
             "noStudentsAddedYet": "Noch keine Studenten hinzugefügt.",
             "addStudentToTeam": "Studenten zum Team hinzufügen (nach Login oder Name suchen)",
             "studentSearch": {
                 "queryTooShort": "Bitte mindestens 3 Zeichen eingeben.",
                 "failed": "Suche fehlgeschlagen. Bitte nochmal versuchen.",
                 "noResults": "Keine Studenten im Kurs gefunden für Suche:"
+            },
+            "selectOwnerForTeam": "Tutor auswählen (nach Login oder Name suchen)",
+            "ownerSearch": {
+                "queryTooShort": "Bitte mindestens 3 Zeichen eingeben.",
+                "failed": "Suche fehlgeschlagen. Bitte nochmal versuchen.",
+                "noResults": "Keine Tutoren im Kurs gefunden für Suche:"
             },
             "teamSizeNote": "Empfohlene Team-Größe:",
             "teamSizeUnit": "Studenten",

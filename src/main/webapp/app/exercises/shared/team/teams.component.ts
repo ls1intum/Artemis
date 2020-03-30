@@ -10,6 +10,7 @@ import { ButtonSize } from 'app/shared/components/button.component';
 import { Exercise } from 'app/entities/exercise.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { formatTeamAsSearchResult } from 'app/exercises/shared/team/team.utils';
+import { AccountService } from 'app/core/auth/account.service';
 
 @Component({
     selector: 'jhi-teams',
@@ -27,6 +28,7 @@ export class TeamsComponent implements OnInit, OnDestroy {
     dialogError$ = this.dialogErrorSource.asObservable();
 
     isLoading: boolean;
+    isAdmin = false;
 
     constructor(
         private route: ActivatedRoute,
@@ -35,7 +37,10 @@ export class TeamsComponent implements OnInit, OnDestroy {
         private eventManager: JhiEventManager,
         private exerciseService: ExerciseService,
         private teamService: TeamService,
-    ) {}
+        private accountService: AccountService,
+    ) {
+        this.isAdmin = this.accountService.isAdmin();
+    }
 
     ngOnInit() {
         this.loadAll();
