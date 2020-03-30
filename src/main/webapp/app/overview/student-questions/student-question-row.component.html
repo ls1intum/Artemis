@@ -64,6 +64,13 @@
             </div>
         </div>
         <div class="row mb-1" *ngFor="let questionAnswer of sortedQuestionAnswers">
+            <fa-icon
+                *ngIf="questionAnswer && questionAnswer.tutorApproved"
+                [ngbTooltip]="'artemisApp.courseOverview.exerciseDetails.faq.approvedLabel' | translate"
+                class="col"
+                container="body"
+                [icon]="'check'"
+            ></fa-icon>
             <div class="col">
                 <div *ngIf="isAnswerMode && selectedQuestionAnswer && questionAnswer && selectedQuestionAnswer.id === questionAnswer.id">
                     <div class="col-12">
@@ -100,6 +107,14 @@
                     [initialTooltip]="'artemisApp.courseOverview.exerciseDetails.faq.deleteAnswer' | translate"
                     [confirmTooltip]="'artemisApp.courseOverview.exerciseDetails.faq.confirmDeleteAnswer' | translate"
                 ></jhi-confirm-icon>
+                <fa-icon
+                    class="mr-1 clickable"
+                    *ngIf="isAtLeastTutorInCourse"
+                    [ngbTooltip]="'artemisApp.courseOverview.exerciseDetails.faq.approveAnswer' | translate"
+                    container="body"
+                    [icon]="'check'"
+                    (click)="$event.stopPropagation(); toggleAnswerTutorApproved(questionAnswer)"
+                ></fa-icon>
             </div>
         </div>
         <div class="row" *ngIf="!studentQuestion.answers || studentQuestion.answers.length === 0">

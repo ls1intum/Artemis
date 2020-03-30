@@ -35,6 +35,7 @@ export class StudentQuestionRowComponent implements OnInit, OnDestroy {
     questionAnswerText: string | null;
     studentQuestionText: string | null;
     sortedQuestionAnswers: StudentQuestionAnswer[];
+    approvedQuestionAnswers: StudentQuestionAnswer[];
 
     constructor(private studentQuestionAnswerService: StudentQuestionAnswerService, private studentQuestionService: StudentQuestionService) {}
 
@@ -48,9 +49,20 @@ export class StudentQuestionRowComponent implements OnInit, OnDestroy {
     sortQuestionAnswers(): void {
         if (!this.studentQuestion.answers) {
             this.sortedQuestionAnswers = [];
+            this.approvedQuestionAnswers = [];
             return;
         }
-        this.sortedQuestionAnswers = this.studentQuestion.answers.sort((a, b) => {
+        this.approvedQuestionAnswers = this.studentQuestion.answers
+            .filter(ans => ans.tutorApproved)
+            .sort((a, b) => {
+            const aValue = moment(a.answerDate!).valueOf();
+            const bValue = moment(b.answerDate!).valueOf();
+
+            return aValue - bValue;
+        });
+        this.sortedQuestionAnswers = this.studentQuestion.answers
+            .filter(ans => !ans.tutorApproved)
+            .sort((a, b) => {
             const aValue = moment(a.answerDate!).valueOf();
             const bValue = moment(b.answerDate!).valueOf();
 
@@ -94,6 +106,7 @@ export class StudentQuestionRowComponent implements OnInit, OnDestroy {
         studentQuestionAnswer.author = this.user;
         studentQuestionAnswer.verified = true;
         studentQuestionAnswer.question = this.studentQuestion;
+        studentQuestionAnswer.tutorApproved = false;
         studentQuestionAnswer.answerDate = moment();
         this.studentQuestionAnswerService.create(studentQuestionAnswer).subscribe((studentQuestionResponse: HttpResponse<StudentQuestionAnswer>) => {
             if (!this.studentQuestion.answers) {
@@ -119,6 +132,13 @@ export class StudentQuestionRowComponent implements OnInit, OnDestroy {
         this.studentQuestionAnswerService.delete(studentAnswer.id).subscribe((res: HttpResponse<any>) => {
             this.studentQuestion.answers = this.studentQuestion.answers.filter((el) => el.id !== studentAnswer.id);
             this.sortQuestionAnswers();
+        });
+    }
+
+    toggleAnswerTutorApproved(studentAnswer: StudentQuestionAnswer): void {
+        studentAnswer.tutorApproved = !studentAnswer.tutorApproved;
+            this.studentQuestionAnswerService.update(studentAnswer).subscribe((studentAnswerResponse: HttpResponse<StudentQuestionAnswer>) => {
+                this.sortQuestionAnswers();
         });
     }
 }
