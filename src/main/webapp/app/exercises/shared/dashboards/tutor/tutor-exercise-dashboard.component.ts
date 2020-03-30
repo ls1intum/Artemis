@@ -8,7 +8,7 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { TutorParticipationService } from 'app/exercises/shared/dashboards/tutor/tutor-participation.service';
 import { TextSubmissionService } from 'app/exercises/text/participate/text-submission.service';
 import { ExampleSubmission } from 'app/entities/example-submission.model';
-import { ArtemisMarkdown } from 'app/shared/markdown.service';
+import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { UMLModel } from '@ls1intum/apollon';
@@ -114,7 +114,7 @@ export class TutorExerciseDashboardComponent implements OnInit, AfterViewInit {
         private textSubmissionService: TextSubmissionService,
         private modelingSubmissionService: ModelingSubmissionService,
         private fileUploadSubmissionService: FileUploadSubmissionService,
-        private artemisMarkdown: ArtemisMarkdown,
+        private artemisMarkdown: ArtemisMarkdownService,
         private router: Router,
         private complaintService: ComplaintService,
         private programmingSubmissionService: ProgrammingSubmissionService,

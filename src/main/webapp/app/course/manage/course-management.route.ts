@@ -17,7 +17,7 @@ export class CourseResolve implements Resolve<Course> {
     constructor(private service: CourseManagementService) {}
 
     resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<Course> {
-        const id = route.params['id'] ? route.params['id'] : null;
+        const id = route.params['courseId'] ? route.params['courseId'] : null;
         if (id) {
             return this.service.find(id).pipe(
                 filter((response: HttpResponse<Course>) => response.ok),
@@ -30,7 +30,7 @@ export class CourseResolve implements Resolve<Course> {
 
 export const courseManagementRoute: Routes = [
     {
-        path: 'course-management',
+        path: '',
         component: CourseManagementComponent,
         data: {
             authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
@@ -39,7 +39,7 @@ export const courseManagementRoute: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
-        path: 'course-management/new',
+        path: 'new',
         component: CourseUpdateComponent,
         resolve: {
             course: CourseResolve,
@@ -51,7 +51,7 @@ export const courseManagementRoute: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
-        path: 'course-management/:id/view',
+        path: ':courseId/view',
         component: CourseDetailComponent,
         resolve: {
             course: CourseResolve,
@@ -63,7 +63,7 @@ export const courseManagementRoute: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
-        path: 'course-management/:courseId',
+        path: ':courseId/exercises',
         component: CourseExercisesOverviewComponent,
         resolve: {
             course: CourseResolve,
@@ -75,7 +75,7 @@ export const courseManagementRoute: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
-        path: 'course-management/:id/edit',
+        path: ':courseId/edit',
         component: CourseUpdateComponent,
         resolve: {
             course: CourseResolve,
@@ -87,7 +87,7 @@ export const courseManagementRoute: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
-        path: 'course-management/:id/groups/:courseGroup',
+        path: ':courseId/groups/:courseGroup',
         component: CourseGroupComponent,
         resolve: {
             course: CourseResolve,
@@ -97,5 +97,14 @@ export const courseManagementRoute: Routes = [
             pageTitle: 'artemisApp.course.detail.title',
         },
         canActivate: [UserRouteAccessService],
+    },
+];
+
+const COURSE_MANAGEMENT_ROUTES = [...courseManagementRoute];
+
+export const courseManagementState: Routes = [
+    {
+        path: '',
+        children: COURSE_MANAGEMENT_ROUTES,
     },
 ];

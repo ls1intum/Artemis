@@ -1,4 +1,4 @@
-import { ArtemisMarkdown } from 'app/shared/markdown.service';
+import { addTextAtCursor } from 'app/shared/util/markdown-util';
 import { DomainTagCommand } from 'app/shared/markdown-editor/domainCommands/domainTag.command';
 
 export class HintCommand extends DomainTagCommand {
@@ -13,7 +13,7 @@ export class HintCommand extends DomainTagCommand {
      */
     execute(): void {
         const text = '\n\t' + this.getOpeningIdentifier() + HintCommand.text;
-        ArtemisMarkdown.addTextAtCursor(text, this.aceEditorContainer);
+        addTextAtCursor(text, this.aceEditor);
     }
 
     /**

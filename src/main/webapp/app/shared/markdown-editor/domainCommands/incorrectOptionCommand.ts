@@ -1,4 +1,4 @@
-import { ArtemisMarkdown } from 'app/shared/markdown.service';
+import { addTextAtCursor } from 'app/shared/util/markdown-util';
 import { DomainTagCommand } from 'app/shared/markdown-editor/domainCommands/domainTag.command';
 
 export class IncorrectOptionCommand extends DomainTagCommand {
@@ -10,7 +10,7 @@ export class IncorrectOptionCommand extends DomainTagCommand {
      */
     execute(): void {
         const text = '\n' + this.getOpeningIdentifier() + ' Enter a wrong answer option here';
-        ArtemisMarkdown.addTextAtCursor(text, this.aceEditorContainer);
+        addTextAtCursor(text, this.aceEditor);
     }
 
     /**

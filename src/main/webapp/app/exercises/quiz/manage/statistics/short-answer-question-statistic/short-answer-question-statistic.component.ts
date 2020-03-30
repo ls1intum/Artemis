@@ -4,7 +4,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { QuizStatisticUtil } from 'app/exercises/quiz/shared/quiz-statistic-util.service';
 import { ShortAnswerQuestionUtil } from 'app/exercises/quiz/shared/short-answer-question-util.service';
-import { ArtemisMarkdown } from 'app/shared/markdown.service';
+import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { ChartOptions } from 'chart.js';
 import { createOptions, DataSet, DataSetProvider } from '../quiz-statistic/quiz-statistic.component';
 import { Subscription } from 'rxjs/Subscription';
@@ -27,7 +27,7 @@ interface BackgroundColorConfig {
 @Component({
     selector: 'jhi-short-answer-question-statistic',
     templateUrl: './short-answer-question-statistic.component.html',
-    providers: [QuizStatisticUtil, ShortAnswerQuestionUtil, ArtemisMarkdown],
+    providers: [QuizStatisticUtil, ShortAnswerQuestionUtil, ArtemisMarkdownService],
     styleUrls: ['./short-answer-question-statistic.component.scss'],
 })
 export class ShortAnswerQuestionStatisticComponent implements OnInit, OnDestroy, DataSetProvider {
@@ -76,7 +76,7 @@ export class ShortAnswerQuestionStatisticComponent implements OnInit, OnDestroy,
         private jhiWebsocketService: JhiWebsocketService,
         private quizStatisticUtil: QuizStatisticUtil,
         public shortAnswerQuestionUtil: ShortAnswerQuestionUtil,
-        private artemisMarkdown: ArtemisMarkdown,
+        private artemisMarkdown: ArtemisMarkdownService,
     ) {
         this.options = createOptions(this);
     }

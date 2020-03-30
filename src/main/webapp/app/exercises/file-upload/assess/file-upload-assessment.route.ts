@@ -6,7 +6,7 @@ import { FileUploadAssessmentDashboardComponent } from 'app/exercises/file-uploa
 
 export const routes: Routes = [
     {
-        path: 'course-management/:courseId/file-upload-exercises/:exerciseId/submissions/:submissionId/assessment',
+        path: ':courseId/file-upload-exercises/:exerciseId/submissions/:submissionId/assessment',
         component: FileUploadAssessmentComponent,
         data: {
             authorities: ['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'],
@@ -15,7 +15,7 @@ export const routes: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
-        path: 'course-management/:courseId/file-upload-exercises/:exerciseId/assessment',
+        path: ':courseId/file-upload-exercises/:exerciseId/assessment',
         component: FileUploadAssessmentDashboardComponent,
         data: {
             authorities: ['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'],
