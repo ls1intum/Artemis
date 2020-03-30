@@ -1,10 +1,13 @@
 <input
-    #ngbTypeahead
+    #instance="ngbTypeahead"
     id="owner-search-input"
     type="text"
     class="form-control"
     [placeholder]="'artemisApp.team.selectOwnerForTeam' | translate"
+    [(ngModel)]="owner"
     (selectItem)="onAutocompleteSelect($event.item)"
+    (focus)="focus$.next('')"
+    (click)="click$.next('')"
     [ngbTypeahead]="onSearch"
     [resultFormatter]="searchResultFormatter"
     [inputFormatter]="searchInputFormatter"

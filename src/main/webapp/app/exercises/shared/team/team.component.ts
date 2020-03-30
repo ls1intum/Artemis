@@ -15,7 +15,7 @@ import { AccountService } from 'app/core/auth/account.service';
 @Component({
     selector: 'jhi-team',
     templateUrl: './team.component.html',
-    styles: ['.date-tooltip { width: 120px !important }'],
+    styles: ['.date-tooltip { width: 115px !important }'],
     encapsulation: ViewEncapsulation.None,
 })
 export class TeamComponent implements OnInit {

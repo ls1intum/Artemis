@@ -28,8 +28,6 @@ export class TeamStudentSearchComponent {
     @Output() searchFailed = new EventEmitter<boolean>();
     @Output() searchNoResults = new EventEmitter<string | null>();
 
-    users: User[] = [];
-
     inputDisplayValue: string;
 
     constructor(private teamService: TeamService) {}
