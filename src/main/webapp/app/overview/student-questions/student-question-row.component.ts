@@ -31,6 +31,7 @@ export class StudentQuestionRowComponent implements OnInit, OnDestroy {
     isAnswerMode: boolean;
     isEditMode: boolean;
     isQuestionAuthor: boolean;
+    showOtherAnswers = false;
     selectedQuestionAnswer: StudentQuestionAnswer | null;
     questionAnswerText: string | null;
     studentQuestionText: string | null;

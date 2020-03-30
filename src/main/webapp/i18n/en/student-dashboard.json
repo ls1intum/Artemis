@@ -160,7 +160,9 @@
                     "deleteAnswer": "Do you want to delete your answer?",
                     "confirmDeleteAnswer": "Please confirm that you want to delete your answer!",
                     "editAnswer": "Edit answer",
-                    "approveAnswer": "Approve answer"
+                    "approveAnswer": "Approve answer",
+                    "hideAnswers": "Hide answers",
+                    "showAnswers": "Show more answers ({{count}})"
                 }
             }
         }

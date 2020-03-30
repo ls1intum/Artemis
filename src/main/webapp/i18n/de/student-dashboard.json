@@ -158,7 +158,9 @@
                     "deleteAnswer": "Möchtest du deine Antwort löschen?",
                     "confirmDeleteAnswer": "Bitte bestätige, dass du deine Antwort löschen möchtest!",
                     "editAnswer": "Antwort bearbeiten",
-                    "approveAnswer": "Antwort bestätigen"
+                    "approveAnswer": "Antwort bestätigen",
+                    "hideAnswers": "Anworten verbergen",
+                    "showAnswers": "Weitere Anworten anzeigen ({{count}})"
                 }
             }
         }
