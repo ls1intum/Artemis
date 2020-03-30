@@ -9,9 +9,9 @@
         },
         "menu": {
             "home": "Home",
-            "overview": "Overview",
+            "overview": "Course Overview",
             "courses": "Courses",
-            "course": "Course Administration",
+            "course": "Course Management",
             "jhipster-needle-menu-add-element": "JHipster will add additional menu entries here (do not translate!)",
             "entities": {
                 "main": "Entities",
@@ -187,6 +187,7 @@
             "view": "View",
             "preview": "Preview",
             "cleanup": "Cleanup",
+            "remove": "Remove",
             "archive": "Archive",
             "submit": "Submit",
             "submitTooltip": "You can submit multiple times until the exercise deadline. Your last submission will count towards your score.",
@@ -230,6 +231,9 @@
         },
         "cleanup": {
             "title": "Confirm cleanup operation"
+        },
+        "remove": {
+            "title": "Confirm remove operation"
         },
         "archive": {
             "title": "Confirm archive operation"

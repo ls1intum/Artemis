@@ -169,7 +169,7 @@ public class TextAssessmentResource extends AssessmentResource {
         // TODO: in case of automatic assessment, we might want to update the assessment engine
 
         if (result.getParticipation() != null && result.getParticipation() instanceof StudentParticipation && !authCheckService.isAtLeastInstructorForExercise(textExercise)) {
-            ((StudentParticipation) result.getParticipation()).setStudent(null);
+            ((StudentParticipation) result.getParticipation()).setParticipant(null);
         }
 
         return ResponseEntity.ok(result);

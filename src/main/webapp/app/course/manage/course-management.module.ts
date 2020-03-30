@@ -1,10 +1,7 @@
 import { NgModule } from '@angular/core';
 import { ReactiveFormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
-import { ArtemisTextExerciseModule } from 'app/exercises/text/manage/text-exercise/text-exercise.module';
-import { ArtemisModelingExerciseModule } from 'app/exercises/modeling/manage/modeling-exercise.module';
 import { ArtemisFileUploadExerciseManagementModule } from 'app/exercises/file-upload/manage/file-upload-exercise-management.module';
-
 import { CourseExerciseCardComponent } from 'app/course/manage/course-exercise-card.component';
 import { FormDateTimePickerModule } from 'app/shared/date-time-picker/date-time-picker.module';
 import { ArtemisColorSelectorModule } from 'app/shared/color-selector/color-selector.module';
@@ -15,12 +12,11 @@ import { SortByModule } from 'app/shared/pipes/sort-by.module';
 import { CourseExercisesOverviewComponent } from 'app/course/manage/course-exercises-overview.component';
 import { CourseDetailComponent } from 'app/course/manage/course-detail.component';
 import { CourseUpdateComponent } from 'app/course/manage/course-update.component';
-import { courseMangementRoute } from 'app/course/manage/course-mangement.route';
+import { courseManagementState } from 'app/course/manage/course-management.route';
 import { CourseManagementComponent } from 'app/course/manage/course-management.component';
 import { OrionModule } from 'app/shared/orion/orion.module';
 import { ArtemisProgrammingExerciseManagementModule } from 'app/exercises/programming/manage/programming-exercise-management.module';
 import { ArtemisQuizManagementModule } from 'app/exercises/quiz/manage/quiz-management.module';
-import { ArtemisProgrammingExerciseModule } from 'app/exercises/programming/shared/programming-exercise.module';
 import { ArtemisExerciseModule } from 'app/exercises/shared/exercise/exercise.module';
 import { ArtemisLectureModule } from 'app/lecture/lecture.module';
 import { ArtemisTextExerciseManagementModule } from 'app/exercises/text/manage/text-exercise-management.module';
@@ -28,13 +24,24 @@ import { ArtemisDashboardsModule } from 'app/shared/dashboards/dashboards.module
 import { ArtemisParticipationModule } from 'app/exercises/shared/participation/participation.module';
 import { ArtemisExerciseHintManagementModule } from 'app/exercises/shared/exercise-hint/manage/exercise-hint-management.module';
 import { ArtemisModelingExerciseManagementModule } from 'app/exercises/modeling/manage/modeling-exercise-management.module';
-
-const ENTITY_STATES = [...courseMangementRoute];
+import { ArtemisCourseScoresModule } from 'app/course/course-scores/course-scores.module';
+import { ArtemisExerciseScoresModule } from 'app/exercises/shared/exercise-scores/exercise-scores.module';
+import { ArtemisComplaintsForTutorModule } from 'app/complaints/complaints-for-tutor/complaints-for-tutor.module';
+import { ArtemisTextExerciseAssessmentModule } from 'app/exercises/text/assess/text-assessment.module';
+import { ArtemisFileUploadAssessmentModule } from 'app/exercises/file-upload/assess/file-upload-assessment.module';
+import { ArtemisModelingAssessmentEditorModule } from 'app/exercises/modeling/assess/modeling-assessment-editor/modeling-assessment-editor.module';
+import { CourseGroupComponent } from 'app/course/manage/course-group.component';
+import { NgxDatatableModule } from '@swimlane/ngx-datatable';
+import { ArtemisDataTableModule } from 'app/shared/data-table/data-table.module';
+import { ArtemisModelingExerciseModule } from 'app/exercises/modeling/manage/modeling-exercise.module';
+import { ArtemisTextExerciseModule } from 'app/exercises/text/manage/text-exercise/text-exercise.module';
+import { ArtemisProgrammingExerciseModule } from 'app/exercises/programming/shared/programming-exercise.module';
+import { ArtemisListOfComplaintsModule } from 'app/complaints/list-of-complaints/list-of-complaints.module';
 
 @NgModule({
     imports: [
         ArtemisSharedModule,
-        RouterModule.forChild(ENTITY_STATES),
+        RouterModule.forChild(courseManagementState),
         SortByModule,
         FormDateTimePickerModule,
         ReactiveFormsModule,
@@ -43,6 +50,8 @@ const ENTITY_STATES = [...courseMangementRoute];
         MomentModule,
         ArtemisExerciseModule,
         ArtemisLectureModule,
+        ArtemisCourseScoresModule,
+        ArtemisExerciseScoresModule,
         ArtemisProgrammingExerciseManagementModule,
         ArtemisFileUploadExerciseManagementModule,
         ArtemisQuizManagementModule,
@@ -55,7 +64,14 @@ const ENTITY_STATES = [...courseMangementRoute];
         ArtemisDashboardsModule,
         ArtemisExerciseHintManagementModule,
         ArtemisParticipationModule,
+        ArtemisComplaintsForTutorModule,
+        ArtemisListOfComplaintsModule,
+        ArtemisTextExerciseAssessmentModule,
+        ArtemisFileUploadAssessmentModule,
+        ArtemisModelingAssessmentEditorModule,
+        NgxDatatableModule,
+        ArtemisDataTableModule,
     ],
-    declarations: [CourseManagementComponent, CourseDetailComponent, CourseUpdateComponent, CourseExerciseCardComponent, CourseExercisesOverviewComponent],
+    declarations: [CourseManagementComponent, CourseDetailComponent, CourseUpdateComponent, CourseExerciseCardComponent, CourseExercisesOverviewComponent, CourseGroupComponent],
 })
 export class ArtemisCourseManagementModule {}

@@ -4,7 +4,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { QuizStatisticUtil } from 'app/exercises/quiz/shared/quiz-statistic-util.service';
 import { DragAndDropQuestionUtil } from 'app/exercises/quiz/shared/drag-and-drop-question-util.service';
-import { ArtemisMarkdown } from 'app/shared/markdown.service';
+import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { ChartOptions } from 'chart.js';
 import { createOptions, DataSet, DataSetProvider } from '../quiz-statistic/quiz-statistic.component';
 import { Subscription } from 'rxjs/Subscription';
@@ -27,7 +27,7 @@ interface BackgroundColorConfig {
 @Component({
     selector: 'jhi-drag-and-drop-question-statistic',
     templateUrl: './drag-and-drop-question-statistic.component.html',
-    providers: [QuizStatisticUtil, DragAndDropQuestionUtil, ArtemisMarkdown],
+    providers: [QuizStatisticUtil, DragAndDropQuestionUtil, ArtemisMarkdownService],
     styleUrls: ['./drag-and-drop-question-statistic.component.scss'],
     encapsulation: ViewEncapsulation.None,
 })
@@ -74,7 +74,7 @@ export class DragAndDropQuestionStatisticComponent implements OnInit, OnDestroy,
         private jhiWebsocketService: JhiWebsocketService,
         private quizStatisticUtil: QuizStatisticUtil,
         private dragAndDropQuestionUtil: DragAndDropQuestionUtil,
-        private artemisMarkdown: ArtemisMarkdown,
+        private artemisMarkdown: ArtemisMarkdownService,
     ) {
         this.options = createOptions(this);
     }

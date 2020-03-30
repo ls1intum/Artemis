@@ -42,3 +42,11 @@ export class Course implements BaseEntity {
 
     constructor() {}
 }
+
+export const enum CourseGroup {
+    STUDENTS = 'students',
+    TUTORS = 'tutors',
+    INSTRUCTORS = 'instructors',
+}
+
+export const courseGroups = [CourseGroup.STUDENTS, CourseGroup.TUTORS, CourseGroup.INSTRUCTORS];

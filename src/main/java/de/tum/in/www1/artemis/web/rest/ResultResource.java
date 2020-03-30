@@ -349,8 +349,8 @@ public class ResultResource {
 
         List<StudentParticipation> participations = participationService.findByExerciseIdWithEagerSubmissionsResultAssessor(exerciseId);
         for (StudentParticipation participation : participations) {
-            // Filter out participations without students
-            if (participation.getStudent() == null) {
+            // Filter out participations without students / teams
+            if (participation.getParticipant() == null) {
                 continue;
             }
 
@@ -553,7 +553,7 @@ public class ResultResource {
         }
 
         // Check if a result exists already for this exercise and student. If so, do nothing and just inform the instructor.
-        Optional<StudentParticipation> optionalParticipation = participationService.findOneByExerciseIdAndStudentLoginAnyStateWithEagerResults(exerciseId, studentLogin);
+        Optional<StudentParticipation> optionalParticipation = participationService.findOneByExerciseAndStudentLoginAnyStateWithEagerResults(exercise, studentLogin);
         Optional<Result> optionalResult = optionalParticipation.map(Participation::findLatestResult);
         if (optionalResult.isPresent()) {
             return ResponseEntity.badRequest()

@@ -17,7 +17,7 @@
         entitiesPerPageTranslation="artemisApp.exercise.resultsPerPage"
         showAllEntitiesTranslation="artemisApp.exercise.showAllResults"
         searchPlaceholderTranslation="artemisApp.exercise.searchForTeams"
-        [searchFields]="['name']"
+        [searchFields]="['name', 'shortName', 'students.name', 'students.login']"
         [searchTextFromEntity]="searchTextFromTeam"
         [searchResultFormatter]="searchResultFormatter"
         (entitiesSizeChange)="handleTeamsSizeChange($event)"
@@ -35,7 +35,7 @@
                 [rowClass]="settings.rowClass"
                 [scrollbarH]="settings.scrollbarH"
             >
-                <ngx-datatable-column prop="id" [minWidth]="60" [width]="80" [maxWidth]="100">
+                <ngx-datatable-column prop="id" [minWidth]="60" [width]="60" [maxWidth]="60">
                     <ng-template ngx-datatable-header-template>
                         <span class="datatable-header-cell-wrapper" (click)="controls.onSort('id')">
                             <span class="datatable-header-cell-label bold sortable" jhiTranslate="global.field.id">
@@ -45,11 +45,13 @@
                         </span>
                     </ng-template>
                     <ng-template ngx-datatable-cell-template let-value="value">
-                        <a routerLink="/team/{{ value }}">{{ value }}</a>
+                        <a [routerLink]="['/course-management', exercise?.course?.id, 'exercises', exercise?.id, 'teams', value]">
+                            {{ value }}
+                        </a>
                     </ng-template>
                 </ngx-datatable-column>
 
-                <ngx-datatable-column prop="name" [minWidth]="100" [width]="150" [maxWidth]="150">
+                <ngx-datatable-column prop="name" [minWidth]="100" [width]="120" [maxWidth]="160">
                     <ng-template ngx-datatable-header-template>
                         <span class="datatable-header-cell-wrapper" (click)="controls.onSort('name')">
                             <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.team.name.label">
@@ -63,29 +65,46 @@
                     </ng-template>
                 </ngx-datatable-column>
 
-                <ngx-datatable-column prop="" [minWidth]="500" [width]="600">
+                <ngx-datatable-column [minWidth]="100" [width]="120" [maxWidth]="160">
                     <ng-template ngx-datatable-header-template>
-                        <span class="datatable-header-cell-wrapper">
+                        <span class="datatable-header-cell-wrapper" (click)="controls.onSort('shortName')">
+                            <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.team.shortName.label">
+                                Short Name
+                            </span>
+                            <fa-icon [icon]="controls.iconForSortPropField('shortName')"></fa-icon>
+                        </span>
+                    </ng-template>
+                    <ng-template ngx-datatable-cell-template let-value="row">
+                        <a [routerLink]="['/course-management', exercise?.course?.id, 'exercises', exercise?.id, 'teams', value.id]">
+                            {{ value.shortName }}
+                        </a>
+                    </ng-template>
+                </ngx-datatable-column>
+
+                <ngx-datatable-column prop="students" [minWidth]="200" [width]="500">
+                    <ng-template ngx-datatable-header-template>
+                        <span class="datatable-header-cell-wrapper" style="cursor: text;">
                             <span class="datatable-header-cell-label bold" jhiTranslate="artemisApp.team.students">
                                 Students
                             </span>
                         </span>
                     </ng-template>
                     <ng-template ngx-datatable-cell-template let-value="value">
-                        <ul class="list-group list-group-horizontal">
-                            <li class="list-group-item student-group-item" *ngFor="let student of value.students">{{ student.firstName }} {{ student.lastName }}</li>
-                        </ul>
+                        <jhi-team-students-list [students]="value"></jhi-team-students-list>
                     </ng-template>
                 </ngx-datatable-column>
 
-                <ngx-datatable-column prop="" [minWidth]="350" [width]="350" [maxWidth]="500">
+                <ngx-datatable-column prop="" [minWidth]="220" [width]="220" [maxWidth]="220">
                     <ng-template ngx-datatable-cell-template let-value="value">
                         <div class="w-100 text-right">
-                            <jhi-team-update-button class="mr-1" [exercise]="exercise" [team]="value" (save)="onTeamUpdate($event)"></jhi-team-update-button>
-                            <button (click)="removeTeam(value)" class="btn btn-danger btn-sm">
-                                <fa-icon [icon]="'trash-alt'"></fa-icon>
-                                <span class="d-none d-md-inline ml-1" jhiTranslate="artemisApp.team.removeTeam.label">Remove team</span>
-                            </button>
+                            <jhi-team-update-button [exercise]="exercise" [team]="value" (save)="onTeamUpdate($event)"></jhi-team-update-button>
+                            <jhi-team-delete-button
+                                class="ml-1"
+                                *ngIf="exercise.isAtLeastInstructor"
+                                [exercise]="exercise"
+                                [team]="value"
+                                (delete)="onTeamDelete($event)"
+                            ></jhi-team-delete-button>
                         </div>
                     </ng-template>
                 </ngx-datatable-column>

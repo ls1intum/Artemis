@@ -57,10 +57,12 @@ public class ExerciseService {
 
     private final ComplaintResponseRepository complaintResponseRepository;
 
+    private final TeamService teamService;
+
     public ExerciseService(ExerciseRepository exerciseRepository, ParticipationService participationService, AuthorizationCheckService authCheckService,
             ProgrammingExerciseService programmingExerciseService, QuizStatisticService quizStatisticService, QuizScheduleService quizScheduleService,
             TutorParticipationRepository tutorParticipationRepository, ExampleSubmissionService exampleSubmissionService, AuditEventRepository auditEventRepository,
-            ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository) {
+            ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository, TeamService teamService) {
         this.exerciseRepository = exerciseRepository;
         this.participationService = participationService;
         this.authCheckService = authCheckService;
@@ -72,6 +74,7 @@ public class ExerciseService {
         this.auditEventRepository = auditEventRepository;
         this.complaintRepository = complaintRepository;
         this.complaintResponseRepository = complaintResponseRepository;
+        this.teamService = teamService;
     }
 
     /**
@@ -123,9 +126,11 @@ public class ExerciseService {
             exercises = exercises.stream().filter(Exercise::isVisibleToStudents).collect(Collectors.toList());
         }
 
-        // filter out questions and all statistical information about the quizPointStatistic from quizExercises (so users can't see which answer options are correct)
         if (exercises != null) {
             for (Exercise exercise : exercises) {
+                setAssignedTeamIdForExerciseAndUser(exercise, user);
+
+                // filter out questions and all statistical information about the quizPointStatistic from quizExercises (so users can't see which answer options are correct)
                 if (exercise instanceof QuizExercise) {
                     QuizExercise quizExercise = (QuizExercise) exercise;
                     quizExercise.filterSensitiveInformation();
@@ -198,14 +203,17 @@ public class ExerciseService {
     /**
      * Get one exercise with all exercise hints and all student questions + answers and with all categories
      * @param exerciseId the id of the exercise to find
+     * @param user the current user
      * @return the exercise
      */
-    public Exercise findOneWithDetailsForStudents(Long exerciseId) {
-        Optional<Exercise> exercise = exerciseRepository.findByIdWithDetailsForStudent(exerciseId);
-        if (exercise.isEmpty()) {
+    public Exercise findOneWithDetailsForStudents(Long exerciseId, User user) {
+        Optional<Exercise> optionalExercise = exerciseRepository.findByIdWithDetailsForStudent(exerciseId);
+        if (optionalExercise.isEmpty()) {
             throw new EntityNotFoundException("Exercise with exerciseId " + exerciseId + " does not exist!");
         }
-        return exercise.get();
+        Exercise exercise = optionalExercise.get();
+        setAssignedTeamIdForExerciseAndUser(exercise, user);
+        return exercise;
     }
 
     /**
@@ -348,5 +356,20 @@ public class ExerciseService {
 
         exercise.setNumberOfOpenMoreFeedbackRequests(numberOfMoreFeedbackRequests - numberOfMoreFeedbackComplaintResponses);
         exercise.setNumberOfMoreFeedbackRequests(numberOfMoreFeedbackRequests);
+    }
+
+    /**
+     * Sets the transient attribute "studentAssignedTeamId" that contains the id of the team to which the user is assigned
+     *
+     * @param exercise the exercise for which to set the attribute
+     * @param user the user for which to check to which team (or no team) he belongs to
+     */
+    private void setAssignedTeamIdForExerciseAndUser(Exercise exercise, User user) {
+        // if the exercise is not team-based, there is nothing to do here
+        if (exercise.isTeamMode()) {
+            teamService.findOneByExerciseAndUser(exercise, user).ifPresent(team -> {
+                exercise.setStudentAssignedTeamId(team.getId());
+            });
+        }
     }
 }

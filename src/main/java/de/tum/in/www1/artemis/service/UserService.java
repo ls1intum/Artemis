@@ -18,13 +18,16 @@ import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.cache.CacheManager;
 import org.springframework.context.event.EventListener;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.SortingOrder;
 import de.tum.in.www1.artemis.exception.UsernameAlreadyUsedException;
 import de.tum.in.www1.artemis.repository.AuthorityRepository;
 import de.tum.in.www1.artemis.repository.GuidedTourSettingsRepository;
@@ -38,6 +41,7 @@ import de.tum.in.www1.artemis.service.connectors.jira.JiraAuthenticationProvider
 import de.tum.in.www1.artemis.service.dto.UserDTO;
 import de.tum.in.www1.artemis.service.ldap.LdapUserDto;
 import de.tum.in.www1.artemis.service.ldap.LdapUserService;
+import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.errors.EmailAlreadyUsedException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.rest.errors.InvalidPasswordException;
@@ -559,11 +563,25 @@ public class UserService {
 
     /**
      * Get all managed users
-     * @param pageable used to find users
+     * @param userSearch used to find users
      * @return all users
      */
-    public Page<UserDTO> getAllManagedUsers(Pageable pageable) {
-        return userRepository.findAllWithGroups(pageable).map(UserDTO::new);
+    public Page<UserDTO> getAllManagedUsers(PageableSearchDTO<String> userSearch) {
+        final var searchTerm = userSearch.getSearchTerm();
+        var sorting = Sort.by(userSearch.getSortedColumn());
+        sorting = userSearch.getSortingOrder() == SortingOrder.ASCENDING ? sorting.ascending() : sorting.descending();
+        final var sorted = PageRequest.of(userSearch.getPage(), userSearch.getPageSize(), sorting);
+        return userRepository.searchByLoginOrNameWithGroups(searchTerm, sorted).map(UserDTO::new);
+    }
+
+    /**
+     * Search for all users by login or name
+     * @param pageable Pageable configuring paginated access (e.g. to limit the number of records returned)
+     * @param loginOrName Search query that will be searched for in login and name field
+     * @return all users matching search criteria
+     */
+    public Page<UserDTO> searchAllUsersByLoginOrName(Pageable pageable, String loginOrName) {
+        return userRepository.searchAllByLoginOrName(pageable, loginOrName).map(UserDTO::new);
     }
 
     /**
@@ -674,12 +692,21 @@ public class UserService {
     }
 
     /**
+     * Get students by given course
+     * @param course object
+     * @return list of students for given course
+     */
+    public List<User> getStudents(Course course) {
+        return findAllUsersInGroup(course.getStudentGroupName());
+    }
+
+    /**
      * Get tutors by given course
      * @param course object
      * @return list of tutors for given course
      */
     public List<User> getTutors(Course course) {
-        return userRepository.findAllInGroup(course.getTeachingAssistantGroupName());
+        return findAllUsersInGroup(course.getTeachingAssistantGroupName());
     }
 
     /**
@@ -689,7 +716,17 @@ public class UserService {
      * @return A list of all users that have the role of instructor in the course
      */
     public List<User> getInstructors(Course course) {
-        return userRepository.findAllInGroup(course.getInstructorGroupName());
+        return findAllUsersInGroup(course.getInstructorGroupName());
+    }
+
+    /**
+     * Get all users in a given group
+     *
+     * @param groupName The group name for which to return all members
+     * @return A list of all users that belong to the group
+     */
+    public List<User> findAllUsersInGroup(String groupName) {
+        return userRepository.findAllInGroup(groupName);
     }
 
     /**

@@ -148,48 +148,30 @@ describe('TextAssessmentComponent', () => {
         updateAssessmentAfterComplaintStub.restore();
     });
 
-    it(
-        'AssessNextButton should be visible, the method assessNextOptimal should be invoked ' + 'and the url should change after clicking on the button',
-        fakeAsync(() => {
-            activatedRouteMock.testParams = { exerciseId: 1, submissionId: 'new' };
-            getTextSubmissionForExerciseWithoutAssessmentStub.returns(throwError({ status: 404 }));
-            // set all attributes for comp
-            comp.ngOnInit();
-            tick();
+    it('AssessNextButton should be visible', fakeAsync(() => {
+        activatedRouteMock.testParams = { exerciseId: 1, submissionId: 'new' };
+        getTextSubmissionForExerciseWithoutAssessmentStub.returns(throwError({ status: 404 }));
+        // set all attributes for comp
+        comp.ngOnInit();
+        tick();
 
-            // not found state is correctly set on the component
-            expect(comp.notFound).to.be.true;
+        // not found state is correctly set on the component
+        expect(comp.notFound).to.be.true;
 
-            comp.userId = 99;
-            comp.submission = submission;
-            comp.result = result;
-            comp.isAssessor = true;
-            comp.isAtLeastInstructor = true;
-            comp.assessmentsAreValid = true;
-            const unassessedSubmission = { submissionExerciseType: 'text', id: 2279, submitted: true, type: 'MANUAL' };
+        comp.userId = 99;
+        comp.submission = submission;
+        comp.result = result;
+        comp.isAssessor = true;
+        comp.isAtLeastInstructor = true;
+        comp.assessmentsAreValid = true;
+        const unassessedSubmission = { submissionExerciseType: 'text', id: 2279, submitted: true, type: 'MANUAL' };
 
-            fixture.detectChanges();
+        fixture.detectChanges();
 
-            // check if assessNextButton is available
-            const assessNextButton = debugElement.query(By.css('#assessNextButton'));
-            expect(assessNextButton).to.exist;
-
-            // check if getTextSubmissionForExerciseWithoutAssessment() is called and works
-            getTextSubmissionForExerciseWithoutAssessmentStub.returns(of(unassessedSubmission));
-            assessNextButton.nativeElement.click();
-            expect(getTextSubmissionForExerciseWithoutAssessmentStub).to.have.been.called;
-            expect(comp.unassessedSubmission).to.be.deep.equal(unassessedSubmission);
-
-            // check if the url changes when you clicked on assessNextAssessmentButton
-            tick();
-            expect(location.path()).to.be.equal(
-                `/course-management/${comp.exercise.course?.id}/text-exercises/${comp.exercise.id}/submissions/${comp.unassessedSubmission.id}/assessment`,
-            );
-
-            fixture.destroy();
-            flush();
-        }),
-    );
+        // check if assessNextButton is available
+        const assessNextButton = debugElement.query(By.css('#assessNextButton'));
+        expect(assessNextButton).to.exist;
+    }));
 
     it('Should set the result and participation properly for new submission', fakeAsync(() => {
         activatedRouteMock.testParams = { exerciseId: 1, submissionId: 'new' };

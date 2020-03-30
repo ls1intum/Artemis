@@ -20,6 +20,10 @@ export class TeamConfigFormGroupComponent implements OnInit {
         this.config = this.exercise.teamAssignmentConfig || new TeamAssignmentConfig();
     }
 
+    get changeExerciseModeDisabled(): boolean {
+        return Boolean(this.exercise.id);
+    }
+
     onExerciseModeChange(mode: ExerciseMode) {
         if (mode === ExerciseMode.TEAM) {
             this.applyCurrentConfig();

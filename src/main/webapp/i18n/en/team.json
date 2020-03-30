@@ -10,10 +10,16 @@
             "updated": "The Team of {{ param }} was updated",
             "deleted": "The Team of {{ param }} was deleted",
             "delete": {
-                "question": "Are you sure you want to delete the team of <strong>{{ name }}</strong>?"
+                "question": "Are you sure you want to delete the team <strong>{{ title }}</strong> and its participation in the exercise? This action can NOT be undone!",
+                "typeNameToConfirm": "Please type in the short name of the team to confirm."
             },
             "detail": {
-                "title": "Team"
+                "title": "Team",
+                "students": {
+                    "login": "Login",
+                    "name": "Name",
+                    "email": "E-Mail"
+                }
             },
             "name": {
                 "label": "Name",
@@ -31,7 +37,9 @@
             "noStudentsAddedYet": "No students added yet.",
             "addStudentToTeam": "Add a student to the team (by searching for login or name)",
             "studentSearch": {
-                "failed": "Search failed. Please try again."
+                "queryTooShort": "Please enter at least 3 characters.",
+                "failed": "Search failed. Please try again.",
+                "noResults": "No students found in course for search:"
             },
             "teamSizeNote": "Recommended team size:",
             "teamSizeUnit": "students",
@@ -41,11 +49,11 @@
                 "error": "Could not create team. Please try again."
             },
             "updateTeam": {
-                "label": "Edit team",
+                "label": "Edit",
                 "error": "Could not update team. Please try again."
             },
             "removeTeam": {
-                "label": "Remove team",
+                "label": "Delete",
                 "error": "Could not remove team. Please try again."
             },
             "errors": {

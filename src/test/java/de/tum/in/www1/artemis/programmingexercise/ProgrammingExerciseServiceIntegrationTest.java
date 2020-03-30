@@ -29,7 +29,6 @@ import de.tum.in.www1.artemis.connector.bitbucket.BitbucketRequestMockProvider;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.enumeration.SortingOrder;
-import de.tum.in.www1.artemis.repository.ParticipationRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.service.ProgrammingExerciseImportService;
 import de.tum.in.www1.artemis.service.ProgrammingExerciseService;
@@ -44,10 +43,8 @@ public class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringInt
 
     private static final String BASE_RESOURCE = "/api/programming-exercises/";
 
-    private static final String DUMMY_URL = "https://te12ste@repobruegge.in.tum.de/scm/TEST2019TEST/testexercise-%s.git";
-
     @Value("${server.url}")
-    protected String ARTEMIS_BASE_URL;
+    protected String ARTEMIS_SERVER_URL;
 
     @Autowired
     ProgrammingExerciseService programmingExerciseService;
@@ -66,9 +63,6 @@ public class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringInt
 
     @Autowired
     private BambooRequestMockProvider bambooRequestMockProvider;
-
-    @Autowired
-    private ParticipationRepository participationRepository;
 
     @Autowired
     private BitbucketRequestMockProvider bitbucketRequestMockProvider;
@@ -177,9 +171,9 @@ public class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringInt
         final var solutionRepoName = (projectKey + "-" + RepositoryType.SOLUTION.getName()).toLowerCase();
         final var testsRepoName = (projectKey + "-" + RepositoryType.TESTS.getName()).toLowerCase();
         var nextParticipationId = programmingExercise.getTemplateParticipation().getId() + 1;
-        final var artemisSolutionHookPath = ARTEMIS_BASE_URL + PROGRAMMING_SUBMISSION_RESOURCE_API_PATH + nextParticipationId++;
-        final var artemisTemplateHookPath = ARTEMIS_BASE_URL + PROGRAMMING_SUBMISSION_RESOURCE_API_PATH + nextParticipationId++;
-        final var artemisTestsHookPath = ARTEMIS_BASE_URL + TEST_CASE_CHANGED_API_PATH + (programmingExercise.getId() + 1);
+        final var artemisSolutionHookPath = ARTEMIS_SERVER_URL + PROGRAMMING_SUBMISSION_RESOURCE_API_PATH + nextParticipationId++;
+        final var artemisTemplateHookPath = ARTEMIS_SERVER_URL + PROGRAMMING_SUBMISSION_RESOURCE_API_PATH + nextParticipationId++;
+        final var artemisTestsHookPath = ARTEMIS_SERVER_URL + TEST_CASE_CHANGED_API_PATH + (programmingExercise.getId() + 1);
 
         verifications.add(bambooRequestMockProvider.mockCopyBuildPlan(programmingExercise.getProjectKey(), TEMPLATE.getName(), projectKey, TEMPLATE.getName()));
         verifications.add(bambooRequestMockProvider.mockCopyBuildPlan(programmingExercise.getProjectKey(), SOLUTION.getName(), projectKey, SOLUTION.getName()));

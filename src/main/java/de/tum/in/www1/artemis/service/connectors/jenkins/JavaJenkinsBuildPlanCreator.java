@@ -47,7 +47,7 @@ public class JavaJenkinsBuildPlanCreator implements JenkinsXmlConfigBuilder {
     private String gitCredentialsKey;
 
     @Value("${server.url}")
-    private String ARTEMIS_BASE_URL;
+    private String ARTEMIS_SERVER_URL;
 
     @Value("${artemis.continuous-integration.artemis-authentication-token-key}")
     private String ARTEMIS_AUTHENTICATION_TOKEN_KEY;
@@ -60,7 +60,7 @@ public class JavaJenkinsBuildPlanCreator implements JenkinsXmlConfigBuilder {
 
     @PostConstruct
     public void init() {
-        this.artemisNotificationUrl = ARTEMIS_BASE_URL + "/api" + Constants.NEW_RESULT_RESOURCE_PATH;
+        this.artemisNotificationUrl = ARTEMIS_SERVER_URL + "/api" + Constants.NEW_RESULT_RESOURCE_PATH;
     }
 
     @Override

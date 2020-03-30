@@ -12,7 +12,7 @@ import { TextAssessmentsService } from 'app/exercises/text/assess/text-assessmen
 import Interactable from '@interactjs/core/Interactable';
 import interact from 'interactjs';
 import { WindowRef } from 'app/core/websocket/window.service';
-import { ArtemisMarkdown } from 'app/shared/markdown.service';
+import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { TranslateService } from '@ngx-translate/core';
 import { ComplaintService } from 'app/complaints/complaint.service';
 import { Subscription } from 'rxjs/Subscription';
@@ -85,7 +85,7 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
         private accountService: AccountService,
         private location: Location,
         private $window: WindowRef,
-        private artemisMarkdown: ArtemisMarkdown,
+        private artemisMarkdown: ArtemisMarkdownService,
         private translateService: TranslateService,
         private textSubmissionService: TextSubmissionService,
         private complaintService: ComplaintService,

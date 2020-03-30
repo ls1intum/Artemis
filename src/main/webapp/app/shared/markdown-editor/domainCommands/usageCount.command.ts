@@ -1,5 +1,5 @@
 import { DomainTagCommand } from 'app/shared/markdown-editor/domainCommands/domainTag.command';
-import { ArtemisMarkdown } from 'app/shared/markdown.service';
+import { addTextAtCursor } from 'app/shared/util/markdown-util';
 
 export class UsageCountCommand extends DomainTagCommand {
     public static readonly identifier = '[count]';
@@ -16,7 +16,7 @@ export class UsageCountCommand extends DomainTagCommand {
      */
     execute(): void {
         const text = '\n' + this.getOpeningIdentifier() + UsageCountCommand.text;
-        ArtemisMarkdown.addTextAtCursor(text, this.aceEditorContainer);
+        addTextAtCursor(text, this.aceEditor);
     }
 
     /**

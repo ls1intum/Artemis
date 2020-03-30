@@ -11,7 +11,7 @@
             "resultsPerPage": "{{number}} results per page",
             "showAllResults": "Show all results",
             "searchForStudents": "Search for students by login or name (comma separated)",
-            "searchForTeams": "Search for teams by name (comma separated)",
+            "searchForTeams": "Search for teams by (short) name or for students by login/name (comma separated)",
             "created": "A new Exercise is created with identifier {{ param }}",
             "updated": "An Exercise is updated with identifier {{ param }}",
             "deleted": "An Exercise is deleted with identifier {{ param }}",
@@ -48,7 +48,7 @@
             "medium": "Medium",
             "hard": "Hard",
             "mode": "Mode",
-            "modeTooltip": "The solving mode of an exercise determines whether students work alone or in teams.",
+            "modeTooltip": "The solving mode of an exercise determines whether students work alone or in teams. NOTE: This cannot be changed later on!",
             "modes": {
                 "individual": "Individual",
                 "team": "Team"
@@ -72,6 +72,8 @@
             "startError": "<strong>Uh oh! Something went wrong... Please try again to start the exercise in a few minutes.</strong>",
             "studentName": "Name",
             "studentId": "Login",
+            "teamName": "Team Name",
+            "teamShortName": "Short Name",
             "completionDate": "Completion Date",
             "result": "Result",
             "submissionCount": "Submissions",

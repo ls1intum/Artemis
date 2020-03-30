@@ -26,8 +26,8 @@ export class ProgrammingAssessmentRepoExportButtonComponent {
 
     @Input() exerciseId: number;
     @Input() participationIdList: number[];
-    @Input() studentIdList: string; // comma separated
-    @Input() singleStudentMode = false;
+    @Input() participantIdentifierList: string; // comma separated
+    @Input() singleParticipantMode = false;
 
     constructor(private modalService: NgbModal) {}
 
@@ -36,7 +36,7 @@ export class ProgrammingAssessmentRepoExportButtonComponent {
         const modalRef = this.modalService.open(ProgrammingAssessmentRepoExportDialogComponent, { keyboard: true, size: 'lg' });
         modalRef.componentInstance.exerciseId = this.exerciseId;
         modalRef.componentInstance.participationIdList = this.participationIdList;
-        modalRef.componentInstance.studentIdList = this.studentIdList;
-        modalRef.componentInstance.singleStudentMode = this.singleStudentMode;
+        modalRef.componentInstance.participantIdentifierList = this.participantIdentifierList;
+        modalRef.componentInstance.singleParticipantMode = this.singleParticipantMode;
     }
 }

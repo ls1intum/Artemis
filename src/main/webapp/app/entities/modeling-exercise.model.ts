@@ -1,6 +1,18 @@
-import { UMLDiagramType } from '@ls1intum/apollon';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { Course } from 'app/entities/course.model';
+
+/**
+ * The DiagramType enumeration. This has to be exactly the same as defined in Apollon (see diagram-type.d.ts)
+ */
+export enum UMLDiagramType {
+    ClassDiagram = 'ClassDiagram',
+    ObjectDiagram = 'ObjectDiagram',
+    ActivityDiagram = 'ActivityDiagram',
+    UseCaseDiagram = 'UseCaseDiagram',
+    CommunicationDiagram = 'CommunicationDiagram',
+    ComponentDiagram = 'ComponentDiagram',
+    DeploymentDiagram = 'DeploymentDiagram',
+}
 
 export class ModelingExercise extends Exercise {
     public diagramType: UMLDiagramType;
@@ -8,9 +20,7 @@ export class ModelingExercise extends Exercise {
     public sampleSolutionExplanation: string;
 
     // helper attributs
-
-    public automaticAssessmentSupported = false; // TODO: in the future, we will set this value to true when loading the modeling exercise
-    // from the server when the corresponding diagram type supports automatic assessment
+    public automaticAssessmentSupported = false;
 
     constructor(diagramType: UMLDiagramType, course?: Course) {
         super(ExerciseType.MODELING);
