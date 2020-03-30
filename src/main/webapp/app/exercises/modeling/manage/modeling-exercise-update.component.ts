@@ -122,7 +122,7 @@ export class ModelingExerciseUpdateComponent implements OnInit {
      */
     previousState(): void {
         if (this.modelingExercise.course) {
-            this.router.navigate(['/course-management', this.modelingExercise.course.id]);
+            this.router.navigate(['/course-management', this.modelingExercise.course.id, 'exercises']);
         } else {
             window.history.back();
         }

@@ -115,7 +115,7 @@
                             <button
                                 *ngIf="course.isAtLeastTutor"
                                 type="submit"
-                                [routerLink]="['/course-management', course.id]"
+                                [routerLink]="['/course-management', course.id, 'exercises']"
                                 class="btn btn-primary btn-sm mr-1 mb-1"
                                 id="exercises-ide-button-{{ course.id }}"
                             >

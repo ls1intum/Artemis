@@ -79,7 +79,7 @@ export class TextExerciseUpdateComponent implements OnInit {
      */
     previousState() {
         if (this.textExercise.course) {
-            this.router.navigate(['/course-management', this.textExercise.course.id]);
+            this.router.navigate(['/course-management', this.textExercise.course.id, 'exercises']);
         } else {
             window.history.back();
         }
