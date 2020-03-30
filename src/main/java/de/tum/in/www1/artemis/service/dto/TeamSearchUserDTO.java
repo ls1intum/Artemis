@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service.dto;
 
+import javax.persistence.Column;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
@@ -28,22 +29,27 @@ public class TeamSearchUserDTO {
     @Size(max = 50)
     private String lastName;
 
-    private boolean isAssignedToTeam;
+    @Size(max = 100)
+    @Column(length = 100)
+    private String email;
+
+    private Long assignedTeamId;
 
     public TeamSearchUserDTO() {
         // Empty constructor needed for Jackson.
     }
 
     public TeamSearchUserDTO(User user) {
-        this(user.getId(), user.getLogin(), user.getName(), user.getFirstName(), user.getLastName());
+        this(user.getId(), user.getLogin(), user.getName(), user.getFirstName(), user.getLastName(), user.getEmail());
     }
 
-    public TeamSearchUserDTO(Long id, String login, String name, String firstName, String lastName) {
+    public TeamSearchUserDTO(Long id, String login, String name, String firstName, String lastName, String email) {
         this.id = id;
         this.login = login;
         this.name = name;
         this.firstName = firstName;
         this.lastName = lastName;
+        this.email = email;
     }
 
     public Long getId() {
@@ -86,17 +92,25 @@ public class TeamSearchUserDTO {
         this.lastName = lastName;
     }
 
-    public boolean isAssignedToTeam() {
-        return isAssignedToTeam;
+    public String getEmail() {
+        return email;
     }
 
-    public void setIsAssignedToTeam(boolean isAssignedToTeam) {
-        this.isAssignedToTeam = isAssignedToTeam;
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    public Long getAssignedTeamId() {
+        return assignedTeamId;
+    }
+
+    public void setAssignedTeamId(Long assignedTeamId) {
+        this.assignedTeamId = assignedTeamId;
     }
 
     @Override
     public String toString() {
-        return "TeamSearchUserDTO{" + "login='" + login + '\'' + ", firstName='" + firstName + '\'' + ", lastName='" + lastName + '\'' + ", isAssignedToTeam='" + isAssignedToTeam
-                + "}";
+        return "TeamSearchUserDTO{" + "login='" + login + "', firstName='" + firstName + "', lastName='" + lastName + "', email='" + email + "', assignedTeamId='" + assignedTeamId
+                + "'}";
     }
 }

@@ -29,9 +29,13 @@ export class ComplaintInteractionsComponent implements OnInit {
 
     ngOnInit(): void {
         if (this.exercise.course) {
-            this.complaintService.getNumberOfAllowedComplaintsInCourse(this.exercise.course.id).subscribe((allowedComplaints: number) => {
-                this.numberOfAllowedComplaints = allowedComplaints;
-            });
+            if (this.exercise.course.complaintsEnabled) {
+                this.complaintService.getNumberOfAllowedComplaintsInCourse(this.exercise.course.id).subscribe((allowedComplaints: number) => {
+                    this.numberOfAllowedComplaints = allowedComplaints;
+                });
+            } else {
+                this.numberOfAllowedComplaints = 0;
+            }
 
             if (this.participation.submissions && this.participation.submissions.length > 0) {
                 if (this.result && this.result.completionDate) {

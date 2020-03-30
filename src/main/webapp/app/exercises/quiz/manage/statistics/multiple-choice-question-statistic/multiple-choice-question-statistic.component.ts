@@ -3,7 +3,7 @@ import { SafeHtml } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { QuizStatisticUtil } from 'app/exercises/quiz/shared/quiz-statistic-util.service';
-import { ArtemisMarkdown } from 'app/shared/markdown.service';
+import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { ChartOptions } from 'chart.js';
 import { createOptions, DataSet, DataSetProvider } from '../quiz-statistic/quiz-statistic.component';
 import { Subscription } from 'rxjs/Subscription';
@@ -17,7 +17,7 @@ import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 @Component({
     selector: 'jhi-multiple-choice-question-statistic',
     templateUrl: './multiple-choice-question-statistic.component.html',
-    providers: [QuizStatisticUtil, ArtemisMarkdown],
+    providers: [QuizStatisticUtil, ArtemisMarkdownService],
 })
 export class MultipleChoiceQuestionStatisticComponent implements OnInit, OnDestroy, DataSetProvider {
     quizExercise: QuizExercise;
@@ -61,7 +61,7 @@ export class MultipleChoiceQuestionStatisticComponent implements OnInit, OnDestr
         private quizExerciseService: QuizExerciseService,
         private jhiWebsocketService: JhiWebsocketService,
         private quizStatisticUtil: QuizStatisticUtil,
-        private artemisMarkdown: ArtemisMarkdown,
+        private artemisMarkdown: ArtemisMarkdownService,
     ) {
         this.options = createOptions(this);
     }

@@ -59,6 +59,9 @@
             "students": "Students",
             "tutors": "Tutors",
             "instructors": "Instructors",
+            "student": "Student",
+            "tutor": "Tutor",
+            "instructor": "Instructor",
             "onlineCourseFalse": "No",
             "onlineCourseTrue": "Yes",
             "form": {
@@ -72,7 +75,20 @@
                 "title": "Presentation Score",
                 "description": "Activate this checkbox to define the amount of presentations a student has to hold to receive the grade bonus for the course. Afterwards you can define for every created exercise, if this feature should be activated."
             },
-            "presentationScore": "Required Presentation Score for Bonus"
+            "presentationScore": "Required Presentation Score for Bonus",
+            "courseGroup": {
+                "outOf": "out of",
+                "usersPerPage": "{{number}} users per page",
+                "showAllUsers": "Show all users",
+                "searchForUsers": "Add a user to this course group by searching for login or name",
+                "searchNoResults": "No users found",
+                "login": "Login",
+                "name": "Name",
+                "email": "Email",
+                "removeFromGroup": {
+                    "modalQuestion": "Are you sure you want to remove the user with login <strong>{{ title }}</strong> from this course group?"
+                }
+            }
         }
     }
 }

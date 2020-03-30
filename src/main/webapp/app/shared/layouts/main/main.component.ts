@@ -1,7 +1,5 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRouteSnapshot, NavigationEnd, NavigationError, Router } from '@angular/router';
-import { Angulartics2 } from 'angulartics2';
-import { Angulartics2Piwik } from 'angulartics2/piwik';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
@@ -12,27 +10,14 @@ import { SentryErrorHandler } from 'app/core/sentry/sentry.error-handler';
     templateUrl: './main.component.html',
 })
 export class JhiMainComponent implements OnInit {
-    constructor(
-        private jhiLanguageHelper: JhiLanguageHelper,
-        private router: Router,
-        private profileService: ProfileService,
-        private sentryErrorHandler: SentryErrorHandler,
-        private angulartics: Angulartics2,
-        private angularticsPiwik: Angulartics2Piwik,
-    ) {
-        this.setupAnalytics().then(null);
+    constructor(private jhiLanguageHelper: JhiLanguageHelper, private router: Router, private profileService: ProfileService, private sentryErrorHandler: SentryErrorHandler) {
+        this.setupErrorHandling().then(null);
     }
 
-    private async setupAnalytics() {
+    private async setupErrorHandling() {
         this.profileService.getProfileInfo().subscribe((profileInfo: ProfileInfo) => {
+            // sentry is only activated if it was specified in the application.yml file
             this.sentryErrorHandler.initSentry(profileInfo);
-            if (profileInfo && profileInfo.inProduction && window.location.host === 'artemis.ase.in.tum.de') {
-                // only Track in Production Environment
-                this.angularticsPiwik.startTracking();
-            } else {
-                // Enable Developer Mode in all other environments
-                this.angulartics.settings.developerMode = true;
-            }
         });
     }
 

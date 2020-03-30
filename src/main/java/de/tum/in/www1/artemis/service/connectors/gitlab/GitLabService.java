@@ -7,6 +7,7 @@ import java.net.URL;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import javax.annotation.PostConstruct;
 
@@ -28,6 +29,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 
 import de.tum.in.www1.artemis.domain.Commit;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
@@ -61,9 +63,6 @@ public class GitLabService extends AbstractVersionControlService {
     @Value("${artemis.version-control.ci-token}")
     private String CI_TOKEN;
 
-    @Value("${artemis.version-control.health-api-token}")
-    private String HEALTH_API_TOKEN;
-
     private String BASE_API;
 
     private final UserService userService;
@@ -87,16 +86,20 @@ public class GitLabService extends AbstractVersionControlService {
     }
 
     @Override
-    public void configureRepository(URL repositoryUrl, String username) {
-        // Automatically created users
-        if (username.startsWith(USER_PREFIX_EDX) || username.startsWith(USER_PREFIX_U4I)) {
-            if (!userExists(username)) {
-                final var user = userService.getUserByLogin(username).get();
-                gitLabUserManagementService.importUser(user);
+    public void configureRepository(URL repositoryUrl, Set<User> users) {
+        for (User user : users) {
+            String username = user.getLogin();
+
+            // Automatically created users
+            if (username.startsWith(USER_PREFIX_EDX) || username.startsWith(USER_PREFIX_U4I)) {
+                if (!userExists(username)) {
+                    gitLabUserManagementService.importUser(user);
+                }
             }
+
+            addMemberToRepository(repositoryUrl, user);
         }
 
-        addMemberToProject(repositoryUrl, username);
         try {
             protectBranch("master", repositoryUrl);
         }
@@ -105,9 +108,10 @@ public class GitLabService extends AbstractVersionControlService {
         }
     }
 
-    private void addMemberToProject(URL repositoryUrl, String username) {
+    @Override
+    public void addMemberToRepository(URL repositoryUrl, User user) {
         final var repositoryId = getPathIDFromRepositoryURL(repositoryUrl);
-        final var userId = gitLabUserManagementService.getUserId(username);
+        final var userId = gitLabUserManagementService.getUserId(user.getLogin());
 
         try {
             gitlab.getProjectApi().addMember(repositoryId, userId, DEVELOPER);
@@ -118,8 +122,21 @@ public class GitLabService extends AbstractVersionControlService {
                 log.warn("Member already has the requested permissions! Permission stays the same");
             }
             else {
-                throw new GitLabException("Error while trying to add user to repository: " + username + " to repo " + repositoryUrl, e);
+                throw new GitLabException("Error while trying to add user to repository: " + user.getLogin() + " to repo " + repositoryUrl, e);
             }
+        }
+    }
+
+    @Override
+    public void removeMemberFromRepository(URL repositoryUrl, User user) {
+        final var repositoryId = getPathIDFromRepositoryURL(repositoryUrl);
+        final var userId = gitLabUserManagementService.getUserId(user.getLogin());
+
+        try {
+            gitlab.getProjectApi().removeMember(repositoryId, userId);
+        }
+        catch (GitLabApiException e) {
+            throw new GitLabException("Error while trying to remove user from repository: " + user.getLogin() + " from repo " + repositoryUrl, e);
         }
     }
 
@@ -334,8 +351,8 @@ public class GitLabService extends AbstractVersionControlService {
     }
 
     @Override
-    public void setRepositoryPermissionsToReadOnly(URL repositoryUrl, String projectKey, String username) {
-        setRepositoryPermission(repositoryUrl, username, GUEST);
+    public void setRepositoryPermissionsToReadOnly(URL repositoryUrl, String projectKey, Set<User> users) {
+        users.forEach(user -> setRepositoryPermission(repositoryUrl, user.getLogin(), GUEST));
     }
 
     private void setRepositoryPermission(URL repositoryUrl, String username, AccessLevel accessLevel) {
@@ -362,7 +379,7 @@ public class GitLabService extends AbstractVersionControlService {
     @Override
     public ConnectorHealth health() {
         try {
-            final var uri = Endpoints.HEALTH.buildEndpoint(GITLAB_SERVER_URL.toString()).queryParam("token", HEALTH_API_TOKEN).build().toUri();
+            final var uri = Endpoints.HEALTH.buildEndpoint(GITLAB_SERVER_URL.toString()).build().toUri();
             final var healthResponse = restTemplate.getForObject(uri, JsonNode.class);
             final var status = healthResponse.get("status").asText();
             if (!status.equals("ok")) {

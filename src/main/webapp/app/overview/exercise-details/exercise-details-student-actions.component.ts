@@ -1,6 +1,6 @@
 import { Component, HostBinding, Input, OnInit } from '@angular/core';
 import * as moment from 'moment';
-import { CourseExerciseService } from '../../course/manage/course-management.service';
+import { CourseExerciseService } from 'app/course/manage/course-management.service';
 import { Router } from '@angular/router';
 import { AlertService } from 'app/core/alert/alert.service';
 import { HttpClient } from '@angular/common/http';
@@ -14,6 +14,7 @@ import { ProgrammingExerciseStudentParticipation } from 'app/entities/participat
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { User } from 'app/core/user/user.model';
 
 @Component({
     selector: 'jhi-exercise-details-student-actions',
@@ -39,6 +40,8 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
     public repositoryPassword: string;
     public wasCopied = false;
 
+    private user: User;
+
     constructor(
         private jhiAlertService: AlertService,
         private courseExerciseService: CourseExerciseService,
@@ -50,6 +53,8 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
 
     ngOnInit(): void {
         this.accountService.identity().then((user) => {
+            this.user = user!;
+
             // Only load password if current user login starts with 'edx_' or 'u4i_'
             if (user && user.login && (user.login.startsWith('edx_') || user.login.startsWith('u4i_'))) {
                 this.getRepositoryPassword();
@@ -58,7 +63,21 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
     }
 
     repositoryUrl(participation: Participation) {
-        return (participation as ProgrammingExerciseStudentParticipation).repositoryUrl;
+        const programmingParticipation = participation as ProgrammingExerciseStudentParticipation;
+        if (programmingParticipation.team) {
+            return this.repositoryUrlForTeam(programmingParticipation);
+        }
+        return programmingParticipation.repositoryUrl;
+    }
+
+    /**
+     * The user info part of the repository url of a team participation has to be be added with the current user's login.
+     *
+     * @return repository url with username of current user inserted
+     */
+    private repositoryUrlForTeam(participation: ProgrammingExerciseStudentParticipation) {
+        // (https://)(bitbucket.ase.in.tum.de/...-team1.git)  =>  (https://)ga12abc@(bitbucket.ase.in.tum.de/...-team1.git)
+        return participation.repositoryUrl.replace(/^(\w*:\/\/)(.*)$/, `$1${this.user.login}@$2`);
     }
 
     isPracticeModeAvailable(): boolean {
@@ -91,7 +110,7 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
     startExercise() {
         if (this.exercise.type === ExerciseType.QUIZ) {
             // Start the quiz
-            return this.router.navigate(['/courses', this.courseId, 'quiz-exercises', this.exercise.id]);
+            return this.router.navigate(['/courses', this.courseId, 'quiz-exercises', this.exercise.id, 'live']);
         }
 
         this.exercise.loading = true;
@@ -147,6 +166,16 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
      */
     participationStatusWrapper(): ParticipationStatus {
         return participationStatus(this.exercise);
+    }
+
+    /**
+     * Returns the id of the team that the student is assigned to (only applicable to team-based exercises)
+     *
+     * @return {assignedTeamId}
+     */
+    get assignedTeamId(): number | undefined {
+        const participation = this.exercise.studentParticipations[0];
+        return participation ? participation.team?.id : this.exercise.studentAssignedTeamId;
     }
 
     startPractice() {

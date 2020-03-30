@@ -27,10 +27,7 @@ import de.tum.in.www1.artemis.config.GuidedTourConfiguration;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
-import de.tum.in.www1.artemis.domain.participation.Participation;
-import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
-import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
-import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.domain.participation.*;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
@@ -83,10 +80,13 @@ public class ParticipationResource {
 
     private final GuidedTourConfiguration guidedTourConfiguration;
 
+    private final TeamService teamService;
+
     public ParticipationResource(ParticipationService participationService, ProgrammingExerciseParticipationService programmingExerciseParticipationService,
             CourseService courseService, QuizExerciseService quizExerciseService, ExerciseService exerciseService, AuthorizationCheckService authCheckService,
             Optional<ContinuousIntegrationService> continuousIntegrationService, AuthorizationCheckService authorizationCheckService, TextSubmissionService textSubmissionService,
-            ResultService resultService, UserService userService, AuditEventRepository auditEventRepository, GuidedTourConfiguration guidedTourConfiguration) {
+            ResultService resultService, UserService userService, AuditEventRepository auditEventRepository, GuidedTourConfiguration guidedTourConfiguration,
+            TeamService teamService) {
         this.participationService = participationService;
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.quizExerciseService = quizExerciseService;
@@ -100,6 +100,7 @@ public class ParticipationResource {
         this.userService = userService;
         this.auditEventRepository = auditEventRepository;
         this.guidedTourConfiguration = guidedTourConfiguration;
+        this.teamService = teamService;
     }
 
     /**
@@ -116,6 +117,7 @@ public class ParticipationResource {
         log.debug("REST request to start Exercise : {}", exerciseId);
         Exercise exercise = exerciseService.findOneWithAdditionalElements(exerciseId);
         User user = userService.getUserWithGroupsAndAuthorities();
+        Participant participant = user;
         Course course = exercise.getCourse();
         if (!authCheckService.isAtLeastStudentInCourse(course, user)) {
             throw new AccessForbiddenException("You are not allowed to access this resource");
@@ -138,7 +140,13 @@ public class ParticipationResource {
             }
         }
 
-        StudentParticipation participation = participationService.startExercise(exercise, user);
+        // if this is a team-based exercise, set the participant to the team that the user belongs to
+        if (exercise.isTeamMode()) {
+            participant = teamService.findOneByExerciseAndUser(exercise, user)
+                    .orElseThrow(() -> new BadRequestAlertException("Team exercise cannot be started without assigned team.", "participation", "cannotStart"));
+        }
+
+        StudentParticipation participation = participationService.startExercise(exercise, participant);
         // remove sensitive information before sending participation to the client
         participation.getExercise().filterSensitiveInformation();
         return ResponseEntity.created(new URI("/api/participations/" + participation.getId())).body(participation);
@@ -166,7 +174,7 @@ public class ParticipationResource {
             throw new BadRequestAlertException(e.getMessage(), "exercise", "exerciseNotFound");
         }
 
-        ProgrammingExerciseStudentParticipation participation = programmingExerciseParticipationService.findStudentParticipationByExerciseIdAndStudentId(exerciseId,
+        ProgrammingExerciseStudentParticipation participation = programmingExerciseParticipationService.findStudentParticipationByExerciseAndStudentId(exercise,
                 principal.getName());
 
         User user = userService.getUserWithGroupsAndAuthorities();
@@ -186,7 +194,7 @@ public class ParticipationResource {
             if (participation != null) {
                 addLatestResultToParticipation(participation);
                 participation.getExercise().filterSensitiveInformation();
-                return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, participation.getStudent().getName()))
+                return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, participation.getParticipant().getName()))
                         .body(participation);
             }
         }
@@ -202,7 +210,7 @@ public class ParticipationResource {
 
     /**
      * This makes sure the client can display the latest result immediately after loading this participation
-     * 
+     *
      * @param participation The participation to which the latest result should get added
      */
     private void addLatestResultToParticipation(Participation participation) {
@@ -244,22 +252,22 @@ public class ParticipationResource {
         }
         StudentParticipation currentParticipation = participationService.findOneStudentParticipation(participation.getId());
         if (currentParticipation.getPresentationScore() != null && currentParticipation.getPresentationScore() > participation.getPresentationScore()) {
-            log.info(user.getLogin() + " removed the presentation score of " + participation.getStudent().getLogin() + " for exercise with participationId "
+            log.info(user.getLogin() + " removed the presentation score of " + participation.getParticipantIdentifier() + " for exercise with participationId "
                     + participation.getExercise().getId());
         }
 
         Participation result = participationService.save(participation);
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, participation.getStudent().getName())).body(result);
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, participation.getParticipant().getName())).body(result);
     }
 
     /**
-     * GET /exercise/:exerciseId/participations : get all the participations for an exercise
+     * GET /exercises/:exerciseId/participations : get all the participations for an exercise
      *
      * @param exerciseId The participationId of the exercise
      * @param withLatestResult Whether the {@link Result results} for the participations should also be fetched
      * @return A list of all participations for the exercise
      */
-    @GetMapping(value = "/exercise/{exerciseId}/participations")
+    @GetMapping(value = "/exercises/{exerciseId}/participations")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<List<StudentParticipation>> getAllParticipationsForExercise(@PathVariable Long exerciseId,
             @RequestParam(defaultValue = "false") boolean withLatestResult) {
@@ -278,7 +286,7 @@ public class ParticipationResource {
         else {
             participations = participationService.findByExerciseId(exerciseId);
         }
-        participations = participations.stream().filter(participation -> participation.getStudent() != null).collect(Collectors.toList());
+        participations = participations.stream().filter(participation -> participation.getParticipant() != null).collect(Collectors.toList());
 
         Map<Long, Integer> submissionCountMap = participationService.countSubmissionsPerParticipationByExerciseId(exerciseId);
         participations.forEach(participation -> participation.setSubmissionCount(submissionCountMap.get(participation.getId())));
@@ -305,8 +313,8 @@ public class ParticipationResource {
         List<StudentParticipation> participations = participationService.findByCourseIdWithRelevantResult(courseId);
         int resultCount = 0;
         for (StudentParticipation participation : participations) {
-            // make sure the registration number is explicitely shown in the client
-            participation.getStudent().setVisibleRegistrationNumber(participation.getStudent().getRegistrationNumber());
+            // make sure the registration number is explicitly shown in the client
+            participation.getStudents().forEach(student -> student.setVisibleRegistrationNumber(student.getRegistrationNumber()));
             // we only need participationId, title, dates and max points
             // remove unnecessary elements
             Exercise exercise = participation.getExercise();
@@ -430,7 +438,7 @@ public class ParticipationResource {
             response = participationForQuizExercise((QuizExercise) exercise, principal.getName());
         }
         else {
-            Optional<StudentParticipation> optionalParticipation = participationService.findOneByExerciseIdAndStudentLoginAnyStateWithEagerResults(exerciseId, principal.getName());
+            Optional<StudentParticipation> optionalParticipation = participationService.findOneByExerciseAndStudentLoginAnyStateWithEagerResults(exercise, principal.getName());
             if (optionalParticipation.isEmpty()) {
                 throw new ResponseStatusException(HttpStatus.FAILED_DEPENDENCY, "No participation found for " + principal.getName() + " in exercise " + exerciseId);
             }
@@ -505,7 +513,7 @@ public class ParticipationResource {
 
         checkAccessPermissionAtLeastInstructor(participation, user);
 
-        String name = participation.getStudent().getName();
+        String name = participation.getParticipant().getName();
         var logMessage = "Delete Participation " + participationId + " of exercise " + participation.getExercise().getTitle() + " for " + name + ", deleteBuildPlan: "
                 + deleteBuildPlan + ", deleteRepository: " + deleteRepository + " by " + principal.getName();
         var auditEvent = new AuditEvent(user.getLogin(), Constants.DELETE_PARTICIPATION, logMessage);
@@ -538,7 +546,7 @@ public class ParticipationResource {
         User user = userService.getUserWithGroupsAndAuthorities();
 
         // Allow all users to delete their own StudentParticipations if it's for a tutorial
-        if (user.getId().equals(participation.getStudent().getId())) {
+        if (participation.isOwnedBy(user)) {
             checkAccessPermissionAtLeastStudent(participation, user);
             if (!guidedTourConfiguration.isExerciseForTutorial(participation.getExercise())) {
                 return forbidden();
@@ -548,7 +556,7 @@ public class ParticipationResource {
             return forbidden();
         }
 
-        String name = participation.getStudent().getName();
+        String name = participation.getParticipant().getName();
         var logMessage = "Delete Participation " + participationId + " of exercise " + participation.getExercise().getTitle() + " for " + name + ", deleteBuildPlan: "
                 + deleteBuildPlan + ", deleteRepository: " + deleteRepository + " by " + principal.getName();
         var auditEvent = new AuditEvent(user.getLogin(), Constants.DELETE_PARTICIPATION, logMessage);

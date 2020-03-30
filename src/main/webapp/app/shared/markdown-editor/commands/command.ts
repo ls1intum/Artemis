@@ -1,5 +1,4 @@
 import { ElementRef } from '@angular/core';
-import { AceEditorComponent } from 'ng2-ace-editor';
 
 /**
  * abstract class for all commands - default and domain commands of Artemis
@@ -7,14 +6,13 @@ import { AceEditorComponent } from 'ng2-ace-editor';
  * domain commands: Artemis customized commands
  */
 export abstract class Command {
-    displayCommandButton: boolean;
     buttonIcon: string;
     buttonTranslationString: string;
-    protected aceEditorContainer: AceEditorComponent;
+    protected aceEditor: any;
     protected markdownWrapper: ElementRef;
 
-    public setEditor(aceEditorContainer: AceEditorComponent): void {
-        this.aceEditorContainer = aceEditorContainer;
+    public setEditor(aceEditor: any): void {
+        this.aceEditor = aceEditor;
     }
 
     public setMarkdownWrapper(ref: ElementRef) {
@@ -22,39 +20,39 @@ export abstract class Command {
     }
 
     protected getSelectedText(): string {
-        return this.aceEditorContainer.getEditor().getSelectedText();
+        return this.aceEditor.getSelectedText();
     }
 
     protected insertText(text: string) {
-        this.aceEditorContainer.getEditor().insert(text);
+        this.aceEditor.insert(text);
     }
 
     protected focus() {
-        this.aceEditorContainer.getEditor().focus();
+        this.aceEditor.focus();
     }
 
     protected getRange(): Range {
-        return this.aceEditorContainer.getEditor().selection.getRange();
+        return this.aceEditor.selection.getRange();
     }
 
     protected replace(range: Range, text: string) {
-        this.aceEditorContainer.getEditor().session.replace(range, text);
+        this.aceEditor.session.replace(range, text);
     }
 
     protected clearSelection() {
-        this.aceEditorContainer.getEditor().clearSelection();
+        this.aceEditor.clearSelection();
     }
 
     protected moveCursorTo(row: number, column: number) {
-        this.aceEditorContainer.getEditor().moveCursorTo(row, column);
+        this.aceEditor.moveCursorTo(row, column);
     }
 
     protected getCursorPosition() {
-        return this.aceEditorContainer.getEditor().getCursorPosition();
+        return this.aceEditor.getCursorPosition();
     }
 
     protected getLine(row: number) {
-        return this.aceEditorContainer.getEditor().getSession().getLine(row);
+        return this.aceEditor.getSession().getLine(row);
     }
 
     protected getCurrentLine() {
@@ -64,13 +62,13 @@ export abstract class Command {
 
     protected moveCursorToEndOfRow() {
         const cursor = this.getCursorPosition();
-        const currentLine = this.aceEditorContainer.getEditor().getSession().getLine(cursor.row);
+        const currentLine = this.aceEditor.getSession().getLine(cursor.row);
         this.clearSelection();
         this.moveCursorTo(cursor.row, currentLine.length);
     }
 
     protected addCompleter(completer: any) {
-        this.aceEditorContainer.getEditor().completers = [...(this.aceEditorContainer.getEditor().completers || []), completer];
+        this.aceEditor.completers = [...(this.aceEditor.completers || []), completer];
     }
 
     abstract execute(input?: string): void;

@@ -1,0 +1,12 @@
+# ===================================================================
+# Jenkins specific properties: this file will only be loaded during startup if the profile jenkins is active
+#
+# This configuration overrides the application.yml file.
+# ===================================================================
+
+jenkins:
+    # The following (optional) parameter allows to customize if Jenkins CSRF protection should be used (activated) within Artemis:
+    # see https://wiki.jenkins.io/display/JENKINS/Remote+access+API --> CSRF Protection
+    # The default value for this parameter is true, so if it is not specified, crumb protection will be active.
+    # If you experience problems using crumb, you can deactivate it here.
+    use-crumb: true

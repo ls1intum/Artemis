@@ -57,7 +57,7 @@ export class ParticipationService {
     findAllParticipationsByExercise(exerciseId: number, withLatestResult = false): Observable<EntityArrayResponseType> {
         const options = createRequestOption({ withLatestResult });
         return this.http
-            .get<StudentParticipation[]>(SERVER_API_URL + `api/exercise/${exerciseId}/participations`, {
+            .get<StudentParticipation[]>(SERVER_API_URL + `api/exercises/${exerciseId}/participations`, {
                 params: options,
                 observe: 'response',
             })
@@ -190,8 +190,14 @@ export class ParticipationService {
         combinedParticipation.initializationState = participations[0].initializationState;
         combinedParticipation.initializationDate = participations[0].initializationDate;
         combinedParticipation.presentationScore = participations[0].presentationScore;
-        combinedParticipation.student = participations[0].student;
         combinedParticipation.exercise = participations[0].exercise;
+
+        if (participations[0].student) {
+            combinedParticipation.student = participations[0].student;
+        }
+        if (participations[0].team) {
+            combinedParticipation.team = participations[0].team;
+        }
 
         participations.forEach((participation) => {
             if (participation.results) {

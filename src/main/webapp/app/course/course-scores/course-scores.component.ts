@@ -144,14 +144,17 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
             }
 
             // find all students by iterating through the participations
-            let student = studentsMap.get(participation.student.id!);
-            if (student == null) {
-                student = new Student(participation.student);
-                studentsMap.set(participation.student.id!, student);
-            }
-            student.participations.push(participation);
-            if (participation.presentationScore) {
-                student.presentationScore += participation.presentationScore;
+            const participationStudents = participation.student ? [participation.student] : participation.team.students;
+            for (const participationStudent of participationStudents) {
+                let student = studentsMap.get(participationStudent.id!);
+                if (student == null) {
+                    student = new Student(participationStudent);
+                    studentsMap.set(participationStudent.id!, student);
+                }
+                student.participations.push(participation);
+                if (participation.presentationScore) {
+                    student.presentationScore += participation.presentationScore;
+                }
             }
         }
 

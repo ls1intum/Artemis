@@ -12,7 +12,7 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import de.tum.in.www1.artemis.domain.participation.ParticipantInterface;
+import de.tum.in.www1.artemis.domain.participation.Participant;
 
 /**
  * A Team of students.
@@ -21,7 +21,7 @@ import de.tum.in.www1.artemis.domain.participation.ParticipantInterface;
 @Table(name = "team")
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class Team implements Serializable, ParticipantInterface {
+public class Team implements Serializable, Participant {
 
     private static final long serialVersionUID = 1L;
 
@@ -42,8 +42,9 @@ public class Team implements Serializable, ParticipantInterface {
     @JsonIgnore
     private Exercise exercise;
 
-    @ManyToMany
+    @ManyToMany(fetch = FetchType.EAGER)
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     @JoinTable(name = "team_student", joinColumns = @JoinColumn(name = "team_id", referencedColumnName = "id"), inverseJoinColumns = @JoinColumn(name = "student_id", referencedColumnName = "id"))
     private Set<User> students = new HashSet<>();
 
@@ -82,7 +83,6 @@ public class Team implements Serializable, ParticipantInterface {
         this.shortName = shortName;
     }
 
-    @JsonIgnore
     public String getParticipantIdentifier() {
         return shortName;
     }
@@ -121,6 +121,10 @@ public class Team implements Serializable, ParticipantInterface {
         return students.contains(user);
     }
 
+    public boolean hasStudentWithLogin(String login) {
+        return students.stream().anyMatch(student -> student.getLogin().equals(login));
+    }
+
     public Team students(Set<User> users) {
         this.students = users;
         return this;
@@ -138,6 +142,13 @@ public class Team implements Serializable, ParticipantInterface {
 
     public void setStudents(Set<User> users) {
         this.students = users;
+    }
+
+    public void filterSensitiveInformation() {
+        this.students.forEach(student -> {
+            student.setLangKey(null);
+            student.setLastNotificationRead(null);
+        });
     }
 
     @Override

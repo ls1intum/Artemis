@@ -141,7 +141,7 @@ public class QuizScheduleService {
             if (!participationHashMap.containsKey(quizExerciseId)) {
                 participationHashMap.put(quizExerciseId, new ConcurrentHashMap<>());
             }
-            participationHashMap.get(quizExerciseId).put(participation.getStudent().getLogin(), participation);
+            participationHashMap.get(quizExerciseId).put(participation.getParticipantIdentifier(), participation);
         }
 
     }
@@ -311,7 +311,7 @@ public class QuizScheduleService {
                     // and remove the participation from the ParticipationHashMap
                     int counter = 0;
                     for (StudentParticipation participation : participationHashMap.remove(quizExerciseId).values()) {
-                        if (participation.getStudent() == null || participation.getStudent().getLogin() == null) {
+                        if (participation.getParticipant() == null || participation.getParticipantIdentifier() == null) {
                             log.error("Participation is missing student (or student is missing username): {}", participation);
                             continue;
                         }
@@ -352,7 +352,7 @@ public class QuizScheduleService {
     }
 
     private void sendQuizResultToUser(long quizExerciseId, StudentParticipation participation) {
-        var user = participation.getStudent().getLogin();
+        var user = participation.getParticipantIdentifier();
         removeUnnecessaryObjectsBeforeSendingToClient(participation);
         // TODO: use a proper result here
         messagingTemplate.convertAndSendToUser(user, "/topic/exercise/" + quizExerciseId + "/participation", participation);
@@ -365,7 +365,7 @@ public class QuizScheduleService {
         }
         // submissions are part of results, so we do not need them twice
         participation.setSubmissions(null);
-        participation.setStudent(null);
+        participation.setParticipant(null);
         if (participation.getResults() != null && participation.getResults().size() > 0) {
             QuizSubmission quizSubmission = (QuizSubmission) participation.getResults().iterator().next().getSubmission();
             if (quizSubmission != null && quizSubmission.getSubmittedAnswers() != null) {
@@ -443,7 +443,7 @@ public class QuizScheduleService {
             // TODO: when this is set earlier for the individual quiz start of a student, we don't need to set this here anymore
             participation.setInitializationDate(quizSubmission.getSubmissionDate());
             Optional<User> user = userService.getUserByLogin(username);
-            user.ifPresent(participation::setStudent);
+            user.ifPresent(participation::setParticipant);
             // add the quizExercise to the participation
             participation.setExercise(quizExercise);
 

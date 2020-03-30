@@ -16,6 +16,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.CacheManager;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationTest;
 import de.tum.in.www1.artemis.connector.jira.JiraRequestMockProvider;
@@ -56,7 +57,7 @@ public class UserIntegrationTest extends AbstractSpringIntegrationTest {
 
     private User student;
 
-    private final int numberOfStudents = 1;
+    private final int numberOfStudents = 50;
 
     private final int numberOfTutors = 1;
 
@@ -210,8 +211,50 @@ public class UserIntegrationTest extends AbstractSpringIntegrationTest {
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     public void getUsers_asAdmin_isSuccessful() throws Exception {
-        List<User> users = request.getList("/api/users", HttpStatus.OK, User.class);
+        final var params = new LinkedMultiValueMap<String, String>();
+        params.add("page", "0");
+        params.add("pageSize", "100");
+        params.add("searchTerm", "");
+        params.add("sortingOrder", "ASCENDING");
+        params.add("sortedColumn", "id");
+        List<UserDTO> users = request.getList("/api/users", HttpStatus.OK, UserDTO.class, params);
         assertThat(users).hasSize(numberOfStudents + numberOfTutors + numberOfInstructors + 1); // +1 for admin user himself
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void searchUsers_asInstructor_isSuccessful() throws Exception {
+        final String loginOrName = "student1";
+        List<UserDTO> users = request.getList("/api/users/search?loginOrName=" + loginOrName, HttpStatus.OK, UserDTO.class);
+        assertThat(users).hasSize(11); // size([student1, student10, ... student19]) = 11
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    public void searchUsers_asAdmin_badRequest() throws Exception {
+        final String loginOrName = "ab"; // too short (needs at least 3 characters)
+        request.getList("/api/users/search?loginOrName=" + loginOrName, HttpStatus.BAD_REQUEST, UserDTO.class);
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void searchUsers_asTutor_forbidden() throws Exception {
+        final String loginOrName = "student";
+        request.getList("/api/users/search?loginOrName=" + loginOrName, HttpStatus.FORBIDDEN, UserDTO.class);
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    public void getUserViaFilter_asAdmin_isSuccessful() throws Exception {
+        final var params = new LinkedMultiValueMap<String, String>();
+        params.add("page", "0");
+        params.add("pageSize", "100");
+        params.add("searchTerm", "student1@test.de");
+        params.add("sortingOrder", "ASCENDING");
+        params.add("sortedColumn", "id");
+        List<User> users = request.getList("/api/users", HttpStatus.OK, User.class, params);
+        assertThat(users).hasSize(1);
+        assertThat(users.get(0).getEmail()).isEqualTo("student1@test.de");
     }
 
     @Test

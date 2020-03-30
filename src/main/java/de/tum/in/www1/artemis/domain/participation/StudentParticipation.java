@@ -1,10 +1,12 @@
 package de.tum.in.www1.artemis.domain.participation;
 
 import java.util.Optional;
+import java.util.Set;
 
 import javax.persistence.*;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonView;
 
 import de.tum.in.www1.artemis.domain.*;
@@ -40,47 +42,29 @@ public class StudentParticipation extends Participation {
         this.presentationScore = presentationScore;
     }
 
-    public User getStudent() {
-        return student;
+    public Optional<User> getStudent() {
+        return Optional.ofNullable(student);
     }
 
-    public Participation student(User user) {
-        this.student = user;
-        return this;
-    }
-
-    public void setStudent(User user) {
-        this.student = user;
-    }
-
-    public Team getTeam() {
-        return team;
-    }
-
-    public Participation team(Team team) {
-        this.team = team;
-        return this;
-    }
-
-    public void setTeam(Team team) {
-        this.team = team;
+    public Optional<Team> getTeam() {
+        return Optional.ofNullable(team);
     }
 
     @JsonIgnore
-    public ParticipantInterface getParticipant() {
-        return Optional.ofNullable((ParticipantInterface) student).orElse(team);
+    public Set<User> getStudents() {
+        return getStudent().map(Set::of).orElseGet(() -> team.getStudents());
     }
 
-    public Participation participant(ParticipantInterface participant) {
-        setParticipant(participant);
-        return this;
+    @JsonIgnore
+    public Participant getParticipant() {
+        return Optional.ofNullable((Participant) student).orElse(team);
     }
 
     /**
      * allows to set the participant independent whether it is a team or user
      * @param participant either a team or user
      */
-    public void setParticipant(ParticipantInterface participant) {
+    public void setParticipant(Participant participant) {
         if (participant instanceof User) {
             this.student = (User) participant;
         }
@@ -92,8 +76,18 @@ public class StudentParticipation extends Participation {
             this.team = null;
         }
         else {
-            throw new Error("Unknown ParticipantInterface type.");
+            throw new Error("Unknown participant type");
         }
+    }
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    public String getParticipantIdentifier() {
+        return Optional.ofNullable(getParticipant()).map(Participant::getParticipantIdentifier).orElse(null);
+    }
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    public String getParticipantName() {
+        return Optional.ofNullable(getParticipant()).map(Participant::getName).orElse(null);
     }
 
     public Exercise getExercise() {
@@ -117,9 +111,18 @@ public class StudentParticipation extends Participation {
         setParticipant(null);
     }
 
+    public boolean isOwnedBy(String userLogin) {
+        return getStudent().map(student -> student.getLogin().equals(userLogin)).orElseGet(() -> team.hasStudentWithLogin(userLogin));
+    }
+
+    public boolean isOwnedBy(User user) {
+        return isOwnedBy(user.getLogin());
+    }
+
     @Override
     public String toString() {
-        return "StudentParticipation{" + "id=" + getId() + ", presentationScore=" + presentationScore + ", student=" + student + ", team=" + team + "}";
+        String participantString = getStudent().map(student -> "student=" + student).orElse("team=" + team);
+        return "StudentParticipation{" + "id=" + getId() + ", presentationScore=" + presentationScore + ", " + participantString + "}";
     }
 
     @Override

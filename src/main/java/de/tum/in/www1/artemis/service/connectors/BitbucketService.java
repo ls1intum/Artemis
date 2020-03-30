@@ -79,34 +79,47 @@ public class BitbucketService extends AbstractVersionControlService {
     }
 
     @Override
-    public void configureRepository(URL repositoryUrl, String username) {
-        if (username.startsWith(USER_PREFIX_EDX) || username.startsWith((USER_PREFIX_U4I))) {
-            // It is an automatically created user
+    public void configureRepository(URL repositoryUrl, Set<User> users) {
+        for (User user : users) {
+            String username = user.getLogin();
 
-            User user = userService.getUserWithGroupsByLogin(username).get();
+            if (username.startsWith(USER_PREFIX_EDX) || username.startsWith((USER_PREFIX_U4I))) {
+                // It is an automatically created user
 
-            if (!userExists(username)) {
-                log.debug("Bitbucket user {} does not exist yet", username);
-                String displayName = (user.getFirstName() + " " + user.getLastName()).trim();
-                createUser(username, userService.decryptPasswordByLogin(username).get(), user.getEmail(), displayName);
+                if (!userExists(username)) {
+                    log.debug("Bitbucket user {} does not exist yet", username);
+                    String displayName = (user.getFirstName() + " " + user.getLastName()).trim();
+                    createUser(username, userService.decryptPasswordByLogin(username).get(), user.getEmail(), displayName);
 
-                try {
-                    addUserToGroups(username, user.getGroups());
+                    try {
+                        addUserToGroups(username, user.getGroups());
+                    }
+                    catch (BitbucketException e) {
+                        /*
+                         * This might throw exceptions, for example if the group does not exist on Bitbucket. We can safely ignore them.
+                         */
+                    }
                 }
-                catch (BitbucketException e) {
-                    /*
-                     * This might throw exceptions, for example if the group does not exist on Bitbucket. We can safely ignore them.
-                     */
+                else {
+                    log.debug("Bitbucket user {} already exists", username);
                 }
-            }
-            else {
-                log.debug("Bitbucket user {} already exists", username);
+
             }
 
+            addMemberToRepository(repositoryUrl, user);
         }
 
-        giveWritePermission(getProjectKeyFromUrl(repositoryUrl), getRepositorySlugFromUrl(repositoryUrl), username);
         protectBranches(getProjectKeyFromUrl(repositoryUrl), getRepositorySlugFromUrl(repositoryUrl));
+    }
+
+    @Override
+    public void addMemberToRepository(URL repositoryUrl, User user) {
+        giveWritePermission(getProjectKeyFromUrl(repositoryUrl), getRepositorySlugFromUrl(repositoryUrl), user.getLogin());
+    }
+
+    @Override
+    public void removeMemberFromRepository(URL repositoryUrl, User user) {
+        removeStudentRepositoryAccess(repositoryUrl, getProjectKeyFromUrl(repositoryUrl), user.getLogin());
     }
 
     /**
@@ -451,15 +464,23 @@ public class BitbucketService extends AbstractVersionControlService {
     }
 
     @Override
-    public void setRepositoryPermissionsToReadOnly(URL repositoryUrl, String projectKey, String username) throws BitbucketException {
-        setStudentRepositoryPermission(repositoryUrl, projectKey, username, VersionControlRepositoryPermission.READ_ONLY);
+    public void setRepositoryPermissionsToReadOnly(URL repositoryUrl, String projectKey, Set<User> users) throws BitbucketException {
+        users.forEach(user -> setStudentRepositoryPermission(repositoryUrl, projectKey, user.getLogin(), VersionControlRepositoryPermission.READ_ONLY));
     }
 
+    /**
+     * Set the permission of a student for a repository
+     *
+     * @param repositoryUrl         The complete repository-url (including protocol, host and the complete path)
+     * @param projectKey            The project key of the repository's project.
+     * @param username              The username of the user whom to assign a permission level
+     * @param repositoryPermission  Repository permission to set for the user (e.g. READ_ONLY, WRITE)
+     */
     private void setStudentRepositoryPermission(URL repositoryUrl, String projectKey, String username, VersionControlRepositoryPermission repositoryPermission)
             throws BitbucketException {
         String permissionString = repositoryPermission == VersionControlRepositoryPermission.READ_ONLY ? "READ" : "WRITE";
         String repositorySlug = getRepositoryName(repositoryUrl);
-        String baseUrl = BITBUCKET_SERVER_URL + "/rest/api/1.0/projects/" + projectKey + "/repos/" + repositorySlug + "/permissions/users?name=";// NAME&PERMISSION
+        String baseUrl = BITBUCKET_SERVER_URL + "/rest/api/1.0/projects/" + projectKey + "/repos/" + repositorySlug + "/permissions/users?name="; // NAME&PERMISSION
         HttpHeaders headers = HeaderUtil.createAuthorization(BITBUCKET_USER, BITBUCKET_PASSWORD);
         HttpEntity<?> entity = new HttpEntity<>(headers);
         String url = baseUrl + username + "&permission=REPO_" + permissionString;
@@ -469,6 +490,28 @@ public class BitbucketService extends AbstractVersionControlService {
         catch (Exception e) {
             log.error("Could not give " + repositoryPermission + " permissions using " + url, e);
             throw new BitbucketException("Error while giving repository permissions", e);
+        }
+    }
+
+    /**
+     * Remove all permissions of a student for a repository
+     *
+     * @param repositoryUrl  The complete repository-url (including protocol, host and the complete path)
+     * @param projectKey     The project key of the repository's project.
+     * @param username       The username of the user whom to remove access
+     */
+    private void removeStudentRepositoryAccess(URL repositoryUrl, String projectKey, String username) throws BitbucketException {
+        String repositorySlug = getRepositoryName(repositoryUrl);
+        String baseUrl = BITBUCKET_SERVER_URL + "/rest/api/1.0/projects/" + projectKey + "/repos/" + repositorySlug + "/permissions/users?name="; // NAME
+        HttpHeaders headers = HeaderUtil.createAuthorization(BITBUCKET_USER, BITBUCKET_PASSWORD);
+        HttpEntity<?> entity = new HttpEntity<>(headers);
+        String url = baseUrl + username;
+        try {
+            restTemplate.exchange(url, HttpMethod.DELETE, entity, Map.class);
+        }
+        catch (Exception e) {
+            log.error("Could not remove repository access using " + url, e);
+            throw new BitbucketException("Error while removing repository access", e);
         }
     }
 

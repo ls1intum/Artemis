@@ -8,7 +8,7 @@ import 'brace/mode/latex';
 import 'brace/ext/language_tools';
 import { Interactable } from '@interactjs/core/Interactable';
 import interact from 'interactjs';
-import { ArtemisMarkdown } from 'app/shared/markdown.service';
+import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { ColorSelectorComponent } from 'app/shared/color-selector/color-selector.component';
 import { DomainTagCommand } from './domainCommands/domainTag.command';
 import { escapeStringForUseInRegex } from 'app/shared/util/global.utils';
@@ -54,7 +54,7 @@ const getAceMode = (mode: EditorMode) => {
 
 @Component({
     selector: 'jhi-markdown-editor',
-    providers: [ArtemisMarkdown],
+    providers: [ArtemisMarkdownService],
     templateUrl: './markdown-editor.component.html',
     styleUrls: ['./markdown-editor.component.scss'],
     encapsulation: ViewEncapsulation.None,
@@ -141,7 +141,7 @@ export class MarkdownEditorComponent implements AfterViewInit {
     resizableMinHeight = MarkdownEditorHeight.SMALL;
     interactResizable: Interactable;
 
-    constructor(private artemisMarkdown: ArtemisMarkdown, private $window: WindowRef) {}
+    constructor(private artemisMarkdown: ArtemisMarkdownService, private $window: WindowRef) {}
 
     /** {boolean} true when the plane html view is needed, false when the preview content is needed from the parent */
     get showDefaultPreview(): boolean {
@@ -170,7 +170,7 @@ export class MarkdownEditorComponent implements AfterViewInit {
 
     /**
      * @function removeCommand
-     * @param typeof Command
+     * @param classRef Command
      * @desc customize the user interface of the markdown editor by removing a command
      */
     removeCommand(classRef: typeof Command) {
@@ -187,12 +187,12 @@ export class MarkdownEditorComponent implements AfterViewInit {
 
         if (this.domainCommands == null || this.domainCommands.length === 0) {
             [...this.defaultCommands, ...this.colorCommands, ...(this.headerCommands || []), ...this.metaCommands].forEach((command) => {
-                command.setEditor(this.aceEditorContainer);
+                command.setEditor(this.aceEditorContainer.getEditor());
                 command.setMarkdownWrapper(this.wrapper);
             });
         } else {
             [...this.defaultCommands, ...this.domainCommands, ...this.colorCommands, ...(this.headerCommands || []), ...this.metaCommands].forEach((command) => {
-                command.setEditor(this.aceEditorContainer);
+                command.setEditor(this.aceEditorContainer.getEditor());
                 command.setMarkdownWrapper(this.wrapper);
             });
         }
