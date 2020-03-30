@@ -57,21 +57,21 @@ export class StudentQuestionRowComponent implements OnInit, OnDestroy {
             return;
         }
         this.approvedQuestionAnswers = this.studentQuestion.answers
-            .filter(ans => ans.tutorApproved)
+            .filter((ans) => ans.tutorApproved)
             .sort((a, b) => {
-            const aValue = moment(a.answerDate!).valueOf();
-            const bValue = moment(b.answerDate!).valueOf();
+                const aValue = moment(a.answerDate!).valueOf();
+                const bValue = moment(b.answerDate!).valueOf();
 
-            return aValue - bValue;
-        });
+                return aValue - bValue;
+            });
         this.sortedQuestionAnswers = this.studentQuestion.answers
-            .filter(ans => !ans.tutorApproved)
+            .filter((ans) => !ans.tutorApproved)
             .sort((a, b) => {
-            const aValue = moment(a.answerDate!).valueOf();
-            const bValue = moment(b.answerDate!).valueOf();
+                const aValue = moment(a.answerDate!).valueOf();
+                const bValue = moment(b.answerDate!).valueOf();
 
-            return aValue - bValue;
-        });
+                return aValue - bValue;
+            });
     }
 
     ngOnDestroy(): void {}
@@ -161,8 +161,8 @@ export class StudentQuestionRowComponent implements OnInit, OnDestroy {
      */
     toggleAnswerTutorApproved(studentAnswer: StudentQuestionAnswer): void {
         studentAnswer.tutorApproved = !studentAnswer.tutorApproved;
-            this.studentQuestionAnswerService.update(studentAnswer).subscribe((studentAnswerResponse: HttpResponse<StudentQuestionAnswer>) => {
-                this.sortQuestionAnswers();
+        this.studentQuestionAnswerService.update(studentAnswer).subscribe((studentAnswerResponse: HttpResponse<StudentQuestionAnswer>) => {
+            this.sortQuestionAnswers();
         });
     }
 }

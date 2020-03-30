@@ -84,7 +84,9 @@
             </div>
             <div
                 class="col-auto"
-                *ngIf="isAtLeastTutorInCourse || (approvedQuestionAnswer.author.id === user.id && (!selectedQuestionAnswer || selectedQuestionAnswer.id !== approvedQuestionAnswer.id))"
+                *ngIf="
+                    isAtLeastTutorInCourse || (approvedQuestionAnswer.author.id === user.id && (!selectedQuestionAnswer || selectedQuestionAnswer.id !== approvedQuestionAnswer.id))
+                "
             >
                 <fa-icon
                     class="mr-1 clickable"
@@ -110,9 +112,15 @@
                 ></fa-icon>
             </div>
         </div>
-        <div class="row mb-1" *ngIf="approvedQuestionAnswers.length !== 0 && sortedQuestionAnswers.length !== 0 &&!showOtherAnswers" (click)="showOtherAnswers = !showOtherAnswers">
+        <div
+            class="row mb-1"
+            *ngIf="approvedQuestionAnswers.length !== 0 && sortedQuestionAnswers.length !== 0 && !showOtherAnswers"
+            (click)="showOtherAnswers = !showOtherAnswers"
+        >
             <div class="col overflow-parent">
-                <div class="overflow-ellipsis question-subtitle">{{ 'artemisApp.courseOverview.exerciseDetails.faq.showAnswers' | translate: { count: sortedQuestionAnswers.length } }}</div>
+                <div class="overflow-ellipsis question-subtitle">
+                    {{ 'artemisApp.courseOverview.exerciseDetails.faq.showAnswers' | translate: { count: sortedQuestionAnswers.length } }}
+                </div>
             </div>
             <div class="col-auto">
                 <fa-icon [icon]="'angle-down'"></fa-icon>
@@ -139,7 +147,9 @@
                             </div>
                         </div>
                         <div class="col-12 d-flex justify-content-between mb-2">
-                            <button class="btn btn-outline-primary" (click)="toggleAnswerMode(null)">{{ 'artemisApp.courseOverview.exerciseDetails.faq.cancel' | translate }}</button>
+                            <button class="btn btn-outline-primary" (click)="toggleAnswerMode(null)">
+                                {{ 'artemisApp.courseOverview.exerciseDetails.faq.cancel' | translate }}
+                            </button>
                             <button class="btn btn-primary" (click)="saveAnswer()">{{ 'artemisApp.courseOverview.exerciseDetails.faq.saveAnswer' | translate }}</button>
                         </div>
                     </div>
