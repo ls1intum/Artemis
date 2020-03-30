@@ -42,12 +42,12 @@ export class AssessmentDetailComponent {
     public get sanitizedText(): string {
         return sanitize(this.text);
     }
-    allowDrop(ev: any) {
-        ev.preventDefault();
+    allowDrop(event: DragEvent) {
+        event.preventDefault();
     }
-    drop(ev: any) {
-        ev.preventDefault();
-        const data = ev.dataTransfer.getData('text');
+    drop(event: any) {
+        event.preventDefault();
+        const data = event.dataTransfer.getData('text');
         const instruction = JSON.parse(data);
         const credits = instruction.credits;
         const feedback = instruction.feedback;
