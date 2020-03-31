@@ -67,7 +67,7 @@ export class ProgrammingExerciseTriggerAllButtonComponent implements OnInit {
     private subscribeBuildRunUpdates() {
         this.programmingBuildRunService
             .getBuildRunUpdates(this.exercise.id)
-            .pipe(tap(buildRunState => (this.isTriggeringBuildAll = buildRunState === BuildRunState.RUNNING)))
+            .pipe(tap((buildRunState) => (this.isTriggeringBuildAll = buildRunState === BuildRunState.RUNNING)))
             .subscribe();
     }
 }

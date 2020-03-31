@@ -10,16 +10,16 @@ import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.actuate.audit.AuditEvent;
+import org.springframework.boot.actuate.audit.AuditEventRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
-import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.Exercise;
-import de.tum.in.www1.artemis.domain.Team;
-import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.config.Constants;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.repository.TeamRepository;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.dto.TeamSearchUserDTO;
@@ -48,18 +48,24 @@ public class TeamResource {
 
     private final ExerciseService exerciseService;
 
-    private final AuthorizationCheckService authCheckService;
-
     private final UserService userService;
 
+    private final AuthorizationCheckService authCheckService;
+
+    private final ParticipationService participationService;
+
+    private final AuditEventRepository auditEventRepository;
+
     public TeamResource(TeamRepository teamRepository, TeamService teamService, CourseService courseService, ExerciseService exerciseService, UserService userService,
-            AuthorizationCheckService authCheckService) {
+            AuthorizationCheckService authCheckService, ParticipationService participationService, AuditEventRepository auditEventRepository) {
         this.teamRepository = teamRepository;
         this.teamService = teamService;
         this.courseService = courseService;
         this.exerciseService = exerciseService;
         this.userService = userService;
         this.authCheckService = authCheckService;
+        this.participationService = participationService;
+        this.auditEventRepository = auditEventRepository;
     }
 
     /**
@@ -77,15 +83,13 @@ public class TeamResource {
         if (team.getId() != null) {
             throw new BadRequestAlertException("A new team cannot already have an ID", ENTITY_NAME, "idexists");
         }
-        if (team.getExercise() != null && !team.getExercise().getId().equals(exerciseId)) {
-            throw new BadRequestAlertException("The team does not belong to the specified exercise id.", ENTITY_NAME, "wrongExerciseId");
-        }
         User user = userService.getUserWithGroupsAndAuthorities();
         Exercise exercise = exerciseService.findOne(exerciseId);
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user)) {
             return forbidden();
         }
         Team result = teamService.save(exercise, team);
+        result.filterSensitiveInformation();
         return ResponseEntity.created(new URI("/api/teams/" + result.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);
     }
@@ -107,15 +111,15 @@ public class TeamResource {
         if (team.getId() == null) {
             throw new BadRequestAlertException("Invalid id", ENTITY_NAME, "idnull");
         }
-        if (team.getExercise() != null && !team.getExercise().getId().equals(exerciseId)) {
-            throw new BadRequestAlertException("The team does not belong to the specified exercise id.", ENTITY_NAME, "wrongExerciseId");
-        }
         if (!team.getId().equals(id)) {
             throw new BadRequestAlertException("The team has an incorrect id.", ENTITY_NAME, "wrongId");
         }
         Optional<Team> existingTeam = teamRepository.findById(id);
         if (existingTeam.isEmpty()) {
             return ResponseEntity.notFound().build();
+        }
+        if (!existingTeam.get().getExercise().getId().equals(exerciseId)) {
+            throw new BadRequestAlertException("The team does not belong to the specified exercise id.", ENTITY_NAME, "wrongExerciseId");
         }
         if (!team.getShortName().equals(existingTeam.get().getShortName())) {
             return forbidden(ENTITY_NAME, "shortNameChangeForbidden", "The team's short name cannot be changed after the team has been created.");
@@ -125,7 +129,12 @@ public class TeamResource {
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user)) {
             return forbidden();
         }
+        // For programming exercise teams with existing participation, the repository access needs to be updated according to the new team member set
+        if (exercise instanceof ProgrammingExercise) {
+            teamService.updateRepositoryMembersIfNeeded(exerciseId, existingTeam.get(), team);
+        }
         Team result = teamService.save(exercise, team);
+        result.filterSensitiveInformation();
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, team.getId().toString())).body(result);
     }
 
@@ -153,6 +162,7 @@ public class TeamResource {
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user) && !team.hasStudent(user)) {
             return forbidden();
         }
+        team.filterSensitiveInformation();
         return ResponseEntity.ok().body(team);
     }
 
@@ -171,7 +181,9 @@ public class TeamResource {
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user)) {
             return forbidden();
         }
-        return ResponseEntity.ok().body(teamRepository.findAllByExerciseIdWithEagerStudents(exerciseId));
+        List<Team> teams = teamRepository.findAllByExerciseIdWithEagerStudents(exerciseId);
+        teams.forEach(Team::filterSensitiveInformation);
+        return ResponseEntity.ok().body(teams);
     }
 
     /**
@@ -182,10 +194,9 @@ public class TeamResource {
      * @return the ResponseEntity with status 200 (OK)
      */
     @DeleteMapping("/exercises/{exerciseId}/teams/{id}")
-    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Void> deleteTeam(@PathVariable long exerciseId, @PathVariable long id) {
-        log.debug("REST request to delete Team : {}", id);
-        // TODO: Martin Wauligmann - Add audit in db and log info (see delete participation)
+        log.info("REST request to delete Team with id {} in exercise with id {}", id, exerciseId);
         User user = userService.getUserWithGroupsAndAuthorities();
         Optional<Team> optionalTeam = teamRepository.findById(id);
         if (optionalTeam.isEmpty()) {
@@ -196,9 +207,15 @@ public class TeamResource {
             throw new BadRequestAlertException("The team does not belong to the specified exercise id.", ENTITY_NAME, "wrongExerciseId");
         }
         Exercise exercise = exerciseService.findOne(exerciseId);
-        if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user)) {
+        if (!authCheckService.isAtLeastInstructorForExercise(exercise, user)) {
             return forbidden();
         }
+        // Create audit event for team delete action
+        var logMessage = "Delete Team with id " + id + " in exercise with id " + exerciseId;
+        var auditEvent = new AuditEvent(user.getLogin(), Constants.DELETE_TEAM, logMessage);
+        auditEventRepository.add(auditEvent);
+        // Delete all participations of the team first and then the team itself
+        participationService.deleteAllByTeamId(id, false, false);
         teamRepository.delete(team);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, Long.toString(id))).build();
     }

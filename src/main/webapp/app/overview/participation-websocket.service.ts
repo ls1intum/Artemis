@@ -32,7 +32,7 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
 
     public resetLocalCache() {
         const participations = this.getAllParticipations();
-        participations.forEach(participation => {
+        participations.forEach((participation) => {
             this.removeParticipation(participation.id, participation.exercise.id);
         });
         this.cachedParticipations = new Map<number, StudentParticipation>();
@@ -58,7 +58,8 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
      */
     private notifyResultSubscribers = (result: Result) => {
         const resultObservable = this.resultObservables.get(result.participation!.id);
-        // TODO: We never convert the date strings of the result (e.g. completionDate) to a Moment object - this could be an issue in some parts of app when a formatted date is needed.
+        // TODO: We never convert the date strings of the result (e.g. completionDate) to a Moment object
+        //  this could be an issue in some parts of app when a formatted date is needed.
         if (!resultObservable) {
             this.resultObservables.set(result.participation!.id, new BehaviorSubject(result));
         } else {
@@ -113,7 +114,7 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
      * @return the cached student participation for the exercise or null
      */
     public getParticipationForExercise(exerciseId: number): StudentParticipation | null {
-        const participationsForExercise = [...this.cachedParticipations.values()].filter(participation => {
+        const participationsForExercise = [...this.cachedParticipations.values()].filter((participation) => {
             return participation.exercise.id === exerciseId;
         });
         if (participationsForExercise && participationsForExercise.length === 1) {

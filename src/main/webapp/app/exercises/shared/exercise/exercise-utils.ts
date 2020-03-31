@@ -50,6 +50,11 @@ export const hasStudentParticipations = (exercise: Exercise) => {
  * @return {ParticipationStatus}
  */
 export const participationStatus = (exercise: Exercise): ParticipationStatus => {
+    // For team exercises check whether the student has been assigned to a team yet
+    if (exercise.teamMode && !exercise.studentAssignedTeamId && !hasStudentParticipations(exercise)) {
+        return ParticipationStatus.NO_TEAM_ASSIGNED;
+    }
+
     // Evaluate the participation status for quiz exercises.
     if (exercise.type === ExerciseType.QUIZ) {
         return participationStatusForQuizExercise(exercise);
@@ -127,7 +132,8 @@ const participationStatusForQuizExercise = (exercise: Exercise): ParticipationSt
 const participationStatusForModelingTextFileUploadExercise = (exercise: Exercise): ParticipationStatus => {
     const participation = exercise.studentParticipations[0];
 
-    // An exercise is active (EXERCISE_ACTIVE) if it is initialized and has not passed its due date. The more detailed evaluation of active exercises takes place in the result component.
+    // An exercise is active (EXERCISE_ACTIVE) if it is initialized and has not passed its due date.
+    // A more detailed evaluation of active exercises takes place in the result component.
     // An exercise was missed (EXERCISE_MISSED) if it is initialized and has passed its due date (due date lies in the past).
     if (participation.initializationState === InitializationState.INITIALIZED) {
         return hasExerciseDueDatePassed(exercise) ? ParticipationStatus.EXERCISE_MISSED : ParticipationStatus.EXERCISE_ACTIVE;

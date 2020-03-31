@@ -49,11 +49,11 @@ export class ExercisePopupService {
         modalRef.componentInstance.exercise = exercise;
         modalRef.componentInstance.ltiConfiguration = ltiConfiguration;
         modalRef.result.then(
-            result => {
+            (result) => {
                 this.router.navigate([{ outlets: { popup: null } }], { replaceUrl: true, queryParamsHandling: 'merge' });
                 this.ngbModalRef = null;
             },
-            reason => {
+            (reason) => {
                 this.router.navigate([{ outlets: { popup: null } }], { replaceUrl: true, queryParamsHandling: 'merge' });
                 this.ngbModalRef = null;
             },

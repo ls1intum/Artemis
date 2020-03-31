@@ -1,6 +1,6 @@
 import { AfterViewInit, Component, EventEmitter, Input, OnChanges, OnInit, Output, QueryList, SimpleChanges, ViewChild, ViewChildren } from '@angular/core';
 import { AceEditorComponent } from 'ng2-ace-editor';
-import { ArtemisMarkdown } from 'app/shared/markdown.service';
+import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { AnswerOption } from 'app/entities/quiz/answer-option.model';
 import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-question.model';
 
@@ -8,7 +8,7 @@ import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-questi
     selector: 'jhi-re-evaluate-multiple-choice-question',
     templateUrl: './re-evaluate-multiple-choice-question.component.html',
     styleUrls: ['./re-evaluate-multiple-choice-question.component.scss', '../../../shared/quiz.scss'],
-    providers: [ArtemisMarkdown],
+    providers: [ArtemisMarkdownService],
 })
 export class ReEvaluateMultipleChoiceQuestionComponent implements OnInit, AfterViewInit, OnChanges {
     @ViewChild('questionEditor', { static: false })
@@ -39,7 +39,7 @@ export class ReEvaluateMultipleChoiceQuestionComponent implements OnInit, AfterV
     // Create Backup Question for resets
     backupQuestion: MultipleChoiceQuestion;
 
-    constructor(private artemisMarkdown: ArtemisMarkdown) {}
+    constructor(private artemisMarkdown: ArtemisMarkdownService) {}
 
     ngOnInit(): void {}
 
@@ -90,11 +90,11 @@ export class ReEvaluateMultipleChoiceQuestionComponent implements OnInit, AfterV
         /** Array with all answer option Ace Editors
          *  Note: we filter out the question Editor (identified by his width)
          **/
-        const answerEditors = this.aceEditorComponents.toArray().filter(editor => editor.style.indexOf('width:90%') === -1);
+        const answerEditors = this.aceEditorComponents.toArray().filter((editor) => editor.style.indexOf('width:90%') === -1);
 
         this.question.answerOptions!.forEach((answer, index) => {
             requestAnimationFrame(
-                function() {
+                function () {
                     answerEditors[index].setTheme('chrome');
                     answerEditors[index].getEditor().renderer.setShowGutter(false);
                     answerEditors[index].getEditor().renderer.setPadding(10);
@@ -247,7 +247,7 @@ export class ReEvaluateMultipleChoiceQuestionComponent implements OnInit, AfterV
      */
     resetAnswer(answer: AnswerOption) {
         // Find correct answer if they have another order
-        const backupAnswer = this.backupQuestion.answerOptions!.find(answerBackup => answer.id === answerBackup.id)!;
+        const backupAnswer = this.backupQuestion.answerOptions!.find((answerBackup) => answer.id === answerBackup.id)!;
         // Find current index of our AnswerOption
         const answerIndex = this.question.answerOptions!.indexOf(answer);
         // Remove current answerOption at given index and insert the backup at the same position

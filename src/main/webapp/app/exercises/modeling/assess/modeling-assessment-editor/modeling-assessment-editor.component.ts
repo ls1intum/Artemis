@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { Location } from '@angular/common';
 import { AlertService } from 'app/core/alert/alert.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { UMLDiagramType, UMLModel } from '@ls1intum/apollon';
+import { UMLModel } from '@ls1intum/apollon';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AccountService } from 'app/core/auth/account.service';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -13,7 +13,7 @@ import { filter } from 'rxjs/operators';
 import { ComplaintResponse } from 'app/entities/complaint-response.model';
 import { ModelingSubmission } from 'app/entities/modeling-submission.model';
 import { ResultService } from 'app/exercises/shared/result/result.service';
-import { ModelingExercise } from 'app/entities/modeling-exercise.model';
+import { ModelingExercise, UMLDiagramType } from 'app/entities/modeling-exercise.model';
 import { ModelingExerciseService } from 'app/exercises/modeling/manage/modeling-exercise.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { Result } from 'app/entities/result.model';
@@ -68,7 +68,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         private translateService: TranslateService,
         private complaintService: ComplaintService,
     ) {
-        translateService.get('modelingAssessmentEditor.messages.confirmCancel').subscribe(text => (this.cancelConfirmationText = text));
+        translateService.get('modelingAssessmentEditor.messages.confirmCancel').subscribe((text) => (this.cancelConfirmationText = text));
     }
 
     private get feedback(): Feedback[] {
@@ -80,13 +80,13 @@ export class ModelingAssessmentEditorComponent implements OnInit {
 
     ngOnInit() {
         // Used to check if the assessor is the current user
-        this.accountService.identity().then(user => {
+        this.accountService.identity().then((user) => {
             this.userId = user!.id!;
         });
         // TODO: we should check if the user is an instructor in the actual exercise behind the submission
         this.isAtLeastInstructor = this.accountService.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR']);
 
-        this.route.paramMap.subscribe(params => {
+        this.route.paramMap.subscribe((params) => {
             this.courseId = Number(params.get('courseId'));
             const exerciseId = Number(params.get('exerciseId'));
             const submissionId: String | null = params.get('submissionId');
@@ -96,7 +96,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
                 this.loadSubmission(Number(submissionId));
             }
         });
-        this.route.queryParamMap.subscribe(queryParams => {
+        this.route.queryParamMap.subscribe((queryParams) => {
             this.hideBackButton = queryParams.get('hideBackButton') === 'true';
         });
     }
@@ -177,9 +177,9 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         if (this.result) {
             this.complaintService
                 .findByResultId(id)
-                .pipe(filter(res => !!res.body))
+                .pipe(filter((res) => !!res.body))
                 .subscribe(
-                    res => {
+                    (res) => {
                         this.complaint = res.body!;
                     },
                     (err: HttpErrorResponse) => {
@@ -200,7 +200,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
             return;
         }
 
-        const generalFeedbackIndex = feedback.findIndex(feedbackElement => feedbackElement.reference == null);
+        const generalFeedbackIndex = feedback.findIndex((feedbackElement) => feedbackElement.reference == null);
         if (generalFeedbackIndex >= 0) {
             this.generalFeedback = feedback[generalFeedbackIndex] || new Feedback();
             feedback.splice(generalFeedbackIndex, 1);
@@ -208,7 +208,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
 
         this.referencedFeedback = feedback;
 
-        this.hasAutomaticFeedback = feedback.some(feedbackItem => feedbackItem.type === FeedbackType.AUTOMATIC);
+        this.hasAutomaticFeedback = feedback.some((feedbackItem) => feedbackItem.type === FeedbackType.AUTOMATIC);
         this.highlightAutomaticFeedback();
 
         if (this.highlightMissingFeedback) {
@@ -321,7 +321,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
      */
     onUpdateAssessmentAfterComplaint(complaintResponse: ComplaintResponse): void {
         this.modelingAssessmentService.updateAssessmentAfterComplaint(this.feedback, complaintResponse, this.submission!.id).subscribe(
-            response => {
+            (response) => {
                 this.result = response.body!;
                 // reconnect
                 this.result.participation!.results = [this.result];
@@ -443,7 +443,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
             ? this.removeHighlightedFeedbackOfColor(this.highlightedElements, FeedbackHighlightColor.RED)
             : new Map<string, string>();
 
-        const referenceIds = this.referencedFeedback.map(feedback => feedback.referenceId);
+        const referenceIds = this.referencedFeedback.map((feedback) => feedback.referenceId);
         for (const element of this.model.elements) {
             if (!referenceIds.includes(element.id)) {
                 this.highlightedElements.set(element.id, FeedbackHighlightColor.RED);

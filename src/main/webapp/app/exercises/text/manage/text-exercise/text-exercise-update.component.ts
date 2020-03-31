@@ -78,11 +78,7 @@ export class TextExerciseUpdateComponent implements OnInit {
      * Returns to previous state, which is always exercise page
      */
     previousState() {
-        if (this.textExercise.course) {
-            this.router.navigate(['/course-management', this.textExercise.course.id]);
-        } else {
-            window.history.back();
-        }
+        window.history.back();
     }
     /**
      * Validates if the date is correct
@@ -95,7 +91,7 @@ export class TextExerciseUpdateComponent implements OnInit {
      * @param categories list of exercise categories
      */
     updateCategories(categories: ExerciseCategory[]) {
-        this.textExercise.categories = categories.map(el => JSON.stringify(el));
+        this.textExercise.categories = categories.map((el) => JSON.stringify(el));
     }
 
     /**

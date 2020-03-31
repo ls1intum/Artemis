@@ -35,7 +35,7 @@ describe('Service Tests', () => {
             it('should return Logs', () => {
                 const log = new Log('main', 'ERROR');
 
-                service.findAll().subscribe(received => {
+                service.findAll().subscribe((received) => {
                     expect(received.body[0]).toEqual(log);
                 });
 
@@ -46,7 +46,7 @@ describe('Service Tests', () => {
             it('should change log level', () => {
                 const log = new Log('main', 'ERROR');
 
-                service.changeLevel(log).subscribe(received => {
+                service.changeLevel(log).subscribe((received) => {
                     expect(received.body[0]).toEqual(log);
                 });
 

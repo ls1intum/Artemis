@@ -91,7 +91,7 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
         assertThat(updatedResult).as("updated result found").isNotNull();
         assertThat(updatedResult.getScore()).isEqualTo(20L);
         assertThat(updatedResult.getResultString()).isEqualTo("new Result!");
-        assertThat(((StudentParticipation) updatedResult.getParticipation()).getStudent()).as("student of participation is hidden").isNull();
+        assertThat(((StudentParticipation) updatedResult.getParticipation()).getStudent()).as("student of participation is hidden").isEmpty();
 
         // Check that result and submission are properly connected
         var submissionFromDb = programmingSubmissionService.findByIdWithEagerResultAndFeedback(programmingSubmission.getId());

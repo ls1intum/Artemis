@@ -26,7 +26,7 @@ export class ProgrammingExerciseResolve implements Resolve<ProgrammingExercise> 
 
 const routes: Routes = [
     {
-        path: 'course-management/:courseId/programming-exercises/new',
+        path: ':courseId/programming-exercises/new',
         component: ProgrammingExerciseUpdateComponent,
         resolve: {
             programmingExercise: ProgrammingExerciseResolve,
@@ -38,7 +38,7 @@ const routes: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
-        path: 'course-management/:courseId/programming-exercises/:id/edit',
+        path: ':courseId/programming-exercises/:id/edit',
         component: ProgrammingExerciseUpdateComponent,
         resolve: {
             programmingExercise: ProgrammingExerciseResolve,
@@ -50,7 +50,7 @@ const routes: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
-        path: 'course-management/:courseId/programming-exercises/import/:id',
+        path: ':courseId/programming-exercises/import/:id',
         component: ProgrammingExerciseUpdateComponent,
         resolve: {
             programmingExercise: ProgrammingExerciseResolve,
@@ -62,7 +62,7 @@ const routes: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
-        path: 'course-management/:courseId/programming-exercises/:exerciseId/test-cases',
+        path: ':courseId/programming-exercises/:exerciseId/test-cases',
         component: ProgrammingExerciseManageTestCasesComponent,
         data: {
             authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
@@ -72,7 +72,7 @@ const routes: Routes = [
         canDeactivate: [CanDeactivateGuard],
     },
     {
-        path: 'course-management/:courseId/programming-exercises/:id',
+        path: ':courseId/programming-exercises/:id',
         component: ProgrammingExerciseDetailComponent,
         resolve: {
             programmingExercise: ProgrammingExerciseResolve,

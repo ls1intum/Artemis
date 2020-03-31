@@ -1,8 +1,6 @@
-import { AceEditorComponent } from 'ng2-ace-editor';
 import { DomainMultiOptionCommand } from 'app/shared/markdown-editor/domainCommands/domainMultiOptionCommand';
 import { getStringSegmentPositions } from 'app/shared/util/global.utils';
-import { ArtemisMarkdown } from 'app/shared/markdown.service';
-
+import { removeTextRange } from 'app/shared/util/markdown-util';
 /**
  * Allows the insertion of values within a comma separated list.
  * Will e.g. remove duplicates and append new items to the list.
@@ -10,8 +8,8 @@ import { ArtemisMarkdown } from 'app/shared/markdown.service';
 export abstract class DomainMultiOptionListCommand extends DomainMultiOptionCommand {
     protected abstract getValueMeta(): string;
 
-    setEditor(aceEditorContainer: AceEditorComponent) {
-        super.setEditor(aceEditorContainer);
+    setEditor(aceEditor: any) {
+        super.setEditor(aceEditor);
 
         const autoCompleter = {
             getCompletions: (editor: any, session: any, pos: any, prefix: any, callback: any) => {
@@ -46,13 +44,13 @@ export abstract class DomainMultiOptionListCommand extends DomainMultiOptionComm
         const newValuesList = this.generateValueList(matchInTag, valueToAdd, cursorPosition);
         const newValuesStringified = `${this.getOpeningIdentifier()}${newValuesList.join(',')}${this.getClosingIdentifier()}`;
         if (matchInTag) {
-            ArtemisMarkdown.removeTextRange(
+            removeTextRange(
                 { col: matchInTag.matchStart, row: cursorPosition.row },
                 {
                     col: matchInTag.matchEnd,
                     row: cursorPosition.row,
                 },
-                this.aceEditorContainer,
+                this.aceEditor,
             );
         }
         this.insertText(newValuesStringified);
@@ -82,7 +80,7 @@ export abstract class DomainMultiOptionListCommand extends DomainMultiOptionComm
             const wordUnderCursor = stringPositions.find(({ start, end }) => column - 1 - match.matchStart > start && column - 1 - match.matchStart < end);
             if (wordUnderCursor) {
                 // Case 1: Replace value.
-                return currentValues.map(val => (val === wordUnderCursor.word ? valueToAdd : val));
+                return currentValues.map((val) => (val === wordUnderCursor.word ? valueToAdd : val));
             } else if (column >= match.matchEnd - 1) {
                 // Case 2: Add value on left side.
                 return [...currentValues, valueToAdd];

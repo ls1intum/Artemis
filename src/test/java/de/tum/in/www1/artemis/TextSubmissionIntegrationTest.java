@@ -106,7 +106,7 @@ public class TextSubmissionIntegrationTest extends AbstractSpringIntegrationTest
 
         assertThat(textSubmissions.size()).as("one text submission was found").isEqualTo(1);
         assertThat(textSubmissions.get(0).getId()).as("correct text submission was found").isEqualTo(textSubmission.getId());
-        assertThat(((StudentParticipation) textSubmissions.get(0).getParticipation()).getStudent()).as("student of participation is hidden").isNull();
+        assertThat(((StudentParticipation) textSubmissions.get(0).getParticipation()).getStudent()).as("student of participation is hidden").isEmpty();
     }
 
     @Test
@@ -118,7 +118,7 @@ public class TextSubmissionIntegrationTest extends AbstractSpringIntegrationTest
 
         assertThat(textSubmissions.size()).as("one text submission was found").isEqualTo(1);
         assertThat(textSubmissions.get(0).getId()).as("correct text submission was found").isEqualTo(textSubmission.getId());
-        assertThat(((StudentParticipation) textSubmissions.get(0).getParticipation()).getStudent()).as("student of participation is hidden").isNotNull();
+        assertThat(((StudentParticipation) textSubmissions.get(0).getParticipation()).getStudent()).as("student of participation is hidden").isNotEmpty();
     }
 
     @Test
@@ -152,7 +152,7 @@ public class TextSubmissionIntegrationTest extends AbstractSpringIntegrationTest
 
         assertThat(textSubmissionWithoutAssessment).as("text submission without assessment was found").isNotNull();
         assertThat(textSubmissionWithoutAssessment.getId()).as("correct text submission was found").isEqualTo(textSubmission.getId());
-        assertThat(((StudentParticipation) textSubmissionWithoutAssessment.getParticipation()).getStudent()).as("student of participation is hidden").isNull();
+        assertThat(((StudentParticipation) textSubmissionWithoutAssessment.getParticipation()).getStudent()).as("student of participation is hidden").isEmpty();
     }
 
     @Test
@@ -301,7 +301,7 @@ public class TextSubmissionIntegrationTest extends AbstractSpringIntegrationTest
             assertThat(submission.getResult()).as("result is hidden").isNull();
         }
         else {
-            assertThat(((StudentParticipation) submission.getParticipation()).getStudent()).as("student of participation is hidden").isNull();
+            assertThat(((StudentParticipation) submission.getParticipation()).getStudent()).as("student of participation is hidden").isEmpty();
         }
     }
 }

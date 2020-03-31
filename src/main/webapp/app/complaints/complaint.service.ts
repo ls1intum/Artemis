@@ -69,7 +69,7 @@ export class ComplaintService implements IComplaintService {
      * @param courseId
      */
     getNumberOfAllowedComplaintsInCourse(courseId: number): Observable<number> {
-        return this.http.get<number>(`${this.apiUrl}/${courseId}/allowed-complaints`);
+        return this.http.get<number>(`${this.apiUrl}/courses/${courseId}/allowed-complaints`);
     }
 
     /**
@@ -135,7 +135,7 @@ export class ComplaintService implements IComplaintService {
 
     private convertDateFromServerArray(res: EntityResponseTypeArray): EntityResponseTypeArray {
         if (res.body) {
-            res.body.forEach(complaint => {
+            res.body.forEach((complaint) => {
                 complaint.submittedTime = complaint.submittedTime != null ? moment(complaint.submittedTime) : null;
             });
         }

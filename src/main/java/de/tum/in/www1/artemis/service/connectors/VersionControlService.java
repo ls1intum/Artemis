@@ -1,16 +1,18 @@
 package de.tum.in.www1.artemis.service.connectors;
 
 import java.net.URL;
+import java.util.Set;
 
 import de.tum.in.www1.artemis.domain.Commit;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.exception.VersionControlException;
 
 public interface VersionControlService {
 
-    void configureRepository(URL repositoryUrl, String username);
+    void configureRepository(URL repositoryUrl, Set<User> users);
 
     /**
      * Creates all necessary webhooks from the VCS to any other system (e.g. Artemis, CI) on pushes to the specified
@@ -115,14 +117,30 @@ public interface VersionControlService {
     VcsRepositoryUrl copyRepository(String sourceProjectKey, String sourceRepositoryName, String targetProjectKey, String targetRepositoryName) throws VersionControlException;
 
     /**
+     * Add the user to the repository
+     *
+     * @param repositoryUrl     The repository url of the repository to which to add the user. It contains the project key & the repository name.
+     * @param user              User which to add to the repository
+     */
+    void addMemberToRepository(URL repositoryUrl, User user);
+
+    /**
+     * Remove the user from the repository
+     *
+     * @param repositoryUrl     The repository url of the repository from which to remove the user. It contains the project key & the repository name.
+     * @param user              User which to remove from the repository
+     */
+    void removeMemberFromRepository(URL repositoryUrl, User user);
+
+    /**
      * Removes the user's write permissions for a repository.
      *
      * @param repositoryUrl     The repository url of the repository to update. It contains the project key & the repository name.
      * @param projectKey        The projectKey that the repo is part of in the VCS.
-     * @param username          String to identify the user with.
+     * @param users             Set of users for which to change permissions
      * @throws VersionControlException        If the communication with the VCS fails.
      */
-    void setRepositoryPermissionsToReadOnly(URL repositoryUrl, String projectKey, String username) throws VersionControlException;
+    void setRepositoryPermissionsToReadOnly(URL repositoryUrl, String projectKey, Set<User> users) throws VersionControlException;
 
     /**
      * Gets the repository slug from the given URL

@@ -1,5 +1,4 @@
 import { NgModule } from '@angular/core';
-import { RouterModule } from '@angular/router';
 import { ChartsModule } from 'ng2-charts';
 import { ClipboardModule } from 'ngx-clipboard';
 import { MomentModule } from 'ngx-moment';
@@ -29,6 +28,7 @@ import { ArtemisProgrammingExerciseInstructionsRenderModule } from 'app/exercise
 import { CourseRegistrationSelectorComponent } from 'app/overview/course-registration-selector/course-registration-selector.component';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { ArtemisCoursesRoutingModule } from 'app/overview/courses-routing.module';
+import { ArtemisTeamModule } from 'app/exercises/shared/team/team.module';
 
 @NgModule({
     imports: [
@@ -47,6 +47,7 @@ import { ArtemisCoursesRoutingModule } from 'app/overview/courses-routing.module
         FeatureToggleModule,
         ProgrammingExerciseUtilsModule,
         ArtemisProgrammingExerciseInstructionsRenderModule,
+        ArtemisTeamModule,
     ],
     declarations: [
         CoursesComponent,

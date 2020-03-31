@@ -75,7 +75,7 @@ export class ModelingExerciseUpdateComponent implements OnInit {
      * @param categories list of exercise categories
      */
     updateCategories(categories: ExerciseCategory[]): void {
-        this.modelingExercise.categories = categories.map(el => JSON.stringify(el));
+        this.modelingExercise.categories = categories.map((el) => JSON.stringify(el));
     }
 
     /**
@@ -121,11 +121,7 @@ export class ModelingExerciseUpdateComponent implements OnInit {
      * Returns to previous state, which is always exercise page
      */
     previousState(): void {
-        if (this.modelingExercise.course) {
-            this.router.navigate(['/course-management', this.modelingExercise.course.id]);
-        } else {
-            window.history.back();
-        }
+        window.history.back();
     }
 
     private subscribeToSaveResponse(result: Observable<HttpResponse<ModelingExercise>>): void {

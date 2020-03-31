@@ -2,7 +2,7 @@ import { Component, Input, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { QuizStatisticUtil } from 'app/exercises/quiz/shared/quiz-statistic-util.service';
 import { ShortAnswerQuestionUtil } from 'app/exercises/quiz/shared/short-answer-question-util.service';
-import { ArtemisMarkdown } from 'app/shared/markdown.service';
+import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { TranslateService } from '@ngx-translate/core';
 import { Subscription } from 'rxjs/Subscription';
 import { HttpResponse } from '@angular/common/http';
@@ -18,7 +18,7 @@ import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 @Component({
     selector: 'jhi-quiz-statistics-footer',
     templateUrl: './quiz-statistics-footer.component.html',
-    providers: [QuizStatisticUtil, ShortAnswerQuestionUtil, ArtemisMarkdown],
+    providers: [QuizStatisticUtil, ShortAnswerQuestionUtil, ArtemisMarkdownService],
     styleUrls: ['./quiz-statistics-footer.component.scss', '../../../shared/quiz.scss'],
 })
 export class QuizStatisticsFooterComponent implements OnInit, OnDestroy {
@@ -56,7 +56,7 @@ export class QuizStatisticsFooterComponent implements OnInit, OnDestroy {
     ) {}
 
     ngOnInit() {
-        this.sub = this.route.params.subscribe(params => {
+        this.sub = this.route.params.subscribe((params) => {
             this.questionIdParam = +params['questionId'];
             if (this.accountService.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'])) {
                 this.quizExerciseService.find(params['exerciseId']).subscribe((res: HttpResponse<QuizExercise>) => {
@@ -148,7 +148,7 @@ export class QuizStatisticsFooterComponent implements OnInit, OnDestroy {
             this.router.navigate(['/courses']);
         }
         this.quizExercise = quiz;
-        const updatedQuestion = this.quizExercise.quizQuestions.filter(question => this.questionIdParam === question.id)[0];
+        const updatedQuestion = this.quizExercise.quizQuestions.filter((question) => this.questionIdParam === question.id)[0];
         this.question = updatedQuestion as QuizQuestion;
         this.quizExercise.adjustedDueDate = moment().add(this.quizExercise.remainingTime, 'seconds');
         this.waitingForQuizStart = !this.quizExercise.started;

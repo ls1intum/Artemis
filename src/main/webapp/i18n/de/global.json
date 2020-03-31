@@ -9,9 +9,9 @@
         },
         "menu": {
             "home": "Startseite",
-            "overview": "Übersicht",
+            "overview": "Kurs Übersicht",
             "courses": "Kurse",
-            "course": "Kursadministration",
+            "course": "Kurs Verwaltung",
             "jhipster-needle-menu-add-element": "JHipster will add additional menu entries here (do not translate!)",
             "entities": {
                 "main": "Entitäten",
@@ -182,6 +182,7 @@
             "reset": "Zurücksetzen",
             "preview": "Vorschau",
             "cleanup": "Aufräumen",
+            "remove": "Entfernen",
             "archive": "Archivieren",
             "submit": "Absenden",
             "submitTooltip": "Du kannst mehrmals bis zur Deadline abgeben. Deine Bewertung ergibt sich immer aus der letzten Abgabe.",
@@ -224,6 +225,9 @@
         },
         "cleanup": {
             "title": "Aufräumen bestätigen"
+        },
+        "remove": {
+            "title": "Entfernen bestätigen"
         },
         "archive": {
             "title": "Archivieren bestätigen"

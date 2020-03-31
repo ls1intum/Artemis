@@ -253,7 +253,7 @@ public class DatabaseUtilService {
         usersToAdd.addAll(instructors);
         usersToAdd.add(admin);
         userRepo.saveAll(usersToAdd);
-        assertThat(userRepo.findAll().size()).as("all users are created").isEqualTo(numberOfStudents + numberOfTutors + numberOfInstructors + 1);
+        assertThat(userRepo.findAll().size()).as("all users are created").isGreaterThanOrEqualTo(numberOfStudents + numberOfTutors + numberOfInstructors + 1);
         assertThat(userRepo.findAll()).as("users are correctly stored").containsAnyOf(usersToAdd.toArray(new User[0]));
 
         final var users = new ArrayList<>(students);
@@ -282,7 +282,7 @@ public class DatabaseUtilService {
             final var buildPlanId = exercise.getProjectKey().toUpperCase() + "-" + login.toUpperCase();
             final var repoName = (exercise.getProjectKey() + "-" + login).toLowerCase();
             participation.setInitializationDate(ZonedDateTime.now());
-            participation.setStudent(user);
+            participation.setParticipant(user);
             participation.setBuildPlanId(buildPlanId);
             participation.setProgrammingExercise(exercise);
             participation.setInitializationState(InitializationState.INITIALIZED);
@@ -489,7 +489,7 @@ public class DatabaseUtilService {
             User user = getUserByLogin(login);
             StudentParticipation participation = new StudentParticipation();
             participation.setInitializationDate(ZonedDateTime.now());
-            participation.setStudent(user);
+            participation.setParticipant(user);
             participation.setExercise(exercise);
             studentParticipationRepo.save(participation);
             storedParticipation = studentParticipationRepo.findByExerciseIdAndStudentLogin(exercise.getId(), login);
@@ -510,7 +510,7 @@ public class DatabaseUtilService {
         final var buildPlanId = exercise.getProjectKey().toUpperCase() + "-" + login.toUpperCase();
         final var repoName = (exercise.getProjectKey() + "-" + login).toLowerCase();
         participation.setInitializationDate(ZonedDateTime.now());
-        participation.setStudent(user);
+        participation.setParticipant(user);
         participation.setBuildPlanId(buildPlanId);
         participation.setProgrammingExercise(exercise);
         participation.setInitializationState(InitializationState.INITIALIZED);

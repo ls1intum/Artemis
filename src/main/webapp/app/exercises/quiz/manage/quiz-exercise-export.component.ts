@@ -36,7 +36,7 @@ export class QuizExerciseExportComponent implements OnInit {
     }
 
     ngOnInit() {
-        this.route.params.subscribe(params => {
+        this.route.params.subscribe((params) => {
             this.courseId = params['courseId'];
             this.loadForCourse(this.courseId);
         });
@@ -47,7 +47,7 @@ export class QuizExerciseExportComponent implements OnInit {
      * @param courseId Id of the course
      */
     private loadForCourse(courseId: number) {
-        this.courseService.find(this.courseId).subscribe(courseResponse => {
+        this.courseService.find(this.courseId).subscribe((courseResponse) => {
             this.course = courseResponse.body!;
             // For the given course, get list of all quiz exercises. And for all quiz exercises, get list of all questions in a quiz exercise,
             this.quizExerciseService.findForCourse(courseId).subscribe(

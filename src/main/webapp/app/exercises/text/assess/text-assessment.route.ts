@@ -5,7 +5,7 @@ import { TextAssessmentDashboardComponent } from './text-assessment-dashboard/te
 
 export const textAssessmentRoutes: Routes = [
     {
-        path: 'course-management/:courseId/text-exercises/:exerciseId/submissions/:submissionId/assessment',
+        path: ':courseId/text-exercises/:exerciseId/submissions/:submissionId/assessment',
         component: TextAssessmentComponent,
         data: {
             authorities: ['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'],
@@ -14,7 +14,7 @@ export const textAssessmentRoutes: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
-        path: 'course-management/:courseId/text-exercises/:exerciseId/assessment',
+        path: ':courseId/text-exercises/:exerciseId/assessment',
         component: TextAssessmentDashboardComponent,
         data: {
             authorities: ['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'],

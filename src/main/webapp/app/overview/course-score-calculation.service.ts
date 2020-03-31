@@ -79,7 +79,7 @@ export class CourseScoreCalculationService {
     }
 
     getCourse(courseId: number): Course | null {
-        return this.courses.find(course => course.id === courseId) || null;
+        return this.courses.find((course) => course.id === courseId) || null;
     }
 
     getParticipationForExercise(exercise: Exercise): Participation | null {
@@ -110,7 +110,7 @@ export class CourseScoreCalculationService {
                 return chosenResult;
             }
 
-            const ratedResults = resultsArray.filter(el => el.rated);
+            const ratedResults = resultsArray.filter((el) => el.rated);
 
             if (ratedResults.length === 1) {
                 return ratedResults[0];

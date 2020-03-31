@@ -4,7 +4,7 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Subscription } from 'rxjs/Subscription';
 import { JhiEventManager } from 'ng-jhipster';
 
-import { Course } from '../../entities/course.model';
+import { Course } from 'app/entities/course.model';
 import { CourseManagementService } from './course-management.service';
 import { CachingStrategy } from 'app/shared/image/secured-image.component';
 import { AlertService } from 'app/core/alert/alert.service';
@@ -23,8 +23,8 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
     constructor(private eventManager: JhiEventManager, private courseService: CourseManagementService, private route: ActivatedRoute, private jhiAlertService: AlertService) {}
 
     ngOnInit() {
-        this.subscription = this.route.params.subscribe(params => {
-            this.load(params['id']);
+        this.subscription = this.route.params.subscribe((params) => {
+            this.load(params['courseId']);
         });
         this.registerChangeInCourses();
     }
@@ -37,7 +37,7 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
 
     registerForCourse() {
         this.courseService.registerForCourse(this.course.id).subscribe(
-            userResponse => {
+            (userResponse) => {
                 if (userResponse.body != null) {
                     const message = 'Registered user for course ' + this.course.title;
                     const jhiAlert = this.jhiAlertService.info(message);

@@ -53,7 +53,7 @@ public class ComplaintService {
         Result originalResult = resultRepository.findByIdWithEagerFeedbacksAndAssessor(complaint.getResult().getId())
                 .orElseThrow(() -> new BadRequestAlertException("The result you are referring to does not exist", ENTITY_NAME, "resultnotfound"));
         StudentParticipation studentParticipation = (StudentParticipation) originalResult.getParticipation();
-        User student = studentParticipation.getStudent();
+        User student = studentParticipation.getStudent().get(); // TODO: adapt for teams
         Long courseId = studentParticipation.getExercise().getCourse().getId();
 
         // Retrieve course to get Max Complaint Number and Max Complaint Time per Student

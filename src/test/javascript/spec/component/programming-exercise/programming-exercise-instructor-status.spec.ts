@@ -79,7 +79,7 @@ describe('ProgrammingExerciseInstructorStatusComponent', () => {
         expect(solutionStatus).to.not.exist;
     });
 
-    [ProgrammingExerciseParticipationType.TEMPLATE, ProgrammingExerciseParticipationType.SOLUTION].map(participationType =>
+    [ProgrammingExerciseParticipationType.TEMPLATE, ProgrammingExerciseParticipationType.SOLUTION].map((participationType) =>
         it('should not show anything if there is no participation', () => {
             comp.participationType = participationType;
             fixture.detectChanges();

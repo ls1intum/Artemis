@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, ViewEncapsulation } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Subscription } from 'rxjs/Subscription';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import { JhiAlertService, JhiEventManager } from 'ng-jhipster';
@@ -9,12 +9,11 @@ import { TeamService } from 'app/exercises/shared/team/team.service';
 import { ButtonSize } from 'app/shared/components/button.component';
 import { Exercise } from 'app/entities/exercise.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
+import { formatTeamAsSearchResult } from 'app/exercises/shared/team/team.utils';
 
 @Component({
     selector: 'jhi-teams',
     templateUrl: './teams.component.html',
-    styleUrls: ['./teams.component.scss'],
-    encapsulation: ViewEncapsulation.None,
 })
 export class TeamsComponent implements OnInit, OnDestroy {
     ButtonSize = ButtonSize;
@@ -47,11 +46,11 @@ export class TeamsComponent implements OnInit, OnDestroy {
     }
 
     loadAll() {
-        this.paramSub = this.route.params.subscribe(params => {
+        this.paramSub = this.route.params.subscribe((params) => {
             this.isLoading = true;
-            this.exerciseService.find(params['exerciseId']).subscribe(exerciseResponse => {
+            this.exerciseService.find(params['exerciseId']).subscribe((exerciseResponse) => {
                 this.exercise = exerciseResponse.body!;
-                this.teamService.findAllByExerciseId(params['exerciseId']).subscribe(teamsResponse => {
+                this.teamService.findAllByExerciseId(params['exerciseId']).subscribe((teamsResponse) => {
                     this.teams = teamsResponse.body!;
                     this.isLoading = false;
                 });
@@ -60,7 +59,7 @@ export class TeamsComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Called when a team has been added or was updated by UpdateTeamDialogComponent
+     * Called when a team has been added or was updated by TeamUpdateButtonComponent
      *
      * @param team Team that was added or updated
      */
@@ -69,16 +68,13 @@ export class TeamsComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Deleted the provided team on the server and then removes it from the component state.
+     * Called when a team has been deleted by TeamDeleteButtonComponent
      *
-     * @param team Team that should be removed
+     * @param team Team that was deleted
      */
-    removeTeam = (team: Team) => {
-        this.teamService.delete(this.exercise, team.id).subscribe(
-            () => this.deleteTeam(team),
-            () => this.jhiAlertService.error('artemisApp.team.removeTeam.error'),
-        );
-    };
+    onTeamDelete(team: Team) {
+        this.deleteTeam(team);
+    }
 
     /**
      * Update the number of filtered teams
@@ -94,10 +90,7 @@ export class TeamsComponent implements OnInit, OnDestroy {
      *
      * @param team
      */
-    searchResultFormatter = (team: Team) => {
-        const { name } = team;
-        return name;
-    };
+    searchResultFormatter = formatTeamAsSearchResult;
 
     /**
      * Converts a team object to a string that can be searched for. This is
@@ -106,7 +99,7 @@ export class TeamsComponent implements OnInit, OnDestroy {
      * @param team Team that was selected
      */
     searchTextFromTeam = (team: Team): string => {
-        return team.name;
+        return team.shortName;
     };
 
     /**
@@ -116,7 +109,7 @@ export class TeamsComponent implements OnInit, OnDestroy {
      * @param team Team that is added or updated
      */
     private upsertTeam(team: Team) {
-        const index = this.teams.findIndex(t => t.id === team.id);
+        const index = this.teams.findIndex((t) => t.id === team.id);
         if (index === -1) {
             this.teams = [...this.teams, team];
         } else {
@@ -130,6 +123,6 @@ export class TeamsComponent implements OnInit, OnDestroy {
      * @param team Team that is deleted
      */
     private deleteTeam(team: Team) {
-        this.teams = this.teams.filter(t => t.id !== team.id);
+        this.teams = this.teams.filter((t) => t.id !== team.id);
     }
 }

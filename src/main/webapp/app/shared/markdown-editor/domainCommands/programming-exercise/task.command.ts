@@ -1,4 +1,3 @@
-import { AceEditorComponent } from 'ng2-ace-editor';
 import { DomainTagCommand } from 'app/shared/markdown-editor/domainCommands/domainTag.command';
 import { escapeStringForUseInRegex } from 'app/shared/util/global.utils';
 
@@ -10,8 +9,8 @@ export class TaskCommand extends DomainTagCommand {
 
     buttonTranslationString = 'artemisApp.programmingExercise.problemStatement.taskCommand';
 
-    setEditor(aceEditorContainer: AceEditorComponent) {
-        super.setEditor(aceEditorContainer);
+    setEditor(aceEditor: any) {
+        super.setEditor(aceEditor);
 
         const taskCommandCompleter = {
             getCompletions: (editor: any, session: any, pos: any, prefix: any, callback: any) => {

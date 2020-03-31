@@ -13,7 +13,7 @@ export class RepositoryService {
     constructor(private http: HttpClient) {}
 
     isClean(participationId: number): Observable<any> {
-        return this.http.get<any>(`${this.resourceUrl}/${participationId}`).map(data => ({ isClean: data.isClean }));
+        return this.http.get<any>(`${this.resourceUrl}/${participationId}`).map((data) => ({ isClean: data.isClean }));
     }
 
     commit(participationId: number): Observable<void> {
@@ -57,7 +57,7 @@ export class RepositoryFileService implements IRepositoryFileService {
     get(participationId: number, fileName: string): Observable<any> {
         return this.http
             .get(`${this.resourceUrl}/${participationId}/file`, { params: new HttpParams().set('file', fileName), responseType: 'text' })
-            .map(data => ({ fileContent: data }));
+            .map((data) => ({ fileContent: data }));
     }
 
     update(participationId: number, fileName: string, fileContent: string): Observable<any> {

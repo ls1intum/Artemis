@@ -54,7 +54,7 @@ export class ProgrammingAssessmentManualResultButtonComponent implements OnChang
             this.latestResultSubscription = this.participationWebsocketService
                 .subscribeForLatestResultOfParticipation(this.participationId)
                 .pipe(filter((result: Result) => result && result.assessmentType === AssessmentType.MANUAL))
-                .subscribe(manualResult => {
+                .subscribe((manualResult) => {
                     let assessor: User | null = null;
                     // TODO: workaround to fix an issue when the assessor gets lost due to the websocket update
                     // we should properly fix this in the future and make sure the assessor is not cut off in the first place
@@ -83,7 +83,7 @@ export class ProgrammingAssessmentManualResultButtonComponent implements OnChang
         modalRef.componentInstance.exercise = this.exercise;
         modalRef.componentInstance.onResultModified.subscribe(($event: Result) => this.onResultModified.emit($event));
         modalRef.result.then(
-            result => this.onResultModified.emit(result),
+            (result) => this.onResultModified.emit(result),
             () => {},
         );
     }

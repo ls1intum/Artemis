@@ -89,6 +89,15 @@
     <div class="btn-group mr-2">
         <button
             jhi-exercise-action-button
+            buttonIcon="users"
+            [buttonLabel]="'artemisApp.exerciseActions.viewTeam' | translate"
+            *ngIf="exercise.teamMode && participationStatusWrapper() !== ParticipationStatus.NO_TEAM_ASSIGNED"
+            [smallButton]="smallButtons"
+            [hideLabelMobile]="true"
+            [routerLink]="['/courses', courseId, 'exercises', exercise.id, 'teams', assignedTeamId]"
+        ></button>
+        <button
+            jhi-exercise-action-button
             buttonIcon="play-circle"
             [buttonLabel]="'artemisApp.exerciseActions.startExercise' | translate"
             [buttonLoading]="exercise.loading"
@@ -155,6 +164,16 @@
 <div *ngIf="exercise.type === ExerciseType.PROGRAMMING">
     <!-- ACTION START -->
     <div class="btn-group">
+        <button
+            class="view-team"
+            jhi-exercise-action-button
+            buttonIcon="users"
+            [buttonLabel]="'artemisApp.exerciseActions.viewTeam' | translate"
+            *ngIf="exercise.teamMode && participationStatusWrapper() !== ParticipationStatus.NO_TEAM_ASSIGNED"
+            [smallButton]="smallButtons"
+            [hideLabelMobile]="true"
+            [routerLink]="['/courses', courseId, 'exercises', exercise.id, 'teams', assignedTeamId]"
+        ></button>
         <button
             class="start-exercise"
             jhi-exercise-action-button
@@ -251,6 +270,15 @@
     <!-- ACTIONS START -->
     <div class="btn-group mr-2">
         <button
+            jhi-exercise-action-button
+            buttonIcon="users"
+            [buttonLabel]="'artemisApp.exerciseActions.viewTeam' | translate"
+            *ngIf="exercise.teamMode && participationStatusWrapper() !== ParticipationStatus.NO_TEAM_ASSIGNED"
+            [smallButton]="smallButtons"
+            [hideLabelMobile]="true"
+            [routerLink]="['/courses', courseId, 'exercises', exercise.id, 'teams', assignedTeamId]"
+        ></button>
+        <button
             class="start-exercise"
             jhi-exercise-action-button
             buttonIcon="play-circle"
@@ -318,6 +346,15 @@
 <div *ngIf="exercise.type === ExerciseType.FILE_UPLOAD">
     <!-- ACTIONS START -->
     <div class="btn-group">
+        <button
+            jhi-exercise-action-button
+            buttonIcon="users"
+            [buttonLabel]="'artemisApp.exerciseActions.viewTeam' | translate"
+            *ngIf="exercise.teamMode && participationStatusWrapper() !== ParticipationStatus.NO_TEAM_ASSIGNED"
+            [smallButton]="smallButtons"
+            [hideLabelMobile]="true"
+            [routerLink]="['/courses', courseId, 'exercises', exercise.id, 'teams', assignedTeamId]"
+        ></button>
         <button
             jhi-exercise-action-button
             buttonIcon="play-circle"

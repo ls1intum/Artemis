@@ -76,11 +76,11 @@ export class UpdatingResultComponent implements OnChanges, OnDestroy {
             .subscribeForLatestResultOfParticipation(this.participation.id)
             .pipe(
                 // Ignore initial null result of subscription
-                filter(result => !!result),
+                filter((result) => !!result),
                 // Ignore ungraded results if ungraded results are supposed to be ignored.
                 filter((result: Result) => this.showUngradedResults || result.rated),
-                map(result => ({ ...result, completionDate: result.completionDate != null ? moment(result.completionDate) : null, participation: this.participation })),
-                tap(result => (this.result = result)),
+                map((result) => ({ ...result, completionDate: result.completionDate != null ? moment(result.completionDate) : null, participation: this.participation })),
+                tap((result) => (this.result = result)),
             )
             .subscribe();
     }
@@ -96,7 +96,8 @@ export class UpdatingResultComponent implements OnChanges, OnDestroy {
         this.submissionSubscription = this.submissionService
             .getLatestPendingSubmissionByParticipationId(this.participation.id, this.exercise.id)
             .pipe(
-                // The updating result must ignore submissions that are ungraded if ungraded results should not be shown (otherwise the building animation will be shown even though not relevant).
+                // The updating result must ignore submissions that are ungraded if ungraded results should not be shown
+                // (otherwise the building animation will be shown even though not relevant).
                 filter(
                     ({ submission }) =>
                         this.showUngradedResults ||

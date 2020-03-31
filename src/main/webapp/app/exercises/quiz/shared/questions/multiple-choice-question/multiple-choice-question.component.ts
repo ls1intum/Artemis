@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, Output, ViewEncapsulation } from '@angular/core';
-import { ArtemisMarkdown } from 'app/shared/markdown.service';
+import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { AnswerOption } from 'app/entities/quiz/answer-option.model';
 import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-question.model';
 import { RenderedQuizQuestionMarkDownElement } from 'app/entities/quiz/quiz-question.model';
@@ -11,7 +11,7 @@ import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
     templateUrl: './multiple-choice-question.component.html',
     styleUrls: ['./multiple-choice-question.component.scss', '../../../participate/quiz-participation.scss'],
     encapsulation: ViewEncapsulation.None,
-    providers: [ArtemisMarkdown],
+    providers: [ArtemisMarkdownService],
 })
 export class MultipleChoiceQuestionComponent {
     _question: MultipleChoiceQuestion;
@@ -48,7 +48,7 @@ export class MultipleChoiceQuestionComponent {
 
     renderedQuestion: RenderedQuizQuestionMarkDownElement;
 
-    constructor(private artemisMarkdown: ArtemisMarkdown) {}
+    constructor(private artemisMarkdown: ArtemisMarkdownService) {}
 
     watchCollection(): void {
         // update html for text, hint and explanation for the question and every answer option
@@ -57,7 +57,7 @@ export class MultipleChoiceQuestionComponent {
         this.renderedQuestion.text = artemisMarkdown.safeHtmlForMarkdown(this.question.text);
         this.renderedQuestion.hint = artemisMarkdown.safeHtmlForMarkdown(this.question.hint);
         this.renderedQuestion.explanation = artemisMarkdown.safeHtmlForMarkdown(this.question.explanation);
-        this.renderedQuestion.renderedSubElements = this.question.answerOptions!.map(answerOption => {
+        this.renderedQuestion.renderedSubElements = this.question.answerOptions!.map((answerOption) => {
             const renderedAnswerOption = new RenderedQuizQuestionMarkDownElement();
             renderedAnswerOption.text = artemisMarkdown.safeHtmlForMarkdown(answerOption.text);
             renderedAnswerOption.hint = artemisMarkdown.safeHtmlForMarkdown(answerOption.hint);
@@ -72,7 +72,7 @@ export class MultipleChoiceQuestionComponent {
             return;
         }
         if (this.isAnswerOptionSelected(answerOption)) {
-            this.selectedAnswerOptions = this.selectedAnswerOptions.filter(selectedAnswerOption => selectedAnswerOption.id !== answerOption.id);
+            this.selectedAnswerOptions = this.selectedAnswerOptions.filter((selectedAnswerOption) => selectedAnswerOption.id !== answerOption.id);
         } else {
             this.selectedAnswerOptions.push(answerOption);
         }
@@ -86,7 +86,7 @@ export class MultipleChoiceQuestionComponent {
     isAnswerOptionSelected(answerOption: AnswerOption): boolean {
         return (
             this.selectedAnswerOptions != null &&
-            this.selectedAnswerOptions.findIndex(function(selected) {
+            this.selectedAnswerOptions.findIndex(function (selected) {
                 return selected.id === answerOption.id;
             }) !== -1
         );

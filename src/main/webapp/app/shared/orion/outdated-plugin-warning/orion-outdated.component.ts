@@ -24,7 +24,7 @@ export class OrionOutdatedComponent implements OnInit {
     constructor(private activatedRoute: ActivatedRoute, private profileService: ProfileService) {}
 
     ngOnInit(): void {
-        this.activatedRoute.queryParams.subscribe(params => {
+        this.activatedRoute.queryParams.subscribe((params) => {
             this.versionString = params['versionString'];
             this.profileService
                 .getProfileInfo()

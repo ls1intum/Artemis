@@ -99,7 +99,7 @@ export class AccountService implements IAccountService {
         }
 
         return this.identity().then(
-            id => {
+            (id) => {
                 const authorities = id!.authorities!;
                 return Promise.resolve(authorities && authorities.includes(authority));
             },

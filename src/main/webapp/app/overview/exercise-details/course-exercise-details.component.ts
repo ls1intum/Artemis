@@ -72,7 +72,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     ) {}
 
     ngOnInit() {
-        this.subscription = this.route.params.subscribe(params => {
+        this.subscription = this.route.params.subscribe((params) => {
             const didExerciseChange = this.exerciseId !== parseInt(params['exerciseId'], 10);
             const didCourseChange = this.courseId !== parseInt(params['courseId'], 10);
             this.exerciseId = parseInt(params['exerciseId'], 10);
@@ -85,7 +85,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
             }
         });
 
-        this.route.queryParams.subscribe(queryParams => {
+        this.route.queryParams.subscribe((queryParams) => {
             if (queryParams['welcome'] === '') {
                 setTimeout(() => {
                     this.showWelcomeAlert = true;
@@ -129,7 +129,11 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         if (!participations) {
             return null;
         }
-        const filteredParticipations = participations.filter((participation: StudentParticipation) => participation.student && participation.student.id === this.currentUser.id);
+        const filteredParticipations = participations.filter((participation: StudentParticipation) => {
+            const personal = participation.student?.id === this.currentUser.id;
+            const team = participation.team?.students.map((s) => s.id).includes(this.currentUser.id);
+            return personal || team;
+        });
         filteredParticipations.forEach((participation: Participation) => {
             if (participation.results) {
                 participation.results = participation.results.filter((result: Result) => result.completionDate);
@@ -184,7 +188,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
 
     subscribeForNewResults() {
         if (this.exercise && this.exercise.studentParticipations && this.exercise.studentParticipations.length > 0) {
-            this.exercise.studentParticipations.forEach(participation => {
+            this.exercise.studentParticipations.forEach((participation) => {
                 this.participationWebsocketService.addParticipation(participation, this.exercise!);
             });
             if (this.currentResult) {
@@ -199,7 +203,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
             if (changedParticipation && this.exercise && changedParticipation.exercise.id === this.exercise.id) {
                 this.exercise.studentParticipations =
                     this.exercise.studentParticipations && this.exercise.studentParticipations.length > 0
-                        ? this.exercise.studentParticipations.map(el => {
+                        ? this.exercise.studentParticipations.map((el) => {
                               return el.id === changedParticipation.id ? changedParticipation : el;
                           })
                         : [changedParticipation];

@@ -299,14 +299,14 @@ public class ExerciseResource {
         User user = userService.getUserWithGroupsAndAuthorities();
         log.debug(user.getLogin() + " requested access for exercise with exerciseId " + exerciseId, exerciseId);
 
-        Exercise exercise = exerciseService.findOneWithDetailsForStudents(exerciseId);
+        Exercise exercise = exerciseService.findOneWithDetailsForStudents(exerciseId, user);
         // if exercise is not yet released to the students they should not have any access to it
         if (!authCheckService.isAllowedToSeeExercise(exercise, user)) {
             return forbidden();
         }
 
         if (exercise != null) {
-            List<StudentParticipation> participations = participationService.findByExerciseIdAndStudentIdWithEagerResultsAndSubmissions(exercise.getId(), user.getId());
+            List<StudentParticipation> participations = participationService.findByExerciseAndStudentIdWithEagerResultsAndSubmissions(exercise, user.getId());
             exercise.setStudentParticipations(new HashSet<>());
             for (StudentParticipation participation : participations) {
 

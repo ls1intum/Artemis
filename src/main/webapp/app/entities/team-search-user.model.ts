@@ -4,5 +4,6 @@ export class TeamSearchUser {
     public name: string;
     public firstName: string;
     public lastName: string;
-    public assignedToTeam: boolean;
+    public email: string;
+    public assignedTeamId: number | null;
 }

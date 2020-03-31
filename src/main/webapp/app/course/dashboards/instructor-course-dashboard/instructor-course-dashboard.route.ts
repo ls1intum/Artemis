@@ -4,7 +4,7 @@ import { InstructorCourseDashboardComponent } from './instructor-course-dashboar
 
 export const instructorCourseDashboardRoute: Routes = [
     {
-        path: 'course-management/:courseId/instructor-dashboard',
+        path: ':courseId/instructor-dashboard',
         component: InstructorCourseDashboardComponent,
         data: {
             authorities: ['ROLE_ADMIN', 'ROLE_INSTRUCTOR'],

@@ -2,7 +2,7 @@ import { DomainTagCommand } from 'app/shared/markdown-editor/domainCommands/doma
 import { UsageCountCommand } from 'app/shared/markdown-editor/domainCommands/usageCount.command';
 import { FeedbackCommand } from 'app/shared/markdown-editor/domainCommands/feedback.command';
 import { CreditsCommand } from 'app/shared/markdown-editor/domainCommands/credits.command';
-import { ArtemisMarkdown } from 'app/shared/markdown.service';
+import { addTextAtCursor } from 'app/shared/util/markdown-util';
 import { GradingScaleCommand } from 'app/shared/markdown-editor/domainCommands/gradingScaleCommand';
 import { InstructionDescriptionCommand } from 'app/shared/markdown-editor/domainCommands/instructionDescription.command';
 
@@ -51,7 +51,7 @@ export class GradingInstructionCommand extends DomainTagCommand {
     execute(): void {
         const text = this.instructionText();
 
-        ArtemisMarkdown.addTextAtCursor(text, this.aceEditorContainer);
+        addTextAtCursor(text, this.aceEditor);
     }
 
     /**

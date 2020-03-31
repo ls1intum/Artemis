@@ -47,7 +47,7 @@ export class ProgrammingExerciseStudentIdeActionsComponent implements OnInit {
 
     ngOnInit(): void {
         this.javaBridge.state().subscribe((ideState: OrionState) => (this.ideState = ideState));
-        this.route.queryParams.subscribe(params => {
+        this.route.queryParams.subscribe((params) => {
             if (params['withIdeSubmit']) {
                 this.submitChanges();
             }
@@ -88,7 +88,7 @@ export class ProgrammingExerciseStudentIdeActionsComponent implements OnInit {
                     }
                     this.jhiAlertService.success('artemisApp.exercise.personalRepository');
                 },
-                error => {
+                (error) => {
                     console.log('Error: ' + error);
                     this.jhiAlertService.warning('artemisApp.exercise.startError');
                 },
@@ -138,7 +138,7 @@ export class ProgrammingExerciseStudentIdeActionsComponent implements OnInit {
                     this.exercise.studentParticipations = [participation];
                     this.exercise.participationStatus = participationStatus(this.exercise);
                 }),
-                catchError(error => {
+                catchError((error) => {
                     console.log('Error: ' + error);
                     this.jhiAlertService.error('artemisApp.exerciseActions.resumeExercise', { error });
                     return error;

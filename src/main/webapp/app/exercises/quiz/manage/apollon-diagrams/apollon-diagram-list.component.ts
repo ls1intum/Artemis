@@ -1,11 +1,11 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { UMLDiagramType } from '@ls1intum/apollon';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { AlertService } from 'app/core/alert/alert.service';
 import { ApollonDiagramCreateFormComponent } from 'app/exercises/quiz/manage/apollon-diagrams/apollon-diagram-create-form.component';
 import { ApollonDiagramService } from 'app/exercises/quiz/manage/apollon-diagrams/apollon-diagram.service';
 import { ApollonDiagram } from 'app/entities/apollon-diagram.model';
+import { UMLDiagramType } from 'app/entities/modeling-exercise.model';
 
 @Component({
     selector: 'jhi-apollon-diagram-list',
@@ -33,10 +33,10 @@ export class ApollonDiagramListComponent implements OnInit {
      */
     ngOnInit() {
         this.apollonDiagramsService.query().subscribe(
-            response => {
+            (response) => {
                 this.apollonDiagrams = response.body!;
             },
-            response => {
+            (response) => {
                 this.jhiAlertService.error('artemisApp.apollonDiagram.home.error.loading');
             },
         );
@@ -58,13 +58,13 @@ export class ApollonDiagramListComponent implements OnInit {
      */
     delete(apollonDiagram: ApollonDiagram) {
         this.apollonDiagramsService.delete(apollonDiagram.id).subscribe(
-            response => {
+            (response) => {
                 this.jhiAlertService.success('artemisApp.apollonDiagram.delete.success', { title: apollonDiagram.title });
-                this.apollonDiagrams = this.apollonDiagrams.filter(diagram => {
+                this.apollonDiagrams = this.apollonDiagrams.filter((diagram) => {
                     return diagram.id !== apollonDiagram.id;
                 });
             },
-            response => {
+            (response) => {
                 this.jhiAlertService.error('artemisApp.apollonDiagram.delete.error', { title: apollonDiagram.title });
             },
         );

@@ -13,7 +13,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { SafeHtml } from '@angular/platform-browser';
-import { ArtemisMarkdown } from 'app/shared/markdown.service';
+import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { ExerciseType } from 'app/entities/exercise.model';
@@ -46,7 +46,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
         private exerciseService: ExerciseService,
         private jhiAlertService: AlertService,
         private programmingExerciseParticipationService: ProgrammingExerciseParticipationService,
-        private artemisMarkdown: ArtemisMarkdown,
+        private artemisMarkdown: ArtemisMarkdownService,
     ) {}
 
     ngOnInit() {
@@ -59,11 +59,11 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
             this.programmingExercise.solutionParticipation.programmingExercise = this.programmingExercise;
             this.programmingExercise.templateParticipation.programmingExercise = this.programmingExercise;
 
-            this.loadLatestResultWithFeedback(this.programmingExercise.solutionParticipation.id).subscribe(results => {
+            this.loadLatestResultWithFeedback(this.programmingExercise.solutionParticipation.id).subscribe((results) => {
                 this.programmingExercise.solutionParticipation.results = results;
                 this.loadingSolutionParticipationResults = false;
             });
-            this.loadLatestResultWithFeedback(this.programmingExercise.templateParticipation.id).subscribe(results => {
+            this.loadLatestResultWithFeedback(this.programmingExercise.templateParticipation.id).subscribe((results) => {
                 this.programmingExercise.templateParticipation.results = results;
                 this.loadingTemplateParticipationResults = false;
             });
@@ -105,11 +105,11 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
 
     generateStructureOracle() {
         this.programmingExerciseService.generateStructureOracle(this.programmingExercise.id).subscribe(
-            res => {
+            (res) => {
                 const jhiAlert = this.jhiAlertService.success(res);
                 jhiAlert.msg = res;
             },
-            error => {
+            (error) => {
                 const errorMessage = error.headers.get('X-artemisApp-alert');
                 // TODO: this is a workaround to avoid translation not found issues. Provide proper translations
                 const jhiAlert = this.jhiAlertService.error(errorMessage);

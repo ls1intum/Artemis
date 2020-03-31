@@ -28,7 +28,7 @@ export class ExerciseHintResolve implements Resolve<ExerciseHint | null> {
 
 export const exerciseHintRoute: Routes = [
     {
-        path: 'course-management/:courseId/exercises/:exerciseId/hints/:hintId/view',
+        path: ':courseId/exercises/:exerciseId/hints/:hintId/view',
         component: ExerciseHintDetailComponent,
         resolve: {
             exerciseHint: ExerciseHintResolve,
@@ -40,7 +40,7 @@ export const exerciseHintRoute: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
-        path: 'course-management/:courseId/exercises/:exerciseId/hints/new',
+        path: ':courseId/exercises/:exerciseId/hints/new',
         component: ExerciseHintUpdateComponent,
         resolve: {
             exerciseHint: ExerciseHintResolve,
@@ -52,7 +52,7 @@ export const exerciseHintRoute: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
-        path: 'course-management/:courseId/exercises/:exerciseId/hints/:hintId/edit',
+        path: ':courseId/exercises/:exerciseId/hints/:hintId/edit',
         component: ExerciseHintUpdateComponent,
         resolve: {
             exerciseHint: ExerciseHintResolve,
@@ -64,7 +64,7 @@ export const exerciseHintRoute: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
-        path: 'course-management/:courseId/exercises/:exerciseId/hints',
+        path: ':courseId/exercises/:exerciseId/hints',
         component: ExerciseHintComponent,
         data: {
             authorities: ['ROLE_ADMIN'],

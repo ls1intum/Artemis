@@ -11,14 +11,13 @@ import org.hibernate.Hibernate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.Team;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.participation.*;
-import de.tum.in.www1.artemis.repository.ParticipationRepository;
-import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
-import de.tum.in.www1.artemis.repository.SolutionProgrammingExerciseParticipationRepository;
-import de.tum.in.www1.artemis.repository.TemplateProgrammingExerciseParticipationRepository;
+import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
@@ -35,6 +34,8 @@ public class ProgrammingExerciseParticipationService {
 
     private final ParticipationRepository participationRepository;
 
+    private final TeamRepository teamRepository;
+
     private final Optional<VersionControlService> versionControlService;
 
     private final AuthorizationCheckService authCheckService;
@@ -42,7 +43,7 @@ public class ProgrammingExerciseParticipationService {
     private final UserService userService;
 
     public ProgrammingExerciseParticipationService(ParticipationService participationService, SolutionProgrammingExerciseParticipationRepository solutionParticipationRepository,
-            ProgrammingExerciseStudentParticipationRepository studentParticipationRepository, ParticipationRepository participationRepository,
+            ProgrammingExerciseStudentParticipationRepository studentParticipationRepository, ParticipationRepository participationRepository, TeamRepository teamRepository,
             TemplateProgrammingExerciseParticipationRepository templateParticipationRepository, Optional<VersionControlService> versionControlService, UserService userService,
             AuthorizationCheckService authCheckService) {
         this.participationService = participationService;
@@ -50,6 +51,7 @@ public class ProgrammingExerciseParticipationService {
         this.solutionParticipationRepository = solutionParticipationRepository;
         this.templateParticipationRepository = templateParticipationRepository;
         this.participationRepository = participationRepository;
+        this.teamRepository = teamRepository;
         this.versionControlService = versionControlService;
         this.authCheckService = authCheckService;
         this.userService = userService;
@@ -104,17 +106,24 @@ public class ProgrammingExerciseParticipationService {
     /**
      * Tries to retrieve a student participation for the given exercise id and username.
      *
-     * @param exerciseId id of the exercise.
+     * @param exercise the exercise for which to find a participation
      * @param username of the user to which the participation belongs.
      * @return the participation for the given exercise and user.
      * @throws EntityNotFoundException if there is no participation for the given exercise and user.
      */
     @Transactional(readOnly = true)
     @NotNull
-    public ProgrammingExerciseStudentParticipation findStudentParticipationByExerciseIdAndStudentId(Long exerciseId, String username) throws EntityNotFoundException {
-        Optional<ProgrammingExerciseStudentParticipation> participation = studentParticipationRepository.findByExerciseIdAndStudentLogin(exerciseId, username);
+    public ProgrammingExerciseStudentParticipation findStudentParticipationByExerciseAndStudentId(Exercise exercise, String username) throws EntityNotFoundException {
+        Optional<ProgrammingExerciseStudentParticipation> participation;
+        if (exercise.isTeamMode()) {
+            Optional<Team> optionalTeam = teamRepository.findOneByExerciseIdAndUserLogin(exercise.getId(), username);
+            participation = optionalTeam.flatMap(team -> studentParticipationRepository.findByExerciseIdAndTeamId(exercise.getId(), team.getId()));
+        }
+        else {
+            participation = studentParticipationRepository.findByExerciseIdAndStudentLogin(exercise.getId(), username);
+        }
         if (participation.isEmpty()) {
-            throw new EntityNotFoundException("participation could not be found by exerciseId " + exerciseId + " and user " + username);
+            throw new EntityNotFoundException("participation could not be found by exerciseId " + exercise.getId() + " and user " + username);
         }
         // Make sure the template participation is not a proxy object in this case
         Hibernate.initialize(participation.get().getProgrammingExercise().getTemplateParticipation());
@@ -123,6 +132,10 @@ public class ProgrammingExerciseParticipationService {
 
     public List<ProgrammingExerciseStudentParticipation> findByExerciseId(Long exerciseId) {
         return studentParticipationRepository.findByExerciseId(exerciseId);
+    }
+
+    public Optional<ProgrammingExerciseStudentParticipation> findByExerciseIdAndTeamId(Long exerciseId, Long teamId) {
+        return studentParticipationRepository.findByExerciseIdAndTeamId(exerciseId, teamId);
     }
 
     public List<ProgrammingExerciseStudentParticipation> findByExerciseAndParticipationIds(Long exerciseId, Set<Long> participationIds) {
@@ -172,7 +185,7 @@ public class ProgrammingExerciseParticipationService {
 
     private boolean canAccessParticipation(@NotNull ProgrammingExerciseStudentParticipation participation) {
         User user = userService.getUserWithGroupsAndAuthorities();
-        return participation.getStudent().getLogin().equals(user.getLogin()) || authCheckService.isAtLeastTeachingAssistantForExercise(participation.getExercise(), user);
+        return participation.isOwnedBy(user) || authCheckService.isAtLeastTeachingAssistantForExercise(participation.getExercise(), user);
     }
 
     private boolean canAccessParticipation(@NotNull SolutionProgrammingExerciseParticipation participation) {
@@ -219,7 +232,7 @@ public class ProgrammingExerciseParticipationService {
     }
 
     public boolean canAccessParticipation(ProgrammingExerciseStudentParticipation participation, Principal principal) {
-        return participation.getStudent().getLogin().equals(principal.getName());
+        return participation.isOwnedBy(principal.getName());
     }
 
     public boolean canAccessParticipation(SolutionProgrammingExerciseParticipation participation, Principal principal) {

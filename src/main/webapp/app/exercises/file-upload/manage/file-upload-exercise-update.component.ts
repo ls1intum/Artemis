@@ -65,11 +65,7 @@ export class FileUploadExerciseUpdateComponent implements OnInit {
      * Returns to previous state, which should be always the page of selected course
      */
     previousState() {
-        if (this.fileUploadExercise.course) {
-            this.router.navigate(['/course-management', this.fileUploadExercise.course!.id]);
-        } else {
-            window.history.back();
-        }
+        window.history.back();
     }
 
     /**
@@ -94,7 +90,7 @@ export class FileUploadExerciseUpdateComponent implements OnInit {
      * @param categories list of exercies categories
      */
     updateCategories(categories: ExerciseCategory[]) {
-        this.fileUploadExercise.categories = categories.map(el => JSON.stringify(el));
+        this.fileUploadExercise.categories = categories.map((el) => JSON.stringify(el));
     }
 
     private subscribeToSaveResponse(result: Observable<HttpResponse<FileUploadExercise>>) {

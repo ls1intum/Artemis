@@ -34,7 +34,7 @@ describe('Service Tests', () => {
             it('should return Metrics', () => {
                 const metrics = [];
 
-                service.getMetrics().subscribe(received => {
+                service.getMetrics().subscribe((received) => {
                     expect(received.body[0]).toEqual(metrics);
                 });
 
@@ -45,7 +45,7 @@ describe('Service Tests', () => {
             it('should return Thread Dump', () => {
                 const dump = [{ name: 'test1', threadState: 'RUNNABLE' }];
 
-                service.threadDump().subscribe(received => {
+                service.threadDump().subscribe((received) => {
                     expect(received.body[0]).toEqual(dump);
                 });
 

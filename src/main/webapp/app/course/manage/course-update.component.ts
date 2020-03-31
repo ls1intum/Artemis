@@ -62,6 +62,10 @@ export class CourseUpdateComponent implements OnInit {
                 validators: [Validators.required, Validators.minLength(3), regexValidator(this.shortNamePattern)],
                 updateOn: 'blur',
             }),
+            // note: we still reference them here so that they are used in the update method when the course is retrieved from the course form
+            studentGroupName: new FormControl(this.course.studentGroupName),
+            teachingAssistantGroupName: new FormControl(this.course.teachingAssistantGroupName),
+            instructorGroupName: new FormControl(this.course.instructorGroupName),
             description: new FormControl(this.course.description),
             startDate: new FormControl(this.course.startDate),
             endDate: new FormControl(this.course.endDate),
@@ -163,13 +167,13 @@ export class CourseUpdateComponent implements OnInit {
 
         this.isUploadingCourseImage = true;
         this.fileUploaderService.uploadFile(file, file['name']).then(
-            result => {
+            (result) => {
                 this.courseForm.patchValue({ courseIcon: result.path });
                 this.isUploadingCourseImage = false;
                 this.courseImageFile = null;
                 this.courseImageFileName = result.path;
             },
-            error => {
+            (error) => {
                 console.error('Error during file upload in uploadBackground()', error.message);
                 this.isUploadingCourseImage = false;
                 this.courseImageFile = null;

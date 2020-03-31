@@ -333,7 +333,7 @@ describe('ProgrammingExerciseManageTestCases', () => {
             { id: testThatWasUpdated.id, weight: testThatWasUpdated.weight, afterDueDate: testThatWasUpdated.afterDueDate },
         ]);
 
-        await new Promise(resolve => setTimeout(resolve));
+        await new Promise((resolve) => setTimeout(resolve));
         fixture.destroy();
     });
 

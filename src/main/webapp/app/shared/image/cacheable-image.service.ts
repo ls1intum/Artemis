@@ -5,7 +5,7 @@ import { Observable, pipe, Subject, Subscription, UnaryFunction } from 'rxjs';
 import { distinctUntilChanged, switchMap, tap } from 'rxjs/operators';
 import { AccountService } from 'app/core/auth/account.service';
 import { blobToBase64String } from 'blob-util';
-import { SessionStorageStrategy } from 'app/shared/image/SessionStorageStrategy';
+import { SessionStorageStrategy } from 'app/shared/image/session-storage-strategy';
 
 const logoutSubject = new Subject<void>();
 

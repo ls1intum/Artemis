@@ -72,7 +72,7 @@ public class TextSubmissionService extends SubmissionService {
     public TextSubmission handleTextSubmission(TextSubmission textSubmission, TextExercise textExercise, Principal principal) {
         // Don't allow submissions after the due date (except if the exercise was started after the due date)
         final var dueDate = textExercise.getDueDate();
-        final var optionalParticipation = participationService.findOneByExerciseIdAndStudentLoginAnyState(textExercise.getId(), principal.getName());
+        final var optionalParticipation = participationService.findOneByExerciseAndStudentLoginAnyState(textExercise, principal.getName());
         if (optionalParticipation.isEmpty()) {
             throw new ResponseStatusException(HttpStatus.FAILED_DEPENDENCY, "No participation found for " + principal.getName() + " in exercise " + textExercise.getId());
         }

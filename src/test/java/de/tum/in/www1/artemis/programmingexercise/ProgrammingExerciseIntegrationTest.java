@@ -210,7 +210,7 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationTest {
         var repository = gitService.getRepositoryByLocalPath(localRepoFile.toPath());
         doReturn(repository).when(gitService).getOrCheckoutRepository(any(URL.class), anyBoolean(), anyString());
         final var path = Endpoints.ROOT
-                + Endpoints.EXPORT_SUBMISSIONS_BY_STUDENT.replace("{exerciseId}", "" + programmingExercise.getId()).replace("{studentIds}", "student1,student2");
+                + Endpoints.EXPORT_SUBMISSIONS_BY_PARTICIPANTS.replace("{exerciseId}", "" + programmingExercise.getId()).replace("{participantIdentifiers}", "student1,student2");
         downloadedFile = request.postWithResponseBodyFile(path, getOptions(), HttpStatus.OK);
         assertThat(downloadedFile.exists());
         // TODO: unzip the files and add some checks
@@ -220,7 +220,7 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationTest {
         final var repositoryExportOptions = new RepositoryExportOptionsDTO();
         repositoryExportOptions.setFilterLateSubmissions(true);
         repositoryExportOptions.setCombineStudentCommits(true);
-        repositoryExportOptions.setAddStudentName(true);
+        repositoryExportOptions.setAddParticipantName(true);
         repositoryExportOptions.setNormalizeCodeStyle(true);
         repositoryExportOptions.setFilterLateSubmissionsDate(ZonedDateTime.now());
         return repositoryExportOptions;
@@ -328,7 +328,7 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationTest {
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void updateProgrammingExercisei_invalidSolutionRepository_badRequest() throws Exception {
+    public void updateProgrammingExercise_invalidSolutionRepository_badRequest() throws Exception {
         database.addTemplateParticipationForProgrammingExercise(programmingExercise);
         database.addSolutionParticipationForProgrammingExercise(programmingExercise);
         bitbucketRequestMockProvider.enableMockingOfRequests();
@@ -482,14 +482,14 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationTest {
 
     @NotNull
     private String getDefaultAPIEndpointForExportRepos() {
-        return ROOT + EXPORT_SUBMISSIONS_BY_STUDENT.replace("{exerciseId}", programmingExercise.getId() + "").replace("{studentIds}", "1,2,3");
+        return ROOT + EXPORT_SUBMISSIONS_BY_PARTICIPANTS.replace("{exerciseId}", programmingExercise.getId() + "").replace("{participantIdentifiers}", "1,2,3");
     }
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
     public void exportSubmissionsByStudentLogins_exportAllAsTutor_forbidden() throws Exception {
         final var options = getOptions();
-        options.setExportAllStudents(true);
+        options.setExportAllParticipants(true);
         request.post(getDefaultAPIEndpointForExportRepos(), options, HttpStatus.FORBIDDEN);
     }
 

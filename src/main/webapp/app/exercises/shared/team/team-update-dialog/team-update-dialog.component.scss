@@ -13,12 +13,15 @@ $error-bg-color: #f8d7da;
 
 .student-search-searching {
     position: relative;
-    top: -1px;
+    top: -2px;
 }
 
-.student-search-failed {
-    line-height: 1.4rem;
+.student-search-error-message {
+    position: relative;
+    top: -4.5px;
+    line-height: 1rem;
     font-size: 0.8rem;
+    margin-left: 5px;
 }
 
 .list-group--students {
@@ -75,12 +78,21 @@ $error-bg-color: #f8d7da;
 }
 
 .student-remove-link {
-    display: block;
-    cursor: pointer;
+    background-color: transparent;
+    border: none;
+    -webkit-appearance: none;
 }
 
 .modal-footer {
     button[disabled] {
         cursor: not-allowed;
+    }
+}
+
+.hidden-md-down {
+    display: none !important;
+
+    @media (min-width: 992px) {
+        display: block !important;
     }
 }

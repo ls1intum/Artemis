@@ -8,7 +8,7 @@ import { ParticipationService } from 'app/exercises/shared/participation/partici
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import { TextEditorService } from 'app/exercises/text/participate/text-editor.service';
 import * as moment from 'moment';
-import { ArtemisMarkdown } from 'app/shared/markdown.service';
+import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { Observable } from 'rxjs/Observable';
 import { TextSubmissionService } from 'app/exercises/text/participate/text-submission.service';
@@ -48,7 +48,7 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
         private textService: TextEditorService,
         private resultService: ResultService,
         private jhiAlertService: AlertService,
-        private artemisMarkdown: ArtemisMarkdown,
+        private artemisMarkdown: ArtemisMarkdownService,
         private location: Location,
         private translateService: TranslateService,
         private participationWebsocketService: ParticipationWebsocketService,
@@ -74,7 +74,7 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
                 if (data.submissions && data.submissions.length > 0) {
                     this.submission = data.submissions[0] as TextSubmission;
                     if (this.submission && data.results && this.isAfterAssessmentDueDate) {
-                        this.result = data.results.find(r => r.submission!.id === this.submission.id)!;
+                        this.result = data.results.find((r) => r.submission!.id === this.submission.id)!;
                     }
 
                     if (this.submission && this.submission.text) {
@@ -95,7 +95,7 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
             newSubmission.submitted = false;
             newSubmission.text = this.answer;
             if (this.submission.id) {
-                this.textSubmissionService.update(newSubmission, this.textExercise.id).subscribe(response => {
+                this.textSubmissionService.update(newSubmission, this.textExercise.id).subscribe((response) => {
                     this.submission = response.body!;
                     // reconnect so that the submission status is displayed correctly in the result.component
                     this.submission.participation.submissions = [this.submission];
@@ -142,7 +142,7 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
      */
     get generalFeedback(): Feedback | null {
         if (this.result && this.result.feedbacks && Array.isArray(this.result.feedbacks)) {
-            const feedbackWithoutReference = this.result.feedbacks.find(f => f.reference == null) || null;
+            const feedbackWithoutReference = this.result.feedbacks.find((f) => f.reference == null) || null;
             if (feedbackWithoutReference != null && feedbackWithoutReference.detailText != null && feedbackWithoutReference.detailText.length > 0) {
                 return feedbackWithoutReference;
             }
@@ -178,7 +178,7 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
 
         this.submission.submitted = true;
         this.textSubmissionService.update(this.submission, this.textExercise.id).subscribe(
-            response => {
+            (response) => {
                 this.submission = response.body!;
                 // reconnect so that the submission status is displayed correctly in the result.component
                 this.submission.participation.submissions = [this.submission];
@@ -192,7 +192,7 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
                     this.jhiAlertService.warning('entity.action.submitDeadlineMissedAlert');
                 }
             },
-            err => {
+            (err) => {
                 this.jhiAlertService.error('artemisApp.modelingEditor.error');
                 this.submission.submitted = false;
                 this.isSaving = false;

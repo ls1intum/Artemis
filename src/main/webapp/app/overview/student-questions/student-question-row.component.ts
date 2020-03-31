@@ -117,7 +117,7 @@ export class StudentQuestionRowComponent implements OnInit, OnDestroy {
 
     deleteAnswer(studentAnswer: StudentQuestionAnswer): void {
         this.studentQuestionAnswerService.delete(studentAnswer.id).subscribe((res: HttpResponse<any>) => {
-            this.studentQuestion.answers = this.studentQuestion.answers.filter(el => el.id !== studentAnswer.id);
+            this.studentQuestion.answers = this.studentQuestion.answers.filter((el) => el.id !== studentAnswer.id);
             this.sortQuestionAnswers();
         });
     }

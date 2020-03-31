@@ -20,7 +20,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.in.www1.artemis.config.Constants;
-import de.tum.in.www1.artemis.domain.participation.ParticipantInterface;
+import de.tum.in.www1.artemis.domain.participation.Participant;
 
 /**
  * A user.
@@ -29,7 +29,7 @@ import de.tum.in.www1.artemis.domain.participation.ParticipantInterface;
 @Table(name = "jhi_user")
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class User extends AbstractAuditingEntity implements Serializable, ParticipantInterface {
+public class User extends AbstractAuditingEntity implements Serializable, Participant {
 
     private static final long serialVersionUID = 1L;
 
@@ -44,7 +44,7 @@ public class User extends AbstractAuditingEntity implements Serializable, Partic
     private String login;
 
     @JsonIgnore
-    @Column(name = "password_hash", length = 60)
+    @Column(name = "password_hash")
     private String password;
 
     @Size(max = 50)
@@ -134,7 +134,6 @@ public class User extends AbstractAuditingEntity implements Serializable, Partic
         this.login = StringUtils.lowerCase(login, Locale.ENGLISH);
     }
 
-    @JsonIgnore
     public String getParticipantIdentifier() {
         return login;
     }

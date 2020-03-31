@@ -15,6 +15,8 @@ export function ParticipationSimulation(timeout, exerciseId, participationId, co
         const match = resReg.exec(message);
         const result = JSON.parse(match[2]);
 
+        console.log("Received test result " + result.successful + ", " + result.resultString);
+
         switch (expectedResult) {
             case TestResult.SUCCESS: {
                 if(!result.successful) fail(`ERROR: The result for participation ${participationId} was not successful!`);
@@ -49,7 +51,6 @@ export function createExercise(artemis, courseId) {
         assessmentType: 'AUTOMATIC',
         type: 'programming',
         programmingLanguage: 'JAVA',
-        publishBuildPlanUrl: true,
         allowOnlineEditor: true,
         packageName: 'de.test',
         problemStatement: programmingExerciseProblemStatement,
@@ -63,7 +64,11 @@ export function createExercise(artemis, courseId) {
 
     res = artemis.post(PROGRAMMING_EXERCISES_SETUP, exercise);
     if (res[0].status !== 201) {
-        fail('ERROR: Could not create exercise (' + res[0].status + ')! response was + ' + res[0].body);
+        console.log("ERROR when creating a new programming exercise. Response headers:");
+        for (let [key, value] of Object.entries(res[0].headers)) {
+            console.log(`${key}: ${value}`);
+        }
+        fail('ERROR: Could not create exercise (status: ' + res[0].status + ')! response: ' + res[0].body);
     }
     const exerciseId = JSON.parse(res[0].body).id;
     console.log('CREATED new programming exercise, ID=' + exerciseId);

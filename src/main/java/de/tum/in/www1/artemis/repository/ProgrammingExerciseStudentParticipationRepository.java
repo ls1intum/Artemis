@@ -27,10 +27,12 @@ public interface ProgrammingExerciseStudentParticipationRepository extends JpaRe
     @EntityGraph(type = LOAD, attributePaths = { "results", "exercise" })
     List<ProgrammingExerciseStudentParticipation> findByBuildPlanId(String buildPlanId);
 
-    @Query("select distinct p from ProgrammingExerciseStudentParticipation p left join fetch p.results where p.buildPlanId is not null and p.student is not null")
+    @Query("select distinct p from ProgrammingExerciseStudentParticipation p left join fetch p.results where p.buildPlanId is not null and (p.student is not null or p.team is not null)")
     List<ProgrammingExerciseStudentParticipation> findAllWithBuildPlanId();
 
     Optional<ProgrammingExerciseStudentParticipation> findByExerciseIdAndStudentLogin(Long exerciseId, String username);
+
+    Optional<ProgrammingExerciseStudentParticipation> findByExerciseIdAndTeamId(Long exerciseId, Long teamId);
 
     List<ProgrammingExerciseStudentParticipation> findByExerciseId(Long exerciseId);
 

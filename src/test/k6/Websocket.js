@@ -20,7 +20,7 @@ const courseId = 1;
 const exerciseId = 1263;
 
 export default function() {
-    const websocketConnectionTime = __ENV.TIMEOUT; // Time in seconds the websocket is kept open, if set to 0 no websocket connection is estahblished
+    const websocketConnectionTime = parseFloat(__ENV.TIMEOUT_PARTICIPATION); // Time in seconds the websocket is kept open, if set to 0 no websocket connection is estahblished
 
     // Delay so that not all users start at the same time, batches of 50 users per second
     const delay = Math.floor(__VU / 50);

@@ -36,7 +36,7 @@ export class UserRouteAccessService implements CanActivate {
                 .pipe(
                     // Only take the first returned boolean and then cancel the subscription
                     first(),
-                    switchMap(isValidOrNoIDE => {
+                    switchMap((isValidOrNoIDE) => {
                         // 1./2. Case: The Orion version is up-to-date/The connected client is a regular browser
                         if (isValidOrNoIDE) {
                             // Always check whether the user is logged in
@@ -53,13 +53,13 @@ export class UserRouteAccessService implements CanActivate {
     checkLogin(authorities: string[], url: string): Promise<boolean> {
         const accountService = this.accountService;
         return Promise.resolve(
-            accountService.identity().then(account => {
+            accountService.identity().then((account) => {
                 if (!authorities || authorities.length === 0) {
                     return true;
                 }
 
                 if (account) {
-                    return accountService.hasAnyAuthority(authorities).then(response => {
+                    return accountService.hasAnyAuthority(authorities).then((response) => {
                         if (response) {
                             return true;
                         }

@@ -8,7 +8,7 @@ import { JhiEventManager } from 'ng-jhipster';
 
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { ModelingExerciseService } from './modeling-exercise.service';
-import { ArtemisMarkdown } from 'app/shared/markdown.service';
+import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 
 @Component({
     selector: 'jhi-modeling-exercise-detail',
@@ -27,11 +27,11 @@ export class ModelingExerciseDetailComponent implements OnInit, OnDestroy {
         private eventManager: JhiEventManager,
         private modelingExerciseService: ModelingExerciseService,
         private route: ActivatedRoute,
-        private artemisMarkdown: ArtemisMarkdown,
+        private artemisMarkdown: ArtemisMarkdownService,
     ) {}
 
     ngOnInit() {
-        this.subscription = this.route.params.subscribe(params => {
+        this.subscription = this.route.params.subscribe((params) => {
             this.load(params['exerciseId']);
         });
         this.registerChangeInModelingExercises();

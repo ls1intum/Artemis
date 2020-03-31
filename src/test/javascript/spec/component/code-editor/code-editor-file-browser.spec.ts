@@ -238,7 +238,7 @@ describe('CodeEditorFileBrowserComponent', () => {
                 text: 'file1',
                 value: 'file1',
             } as any),
-        ].map(x => x.toString());
+        ].map((x) => x.toString());
         getRepositoryContentStub.returns(Observable.of(repositoryContent));
         isCleanStub.returns(Observable.of({ repositoryStatus: CommitState.CLEAN }));
         comp.commitState = CommitState.UNDEFINED;
@@ -246,7 +246,7 @@ describe('CodeEditorFileBrowserComponent', () => {
         fixture.detectChanges();
         expect(comp.isLoadingFiles).to.equal(false);
         expect(comp.repositoryFiles).to.deep.equal(allowedFiles);
-        expect(comp.filesTreeViewItem.map(x => x.toString())).to.deep.equal(expectedFileTreeItems);
+        expect(comp.filesTreeViewItem.map((x) => x.toString())).to.deep.equal(expectedFileTreeItems);
         const renderedFolders = debugElement.queryAll(By.css('jhi-code-editor-file-browser-folder'));
         const renderedFiles = debugElement.queryAll(By.css('jhi-code-editor-file-browser-file'));
         expect(renderedFolders).to.have.lengthOf(0);
@@ -345,7 +345,7 @@ describe('CodeEditorFileBrowserComponent', () => {
         const isSelected = !!selectedFileHtml.query(By.css('.node-selected'));
         expect(isSelected).to.be.true;
         const notSelectedFilesHtml = [renderedFiles[1], ...renderedFolders];
-        const areUnSelected = !notSelectedFilesHtml.some(el => !!el.query(By.css('.node-selected')));
+        const areUnSelected = !notSelectedFilesHtml.some((el) => !!el.query(By.css('.node-selected')));
         expect(areUnSelected).to.be.true;
     });
 

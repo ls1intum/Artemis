@@ -25,6 +25,7 @@ import { ReEvaluateShortAnswerQuestionComponent } from 'app/exercises/quiz/manag
 import { QuizReEvaluateWarningComponent } from 'app/exercises/quiz/manage/re-evaluate/quiz-re-evaluate-warning.component';
 import { QuizExerciseExportComponent } from 'app/exercises/quiz/manage/quiz-exercise-export.component';
 import { ArtemisQuizQuestionTypesModule } from 'app/exercises/quiz/shared/questions/artemis-quiz-question-types.module';
+import { ArtemisQuizParticipationModule } from 'app/exercises/quiz/participate/quiz-participation.module';
 
 const ENTITY_STATES = [...quizManagementRoute];
 
@@ -36,13 +37,14 @@ const ENTITY_STATES = [...quizManagementRoute];
         SortByModule,
         AngularFittextModule,
         AceEditorModule,
+        FormDateTimePickerModule,
         ArtemisQuizQuestionTypesModule,
         ArtemisMarkdownEditorModule,
         ArtemisQuizStatisticModule,
         ArtemisApollonDiagramsModule,
-        FormDateTimePickerModule,
         ArtemisCategorySelectorModule,
         ArtemisDifficultyPickerModule,
+        ArtemisQuizParticipationModule,
     ],
     declarations: [
         QuizExerciseComponent,

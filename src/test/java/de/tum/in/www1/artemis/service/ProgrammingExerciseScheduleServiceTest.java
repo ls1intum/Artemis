@@ -7,7 +7,6 @@ import java.net.URISyntaxException;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import org.eclipse.jgit.lib.ObjectId;
 import org.junit.jupiter.api.AfterEach;
@@ -78,15 +77,16 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationTe
         for (StudentParticipation studentParticipation : studentParticipations) {
             ProgrammingExerciseStudentParticipation programmingExerciseStudentParticipation = (ProgrammingExerciseStudentParticipation) studentParticipation;
             verify(versionControlService, Mockito.times(callCount)).setRepositoryPermissionsToReadOnly(programmingExerciseStudentParticipation.getRepositoryUrlAsUrl(),
-                    programmingExercise.getProjectKey(), programmingExerciseStudentParticipation.getStudent().getLogin());
+                    programmingExercise.getProjectKey(), programmingExerciseStudentParticipation.getStudents());
             verify(versionControlService, Mockito.times(callCount)).setRepositoryPermissionsToReadOnly(programmingExerciseStudentParticipation.getRepositoryUrlAsUrl(),
-                    programmingExercise.getProjectKey(), programmingExerciseStudentParticipation.getStudent().getLogin());
+                    programmingExercise.getProjectKey(), programmingExerciseStudentParticipation.getStudents());
         }
     }
 
     private void mockStudentRepoLocks() throws URISyntaxException {
-        for (final var login : programmingExercise.getStudentParticipations().stream().map(p -> p.getStudent().getLogin()).collect(Collectors.toList())) {
-            bitbucketRequestMockProvider.mockSetRepositoryPermissionsToReadOnly(programmingExercise.getProjectKey(), login);
+        for (final var participation : programmingExercise.getStudentParticipations()) {
+            final var repositorySlug = (programmingExercise.getProjectKey() + "-" + participation.getParticipantIdentifier()).toLowerCase();
+            bitbucketRequestMockProvider.mockSetRepositoryPermissionsToReadOnly(repositorySlug, programmingExercise.getProjectKey(), participation.getStudents());
         }
     }
 
