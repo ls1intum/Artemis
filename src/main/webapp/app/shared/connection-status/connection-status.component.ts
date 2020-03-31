@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, ContentChild, TemplateRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, ContentChild, ElementRef } from '@angular/core';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 
 @Component({
@@ -7,7 +7,7 @@ import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
     styleUrls: ['./connection-status.component.scss'],
 })
 export class JhiConnectionStatusComponent implements OnInit, OnDestroy {
-    @ContentChild(TemplateRef, { read: TemplateRef, static: false }) templateRef: TemplateRef<any>;
+    @ContentChild('innerContent', { static: false }) innerContent: ElementRef;
 
     disconnected = true;
     onConnected: () => void;

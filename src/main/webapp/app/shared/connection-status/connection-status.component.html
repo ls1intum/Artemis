@@ -2,5 +2,5 @@
     <fa-icon [icon]="'circle'" size="sm"></fa-icon>
     <span *ngIf="!disconnected" jhiTranslate="connectionStatus.connected"></span>
     <span *ngIf="disconnected" jhiTranslate="connectionStatus.disconnected"></span>
-    <ng-container *ngTemplateOutlet="templateRef"></ng-container>
+    <ng-content select="[innerContent]"></ng-content>
 </div>
