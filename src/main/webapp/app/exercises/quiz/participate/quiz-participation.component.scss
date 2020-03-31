@@ -1,14 +1,6 @@
 .quiz-header {
     font-size: 16px;
     margin-top: 25px;
-
-    .in-parentheses:before {
-        content: '(';
-    }
-
-    .in-parentheses:after {
-        content: ')';
-    }
 }
 
 .quiz-content {
@@ -154,6 +146,14 @@
     font-weight: bold;
     border-color: #3c763d;
     z-index: 8;
+}
+
+.in-parentheses:before {
+    content: '(';
+}
+
+.in-parentheses:after {
+    content: ')';
 }
 
 .align-text {
