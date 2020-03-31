@@ -13,6 +13,7 @@ import { FindLanguageFromKeyPipe } from 'app/shared/language/find-language-from-
 import { ArtemisSharedLibsModule } from 'app/shared/shared-libs.module';
 import { SlideToggleComponent } from 'app/exercises/shared/slide-toggle/slide-toggle.component';
 import { AlertErrorComponent } from 'app/shared/alert/alert-error.component';
+import { JhiConnectionStatusComponent } from 'app/shared/connection-status/connection-status.component';
 
 @NgModule({
     imports: [ArtemisSharedLibsModule, ArtemisSharedCommonModule, ArtemisSharedPipesModule],
@@ -24,6 +25,7 @@ import { AlertErrorComponent } from 'app/shared/alert/alert-error.component';
         ResizeableContainerComponent,
         SecureLinkDirective,
         SlideToggleComponent,
+        JhiConnectionStatusComponent,
     ],
     providers: [DatePipe],
     entryComponents: [DeleteDialogComponent],
@@ -41,6 +43,7 @@ import { AlertErrorComponent } from 'app/shared/alert/alert-error.component';
         ResizeableContainerComponent,
         SecureLinkDirective,
         SlideToggleComponent,
+        JhiConnectionStatusComponent,
     ],
 })
 export class ArtemisSharedModule {}

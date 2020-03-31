@@ -1,11 +1,7 @@
 <div>
     <h2 id="tracker-page-heading" jhiTranslate="tracker.title">Real-time user activities</h2>
 
-    <div class="connection-status-admin" [ngClass]="{ disconnected: disconnected }">
-        <fa-icon [icon]="'circle'" size="sm"></fa-icon>
-        <span *ngIf="!disconnected" jhiTranslate="artemisApp.quizExercise.connected"></span>
-        <span *ngIf="disconnected" jhiTranslate="artemisApp.quizExercise.disconnected"></span>
-    </div>
+    <jhi-connection-status></jhi-connection-status>
 
     <div class="table-responsive">
         <table class="table table-striped">

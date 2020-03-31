@@ -129,6 +129,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
             this.subscription = this.route.params.subscribe((params) => {
                 this.quizId = params['exerciseId'];
                 // init according to mode
+                console.log('mode', this.mode);
                 switch (this.mode) {
                     case 'practice':
                         this.initPracticeMode();
