@@ -143,6 +143,7 @@ For more information, review [Working with Angular](https://www.jhipster.tech/de
 
 You can define the following custom assets for Artemis to be used instead of the TUM defaults:
 * The logo next to the "Artemis" heading on the navbar &#8594; `${artemisRunDirectory}/public/images/logo.png`
+* The favicon &#8594; `${artemisRunDirectory}/public/images/favicon.ico`
 * The privacy statement HTML &#8594; `${artemisRunDirectory}/public/content/privacy_statement.html`
 * The contact email address in the `application-{prod,artemis}.yml` configuration file under the key `info.contact`
 * The imprint link in the `application-{prod,artemis}.yml` configuration file under the key `info.imprint`
