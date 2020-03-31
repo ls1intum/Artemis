@@ -34,7 +34,7 @@
                     <td>{{ lecture.endDate | date: 'medium' }}</td>
                     <td>
                         <div *ngIf="lecture.course">
-                            <a [routerLink]="['../course', lecture.course?.id, 'view']">{{ lecture.course?.title }}</a>
+                            <a [routerLink]="['../view']">{{ lecture.course?.title }}</a>
                         </div>
                     </td>
                     <td class="text-right">

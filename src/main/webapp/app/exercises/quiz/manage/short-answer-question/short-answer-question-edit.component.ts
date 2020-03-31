@@ -12,7 +12,7 @@ import {
     ViewChild,
     ViewEncapsulation,
 } from '@angular/core';
-import { ArtemisMarkdown } from 'app/shared/markdown.service';
+import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { AceEditorComponent } from 'ng2-ace-editor';
 import 'brace/theme/chrome';
 import 'brace/mode/markdown';
@@ -29,7 +29,7 @@ import { ShortAnswerSolution } from 'app/entities/quiz/short-answer-solution.mod
     templateUrl: './short-answer-question-edit.component.html',
     styleUrls: ['./short-answer-question-edit.component.scss', '../quiz-exercise.scss', '../../shared/quiz.scss'],
     encapsulation: ViewEncapsulation.None,
-    providers: [ArtemisMarkdown],
+    providers: [ArtemisMarkdownService],
 })
 export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, AfterViewInit, QuizQuestionEdit {
     @ViewChild('questionEditor', { static: false })
@@ -77,7 +77,7 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
     backupQuestion: ShortAnswerQuestion;
 
     constructor(
-        private artemisMarkdown: ArtemisMarkdown,
+        private artemisMarkdown: ArtemisMarkdownService,
         public shortAnswerQuestionUtil: ShortAnswerQuestionUtil,
         private modalService: NgbModal,
         private changeDetector: ChangeDetectorRef,

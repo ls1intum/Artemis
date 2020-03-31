@@ -516,7 +516,7 @@ public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegratio
     public void getNumberOfAllowedComplaintsInCourse() throws Exception {
         complaint.setStudent(database.getUserByLogin("student1"));
         complaintRepo.save(complaint);
-        Long nrOfAllowedComplaints = request.get("/api/" + modelingExercise.getCourse().getId() + "/allowed-complaints", HttpStatus.OK, Long.class);
+        Long nrOfAllowedComplaints = request.get("/api/courses/" + modelingExercise.getCourse().getId() + "/allowed-complaints", HttpStatus.OK, Long.class);
         assertThat(nrOfAllowedComplaints.intValue()).isEqualTo(course.getMaxComplaints());
         // TODO: there should be a second test case where the student already has 2 complaints and the number is reduced
     }

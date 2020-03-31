@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { ArtemisMarkdown } from 'app/shared/markdown.service';
+import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { ShortAnswerQuestion } from 'app/entities/quiz/short-answer-question.model';
 import { ShortAnswerMapping } from 'app/entities/quiz/short-answer-mapping.model';
 import { ShortAnswerSpot } from 'app/entities/quiz/short-answer-spot.model';
@@ -469,7 +469,7 @@ export class ShortAnswerQuestionUtil {
      * @param artemisMarkdown
      * @returns {string[][]}
      */
-    transformTextPartsIntoHTML(textParts: string[][], artemisMarkdown: ArtemisMarkdown): (string | null)[][] {
+    transformTextPartsIntoHTML(textParts: string[][], artemisMarkdown: ArtemisMarkdownService): (string | null)[][] {
         return textParts.map((textPart) => textPart.map((element) => artemisMarkdown.htmlForMarkdown(element)));
     }
 }

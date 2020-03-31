@@ -139,7 +139,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
                     case 'solution':
                         this.initShowSolution();
                         break;
-                    case 'default':
+                    case 'live':
                         this.init();
                         break;
                 }
@@ -919,7 +919,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
                         );
                     }
                     break;
-                case 'default':
+                case 'live':
                     if (this.disconnected || !this.submissionChannel) {
                         alert(
                             "Cannot Submit while disconnected. Don't worry, answers that were saved" +

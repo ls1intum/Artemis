@@ -1,7 +1,7 @@
 import { Component, Input } from '@angular/core';
 import { SafeHtml } from '@angular/platform-browser';
 import { UMLDiagramType, UMLModel } from '@ls1intum/apollon';
-import { ArtemisMarkdown } from 'app/shared/markdown.service';
+import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
@@ -23,7 +23,7 @@ export class AssessmentInstructionsComponent {
 
     readonly ExerciseType = ExerciseType;
 
-    constructor(private markdownService: ArtemisMarkdown) {}
+    constructor(private markdownService: ArtemisMarkdownService) {}
 
     @Input('exercise') set exerciseInput(exercise: Exercise) {
         this.exercise = exercise;

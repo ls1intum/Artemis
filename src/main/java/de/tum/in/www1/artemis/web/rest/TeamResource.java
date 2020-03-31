@@ -10,12 +10,15 @@ import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.actuate.audit.AuditEvent;
+import org.springframework.boot.actuate.audit.AuditEventRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
+import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.repository.TeamRepository;
 import de.tum.in.www1.artemis.service.*;
@@ -51,8 +54,10 @@ public class TeamResource {
 
     private final ParticipationService participationService;
 
+    private final AuditEventRepository auditEventRepository;
+
     public TeamResource(TeamRepository teamRepository, TeamService teamService, CourseService courseService, ExerciseService exerciseService, UserService userService,
-            AuthorizationCheckService authCheckService, ParticipationService participationService) {
+            AuthorizationCheckService authCheckService, ParticipationService participationService, AuditEventRepository auditEventRepository) {
         this.teamRepository = teamRepository;
         this.teamService = teamService;
         this.courseService = courseService;
@@ -60,6 +65,7 @@ public class TeamResource {
         this.userService = userService;
         this.authCheckService = authCheckService;
         this.participationService = participationService;
+        this.auditEventRepository = auditEventRepository;
     }
 
     /**
@@ -199,8 +205,7 @@ public class TeamResource {
     @DeleteMapping("/exercises/{exerciseId}/teams/{id}")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Void> deleteTeam(@PathVariable long exerciseId, @PathVariable long id) {
-        log.debug("REST request to delete Team : {}", id);
-        // TODO: Martin Wauligmann - Add audit in db and log info (see delete participation)
+        log.info("REST request to delete Team with id {} in exercise with id {}", id, exerciseId);
         User user = userService.getUserWithGroupsAndAuthorities();
         Optional<Team> optionalTeam = teamRepository.findById(id);
         if (optionalTeam.isEmpty()) {
@@ -214,6 +219,11 @@ public class TeamResource {
         if (!authCheckService.isAtLeastInstructorForExercise(exercise, user)) {
             return forbidden();
         }
+        // Create audit event for team delete action
+        var logMessage = "Delete Team with id " + id + " in exercise with id " + exerciseId;
+        var auditEvent = new AuditEvent(user.getLogin(), Constants.DELETE_TEAM, logMessage);
+        auditEventRepository.add(auditEvent);
+        // Delete all participations of the team first and then the team itself
         participationService.deleteAllByTeamId(id, false, false);
         teamRepository.delete(team);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, Long.toString(id))).build();

@@ -5,7 +5,7 @@ import { ComplaintType } from 'app/entities/complaint.model';
 
 export const listOfComplaintsRoute: Routes = [
     {
-        path: 'course-management/:courseId/complaints',
+        path: ':courseId/complaints',
         component: ListOfComplaintsComponent,
         data: {
             authorities: ['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'],
@@ -15,7 +15,7 @@ export const listOfComplaintsRoute: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
-        path: 'course-management/:courseId/exercises/:exerciseId/complaints',
+        path: ':courseId/exercises/:exerciseId/complaints',
         component: ListOfComplaintsComponent,
         data: {
             authorities: ['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'],
@@ -25,7 +25,7 @@ export const listOfComplaintsRoute: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
-        path: 'course-management/:courseId/more-feedback-requests',
+        path: ':courseId/more-feedback-requests',
         component: ListOfComplaintsComponent,
         data: {
             authorities: ['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'],
@@ -35,7 +35,7 @@ export const listOfComplaintsRoute: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
-        path: 'course-management/:courseId/exercises/:exerciseId/more-feedback-requests',
+        path: ':courseId/exercises/:exerciseId/more-feedback-requests',
         component: ListOfComplaintsComponent,
         data: {
             authorities: ['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'],

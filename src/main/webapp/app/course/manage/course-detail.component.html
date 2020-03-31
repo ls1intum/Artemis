@@ -63,7 +63,7 @@
                 <fa-icon [icon]="'pencil-alt'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.edit">Edit</span>
             </button>
 
-            <button type="button" (click)="registerForCourse()" class="btn btn-warning">
+            <button *ngIf="course.registrationEnabled" type="button" (click)="registerForCourse()" class="btn btn-warning">
                 <fa-icon [icon]="'user-plus'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.registerForCourse">Register</span>
             </button>
         </div>

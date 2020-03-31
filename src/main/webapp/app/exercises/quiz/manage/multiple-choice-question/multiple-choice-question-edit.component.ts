@@ -1,5 +1,5 @@
 import { ChangeDetectorRef, Component, EventEmitter, Input, OnInit, Output, ViewChild } from '@angular/core';
-import { ArtemisMarkdown } from 'app/shared/markdown.service';
+import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { HintCommand } from 'app/shared/markdown-editor/domainCommands/hint.command';
 import { ExplanationCommand } from 'app/shared/markdown-editor/domainCommands/explanation.command';
@@ -15,7 +15,7 @@ import { QuizQuestionEdit } from 'app/exercises/quiz/manage/quiz-question-edit.i
     selector: 'jhi-multiple-choice-question-edit',
     templateUrl: './multiple-choice-question-edit.component.html',
     styleUrls: ['../../shared/quiz.scss'],
-    providers: [ArtemisMarkdown],
+    providers: [ArtemisMarkdownService],
 })
 export class MultipleChoiceQuestionEditComponent implements OnInit, QuizQuestionEdit {
     @ViewChild('markdownEditor', { static: false })
@@ -51,7 +51,7 @@ export class MultipleChoiceQuestionEditComponent implements OnInit, QuizQuestion
     /** DomainCommands for the multiple choice question **/
     commandMultipleChoiceQuestions: DomainCommand[] = [this.correctCommand, this.incorrectCommand, this.explanationCommand, this.hintCommand];
 
-    constructor(private artemisMarkdown: ArtemisMarkdown, private modalService: NgbModal, private changeDetector: ChangeDetectorRef) {}
+    constructor(private artemisMarkdown: ArtemisMarkdownService, private modalService: NgbModal, private changeDetector: ChangeDetectorRef) {}
 
     ngOnInit(): void {
         this.questionEditorText = this.generateMarkdown();

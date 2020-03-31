@@ -5,10 +5,10 @@ import { HttpResponse } from '@angular/common/http';
 import { Subscription } from 'rxjs/Subscription';
 import { JhiEventManager } from 'ng-jhipster';
 
-import { TextExercise } from '../../../../entities/text-exercise.model';
+import { TextExercise } from 'app/entities/text-exercise.model';
 import { TextExerciseService } from './text-exercise.service';
-import { ArtemisMarkdown } from 'app/shared/markdown.service';
-import { AssessmentType } from '../../../../entities/assessment-type.model';
+import { ArtemisMarkdownService } from 'app/shared/markdown.service';
+import { AssessmentType } from 'app/entities/assessment-type.model';
 
 @Component({
     selector: 'jhi-text-exercise-detail',
@@ -26,7 +26,12 @@ export class TextExerciseDetailComponent implements OnInit, OnDestroy {
     private subscription: Subscription;
     private eventSubscriber: Subscription;
 
-    constructor(private eventManager: JhiEventManager, private textExerciseService: TextExerciseService, private route: ActivatedRoute, private artemisMarkdown: ArtemisMarkdown) {}
+    constructor(
+        private eventManager: JhiEventManager,
+        private textExerciseService: TextExerciseService,
+        private route: ActivatedRoute,
+        private artemisMarkdown: ArtemisMarkdownService,
+    ) {}
 
     ngOnInit() {
         this.subscription = this.route.params.subscribe((params) => {

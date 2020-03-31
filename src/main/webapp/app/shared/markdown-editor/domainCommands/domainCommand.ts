@@ -2,7 +2,7 @@ import { Command } from 'app/shared/markdown-editor/commands/command';
 import { escapeStringForUseInRegex } from 'app/shared/util/global.utils';
 
 /** abstract class for all domainCommands - customized commands for Artemis specific use cases
- * e.g multiple choice questons, drag an drop questions
+ * e.g multiple choice questions, drag an drop questions
  * Each domain command has its own logic and an unique identifier**/
 export abstract class DomainCommand extends Command {
     abstract getOpeningIdentifier(): string; // e.g. [exp]
@@ -25,8 +25,8 @@ export abstract class DomainCommand extends Command {
      * Returns the content between the identifiers if there is match, otherwise returns null.
      */
     isCursorWithinTag(): { matchStart: number; matchEnd: number; innerTagContent: string } | null {
-        const { row, column } = this.aceEditorContainer.getEditor().getCursorPosition(),
-            line = this.aceEditorContainer.getEditor().getSession().getLine(row),
+        const { row, column } = this.aceEditor.getCursorPosition(),
+            line = this.aceEditor.getSession().getLine(row),
             regex = this.getTagRegex('g');
 
         const indexes: Array<{ matchStart: number; matchEnd: number; innerTagContent: string }> = [];
@@ -44,7 +44,7 @@ export abstract class DomainCommand extends Command {
      * Returns the content between the identifiers if there is match, otherwise returns null.
      */
     isTagInRow(row: number): { matchStart: number; matchEnd: number; innerTagContent: string } | null {
-        const line = this.aceEditorContainer.getEditor().getSession().getLine(row),
+        const line = this.aceEditor.getSession().getLine(row),
             regex = this.getTagRegex();
 
         if (!line) {
