@@ -111,9 +111,14 @@
                 </ngx-datatable-column>
 
                 <ngx-datatable-column prop="" [minWidth]="220" [width]="220" [maxWidth]="220">
-                    <ng-template ngx-datatable-cell-template let-value="value">
+                    <ng-template ngx-datatable-cell-template let-value="row">
                         <div class="w-100 text-right">
-                            <jhi-team-update-button [exercise]="exercise" [team]="value" (save)="onTeamUpdate($event)"></jhi-team-update-button>
+                            <jhi-team-update-button
+                                *ngIf="exercise.isAtLeastInstructor || value.owner?.id === currentUser.id"
+                                [exercise]="exercise"
+                                [team]="value"
+                                (save)="onTeamUpdate($event)"
+                            ></jhi-team-update-button>
                             <jhi-team-delete-button
                                 class="ml-1"
                                 *ngIf="exercise.isAtLeastInstructor"

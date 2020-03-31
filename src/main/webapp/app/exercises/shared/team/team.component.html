@@ -29,7 +29,13 @@
             </div>
         </div>
         <div *ngIf="exercise.isAtLeastTutor" class="d-flex ml-auto">
-            <jhi-team-update-button [exercise]="exercise" [team]="team" [buttonSize]="ButtonSize.MEDIUM" (save)="onTeamUpdate($event)"></jhi-team-update-button>
+            <jhi-team-update-button
+                *ngIf="exercise.isAtLeastInstructor || team.owner?.id === currentUser.id"
+                [exercise]="exercise"
+                [team]="team"
+                [buttonSize]="ButtonSize.MEDIUM"
+                (save)="onTeamUpdate($event)"
+            ></jhi-team-update-button>
             <jhi-team-delete-button
                 class="ml-1"
                 *ngIf="exercise.isAtLeastInstructor"

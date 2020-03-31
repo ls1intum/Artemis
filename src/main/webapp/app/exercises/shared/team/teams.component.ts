@@ -11,6 +11,7 @@ import { Exercise } from 'app/entities/exercise.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { formatTeamAsSearchResult } from 'app/exercises/shared/team/team.utils';
 import { AccountService } from 'app/core/auth/account.service';
+import { User } from 'app/core/user/user.model';
 
 @Component({
     selector: 'jhi-teams',
@@ -28,6 +29,8 @@ export class TeamsComponent implements OnInit, OnDestroy {
     dialogError$ = this.dialogErrorSource.asObservable();
 
     isLoading: boolean;
+
+    currentUser: User;
     isAdmin = false;
 
     constructor(
@@ -39,7 +42,10 @@ export class TeamsComponent implements OnInit, OnDestroy {
         private teamService: TeamService,
         private accountService: AccountService,
     ) {
-        this.isAdmin = this.accountService.isAdmin();
+        this.accountService.identity().then((user: User) => {
+            this.currentUser = user;
+            this.isAdmin = this.accountService.isAdmin();
+        });
     }
 
     ngOnInit() {

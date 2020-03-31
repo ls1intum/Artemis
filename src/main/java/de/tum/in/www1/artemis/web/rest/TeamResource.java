@@ -126,17 +126,20 @@ public class TeamResource {
             return forbidden(ENTITY_NAME, "shortNameChangeForbidden", "The team's short name cannot be changed after the team has been created.");
         }
 
-        // User must be (1) at least instructor or (2) TA but the owner of the team
+        // Prepare auth checks
         User user = userService.getUserWithGroupsAndAuthorities();
         Exercise exercise = exerciseService.findOne(exerciseId);
         final boolean isAtLeastInstructor = authCheckService.isAtLeastInstructorForExercise(exercise, user);
-        final boolean isAtLeastTeachingAssistantAndOwner = authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user) && authCheckService.isOwnerOfTeam(team, user);
+        final boolean isAtLeastTeachingAssistantAndOwner = authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user)
+                && authCheckService.isOwnerOfTeam(existingTeam.get(), user);
+
+        // User must be (1) at least instructor or (2) TA but the owner of the team
         if (!isAtLeastInstructor && !isAtLeastTeachingAssistantAndOwner) {
             return forbidden();
         }
 
         // The team owner can only be changed by instructors
-        if (!isAtLeastInstructor && !team.getOwner().equals(existingTeam.get().getOwner())) {
+        if (!isAtLeastInstructor && !existingTeam.get().getOwner().equals(team.getOwner())) {
             return forbidden();
         }
 

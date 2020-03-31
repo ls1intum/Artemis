@@ -28,6 +28,8 @@ export class TeamComponent implements OnInit {
 
     paramSub: Subscription;
     isLoading: boolean;
+
+    currentUser: User;
     isAdmin = false;
 
     constructor(
@@ -40,7 +42,10 @@ export class TeamComponent implements OnInit {
         private accountService: AccountService,
         private router: Router,
     ) {
-        this.isAdmin = this.accountService.isAdmin();
+        this.accountService.identity().then((user: User) => {
+            this.currentUser = user;
+            this.isAdmin = this.accountService.isAdmin();
+        });
     }
 
     ngOnInit() {

@@ -263,14 +263,14 @@ public class DatabaseUtilService {
         return users;
     }
 
-    public List<Team> addTeamsForExercise(Exercise exercise, int numberOfTeams) {
-        List<Team> teams = ModelFactory.generateTeamsForExercise(exercise, numberOfTeams);
+    public List<Team> addTeamsForExercise(Exercise exercise, int numberOfTeams, User owner) {
+        List<Team> teams = ModelFactory.generateTeamsForExercise(exercise, numberOfTeams, owner);
         userRepo.saveAll(teams.stream().map(Team::getStudents).flatMap(Collection::stream).collect(Collectors.toList()));
         return teamRepo.saveAll(teams);
     }
 
-    public Team addTeamForExercise(Exercise exercise) {
-        return addTeamsForExercise(exercise, 1).get(0);
+    public Team addTeamForExercise(Exercise exercise, User owner) {
+        return addTeamsForExercise(exercise, 1, owner).get(0);
     }
 
     public Result addProgrammingParticipationWithResultForExercise(ProgrammingExercise exercise, String login) {
