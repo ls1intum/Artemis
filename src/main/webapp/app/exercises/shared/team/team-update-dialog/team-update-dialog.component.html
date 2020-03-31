@@ -32,7 +32,7 @@
         </div>
         <div class="form-group">
             <div>
-                <label class="label-narrow" jhiTranslate="artemisApp.team.shortName.label" for="teamShortName">Name</label>
+                <label class="label-narrow" jhiTranslate="artemisApp.team.shortName.label" for="teamShortName">Short Name</label>
                 <jhi-help-icon placement="right" text="artemisApp.team.shortName.tooltip"></jhi-help-icon>
             </div>
             <input
@@ -56,16 +56,48 @@
         </div>
         <div class="form-group">
             <div class="d-flex align-items-end">
-                <label class="label-narrow mr-1" jhiTranslate="artemisApp.team.students">Students</label>
-                <fa-icon class="student-search-searching" [icon]="'spinner'" [spin]="true" *ngIf="searchingStudents"></fa-icon>
-                <span *ngIf="searchingStudentsQueryTooShort" class="student-search-error-message text-danger" jhiTranslate="artemisApp.team.studentSearch.queryTooShort">
+                <div>
+                    <label class="label-narrow" jhiTranslate="artemisApp.team.owner.label">Tutor</label>
+                    <jhi-help-icon placement="right" text="artemisApp.team.owner.tooltip" class="mr-1"></jhi-help-icon>
+                </div>
+                <fa-icon class="search-searching" [icon]="'spinner'" [spin]="true" *ngIf="searchingOwner"></fa-icon>
+                <span *ngIf="searchingOwnerQueryTooShort" class="search-error-message text-danger" jhiTranslate="artemisApp.team.ownerSearch.queryTooShort">
                     Please enter at least 3 characters.
                 </span>
-                <span *ngIf="searchingStudentsNoResultsForQuery" class="student-search-error-message text-danger">
+                <span *ngIf="searchingOwnerNoResultsForQuery" class="search-error-message text-danger">
+                    <span jhiTranslate="artemisApp.team.ownerSearch.noResults">No tutors found in course for search:</span>
+                    <strong>{{ searchingOwnerNoResultsForQuery }}</strong>
+                </span>
+                <span *ngIf="searchingOwnerFailed" class="search-error-message text-danger" jhiTranslate="artemisApp.team.ownerSearch.failed">
+                    Search failed. Please try again.
+                </span>
+            </div>
+            <jhi-team-owner-search
+                id="teamOwner"
+                [inputDisabled]="!exercise.isAtLeastInstructor"
+                [course]="exercise.course"
+                [exercise]="exercise"
+                [team]="team"
+                (selectOwner)="onSelectOwner($event)"
+                (searching)="searchingOwner = $event"
+                (searchQueryTooShort)="searchingOwnerQueryTooShort = $event"
+                (searchNoResults)="searchingOwnerNoResultsForQuery = $event"
+                (searchFailed)="searchingOwnerFailed = $event"
+            >
+            </jhi-team-owner-search>
+        </div>
+        <div class="form-group">
+            <div class="d-flex align-items-end">
+                <label class="label-narrow mr-1" jhiTranslate="artemisApp.team.students">Students</label>
+                <fa-icon class="search-searching" [icon]="'spinner'" [spin]="true" *ngIf="searchingStudents"></fa-icon>
+                <span *ngIf="searchingStudentsQueryTooShort" class="search-error-message text-danger" jhiTranslate="artemisApp.team.studentSearch.queryTooShort">
+                    Please enter at least 3 characters.
+                </span>
+                <span *ngIf="searchingStudentsNoResultsForQuery" class="search-error-message text-danger">
                     <span jhiTranslate="artemisApp.team.studentSearch.noResults">No students found in course for search:</span>
                     <strong>{{ searchingStudentsNoResultsForQuery }}</strong>
                 </span>
-                <span *ngIf="searchingStudentsFailed" class="student-search-error-message text-danger" jhiTranslate="artemisApp.team.studentSearch.failed">
+                <span *ngIf="searchingStudentsFailed" class="search-error-message text-danger" jhiTranslate="artemisApp.team.studentSearch.failed">
                     Search failed. Please try again.
                 </span>
             </div>

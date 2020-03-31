@@ -8,6 +8,7 @@ import { TeamSearchUser } from 'app/entities/team-search-user.model';
 import { User } from 'app/core/user/user.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { TeamAssignmentConfig } from 'app/entities/team-assignment-config.model';
+import * as moment from 'moment';
 
 export const mockTeamStudents = [
     { id: 1, firstName: 'John', lastName: 'Doe', name: 'John Doe', login: 'ga12abc', email: 'john.doe@example.com' },
@@ -23,7 +24,9 @@ export const mockNonTeamStudents = [
 
 const teamAssignmentConfig = { minTeamSize: 1, maxTeamSize: 5 } as TeamAssignmentConfig; // note: size of mockTeamStudents above should conform
 
-export const mockExercise = { id: 1, title: 'Programming exercise', teamAssignmentConfig } as ProgrammingExercise;
+const mockCourse = { id: 1 };
+
+export const mockExercise = { id: 1, title: 'Programming exercise', teamAssignmentConfig, course: mockCourse } as ProgrammingExercise;
 
 export const mockEmptyTeam = ({
     students: [],
@@ -34,9 +37,16 @@ export const mockTeam = {
     name: 'Team 1',
     shortName: 'team1',
     students: mockTeamStudents,
+    owner: { id: 1 } as User,
+    createdBy: 'tutor1',
+    createdDate: moment(),
 } as Team;
 
-export const mockTeams = [mockTeam, { id: 2, name: 'Team 2', shortName: 'team2', students: [] } as Team, { id: 3, name: 'Team 3', shortName: 'team3', students: [] } as Team];
+export const mockTeams = [
+    mockTeam,
+    { id: 2, name: 'Team 2', shortName: 'team2', students: [], owner: { id: 1 } as User, createdBy: 'tutor1', createdDate: moment() } as Team,
+    { id: 3, name: 'Team 3', shortName: 'team3', students: [], owner: { id: 1 } as User, createdBy: 'tutor1', createdDate: moment() } as Team,
+];
 
 export const mockShortNames = {
     existing: 'team1',

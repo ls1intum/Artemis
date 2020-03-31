@@ -1,13 +1,41 @@
 <div>
     <div *ngIf="exercise && team" class="d-flex">
-        <div class="mb-3">
-            <h2>
+        <div class="mb-2">
+            <h2 class="mb-2">
                 <span>{{ exercise.title }} - {{ team.name }}</span>
                 <span class="text-muted"> ({{ team.shortName }})</span>
             </h2>
+            <div>
+                <span class="d-inline-block">
+                    <span class="text-muted font-weight-bolder">Tutor:</span>
+                    <a *ngIf="isAdmin && team.owner" [routerLink]="['/admin', 'user-management', team.owner?.login, 'view']">{{ team.owner?.name }}</a>
+                    <a *ngIf="!isAdmin && team.owner" [href]="'mailto:' + team.owner.email">{{ team.owner?.name }}</a>
+                    <span *ngIf="!isAdmin && !team.owner" class="font-weight-bold" jhiTranslate="artemisApp.team.detail.noOwner">No tutor</span>
+                </span>
+                <span class="d-inline-block ml-2">
+                    <span class="text-muted font-weight-bolder">Created:</span>
+                    <span ngbTooltip="{{ team.createdDate | date: 'dd.MM.yyyy HH:mm' }}" placement="top" tooltipClass="date-tooltip">
+                        {{ team.createdDate.fromNow() }}
+                    </span>
+                    <a *ngIf="isAdmin" [routerLink]="['/admin', 'user-management', team.createdBy, 'view']">({{ team.createdBy }})</a>
+                </span>
+                <span class="d-inline-block ml-2" *ngIf="team.lastModifiedDate && team.lastModifiedDate.isAfter(team.createdDate)">
+                    <span class="text-muted font-weight-bolder">Last modified:</span>
+                    <span ngbTooltip="{{ team.lastModifiedDate | date: 'dd.MM.yyyy HH:mm' }}" position="top" tooltipClass="date-tooltip">
+                        {{ team.lastModifiedDate.fromNow() }}
+                    </span>
+                    <a *ngIf="isAdmin" [routerLink]="['/admin', 'user-management', team.lastModifiedBy, 'view']">({{ team.lastModifiedBy }})</a>
+                </span>
+            </div>
         </div>
         <div *ngIf="exercise.isAtLeastTutor" class="d-flex ml-auto">
-            <jhi-team-update-button [exercise]="exercise" [team]="team" [buttonSize]="ButtonSize.MEDIUM" (save)="onTeamUpdate($event)"></jhi-team-update-button>
+            <jhi-team-update-button
+                *ngIf="exercise.isAtLeastInstructor || team.owner?.id === currentUser.id"
+                [exercise]="exercise"
+                [team]="team"
+                [buttonSize]="ButtonSize.MEDIUM"
+                (save)="onTeamUpdate($event)"
+            ></jhi-team-update-button>
             <jhi-team-delete-button
                 class="ml-1"
                 *ngIf="exercise.isAtLeastInstructor"
