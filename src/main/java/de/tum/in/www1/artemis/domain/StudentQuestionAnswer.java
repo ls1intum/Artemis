@@ -96,14 +96,18 @@ public class StudentQuestionAnswer implements Serializable {
         this.verified = verified;
     }
 
-    public Boolean isTutorApproved() { return tutorApproved; }
+    public Boolean isTutorApproved() {
+        return tutorApproved;
+    }
 
     public StudentQuestionAnswer tutorApproved(Boolean tutorApproved) {
         this.tutorApproved = tutorApproved;
         return this;
     }
 
-    public void setTutorApproved(Boolean tutorApproved) { this.tutorApproved = tutorApproved; }
+    public void setTutorApproved(Boolean tutorApproved) {
+        this.tutorApproved = tutorApproved;
+    }
 
     public User getAuthor() {
         return author;
@@ -154,7 +158,7 @@ public class StudentQuestionAnswer implements Serializable {
 
     @Override
     public String toString() {
-        return "StudentQuestionAnswer{" + "id=" + getId() + ", answerText='" + getAnswerText() + "'" + ", answerDate='" + getAnswerDate() + "'" + ", verified='" + isVerified() + "'" + ", tutorApproved='" + isTutorApproved()
-                + "'" + "}";
+        return "StudentQuestionAnswer{" + "id=" + getId() + ", answerText='" + getAnswerText() + "'" + ", answerDate='" + getAnswerDate() + "'" + ", verified='" + isVerified()
+                + "'" + ", tutorApproved='" + isTutorApproved() + "'" + "}";
     }
 }
