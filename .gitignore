@@ -68,7 +68,7 @@ classes/
 .local/share/JetBrains/
 .java/
 out/
-
+/src/main/resources/config/application-artemis.yml
 ######################
 # Visual Studio Code
 ######################
