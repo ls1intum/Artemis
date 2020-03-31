@@ -92,7 +92,8 @@
                     </ng-template>
                     <ng-template ngx-datatable-cell-template let-value="value">
                         <a *ngIf="isAdmin" [routerLink]="['/admin', 'user-management', value?.login, 'view']"> {{ value?.name }}</a>
-                        <span *ngIf="!isAdmin" class="font-weight-bold">{{ value?.name }}</span>
+                        <a *ngIf="!isAdmin && value" [href]="'mailto:' + value?.email">{{ value?.name }}</a>
+                        <span *ngIf="!isAdmin && !value" class="font-weight-bold" jhiTranslate="artemisApp.team.detail.noOwner">No tutor</span>
                     </ng-template>
                 </ngx-datatable-column>
 

@@ -19,7 +19,8 @@
                     "login": "Login",
                     "name": "Name",
                     "email": "E-Mail"
-                }
+                },
+                "noOwner": "No tutor"
             },
             "name": {
                 "label": "Name",
