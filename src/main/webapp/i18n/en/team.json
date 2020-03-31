@@ -19,7 +19,8 @@
                     "login": "Login",
                     "name": "Name",
                     "email": "E-Mail"
-                }
+                },
+                "noOwner": "No tutor"
             },
             "name": {
                 "label": "Name",
@@ -32,14 +33,25 @@
                 "minlength": "The short name must be at least 3 characters long.",
                 "alreadyTaken": "This short name is already taken by another team."
             },
+            "owner": {
+                "label": "Tutor",
+                "tooltip": "Only instructors can re-assign tutors to teams."
+            },
             "image": "Image",
             "students": "Students",
+            "tutor": "Tutor",
             "noStudentsAddedYet": "No students added yet.",
             "addStudentToTeam": "Add a student to the team (by searching for login or name)",
             "studentSearch": {
                 "queryTooShort": "Please enter at least 3 characters.",
                 "failed": "Search failed. Please try again.",
                 "noResults": "No students found in course for search:"
+            },
+            "selectOwnerForTeam": "Select tutor (by searching for login or name)",
+            "ownerSearch": {
+                "queryTooShort": "Please enter at least 3 characters.",
+                "failed": "Search failed. Please try again.",
+                "noResults": "No tutors found in course for search:"
             },
             "teamSizeNote": "Recommended team size:",
             "teamSizeUnit": "students",

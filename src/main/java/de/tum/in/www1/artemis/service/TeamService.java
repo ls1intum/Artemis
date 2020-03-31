@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service;
 
+import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -122,6 +123,11 @@ public class TeamService {
         List<Pair<User, Team>> conflicts = findStudentTeamConflicts(exercise, team);
         if (!conflicts.isEmpty()) {
             throw new StudentsAlreadyAssignedException(conflicts);
+        }
+        // audit information is normally updated automatically but since changes in the many-to-many relationships are not registered,
+        // we need to trigger the audit explicitly by modifying a column of the team entity itself
+        if (team.getId() != null) {
+            team.setLastModifiedDate(Instant.now());
         }
         team.setExercise(exercise);
         return teamRepository.save(team);
