@@ -148,6 +148,7 @@ public class TeamIntegrationTest extends AbstractSpringIntegrationTest {
         Team team = database.addTeamForExercise(exercise);
         team.setName(TEAM_NAME_UPDATED);
         team.setStudents(students);
+        team.setOwner(userRepo.findOneByLogin("tutor1").orElseThrow());
 
         Team serverTeam = request.putWithResponseBody(resourceUrl() + "/" + team.getId(), team, Team.class, HttpStatus.OK);
         assertThat(serverTeam.getName()).as("Team name was updated correctly").isEqualTo(TEAM_NAME_UPDATED);

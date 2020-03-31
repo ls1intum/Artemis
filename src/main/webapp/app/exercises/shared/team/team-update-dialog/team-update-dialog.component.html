@@ -74,6 +74,7 @@
             </div>
             <jhi-team-owner-search
                 id="teamOwner"
+                [inputDisabled]="!exercise.isAtLeastInstructor"
                 [course]="exercise.course"
                 [exercise]="exercise"
                 [team]="team"

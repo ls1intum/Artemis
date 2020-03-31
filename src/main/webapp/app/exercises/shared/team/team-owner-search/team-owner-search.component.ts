@@ -19,6 +19,8 @@ export class TeamOwnerSearchComponent implements OnInit {
     focus$ = new Subject<string>();
     click$ = new Subject<string>();
 
+    @Input() inputDisabled: boolean;
+
     @Input() course: Course;
     @Input() exercise: Exercise;
     @Input() team: Team;

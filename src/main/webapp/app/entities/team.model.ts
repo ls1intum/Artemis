@@ -13,7 +13,7 @@ export class Team implements BaseEntity {
     public createdBy: string;
     public createdDate: Moment;
     public lastModifiedBy?: string;
-    public lastModifiedDate: Moment | null;
+    public lastModifiedDate?: Moment | null;
 
     constructor() {}
 }

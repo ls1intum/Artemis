@@ -135,6 +135,11 @@ public class TeamResource {
             return forbidden();
         }
 
+        // The team owner can only be changed by instructors
+        if (!isAtLeastInstructor && !team.getOwner().equals(existingTeam.get().getOwner())) {
+            return forbidden();
+        }
+
         // Save team (includes check for conflicts that no student is assigned to multiple teams for an exercise)
         Team result = teamService.save(exercise, team);
 

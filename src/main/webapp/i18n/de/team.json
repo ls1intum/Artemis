@@ -34,7 +34,7 @@
             },
             "owner": {
                 "label": "Tutor",
-                "tooltip": "Wenn du dieses Team einem anderen Tutor zuordnest, kannst du es anschließend nicht mehr bearbeiten."
+                "tooltip": "Nur Instruktoren können die Tutor-Zuweisung für Teams ändern."
             },
             "image": "Bild",
             "students": "Studenten",

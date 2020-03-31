@@ -34,7 +34,7 @@
             },
             "owner": {
                 "label": "Tutor",
-                "tooltip": "If you assign a different tutor, you won't be able to edit this team anymore."
+                "tooltip": "Only instructors can re-assign tutors to teams."
             },
             "image": "Image",
             "students": "Students",
