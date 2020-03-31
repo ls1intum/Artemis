@@ -151,6 +151,8 @@ public class CourseResource {
                     .body(null);
         }
 
+        // TODO: allow custom (existing) groups in the DEV environment
+
         if (course.getStudentGroupName() != null) {
             throw new BadRequestAlertException("The student group name must be null when creating a course", ENTITY_NAME, "studentGroupNameCannotBeSet");
         }
