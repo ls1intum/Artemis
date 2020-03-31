@@ -276,5 +276,9 @@
         "exercise": "Aufgabendetails",
         "lectures": "Vorlesungen",
         "statistics": "Kursstatistiken"
+    },
+    "connectionStatus": {
+        "connected": "Verbunden",
+        "disconnected": "Verbindung getrennt"
     }
 }

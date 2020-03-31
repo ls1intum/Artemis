@@ -282,5 +282,9 @@
         "lectures": "Lectures",
         "exercise": "Exercise details",
         "statistics": "Course statistics"
+    },
+    "connectionStatus": {
+        "connected": "Connected",
+        "disconnected": "Disconnected"
     }
 }

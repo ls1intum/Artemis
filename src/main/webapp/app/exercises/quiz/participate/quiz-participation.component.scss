@@ -1,14 +1,6 @@
 .quiz-header {
     font-size: 16px;
     margin-top: 25px;
-
-    .in-parentheses:before {
-        content: '(';
-    }
-
-    .in-parentheses:after {
-        content: ')';
-    }
 }
 
 .quiz-content {
@@ -125,20 +117,7 @@
         color: red;
     }
 
-    .connection-status {
-        font-size: 14px;
-        color: green;
-
-        &.disconnected {
-            color: red;
-        }
-
-        i {
-            font-size: 0.8em;
-            vertical-align: 10%;
-            margin-right: 2px;
-        }
-
+    .connection-status-quiz {
         @media (max-width: 767.98px) {
             font-size: 11px;
         }
@@ -167,6 +146,14 @@
     font-weight: bold;
     border-color: #3c763d;
     z-index: 8;
+}
+
+.in-parentheses:before {
+    content: '(';
+}
+
+.in-parentheses:after {
+    content: ')';
 }
 
 .align-text {

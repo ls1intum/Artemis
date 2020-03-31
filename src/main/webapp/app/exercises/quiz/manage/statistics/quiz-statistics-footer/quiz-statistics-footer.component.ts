@@ -41,9 +41,6 @@ export class QuizStatisticsFooterComponent implements OnInit, OnDestroy {
     remainingTimeText = '?';
     remainingTimeSeconds = 0;
     interval: any;
-    disconnected = true;
-    onConnected: () => void;
-    onDisconnected: () => void;
 
     constructor(
         private route: ActivatedRoute,
@@ -63,20 +60,6 @@ export class QuizStatisticsFooterComponent implements OnInit, OnDestroy {
                     this.loadQuiz(res.body!);
                 });
             }
-
-            // listen to connect / disconnect events
-            this.onConnected = () => {
-                this.disconnected = false;
-            };
-            this.jhiWebsocketService.bind('connect', () => {
-                this.onConnected();
-            });
-            this.onDisconnected = () => {
-                this.disconnected = true;
-            };
-            this.jhiWebsocketService.bind('disconnect', () => {
-                this.onDisconnected();
-            });
         });
 
         // update displayed times in UI regularly
@@ -128,12 +111,6 @@ export class QuizStatisticsFooterComponent implements OnInit, OnDestroy {
     ngOnDestroy() {
         clearInterval(this.interval);
         this.jhiWebsocketService.unsubscribe(this.websocketChannelForData);
-        if (this.onConnected) {
-            this.jhiWebsocketService.unbind('connect', this.onConnected);
-        }
-        if (this.onDisconnected) {
-            this.jhiWebsocketService.unbind('disconnect', this.onDisconnected);
-        }
     }
 
     /**
