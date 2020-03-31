@@ -90,7 +90,7 @@
             "remainingTime": "Restzeit",
             "waitingForStart": "Warte auf Start",
             "quizInstructions": {
-                "default": "Beantworte alle Fragen in der verbleibenden Zeit und klick erst dann auf die Schaltfläche \"Absenden\", wenn du fertig bist.",
+                "live": "Beantworte alle Fragen in der verbleibenden Zeit und klick erst dann auf die Schaltfläche \"Absenden\", wenn du fertig bist.",
                 "wait": "Warte bis das Quiz beendet ist um deine Ergebnisse zu sehen.",
                 "result": "Du hast das Quiz mit {{userScore}} von {{maxScore}} Punkten abgeschlossen ({{percentage}} %).",
                 "waitForStart": "Bitte warte.<br><br>Diese Seite lädt automatisch neu, sobald das Quiz beginnt.",
@@ -100,8 +100,6 @@
             "lastSaved": "Gespeichert",
             "lastSavedTimeNever": "Nie",
             "submitted": "Abgegeben",
-            "connected": "Verbunden",
-            "disconnected": "Verbindung getrennt",
             "unsavedChanges": "Ungespeicherte Änderungen",
             "statistics": "Statistiken",
             "practiceMode": "Übung",
