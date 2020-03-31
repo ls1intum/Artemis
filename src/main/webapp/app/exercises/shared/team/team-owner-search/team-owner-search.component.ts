@@ -1,13 +1,12 @@
 import { Component, EventEmitter, Input, OnInit, Output, ViewChild } from '@angular/core';
-import { combineLatest, Observable, of } from 'rxjs';
+import { combineLatest, Observable, of, Subject, merge } from 'rxjs';
 import { User } from 'app/core/user/user.model';
-import { filter, map, switchMap, tap } from 'rxjs/operators';
+import { filter, map, switchMap, tap, catchError } from 'rxjs/operators';
 import { Course, CourseGroup } from 'app/entities/course.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { Team } from 'app/entities/team.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { cloneDeep } from 'lodash';
-import { Subject, merge } from 'rxjs';
 import { NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
 
 @Component({
@@ -32,7 +31,8 @@ export class TeamOwnerSearchComponent implements OnInit {
     @Output() searchNoResults = new EventEmitter<string | null>();
 
     owner: User;
-    ownerOptions: User[];
+    ownerOptions: User[] = [];
+    ownerOptionsLoaded = false;
 
     inputDisplayValue: string;
 
@@ -43,21 +43,6 @@ export class TeamOwnerSearchComponent implements OnInit {
             this.owner = cloneDeep(this.team.owner);
             this.inputDisplayValue = this.searchResultFormatter(this.owner);
         }
-
-        setTimeout(() => {
-            this.searchFailed.emit(false);
-            this.searching.emit(true);
-            this.courseService.getAllUsersInCourseGroup(this.course.id, CourseGroup.TUTORS).subscribe(
-                (usersResponse) => {
-                    this.ownerOptions = usersResponse.body!;
-                    this.searching.emit(false);
-                },
-                (error) => {
-                    this.searchFailed.emit(true);
-                    this.searching.emit(false);
-                },
-            );
-        });
     }
 
     onAutocompleteSelect = (owner: User) => {
@@ -83,15 +68,43 @@ export class TeamOwnerSearchComponent implements OnInit {
                 this.searchNoResults.emit(null);
             }),
             switchMap((loginOrName) => {
-                const match = (user: User) => [user.login, user.name].some((field) => (field || '').includes(loginOrName));
-                return combineLatest([of(loginOrName), of(this.ownerOptions.filter(match))]);
+                this.searchFailed.emit(false);
+                this.searching.emit(true);
+                // If owner options have already been loaded once, do not load them again and reuse the already loaded ones
+                const ownerOptionsSource$ = this.ownerOptionsLoaded ? of(this.ownerOptions) : this.loadOwnerOptions();
+                return combineLatest([of(loginOrName), ownerOptionsSource$]);
             }),
-            tap(([loginOrName, users]) => {
-                if (users && users.length === 0) {
+            tap(() => this.searching.emit(false)),
+            switchMap(([loginOrName, ownerOptions]) => {
+                // Filter list of all owner options by the search term
+                const match = (user: User) => [user.login, user.name].some((field) => (field || '').includes(loginOrName));
+                return combineLatest([of(loginOrName), of(ownerOptions === null ? ownerOptions : ownerOptions.filter(match))]);
+            }),
+            tap(([loginOrName, ownerOptions]) => {
+                if (ownerOptions && ownerOptions.length === 0) {
                     this.searchNoResults.emit(loginOrName);
                 }
             }),
-            map(([_, users]) => users || []),
+            map(([_, ownerOptions]) => ownerOptions || []),
         );
     };
+
+    loadOwnerOptions() {
+        return this.courseService
+            .getAllUsersInCourseGroup(this.course.id, CourseGroup.TUTORS)
+            .pipe(map((usersResponse) => usersResponse.body!))
+            .pipe(
+                tap((ownerOptions) => {
+                    this.ownerOptions = ownerOptions;
+                    this.ownerOptionsLoaded = true;
+                }),
+            )
+            .pipe(
+                catchError(() => {
+                    this.ownerOptionsLoaded = false;
+                    this.searchFailed.emit(true);
+                    return of(null);
+                }),
+            );
+    }
 }
