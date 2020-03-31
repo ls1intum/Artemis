@@ -59,6 +59,12 @@ export class TeamOwnerSearchComponent implements OnInit {
         return `${name} (${login})`;
     };
 
+    searchMatchesUser(loginOrName: string, user: User) {
+        return [user.login, user.name].some((field) => {
+            return (field || '').toLowerCase().includes(loginOrName.toLowerCase());
+        });
+    }
+
     onSearch = (text$: Observable<string>) => {
         const clicksWithClosedPopup$ = this.click$.pipe(filter(() => !this.ngbTypeahead.isPopupOpen()));
         const inputFocus$ = this.focus$;
@@ -77,7 +83,7 @@ export class TeamOwnerSearchComponent implements OnInit {
             tap(() => this.searching.emit(false)),
             switchMap(([loginOrName, ownerOptions]) => {
                 // Filter list of all owner options by the search term
-                const match = (user: User) => [user.login, user.name].some((field) => (field || '').includes(loginOrName));
+                const match = (user: User) => this.searchMatchesUser(loginOrName, user);
                 return combineLatest([of(loginOrName), of(ownerOptions === null ? ownerOptions : ownerOptions.filter(match))]);
             }),
             tap(([loginOrName, ownerOptions]) => {
