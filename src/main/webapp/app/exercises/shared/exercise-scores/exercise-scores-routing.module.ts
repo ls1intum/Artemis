@@ -5,7 +5,7 @@ import { NgModule } from '@angular/core';
 
 const routes: Routes = [
     {
-        path: 'course-management/:courseId/exercises/:exerciseId/scores',
+        path: ':courseId/exercises/:exerciseId/scores',
         component: ExerciseScoresComponent,
         data: {
             authorities: ['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'],

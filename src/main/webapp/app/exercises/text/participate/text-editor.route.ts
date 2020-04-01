@@ -4,7 +4,7 @@ import { TextEditorComponent } from './text-editor.component';
 
 export const textEditorRoute: Routes = [
     {
-        path: 'courses/:courseId/text-exercises/:exerciseId/participate/:participationId',
+        path: 'participate/:participationId',
         component: TextEditorComponent,
         data: {
             authorities: ['ROLE_USER'],

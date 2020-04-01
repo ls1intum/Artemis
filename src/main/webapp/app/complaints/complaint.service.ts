@@ -69,7 +69,7 @@ export class ComplaintService implements IComplaintService {
      * @param courseId
      */
     getNumberOfAllowedComplaintsInCourse(courseId: number): Observable<number> {
-        return this.http.get<number>(`${this.apiUrl}/${courseId}/allowed-complaints`);
+        return this.http.get<number>(`${this.apiUrl}/courses/${courseId}/allowed-complaints`);
     }
 
     /**

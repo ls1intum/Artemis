@@ -102,20 +102,7 @@
         color: red;
     }
 
-    .connection-status {
-        font-size: 14px;
-        color: green;
-
-        &.disconnected {
-            color: red;
-        }
-
-        i {
-            font-size: 0.8em;
-            vertical-align: 10%;
-            margin-right: 2px;
-        }
-
+    .connection-status-quiz {
         @media (max-width: 767.98px) {
             font-size: 11px;
         }

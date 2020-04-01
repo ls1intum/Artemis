@@ -4,14 +4,13 @@ import { UserRouteAccessService } from 'app/core/auth/user-route-access-service'
 import { ModelingExerciseComponent } from './modeling-exercise.component';
 import { ModelingExerciseDetailComponent } from './modeling-exercise-detail.component';
 import { ModelingExerciseUpdateComponent } from 'app/exercises/modeling/manage/modeling-exercise-update.component';
-import { CourseManagementService } from '../../../course/manage/course-management.service';
+import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ModelingExerciseService } from 'app/exercises/modeling/manage/modeling-exercise.service';
-import { ModelingExercise } from 'app/entities/modeling-exercise.model';
+import { ModelingExercise, UMLDiagramType } from 'app/entities/modeling-exercise.model';
 import { HttpResponse } from '@angular/common/http';
 import { filter, map } from 'rxjs/operators';
 import { Observable } from 'rxjs';
 import { Course } from 'app/entities/course.model';
-import { UMLDiagramType } from '@ls1intum/apollon';
 
 @Injectable({ providedIn: 'root' })
 export class ModelingExerciseResolver implements Resolve<ModelingExercise> {
@@ -34,7 +33,7 @@ export class ModelingExerciseResolver implements Resolve<ModelingExercise> {
 
 const routes: Routes = [
     {
-        path: 'course-management/:courseId/modeling-exercises/new',
+        path: ':courseId/modeling-exercises/new',
         component: ModelingExerciseUpdateComponent,
         resolve: {
             modelingExercise: ModelingExerciseResolver,
@@ -46,7 +45,7 @@ const routes: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
-        path: 'course-management/:courseId/modeling-exercises/:exerciseId/edit',
+        path: ':courseId/modeling-exercises/:exerciseId/edit',
         component: ModelingExerciseUpdateComponent,
         resolve: {
             modelingExercise: ModelingExerciseResolver,
@@ -58,7 +57,7 @@ const routes: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
-        path: 'course-management/:courseId/modeling-exercises/:exerciseId',
+        path: ':courseId/modeling-exercises/:exerciseId',
         component: ModelingExerciseDetailComponent,
         data: {
             authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
@@ -67,7 +66,7 @@ const routes: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
-        path: 'course-management/:courseId/modeling-exercises',
+        path: ':courseId/modeling-exercises',
         component: ModelingExerciseComponent,
         data: {
             authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],

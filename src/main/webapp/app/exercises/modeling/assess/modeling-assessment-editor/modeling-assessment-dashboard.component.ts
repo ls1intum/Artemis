@@ -1,8 +1,7 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { JhiEventManager } from 'ng-jhipster';
-import { UMLDiagramType } from '@ls1intum/apollon';
 import { Course } from 'app/entities/course.model';
-import { CourseManagementService } from '../../../../course/manage/course-management.service';
+import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { Subscription } from 'rxjs';
 import { ActivatedRoute, Router } from '@angular/router';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
@@ -17,8 +16,9 @@ import { ModelingAssessmentService } from 'app/exercises/modeling/assess/modelin
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { ModelingSubmission } from 'app/entities/modeling-submission.model';
 import { ResultService } from 'app/exercises/shared/result/result.service';
-import { ModelingExercise } from 'app/entities/modeling-exercise.model';
+import { ModelingExercise, UMLDiagramType } from 'app/entities/modeling-exercise.model';
 import { AlertService } from 'app/core/alert/alert.service';
+import { AssessmentType } from 'app/entities/assessment-type.model';
 
 @Component({
     selector: 'jhi-assessment-dashboard',
@@ -137,7 +137,7 @@ export class ModelingAssessmentDashboardComponent implements OnInit, OnDestroy {
      * @param {boolean} forceReload force REST call to update nextOptimalSubmissionIds
      */
     filterSubmissions(forceReload: boolean) {
-        if (this.modelingExercise.diagramType === this.CLASS_DIAGRAM && (this.nextOptimalSubmissionIds.length < 3 || forceReload)) {
+        if (this.isCompassActive(this.modelingExercise) && (this.nextOptimalSubmissionIds.length < 3 || forceReload)) {
             this.modelingAssessmentService.getOptimalSubmissions(this.modelingExercise.id).subscribe(
                 (optimal: number[]) => {
                     this.nextOptimalSubmissionIds = optimal;
@@ -150,6 +150,13 @@ export class ModelingAssessmentDashboardComponent implements OnInit, OnDestroy {
         } else {
             this.applyFilter();
         }
+    }
+
+    isCompassActive(modelingExercise: ModelingExercise) {
+        return (
+            modelingExercise.assessmentType === AssessmentType.SEMI_AUTOMATIC &&
+            (modelingExercise.diagramType === UMLDiagramType.ClassDiagram || modelingExercise.diagramType === UMLDiagramType.ActivityDiagram)
+        );
     }
 
     /**

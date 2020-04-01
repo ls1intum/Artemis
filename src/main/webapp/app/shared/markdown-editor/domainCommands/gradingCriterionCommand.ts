@@ -1,5 +1,5 @@
 import { DomainTagCommand } from 'app/shared/markdown-editor/domainCommands/domainTag.command';
-import { ArtemisMarkdown } from 'app/shared/markdown.service';
+import { addTextAtCursor } from 'app/shared/util/markdown-util';
 import { GradingInstructionCommand } from 'app/shared/markdown-editor/domainCommands/gradingInstruction.command';
 
 export class GradingCriterionCommand extends DomainTagCommand {
@@ -16,7 +16,7 @@ export class GradingCriterionCommand extends DomainTagCommand {
      */
     execute(): void {
         const text = '\n' + this.getOpeningIdentifier() + GradingCriterionCommand.text + '\n' + this.gradingInstructionCommand.instructionText();
-        ArtemisMarkdown.addTextAtCursor(text, this.aceEditorContainer);
+        addTextAtCursor(text, this.aceEditor);
     }
 
     /**

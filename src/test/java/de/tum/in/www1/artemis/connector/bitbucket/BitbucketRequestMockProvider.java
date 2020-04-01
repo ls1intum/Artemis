@@ -236,11 +236,27 @@ public class BitbucketRequestMockProvider {
         mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.DELETE)).andRespond(withStatus(HttpStatus.OK));
     }
 
-    public void mockSetRepositoryPermissionsToReadOnly(String projectKey, String username) throws URISyntaxException {
-        final var uri = UriComponentsBuilder.fromUri(BITBUCKET_SERVER_URL.toURI()).path("/rest/api/1.0/projects").pathSegment(projectKey).path("repos")
-                .pathSegment((projectKey + "-" + username).toLowerCase()).path("permissions/users").queryParam("name", username).queryParam("permission", "REPO_READ").build()
-                .toUri();
+    public void mockSetRepositoryPermissionsToReadOnly(String repositorySlug, String projectKey, Set<User> users) throws URISyntaxException {
+        for (User user : users) {
+            mockSetStudentRepositoryPermission(repositorySlug, projectKey, user.getLogin());
+        }
+    }
+
+    private void mockSetStudentRepositoryPermission(String repositorySlug, String projectKey, String username) throws URISyntaxException {
+        final var uri = UriComponentsBuilder.fromUri(BITBUCKET_SERVER_URL.toURI()).path("/rest/api/1.0/projects").pathSegment(projectKey).path("repos").pathSegment(repositorySlug)
+                .path("permissions/users").queryParam("name", username).queryParam("permission", "REPO_READ").build().toUri();
 
         mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.PUT)).andRespond(withStatus(HttpStatus.OK));
+    }
+
+    public void mockRemoveMemberFromRepository(String repositorySlug, String projectKey, User user) throws URISyntaxException {
+        mockRemoveStudentRepositoryAccess(repositorySlug, projectKey, user.getLogin());
+    }
+
+    private void mockRemoveStudentRepositoryAccess(String repositorySlug, String projectKey, String username) throws URISyntaxException {
+        final var uri = UriComponentsBuilder.fromUri(BITBUCKET_SERVER_URL.toURI()).path("/rest/api/1.0/projects").pathSegment(projectKey).path("repos").pathSegment(repositorySlug)
+                .path("permissions/users").queryParam("name", username).build().toUri();
+
+        mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.DELETE)).andRespond(withStatus(HttpStatus.OK));
     }
 }

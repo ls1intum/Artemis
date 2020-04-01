@@ -5,7 +5,7 @@ import { ModelingStatisticsComponent } from './modeling-statistics.component';
 
 const routes: Routes = [
     {
-        path: 'course-management/:courseId/modeling-exercises/:exerciseId/statistics',
+        path: ':courseId/modeling-exercises/:exerciseId/statistics',
         component: ModelingStatisticsComponent,
         data: {
             authorities: ['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'],

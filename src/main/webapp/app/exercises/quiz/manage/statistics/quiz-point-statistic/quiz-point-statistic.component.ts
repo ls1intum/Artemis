@@ -47,9 +47,6 @@ export class QuizPointStatisticComponent implements OnInit, OnDestroy, DataSetPr
     remainingTimeText = '?';
     remainingTimeSeconds = 0;
     interval: any;
-    disconnected = true;
-    onConnected: () => void;
-    onDisconnected: () => void;
 
     constructor(
         private route: ActivatedRoute,
@@ -94,20 +91,6 @@ export class QuizPointStatisticComponent implements OnInit, OnDestroy, DataSetPr
             // ask for new Data if the websocket for new statistical data was notified
             this.jhiWebsocketService.receive(this.websocketChannelForData).subscribe((quiz) => {
                 this.loadNewData(quiz.quizPointStatistic);
-            });
-
-            // listen to connect / disconnect events
-            this.onConnected = () => {
-                this.disconnected = false;
-            };
-            this.jhiWebsocketService.bind('connect', () => {
-                this.onConnected();
-            });
-            this.onDisconnected = () => {
-                this.disconnected = true;
-            };
-            this.jhiWebsocketService.bind('disconnect', () => {
-                this.onDisconnected();
             });
 
             // add Axes-labels based on selected language
@@ -168,12 +151,6 @@ export class QuizPointStatisticComponent implements OnInit, OnDestroy, DataSetPr
     ngOnDestroy() {
         clearInterval(this.interval);
         this.jhiWebsocketService.unsubscribe(this.websocketChannelForData);
-        if (this.onConnected) {
-            this.jhiWebsocketService.unbind('connect', this.onConnected);
-        }
-        if (this.onDisconnected) {
-            this.jhiWebsocketService.unbind('disconnect', this.onDisconnected);
-        }
     }
 
     getDataSets() {

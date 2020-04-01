@@ -39,6 +39,7 @@
         </button>
         <button
             class="btn ml-2 btn-success"
+            id="assessNextButton"
             *ngIf="result?.completionDate && (isAssessor || isAtLeastInstructor) && !hasComplaint"
             [disabled]="busy"
             (click)="nextSubmission.emit()"

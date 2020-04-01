@@ -92,6 +92,8 @@ public class BitbucketService extends AbstractVersionControlService {
                     createUser(username, userService.decryptPasswordByLogin(username).get(), user.getEmail(), displayName);
 
                     try {
+                        // NOTE: we need to refetch the user here to make sure that the groups are not lazy loaded.
+                        user = userService.getUserWithGroupsAndAuthorities();
                         addUserToGroups(username, user.getGroups());
                     }
                     catch (BitbucketException e) {
@@ -119,8 +121,7 @@ public class BitbucketService extends AbstractVersionControlService {
 
     @Override
     public void removeMemberFromRepository(URL repositoryUrl, User user) {
-        // TODO: Instead of reducing the permissions to readOnly, the user should be removed from the repo entirely
-        setRepositoryPermissionsToReadOnly(repositoryUrl, getProjectKeyFromUrl(repositoryUrl), Set.of(user));
+        removeStudentRepositoryAccess(repositoryUrl, getProjectKeyFromUrl(repositoryUrl), user.getLogin());
     }
 
     /**
@@ -469,11 +470,19 @@ public class BitbucketService extends AbstractVersionControlService {
         users.forEach(user -> setStudentRepositoryPermission(repositoryUrl, projectKey, user.getLogin(), VersionControlRepositoryPermission.READ_ONLY));
     }
 
+    /**
+     * Set the permission of a student for a repository
+     *
+     * @param repositoryUrl         The complete repository-url (including protocol, host and the complete path)
+     * @param projectKey            The project key of the repository's project.
+     * @param username              The username of the user whom to assign a permission level
+     * @param repositoryPermission  Repository permission to set for the user (e.g. READ_ONLY, WRITE)
+     */
     private void setStudentRepositoryPermission(URL repositoryUrl, String projectKey, String username, VersionControlRepositoryPermission repositoryPermission)
             throws BitbucketException {
         String permissionString = repositoryPermission == VersionControlRepositoryPermission.READ_ONLY ? "READ" : "WRITE";
         String repositorySlug = getRepositoryName(repositoryUrl);
-        String baseUrl = BITBUCKET_SERVER_URL + "/rest/api/1.0/projects/" + projectKey + "/repos/" + repositorySlug + "/permissions/users?name=";// NAME&PERMISSION
+        String baseUrl = BITBUCKET_SERVER_URL + "/rest/api/1.0/projects/" + projectKey + "/repos/" + repositorySlug + "/permissions/users?name="; // NAME&PERMISSION
         HttpHeaders headers = HeaderUtil.createAuthorization(BITBUCKET_USER, BITBUCKET_PASSWORD);
         HttpEntity<?> entity = new HttpEntity<>(headers);
         String url = baseUrl + username + "&permission=REPO_" + permissionString;
@@ -483,6 +492,28 @@ public class BitbucketService extends AbstractVersionControlService {
         catch (Exception e) {
             log.error("Could not give " + repositoryPermission + " permissions using " + url, e);
             throw new BitbucketException("Error while giving repository permissions", e);
+        }
+    }
+
+    /**
+     * Remove all permissions of a student for a repository
+     *
+     * @param repositoryUrl  The complete repository-url (including protocol, host and the complete path)
+     * @param projectKey     The project key of the repository's project.
+     * @param username       The username of the user whom to remove access
+     */
+    private void removeStudentRepositoryAccess(URL repositoryUrl, String projectKey, String username) throws BitbucketException {
+        String repositorySlug = getRepositoryName(repositoryUrl);
+        String baseUrl = BITBUCKET_SERVER_URL + "/rest/api/1.0/projects/" + projectKey + "/repos/" + repositorySlug + "/permissions/users?name="; // NAME
+        HttpHeaders headers = HeaderUtil.createAuthorization(BITBUCKET_USER, BITBUCKET_PASSWORD);
+        HttpEntity<?> entity = new HttpEntity<>(headers);
+        String url = baseUrl + username;
+        try {
+            restTemplate.exchange(url, HttpMethod.DELETE, entity, Map.class);
+        }
+        catch (Exception e) {
+            log.error("Could not remove repository access using " + url, e);
+            throw new BitbucketException("Error while removing repository access", e);
         }
     }
 

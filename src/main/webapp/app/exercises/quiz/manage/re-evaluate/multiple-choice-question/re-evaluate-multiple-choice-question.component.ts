@@ -1,6 +1,6 @@
 import { AfterViewInit, Component, EventEmitter, Input, OnChanges, OnInit, Output, QueryList, SimpleChanges, ViewChild, ViewChildren } from '@angular/core';
 import { AceEditorComponent } from 'ng2-ace-editor';
-import { ArtemisMarkdown } from 'app/shared/markdown.service';
+import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { AnswerOption } from 'app/entities/quiz/answer-option.model';
 import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-question.model';
 
@@ -8,7 +8,7 @@ import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-questi
     selector: 'jhi-re-evaluate-multiple-choice-question',
     templateUrl: './re-evaluate-multiple-choice-question.component.html',
     styleUrls: ['./re-evaluate-multiple-choice-question.component.scss', '../../../shared/quiz.scss'],
-    providers: [ArtemisMarkdown],
+    providers: [ArtemisMarkdownService],
 })
 export class ReEvaluateMultipleChoiceQuestionComponent implements OnInit, AfterViewInit, OnChanges {
     @ViewChild('questionEditor', { static: false })
@@ -39,7 +39,7 @@ export class ReEvaluateMultipleChoiceQuestionComponent implements OnInit, AfterV
     // Create Backup Question for resets
     backupQuestion: MultipleChoiceQuestion;
 
-    constructor(private artemisMarkdown: ArtemisMarkdown) {}
+    constructor(private artemisMarkdown: ArtemisMarkdownService) {}
 
     ngOnInit(): void {}
 

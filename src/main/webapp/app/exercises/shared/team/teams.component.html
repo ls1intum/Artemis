@@ -17,7 +17,7 @@
         entitiesPerPageTranslation="artemisApp.exercise.resultsPerPage"
         showAllEntitiesTranslation="artemisApp.exercise.showAllResults"
         searchPlaceholderTranslation="artemisApp.exercise.searchForTeams"
-        [searchFields]="['name', 'shortName', 'students.name', 'students.login']"
+        [searchFields]="['name', 'shortName', 'students.name', 'students.login', 'owner.name', 'owner.login']"
         [searchTextFromEntity]="searchTextFromTeam"
         [searchResultFormatter]="searchResultFormatter"
         (entitiesSizeChange)="handleTeamsSizeChange($event)"
@@ -81,7 +81,23 @@
                     </ng-template>
                 </ngx-datatable-column>
 
-                <ngx-datatable-column prop="students" [minWidth]="200" [width]="500">
+                <ngx-datatable-column prop="owner" [minWidth]="140" [width]="160">
+                    <ng-template ngx-datatable-header-template>
+                        <span class="datatable-header-cell-wrapper" (click)="controls.onSort('owner.name')">
+                            <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.team.tutor">
+                                Tutor
+                            </span>
+                            <fa-icon [icon]="controls.iconForSortPropField('owner.name')"></fa-icon>
+                        </span>
+                    </ng-template>
+                    <ng-template ngx-datatable-cell-template let-value="value">
+                        <a *ngIf="isAdmin" [routerLink]="['/admin', 'user-management', value?.login, 'view']"> {{ value?.name }}</a>
+                        <a *ngIf="!isAdmin && value" [href]="'mailto:' + value?.email">{{ value?.name }}</a>
+                        <span *ngIf="!isAdmin && !value" class="font-weight-bold" jhiTranslate="artemisApp.team.detail.noOwner">No tutor</span>
+                    </ng-template>
+                </ngx-datatable-column>
+
+                <ngx-datatable-column prop="students" [minWidth]="200" [width]="600">
                     <ng-template ngx-datatable-header-template>
                         <span class="datatable-header-cell-wrapper" style="cursor: text;">
                             <span class="datatable-header-cell-label bold" jhiTranslate="artemisApp.team.students">
@@ -90,14 +106,19 @@
                         </span>
                     </ng-template>
                     <ng-template ngx-datatable-cell-template let-value="value">
-                        <jhi-team-students-list [students]="value"></jhi-team-students-list>
+                        <jhi-team-students-list [students]="value" [renderLinks]="isAdmin"></jhi-team-students-list>
                     </ng-template>
                 </ngx-datatable-column>
 
                 <ngx-datatable-column prop="" [minWidth]="220" [width]="220" [maxWidth]="220">
-                    <ng-template ngx-datatable-cell-template let-value="value">
+                    <ng-template ngx-datatable-cell-template let-value="row">
                         <div class="w-100 text-right">
-                            <jhi-team-update-button [exercise]="exercise" [team]="value" (save)="onTeamUpdate($event)"></jhi-team-update-button>
+                            <jhi-team-update-button
+                                *ngIf="exercise.isAtLeastInstructor || value.owner?.id === currentUser.id"
+                                [exercise]="exercise"
+                                [team]="value"
+                                (save)="onTeamUpdate($event)"
+                            ></jhi-team-update-button>
                             <jhi-team-delete-button
                                 class="ml-1"
                                 *ngIf="exercise.isAtLeastInstructor"

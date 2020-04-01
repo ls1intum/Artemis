@@ -37,11 +37,7 @@
                 <tr>
                     <td>Websocket Connection</td>
                     <td class="text-center">
-                        <div class="connection-status-admin" [ngClass]="{ disconnected: disconnected }">
-                            <fa-icon [icon]="'circle'" size="sm"></fa-icon>
-                            <span *ngIf="!disconnected" jhiTranslate="artemisApp.quizExercise.connected"></span>
-                            <span *ngIf="disconnected" jhiTranslate="artemisApp.quizExercise.disconnected"></span>
-                        </div>
+                        <jhi-connection-status></jhi-connection-status>
                     </td>
                     <td class="text-center">-</td>
                 </tr>

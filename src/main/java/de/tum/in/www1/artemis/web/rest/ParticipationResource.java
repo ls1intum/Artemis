@@ -133,9 +133,9 @@ public class ParticipationResource {
         // users cannot start the programming exercises if test run after due date or semi automatic grading is active and the due date has passed
         // Also don't allow participations if the feature is disabled
         if (exercise instanceof ProgrammingExercise) {
-            var pExercise = (ProgrammingExercise) exercise;
-            if (!Feature.PROGRAMMING_EXERCISES.isEnabled() || (pExercise.getDueDate() != null && ZonedDateTime.now().isAfter(pExercise.getDueDate())
-                    && (pExercise.getBuildAndTestStudentSubmissionsAfterDueDate() != null || pExercise.getAssessmentType() != AssessmentType.AUTOMATIC))) {
+            var programmingExercise = (ProgrammingExercise) exercise;
+            if (!Feature.PROGRAMMING_EXERCISES.isEnabled() || (programmingExercise.getDueDate() != null && ZonedDateTime.now().isAfter(programmingExercise.getDueDate())
+                    && (programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate() != null || programmingExercise.getAssessmentType() != AssessmentType.AUTOMATIC))) {
                 return forbidden();
             }
         }
@@ -261,13 +261,13 @@ public class ParticipationResource {
     }
 
     /**
-     * GET /exercise/:exerciseId/participations : get all the participations for an exercise
+     * GET /exercises/:exerciseId/participations : get all the participations for an exercise
      *
      * @param exerciseId The participationId of the exercise
      * @param withLatestResult Whether the {@link Result results} for the participations should also be fetched
      * @return A list of all participations for the exercise
      */
-    @GetMapping(value = "/exercise/{exerciseId}/participations")
+    @GetMapping(value = "/exercises/{exerciseId}/participations")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<List<StudentParticipation>> getAllParticipationsForExercise(@PathVariable Long exerciseId,
             @RequestParam(defaultValue = "false") boolean withLatestResult) {

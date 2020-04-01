@@ -4,7 +4,7 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Subscription } from 'rxjs/Subscription';
 import { JhiEventManager } from 'ng-jhipster';
 
-import { Course } from '../../entities/course.model';
+import { Course } from 'app/entities/course.model';
 import { CourseManagementService } from './course-management.service';
 import { CachingStrategy } from 'app/shared/image/secured-image.component';
 import { AlertService } from 'app/core/alert/alert.service';
@@ -24,7 +24,7 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
 
     ngOnInit() {
         this.subscription = this.route.params.subscribe((params) => {
-            this.load(params['id']);
+            this.load(params['courseId']);
         });
         this.registerChangeInCourses();
     }

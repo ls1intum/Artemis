@@ -153,7 +153,7 @@ public class ComplaintResource {
      * @param courseId the id of the course for which we want to get the number of allowed complaints
      * @return the ResponseEntity with status 200 (OK) and the number of still allowed complaints
      */
-    @GetMapping("/{courseId}/allowed-complaints")
+    @GetMapping("/courses/{courseId}/allowed-complaints")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Long> getNumberOfAllowedComplaintsInCourse(@PathVariable Long courseId) {
         log.debug("REST request to get the number of unaccepted Complaints associated to the current user in course : {}", courseId);

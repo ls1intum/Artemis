@@ -6,7 +6,7 @@ import { ModelingSubmissionComponent } from './modeling-submission.component';
 
 export const routes: Routes = [
     {
-        path: 'courses/:courseId/modeling-exercises/:exerciseId/participate/:participationId',
+        path: 'participate/:participationId',
         component: ModelingSubmissionComponent,
         data: {
             authorities: ['ROLE_USER'],
