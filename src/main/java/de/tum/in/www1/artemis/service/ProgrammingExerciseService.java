@@ -169,6 +169,35 @@ public class ProgrammingExerciseService {
         return programmingExercise;
     }
 
+    @Transactional
+    public ProgrammingExercise setupProgrammingExerciseWithoutLocalSetup(ProgrammingExercise programmingExercise) throws InterruptedException, GitAPIException, IOException {
+        final var user = userService.getUser();
+        final var projectKey = programmingExercise.getProjectKey();
+        // TODO: the following code is used quite often and should be done in only one place
+        final var exerciseRepoName = projectKey.toLowerCase() + "-" + RepositoryType.TEMPLATE.getName();
+        final var testRepoName = projectKey.toLowerCase() + "-" + RepositoryType.TESTS.getName();
+        final var solutionRepoName = projectKey.toLowerCase() + "-" + RepositoryType.SOLUTION.getName();
+        final var exerciseRepoUrl = "http://localhost:7990/scm/" + projectKey + "/" + exerciseRepoName + ".git";
+        final var testsRepoUrl = "http://localhost:7990/scm/" + projectKey + "/" + testRepoName + ".git";
+        final var solutionRepoUrl = "http://localhost:7990/scm/" + projectKey + "/" + solutionRepoName + ".git";
+        programmingExercise.generateAndSetProjectKey();
+        initParticipations(programmingExercise);
+        setURLsAndBuildPlanIDsForNewExerciseNoLocalSetup(programmingExercise, new URL(exerciseRepoUrl), new URL(testsRepoUrl), new URL(solutionRepoUrl));
+
+        // Save participations to get the ids required for the webhooks
+        connectBaseParticipationsToExerciseAndSave(programmingExercise);
+        // save to get the id required for the webhook
+        programmingExercise = programmingExerciseRepository.save(programmingExercise);
+
+        // The creation of the webhooks must occur after the initial push, because the participation is
+        // not yet saved in the database, so we cannot save the submission accordingly (see ProgrammingSubmissionService.notifyPush)
+
+        programmingExerciseScheduleService.scheduleExerciseIfRequired(programmingExercise);
+        groupNotificationService.notifyTutorGroupAboutExerciseCreated(programmingExercise);
+
+        return programmingExercise;
+    }
+
     private void setupBuildPlansForNewExercise(ProgrammingExercise programmingExercise, URL exerciseRepoUrl, URL testsRepoUrl, URL solutionRepoUrl) {
         String projectKey = programmingExercise.getProjectKey();
         continuousIntegrationService.get().createProjectForExercise(programmingExercise);
@@ -204,6 +233,20 @@ public class ProgrammingExerciseService {
         solutionParticipation.setBuildPlanId(projectKey + "-" + solutionPlanName);
         solutionParticipation.setRepositoryUrl(versionControlService.get().getCloneRepositoryUrl(projectKey, solutionRepoName).toString());
         programmingExercise.setTestRepositoryUrl(versionControlService.get().getCloneRepositoryUrl(projectKey, testRepoName).toString());
+    }
+
+    private void setURLsAndBuildPlanIDsForNewExerciseNoLocalSetup(ProgrammingExercise programmingExercise, URL exerciseRepoUrl, URL testsRepoUrl, URL solutionUrl) {
+        final var projectKey = programmingExercise.getProjectKey();
+        final var templateParticipation = programmingExercise.getTemplateParticipation();
+        final var solutionParticipation = programmingExercise.getSolutionParticipation();
+        final var templatePlanName = TEMPLATE.getName();
+        final var solutionPlanName = SOLUTION.getName();
+
+        templateParticipation.setBuildPlanId(projectKey + "-" + templatePlanName); // Set build plan id to newly created BaseBuild plan
+        templateParticipation.setRepositoryUrl(exerciseRepoUrl.toString());
+        solutionParticipation.setBuildPlanId(projectKey + "-" + solutionPlanName);
+        solutionParticipation.setRepositoryUrl(solutionUrl.toString());
+        programmingExercise.setTestRepositoryUrl(testsRepoUrl.toString());
     }
 
     private void setupExerciseTemplate(ProgrammingExercise programmingExercise, User user, URL exerciseRepoUrl, URL testsRepoUrl, URL solutionRepoUrl)
@@ -385,7 +428,7 @@ public class ProgrammingExerciseService {
 
     /**
      * Replace placeholders in repository files (e.g. ${placeholder}).
-     * 
+     *
      * @param programmingExercise The related programming exercise
      * @param repository The repository in which the placeholders should get replaced
      * @throws IOException If replacing the directory name, or file variables throws an exception
@@ -418,7 +461,7 @@ public class ProgrammingExerciseService {
 
     /**
      * Stage, commit and push.
-     * 
+     *
      * @param repository The repository to which the changes should get pushed
      * @param templateName The template name which should be put in the commit message
      * @throws GitAPIException If committing, or pushing to the repo throws an exception
@@ -452,7 +495,7 @@ public class ProgrammingExerciseService {
 
     /**
      * Find a programming exercise by its id.
-     * 
+     *
      * @param programmingExerciseId of the programming exercise.
      * @return The programming exercise related to the given id
      * @throws EntityNotFoundException the programming exercise could not be found.
@@ -526,7 +569,7 @@ public class ProgrammingExerciseService {
 
     /**
      * Combine all commits of the given repository into one.
-     * 
+     *
      * @param repoUrl of the repository to combine.
      * @throws InterruptedException If the checkout fails
      * @throws GitAPIException If the checkout fails
