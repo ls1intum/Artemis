@@ -93,7 +93,7 @@ public class BitbucketService extends AbstractVersionControlService {
 
                     try {
                         // NOTE: we need to refetch the user here to make sure that the groups are not lazy loaded.
-                        user = userService.getUserWithGroupsAndAuthorities();
+                        user = userService.getUserWithGroupsAndAuthorities(user.getLogin());
                         addUserToGroups(username, user.getGroups());
                     }
                     catch (BitbucketException e) {
