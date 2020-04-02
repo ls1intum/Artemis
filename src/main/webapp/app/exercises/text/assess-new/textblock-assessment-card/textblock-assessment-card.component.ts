@@ -1,6 +1,5 @@
 import { Component, Input, Output, EventEmitter, ViewChild } from '@angular/core';
 import { TextBlockRef } from 'app/entities/text-block-ref.model';
-import { Feedback } from 'app/entities/feedback.model';
 import { TextblockFeedbackEditorComponent } from 'app/exercises/text/assess-new/textblock-feedback-editor/textblock-feedback-editor.component';
 
 type OptionalTextBlockRef = TextBlockRef | null;
