@@ -305,9 +305,9 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationTest 
     public void getAllParticipationsForExercise() throws Exception {
         database.addParticipationForExercise(textExercise, "student1");
         database.addParticipationForExercise(textExercise, "student2");
-        var participations = request.getList("/api/exercise/" + textExercise.getId() + "/participations", HttpStatus.OK, StudentParticipation.class);
+        var participations = request.getList("/api/exercises/" + textExercise.getId() + "/participations", HttpStatus.OK, StudentParticipation.class);
         assertThat(participations.size()).as("Exactly 2 participations are returned").isEqualTo(2);
-        assertThat(participations.stream().allMatch(participation -> participation.getStudent() != null)).as("Only participation that has student are returned").isTrue();
+        assertThat(participations.stream().allMatch(participation -> participation.getStudent().isPresent())).as("Only participation that has student are returned").isTrue();
         assertThat(participations.stream().allMatch(participation -> participation.getSubmissionCount() == 0)).as("No submissions should exist for participations").isTrue();
     }
 
@@ -321,9 +321,9 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationTest 
         resultRepository.save(result);
         final var params = new LinkedMultiValueMap<String, String>();
         params.add("withLatestResult", "true");
-        var participations = request.getList("/api/exercise/" + textExercise.getId() + "/participations", HttpStatus.OK, StudentParticipation.class, params);
+        var participations = request.getList("/api/exercises/" + textExercise.getId() + "/participations", HttpStatus.OK, StudentParticipation.class, params);
         assertThat(participations.size()).as("Exactly 2 participations are returned").isEqualTo(2);
-        assertThat(participations.stream().allMatch(p -> p.getStudent() != null)).as("Only participation that has student are returned").isTrue();
+        assertThat(participations.stream().allMatch(p -> p.getStudent().isPresent())).as("Only participation that has student are returned").isTrue();
         assertThat(participations.stream().allMatch(p -> p.getSubmissionCount() == 0)).as("No submissions should exist for participations").isTrue();
         var participationWithResult = participations.stream().filter(p -> p.getParticipant().equals(database.getUserByLogin("student2"))).findFirst().get();
         assertThat(participationWithResult.getResults().size()).isEqualTo(1);
@@ -333,7 +333,7 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationTest 
     @Test
     @WithMockUser(username = "tutor3", roles = "TA")
     public void getAllParticipationsForExercise_NotTutorInCourse() throws Exception {
-        request.getList("/api/exercise/" + textExercise.getId() + "/participations", HttpStatus.FORBIDDEN, StudentParticipation.class);
+        request.getList("/api/exercises/" + textExercise.getId() + "/participations", HttpStatus.FORBIDDEN, StudentParticipation.class);
     }
 
     @Test

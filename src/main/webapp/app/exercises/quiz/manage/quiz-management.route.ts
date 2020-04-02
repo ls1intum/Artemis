@@ -5,10 +5,11 @@ import { QuizExerciseDetailComponent } from './quiz-exercise-detail.component';
 import { QuizExerciseExportComponent } from './quiz-exercise-export.component';
 import { PendingChangesGuard } from 'app/shared/guard/pending-changes.guard';
 import { QuizReEvaluateComponent } from 'app/exercises/quiz/manage/re-evaluate/quiz-re-evaluate.component';
+import { QuizParticipationComponent } from 'app/exercises/quiz/participate/quiz-participation.component';
 
 export const quizManagementRoute: Routes = [
     {
-        path: 'course-management/:courseId/quiz-exercises',
+        path: ':courseId/quiz-exercises',
         component: QuizExerciseComponent,
         data: {
             authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
@@ -17,7 +18,7 @@ export const quizManagementRoute: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
-        path: 'course-management/:courseId/quiz-exercises/:exerciseId',
+        path: ':courseId/quiz-exercises/:exerciseId',
         component: QuizExerciseDetailComponent,
         data: {
             authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
@@ -27,7 +28,7 @@ export const quizManagementRoute: Routes = [
         canDeactivate: [PendingChangesGuard],
     },
     {
-        path: 'course-management/:courseId/quiz-exercises/:exerciseId/re-evaluate',
+        path: ':courseId/quiz-exercises/:exerciseId/re-evaluate',
         component: QuizReEvaluateComponent,
         data: {
             authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
@@ -36,7 +37,7 @@ export const quizManagementRoute: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
-        path: 'course-management/:courseId/quiz-exercises/:exerciseId/edit',
+        path: ':courseId/quiz-exercises/:exerciseId/edit',
         component: QuizExerciseDetailComponent,
         data: {
             authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
@@ -46,7 +47,7 @@ export const quizManagementRoute: Routes = [
         canDeactivate: [PendingChangesGuard],
     },
     {
-        path: 'course-management/:courseId/quiz-exercises/new',
+        path: ':courseId/quiz-exercises/new',
         component: QuizExerciseDetailComponent,
         data: {
             authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
@@ -56,11 +57,31 @@ export const quizManagementRoute: Routes = [
         canDeactivate: [PendingChangesGuard],
     },
     {
-        path: 'course-management/:courseId/quiz-exercises/export',
+        path: ':courseId/quiz-exercises/export',
         component: QuizExerciseExportComponent,
         data: {
             authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
             pageTitle: 'artemisApp.quizExercise.home.title',
+        },
+        canActivate: [UserRouteAccessService],
+    },
+    {
+        path: ':courseId/quiz-exercises/:exerciseId/preview',
+        component: QuizParticipationComponent,
+        data: {
+            authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
+            pageTitle: 'artemisApp.quizExercise.home.title',
+            mode: 'preview',
+        },
+        canActivate: [UserRouteAccessService],
+    },
+    {
+        path: ':courseId/quiz-exercises/:exerciseId/solution',
+        component: QuizParticipationComponent,
+        data: {
+            authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
+            pageTitle: 'artemisApp.quizExercise.home.title',
+            mode: 'solution',
         },
         canActivate: [UserRouteAccessService],
     },

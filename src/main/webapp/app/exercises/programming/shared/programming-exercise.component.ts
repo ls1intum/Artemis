@@ -16,7 +16,7 @@ import { isOrion, OrionState } from 'app/shared/orion/orion';
 import { OrionConnectorService } from 'app/shared/orion/orion-connector.service';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
-import { CourseExerciseService, CourseManagementService } from '../../../course/manage/course-management.service';
+import { CourseExerciseService, CourseManagementService } from 'app/course/manage/course-management.service';
 
 @Component({
     selector: 'jhi-programming-exercise',

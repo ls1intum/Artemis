@@ -9,7 +9,7 @@ import { ExampleSubmissionService } from 'app/exercises/shared/example-submissio
 import { TextAssessmentsService } from 'app/exercises/text/assess/text-assessments.service';
 import { HighlightColors } from 'app/exercises/text/assess/highlight-colors';
 import { TutorParticipationService } from 'app/exercises/shared/dashboards/tutor/tutor-participation.service';
-import { ArtemisMarkdown } from 'app/shared/markdown.service';
+import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import Interactable from '@interactjs/core/Interactable';
 import interact from 'interactjs';
 import { AccountService } from 'app/core/auth/account.service';
@@ -69,7 +69,7 @@ export class ExampleTextSubmissionComponent implements OnInit, AfterViewInit {
         private route: ActivatedRoute,
         private router: Router,
         private location: Location,
-        private artemisMarkdown: ArtemisMarkdown,
+        private artemisMarkdown: ArtemisMarkdownService,
         private resultService: ResultService,
         private $window: WindowRef,
         private guidedTourService: GuidedTourService,

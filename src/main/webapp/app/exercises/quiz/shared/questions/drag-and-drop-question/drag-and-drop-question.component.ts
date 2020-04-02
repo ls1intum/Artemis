@@ -1,5 +1,5 @@
 import { Component, EventEmitter, HostListener, Input, OnChanges, Output, SimpleChanges, ViewChild, ViewEncapsulation } from '@angular/core';
-import { ArtemisMarkdown } from 'app/shared/markdown.service';
+import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { DragAndDropQuestionUtil } from 'app/exercises/quiz/shared/drag-and-drop-question-util.service';
 import { polyfill } from 'mobile-drag-drop';
 import { scrollBehaviourDragImageTranslateOverride } from 'mobile-drag-drop/scroll-behaviour';
@@ -27,7 +27,7 @@ window.addEventListener('touchmove', function () {}, { passive: false });
 @Component({
     selector: 'jhi-drag-and-drop-question',
     templateUrl: './drag-and-drop-question.component.html',
-    providers: [ArtemisMarkdown, DragAndDropQuestionUtil],
+    providers: [ArtemisMarkdownService, DragAndDropQuestionUtil],
     styleUrls: ['./drag-and-drop-question.component.scss', '../../../participate/quiz-participation.scss'],
     encapsulation: ViewEncapsulation.None,
 })
@@ -81,7 +81,7 @@ export class DragAndDropQuestionComponent implements OnChanges {
 
     loadingState = 'loading';
 
-    constructor(private artemisMarkdown: ArtemisMarkdown, private dragAndDropQuestionUtil: DragAndDropQuestionUtil) {}
+    constructor(private artemisMarkdown: ArtemisMarkdownService, private dragAndDropQuestionUtil: DragAndDropQuestionUtil) {}
 
     @HostListener('window:resize') onResize() {
         resizeImage();

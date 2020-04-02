@@ -7,7 +7,7 @@ import { ModelingAssessmentConflictComponent } from 'app/exercises/modeling/asse
 
 const routes: Routes = [
     {
-        path: 'course-management/:courseId/modeling-exercises/:exerciseId/submissions/:submissionId/assessment',
+        path: ':courseId/modeling-exercises/:exerciseId/submissions/:submissionId/assessment',
         component: ModelingAssessmentEditorComponent,
         data: {
             authorities: ['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'],
@@ -16,7 +16,7 @@ const routes: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
-        path: 'course-management/:courseId/modeling-exercises/:exerciseId/submissions/:submissionId/assessment/conflict',
+        path: ':courseId/modeling-exercises/:exerciseId/submissions/:submissionId/assessment/conflict',
         component: ModelingAssessmentConflictComponent,
         data: {
             authorities: ['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'],
@@ -25,7 +25,7 @@ const routes: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
-        path: 'course-management/:courseId/modeling-exercises/:exerciseId/assessment',
+        path: ':courseId/modeling-exercises/:exerciseId/assessment',
         component: ModelingAssessmentDashboardComponent,
         data: {
             authorities: ['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'],

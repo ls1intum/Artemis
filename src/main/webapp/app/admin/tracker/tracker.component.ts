@@ -7,9 +7,6 @@ import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 })
 export class JhiTrackerComponent implements OnInit, OnDestroy {
     activities: any[] = [];
-    disconnected = true;
-    onConnected: () => void;
-    onDisconnected: () => void;
 
     constructor(private trackerService: JhiWebsocketService) {}
 
@@ -34,20 +31,6 @@ export class JhiTrackerComponent implements OnInit, OnDestroy {
         this.trackerService.subscribe('/topic/tracker');
         this.trackerService.receive('/topic/tracker').subscribe((activity: any) => {
             this.showActivity(activity);
-        });
-
-        // listen to connect / disconnect events
-        this.onConnected = () => {
-            this.disconnected = false;
-        };
-        this.trackerService.bind('connect', () => {
-            this.onConnected();
-        });
-        this.onDisconnected = () => {
-            this.disconnected = true;
-        };
-        this.trackerService.bind('disconnect', () => {
-            this.onDisconnected();
         });
     }
 

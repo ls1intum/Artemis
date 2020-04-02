@@ -9,9 +9,9 @@
         },
         "menu": {
             "home": "Startseite",
-            "overview": "Übersicht",
+            "overview": "Kurs Übersicht",
             "courses": "Kurse",
-            "course": "Kursadministration",
+            "course": "Kurs Verwaltung",
             "jhipster-needle-menu-add-element": "JHipster will add additional menu entries here (do not translate!)",
             "entities": {
                 "main": "Entitäten",
@@ -276,5 +276,9 @@
         "exercise": "Aufgabendetails",
         "lectures": "Vorlesungen",
         "statistics": "Kursstatistiken"
+    },
+    "connectionStatus": {
+        "connected": "Verbunden",
+        "disconnected": "Verbindung getrennt"
     }
 }

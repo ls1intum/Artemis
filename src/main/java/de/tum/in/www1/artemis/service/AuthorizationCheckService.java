@@ -254,6 +254,17 @@ public class AuthorizationCheckService {
     }
 
     /**
+     * checks if the currently logged in user is owner of the given team
+     *
+     * @param team the team that needs to be checked
+     * @param user the user whose permissions should be checked
+     * @return true, if user is student is owner of this team, otherwise false
+     */
+    public boolean isOwnerOfTeam(Team team, User user) {
+        return user.equals(team.getOwner());
+    }
+
+    /**
      * Method used to check whether the user of the websocket message is owner of this participation
      *
      * @param participation participation to check the rights for

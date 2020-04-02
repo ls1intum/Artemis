@@ -1,4 +1,4 @@
-import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, TestBed, tick, flush } from '@angular/core/testing';
 import { TranslateModule } from '@ngx-translate/core';
 import { DebugElement } from '@angular/core';
 import * as chai from 'chai';
@@ -17,6 +17,8 @@ import { ArtemisSharedComponentModule } from 'app/shared/components/shared-compo
 import { ArtemisTeamModule } from 'app/exercises/shared/team/team.module';
 import { mockEmptyTeam, mockExercise, mockNonTeamStudents, mockTeam, MockTeamService, mockTeamStudents } from '../../mocks/mock-team.service';
 import { TeamService } from 'app/exercises/shared/team/team.service';
+import { MockSyncStorage } from '../../mocks/mock-sync.storage';
+import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -32,7 +34,13 @@ describe('TeamUpdateDialogComponent', () => {
         return TestBed.configureTestingModule({
             imports: [TranslateModule.forRoot(), ArtemisTestModule, FormsModule, NgJhipsterModule, NgbModule, ArtemisSharedModule, ArtemisSharedComponentModule, ArtemisTeamModule],
             declarations: [],
-            providers: [JhiEventManager, { provide: AlertService, useClass: MockAlertService }, { provide: TeamService, useClass: MockTeamService }],
+            providers: [
+                JhiEventManager,
+                { provide: AlertService, useClass: MockAlertService },
+                { provide: TeamService, useClass: MockTeamService },
+                { provide: LocalStorageService, useClass: MockSyncStorage },
+                { provide: SessionStorageService, useClass: MockSyncStorage },
+            ],
         })
             .compileComponents()
             .then(() => {
@@ -55,6 +63,9 @@ describe('TeamUpdateDialogComponent', () => {
         expect(cancelButton).to.exist;
         cancelButton.nativeElement.click();
         expect(modalDismissSpy.callCount).to.equal(2);
+
+        fixture.destroy();
+        flush();
     }));
 
     it('Team Update Dialog can be used to create team', fakeAsync(() => {
@@ -120,6 +131,9 @@ describe('TeamUpdateDialogComponent', () => {
         expect(comp.team).to.deep.equal(comp.pendingTeam);
         expect(comp.isSaving).to.be.false;
         expect(modalCloseSpy.callCount).to.equal(1);
+
+        fixture.destroy();
+        flush();
     }));
 
     it('Team Update Dialog can be used to update team', fakeAsync(() => {
@@ -178,5 +192,8 @@ describe('TeamUpdateDialogComponent', () => {
         expect(comp.team).to.deep.equal(comp.pendingTeam);
         expect(comp.isSaving).to.be.false;
         expect(modalCloseSpy.callCount).to.equal(1);
+
+        fixture.destroy();
+        flush();
     }));
 });

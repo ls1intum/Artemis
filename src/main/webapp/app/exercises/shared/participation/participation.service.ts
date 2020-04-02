@@ -57,7 +57,7 @@ export class ParticipationService {
     findAllParticipationsByExercise(exerciseId: number, withLatestResult = false): Observable<EntityArrayResponseType> {
         const options = createRequestOption({ withLatestResult });
         return this.http
-            .get<StudentParticipation[]>(SERVER_API_URL + `api/exercise/${exerciseId}/participations`, {
+            .get<StudentParticipation[]>(SERVER_API_URL + `api/exercises/${exerciseId}/participations`, {
                 params: options,
                 observe: 'response',
             })

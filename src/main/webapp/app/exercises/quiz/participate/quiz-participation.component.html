@@ -5,7 +5,7 @@
         <span *ngSwitchCase="'preview'" class="in-parentheses" jhiTranslate="artemisApp.quizExercise.previewMode"></span>
         <span *ngSwitchCase="'solution'" class="in-parentheses" jhiTranslate="artemisApp.quizExercise.solution"></span>
     </h2>
-    <p *ngIf="!waitingForQuizStart && !submission.submitted && !showingResult" jhiTranslate="artemisApp.quizExercise.quizInstructions.default"></p>
+    <p *ngIf="!waitingForQuizStart && !submission.submitted && !showingResult" jhiTranslate="artemisApp.quizExercise.quizInstructions.live"></p>
     <p *ngIf="!waitingForQuizStart && submission.submitted && !showingResult" jhiTranslate="artemisApp.quizExercise.quizInstructions.wait"></p>
     <p
         *ngIf="!waitingForQuizStart && showingResult && mode !== 'solution'"
@@ -115,10 +115,10 @@
                         {{ remainingTimeText }}
                     </span>
                 </div>
-                <div *ngIf="mode === 'default' && waitingForQuizStart">
+                <div *ngIf="mode === 'live' && waitingForQuizStart">
                     <span jhiTranslate="artemisApp.quizExercise.waitingForStart"></span>
                 </div>
-                <div *ngIf="mode === 'default' && !waitingForQuizStart">
+                <div *ngIf="mode === 'live' && !waitingForQuizStart">
                     <span *ngIf="isSaving" jhiTranslate="artemisApp.quizExercise.isSaving">Saving answers...</span>
                     <span *ngIf="!isSaving && !isMobile()" ngbTooltip="{{ submission.adjustedSubmissionDate | date: 'MMM d, y HH:mm:ss' }}" placement="right">
                         <span *ngIf="!submission.submitted" jhiTranslate="artemisApp.quizExercise.lastSaved" class="colon-suffix"></span>
@@ -133,12 +133,9 @@
                         <span *ngIf="submission.submitted" jhiTranslate="artemisApp.quizExercise.submitted"></span>
                     </span>
                 </div>
-                <div *ngIf="mode === 'default'" class="connection-status" [ngClass]="{ disconnected: disconnected }">
-                    <fa-icon [icon]="'circle'" size="sm"></fa-icon>
-                    <span *ngIf="!disconnected" jhiTranslate="artemisApp.quizExercise.connected"></span>
-                    <span *ngIf="disconnected" jhiTranslate="artemisApp.quizExercise.disconnected"></span>
-                    <span *ngIf="unsavedChanges" jhiTranslate="artemisApp.quizExercise.unsavedChanges" class="in-parentheses"></span>
-                </div>
+                <jhi-connection-status *ngIf="mode === 'live'" class="connection-status-quiz">
+                    <span innerContent *ngIf="unsavedChanges" jhiTranslate="artemisApp.quizExercise.unsavedChanges" class="in-parentheses"></span>
+                </jhi-connection-status>
                 <div *ngIf="mode === 'practice'">
                     <span jhiTranslate="artemisApp.quizExercise.practiceMode"></span>
                 </div>

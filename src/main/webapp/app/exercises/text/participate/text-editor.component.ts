@@ -8,7 +8,7 @@ import { ParticipationService } from 'app/exercises/shared/participation/partici
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import { TextEditorService } from 'app/exercises/text/participate/text-editor.service';
 import * as moment from 'moment';
-import { ArtemisMarkdown } from 'app/shared/markdown.service';
+import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { Observable } from 'rxjs/Observable';
 import { TextSubmissionService } from 'app/exercises/text/participate/text-submission.service';
@@ -48,7 +48,7 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
         private textService: TextEditorService,
         private resultService: ResultService,
         private jhiAlertService: AlertService,
-        private artemisMarkdown: ArtemisMarkdown,
+        private artemisMarkdown: ArtemisMarkdownService,
         private location: Location,
         private translateService: TranslateService,
         private participationWebsocketService: ParticipationWebsocketService,
