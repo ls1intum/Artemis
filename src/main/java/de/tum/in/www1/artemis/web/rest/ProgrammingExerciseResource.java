@@ -339,9 +339,6 @@ public class ProgrammingExerciseResource {
         }
 
         programmingExercise.generateAndSetProjectKey();
-        String projectKey = programmingExercise.getProjectKey();
-        String projectName = programmingExercise.getProjectName();
-
         try {
             ProgrammingExercise newProgrammingExercise = programmingExerciseService.setupProgrammingExerciseWithoutLocalSetup(programmingExercise); // Setup all repositories etc
             return ResponseEntity.created(new URI("/api/programming-exercises" + newProgrammingExercise.getId()))
