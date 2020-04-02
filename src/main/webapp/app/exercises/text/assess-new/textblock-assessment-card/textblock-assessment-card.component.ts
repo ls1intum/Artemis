@@ -6,11 +6,11 @@ import { TextblockFeedbackEditorComponent } from 'app/exercises/text/assess-new/
 type OptionalTextBlockRef = TextBlockRef | null;
 
 @Component({
-    selector: 'jhi-textblock-assessment-card-component',
-    templateUrl: './textblock-assessment-card-component.component.html',
-    styleUrls: ['./textblock-assessment-card-component.component.scss'],
+    selector: 'jhi-textblock-assessment-card',
+    templateUrl: './textblock-assessment-card.component.html',
+    styleUrls: ['./textblock-assessment-card.component.scss'],
 })
-export class TextblockAssessmentCardComponentComponent {
+export class TextblockAssessmentCardComponent {
     @Input() textBlockRef: TextBlockRef;
     @Input() selected = false;
     @Output() didSelect = new EventEmitter<OptionalTextBlockRef>();

@@ -6,13 +6,13 @@ import { TextBlock } from 'app/entities/text-block.model';
 @Component({
     selector: 'jhi-text-assessment-area',
     template: `
-        <jhi-textblock-assessment-card-component
+        <jhi-textblock-assessment-card
             *ngFor="let ref of textBlockRefs"
             [textBlockRef]="ref"
             [selected]="selectedRef === ref"
             (didSelect)="selectedRef = $event"
             (didChange)="textBlockRefsChangeEmit()"
-        ></jhi-textblock-assessment-card-component>
+        ></jhi-textblock-assessment-card>
     `,
     styles: [
         `

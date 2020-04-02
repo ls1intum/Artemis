@@ -9,7 +9,7 @@ import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { TextAssessmentAreaComponent } from 'app/exercises/text/assess-new/text-assessment-area/text-assessment-area.component';
 import { MockComponent } from 'ng-mocks';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TextblockAssessmentCardComponentComponent } from 'app/exercises/text/assess-new/textblock-assessment-card/textblock-assessment-card-component.component';
+import { TextblockAssessmentCardComponent } from 'app/exercises/text/assess-new/textblock-assessment-card/textblock-assessment-card.component';
 import { TextblockFeedbackEditorComponent } from 'app/exercises/text/assess-new/textblock-feedback-editor/textblock-feedback-editor.component';
 import { TranslateModule } from '@ngx-translate/core';
 import { TextBlockRef } from 'app/entities/text-block-ref.model';
@@ -59,7 +59,7 @@ describe('TextSubmissionAssessmentComponent', () => {
     beforeEach(async () => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, ArtemisSharedModule, ArtemisAssessmentSharedModule, AssessmentInstructionsModule, TranslateModule.forRoot()],
-            declarations: [TextSubmissionAssessmentComponent, TextAssessmentAreaComponent, TextblockAssessmentCardComponentComponent, TextblockFeedbackEditorComponent],
+            declarations: [TextSubmissionAssessmentComponent, TextAssessmentAreaComponent, TextblockAssessmentCardComponent, TextblockFeedbackEditorComponent],
             providers: [{ provide: ActivatedRoute, useValue: route }],
         })
             .overrideModule(ArtemisTestModule, {
