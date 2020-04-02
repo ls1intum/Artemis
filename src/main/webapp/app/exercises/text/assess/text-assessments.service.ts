@@ -12,6 +12,7 @@ import { TextBlock } from 'app/entities/text-block.model';
 import { TextBlockRef } from 'app/entities/text-block-ref.model';
 
 type EntityResponseType = HttpResponse<Result>;
+type TextAssessmentDTO = { feedbacks: Feedback[]; textBlocks: TextBlock[] };
 
 @Injectable({
     providedIn: 'root',
@@ -22,14 +23,16 @@ export class TextAssessmentsService {
     constructor(private http: HttpClient) {}
 
     public save(exerciseId: number, resultId: number, feedbacks: Feedback[], textBlocks: TextBlock[]): Observable<EntityResponseType> {
+        const body = TextAssessmentsService.prepareFeedbacksAndTextblocksForRequest(feedbacks, textBlocks);
         return this.http
-            .put<Result>(`${this.resourceUrl}/exercise/${exerciseId}/result/${resultId}`, { feedbacks, textBlocks }, { observe: 'response' })
+            .put<Result>(`${this.resourceUrl}/exercise/${exerciseId}/result/${resultId}`, body, { observe: 'response' })
             .map((res: EntityResponseType) => TextAssessmentsService.convertResponse(res));
     }
 
     public submit(exerciseId: number, resultId: number, feedbacks: Feedback[], textBlocks: TextBlock[]): Observable<EntityResponseType> {
+        const body = TextAssessmentsService.prepareFeedbacksAndTextblocksForRequest(feedbacks, textBlocks);
         return this.http
-            .put<Result>(`${this.resourceUrl}/exercise/${exerciseId}/result/${resultId}/submit`, { feedbacks, textBlocks }, { observe: 'response' })
+            .put<Result>(`${this.resourceUrl}/exercise/${exerciseId}/result/${resultId}/submit`, body, { observe: 'response' })
             .map((res: EntityResponseType) => TextAssessmentsService.convertResponse(res));
     }
 
@@ -68,6 +71,21 @@ export class TextAssessmentsService {
 
     public getExampleResult(exerciseId: number, submissionId: number): Observable<Result> {
         return this.http.get<Result>(`${this.resourceUrl}/exercise/${exerciseId}/submission/${submissionId}/example-result`);
+    }
+
+    private static prepareFeedbacksAndTextblocksForRequest(feedbacks: Feedback[], textBlocks: TextBlock[]): TextAssessmentDTO {
+        feedbacks = feedbacks.map((f) => {
+            f = Object.assign({}, f);
+            f.result = null;
+            return f;
+        });
+        textBlocks = textBlocks.map((tb) => {
+            tb = Object.assign({}, tb);
+            tb.submission = undefined;
+            return tb;
+        });
+
+        return { feedbacks, textBlocks };
     }
 
     private static convertResponse(res: EntityResponseType): EntityResponseType {

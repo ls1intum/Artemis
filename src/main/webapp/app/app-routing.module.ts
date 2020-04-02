@@ -49,6 +49,7 @@ const LAYOUT_ROUTES: Routes = [navbarRoute, ...errorRoute];
                     loadChildren: () => import('./exercises/file-upload/participate/file-upload-participation.module').then((m) => m.ArtemisFileUploadParticipationModule),
                 },
                 {
+                    // TODO:  Remove '-new' when migrating to Text Assessment V2
                     path: 'course-management/:courseId/text-exercises/:exerciseId/submissions-new',
                     loadChildren: () => import('./exercises/text/assess-new/text-submission-assessment.module').then((m) => m.ArtemisTextSubmissionAssessmentModule),
                 },

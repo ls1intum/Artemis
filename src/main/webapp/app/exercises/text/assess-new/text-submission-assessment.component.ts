@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { Location } from '@angular/common';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { ActivatedRoute, Router } from '@angular/router';
 import { JhiAlertService } from 'ng-jhipster';
 import * as moment from 'moment';
 
@@ -17,6 +18,7 @@ import { Feedback } from 'app/entities/feedback.model';
 import { notUndefined } from 'app/shared/util/global.utils';
 import { TextBlock } from 'app/entities/text-block.model';
 import { TranslateService } from '@ngx-translate/core';
+import { NEW_ASSESSMENT_PATH } from 'app/exercises/text/assess-new/text-submission-assessment.route';
 
 @Component({
     selector: 'jhi-text-submission-assessment',
@@ -61,6 +63,7 @@ export class TextSubmissionAssessmentComponent implements OnInit {
     constructor(
         private activatedRoute: ActivatedRoute,
         private router: Router,
+        private location: Location,
         private jhiAlertService: JhiAlertService,
         private accountService: AccountService,
         private assessmentsService: TextAssessmentsService,
@@ -85,10 +88,24 @@ export class TextSubmissionAssessmentComponent implements OnInit {
             this.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.exercise.course!);
             this.prepareTextBlocksAndFeedbacks();
             this.getComplaint();
+            this.updateUrlIfNeeded();
 
             this.checkPermissions();
             this.isLoading = false;
         });
+    }
+
+    private updateUrlIfNeeded() {
+        if (this.activatedRoute.routeConfig?.path === NEW_ASSESSMENT_PATH) {
+            // Update the url with the new id, without reloading the page, to make the history consistent
+            const newUrl = this.router
+                .createUrlTree(
+                    // TODO:  Remove '-new' when migrating to Text Assessment V2
+                    ['course-management', this.exercise?.course?.id, 'text-exercises', this.exercise?.id, 'submissions-new', this.submission?.id, 'assessment'],
+                )
+                .toString();
+            this.location.go(newUrl);
+        }
     }
 
     navigateBack(): void {
@@ -125,7 +142,7 @@ export class TextSubmissionAssessmentComponent implements OnInit {
         );
     }
 
-    private handleSaveOrSubmitSuccessWithAlert(response: HttpResponse<Result>, translationKey: string) {
+    private handleSaveOrSubmitSuccessWithAlert(response: HttpResponse<Result>, translationKey: string): void {
         this.participation!.results[0] = this.result = response.body!;
         this.jhiAlertService.success(translationKey);
         this.busy = false;
@@ -143,6 +160,7 @@ export class TextSubmissionAssessmentComponent implements OnInit {
 
     nextSubmission(): void {
         this.busy = true;
+        // TODO:  Remove '-new' when migrating to Text Assessment V2
         this.router.navigate(['course-management', this.exercise?.course?.id, 'text-exercises', this.exercise?.id, 'submissions-new', 'new', 'assessment']);
     }
 

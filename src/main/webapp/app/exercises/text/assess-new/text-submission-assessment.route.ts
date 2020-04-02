@@ -2,7 +2,6 @@ import { Injectable } from '@angular/core';
 import { Routes, Resolve, ActivatedRouteSnapshot, RouterStateSnapshot } from '@angular/router';
 import { Location } from '@angular/common';
 import { Observable } from 'rxjs';
-import { tap } from 'rxjs/operators';
 
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { TextSubmissionAssessmentComponent } from './text-submission-assessment.component';
@@ -44,15 +43,8 @@ export class NewStudentParticipationResolver implements Resolve<StudentParticipa
         console.log(`NewStudentParticipationResolver for Exercise ${exerciseId}.`);
 
         if (exerciseId) {
-            this.textSubmissionService
+            return this.textSubmissionService
                 .getTextSubmissionForExerciseWithoutAssessment(exerciseId, true)
-                .pipe(
-                    tap((submission) => {
-                        // Update the url with the new id, without reloading the page, to make the history consistent
-                        const newUrl = window.location.hash.replace('#', '').replace('new', `${submission.id}`);
-                        this.location.go(newUrl);
-                    }),
-                )
                 .map((submission) => <StudentParticipation>submission.participation)
                 .catch(() => Observable.of(null));
         }
@@ -60,9 +52,10 @@ export class NewStudentParticipationResolver implements Resolve<StudentParticipa
     }
 }
 
+export const NEW_ASSESSMENT_PATH = 'new/assessment';
 export const textSubmissionAssessmentRoutes: Routes = [
     {
-        path: 'new/assessment',
+        path: NEW_ASSESSMENT_PATH,
         component: TextSubmissionAssessmentComponent,
         data: {
             authorities: ['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'],
