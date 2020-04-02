@@ -80,19 +80,21 @@ export class TextSubmissionAssessmentComponent implements OnInit {
 
         this.isAtLeastInstructor = this.accountService.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR']);
 
-        this.activatedRoute.data.subscribe(({ studentParticipation }) => {
-            this.participation = studentParticipation;
-            this.submission = this.participation?.submissions[0] as TextSubmission;
-            this.exercise = this.participation?.exercise as TextExercise;
-            this.result = this.submission?.result;
-            this.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.exercise.course!);
-            this.prepareTextBlocksAndFeedbacks();
-            this.getComplaint();
-            this.updateUrlIfNeeded();
+        this.activatedRoute.data.subscribe(({ studentParticipation }) => this.setPropertiesFromServerResponse(studentParticipation));
+    }
 
-            this.checkPermissions();
-            this.isLoading = false;
-        });
+    private setPropertiesFromServerResponse(studentParticipation: StudentParticipation) {
+        this.participation = studentParticipation;
+        this.submission = this.participation?.submissions[0] as TextSubmission;
+        this.exercise = this.participation?.exercise as TextExercise;
+        this.result = this.submission?.result;
+        this.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.exercise!.course!);
+        this.prepareTextBlocksAndFeedbacks();
+        this.getComplaint();
+        this.updateUrlIfNeeded();
+
+        this.checkPermissions();
+        this.isLoading = false;
     }
 
     private updateUrlIfNeeded() {

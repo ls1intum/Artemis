@@ -42,6 +42,10 @@ public class TextSubmission extends Submission implements Serializable {
         return text;
     }
 
+    /**
+     * Excerpt of Text, used for toString() so log messages do not get too long.
+     * @return excerpt of text, maximum String length of 104 characters
+     */
     @JsonIgnore()
     public String getExcerpt() {
         if (getText().length() > MAX_EXCERPT_LENGTH) {

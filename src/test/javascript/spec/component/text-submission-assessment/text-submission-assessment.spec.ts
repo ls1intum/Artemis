@@ -9,21 +9,66 @@ import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { TextAssessmentAreaComponent } from 'app/exercises/text/assess-new/text-assessment-area/text-assessment-area.component';
 import { MockComponent } from 'ng-mocks';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TextblockAssessmentCardComponentComponent } from 'app/exercises/text/assess-new/textblock-assessment-card/textblock-assessment-card-component.component';
+import { TextblockFeedbackEditorComponent } from 'app/exercises/text/assess-new/textblock-feedback-editor/textblock-feedback-editor.component';
+import { TranslateModule } from '@ngx-translate/core';
+import { TextBlockRef } from 'app/entities/text-block-ref.model';
+import { ExerciseType } from 'app/entities/exercise.model';
+import { AssessmentType } from 'app/entities/assessment-type.model';
+import { TextExercise } from 'app/entities/text-exercise.model';
+import { ParticipationType } from 'app/entities/participation/participation.model';
+import { SubmissionExerciseType, SubmissionType } from 'app/entities/submission.model';
+import { TextSubmission } from 'app/entities/text-submission.model';
+import { Result } from 'app/entities/result.model';
+import moment = require('moment');
+import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { ActivatedRoute } from '@angular/router';
 
 describe('TextSubmissionAssessmentComponent', () => {
     let component: TextSubmissionAssessmentComponent;
     let fixture: ComponentFixture<TextSubmissionAssessmentComponent>;
 
+    const route = ({ snapshot: { path: '' } } as unknown) as ActivatedRoute;
+    const exercise = { id: 20, type: ExerciseType.TEXT, assessmentType: AssessmentType.MANUAL, problemStatement: '' } as TextExercise;
+    const participation: StudentParticipation = ({ type: ParticipationType.STUDENT, exercise } as unknown) as StudentParticipation;
+    const submission = ({
+        submissionExerciseType: SubmissionExerciseType.TEXT,
+        id: 2278,
+        submitted: true,
+        type: SubmissionType.MANUAL,
+        submissionDate: moment('2019-07-09T10:47:33.244Z'),
+        text: 'asdfasdfasdfasdf',
+        participation,
+    } as unknown) as TextSubmission;
+    const result = ({
+        id: 2374,
+        resultString: '1 of 12 points',
+        completionDate: moment('2019-07-09T11:51:23.251Z'),
+        successful: false,
+        score: 8,
+        rated: true,
+        hasFeedback: false,
+        hasComplaint: false,
+        submission,
+        participation,
+    } as unknown) as Result;
+    submission.result = result;
+    submission.participation.submissions = [submission];
+    submission.participation.results = [submission.result];
+
     beforeEach(async () => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, ArtemisSharedModule, ArtemisAssessmentSharedModule, AssessmentInstructionsModule],
-            declarations: [TextSubmissionAssessmentComponent, TextAssessmentAreaComponent],
-        }).overrideModule(ArtemisTestModule, {
-            remove: {
-                declarations: [MockComponent(FaIconComponent)],
-                exports: [MockComponent(FaIconComponent)],
-            }
-        }).compileComponents();
+            imports: [ArtemisTestModule, ArtemisSharedModule, ArtemisAssessmentSharedModule, AssessmentInstructionsModule, TranslateModule.forRoot()],
+            declarations: [TextSubmissionAssessmentComponent, TextAssessmentAreaComponent, TextblockAssessmentCardComponentComponent, TextblockFeedbackEditorComponent],
+            providers: [{ provide: ActivatedRoute, useValue: route }],
+        })
+            .overrideModule(ArtemisTestModule, {
+                remove: {
+                    declarations: [MockComponent(FaIconComponent)],
+                    exports: [MockComponent(FaIconComponent)],
+                },
+            })
+            .compileComponents();
     });
 
     beforeEach(() => {
@@ -36,13 +81,31 @@ describe('TextSubmissionAssessmentComponent', () => {
         expect(component).toBeTruthy();
     });
 
-    it('should not print default message', () => {
-        const compiled = fixture.debugElement.nativeElement;
-        expect(compiled.querySelector('p').textContent).not.toContain('text-submission-assessment works!');
+    it('should show jhi-text-assessment-area', () => {
+        component['setPropertiesFromServerResponse'](participation);
+        fixture.detectChanges();
+
+        const textAssessmentArea = fixture.debugElement.query(By.directive(TextAssessmentAreaComponent));
+        expect(textAssessmentArea).toBeTruthy();
     });
 
     it('should use jhi-assessment-layout', () => {
         const sharedLayout = fixture.debugElement.query(By.directive(AssessmentLayoutComponent));
         expect(sharedLayout).toBeTruthy();
+    });
+
+    it('should update score', () => {
+        component['setPropertiesFromServerResponse'](participation);
+        fixture.detectChanges();
+
+        const textAssessmentArea = fixture.debugElement.query(By.directive(TextAssessmentAreaComponent));
+        const textAssessmentAreaComponent = textAssessmentArea.componentInstance as TextAssessmentAreaComponent;
+        const textBlockRef = TextBlockRef.new();
+        textBlockRef.initFeedback();
+        textBlockRef.feedback!.credits = 42;
+        textAssessmentAreaComponent.textBlockRefs.push(textBlockRef);
+        textAssessmentAreaComponent.textBlockRefsChangeEmit();
+
+        expect(component.result?.score).toBe(42);
     });
 });
