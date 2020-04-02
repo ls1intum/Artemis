@@ -173,6 +173,8 @@ export class TextSubmissionAssessmentComponent implements OnInit {
         const hasGeneralFeedback = Feedback.hasDetailText(this.generalFeedback);
 
         this.assessmentsAreValid = hasReferencedFeedback || hasGeneralFeedback;
+
+        this.result!.score = this.referencedFeedback.map((feedback) => feedback.credits).reduce((a, b) => a + b, 0);
     }
 
     private prepareTextBlocksAndFeedbacks(): void {
