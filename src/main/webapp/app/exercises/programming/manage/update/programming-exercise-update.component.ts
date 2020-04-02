@@ -166,10 +166,6 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
                 requestOptions.notificationText = this.notificationText;
             }
             this.subscribeToSaveResponse(this.programmingExerciseService.update(this.programmingExercise, requestOptions));
-        } else if (this.programmingExercise.noLocalSetup) {
-            {
-                this.subscribeToSaveResponse(this.programmingExerciseService.automaticSetupForExercisesWithoutLocalSetup(this.programmingExercise));
-            }
         } else {
             this.subscribeToSaveResponse(this.programmingExerciseService.automaticSetup(this.programmingExercise));
         }

@@ -18,6 +18,7 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.core.env.Environment;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.core.io.support.ResourcePatternUtils;
@@ -26,22 +27,10 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.Repository;
-import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
-import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
-import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
-import de.tum.in.www1.artemis.domain.enumeration.SortingOrder;
-import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
-import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
-import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
-import de.tum.in.www1.artemis.domain.participation.TemplateProgrammingExerciseParticipation;
-import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
-import de.tum.in.www1.artemis.repository.ResultRepository;
-import de.tum.in.www1.artemis.repository.SolutionProgrammingExerciseParticipationRepository;
-import de.tum.in.www1.artemis.repository.TemplateProgrammingExerciseParticipationRepository;
+import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.*;
+import de.tum.in.www1.artemis.domain.participation.*;
+import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.connectors.CIPermission;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
@@ -85,12 +74,17 @@ public class ProgrammingExerciseService {
 
     private final ResourceLoader resourceLoader;
 
+    private final ProgrammingSubmissionRepository programmingSubmissionRepository;
+
+    private final Environment environment;
+
     public ProgrammingExerciseService(ProgrammingExerciseRepository programmingExerciseRepository, FileService fileService, GitService gitService,
             Optional<VersionControlService> versionControlService, Optional<ContinuousIntegrationService> continuousIntegrationService,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, ParticipationService participationService,
             ResultRepository resultRepository, UserService userService, AuthorizationCheckService authCheckService, ResourceLoader resourceLoader,
-            ProgrammingExerciseScheduleService programmingExerciseScheduleService, GroupNotificationService groupNotificationService) {
+            ProgrammingExerciseScheduleService programmingExerciseScheduleService, GroupNotificationService groupNotificationService,
+            ProgrammingSubmissionRepository programmingSubmissionRepository, Environment environment) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.fileService = fileService;
         this.gitService = gitService;
@@ -105,6 +99,8 @@ public class ProgrammingExerciseService {
         this.resourceLoader = resourceLoader;
         this.programmingExerciseScheduleService = programmingExerciseScheduleService;
         this.groupNotificationService = groupNotificationService;
+        this.programmingSubmissionRepository = programmingSubmissionRepository;
+        this.environment = environment;
     }
 
     // TODO We too many many generic throws Exception declarations.
@@ -142,60 +138,80 @@ public class ProgrammingExerciseService {
         final var exerciseRepoName = projectKey.toLowerCase() + "-" + RepositoryType.TEMPLATE.getName();
         final var testRepoName = projectKey.toLowerCase() + "-" + RepositoryType.TESTS.getName();
         final var solutionRepoName = projectKey.toLowerCase() + "-" + RepositoryType.SOLUTION.getName();
-        final var exerciseRepoUrl = versionControlService.get().getCloneRepositoryUrl(projectKey, exerciseRepoName).getURL();
-        final var testsRepoUrl = versionControlService.get().getCloneRepositoryUrl(projectKey, testRepoName).getURL();
-        final var solutionRepoUrl = versionControlService.get().getCloneRepositoryUrl(projectKey, solutionRepoName).getURL();
 
-        createRepositoriesForNewExercise(programmingExercise, exerciseRepoName, testRepoName, solutionRepoName);
         initParticipations(programmingExercise);
         setURLsAndBuildPlanIDsForNewExercise(programmingExercise, exerciseRepoName, testRepoName, solutionRepoName);
+        if (environment.acceptsProfiles("dev")) {
+        }
+        else {
+            final var exerciseRepoUrl = versionControlService.get().getCloneRepositoryUrl(projectKey, exerciseRepoName).getURL();
+            final var testsRepoUrl = versionControlService.get().getCloneRepositoryUrl(projectKey, testRepoName).getURL();
+            final var solutionRepoUrl = versionControlService.get().getCloneRepositoryUrl(projectKey, solutionRepoName).getURL();
 
+            createRepositoriesForNewExercise(programmingExercise, exerciseRepoName, testRepoName, solutionRepoName);
+
+            setupExerciseTemplate(programmingExercise, user, exerciseRepoUrl, testsRepoUrl, solutionRepoUrl);
+            setupBuildPlansForNewExercise(programmingExercise, exerciseRepoUrl, testsRepoUrl, solutionRepoUrl);
+        }
         // Save participations to get the ids required for the webhooks
         connectBaseParticipationsToExerciseAndSave(programmingExercise);
-
-        setupExerciseTemplate(programmingExercise, user, exerciseRepoUrl, testsRepoUrl, solutionRepoUrl);
-        setupBuildPlansForNewExercise(programmingExercise, exerciseRepoUrl, testsRepoUrl, solutionRepoUrl);
 
         // save to get the id required for the webhook
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
 
         // The creation of the webhooks must occur after the initial push, because the participation is
         // not yet saved in the database, so we cannot save the submission accordingly (see ProgrammingSubmissionService.notifyPush)
-        versionControlService.get().addWebHooksForExercise(programmingExercise);
-
+        if (environment.acceptsProfiles("dev")) {
+        }
+        else {
+            versionControlService.get().addWebHooksForExercise(programmingExercise);
+        }
         programmingExerciseScheduleService.scheduleExerciseIfRequired(programmingExercise);
         groupNotificationService.notifyTutorGroupAboutExerciseCreated(programmingExercise);
 
         return programmingExercise;
     }
 
-    @Transactional
-    public ProgrammingExercise setupProgrammingExerciseWithoutLocalSetup(ProgrammingExercise programmingExercise) throws InterruptedException, GitAPIException, IOException {
-        final var user = userService.getUser();
-        final var projectKey = programmingExercise.getProjectKey();
-        // TODO: the following code is used quite often and should be done in only one place
-        final var exerciseRepoName = projectKey.toLowerCase() + "-" + RepositoryType.TEMPLATE.getName();
-        final var testRepoName = projectKey.toLowerCase() + "-" + RepositoryType.TESTS.getName();
-        final var solutionRepoName = projectKey.toLowerCase() + "-" + RepositoryType.SOLUTION.getName();
-        final var exerciseRepoUrl = "http://localhost:7990/scm/" + projectKey + "/" + exerciseRepoName + ".git";
-        final var testsRepoUrl = "http://localhost:7990/scm/" + projectKey + "/" + testRepoName + ".git";
-        final var solutionRepoUrl = "http://localhost:7990/scm/" + projectKey + "/" + solutionRepoName + ".git";
-        programmingExercise.generateAndSetProjectKey();
-        initParticipations(programmingExercise);
-        setURLsAndBuildPlanIDsForNewExerciseNoLocalSetup(programmingExercise, new URL(exerciseRepoUrl), new URL(testsRepoUrl), new URL(solutionRepoUrl));
+    public void setupInitialSubmissionsAndResults(ProgrammingExercise programmingExercise) {
+        Optional<TemplateProgrammingExerciseParticipation> templateProgrammingExerciseParticipation = this.templateProgrammingExerciseParticipationRepository
+                .findByProgrammingExerciseId(programmingExercise.getId());
+        Optional<SolutionProgrammingExerciseParticipation> solutionProgrammingExerciseParticipation = this.solutionProgrammingExerciseParticipationRepository
+                .findByProgrammingExerciseId(programmingExercise.getId());
+        String commitHashBase = "abcdef01";
+        ProgrammingSubmission programmingSubmissionBase = new ProgrammingSubmission();
+        programmingSubmissionBase.setParticipation(templateProgrammingExerciseParticipation.get());
+        programmingSubmissionBase.setSubmitted(true);
+        programmingSubmissionBase.setType(SubmissionType.OTHER);
+        programmingSubmissionBase.setCommitHash(commitHashBase);
+        programmingSubmissionBase.setSubmissionDate(templateProgrammingExerciseParticipation.get().getInitializationDate());
+        programmingSubmissionRepository.save(programmingSubmissionBase);
+        Result resultBase = new Result();
+        resultBase.setParticipation(templateProgrammingExerciseParticipation.get());
+        resultBase.setSubmission(programmingSubmissionBase);
+        resultBase.setRated(true);
+        resultBase.resultString("13 of 13 failed");
+        resultBase.setAssessmentType(AssessmentType.AUTOMATIC);
+        resultBase.score(0L);
+        resultBase.setCompletionDate(templateProgrammingExerciseParticipation.get().getInitializationDate());
+        resultRepository.save(resultBase);
 
-        // Save participations to get the ids required for the webhooks
-        connectBaseParticipationsToExerciseAndSave(programmingExercise);
-        // save to get the id required for the webhook
-        programmingExercise = programmingExerciseRepository.save(programmingExercise);
-
-        // The creation of the webhooks must occur after the initial push, because the participation is
-        // not yet saved in the database, so we cannot save the submission accordingly (see ProgrammingSubmissionService.notifyPush)
-
-        programmingExerciseScheduleService.scheduleExerciseIfRequired(programmingExercise);
-        groupNotificationService.notifyTutorGroupAboutExerciseCreated(programmingExercise);
-
-        return programmingExercise;
+        ProgrammingSubmission programmingSubmissionSolution = new ProgrammingSubmission();
+        String commitHashSolution = "abcdef23";
+        programmingSubmissionSolution.setParticipation(solutionProgrammingExerciseParticipation.get());
+        programmingSubmissionSolution.setSubmitted(true);
+        programmingSubmissionSolution.setType(SubmissionType.OTHER);
+        programmingSubmissionSolution.setCommitHash(commitHashSolution);
+        programmingSubmissionSolution.setSubmissionDate(solutionProgrammingExerciseParticipation.get().getInitializationDate());
+        programmingSubmissionRepository.save(programmingSubmissionSolution);
+        Result resultSolution = new Result();
+        resultSolution.setParticipation(solutionProgrammingExerciseParticipation.get());
+        resultSolution.setSubmission(programmingSubmissionSolution);
+        resultSolution.setRated(true);
+        resultSolution.resultString("13 of 13 passed");
+        resultSolution.score(100L);
+        resultSolution.setAssessmentType(AssessmentType.AUTOMATIC);
+        resultSolution.setCompletionDate(solutionProgrammingExerciseParticipation.get().getInitializationDate());
+        resultRepository.save(resultSolution);
     }
 
     private void setupBuildPlansForNewExercise(ProgrammingExercise programmingExercise, URL exerciseRepoUrl, URL testsRepoUrl, URL solutionRepoUrl) {
@@ -227,26 +243,23 @@ public class ProgrammingExerciseService {
         final var solutionParticipation = programmingExercise.getSolutionParticipation();
         final var templatePlanName = TEMPLATE.getName();
         final var solutionPlanName = SOLUTION.getName();
-
-        templateParticipation.setBuildPlanId(projectKey + "-" + templatePlanName); // Set build plan id to newly created BaseBuild plan
-        templateParticipation.setRepositoryUrl(versionControlService.get().getCloneRepositoryUrl(projectKey, exerciseRepoName).toString());
-        solutionParticipation.setBuildPlanId(projectKey + "-" + solutionPlanName);
-        solutionParticipation.setRepositoryUrl(versionControlService.get().getCloneRepositoryUrl(projectKey, solutionRepoName).toString());
-        programmingExercise.setTestRepositoryUrl(versionControlService.get().getCloneRepositoryUrl(projectKey, testRepoName).toString());
-    }
-
-    private void setURLsAndBuildPlanIDsForNewExerciseNoLocalSetup(ProgrammingExercise programmingExercise, URL exerciseRepoUrl, URL testsRepoUrl, URL solutionUrl) {
-        final var projectKey = programmingExercise.getProjectKey();
-        final var templateParticipation = programmingExercise.getTemplateParticipation();
-        final var solutionParticipation = programmingExercise.getSolutionParticipation();
-        final var templatePlanName = TEMPLATE.getName();
-        final var solutionPlanName = SOLUTION.getName();
-
-        templateParticipation.setBuildPlanId(projectKey + "-" + templatePlanName); // Set build plan id to newly created BaseBuild plan
-        templateParticipation.setRepositoryUrl(exerciseRepoUrl.toString());
-        solutionParticipation.setBuildPlanId(projectKey + "-" + solutionPlanName);
-        solutionParticipation.setRepositoryUrl(solutionUrl.toString());
-        programmingExercise.setTestRepositoryUrl(testsRepoUrl.toString());
+        if (environment.acceptsProfiles("dev")) {
+            final var exerciseRepoUrl = "http://localhost:7990/scm/" + projectKey + "/" + exerciseRepoName + ".git";
+            final var testsRepoUrl = "http://localhost:7990/scm/" + projectKey + "/" + testRepoName + ".git";
+            final var solutionRepoUrl = "http://localhost:7990/scm/" + projectKey + "/" + solutionRepoName + ".git";
+            templateParticipation.setBuildPlanId(projectKey + "-" + templatePlanName); // Set build plan id to newly created BaseBuild plan
+            templateParticipation.setRepositoryUrl(exerciseRepoUrl);
+            solutionParticipation.setBuildPlanId(projectKey + "-" + solutionPlanName);
+            solutionParticipation.setRepositoryUrl(solutionRepoUrl);
+            programmingExercise.setTestRepositoryUrl(testsRepoUrl);
+        }
+        else {
+            templateParticipation.setBuildPlanId(projectKey + "-" + templatePlanName); // Set build plan id to newly created BaseBuild plan
+            templateParticipation.setRepositoryUrl(versionControlService.get().getCloneRepositoryUrl(projectKey, exerciseRepoName).toString());
+            solutionParticipation.setBuildPlanId(projectKey + "-" + solutionPlanName);
+            solutionParticipation.setRepositoryUrl(versionControlService.get().getCloneRepositoryUrl(projectKey, solutionRepoName).toString());
+            programmingExercise.setTestRepositoryUrl(versionControlService.get().getCloneRepositoryUrl(projectKey, testRepoName).toString());
+        }
     }
 
     private void setupExerciseTemplate(ProgrammingExercise programmingExercise, User user, URL exerciseRepoUrl, URL testsRepoUrl, URL solutionRepoUrl)
@@ -832,4 +845,5 @@ public class ProgrammingExerciseService {
         log.debug("countSubmissionsByCourseIdSubmitted took " + (System.currentTimeMillis() - start) + "ms");
         return count;
     }
+
 }

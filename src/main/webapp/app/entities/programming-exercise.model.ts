@@ -17,7 +17,6 @@ export class ProgrammingExercise extends Exercise {
     public testRepositoryUrl: string;
     public publishBuildPlanUrl = false; // default value
     public allowOnlineEditor = false; // default value
-    public noLocalSetup = false; // default value
     public programmingLanguage = ProgrammingLanguage.JAVA; // default value
     public packageName: string;
     public problemStatement: string;
