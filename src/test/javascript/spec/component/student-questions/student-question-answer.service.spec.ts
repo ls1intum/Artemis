@@ -31,8 +31,8 @@ describe('Service Tests', () => {
         });
 
         describe('Service methods', () => {
-            it('should find an StudentQuestionAnswer', async () => {
-                const returnedFromService = Object.assign({}, elemDefault);
+            it('should find a StudentQuestionAnswer', async () => {
+                const returnedFromService = { ...elemDefault };
                 service
                     .find(123)
                     .pipe(take(1))
@@ -44,13 +44,8 @@ describe('Service Tests', () => {
             });
 
             it('should create a StudentQuestionAnswer', async () => {
-                const returnedFromService = Object.assign(
-                    {
-                        id: 0,
-                    },
-                    elemDefault,
-                );
-                const expected = Object.assign({}, returnedFromService);
+                const returnedFromService = { ...elemDefault, id: 0 };
+                const expected = { ...returnedFromService };
                 service
                     .create(new StudentQuestionAnswer())
                     .pipe(take(1))
@@ -61,14 +56,8 @@ describe('Service Tests', () => {
             });
 
             it('should update a StudentQuestionAnswer', async () => {
-                const returnedFromService = Object.assign(
-                    {
-                        answerText: 'This is another test answer'
-                    },
-                    elemDefault,
-                );
-
-                const expected = Object.assign({}, returnedFromService);
+                const returnedFromService = { ...elemDefault, answerText: 'This is another test answer' };
+                const expected = { ...returnedFromService };
                 service
                     .update(expected)
                     .pipe(take(1))

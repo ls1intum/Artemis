@@ -32,13 +32,8 @@ describe('Service Tests', () => {
 
         describe('Service methods', () => {
             it('should create a StudentQuestion', async () => {
-                const returnedFromService = Object.assign(
-                    {
-                        id: 0,
-                    },
-                    elemDefault,
-                );
-                const expected = Object.assign({}, returnedFromService);
+                const returnedFromService = { ...elemDefault, id: 0 };
+                const expected = { ...returnedFromService };
                 service
                     .create(new StudentQuestion())
                     .pipe(take(1))
@@ -49,14 +44,9 @@ describe('Service Tests', () => {
             });
 
             it('should update a StudentQuestion', async () => {
-                const returnedFromService = Object.assign(
-                    {
-                        questionText: 'This is another test question'
-                    },
-                    elemDefault,
-                );
+                const returnedFromService = { ...elemDefault, questionText: 'This is another test question' };
 
-                const expected = Object.assign({}, returnedFromService);
+                const expected = { ...returnedFromService };
                 service
                     .update(expected)
                     .pipe(take(1))
