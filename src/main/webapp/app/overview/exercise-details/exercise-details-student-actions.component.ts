@@ -107,6 +107,18 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
         }, 3000);
     }
 
+    createSubmission() {
+        this.courseExerciseService.createSubmission(this.user.id!, this.exercise.id).subscribe(
+            () => {
+                console.log('dgdsfd');
+            },
+            () => {
+                console.log('Error: ');
+                this.jhiAlertService.warning('artemisApp.exercise.startError');
+            },
+        );
+    }
+
     startExercise() {
         if (this.exercise.type === ExerciseType.QUIZ) {
             // Start the quiz

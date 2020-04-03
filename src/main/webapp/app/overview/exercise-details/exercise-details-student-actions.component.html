@@ -184,7 +184,7 @@
             [smallButton]="smallButtons"
             [hideLabelMobile]="false"
             *ngIf="participationStatusWrapper() === ParticipationStatus.UNINITIALIZED && isStartExerciseAvailable()"
-            (click)="startExercise()"
+            (click)="createSubmission()"
         ></button>
         <button
             jhi-exercise-action-button
@@ -229,6 +229,7 @@
             *ngIf="participationStatusWrapper() === ParticipationStatus.INACTIVE && isStartExerciseAvailable()"
             (click)="resumeProgrammingExercise()"
         ></button>
+
         <ng-template #popContent>
             <p>{{ 'artemisApp.exerciseActions.clonePersonalRepository' | translate }}</p>
             <pre
