@@ -2,6 +2,7 @@ package ${packageName};
 
 import java.text.*;
 import java.util.*;
+import java.security.SecureRandom;
 
 public class Client {
 
@@ -57,6 +58,8 @@ public class Client {
         return list;
     }
 
+    private static SecureRandom random = new SecureRandom();
+
     /**
      * Creates a random Date within given Range
      */
@@ -69,14 +72,14 @@ public class Client {
      * Creates a random Long within given Range
      */
     private static long randomLongWithin(long low, long high) {
-        return low + (long) (Math.random() * (high - low));
+        return low + random.nextLong() * (high - low);
     }
 
     /**
      * Creates a random Integer within given Range
      */
     private static int randomIntegerWithin(int low, int high) {
-        return low + (int) (Math.random() * (high - low));
+        return low + random.nextInt() * (high - low);
     }
 
     /**

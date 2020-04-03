@@ -5,7 +5,6 @@ pluginManagement {
         id 'com.gorylenko.gradle-git-properties' version "${git_properties_plugin_version}"
         id 'com.github.node-gradle.node' version "${gradle_node_plugin_version}"
         id 'org.liquibase.gradle' version "${liquibase_plugin_version}"
-        id 'org.sonarqube' version "${sonarqube_plugin_version}"
         id 'net.ltgt.apt-eclipse' version "${apt_plugin_version}"
         id 'net.ltgt.apt-idea' version "${apt_plugin_version}"
         id 'net.ltgt.apt' version "${apt_plugin_version}"

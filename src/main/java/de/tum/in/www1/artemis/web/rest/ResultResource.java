@@ -248,7 +248,7 @@ public class ResultResource {
             log.error("Exception encountered when trying to retrieve the plan key from a request a new programming exercise result: {}, {}", ex, requestBody);
             return badRequest();
         }
-        log.info("Artemis received a new result from Bamboo for build plan {}", planKey);
+        log.info("Artemis received a new result for build plan {}", planKey);
 
         // Try to retrieve the participation with the build plan key.
         Optional<ProgrammingExerciseParticipation> optionalParticipation = getParticipationWithResults(planKey);
@@ -427,8 +427,8 @@ public class ResultResource {
     }
 
     /**
-     * GET /results/:id/details : get the build result details from Bamboo for the "id" result. This method is only invoked if the result actually includes details (e.g. feedback
-     * or build errors)
+     * GET /results/:id/details : get the build result details from CI service for the "id" result.
+     * This method is only invoked if the result actually includes details (e.g. feedback or build errors)
      *
      * @param resultId the id of the result to retrieve. If the participation related to the result is not a StudentParticipation or ProgrammingExerciseParticipation, the endpoint will return forbidden!
      * @return the ResponseEntity with status 200 (OK) and with body the result, status 404 (Not Found) if the result does not exist or 403 (forbidden) if the user does not have permissions to access the participation.
