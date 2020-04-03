@@ -233,29 +233,20 @@ public class ProgrammingExerciseResource {
         programmingExercise.generateAndSetProjectKey();
         String projectKey = programmingExercise.getProjectKey();
         String projectName = programmingExercise.getProjectName();
-        if (environment.acceptsProfiles("dev")) {
+        boolean projectExists = versionControlService.get().checkIfProjectExists(projectKey, projectName);
+        if (projectExists) {
+            return ResponseEntity.badRequest()
+                    .headers(HeaderUtil.createAlert(applicationName,
+                            "Project already exists on the Version Control Server: " + projectName + ". Please choose a different title and short name!", "vcsProjectExists"))
+                    .body(null);
         }
-        else {
-            boolean projectExists = versionControlService.get().checkIfProjectExists(projectKey, projectName);
-            if (projectExists) {
-                return ResponseEntity.badRequest()
-                        .headers(HeaderUtil.createAlert(applicationName,
-                                "Project already exists on the Version Control Server: " + projectName + ". Please choose a different title and short name!", "vcsProjectExists"))
-                        .body(null);
-            }
 
-            String errorMessageCI = continuousIntegrationService.get().checkIfProjectExists(projectKey, projectName);
-            if (errorMessageCI != null) {
-                return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, errorMessageCI, "ciProjectExists")).body(null);
-            }
+        String errorMessageCI = continuousIntegrationService.get().checkIfProjectExists(projectKey, projectName);
+        if (errorMessageCI != null) {
+            return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, errorMessageCI, "ciProjectExists")).body(null);
         }
         try {
             ProgrammingExercise newProgrammingExercise = programmingExerciseService.setupProgrammingExercise(programmingExercise); // Setup all repositories etc
-            if (environment.acceptsProfiles("dev")) {
-                programmingExerciseService.setupInitialSubmissionsAndResults(programmingExercise);
-            }
-            else {
-            }
             return ResponseEntity.created(new URI("/api/programming-exercises" + newProgrammingExercise.getId()))
                     .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, newProgrammingExercise.getTitle())).body(newProgrammingExercise);
         }
