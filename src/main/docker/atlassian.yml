@@ -1,0 +1,27 @@
+version: '2'
+services:
+    artemis-jira:
+        image: atlassian/jira-core:8.8
+        volumes:
+          - artemis-jira:/var/atlassian/application-data/jira
+        ports:
+            - "8081:8080"
+    artemis-bitbucket:
+        image: atlassian/bitbucket-server:7.1.0
+        volumes:
+            - artemis-bitbucket:/var/atlassian/application-data/bitbucket
+        ports:
+            - "7990:7990"
+            - "7999:7999"
+    artemis-bamboo:
+        build: bamboo
+        volumes:
+            - artemis-bamboo:/var/atlassian/application-data/bamboo
+        ports:
+            - "54663:54663"
+            - "8085:8085"
+
+volumes:
+    artemis-jira:
+    artemis-bitbucket:
+    artemis-bamboo:
