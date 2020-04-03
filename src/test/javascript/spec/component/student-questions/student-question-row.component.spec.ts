@@ -2,11 +2,11 @@ import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateModule } from '@ngx-translate/core';
-import { StudentQuestionRowComponent } from "app/overview/student-questions/student-question-row.component";
-import { StudentQuestionAnswer } from "app/entities/student-question-answer.model";
-import { StudentQuestion } from "app/entities/student-question.model";
-import { ArtemisTestModule } from "../../test.module";
-import { ArtemisSharedModule } from "app/shared/shared.module";
+import { StudentQuestionRowComponent } from 'app/overview/student-questions/student-question-row.component';
+import { StudentQuestionAnswer } from 'app/entities/student-question-answer.model';
+import { StudentQuestion } from 'app/entities/student-question.model';
+import { ArtemisTestModule } from '../../test.module';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -19,20 +19,20 @@ describe('StudentQuestionRowComponent', () => {
         id: 1,
         answerDate: null,
         answerText: 'not approved',
-        tutorApproved: false
+        tutorApproved: false,
     } as StudentQuestionAnswer;
 
     const approvedStudentQuestionAnswer = {
         id: 2,
         answerDate: null,
         answerText: 'approved',
-        tutorApproved: true
+        tutorApproved: true,
     } as StudentQuestionAnswer;
 
     const studentQuestion = {
         id: 1,
         creationDate: null,
-        answers: [unApprovedStudentQuestionAnswer, approvedStudentQuestionAnswer]
+        answers: [unApprovedStudentQuestionAnswer, approvedStudentQuestionAnswer],
     } as StudentQuestion;
 
     beforeEach(async () => {
