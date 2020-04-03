@@ -184,7 +184,7 @@
             [smallButton]="smallButtons"
             [hideLabelMobile]="false"
             *ngIf="participationStatusWrapper() === ParticipationStatus.UNINITIALIZED && isStartExerciseAvailable()"
-            (click)="createSubmission()"
+            (click)="simulateResult()"
         ></button>
         <button
             jhi-exercise-action-button

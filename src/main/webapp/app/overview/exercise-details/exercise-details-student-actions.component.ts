@@ -107,8 +107,20 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
         }, 3000);
     }
 
-    createSubmission() {
-        this.courseExerciseService.createSubmission(this.user.id!, this.exercise.id).subscribe(
+    simulateSubmission() {
+        this.courseExerciseService.simulateSubmission(this.user.id!, this.exercise.id).subscribe(
+            () => {
+                console.log('dgdsfd');
+            },
+            () => {
+                console.log('Error: ');
+                this.jhiAlertService.warning('artemisApp.exercise.startError');
+            },
+        );
+    }
+
+    simulateResult() {
+        this.courseExerciseService.simulateResult(this.exercise.id).subscribe(
             () => {
                 console.log('dgdsfd');
             },

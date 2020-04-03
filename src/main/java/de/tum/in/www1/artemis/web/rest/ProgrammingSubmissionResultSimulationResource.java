@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
+
 import java.time.ZonedDateTime;
 import java.util.Optional;
 import java.util.Random;
@@ -63,7 +65,7 @@ public class ProgrammingSubmissionResultSimulationResource {
     public ResponseEntity<?> notifyPush(@PathVariable Long userID, @PathVariable Long exerciseID) {
         log.debug("REST request to inform about new commit+push for participation");
 
-        ProgrammingSubmission programmingSubmission = preparation(exerciseID);
+        ProgrammingSubmission programmingSubmission = createSubmission(exerciseID);
 
         programmingSubmissionService.notifyUserAboutSubmission(programmingSubmission);
 
@@ -71,7 +73,58 @@ public class ProgrammingSubmissionResultSimulationResource {
         return ResponseEntity.status(HttpStatus.OK).build();
     }
 
-    private ProgrammingSubmission preparation(Long exerciseID) {
+    /**
+     * This method is used by the CI system to inform Artemis about a new programming exercise build result.
+     * It will make sure to:
+     * - Create a result from the build result including its feedbacks
+     * - Assign the result to an existing submission OR create a new submission if needed
+     * - Update the result's score based on the exercise's test cases (weights, etc.)
+     * - Update the exercise's test cases if the build is from a solution participation
+     *
+     *
+     * @return a ResponseEntity to the CI system
+     */
+    @PostMapping(value = "courses/result/no-local-setup/{exerciseID}")
+    public ResponseEntity<?> notifyNewProgrammingExerciseResult(@PathVariable Long exerciseID) {
+        log.debug("Received result notify (NEW)");
+        // The 'user' is not properly logged into Artemis, this leads to an issue when accessing custom repository methods.
+        // Therefore a mock auth object has to be created.
+        // SecurityUtils.setAuthorizationObject();
+
+        // Retrieving the plan key can fail if e.g. the requestBody is malformated. In this case nothing else can be done.
+        String planKey;
+        /*
+         * try { planKey = continuousIntegrationService.get().getPlanKey(requestBody); } // TODO: How can we catch a more specific exception here? Because of the adapter pattern
+         * this is always just Exception... catch (Exception ex) {
+         * log.error("Exception encountered when trying to retrieve the plan key from a request a new programming exercise result: {}, {}", ex, requestBody); return badRequest(); }
+         * log.info("Artemis received a new result from Bamboo for build plan {}", planKey); // Try to retrieve the participation with the build plan key.
+         * Optional<ProgrammingExerciseParticipation> optionalParticipation = getParticipationWithResults(planKey); if (optionalParticipation.isEmpty()) {
+         * log.warn("Participation is missing for notifyResultNew (PlanKey: {}).", planKey); return notFound(); } ProgrammingExerciseParticipation participation =
+         * optionalParticipation.get(); Optional<Result> result; // Process the new result from the build result. result =
+         * resultService.processNewProgrammingExerciseResult((Participation) participation, requestBody); // Only notify the user about the new result if the result was created
+         * successfully. if (result.isPresent()) { log.debug("Send result to client over websocket. Result: {}, Submission: {}, Participation: {}", result.get(),
+         * result.get().getSubmission(), result.get().getParticipation()); // notify user via websocket messagingService.broadcastNewResult((Participation) participation,
+         * result.get()); // TODO: can we avoid to invoke this code for non LTI students? (to improve performance) // if (participation.isLti()) { // } // handles new results and
+         * sends them to LTI consumers if (participation instanceof ProgrammingExerciseStudentParticipation) { ltiService.onNewResult((ProgrammingExerciseStudentParticipation)
+         * participation); } log.info("The new result for {} was saved successfully", planKey); }
+         */
+        return ResponseEntity.ok().build();
+    }
+
+    private ProgrammingExerciseStudentParticipation createParticipation(ProgrammingExercise programmingExercise, Participant participant, User user) {
+        ProgrammingExerciseStudentParticipation programmingExerciseStudentParticipation = new ProgrammingExerciseStudentParticipation();
+        programmingExerciseStudentParticipation.setBuildPlanId(programmingExercise.getProjectKey() + "-" + user.getLogin());
+        programmingExerciseStudentParticipation.setParticipant(participant);
+        programmingExerciseStudentParticipation.setInitializationState(InitializationState.INITIALIZED);
+        programmingExerciseStudentParticipation.setRepositoryUrl("http://" + user.getLogin() + "@localhost7990/scm/" + programmingExercise.getProjectKey() + "/"
+                + programmingExercise.getProjectKey().toLowerCase() + "-" + user.getLogin() + ".git");
+        programmingExerciseStudentParticipation.setInitializationDate(ZonedDateTime.now());
+        programmingExerciseStudentParticipation.setProgrammingExercise(programmingExercise);
+        participationRepository.save(programmingExerciseStudentParticipation);
+        return programmingExerciseStudentParticipation;
+    }
+
+    private ProgrammingSubmission createSubmission(Long exerciseID) {
         User user = userService.getUserWithGroupsAndAuthorities();
         Participant participant = user;
         ProgrammingExerciseStudentParticipation programmingExerciseStudentParticipation;
@@ -97,17 +150,7 @@ public class ProgrammingSubmissionResultSimulationResource {
         return programmingSubmission;
     }
 
-    private ProgrammingExerciseStudentParticipation createParticipation(ProgrammingExercise programmingExercise, Participant participant, User user) {
-        ProgrammingExerciseStudentParticipation programmingExerciseStudentParticipation = new ProgrammingExerciseStudentParticipation();
-        programmingExerciseStudentParticipation.setBuildPlanId(programmingExercise.getProjectKey() + "-" + user.getLogin());
-        programmingExerciseStudentParticipation.setParticipant(participant);
-        programmingExerciseStudentParticipation.setInitializationState(InitializationState.INITIALIZED);
-        programmingExerciseStudentParticipation.setRepositoryUrl("http://" + user.getLogin() + "@localhost7990/scm/" + programmingExercise.getProjectKey() + "/"
-                + programmingExercise.getProjectKey().toLowerCase() + "-" + user.getLogin() + ".git");
-        programmingExerciseStudentParticipation.setInitializationDate(ZonedDateTime.now());
-        programmingExerciseStudentParticipation.setProgrammingExercise(programmingExercise);
-        participationRepository.save(programmingExerciseStudentParticipation);
-        return programmingExerciseStudentParticipation;
-    }
-
+    /*
+     * private Result createResult(){ }
+     */
 }
