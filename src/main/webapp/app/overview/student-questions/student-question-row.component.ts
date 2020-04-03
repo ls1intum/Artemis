@@ -146,7 +146,7 @@ export class StudentQuestionRowComponent implements OnInit, OnDestroy {
 
     /**
      * Takes a studentAnswer and deletes it
-     * @param   {studentQuestionAnswer} studentAnser
+     * @param   {studentQuestionAnswer} studentAnswer
      */
     deleteAnswer(studentAnswer: StudentQuestionAnswer): void {
         this.studentQuestionAnswerService.delete(studentAnswer.id).subscribe((res: HttpResponse<any>) => {
@@ -157,7 +157,7 @@ export class StudentQuestionRowComponent implements OnInit, OnDestroy {
 
     /**
      * Takes a studentAnswer and toggles the tutorApproved field
-     * @param   {studentQuestionAnswer} studentAnser
+     * @param   {studentQuestionAnswer} studentAnswer
      */
     toggleAnswerTutorApproved(studentAnswer: StudentQuestionAnswer): void {
         studentAnswer.tutorApproved = !studentAnswer.tutorApproved;
