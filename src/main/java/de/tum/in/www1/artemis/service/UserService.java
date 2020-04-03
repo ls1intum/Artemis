@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.service;
 
 import static de.tum.in.www1.artemis.config.Constants.TUM_USERNAME_PATTERN;
 
-import java.security.Principal;
 import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -661,13 +660,13 @@ public class UserService {
     }
 
     /**
-     * Get user with user groups and authorities by principal object
-     * @param principal abstract presentation for user
+     * Get user with user groups and authorities with the username (i.e. user.getLogin() or principal.getName())
+     * @param username the username of the user who should be retrieved from the database
      * @return the user that belongs to the given principal with eagerly loaded groups and authorities
      */
-    public User getUserWithGroupsAndAuthorities(@NotNull Principal principal) {
-        Optional<User> user = userRepository.findOneWithGroupsAndAuthoritiesByLogin(principal.getName());
-        return unwrapOptionalUser(user, principal.getName());
+    public User getUserWithGroupsAndAuthorities(@NotNull String username) {
+        Optional<User> user = userRepository.findOneWithGroupsAndAuthoritiesByLogin(username);
+        return unwrapOptionalUser(user, username);
     }
 
     /**
