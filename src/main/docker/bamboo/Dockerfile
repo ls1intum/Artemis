@@ -1,5 +1,7 @@
 FROM atlassian/bamboo-server:6.10.3
 
+LABEL description="Bamboo pre-configured for Artemis"
+
 USER root
 ENV DEBIAN_FRONTEND noninteractive
 

@@ -1,6 +1,6 @@
 version: '2'
 services:
-    artemis-gitlab:
+    gitlab:
         image: gitlab/gitlab-ce:latest
         volumes:
             - artemis-gitlab-data:/var/opt/gitlab
@@ -9,15 +9,25 @@ services:
             - ./gitlab/gitlab-setup.sh:/gitlab-setup.sh
         ports:
             - "2222:22"
-            - "8081:80"
+            - "8082:80"
         mem_limit: 3000m
-    artemis-jenkins:
+        hostname: gitlab
+        networks:
+          - artemis
+    jenkins:
         build: jenkins
         volumes:
             - artemis-jenkins-data:/var/jenkins_home
             - /var/run/docker.sock:/var/run/docker.sock
         ports:
-            - "8082:8080"
+            - "8083:8080"
+        hostname: jenkins
+        networks:
+            - artemis
+
+networks:
+    artemis:
+        driver: "bridge"
 
 volumes:
     artemis-gitlab-data:
