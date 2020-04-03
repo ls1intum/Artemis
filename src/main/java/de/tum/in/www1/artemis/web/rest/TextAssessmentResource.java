@@ -104,8 +104,11 @@ public class TextAssessmentResource extends AssessmentResource {
             return forbidden("assessment", "assessmentSaveNotAllowed", "The user is not allowed to override the assessment");
         }
 
-        textAssessment.getTextBlocks().forEach(tb -> tb.setSubmission(optionalTextSubmission.get()));
-        textBlockRepository.saveAll(textAssessment.getTextBlocks());
+        if (textAssessment.getTextBlocks() != null) {
+            textAssessment.getTextBlocks().forEach(tb -> tb.setSubmission(optionalTextSubmission.get()));
+            textBlockRepository.saveAll(textAssessment.getTextBlocks());
+        }
+
         Result result = textAssessmentService.saveAssessment(resultId, textAssessment.getFeedbacks(), textExercise);
 
         if (result.getParticipation() != null && result.getParticipation() instanceof StudentParticipation
@@ -141,8 +144,10 @@ public class TextAssessmentResource extends AssessmentResource {
             return forbidden("assessment", "assessmentSaveNotAllowed", "The user is not allowed to override the assessment");
         }
 
-        textAssessment.getTextBlocks().forEach(tb -> tb.setSubmission(optionalTextSubmission.get()));
-        textBlockRepository.saveAll(textAssessment.getTextBlocks());
+        if (textAssessment.getTextBlocks() != null) {
+            textAssessment.getTextBlocks().forEach(tb -> tb.setSubmission(optionalTextSubmission.get()));
+            textBlockRepository.saveAll(textAssessment.getTextBlocks());
+        }
         Result result = textAssessmentService.submitAssessment(resultId, textExercise, textAssessment.getFeedbacks());
         StudentParticipation studentParticipation = (StudentParticipation) result.getParticipation();
         if (studentParticipation.getExercise().getAssessmentDueDate() == null || studentParticipation.getExercise().getAssessmentDueDate().isBefore(ZonedDateTime.now())) {
@@ -306,6 +311,7 @@ public class TextAssessmentResource extends AssessmentResource {
         textSubmission.setBlocks(textBlocks);
 
         if (textSubmission.getBlocks() == null || textSubmission.getBlocks().isEmpty()) {
+            result.setSubmission(textSubmission);
             computeBlocks(result, exercise);
         }
 

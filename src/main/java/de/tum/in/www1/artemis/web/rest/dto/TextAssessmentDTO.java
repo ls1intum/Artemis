@@ -11,6 +11,13 @@ public class TextAssessmentDTO {
 
     private List<Feedback> feedbacks;
 
+    public TextAssessmentDTO() {
+    }
+
+    public TextAssessmentDTO(List<Feedback> feedbacks) {
+        this.feedbacks = feedbacks;
+    }
+
     public List<TextBlock> getTextBlocks() {
         return textBlocks;
     }
