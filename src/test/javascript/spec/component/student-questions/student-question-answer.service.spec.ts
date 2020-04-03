@@ -15,6 +15,7 @@ describe('Service Tests', () => {
         let httpMock: HttpTestingController;
         let elemDefault: StudentQuestionAnswer;
         let expectedResult: any;
+
         beforeEach(() => {
             TestBed.configureTestingModule({
                 imports: [HttpClientTestingModule],
@@ -55,8 +56,20 @@ describe('Service Tests', () => {
                 expect(expectedResult.body).to.deep.equal(expected);
             });
 
-            it('should update a StudentQuestionAnswer', async () => {
+            it('should update a StudentQuestionAnswer text field', async () => {
                 const returnedFromService = { ...elemDefault, answerText: 'This is another test answer' };
+                const expected = { ...returnedFromService };
+                service
+                    .update(expected)
+                    .pipe(take(1))
+                    .subscribe((resp) => (expectedResult = resp));
+                const req = httpMock.expectOne({ method: 'PUT' });
+                req.flush(returnedFromService);
+                expect(expectedResult.body).to.deep.equal(expected);
+            });
+
+            it('should update a StudentQuestionAnswer tutorApproved field', async () => {
+                const returnedFromService = { ...elemDefault, tutorApproved: true };
                 const expected = { ...returnedFromService };
                 service
                     .update(expected)
