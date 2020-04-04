@@ -39,8 +39,8 @@ group = "de.tum.in.www1.artemis"
 version = "3.11.2"
 description = "Interactive Learning with Individual Feedback"
 
-sourceCompatibility=12
-targetCompatibility=12
+sourceCompatibility=14
+targetCompatibility=14
 
 apply plugin: "com.github.ben-manes.versions"
 
@@ -244,15 +244,13 @@ dependencies {
     }
     testImplementation ("org.springframework.boot:spring-boot-starter-test:${spring_boot_version}") {
         exclude module: "junit"
+        exclude group: "org.junit.vintage", module: "junit-vintage-engine"
         exclude group: "com.vaadin.external.google", module: "android-json"
     }
     testImplementation "org.springframework.security:spring-security-test:${spring_security_version}"
     testImplementation "org.springframework.boot:spring-boot-test:${spring_boot_version}"
     testImplementation "org.assertj:assertj-core:3.15.0"
-    testImplementation "org.junit.jupiter:junit-jupiter-api:${junit_version}"
-    testImplementation "org.junit.jupiter:junit-jupiter-params:${junit_version}"
-    testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:${junit_version}"
-    testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:${junit_version}"
+    testImplementation "org.junit.jupiter:junit-jupiter:${junit_version}"
     testImplementation 'com.tngtech.archunit:archunit-junit5-api:0.13.1'
     testRuntimeOnly 'com.tngtech.archunit:archunit-junit5-engine:0.13.1'
     testImplementation "org.mockito:mockito-core:3.3.3"
@@ -350,7 +348,7 @@ task buildJarForDocker (type: Exec) {
 // Available commands:
 //
 // 1) Build production:                             ./gradlew -Pprod -Pwar clean bootWar
-// 2) Execute tests with code coverage report:      ./gradlew executeTests jacocoTestReport -x yarn_install -x webpack -x generateGitProperties
+// 2) Execute tests with code coverage report:      ./gradlew executeTests jacocoTestReport -x yarn_install -x webpack
 // 3) Check Java code format:                       ./gradlew spotlessCheck -x yarn_install -x webpack
 // 4) Apply Java code formatter:                    ./gradlew spotlessApply -x yarn_install -x webpack
 // 5) Find dependency updates:                      ./gradlew dependencyUpdates
