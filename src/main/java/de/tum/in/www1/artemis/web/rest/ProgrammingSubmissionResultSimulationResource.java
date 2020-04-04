@@ -1,7 +1,5 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
-
 import java.time.ZonedDateTime;
 import java.util.Optional;
 import java.util.Random;
@@ -10,22 +8,25 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
-import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
-import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.participation.*;
 import de.tum.in.www1.artemis.repository.ParticipationRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
+import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.service.ProgrammingSubmissionService;
 import de.tum.in.www1.artemis.service.UserService;
+import de.tum.in.www1.artemis.service.WebsocketMessagingService;
 
 @RestController
 @RequestMapping("/api")
+@Transactional
 public class ProgrammingSubmissionResultSimulationResource {
 
     private final Logger log = LoggerFactory.getLogger(ProgrammingSubmissionResource.class);
@@ -42,15 +43,21 @@ public class ProgrammingSubmissionResultSimulationResource {
 
     private final ProgrammingSubmissionRepository programmingSubmissionRepository;
 
+    private final ResultRepository resultRepository;
+
+    private final WebsocketMessagingService messagingService;
+
     public ProgrammingSubmissionResultSimulationResource(ProgrammingSubmissionService programmingSubmissionService, UserService userService,
             ProgrammingExerciseResource programmingExerciseResource, ParticipationRepository participationRepository, ParticipationService participationService,
-            ProgrammingSubmissionRepository programmingSubmissionRepository) {
+            ProgrammingSubmissionRepository programmingSubmissionRepository, ResultRepository resultRepository, WebsocketMessagingService messagingService) {
         this.programmingSubmissionService = programmingSubmissionService;
         this.userService = userService;
         this.programmingExerciseResource = programmingExerciseResource;
         this.participationRepository = participationRepository;
         this.participationService = participationService;
         this.programmingSubmissionRepository = programmingSubmissionRepository;
+        this.resultRepository = resultRepository;
+        this.messagingService = messagingService;
     }
 
     /**
@@ -87,27 +94,22 @@ public class ProgrammingSubmissionResultSimulationResource {
     @PostMapping(value = "courses/result/no-local-setup/{exerciseID}")
     public ResponseEntity<?> notifyNewProgrammingExerciseResult(@PathVariable Long exerciseID) {
         log.debug("Received result notify (NEW)");
-        // The 'user' is not properly logged into Artemis, this leads to an issue when accessing custom repository methods.
-        // Therefore a mock auth object has to be created.
-        // SecurityUtils.setAuthorizationObject();
 
-        // Retrieving the plan key can fail if e.g. the requestBody is malformated. In this case nothing else can be done.
-        String planKey;
+        User user = userService.getUserWithGroupsAndAuthorities();
+        Participant participant = user;
+        ResponseEntity<ProgrammingExercise> programmingExercise = programmingExerciseResource.getProgrammingExercise(exerciseID);
+        Optional<StudentParticipation> optionalStudentParticipation = participationService.findOneByExerciseAndParticipantAnyState(programmingExercise.getBody(), participant);
+        ProgrammingExerciseStudentParticipation programmingExerciseStudentParticipation = (ProgrammingExerciseStudentParticipation) optionalStudentParticipation.get();
+        Result result = createResult(programmingExerciseStudentParticipation);
+
+        log.debug("Send result to client over websocket. Result: {}, Submission: {}, Participation: {}", result, result.getSubmission(), result.getParticipation());
+        messagingService.broadcastNewResult((Participation) optionalStudentParticipation.get(), result); // TODO: can we avoid to invoke this code for non LTI students? (to improve
+                                                                                                         // performance) // if (participation.isLti()) { // }
+        // handles new results and sends them to LTI consumers
         /*
-         * try { planKey = continuousIntegrationService.get().getPlanKey(requestBody); } // TODO: How can we catch a more specific exception here? Because of the adapter pattern
-         * this is always just Exception... catch (Exception ex) {
-         * log.error("Exception encountered when trying to retrieve the plan key from a request a new programming exercise result: {}, {}", ex, requestBody); return badRequest(); }
-         * log.info("Artemis received a new result from Bamboo for build plan {}", planKey); // Try to retrieve the participation with the build plan key.
-         * Optional<ProgrammingExerciseParticipation> optionalParticipation = getParticipationWithResults(planKey); if (optionalParticipation.isEmpty()) {
-         * log.warn("Participation is missing for notifyResultNew (PlanKey: {}).", planKey); return notFound(); } ProgrammingExerciseParticipation participation =
-         * optionalParticipation.get(); Optional<Result> result; // Process the new result from the build result. result =
-         * resultService.processNewProgrammingExerciseResult((Participation) participation, requestBody); // Only notify the user about the new result if the result was created
-         * successfully. if (result.isPresent()) { log.debug("Send result to client over websocket. Result: {}, Submission: {}, Participation: {}", result.get(),
-         * result.get().getSubmission(), result.get().getParticipation()); // notify user via websocket messagingService.broadcastNewResult((Participation) participation,
-         * result.get()); // TODO: can we avoid to invoke this code for non LTI students? (to improve performance) // if (participation.isLti()) { // } // handles new results and
-         * sends them to LTI consumers if (participation instanceof ProgrammingExerciseStudentParticipation) { ltiService.onNewResult((ProgrammingExerciseStudentParticipation)
-         * participation); } log.info("The new result for {} was saved successfully", planKey); }
+         * if (participation instanceof ProgrammingExerciseStudentParticipation) { ltiService.onNewResult((ProgrammingExerciseStudentParticipation) participation); }
          */
+        log.info("The new result for {} was saved successfully", ((ProgrammingExerciseStudentParticipation) optionalStudentParticipation.get()).getBuildPlanId());
         return ResponseEntity.ok().build();
     }
 
@@ -124,7 +126,7 @@ public class ProgrammingSubmissionResultSimulationResource {
         return programmingExerciseStudentParticipation;
     }
 
-    private ProgrammingSubmission createSubmission(Long exerciseID) {
+    ProgrammingSubmission createSubmission(Long exerciseID) {
         User user = userService.getUserWithGroupsAndAuthorities();
         Participant participant = user;
         ProgrammingExerciseStudentParticipation programmingExerciseStudentParticipation;
@@ -135,6 +137,7 @@ public class ProgrammingSubmissionResultSimulationResource {
         }
         else {
             programmingExerciseStudentParticipation = (ProgrammingExerciseStudentParticipation) optionalStudentParticipation.get();
+            ;
         }
 
         ProgrammingSubmission programmingSubmission = new ProgrammingSubmission();
@@ -143,14 +146,25 @@ public class ProgrammingSubmissionResultSimulationResource {
         programmingSubmission.setSubmitted(true);
         programmingSubmission.setSubmissionDate(ZonedDateTime.now());
         programmingSubmission.setType(SubmissionType.MANUAL);
-        programmingSubmission.setParticipation(programmingExerciseStudentParticipation);
         programmingExerciseStudentParticipation.addSubmissions(programmingSubmission);
 
         programmingSubmissionRepository.save(programmingSubmission);
         return programmingSubmission;
     }
 
-    /*
-     * private Result createResult(){ }
-     */
+    private Result createResult(ProgrammingExerciseStudentParticipation programmingExerciseStudentParticipation) {
+        Optional<ProgrammingSubmission> programmingSubmission = programmingSubmissionRepository
+                .findFirstByParticipationIdOrderBySubmissionDateDesc(programmingExerciseStudentParticipation.getId());
+        Result result = new Result();
+        result.setSubmission(programmingSubmission.get());
+        result.setParticipation(programmingExerciseStudentParticipation);
+        result.setRated(true);
+        result.resultString("7 of 13 passed");
+        result.score(54L);
+        result.setAssessmentType(AssessmentType.AUTOMATIC);
+        result.setCompletionDate(ZonedDateTime.now());
+        resultRepository.save(result);
+        return result;
+    }
+
 }
