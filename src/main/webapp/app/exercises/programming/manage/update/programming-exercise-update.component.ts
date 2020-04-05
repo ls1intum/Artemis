@@ -16,6 +16,8 @@ import { AssessmentType } from 'app/entities/assessment-type.model';
 import { ExerciseCategory } from 'app/entities/exercise.model';
 import { EditorMode } from 'app/shared/markdown-editor/markdown-editor.component';
 import { KatexCommand } from 'app/shared/markdown-editor/commands/katex.command';
+import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 
 @Component({
     selector: 'jhi-programming-exercise-update',
@@ -51,6 +53,8 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     titleNamePattern = '^[a-zA-Z0-9-_ ]+'; // must only contain alphanumeric characters, or whitespaces, or '_' or '-'
     exerciseCategories: ExerciseCategory[];
     existingCategories: ExerciseCategory[];
+    profileInfo: ProfileInfo;
+    inProduction: Boolean;
 
     constructor(
         private programmingExerciseService: ProgrammingExerciseService,
@@ -60,6 +64,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         private fileService: FileService,
         private activatedRoute: ActivatedRoute,
         private translateService: TranslateService,
+        private profileService: ProfileService,
     ) {}
 
     /**
@@ -139,6 +144,16 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         if (this.programmingExercise.id !== undefined) {
             this.problemStatementLoaded = true;
         }
+        // In order to check if the application is currently running on production
+        this.profileService.getProfileInfo().subscribe(
+            (profileInfo) => {
+                if (profileInfo) {
+                    this.profileInfo = profileInfo;
+                    this.inProduction = profileInfo.inProduction;
+                }
+            },
+            (reason) => {},
+        );
     }
 
     previousState() {

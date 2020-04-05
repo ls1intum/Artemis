@@ -186,12 +186,6 @@
             *ngIf="participationStatusWrapper() === ParticipationStatus.UNINITIALIZED && isStartExerciseAvailable()"
             (click)="startExercise()"
         ></button>
-        <button placement="right" (click)="simulateSubmission()">
-            Submission
-        </button>
-        <button placement="right" (click)="simulateResult()">
-            Result
-        </button>
         <button
             jhi-exercise-action-button
             buttonIcon="folder-open"
@@ -235,7 +229,12 @@
             *ngIf="participationStatusWrapper() === ParticipationStatus.INACTIVE && isStartExerciseAvailable()"
             (click)="resumeProgrammingExercise()"
         ></button>
-
+        <button class="button" id="submission" *ngIf="!inProduction" (click)="simulateSubmission()">
+            Submission
+        </button>
+        <button class="button" id="result" *ngIf="!inProduction" (click)="simulateResult()">
+            Result
+        </button>
         <ng-template #popContent>
             <p>{{ 'artemisApp.exerciseActions.clonePersonalRepository' | translate }}</p>
             <pre
