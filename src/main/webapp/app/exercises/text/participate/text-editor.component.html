@@ -43,16 +43,24 @@
     </div>
 
     <div class="row">
-        <div class="col-12 col-lg-10 col-xl-8" *ngIf="!result; else hasFeedback">
-            <textarea
-                #textEditor
-                [(ngModel)]="answer"
-                style="width: 100%; height: 50vh;"
-                [readonly]="!isActive || !submission"
-                [disabled]="!isActive || !submission"
-                (keydown.tab)="onTextEditorTab(textEditor, $event)"
-            ></textarea>
-        </div>
+        <ng-container *ngIf="!result; else hasFeedback">
+            <div class="col-12 order-1 col-lg-3 order-lg-2 col-xl-4" *ngIf="textExercise?.teamMode && isActive && submission">
+                <div class="d-flex flex-column align-items-flex-end">
+                    <jhi-connection-status></jhi-connection-status>
+                </div>
+            </div>
+
+            <div class="col-12 order-2 col-lg-9 order-lg-1 col-xl-8">
+                <textarea
+                    #textEditor
+                    [(ngModel)]="answer"
+                    style="width: 100%; height: 50vh;"
+                    [readonly]="!isActive || !submission"
+                    [disabled]="!isActive || !submission"
+                    (keydown.tab)="onTextEditorTab(textEditor, $event)"
+                ></textarea>
+            </div>
+        </ng-container>
 
         <ng-template #hasFeedback>
             <div class="col-md-12 col-lg-10 col-xl-8">
