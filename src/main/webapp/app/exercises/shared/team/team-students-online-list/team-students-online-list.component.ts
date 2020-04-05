@@ -6,11 +6,6 @@ import { orderBy } from 'lodash';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 
-class UserOnlineStatus {
-    userId: number;
-    online: boolean;
-}
-
 @Component({
     selector: 'jhi-team-students-online-list',
     templateUrl: './team-students-online-list.component.html',
@@ -20,28 +15,24 @@ export class TeamStudentsOnlineListComponent implements OnInit, OnDestroy {
     @Input() participation: StudentParticipation;
 
     currentUser: User;
-    onlineUserIds = new Set<number>();
-    websocketChannel: string;
+    onlineUserLogins = new Set<string>();
+    websocketTopic: string;
 
     constructor(private accountService: AccountService, private jhiWebsocketService: JhiWebsocketService) {}
 
     ngOnInit(): void {
         this.accountService.identity().then((user: User) => {
             this.currentUser = user;
-            this.onlineUserIds.add(user.id!);
-
-            this.websocketChannel = `/topic/participation/${this.participation.id}/team`;
-            this.jhiWebsocketService.subscribe(this.websocketChannel);
-            this.jhiWebsocketService.receive(this.websocketChannel).subscribe(({ userId, online }: UserOnlineStatus) => {
-                return online ? this.onlineUserIds.add(userId) : this.onlineUserIds.delete(userId);
+            this.websocketTopic = `/topic/participations/${this.participation.id}/team`;
+            this.jhiWebsocketService.subscribe(this.websocketTopic);
+            this.jhiWebsocketService.receive(this.websocketTopic).subscribe((logins: string[]) => {
+                this.onlineUserLogins = new Set<string>(logins);
             });
-            setTimeout(() => this.jhiWebsocketService.send(this.websocketChannel, this.userOnlineStatus(true)));
         });
     }
 
     ngOnDestroy(): void {
-        this.jhiWebsocketService.send(this.websocketChannel, this.userOnlineStatus(false));
-        this.jhiWebsocketService.unsubscribe(this.websocketChannel);
+        this.jhiWebsocketService.unsubscribe(this.websocketTopic);
     }
 
     get team(): Team {
@@ -69,13 +60,6 @@ export class TeamStudentsOnlineListComponent implements OnInit, OnDestroy {
     };
 
     isOnline = (user: User): boolean => {
-        return this.onlineUserIds.has(user.id!);
+        return this.onlineUserLogins.has(user.login!);
     };
-
-    userOnlineStatus(online: boolean): UserOnlineStatus {
-        return {
-            userId: this.currentUser.id!,
-            online,
-        };
-    }
 }
