@@ -22,11 +22,13 @@
     white-space: nowrap;
 }
 
-.online-status-icon {
+.student-status {
     display: inline-flex;
-    color: green;
+    color: gray;
+    transition: 0.2s color ease-out;
 
-    &.disconnected {
-        color: red;
+    &.online {
+        color: green;
+        transition: 0.15s color ease-in;
     }
 }
