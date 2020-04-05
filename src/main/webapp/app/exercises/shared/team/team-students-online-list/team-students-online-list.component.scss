@@ -6,6 +6,10 @@
     }
 }
 
+:host {
+    display: block;
+}
+
 .student-list {
     list-style: none;
     padding: 0;

@@ -28,15 +28,16 @@
 <jhi-alert></jhi-alert>
 
 <div class="p-4">
-    <div class="row" *ngIf="textExercise">
-        <div class="col-9">
+    <div class="d-flex" *ngIf="textExercise">
+        <div class="flex-grow-1">
             <p class="mb-3 markdown-preview">
                 <b><span jhiTranslate="artemisApp.exercise.problemStatement">Problem Statement</span>:</b>
                 <span [innerHTML]="textExercise!.problemStatement! | htmlForMarkdown"></span>
             </p>
         </div>
-        <div class="col-3 text-right" *ngIf="!submission?.submitted">
-            <p>
+        <div *ngIf="!submission?.submitted" class="flex-shrink-0 d-flex flex-column align-items-end flex-lg-row justify-content-lg-end align-items-lg-start">
+            <jhi-connection-status class="text-right" *ngIf="textExercise?.teamMode && isActive"></jhi-connection-status>
+            <p class="ml-0 ml-lg-3 mb-0">
                 <strong><span jhiTranslate="artemisApp.exercise.maxScore">Max. Score</span>: {{ textExercise!.maxScore }}</strong>
             </p>
         </div>
@@ -45,10 +46,7 @@
     <div class="row">
         <ng-container *ngIf="!result; else hasFeedback">
             <div class="col-12 order-1 col-lg-3 order-lg-2 col-xl-4" *ngIf="textExercise?.teamMode && isActive && submission">
-                <div class="d-flex flex-column align-items-flex-end">
-                    <jhi-connection-status class="mb-3 text-right"></jhi-connection-status>
-                    <jhi-team-students-online-list [participation]="participation"></jhi-team-students-online-list>
-                </div>
+                <jhi-team-students-online-list class="mb-3" [participation]="participation"></jhi-team-students-online-list>
             </div>
 
             <div class="col-12 order-2 col-lg-9 order-lg-1 col-xl-8">
