@@ -1,3 +1,11 @@
+@mixin status-change-transition() {
+    transition: 0.1s color ease-out;
+
+    .online & {
+        transition: 0.05s color ease-in;
+    }
+}
+
 .student-list {
     list-style: none;
     padding: 0;
@@ -7,7 +15,6 @@
 .student-item {
     display: flex;
     align-items: center;
-
     font-size: 14px;
     font-weight: 400;
 
@@ -17,18 +24,25 @@
 }
 
 .student-name {
+    @include status-change-transition;
+
     text-overflow: ellipsis;
     overflow: hidden;
     white-space: nowrap;
+    color: #6c757d;
+
+    .online & {
+        color: initial;
+    }
 }
 
 .student-status {
-    display: inline-flex;
-    color: gray;
-    transition: 0.2s color ease-out;
+    @include status-change-transition;
 
-    &.online {
+    display: inline-flex;
+    color: #ccc;
+
+    .online & {
         color: green;
-        transition: 0.15s color ease-in;
     }
 }
