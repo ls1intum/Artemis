@@ -10,6 +10,7 @@ import { TeamUpdateDialogComponent } from 'app/exercises/shared/team/team-update
 import { TeamStudentSearchComponent } from 'app/exercises/shared/team/team-student-search/team-student-search.component';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { TeamStudentsListComponent } from 'app/exercises/shared/team/team-students-list/team-students-list.component';
+import { TeamStudentsOnlineListComponent } from 'app/exercises/shared/team/team-students-online-list/team-students-online-list.component';
 import { TeamComponent } from 'app/exercises/shared/team/team.component';
 import { TeamDeleteButtonComponent } from 'app/exercises/shared/team/team-update-dialog/team-delete-button.component';
 import { TeamOwnerSearchComponent } from 'app/exercises/shared/team/team-owner-search/team-owner-search.component';
@@ -26,9 +27,10 @@ const ENTITY_STATES = [...teamRoute];
         TeamStudentSearchComponent,
         TeamOwnerSearchComponent,
         TeamStudentsListComponent,
+        TeamStudentsOnlineListComponent,
         TeamComponent,
     ],
-    exports: [TeamUpdateButtonComponent, TeamStudentsListComponent],
+    exports: [TeamUpdateButtonComponent, TeamStudentsListComponent, TeamStudentsOnlineListComponent],
     entryComponents: [TeamUpdateDialogComponent],
 })
 export class ArtemisTeamModule {}

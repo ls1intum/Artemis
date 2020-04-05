@@ -1,0 +1,9 @@
+<div>
+    <h5>Team</h5>
+    <ul class="student-list">
+        <li class="student-item" *ngFor="let student of studentList">
+            <fa-icon class="online-status-icon mr-2" [icon]="'circle'" size="sm"></fa-icon>
+            <span class="student-name"> {{ student.name }} <span *ngIf="isSelf(student)" class="text-muted">(you)</span> </span>
+        </li>
+    </ul>
+</div>

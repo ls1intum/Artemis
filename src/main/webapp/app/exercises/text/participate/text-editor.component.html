@@ -46,7 +46,8 @@
         <ng-container *ngIf="!result; else hasFeedback">
             <div class="col-12 order-1 col-lg-3 order-lg-2 col-xl-4" *ngIf="textExercise?.teamMode && isActive && submission">
                 <div class="d-flex flex-column align-items-flex-end">
-                    <jhi-connection-status></jhi-connection-status>
+                    <jhi-connection-status class="mb-3 text-right"></jhi-connection-status>
+                    <jhi-team-students-online-list [team]="participation.team"></jhi-team-students-online-list>
                 </div>
             </div>
 
