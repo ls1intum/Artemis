@@ -190,6 +190,11 @@ public class ProgrammingExerciseService {
         return programmingExercise;
     }
 
+    /**
+     * This method creates the initial submissions and results for the new exercise
+     * These submissions and results are SIMULATIONS for the testing of programming exercises without local setup
+     * @param programmingExercise
+     */
     public void setupInitialSubmissionsAndResults(ProgrammingExercise programmingExercise) {
         Optional<TemplateProgrammingExerciseParticipation> templateProgrammingExerciseParticipation = this.templateProgrammingExerciseParticipationRepository
                 .findByProgrammingExerciseId(programmingExercise.getId());
@@ -280,7 +285,7 @@ public class ProgrammingExerciseService {
         final var exerciseRepoUrl = "http://localhost:7990/scm/" + projectKey + "/" + exerciseRepoName + ".git";
         final var testsRepoUrl = "http://localhost:7990/scm/" + projectKey + "/" + testRepoName + ".git";
         final var solutionRepoUrl = "http://localhost:7990/scm/" + projectKey + "/" + solutionRepoName + ".git";
-        templateParticipation.setBuildPlanId(projectKey + "-" + templatePlanName); // Set build plan id to newly created BaseBuild plan
+        templateParticipation.setBuildPlanId(projectKey + "-" + templatePlanName);
         templateParticipation.setRepositoryUrl(exerciseRepoUrl);
         solutionParticipation.setBuildPlanId(projectKey + "-" + solutionPlanName);
         solutionParticipation.setRepositoryUrl(solutionRepoUrl);

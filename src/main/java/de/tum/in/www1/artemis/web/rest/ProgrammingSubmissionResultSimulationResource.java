@@ -61,35 +61,27 @@ public class ProgrammingSubmissionResultSimulationResource {
     }
 
     /**
-     * POST /programming-submissions/:participationId : Notify the application about a new push to the VCS for the participation with Id participationId This API is invoked by the
-     * VCS Server at the push of a new commit
-     *
-     * @param
-     * @param exerciseID the body of the post request by the VCS.
-     * @return the ResponseEntity with status 200 (OK), or with status 400 (Bad Request) if the latest commit was already notified about
+     * This method is used to create a participation and a submission
+     * This participation and submission are only SIMULATIONS for the testing
+     * of programming exercises without local setup
+     * @param exerciseID the id of the exercise
+     * @return HTTP OK
      */
-    @PostMapping(value = "courses/{userID}/no-local-setup/{exerciseID}")
-    public ResponseEntity<?> notifyPush(@PathVariable Long userID, @PathVariable Long exerciseID) {
-        log.debug("REST request to inform about new commit+push for participation");
+    @PostMapping(value = "courses/submission/no-local-setup/{exerciseID}")
+    public ResponseEntity<?> notifyPush(@PathVariable Long exerciseID) {
 
         ProgrammingSubmission programmingSubmission = createSubmission(exerciseID);
 
         programmingSubmissionService.notifyUserAboutSubmission(programmingSubmission);
 
-        // TODO: we should not really return status code other than 200, because Bitbucket might kill the webhook, if there are too many errors
         return ResponseEntity.status(HttpStatus.OK).build();
     }
 
     /**
-     * This method is used by the CI system to inform Artemis about a new programming exercise build result.
-     * It will make sure to:
-     * - Create a result from the build result including its feedbacks
-     * - Assign the result to an existing submission OR create a new submission if needed
-     * - Update the result's score based on the exercise's test cases (weights, etc.)
-     * - Update the exercise's test cases if the build is from a solution participation
-     *
-     *
-     * @return a ResponseEntity to the CI system
+     * This method is used to notify artemis that there is a new programming exercise build result.
+     * This result is only a SIMULATION for the testing of programming exercises without local setup
+     * @param exerciseID id of the exercise
+     * @return HTTP OK
      */
     @PostMapping(value = "courses/result/no-local-setup/{exerciseID}")
     public ResponseEntity<?> notifyNewProgrammingExerciseResult(@PathVariable Long exerciseID) {
@@ -103,8 +95,8 @@ public class ProgrammingSubmissionResultSimulationResource {
         Result result = createResult(programmingExerciseStudentParticipation);
 
         log.debug("Send result to client over websocket. Result: {}, Submission: {}, Participation: {}", result, result.getSubmission(), result.getParticipation());
-        messagingService.broadcastNewResult((Participation) optionalStudentParticipation.get(), result); // TODO: can we avoid to invoke this code for non LTI students? (to improve
-                                                                                                         // performance) // if (participation.isLti()) { // }
+        messagingService.broadcastNewResult((Participation) optionalStudentParticipation.get(), result);
+        // TODO: can we avoid to invoke this code for non LTI students? (to improve performance) // if (participation.isLti()) { // }
         // handles new results and sends them to LTI consumers
         /*
          * if (participation instanceof ProgrammingExerciseStudentParticipation) { ltiService.onNewResult((ProgrammingExerciseStudentParticipation) participation); }
@@ -137,7 +129,6 @@ public class ProgrammingSubmissionResultSimulationResource {
         }
         else {
             programmingExerciseStudentParticipation = (ProgrammingExerciseStudentParticipation) optionalStudentParticipation.get();
-            ;
         }
 
         ProgrammingSubmission programmingSubmission = new ProgrammingSubmission();

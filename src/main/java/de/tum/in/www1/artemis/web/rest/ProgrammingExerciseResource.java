@@ -257,6 +257,13 @@ public class ProgrammingExerciseResource {
         }
     }
 
+    /**
+     * POST /programming-exercises/no-local-setup: Setup a new programmingExercise
+     * This method creates a new exercise
+     * This exercise is only a SIMULATION for the testing of programming exercises without local setup
+     * @param programmingExercise the input to create/setup new exercise
+     * @return a Response Entity
+     */
     @PostMapping(Endpoints.NO_LOCAL_SETUP)
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     @FeatureToggle(Feature.PROGRAMMING_EXERCISES)

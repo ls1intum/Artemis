@@ -15,6 +15,8 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { User } from 'app/core/user/user.model';
+import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 
 @Component({
     selector: 'jhi-exercise-details-student-actions',
@@ -41,6 +43,8 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
     public wasCopied = false;
 
     private user: User;
+    profileInfo: ProfileInfo;
+    inProduction: Boolean;
 
     constructor(
         private jhiAlertService: AlertService,
@@ -49,6 +53,7 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
         private accountService: AccountService,
         private sourceTreeService: SourceTreeService,
         private router: Router,
+        private profileService: ProfileService,
     ) {}
 
     ngOnInit(): void {
@@ -60,6 +65,16 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
                 this.getRepositoryPassword();
             }
         });
+        // In order to check if the application is currently running on production
+        this.profileService.getProfileInfo().subscribe(
+            (profileInfo) => {
+                if (profileInfo) {
+                    this.profileInfo = profileInfo;
+                    this.inProduction = profileInfo.inProduction;
+                }
+            },
+            (reason) => {},
+        );
     }
 
     repositoryUrl(participation: Participation) {
@@ -108,7 +123,7 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
     }
 
     simulateSubmission() {
-        this.courseExerciseService.simulateSubmission(this.user.id!, this.exercise.id).subscribe(
+        this.courseExerciseService.simulateSubmission(this.exercise.id).subscribe(
             () => {
                 console.log('dgdsfd');
             },
