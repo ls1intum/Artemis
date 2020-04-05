@@ -60,17 +60,15 @@ public class ParticipationTeamWebsocketService {
     private void unsubscribe(AbstractSubProtocolEvent event) {
         StompHeaderAccessor headers = StompHeaderAccessor.wrap(event.getMessage());
         Optional.ofNullable(destinationTracker.get(headers.getSessionId())).ifPresent(destination -> {
-            Optional.ofNullable(event.getUser()).ifPresent(principal -> {
-                List<String> userLogins = getSubscriberPrincipals(destination, principal.getName());
-                messagingTemplate.convertAndSend(destination, userLogins);
-                destinationTracker.remove(headers.getSessionId());
-            });
+            List<String> userLogins = getSubscriberPrincipals(destination, headers.getSessionId());
+            messagingTemplate.convertAndSend(destination, userLogins);
+            destinationTracker.remove(headers.getSessionId());
         });
     }
 
-    private List<String> getSubscriberPrincipals(String destination, String exceptPrincipalName) {
-        return simpUserRegistry.findSubscriptions(s -> s.getDestination().equals(destination)).stream().map(SimpSubscription::getSession).map(SimpSession::getUser)
-                .map(SimpUser::getName).filter(name -> !name.equals(exceptPrincipalName)).collect(Collectors.toList());
+    private List<String> getSubscriberPrincipals(String destination, String exceptSessionID) {
+        return simpUserRegistry.findSubscriptions(s -> s.getDestination().equals(destination)).stream().map(SimpSubscription::getSession)
+                .filter(simpSession -> !simpSession.getId().equals(exceptSessionID)).map(SimpSession::getUser).map(SimpUser::getName).collect(Collectors.toList());
     }
 
     private List<String> getSubscriberPrincipals(String destination) {
