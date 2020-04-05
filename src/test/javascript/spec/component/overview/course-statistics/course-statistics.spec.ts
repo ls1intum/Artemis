@@ -29,116 +29,117 @@ describe('CourseStatisticsComponent', () => {
     let fixture: ComponentFixture<CourseStatisticsComponent>;
     let courseScoreCalculationService: CourseScoreCalculationService;
 
-    const modelingExercises = [
-        {
-            type: 'modeling',
-            id: 192,
-            title: 'test 17.06. 1',
-            dueDate: moment('2019-06-17T09:47:12+02:00'),
-            assessmentDueDate: moment('2019-06-17T09:55:17+02:00'),
-            maxScore: 12.0,
-            studentParticipations: [
-                {
-                    id: 248,
-                    initializationState: 'FINISHED',
-                    initializationDate: moment('2019-06-17T09:29:34.908+02:00'),
-                    presentationScore: 2,
-                    student: {
-                        id: 9,
-                        login: 'artemis_test_user_1',
-                        firstName: 'Artemis Test User 1',
-                        email: 'krusche+testuser_1@in.tum.de',
-                        activated: true,
-                        langKey: 'en',
-                    },
-                },
-            ],
-            diagramType: 'ClassDiagram',
-            numberOfParticipations: 0,
-            numberOfAssessments: 0,
-            numberOfComplaints: 0,
-            presentationScoreEnabled: true,
-        },
-        {
-            type: 'modeling',
-            id: 193,
-            title: 'test 17.06. 2',
-            dueDate: moment('2019-06-17T17:50:08+02:00'),
-            assessmentDueDate: moment('2019-06-17T17:51:13+02:00'),
-            maxScore: 12.0,
-            studentParticipations: [
-                {
-                    id: 249,
-                    initializationState: 'FINISHED',
-                    initializationDate: moment('2019-06-18T10:53:27.997+02:00'),
-                    student: {
-                        id: 9,
-                        login: 'artemis_test_user_1',
-                        firstName: 'Artemis Test User 1',
-                        email: 'krusche+testuser_1@in.tum.de',
-                        activated: true,
-                        langKey: 'en',
-                    },
-                },
-            ],
-            diagramType: 'ClassDiagram',
-            numberOfParticipations: 0,
-            numberOfAssessments: 0,
-            numberOfComplaints: 0,
-        },
-        {
-            type: 'modeling',
-            id: 194,
-            title: 'test 18.06. 1',
-            dueDate: moment('2019-06-18T07:56:41+02:00'),
-            maxScore: 12.0,
-            studentParticipations: [],
-            diagramType: 'ClassDiagram',
-            numberOfParticipations: 0,
-            numberOfAssessments: 0,
-            numberOfComplaints: 0,
-        },
-        {
-            type: 'modeling',
-            id: 191,
-            title: 'Until 18:20',
-            dueDate: moment('2019-06-16T18:15:03+02:00'),
-            assessmentDueDate: moment('2019-06-16T18:30:57+02:00'),
-            maxScore: 12.0,
-            studentParticipations: [
-                {
-                    id: 246,
-                    initializationState: 'FINISHED',
-                    initializationDate: moment('2019-06-16T18:10:28.293+02:00'),
-                    results: [
-                        {
-                            id: 231,
-                            resultString: '11 of 12 points',
-                            completionDate: moment('2019-06-17T09:30:17.761+02:00'),
-                            successful: false,
-                            score: 92,
-                            rated: true,
-                            hasFeedback: false,
-                            assessmentType: 'MANUAL',
-                            hasComplaint: false,
+    const modelingExercises =
+        [
+            {
+                type: 'modeling',
+                id: 192,
+                title: 'test 17.06. 1',
+                dueDate: moment('2019-06-17T09:47:12+02:00'),
+                assessmentDueDate: moment('2019-06-17T09:55:17+02:00'),
+                maxScore: 12.0,
+                studentParticipations: [
+                    {
+                        id: 248,
+                        initializationState: 'FINISHED',
+                        initializationDate: moment('2019-06-17T09:29:34.908+02:00'),
+                        presentationScore: 2,
+                        student: {
+                            id: 9,
+                            login: 'artemis_test_user_1',
+                            firstName: 'Artemis Test User 1',
+                            email: 'krusche+testuser_1@in.tum.de',
+                            activated: true,
+                            langKey: 'en',
                         },
-                    ],
-                    student: {
-                        id: 9,
-                        login: 'artemis_test_user_1',
-                        firstName: 'Artemis Test User 1',
-                        email: 'krusche+testuser_1@in.tum.de',
-                        activated: true,
-                        langKey: 'en',
                     },
-                },
-            ],
-            diagramType: 'ClassDiagram',
-            numberOfParticipations: 0,
-            numberOfAssessments: 0,
-            numberOfComplaints: 0,
-        },
-    ] as ModelingExercise[];
+                ],
+                diagramType: 'ClassDiagram',
+                numberOfParticipations: 0,
+                numberOfAssessments: 0,
+                numberOfComplaints: 0,
+                presentationScoreEnabled: true,
+            },
+            {
+                type: 'modeling',
+                id: 193,
+                title: 'test 17.06. 2',
+                dueDate: moment('2019-06-17T17:50:08+02:00'),
+                assessmentDueDate: moment('2019-06-17T17:51:13+02:00'),
+                maxScore: 12.0,
+                studentParticipations: [
+                    {
+                        id: 249,
+                        initializationState: 'FINISHED',
+                        initializationDate: moment('2019-06-18T10:53:27.997+02:00'),
+                        student: {
+                            id: 9,
+                            login: 'artemis_test_user_1',
+                            firstName: 'Artemis Test User 1',
+                            email: 'krusche+testuser_1@in.tum.de',
+                            activated: true,
+                            langKey: 'en',
+                        },
+                    },
+                ],
+                diagramType: 'ClassDiagram',
+                numberOfParticipations: 0,
+                numberOfAssessments: 0,
+                numberOfComplaints: 0,
+            },
+            {
+                type: 'modeling',
+                id: 194,
+                title: 'test 18.06. 1',
+                dueDate: moment('2019-06-18T07:56:41+02:00'),
+                maxScore: 12.0,
+                studentParticipations: [],
+                diagramType: 'ClassDiagram',
+                numberOfParticipations: 0,
+                numberOfAssessments: 0,
+                numberOfComplaints: 0,
+            },
+            {
+                type: 'modeling',
+                id: 191,
+                title: 'Until 18:20',
+                dueDate: moment('2019-06-16T18:15:03+02:00'),
+                assessmentDueDate: moment('2019-06-16T18:30:57+02:00'),
+                maxScore: 12.0,
+                studentParticipations: [
+                    {
+                        id: 246,
+                        initializationState: 'FINISHED',
+                        initializationDate: moment('2019-06-16T18:10:28.293+02:00'),
+                        results: [
+                            {
+                                id: 231,
+                                resultString: '11 of 12 points',
+                                completionDate: moment('2019-06-17T09:30:17.761+02:00'),
+                                successful: false,
+                                score: 92,
+                                rated: true,
+                                hasFeedback: false,
+                                assessmentType: 'MANUAL',
+                                hasComplaint: false,
+                            },
+                        ],
+                        student: {
+                            id: 9,
+                            login: 'artemis_test_user_1',
+                            firstName: 'Artemis Test User 1',
+                            email: 'krusche+testuser_1@in.tum.de',
+                            activated: true,
+                            langKey: 'en',
+                        },
+                    },
+                ],
+                diagramType: 'ClassDiagram',
+                numberOfParticipations: 0,
+                numberOfAssessments: 0,
+                numberOfComplaints: 0,
+            },
+        ] as ModelingExercise[];
 
     const course = new Course();
     course.id = 64;
@@ -153,14 +154,15 @@ describe('CourseStatisticsComponent', () => {
     course.exercises = [];
     course.presentationScore = 1;
 
-    const newAttachment = {
-        id: 53,
-        name: 'TestFile',
-        link: '/api/files/attachments/lecture/4/Mein_Test_PDF3.pdf',
-        version: 1,
-        uploadDate: moment('2019-05-07T08:49:59+02:00'),
-        attachmentType: 'FILE',
-    } as Attachment;
+    const newAttachment =
+        {
+            id: 53,
+            name: 'TestFile',
+            link: '/api/files/attachments/lecture/4/Mein_Test_PDF3.pdf',
+            version: 1,
+            uploadDate: moment('2019-05-07T08:49:59+02:00'),
+            attachmentType: 'FILE',
+        } as Attachment;
 
     beforeEach(async () => {
         return TestBed.configureTestingModule({

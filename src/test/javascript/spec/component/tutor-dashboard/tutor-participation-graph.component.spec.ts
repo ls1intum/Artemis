@@ -35,15 +35,17 @@ describe('TutorParticipationGraphComponent', () => {
 
     describe('Participation Status Method', () => {
         beforeEach(() => {
-            comp.exercise = {
-                id: 1,
-                exampleSubmissions: [{ id: 1, usedForTutorial: true }],
-            } as Exercise;
+            comp.exercise =
+                {
+                    id: 1,
+                    exampleSubmissions: [{ id: 1, usedForTutorial: true }],
+                } as Exercise;
 
-            comp.tutorParticipation = {
-                id: 1,
-                trainedExampleSubmissions: [{ id: 1, usedForTutorial: true }],
-            } as TutorParticipation;
+            comp.tutorParticipation =
+                {
+                    id: 1,
+                    trainedExampleSubmissions: [{ id: 1, usedForTutorial: true }],
+                } as TutorParticipation;
         });
 
         it('should calculate the right classes for the initial NOT_PARTICIPATED status', () => {
@@ -69,18 +71,20 @@ describe('TutorParticipationGraphComponent', () => {
             expect(comp.calculateClasses(TutorParticipationStatus.NOT_PARTICIPATED)).to.equal('');
             expect(comp.calculateClasses(TutorParticipationStatus.TRAINED)).to.equal('');
 
-            comp.exercise = {
-                id: 1,
-                exampleSubmissions: [
-                    { id: 1, usedForTutorial: false },
-                    { id: 2, usedForTutorial: true },
-                ],
-            } as Exercise;
+            comp.exercise =
+                {
+                    id: 1,
+                    exampleSubmissions: [
+                        { id: 1, usedForTutorial: false },
+                        { id: 2, usedForTutorial: true },
+                    ],
+                } as Exercise;
 
-            comp.tutorParticipation = {
-                id: 1,
-                trainedExampleSubmissions: [{ id: 1, usedForTutorial: false }],
-            } as TutorParticipation;
+            comp.tutorParticipation =
+                {
+                    id: 1,
+                    trainedExampleSubmissions: [{ id: 1, usedForTutorial: false }],
+                } as TutorParticipation;
 
             expect(comp.calculateClasses(TutorParticipationStatus.REVIEWED_INSTRUCTIONS)).to.equal('');
             expect(comp.calculateClasses(TutorParticipationStatus.NOT_PARTICIPATED)).to.equal('');

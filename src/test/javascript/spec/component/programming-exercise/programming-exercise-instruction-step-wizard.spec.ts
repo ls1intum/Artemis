@@ -45,11 +45,12 @@ describe('ProgrammingExerciseInstructionStepWizard', () => {
     afterEach(() => {});
 
     it('Should load the expected number of steps according to the provided tests', () => {
-        const result = {
-            id: 1,
-            completionDate: moment('2019-01-06T22:15:29.203+02:00'),
-            feedbacks: [{ text: 'testBubbleSort', detail_text: 'lorem ipsum' }],
-        } as any;
+        const result =
+            {
+                id: 1,
+                completionDate: moment('2019-01-06T22:15:29.203+02:00'),
+                feedbacks: [{ text: 'testBubbleSort', detail_text: 'lorem ipsum' }],
+            } as any;
         const tasks = [
             { completeString: '[task][Implement BubbleSort](testBubbleSort)', taskName: 'Implement BubbleSort', tests: ['testBubbleSort'] } as Task,
             { completeString: '[task][Implement MergeSort](testMergeSort)', taskName: 'Implement MergeSort', tests: ['testMergeSort'] } as Task,
@@ -70,11 +71,12 @@ describe('ProgrammingExerciseInstructionStepWizard', () => {
     });
 
     it('Should not show any icons for empty tasks list', () => {
-        const result = {
-            id: 1,
-            completionDate: moment('2019-01-06T22:15:29.203+02:00'),
-            feedbacks: [{ text: 'testBubbleSort', detail_text: 'lorem ipsum' }],
-        } as any;
+        const result =
+            {
+                id: 1,
+                completionDate: moment('2019-01-06T22:15:29.203+02:00'),
+                feedbacks: [{ text: 'testBubbleSort', detail_text: 'lorem ipsum' }],
+            } as any;
         comp.latestResult = result;
         comp.tasks = [];
 
