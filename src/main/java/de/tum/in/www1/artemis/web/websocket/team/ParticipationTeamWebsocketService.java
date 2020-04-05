@@ -19,6 +19,8 @@ import org.springframework.messaging.simp.user.SimpSubscription;
 import org.springframework.messaging.simp.user.SimpUser;
 import org.springframework.messaging.simp.user.SimpUserRegistry;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.socket.messaging.AbstractSubProtocolEvent;
+import org.springframework.web.socket.messaging.SessionDisconnectEvent;
 import org.springframework.web.socket.messaging.SessionUnsubscribeEvent;
 
 @Controller
@@ -47,6 +49,15 @@ public class ParticipationTeamWebsocketService {
 
     @EventListener
     public void handleUnsubscribe(SessionUnsubscribeEvent event) {
+        unsubscribe(event);
+    }
+
+    @EventListener
+    public void handleDisconnect(SessionDisconnectEvent event) {
+        unsubscribe(event);
+    }
+
+    private void unsubscribe(AbstractSubProtocolEvent event) {
         StompHeaderAccessor headers = StompHeaderAccessor.wrap(event.getMessage());
         Optional.ofNullable(destinationTracker.get(headers.getSessionId())).ifPresent(destination -> {
             Optional.ofNullable(event.getUser()).ifPresent(principal -> {
