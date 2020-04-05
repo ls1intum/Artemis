@@ -298,8 +298,8 @@ export class CourseExerciseService {
         });
     }
 
-    simulateSubmission(userID: number, exerciseID: number): Observable<any> {
-        return this.http.post<ProgrammingExercise>(`${this.resourceUrl}/${userID}/no-local-setup/${exerciseID}`, {}, { observe: 'response' });
+    simulateSubmission(exerciseID: number): Observable<any> {
+        return this.http.post<ProgrammingExercise>(`${this.resourceUrl}/submission/no-local-setup/${exerciseID}`, {}, { observe: 'response' });
     }
 
     simulateResult(exerciseID: number): Observable<any> {
