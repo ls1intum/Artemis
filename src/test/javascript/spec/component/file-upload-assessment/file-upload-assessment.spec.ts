@@ -103,13 +103,14 @@ describe('FileUploadAssessmentComponent', () => {
         tick();
 
         comp.userId = 99;
-        comp.submission = {
-            submissionExerciseType: SubmissionExerciseType.FILE_UPLOAD,
-            id: 2278,
-            submitted: true,
-            type: SubmissionType.MANUAL,
-            submissionDate: moment('2019-07-09T10:47:33.244Z'),
-        } as FileUploadSubmission;
+        comp.submission =
+            {
+                submissionExerciseType: SubmissionExerciseType.FILE_UPLOAD,
+                id: 2278,
+                submitted: true,
+                type: SubmissionType.MANUAL,
+                submissionDate: moment('2019-07-09T10:47:33.244Z'),
+            } as FileUploadSubmission;
         comp.result = new Result();
         comp.result.id = 2374;
         comp.result.resultString = '1 of 12 points';

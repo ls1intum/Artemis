@@ -15,15 +15,16 @@ describe('ProgrammingExerciseInstructionService', () => {
     }));
 
     it('should determine a successful state for all tasks if the result is successful', () => {
-        const result = {
-            id: 1,
-            completionDate: moment('2019-06-06T22:15:29.203+02:00'),
-            successful: true,
-            feedbacks: [
-                { text: 'testBubbleSort', detail_text: 'lorem ipsum', positive: true },
-                { text: 'testMergeSort', detail_text: 'lorem ipsum', positive: true },
-            ],
-        } as any;
+        const result =
+            {
+                id: 1,
+                completionDate: moment('2019-06-06T22:15:29.203+02:00'),
+                successful: true,
+                feedbacks: [
+                    { text: 'testBubbleSort', detail_text: 'lorem ipsum', positive: true },
+                    { text: 'testMergeSort', detail_text: 'lorem ipsum', positive: true },
+                ],
+            } as any;
         const testCases = result.feedbacks.map(({ text }: { text: string }) => text);
 
         const { testCaseState: taskState1, detailed: detailed1 } = programmingExerciseInstructionService.testStatusForTask(testCases.slice(0, 1), result);
@@ -36,15 +37,16 @@ describe('ProgrammingExerciseInstructionService', () => {
     });
 
     it('should determine a failed state for a task if at least one test has failed (non legacy case)', () => {
-        const result = {
-            id: 1,
-            completionDate: moment('2019-06-06T22:15:29.203+02:00'),
-            successful: false,
-            feedbacks: [
-                { text: 'testBubbleSort', detail_text: 'lorem ipsum', positive: false },
-                { text: 'testMergeSort', detail_text: 'lorem ipsum', positive: true },
-            ],
-        } as any;
+        const result =
+            {
+                id: 1,
+                completionDate: moment('2019-06-06T22:15:29.203+02:00'),
+                successful: false,
+                feedbacks: [
+                    { text: 'testBubbleSort', detail_text: 'lorem ipsum', positive: false },
+                    { text: 'testMergeSort', detail_text: 'lorem ipsum', positive: true },
+                ],
+            } as any;
         const testCases = result.feedbacks.map(({ text }: { text: string }) => text);
 
         const { testCaseState: taskState1, detailed: detailed1 } = programmingExerciseInstructionService.testStatusForTask(testCases, result);
@@ -53,12 +55,13 @@ describe('ProgrammingExerciseInstructionService', () => {
     });
 
     it('should determine a failed state for a task if at least one test has failed (legacy case)', () => {
-        const result = {
-            id: 1,
-            completionDate: moment('2018-06-06T22:15:29.203+02:00'),
-            successful: false,
-            feedbacks: [{ text: 'testBubbleSort', detail_text: 'lorem ipsum', positive: false }],
-        } as any;
+        const result =
+            {
+                id: 1,
+                completionDate: moment('2018-06-06T22:15:29.203+02:00'),
+                successful: false,
+                feedbacks: [{ text: 'testBubbleSort', detail_text: 'lorem ipsum', positive: false }],
+            } as any;
         const testCases = ['testBubbleSort', 'testMergeSort'];
 
         const { testCaseState: taskState1, detailed: detailed1 } = programmingExerciseInstructionService.testStatusForTask(testCases, result);
@@ -67,12 +70,13 @@ describe('ProgrammingExerciseInstructionService', () => {
     });
 
     it('should determine a state if there is no feedback for the specified tests (non legacy only)', () => {
-        const result = {
-            id: 1,
-            completionDate: moment('2019-06-06T22:15:29.203+02:00'),
-            successful: false,
-            feedbacks: [{ text: 'irrelevantTest', detail_text: 'lorem ipsum', positive: true }],
-        } as any;
+        const result =
+            {
+                id: 1,
+                completionDate: moment('2019-06-06T22:15:29.203+02:00'),
+                successful: false,
+                feedbacks: [{ text: 'irrelevantTest', detail_text: 'lorem ipsum', positive: true }],
+            } as any;
         const testCases = ['testBubbleSort', 'testMergeSort'];
 
         const { testCaseState: taskState1, detailed: detailed1 } = programmingExerciseInstructionService.testStatusForTask(testCases, result);
