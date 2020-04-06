@@ -20,10 +20,14 @@ export class TeamStudentsOnlineListComponent implements OnInit, OnDestroy {
 
     constructor(private accountService: AccountService, private jhiWebsocketService: JhiWebsocketService) {}
 
+    /**
+     * Subscribes to the websocket topic "team" for the given participation
+     * On subscribe, the server sends a list of logins from all subscribed team members (including the user himself)
+     */
     ngOnInit(): void {
         this.accountService.identity().then((user: User) => {
             this.currentUser = user;
-            this.websocketTopic = `/topic/participations/${this.participation.id}/team`;
+            this.websocketTopic = this.buildWebsocketTopic();
             this.jhiWebsocketService.subscribe(this.websocketTopic);
             this.jhiWebsocketService.receive(this.websocketTopic).subscribe((logins: string[]) => {
                 this.onlineUserLogins = new Set<string>(logins);
@@ -35,10 +39,20 @@ export class TeamStudentsOnlineListComponent implements OnInit, OnDestroy {
         this.jhiWebsocketService.unsubscribe(this.websocketTopic);
     }
 
+    /**
+     * Topic for updates on online status of team members (needs to match route in ParticipationTeamWebsocketService.java)
+     */
+    buildWebsocketTopic(): string {
+        return `/topic/participations/${this.participation.id}/team`;
+    }
+
     get team(): Team {
         return this.participation.team;
     }
 
+    /**
+     * @return list of team members (1. current user, x. other users sorted alphabetically by full name)
+     */
     get studentList(): User[] {
         return [...(this.self ? [this.self] : []), ...orderBy(this.otherStudents, ['name'])];
     }

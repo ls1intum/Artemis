@@ -39,6 +39,11 @@ public class ParticipationTeamWebsocketService {
         this.simpUserRegistry = simpUserRegistry;
     }
 
+    /**
+     * Called when a user subscribes to the destination specified in the subscribe mapping.
+     * We have to keep track of the destination that this session belongs to since it is needed on unsubscribe and disconnect but is not available there.
+     * Finally, the list of currently subscribed users (including now this user) is send back to all subscribers of the destination.
+     */
     @SubscribeMapping("/topic/participations/{participationId}/team")
     public void subscribe(@DestinationVariable Long participationId, StompHeaderAccessor stompHeaderAccessor, Principal principal) {
         final String destination = getDestination(participationId);
@@ -47,16 +52,30 @@ public class ParticipationTeamWebsocketService {
         messagingTemplate.convertAndSend(destination, userLogins);
     }
 
+    /**
+     * Called when a user unsubscribes (e.g. when he navigates to a different part of the app, is normally called in ngOnDestroy on the client side).
+     */
     @EventListener
     public void handleUnsubscribe(SessionUnsubscribeEvent event) {
         unsubscribe(event);
     }
 
+    /**
+     * Called when a user disconnects (e.g. when he goes offline or to a different website).
+     */
     @EventListener
     public void handleDisconnect(SessionDisconnectEvent event) {
         unsubscribe(event);
     }
 
+    /**
+     * Since this method is called for any sort of unsubscribe or disconnect event, it first needs to be checked whether this event is relevant at all
+     * for this particular service which is the case if the session id was tracked by the destinationTracker.
+     * The list of subscribed users - explicitly excluding the session that is about to be destroyed - is send to all subscribers.
+     * Note: Since a single user can have multiple sessions for a single destination (e.g. by having two open tabs), the user list might not change at all.
+     *
+     * @param event SessionUnsubscribeEvent or SessionDisconnectEvent
+     */
     private void unsubscribe(AbstractSubProtocolEvent event) {
         StompHeaderAccessor headers = StompHeaderAccessor.wrap(event.getMessage());
         Optional.ofNullable(destinationTracker.get(headers.getSessionId())).ifPresent(destination -> {
@@ -66,6 +85,13 @@ public class ParticipationTeamWebsocketService {
         });
     }
 
+    /**
+     * Finds all subscriptions to a certain destination and returns the corresponding user logins as a list.
+     * Optionally, a certain session ID can be excluded from consideration (which is handy for the unsubscribe event listener which is
+     * called before the session is actually removed).
+     *
+     * @return list of principals / logins
+     */
     private List<String> getSubscriberPrincipals(String destination, String exceptSessionID) {
         return simpUserRegistry.findSubscriptions(s -> s.getDestination().equals(destination)).stream().map(SimpSubscription::getSession)
                 .filter(simpSession -> !simpSession.getId().equals(exceptSessionID)).map(SimpSession::getUser).map(SimpUser::getName).collect(Collectors.toList());
