@@ -28,11 +28,12 @@ export class TeamStudentsOnlineListComponent implements OnInit, OnDestroy {
     ngOnInit(): void {
         this.accountService.identity().then((user: User) => {
             this.currentUser = user;
+            this.onlineUserLogins = new Set<string>([user.login!]);
             this.websocketTopic = this.buildWebsocketTopic();
             this.jhiWebsocketService.receive(this.websocketTopic).subscribe((logins: string[]) => {
                 this.onlineUserLogins = new Set<string>(logins);
             });
-            setTimeout(() => this.jhiWebsocketService.subscribe(this.websocketTopic), 250);
+            setTimeout(() => this.jhiWebsocketService.subscribe(this.websocketTopic), 300);
         });
     }
 
