@@ -32,7 +32,7 @@ export class TeamStudentsOnlineListComponent implements OnInit, OnDestroy {
             this.jhiWebsocketService.receive(this.websocketTopic).subscribe((logins: string[]) => {
                 this.onlineUserLogins = new Set<string>(logins);
             });
-            setTimeout(() => this.jhiWebsocketService.subscribe(this.websocketTopic), 100);
+            setTimeout(() => this.jhiWebsocketService.subscribe(this.websocketTopic), 250);
         });
     }
 
