@@ -4,6 +4,11 @@ import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { TextblockFeedbackEditorComponent } from 'app/exercises/text/assess-new/textblock-feedback-editor/textblock-feedback-editor.component';
 import { Feedback } from 'app/entities/feedback.model';
 import { TextBlock } from 'app/entities/text-block.model';
+import { ArtemisConfirmIconModule } from 'app/shared/confirm-icon/confirm-icon.module';
+import { TranslateModule } from '@ngx-translate/core';
+import { MockComponent } from 'ng-mocks';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { By } from '@angular/platform-browser';
 
 describe('TextblockFeedbackEditorComponent', () => {
     let component: TextblockFeedbackEditorComponent;
@@ -14,9 +19,16 @@ describe('TextblockFeedbackEditorComponent', () => {
 
     beforeEach(async () => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, ArtemisSharedModule],
+            imports: [ArtemisTestModule, ArtemisSharedModule, TranslateModule.forRoot(), ArtemisConfirmIconModule],
             declarations: [TextblockFeedbackEditorComponent],
-        }).compileComponents();
+        })
+            .overrideModule(ArtemisTestModule, {
+                remove: {
+                    declarations: [MockComponent(FaIconComponent)],
+                    exports: [MockComponent(FaIconComponent)],
+                },
+            })
+            .compileComponents();
     });
 
     beforeEach(() => {
@@ -39,27 +51,39 @@ describe('TextblockFeedbackEditorComponent', () => {
     });
 
     it('should show delete button for empty feedback only', () => {
-        let button = compiled.querySelector('button');
+        // fixture.debugElement.query(By.css('fa-icon.back-button'));
+        let button = compiled.querySelector('.close fa-icon[icon="times"]');
+        let confirm = compiled.querySelector('.close jhi-confirm-icon');
         expect(button).toBeTruthy();
+        expect(confirm).toBeFalsy();
 
         component.feedback.credits = 1;
         fixture.detectChanges();
-        button = compiled.querySelector('button');
+        button = compiled.querySelector('.close fa-icon[icon="times"]');
+        confirm = compiled.querySelector('.close jhi-confirm-icon');
         expect(button).toBeFalsy();
+        expect(confirm).toBeTruthy();
 
         component.feedback.detailText = 'Lorem Ipsum';
         fixture.detectChanges();
-        button = compiled.querySelector('button');
+        button = compiled.querySelector('.close fa-icon[icon="times"]');
+        confirm = compiled.querySelector('.close jhi-confirm-icon');
         expect(button).toBeFalsy();
+        expect(confirm).toBeTruthy();
 
         component.feedback.credits = 0;
         fixture.detectChanges();
-        button = compiled.querySelector('button');
+        button = compiled.querySelector('.close fa-icon[icon="times"]');
+        confirm = compiled.querySelector('.close jhi-confirm-icon');
         expect(button).toBeFalsy();
+        expect(confirm).toBeTruthy();
 
         component.feedback.detailText = '';
         fixture.detectChanges();
-        button = compiled.querySelector('button');
+
+        button = compiled.querySelector('.close fa-icon[icon="times"]');
+        confirm = compiled.querySelector('.close jhi-confirm-icon');
         expect(button).toBeTruthy();
+        expect(confirm).toBeFalsy();
     });
 });

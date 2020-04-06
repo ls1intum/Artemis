@@ -5,6 +5,10 @@ import { TextblockAssessmentCardComponent } from 'app/exercises/text/assess-new/
 import { TextblockFeedbackEditorComponent } from 'app/exercises/text/assess-new/textblock-feedback-editor/textblock-feedback-editor.component';
 import { TextBlockRef } from 'app/entities/text-block-ref.model';
 import { By } from '@angular/platform-browser';
+import { ArtemisConfirmIconModule } from 'app/shared/confirm-icon/confirm-icon.module';
+import { MockComponent } from 'ng-mocks';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TranslateModule } from '@ngx-translate/core';
 
 describe('TextblockAssessmentCardComponent', () => {
     let component: TextblockAssessmentCardComponent;
@@ -12,9 +16,16 @@ describe('TextblockAssessmentCardComponent', () => {
 
     beforeEach(async () => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, ArtemisSharedModule],
+            imports: [ArtemisTestModule, ArtemisSharedModule, TranslateModule.forRoot(), ArtemisConfirmIconModule],
             declarations: [TextblockAssessmentCardComponent, TextblockFeedbackEditorComponent],
-        }).compileComponents();
+        })
+            .overrideModule(ArtemisTestModule, {
+                remove: {
+                    declarations: [MockComponent(FaIconComponent)],
+                    exports: [MockComponent(FaIconComponent)],
+                },
+            })
+            .compileComponents();
     });
 
     beforeEach(() => {
