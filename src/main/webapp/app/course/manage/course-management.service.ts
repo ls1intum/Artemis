@@ -223,6 +223,7 @@ export class CourseManagementService {
 @Injectable({ providedIn: 'root' })
 export class CourseExerciseService {
     private resourceUrl = SERVER_API_URL + `api/courses`;
+    private resourceUrlWithoutLocalSetup = SERVER_API_URL + `api`;
 
     constructor(private http: HttpClient, private participationWebsocketService: ParticipationWebsocketService) {}
 
@@ -299,11 +300,11 @@ export class CourseExerciseService {
     }
 
     simulateSubmission(exerciseID: number): Observable<any> {
-        return this.http.post<ProgrammingExercise>(`${this.resourceUrl}/submission/no-local-setup/${exerciseID}`, {}, { observe: 'response' });
+        return this.http.post<any>(`${this.resourceUrlWithoutLocalSetup}/submissions/no-local-setup/${exerciseID}`, {}, { observe: 'response' });
     }
 
-    simulateResult(exerciseID: number): Observable<any> {
-        return this.http.post<ProgrammingExercise>(`${this.resourceUrl}/result/no-local-setup/${exerciseID}`, {}, { observe: 'response' });
+    simulateResult(exerciseID: number): Observable<HttpResponse<any>> {
+        return this.http.post<any>(`${this.resourceUrlWithoutLocalSetup}/results/no-local-setup/${exerciseID}`, {}, { observe: 'response' });
     }
 
     resumeProgrammingExercise(courseId: number, exerciseId: number): Observable<StudentParticipation> {
