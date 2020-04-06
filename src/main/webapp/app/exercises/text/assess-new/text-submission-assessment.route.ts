@@ -20,7 +20,6 @@ export class StudentParticipationResolver implements Resolve<StudentParticipatio
      */
     resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot) {
         const submissionId = Number(route.paramMap.get('submissionId'));
-        console.log(`StudentParticipationResolver for Submission ${submissionId}.`);
 
         if (submissionId) {
             return this.textAssessmentsService.getFeedbackDataForExerciseSubmission(submissionId).catch(() => Observable.of(null));
@@ -40,7 +39,6 @@ export class NewStudentParticipationResolver implements Resolve<StudentParticipa
      */
     resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot) {
         const exerciseId = Number(route.paramMap.get('exerciseId'));
-        console.log(`NewStudentParticipationResolver for Exercise ${exerciseId}.`);
 
         if (exerciseId) {
             return this.textSubmissionService
