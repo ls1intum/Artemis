@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.programmingexercise;
 import static de.tum.in.www1.artemis.config.Constants.*;
 import static de.tum.in.www1.artemis.constants.ProgrammingSubmissionConstants.*;
 import static de.tum.in.www1.artemis.util.TestConstants.COMMIT_HASH_OBJECT_ID;
+import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResource.Endpoints.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.doReturn;
 
@@ -460,6 +461,37 @@ class ProgrammingSubmissionAndResultIntegrationTest extends AbstractSpringIntegr
             // Submissions with type TEST and no buildAndTestAfterDueDate should be rated.
             assertThat(participationResult.isRated()).isTrue();
         }
+    }
+
+    /**
+     * This tests if the submission is created for programming exercises without local setup
+     */
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    void shouldCreateSubmissionWithoutLocalSetup() throws Exception {
+        request.postWithoutLocation("/api" + SUBMISSIONS_NO_LOCAL_SETUP + "/" + exerciseId, null, HttpStatus.OK, new HttpHeaders());
+        assertThat(submissionRepository.findAll()).hasSize(1);
+        ProgrammingSubmission submission = submissionRepository.findAll().get(0);
+        assertThat(participationRepository.findById(submission.getParticipation().getId()));
+        assertThat(participationIds.contains(submission.getParticipation().getId()));
+        assertThat(submission.getType()).isEqualTo(SubmissionType.MANUAL);
+        assertThat(submission.isSubmitted()).isTrue();
+    }
+
+    /**
+     * This tests if the result is created for programming exercises without local setup
+     */
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    void shouldCreateResultWithoutLocalSetup() throws Exception {
+        request.postWithoutLocation("/api" + SUBMISSIONS_NO_LOCAL_SETUP + "/" + exerciseId, null, HttpStatus.OK, new HttpHeaders());
+        request.postWithoutLocation("/api" + RESULTS_NO_LOCAL_SETUP + "/" + exerciseId, null, HttpStatus.OK, new HttpHeaders());
+        ProgrammingSubmission submission = submissionRepository.findAll().get(0);
+        assertThat(resultRepository.findAll()).hasSize(1);
+        Result result = resultRepository.findAll().get(0);
+        assertThat(result.getParticipation().getId()).isEqualTo(submission.getParticipation().getId());
     }
 
     /**
