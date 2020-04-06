@@ -93,6 +93,8 @@
             "isText": "This is a text exercise",
             "isFileUpload": "This is a file upload exercise",
             "notificationText": "Optional: Notification about changes",
+            "submissionSuccessful": "The submission was successful",
+            "resultCreationSuccessful": "The result was created successfully",
             "presentationScoreEnabled": {
                 "title": "Presentation Score enabled",
                 "description": "If the presentation score is enabled, tutors can enter points for students on the \"Participations\" page of the exercise."

@@ -93,6 +93,8 @@
             "isText": "Das ist eine Textübung",
             "isFileUpload": "Das ist eine Datei-Upload-Übung",
             "notificiationText": "Optional: Mitteilung über die Änderung",
+            "submissionSuccessful": "Die submission war erfolgreich",
+            "resultCreationSuccessful": "Das Ergebnis wurde erfolgreich erzeugt",
             "presentationScoreEnabled": {
                 "title": "Präsentationsergebnis aktiviert",
                 "description": "Wenn das Präsentationsergebnis aktiviert ist, dann können Tutoren auf der Seite \"Teilnahmen\" dieser Übung eine Punkt für Präsentation von Studenten eintragen."
