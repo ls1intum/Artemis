@@ -23,15 +23,16 @@ export class TeamStudentsOnlineListComponent implements OnInit, OnDestroy {
     /**
      * Subscribes to the websocket topic "team" for the given participation
      * On subscribe, the server sends a list of logins from all subscribed team members (including the user himself)
+     * Receiver needs to be instantiated slightly before subscribing to not miss the first message.
      */
     ngOnInit(): void {
         this.accountService.identity().then((user: User) => {
             this.currentUser = user;
             this.websocketTopic = this.buildWebsocketTopic();
-            this.jhiWebsocketService.subscribe(this.websocketTopic);
             this.jhiWebsocketService.receive(this.websocketTopic).subscribe((logins: string[]) => {
                 this.onlineUserLogins = new Set<string>(logins);
             });
+            setTimeout(() => this.jhiWebsocketService.subscribe(this.websocketTopic), 100);
         });
     }
 
