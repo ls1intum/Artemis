@@ -36,7 +36,7 @@
             </p>
         </div>
         <div *ngIf="!submission?.submitted" class="flex-shrink-0 ml-4 ml-lg-5">
-            <div class="d-flex flex-column align-items-end flex-lg-row justify-content-lg-end align-items-lg-start">
+            <div class="d-flex flex-column align-items-end flex-lg-row justify-content-lg-start align-items-lg-start">
                 <jhi-connection-status class="text-right" *ngIf="textExercise?.teamMode && isActive"></jhi-connection-status>
                 <p class="ml-0 ml-lg-3 mb-0">
                     <strong><span jhiTranslate="artemisApp.exercise.maxScore">Max. Score</span>: {{ textExercise!.maxScore }}</strong>
