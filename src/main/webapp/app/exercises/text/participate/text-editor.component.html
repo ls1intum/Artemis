@@ -42,7 +42,7 @@
                 [participation]="participation"
                 [bounded]="false"
             ></jhi-team-participate-info-box>
-            <p *ngIf="!textExercise?.teamMode">
+            <p *ngIf="!textExercise?.teamMode" class="ml-3">
                 <strong><span jhiTranslate="artemisApp.exercise.maxScore">Max. Score</span>: {{ textExercise!.maxScore }}</strong>
             </p>
         </div>

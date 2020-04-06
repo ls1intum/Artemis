@@ -44,12 +44,7 @@
                 [exercise]="modelingExercise"
                 [participation]="participation"
             ></jhi-team-participate-info-box>
-            <p
-                class="ml-0 ml-lg-3 mb-0"
-                *ngIf="!modelingExercise?.teamMode"
-                jhiTranslate="artemisApp.modelingSubmission.maxScore"
-                [translateValues]="{ maxScore: modelingExercise!.maxScore }"
-            >
+            <p class="ml-3" *ngIf="!modelingExercise?.teamMode" jhiTranslate="artemisApp.modelingSubmission.maxScore" [translateValues]="{ maxScore: modelingExercise!.maxScore }">
                 <strong>Max. Score: {{ modelingExercise!.maxScore }}</strong>
             </p>
         </div>

@@ -30,7 +30,7 @@
 .student-name {
     @include status-change-transition;
 
-    max-width: 175px;
+    max-width: 190px;
     text-overflow: ellipsis;
     overflow: hidden;
     white-space: nowrap;
