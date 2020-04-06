@@ -217,6 +217,19 @@ public class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractS
         assertThat(programmingExerciseRepository.count()).isEqualTo(1);
     }
 
+    @ParameterizedTest
+    @EnumSource(ExerciseMode.class)
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void setupProgrammingExerciseWithoutLocalSetup_validExercise_created(ExerciseMode mode) throws Exception {
+        exercise.setMode(mode);
+        mockConnectorRequestsForSetup(exercise);
+        final var generatedExercise = request.postWithResponseBody(ROOT + NO_LOCAL_SETUP, exercise, ProgrammingExercise.class, HttpStatus.CREATED);
+
+        exercise.setId(generatedExercise.getId());
+        assertThat(exercise).isEqualTo(generatedExercise);
+        assertThat(programmingExerciseRepository.count()).isEqualTo(1);
+    }
+
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void setupProgrammingExercise_validExercise_structureOracle() throws Exception {
