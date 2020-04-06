@@ -19,6 +19,8 @@ import { StudentParticipation } from 'app/entities/participation/student-partici
 import { AccountService } from 'app/core/auth/account.service';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import { NotificationService } from 'app/overview/notification/notification.service';
+import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
+import { Result } from 'app/entities/result.model';
 
 export type EntityResponseType = HttpResponse<Course>;
 export type EntityArrayResponseType = HttpResponse<Course[]>;
@@ -299,12 +301,12 @@ export class CourseExerciseService {
         });
     }
 
-    simulateSubmission(exerciseID: number): Observable<any> {
-        return this.http.post<any>(`${this.resourceUrlWithoutLocalSetup}/submissions/no-local-setup/${exerciseID}`, {}, { observe: 'response' });
+    simulateSubmission(exerciseID: number): Observable<HttpResponse<ProgrammingSubmission>> {
+        return this.http.post<ProgrammingSubmission>(`${this.resourceUrlWithoutLocalSetup}/submissions/no-local-setup/${exerciseID}`, {}, { observe: 'response' });
     }
 
-    simulateResult(exerciseID: number): Observable<HttpResponse<any>> {
-        return this.http.post<any>(`${this.resourceUrlWithoutLocalSetup}/results/no-local-setup/${exerciseID}`, {}, { observe: 'response' });
+    simulateResult(exerciseID: number): Observable<HttpResponse<Result>> {
+        return this.http.post<Result>(`${this.resourceUrlWithoutLocalSetup}/results/no-local-setup/${exerciseID}`, {}, { observe: 'response' });
     }
 
     resumeProgrammingExercise(courseId: number, exerciseId: number): Observable<StudentParticipation> {

@@ -4,8 +4,8 @@ import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
@@ -53,17 +53,18 @@ public class ProgrammingSubmissionResultSimulationResource {
      * of programming exercises without local setup
      *
      * @param exerciseID the id of the exercise
-     * @return HTTP OK
+     * @return HTTP OK and ProgrammingSubmission
      */
 
     @PostMapping(value = "submissions/no-local-setup/{exerciseID}")
-    public ResponseEntity<?> notifyAboutParticipationAndSubmissionSimulation(@PathVariable Long exerciseID) {
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<ProgrammingSubmission> createParticipationAndSubmissionSimulation(@PathVariable Long exerciseID) {
 
         ProgrammingSubmission programmingSubmission = programmingSubmissionResultSimulationService.createSubmission(exerciseID);
 
         programmingSubmissionService.notifyUserAboutSubmission(programmingSubmission);
 
-        return ResponseEntity.status(HttpStatus.OK).build();
+        return ResponseEntity.ok().body(programmingSubmission);
     }
 
     /**
@@ -71,10 +72,11 @@ public class ProgrammingSubmissionResultSimulationResource {
      * This result is only a SIMULATION for the testing of programming exercises without local setup
      *
      * @param exerciseID id of the exercise
-     * @return HTTP OK
+     * @return HTTP OK and Result
      */
     @PostMapping(value = "results/no-local-setup/{exerciseID}")
-    public ResponseEntity<?> notifyNewProgrammingExerciseResult(@PathVariable Long exerciseID) {
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<Result> createNewProgrammingExerciseResult(@PathVariable Long exerciseID) {
         log.debug("Received result notify (NEW)");
         User user = userService.getUserWithGroupsAndAuthorities();
         Participant participant = user;
@@ -90,7 +92,7 @@ public class ProgrammingSubmissionResultSimulationResource {
          * if (participation instanceof ProgrammingExerciseStudentParticipation) { ltiService.onNewResult((ProgrammingExerciseStudentParticipation) participation); }
          */
         log.info("The new result for {} was saved successfully", ((ProgrammingExerciseStudentParticipation) optionalStudentParticipation.get()).getBuildPlanId());
-        return ResponseEntity.status(HttpStatus.OK).build();
+        return ResponseEntity.ok().body(result);
     }
 
 }

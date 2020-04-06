@@ -470,9 +470,10 @@ class ProgrammingSubmissionAndResultIntegrationTest extends AbstractSpringIntegr
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void shouldCreateSubmissionWithoutLocalSetup() throws Exception {
         assertThat(submissionRepository.findAll()).hasSize(0);
-        request.postWithoutLocation("/api" + SUBMISSIONS_NO_LOCAL_SETUP + "/" + exerciseId, null, HttpStatus.OK, new HttpHeaders());
+        final var returnedSubmission = request.postWithResponseBody("/api" + SUBMISSIONS_NO_LOCAL_SETUP + "/" + exerciseId, null, ProgrammingSubmission.class, HttpStatus.OK);
         assertThat(submissionRepository.findAll()).hasSize(1);
         ProgrammingSubmission submission = submissionRepository.findAll().get(0);
+        assertThat(returnedSubmission).isEqualTo(submission);
         assertThat(participationRepository.findById(submission.getParticipation().getId()));
         assertThat(participationIds.contains(submission.getParticipation().getId()));
         assertThat(submission.getType()).isEqualTo(SubmissionType.MANUAL);
@@ -486,12 +487,14 @@ class ProgrammingSubmissionAndResultIntegrationTest extends AbstractSpringIntegr
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void shouldCreateResultWithoutLocalSetup() throws Exception {
-        request.postWithoutLocation("/api" + SUBMISSIONS_NO_LOCAL_SETUP + "/" + exerciseId, null, HttpStatus.OK, new HttpHeaders());
+        final var returnedSubmission = request.postWithResponseBody("/api" + SUBMISSIONS_NO_LOCAL_SETUP + "/" + exerciseId, null, ProgrammingSubmission.class, HttpStatus.OK);
         assertThat(resultRepository.findAll()).hasSize(0);
-        request.postWithoutLocation("/api" + RESULTS_NO_LOCAL_SETUP + "/" + exerciseId, null, HttpStatus.OK, new HttpHeaders());
+        Result returnedResult = request.postWithResponseBody("/api" + RESULTS_NO_LOCAL_SETUP + "/" + exerciseId, null, Result.class, HttpStatus.OK);
         ProgrammingSubmission submission = submissionRepository.findAll().get(0);
+        assertThat(returnedSubmission).isEqualTo(submission);
         assertThat(resultRepository.findAll()).hasSize(1);
         Result result = resultRepository.findAll().get(0);
+        assertThat(returnedResult).isEqualTo(result);
         assertThat(result.getParticipation().getId()).isEqualTo(submission.getParticipation().getId());
     }
 
