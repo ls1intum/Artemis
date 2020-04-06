@@ -251,5 +251,6 @@ export class TextSubmissionAssessmentComponent implements OnInit {
     private handleError(error: HttpErrorResponse): void {
         const errorMessage = error.headers?.get('X-artemisApp-message') || error.message;
         this.jhiAlertService.error(errorMessage, null, undefined);
+        this.busy = false;
     }
 }
