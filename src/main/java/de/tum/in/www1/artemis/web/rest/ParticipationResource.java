@@ -133,9 +133,9 @@ public class ParticipationResource {
         // users cannot start the programming exercises if test run after due date or semi automatic grading is active and the due date has passed
         // Also don't allow participations if the feature is disabled
         if (exercise instanceof ProgrammingExercise) {
-            var pExercise = (ProgrammingExercise) exercise;
-            if (!Feature.PROGRAMMING_EXERCISES.isEnabled() || (pExercise.getDueDate() != null && ZonedDateTime.now().isAfter(pExercise.getDueDate())
-                    && (pExercise.getBuildAndTestStudentSubmissionsAfterDueDate() != null || pExercise.getAssessmentType() != AssessmentType.AUTOMATIC))) {
+            var programmingExercise = (ProgrammingExercise) exercise;
+            if (!Feature.PROGRAMMING_EXERCISES.isEnabled() || (programmingExercise.getDueDate() != null && ZonedDateTime.now().isAfter(programmingExercise.getDueDate())
+                    && (programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate() != null || programmingExercise.getAssessmentType() != AssessmentType.AUTOMATIC))) {
                 return forbidden();
             }
         }

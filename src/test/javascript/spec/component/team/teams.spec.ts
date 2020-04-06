@@ -33,6 +33,8 @@ import { Router } from '@angular/router';
 import { Location } from '@angular/common';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import { MockParticipationService } from '../../mocks/mock-participation.service';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from '../../mocks/mock-account.service';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -46,9 +48,12 @@ describe('TeamsComponent', () => {
     let location: Location;
     let ngbActiveModal: NgbActiveModal;
 
-    const route = ({
-        params: of({ exerciseId: 1 }),
-    } as any) as ActivatedRoute;
+    const route =
+        ({
+            params: of({ exerciseId: 1 }),
+        } as
+            any) as
+        ActivatedRoute;
 
     beforeEach(async () => {
         return TestBed.configureTestingModule({
@@ -77,6 +82,7 @@ describe('TeamsComponent', () => {
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: CookieService, useClass: MockCookieService },
                 { provide: ParticipationService, useClass: MockParticipationService },
+                { provide: AccountService, useClass: MockAccountService },
             ],
         })
             .compileComponents()

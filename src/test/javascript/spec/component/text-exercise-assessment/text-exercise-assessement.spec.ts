@@ -66,27 +66,31 @@ describe('TextAssessmentComponent', () => {
 
     const exercise = { id: 20, type: ExerciseType.TEXT, assessmentType: AssessmentType.MANUAL } as TextExercise;
     const participation: Participation = <Participation>(<unknown>{ type: ParticipationType.STUDENT, exercise: exercise });
-    const submission = {
-        submissionExerciseType: SubmissionExerciseType.TEXT,
-        id: 2278,
-        submitted: true,
-        type: SubmissionType.MANUAL,
-        submissionDate: moment('2019-07-09T10:47:33.244Z'),
-        text: 'asdfasdfasdfasdf',
-        participation: participation,
-    } as TextSubmission;
-    const result = ({
-        id: 2374,
-        resultString: '1 of 12 points',
-        completionDate: moment('2019-07-09T11:51:23.251Z'),
-        successful: false,
-        score: 8,
-        rated: true,
-        hasFeedback: false,
-        hasComplaint: false,
-        submission: submission,
-        participation: participation,
-    } as unknown) as Result;
+    const submission =
+        {
+            submissionExerciseType: SubmissionExerciseType.TEXT,
+            id: 2278,
+            submitted: true,
+            type: SubmissionType.MANUAL,
+            submissionDate: moment('2019-07-09T10:47:33.244Z'),
+            text: 'asdfasdfasdfasdf',
+            participation: participation,
+        } as TextSubmission;
+    const result =
+        ({
+            id: 2374,
+            resultString: '1 of 12 points',
+            completionDate: moment('2019-07-09T11:51:23.251Z'),
+            successful: false,
+            score: 8,
+            rated: true,
+            hasFeedback: false,
+            hasComplaint: false,
+            submission: submission,
+            participation: participation,
+        } as
+            unknown) as
+        Result;
     submission.result = result;
     submission.participation.submissions = [submission];
     submission.participation.results = [submission.result];

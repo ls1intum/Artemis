@@ -255,7 +255,7 @@ public class BambooRequestMockProvider {
         changes.setChanges(new LinkedList<>());
         buildResult.setChanges(changes);
 
-        buildLink.setLinkToArtifact(new URL("https://bamboobruegge.in.tum.de/download/"));
+        buildLink.setLinkToArtifact(new URL("https://bamboo.ase.in.tum.de/download/"));
         buildLink.setRel("self");
         buildArtifact.setLink(buildLink);
         buildArtifact.setName("Build log");

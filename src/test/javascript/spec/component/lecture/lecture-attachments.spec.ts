@@ -24,57 +24,60 @@ describe('LectureAttachmentsComponent', () => {
     let fixture: ComponentFixture<LectureAttachmentsComponent>;
     let fileUploaderService: FileUploaderService;
 
-    const lecture = {
-        id: 4,
-        title: 'Second Test Lecture2',
-        description:
-            'Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet.',
-        startDate: moment('2019-04-15T14:00:19+02:00'),
-        endDate: moment('2019-04-15T15:30:20+02:00'),
-        course: {
-            id: 1,
-            title: 'Refactoring CSS',
+    const lecture =
+        {
+            id: 4,
+            title: 'Second Test Lecture2',
             description:
                 'Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet.',
-            shortName: 'RCSS',
-            studentGroupName: 'artemis-dev',
-            teachingAssistantGroupName: 'tumuser',
-            instructorGroupName: 'tumuser',
-            startDate: moment('2018-12-15T16:11:00+01:00'),
-            endDate: moment('2019-06-15T16:11:14+02:00'),
-            onlineCourse: false,
-            color: '#691b0b',
-            registrationEnabled: false,
-        },
-    } as Lecture;
+            startDate: moment('2019-04-15T14:00:19+02:00'),
+            endDate: moment('2019-04-15T15:30:20+02:00'),
+            course: {
+                id: 1,
+                title: 'Refactoring CSS',
+                description:
+                    'Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet.',
+                shortName: 'RCSS',
+                studentGroupName: 'artemis-dev',
+                teachingAssistantGroupName: 'tumuser',
+                instructorGroupName: 'tumuser',
+                startDate: moment('2018-12-15T16:11:00+01:00'),
+                endDate: moment('2019-06-15T16:11:14+02:00'),
+                onlineCourse: false,
+                color: '#691b0b',
+                registrationEnabled: false,
+            },
+        } as Lecture;
 
-    const attachments = [
+    const attachments =
+        [
+            {
+                id: 50,
+                name: 'test',
+                link: '/api/files/attachments/lecture/4/Mein_Test_PDF4.pdf',
+                version: 2,
+                uploadDate: moment('2019-05-05T10:05:25+02:00'),
+                attachmentType: 'FILE',
+            },
+            {
+                id: 52,
+                name: 'test2',
+                link: '/api/files/attachments/lecture/4/Mein_Test_PDF3.pdf',
+                version: 1,
+                uploadDate: moment('2019-05-07T08:49:59+02:00'),
+                attachmentType: 'FILE',
+            },
+        ] as Attachment[];
+
+    const newAttachment =
         {
-            id: 50,
-            name: 'test',
-            link: '/api/files/attachments/lecture/4/Mein_Test_PDF4.pdf',
-            version: 2,
-            uploadDate: moment('2019-05-05T10:05:25+02:00'),
-            attachmentType: 'FILE',
-        },
-        {
-            id: 52,
-            name: 'test2',
+            id: 53,
+            name: 'TestFile',
             link: '/api/files/attachments/lecture/4/Mein_Test_PDF3.pdf',
             version: 1,
             uploadDate: moment('2019-05-07T08:49:59+02:00'),
             attachmentType: 'FILE',
-        },
-    ] as Attachment[];
-
-    const newAttachment = {
-        id: 53,
-        name: 'TestFile',
-        link: '/api/files/attachments/lecture/4/Mein_Test_PDF3.pdf',
-        version: 1,
-        uploadDate: moment('2019-05-07T08:49:59+02:00'),
-        attachmentType: 'FILE',
-    } as Attachment;
+        } as Attachment;
 
     beforeEach(async () => {
         return TestBed.configureTestingModule({

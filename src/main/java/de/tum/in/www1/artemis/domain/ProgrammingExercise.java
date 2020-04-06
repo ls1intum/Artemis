@@ -382,7 +382,7 @@ public class ProgrammingExercise extends Exercise {
 
     @JsonIgnore
     public String getProjectName() {
-        // this is the name used for Bitbucket and Bamboo
+        // this is the name used for VC service and CI service
         return this.getCourse().getShortName() + " " + this.getTitle();
     }
 

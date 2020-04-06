@@ -4,7 +4,6 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 
 import { Health, HealthDetails, HealthKey, HealthService } from './health.service';
 import { HealthModalComponent } from './health-modal.component';
-import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 
 @Component({
     selector: 'jhi-health',
@@ -12,28 +11,11 @@ import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 })
 export class HealthComponent implements OnInit {
     health?: Health;
-    disconnected = true;
-    onConnected: () => void;
-    onDisconnected: () => void;
 
-    constructor(private modalService: NgbModal, private healthService: HealthService, private trackerService: JhiWebsocketService) {}
+    constructor(private modalService: NgbModal, private healthService: HealthService) {}
 
     ngOnInit() {
         this.refresh();
-
-        // listen to connect / disconnect events
-        this.onConnected = () => {
-            this.disconnected = false;
-        };
-        this.trackerService.bind('connect', () => {
-            this.onConnected();
-        });
-        this.onDisconnected = () => {
-            this.disconnected = true;
-        };
-        this.trackerService.bind('disconnect', () => {
-            this.onDisconnected();
-        });
     }
 
     getBadgeClass(statusState: string) {

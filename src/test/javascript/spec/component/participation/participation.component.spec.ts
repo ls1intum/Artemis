@@ -48,38 +48,43 @@ describe('ParticipationComponent', () => {
             updateSpy = spyOn(service, 'update').and.returnValue(of());
         });
 
-        const courseWithPresentationScore = {
-            id: 1,
-            title: 'Presentation Score',
-            presentationScore: 2,
-        } as Course;
+        const courseWithPresentationScore =
+            {
+                id: 1,
+                title: 'Presentation Score',
+                presentationScore: 2,
+            } as Course;
 
-        const courseWithoutPresentationScore = {
-            id: 2,
-            title: 'No Presentation Score',
-            presentationScore: 0,
-        } as Course;
+        const courseWithoutPresentationScore =
+            {
+                id: 2,
+                title: 'No Presentation Score',
+                presentationScore: 0,
+            } as Course;
 
-        const exercise1 = {
-            id: 1,
-            title: 'Exercise 1',
-            course: courseWithPresentationScore,
-            presentationScoreEnabled: true,
-            isAtLeastTutor: true,
-        } as Exercise;
+        const exercise1 =
+            {
+                id: 1,
+                title: 'Exercise 1',
+                course: courseWithPresentationScore,
+                presentationScoreEnabled: true,
+                isAtLeastTutor: true,
+            } as Exercise;
 
-        const exercise2 = {
-            id: 2,
-            title: 'Exercise 2',
-            course: courseWithoutPresentationScore,
-            presentationScoreEnabled: false,
-            isAtLeastTutor: true,
-        } as Exercise;
+        const exercise2 =
+            {
+                id: 2,
+                title: 'Exercise 2',
+                course: courseWithoutPresentationScore,
+                presentationScoreEnabled: false,
+                isAtLeastTutor: true,
+            } as Exercise;
 
-        const participation = {
-            student: { id: 1 },
-            exercise: exercise1,
-        } as StudentParticipation;
+        const participation =
+            {
+                student: { id: 1 },
+                exercise: exercise1,
+            } as StudentParticipation;
 
         it('should add a presentation score if the feature is enabled', () => {
             component.exercise = exercise1;

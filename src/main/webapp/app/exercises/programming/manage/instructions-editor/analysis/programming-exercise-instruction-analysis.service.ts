@@ -146,21 +146,23 @@ export class ProgrammingExerciseInstructionAnalysisService {
      * @param regex to search for in the tasks.
      */
     private extractRegexFromTasks(tasks: [number, string][], regex: RegExp): [number, string[]][] {
-        return compose(
-            map(([lineNumber, match]) => {
-                const cleanedMatches = compose(
-                    uniq,
-                    filter((m) => !!m),
-                    flatten,
-                )(match.split(',').map((m: string) => m.trim()));
-                return [lineNumber, cleanedMatches];
-            }),
-            filter(([, testCases]) => !!testCases),
-            map(([lineNumber, task]) => {
-                const extractedValue = task.match(regex);
-                return extractedValue && extractedValue.length > 1 ? [lineNumber, extractedValue[1]] : [lineNumber, null];
-            }),
-            filter(([, task]) => !!task),
-        )(tasks) as [number, string[]][];
+        return (
+            compose(
+                map(([lineNumber, match]) => {
+                    const cleanedMatches = compose(
+                        uniq,
+                        filter((m) => !!m),
+                        flatten,
+                    )(match.split(',').map((m: string) => m.trim()));
+                    return [lineNumber, cleanedMatches];
+                }),
+                filter(([, testCases]) => !!testCases),
+                map(([lineNumber, task]) => {
+                    const extractedValue = task.match(regex);
+                    return extractedValue && extractedValue.length > 1 ? [lineNumber, extractedValue[1]] : [lineNumber, null];
+                }),
+                filter(([, task]) => !!task),
+            )(tasks) as [number, string[]][]
+        );
     }
 }

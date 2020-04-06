@@ -33,10 +33,13 @@ describe('Component Tests', () => {
         let fixture: ComponentFixture<FileUploadExerciseDetailComponent>;
         let debugElement: DebugElement;
 
-        const route = ({
-            data: of({ fileUploadExercise: fileUploadExercise }),
-            params: of({ exerciseId: 2 }),
-        } as any) as ActivatedRoute;
+        const route =
+            ({
+                data: of({ fileUploadExercise: fileUploadExercise }),
+                params: of({ exerciseId: 2 }),
+            } as
+                any) as
+            ActivatedRoute;
 
         beforeEach(() => {
             TestBed.configureTestingModule({

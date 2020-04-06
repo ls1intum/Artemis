@@ -63,11 +63,7 @@
                         {{ remainingTimeText }}
                     </span>
                 </div>
-                <div *ngIf="waitingForQuizStart || remainingTimeSeconds >= 0" class="connection-status" [ngClass]="{ disconnected: disconnected }">
-                    <fa-icon [icon]="'circle'" size="sm"></fa-icon>
-                    <span *ngIf="!disconnected" jhiTranslate="artemisApp.quizExercise.connected"></span>
-                    <span *ngIf="disconnected" jhiTranslate="artemisApp.quizExercise.disconnected"></span>
-                </div>
+                <jhi-connection-status *ngIf="waitingForQuizStart || remainingTimeSeconds >= 0"> </jhi-connection-status>
             </div>
             <div class="form-group col-sm">
                 <div *ngIf="quizExercise" class="btn-group flex-btn-group-container">

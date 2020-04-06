@@ -27,10 +27,17 @@ export class TeamUpdateDialogComponent implements OnInit {
 
     pendingTeam: Team;
     isSaving = false;
+
     searchingStudents = false;
     searchingStudentsQueryTooShort = false;
     searchingStudentsFailed = false;
     searchingStudentsNoResultsForQuery: string | null = null;
+
+    searchingOwner = false;
+    searchingOwnerQueryTooShort = false;
+    searchingOwnerFailed = false;
+    searchingOwnerNoResultsForQuery: string | null = null;
+
     studentTeamConflicts = [];
     ignoreTeamSizeRecommendation = false;
 
@@ -121,6 +128,10 @@ export class TeamUpdateDialogComponent implements OnInit {
     onRemoveStudent(student: User) {
         this.pendingTeam.students = this.pendingTeam.students.filter((user) => user.id !== student.id);
         this.resetStudentTeamConflict(student); // conflict might no longer exist when the student is added again
+    }
+
+    onSelectOwner(owner: User) {
+        this.pendingTeam.owner = owner;
     }
 
     clear() {
