@@ -54,7 +54,6 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     exerciseCategories: ExerciseCategory[];
     existingCategories: ExerciseCategory[];
     profileInfo: ProfileInfo;
-    inProduction: Boolean;
 
     constructor(
         private programmingExerciseService: ProgrammingExerciseService,
@@ -149,11 +148,17 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
             (profileInfo) => {
                 if (profileInfo) {
                     this.profileInfo = profileInfo;
-                    this.inProduction = profileInfo.inProduction;
                 }
             },
             (reason) => {},
         );
+    }
+
+    /**
+     * The button should be only visible in the dev or the testing environment
+     */
+    visibilityCheck(): boolean {
+        return !this.profileInfo.inProduction || window.location.host === 'artemistest.ase.in.tum.de';
     }
 
     previousState() {

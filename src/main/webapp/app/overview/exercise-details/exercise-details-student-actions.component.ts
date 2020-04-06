@@ -44,7 +44,6 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
 
     private user: User;
     profileInfo: ProfileInfo;
-    inProduction: Boolean;
 
     constructor(
         private jhiAlertService: AlertService,
@@ -70,11 +69,17 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
             (profileInfo) => {
                 if (profileInfo) {
                     this.profileInfo = profileInfo;
-                    this.inProduction = profileInfo.inProduction;
                 }
             },
             (reason) => {},
         );
+    }
+
+    /**
+     * The button should be only visible in the dev or the testing environment
+     */
+    visibilityCheck(): boolean {
+        return !this.profileInfo.inProduction || window.location.host === 'artemistest.ase.in.tum.de';
     }
 
     repositoryUrl(participation: Participation) {
