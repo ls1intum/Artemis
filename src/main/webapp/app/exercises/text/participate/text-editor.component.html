@@ -40,7 +40,7 @@
                 *ngIf="textExercise?.teamMode && isActive"
                 [exercise]="textExercise"
                 [participation]="participation"
-                [stickyEnabled]="true"
+                [bounded]="false"
             ></jhi-team-participate-info-box>
             <p *ngIf="!textExercise?.teamMode">
                 <strong><span jhiTranslate="artemisApp.exercise.maxScore">Max. Score</span>: {{ textExercise!.maxScore }}</strong>

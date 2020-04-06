@@ -1,6 +1,15 @@
-<div class="team-participate-info-box" [class.sticky]="isSticky">
+<div #boundary class="team-participate-info-box" [class.sticky]="isSticky" [class.sticky-enabled]="stickyEnabled">
     <div #spacer></div>
-    <div class="sticky-box" stickyThing marginTop="25" marginRight="35" [enable]="stickyEnabled" [spacer]="spacer" (stickyStatus)="onStickyStatusChange($event)">
+    <div
+        class="sticky-box"
+        stickyThing
+        marginTop="25"
+        marginRight="35"
+        [enable]="stickyEnabled"
+        [spacer]="spacer"
+        [boundary]="bounded ? boundary : undefined"
+        (stickyStatus)="onStickyStatusChange($event)"
+    >
         <div class="d-flex justify-content-end justify-content-md-start">
             <jhi-connection-status class="text-right"></jhi-connection-status>
             <p class="ml-3 mb-0">

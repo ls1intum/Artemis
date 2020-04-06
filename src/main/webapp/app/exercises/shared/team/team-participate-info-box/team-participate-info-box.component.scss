@@ -1,9 +1,9 @@
-:host {
-    display: block;
-}
-
 .team-participate-info-box {
     min-width: 237px;
+
+    &.sticky-enabled {
+        height: 100%;
+    }
 
     .sticky-box {
         padding: 18px 20px 24px;
