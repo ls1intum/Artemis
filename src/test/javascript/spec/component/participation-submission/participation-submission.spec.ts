@@ -90,16 +90,17 @@ describe('ParticipationSubmissionComponent', () => {
         // set all attributes for comp
         const participation = new StudentParticipation();
         participation.id = 1;
-        const submissions = [
-            {
-                submissionExerciseType: SubmissionExerciseType.TEXT,
-                id: 2278,
-                submitted: true,
-                type: SubmissionType.MANUAL,
-                submissionDate: moment('2019-07-09T10:47:33.244Z'),
-                text: 'asdfasdfasdfasdf',
-            },
-        ] as TextSubmission[];
+        const submissions =
+            [
+                {
+                    submissionExerciseType: SubmissionExerciseType.TEXT,
+                    id: 2278,
+                    submitted: true,
+                    type: SubmissionType.MANUAL,
+                    submissionDate: moment('2019-07-09T10:47:33.244Z'),
+                    text: 'asdfasdfasdfasdf',
+                },
+            ] as TextSubmission[];
         submissions[0].participation = participation;
 
         // check if findAllSubmissionsOfParticipationStub() is called and works

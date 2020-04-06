@@ -8,7 +8,7 @@ To get an overview of the used technology, have a look at [https://jhipster.gith
 You can find tutorials how to setup JHipster in an IDE ([IntelliJ](https://www.jetbrains.com/idea) is recommended) on [https://jhipster.github.io/configuring-ide](https://jhipster.github.io/configuring-ide).
 Before you can build Artemis, you must install and configure the following dependencies/tools on your machine:
 
-1. [Java JDK](https://www.oracle.com/java/technologies/javase-downloads.html): We use Java (>= JDK 12) to develop and run the Artemis application server which is based on [Spring Boot](http://projects.spring.io/spring-boot).
+1. [Java JDK](https://www.oracle.com/java/technologies/javase-downloads.html): We use Java (>= JDK 14) to develop and run the Artemis application server which is based on [Spring Boot](http://projects.spring.io/spring-boot).
 2. [MySQL Database Server 8](https://dev.mysql.com/downloads/mysql): Artemis uses Hibernate to store entities in a MySQL database. Download and install the MySQL Community Server (8.0.x) and configure the 'root' user with an empty password. (In case you want to use a different password, make sure to change the value in application-dev.yml and in liquibase.gradle). The required Artemis scheme will be created / updated automatically at startup time of the server application.
 3. [Node.js](https://nodejs.org): We use Node (>=12.8.0) to compile and run the client Angular application. Depending on your system, you can install Node either from source or as a pre-packaged bundle. 
 4. [Yarn](https://yarnpkg.com): We use Yarn (>=1.17.3) to manage client side Node dependencies.

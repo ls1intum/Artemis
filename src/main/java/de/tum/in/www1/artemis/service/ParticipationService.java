@@ -537,7 +537,7 @@ public class ParticipationService {
     }
 
     /**
-     * Perform an empty commit so that the Bamboo build plan definitely runs for the actual student commit
+     * Perform an empty commit so that the build plan definitely runs for the actual student commit
      *
      * @param participation the participation of the student
      * @return the participation of the student
