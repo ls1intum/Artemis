@@ -31,7 +31,7 @@ import org.json.*;
  * If no methods should be tested for correctness, remove {@link MethodTest}, otherwise one test will fail (limitation of JUnit)
  * If no attributes and no enums should be tested for correctness, remove {@link AttributeTest}, otherwise one test will fail (limitation of JUnit)
  */
-public class StructuralTest {
+public abstract class StructuralTest {
 
     protected static final String JSON_PROPERTY_SUPERCLASS = "superclass";
     protected static final String JSON_PROPERTY_INTERFACES = "interfaces";

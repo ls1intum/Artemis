@@ -26,21 +26,20 @@ plugins {
     id "jacoco"
     id "org.springframework.boot"
     id "com.google.cloud.tools.jib" version "2.1.0"
-    id "com.gorylenko.gradle-git-properties"
     id "com.github.node-gradle.node"
     id "net.ltgt.apt-eclipse"
     id "net.ltgt.apt-idea"
     id "net.ltgt.apt"
     //jhipster-needle-gradle-plugins - JHipster will add additional gradle plugins here
-    id "com.diffplug.gradle.spotless" version "3.28.0"
+    id "com.diffplug.gradle.spotless" version "3.28.1"
 }
 
 group = "de.tum.in.www1.artemis"
-version = "3.11.1"
+version = "3.11.2"
 description = "Interactive Learning with Individual Feedback"
 
-sourceCompatibility=12
-targetCompatibility=12
+sourceCompatibility=14
+targetCompatibility=14
 
 apply plugin: "com.github.ben-manes.versions"
 
@@ -158,7 +157,7 @@ repositories {
 
 dependencies {
     implementation 'com.offbytwo.jenkins:jenkins-client:0.3.8'
-    implementation 'org.gitlab4j:gitlab4j-api:4.14.22'
+    implementation 'org.gitlab4j:gitlab4j-api:4.14.25'
 
     // TODO: at the moment we cannot upgrade to a higher version of acli due to conflicts with the used LoggerFactory
     // the problem is that newer versions integrate the logging framework directly into the jar file instead of referencing
@@ -172,7 +171,7 @@ dependencies {
     implementation "org.imsglobal:basiclti-util:1.2.0"
     implementation "org.jasypt:jasypt:1.9.3"
     implementation "me.xdrop:fuzzywuzzy:1.2.0"
-    implementation "com.atlassian.bamboo:bamboo-specs:6.10.3"
+    implementation "com.atlassian.bamboo:bamboo-specs:7.0.2"
     implementation "com.thoughtworks.qdox:qdox:2.0.0"
     implementation "io.sentry:sentry-spring:1.7.30"
     implementation "io.sentry:sentry-logback:1.7.30"
@@ -182,7 +181,7 @@ dependencies {
 
     implementation "io.github.jhipster:jhipster-framework"
     implementation "org.springframework.boot:spring-boot-starter-cache:${spring_boot_version}"
-    implementation "io.micrometer:micrometer-registry-prometheus:1.4.0"
+    implementation "io.micrometer:micrometer-registry-prometheus:1.4.1"
     implementation "net.logstash.logback:logstash-logback-encoder:6.3"
     implementation "com.fasterxml.jackson.datatype:jackson-datatype-hppc:2.10.3"
     implementation "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.10.3"
@@ -193,7 +192,7 @@ dependencies {
     implementation "javax.cache:cache-api:1.1.1"
     implementation "org.hibernate:hibernate-core"
     implementation "com.zaxxer:HikariCP:3.4.2"
-    implementation "org.apache.commons:commons-lang3:3.9"
+    implementation "org.apache.commons:commons-lang3:3.10"
     implementation "org.apache.commons:commons-text:1.8"
     implementation "commons-io:commons-io"
     implementation "javax.transaction:javax.transaction-api:1.3"
@@ -217,12 +216,14 @@ dependencies {
     implementation "org.springframework.boot:spring-boot-starter-thymeleaf:${spring_boot_version}"
 
     implementation "org.springframework.ldap:spring-ldap-core"
-    implementation "org.springframework.data:spring-data-ldap:2.2.5.RELEASE"
+    implementation "org.springframework.data:spring-data-ldap:2.2.6.RELEASE"
 
     implementation "org.springframework.security:spring-security-config:${spring_security_version}"
     implementation "org.springframework.security:spring-security-data:${spring_security_version}"
     implementation "org.springframework.security:spring-security-web:${spring_security_version}"
     implementation "org.springframework.security:spring-security-messaging:${spring_security_version}"
+    implementation "org.springframework.security:spring-security-ldap:${spring_security_version}"
+    implementation "org.xmlbeam:xmlprojector:1.4.16"
     implementation "io.jsonwebtoken:jjwt-api:0.11.1"
     runtimeOnly "io.jsonwebtoken:jjwt-impl:0.11.1"
     runtimeOnly "io.jsonwebtoken:jjwt-jackson:0.11.1"
@@ -244,15 +245,13 @@ dependencies {
     }
     testImplementation ("org.springframework.boot:spring-boot-starter-test:${spring_boot_version}") {
         exclude module: "junit"
+        exclude group: "org.junit.vintage", module: "junit-vintage-engine"
         exclude group: "com.vaadin.external.google", module: "android-json"
     }
     testImplementation "org.springframework.security:spring-security-test:${spring_security_version}"
     testImplementation "org.springframework.boot:spring-boot-test:${spring_boot_version}"
     testImplementation "org.assertj:assertj-core:3.15.0"
-    testImplementation "org.junit.jupiter:junit-jupiter-api:${junit_version}"
-    testImplementation "org.junit.jupiter:junit-jupiter-params:${junit_version}"
-    testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:${junit_version}"
-    testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:${junit_version}"
+    testImplementation "org.junit.jupiter:junit-jupiter:${junit_version}"
     testImplementation 'com.tngtech.archunit:archunit-junit5-api:0.13.1'
     testRuntimeOnly 'com.tngtech.archunit:archunit-junit5-engine:0.13.1'
     testImplementation "org.mockito:mockito-core:3.3.3"
@@ -326,15 +325,10 @@ if (project.hasProperty("nodeInstall")) {
     }
 }
 
-gitProperties {
-    failOnNoGitDirectory = false
-    keys = ["git.branch", "git.commit.id.abbrev", "git.commit.id.describe"]
-}
-
 // Command to execute the JavaDoc checkstyle verification ./gradlew checkstyleMain
 checkstyle {
     toolVersion "8.10"
-    configFile file("checkstyle.xml")
+    configFile file("${rootDir}/checkstyle.xml")
     checkstyleTest.enabled = false
     maxErrors = 0
 }
@@ -350,7 +344,7 @@ task buildJarForDocker (type: Exec) {
 // Available commands:
 //
 // 1) Build production:                             ./gradlew -Pprod -Pwar clean bootWar
-// 2) Execute tests with code coverage report:      ./gradlew executeTests jacocoTestReport -x yarn_install -x webpack -x generateGitProperties
+// 2) Execute tests with code coverage report:      ./gradlew executeTests jacocoTestReport -x yarn_install -x webpack
 // 3) Check Java code format:                       ./gradlew spotlessCheck -x yarn_install -x webpack
 // 4) Apply Java code formatter:                    ./gradlew spotlessApply -x yarn_install -x webpack
 // 5) Find dependency updates:                      ./gradlew dependencyUpdates
