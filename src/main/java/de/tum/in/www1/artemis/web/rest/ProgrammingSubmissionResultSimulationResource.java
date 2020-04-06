@@ -19,10 +19,7 @@ import de.tum.in.www1.artemis.domain.participation.*;
 import de.tum.in.www1.artemis.repository.ParticipationRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
-import de.tum.in.www1.artemis.service.ParticipationService;
-import de.tum.in.www1.artemis.service.ProgrammingSubmissionService;
-import de.tum.in.www1.artemis.service.UserService;
-import de.tum.in.www1.artemis.service.WebsocketMessagingService;
+import de.tum.in.www1.artemis.service.*;
 
 @RestController
 @RequestMapping("/api")
@@ -35,8 +32,6 @@ public class ProgrammingSubmissionResultSimulationResource {
 
     private final UserService userService;
 
-    private final ProgrammingExerciseResource programmingExerciseResource;
-
     private final ParticipationRepository participationRepository;
 
     private final ParticipationService participationService;
@@ -47,17 +42,19 @@ public class ProgrammingSubmissionResultSimulationResource {
 
     private final WebsocketMessagingService messagingService;
 
+    private final ProgrammingExerciseService programmingExerciseService;
+
     public ProgrammingSubmissionResultSimulationResource(ProgrammingSubmissionService programmingSubmissionService, UserService userService,
-            ProgrammingExerciseResource programmingExerciseResource, ParticipationRepository participationRepository, ParticipationService participationService,
-            ProgrammingSubmissionRepository programmingSubmissionRepository, ResultRepository resultRepository, WebsocketMessagingService messagingService) {
+            ParticipationRepository participationRepository, ParticipationService participationService, ProgrammingSubmissionRepository programmingSubmissionRepository,
+            ResultRepository resultRepository, WebsocketMessagingService messagingService, ProgrammingExerciseService programmingExerciseService) {
         this.programmingSubmissionService = programmingSubmissionService;
         this.userService = userService;
-        this.programmingExerciseResource = programmingExerciseResource;
         this.participationRepository = participationRepository;
         this.participationService = participationService;
         this.programmingSubmissionRepository = programmingSubmissionRepository;
         this.resultRepository = resultRepository;
         this.messagingService = messagingService;
+        this.programmingExerciseService = programmingExerciseService;
     }
 
     /**
@@ -68,7 +65,7 @@ public class ProgrammingSubmissionResultSimulationResource {
      * @return HTTP OK
      */
     @PostMapping(value = "courses/submission/no-local-setup/{exerciseID}")
-    public ResponseEntity<?> notifyPush(@PathVariable Long exerciseID) {
+    public ResponseEntity<?> notifyAboutParticipationAndSubmissionSimulation(@PathVariable Long exerciseID) {
 
         ProgrammingSubmission programmingSubmission = createSubmission(exerciseID);
 
@@ -89,8 +86,8 @@ public class ProgrammingSubmissionResultSimulationResource {
 
         User user = userService.getUserWithGroupsAndAuthorities();
         Participant participant = user;
-        ResponseEntity<ProgrammingExercise> programmingExercise = programmingExerciseResource.getProgrammingExercise(exerciseID);
-        Optional<StudentParticipation> optionalStudentParticipation = participationService.findOneByExerciseAndParticipantAnyState(programmingExercise.getBody(), participant);
+        ProgrammingExercise programmingExercise = programmingExerciseService.findByIdWithEagerStudentParticipationsAndSubmissions(exerciseID);
+        Optional<StudentParticipation> optionalStudentParticipation = participationService.findOneByExerciseAndParticipantAnyState(programmingExercise, participant);
         ProgrammingExerciseStudentParticipation programmingExerciseStudentParticipation = (ProgrammingExerciseStudentParticipation) optionalStudentParticipation.get();
         Result result = createResult(programmingExerciseStudentParticipation);
 
@@ -122,10 +119,10 @@ public class ProgrammingSubmissionResultSimulationResource {
         User user = userService.getUserWithGroupsAndAuthorities();
         Participant participant = user;
         ProgrammingExerciseStudentParticipation programmingExerciseStudentParticipation;
-        ResponseEntity<ProgrammingExercise> programmingExercise = programmingExerciseResource.getProgrammingExercise(exerciseID);
-        Optional<StudentParticipation> optionalStudentParticipation = participationService.findOneByExerciseAndParticipantAnyState(programmingExercise.getBody(), participant);
+        ProgrammingExercise programmingExercise = programmingExerciseService.findByIdWithEagerStudentParticipationsAndSubmissions(exerciseID);
+        Optional<StudentParticipation> optionalStudentParticipation = participationService.findOneByExerciseAndParticipantAnyState(programmingExercise, participant);
         if (optionalStudentParticipation.isEmpty()) {
-            programmingExerciseStudentParticipation = createParticipation(programmingExercise.getBody(), participant, user);
+            programmingExerciseStudentParticipation = createParticipation(programmingExercise, participant, user);
         }
         else {
             programmingExerciseStudentParticipation = (ProgrammingExerciseStudentParticipation) optionalStudentParticipation.get();
