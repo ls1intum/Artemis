@@ -43,6 +43,10 @@ public class ParticipationTeamWebsocketService {
      * Called when a user subscribes to the destination specified in the subscribe mapping.
      * We have to keep track of the destination that this session belongs to since it is needed on unsubscribe and disconnect but is not available there.
      * Finally, the list of currently subscribed users (including now this user) is send back to all subscribers of the destination.
+     *
+     * @param participationId id of participation
+     * @param stompHeaderAccessor header from STOMP frame
+     * @param principal current user principal
      */
     @SubscribeMapping("/topic/participations/{participationId}/team")
     public void subscribe(@DestinationVariable Long participationId, StompHeaderAccessor stompHeaderAccessor, Principal principal) {
@@ -54,6 +58,8 @@ public class ParticipationTeamWebsocketService {
 
     /**
      * Called when a user unsubscribes (e.g. when he navigates to a different part of the app, is normally called in ngOnDestroy on the client side).
+     *
+     * @param event session unsubscribe event
      */
     @EventListener
     public void handleUnsubscribe(SessionUnsubscribeEvent event) {
@@ -62,6 +68,8 @@ public class ParticipationTeamWebsocketService {
 
     /**
      * Called when a user disconnects (e.g. when he goes offline or to a different website).
+     *
+     * @param event session disconnect event
      */
     @EventListener
     public void handleDisconnect(SessionDisconnectEvent event) {
@@ -90,6 +98,8 @@ public class ParticipationTeamWebsocketService {
      * Optionally, a certain session ID can be excluded from consideration (which is handy for the unsubscribe event listener which is
      * called before the session is actually removed).
      *
+     * @param destination destination/topic for which to get the subscribers
+     * @param exceptSessionID session id that should be excluded from subscription sessions
      * @return list of principals / logins
      */
     private List<String> getSubscriberPrincipals(String destination, String exceptSessionID) {
