@@ -29,7 +29,7 @@
     </div>
     <br />
 
-    <div class="d-flex" *ngIf="modelingExercise">
+    <div class="d-flex flex-column flex-md-row" *ngIf="modelingExercise">
         <div class="flex-grow-1">
             <p class="mb-3 markdown-preview">
                 <span jhiTranslate="artemisApp.modelingSubmission.problemStatement"><strong>Problem Statement:</strong></span>
@@ -38,14 +38,20 @@
                 </span>
             </p>
         </div>
-        <div *ngIf="!submission?.submitted" class="flex-shrink-0 ml-4 ml-lg-5">
-            <div class="d-flex flex-column align-items-end flex-lg-row justify-content-lg-start align-items-lg-start">
-                <jhi-connection-status class="text-right" *ngIf="modelingExercise?.teamMode && (isActive || isLate)"></jhi-connection-status>
-                <p class="ml-0 ml-lg-3 mb-0" jhiTranslate="artemisApp.modelingSubmission.maxScore" [translateValues]="{ maxScore: modelingExercise!.maxScore }">
-                    <strong>Max. Score: {{ modelingExercise!.maxScore }}</strong>
-                </p>
-            </div>
-            <jhi-team-students-online-list class="my-4" *ngIf="modelingExercise?.teamMode && (isActive || isLate)" [participation]="participation"></jhi-team-students-online-list>
+        <div *ngIf="!submission?.submitted" class="flex-shrink-0 ml-md-3 ml-lg-4" [ngStyle]="{ zIndex: 1 }">
+            <jhi-team-participate-info-box
+                *ngIf="modelingExercise?.teamMode && (isActive || isLate)"
+                [exercise]="modelingExercise"
+                [participation]="participation"
+            ></jhi-team-participate-info-box>
+            <p
+                class="ml-0 ml-lg-3 mb-0"
+                *ngIf="!modelingExercise?.teamMode"
+                jhiTranslate="artemisApp.modelingSubmission.maxScore"
+                [translateValues]="{ maxScore: modelingExercise!.maxScore }"
+            >
+                <strong>Max. Score: {{ modelingExercise!.maxScore }}</strong>
+            </p>
         </div>
     </div>
 

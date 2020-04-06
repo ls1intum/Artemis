@@ -32,6 +32,7 @@
         "@ngx-translate/http-loader": "4.0.0",
         "@sentry/browser": "5.15.4",
         "@swimlane/ngx-datatable": "16.0.3",
+        "@w11k/angular-sticky-things": "1.2.5",
         "ace-builds": "1.4.9",
         "angular-fittext": "2.1.1",
         "blob-util": "2.0.2",

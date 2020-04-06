@@ -1,0 +1,23 @@
+:host {
+    display: block;
+}
+
+.team-participate-info-box {
+    min-width: 237px;
+
+    .sticky-box {
+        padding: 18px 20px 24px;
+        transition: 0.2s box-shadow;
+
+        // on mobile (below md breakpoint)
+        @media (max-width: 767px) {
+            padding: 10px 0 25px;
+        }
+    }
+
+    &.sticky .sticky-box {
+        background: white;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.08);
+        border-radius: 8px;
+    }
+}
