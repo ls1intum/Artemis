@@ -210,13 +210,14 @@ describe('CodeEditorInstructorIntegration', () => {
     it('should load the exercise and select the template participation if no participation id is provided', () => {
         jest.resetModules();
         // @ts-ignore
-        const exercise = {
-            id: 1,
-            problemStatement,
-            studentParticipations: [{ id: 2, repositoryUrl: 'test' }],
-            templateParticipation: { id: 3, repositoryUrl: 'test2', results: [{ id: 9, successful: true }] },
-            solutionParticipation: { id: 4, repositoryUrl: 'test3' },
-        } as ProgrammingExercise;
+        const exercise =
+            {
+                id: 1,
+                problemStatement,
+                studentParticipations: [{ id: 2, repositoryUrl: 'test' }],
+                templateParticipation: { id: 3, repositoryUrl: 'test2', results: [{ id: 9, successful: true }] },
+                solutionParticipation: { id: 4, repositoryUrl: 'test3' },
+            } as ProgrammingExercise;
         exercise.studentParticipations = exercise.studentParticipations.map((p) => {
             p.exercise = exercise;
             return p;
@@ -296,13 +297,14 @@ describe('CodeEditorInstructorIntegration', () => {
     });
 
     it('should load test repository if specified in url', () => {
-        const exercise = {
-            id: 1,
-            problemStatement,
-            studentParticipations: [{ id: 2 }],
-            templateParticipation: { id: 3 },
-            solutionParticipation: { id: 4 },
-        } as ProgrammingExercise;
+        const exercise =
+            {
+                id: 1,
+                problemStatement,
+                studentParticipations: [{ id: 2 }],
+                templateParticipation: { id: 3 },
+                solutionParticipation: { id: 4 },
+            } as ProgrammingExercise;
         const setDomainSpy = spy(domainService, 'setDomain');
         // @ts-ignore
         (container.router as MockRouter).setUrl('code-editor-instructor/1/test');
@@ -335,10 +337,11 @@ describe('CodeEditorInstructorIntegration', () => {
 
     it('should be able to switch between the repos and update the child components accordingly', () => {
         // @ts-ignore
-        const exercise = {
-            id: 1,
-            problemStatement,
-        } as ProgrammingExercise;
+        const exercise =
+            {
+                id: 1,
+                problemStatement,
+            } as ProgrammingExercise;
         exercise.templateParticipation = { id: 3, repositoryUrl: 'test2', programmingExercise: exercise } as TemplateProgrammingExerciseParticipation;
         exercise.solutionParticipation = { id: 4, repositoryUrl: 'test3', programmingExercise: exercise } as SolutionProgrammingExerciseParticipation;
         // @ts-ignore
@@ -392,10 +395,11 @@ describe('CodeEditorInstructorIntegration', () => {
 
     it('should not be able to select a repository without repositoryUrl', () => {
         // @ts-ignore
-        const exercise = {
-            id: 1,
-            problemStatement,
-        } as ProgrammingExercise;
+        const exercise =
+            {
+                id: 1,
+                problemStatement,
+            } as ProgrammingExercise;
         // @ts-ignore
         exercise.studentParticipations = [{ id: 2, repositoryUrl: 'test', exercise } as ProgrammingExerciseStudentParticipation];
         exercise.templateParticipation = { id: 3, programmingExercise: exercise } as TemplateProgrammingExerciseParticipation;
