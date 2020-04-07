@@ -196,7 +196,7 @@ public class ProgrammingExerciseService {
     }
 
     /**
-     * This method creates the initial submissions and results for the new exercise
+     * This method creates the template and solution submissions and results for the new exercise
      * These submissions and results are SIMULATIONS for the testing of programming exercises without local setup
      * @param programmingExercise the new exercise
      */
