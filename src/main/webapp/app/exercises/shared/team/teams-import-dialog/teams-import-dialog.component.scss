@@ -26,6 +26,7 @@ $error-bg-color: #f8d7da;
 
     .list-group-item-container {
         position: relative;
+        margin-bottom: 0.15rem;
 
         &:nth-child(even) {
             .list-group-item {
@@ -53,6 +54,8 @@ $error-bg-color: #f8d7da;
         padding: 0.3rem 1rem;
 
         &.has-error {
+            font-weight: 500;
+            color: $error-text-color;
             background-color: $error-bg-color;
         }
     }
@@ -78,4 +81,9 @@ $error-bg-color: #f8d7da;
     button[disabled] {
         cursor: not-allowed;
     }
+}
+
+.label-narrow {
+    display: inline-block;
+    margin-bottom: 0.1rem;
 }

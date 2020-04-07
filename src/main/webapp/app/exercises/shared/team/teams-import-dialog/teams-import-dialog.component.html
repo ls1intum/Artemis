@@ -63,9 +63,9 @@
                             <jhi-team-students-list class="team-students" [students]="team.students"></jhi-team-students-list>
                         </div>
                     </li>
-                    <li *ngIf="!sourceTeams || sourceTeams.length === 0" class="list-group-item-container d-flex align-items-center" [class.has-error]="sourceTeams.length === 0">
+                    <li *ngIf="!sourceTeams || sourceTeams.length === 0" class="list-group-item-container d-flex align-items-center">
                         <div class="list-group-item-index text-muted">1</div>
-                        <div class="list-group-item d-flex align-items-center py-2">
+                        <div class="list-group-item d-flex align-items-center py-5" [class.has-error]="sourceTeams?.length === 0">
                             <span *ngIf="!sourceTeams" class="text-muted" jhiTranslate="artemisApp.team.selectSourceExerciseFirst">
                                 Please select a source exercise first.
                             </span>
