@@ -238,16 +238,17 @@ public class TeamResource {
     }
 
     /**
-     * GET /teams?shortName={shortName} : get boolean flag whether team with shortName exists
+     * GET /exercises/{exerciseId}/teams/exists?shortName={shortName} : get boolean flag whether team with shortName exists for exercise
      *
+     * @param exerciseId the id of the exercise for which to check teams
      * @param shortName the shortName of the team to check for existence
      * @return Response with status 200 (OK) and boolean flag in the body
      */
-    @GetMapping("/teams") // this check is independent of the exercise (a team's shortName serves as a globally unique identifier)
+    @GetMapping("/exercises/{exerciseId}/teams/exists")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Boolean> existsTeamByShortName(@RequestParam("shortName") String shortName) {
-        log.debug("REST request to check Team existence by shortName : {}", shortName);
-        return ResponseEntity.ok().body(teamRepository.findOneByShortName(shortName).isPresent());
+    public ResponseEntity<Boolean> existsTeamByShortName(@PathVariable long exerciseId, @RequestParam("shortName") String shortName) {
+        log.debug("REST request to check Team existence for exercise with id {} for shortName : {}", exerciseId, shortName);
+        return ResponseEntity.ok().body(teamRepository.findOneByExerciseIdAndShortName(exerciseId, shortName).isPresent());
     }
 
     /**

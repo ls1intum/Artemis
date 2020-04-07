@@ -20,7 +20,7 @@ import de.tum.in.www1.artemis.domain.participation.Participant;
  * A Team of students.
  */
 @Entity
-@Table(name = "team")
+@Table(name = "team", uniqueConstraints = { @UniqueConstraint(columnNames = { "exercise_id", "short_name" }) })
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class Team extends AbstractAuditingEntity implements Serializable, Participant {
@@ -34,7 +34,7 @@ public class Team extends AbstractAuditingEntity implements Serializable, Partic
     @Column(name = "name")
     private String name;
 
-    @Column(name = "short_name", unique = true)
+    @Column(name = "short_name")
     private String shortName;
 
     @Column(name = "image")

@@ -24,7 +24,7 @@ export interface ITeamService {
 
     delete(exercise: Exercise, teamId: number): Observable<HttpResponse<any>>;
 
-    existsByShortName(shortName: string): Observable<HttpResponse<boolean>>;
+    existsByShortName(exercise: Exercise, shortName: string): Observable<HttpResponse<boolean>>;
 
     searchInCourseForExerciseTeam(course: Course, exercise: Exercise, loginOrName: string): Observable<HttpResponse<TeamSearchUser[]>>;
 }
@@ -67,8 +67,8 @@ export class TeamService implements ITeamService {
         return this.http.delete<any>(`${TeamService.resourceUrl(exercise.id)}/${teamId}`, { observe: 'response' });
     }
 
-    existsByShortName(shortName: string): Observable<HttpResponse<boolean>> {
-        return this.http.get<boolean>(`${SERVER_API_URL}api/teams?shortName=${shortName}`, { observe: 'response' });
+    existsByShortName(exercise: Exercise, shortName: string): Observable<HttpResponse<boolean>> {
+        return this.http.get<boolean>(`${TeamService.resourceUrl(exercise.id)}/exists?shortName=${shortName}`, { observe: 'response' });
     }
 
     searchInCourseForExerciseTeam(course: Course, exercise: Exercise, loginOrName: string): Observable<HttpResponse<TeamSearchUser[]>> {

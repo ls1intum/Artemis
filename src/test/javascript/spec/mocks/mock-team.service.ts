@@ -79,7 +79,7 @@ export class MockTeamService implements ITeamService {
         return MockTeamService.response({});
     }
 
-    existsByShortName(shortName: string) {
+    existsByShortName(exercise: Exercise, shortName: string) {
         return MockTeamService.response(shortName === mockShortNames.existing);
     }
 
