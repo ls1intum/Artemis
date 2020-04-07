@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.web.websocket.team;
 
-import java.security.Principal;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -11,6 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.event.EventListener;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
+import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.messaging.simp.annotation.SubscribeMapping;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
@@ -42,16 +42,23 @@ public class ParticipationTeamWebsocketService {
     /**
      * Called when a user subscribes to the destination specified in the subscribe mapping.
      * We have to keep track of the destination that this session belongs to since it is needed on unsubscribe and disconnect but is not available there.
-     * Finally, the list of currently subscribed users (including now this user) is send back to all subscribers of the destination.
      *
      * @param participationId id of participation
      * @param stompHeaderAccessor header from STOMP frame
-     * @param principal current user principal
      */
     @SubscribeMapping("/topic/participations/{participationId}/team")
-    public void subscribe(@DestinationVariable Long participationId, StompHeaderAccessor stompHeaderAccessor, Principal principal) {
+    public void subscribe(@DestinationVariable Long participationId, StompHeaderAccessor stompHeaderAccessor) {
+        destinationTracker.put(stompHeaderAccessor.getSessionId(), getDestination(participationId));
+    }
+
+    /**
+     * Called by a user to trigger the sending of the online team members list to all subscribers.
+     *
+     * @param participationId id of participation
+     */
+    @MessageMapping("/topic/participations/{participationId}/team/trigger")
+    public void triggerSend(@DestinationVariable Long participationId) {
         final String destination = getDestination(participationId);
-        destinationTracker.put(stompHeaderAccessor.getSessionId(), destination);
         final List<String> userLogins = getSubscriberPrincipals(destination);
         messagingTemplate.convertAndSend(destination, userLogins);
     }

@@ -22,18 +22,20 @@ export class TeamStudentsOnlineListComponent implements OnInit, OnDestroy {
 
     /**
      * Subscribes to the websocket topic "team" for the given participation
-     * On subscribe, the server sends a list of logins from all subscribed team members (including the user himself)
-     * Receiver needs to be instantiated slightly before subscribing to not miss the first message.
+     * Then it triggers the server to send the current list of online team members after a short timeout.
+     * The timeout is needed to let the subscription take effect first.
      */
     ngOnInit(): void {
         this.accountService.identity().then((user: User) => {
             this.currentUser = user;
-            this.onlineUserLogins = new Set<string>([user.login!]);
             this.websocketTopic = this.buildWebsocketTopic();
+            this.jhiWebsocketService.subscribe(this.websocketTopic);
             this.jhiWebsocketService.receive(this.websocketTopic).subscribe((logins: string[]) => {
                 this.onlineUserLogins = new Set<string>(logins);
             });
-            setTimeout(() => this.jhiWebsocketService.subscribe(this.websocketTopic), 300);
+            setTimeout(() => {
+                this.jhiWebsocketService.send(this.buildWebsocketTopic('/trigger'), {});
+            }, 200);
         });
     }
 
@@ -44,8 +46,8 @@ export class TeamStudentsOnlineListComponent implements OnInit, OnDestroy {
     /**
      * Topic for updates on online status of team members (needs to match route in ParticipationTeamWebsocketService.java)
      */
-    buildWebsocketTopic(): string {
-        return `/topic/participations/${this.participation.id}/team`;
+    buildWebsocketTopic(path = ''): string {
+        return `/topic/participations/${this.participation.id}/team${path}`;
     }
 
     get team(): Team {
