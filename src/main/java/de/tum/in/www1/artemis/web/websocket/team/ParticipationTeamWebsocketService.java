@@ -40,25 +40,37 @@ public class ParticipationTeamWebsocketService {
     }
 
     /**
-     * Called when a user subscribes to the destination specified in the subscribe mapping.
-     * We have to keep track of the destination that this session belongs to since it is needed on unsubscribe and disconnect but is not available there.
+     * Called when a user subscribes to the destination specified in the subscribe mapping
+     *
+     * We have to keep track of the destination that this session belongs to since it is
+     * needed on unsubscribe and disconnect but is not available there.
      *
      * @param participationId id of participation
      * @param stompHeaderAccessor header from STOMP frame
      */
     @SubscribeMapping("/topic/participations/{participationId}/team")
     public void subscribe(@DestinationVariable Long participationId, StompHeaderAccessor stompHeaderAccessor) {
-        destinationTracker.put(stompHeaderAccessor.getSessionId(), getDestination(participationId));
+        final String destination = getDestination(participationId);
+        destinationTracker.put(stompHeaderAccessor.getSessionId(), destination);
+        sendOnlineTeamMembers(destination);
     }
 
     /**
-     * Called by a user to trigger the sending of the online team members list to all subscribers.
+     * Called by a user to trigger the sending of the online team members list to all subscribers
      *
      * @param participationId id of participation
      */
     @MessageMapping("/topic/participations/{participationId}/team/trigger")
     public void triggerSend(@DestinationVariable Long participationId) {
-        final String destination = getDestination(participationId);
+        sendOnlineTeamMembers(getDestination(participationId));
+    }
+
+    /**
+     * Sends out a list of user logins of team students that are online to all team members
+     *
+     * @param destination websocket topic to which to send the list of online users
+     */
+    private void sendOnlineTeamMembers(String destination) {
         final List<String> userLogins = getSubscriberPrincipals(destination);
         messagingTemplate.convertAndSend(destination, userLogins);
     }

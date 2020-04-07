@@ -22,8 +22,9 @@ export class TeamStudentsOnlineListComponent implements OnInit, OnDestroy {
 
     /**
      * Subscribes to the websocket topic "team" for the given participation
-     * Then it triggers the server to send the current list of online team members after a short timeout.
-     * The timeout is needed to let the subscription take effect first.
+     *
+     * The current list of online team members is sent upon subscribing, however, this message cannot be received yet by the
+     * client sometimes and thus the list is explicitly requested once more after a short timeout to cover those cases.
      */
     ngOnInit(): void {
         this.accountService.identity().then((user: User) => {
@@ -35,7 +36,7 @@ export class TeamStudentsOnlineListComponent implements OnInit, OnDestroy {
             });
             setTimeout(() => {
                 this.jhiWebsocketService.send(this.buildWebsocketTopic('/trigger'), {});
-            }, 200);
+            }, 1000);
         });
     }
 
