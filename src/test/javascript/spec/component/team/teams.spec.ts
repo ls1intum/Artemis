@@ -48,9 +48,12 @@ describe('TeamsComponent', () => {
     let location: Location;
     let ngbActiveModal: NgbActiveModal;
 
-    const route = ({
-        params: of({ exerciseId: 1 }),
-    } as any) as ActivatedRoute;
+    const route =
+        ({
+            params: of({ exerciseId: 1 }),
+        } as
+            any) as
+        ActivatedRoute;
 
     beforeEach(async () => {
         return TestBed.configureTestingModule({

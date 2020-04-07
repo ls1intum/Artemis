@@ -279,11 +279,12 @@ describe('ProgrammingExerciseInstructionComponent', () => {
     });
 
     it('should create the steps task icons for the tasks in problem statement markdown (non legacy case)', fakeAsync(() => {
-        const result = {
-            id: 1,
-            completionDate: moment('2019-06-06T22:15:29.203+02:00'),
-            feedbacks: [{ text: 'testMergeSort', detail_text: 'lorem ipsum', positive: true }],
-        } as any;
+        const result =
+            {
+                id: 1,
+                completionDate: moment('2019-06-06T22:15:29.203+02:00'),
+                feedbacks: [{ text: 'testMergeSort', detail_text: 'lorem ipsum', positive: true }],
+            } as any;
         const exercise = { id: 3, course: { id: 4 }, problemStatement } as ProgrammingExercise;
 
         openModalStub.returns({ componentInstance: {} });
@@ -327,11 +328,12 @@ describe('ProgrammingExerciseInstructionComponent', () => {
     }));
 
     it('should create the steps task icons for the tasks in problem statement markdown (legacy case)', fakeAsync(() => {
-        const result = {
-            id: 1,
-            completionDate: moment('2019-01-06T22:15:29.203+02:00'),
-            feedbacks: [{ text: 'testBubbleSort', detail_text: 'lorem ipsum' }],
-        } as any;
+        const result =
+            {
+                id: 1,
+                completionDate: moment('2019-01-06T22:15:29.203+02:00'),
+                feedbacks: [{ text: 'testBubbleSort', detail_text: 'lorem ipsum' }],
+            } as any;
         const exercise = { id: 3, course: { id: 4 }, problemStatement } as ProgrammingExercise;
 
         openModalStub.returns({ componentInstance: {} });

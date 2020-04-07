@@ -117,7 +117,7 @@ public class BambooBuildPlanService {
 
         switch (programmingLanguage) {
         case JAVA: {
-            defaultJob.dockerConfiguration(new DockerConfiguration().image("maven:3.6.3-jdk-14"));
+            defaultJob.dockerConfiguration(new DockerConfiguration().image("ls1tum/artemis-maven-template"));
             if (!sequentialBuildRuns) {
                 return defaultStage
                         .jobs(defaultJob.tasks(checkoutTask, new MavenTask().goal("clean test").jdk("JDK").executableLabel("Maven 3").description("Tests").hasTests(true)));
