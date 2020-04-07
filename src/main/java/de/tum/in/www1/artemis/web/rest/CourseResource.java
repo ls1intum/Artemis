@@ -18,6 +18,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.actuate.audit.AuditEvent;
 import org.springframework.boot.actuate.audit.AuditEventRepository;
+import org.springframework.core.env.Environment;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -28,6 +29,7 @@ import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
 import de.tum.in.www1.artemis.domain.enumeration.TutorParticipationStatus;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
+import de.tum.in.www1.artemis.exception.ArtemisAuthenticationException;
 import de.tum.in.www1.artemis.exception.GroupAlreadyExistsException;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
@@ -95,8 +97,10 @@ public class CourseResource {
 
     private final Optional<VcsUserManagementService> vcsUserManagementService;
 
+    private final Environment env;
+
     public CourseResource(UserService userService, CourseService courseService, ParticipationService participationService, CourseRepository courseRepository,
-            ExerciseService exerciseService, AuthorizationCheckService authCheckService, TutorParticipationService tutorParticipationService,
+            ExerciseService exerciseService, AuthorizationCheckService authCheckService, TutorParticipationService tutorParticipationService, Environment env,
             ArtemisAuthenticationProvider artemisAuthenticationProvider, ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository,
             LectureService lectureService, NotificationService notificationService, SubmissionService submissionService, ResultService resultService,
             ComplaintService complaintService, TutorLeaderboardService tutorLeaderboardService, ExampleSubmissionRepository exampleSubmissionRepository,
@@ -121,6 +125,7 @@ public class CourseResource {
         this.exampleSubmissionRepository = exampleSubmissionRepository;
         this.vcsUserManagementService = vcsUserManagementService;
         this.auditEventRepository = auditEventRepository;
+        this.env = env;
     }
 
     /**
@@ -151,32 +156,48 @@ public class CourseResource {
                     .body(null);
         }
 
-        // TODO: allow custom (existing) groups in the DEV environment
-
-        if (course.getStudentGroupName() != null) {
-            throw new BadRequestAlertException("The student group name must be null when creating a course", ENTITY_NAME, "studentGroupNameCannotBeSet");
-        }
-        if (course.getTeachingAssistantGroupName() != null) {
-            throw new BadRequestAlertException("The teaching assistant group name must be null when creating a course", ENTITY_NAME, "teachingAssistantGroupNameCannotBeSet");
-        }
-        if (course.getInstructorGroupName() != null) {
-            throw new BadRequestAlertException("The instructor group name must be null when creating a course", ENTITY_NAME, "instructorGroupNameCannotBeSet");
-        }
-
         validateComplaintsConfig(course);
 
-        course.setStudentGroupName(course.getDefaultStudentGroupName());
-        course.setTeachingAssistantGroupName(course.getDefaultTeachingAssistantGroupName());
-        course.setInstructorGroupName(course.getDefaultInstructorGroupName());
-
         try {
-            artemisAuthenticationProvider.createGroup(course.getStudentGroupName());
-            artemisAuthenticationProvider.createGroup(course.getTeachingAssistantGroupName());
-            artemisAuthenticationProvider.createGroup(course.getInstructorGroupName());
+
+            // We use default names if a group was not specified by the ADMIN.
+            // NOTE: instructors cannot change the group of a course, because this would be a security issue!
+
+            // only create default group names, if the ADMIN has used a custom group names, we assume that it already exists.
+
+            if (course.getStudentGroupName() == null) {
+                course.setStudentGroupName(course.getDefaultStudentGroupName());
+                artemisAuthenticationProvider.createGroup(course.getStudentGroupName());
+            }
+            else {
+                checkIfGroupsExists(course.getStudentGroupName());
+            }
+
+            if (course.getTeachingAssistantGroupName() == null) {
+                course.setTeachingAssistantGroupName(course.getDefaultTeachingAssistantGroupName());
+                artemisAuthenticationProvider.createGroup(course.getTeachingAssistantGroupName());
+            }
+            else {
+                checkIfGroupsExists(course.getTeachingAssistantGroupName());
+            }
+
+            if (course.getInstructorGroupName() == null) {
+                course.setInstructorGroupName(course.getDefaultInstructorGroupName());
+                artemisAuthenticationProvider.createGroup(course.getInstructorGroupName());
+            }
+            else {
+                checkIfGroupsExists(course.getInstructorGroupName());
+            }
         }
-        catch (GroupAlreadyExistsException e) {
-            throw new BadRequestAlertException("One of the groups already exists, because the short name was already used in Artemis before. Please choose a different short name!",
-                    ENTITY_NAME, "shortNameWasAlreadyUsed");
+        catch (GroupAlreadyExistsException ex) {
+            throw new BadRequestAlertException(
+                    ex.getMessage() + ": One of the groups already exists (in the external user management), because the short name was already used in Artemis before. "
+                            + "Please choose a different short name!",
+                    ENTITY_NAME, "shortNameWasAlreadyUsed", true);
+        }
+        catch (ArtemisAuthenticationException ex) {
+            // a specified group does not exist, notify the client
+            throw new BadRequestAlertException(ex.getMessage(), ENTITY_NAME, "groupNotFound", true);
         }
         Course result = courseService.save(course);
         return ResponseEntity.created(new URI("/api/courses/" + result.getId()))
@@ -202,17 +223,9 @@ public class CourseResource {
         if (existingCourse.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
+
         if (!Objects.equals(existingCourse.get().getShortName(), updatedCourse.getShortName())) {
-            throw new BadRequestAlertException("The course short name cannot be changed", ENTITY_NAME, "shortNameCannotChange");
-        }
-        if (!Objects.equals(existingCourse.get().getStudentGroupName(), updatedCourse.getStudentGroupName())) {
-            throw new BadRequestAlertException("The student group name cannot be changed", ENTITY_NAME, "studentGroupNameCannotChange");
-        }
-        if (!Objects.equals(existingCourse.get().getTeachingAssistantGroupName(), updatedCourse.getTeachingAssistantGroupName())) {
-            throw new BadRequestAlertException("The teaching assistant group name cannot be changed", ENTITY_NAME, "teachingAssistantGroupNameCannotChange");
-        }
-        if (!Objects.equals(existingCourse.get().getInstructorGroupName(), updatedCourse.getInstructorGroupName())) {
-            throw new BadRequestAlertException("The instructor group name cannot be changed", ENTITY_NAME, "instructorGroupNameCannotChange");
+            throw new BadRequestAlertException("The course short name cannot be changed", ENTITY_NAME, "shortNameCannotChange", true);
         }
 
         User user = userService.getUserWithGroupsAndAuthorities();
@@ -220,6 +233,39 @@ public class CourseResource {
         // this is important, otherwise someone could put himself into the instructor group of the updated Course
         if (!authCheckService.isAtLeastInstructorInCourse(existingCourse.get(), user)) {
             return forbidden();
+        }
+
+        if (authCheckService.isAdmin()) {
+            // if an admin changes a group, we need to check that the changed group exists
+            try {
+                if (!Objects.equals(existingCourse.get().getStudentGroupName(), updatedCourse.getStudentGroupName())) {
+                    checkIfGroupsExists(updatedCourse.getStudentGroupName());
+                }
+                if (!Objects.equals(existingCourse.get().getTeachingAssistantGroupName(), updatedCourse.getTeachingAssistantGroupName())) {
+                    checkIfGroupsExists(updatedCourse.getTeachingAssistantGroupName());
+                }
+                if (!Objects.equals(existingCourse.get().getInstructorGroupName(), updatedCourse.getInstructorGroupName())) {
+                    checkIfGroupsExists(updatedCourse.getInstructorGroupName());
+                }
+            }
+            catch (ArtemisAuthenticationException ex) {
+                // a specified group does not exist, notify the client
+                throw new BadRequestAlertException(ex.getMessage(), ENTITY_NAME, "groupNotFound", true);
+            }
+        }
+        else {
+            // this means the user must be an instructor, who has NOT Admin rights.
+            // instructors are not allowed to change group names, because this would lead to security problems
+
+            if (!Objects.equals(existingCourse.get().getStudentGroupName(), updatedCourse.getStudentGroupName())) {
+                throw new BadRequestAlertException("The student group name cannot be changed", ENTITY_NAME, "studentGroupNameCannotChange", true);
+            }
+            if (!Objects.equals(existingCourse.get().getTeachingAssistantGroupName(), updatedCourse.getTeachingAssistantGroupName())) {
+                throw new BadRequestAlertException("The teaching assistant group name cannot be changed", ENTITY_NAME, "teachingAssistantGroupNameCannotChange", true);
+            }
+            if (!Objects.equals(existingCourse.get().getInstructorGroupName(), updatedCourse.getInstructorGroupName())) {
+                throw new BadRequestAlertException("The instructor group name cannot be changed", ENTITY_NAME, "instructorGroupNameCannotChange", true);
+            }
         }
 
         // Check if course shortname matches regex
@@ -238,6 +284,16 @@ public class CourseResource {
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, updatedCourse.getTitle())).body(result);
     }
 
+    private void checkIfGroupsExists(String group) {
+        // if (!Arrays.asList(env.getActiveProfiles()).contains(JHipsterConstants.SPRING_PROFILE_PRODUCTION)) {
+        // return;
+        // }
+        // only execute this check in the production environment because normal developers (while testing) might not have the right to call this method on the authentication server
+        if (!artemisAuthenticationProvider.isGroupAvailable(group)) {
+            throw new ArtemisAuthenticationException("Cannot save! The group " + group + " does not exist. Please double check the group name!");
+        }
+    }
+
     private void validateComplaintsConfig(Course course) {
         if (course.getMaxComplaints() == null) {
             // set the default value to prevent null pointer exceptions
@@ -248,16 +304,16 @@ public class CourseResource {
             course.setMaxComplaintTimeDays(7);
         }
         if (course.getMaxComplaints() < 0) {
-            throw new BadRequestAlertException("Max Complaints cannot be negative", ENTITY_NAME, "maxComplaintsInvalid");
+            throw new BadRequestAlertException("Max Complaints cannot be negative", ENTITY_NAME, "maxComplaintsInvalid", true);
         }
         if (course.getMaxComplaintTimeDays() < 0) {
-            throw new BadRequestAlertException("Max Complaint Days cannot be negative", ENTITY_NAME, "maxComplaintDaysInvalid");
+            throw new BadRequestAlertException("Max Complaint Days cannot be negative", ENTITY_NAME, "maxComplaintDaysInvalid", true);
         }
         if (course.getMaxComplaintTimeDays() == 0 && course.getMaxComplaints() != 0) {
-            throw new BadRequestAlertException("Both complaints configs must be 0 (disabled) or must have positive integer values", ENTITY_NAME, "complaintsConfigInvalid");
+            throw new BadRequestAlertException("Both complaints configs must be 0 (disabled) or must have positive integer values", ENTITY_NAME, "complaintsConfigInvalid", true);
         }
         if (course.getMaxComplaintTimeDays() != 0 && course.getMaxComplaints() == 0) {
-            throw new BadRequestAlertException("Both complaints configs must be 0 (disabled) or must have positive integer values", ENTITY_NAME, "complaintsConfigInvalid");
+            throw new BadRequestAlertException("Both complaints configs must be 0 (disabled) or must have positive integer values", ENTITY_NAME, "complaintsConfigInvalid", true);
         }
     }
 
@@ -642,7 +698,7 @@ public class CourseResource {
         }
         String title = course.getTitle();
 
-        // only delete the groups if they have been created by Artemis before
+        // only delete (default) groups which have been created by Artemis before
         if (course.getStudentGroupName().equals(course.getDefaultStudentGroupName())) {
             artemisAuthenticationProvider.deleteGroup(course.getStudentGroupName());
         }

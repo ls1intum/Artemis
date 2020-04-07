@@ -148,7 +148,7 @@ export class JhiWebsocketService implements IWebsocketService, OnDestroy {
 
                 // Setup periodic logs of websocket connection numbers
                 this.logTimers.push(
-                    timer(0, 10000).subscribe((x) => {
+                    timer(0, 60000).subscribe((x) => {
                         console.log('\n\n');
                         console.log(`${this.subscribers.size} websocket subscriptions: `, this.subscribers.keys());
                         // this.subscribers.forEach((sub, topic) => console.log(topic));
