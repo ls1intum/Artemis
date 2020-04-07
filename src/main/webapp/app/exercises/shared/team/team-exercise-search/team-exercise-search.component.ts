@@ -16,6 +16,7 @@ export class TeamExerciseSearchComponent implements OnInit {
     click$ = new Subject<string>();
 
     @Input() course: Course;
+    @Input() ignoreExercises: Exercise[];
 
     @Output() selectExercise = new EventEmitter<Exercise>();
     @Output() searching = new EventEmitter<boolean>();
@@ -86,6 +87,7 @@ export class TeamExerciseSearchComponent implements OnInit {
             .findWithExercises(this.course.id)
             .pipe(map((courseResponse) => courseResponse.body!.exercises))
             .pipe(map((exercises) => exercises.filter((exercise) => exercise.teamMode)))
+            .pipe(map((exercises) => exercises.filter((exercise) => !this.ignoreExercises.map((e) => e.id).includes(exercise.id))))
             .pipe(
                 tap((exerciseOptions) => {
                     this.exerciseOptions = exerciseOptions;

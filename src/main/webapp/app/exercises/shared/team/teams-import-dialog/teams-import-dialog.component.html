@@ -32,6 +32,7 @@
             <jhi-team-exercise-search
                 id="teamExercises"
                 [course]="exercise.course"
+                [ignoreExercises]="[exercise]"
                 (selectExercise)="onSelectSourceExercise($event)"
                 (searching)="searchingExercises = $event"
                 (searchQueryTooShort)="searchingExercisesQueryTooShort = $event"
