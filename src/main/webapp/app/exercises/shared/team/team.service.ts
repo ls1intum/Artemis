@@ -27,6 +27,8 @@ export interface ITeamService {
     existsByShortName(exercise: Exercise, shortName: string): Observable<HttpResponse<boolean>>;
 
     searchInCourseForExerciseTeam(course: Course, exercise: Exercise, loginOrName: string): Observable<HttpResponse<TeamSearchUser[]>>;
+
+    importTeamsFromExercise(exercise: Exercise, sourceExercise: Exercise): Observable<HttpResponse<Team[]>>;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -74,6 +76,10 @@ export class TeamService implements ITeamService {
     searchInCourseForExerciseTeam(course: Course, exercise: Exercise, loginOrName: string): Observable<HttpResponse<TeamSearchUser[]>> {
         const url = `${SERVER_API_URL}api/courses/${course.id}/exercises/${exercise.id}/team-search-users?loginOrName=${loginOrName}`;
         return this.http.get<TeamSearchUser[]>(url, { observe: 'response' });
+    }
+
+    importTeamsFromExercise(exercise: Exercise, sourceExercise: Exercise) {
+        return this.http.post<Team[]>(`${TeamService.resourceUrl(exercise.id)}/import-from-exercise/${sourceExercise.id}`, {}, { observe: 'response' });
     }
 
     /**

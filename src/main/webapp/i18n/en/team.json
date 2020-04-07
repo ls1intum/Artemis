@@ -68,6 +68,20 @@
                 "label": "Delete",
                 "error": "Could not remove team. Please try again."
             },
+            "importTeams": {
+                "label": "Import teams",
+                "error": "Could not import teams. Please try again."
+            },
+            "sourceExercise": {
+                "label": "Source exercise",
+                "tooltip": "The teams from the selected source exercise will be copied into this exercise."
+            },
+            "selectExerciseForImport": "Select exercise (by searching for the title)",
+            "exerciseSearch": {
+                "queryTooShort": "Please enter at least 3 characters.",
+                "failed": "Search failed. Please try again.",
+                "noResults": "No exercise found in course for search:"
+            },
             "errors": {
                 "studentAlreadyAssignedToTeam": "Student with login {{ studentLogin }} is already assigned to team with id {{ teamId }."
             }

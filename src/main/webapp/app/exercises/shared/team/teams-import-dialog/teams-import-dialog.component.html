@@ -1,0 +1,52 @@
+<form id="teamsImportDialogForm" name="importForm" role="form" novalidate (ngSubmit)="save()" #editForm="ngForm">
+    <div class="modal-header">
+        <h4 class="modal-title">
+            <span [jhiTranslate]="'artemisApp.team.importTeams.label'">
+                Import teams
+            </span>
+            <span>({{ exercise.title }})</span>
+        </h4>
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true" (click)="clear()">&times;</button>
+    </div>
+    <div class="modal-body">
+        <jhi-alert-error></jhi-alert-error>
+        <jhi-alert></jhi-alert>
+        <div class="form-group">
+            <div class="d-flex align-items-end">
+                <div>
+                    <label class="label-narrow" jhiTranslate="artemisApp.team.sourceExercise.label">Tutor</label>
+                    <jhi-help-icon placement="right" text="artemisApp.team.sourceExercise.tooltip" class="mr-1"></jhi-help-icon>
+                </div>
+                <fa-icon class="search-searching" [icon]="'spinner'" [spin]="true" *ngIf="searchingExercises"></fa-icon>
+                <span *ngIf="searchingExercisesQueryTooShort" class="search-error-message text-danger" jhiTranslate="artemisApp.team.exerciseSearch.queryTooShort">
+                    Please enter at least 3 characters.
+                </span>
+                <span *ngIf="searchingExercisesNoResultsForQuery" class="search-error-message text-danger">
+                    <span jhiTranslate="artemisApp.team.exerciseSearch.noResults">No exercise found in course for search:</span>
+                    <strong>{{ searchingExercisesNoResultsForQuery }}</strong>
+                </span>
+                <span *ngIf="searchingExercisesFailed" class="search-error-message text-danger" jhiTranslate="artemisApp.team.exerciseSearch.failed">
+                    Search failed. Please try again.
+                </span>
+            </div>
+            <jhi-team-exercise-search
+                id="teamExercises"
+                [course]="exercise.course"
+                (selectExercise)="onSelectSourceExercise($event)"
+                (searching)="searchingExercises = $event"
+                (searchQueryTooShort)="searchingExercisesQueryTooShort = $event"
+                (searchNoResults)="searchingExercisesNoResultsForQuery = $event"
+                (searchFailed)="searchingExercisesFailed = $event"
+            >
+            </jhi-team-exercise-search>
+        </div>
+    </div>
+    <div class="modal-footer">
+        <button type="button" class="btn btn-default cancel" data-dismiss="modal" (click)="clear()">
+            <fa-icon [icon]="'ban'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
+        </button>
+        <button type="submit" [disabled]="editForm.invalid || isImporting" class="btn btn-warning">
+            <fa-icon [icon]="'upload'" class="mr-2"></fa-icon><span jhiTranslate="entity.action.import">Import</span>
+        </button>
+    </div>
+</form>

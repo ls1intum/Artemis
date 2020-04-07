@@ -68,6 +68,20 @@
                 "label": "Löschen",
                 "error": "Das Team konnte nicht entfernt werden. Bitte versuche es nochmal."
             },
+            "importTeams": {
+                "label": "Teams importieren",
+                "error": "Teams konnten nicht importiert werden. Bitte versuche es nochmal."
+            },
+            "sourceExercise": {
+                "label": "Quell-Übung",
+                "tooltip": "Die Teams der ausgewählten Quell-Übung werden in diese Ziel-Übung kopiert."
+            },
+            "selectExerciseForImport": "Übung auswählen (nach Titel suchen)",
+            "exerciseSearch": {
+                "queryTooShort": "Bitte mindestens 3 Zeichen eingeben.",
+                "failed": "Suche fehlgeschlagen. Bitte nochmal versuchen.",
+                "noResults": "Keine Übung im Kurs gefunden für Suche:"
+            },
             "errors": {
                 "studentAlreadyAssignedToTeam": "Student mit Login {{ studentLogin }} ist bereits in Team mit Id {{ teamId }."
             }

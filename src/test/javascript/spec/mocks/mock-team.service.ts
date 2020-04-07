@@ -87,6 +87,10 @@ export class MockTeamService implements ITeamService {
         return MockTeamService.response(mockTeamSearchUsers);
     }
 
+    importTeamsFromExercise(exercise: Exercise, sourceExercise: Exercise) {
+        return MockTeamService.response(mockTeams);
+    }
+
     // helper method
     private static response<T>(entity: T) {
         return of({ body: entity }) as Observable<HttpResponse<T>>;

@@ -88,6 +88,15 @@ export class TeamsComponent implements OnInit, OnDestroy {
     }
 
     /**
+     * Called when teams were imported from another team exercise
+     *
+     * @param teams Teams that were imported
+     */
+    onTeamsImport(teams: Team[]) {
+        this.loadAll();
+    }
+
+    /**
      * Update the number of filtered teams
      *
      * @param filteredTeamsSize Total number of teams after filters have been applied

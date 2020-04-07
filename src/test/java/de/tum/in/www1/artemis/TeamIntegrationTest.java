@@ -67,7 +67,7 @@ public class TeamIntegrationTest extends AbstractSpringIntegrationTest {
     }
 
     private String resourceUrlExistsTeamByShortName(String shortName) {
-        return "/api/teams?shortName=" + shortName;
+        return resourceUrl() + "/exists?shortName=" + shortName;
     }
 
     private String resourceUrlSearchUsersInCourse(String loginOrName) {
