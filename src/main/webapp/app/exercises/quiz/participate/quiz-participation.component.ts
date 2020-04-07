@@ -115,7 +115,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
         private participationWebsocketService: ParticipationWebsocketService,
         private route: ActivatedRoute,
         private jhiAlertService: AlertService,
-        private quizSubmissionService: QuizParticipationService,
+        private quizParticipationService: QuizParticipationService,
         private translateService: TranslateService,
         private deviceService: DeviceDetectorService,
     ) {
@@ -214,7 +214,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
         // load the quiz (and existing submission if quiz has started)
         this.participationService.findParticipation(this.quizId).subscribe(
             (response: HttpResponse<StudentParticipation>) => {
-                this.applyParticipationFull(response.body!);
+                this.updateParticipationFromServer(response.body!);
             },
             (res: HttpErrorResponse) => this.onError(res),
         );
@@ -322,7 +322,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
         }
 
         if (!this.participationChannel) {
-            this.participationChannel = '/user/topic/quizExercise/' + this.quizId + '/participation';
+            this.participationChannel = '/user/topic/exercise/' + this.quizId + '/participation';
             // TODO: subscribe for new results instead if this is what we are actually interested in
             // participation channel => react to new results
             this.jhiWebsocketService.subscribe(this.participationChannel);
@@ -330,10 +330,10 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
                 if (changedParticipation && this.quizExercise && changedParticipation.exercise.id === this.quizExercise.id) {
                     if (this.waitingForQuizStart) {
                         // only apply completely if quiz hasn't started to prevent jumping ui during participation
-                        this.applyParticipationFull(changedParticipation);
+                        this.updateParticipationFromServer(changedParticipation);
                     } else {
                         // update quizExercise and results / submission
-                        this.applyParticipationAfterQuizEnd(changedParticipation);
+                        this.showQuizResultAfterQuizEnd(changedParticipation);
                     }
                 }
             });
@@ -570,7 +570,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
     /**
      * Apply the data of the participation, replacing all old data
      */
-    applyParticipationFull(participation: StudentParticipation) {
+    updateParticipationFromServer(participation: StudentParticipation) {
         this.applyQuizFull(participation.exercise as QuizExercise);
 
         // apply submission if it exists
@@ -644,7 +644,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
     /*
      * This method only handles the update of the quiz after the quiz has ended
      */
-    applyParticipationAfterQuizEnd(participation: StudentParticipation) {
+    showQuizResultAfterQuizEnd(participation: StudentParticipation) {
         const quizExercise = participation.exercise as QuizExercise;
         if (participation.results.length && participation.results[0].resultString && quizExercise.ended) {
             // quiz has ended and results are available
@@ -901,7 +901,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
             switch (this.mode) {
                 case 'practice':
                     if (!this.submission.id) {
-                        this.quizSubmissionService.submitForPractice(this.submission, this.quizId).subscribe(
+                        this.quizParticipationService.submitForPractice(this.submission, this.quizId).subscribe(
                             (response: HttpResponse<Result>) => {
                                 this.onSubmitPracticeOrPreviewSuccess(response.body!);
                             },
@@ -911,7 +911,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
                     break;
                 case 'preview':
                     if (!this.submission.id) {
-                        this.quizSubmissionService.submitForPreview(this.submission, this.quizId).subscribe(
+                        this.quizParticipationService.submitForPreview(this.submission, this.quizId).subscribe(
                             (response: HttpResponse<Result>) => {
                                 this.onSubmitPracticeOrPreviewSuccess(response.body!);
                             },
