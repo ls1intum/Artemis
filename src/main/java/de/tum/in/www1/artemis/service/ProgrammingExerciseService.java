@@ -165,8 +165,13 @@ public class ProgrammingExerciseService {
         return programmingExercise;
     }
 
+    /**
+     * Setups the context of a new programming exercise.
+     * @param programmingExercise the exercise which should be stored in the database
+     * @return returns the modified and stored programming exercise
+     */
     @Transactional
-    public ProgrammingExercise setupProgrammingExerciseWithoutLocalSetup(ProgrammingExercise programmingExercise) throws InterruptedException, GitAPIException, IOException {
+    public ProgrammingExercise setupProgrammingExerciseWithoutLocalSetup(ProgrammingExercise programmingExercise) {
         programmingExercise.generateAndSetProjectKey();
         final var projectKey = programmingExercise.getProjectKey();
         // TODO: the following code is used quite often and should be done in only one place
@@ -193,7 +198,7 @@ public class ProgrammingExerciseService {
     /**
      * This method creates the initial submissions and results for the new exercise
      * These submissions and results are SIMULATIONS for the testing of programming exercises without local setup
-     * @param programmingExercise
+     * @param programmingExercise the new exercise
      */
     public void setupInitialSubmissionsAndResults(ProgrammingExercise programmingExercise) {
         Optional<TemplateProgrammingExerciseParticipation> templateProgrammingExerciseParticipation = this.templateProgrammingExerciseParticipationRepository
@@ -275,6 +280,13 @@ public class ProgrammingExerciseService {
 
     }
 
+    /**
+     * Sets the url and buildplan ids for the new exercise
+     * @param programmingExercise the new exercise
+     * @param exerciseRepoName the repo name of the new exercise
+     * @param testRepoName the test repo name of the new exercise
+     * @param solutionRepoName the solution repo name of the new exercise
+     */
     private void setURLsAndBuildPlanIDsForNewExerciseWithoutLocalSetup(ProgrammingExercise programmingExercise, String exerciseRepoName, String testRepoName,
             String solutionRepoName) {
         final var projectKey = programmingExercise.getProjectKey();

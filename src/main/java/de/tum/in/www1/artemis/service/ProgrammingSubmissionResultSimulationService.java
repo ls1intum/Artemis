@@ -50,6 +50,13 @@ public class ProgrammingSubmissionResultSimulationService {
         this.participationService = participationService;
     }
 
+    /**
+     * This method creates a new participation for the provided user
+     * @param programmingExercise the used programmingExercise
+     * @param participant the participant object of the user
+     * @param user the user who wants to particpate
+     * @return the newly created and stored participation
+     */
     public ProgrammingExerciseStudentParticipation createParticipation(ProgrammingExercise programmingExercise, Participant participant, User user) {
         ProgrammingExerciseStudentParticipation programmingExerciseStudentParticipation = new ProgrammingExerciseStudentParticipation();
         programmingExerciseStudentParticipation.setBuildPlanId(programmingExercise.getProjectKey() + "-" + user.getLogin());
@@ -63,6 +70,11 @@ public class ProgrammingSubmissionResultSimulationService {
         return programmingExerciseStudentParticipation;
     }
 
+    /**
+     * This method creates a new submission for the provided user
+     * @param exerciseID the exerciseId of the exercise for which a submission should be created
+     * @return the newly created and stored submission
+     */
     public ProgrammingSubmission createSubmission(Long exerciseID) {
         User user = userService.getUserWithGroupsAndAuthorities();
         Participant participant = user;
@@ -88,6 +100,11 @@ public class ProgrammingSubmissionResultSimulationService {
         return programmingSubmission;
     }
 
+    /**
+     *  This method creates a new result for the provided participation
+     * @param programmingExerciseStudentParticipation the participation for which the new result should be created
+     * @return the newly created and stored result
+     */
     public Result createResult(ProgrammingExerciseStudentParticipation programmingExerciseStudentParticipation) {
         Optional<ProgrammingSubmission> programmingSubmission = programmingSubmissionRepository
                 .findFirstByParticipationIdOrderBySubmissionDateDesc(programmingExerciseStudentParticipation.getId());
