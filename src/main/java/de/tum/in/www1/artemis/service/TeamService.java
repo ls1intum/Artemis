@@ -42,6 +42,7 @@ public class TeamService {
 
     /**
      * Finds the team of a given user for an exercise
+     *
      * @param exercise Exercise for which to find the team
      * @param user Student for which to find the team
      * @return found team (or empty if student has not been assigned to a team yet for the exercise)
@@ -52,6 +53,7 @@ public class TeamService {
 
     /**
      * Returns whether the student is already assigned to a team for a given exercise
+     *
      * @param exercise Exercise for which to check
      * @param user Student for which to check
      * @return boolean flag whether the student has been assigned already or not yet
@@ -65,6 +67,7 @@ public class TeamService {
 
     /**
      * Search for users by login or name in course
+     *
      * @param course Course in which to search students
      * @param exercise Exercise in which the student might be added to a team
      * @param loginOrName Login or name by which to search students
@@ -91,6 +94,7 @@ public class TeamService {
 
     /**
      * Update the members of a team repository if a participation exists already. Users might need to be removed or added.
+     *
      * @param exerciseId Id of the exercise to which the team belongs
      * @param existingTeam Old team before update
      * @param updatedTeam New team after update
@@ -114,6 +118,7 @@ public class TeamService {
 
     /**
      * Saves a team to the database (and verifies before that none of the students is already assigned to another team)
+     *
      * @param exercise Exercise which the team belongs to
      * @param team Team to be saved
      * @return saved Team
@@ -135,6 +140,7 @@ public class TeamService {
 
     /**
      * Checks for each student in the given team whether they already belong to a different team
+     *
      * @param exercise Exercise which the team belongs to
      * @param team Team whose students should be checked for conflicts with other teams
      * @return list of conflict pairs <student, team> where team is a different team than in the argument
@@ -148,5 +154,19 @@ public class TeamService {
             }
         });
         return conflicts;
+    }
+
+    /**
+     * Imports the teams from the source exercise into destination exercise
+     *
+     * @param sourceExercise Exercise from which to copy the existing teams
+     * @param destinationExercise Exercise in which to copy the teams from source exercise
+     * @return list of newly created teams in destination exercise
+     */
+    public List<Team> copyTeamsFromSourceExerciseIntoDestinationExercise(Exercise sourceExercise, Exercise destinationExercise) {
+        List<Team> sourceTeams = teamRepository.findAllByExerciseId(sourceExercise.getId());
+        List<Team> destinationTeams = sourceTeams.stream().map(Team::new).map(team -> team.exercise(destinationExercise)).collect(Collectors.toList());
+        destinationTeams = teamRepository.saveAll(destinationTeams);
+        return destinationTeams;
     }
 }

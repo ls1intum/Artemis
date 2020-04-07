@@ -7,6 +7,7 @@ import java.util.Objects;
 import java.util.Set;
 
 import javax.persistence.*;
+import javax.validation.constraints.NotNull;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
@@ -52,6 +53,22 @@ public class Team extends AbstractAuditingEntity implements Serializable, Partic
 
     @ManyToOne
     private User owner;
+
+    private Team() {
+    }
+
+    /**
+     * Copy constructor (generates a copy of team with no exercise assigned yet)
+     *
+     * @param team Team which to copy
+     */
+    public Team(@NotNull Team team) {
+        this.name = team.name;
+        this.shortName = team.shortName;
+        this.image = team.image;
+        this.students.addAll(team.students);
+        this.owner = team.owner;
+    }
 
     // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
     public Long getId() {

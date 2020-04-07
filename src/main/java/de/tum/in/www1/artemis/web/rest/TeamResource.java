@@ -276,4 +276,36 @@ public class TeamResource {
         Exercise exercise = exerciseService.findOne(exerciseId);
         return ResponseEntity.ok().body(teamService.searchByLoginOrNameInCourseForExerciseTeam(course, exercise, loginOrName));
     }
+
+    /**
+     * POST /exercises/:destinationExerciseId/teams/import-from-exercise/:sourceExerciseId : copy all teams from source exercise into destination exercise
+     *
+     * @param destinationExerciseId the exercise id of the exercise for which to import teams (= destination exercise)
+     * @param sourceExerciseId the exercise id of the exercise from which to copy the teams (= source exercise)
+     * @return the ResponseEntity with status 200 (OK) and the list of created teams in body
+     */
+    @PostMapping("/exercises/{destinationExerciseId}/teams/import-from-exercise/{sourceExerciseId}")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<List<Team>> getTeamsForExercise(@PathVariable long destinationExerciseId, @PathVariable long sourceExerciseId) {
+        log.debug("REST request import all Teams from source exercise with id {} into destination exercise with id {}", sourceExerciseId, destinationExerciseId);
+        User user = userService.getUserWithGroupsAndAuthorities();
+        Exercise destinationExercise = exerciseService.findOne(destinationExerciseId);
+        if (!authCheckService.isAtLeastInstructorForExercise(destinationExercise, user)) {
+            return forbidden();
+        }
+        if (destinationExerciseId == sourceExerciseId) {
+            throw new BadRequestAlertException("The source and destination exercise must be different.", ENTITY_NAME, "sourceDestinationExerciseNotDifferent");
+        }
+        if (!destinationExercise.isTeamMode()) {
+            throw new BadRequestAlertException("The destination exercise must be a team-based exercise.", ENTITY_NAME, "destinationExerciseNotTeamBased");
+        }
+        Exercise sourceExercise = exerciseService.findOne(sourceExerciseId);
+        if (!sourceExercise.isTeamMode()) {
+            throw new BadRequestAlertException("The source exercise must be a team-based exercise.", ENTITY_NAME, "sourceExerciseNotTeamBased");
+        }
+        List<Team> destinationTeams = teamService.copyTeamsFromSourceExerciseIntoDestinationExercise(sourceExercise, destinationExercise);
+        destinationTeams.forEach(Team::filterSensitiveInformation);
+        return ResponseEntity.ok().body(destinationTeams);
+    }
+
 }
