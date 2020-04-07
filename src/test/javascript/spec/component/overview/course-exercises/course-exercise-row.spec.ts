@@ -141,10 +141,11 @@ describe('CourseExerciseRowComponent', () => {
     it('Participation status of programming exercise should evaluate to INITIALIZED', () => {
         setupExercise(ExerciseType.PROGRAMMING, moment());
 
-        const studentParticipation = {
-            id: 1,
-            initializationState: InitializationState.INITIALIZED,
-        } as StudentParticipation;
+        const studentParticipation =
+            {
+                id: 1,
+                initializationState: InitializationState.INITIALIZED,
+            } as StudentParticipation;
         comp.exercise.studentParticipations = [studentParticipation];
 
         getAllParticipationsStub.returns(studentParticipation);
@@ -156,10 +157,11 @@ describe('CourseExerciseRowComponent', () => {
     it('Participation status of programming exercise should evaluate to INACTIVE', () => {
         setupExercise(ExerciseType.PROGRAMMING, moment());
 
-        const studentParticipation = {
-            id: 1,
-            initializationState: InitializationState.UNINITIALIZED,
-        } as StudentParticipation;
+        const studentParticipation =
+            {
+                id: 1,
+                initializationState: InitializationState.UNINITIALIZED,
+            } as StudentParticipation;
         comp.exercise.studentParticipations = [studentParticipation];
 
         getAllParticipationsStub.returns(of(studentParticipation));
@@ -177,20 +179,22 @@ describe('CourseExerciseRowComponent', () => {
         initializationState?: InitializationState,
         hasResults?: boolean,
     ) => {
-        comp.exercise = {
-            id: 1,
-            dueDate,
-            isPlannedToStart,
-            releaseDate,
-            type: ExerciseType.QUIZ,
-            visibleToStudents,
-        } as QuizExercise;
+        comp.exercise =
+            {
+                id: 1,
+                dueDate,
+                isPlannedToStart,
+                releaseDate,
+                type: ExerciseType.QUIZ,
+                visibleToStudents,
+            } as QuizExercise;
 
         if (hasParticipations) {
-            const studentParticipation = {
-                id: 1,
-                initializationState,
-            } as StudentParticipation;
+            const studentParticipation =
+                {
+                    id: 1,
+                    initializationState,
+                } as StudentParticipation;
 
             if (hasResults) {
                 studentParticipation.results = [{ id: 1 } as Result];
@@ -208,10 +212,11 @@ describe('CourseExerciseRowComponent', () => {
         const dueDate = inDueDate ? moment().add(3, 'days') : moment().subtract(3, 'days');
         setupExercise(exerciseType, dueDate);
 
-        const studentParticipation = {
-            id: 1,
-            initializationState,
-        } as StudentParticipation;
+        const studentParticipation =
+            {
+                id: 1,
+                initializationState,
+            } as StudentParticipation;
         comp.exercise.studentParticipations = [studentParticipation];
 
         getAllParticipationsStub.returns(studentParticipation);
@@ -219,10 +224,11 @@ describe('CourseExerciseRowComponent', () => {
     };
 
     const setupExercise = (exerciseType: ExerciseType, dueDate: moment.Moment) => {
-        comp.exercise = {
-            id: 1,
-            type: exerciseType,
-            dueDate,
-        } as Exercise;
+        comp.exercise =
+            {
+                id: 1,
+                type: exerciseType,
+                dueDate,
+            } as Exercise;
     };
 });
