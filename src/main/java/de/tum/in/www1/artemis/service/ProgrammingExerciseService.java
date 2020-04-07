@@ -171,6 +171,10 @@ public class ProgrammingExerciseService {
         giveCIProjectPermissions(programmingExercise);
     }
 
+    /**
+     *  This method connects the new programming exercise with the template and solution participation
+     * @param programmingExercise the new programming exercise
+     */
     public void connectBaseParticipationsToExerciseAndSave(ProgrammingExercise programmingExercise) {
         final var templateParticipation = programmingExercise.getTemplateParticipation();
         final var solutionParticipation = programmingExercise.getSolutionParticipation();
