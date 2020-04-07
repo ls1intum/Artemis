@@ -1,3 +1,81 @@
+@import 'src/main/webapp/content/scss/bootstrap-variables';
+
+$error-text-color: $danger;
+$error-bg-color: #f8d7da;
+
 :host {
     display: block;
+}
+
+.loading-spinner {
+    position: relative;
+    top: -2px;
+}
+
+.error-message {
+    position: relative;
+    top: -4.5px;
+    line-height: 1rem;
+    font-size: 0.8rem;
+    margin-left: 5px;
+}
+
+.list-group--teams {
+    max-height: calc(100vh - 555px);
+    overflow-y: auto;
+
+    .list-group-item-container {
+        position: relative;
+
+        &:nth-child(even) {
+            .list-group-item {
+                background-color: rgba(0, 0, 0, 0.05);
+
+                &.has-error {
+                    background-color: darken($error-bg-color, 8%);
+                }
+            }
+        }
+    }
+
+    .list-group-item-index {
+        min-width: 30px;
+        text-align: right;
+        margin-left: 0.5rem;
+        margin-right: 1rem;
+        font-size: 1.1rem;
+        font-weight: 500;
+    }
+
+    .list-group-item {
+        flex-grow: 1;
+        overflow-x: hidden;
+        padding: 0.3rem 1rem;
+
+        &.has-error {
+            background-color: $error-bg-color;
+        }
+    }
+}
+
+.team-name {
+    width: 135px;
+    margin-right: 15px;
+    flex-shrink: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.team-students {
+    flex-grow: 1;
+    overflow-x: auto;
+}
+
+.modal-footer {
+    justify-content: space-between;
+
+    button[disabled] {
+        cursor: not-allowed;
+    }
 }

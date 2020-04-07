@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, ViewChild } from '@angular/core';
+import { Component, Input, ViewChild } from '@angular/core';
 import { NgForm } from '@angular/forms';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
@@ -12,25 +12,44 @@ import { Exercise } from 'app/entities/exercise.model';
     templateUrl: './teams-import-dialog.component.html',
     styleUrls: ['./teams-import-dialog.component.scss'],
 })
-export class TeamsImportDialogComponent implements OnInit {
+export class TeamsImportDialogComponent {
     @ViewChild('importForm', { static: false }) importForm: NgForm;
 
     @Input() exercise: Exercise;
 
     sourceExercise: Exercise;
-    isImporting = false;
 
     searchingExercises = false;
     searchingExercisesQueryTooShort = false;
     searchingExercisesFailed = false;
     searchingExercisesNoResultsForQuery: string | null = null;
 
+    sourceTeams: Team[];
+    loadingSourceTeams = false;
+    loadingSourceTeamsFailed = false;
+
+    isImporting = false;
+
     constructor(private teamService: TeamService, private activeModal: NgbActiveModal) {}
 
-    ngOnInit(): void {}
+    loadSourceTeams(sourceExercise: Exercise) {
+        this.loadingSourceTeams = true;
+        this.loadingSourceTeamsFailed = false;
+        this.teamService.findAllByExerciseId(sourceExercise.id).subscribe(
+            (teamsResponse) => {
+                this.sourceTeams = teamsResponse.body!;
+                this.loadingSourceTeams = false;
+            },
+            () => {
+                this.loadingSourceTeams = false;
+                this.loadingSourceTeamsFailed = true;
+            },
+        );
+    }
 
     onSelectSourceExercise(exercise: Exercise) {
         this.sourceExercise = exercise;
+        this.loadSourceTeams(exercise);
     }
 
     clear() {

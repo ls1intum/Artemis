@@ -14,18 +14,18 @@
         <div class="form-group">
             <div class="d-flex align-items-end">
                 <div>
-                    <label class="label-narrow" jhiTranslate="artemisApp.team.sourceExercise.label">Tutor</label>
+                    <label class="label-narrow" jhiTranslate="artemisApp.team.sourceExercise.label">Source exercise</label>
                     <jhi-help-icon placement="right" text="artemisApp.team.sourceExercise.tooltip" class="mr-1"></jhi-help-icon>
                 </div>
-                <fa-icon class="search-searching" [icon]="'spinner'" [spin]="true" *ngIf="searchingExercises"></fa-icon>
-                <span *ngIf="searchingExercisesQueryTooShort" class="search-error-message text-danger" jhiTranslate="artemisApp.team.exerciseSearch.queryTooShort">
+                <fa-icon class="loading-spinner" [icon]="'spinner'" [spin]="true" *ngIf="searchingExercises"></fa-icon>
+                <span *ngIf="searchingExercisesQueryTooShort" class="error-message text-danger" jhiTranslate="artemisApp.team.exerciseSearch.queryTooShort">
                     Please enter at least 3 characters.
                 </span>
-                <span *ngIf="searchingExercisesNoResultsForQuery" class="search-error-message text-danger">
+                <span *ngIf="searchingExercisesNoResultsForQuery" class="error-message text-danger">
                     <span jhiTranslate="artemisApp.team.exerciseSearch.noResults">No exercise found in course for search:</span>
                     <strong>{{ searchingExercisesNoResultsForQuery }}</strong>
                 </span>
-                <span *ngIf="searchingExercisesFailed" class="search-error-message text-danger" jhiTranslate="artemisApp.team.exerciseSearch.failed">
+                <span *ngIf="searchingExercisesFailed" class="error-message text-danger" jhiTranslate="artemisApp.team.exerciseSearch.failed">
                     Search failed. Please try again.
                 </span>
             </div>
@@ -41,13 +41,54 @@
             >
             </jhi-team-exercise-search>
         </div>
+        <div class="form-group">
+            <div class="d-flex align-items-end">
+                <div>
+                    <label class="label-narrow" jhiTranslate="artemisApp.team.sourceTeams.label">Source teams</label>
+                    <jhi-help-icon placement="right" text="artemisApp.team.sourceTeams.tooltip" class="mr-1"></jhi-help-icon>
+                </div>
+                <fa-icon class="loading-spinner" [icon]="'spinner'" [spin]="true" *ngIf="loadingSourceTeams"></fa-icon>
+                <span *ngIf="loadingSourceTeamsFailed" class="error-message text-danger" jhiTranslate="artemisApp.team.loadSourceTeams.failed">
+                    Loading teams failed. Please try again.
+                </span>
+            </div>
+            <div>
+                <ul class="list-group list-group--teams my-1">
+                    <li *ngFor="let team of sourceTeams; index as i" class="list-group-item-container d-flex align-items-center">
+                        <div class="list-group-item-index">
+                            {{ i + 1 }}
+                        </div>
+                        <div class="list-group-item d-flex align-items-center">
+                            <div class="team-name">{{ team.shortName }}</div>
+                            <jhi-team-students-list class="team-students" [students]="team.students"></jhi-team-students-list>
+                        </div>
+                    </li>
+                    <li *ngIf="!sourceTeams || sourceTeams.length === 0" class="list-group-item-container d-flex align-items-center" [class.has-error]="sourceTeams.length === 0">
+                        <div class="list-group-item-index text-muted">1</div>
+                        <div class="list-group-item d-flex align-items-center py-2">
+                            <span *ngIf="!sourceTeams" class="text-muted" jhiTranslate="artemisApp.team.selectSourceExerciseFirst">
+                                Please select a source exercise first.
+                            </span>
+                            <span *ngIf="sourceTeams?.length === 0" jhiTranslate="artemisApp.team.noTeamsInSourceExercise">
+                                The source exercise has no teams.
+                            </span>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+        </div>
     </div>
     <div class="modal-footer">
-        <button type="button" class="btn btn-default cancel" data-dismiss="modal" (click)="clear()">
-            <fa-icon [icon]="'ban'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
-        </button>
-        <button type="submit" [disabled]="editForm.invalid || isImporting" class="btn btn-warning">
-            <fa-icon [icon]="'upload'" class="mr-2"></fa-icon><span jhiTranslate="entity.action.import">Import</span>
-        </button>
+        <div *ngIf="sourceTeams?.length > 0" class="flex-shrink-0 mr-2"><strong>Total teams to be imported:</strong> {{ sourceTeams.length }}</div>
+        <div class="flex-grow-1 d-flex justify-content-end">
+            <button type="button" class="btn btn-default cancel" data-dismiss="modal" (click)="clear()">
+                <fa-icon [icon]="'ban'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
+            </button>
+            <button type="submit" [disabled]="editForm.invalid || isImporting || !sourceExercise || !sourceTeams || sourceTeams.length === 0" class="btn btn-warning">
+                <fa-icon [icon]="'upload'" class="mr-2"></fa-icon>
+                <span jhiTranslate="entity.action.import">Import</span>
+                <fa-icon class="ml-1" [hidden]="!isImporting" [spin]="true" [icon]="'circle-notch'"></fa-icon>
+            </button>
+        </div>
     </div>
 </form>

@@ -82,6 +82,15 @@
                 "failed": "Search failed. Please try again.",
                 "noResults": "No exercise found in course for search:"
             },
+            "sourceTeams": {
+                "label": "Source teams",
+                "tooltip": "These teams will be copied into the current exercise."
+            },
+            "loadSourceTeams": {
+                "failed": "Loading teams failed. Please try again."
+            },
+            "selectSourceExerciseFirst": "Please select a source exercise first.",
+            "noTeamsInSourceExercise": "The source exercise has no teams.",
             "errors": {
                 "studentAlreadyAssignedToTeam": "Student with login {{ studentLogin }} is already assigned to team with id {{ teamId }."
             }

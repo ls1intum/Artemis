@@ -82,6 +82,15 @@
                 "failed": "Suche fehlgeschlagen. Bitte nochmal versuchen.",
                 "noResults": "Keine Übung im Kurs gefunden für Suche:"
             },
+            "sourceTeams": {
+                "label": "Quell-Teams",
+                "tooltip": "Diese Teams werden in die aktuelle Übung kopiert."
+            },
+            "loadSourceTeams": {
+                "failed": "Teams konnten nicht geladen werden. Bitte versuche es nochmal."
+            },
+            "selectSourceExerciseFirst": "Bitte wähle zuerst eine Quell-Übung aus.",
+            "noTeamsInSourceExercise": "Die Quell-Übung hat keine Teams.",
             "errors": {
                 "studentAlreadyAssignedToTeam": "Student mit Login {{ studentLogin }} ist bereits in Team mit Id {{ teamId }."
             }
