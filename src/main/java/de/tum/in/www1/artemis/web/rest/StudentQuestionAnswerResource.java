@@ -105,7 +105,7 @@ public class StudentQuestionAnswerResource {
         if (optionalStudentQuestionAnswer.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
-        if (mayUpdateOrDeleteStudentQuestionAnswer(studentQuestionAnswer, user)) {
+        if (mayUpdateOrDeleteStudentQuestionAnswer(optionalStudentQuestionAnswer.get(), user)) {
             StudentQuestionAnswer result = studentQuestionAnswerRepository.save(studentQuestionAnswer);
             return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, studentQuestionAnswer.getId().toString())).body(result);
         }
@@ -174,14 +174,9 @@ public class StudentQuestionAnswerResource {
      * @return Boolean if StudenQuestionAnswer can updated or deleted
      */
     private boolean mayUpdateOrDeleteStudentQuestionAnswer(StudentQuestionAnswer studentQuestionAnswer, User user) {
-        if (studentQuestionAnswer.getQuestion().getCourse() == null) {
-            return false;
-        }
-        else {
-            Course course = studentQuestionAnswer.getQuestion().getCourse();
-            Boolean hasCourseTAAccess = authorizationCheckService.isAtLeastTeachingAssistantInCourse(course, user);
-            Boolean isUserAuthor = user.getId().equals(studentQuestionAnswer.getAuthor().getId());
-            return hasCourseTAAccess || isUserAuthor;
-        }
+        Course course = studentQuestionAnswer.getQuestion().getCourse();
+        Boolean hasCourseTAAccess = authorizationCheckService.isAtLeastTeachingAssistantInCourse(course, user);
+        Boolean isUserAuthor = user.getId().equals(studentQuestionAnswer.getAuthor().getId());
+        return hasCourseTAAccess || isUserAuthor;
     }
 }
