@@ -127,12 +127,18 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
         }, 3000);
     }
 
+    /**
+     * triggers the simulation of a participation and submission for the currently logged in user
+     */
     simulateSubmission() {
         this.courseExerciseService.simulateSubmission(this.exercise.id).subscribe(() => {
             this.jhiAlertService.success('artemisApp.exercise.submissionSuccessful');
         });
     }
 
+    /**
+     * triggers the simulation of a result for the currently logged in user
+     */
     simulateResult() {
         this.courseExerciseService.simulateResult(this.exercise.id).subscribe(() => {
             this.jhiAlertService.success('artemisApp.exercise.resultCreationSuccessful');
