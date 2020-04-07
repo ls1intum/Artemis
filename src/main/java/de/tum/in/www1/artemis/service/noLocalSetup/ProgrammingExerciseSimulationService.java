@@ -1,0 +1,159 @@
+package de.tum.in.www1.artemis.service.noLocalSetup;
+
+import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.SOLUTION;
+import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.TEMPLATE;
+
+import java.util.Optional;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
+import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
+import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
+import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
+import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.domain.participation.TemplateProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.service.GroupNotificationService;
+import de.tum.in.www1.artemis.service.ProgrammingExerciseService;
+import de.tum.in.www1.artemis.service.scheduled.ProgrammingExerciseScheduleService;
+
+@Service
+public class ProgrammingExerciseSimulationService {
+
+    private final ProgrammingExerciseRepository programmingExerciseRepository;
+
+    private final ProgrammingExerciseScheduleService programmingExerciseScheduleService;
+
+    private final GroupNotificationService groupNotificationService;
+
+    private final ProgrammingExerciseService programmingExerciseService;
+
+    private final TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository;
+
+    private final SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository;
+
+    private final ProgrammingSubmissionRepository programmingSubmissionRepository;
+
+    private final ResultRepository resultRepository;
+
+    public ProgrammingExerciseSimulationService(ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingExerciseScheduleService programmingExerciseScheduleService,
+            GroupNotificationService groupNotificationService, ProgrammingExerciseService programmingExerciseService,
+            TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
+            SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, ProgrammingSubmissionRepository programmingSubmissionRepository,
+            ResultRepository resultRepository) {
+        this.programmingExerciseRepository = programmingExerciseRepository;
+        this.programmingExerciseScheduleService = programmingExerciseScheduleService;
+        this.groupNotificationService = groupNotificationService;
+        this.programmingExerciseService = programmingExerciseService;
+        this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
+        this.solutionProgrammingExerciseParticipationRepository = solutionProgrammingExerciseParticipationRepository;
+        this.programmingSubmissionRepository = programmingSubmissionRepository;
+        this.resultRepository = resultRepository;
+    }
+
+    /**
+     * Setups the context of a new programming exercise.
+     * @param programmingExercise the exercise which should be stored in the database
+     * @return returns the modified and stored programming exercise
+     */
+    @Transactional
+    public ProgrammingExercise setupProgrammingExerciseWithoutLocalSetup(ProgrammingExercise programmingExercise) {
+        programmingExercise.generateAndSetProjectKey();
+        final var projectKey = programmingExercise.getProjectKey();
+        // TODO: the following code is used quite often and should be done in only one place
+        final var exerciseRepoName = projectKey.toLowerCase() + "-" + RepositoryType.TEMPLATE.getName();
+        final var testRepoName = projectKey.toLowerCase() + "-" + RepositoryType.TESTS.getName();
+        final var solutionRepoName = projectKey.toLowerCase() + "-" + RepositoryType.SOLUTION.getName();
+
+        programmingExerciseService.initParticipations(programmingExercise);
+        setURLsAndBuildPlanIDsForNewExerciseWithoutLocalSetup(programmingExercise, exerciseRepoName, testRepoName, solutionRepoName);
+        // Save participations to get the ids required for the webhooks
+        programmingExerciseService.connectBaseParticipationsToExerciseAndSave(programmingExercise);
+
+        // save to get the id required for the webhook
+        programmingExercise = programmingExerciseRepository.save(programmingExercise);
+
+        // The creation of the webhooks must occur after the initial push, because the participation is
+        // not yet saved in the database, so we cannot save the submission accordingly (see ProgrammingSubmissionService.notifyPush)
+        programmingExerciseScheduleService.scheduleExerciseIfRequired(programmingExercise);
+        groupNotificationService.notifyTutorGroupAboutExerciseCreated(programmingExercise);
+
+        return programmingExercise;
+    }
+
+    /**
+     * Sets the url and buildplan ids for the new exercise
+     * @param programmingExercise the new exercise
+     * @param exerciseRepoName the repo name of the new exercise
+     * @param testRepoName the test repo name of the new exercise
+     * @param solutionRepoName the solution repo name of the new exercise
+     */
+    private void setURLsAndBuildPlanIDsForNewExerciseWithoutLocalSetup(ProgrammingExercise programmingExercise, String exerciseRepoName, String testRepoName,
+            String solutionRepoName) {
+        final var projectKey = programmingExercise.getProjectKey();
+        final var templateParticipation = programmingExercise.getTemplateParticipation();
+        final var solutionParticipation = programmingExercise.getSolutionParticipation();
+        final var templatePlanName = TEMPLATE.getName();
+        final var solutionPlanName = SOLUTION.getName();
+        final var exerciseRepoUrl = "http://localhost:7990/scm/" + projectKey + "/" + exerciseRepoName + ".git";
+        final var testsRepoUrl = "http://localhost:7990/scm/" + projectKey + "/" + testRepoName + ".git";
+        final var solutionRepoUrl = "http://localhost:7990/scm/" + projectKey + "/" + solutionRepoName + ".git";
+        templateParticipation.setBuildPlanId(projectKey + "-" + templatePlanName);
+        templateParticipation.setRepositoryUrl(exerciseRepoUrl);
+        solutionParticipation.setBuildPlanId(projectKey + "-" + solutionPlanName);
+        solutionParticipation.setRepositoryUrl(solutionRepoUrl);
+        programmingExercise.setTestRepositoryUrl(testsRepoUrl);
+    }
+
+    /**
+     * This method creates the template and solution submissions and results for the new exercise
+     * These submissions and results are SIMULATIONS for the testing of programming exercises without local setup
+     * @param programmingExercise the new exercise
+     */
+    public void setupInitialSubmissionsAndResults(ProgrammingExercise programmingExercise) {
+        Optional<TemplateProgrammingExerciseParticipation> templateProgrammingExerciseParticipation = this.templateProgrammingExerciseParticipationRepository
+                .findByProgrammingExerciseId(programmingExercise.getId());
+        Optional<SolutionProgrammingExerciseParticipation> solutionProgrammingExerciseParticipation = this.solutionProgrammingExerciseParticipationRepository
+                .findByProgrammingExerciseId(programmingExercise.getId());
+        String commitHashBase = "abcdef01";
+        ProgrammingSubmission programmingSubmissionBase = new ProgrammingSubmission();
+        programmingSubmissionBase.setParticipation(templateProgrammingExerciseParticipation.get());
+        programmingSubmissionBase.setSubmitted(true);
+        programmingSubmissionBase.setType(SubmissionType.OTHER);
+        programmingSubmissionBase.setCommitHash(commitHashBase);
+        programmingSubmissionBase.setSubmissionDate(templateProgrammingExerciseParticipation.get().getInitializationDate());
+        programmingSubmissionRepository.save(programmingSubmissionBase);
+        Result resultBase = new Result();
+        resultBase.setParticipation(templateProgrammingExerciseParticipation.get());
+        resultBase.setSubmission(programmingSubmissionBase);
+        resultBase.setRated(true);
+        resultBase.resultString("13 of 13 failed");
+        resultBase.setAssessmentType(AssessmentType.AUTOMATIC);
+        resultBase.score(0L);
+        resultBase.setCompletionDate(templateProgrammingExerciseParticipation.get().getInitializationDate());
+        resultRepository.save(resultBase);
+
+        ProgrammingSubmission programmingSubmissionSolution = new ProgrammingSubmission();
+        String commitHashSolution = "abcdef23";
+        programmingSubmissionSolution.setParticipation(solutionProgrammingExerciseParticipation.get());
+        programmingSubmissionSolution.setSubmitted(true);
+        programmingSubmissionSolution.setType(SubmissionType.OTHER);
+        programmingSubmissionSolution.setCommitHash(commitHashSolution);
+        programmingSubmissionSolution.setSubmissionDate(solutionProgrammingExerciseParticipation.get().getInitializationDate());
+        programmingSubmissionRepository.save(programmingSubmissionSolution);
+        Result resultSolution = new Result();
+        resultSolution.setParticipation(solutionProgrammingExerciseParticipation.get());
+        resultSolution.setSubmission(programmingSubmissionSolution);
+        resultSolution.setRated(true);
+        resultSolution.resultString("13 of 13 passed");
+        resultSolution.score(100L);
+        resultSolution.setAssessmentType(AssessmentType.AUTOMATIC);
+        resultSolution.setCompletionDate(solutionProgrammingExerciseParticipation.get().getInitializationDate());
+        resultRepository.save(resultSolution);
+    }
+
+}
