@@ -32,16 +32,18 @@ describe('ProgrammingExerciseTestCaseService', () => {
     const exercise1 = { id: 1 };
     const exercise2 = { id: 2 };
 
-    const testCases1 = [
-        { testName: 'testBubbleSort', active: true },
-        { testName: 'testMergeSort', active: true },
-        { testName: 'otherTest', active: false },
-    ] as ProgrammingExerciseTestCase[];
-    const testCases2 = [
-        { testName: 'testBubbleSort', active: false },
-        { testName: 'testMergeSort', active: true },
-        { testName: 'otherTest', active: true },
-    ] as ProgrammingExerciseTestCase[];
+    const testCases1 =
+        [
+            { testName: 'testBubbleSort', active: true },
+            { testName: 'testMergeSort', active: true },
+            { testName: 'otherTest', active: false },
+        ] as ProgrammingExerciseTestCase[];
+    const testCases2 =
+        [
+            { testName: 'testBubbleSort', active: false },
+            { testName: 'testMergeSort', active: true },
+            { testName: 'otherTest', active: true },
+        ] as ProgrammingExerciseTestCase[];
 
     const exercise1Topic = `/topic/programming-exercise/${exercise1.id}/test-cases`;
     const exercise2Topic = `/topic/programming-exercise/${exercise2.id}/test-cases`;

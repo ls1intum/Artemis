@@ -9,7 +9,7 @@ services:
     command: sh -c "./gradlew buildJarForDocker && java -jar build/libs/Artemis-*.jar"
     depends_on:
       - artemis-mysql
-    image: openjdk:12-jdk-alpine
+    image: openjdk:14-jdk-alpine
     environment:
       - SPRING_DATASOURCE_URL=jdbc:mysql://artemis-mysql:3306/Artemis?createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true&useUnicode=true&characterEncoding=utf8&useSSL=false&useLegacyDatetimeCode=false&serverTimezone=UTC
       - SPRING_PROFILES_ACTIVE=dev,bamboo,bitbucket,jira,artemis
@@ -25,7 +25,7 @@ services:
     command: sh -c "yarn install && yarn start-docker"
     depends_on:
       - artemis-server
-    image: node:12.8.0-alpine
+    image: node:13.12.0-alpine
     networks:
       - artemis
     ports:
@@ -40,7 +40,7 @@ services:
       - MYSQL_USER=root
       - MYSQL_ALLOW_EMPTY_PASSWORD=yes
       - MYSQL_DATABASE=Artemis
-    image: mysql:8.0.17
+    image: mysql:8.0.19
     networks:
       - artemis
     ports:

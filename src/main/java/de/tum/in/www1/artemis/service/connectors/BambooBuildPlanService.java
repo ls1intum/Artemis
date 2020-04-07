@@ -22,6 +22,7 @@ import org.springframework.stereotype.Service;
 import com.atlassian.bamboo.specs.api.builders.AtlassianModule;
 import com.atlassian.bamboo.specs.api.builders.BambooKey;
 import com.atlassian.bamboo.specs.api.builders.applink.ApplicationLink;
+import com.atlassian.bamboo.specs.api.builders.docker.DockerConfiguration;
 import com.atlassian.bamboo.specs.api.builders.notification.AnyNotificationRecipient;
 import com.atlassian.bamboo.specs.api.builders.notification.Notification;
 import com.atlassian.bamboo.specs.api.builders.permission.PermissionType;
@@ -116,19 +117,20 @@ public class BambooBuildPlanService {
 
         switch (programmingLanguage) {
         case JAVA: {
+            defaultJob.dockerConfiguration(new DockerConfiguration().image("ls1tum/artemis-maven-template"));
             if (!sequentialBuildRuns) {
                 return defaultStage
-                        .jobs(defaultJob.tasks(checkoutTask, new MavenTask().goal("clean test").jdk("JDK 12").executableLabel("Maven 3").description("Tests").hasTests(true)));
+                        .jobs(defaultJob.tasks(checkoutTask, new MavenTask().goal("clean test").jdk("JDK").executableLabel("Maven 3").description("Tests").hasTests(true)));
             }
             else {
                 return defaultStage.jobs(defaultJob.tasks(checkoutTask,
-                        new MavenTask().goal("clean test").workingSubdirectory("structural").jdk("JDK 12").executableLabel("Maven 3").description("Structural tests")
-                                .hasTests(true),
-                        new MavenTask().goal("clean test").workingSubdirectory("behavior").jdk("JDK 12").executableLabel("Maven 3").description("Behavior tests").hasTests(true)));
+                        new MavenTask().goal("clean test").workingSubdirectory("structural").jdk("JDK").executableLabel("Maven 3").description("Structural tests").hasTests(true),
+                        new MavenTask().goal("clean test").workingSubdirectory("behavior").jdk("JDK").executableLabel("Maven 3").description("Behavior tests").hasTests(true)));
             }
         }
         case PYTHON:
         case C: {
+            defaultJob.dockerConfiguration(new DockerConfiguration().image("com8/artemis-gbs:latest"));
             final var testParserTask = new TestParserTask(TestParserTaskProperties.TestType.JUNIT).resultDirectories("test-reports/*results.xml");
             var tasks = readScriptTasksFromTemplate(programmingLanguage, sequentialBuildRuns == null ? false : sequentialBuildRuns);
             tasks.add(0, checkoutTask);
