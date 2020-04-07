@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.web.rest.noLocalSetup;
+package de.tum.in.www1.artemis.web.rest;
 
 import static de.tum.in.www1.artemis.config.Constants.SHORT_NAME_PATTERN;
 import static de.tum.in.www1.artemis.config.Constants.TITLE_NAME_PATTERN;
@@ -28,11 +28,10 @@ import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.CourseService;
+import de.tum.in.www1.artemis.service.ProgrammingExerciseSimulationService;
 import de.tum.in.www1.artemis.service.UserService;
 import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
-import de.tum.in.www1.artemis.service.noLocalSetup.ProgrammingExerciseSimulationService;
-import de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResource;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
 @RestController

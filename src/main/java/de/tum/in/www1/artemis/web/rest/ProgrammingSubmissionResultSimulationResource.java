@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.web.rest.noLocalSetup;
+package de.tum.in.www1.artemis.web.rest;
 
 import java.util.Optional;
 
@@ -12,8 +12,7 @@ import org.springframework.web.bind.annotation.*;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.participation.*;
 import de.tum.in.www1.artemis.service.*;
-import de.tum.in.www1.artemis.service.noLocalSetup.ProgrammingSubmissionResultSimulationService;
-import de.tum.in.www1.artemis.web.rest.ProgrammingSubmissionResource;
+import de.tum.in.www1.artemis.service.ProgrammingSubmissionResultSimulationService;
 
 @RestController
 @RequestMapping("/api")
