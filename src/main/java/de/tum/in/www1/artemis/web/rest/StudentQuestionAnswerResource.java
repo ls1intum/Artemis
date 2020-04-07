@@ -166,10 +166,22 @@ public class StudentQuestionAnswerResource {
         }
     }
 
+    /**
+     * Check if user can update or delete StudentQuestionAnswer
+     *
+     * @param studentQuestionAnswer studentQuestionAnswer for which to check
+     * @param user user for which to check
+     * @return Boolean if StudenQuestionAnswer can updated or deleted
+     */
     private boolean mayUpdateOrDeleteStudentQuestionAnswer(StudentQuestionAnswer studentQuestionAnswer, User user) {
-        Course course = studentQuestionAnswer.getQuestion().getCourse();
-        Boolean hasCourseTAAccess = authorizationCheckService.isAtLeastTeachingAssistantInCourse(course, user);
-        Boolean isUserAuthor = user.getId().equals(studentQuestionAnswer.getAuthor().getId());
-        return hasCourseTAAccess || isUserAuthor;
+        if (studentQuestionAnswer.getQuestion().getCourse() == null) {
+            return false;
+        }
+        else {
+            Course course = studentQuestionAnswer.getQuestion().getCourse();
+            Boolean hasCourseTAAccess = authorizationCheckService.isAtLeastTeachingAssistantInCourse(course, user);
+            Boolean isUserAuthor = user.getId().equals(studentQuestionAnswer.getAuthor().getId());
+            return hasCourseTAAccess || isUserAuthor;
+        }
     }
 }
