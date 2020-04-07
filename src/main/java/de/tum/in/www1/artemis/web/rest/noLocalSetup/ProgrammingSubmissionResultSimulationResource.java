@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.*;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.participation.*;
 import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.service.noLocalSetup.ProgrammingSubmissionResultSimulationService;
 import de.tum.in.www1.artemis.web.rest.ProgrammingSubmissionResource;
 
 @RestController
