@@ -36,7 +36,7 @@ export class TeamStudentsOnlineListComponent implements OnInit, OnDestroy {
             });
             setTimeout(() => {
                 this.jhiWebsocketService.send(this.buildWebsocketTopic('/trigger'), {});
-            }, 1000);
+            }, 700);
         });
     }
 
