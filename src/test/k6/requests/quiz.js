@@ -1,6 +1,6 @@
-import { PARTICIPATION } from "./endpoints.js";
-import { fail, sleep } from 'k6';
-import { nextWSSubscriptionId, randomArrayValue } from "../util/utils.js";
+import {PARTICIPATION} from "./endpoints.js";
+import {fail, sleep} from 'k6';
+import {nextWSSubscriptionId, randomArrayValue} from "../util/utils.js";
 
 export function getQuizQuestions(artemis, courseId, exerciseId) {
     const res = artemis.get(PARTICIPATION(exerciseId));
@@ -18,20 +18,24 @@ export function simulateQuizWork(artemis, exerciseId, questions, timeout) {
         }
 
         function submitRandomAnswer() {
-            const randAnswer = randomArrayValue(questions[0].answerOptions);
             const answer = {
                 submissionExerciseType: 'quiz',
                 submitted: false,
-                submittedAnswers: [{
-                    type: questions[0].type,
-                    quizQuestions: questions[0],
-                    selectedOptions: [randAnswer]
-                }]
+                submittedAnswers: questions.map(q => generateAnswer(q))
             };
             const answerString = JSON.stringify(answer);
             const wsMessage = `SEND\ndestination:/topic/quizExercise/${exerciseId}/submission\ncontent-length:${answerString.length}\n\n${answerString}\u0000`;
 
             socket.send(wsMessage);
+        }
+
+        function generateAnswer(question) {
+            const randAnswer = randomArrayValue(question.answerOptions);
+            return {
+                type: question.type,
+                quizQuestion: question,
+                selectedOptions: [randAnswer]
+            };
         }
 
         // Subscribe to callback response from server (response after submitted answer
