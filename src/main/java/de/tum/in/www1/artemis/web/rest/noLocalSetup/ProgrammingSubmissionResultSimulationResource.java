@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.web.rest;
+package de.tum.in.www1.artemis.web.rest.noLocalSetup;
 
 import java.util.Optional;
 
@@ -11,8 +11,8 @@ import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.participation.*;
-import de.tum.in.www1.artemis.repository.ParticipationRepository;
 import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.web.rest.ProgrammingSubmissionResource;
 
 @RestController
 @RequestMapping("/api")
@@ -25,8 +25,6 @@ public class ProgrammingSubmissionResultSimulationResource {
 
     private final UserService userService;
 
-    private final ParticipationRepository participationRepository;
-
     private final ParticipationService participationService;
 
     private final WebsocketMessagingService messagingService;
@@ -36,11 +34,10 @@ public class ProgrammingSubmissionResultSimulationResource {
     private final ProgrammingSubmissionResultSimulationService programmingSubmissionResultSimulationService;
 
     public ProgrammingSubmissionResultSimulationResource(ProgrammingSubmissionService programmingSubmissionService, UserService userService,
-            ParticipationRepository participationRepository, ParticipationService participationService, WebsocketMessagingService messagingService,
-            ProgrammingExerciseService programmingExerciseService, ProgrammingSubmissionResultSimulationService programmingSubmissionResultSimulationService) {
+            ParticipationService participationService, WebsocketMessagingService messagingService, ProgrammingExerciseService programmingExerciseService,
+            ProgrammingSubmissionResultSimulationService programmingSubmissionResultSimulationService) {
         this.programmingSubmissionService = programmingSubmissionService;
         this.userService = userService;
-        this.participationRepository = participationRepository;
         this.participationService = participationService;
         this.messagingService = messagingService;
         this.programmingExerciseService = programmingExerciseService;
