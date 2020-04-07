@@ -161,12 +161,12 @@ public class TeamService {
      *
      * @param sourceExercise Exercise from which to copy the existing teams
      * @param destinationExercise Exercise in which to copy the teams from source exercise
-     * @return list of newly created teams in destination exercise
+     * @return list of all teams in destination exercise
      */
     public List<Team> copyTeamsFromSourceExerciseIntoDestinationExercise(Exercise sourceExercise, Exercise destinationExercise) {
         List<Team> sourceTeams = teamRepository.findAllByExerciseId(sourceExercise.getId());
-        List<Team> destinationTeams = sourceTeams.stream().map(Team::new).map(team -> team.exercise(destinationExercise)).collect(Collectors.toList());
-        destinationTeams = teamRepository.saveAll(destinationTeams);
-        return destinationTeams;
+        // TODO: Prevent conflicts (1. existing short names, 2. existing students)
+        teamRepository.saveAll(sourceTeams.stream().map(Team::new).map(team -> team.exercise(destinationExercise)).collect(Collectors.toList()));
+        return teamRepository.findAllByExerciseId(destinationExercise.getId());
     }
 }

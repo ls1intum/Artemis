@@ -54,7 +54,7 @@ public class Team extends AbstractAuditingEntity implements Serializable, Partic
     @ManyToOne
     private User owner;
 
-    private Team() {
+    public Team() {
     }
 
     /**
