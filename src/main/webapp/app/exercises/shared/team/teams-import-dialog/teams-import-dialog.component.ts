@@ -81,8 +81,16 @@ export class TeamsImportDialogComponent implements OnInit, OnDestroy {
 
     onSelectSourceExercise(exercise: Exercise) {
         this.sourceExercise = exercise;
-        this.importStrategy = null;
+        this.initImportStrategy();
         this.loadSourceTeams(exercise);
+    }
+
+    /**
+     * If the exercise has no teams yet, the user doesn't have to chose an import strategy
+     * since there is no need for conflict handling decisions when no teams exist yet.
+     */
+    initImportStrategy() {
+        this.importStrategy = this.teams.length === 0 ? this.defaultImportStrategy : null;
     }
 
     computePotentialConflictsBasedOnExistingTeams() {
@@ -158,6 +166,10 @@ export class TeamsImportDialogComponent implements OnInit, OnDestroy {
 
     updateImportStrategy(importStrategy: ImportStrategy) {
         this.importStrategy = importStrategy;
+    }
+
+    get showImportPreviewNumbers(): boolean {
+        return this.sourceExercise && this.sourceTeams && Boolean(this.importStrategy);
     }
 
     /**

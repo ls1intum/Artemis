@@ -111,6 +111,7 @@
                 }
             },
             "importPreview": {
+                "noTeamsToImport": "Keine Teams zum Importieren",
                 "noConflictFreeTeamsToImport": "Keine konfliktfreien Teams zum Importieren",
                 "teamsToBeDeleted": "Teams zum Löschen:",
                 "teamsToBeImported": "Teams zum Importieren:",
