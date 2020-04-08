@@ -81,10 +81,26 @@ export class StudentQuestionRowComponent implements OnInit, OnDestroy {
         this.isEditMode = !this.isEditMode;
     }
 
+    /**
+     * Takes a studentQuestionAnswer and toggles the edit field for it
+     * If a studentQuestionAnswer is already selected it closes the edit field for the old one and opens it for the new one
+     * @param   {StudentQuestionAnswer} questionAnswer
+     */
     toggleAnswerMode(questionAnswer: StudentQuestionAnswer | null): void {
-        this.isAnswerMode = !this.isAnswerMode;
-        this.questionAnswerText = questionAnswer ? questionAnswer.answerText : '';
-        this.selectedQuestionAnswer = questionAnswer;
+        if (questionAnswer && this.selectedQuestionAnswer) {
+            if (questionAnswer.id === this.selectedQuestionAnswer.id) {
+                this.isAnswerMode = false;
+                this.questionAnswerText = '';
+                this.selectedQuestionAnswer = null;
+            } else {
+                this.questionAnswerText = questionAnswer.answerText;
+                this.selectedQuestionAnswer = questionAnswer;
+            }
+        } else {
+            this.isAnswerMode = !this.isAnswerMode;
+            this.questionAnswerText = questionAnswer ? questionAnswer.answerText : '';
+            this.selectedQuestionAnswer = questionAnswer;
+        }
     }
 
     /**
