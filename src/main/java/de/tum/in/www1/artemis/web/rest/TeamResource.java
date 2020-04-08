@@ -20,6 +20,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.TeamImportStrategyType;
 import de.tum.in.www1.artemis.repository.TeamRepository;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.dto.TeamSearchUserDTO;
@@ -278,18 +279,22 @@ public class TeamResource {
     }
 
     /**
-     * POST /exercises/:destinationExerciseId/teams/import-from-exercise/:sourceExerciseId : copy all teams from source exercise into destination exercise
+     * POST /exercises/:destinationExerciseId/teams/import-from-exercise/:sourceExerciseId : copy teams from source exercise into destination exercise
      *
+     * @param importStrategyType the import strategy to use when importing the teams
      * @param destinationExerciseId the exercise id of the exercise for which to import teams (= destination exercise)
      * @param sourceExerciseId the exercise id of the exercise from which to copy the teams (= source exercise)
      * @return the ResponseEntity with status 200 (OK) and the list of created teams in body
      */
     @PostMapping("/exercises/{destinationExerciseId}/teams/import-from-exercise/{sourceExerciseId}")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<List<Team>> getTeamsForExercise(@PathVariable long destinationExerciseId, @PathVariable long sourceExerciseId) {
-        log.debug("REST request import all Teams from source exercise with id {} into destination exercise with id {}", sourceExerciseId, destinationExerciseId);
+    public ResponseEntity<List<Team>> importTeamsFromSourceExercise(@RequestBody TeamImportStrategyType importStrategyType, @PathVariable long destinationExerciseId,
+            @PathVariable long sourceExerciseId) {
+        log.debug("REST request import all teams from source exercise with id {} into destination exercise with id {}", sourceExerciseId, destinationExerciseId);
+
         User user = userService.getUserWithGroupsAndAuthorities();
         Exercise destinationExercise = exerciseService.findOne(destinationExerciseId);
+
         if (!authCheckService.isAtLeastInstructorForExercise(destinationExercise, user)) {
             return forbidden();
         }
@@ -303,7 +308,15 @@ public class TeamResource {
         if (!sourceExercise.isTeamMode()) {
             throw new BadRequestAlertException("The source exercise must be a team-based exercise.", ENTITY_NAME, "sourceExerciseNotTeamBased");
         }
-        List<Team> destinationTeams = teamService.copyTeamsFromSourceExerciseIntoDestinationExercise(sourceExercise, destinationExercise);
+
+        // Create audit event for team import action
+        var logMessage = "Import teams from source exercise '" + sourceExercise.getTitle() + "' (id: " + sourceExercise.getId() + ") into destination exercise '"
+                + destinationExercise.getTitle() + "' (id: " + destinationExercise.getId() + ") using strategy " + importStrategyType;
+        var auditEvent = new AuditEvent(user.getLogin(), Constants.IMPORT_TEAMS, logMessage);
+        auditEventRepository.add(auditEvent);
+
+        // Import teams and return the teams that now belong to the destination exercise
+        List<Team> destinationTeams = teamService.importTeamsFromSourceExerciseIntoDestinationExerciseUsingStrategy(sourceExercise, destinationExercise, importStrategyType);
         destinationTeams.forEach(Team::filterSensitiveInformation);
         return ResponseEntity.ok().body(destinationTeams);
     }

@@ -11,11 +11,15 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.Team;
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.enumeration.TeamImportStrategyType;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.repository.TeamRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
 import de.tum.in.www1.artemis.service.dto.TeamSearchUserDTO;
+import de.tum.in.www1.artemis.service.team.TeamImportStrategy;
+import de.tum.in.www1.artemis.service.team.strategies.CreateOnlyStrategy;
+import de.tum.in.www1.artemis.service.team.strategies.PurgeExistingStrategy;
 import de.tum.in.www1.artemis.web.rest.errors.StudentsAlreadyAssignedException;
 
 @Service
@@ -31,13 +35,17 @@ public class TeamService {
 
     private final ProgrammingExerciseParticipationService programmingExerciseParticipationService;
 
+    private final ParticipationService participationService;
+
     public TeamService(TeamRepository teamRepository, UserRepository userRepository, AuthorizationCheckService authCheckService,
-            Optional<VersionControlService> versionControlService, ProgrammingExerciseParticipationService programmingExerciseParticipationService) {
+            Optional<VersionControlService> versionControlService, ProgrammingExerciseParticipationService programmingExerciseParticipationService,
+            ParticipationService participationService) {
         this.teamRepository = teamRepository;
         this.userRepository = userRepository;
         this.authCheckService = authCheckService;
         this.versionControlService = versionControlService;
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
+        this.participationService = participationService;
     }
 
     /**
@@ -157,16 +165,28 @@ public class TeamService {
     }
 
     /**
-     * Imports the teams from the source exercise into destination exercise
+     * Imports the teams from the source exercise into destination exercise using the given strategy
      *
      * @param sourceExercise Exercise from which to copy the existing teams
      * @param destinationExercise Exercise in which to copy the teams from source exercise
-     * @return list of all teams in destination exercise
+     * @param importStrategyType Type of strategy used to import teams (relevant for conflicts)
+     * @return list of all teams that are now in the destination exercise
      */
-    public List<Team> copyTeamsFromSourceExerciseIntoDestinationExercise(Exercise sourceExercise, Exercise destinationExercise) {
-        List<Team> sourceTeams = teamRepository.findAllByExerciseId(sourceExercise.getId());
-        // TODO: Prevent conflicts (1. existing short names, 2. existing students)
-        teamRepository.saveAll(sourceTeams.stream().map(Team::new).map(team -> team.exercise(destinationExercise)).collect(Collectors.toList()));
+    public List<Team> importTeamsFromSourceExerciseIntoDestinationExerciseUsingStrategy(Exercise sourceExercise, Exercise destinationExercise,
+            TeamImportStrategyType importStrategyType) {
+        TeamImportStrategy teamImportStrategy = getTeamImportStrategy(importStrategyType);
+        teamImportStrategy.importTeams(sourceExercise, destinationExercise);
         return teamRepository.findAllByExerciseId(destinationExercise.getId());
+    }
+
+    private TeamImportStrategy getTeamImportStrategy(TeamImportStrategyType importStrategyType) {
+        switch (importStrategyType) {
+        case PURGE_EXISTING:
+            return new PurgeExistingStrategy(teamRepository, participationService);
+        case CREATE_ONLY:
+            return new CreateOnlyStrategy(teamRepository);
+        default:
+            throw new Error("Unknown team import strategy type: " + importStrategyType);
+        }
     }
 }
