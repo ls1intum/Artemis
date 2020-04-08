@@ -1,10 +1,10 @@
 <form id="teamsImportDialogForm" name="importForm" role="form" novalidate (ngSubmit)="importTeams()" #editForm="ngForm">
     <div class="modal-header">
         <h4 class="modal-title">
-            <span [jhiTranslate]="'artemisApp.team.importTeams.label'">
-                Import teams
+            <span [jhiTranslate]="'artemisApp.team.importTeams.dialogTitle'">
+                Import teams into:
             </span>
-            <span>({{ exercise.title }})</span>
+            <span>{{ exercise.title }}</span>
         </h4>
         <button type="button" class="close" data-dismiss="modal" aria-hidden="true" (click)="clear()">&times;</button>
     </div>

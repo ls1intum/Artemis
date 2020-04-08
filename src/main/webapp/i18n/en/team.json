@@ -72,7 +72,8 @@
                 "error": "Could not remove team. Please try again."
             },
             "importTeams": {
-                "label": "Import teams",
+                "buttonLabel": "Import teams",
+                "dialogTitle": "Import teams into:",
                 "error": "Could not import teams. Please try again."
             },
             "sourceExercise": {

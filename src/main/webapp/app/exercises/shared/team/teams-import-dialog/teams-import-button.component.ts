@@ -12,7 +12,7 @@ import { TeamsImportDialogComponent } from 'app/exercises/shared/team/teams-impo
             [btnType]="ButtonType.PRIMARY"
             [btnSize]="buttonSize"
             [icon]="'plus'"
-            [title]="'artemisApp.team.importTeams.label'"
+            [title]="'artemisApp.team.importTeams.buttonLabel'"
             (onClick)="openTeamsImportDialog($event)"
         ></jhi-button>
     `,

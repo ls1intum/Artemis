@@ -72,7 +72,8 @@
                 "error": "Das Team konnte nicht entfernt werden. Bitte versuche es nochmal."
             },
             "importTeams": {
-                "label": "Importiere Teams",
+                "buttonLabel": "Importiere Teams",
+                "dialogTitle": "Importiere Teams nach:",
                 "error": "Teams konnten nicht importiert werden. Bitte versuche es nochmal."
             },
             "sourceExercise": {
