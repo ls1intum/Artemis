@@ -155,10 +155,10 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     }
 
     /**
-     * The button should be only visible in the dev or the testing environment
+     * The button should be only visible in the dev environment
      */
     visibilityCheck(): boolean {
-        return !this.profileInfo.inProduction || window.location.host === 'artemistest.ase.in.tum.de';
+        return !this.profileInfo.inProduction;
     }
 
     previousState() {
