@@ -22,20 +22,4 @@ export class AssessmentGeneralFeedbackComponent {
         this.feedbackClone.detailText = trimmedText.length > 0 ? trimmedText : null;
         this.feedbackChange.emit(this.feedbackClone);
     }
-    allowDrop(event: DragEvent) {
-        event.preventDefault();
-    }
-    drop(event: any) {
-        event.preventDefault();
-        const data = event.dataTransfer.getData('text');
-        const instruction = JSON.parse(data);
-        const credits = instruction.credits;
-        const feedback = instruction.feedback;
-        if (credits > 0) {
-            this.text += 'Score: ' + '+' + credits + ' Feedback: ' + feedback + '\n';
-        } else {
-            this.text += 'Score: ' + credits + ' Feedback: ' + feedback + '\n';
-        }
-        this.onTextChange(this.text);
-    }
 }
