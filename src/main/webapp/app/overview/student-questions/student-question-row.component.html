@@ -63,9 +63,9 @@
                 </div>
             </div>
         </div>
-        <div class="row mb-1" *ngFor="let questionAnswer of sortedQuestionAnswers">
-            <div class="col">
-                <div *ngIf="isAnswerMode && selectedQuestionAnswer && questionAnswer && selectedQuestionAnswer.id === questionAnswer.id">
+        <div class="row mb-1 answer-approved" *ngFor="let approvedQuestionAnswer of approvedQuestionAnswers">
+            <div class="col" [ngbTooltip]="'artemisApp.courseOverview.exerciseDetails.faq.approvedLabel' | translate">
+                <div *ngIf="isAnswerMode && selectedQuestionAnswer && approvedQuestionAnswer && selectedQuestionAnswer.id === approvedQuestionAnswer.id">
                     <div class="col-12">
                         <div class="form-group">
                             <label class="form-control-label">{{ 'artemisApp.courseOverview.exerciseDetails.faq.answerLabel' | translate }}</label>
@@ -77,29 +77,114 @@
                         <button class="btn btn-primary" (click)="saveAnswer()">{{ 'artemisApp.courseOverview.exerciseDetails.faq.saveAnswer' | translate }}</button>
                     </div>
                 </div>
-                <div *ngIf="!selectedQuestionAnswer || selectedQuestionAnswer.id !== questionAnswer.id">A: {{ questionAnswer.answerText }}</div>
-                <div class="text-black-50 mb-1 question-subtitle" *ngIf="!selectedQuestionAnswer || selectedQuestionAnswer.id !== questionAnswer.id">
-                    {{ questionAnswer.author.name }} - {{ questionAnswer.answerDate | date: 'dd.MM.yy HH:mm' }}
+                <div *ngIf="!selectedQuestionAnswer || selectedQuestionAnswer.id !== approvedQuestionAnswer.id">A: {{ approvedQuestionAnswer.answerText }}</div>
+                <div class="text-black-50 mb-1 question-subtitle" *ngIf="!selectedQuestionAnswer || selectedQuestionAnswer.id !== approvedQuestionAnswer.id">
+                    {{ approvedQuestionAnswer.author.name }} - {{ approvedQuestionAnswer.answerDate | date: 'dd.MM.yy HH:mm' }}
                 </div>
             </div>
             <div
                 class="col-auto"
-                *ngIf="isAtLeastTutorInCourse || (questionAnswer.author.id === user.id && (!selectedQuestionAnswer || selectedQuestionAnswer.id !== questionAnswer.id))"
+                *ngIf="
+                    isAtLeastTutorInCourse || (approvedQuestionAnswer.author.id === user.id && (!selectedQuestionAnswer || selectedQuestionAnswer.id !== approvedQuestionAnswer.id))
+                "
             >
                 <fa-icon
                     class="mr-1 clickable"
                     [ngbTooltip]="'artemisApp.courseOverview.exerciseDetails.faq.editAnswer' | translate"
                     container="body"
                     [icon]="'pencil-alt'"
-                    (click)="$event.stopPropagation(); toggleAnswerMode(questionAnswer)"
+                    (click)="$event.stopPropagation(); toggleAnswerMode(approvedQuestionAnswer)"
                 ></fa-icon>
                 <jhi-confirm-icon
                     (click)="$event.stopPropagation()"
-                    (confirmEvent)="deleteAnswer(questionAnswer)"
+                    (confirmEvent)="deleteAnswer(approvedQuestionAnswer)"
                     [ngClass]="'mr-1 clickable'"
                     [initialTooltip]="'artemisApp.courseOverview.exerciseDetails.faq.deleteAnswer' | translate"
                     [confirmTooltip]="'artemisApp.courseOverview.exerciseDetails.faq.confirmDeleteAnswer' | translate"
                 ></jhi-confirm-icon>
+                <fa-icon
+                    class="mr-1 clickable"
+                    *ngIf="isAtLeastTutorInCourse"
+                    [ngbTooltip]="'artemisApp.courseOverview.exerciseDetails.faq.approveAnswer' | translate"
+                    container="body"
+                    [icon]="'check'"
+                    (click)="$event.stopPropagation(); toggleAnswerTutorApproved(approvedQuestionAnswer)"
+                ></fa-icon>
+            </div>
+        </div>
+        <div
+            class="row mb-1"
+            *ngIf="approvedQuestionAnswers.length !== 0 && sortedQuestionAnswers.length !== 0 && !showOtherAnswers"
+            (click)="showOtherAnswers = !showOtherAnswers"
+        >
+            <div class="col overflow-parent">
+                <div class="overflow-ellipsis question-subtitle">
+                    {{ 'artemisApp.courseOverview.exerciseDetails.faq.showAnswers' | translate: { count: sortedQuestionAnswers.length } }}
+                </div>
+            </div>
+            <div class="col-auto">
+                <fa-icon [icon]="'angle-down'"></fa-icon>
+            </div>
+        </div>
+        <div *ngIf="approvedQuestionAnswers.length === 0 || showOtherAnswers">
+            <div *ngIf="approvedQuestionAnswers.length !== 0 && sortedQuestionAnswers.length !== 0 && showOtherAnswers">
+                <div class="row mb-1" (click)="showOtherAnswers = !showOtherAnswers">
+                    <div class="col overflow-parent">
+                        <div class="overflow-ellipsis question-subtitle">{{ 'artemisApp.courseOverview.exerciseDetails.faq.hideAnswers' | translate }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <fa-icon [icon]="'angle-up'"></fa-icon>
+                    </div>
+                </div>
+            </div>
+            <div class="row mb-1" *ngFor="let questionAnswer of sortedQuestionAnswers">
+                <div class="col">
+                    <div *ngIf="isAnswerMode && selectedQuestionAnswer && questionAnswer && selectedQuestionAnswer.id === questionAnswer.id">
+                        <div class="col-12">
+                            <div class="form-group">
+                                <label class="form-control-label">{{ 'artemisApp.courseOverview.exerciseDetails.faq.answerLabel' | translate }}</label>
+                                <textarea [(ngModel)]="questionAnswerText" class="form-control" name="answer"></textarea>
+                            </div>
+                        </div>
+                        <div class="col-12 d-flex justify-content-between mb-2">
+                            <button class="btn btn-outline-primary" (click)="toggleAnswerMode(null)">
+                                {{ 'artemisApp.courseOverview.exerciseDetails.faq.cancel' | translate }}
+                            </button>
+                            <button class="btn btn-primary" (click)="saveAnswer()">{{ 'artemisApp.courseOverview.exerciseDetails.faq.saveAnswer' | translate }}</button>
+                        </div>
+                    </div>
+                    <div *ngIf="!selectedQuestionAnswer || selectedQuestionAnswer.id !== questionAnswer.id">A: {{ questionAnswer.answerText }}</div>
+                    <div class="text-black-50 mb-1 question-subtitle" *ngIf="!selectedQuestionAnswer || selectedQuestionAnswer.id !== questionAnswer.id">
+                        {{ questionAnswer.author.name }} - {{ questionAnswer.answerDate | date: 'dd.MM.yy HH:mm' }}
+                    </div>
+                </div>
+                <div
+                    class="col-auto"
+                    *ngIf="isAtLeastTutorInCourse || (questionAnswer.author.id === user.id && (!selectedQuestionAnswer || selectedQuestionAnswer.id !== questionAnswer.id))"
+                >
+                    <fa-icon
+                        class="mr-1 clickable"
+                        [ngbTooltip]="'artemisApp.courseOverview.exerciseDetails.faq.editAnswer' | translate"
+                        container="body"
+                        [icon]="'pencil-alt'"
+                        (click)="$event.stopPropagation(); toggleAnswerMode(questionAnswer)"
+                    ></fa-icon>
+                    <jhi-confirm-icon
+                        (click)="$event.stopPropagation()"
+                        (confirmEvent)="deleteAnswer(questionAnswer)"
+                        [ngClass]="'mr-1 clickable'"
+                        [initialTooltip]="'artemisApp.courseOverview.exerciseDetails.faq.deleteAnswer' | translate"
+                        [confirmTooltip]="'artemisApp.courseOverview.exerciseDetails.faq.confirmDeleteAnswer' | translate"
+                    ></jhi-confirm-icon>
+                    <fa-icon
+                        class="mr-1 clickable"
+                        *ngIf="isAtLeastTutorInCourse"
+                        [ngbTooltip]="'artemisApp.courseOverview.exerciseDetails.faq.approveAnswer' | translate"
+                        container="body"
+                        [icon]="'check'"
+                        (click)="$event.stopPropagation(); toggleAnswerTutorApproved(questionAnswer)"
+                    ></fa-icon>
+                </div>
             </div>
         </div>
         <div class="row" *ngIf="!studentQuestion.answers || studentQuestion.answers.length === 0">

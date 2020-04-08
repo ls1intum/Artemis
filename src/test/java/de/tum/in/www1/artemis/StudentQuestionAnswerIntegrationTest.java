@@ -205,6 +205,25 @@ public class StudentQuestionAnswerIntegrationTest extends AbstractSpringIntegrat
         assertThat(studentQuestionAnswerRepository.findById(studentQuestionAnswer_student2.getId())).isNotEmpty();
     }
 
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void toggleStudentQuestionAnswerApproved() throws Exception {
+        List<StudentQuestionAnswer> answers = createStudentQuestionAnswersOnServer();
+        StudentQuestionAnswer studentQuestionAnswer = answers.get(0);
+
+        // approve answer
+        studentQuestionAnswer.setTutorApproved(true);
+        StudentQuestionAnswer updatedStudentQuestionAnswer1 = request.putWithResponseBody("/api/student-question-answers", studentQuestionAnswer, StudentQuestionAnswer.class,
+                HttpStatus.OK);
+        assertThat(updatedStudentQuestionAnswer1).isEqualTo(studentQuestionAnswer);
+
+        // unapprove answer
+        studentQuestionAnswer.setTutorApproved(false);
+        StudentQuestionAnswer updatedStudentQuestionAnswer2 = request.putWithResponseBody("/api/student-question-answers", studentQuestionAnswer, StudentQuestionAnswer.class,
+                HttpStatus.OK);
+        assertThat(updatedStudentQuestionAnswer2).isEqualTo(studentQuestionAnswer);
+    }
+
     private List<StudentQuestionAnswer> createStudentQuestionAnswersOnServer() throws Exception {
         StudentQuestion studentQuestion = database.createCourseWithExerciseAndStudentQuestions().get(0);
         List<StudentQuestionAnswer> answers = new ArrayList<>();
