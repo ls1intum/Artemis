@@ -59,7 +59,7 @@ describe('GradingInstructionCommand', () => {
                     FeedbackCommand.text +
                     '\n' +
                     '\t' +
-                    '[count]' +
+                    '[maxCountInScore]' +
                     UsageCountCommand.text) +
                 '\n',
         );
