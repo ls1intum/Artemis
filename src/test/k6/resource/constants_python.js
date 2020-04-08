@@ -116,6 +116,7 @@ export const twoSuccessfulErrorContentPython = {
 };
 
 export const allSuccessfulContentPython = {
+    newFiles: [],
     content: [
         {
             fileName: 'sorting_algorithms.py',
