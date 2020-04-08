@@ -398,12 +398,10 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
                 this.exerciseBuildState = { ...this.exerciseBuildState, [exerciseId]: exerciseBuildState };
                 this.exerciseBuildStateSubjects.get(exerciseId)!.next(exerciseBuildState);
             });
-        return (
-            this.exerciseBuildStateSubjects
-                .get(exerciseId)!
-                .asObservable()
-                .pipe(filter((val) => val !== undefined)) as Observable<ExerciseSubmissionState>
-        );
+        return this.exerciseBuildStateSubjects
+            .get(exerciseId)!
+            .asObservable()
+            .pipe(filter((val) => val !== undefined)) as Observable<ExerciseSubmissionState>;
     };
 
     getResultEtaInMs = () => {
