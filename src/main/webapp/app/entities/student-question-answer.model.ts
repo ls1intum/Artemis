@@ -8,6 +8,7 @@ export class StudentQuestionAnswer implements BaseEntity {
     public answerText: string | null;
     public answerDate: Moment | null;
     public verified = false; // default value
+    public tutorApproved = false; // default value
     public author: User;
     public question: StudentQuestion;
 

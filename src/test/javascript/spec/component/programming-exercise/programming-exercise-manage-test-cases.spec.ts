@@ -70,16 +70,14 @@ describe('ProgrammingExerciseManageTestCases', () => {
     const testCasesNoUpdated = '#test-case-status-no-updated';
 
     const exerciseId = 1;
-    const exercise =
-        {
-            id: exerciseId,
-        } as ProgrammingExercise;
-    const testCases1 =
-        [
-            { id: 1, testName: 'testBubbleSort', active: true, weight: 1, afterDueDate: false },
-            { id: 2, testName: 'testMergeSort', active: true, weight: 1, afterDueDate: true },
-            { id: 3, testName: 'otherTest', active: false, weight: 1, afterDueDate: false },
-        ] as ProgrammingExerciseTestCase[];
+    const exercise = {
+        id: exerciseId,
+    } as ProgrammingExercise;
+    const testCases1 = [
+        { id: 1, testName: 'testBubbleSort', active: true, weight: 1, afterDueDate: false },
+        { id: 2, testName: 'testMergeSort', active: true, weight: 1, afterDueDate: true },
+        { id: 3, testName: 'otherTest', active: false, weight: 1, afterDueDate: false },
+    ] as ProgrammingExerciseTestCase[];
 
     const getExerciseTestCasteStateDTO = (
         released: boolean,

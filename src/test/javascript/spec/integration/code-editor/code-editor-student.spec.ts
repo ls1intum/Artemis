@@ -554,12 +554,11 @@ describe('CodeEditorStudentIntegration', () => {
 
     it('should show the repository locked badge and disable the editor actions if the exercises buildAndTestAfterDueDate is set and the due date has passed', () => {
         container.ngOnInit();
-        const participation =
-            {
-                id: 1,
-                results: [result],
-                exercise: { id: 99, buildAndTestStudentSubmissionsAfterDueDate: moment().subtract(1, 'hours'), dueDate: moment().subtract(2, 'hours') } as ProgrammingExercise,
-            } as any;
+        const participation = {
+            id: 1,
+            results: [result],
+            exercise: { id: 99, buildAndTestStudentSubmissionsAfterDueDate: moment().subtract(1, 'hours'), dueDate: moment().subtract(2, 'hours') } as ProgrammingExercise,
+        } as any;
         const feedbacks = [{ id: 2 }] as Feedback[];
         const findWithLatestResultSubject = new Subject<Participation>();
         const getFeedbackDetailsForResultSubject = new Subject<{ body: Feedback[] }>();
