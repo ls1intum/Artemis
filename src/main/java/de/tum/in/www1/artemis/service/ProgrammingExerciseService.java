@@ -133,16 +133,16 @@ public class ProgrammingExerciseService {
         final var exerciseRepoUrl = versionControlService.get().getCloneRepositoryUrl(projectKey, exerciseRepoName).getURL();
         final var testsRepoUrl = versionControlService.get().getCloneRepositoryUrl(projectKey, testRepoName).getURL();
         final var solutionRepoUrl = versionControlService.get().getCloneRepositoryUrl(projectKey, solutionRepoName).getURL();
+
+        createRepositoriesForNewExercise(programmingExercise, exerciseRepoName, testRepoName, solutionRepoName);
         initParticipations(programmingExercise);
         setURLsAndBuildPlanIDsForNewExercise(programmingExercise, exerciseRepoName, testRepoName, solutionRepoName);
 
-        createRepositoriesForNewExercise(programmingExercise, exerciseRepoName, testRepoName, solutionRepoName);
+        // Save participations to get the ids required for the webhooks
+        connectBaseParticipationsToExerciseAndSave(programmingExercise);
 
         setupExerciseTemplate(programmingExercise, user, exerciseRepoUrl, testsRepoUrl, solutionRepoUrl);
         setupBuildPlansForNewExercise(programmingExercise, exerciseRepoUrl, testsRepoUrl, solutionRepoUrl);
-
-        // Save participations to get the ids required for the webhooks
-        connectBaseParticipationsToExerciseAndSave(programmingExercise);
 
         // save to get the id required for the webhook
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
