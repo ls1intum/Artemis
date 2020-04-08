@@ -31,10 +31,12 @@ export class StudentQuestionRowComponent implements OnInit, OnDestroy {
     isAnswerMode: boolean;
     isEditMode: boolean;
     isQuestionAuthor: boolean;
+    showOtherAnswers = false;
     selectedQuestionAnswer: StudentQuestionAnswer | null;
     questionAnswerText: string | null;
     studentQuestionText: string | null;
     sortedQuestionAnswers: StudentQuestionAnswer[];
+    approvedQuestionAnswers: StudentQuestionAnswer[];
 
     constructor(private studentQuestionAnswerService: StudentQuestionAnswerService, private studentQuestionService: StudentQuestionService) {}
 
@@ -45,17 +47,31 @@ export class StudentQuestionRowComponent implements OnInit, OnDestroy {
         this.sortQuestionAnswers();
     }
 
+    /**
+     * sorts the answers of a question into approved and not approved and then by date
+     */
     sortQuestionAnswers(): void {
         if (!this.studentQuestion.answers) {
             this.sortedQuestionAnswers = [];
+            this.approvedQuestionAnswers = [];
             return;
         }
-        this.sortedQuestionAnswers = this.studentQuestion.answers.sort((a, b) => {
-            const aValue = moment(a.answerDate!).valueOf();
-            const bValue = moment(b.answerDate!).valueOf();
+        this.approvedQuestionAnswers = this.studentQuestion.answers
+            .filter((ans) => ans.tutorApproved)
+            .sort((a, b) => {
+                const aValue = moment(a.answerDate!).valueOf();
+                const bValue = moment(b.answerDate!).valueOf();
 
-            return aValue - bValue;
-        });
+                return aValue - bValue;
+            });
+        this.sortedQuestionAnswers = this.studentQuestion.answers
+            .filter((ans) => !ans.tutorApproved)
+            .sort((a, b) => {
+                const aValue = moment(a.answerDate!).valueOf();
+                const bValue = moment(b.answerDate!).valueOf();
+
+                return aValue - bValue;
+            });
     }
 
     ngOnDestroy(): void {}
@@ -71,6 +87,9 @@ export class StudentQuestionRowComponent implements OnInit, OnDestroy {
         this.selectedQuestionAnswer = questionAnswer;
     }
 
+    /**
+     * Changes the question text
+     */
     saveQuestion(): void {
         this.studentQuestion.questionText = this.studentQuestionText;
         this.studentQuestionService.update(this.studentQuestion).subscribe((studentQuestionResponse: HttpResponse<StudentQuestion>) => {
@@ -79,6 +98,9 @@ export class StudentQuestionRowComponent implements OnInit, OnDestroy {
         });
     }
 
+    /**
+     * deletes the studentQuestion
+     */
     deleteQuestion(): void {
         this.studentQuestionService.delete(this.studentQuestion.id).subscribe((res: HttpResponse<any>) => {
             this.interactQuestion.emit({
@@ -88,12 +110,16 @@ export class StudentQuestionRowComponent implements OnInit, OnDestroy {
         });
     }
 
+    /**
+     * Creates a new studentAnswer
+     */
     addAnswer(): void {
         const studentQuestionAnswer = new StudentQuestionAnswer();
         studentQuestionAnswer.answerText = this.questionAnswerText;
         studentQuestionAnswer.author = this.user;
         studentQuestionAnswer.verified = true;
         studentQuestionAnswer.question = this.studentQuestion;
+        studentQuestionAnswer.tutorApproved = false;
         studentQuestionAnswer.answerDate = moment();
         this.studentQuestionAnswerService.create(studentQuestionAnswer).subscribe((studentQuestionResponse: HttpResponse<StudentQuestionAnswer>) => {
             if (!this.studentQuestion.answers) {
@@ -106,6 +132,9 @@ export class StudentQuestionRowComponent implements OnInit, OnDestroy {
         });
     }
 
+    /**
+     * Updates the text of the selected studentAnswer
+     */
     saveAnswer(): void {
         this.selectedQuestionAnswer!.answerText = this.questionAnswerText;
         this.studentQuestionAnswerService.update(this.selectedQuestionAnswer!).subscribe((studentAnswerResponse: HttpResponse<StudentQuestionAnswer>) => {
@@ -115,9 +144,24 @@ export class StudentQuestionRowComponent implements OnInit, OnDestroy {
         });
     }
 
+    /**
+     * Takes a studentAnswer and deletes it
+     * @param   {studentQuestionAnswer} studentAnswer
+     */
     deleteAnswer(studentAnswer: StudentQuestionAnswer): void {
         this.studentQuestionAnswerService.delete(studentAnswer.id).subscribe((res: HttpResponse<any>) => {
             this.studentQuestion.answers = this.studentQuestion.answers.filter((el) => el.id !== studentAnswer.id);
+            this.sortQuestionAnswers();
+        });
+    }
+
+    /**
+     * Takes a studentAnswer and toggles the tutorApproved field
+     * @param   {studentQuestionAnswer} studentAnswer
+     */
+    toggleAnswerTutorApproved(studentAnswer: StudentQuestionAnswer): void {
+        studentAnswer.tutorApproved = !studentAnswer.tutorApproved;
+        this.studentQuestionAnswerService.update(studentAnswer).subscribe((studentAnswerResponse: HttpResponse<StudentQuestionAnswer>) => {
             this.sortQuestionAnswers();
         });
     }
