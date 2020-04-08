@@ -110,11 +110,10 @@ describe('ProgrammingExerciseInstructorSubmissionState', () => {
     });
 
     it('should show the result eta if there is at least one building submission', fakeAsync(() => {
-        const isBuildingSubmissionState =
-            {
-                1: { submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, submission: null, participationId: 4 },
-                4: { submissionState: ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION, submission: null, participationId: 5 },
-            } as ExerciseSubmissionState;
+        const isBuildingSubmissionState = {
+            1: { submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, submission: null, participationId: 4 },
+            4: { submissionState: ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION, submission: null, participationId: 5 },
+        } as ExerciseSubmissionState;
         comp.exercise = exercise as ProgrammingExercise;
 
         triggerChanges(comp, { property: 'exercise', currentValue: comp.exercise });
@@ -129,11 +128,10 @@ describe('ProgrammingExerciseInstructorSubmissionState', () => {
     }));
 
     it('should not show the result eta if there is no building submission', fakeAsync(() => {
-        const isNotBuildingSubmission =
-            {
-                1: { submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, submission: null, participationId: 4 },
-                4: { submissionState: ProgrammingSubmissionState.HAS_FAILED_SUBMISSION, submission: null, participationId: 5 },
-            } as ExerciseSubmissionState;
+        const isNotBuildingSubmission = {
+            1: { submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, submission: null, participationId: 4 },
+            4: { submissionState: ProgrammingSubmissionState.HAS_FAILED_SUBMISSION, submission: null, participationId: 5 },
+        } as ExerciseSubmissionState;
         comp.exercise = exercise as ProgrammingExercise;
 
         triggerChanges(comp, { property: 'exercise', currentValue: comp.exercise });
@@ -148,11 +146,10 @@ describe('ProgrammingExerciseInstructorSubmissionState', () => {
     }));
 
     it('should show & enable the trigger all button and the build state once the build summary is loaded', fakeAsync(() => {
-        const noPendingSubmissionState =
-            {
-                1: { submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, submission: null, participationId: 4 },
-                4: { submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, submission: null, participationId: 5 },
-            } as ExerciseSubmissionState;
+        const noPendingSubmissionState = {
+            1: { submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, submission: null, participationId: 4 },
+            4: { submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, submission: null, participationId: 5 },
+        } as ExerciseSubmissionState;
         const compressedSummary = { [ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION]: 2 };
         comp.exercise = exercise as ProgrammingExercise;
 
@@ -178,12 +175,11 @@ describe('ProgrammingExerciseInstructorSubmissionState', () => {
     }));
 
     it('should show & enable both buttons and the build state once the build summary is loaded when a failed submission exists', fakeAsync(() => {
-        const noPendingSubmissionState =
-            {
-                1: { submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, submission: null, participationId: 55 },
-                4: { submissionState: ProgrammingSubmissionState.HAS_FAILED_SUBMISSION, submission: null, participationId: 76 },
-                5: { submissionState: ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION, submission: null, participationId: 76 },
-            } as ExerciseSubmissionState;
+        const noPendingSubmissionState = {
+            1: { submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, submission: null, participationId: 55 },
+            4: { submissionState: ProgrammingSubmissionState.HAS_FAILED_SUBMISSION, submission: null, participationId: 76 },
+            5: { submissionState: ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION, submission: null, participationId: 76 },
+        } as ExerciseSubmissionState;
         const compressedSummary = {
             [ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION]: 1,
             [ProgrammingSubmissionState.HAS_FAILED_SUBMISSION]: 1,
@@ -247,11 +243,10 @@ describe('ProgrammingExerciseInstructorSubmissionState', () => {
     });
 
     it('should disable the trigger all button while a build is running and re-enable it when it is complete', fakeAsync(() => {
-        const isBuildingSubmissionState =
-            {
-                1: { submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, submission: null, participationId: 4 },
-                4: { submissionState: ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION, submission: null, participationId: 5 },
-            } as ExerciseSubmissionState;
+        const isBuildingSubmissionState = {
+            1: { submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, submission: null, participationId: 4 },
+            4: { submissionState: ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION, submission: null, participationId: 5 },
+        } as ExerciseSubmissionState;
         comp.exercise = exercise as ProgrammingExercise;
 
         triggerChanges(comp, { property: 'exercise', currentValue: comp.exercise });

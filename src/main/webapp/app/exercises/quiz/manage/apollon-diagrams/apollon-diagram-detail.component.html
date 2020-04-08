@@ -3,7 +3,9 @@
 
     <div class="row">
         <div class="col">
-            <a href="#/apollon-diagrams">&larr; {{ 'entity.action.back' | translate }}</a>
+            <button type="submit" (click)="previousState()" class="btn btn-info">
+                <fa-icon [icon]="'arrow-left'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.back"> Back</span>
+            </button>
         </div>
         <div class="col text-right">
             <label class="mr-1">

@@ -35,7 +35,7 @@ plugins {
 }
 
 group = "de.tum.in.www1.artemis"
-version = "3.11.2"
+version = "3.11.3"
 description = "Interactive Learning with Individual Feedback"
 
 sourceCompatibility=14
@@ -200,7 +200,7 @@ dependencies {
     implementation "org.hibernate:hibernate-jcache"
     implementation "org.hibernate:hibernate-entitymanager"
     implementation "org.hibernate.validator:hibernate-validator:6.1.2.Final"
-    implementation "org.liquibase:liquibase-core:3.8.8"
+    implementation "org.liquibase:liquibase-core:3.8.9"
     implementation "org.springframework.boot:spring-boot-loader-tools:${spring_boot_version}"
     implementation "org.springframework.boot:spring-boot-starter-mail:${spring_boot_version}"
     implementation "org.springframework.boot:spring-boot-starter-logging:${spring_boot_version}"
