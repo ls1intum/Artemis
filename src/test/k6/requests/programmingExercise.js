@@ -1,7 +1,9 @@
 import { nextAlphanumeric, nextWSSubscriptionId } from '../util/utils.js';
 import { PROGRAMMING_EXERCISES_SETUP, COMMIT, PARTICIPATIONS, PROGRAMMING_EXERCISE, NEW_FILE } from './endpoints.js';
 import { sleep, fail } from 'k6';
-import { programmingExerciseProblemStatement } from "../resource/constants.js";
+import {programmingExerciseProblemStatementJava} from "../resource/constants_java.js";
+import {programmingExerciseProblemStatementPython} from "../resource/constants_python.js";
+import {programmingExerciseProblemStatementC} from "../resource/constants_c.js";
 
 export function ParticipationSimulation(timeout, exerciseId, participationId, content) {
     this.timeout = timeout;
@@ -40,8 +42,21 @@ export const TestResult = {
     BUILD_ERROR: 'error'
 };
 
-export function createExercise(artemis, courseId) {
+export function createProgrammingExercise(artemis, courseId, programmingLanguage) {
     let res;
+
+    let programmingExerciseProblemStatement;
+    switch (programmingLanguage) {
+        case 'JAVA':
+            programmingExerciseProblemStatement = programmingExerciseProblemStatementJava;
+            break;
+        case 'PYTHON':
+            programmingExerciseProblemStatement = programmingExerciseProblemStatementPython;
+            break;
+        case 'C':
+            programmingExerciseProblemStatement = programmingExerciseProblemStatementC;
+            break;
+    }
 
     // The actual exercise
     const exercise = {
@@ -50,7 +65,7 @@ export function createExercise(artemis, courseId) {
         maxScore: 42,
         assessmentType: 'AUTOMATIC',
         type: 'programming',
-        programmingLanguage: 'JAVA',
+        programmingLanguage: programmingLanguage,
         allowOnlineEditor: true,
         packageName: 'de.test',
         problemStatement: programmingExerciseProblemStatement,
@@ -76,7 +91,7 @@ export function createExercise(artemis, courseId) {
     return exerciseId;
 }
 
-export function deleteExercise(artemis, exerciseId) {
+export function deleteProgrammingExercise(artemis, exerciseId) {
     const res = artemis.delete(PROGRAMMING_EXERCISE(exerciseId), {
         deleteStudentReposBuildPlans: true,
         deleteBaseReposBuildPlans: true
