@@ -142,6 +142,7 @@
                     "newQuestionLabel": "Neue Frage",
                     "answerLabel": "Antwort",
                     "questionLabel": "Frage",
+                    "approvedLabel": "Von einem Tutor bestätigt",
                     "answerNow": "Jetzt beantworten",
                     "noAnswers": "Diese Frage wurde noch nicht beantwortet.",
                     "answerCount": "Antworten: {{count}}",
@@ -156,7 +157,10 @@
                     "editQuestion": "Frage bearbeiten",
                     "deleteAnswer": "Möchtest du deine Antwort löschen?",
                     "confirmDeleteAnswer": "Bitte bestätige, dass du deine Antwort löschen möchtest!",
-                    "editAnswer": "Answort bearbeiten"
+                    "editAnswer": "Antwort bearbeiten",
+                    "approveAnswer": "Antwort bestätigen",
+                    "hideAnswers": "Weniger Anworten anzeigen",
+                    "showAnswers": "Weitere Anworten anzeigen ({{count}})"
                 }
             }
         }

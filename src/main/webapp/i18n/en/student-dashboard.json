@@ -144,6 +144,7 @@
                     "newQuestionLabel": "New question",
                     "answerLabel": "Answer",
                     "questionLabel": "Question",
+                    "approvedLabel": "Approved by a tutor",
                     "answerNow": "Answer now",
                     "noAnswers": "This question was not yet answered.",
                     "answerCount": "Answers: {{count}}",
@@ -158,7 +159,10 @@
                     "editQuestion": "Edit question",
                     "deleteAnswer": "Do you want to delete your answer?",
                     "confirmDeleteAnswer": "Please confirm that you want to delete your answer!",
-                    "editAnswer": "Edit answer"
+                    "editAnswer": "Edit answer",
+                    "approveAnswer": "Approve answer",
+                    "hideAnswers": "Show less answers",
+                    "showAnswers": "Show more answers ({{count}})"
                 }
             }
         }
