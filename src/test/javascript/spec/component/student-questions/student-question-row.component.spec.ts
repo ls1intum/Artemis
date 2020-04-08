@@ -66,7 +66,32 @@ describe('StudentQuestionRowComponent', () => {
         component.toggleAnswerMode(approvedStudentQuestionAnswer);
         componentFixture.detectChanges();
         expect(component.isAnswerMode).to.be.true;
+        expect(component.questionAnswerText).to.deep.equal(approvedStudentQuestionAnswer.answerText);
         expect(component.selectedQuestionAnswer).to.deep.equal(approvedStudentQuestionAnswer);
+    });
+
+    it('should toggle answer mode and set question tp null', () => {
+        component.studentQuestion = studentQuestion;
+        componentFixture.detectChanges();
+        component.toggleAnswerMode(approvedStudentQuestionAnswer);
+        componentFixture.detectChanges();
+        component.toggleAnswerMode(approvedStudentQuestionAnswer);
+        componentFixture.detectChanges();
+        expect(component.isAnswerMode).to.be.false;
+        expect(component.questionAnswerText).to.deep.equal('');
+        expect(component.selectedQuestionAnswer).to.deep.equal(null);
+    });
+
+    it('should keep answer mode for different question', () => {
+        component.studentQuestion = studentQuestion;
+        componentFixture.detectChanges();
+        component.toggleAnswerMode(approvedStudentQuestionAnswer);
+        componentFixture.detectChanges();
+        component.toggleAnswerMode(unApprovedStudentQuestionAnswer);
+        componentFixture.detectChanges();
+        expect(component.isAnswerMode).to.be.true;
+        expect(component.questionAnswerText).to.deep.equal(unApprovedStudentQuestionAnswer.answerText);
+        expect(component.selectedQuestionAnswer).to.deep.equal(unApprovedStudentQuestionAnswer);
     });
 
     it('should toggle question edit mode', () => {
