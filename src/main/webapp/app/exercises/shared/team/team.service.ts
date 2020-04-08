@@ -5,7 +5,7 @@ import { map } from 'rxjs/operators';
 import * as moment from 'moment';
 
 import { SERVER_API_URL } from 'app/app.constants';
-import { Team } from 'app/entities/team.model';
+import { Team, TeamImportStrategyType } from 'app/entities/team.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { Course } from 'app/entities/course.model';
 import { TeamSearchUser } from 'app/entities/team-search-user.model';
@@ -28,7 +28,7 @@ export interface ITeamService {
 
     searchInCourseForExerciseTeam(course: Course, exercise: Exercise, loginOrName: string): Observable<HttpResponse<TeamSearchUser[]>>;
 
-    importTeamsFromExercise(exercise: Exercise, sourceExercise: Exercise): Observable<HttpResponse<Team[]>>;
+    importTeamsFromExercise(exercise: Exercise, sourceExercise: Exercise, importStrategy: TeamImportStrategyType): Observable<HttpResponse<Team[]>>;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -78,8 +78,8 @@ export class TeamService implements ITeamService {
         return this.http.get<TeamSearchUser[]>(url, { observe: 'response' });
     }
 
-    importTeamsFromExercise(exercise: Exercise, sourceExercise: Exercise) {
-        return this.http.post<Team[]>(`${TeamService.resourceUrl(exercise.id)}/import-from-exercise/${sourceExercise.id}`, {}, { observe: 'response' });
+    importTeamsFromExercise(exercise: Exercise, sourceExercise: Exercise, importStrategy: TeamImportStrategyType) {
+        return this.http.post<Team[]>(`${TeamService.resourceUrl(exercise.id)}/import-from-exercise/${sourceExercise.id}`, importStrategy, { observe: 'response' });
     }
 
     /**

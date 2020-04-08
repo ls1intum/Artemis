@@ -5,15 +5,10 @@ import { JhiAlertService } from 'ng-jhipster';
 import { HttpResponse } from '@angular/common/http';
 import { Subject } from 'rxjs';
 import { TeamService } from 'app/exercises/shared/team/team.service';
-import { Team } from 'app/entities/team.model';
+import { Team, TeamImportStrategyType as ImportStrategy } from 'app/entities/team.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { flatMap } from 'lodash';
-
-enum ImportStrategy {
-    PURGE_EXISTING = 'PURGE_EXISTING',
-    CREATE_ONLY = 'CREATE_ONLY',
-}
 
 @Component({
     selector: 'jhi-teams-import-dialog',
@@ -195,8 +190,11 @@ export class TeamsImportDialogComponent implements OnInit, OnDestroy {
     }
 
     importTeams() {
+        if (this.isSubmitDisabled) {
+            return;
+        }
         this.isImporting = true;
-        this.teamService.importTeamsFromExercise(this.exercise, this.sourceExercise).subscribe(
+        this.teamService.importTeamsFromExercise(this.exercise, this.sourceExercise, this.importStrategy!).subscribe(
             (res) => this.onSaveSuccess(res),
             () => this.onSaveError(),
         );
