@@ -47,6 +47,9 @@
                 "failed": "Suche fehlgeschlagen. Bitte nochmal versuchen.",
                 "noResults": "Keine Studenten im Kurs gefunden für Suche:"
             },
+            "errors": {
+                "studentAlreadyAssignedToTeam": "Student mit Login {{ studentLogin }} ist bereits in Team mit Id {{ teamId }."
+            },
             "selectOwnerForTeam": "Tutor auswählen (nach Login oder Name suchen)",
             "ownerSearch": {
                 "queryTooShort": "Bitte mindestens 3 Zeichen eingeben.",
@@ -91,8 +94,28 @@
             },
             "selectSourceExerciseFirst": "Bitte wähle zuerst eine Quell-Übung aus.",
             "noTeamsInSourceExercise": "Die Quell-Übung hat keine Teams.",
-            "errors": {
-                "studentAlreadyAssignedToTeam": "Student mit Login {{ studentLogin }} ist bereits in Team mit Id {{ teamId }."
+            "importStrategy": {
+                "label": "Import-Strategie",
+                "tooltip": "Die Import-Strategie bestimmt, welche Quell-Teams importiert werden und was mit den existierenden Teams in dieser Übung geschieht.",
+                "options": {
+                    "purgeExisting": {
+                        "label": "Bestehende Teams löschen",
+                        "badge": "kritisch",
+                        "explanation": "Bevor alle Teams der Quell-Übung oben importiert werden, werden alle existierenden Teams dieser Übung gelöscht."
+                    },
+                    "createOnly": {
+                        "label": "Nur Teams hinzufügen",
+                        "badge": "sicher",
+                        "explanation": "Nur konfliktfreie Quell-Teams (oben in grün angezeigt) werden importiert. Bereits bestehende Teams in dieser Übung werden nicht angefasst."
+                    }
+                }
+            },
+            "importPreview": {
+                "noConflictFreeTeamsToImport": "Keine konfliktfreien Teams zum Importieren",
+                "teamsToBeDeleted": "Teams zum Löschen:",
+                "teamsToBeImported": "Teams zum Importieren:",
+                "outOf": "(von {{ number }})",
+                "totalTeamsAfterImport": "Teams insgesamt nach Import:"
             }
         }
     }

@@ -10,6 +10,7 @@
                 class="mr-2"
                 *ngIf="exercise?.isAtLeastInstructor"
                 [exercise]="exercise"
+                [teams]="teams"
                 [buttonSize]="ButtonSize.MEDIUM"
                 (save)="onTeamsImport($event)"
             ></jhi-teams-import-button>

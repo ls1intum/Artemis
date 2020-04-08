@@ -41,7 +41,7 @@
             >
             </jhi-team-exercise-search>
         </div>
-        <div class="form-group">
+        <div class="form-group mt-2">
             <div class="d-flex align-items-end">
                 <div>
                     <label class="label-narrow" jhiTranslate="artemisApp.team.sourceTeams.label">Source teams</label>
@@ -53,14 +53,19 @@
                 </span>
             </div>
             <div>
-                <ul class="list-group list-group--teams my-1">
+                <ul class="list-group list-group--teams mt-2">
                     <li *ngFor="let team of sourceTeams; index as i" class="list-group-item-container d-flex align-items-center">
                         <div class="list-group-item-index">
                             {{ i + 1 }}
                         </div>
-                        <div class="list-group-item d-flex align-items-center">
+                        <div
+                            class="list-group-item d-flex align-items-center"
+                            [class.has-error]="teamShortNamesAlreadyExistingInExercise.includes(team.shortName)"
+                            [class.has-success]="isSourceTeamFreeOfAnyConflicts(team)"
+                        >
                             <div class="team-name">{{ team.shortName }}</div>
-                            <jhi-team-students-list class="team-students" [students]="team.students"></jhi-team-students-list>
+                            <jhi-team-students-list class="team-students" [students]="team.students" [errorStudentLogins]="studentLoginsAlreadyExistingInExercise">
+                            </jhi-team-students-list>
                         </div>
                     </li>
                     <li *ngIf="!sourceTeams || sourceTeams.length === 0" class="list-group-item-container d-flex align-items-center">
@@ -77,16 +82,88 @@
                 </ul>
             </div>
         </div>
+        <ng-container *ngIf="showImportStrategyChoices">
+            <hr class="my-4" />
+            <div class="form-group mb-0">
+                <div>
+                    <label class="label-narrow" jhiTranslate="artemisApp.team.importStrategy.label">Import conflict strategy</label>
+                    <jhi-help-icon placement="right" text="artemisApp.team.importStrategy.tooltip" class="mr-1"></jhi-help-icon>
+                </div>
+                <div class="d-flex flex-column mt-2 pl-2">
+                    <label class="d-flex align-items-start">
+                        <input
+                            type="radio"
+                            name="importStrategy"
+                            class="radio-input-with-explanation"
+                            [ngModel]="importStrategy"
+                            (click)="updateImportStrategy(ImportStrategy.PURGE_EXISTING)"
+                            [value]="ImportStrategy.PURGE_EXISTING"
+                        />
+                        <div class="ml-2 radio-label-with-explanation">
+                            <strong>
+                                {{ 'artemisApp.team.importStrategy.options.purgeExisting.label' | translate }}
+                                <span class="badge badge-danger ml-1">{{ 'artemisApp.team.importStrategy.options.purgeExisting.badge' | translate }}</span>
+                            </strong>
+                            <p [class.text-muted]="importStrategy !== ImportStrategy.PURGE_EXISTING" class="explanation mb-2">
+                                {{ 'artemisApp.team.importStrategy.options.purgeExisting.explanation' | translate }}
+                            </p>
+                        </div>
+                    </label>
+                    <label class="d-flex align-items-start">
+                        <input
+                            type="radio"
+                            name="importStrategy"
+                            class="radio-input-with-explanation"
+                            [ngModel]="importStrategy"
+                            (click)="updateImportStrategy(ImportStrategy.CREATE_ONLY)"
+                            [value]="ImportStrategy.CREATE_ONLY"
+                        />
+                        <div class="ml-2 radio-label-with-explanation">
+                            <strong>
+                                {{ 'artemisApp.team.importStrategy.options.createOnly.label' | translate }}
+                                <span class="badge badge-success ml-1">{{ 'artemisApp.team.importStrategy.options.createOnly.badge' | translate }}</span>
+                            </strong>
+                            <p [class.text-muted]="importStrategy !== ImportStrategy.CREATE_ONLY" class="explanation mb-0">
+                                {{ 'artemisApp.team.importStrategy.options.createOnly.explanation' | translate }}
+                            </p>
+                        </div>
+                    </label>
+                </div>
+            </div>
+        </ng-container>
     </div>
     <div class="modal-footer">
-        <div *ngIf="sourceTeams?.length > 0" class="flex-shrink-0 mr-2"><strong>Total teams to be imported:</strong> {{ sourceTeams.length }}</div>
+        <div *ngIf="numberOfTeamsToBeImported !== null" class="flex-shrink-0 mr-2 d-flex">
+            <div *ngIf="numberOfTeamsToBeImported === 0">
+                <strong>{{ 'artemisApp.team.importPreview.noConflictFreeTeamsToImport' | translate }}</strong>
+            </div>
+            <ng-container *ngIf="numberOfTeamsToBeImported > 0">
+                <div *ngIf="numberOfTeamsToBeDeleted > 0" class="mr-3">
+                    <strong>{{ 'artemisApp.team.importPreview.teamsToBeDeleted' | translate }}</strong> {{ numberOfTeamsToBeDeleted }}
+                </div>
+                <div *ngIf="numberOfTeamsToBeImported !== numberOfTeamsAfterImport" class="mr-3">
+                    <strong>{{ 'artemisApp.team.importPreview.teamsToBeImported' | translate }}</strong> {{ numberOfTeamsToBeImported }}
+                    <span
+                        *ngIf="numberOfTeamsToBeImported < sourceTeams.length"
+                        jhiTranslate="artemisApp.team.importPreview.outOf"
+                        [translateValues]="{ number: sourceTeams.length }"
+                    >
+                        (out of {{ sourceTeams.length }})
+                    </span>
+                </div>
+                <div>
+                    <strong>{{ 'artemisApp.team.importPreview.totalTeamsAfterImport' | translate }}</strong> {{ numberOfTeamsAfterImport }}
+                </div>
+            </ng-container>
+        </div>
         <div class="flex-grow-1 d-flex justify-content-end">
             <button type="button" class="btn btn-default cancel" data-dismiss="modal" (click)="clear()">
                 <fa-icon [icon]="'ban'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
             </button>
-            <button type="submit" [disabled]="editForm.invalid || isImporting || !sourceExercise || !sourceTeams || sourceTeams.length === 0" class="btn btn-warning">
+            <button type="submit" [disabled]="editForm.invalid || isSubmitDisabled" class="btn btn-warning">
                 <fa-icon [icon]="'upload'" class="mr-2"></fa-icon>
-                <span jhiTranslate="entity.action.import">Import</span>
+                <span *ngIf="importStrategy === ImportStrategy.PURGE_EXISTING"> <span jhiTranslate="entity.action.purge">Purge</span> + </span>
+                <span jhiTranslate="entity.action.to-import">Import</span>
                 <fa-icon class="ml-1" [hidden]="!isImporting" [spin]="true" [icon]="'circle-notch'"></fa-icon>
             </button>
         </div>

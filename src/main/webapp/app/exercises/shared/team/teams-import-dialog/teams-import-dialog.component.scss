@@ -1,7 +1,13 @@
 @import 'src/main/webapp/content/scss/bootstrap-variables';
 
+$success-text-color: #155724;
+$success-bg-color: #d4edda;
+
 $warning-text-color: #856404;
 $warning-bg-color: #fff3cd;
+
+$error-text-color: $danger;
+$error-bg-color: #f8d7da;
 
 :host {
     display: block;
@@ -21,22 +27,12 @@ $warning-bg-color: #fff3cd;
 }
 
 .list-group--teams {
-    max-height: calc(100vh - 555px);
+    max-height: max(240px, 100vh - 560px);
     overflow-y: auto;
 
     .list-group-item-container {
         position: relative;
         margin-bottom: 0.15rem;
-
-        &:nth-child(even) {
-            .list-group-item {
-                background-color: rgba(0, 0, 0, 0.05);
-
-                &.has-warning {
-                    background-color: darken($warning-bg-color, 8%);
-                }
-            }
-        }
     }
 
     .list-group-item-index {
@@ -53,10 +49,22 @@ $warning-bg-color: #fff3cd;
         overflow-x: hidden;
         padding: 0.3rem 1rem;
 
+        &.has-success {
+            color: $success-text-color;
+            background-color: $success-bg-color;
+        }
+
         &.has-warning {
-            font-weight: 500;
             color: $warning-text-color;
             background-color: $warning-bg-color;
+        }
+
+        &.has-error {
+            background-color: $error-bg-color;
+
+            .team-name {
+                color: $error-text-color;
+            }
         }
     }
 }
@@ -72,8 +80,29 @@ $warning-bg-color: #fff3cd;
 
 .team-students {
     flex-grow: 1;
-    overflow-x: auto;
+    overflow-x: hidden;
     font-size: 12.5px;
+}
+
+.label-narrow {
+    display: inline-block;
+    margin-bottom: 0.1rem;
+}
+
+.radio-input-with-explanation {
+    height: 0.9rem * 1.5;
+}
+
+.radio-label-with-explanation {
+    .badge {
+        position: relative;
+        top: -1px;
+        font-size: 85%;
+    }
+
+    .explanation {
+        max-width: 66%;
+    }
 }
 
 .modal-footer {
@@ -82,9 +111,4 @@ $warning-bg-color: #fff3cd;
     button[disabled] {
         cursor: not-allowed;
     }
-}
-
-.label-narrow {
-    display: inline-block;
-    margin-bottom: 0.1rem;
 }

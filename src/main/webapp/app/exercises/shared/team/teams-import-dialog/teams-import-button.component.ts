@@ -22,6 +22,7 @@ export class TeamsImportButtonComponent {
     ButtonSize = ButtonSize;
 
     @Input() exercise: Exercise;
+    @Input() teams: Team[];
     @Input() buttonSize: ButtonSize = ButtonSize.SMALL;
 
     @Output() save: EventEmitter<Team[]> = new EventEmitter();
@@ -32,6 +33,7 @@ export class TeamsImportButtonComponent {
         event.stopPropagation();
         const modalRef: NgbModalRef = this.modalService.open(TeamsImportDialogComponent, { keyboard: true, size: 'lg', backdrop: 'static' });
         modalRef.componentInstance.exercise = this.exercise;
+        modalRef.componentInstance.teams = this.teams;
 
         modalRef.result.then(
             (teams: Team[]) => this.save.emit(teams),
