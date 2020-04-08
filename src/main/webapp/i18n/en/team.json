@@ -116,7 +116,12 @@
                 "teamsToBeImported": "Teams to be imported:",
                 "outOf": "(out of {{ number }})",
                 "totalTeamsAfterImport": "Total teams after import:"
-            }
+            },
+            "purgeConfirmationDialog": {
+                "question": "Are you sure you want to delete all teams of exercise <strong>{{ title }}</strong> and their participations in the exercise? This action can NOT be undone!",
+                "typeNameToConfirm": "Please type in the title of the exercise to confirm."
+            },
+            "importError": "Import failed. Please try again or contact an administrator for assistance."
         }
     }
 }

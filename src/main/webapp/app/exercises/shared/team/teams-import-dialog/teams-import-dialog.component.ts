@@ -1,11 +1,13 @@
-import { Component, Input, ViewChild, OnInit, OnChanges } from '@angular/core';
+import { Component, Input, ViewChild, OnInit, OnDestroy } from '@angular/core';
 import { NgForm } from '@angular/forms';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { JhiAlertService } from 'ng-jhipster';
+import { HttpResponse } from '@angular/common/http';
+import { Subject } from 'rxjs';
 import { TeamService } from 'app/exercises/shared/team/team.service';
 import { Team } from 'app/entities/team.model';
 import { Exercise } from 'app/entities/exercise.model';
+import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { flatMap } from 'lodash';
 
 enum ImportStrategy {
@@ -18,8 +20,9 @@ enum ImportStrategy {
     templateUrl: './teams-import-dialog.component.html',
     styleUrls: ['./teams-import-dialog.component.scss'],
 })
-export class TeamsImportDialogComponent implements OnInit {
+export class TeamsImportDialogComponent implements OnInit, OnDestroy {
     readonly ImportStrategy = ImportStrategy;
+    readonly ActionType = ActionType;
 
     @ViewChild('importForm', { static: false }) importForm: NgForm;
 
@@ -47,10 +50,17 @@ export class TeamsImportDialogComponent implements OnInit {
     studentLoginsAlreadyExistingInExercise: string[] = [];
     sourceTeamsFreeOfConflicts: Team[] = [];
 
-    constructor(private teamService: TeamService, private activeModal: NgbActiveModal) {}
+    private dialogErrorSource = new Subject<string>();
+    dialogError$ = this.dialogErrorSource.asObservable();
+
+    constructor(private teamService: TeamService, private activeModal: NgbActiveModal, private jhiAlertService: JhiAlertService) {}
 
     ngOnInit() {
         this.computePotentialConflictsBasedOnExistingTeams();
+    }
+
+    ngOnDestroy(): void {
+        this.dialogErrorSource.unsubscribe();
     }
 
     loadSourceTeams(sourceExercise: Exercise) {
@@ -106,6 +116,7 @@ export class TeamsImportDialogComponent implements OnInit {
             case ImportStrategy.PURGE_EXISTING:
                 return this.teams.length;
             case ImportStrategy.CREATE_ONLY:
+                return 0;
             default:
                 return null;
         }
@@ -166,15 +177,16 @@ export class TeamsImportDialogComponent implements OnInit {
         this.activeModal.dismiss('cancel');
     }
 
-    save() {
-        this.subscribeToSaveResponse(this.teamService.importTeamsFromExercise(this.exercise, this.sourceExercise));
+    purgeAndImportTeams() {
+        this.dialogErrorSource.next('');
+        this.importTeams();
     }
 
-    private subscribeToSaveResponse(teams: Observable<HttpResponse<Team[]>>) {
+    importTeams() {
         this.isImporting = true;
-        teams.subscribe(
+        this.teamService.importTeamsFromExercise(this.exercise, this.sourceExercise).subscribe(
             (res) => this.onSaveSuccess(res),
-            (error) => this.onSaveError(error),
+            () => this.onSaveError(),
         );
     }
 
@@ -183,7 +195,8 @@ export class TeamsImportDialogComponent implements OnInit {
         this.isImporting = false;
     }
 
-    onSaveError(httpErrorResponse: HttpErrorResponse) {
+    onSaveError() {
+        this.jhiAlertService.error('artemisApp.team.importError');
         this.isImporting = false;
     }
 }

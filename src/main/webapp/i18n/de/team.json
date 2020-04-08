@@ -116,7 +116,12 @@
                 "teamsToBeImported": "Teams zum Importieren:",
                 "outOf": "(von {{ number }})",
                 "totalTeamsAfterImport": "Teams insgesamt nach Import:"
-            }
+            },
+            "purgeConfirmationDialog": {
+                "question": "Sollen alle Teams der Übung <strong>{{ title }}</strong> und ihre Teilnahmen an der Aufgabe wirklich dauerhaft gelöscht werden? Diese Aktion kann NICHT rückgängig gemacht werden!",
+                "typeNameToConfirm": "Bitte gib den Titel der Übung zur Bestätigung ein."
+            },
+            "importError": "Import failed. Please try again or contact an administrator for assistance."
         }
     }
 }

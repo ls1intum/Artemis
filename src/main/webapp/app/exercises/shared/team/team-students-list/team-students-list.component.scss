@@ -37,6 +37,6 @@ $error-bg-color: #f8d7da;
 
     &.has-error {
         color: $error-text-color;
-        background-color: $error-bg-color;
+        background-color: lighten($error-bg-color, 5%);
     }
 }
