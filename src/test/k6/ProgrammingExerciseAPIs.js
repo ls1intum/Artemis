@@ -3,9 +3,9 @@ import { login } from "./requests/requests.js";
 import { createProgrammingExercise, startExercise, simulateSubmission, ParticipationSimulation, TestResult, deleteProgrammingExercise } from "./requests/programmingExercise.js";
 import { deleteCourse, newCourse, addUserToStudentsInCourse, addUserToInstructorsInCourse } from "./requests/course.js";
 import { newUser, getUser, updateUser, createUsersIfNeeded } from './requests/user.js';
-import {allSuccessfulContentJava, buildErrorContentJava, twoSuccessfulErrorContentJava} from "./resource/constants_java.js";
-import {allSuccessfulContentPython, buildErrorContentPython, twoSuccessfulErrorContentPython} from "./resource/constants_python.js";
-import {allSuccessfulContentC, buildErrorContentC, twoSuccessfulErrorContentC} from "./resource/constants_c.js";
+import {allSuccessfulContentJava, buildErrorContentJava, someSuccessfulErrorContentJava} from "./resource/constants_java.js";
+import {allSuccessfulContentPython, buildErrorContentPython, someSuccessfulErrorContentPython} from "./resource/constants_python.js";
+import {allSuccessfulContentC, buildErrorContentC, someSuccessfulErrorContentC} from "./resource/constants_c.js";
 
 export const options = {
     maxRedirects: 0,
@@ -75,25 +75,25 @@ export default function (data) {
     const delay = Math.floor(__VU / 3);
     sleep(delay * 3);
 
-    let twoSuccessfulErrorContent, allSuccessfulContent, buildErrorContent, twoPassedString;
+    let someSuccessfulErrorContent, allSuccessfulContent, buildErrorContent, somePassedString;
     switch(programmingLanguage) {
         case 'JAVA':
-            twoSuccessfulErrorContent = twoSuccessfulErrorContentJava;
+            someSuccessfulErrorContent = someSuccessfulErrorContentJava;
             allSuccessfulContent = allSuccessfulContentJava;
             buildErrorContent = buildErrorContentJava;
-            twoPassedString = '2 of 13 passed';
+            somePassedString = '2 of 13 passed';
             break;
         case 'PYTHON':
-            twoSuccessfulErrorContent = twoSuccessfulErrorContentPython;
+            someSuccessfulErrorContent = someSuccessfulErrorContentPython;
             allSuccessfulContent = allSuccessfulContentPython;
             buildErrorContent = buildErrorContentPython;
-            twoPassedString = '2 of 13 passed';
+            somePassedString = '2 of 13 passed';
             break;
         case 'C':
-            twoSuccessfulErrorContent = twoSuccessfulErrorContentC;
+            someSuccessfulErrorContent = someSuccessfulErrorContentC;
             allSuccessfulContent = allSuccessfulContentC;
             buildErrorContent = buildErrorContentC;
-            twoPassedString = '2 of 13 passed';
+            somePassedString = '4 of 20 passed';
             break;
     }
 
@@ -101,12 +101,16 @@ export default function (data) {
         let participationId = startExercise(artemis, courseId, exerciseId);
         if (participationId) {
             // partial success, then 100%, then build error -- wait some time between submissions in order to the build server time for the result
-            let simulation = new ParticipationSimulation(timeoutParticipation, exerciseId, participationId, twoSuccessfulErrorContent);
-            simulateSubmission(artemis, simulation, TestResult.FAIL, '2 of 13 passed');
+            let simulation = new ParticipationSimulation(timeoutParticipation, exerciseId, participationId, someSuccessfulErrorContent);
+            simulateSubmission(artemis, simulation, TestResult.FAIL, somePassedString);
             simulation = new ParticipationSimulation(timeoutParticipation, exerciseId, participationId, allSuccessfulContent);
             simulateSubmission(artemis, simulation, TestResult.SUCCESS);
             simulation = new ParticipationSimulation(timeoutParticipation, exerciseId, participationId, buildErrorContent);
-            simulateSubmission(artemis, simulation, TestResult.BUILD_ERROR);
+            if (programmingLanguage === 'C') { // C builds do never fail - they will only show 0/20 passed
+                simulateSubmission(artemis, simulation, TestResult.FAIL, "0 of 20 passed");
+            } else {
+                simulateSubmission(artemis, simulation, TestResult.BUILD_ERROR);
+            }
         }
 
         const delta = (new Date().getTime() - startTime) / 1000;

@@ -100,7 +100,7 @@ export const buildErrorContentPython = {
     }]
 };
 
-export const twoSuccessfulErrorContentPython = {
+export const someSuccessfulErrorContentPython = {
     newFiles: [],
     content: [{
         fileName: 'sort_strategy.py',

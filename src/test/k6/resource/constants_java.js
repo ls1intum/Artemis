@@ -108,7 +108,7 @@ export const testErrorContentJava = {
     }]
 };
 
-export const twoSuccessfulErrorContentJava = {
+export const someSuccessfulErrorContentJava = {
     newFiles: ['src/de/test/SortStrategy.java'],
     content: [{
         fileName: 'src/de/test/SortStrategy.java',
