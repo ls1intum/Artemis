@@ -14,13 +14,22 @@
             <div *ngFor="let criterion of exercise.gradingCriteria">
                 <label class="font-weight-bold" [innerHTML]="criterion!.title! | htmlForMarkdown"></label>
                 <table class="table table-bordered">
+                    <thead>
+                        <tr>
+                            <td class="font-weight-bold">Credits</td>
+                            <td class="font-weight-bold">Grading Scale</td>
+                            <td class="font-weight-bold">Instruction Description</td>
+                            <td class="font-weight-bold">Feedback</td>
+                            <td class="font-weight-bold">Max Count in Score</td>
+                        </tr>
+                    </thead>
                     <tbody>
                         <tr *ngFor="let instruction of criterion.structuredGradingInstructions">
                             <td style="width: 5%;" [innerHTML]="instruction.credits"></td>
                             <td style="width: 10%;" [innerHTML]="instruction!.gradingScale! | htmlForMarkdown"></td>
                             <td style="width: 40%;" [innerHTML]="instruction!.instructionDescription! | htmlForMarkdown"></td>
-                            <td style="width: 40%;" [innerHTML]="instruction!.feedback! | htmlForMarkdown"></td>
-                            <td style="width: 5%;" [innerHTML]="instruction.usageCount"></td>
+                            <td style="width: 35%;" [innerHTML]="instruction!.feedback! | htmlForMarkdown"></td>
+                            <td style="width: 10%;" [innerHTML]="instruction.usageCount"></td>
                         </tr>
                     </tbody>
                 </table>
