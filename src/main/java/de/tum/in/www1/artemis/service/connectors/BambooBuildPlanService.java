@@ -126,7 +126,7 @@ public class BambooBuildPlanService {
         }
         case PYTHON:
         case C: {
-            defaultJob.dockerConfiguration(new DockerConfiguration().image("com8/artemis-gbs:latest"));
+            defaultJob.dockerConfiguration(new DockerConfiguration().image("ls1tum/artemis-python-docker"));
             final var testParserTask = new TestParserTask(TestParserTaskProperties.TestType.JUNIT).resultDirectories("test-reports/*results.xml");
             var tasks = readScriptTasksFromTemplate(programmingLanguage, sequentialBuildRuns == null ? false : sequentialBuildRuns);
             tasks.add(0, checkoutTask);
