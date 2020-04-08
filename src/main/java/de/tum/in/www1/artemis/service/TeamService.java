@@ -21,9 +21,9 @@ import de.tum.in.www1.artemis.web.rest.errors.StudentsAlreadyAssignedException;
 @Service
 public class TeamService {
 
-    private TeamRepository teamRepository;
+    private final TeamRepository teamRepository;
 
-    private UserRepository userRepository;
+    private final UserRepository userRepository;
 
     private final AuthorizationCheckService authCheckService;
 

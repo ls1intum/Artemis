@@ -5,6 +5,7 @@ import { Course } from 'app/entities/course.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
+import { orderBy } from 'lodash';
 
 @Component({
     selector: 'jhi-team-exercise-search',
@@ -44,8 +45,8 @@ export class TeamExerciseSearchComponent implements OnInit {
     };
 
     searchResultFormatter = (exercise: Exercise): string => {
-        const { title } = exercise;
-        return title;
+        const { title, releaseDate } = exercise;
+        return title + (releaseDate ? ` (${releaseDate.format('DD.MM.YYYY')})` : '');
     };
 
     searchMatchesExercise(searchTerm: string, exercise: Exercise) {
@@ -79,6 +80,7 @@ export class TeamExerciseSearchComponent implements OnInit {
                 }
             }),
             map(([_, exerciseOptions]) => exerciseOptions || []),
+            map((exerciseOptions) => orderBy(exerciseOptions, ['releaseDate', 'id'])),
         );
     };
 

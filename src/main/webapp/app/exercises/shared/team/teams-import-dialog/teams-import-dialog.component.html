@@ -65,7 +65,7 @@
                     </li>
                     <li *ngIf="!sourceTeams || sourceTeams.length === 0" class="list-group-item-container d-flex align-items-center">
                         <div class="list-group-item-index text-muted">1</div>
-                        <div class="list-group-item d-flex align-items-center py-5" [class.has-error]="sourceTeams?.length === 0">
+                        <div class="list-group-item d-flex align-items-center py-5" [class.has-warning]="sourceTeams?.length === 0">
                             <span *ngIf="!sourceTeams" class="text-muted" jhiTranslate="artemisApp.team.selectSourceExerciseFirst">
                                 Please select a source exercise first.
                             </span>

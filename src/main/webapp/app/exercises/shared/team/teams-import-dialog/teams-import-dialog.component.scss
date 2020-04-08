@@ -1,7 +1,7 @@
 @import 'src/main/webapp/content/scss/bootstrap-variables';
 
-$error-text-color: $danger;
-$error-bg-color: #f8d7da;
+$warning-text-color: #856404;
+$warning-bg-color: #fff3cd;
 
 :host {
     display: block;
@@ -12,7 +12,7 @@ $error-bg-color: #f8d7da;
     top: -2px;
 }
 
-.error-message {
+.warning-message {
     position: relative;
     top: -4.5px;
     line-height: 1rem;
@@ -32,8 +32,8 @@ $error-bg-color: #f8d7da;
             .list-group-item {
                 background-color: rgba(0, 0, 0, 0.05);
 
-                &.has-error {
-                    background-color: darken($error-bg-color, 8%);
+                &.has-warning {
+                    background-color: darken($warning-bg-color, 8%);
                 }
             }
         }
@@ -53,10 +53,10 @@ $error-bg-color: #f8d7da;
         overflow-x: hidden;
         padding: 0.3rem 1rem;
 
-        &.has-error {
+        &.has-warning {
             font-weight: 500;
-            color: $error-text-color;
-            background-color: $error-bg-color;
+            color: $warning-text-color;
+            background-color: $warning-bg-color;
         }
     }
 }
@@ -73,6 +73,7 @@ $error-bg-color: #f8d7da;
 .team-students {
     flex-grow: 1;
     overflow-x: auto;
+    font-size: 12.5px;
 }
 
 .modal-footer {
