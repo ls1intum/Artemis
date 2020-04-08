@@ -28,4 +28,7 @@ export class StructuredGradingInstructionsAssessmentLayoutComponent {
         }
         return colour;
     }
+    setScore(nr: number) {
+        return nr + 'P';
+    }
 }

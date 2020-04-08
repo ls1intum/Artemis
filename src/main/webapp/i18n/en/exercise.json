@@ -33,6 +33,7 @@
             "sampleSolution": "Example Solution",
             "gradingInstructions": "Grading Instructions",
             "structuredGradingInstructions": "Structured Grading Instructions",
+            "usageCountHint": "This number specifies how often points for this instruction will be added to the final score",
             "DragDropInstruction": "Drag & Drop instruction to feedback element",
             "title": "Title",
             "shortName": "Short Name",

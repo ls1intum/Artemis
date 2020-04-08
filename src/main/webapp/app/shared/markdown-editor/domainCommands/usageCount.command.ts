@@ -32,6 +32,6 @@ export class UsageCountCommand extends DomainTagCommand {
      * @desc identify the end of the usage count
      */
     getClosingIdentifier(): string {
-        return '[/count]';
+        return '[/maxCountInScore]';
     }
 }

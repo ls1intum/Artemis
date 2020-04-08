@@ -34,6 +34,7 @@
             "gradingInstructions": "Benotungshinweise",
             "structuredGradingInstructions": "Strukturierte Benotungshinweise",
             "DragDropInstruction": "Drag & Drop Benotungshinweis zum Feedback Element",
+            "usageCountHint": "Diese Zahl gibt an, wie oft Punkte für diese Anweisung zur Endbewertung hinzugefügt werden",
             "title": "Titel",
             "shortName": "Kurzname",
             "releaseDate": "Veröffentlichungsdatum",
