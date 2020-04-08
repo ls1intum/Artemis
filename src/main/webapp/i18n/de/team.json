@@ -102,7 +102,7 @@
                     "purgeExisting": {
                         "label": "Bestehende Teams löschen",
                         "badge": "kritisch",
-                        "explanation": "Bevor alle Teams der Quell-Übung oben importiert werden, werden alle existierenden Teams dieser Übung gelöscht."
+                        "explanation": "Bevor alle Teams der Quell-Übung oben importiert werden, werden alle existierenden Teams dieser Übung inklusive ihrer Teilnahmen gelöscht."
                     },
                     "createOnly": {
                         "label": "Nur Teams hinzufügen",

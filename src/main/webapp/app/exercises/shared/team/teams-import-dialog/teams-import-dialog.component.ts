@@ -194,7 +194,7 @@ export class TeamsImportDialogComponent implements OnInit, OnDestroy {
             return;
         }
         this.isImporting = true;
-        this.teamService.importTeamsFromExercise(this.exercise, this.sourceExercise, this.importStrategy!).subscribe(
+        this.teamService.importTeamsFromSourceExercise(this.exercise, this.sourceExercise, this.importStrategy!).subscribe(
             (res) => this.onSaveSuccess(res),
             () => this.onSaveError(),
         );
