@@ -4,10 +4,17 @@
 
 <jhi-alert></jhi-alert>
 
-<button (click)="openCreateDiagramDialog()" class="btn btn-primary">
-    <fa-icon [icon]="'plus'"></fa-icon>
-    <span jhiTranslate="artemisApp.apollonDiagram.home.createLabel">Create a New Apollon Diagram</span>
-</button>
+<div class="row">
+    <div class="col">
+        <button type="submit" (click)="previousState()" class="btn btn-info">
+            <fa-icon [icon]="'arrow-left'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.back"> Back</span>
+        </button>
+        <button (click)="openCreateDiagramDialog()" class="btn btn-primary">
+            <fa-icon [icon]="'plus'"></fa-icon>
+            <span jhiTranslate="artemisApp.apollonDiagram.home.createLabel">Create a New Apollon Diagram</span>
+        </button>
+    </div>
+</div>
 
 <div class="table-responsive" *ngIf="apollonDiagrams && apollonDiagrams.length > 0">
     <table class="table table-striped">
@@ -22,7 +29,7 @@
         <tbody>
             <tr *ngFor="let apollonDiagram of apollonDiagrams | sortBy: predicate:reverse; trackBy: trackId">
                 <td>
-                    <a [routerLink]="['/apollon-diagrams', apollonDiagram.id]">{{ apollonDiagram.id }}</a>
+                    <a [routerLink]="['/course-management', 'apollon-diagrams', apollonDiagram.id]">{{ apollonDiagram.id }}</a>
                 </td>
                 <td>{{ getTitleForApollonDiagram(apollonDiagram) }}</td>
                 <td jhiTranslate="{{ 'artemisApp.DiagramType.' + apollonDiagram.diagramType }}">{{ apollonDiagram.diagramType }}</td>
