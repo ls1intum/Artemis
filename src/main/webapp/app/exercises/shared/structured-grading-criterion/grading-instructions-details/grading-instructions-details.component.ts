@@ -277,6 +277,5 @@ export class GradingInstructionsDetailsComponent implements OnInit {
         this.criteria = [];
         this.exercise.gradingCriteria = [];
         this.createSubInstructionCommands(domainCommands);
-        console.log(this.exercise.gradingCriteria);
     }
 }
