@@ -87,11 +87,11 @@ timeoutExercise=${timeoutExercise:-10}
 programmingLanguage=${programmingLanguage:-"JAVA"}
 
 echo "################### STARTING API Tests ###################"
-result=$(docker run -i --rm --network=host --name api-tests -v "$baseDir":/src -e BASE_USERNAME="$baseUsername" -e BASE_URL="$baseUrl" \
+result=$(docker run -i --rm --network=host --name api-tests-"$tests"-"$programmingLanguage" -v "$baseDir":/src -e BASE_USERNAME="$baseUsername" -e BASE_URL="$baseUrl" \
   -e BASE_PASSWORD="$basePassword" -e ITERATIONS="$iterations" -e TIMEOUT_PARTICIPATION="$timeoutParticipation" -e CLEANUP="$cleanup" \
   -e ADMIN_USERNAME="$adminUsername" -e ADMIN_PASSWORD="$adminPassword" -e CREATE_USERS="$createUsers" -e TIMEOUT_EXERCISE="$timeoutExercise" \
   -e PROGRAMMING_LANGUAGE="$programmingLanguage" \
-  loadimpact/k6 run /src/"$tests".js 2>&1)
+  loadimpact/k6 run --address localhost:0 /src/"$tests".js 2>&1)
 
 echo "########## FINISHED testing - evaluating result ##########"
 echo "$result"
