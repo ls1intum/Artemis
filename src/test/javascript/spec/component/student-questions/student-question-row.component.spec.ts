@@ -95,15 +95,13 @@ describe('StudentQuestionRowComponent', () => {
     });
 
     it('should toggle answer mode for new answer', () => {
-        it('should toggle answer mode and set question', () => {
-            component.studentQuestion = studentQuestion;
-            componentFixture.detectChanges();
-            component.toggleAnswerModeForNewAnswer();
-            componentFixture.detectChanges();
-            expect(component.isAnswerMode).to.be.true;
-            expect(component.questionAnswerText).to.deep.equal('');
-            expect(component.selectedQuestionAnswer).to.deep.equal(null);
-        });
+        component.studentQuestion = studentQuestion;
+        componentFixture.detectChanges();
+        component.toggleAnswerModeForNewAnswer();
+        componentFixture.detectChanges();
+        expect(component.isAnswerMode).to.be.true;
+        expect(component.questionAnswerText).to.deep.equal('');
+        expect(component.selectedQuestionAnswer).to.deep.equal(null);
     });
 
     it('should toggle question edit mode', () => {
