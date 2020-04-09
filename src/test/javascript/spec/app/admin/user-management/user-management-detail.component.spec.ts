@@ -10,12 +10,9 @@ describe('Component Tests', () => {
     describe('User Management Detail Component', () => {
         let comp: UserManagementDetailComponent;
         let fixture: ComponentFixture<UserManagementDetailComponent>;
-        const route =
-            ({
-                data: of({ user: new User(1, 'user', 'first', 'last', 'first@last.com', true, 'en', ['ROLE_USER'], 'admin', null, null, null) }),
-            } as
-                any) as
-            ActivatedRoute;
+        const route = ({
+            data: of({ user: new User(1, 'user', 'first', 'last', 'first@last.com', true, 'en', ['ROLE_USER'], 'admin', null, null, null) }),
+        } as any) as ActivatedRoute;
 
         beforeEach(async(() => {
             TestBed.configureTestingModule({

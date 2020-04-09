@@ -72,12 +72,11 @@ export class ResultDetailComponent implements OnInit {
         if (!this.feedbackFilter) {
             this.feedbackList = feedbackList;
         } else {
-            this.feedbackList =
-                this.feedbackFilter
-                    .map((test) => {
-                        return feedbackList.find(({ text }) => text === test);
-                    })
-                    .filter(Boolean) as Feedback[];
+            this.feedbackList = this.feedbackFilter
+                .map((test) => {
+                    return feedbackList.find(({ text }) => text === test);
+                })
+                .filter(Boolean) as Feedback[];
         }
     };
 
