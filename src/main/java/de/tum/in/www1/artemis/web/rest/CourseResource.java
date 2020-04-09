@@ -40,6 +40,7 @@ import de.tum.in.www1.artemis.web.rest.dto.TutorLeaderboardDTO;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
+import io.github.jhipster.config.JHipsterConstants;
 import io.github.jhipster.web.util.ResponseUtil;
 
 /**
@@ -285,9 +286,9 @@ public class CourseResource {
     }
 
     private void checkIfGroupsExists(String group) {
-        // if (!Arrays.asList(env.getActiveProfiles()).contains(JHipsterConstants.SPRING_PROFILE_PRODUCTION)) {
-        // return;
-        // }
+        if (!Arrays.asList(env.getActiveProfiles()).contains(JHipsterConstants.SPRING_PROFILE_PRODUCTION)) {
+            return;
+        }
         // only execute this check in the production environment because normal developers (while testing) might not have the right to call this method on the authentication server
         if (!artemisAuthenticationProvider.isGroupAvailable(group)) {
             throw new ArtemisAuthenticationException("Cannot save! The group " + group + " does not exist. Please double check the group name!");
