@@ -87,20 +87,30 @@ export class StudentQuestionRowComponent implements OnInit, OnDestroy {
      * @param   {StudentQuestionAnswer} questionAnswer
      */
     toggleAnswerMode(questionAnswer: StudentQuestionAnswer | null): void {
-        if (questionAnswer && this.selectedQuestionAnswer) {
-            if (questionAnswer.id === this.selectedQuestionAnswer.id) {
+        if (questionAnswer) {
+            if (this.selectedQuestionAnswer && questionAnswer.id === this.selectedQuestionAnswer.id) {
                 this.isAnswerMode = false;
                 this.questionAnswerText = '';
                 this.selectedQuestionAnswer = null;
             } else {
+                this.isAnswerMode = true;
                 this.questionAnswerText = questionAnswer.answerText;
                 this.selectedQuestionAnswer = questionAnswer;
             }
         } else {
-            this.isAnswerMode = !this.isAnswerMode;
-            this.questionAnswerText = questionAnswer ? questionAnswer.answerText : '';
+            this.isAnswerMode = false;
+            this.questionAnswerText = '';
             this.selectedQuestionAnswer = questionAnswer;
         }
+    }
+
+    /**
+     * Toggles the field for a new Answer
+     */
+    toggleAnswerModeForNewAnswer(): void {
+        this.isAnswerMode = true;
+        this.questionAnswerText = '';
+        this.selectedQuestionAnswer = null;
     }
 
     /**

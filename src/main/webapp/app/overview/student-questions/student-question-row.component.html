@@ -194,7 +194,7 @@
         </div>
         <div class="row mb-3" *ngIf="!isAnswerMode">
             <div class="col">
-                <button class="btn btn-primary" (click)="toggleAnswerMode(null)">{{ 'artemisApp.courseOverview.exerciseDetails.faq.answerNow' | translate }}</button>
+                <button class="btn btn-primary" (click)="toggleAnswerModeForNewAnswer()">{{ 'artemisApp.courseOverview.exerciseDetails.faq.answerNow' | translate }}</button>
             </div>
         </div>
         <div *ngIf="isAnswerMode && !selectedQuestionAnswer">
