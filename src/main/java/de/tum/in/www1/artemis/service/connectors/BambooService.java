@@ -690,13 +690,13 @@ public class BambooService implements ContinuousIntegrationService {
 
         if (result.getResultString() != null && !result.getResultString().isEmpty()) {
 
-            Pattern pattern = Pattern.compile("^([0-9]+) of ([0-9]+) failed");
+            Pattern pattern = Pattern.compile("^([0-9]+) of ([0-9]+) passed");
             Matcher matcher = pattern.matcher(result.getResultString());
 
             if (matcher.find()) {
-                float failedTests = Float.parseFloat(matcher.group(1));
+                float successfulTests = Float.parseFloat(matcher.group(1));
                 float totalTests = Float.parseFloat(matcher.group(2));
-                float score = (totalTests - failedTests - skippedTests) / totalTests;
+                float score = successfulTests / totalTests;
                 return (long) (score * 100);
             }
         }
@@ -718,7 +718,11 @@ public class BambooService implements ContinuousIntegrationService {
         result.setRatedIfNotExceeded(participation.getProgrammingExercise().getDueDate(), submission);
         result.setAssessmentType(AssessmentType.AUTOMATIC);
         result.setSuccessful(buildResults.getBuildState() == QueriedBambooBuildResultDTO.BuildState.SUCCESS);
-        result.setResultString(buildResults.getBuildTestSummary());
+
+        int total = buildResults.getTestResults().getAll();
+        int passed = buildResults.getTestResults().getSuccessful();
+        result.setResultString(String.format("%d of %d passed", passed, total));
+
         result.setCompletionDate(buildResults.getBuildCompletedDate());
         result.setScore(calculateScoreForResult(result, buildResults.getTestResults().getSkipped()));
         result.setParticipation((Participation) participation);
