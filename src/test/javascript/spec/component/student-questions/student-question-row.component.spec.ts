@@ -15,28 +15,25 @@ describe('StudentQuestionRowComponent', () => {
     let component: StudentQuestionRowComponent;
     let componentFixture: ComponentFixture<StudentQuestionRowComponent>;
 
-    const unApprovedStudentQuestionAnswer =
-        {
-            id: 1,
-            answerDate: null,
-            answerText: 'not approved',
-            tutorApproved: false,
-        } as StudentQuestionAnswer;
+    const unApprovedStudentQuestionAnswer = {
+        id: 1,
+        answerDate: null,
+        answerText: 'not approved',
+        tutorApproved: false,
+    } as StudentQuestionAnswer;
 
-    const approvedStudentQuestionAnswer =
-        {
-            id: 2,
-            answerDate: null,
-            answerText: 'approved',
-            tutorApproved: true,
-        } as StudentQuestionAnswer;
+    const approvedStudentQuestionAnswer = {
+        id: 2,
+        answerDate: null,
+        answerText: 'approved',
+        tutorApproved: true,
+    } as StudentQuestionAnswer;
 
-    const studentQuestion =
-        {
-            id: 1,
-            creationDate: null,
-            answers: [unApprovedStudentQuestionAnswer, approvedStudentQuestionAnswer],
-        } as StudentQuestion;
+    const studentQuestion = {
+        id: 1,
+        creationDate: null,
+        answers: [unApprovedStudentQuestionAnswer, approvedStudentQuestionAnswer],
+    } as StudentQuestion;
 
     beforeEach(async () => {
         return TestBed.configureTestingModule({
