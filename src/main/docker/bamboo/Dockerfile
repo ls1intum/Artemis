@@ -1,10 +1,11 @@
-FROM atlassian/bamboo-server:6.10.3
+FROM atlassian/bamboo-server:7.0.2
 
 LABEL description="Bamboo pre-configured for Artemis"
 
 USER root
 ENV DEBIAN_FRONTEND noninteractive
 
+RUN update-alternatives --install /usr/bin/java java /usr/lib/jvm/java-8-openjdk-amd64/jre/bin/java 1
 RUN apt-get update
 RUN apt-get install -y maven
 RUN apt-get install -y software-properties-common apt-utils
