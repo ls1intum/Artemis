@@ -6,8 +6,6 @@
 /src/test/javascript/PhantomJS*/
 /uploads
 /test-results.xml
-/src/main/resources/config/application-artemis.yml
-/src/main/resources/config/application-dev.yml
 
 ######################
 # Node
@@ -70,7 +68,6 @@ classes/
 .local/share/JetBrains/
 .java/
 out/
-/src/main/resources/config/application-artemis.yml
 ######################
 # Visual Studio Code
 ######################
