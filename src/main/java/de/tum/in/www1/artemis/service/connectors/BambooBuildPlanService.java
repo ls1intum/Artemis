@@ -5,15 +5,13 @@ import static de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationSer
 
 import java.io.IOException;
 import java.net.URL;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import org.apache.commons.io.IOUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
+import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.core.io.support.ResourcePatternUtils;
 import org.springframework.lang.Nullable;
@@ -38,7 +36,6 @@ import com.atlassian.bamboo.specs.api.builders.plan.configuration.ConcurrentBuil
 import com.atlassian.bamboo.specs.api.builders.project.Project;
 import com.atlassian.bamboo.specs.api.builders.repository.VcsChangeDetection;
 import com.atlassian.bamboo.specs.api.builders.repository.VcsRepositoryIdentifier;
-import com.atlassian.bamboo.specs.api.builders.requirement.Requirement;
 import com.atlassian.bamboo.specs.api.builders.task.Task;
 import com.atlassian.bamboo.specs.builders.notification.PlanCompletedNotification;
 import com.atlassian.bamboo.specs.builders.repository.bitbucket.server.BitbucketServerRepository;
@@ -130,12 +127,11 @@ public class BambooBuildPlanService {
         }
         case PYTHON:
         case C: {
-            defaultJob.dockerConfiguration(new DockerConfiguration().image("com8/artemis-gbs:latest"));
+            defaultJob.dockerConfiguration(new DockerConfiguration().image("ls1tum/artemis-python-docker"));
             final var testParserTask = new TestParserTask(TestParserTaskProperties.TestType.JUNIT).resultDirectories("test-reports/*results.xml");
             var tasks = readScriptTasksFromTemplate(programmingLanguage, sequentialBuildRuns == null ? false : sequentialBuildRuns);
             tasks.add(0, checkoutTask);
-
-            return defaultStage.jobs(defaultJob.tasks(tasks.toArray(new Task[0])).requirements(new Requirement("Python3")).finalTasks(testParserTask));
+            return defaultStage.jobs(defaultJob.tasks(tasks.toArray(new Task[0])).finalTasks(testParserTask));
         }
         default:
             throw new IllegalArgumentException("No build stage setup for programming language " + programmingLanguage);
@@ -198,23 +194,21 @@ public class BambooBuildPlanService {
         final var directoryPattern = "classpath:templates/bamboo/" + programmingLanguage.name().toLowerCase() + (sequentialBuildRuns ? "/sequentialRuns/" : "/regularRuns/")
                 + "*.sh";
         try {
-            final var scriptResources = ResourcePatternUtils.getResourcePatternResolver(resourceLoader).getResources(directoryPattern);
-            // Have to use foreach because of possible IOException
-            // script name -> file contents
-            final var scriptContents = new HashMap<String, String>();
+            List<Task<?, ?>> tasks = new ArrayList<>();
+            final var scriptResources = Arrays.asList(ResourcePatternUtils.getResourcePatternResolver(resourceLoader).getResources(directoryPattern));
+            scriptResources.sort(Comparator.comparing(Resource::getFilename));
             for (final var resource : scriptResources) {
-
                 // 1_some_description.sh --> "some description"
                 final var descriptionElements = Arrays.stream((resource.getFilename().split("\\.")[0] // cut .sh suffix
                         .split("_"))).collect(Collectors.toList());
                 descriptionElements.remove(0);  // Remove the index prefix: 1 some description --> some description
                 final var scriptDescription = String.join(" ", descriptionElements);
-                try (final var is = resource.getInputStream()) {
-                    scriptContents.put(scriptDescription, IOUtils.toString(is));
+                try (final var inputStream = resource.getInputStream()) {
+                    tasks.add(new ScriptTask().description(scriptDescription).inlineBody(IOUtils.toString(inputStream)));
                 }
             }
 
-            return scriptContents.entrySet().stream().map(script -> new ScriptTask().description(script.getKey()).inlineBody(script.getValue())).collect(Collectors.toList());
+            return tasks;
         }
         catch (IOException e) {
             throw new ContinuousIntegrationBuildPlanException("Unable to load template build plans", e);

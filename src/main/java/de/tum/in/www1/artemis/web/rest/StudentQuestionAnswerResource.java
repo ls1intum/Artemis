@@ -105,7 +105,7 @@ public class StudentQuestionAnswerResource {
         if (optionalStudentQuestionAnswer.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
-        if (mayUpdateOrDeleteStudentQuestionAnswer(studentQuestionAnswer, user)) {
+        if (mayUpdateOrDeleteStudentQuestionAnswer(optionalStudentQuestionAnswer.get(), user)) {
             StudentQuestionAnswer result = studentQuestionAnswerRepository.save(studentQuestionAnswer);
             return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, studentQuestionAnswer.getId().toString())).body(result);
         }
@@ -166,6 +166,13 @@ public class StudentQuestionAnswerResource {
         }
     }
 
+    /**
+     * Check if user can update or delete StudentQuestionAnswer
+     *
+     * @param studentQuestionAnswer studentQuestionAnswer for which to check
+     * @param user user for which to check
+     * @return Boolean if StudenQuestionAnswer can updated or deleted
+     */
     private boolean mayUpdateOrDeleteStudentQuestionAnswer(StudentQuestionAnswer studentQuestionAnswer, User user) {
         Course course = studentQuestionAnswer.getQuestion().getCourse();
         Boolean hasCourseTAAccess = authorizationCheckService.isAtLeastTeachingAssistantInCourse(course, user);

@@ -23,7 +23,7 @@
                 Export Quiz Exercises
             </span>
         </button>
-        <button *ngIf="course && course.isAtLeastInstructor" class="btn mr-2 btn-primary float-right" [routerLink]="['/apollon-diagrams']">
+        <button *ngIf="course && course.isAtLeastInstructor" class="btn mr-2 btn-primary float-right" [routerLink]="['/course-management/apollon-diagrams']">
             <fa-icon [icon]="'plus'"></fa-icon>
             <span jhiTranslate="artemisApp.quizExercise.home.createModelDragAndDrop">
                 Create new Drag and Drop Model Quiz
