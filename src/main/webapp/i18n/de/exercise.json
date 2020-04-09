@@ -93,7 +93,7 @@
             "isText": "Das ist eine Textübung",
             "isFileUpload": "Das ist eine Datei-Upload-Übung",
             "notificiationText": "Optional: Mitteilung über die Änderung",
-            "submissionSuccessful": "Die submission war erfolgreich",
+            "submissionSuccessful": "Die Einreichung war erfolgreich",
             "resultCreationSuccessful": "Das Ergebnis wurde erfolgreich erzeugt",
             "presentationScoreEnabled": {
                 "title": "Präsentationsergebnis aktiviert",
