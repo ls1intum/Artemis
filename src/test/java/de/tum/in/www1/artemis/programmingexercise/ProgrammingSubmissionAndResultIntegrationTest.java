@@ -135,7 +135,7 @@ class ProgrammingSubmissionAndResultIntegrationTest extends AbstractSpringIntegr
     /**
      * The student commits, the code change is pushed to the VCS.
      * The VCS notifies Artemis about a new submission.
-     * <p>
+     *
      * However the participation id provided by the VCS on the request is invalid.
      */
     @Test
@@ -176,9 +176,9 @@ class ProgrammingSubmissionAndResultIntegrationTest extends AbstractSpringIntegr
     /**
      * The student commits, the code change is pushed to the VCS.
      * The VCS notifies Artemis about a new submission.
-     * <p>
+     *
      * Here the participation provided does exist so Artemis can create the submission.
-     * <p>
+     *
      * After that the CI builds the code submission and notifies Artemis so it can create the result.
      */
     @Test
@@ -210,9 +210,9 @@ class ProgrammingSubmissionAndResultIntegrationTest extends AbstractSpringIntegr
     /**
      * The student commits, the code change is pushed to the VCS.
      * The VCS notifies Artemis about a new submission.
-     * <p>
+     *
      * Here the participation provided does exist so Artemis can create the submission.
-     * <p>
+     *
      * After that the CI builds the code submission and notifies Artemis so it can create the result.
      *
      * @param additionalCommit Whether an additional commit in the Assignment repo should be added to the payload
@@ -247,9 +247,9 @@ class ProgrammingSubmissionAndResultIntegrationTest extends AbstractSpringIntegr
     /**
      * The student commits, the code change is pushed to the VCS.
      * The VCS notifies Artemis about a new submission.
-     * <p>
+     *
      * After that the CI builds the code submission and notifies Artemis so it can create the result - however for an unknown reason this request is sent twice!
-     * <p>
+     *
      * Only the last result should be linked to the created submission.
      */
     @ParameterizedTest
@@ -282,7 +282,7 @@ class ProgrammingSubmissionAndResultIntegrationTest extends AbstractSpringIntegr
     /**
      * The student commits, the code change is pushed to the VCS.
      * The VCS notifies Artemis about a new submission - however for an unknown reason this request is sent twice!
-     * <p>
+     *
      * This should not create two identical submissions.
      */
     @ParameterizedTest
