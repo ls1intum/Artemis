@@ -129,7 +129,7 @@ public class ProgrammingExerciseSimulationService {
         resultBase.setParticipation(templateProgrammingExerciseParticipation.get());
         resultBase.setSubmission(programmingSubmissionBase);
         resultBase.setRated(true);
-        resultBase.resultString("13 of 13 failed");
+        resultBase.resultString("0 of 13 passed");
         resultBase.setAssessmentType(AssessmentType.AUTOMATIC);
         resultBase.score(0L);
         resultBase.setCompletionDate(templateProgrammingExerciseParticipation.get().getInitializationDate());
