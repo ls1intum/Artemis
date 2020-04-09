@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.service;
 
 import java.time.ZonedDateTime;
 import java.util.Optional;
-import java.util.Random;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,6 +20,7 @@ import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.ParticipationRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
+import de.tum.in.www1.artemis.service.util.VCSSimulationUtils;
 
 @Service
 public class ProgrammingSubmissionResultSimulationService {
@@ -89,8 +89,7 @@ public class ProgrammingSubmissionResultSimulationService {
         }
 
         ProgrammingSubmission programmingSubmission = new ProgrammingSubmission();
-        Random random = new Random();
-        programmingSubmission.setCommitHash(String.valueOf(random.nextInt(100000)));
+        programmingSubmission.setCommitHash(VCSSimulationUtils.simulateCommitHash());
         programmingSubmission.setSubmitted(true);
         programmingSubmission.setSubmissionDate(ZonedDateTime.now());
         programmingSubmission.setType(SubmissionType.MANUAL);

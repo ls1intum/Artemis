@@ -18,6 +18,7 @@ import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExercisePa
 import de.tum.in.www1.artemis.domain.participation.TemplateProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.scheduled.ProgrammingExerciseScheduleService;
+import de.tum.in.www1.artemis.service.util.VCSSimulationUtils;
 
 @Service
 public class ProgrammingExerciseSimulationService {
@@ -117,7 +118,7 @@ public class ProgrammingExerciseSimulationService {
                 .findByProgrammingExerciseId(programmingExercise.getId());
         Optional<SolutionProgrammingExerciseParticipation> solutionProgrammingExerciseParticipation = this.solutionProgrammingExerciseParticipationRepository
                 .findByProgrammingExerciseId(programmingExercise.getId());
-        String commitHashBase = "abcdef01";
+        String commitHashBase = VCSSimulationUtils.simulateCommitHash();
         ProgrammingSubmission programmingSubmissionBase = new ProgrammingSubmission();
         programmingSubmissionBase.setParticipation(templateProgrammingExerciseParticipation.get());
         programmingSubmissionBase.setSubmitted(true);
@@ -136,7 +137,7 @@ public class ProgrammingExerciseSimulationService {
         resultRepository.save(resultBase);
 
         ProgrammingSubmission programmingSubmissionSolution = new ProgrammingSubmission();
-        String commitHashSolution = "abcdef23";
+        String commitHashSolution = VCSSimulationUtils.simulateCommitHash();
         programmingSubmissionSolution.setParticipation(solutionProgrammingExerciseParticipation.get());
         programmingSubmissionSolution.setSubmitted(true);
         programmingSubmissionSolution.setType(SubmissionType.OTHER);
