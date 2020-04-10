@@ -519,7 +519,13 @@ public class BambooService implements ContinuousIntegrationService {
         result.setAssessmentType(AssessmentType.AUTOMATIC);
         result.setSuccessful(buildResult.getBuild().isSuccessful());
 
-        result.setResultString(buildResult.getBuild().getTestSummary().getDescription());
+        if (buildResult.getBuild().getTestSummary().getDescription().equals("No tests found")) {
+            result.setResultString("No tests found");
+        } else {
+            int total = buildResult.getBuild().getTestSummary().getTotalCount();
+            int passed = buildResult.getBuild().getTestSummary().getSuccessfulCount();
+            result.setResultString(String.format("%d of %d passed", passed, total));
+        }
 
         result.setCompletionDate(buildResult.getBuild().getBuildCompletedDate());
         result.setScore(calculateScoreForResult(result, buildResult.getBuild().getTestSummary().getSkippedCount()));
@@ -719,9 +725,13 @@ public class BambooService implements ContinuousIntegrationService {
         result.setAssessmentType(AssessmentType.AUTOMATIC);
         result.setSuccessful(buildResults.getBuildState() == QueriedBambooBuildResultDTO.BuildState.SUCCESS);
 
-        int total = buildResults.getTestResults().getAll();
-        int passed = buildResults.getTestResults().getSuccessful();
-        result.setResultString(String.format("%d of %d passed", passed, total));
+        if (buildResults.getBuildTestSummary().equals("No tests found")) {
+            result.setResultString("No tests found");
+        } else {
+            int total = buildResults.getTestResults().getAll();
+            int passed = buildResults.getTestResults().getSuccessful();
+            result.setResultString(String.format("%d of %d passed", passed, total));
+        }
 
         result.setCompletionDate(buildResults.getBuildCompletedDate());
         result.setScore(calculateScoreForResult(result, buildResults.getTestResults().getSkipped()));
