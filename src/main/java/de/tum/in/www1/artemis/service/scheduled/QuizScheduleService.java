@@ -17,7 +17,6 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
-import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
@@ -51,7 +50,7 @@ public class QuizScheduleService {
     /**
      * quizExerciseId -> ScheduledFuture
      */
-    private static Map<Long, ScheduledFuture> quizStartSchedules = new ConcurrentHashMap<>();
+    private static Map<Long, ScheduledFuture<?>> quizStartSchedules = new ConcurrentHashMap<>();
 
     private static ThreadPoolTaskScheduler threadPoolTaskScheduler = new ThreadPoolTaskScheduler();
     static {
@@ -60,7 +59,7 @@ public class QuizScheduleService {
         threadPoolTaskScheduler.initialize();
     }
 
-    private ScheduledFuture scheduledFuture;
+    private ScheduledFuture<?> scheduledFuture;
 
     private final SimpMessageSendingOperations messagingTemplate;
 
@@ -118,7 +117,7 @@ public class QuizScheduleService {
      * @param result the result, which should be added
      */
     public static void addResultForStatisticUpdate(Long quizExerciseId, Result result) {
-
+        log.debug("add result for statistic update for quiz " + quizExerciseId + ": " + result);
         if (quizExerciseId != null && result != null) {
             // check if there is already a result with the same quiz
             if (!resultHashMap.containsKey(quizExerciseId)) {
@@ -209,11 +208,11 @@ public class QuizScheduleService {
     }
 
     /**
-     * stop scheduler (doesn't interrupt if running)
+     * stop scheduler (interrupts if running)
      */
     public void stopSchedule() {
         if (scheduledFuture != null) {
-            scheduledFuture.cancel(false);
+            scheduledFuture.cancel(true);
         }
         for (Long quizExerciseId : quizStartSchedules.keySet()) {
             cancelScheduledQuizStart(quizExerciseId);
@@ -231,7 +230,7 @@ public class QuizScheduleService {
 
         if (quizExercise.isIsPlannedToStart() && quizExercise.getReleaseDate().isAfter(ZonedDateTime.now())) {
             // schedule sending out filtered quiz over websocket
-            ScheduledFuture scheduledFuture = threadPoolTaskScheduler.schedule(() -> quizExerciseService.sendQuizExerciseToSubscribedClients(quizExercise),
+            ScheduledFuture<?> scheduledFuture = threadPoolTaskScheduler.schedule(() -> quizExerciseService.sendQuizExerciseToSubscribedClients(quizExercise),
                     Date.from(quizExercise.getReleaseDate().toInstant()));
 
             // save scheduled future in HashMap
@@ -240,9 +239,9 @@ public class QuizScheduleService {
     }
 
     public void cancelScheduledQuizStart(Long quizExerciseId) {
-        ScheduledFuture scheduledFuture = quizStartSchedules.remove(quizExerciseId);
+        ScheduledFuture<?> scheduledFuture = quizStartSchedules.remove(quizExerciseId);
         if (scheduledFuture != null) {
-            scheduledFuture.cancel(false);
+            scheduledFuture.cancel(true);
         }
     }
 
@@ -263,6 +262,7 @@ public class QuizScheduleService {
      * (DB Read and DB Write) and remove from ResultHashMap 4. Send out new Statistics over WebSocket (WebSocket Send)
      */
     public void processCachedQuizSubmissions() {
+        log.debug("Process cached quiz submissions");
         // global try-catch for error logging
         try {
             long start = System.currentTimeMillis();
@@ -329,7 +329,7 @@ public class QuizScheduleService {
 
                 // get the Quiz with the statistic from the database
                 QuizExercise quizExercise = quizExerciseService.findOneWithQuestionsAndStatistics(quizExerciseId);
-                // check if quiz has been deleted
+                // check if quiz has been deleted (edge case), then do nothing!
                 if (quizExercise == null) {
                     resultHashMap.remove(quizExerciseId);
                     continue;
@@ -339,7 +339,8 @@ public class QuizScheduleService {
                 try {
                     Set<Result> newResultsForQuiz = resultHashMap.remove(quizExerciseId);
                     quizStatisticService.updateStatistics(newResultsForQuiz, quizExercise);
-                    log.debug("Updated statistics after {} ms for quiz {}", System.currentTimeMillis() - start, quizExercise.getTitle());
+                    log.debug("Updated statistics with {} new results after {} ms for quiz {}", newResultsForQuiz.size(), System.currentTimeMillis() - start,
+                            quizExercise.getTitle());
                 }
                 catch (Exception e) {
                     log.error("Exception in StatisticService.updateStatistics():\n{}", e.getMessage());
@@ -434,7 +435,7 @@ public class QuizScheduleService {
      * @param username       the user, who submitted the quizSubmission
      * @param quizSubmission the quizSubmission, which is used to calculate the Result
      */
-    private Participation createParticipationWithResultAndWriteItInHashMaps(QuizExercise quizExercise, String username, QuizSubmission quizSubmission) {
+    private void createParticipationWithResultAndWriteItInHashMaps(QuizExercise quizExercise, String username, QuizSubmission quizSubmission) {
 
         if (quizExercise != null && username != null && quizSubmission != null) {
 
@@ -468,16 +469,13 @@ public class QuizScheduleService {
 
             // save participation, result and quizSubmission
             participation = studentParticipationRepository.save(participation);
-            quizSubmission = quizSubmissionRepository.save(quizSubmission);
+            quizSubmissionRepository.save(quizSubmission);
             result = resultRepository.save(result);
 
             // add the participation to the participationHashMap for the send out at the end of the quiz
             addParticipation(quizExercise.getId(), participation);
             // add the result of the participation resultHashMap for the statistic-Update
             addResultForStatisticUpdate(quizExercise.getId(), result);
-
-            return participation;
         }
-        return null;
     }
 }

@@ -11,12 +11,12 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import de.tum.in.www1.artemis.AbstractSpringIntegrationTest;
+import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
 
-class ProgrammingExerciseServiceTest extends AbstractSpringIntegrationTest {
+class ProgrammingExerciseServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
     ProgrammingExerciseRepository programmingExerciseRepository;
