@@ -167,6 +167,12 @@ canvas#complete-chart {
     text-align: left;
     color: white;
     background-color: #3e8acc;
+    &:hover {
+        background-color: #0f6ab4;
+    }
+    &:active {
+        box-shadow: 0 2px 0 $artemis-dark;
+    }
     border: none;
     border-radius: 1px;
 }
