@@ -4,6 +4,7 @@ import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.SOLUTION;
 import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.TEMPLATE;
 import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResource.Endpoints.*;
 import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResource.ErrorKeys.*;
+import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseSimulationResource.Endpoints.EXERCISES_SIMULATION;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.doReturn;
@@ -349,7 +350,7 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationTest {
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void setupProgrammingExerciseWithoutLocalSetup_exerciseIsNull_badRequest() throws Exception {
-        request.post(ROOT + NO_LOCAL_SETUP, null, HttpStatus.BAD_REQUEST);
+        request.post(ROOT + EXERCISES_SIMULATION, null, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -361,7 +362,7 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationTest {
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void setupProgrammingExerciseWithoutLocalSetup_exerciseIDIsNull_badRequest() throws Exception {
-        request.post(ROOT + NO_LOCAL_SETUP, programmingExercise, HttpStatus.BAD_REQUEST);
+        request.post(ROOT + EXERCISES_SIMULATION, programmingExercise, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -373,7 +374,7 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationTest {
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void setupProgrammingExerciseWithoutLocalSetup_courseIsNull_badRequest() throws Exception {
-        request.post(ROOT + NO_LOCAL_SETUP, new ProgrammingExercise(), HttpStatus.BAD_REQUEST);
+        request.post(ROOT + EXERCISES_SIMULATION, new ProgrammingExercise(), HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -389,7 +390,7 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationTest {
     public void setupProgrammingExerciseWithoutLocalSetup_instructorNotInCourse_forbidden() throws Exception {
         database.addInstructor("other-instructors", "instructoralt");
         programmingExercise.setId(null);
-        request.post(ROOT + NO_LOCAL_SETUP, programmingExercise, HttpStatus.FORBIDDEN);
+        request.post(ROOT + EXERCISES_SIMULATION, programmingExercise, HttpStatus.FORBIDDEN);
     }
 
     @Test
@@ -405,7 +406,7 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationTest {
     public void setupProgrammingExerciseWithoutLocalSetup_titleNull_badRequest() throws Exception {
         programmingExercise.setId(null);
         programmingExercise.setTitle(null);
-        request.post(ROOT + NO_LOCAL_SETUP, programmingExercise, HttpStatus.BAD_REQUEST);
+        request.post(ROOT + EXERCISES_SIMULATION, programmingExercise, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -421,7 +422,7 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationTest {
     public void setupProgrammingExerciseWithoutLocalSetup_titleContainsBadCharacter_badRequest() throws Exception {
         programmingExercise.setId(null);
         programmingExercise.setTitle("abc?=§ ``+##");
-        request.post(ROOT + NO_LOCAL_SETUP, programmingExercise, HttpStatus.BAD_REQUEST);
+        request.post(ROOT + EXERCISES_SIMULATION, programmingExercise, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -437,7 +438,7 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationTest {
     public void setupProgrammingExerciseWithoutLocalSetup_shortNameIsNull_badRequest() throws Exception {
         programmingExercise.setId(null);
         programmingExercise.setShortName(null);
-        request.post(ROOT + NO_LOCAL_SETUP, programmingExercise, HttpStatus.BAD_REQUEST);
+        request.post(ROOT + EXERCISES_SIMULATION, programmingExercise, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -453,7 +454,7 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationTest {
     public void setupProgrammingExerciseWithoutLocalSetup_shortNameContainsBadCharacters_badRequest() throws Exception {
         programmingExercise.setId(null);
         programmingExercise.setShortName("asdb ³¼²½¼³`` ");
-        request.post(ROOT + NO_LOCAL_SETUP, programmingExercise, HttpStatus.BAD_REQUEST);
+        request.post(ROOT + EXERCISES_SIMULATION, programmingExercise, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -469,7 +470,7 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationTest {
     public void setupProgrammingExerciseWithoutLocalSetup_noProgrammingLanguageSet_badRequest() throws Exception {
         programmingExercise.setId(null);
         programmingExercise.setProgrammingLanguage(null);
-        request.post(ROOT + NO_LOCAL_SETUP, programmingExercise, HttpStatus.BAD_REQUEST);
+        request.post(ROOT + EXERCISES_SIMULATION, programmingExercise, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -485,7 +486,7 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationTest {
     public void setupProgrammingExerciseWithoutLocalSetup_packageNameContainsBadCharacters_badRequest() throws Exception {
         programmingExercise.setId(null);
         programmingExercise.setPackageName("..asd. ß?");
-        request.post(ROOT + NO_LOCAL_SETUP, programmingExercise, HttpStatus.BAD_REQUEST);
+        request.post(ROOT + EXERCISES_SIMULATION, programmingExercise, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -501,7 +502,7 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationTest {
     public void setupProgrammingExerciseWithoutLocalSetup_packageNameIsNull_badRequest() throws Exception {
         programmingExercise.setId(null);
         programmingExercise.setPackageName(null);
-        request.post(ROOT + NO_LOCAL_SETUP, programmingExercise, HttpStatus.BAD_REQUEST);
+        request.post(ROOT + EXERCISES_SIMULATION, programmingExercise, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -517,7 +518,7 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationTest {
     public void setupProgrammingExerciseWithoutLocalSetup_maxScoreIsNull_badRequest() throws Exception {
         programmingExercise.setId(null);
         programmingExercise.setMaxScore(null);
-        request.post(ROOT + NO_LOCAL_SETUP, programmingExercise, HttpStatus.BAD_REQUEST);
+        request.post(ROOT + EXERCISES_SIMULATION, programmingExercise, HttpStatus.BAD_REQUEST);
     }
 
     @Test

@@ -48,6 +48,7 @@ import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.service.TeamService;
 import de.tum.in.www1.artemis.util.*;
 import de.tum.in.www1.artemis.web.rest.ParticipationResource;
+import de.tum.in.www1.artemis.web.rest.ProgrammingExerciseSimulationResource;
 
 public class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractSpringIntegrationTest {
 
@@ -223,7 +224,9 @@ public class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractS
     public void setupProgrammingExerciseWithoutLocalSetup_validExercise_created(ExerciseMode mode) throws Exception {
         exercise.setMode(mode);
         mockConnectorRequestsForSetup(exercise);
-        final var generatedExercise = request.postWithResponseBody(ROOT + NO_LOCAL_SETUP, exercise, ProgrammingExercise.class, HttpStatus.CREATED);
+        final var generatedExercise = request.postWithResponseBody(
+                ProgrammingExerciseSimulationResource.Endpoints.ROOT + ProgrammingExerciseSimulationResource.Endpoints.EXERCISES_SIMULATION, exercise, ProgrammingExercise.class,
+                HttpStatus.CREATED);
 
         exercise.setId(generatedExercise.getId());
         assertThat(exercise).isEqualTo(generatedExercise);
