@@ -4,6 +4,10 @@ import java.util.Random;
 
 public class VCSSimulationUtils {
 
+    /**
+     * Simulates a commit Hash, the returned string consist out of 40 times the same number
+     * @return the simulated commitHash
+     */
     public static String simulateCommitHash() {
         Random random = new Random();
         String number = String.valueOf(random.nextInt(10));
