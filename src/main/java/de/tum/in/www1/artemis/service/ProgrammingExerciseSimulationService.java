@@ -98,9 +98,9 @@ public class ProgrammingExerciseSimulationService {
         final var solutionParticipation = programmingExercise.getSolutionParticipation();
         final var templatePlanName = TEMPLATE.getName();
         final var solutionPlanName = SOLUTION.getName();
-        final var exerciseRepoUrl = "http://localhost:7990/scm/" + projectKey + "/" + exerciseRepoName + ".git";
-        final var testsRepoUrl = "http://localhost:7990/scm/" + projectKey + "/" + testRepoName + ".git";
-        final var solutionRepoUrl = "http://localhost:7990/scm/" + projectKey + "/" + solutionRepoName + ".git";
+        final var exerciseRepoUrl = "http://nolocalsetup:7990/scm/" + projectKey + "/" + exerciseRepoName + ".git";
+        final var testsRepoUrl = "http://nolocalsetup:7990/scm/" + projectKey + "/" + testRepoName + ".git";
+        final var solutionRepoUrl = "http://nolocalsetup:7990/scm/" + projectKey + "/" + solutionRepoName + ".git";
         templateParticipation.setBuildPlanId(projectKey + "-" + templatePlanName);
         templateParticipation.setRepositoryUrl(exerciseRepoUrl);
         solutionParticipation.setBuildPlanId(projectKey + "-" + solutionPlanName);

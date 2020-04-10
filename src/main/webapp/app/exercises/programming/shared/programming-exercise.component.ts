@@ -101,6 +101,15 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
         );
     }
 
+    /**
+     * Checks if the url includes the string "nolocalsetup', which is an indication
+     * that the particular programming exercise has no local setup
+     * @param urlToCheck the url which will be check if it contains the substring
+     */
+    hasNoLocalSetup(urlToCheck: string): boolean {
+        return urlToCheck.includes('nolocalsetup');
+    }
+
     protected getChangeEventName(): string {
         return 'programmingExerciseListModification';
     }

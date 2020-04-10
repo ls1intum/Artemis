@@ -99,8 +99,14 @@
                     <td *ngIf="!isOrion" class="d-flex flex-column">
                         <div class="d-flex justify-content-between">
                             <span *ngIf="programmingExercise.templateParticipation && programmingExercise.templateParticipation.repositoryUrl"
-                                ><a href="{{ programmingExercise.templateParticipation.repositoryUrl }}" target="_blank">Template</a></span
+                                ><a
+                                    *ngIf="!hasNoLocalSetup(programmingExercise.templateParticipation.repositoryUrl); else noLocalSetupTemplate"
+                                    href="{{ programmingExercise.templateParticipation.repositoryUrl }}"
+                                    target="_blank"
+                                    >Template</a
+                                ></span
                             >
+                            <ng-template #noLocalSetupTemplate>Template</ng-template>
                             <jhi-programming-exercise-instructor-status
                                 *ngIf="
                                     programmingExercise.templateParticipation &&
@@ -114,8 +120,14 @@
                         </div>
                         <div class="d-flex justify-content-between">
                             <span *ngIf="programmingExercise.solutionParticipation && programmingExercise.solutionParticipation.repositoryUrl"
-                                ><a href="{{ programmingExercise.solutionParticipation.repositoryUrl }}" target="_blank">Solution</a></span
+                                ><a
+                                    *ngIf="!hasNoLocalSetup(programmingExercise.solutionParticipation.repositoryUrl); else noLocalSetupSolution"
+                                    href="{{ programmingExercise.solutionParticipation.repositoryUrl }}"
+                                    target="_blank"
+                                    >Solution</a
+                                ></span
                             >
+                            <ng-template #noLocalSetupSolution>Solution</ng-template>
                             <jhi-programming-exercise-instructor-status
                                 *ngIf="
                                     programmingExercise.solutionParticipation &&
@@ -128,21 +140,39 @@
                             ></jhi-programming-exercise-instructor-status>
                         </div>
                         <div>
-                            <span *ngIf="programmingExercise.testRepositoryUrl"><a href="{{ programmingExercise.testRepositoryUrl }}" target="_blank">Test</a></span>
+                            <span *ngIf="programmingExercise.testRepositoryUrl"
+                                ><a
+                                    *ngIf="!hasNoLocalSetup(programmingExercise.testRepositoryUrl); else noLocalSetupTest"
+                                    href="{{ programmingExercise.testRepositoryUrl }}"
+                                    target="_blank"
+                                    >Test</a
+                                ></span
+                            >
+                            <ng-template #noLocalSetupTest>Test</ng-template>
                         </div>
                     </td>
                     <td jhiOrionFilter [showInOrionWindow]="false">
                         <!-- TODO get the correct URL from the server instead of hardcoding Bamboo here -->
                         <span *ngIf="programmingExercise.templateParticipation && programmingExercise.templateParticipation.buildPlanId"
-                            ><a jhiBuildPlanLink [projectKey]="programmingExercise.projectKey" [buildPlanId]="programmingExercise.templateParticipation.buildPlanId"
+                            ><a
+                                *ngIf="!hasNoLocalSetup(programmingExercise.templateParticipation.repositoryUrl); else noLocalSetupTemplate"
+                                jhiBuildPlanLink
+                                [projectKey]="programmingExercise.projectKey"
+                                [buildPlanId]="programmingExercise.templateParticipation.buildPlanId"
                                 >Template</a
                             ></span
-                        ><br />
+                        >
+                        <ng-template #noLocalSetupTemplate>Template</ng-template> <br />
                         <span *ngIf="programmingExercise.solutionParticipation && programmingExercise.solutionParticipation.buildPlanId"
-                            ><a jhiBuildPlanLink [projectKey]="programmingExercise.projectKey" [buildPlanId]="programmingExercise.solutionParticipation.buildPlanId"
+                            ><a
+                                *ngIf="!hasNoLocalSetup(programmingExercise.solutionParticipation.repositoryUrl); else noLocalSetupSolution"
+                                jhiBuildPlanLink
+                                [projectKey]="programmingExercise.projectKey"
+                                [buildPlanId]="programmingExercise.solutionParticipation.buildPlanId"
                                 >Solution</a
                             ></span
-                        ><br />
+                        >
+                        <ng-template #noLocalSetupSolution>Solution</ng-template><br />
                     </td>
 
                     <td class="d-none d-md-table-cell">{{ programmingExercise.publishBuildPlanUrl }}</td>
