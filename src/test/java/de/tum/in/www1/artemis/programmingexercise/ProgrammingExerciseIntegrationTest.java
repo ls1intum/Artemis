@@ -361,20 +361,8 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationTest {
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void setupProgrammingExerciseWithoutLocalSetup_exerciseIDIsNull_badRequest() throws Exception {
-        request.post(ROOT + EXERCISES_SIMULATION, programmingExercise, HttpStatus.BAD_REQUEST);
-    }
-
-    @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void setupProgrammingExercise_courseIsNull_badRequest() throws Exception {
         request.post(ROOT + SETUP, new ProgrammingExercise(), HttpStatus.BAD_REQUEST);
-    }
-
-    @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void setupProgrammingExerciseWithoutLocalSetup_courseIsNull_badRequest() throws Exception {
-        request.post(ROOT + EXERCISES_SIMULATION, new ProgrammingExercise(), HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -383,14 +371,6 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationTest {
         database.addInstructor("other-instructors", "instructoralt");
         programmingExercise.setId(null);
         request.post(ROOT + SETUP, programmingExercise, HttpStatus.FORBIDDEN);
-    }
-
-    @Test
-    @WithMockUser(username = "instructoralt1", roles = "INSTRUCTOR")
-    public void setupProgrammingExerciseWithoutLocalSetup_instructorNotInCourse_forbidden() throws Exception {
-        database.addInstructor("other-instructors", "instructoralt");
-        programmingExercise.setId(null);
-        request.post(ROOT + EXERCISES_SIMULATION, programmingExercise, HttpStatus.FORBIDDEN);
     }
 
     @Test
@@ -403,26 +383,10 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationTest {
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void setupProgrammingExerciseWithoutLocalSetup_titleNull_badRequest() throws Exception {
-        programmingExercise.setId(null);
-        programmingExercise.setTitle(null);
-        request.post(ROOT + EXERCISES_SIMULATION, programmingExercise, HttpStatus.BAD_REQUEST);
-    }
-
-    @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void setupProgrammingExercise_titleContainsBadCharacter_badRequest() throws Exception {
         programmingExercise.setId(null);
         programmingExercise.setTitle("abc?=§ ``+##");
         request.post(ROOT + SETUP, programmingExercise, HttpStatus.BAD_REQUEST);
-    }
-
-    @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void setupProgrammingExerciseWithoutLocalSetup_titleContainsBadCharacter_badRequest() throws Exception {
-        programmingExercise.setId(null);
-        programmingExercise.setTitle("abc?=§ ``+##");
-        request.post(ROOT + EXERCISES_SIMULATION, programmingExercise, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -435,26 +399,10 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationTest {
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void setupProgrammingExerciseWithoutLocalSetup_shortNameIsNull_badRequest() throws Exception {
-        programmingExercise.setId(null);
-        programmingExercise.setShortName(null);
-        request.post(ROOT + EXERCISES_SIMULATION, programmingExercise, HttpStatus.BAD_REQUEST);
-    }
-
-    @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void setupProgrammingExercise_shortNameContainsBadCharacters_badRequest() throws Exception {
         programmingExercise.setId(null);
         programmingExercise.setShortName("asdb ³¼²½¼³`` ");
         request.post(ROOT + SETUP, programmingExercise, HttpStatus.BAD_REQUEST);
-    }
-
-    @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void setupProgrammingExerciseWithoutLocalSetup_shortNameContainsBadCharacters_badRequest() throws Exception {
-        programmingExercise.setId(null);
-        programmingExercise.setShortName("asdb ³¼²½¼³`` ");
-        request.post(ROOT + EXERCISES_SIMULATION, programmingExercise, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -467,26 +415,10 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationTest {
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void setupProgrammingExerciseWithoutLocalSetup_noProgrammingLanguageSet_badRequest() throws Exception {
-        programmingExercise.setId(null);
-        programmingExercise.setProgrammingLanguage(null);
-        request.post(ROOT + EXERCISES_SIMULATION, programmingExercise, HttpStatus.BAD_REQUEST);
-    }
-
-    @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void setupProgrammingExercise_packageNameContainsBadCharacters_badRequest() throws Exception {
         programmingExercise.setId(null);
         programmingExercise.setPackageName("..asd. ß?");
         request.post(ROOT + SETUP, programmingExercise, HttpStatus.BAD_REQUEST);
-    }
-
-    @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void setupProgrammingExerciseWithoutLocalSetup_packageNameContainsBadCharacters_badRequest() throws Exception {
-        programmingExercise.setId(null);
-        programmingExercise.setPackageName("..asd. ß?");
-        request.post(ROOT + EXERCISES_SIMULATION, programmingExercise, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -499,26 +431,10 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationTest {
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void setupProgrammingExerciseWithoutLocalSetup_packageNameIsNull_badRequest() throws Exception {
-        programmingExercise.setId(null);
-        programmingExercise.setPackageName(null);
-        request.post(ROOT + EXERCISES_SIMULATION, programmingExercise, HttpStatus.BAD_REQUEST);
-    }
-
-    @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void setupProgrammingExercise_maxScoreIsNull_badRequest() throws Exception {
         programmingExercise.setId(null);
         programmingExercise.setMaxScore(null);
         request.post(ROOT + SETUP, programmingExercise, HttpStatus.BAD_REQUEST);
-    }
-
-    @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void setupProgrammingExerciseWithoutLocalSetup_maxScoreIsNull_badRequest() throws Exception {
-        programmingExercise.setId(null);
-        programmingExercise.setMaxScore(null);
-        request.post(ROOT + EXERCISES_SIMULATION, programmingExercise, HttpStatus.BAD_REQUEST);
     }
 
     @Test
