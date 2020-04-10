@@ -22,7 +22,7 @@ import de.tum.in.www1.artemis.service.StudentQuestionService;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.RequestUtilService;
 
-public class StudentQuestionAnswerIntegrationTest extends AbstractSpringIntegrationTest {
+public class StudentQuestionAnswerIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
     DatabaseUtilService database;

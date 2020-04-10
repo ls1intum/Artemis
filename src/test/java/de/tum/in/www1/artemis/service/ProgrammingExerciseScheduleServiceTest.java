@@ -14,9 +14,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.mock.mockito.SpyBean;
 
-import de.tum.in.www1.artemis.AbstractSpringIntegrationTest;
+import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.connector.bitbucket.BitbucketRequestMockProvider;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
@@ -26,16 +25,13 @@ import de.tum.in.www1.artemis.service.scheduled.ProgrammingExerciseScheduleServi
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.TimeService;
 
-class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationTest {
+class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
     ProgrammingExerciseScheduleService programmingExerciseScheduleService;
 
     @Autowired
     ProgrammingExerciseRepository programmingExerciseRepository;
-
-    @SpyBean
-    ProgrammingSubmissionService programmingSubmissionService;
 
     @Autowired
     DatabaseUtilService database;
