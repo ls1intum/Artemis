@@ -1,6 +1,7 @@
-version: '2'
+version: "2"
 services:
     jira:
+        container_name: artemis_jira
         image: atlassian/jira-core:8.8
         volumes:
           - artemis-jira:/var/atlassian/application-data/jira
@@ -8,8 +9,10 @@ services:
             - "8081:8080"
         hostname: jira
         networks:
-          - artemis
+            artemis:
+                ipv4_address: 172.20.0.2
     bitbucket:
+        container_name: artemis_bitbucket
         image: atlassian/bitbucket-server:7.1.0
         volumes:
             - artemis-bitbucket:/var/atlassian/application-data/bitbucket
@@ -20,8 +23,10 @@ services:
             - "7999:7999"
         hostname: bitbucket
         networks:
-          - artemis
+            artemis:
+                ipv4_address: 172.20.0.3
     bamboo:
+        container_name: artemis_bamboo
         build: bamboo
         volumes:
             - artemis-bamboo:/var/atlassian/application-data/bamboo
@@ -30,11 +35,16 @@ services:
             - "8085:8085"
         hostname: bamboo
         networks:
-          - artemis
+            artemis:
+                ipv4_address: 172.20.0.4
 
 networks:
   artemis:
       driver: "bridge"
+      ipam:
+        driver: default
+        config:
+            - subnet: 172.20.0.0/24
 
 volumes:
     artemis-jira:
