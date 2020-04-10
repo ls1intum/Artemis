@@ -15,3 +15,4 @@ export const PARTICIPATION = (exerciseId) => `/exercises/${exerciseId}/participa
 export const PARTICIPATIONS = (courseId, exerciseId) => `${EXERCISE(courseId, exerciseId)}/participations`;
 export const COMMIT = (participationId) => `/repository/${participationId}/commit`;
 export const NEW_FILE = (participationId) => `/repository/${participationId}/file`;
+export const PARTICIPATION_WITH_RESULT = (participationId) => `/participations/${participationId}/withLatestResult`;
