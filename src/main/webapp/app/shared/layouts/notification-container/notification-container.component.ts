@@ -18,6 +18,7 @@ export class NotificationContainerComponent implements OnInit {
     sortedNotifications: Notification[] = [];
     currentUser: User;
     notificationCount = 0;
+    showSidebar = false;
 
     constructor(private notificationService: NotificationService, private userService: UserService, private accountService: AccountService) {}
 
@@ -79,5 +80,9 @@ export class NotificationContainerComponent implements OnInit {
                 this.updateNotifications();
             }, 1500);
         });
+    }
+
+    toggleSidebar(): void {
+        this.showSidebar = !this.showSidebar;
     }
 }
