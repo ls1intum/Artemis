@@ -79,7 +79,7 @@ public class ProgrammingExerciseSimulationResource {
      * @param programmingExercise the input to create/setup new exercise
      * @return a Response Entity
      */
-    @PostMapping(ProgrammingExerciseSimulationResource.Endpoints.NO_LOCAL_SETUP)
+    @PostMapping(ProgrammingExerciseSimulationResource.Endpoints.EXERCISES_SIMULATION)
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
     public ResponseEntity<ProgrammingExercise> setupProgrammingExerciseWithoutLocalSetup(@RequestBody ProgrammingExercise programmingExercise) {
@@ -184,7 +184,7 @@ public class ProgrammingExerciseSimulationResource {
 
         public static final String PROGRAMMING_EXERCISES = "/programming-exercises";
 
-        public static final String NO_LOCAL_SETUP = PROGRAMMING_EXERCISES + "/no-local-setup";
+        public static final String EXERCISES_SIMULATION = PROGRAMMING_EXERCISES + "/no-local-setup";
 
     }
 }

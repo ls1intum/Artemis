@@ -733,12 +733,6 @@ public class ProgrammingExerciseResource {
 
         public static final String SETUP = PROGRAMMING_EXERCISES + "/setup";
 
-        public static final String NO_LOCAL_SETUP = PROGRAMMING_EXERCISES + "/no-local-setup";
-
-        public static final String SUBMISSIONS_NO_LOCAL_SETUP = "/submissions/no-local-setup";
-
-        public static final String RESULTS_NO_LOCAL_SETUP = "/results/no-local-setup";
-
         public static final String GET_FOR_COURSE = "/courses/{courseId}/programming-exercises";
 
         public static final String IMPORT = PROGRAMMING_EXERCISES + "/import/{sourceExerciseId}";

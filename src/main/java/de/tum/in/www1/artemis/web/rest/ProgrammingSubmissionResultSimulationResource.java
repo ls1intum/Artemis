@@ -83,13 +83,16 @@ public class ProgrammingSubmissionResultSimulationResource {
         Result result = programmingSubmissionResultSimulationService.createResult(programmingExerciseStudentParticipation);
 
         messagingService.broadcastNewResult((Participation) optionalStudentParticipation.get(), result);
-        // TODO: can we avoid to invoke this code for non LTI students? (to improve performance) // if (participation.isLti()) { // }
-        // handles new results and sends them to LTI consumers
-        /*
-         * if (participation instanceof ProgrammingExerciseStudentParticipation) { ltiService.onNewResult((ProgrammingExerciseStudentParticipation) participation); }
-         */
         log.info("The new result for {} was saved successfully", ((ProgrammingExerciseStudentParticipation) optionalStudentParticipation.get()).getBuildPlanId());
         return ResponseEntity.ok().body(result);
+    }
+
+    public static final class Endpoints {
+
+        public static final String SUBMISSIONS_SIMULATION = "/submissions/no-local-setup";
+
+        public static final String RESULTS_SIMULATION = "/results/no-local-setup";
+
     }
 
 }
