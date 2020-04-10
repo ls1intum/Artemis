@@ -233,9 +233,11 @@ GitLab should configure itself automatically. If there are no issues, you can de
         LABEL description="Jenkins with maven pre-installed for Artemis"
         
         USER root
-        
+        # Make sure all sources are up to date
         RUN apt update
+        # Install Maven
         RUN apt-get install -y maven
+        # Install Java 14 JDK
         RUN cd /usr/lib/jvm && \
             wget https://github.com/AdoptOpenJDK/openjdk14-binaries/releases/download/jdk-14%2B36.1_openj9-0.19.0/OpenJDK14U-jdk_x64_linux_openj9_14_36_openj9-0.19.0.tar.gz && \
             tar -zxf OpenJDK14U-jdk_x64_linux_openj9_14_36_openj9-0.19.0.tar.gz \
@@ -244,6 +246,13 @@ GitLab should configure itself automatically. If there are no issues, you can de
         RUN chown -R root:root /usr/lib/jvm/java-14-openjdk-amd64
         RUN JAVA_HOME="/usr/lib/jvm/java-14-openjdk-amd64" && export JAVA_HOME
         ENV JAVA_HOME /usr/lib/jvm/java-14-openjdk-amd64
+        
+        # Install python dependecies
+        RUN apt install -y python3 python3-pip
+        # Install all C dependencies
+        RUN apt install -y gcc-8 gdb make libasan5 libubsan0 liblsan0 libtsan0
+        # Install pytest for python exercises
+        RUN pip3 install -U pytest
         
         USER jenkins
 

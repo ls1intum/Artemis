@@ -15,15 +15,16 @@ import de.tum.in.www1.artemis.service.util.XmlFileUtils;
 
 @Profile("jenkins")
 @Component
-public class JavaJenkinsBuildPlanCreator extends AbstractJenkinsBuildPlanCreator {
+public class CJenkinsBuildPlanCreator extends AbstractJenkinsBuildPlanCreator {
 
-    public JavaJenkinsBuildPlanCreator(ResourceLoader resourceLoader) {
+    public CJenkinsBuildPlanCreator(ResourceLoader resourceLoader) {
         super(resourceLoader);
     }
 
     @Override
     public Document buildBasicConfig(URL testRepositoryURL, URL assignmentRepositoryURL) {
-        final var resourcePath = Path.of("templates", "jenkins", "java", "config.xml");
+        // TODO: provide a correct config file for C
+        final var resourcePath = Path.of("templates", "jenkins", "c", "config.xml");
         final var replacements = Map.of(REPLACE_TEST_REPO, testRepositoryURL.toString(), REPLACE_ASSIGNMENT_REPO, assignmentRepositoryURL.toString(), REPLACE_GIT_CREDENTIALS,
                 gitCredentialsKey, REPLACE_ASSIGNMENT_CHECKOUT_PATH, Constants.ASSIGNMENT_CHECKOUT_PATH, REPLACE_PUSH_TOKEN, pushToken, REPLACE_ARTEMIS_NOTIFICATION_URL,
                 artemisNotificationUrl, REPLACE_NOTIFICATIONS_TOKEN, ARTEMIS_AUTHENTICATION_TOKEN_KEY);
@@ -38,6 +39,6 @@ public class JavaJenkinsBuildPlanCreator extends AbstractJenkinsBuildPlanCreator
             return buildBasicConfig(testRepositoryURL, assignmentRepositoryURL);
         }
 
-        throw new UnsupportedOperationException("Sequential Jenkins builds not yet supported for Java!");
+        throw new UnsupportedOperationException("Sequential Jenkins builds not yet supported for C!");
     }
 }
