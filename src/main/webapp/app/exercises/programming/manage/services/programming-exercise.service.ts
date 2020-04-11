@@ -35,17 +35,6 @@ export class ProgrammingExerciseService {
             .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
     }
 
-    /**
-     * Triggers the creation and setup of a new programming exercise
-     * @param programmingExercise
-     */
-    automaticSetupWithoutLocalSetup(programmingExercise: ProgrammingExercise): Observable<EntityResponseType> {
-        const copy = this.convertDataFromClient(programmingExercise);
-        return this.http
-            .post<ProgrammingExercise>(this.resourceUrl + '/no-local-setup', copy, { observe: 'response' })
-            .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
-    }
-
     generateStructureOracle(exerciseId: number): Observable<string> {
         return this.http.put<string>(this.resourceUrl + '/' + exerciseId + '/generate-tests', { responseType: 'text' });
     }

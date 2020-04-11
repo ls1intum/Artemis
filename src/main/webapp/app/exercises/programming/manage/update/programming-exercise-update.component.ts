@@ -18,6 +18,7 @@ import { EditorMode } from 'app/shared/markdown-editor/markdown-editor.component
 import { KatexCommand } from 'app/shared/markdown-editor/commands/katex.command';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { ProgrammingExerciseSimulationService } from 'app/exercises/programming/manage/services/programming-exercise-simulation.service';
 
 @Component({
     selector: 'jhi-programming-exercise-update',
@@ -64,6 +65,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         private activatedRoute: ActivatedRoute,
         private translateService: TranslateService,
         private profileService: ProfileService,
+        private programmingExerciseSimulationService: ProgrammingExerciseSimulationService,
     ) {}
 
     /**
@@ -187,7 +189,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
             }
             this.subscribeToSaveResponse(this.programmingExerciseService.update(this.programmingExercise, requestOptions));
         } else if (this.programmingExercise.noLocalSetup) {
-            this.subscribeToSaveResponse(this.programmingExerciseService.automaticSetupWithoutLocalSetup(this.programmingExercise));
+            this.subscribeToSaveResponse(this.programmingExerciseSimulationService.automaticSetupWithoutLocalSetup(this.programmingExercise));
         } else {
             this.subscribeToSaveResponse(this.programmingExerciseService.automaticSetup(this.programmingExercise));
         }
