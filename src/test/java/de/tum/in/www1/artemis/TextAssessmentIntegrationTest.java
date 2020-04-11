@@ -27,7 +27,7 @@ import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.RequestUtilService;
 import de.tum.in.www1.artemis.util.TextExerciseUtilService;
 
-public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationTest {
+public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
     CourseRepository courseRepo;

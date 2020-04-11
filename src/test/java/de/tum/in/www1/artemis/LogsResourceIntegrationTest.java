@@ -10,7 +10,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.in.www1.artemis.util.RequestUtilService;
 import de.tum.in.www1.artemis.web.rest.vm.LoggerVM;
 
-public class LogsResourceIntegrationTest extends AbstractSpringIntegrationTest {
+public class LogsResourceIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
     RequestUtilService request;

@@ -23,7 +23,7 @@ import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.RequestUtilService;
 
-public class FileUploadAssessmentIntegrationTest extends AbstractSpringIntegrationTest {
+public class FileUploadAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     public static final String API_FILE_UPLOAD_SUBMISSIONS = "/api/file-upload-submissions/";
 
