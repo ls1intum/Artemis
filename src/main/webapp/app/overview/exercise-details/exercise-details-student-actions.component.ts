@@ -17,6 +17,7 @@ import { StudentParticipation } from 'app/entities/participation/student-partici
 import { User } from 'app/core/user/user.model';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { CourseExerciseSubmissionResultSimulationService } from 'app/course/manage/course-exercise-submission-result-simulation.service';
 
 @Component({
     selector: 'jhi-exercise-details-student-actions',
@@ -53,6 +54,7 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
         private sourceTreeService: SourceTreeService,
         private router: Router,
         private profileService: ProfileService,
+        private courseExerciseSubmissionResultSimulationService: CourseExerciseSubmissionResultSimulationService,
     ) {}
 
     ngOnInit(): void {
@@ -131,7 +133,7 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
      * triggers the simulation of a participation and submission for the currently logged in user
      */
     simulateSubmission() {
-        this.courseExerciseService.simulateSubmission(this.exercise.id).subscribe(() => {
+        this.courseExerciseSubmissionResultSimulationService.simulateSubmission(this.exercise.id).subscribe(() => {
             this.jhiAlertService.success('artemisApp.exercise.submissionSuccessful');
         });
     }
@@ -140,7 +142,7 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
      * triggers the simulation of a result for the currently logged in user
      */
     simulateResult() {
-        this.courseExerciseService.simulateResult(this.exercise.id).subscribe(() => {
+        this.courseExerciseSubmissionResultSimulationService.simulateResult(this.exercise.id).subscribe(() => {
             this.jhiAlertService.success('artemisApp.exercise.resultCreationSuccessful');
         });
     }

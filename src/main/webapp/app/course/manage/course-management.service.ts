@@ -19,8 +19,6 @@ import { StudentParticipation } from 'app/entities/participation/student-partici
 import { AccountService } from 'app/core/auth/account.service';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import { NotificationService } from 'app/overview/notification/notification.service';
-import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
-import { Result } from 'app/entities/result.model';
 
 export type EntityResponseType = HttpResponse<Course>;
 export type EntityArrayResponseType = HttpResponse<Course[]>;
@@ -225,7 +223,6 @@ export class CourseManagementService {
 @Injectable({ providedIn: 'root' })
 export class CourseExerciseService {
     private resourceUrl = SERVER_API_URL + `api/courses`;
-    private resourceUrlWithoutLocalSetup = SERVER_API_URL + `api`;
 
     constructor(private http: HttpClient, private participationWebsocketService: ParticipationWebsocketService) {}
 
@@ -299,14 +296,6 @@ export class CourseExerciseService {
         return this.http.post<StudentParticipation>(`${this.resourceUrl}/${courseId}/exercises/${exerciseId}/participations`, {}).map((participation: StudentParticipation) => {
             return this.handleParticipation(participation);
         });
-    }
-
-    simulateSubmission(exerciseID: number): Observable<HttpResponse<ProgrammingSubmission>> {
-        return this.http.post<ProgrammingSubmission>(`${this.resourceUrlWithoutLocalSetup}/submissions/no-local-setup/${exerciseID}`, {}, { observe: 'response' });
-    }
-
-    simulateResult(exerciseID: number): Observable<HttpResponse<Result>> {
-        return this.http.post<Result>(`${this.resourceUrlWithoutLocalSetup}/results/no-local-setup/${exerciseID}`, {}, { observe: 'response' });
     }
 
     resumeProgrammingExercise(courseId: number, exerciseId: number): Observable<StudentParticipation> {
