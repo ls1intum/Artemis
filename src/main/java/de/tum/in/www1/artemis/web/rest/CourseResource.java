@@ -355,6 +355,7 @@ public class CourseResource {
     /**
      * GET /courses : get all courses for administration purposes.
      *
+     * @param onlyActive if true, only active courses will be considered in the result
      * @return the list of courses (the user has access to)
      */
     @GetMapping("/courses")
@@ -375,6 +376,7 @@ public class CourseResource {
     /**
      * GET /courses : get all courses for administration purposes with user stats.
      *
+     * @param onlyActive if true, only active courses will be considered in the result
      * @return the list of courses (the user has access to)
      */
     @GetMapping("/courses/with-user-stats")
