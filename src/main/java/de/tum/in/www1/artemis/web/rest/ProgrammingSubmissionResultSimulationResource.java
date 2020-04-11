@@ -4,6 +4,7 @@ import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.transaction.annotation.Transactional;
@@ -14,6 +15,7 @@ import de.tum.in.www1.artemis.domain.participation.*;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.ProgrammingSubmissionResultSimulationService;
 
+@Profile("dev")
 @RestController
 @RequestMapping("/api")
 @Transactional

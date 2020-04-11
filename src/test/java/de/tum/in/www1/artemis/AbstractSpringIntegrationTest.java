@@ -20,7 +20,7 @@ import de.tum.in.www1.artemis.service.connectors.*;
 @AutoConfigureMockMvc
 @AutoConfigureTestDatabase
 // NOTE: we use a common set of active profiles to reduce the number of application launches during testing. This significantly saves time and memory!
-@ActiveProfiles({ "artemis", "bamboo", "bitbucket", "jira", "automaticText" })
+@ActiveProfiles({ "artemis", "bamboo", "bitbucket", "jira", "automaticText", "dev" })
 public abstract class AbstractSpringIntegrationTest {
 
     // NOTE: we prefer SpyBean over MockBean, because it is more lightweight, we can mock method, but we can also invoke actual methods during testing
