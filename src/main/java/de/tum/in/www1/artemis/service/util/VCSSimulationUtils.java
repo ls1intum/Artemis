@@ -2,6 +2,9 @@ package de.tum.in.www1.artemis.service.util;
 
 import java.util.Random;
 
+import org.springframework.context.annotation.Profile;
+
+@Profile("dev")
 public class VCSSimulationUtils {
 
     /**
