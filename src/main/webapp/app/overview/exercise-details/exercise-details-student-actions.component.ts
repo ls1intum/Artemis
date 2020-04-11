@@ -66,22 +66,13 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
                 this.getRepositoryPassword();
             }
         });
-        // In order to check if the application is currently running on production
-        this.profileService.getProfileInfo().subscribe(
-            (profileInfo) => {
-                if (profileInfo) {
-                    this.profileInfo = profileInfo;
-                }
-            },
-            (reason) => {},
-        );
     }
 
     /**
      * The button should be only visible in the dev environment
      */
-    visibilityCheck(): boolean {
-        return !this.profileInfo.inProduction;
+    isInProduction(): boolean {
+        return this.profileService.isInProduction();
     }
 
     repositoryUrl(participation: Participation) {

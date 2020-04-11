@@ -145,22 +145,13 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         if (this.programmingExercise.id !== undefined) {
             this.problemStatementLoaded = true;
         }
-        // In order to check if the application is currently running on production
-        this.profileService.getProfileInfo().subscribe(
-            (profileInfo) => {
-                if (profileInfo) {
-                    this.profileInfo = profileInfo;
-                }
-            },
-            (reason) => {},
-        );
     }
 
     /**
      * The button should be only visible in the dev environment
      */
-    visibilityCheck(): boolean {
-        return !this.profileInfo.inProduction;
+    isInProduction(): boolean {
+        return this.profileService.isInProduction();
     }
 
     previousState() {
