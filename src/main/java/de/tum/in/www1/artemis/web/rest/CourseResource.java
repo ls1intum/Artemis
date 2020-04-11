@@ -7,6 +7,7 @@ import static java.time.ZonedDateTime.now;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.stream.Collectors;
@@ -358,12 +359,16 @@ public class CourseResource {
      */
     @GetMapping("/courses")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public List<Course> getAllCourses() {
+    public List<Course> getAllCourses(@RequestParam(defaultValue = "false") boolean onlyActive) {
         log.debug("REST request to get all Courses the user has access to");
         User user = userService.getUserWithGroupsAndAuthorities();
         List<Course> courses = courseService.findAll();
         Stream<Course> userCourses = courses.stream().filter(course -> user.getGroups().contains(course.getTeachingAssistantGroupName())
                 || user.getGroups().contains(course.getInstructorGroupName()) || authCheckService.isAdmin());
+        if (onlyActive) {
+            // only include courses that have NOT been finished
+            userCourses = userCourses.filter(course -> course.getEndDate() == null || course.getEndDate().isAfter(ZonedDateTime.now()));
+        }
         return userCourses.collect(Collectors.toList());
     }
 
@@ -374,14 +379,17 @@ public class CourseResource {
      */
     @GetMapping("/courses/with-user-stats")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public List<Course> getAllCoursesWithUserStats() {
-        List<Course> courses = getAllCourses();
+    public List<Course> getAllCoursesWithUserStats(@RequestParam(defaultValue = "false") boolean onlyActive) {
+        log.debug("get courses with user stats, only active: " + onlyActive);
+        long start = System.currentTimeMillis();
+        List<Course> courses = getAllCourses(onlyActive);
         for (Course course : courses) {
             course.setNumberOfInstructors(userService.countUserInGroup(course.getInstructorGroupName()));
             course.setNumberOfTeachingAssistants(userService.countUserInGroup(course.getTeachingAssistantGroupName()));
             course.setNumberOfStudents(userService.countUserInGroup(course.getStudentGroupName()));
         }
-
+        long end = System.currentTimeMillis();
+        log.debug("getAllCoursesWithUserStats took " + (end - start) + "ms for " + courses.size() + " courses");
         return courses;
     }
 
