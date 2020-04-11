@@ -25,6 +25,7 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { GradingCriterion } from 'app/exercises/shared/structured-grading-criterion/grading-criterion.model';
+import { CourseExerciseSubmissionResultSimulationService } from 'app/course/manage/course-exercise-submission-result-simulation.service';
 
 const MAX_RESULT_HISTORY_LENGTH = 5;
 
@@ -34,6 +35,7 @@ const MAX_RESULT_HISTORY_LENGTH = 5;
     styleUrls: ['../course-overview.scss'],
 })
 export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
+    [x: string]: any;
     readonly AssessmentType = AssessmentType;
     readonly QUIZ = ExerciseType.QUIZ;
     readonly PROGRAMMING = ExerciseType.PROGRAMMING;
@@ -69,6 +71,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         private route: ActivatedRoute,
         private profileService: ProfileService,
         private guidedTourService: GuidedTourService,
+        private courseExerciseSubmissionResultSimulationService: CourseExerciseSubmissionResultSimulationService,
     ) {}
 
     ngOnInit() {
@@ -119,6 +122,31 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         this.isAfterAssessmentDueDate = !this.exercise.assessmentDueDate || moment().isAfter(this.exercise.assessmentDueDate);
         this.exerciseCategories = this.exerciseService.convertExerciseCategoriesFromServer(this.exercise);
         this.subscribeForNewResults();
+    }
+
+    /**
+     * The button should be only visible in the dev environment
+     */
+    isInProduction(): boolean {
+        return this.profileService.isInProduction();
+    }
+
+    /**
+     * triggers the simulation of a participation and submission for the currently logged in user
+     */
+    simulateSubmission() {
+        this.courseExerciseSubmissionResultSimulationService.simulateSubmission(this.exerciseId).subscribe(() => {
+            this.jhiAlertService.success('artemisApp.exercise.submissionSuccessful');
+        });
+    }
+
+    /**
+     * triggers the simulation of a result for the currently logged in user
+     */
+    simulateResult() {
+        this.courseExerciseSubmissionResultSimulationService.simulateResult(this.exerciseId).subscribe(() => {
+            this.jhiAlertService.success('artemisApp.exercise.resultCreationSuccessful');
+        });
     }
 
     /**

@@ -68,13 +68,6 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
         });
     }
 
-    /**
-     * The button should be only visible in the dev environment
-     */
-    isInProduction(): boolean {
-        return this.profileService.isInProduction();
-    }
-
     repositoryUrl(participation: Participation) {
         const programmingParticipation = participation as ProgrammingExerciseStudentParticipation;
         if (programmingParticipation.team) {
@@ -118,24 +111,6 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
         setTimeout(() => {
             this.wasCopied = false;
         }, 3000);
-    }
-
-    /**
-     * triggers the simulation of a participation and submission for the currently logged in user
-     */
-    simulateSubmission() {
-        this.courseExerciseSubmissionResultSimulationService.simulateSubmission(this.exercise.id).subscribe(() => {
-            this.jhiAlertService.success('artemisApp.exercise.submissionSuccessful');
-        });
-    }
-
-    /**
-     * triggers the simulation of a result for the currently logged in user
-     */
-    simulateResult() {
-        this.courseExerciseSubmissionResultSimulationService.simulateResult(this.exercise.id).subscribe(() => {
-            this.jhiAlertService.success('artemisApp.exercise.resultCreationSuccessful');
-        });
     }
 
     startExercise() {

@@ -229,12 +229,6 @@
             *ngIf="participationStatusWrapper() === ParticipationStatus.INACTIVE && isStartExerciseAvailable()"
             (click)="resumeProgrammingExercise()"
         ></button>
-        <button class="dev-button" id="submission" *ngIf="!isInProduction()" (click)="simulateSubmission()">
-            Submission
-        </button>
-        <button class="dev-button" id="result" *ngIf="!isInProduction()" (click)="simulateResult()">
-            Result
-        </button>
         <ng-template #popContent>
             <p>{{ 'artemisApp.exerciseActions.clonePersonalRepository' | translate }}</p>
             <pre
