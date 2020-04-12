@@ -77,6 +77,13 @@ export class TeamsImportDialogComponent implements OnInit, OnDestroy {
         );
     }
 
+    /**
+     * Method is called when the user has selected an exercise using the autocomplete select field
+     *
+     * The import strategy is reset and the source teams are loaded for the selected exercise
+     *
+     * @param exercise Exercise that was selected as a source exercise
+     */
     onSelectSourceExercise(exercise: Exercise) {
         this.sourceExercise = exercise;
         this.initImportStrategy();
@@ -91,15 +98,32 @@ export class TeamsImportDialogComponent implements OnInit, OnDestroy {
         this.importStrategy = this.teams.length === 0 ? this.defaultImportStrategy : null;
     }
 
+    /**
+     * Computes two lists of potential conflict sources:
+     * 1. The existing team short names of team already in this exercise
+     * 2. The logins of students who already belong to teams of this exercise
+     */
     computePotentialConflictsBasedOnExistingTeams() {
         this.teamShortNamesAlreadyExistingInExercise = this.teams.map((team) => team.shortName);
         this.studentLoginsAlreadyExistingInExercise = flatMap(this.teams, (team) => team.students.map((student) => student.login!));
     }
 
+    /**
+     * Computes a list of all source teams that are conflict-free (i.e. could be imported without any problems)
+     */
     computeSourceTeamsFreeOfConflicts() {
         this.sourceTeamsFreeOfConflicts = this.sourceTeams!.filter((team: Team) => this.isSourceTeamFreeOfAnyConflicts(team));
     }
 
+    /**
+     * Predicate that returns true iff the given source team is conflict-free
+     *
+     * This is the case if the following two conditions are fulfilled:
+     * 1. No team short name unique constraint violation
+     * 2. No student is in the team that is already assigned to a team of the exercise
+     *
+     * @param sourceTeam Team which is checked for conflicts
+     */
     isSourceTeamFreeOfAnyConflicts(sourceTeam: Team): boolean {
         // Short name of source team already exists among teams of destination exercise
         if (this.teamShortNamesAlreadyExistingInExercise.includes(sourceTeam.shortName)) {
@@ -166,6 +190,9 @@ export class TeamsImportDialogComponent implements OnInit, OnDestroy {
         this.importStrategy = importStrategy;
     }
 
+    /**
+     * Computed flag whether to show the import preview numbers in the footer of the modal
+     */
     get showImportPreviewNumbers(): boolean {
         return this.sourceExercise && this.sourceTeams! && Boolean(this.importStrategy);
     }
@@ -187,11 +214,17 @@ export class TeamsImportDialogComponent implements OnInit, OnDestroy {
         this.activeModal.dismiss('cancel');
     }
 
+    /**
+     * Method is called if the strategy "Purge existing" has been chosen and the user has confirmed the delete action
+     */
     purgeAndImportTeams() {
         this.dialogErrorSource.next('');
         this.importTeams();
     }
 
+    /**
+     * Is called when the user clicks on "Import" in the modal and sends the import request to the server
+     */
     importTeams() {
         if (this.isSubmitDisabled) {
             return;
@@ -213,6 +246,9 @@ export class TeamsImportDialogComponent implements OnInit, OnDestroy {
         this.isImporting = false;
     }
 
+    /**
+     * Returns a sample team that can be used to render the different conflict states in the legend below the source teams
+     */
     get sampleTeamForLegend() {
         const team = new Team();
         const student = new User(1, 'ga12abc', 'John', 'Doe', 'john.doe@tum.de');
