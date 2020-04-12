@@ -19,10 +19,10 @@
             [showResult]="showResults && currentResult !== null"
         >
         </jhi-exercise-details-student-actions>
-        <button class="dev-button" id="submission" *ngIf="!isInProduction()" (click)="simulateSubmission()">
+        <button class="dev-button" id="submission" *ngIf="!isInProduction() && hasNoLocalSetup()" (click)="simulateSubmission()">
             Submission
         </button>
-        <button class="dev-button" id="result" *ngIf="!isInProduction()" (click)="simulateResult()">
+        <button class="dev-button" id="result" *ngIf="!isInProduction() && hasNoLocalSetup()" (click)="simulateResult()">
             Result
         </button>
         <jhi-submission-result-status [exercise]="exercise" [studentParticipation]="studentParticipation" updatingResultClass="mr-2" [showGradedBadge]="true">

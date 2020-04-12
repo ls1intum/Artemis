@@ -26,6 +26,7 @@ import { ProgrammingExerciseStudentParticipation } from 'app/entities/participat
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { GradingCriterion } from 'app/exercises/shared/structured-grading-criterion/grading-criterion.model';
 import { CourseExerciseSubmissionResultSimulationService } from 'app/course/manage/course-exercise-submission-result-simulation.service';
+import { ProgrammingExerciseSimulationUtils } from 'app/exercises/programming/shared/utils/programming-exercise-simulation-utils';
 
 const MAX_RESULT_HISTORY_LENGTH = 5;
 
@@ -54,6 +55,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     studentParticipation: StudentParticipation | null;
     isAfterAssessmentDueDate: boolean;
     public gradingCriteria: GradingCriterion[];
+    private programmingExercise: ProgrammingExercise;
 
     showWelcomeAlert = false;
 
@@ -72,6 +74,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         private profileService: ProfileService,
         private guidedTourService: GuidedTourService,
         private courseExerciseSubmissionResultSimulationService: CourseExerciseSubmissionResultSimulationService,
+        private programmingExerciseSimulationUtils: ProgrammingExerciseSimulationUtils,
     ) {}
 
     ngOnInit() {
@@ -121,6 +124,9 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         this.exercise.participationStatus = participationStatus(this.exercise);
         this.isAfterAssessmentDueDate = !this.exercise.assessmentDueDate || moment().isAfter(this.exercise.assessmentDueDate);
         this.exerciseCategories = this.exerciseService.convertExerciseCategoriesFromServer(this.exercise);
+        if (this.exercise.type.toString() === 'programming') {
+            this.getProgrammingExercise();
+        }
         this.subscribeForNewResults();
     }
 
@@ -129,6 +135,22 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
      */
     isInProduction(): boolean {
         return this.profileService.isInProduction();
+    }
+
+    /**
+     * checks if exercise has no local setup
+     */
+    hasNoLocalSetup(): boolean {
+        return this.programmingExerciseSimulationUtils.hasNoLocalSetup(this.programmingExercise.testRepositoryUrl);
+    }
+
+    /**
+     * asks the server for the programming exercise with the provided exercise ID
+     */
+    getProgrammingExercise() {
+        this.courseExerciseSubmissionResultSimulationService.getProgrammingExercise(this.exerciseId).subscribe((programmingExercise) => {
+            this.programmingExercise = programmingExercise;
+        });
     }
 
     /**

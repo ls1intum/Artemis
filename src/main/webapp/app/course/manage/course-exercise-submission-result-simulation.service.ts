@@ -4,6 +4,7 @@ import { ProgrammingSubmission } from 'app/entities/programming-submission.model
 import { Result } from 'app/entities/result.model';
 import { Observable } from 'rxjs/Observable';
 import { HttpResponse, HttpClient } from '@angular/common/http';
+import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 
 @Injectable({ providedIn: 'root' })
 export class CourseExerciseSubmissionResultSimulationService {
@@ -17,5 +18,9 @@ export class CourseExerciseSubmissionResultSimulationService {
 
     simulateResult(exerciseID: number): Observable<HttpResponse<Result>> {
         return this.http.post<Result>(`${this.resourceUrlWithoutLocalSetup}/results/no-local-setup/${exerciseID}`, {}, { observe: 'response' });
+    }
+
+    getProgrammingExercise(exerciseID: number): Observable<ProgrammingExercise> {
+        return this.http.get<ProgrammingExercise>(`${this.resourceUrlWithoutLocalSetup}/programming-exercises/${exerciseID}`);
     }
 }
