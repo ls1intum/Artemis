@@ -123,8 +123,44 @@ public class TeamImportIntegrationTest extends AbstractSpringIntegrationBambooBi
         List<Team> sourceTeams = database.addTeamsForExercise(sourceExercise, "sourceTeam", 3, tutor);
         List<Team> destinationTeamsBefore = database.addTeamsForExercise(destinationExercise, 1, tutor);
         List<Team> destinationTeamsAfter = request.putWithResponseBodyList(importFromSourceExerciseUrl(strategyType), null, Team.class, HttpStatus.OK);
-        // destination teams before + imported source teams = destination teams after
+        // destination teams before + source teams = destination teams after
         assertCorrectnessOfImport(addLists(destinationTeamsBefore, sourceTeams), destinationTeamsAfter);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testImportTeamsIntoExerciseWithConflictsUsingPurgeExistingStrategy() throws Exception {
+        TeamImportStrategyType strategyType = TeamImportStrategyType.PURGE_EXISTING;
+        List<Team> sourceTeams = database.addTeamsForExercise(sourceExercise, "sameShortName", "other", 3, tutor);
+        database.addTeamsForExercise(destinationExercise, "sameShortName", 2, tutor);
+        List<Team> destinationTeamsAfter = request.putWithResponseBodyList(importFromSourceExerciseUrl(strategyType), null, Team.class, HttpStatus.OK);
+        // imported source teams = destination teams after
+        assertCorrectnessOfImport(sourceTeams, destinationTeamsAfter);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testImportTeamsIntoExerciseWithTeamShortNameConflictsUsingCreateOnlyStrategy() throws Exception {
+        TeamImportStrategyType strategyType = TeamImportStrategyType.CREATE_ONLY;
+        List<Team> sourceTeamsWithoutConflict = database.addTeamsForExercise(sourceExercise, "sourceTeam", 1, tutor);
+        List<Team> sourceTeamsWithTeamShortNameConflict = database.addTeamsForExercise(sourceExercise, "sameShortName", "other", 2, tutor);
+        List<Team> destinationTeamsBefore = database.addTeamsForExercise(destinationExercise, "sameShortName", 3, tutor);
+        List<Team> destinationTeamsAfter = request.putWithResponseBodyList(importFromSourceExerciseUrl(strategyType), null, Team.class, HttpStatus.OK);
+        // destination teams before + conflict-free source teams = destination teams after
+        assertCorrectnessOfImport(addLists(destinationTeamsBefore, sourceTeamsWithoutConflict), destinationTeamsAfter);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testImportTeamsIntoExerciseWithStudentConflictsUsingCreateOnlyStrategy() throws Exception {
+        TeamImportStrategyType strategyType = TeamImportStrategyType.CREATE_ONLY;
+        List<Team> sourceTeamsWithoutConflict = database.addTeamsForExercise(sourceExercise, "sourceTeamOther", 1, tutor);
+        List<Team> sourceTeamsWithStudentConflict = database.addTeamsForExercise(sourceExercise, "sourceTeam", 3, tutor);
+        List<Team> destinationTeamsBefore = teamRepo.saveAll(
+                sourceTeamsWithStudentConflict.stream().map(team -> team.exercise(destinationExercise).shortName("other" + team.getShortName())).collect(Collectors.toList()));
+        List<Team> destinationTeamsAfter = request.putWithResponseBodyList(importFromSourceExerciseUrl(strategyType), null, Team.class, HttpStatus.OK);
+        // destination teams before + conflict-free source teams = destination teams after
+        assertCorrectnessOfImport(addLists(destinationTeamsBefore, sourceTeamsWithoutConflict), destinationTeamsAfter);
     }
 
     @Test
