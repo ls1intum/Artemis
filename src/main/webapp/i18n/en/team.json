@@ -74,6 +74,7 @@
             "importTeams": {
                 "buttonLabel": "Import teams",
                 "dialogTitle": "Import teams into:",
+                "introText": "This dialog can be used to import teams from another exercise.",
                 "error": "Could not import teams. Please try again."
             },
             "sourceExercise": {
@@ -112,7 +113,6 @@
             "loadSourceTeams": {
                 "failed": "Loading teams failed. Please try again."
             },
-            "selectSourceExerciseFirst": "Please select a source exercise first.",
             "noTeamsInSourceExercise": "The source exercise has no teams.",
             "importStrategy": {
                 "label": "Import strategy",

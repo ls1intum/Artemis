@@ -9,6 +9,8 @@ $warning-bg-color: #fff3cd;
 $error-text-color: $danger;
 $error-bg-color: #f8d7da;
 
+$text-slightly-muted: #444;
+
 :host {
     display: block;
 }
@@ -24,6 +26,10 @@ $error-bg-color: #f8d7da;
     line-height: 1rem;
     font-size: 0.8rem;
     margin-left: 5px;
+}
+
+.intro-text {
+    color: $text-slightly-muted;
 }
 
 .list-group--teams {
@@ -131,7 +137,7 @@ $error-bg-color: #f8d7da;
         margin-top: 3px;
 
         label {
-            color: #444;
+            color: $text-slightly-muted;
         }
     }
 }

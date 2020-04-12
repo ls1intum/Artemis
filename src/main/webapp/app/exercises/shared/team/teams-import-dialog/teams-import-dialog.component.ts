@@ -33,7 +33,7 @@ export class TeamsImportDialogComponent implements OnInit, OnDestroy {
     searchingExercisesFailed = false;
     searchingExercisesNoResultsForQuery: string | null = null;
 
-    sourceTeams: Team[];
+    sourceTeams: Team[] | null;
     loadingSourceTeams = false;
     loadingSourceTeamsFailed = false;
 
@@ -61,6 +61,7 @@ export class TeamsImportDialogComponent implements OnInit, OnDestroy {
     }
 
     loadSourceTeams(sourceExercise: Exercise) {
+        this.sourceTeams = null;
         this.loadingSourceTeams = true;
         this.loadingSourceTeamsFailed = false;
         this.teamService.findAllByExerciseId(sourceExercise.id).subscribe(
@@ -96,7 +97,7 @@ export class TeamsImportDialogComponent implements OnInit, OnDestroy {
     }
 
     computeSourceTeamsFreeOfConflicts() {
-        this.sourceTeamsFreeOfConflicts = this.sourceTeams.filter((team: Team) => this.isSourceTeamFreeOfAnyConflicts(team));
+        this.sourceTeamsFreeOfConflicts = this.sourceTeams!.filter((team: Team) => this.isSourceTeamFreeOfAnyConflicts(team));
     }
 
     isSourceTeamFreeOfAnyConflicts(sourceTeam: Team): boolean {
@@ -130,7 +131,7 @@ export class TeamsImportDialogComponent implements OnInit, OnDestroy {
     get numberOfTeamsToBeImported(): number | null {
         switch (this.importStrategy) {
             case ImportStrategy.PURGE_EXISTING:
-                return this.sourceTeams.length;
+                return this.sourceTeams!.length;
             case ImportStrategy.CREATE_ONLY:
                 return this.numberOfConflictFreeSourceTeams;
             default:
@@ -141,7 +142,7 @@ export class TeamsImportDialogComponent implements OnInit, OnDestroy {
     get numberOfTeamsAfterImport(): number | null {
         switch (this.importStrategy) {
             case ImportStrategy.PURGE_EXISTING:
-                return this.sourceTeams.length;
+                return this.sourceTeams!.length;
             case ImportStrategy.CREATE_ONLY:
                 return this.teams.length + this.numberOfConflictFreeSourceTeams;
             default:
@@ -158,7 +159,7 @@ export class TeamsImportDialogComponent implements OnInit, OnDestroy {
      * 3. The current exercise already has existing teams in it
      */
     get showImportStrategyChoices(): boolean {
-        return this.sourceExercise && this.sourceTeams?.length > 0 && this.teams.length > 0;
+        return this.sourceExercise && this.sourceTeams!?.length > 0 && this.teams.length > 0;
     }
 
     updateImportStrategy(importStrategy: ImportStrategy) {
@@ -166,7 +167,7 @@ export class TeamsImportDialogComponent implements OnInit, OnDestroy {
     }
 
     get showImportPreviewNumbers(): boolean {
-        return this.sourceExercise && this.sourceTeams && Boolean(this.importStrategy);
+        return this.sourceExercise && this.sourceTeams! && Boolean(this.importStrategy);
     }
 
     /**

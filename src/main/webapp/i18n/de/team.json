@@ -74,6 +74,7 @@
             "importTeams": {
                 "buttonLabel": "Importiere Teams",
                 "dialogTitle": "Importiere Teams nach:",
+                "introText": "Dieser Dialog kann dazu verwendet werden, Teams einer anderen Übung zu importieren.",
                 "error": "Teams konnten nicht importiert werden. Bitte versuche es nochmal."
             },
             "sourceExercise": {
@@ -112,7 +113,6 @@
             "loadSourceTeams": {
                 "failed": "Teams konnten nicht geladen werden. Bitte versuche es nochmal."
             },
-            "selectSourceExerciseFirst": "Bitte wähle zuerst eine Quell-Übung aus.",
             "noTeamsInSourceExercise": "Die Quell-Übung hat keine Teams.",
             "importStrategy": {
                 "label": "Import-Strategie",

@@ -12,6 +12,11 @@
         <jhi-alert-error></jhi-alert-error>
         <jhi-alert></jhi-alert>
         <div class="form-group">
+            <p class="intro-text" jhiTranslate="artemisApp.team.importTeams.introText">
+                This dialog can be used to import teams from another exercise.
+            </p>
+        </div>
+        <div class="form-group">
             <div class="d-flex align-items-end">
                 <div>
                     <label class="label-narrow" jhiTranslate="artemisApp.team.sourceExercise.label">Source exercise</label>
@@ -41,7 +46,7 @@
             >
             </jhi-team-exercise-search>
         </div>
-        <div class="form-group mt-2">
+        <div *ngIf="sourceTeams" class="form-group mt-2">
             <div class="d-flex align-items-end">
                 <div>
                     <label class="label-narrow" jhiTranslate="artemisApp.team.sourceTeams.label">Source teams</label>
@@ -71,9 +76,6 @@
                     <li *ngIf="!sourceTeams || sourceTeams.length === 0" class="list-group-item-container d-flex align-items-center">
                         <div class="list-group-item-index text-muted">1</div>
                         <div class="list-group-item list-group-item--teams py-5" [class.has-warning]="sourceTeams?.length === 0">
-                            <span *ngIf="!sourceTeams" class="text-muted" jhiTranslate="artemisApp.team.selectSourceExerciseFirst">
-                                Please select a source exercise first.
-                            </span>
                             <span *ngIf="sourceTeams?.length === 0" jhiTranslate="artemisApp.team.noTeamsInSourceExercise">
                                 The source exercise has no teams.
                             </span>
