@@ -61,10 +61,10 @@ public class ProgrammingSubmissionResultSimulationService {
      */
     public ProgrammingExerciseStudentParticipation createParticipation(ProgrammingExercise programmingExercise, Participant participant, User user) {
         ProgrammingExerciseStudentParticipation programmingExerciseStudentParticipation = new ProgrammingExerciseStudentParticipation();
-        programmingExerciseStudentParticipation.setBuildPlanId(programmingExercise.getProjectKey() + "-" + user.getLogin());
+        programmingExerciseStudentParticipation.setBuildPlanId(programmingExercise.getProjectKey() + "-" + user.getLogin().toUpperCase());
         programmingExerciseStudentParticipation.setParticipant(participant);
         programmingExerciseStudentParticipation.setInitializationState(InitializationState.INITIALIZED);
-        programmingExerciseStudentParticipation.setRepositoryUrl("http://" + user.getLogin() + "@localhost7990/scm/" + programmingExercise.getProjectKey() + "/"
+        programmingExerciseStudentParticipation.setRepositoryUrl("http://" + user.getLogin() + "@localhost7990:/scm/" + programmingExercise.getProjectKey() + "/"
                 + programmingExercise.getProjectKey().toLowerCase() + "-" + user.getLogin() + ".git");
         programmingExerciseStudentParticipation.setInitializationDate(ZonedDateTime.now());
         programmingExerciseStudentParticipation.setProgrammingExercise(programmingExercise);
