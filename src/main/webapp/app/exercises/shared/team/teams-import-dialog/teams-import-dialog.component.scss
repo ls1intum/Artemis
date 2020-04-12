@@ -52,7 +52,7 @@ $text-slightly-muted: #444;
 }
 
 .list-group-item--teams {
-    display: flex;
+    display: flex !important;
     align-items: center;
 
     flex-grow: 1;
