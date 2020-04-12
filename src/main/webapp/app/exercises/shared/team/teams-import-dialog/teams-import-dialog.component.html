@@ -181,7 +181,7 @@
         </ng-container>
     </div>
     <div class="modal-footer">
-        <div *ngIf="showImportPreviewNumbers" class="flex-shrink-0 mr-2 d-flex">
+        <div *ngIf="showImportPreviewNumbers && sourceTeams" class="flex-shrink-0 mr-2 d-flex">
             <div *ngIf="numberOfTeamsToBeImported! === 0">
                 <strong *ngIf="sourceTeams.length === 0">{{ 'artemisApp.team.importPreview.noTeamsToImport' | translate }}</strong>
                 <strong *ngIf="sourceTeams.length > 0">{{ 'artemisApp.team.importPreview.noConflictFreeTeamsToImport' | translate }}</strong>
