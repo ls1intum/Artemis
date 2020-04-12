@@ -329,8 +329,8 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Quiz
             const backgroundWidth = jQueryBackgroundElement.width()!;
             const backgroundHeight = jQueryBackgroundElement.height()!;
 
-            const dropLocationX = (dropLocation.posX / 200) * backgroundWidth;
-            const dropLocationY = (dropLocation.posY / 200) * backgroundHeight;
+            const dropLocationX = (dropLocation.posX / 100) * backgroundWidth;
+            const dropLocationY = (dropLocation.posY / 100) * backgroundHeight;
 
             // Save offset of mouse in drop location
             this.mouse.offsetX = dropLocationX - this.mouse.x;
@@ -393,7 +393,7 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Quiz
                     break;
                 case 'bottom':
                     // Use opposite end as startY
-                    this.mouse.startY = (dropLocation.posY / 200) * backgroundHeight;
+                    this.mouse.startY = (dropLocation.posY / 100) * backgroundHeight;
                     break;
             }
 
@@ -408,7 +408,7 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Quiz
                     break;
                 case 'right':
                     // Use opposite end as startX
-                    this.mouse.startX = (dropLocation.posX / 200) * backgroundWidth;
+                    this.mouse.startX = (dropLocation.posX / 100) * backgroundWidth;
                     break;
             }
         }

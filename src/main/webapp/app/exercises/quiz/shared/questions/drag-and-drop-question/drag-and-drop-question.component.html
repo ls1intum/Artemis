@@ -82,10 +82,10 @@
                             *ngFor="let dropLocation of question.dropLocations"
                             [ngClass]="dropAllowed ? 'drop-allowed' : ''"
                             [ngStyle]="{
-                                top: dropLocation.posY / 2 + '%',
-                                left: dropLocation.posX / 2 + '%',
-                                width: dropLocation.width / 2 + '%',
-                                height: dropLocation.height / 2 + '%'
+                                top: dropLocation.posY + '%',
+                                left: dropLocation.posX + '%',
+                                width: dropLocation.width + '%',
+                                height: dropLocation.height + '%'
                             }"
                             (onDropSuccess)="onDragDrop(dropLocation, $event)"
                             (onDragEnter)="preventDefault($event)"
@@ -111,10 +111,10 @@
                                     incorrect: !isLocationCorrect(dropLocation) && !dropLocation.invalid && !invalidDragItemForDropLocation(dropLocation) && !question.invalid
                                 }"
                                 [ngStyle]="{
-                                    top: dropLocation.posY / 2 + '%',
-                                    left: dropLocation.posX / 2 + '%',
-                                    width: dropLocation.width / 2 + '%',
-                                    height: dropLocation.height / 2 + '%'
+                                    top: dropLocation.posY + '%',
+                                    left: dropLocation.posX + '%',
+                                    width: dropLocation.width + '%',
+                                    height: dropLocation.height + '%'
                                 }"
                             >
                                 <div
@@ -165,10 +165,10 @@
                                     incorrect: !isLocationCorrect(dropLocation) && !dropLocation.invalid && !invalidDragItemForDropLocation(dropLocation) && !question.invalid
                                 }"
                                 [ngStyle]="{
-                                    top: dropLocation.posY / 2 + '%',
-                                    left: dropLocation.posX / 2 + '%',
-                                    width: dropLocation.width / 2 + '%',
-                                    height: dropLocation.height / 2 + '%'
+                                    top: dropLocation.posY + '%',
+                                    left: dropLocation.posX + '%',
+                                    width: dropLocation.width + '%',
+                                    height: dropLocation.height + '%'
                                 }"
                             >
                                 <div

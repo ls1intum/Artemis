@@ -11,9 +11,6 @@ import { DragItem } from 'app/entities/quiz/drag-item.model';
 import { DropLocation } from 'app/entities/quiz/drop-location.model';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 
-// Drop locations in quiz exercises are relatively positioned and sized using integers in the interval [0, 200]
-const MAX_SIZE_UNIT = 200;
-
 /**
  * Generates a new Drag and Drop Quiz Exercise based on a UML model.
  *
@@ -215,7 +212,7 @@ async function generateDragAndDropItemForRelationship(element: UMLModelElement, 
  * Create a Drag and Drop Quiz Exercise `DropLocation` for an `Element`.
  *
  * Based on the total size of the complete UML model and the boundaries of an element a drop location is computed. Instead of abolute values
- * for position and size, `DropLocation`s use precentage values to the base of `MAX_SIZE_UNIT`.
+ * for position and size, `DropLocation`s use precentage values.
  *
  * @param {Boundary} elementLocation The position and size of an element.
  * @param {Size} totalSize The total size of the UML model.
@@ -224,10 +221,11 @@ async function generateDragAndDropItemForRelationship(element: UMLModelElement, 
  */
 function computeDropLocation(elementLocation: { x: number; y: number; width: number; height: number }, totalSize: { width: number; height: number }): DropLocation {
     const dropLocation = new DropLocation();
-    dropLocation.posX = Math.ceil((elementLocation.x / totalSize.width) * MAX_SIZE_UNIT);
-    dropLocation.posY = Math.ceil((elementLocation.y / totalSize.height) * MAX_SIZE_UNIT);
-    dropLocation.width = Math.floor((elementLocation.width / totalSize.width) * MAX_SIZE_UNIT);
-    dropLocation.height = Math.floor((elementLocation.height / totalSize.height) * MAX_SIZE_UNIT);
+    // round to second decimal
+    dropLocation.posX = Math.round((elementLocation.x / (totalSize.width - 0)) * 100 * 100) / 100;
+    dropLocation.posY = Math.round((elementLocation.y / (totalSize.height - 0)) * 100 * 100) / 100;
+    dropLocation.width = Math.round((elementLocation.width / (totalSize.width - 0)) * 100 * 100) / 100;
+    dropLocation.height = Math.round((elementLocation.height / (totalSize.height - 0)) * 100 * 100) / 100;
     return dropLocation;
 }
 
