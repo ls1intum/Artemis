@@ -24,7 +24,7 @@ import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.RequestUtilService;
 import de.tum.in.www1.artemis.web.websocket.QuizSubmissionWebsocketService;
 
-public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationTest {
+public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
     DatabaseUtilService database;
@@ -221,7 +221,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationTest {
     }
 
     private QuizExercise createQuizOnServer() throws Exception {
-        List<Course> courses = database.createCoursesWithExercisesAndLectures();
+        List<Course> courses = database.createCoursesWithExercisesAndLectures(true);
         Course course = courses.get(0);
 
         QuizExercise quizExercise = database.createQuiz(course, ZonedDateTime.now().plusHours(5), null);
@@ -251,7 +251,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationTest {
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void testUpdateNotExistingQuizExercise() throws Exception {
-        List<Course> courses = database.createCoursesWithExercisesAndLectures();
+        List<Course> courses = database.createCoursesWithExercisesAndLectures(true);
         Course course = courses.get(0);
 
         QuizExercise quizExercise = database.createQuiz(course, ZonedDateTime.now().plusHours(5), null);
@@ -262,7 +262,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationTest {
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void testUpdateRunningQuizExercise() throws Exception {
-        List<Course> courses = database.createCoursesWithExercisesAndLectures();
+        List<Course> courses = database.createCoursesWithExercisesAndLectures(true);
         Course course = courses.get(0);
         // create QuizExercise that already started
         QuizExercise startedQuizExercise = database.createQuiz(course, ZonedDateTime.now().minusHours(1), null);

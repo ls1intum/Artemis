@@ -34,7 +34,7 @@ import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.RequestUtilService;
 
-public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationTest {
+public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     public static final String API_MODELING_SUBMISSIONS = "/api/modeling-submissions/";
 

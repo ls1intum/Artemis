@@ -33,7 +33,7 @@ import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.RequestUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.StatsForInstructorDashboardDTO;
 
-public class ExerciseIntegrationTest extends AbstractSpringIntegrationTest {
+public class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
     DatabaseUtilService database;
@@ -83,7 +83,7 @@ public class ExerciseIntegrationTest extends AbstractSpringIntegrationTest {
     @Test
     @WithMockUser(value = "tutor1", roles = "TA")
     public void testGetStatsForTutorExerciseDashboardTest() throws Exception {
-        List<Course> courses = database.createCoursesWithExercisesAndLectures();
+        List<Course> courses = database.createCoursesWithExercisesAndLectures(true);
         Course course = courses.get(0);
         TextExercise textExercise = (TextExercise) course.getExercises().stream().filter(e -> e instanceof TextExercise).findFirst().get();
         List<Submission> submissions = new ArrayList<>();
@@ -117,7 +117,7 @@ public class ExerciseIntegrationTest extends AbstractSpringIntegrationTest {
     @Test
     @WithMockUser(value = "student1", roles = "USER")
     public void testGetExercise() throws Exception {
-        List<Course> courses = database.createCoursesWithExercisesAndLectures();
+        List<Course> courses = database.createCoursesWithExercisesAndLectures(true);
         for (Course course : courses) {
             for (Exercise exercise : course.getExercises()) {
                 Exercise exerciseServer = request.get("/api/exercises/" + exercise.getId(), HttpStatus.OK, Exercise.class);
@@ -203,7 +203,7 @@ public class ExerciseIntegrationTest extends AbstractSpringIntegrationTest {
     @Test
     @WithMockUser(value = "student1", roles = "USER")
     public void testGetExerciseDetails() throws Exception {
-        List<Course> courses = database.createCoursesWithExercisesAndLectures();
+        List<Course> courses = database.createCoursesWithExercisesAndLectures(true);
         for (Course course : courses) {
             for (Exercise exercise : course.getExercises()) {
                 Exercise exerciseWithDetails = request.get("/api/exercises/" + exercise.getId() + "/details", HttpStatus.OK, Exercise.class);
@@ -258,7 +258,7 @@ public class ExerciseIntegrationTest extends AbstractSpringIntegrationTest {
     @Test
     @WithMockUser(value = "tutor1", roles = "TA")
     public void testGetExerciseForTutorDashboard() throws Exception {
-        List<Course> courses = database.createCoursesWithExercisesAndLectures();
+        List<Course> courses = database.createCoursesWithExercisesAndLectures(true);
         for (Course course : courses) {
             for (Exercise exercise : course.getExercises()) {
                 Exercise exerciseForTutorDashboard = request.get("/api/exercises/" + exercise.getId() + "/for-tutor-dashboard", HttpStatus.OK, Exercise.class);
@@ -345,7 +345,7 @@ public class ExerciseIntegrationTest extends AbstractSpringIntegrationTest {
     @Test
     @WithMockUser(value = "tutor1", roles = "TA")
     public void testGetStatsForTutorExerciseDashboard() throws Exception {
-        List<Course> courses = database.createCoursesWithExercisesAndLectures();
+        List<Course> courses = database.createCoursesWithExercisesAndLectures(true);
         for (Course course : courses) {
             var tutors = findTutors(course);
             for (Exercise exercise : course.getExercises()) {
@@ -386,7 +386,7 @@ public class ExerciseIntegrationTest extends AbstractSpringIntegrationTest {
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void testGetStatsForInstructorExerciseDashboard() throws Exception {
-        List<Course> courses = database.createCoursesWithExercisesAndLectures();
+        List<Course> courses = database.createCoursesWithExercisesAndLectures(true);
         for (Course course : courses) {
             var tutors = findTutors(course);
             for (Exercise exercise : course.getExercises()) {
@@ -426,7 +426,7 @@ public class ExerciseIntegrationTest extends AbstractSpringIntegrationTest {
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void testResetExercise() throws Exception {
-        List<Course> courses = database.createCoursesWithExercisesAndLectures();
+        List<Course> courses = database.createCoursesWithExercisesAndLectures(true);
         for (Course course : courses) {
             for (Exercise exercise : course.getExercises()) {
                 request.delete("/api/exercises/" + exercise.getId() + "/reset", HttpStatus.OK);
@@ -447,7 +447,7 @@ public class ExerciseIntegrationTest extends AbstractSpringIntegrationTest {
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void testCleanupExercise() throws Exception {
-        List<Course> courses = database.createCoursesWithExercisesAndLectures();
+        List<Course> courses = database.createCoursesWithExercisesAndLectures(true);
         for (Course course : courses) {
             for (Exercise exercise : course.getExercises()) {
                 request.delete("/api/exercises/" + exercise.getId() + "/cleanup", HttpStatus.OK);

@@ -139,6 +139,6 @@ public class QuizSubmission extends Submission implements Serializable {
 
     @Override
     public String toString() {
-        return "QuizSubmission{" + "id=" + getId() + ", scoreInPoints='" + getScoreInPoints() + "'" + "}";
+        return "QuizSubmission{" + "id=" + getId() + ", scoreInPoints='" + getScoreInPoints() + ", submittedAnswers='" + getSubmittedAnswers() + "'" + "}";
     }
 }

@@ -26,7 +26,7 @@ import de.tum.in.www1.artemis.service.UserService;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.RequestUtilService;
 
-public class ModelingAssessmentConflictResourceIntegrationTest extends AbstractSpringIntegrationTest {
+public class ModelingAssessmentConflictResourceIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
     DatabaseUtilService database;
