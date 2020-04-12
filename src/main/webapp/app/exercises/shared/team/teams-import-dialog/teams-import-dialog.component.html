@@ -46,7 +46,7 @@
             >
             </jhi-team-exercise-search>
         </div>
-        <div *ngIf="sourceTeams" class="form-group mt-2">
+        <div *ngIf="sourceExercise" class="form-group mt-2">
             <div class="d-flex align-items-end">
                 <div>
                     <label class="label-narrow" jhiTranslate="artemisApp.team.sourceTeams.label">Source teams</label>
@@ -57,7 +57,7 @@
                     Loading teams failed. Please try again.
                 </span>
             </div>
-            <div>
+            <div *ngIf="sourceTeams">
                 <ul class="list-group list-group--teams mt-2">
                     <li *ngFor="let team of sourceTeams; index as i" class="list-group-item-container d-flex align-items-center">
                         <div class="list-group-item-index">
