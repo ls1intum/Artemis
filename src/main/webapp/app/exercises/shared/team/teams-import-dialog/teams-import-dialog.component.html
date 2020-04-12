@@ -23,11 +23,11 @@
                     <jhi-help-icon placement="right" text="artemisApp.team.sourceExercise.tooltip" class="mr-1"></jhi-help-icon>
                 </div>
                 <fa-icon class="loading-spinner" [icon]="'spinner'" [spin]="true" *ngIf="searchingExercises"></fa-icon>
-                <span *ngIf="searchingExercisesQueryTooShort" class="error-message text-danger" jhiTranslate="artemisApp.team.exerciseSearch.queryTooShort">
-                    Please enter at least 3 characters.
+                <span *ngIf="searchingExercisesNoResultsForQuery === ''" class="error-message text-danger">
+                    <span jhiTranslate="artemisApp.team.exerciseSearch.noResults">There are no other team-based exercises in this course.</span>
                 </span>
                 <span *ngIf="searchingExercisesNoResultsForQuery" class="error-message text-danger">
-                    <span jhiTranslate="artemisApp.team.exerciseSearch.noResults">No exercise found in course for search:</span>
+                    <span jhiTranslate="artemisApp.team.exerciseSearch.noResultsForSearchTerm">No other team-based exercise found in course for search:</span>
                     <strong>{{ searchingExercisesNoResultsForQuery }}</strong>
                 </span>
                 <span *ngIf="searchingExercisesFailed" class="error-message text-danger" jhiTranslate="artemisApp.team.exerciseSearch.failed">
@@ -40,7 +40,6 @@
                 [ignoreExercises]="[exercise]"
                 (selectExercise)="onSelectSourceExercise($event)"
                 (searching)="searchingExercises = $event"
-                (searchQueryTooShort)="searchingExercisesQueryTooShort = $event"
                 (searchNoResults)="searchingExercisesNoResultsForQuery = $event"
                 (searchFailed)="searchingExercisesFailed = $event"
             >

@@ -29,7 +29,6 @@ export class TeamsImportDialogComponent implements OnInit, OnDestroy {
     sourceExercise: Exercise;
 
     searchingExercises = false;
-    searchingExercisesQueryTooShort = false;
     searchingExercisesFailed = false;
     searchingExercisesNoResultsForQuery: string | null = null;
 

@@ -83,9 +83,9 @@
             },
             "selectExerciseForImport": "Übung auswählen (nach Titel suchen)",
             "exerciseSearch": {
-                "queryTooShort": "Bitte mindestens 3 Zeichen eingeben.",
                 "failed": "Suche fehlgeschlagen. Bitte nochmal versuchen.",
-                "noResults": "Keine Übung im Kurs gefunden für Suche:"
+                "noResults": "Es gibt in diesem Kurs keine anderen Team-Übungen.",
+                "noResultsForSearchTerm": "Es wurde keine andere Team-Übung im Kurs gefunden für die Suche:"
             },
             "sourceTeams": {
                 "label": "Quell-Teams",
