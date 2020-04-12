@@ -17,6 +17,7 @@ import { OrionConnectorService } from 'app/shared/orion/orion-connector.service'
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { CourseExerciseService, CourseManagementService } from 'app/course/manage/course-management.service';
+import { ProgrammingExerciseSimulationUtils } from 'app/exercises/programming/shared/utils/programming-exercise-simulation-utils';
 
 @Component({
     selector: 'jhi-programming-exercise',
@@ -38,6 +39,7 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
         private modalService: NgbModal,
         private router: Router,
         private javaBridge: OrionConnectorService,
+        private programmingExerciseSimulationUtils: ProgrammingExerciseSimulationUtils,
         courseService: CourseManagementService,
         translateService: TranslateService,
         eventManager: JhiEventManager,
@@ -107,7 +109,7 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
      * @param urlToCheck the url which will be check if it contains the substring
      */
     hasNoLocalSetup(urlToCheck: string): boolean {
-        return urlToCheck.includes('nolocalsetup');
+        return this.programmingExerciseSimulationUtils.hasNoLocalSetup(urlToCheck);
     }
 
     protected getChangeEventName(): string {
