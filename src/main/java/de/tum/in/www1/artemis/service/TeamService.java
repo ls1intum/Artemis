@@ -179,6 +179,12 @@ public class TeamService {
         return teamRepository.findAllByExerciseId(destinationExercise.getId());
     }
 
+    /**
+     * Returns an instance of TeamImportStrategy based on the given import strategy type (enum)
+     *
+     * @param importStrategyType Type for which to instantiate a strategy
+     * @return TeamImportStrategy
+     */
     private TeamImportStrategy getTeamImportStrategy(TeamImportStrategyType importStrategyType) {
         switch (importStrategyType) {
         case PURGE_EXISTING:

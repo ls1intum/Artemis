@@ -17,6 +17,12 @@ public abstract class TeamImportStrategy {
 
     abstract public void importTeams(Exercise sourceExercise, Exercise destinationExercise);
 
+    /**
+     * Clones the given original teams via copy constructor, assigns them to the given destination exercise and persists them
+     *
+     * @param originalTeams Team that should be cloned
+     * @param destinationExercise Exercise in which the cloned teams should be saved
+     */
     protected void cloneTeamsIntoDestinationExercise(List<Team> originalTeams, Exercise destinationExercise) {
         List<Team> clonedTeams = originalTeams.stream().map(Team::new).map(team -> team.exercise(destinationExercise)).collect(Collectors.toList());
         teamRepository.saveAll(clonedTeams);

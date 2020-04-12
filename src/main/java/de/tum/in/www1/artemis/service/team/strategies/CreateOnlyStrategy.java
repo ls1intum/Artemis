@@ -25,6 +25,17 @@ public class CreateOnlyStrategy extends TeamImportStrategy {
         cloneTeamsIntoDestinationExercise(conflictFreeSourceTeams, destinationExercise);
     }
 
+    /**
+     * Filters the teams from the given source exercise and returns only those that can be imported into the destination exercise without conflicts
+     *
+     * Conditions for being conflict-free:
+     * 1. No clash in team short name
+     * 2. No overlapping students
+     *
+     * @param sourceExercise Exercise from which to take the teams for the import
+     * @param destinationExercise Exercise in which to import the teams into
+     * @return list of those source teams that have no conflicts
+     */
     private List<Team> getConflictFreeSourceTeams(Exercise sourceExercise, Exercise destinationExercise) {
         // Get all teams from the source exercise and from the destination exercise
         List<Team> sourceTeams = teamRepository.findAllByExerciseId(sourceExercise.getId());

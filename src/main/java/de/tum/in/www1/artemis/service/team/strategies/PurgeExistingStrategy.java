@@ -18,6 +18,14 @@ public class PurgeExistingStrategy extends TeamImportStrategy {
         this.participationService = participationService;
     }
 
+    /**
+     * Imports all team of the source exercise into the destination exercise
+     *
+     * Conflicts are prevented trivially by first deleting all teams of the destination exercise.
+     *
+     * @param sourceExercise Exercise from which to take the teams for the import
+     * @param destinationExercise Exercise in which to import the teams into
+     */
     @Override
     public void importTeams(Exercise sourceExercise, Exercise destinationExercise) {
         // Delete participations of existing teams in destination exercise (must happen before deleting teams themselves)
