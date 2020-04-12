@@ -82,7 +82,8 @@ public class ProgrammingSubmissionResultSimulationService {
         Participant participant = user;
         ProgrammingExerciseStudentParticipation programmingExerciseStudentParticipation;
         ProgrammingExercise programmingExercise = programmingExerciseService.findByIdWithEagerStudentParticipationsAndSubmissions(exerciseID);
-        Optional<StudentParticipation> optionalStudentParticipation = participationService.findOneByExerciseAndParticipantAnyState(programmingExercise, participant);
+        Optional<StudentParticipation> optionalStudentParticipation = participationService.findOneByExerciseAndStudentLoginWithEagerSubmissionsAnyState(programmingExercise,
+                user.getLogin());
         if (optionalStudentParticipation.isEmpty()) {
             programmingExerciseStudentParticipation = createParticipation(programmingExercise, participant, user);
         }

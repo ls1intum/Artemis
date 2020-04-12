@@ -7,7 +7,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.*;
@@ -18,7 +17,6 @@ import de.tum.in.www1.artemis.service.ProgrammingSubmissionResultSimulationServi
 @Profile("dev")
 @RestController
 @RequestMapping("/api")
-@Transactional
 public class ProgrammingSubmissionResultSimulationResource {
 
     private final Logger log = LoggerFactory.getLogger(ProgrammingSubmissionResource.class);
