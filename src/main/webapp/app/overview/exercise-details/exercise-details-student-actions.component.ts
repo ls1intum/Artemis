@@ -44,7 +44,6 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
     public wasCopied = false;
 
     private user: User;
-    profileInfo: ProfileInfo;
 
     constructor(
         private jhiAlertService: AlertService,
@@ -53,8 +52,6 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
         private accountService: AccountService,
         private sourceTreeService: SourceTreeService,
         private router: Router,
-        private profileService: ProfileService,
-        private courseExerciseSubmissionResultSimulationService: CourseExerciseSubmissionResultSimulationService,
     ) {}
 
     ngOnInit(): void {
