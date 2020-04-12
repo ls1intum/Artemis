@@ -88,7 +88,26 @@
             },
             "sourceTeams": {
                 "label": "Quell-Teams",
-                "tooltip": "Diese Teams werden in die aktuelle Übung kopiert."
+                "tooltip": "Diese Teams werden in die aktuelle Übung kopiert.",
+                "legend": {
+                    "label": "Legende",
+                    "tooltip": "Die Legende zeigt die drei möglichen Konflikt-Zustände an, die ein Quell-Team haben kann.",
+                    "teamShortName": "team",
+                    "items": {
+                        "conflictFreeTeam": {
+                            "label": "Konfliktfreies Team",
+                            "tooltip": "Dieses Team kann ohne Probleme importiert werden."
+                        },
+                        "teamShortNameConflict": {
+                            "label": "Team-Kurznamen Konflikt",
+                            "tooltip": "Ein Team mit dem gleichen Kurznamen existiert bereits in dieser Übung."
+                        },
+                        "studentConflict": {
+                            "label": "Studenten Konflikt",
+                            "tooltip": "Der rot markierte Student ist bereits in einem Team dieser Übung."
+                        }
+                    }
+                }
             },
             "loadSourceTeams": {
                 "failed": "Teams konnten nicht geladen werden. Bitte versuche es nochmal."

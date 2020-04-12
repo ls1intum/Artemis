@@ -88,7 +88,26 @@
             },
             "sourceTeams": {
                 "label": "Source teams",
-                "tooltip": "These teams will be copied into the current exercise."
+                "tooltip": "These teams will be copied into the current exercise.",
+                "legend": {
+                    "label": "Legend",
+                    "tooltip": "The legend shows the three different conflict states that a source team can have.",
+                    "teamShortName": "team",
+                    "items": {
+                        "conflictFreeTeam": {
+                            "label": "Conflict-free team",
+                            "tooltip": "This team can be imported without any issues."
+                        },
+                        "teamShortNameConflict": {
+                            "label": "Team short name conflict",
+                            "tooltip": "A team with the same short name already exists in this exercise."
+                        },
+                        "studentConflict": {
+                            "label": "Student conflict",
+                            "tooltip": "The student highlighted in red is already part of a team for this exercise."
+                        }
+                    }
+                }
             },
             "loadSourceTeams": {
                 "failed": "Loading teams failed. Please try again."

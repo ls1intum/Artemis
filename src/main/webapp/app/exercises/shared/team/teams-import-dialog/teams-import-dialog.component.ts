@@ -1,4 +1,4 @@
-import { Component, Input, ViewChild, OnInit, OnDestroy } from '@angular/core';
+import { Component, Input, ViewChild, OnInit, OnDestroy, ViewEncapsulation } from '@angular/core';
 import { NgForm } from '@angular/forms';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { JhiAlertService } from 'ng-jhipster';
@@ -9,11 +9,13 @@ import { Team, TeamImportStrategyType as ImportStrategy } from 'app/entities/tea
 import { Exercise } from 'app/entities/exercise.model';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { flatMap } from 'lodash';
+import { User } from 'app/core/user/user.model';
 
 @Component({
     selector: 'jhi-teams-import-dialog',
     templateUrl: './teams-import-dialog.component.html',
     styleUrls: ['./teams-import-dialog.component.scss'],
+    encapsulation: ViewEncapsulation.None,
 })
 export class TeamsImportDialogComponent implements OnInit, OnDestroy {
     readonly ImportStrategy = ImportStrategy;
@@ -208,5 +210,17 @@ export class TeamsImportDialogComponent implements OnInit, OnDestroy {
     onSaveError() {
         this.jhiAlertService.error('artemisApp.team.importError');
         this.isImporting = false;
+    }
+
+    get sampleTeamForLegend() {
+        const team = new Team();
+        const student = new User(1, 'ga12abc', 'John', 'Doe', 'john.doe@tum.de');
+        student.name = `${student.firstName} ${student.lastName}`;
+        team.students = [student];
+        return team;
+    }
+
+    get sampleErrorStudentLoginsForLegend() {
+        return this.sampleTeamForLegend.students.map((student) => student.login);
     }
 }
