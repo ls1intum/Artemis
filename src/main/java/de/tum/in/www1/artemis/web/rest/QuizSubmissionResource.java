@@ -8,7 +8,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
-import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
@@ -45,16 +44,13 @@ public class QuizSubmissionResource {
 
     private final WebsocketMessagingService messagingService;
 
-    private final SimpMessageSendingOperations messagingTemplate;
-
     private final AuthorizationCheckService authCheckService;
 
     public QuizSubmissionResource(QuizExerciseService quizExerciseService, QuizSubmissionService quizSubmissionService, ParticipationService participationService,
-            SimpMessageSendingOperations messagingTemplate, WebsocketMessagingService messagingService, UserService userService, AuthorizationCheckService authCheckService) {
+            WebsocketMessagingService messagingService, UserService userService, AuthorizationCheckService authCheckService) {
         this.quizExerciseService = quizExerciseService;
         this.quizSubmissionService = quizSubmissionService;
         this.participationService = participationService;
-        this.messagingTemplate = messagingTemplate;
         this.messagingService = messagingService;
         this.userService = userService;
         this.authCheckService = authCheckService;

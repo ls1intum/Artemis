@@ -23,7 +23,7 @@ import org.springframework.util.LinkedMultiValueMap;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
-import de.tum.in.www1.artemis.AbstractSpringIntegrationTest;
+import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.connector.bamboo.BambooRequestMockProvider;
 import de.tum.in.www1.artemis.connector.bitbucket.BitbucketRequestMockProvider;
 import de.tum.in.www1.artemis.domain.*;
@@ -39,7 +39,7 @@ import de.tum.in.www1.artemis.util.Verifiable;
 import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 
-public class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringIntegrationTest {
+public class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     private static final String BASE_RESOURCE = "/api/programming-exercises/";
 

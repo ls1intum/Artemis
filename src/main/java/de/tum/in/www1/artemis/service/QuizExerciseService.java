@@ -193,7 +193,7 @@ public class QuizExerciseService {
      * @return the entity
      */
     public Optional<QuizExercise> findById(Long quizExerciseId) {
-        log.debug("Request to get Quiz Exercise : {}", quizExerciseId);
+        log.debug("Request to find Quiz Exercise by id : {}", quizExerciseId);
         return quizExerciseRepository.findById(quizExerciseId);
     }
 
@@ -204,7 +204,7 @@ public class QuizExerciseService {
      * @return the entity
      */
     public QuizExercise findOne(Long quizExerciseId) {
-        log.debug("Request to get Quiz Exercise : {}", quizExerciseId);
+        log.debug("Request to find one Quiz Exercise : {}", quizExerciseId);
         Optional<QuizExercise> quizExercise = quizExerciseRepository.findById(quizExerciseId);
         return quizExercise.orElse(null);
     }
@@ -216,7 +216,7 @@ public class QuizExerciseService {
      * @return the entity
      */
     public QuizExercise findOneWithQuestions(Long quizExerciseId) {
-        log.debug("Request to get Quiz Exercise : {}", quizExerciseId);
+        log.debug("Request to find one Quiz Exercise with questions : {}", quizExerciseId);
         Optional<QuizExercise> quizExercise = quizExerciseRepository.findWithEagerQuestionsById(quizExerciseId);
         return quizExercise.orElse(null);
     }
@@ -228,7 +228,7 @@ public class QuizExerciseService {
      * @return the entity
      */
     public QuizExercise findOneWithQuestionsAndStatistics(Long quizExerciseId) {
-        log.debug("Request to get Quiz Exercise : {}", quizExerciseId);
+        log.debug("Request to find one Quiz Exercise with questions and statistics : {}", quizExerciseId);
         Optional<QuizExercise> optionalQuizExercise = quizExerciseRepository.findWithEagerQuestionsAndStatisticsById(quizExerciseId);
         return optionalQuizExercise.orElse(null);
     }
@@ -240,7 +240,7 @@ public class QuizExerciseService {
      * @return the entity
      */
     public List<QuizExercise> findByCourseId(Long courseId) {
-        log.debug("Request to get all Quiz Exercises in Course : {}", courseId);
+        log.debug("Request to find all Quiz Exercises in Course : {}", courseId);
         List<QuizExercise> quizExercises = quizExerciseRepository.findByCourseId(courseId);
         User user = userService.getUserWithGroupsAndAuthorities();
         if (quizExercises.size() > 0) {
@@ -327,7 +327,7 @@ public class QuizExerciseService {
 
     /**
      * get the view for students in the given quiz
-     * 
+     *
      * @param quizExercise the quiz to get the view for
      * @return the view depending on the current state of the quiz
      */
