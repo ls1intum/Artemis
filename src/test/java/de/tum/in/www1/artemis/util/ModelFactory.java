@@ -143,11 +143,11 @@ public class ModelFactory {
         return team;
     }
 
-    public static List<Team> generateTeamsForExercise(Exercise exercise, int numberOfTeams, User owner) {
+    public static List<Team> generateTeamsForExercise(Exercise exercise, String shortNamePrefix, int numberOfTeams, User owner) {
         List<Team> teams = new ArrayList<>();
         for (int i = 1; i <= numberOfTeams; i++) {
             int numberOfStudents = new Random().nextInt(4) + 1; // range: 1-4 students
-            teams.add(generateTeamForExercise(exercise, "Team " + i, "team" + i, numberOfStudents, owner));
+            teams.add(generateTeamForExercise(exercise, "Team " + i, shortNamePrefix + i, numberOfStudents, owner));
         }
         return teams;
     }

@@ -279,14 +279,14 @@ public class TeamResource {
     }
 
     /**
-     * POST /exercises/:destinationExerciseId/teams/import-from-exercise/:sourceExerciseId : copy teams from source exercise into destination exercise
+     * PUT /exercises/:destinationExerciseId/teams/import-from-exercise/:sourceExerciseId : copy teams from source exercise into destination exercise
      *
      * @param destinationExerciseId the exercise id of the exercise for which to import teams (= destination exercise)
      * @param sourceExerciseId the exercise id of the exercise from which to copy the teams (= source exercise)
      * @param importStrategyType the import strategy to use when importing the teams
      * @return the ResponseEntity with status 200 (OK) and the list of created teams in body
      */
-    @PostMapping("/exercises/{destinationExerciseId}/teams/import-from-exercise/{sourceExerciseId}")
+    @PutMapping("/exercises/{destinationExerciseId}/teams/import-from-exercise/{sourceExerciseId}")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<List<Team>> importTeamsFromSourceExercise(@PathVariable long destinationExerciseId, @PathVariable long sourceExerciseId,
             @RequestParam TeamImportStrategyType importStrategyType) {

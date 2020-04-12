@@ -79,7 +79,7 @@ export class TeamService implements ITeamService {
     }
 
     importTeamsFromSourceExercise(exercise: Exercise, sourceExercise: Exercise, importStrategyType: TeamImportStrategyType) {
-        return this.http.post<Team[]>(
+        return this.http.put<Team[]>(
             `${TeamService.resourceUrl(exercise.id)}/import-from-exercise/${sourceExercise.id}?importStrategyType=${importStrategyType}`,
             {},
             { observe: 'response' },
