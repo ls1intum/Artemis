@@ -12,15 +12,15 @@ export class CourseExerciseSubmissionResultSimulationService {
 
     constructor(private http: HttpClient) {}
 
-    simulateSubmission(exerciseID: number): Observable<HttpResponse<ProgrammingSubmission>> {
-        return this.http.post<ProgrammingSubmission>(`${this.resourceUrlWithoutLocalSetup}/submissions/no-local-setup/${exerciseID}`, {}, { observe: 'response' });
+    simulateSubmission(exerciseId: number): Observable<HttpResponse<ProgrammingSubmission>> {
+        return this.http.post<ProgrammingSubmission>(`${this.resourceUrlWithoutLocalSetup}/submissions/no-local-setup/${exerciseId}`, {}, { observe: 'response' });
     }
 
-    simulateResult(exerciseID: number): Observable<HttpResponse<Result>> {
-        return this.http.post<Result>(`${this.resourceUrlWithoutLocalSetup}/results/no-local-setup/${exerciseID}`, {}, { observe: 'response' });
+    simulateResult(exerciseId: number): Observable<HttpResponse<Result>> {
+        return this.http.post<Result>(`${this.resourceUrlWithoutLocalSetup}/results/no-local-setup/${exerciseId}`, {}, { observe: 'response' });
     }
 
-    getProgrammingExercise(exerciseID: number): Observable<ProgrammingExercise> {
-        return this.http.get<ProgrammingExercise>(`${this.resourceUrlWithoutLocalSetup}/programming-exercises/${exerciseID}`);
+    getProgrammingExercise(exerciseId: number): Observable<ProgrammingExercise> {
+        return this.http.get<ProgrammingExercise>(`${this.resourceUrlWithoutLocalSetup}/programming-exercises/${exerciseId}`);
     }
 }
