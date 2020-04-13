@@ -35,10 +35,10 @@
         "preserveWhitespaces": true
     },
     "include": [
-        "src/main/webapp/app"
+        "src/main/webapp/app",
+        "src/test/javascript"
     ],
     "exclude": [
-        "node_modules",
-        "src/test"
+        "node_modules"
     ]
 }
