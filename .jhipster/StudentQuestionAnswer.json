@@ -12,6 +12,10 @@
         {
             "fieldName": "verified",
             "fieldType": "Boolean"
+        },
+        {
+            "fieldName": "tutorApproved",
+            "fieldtype": "Boolean"
         }
     ],
     "relationships": [

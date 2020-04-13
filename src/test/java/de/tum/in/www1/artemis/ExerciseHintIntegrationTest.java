@@ -20,7 +20,7 @@ import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.RequestUtilService;
 import de.tum.in.www1.artemis.web.rest.ExerciseHintResource;
 
-public class ExerciseHintIntegrationTest extends AbstractSpringIntegrationTest {
+public class ExerciseHintIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
     ExerciseHintResource exerciseHintResource;
