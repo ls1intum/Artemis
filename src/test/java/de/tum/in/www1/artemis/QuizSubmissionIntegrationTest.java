@@ -62,9 +62,9 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
 
     @BeforeEach
     public void init() {
+        quizScheduleService.stopSchedule();
         database.addUsers(10, 5, 1);
         // do not use the schedule service based on a time interval in the tests, because this would result in flaky tests that run much slower
-        quizScheduleService.stopSchedule();
     }
 
     @AfterEach

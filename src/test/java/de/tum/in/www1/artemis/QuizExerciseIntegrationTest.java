@@ -30,7 +30,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     DatabaseUtilService database;
 
     @Autowired
-    QuizScheduleService scheduleService;
+    QuizScheduleService quizScheduleService;
 
     @Autowired
     RequestUtilService request;
@@ -62,11 +62,13 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     @BeforeEach
     public void init() {
         database.addUsers(10, 5, 1);
+        quizScheduleService.startSchedule(3000);
     }
 
     @AfterEach
     public void tearDown() {
         database.resetDatabase();
+        quizScheduleService.stopSchedule();
     }
 
     @Test
