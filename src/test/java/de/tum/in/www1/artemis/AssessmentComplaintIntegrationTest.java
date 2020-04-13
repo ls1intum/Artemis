@@ -76,7 +76,7 @@ public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegratio
         database.addUsers(2, 2, 1);
         // Initialize with 5 max complaints and 2 weeks max complaint deadline
         course = database.addCourseWithOneModelingExercise();
-        modelingExercise = (ModelingExercise) exerciseRepo.findAll().get(0);
+        modelingExercise = (ModelingExercise) course.getExercises().iterator().next();
         saveModelingSubmissionAndAssessment();
         complaint = new Complaint().result(modelingAssessment).complaintText("This is not fair").complaintType(ComplaintType.COMPLAINT);
         moreFeedbackRequest = new Complaint().result(modelingAssessment).complaintText("Please explain").complaintType(ComplaintType.MORE_FEEDBACK);
