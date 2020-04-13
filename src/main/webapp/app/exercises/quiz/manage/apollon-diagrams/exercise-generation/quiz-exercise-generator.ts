@@ -48,7 +48,7 @@ export async function generateDragAndDropQuizExercise(
         if (element == null) {
             continue;
         }
-        const { dragItem, dropLocation } = await generateDragAndDropItem(element, model, fileUploaderService);
+        const { dragItem, dropLocation } = await generateDragAndDropItem(element, model, renderedDiagram.clip, fileUploaderService);
         dragItems.set(element.id, dragItem!);
         dropLocations.set(element.id, dropLocation!);
     }
@@ -127,14 +127,19 @@ function createDragAndDropQuestion(
  *
  * @return {Promise<DragAndDropMapping>} A Promise resolving to a Drag and Drop mapping
  */
-async function generateDragAndDropItem(element: UMLModelElement, model: UMLModel, fileUploaderService: FileUploaderService): Promise<DragAndDropMapping> {
+async function generateDragAndDropItem(
+    element: UMLModelElement,
+    model: UMLModel,
+    svgSize: { width: number; height: number },
+    fileUploaderService: FileUploaderService,
+): Promise<DragAndDropMapping> {
     const textualElementTypes: UMLElementType[] = [UMLElementType.ClassAttribute, UMLElementType.ClassMethod, UMLElementType.ObjectAttribute];
     if (element.type in UMLRelationshipType) {
-        return generateDragAndDropItemForRelationship(element, model, fileUploaderService);
+        return generateDragAndDropItemForRelationship(element, model, svgSize, fileUploaderService);
     } else if (textualElementTypes.includes(element.type as UMLElementType)) {
-        return generateDragAndDropItemForText(element, model);
+        return generateDragAndDropItemForText(element, model, svgSize);
     } else {
-        return generateDragAndDropItemForElement(element, model, fileUploaderService);
+        return generateDragAndDropItemForElement(element, model, svgSize, fileUploaderService);
     }
 }
 
@@ -147,14 +152,19 @@ async function generateDragAndDropItem(element: UMLModelElement, model: UMLModel
  *
  * @return {Promise<DragAndDropMapping>} A Promise resolving to a Drag and Drop mapping
  */
-async function generateDragAndDropItemForElement(element: UMLModelElement, model: UMLModel, fileUploaderService: FileUploaderService): Promise<DragAndDropMapping> {
+async function generateDragAndDropItemForElement(
+    element: UMLModelElement,
+    model: UMLModel,
+    svgSize: { width: number; height: number },
+    fileUploaderService: FileUploaderService,
+): Promise<DragAndDropMapping> {
     const renderedElement: SVG = ApollonEditor.exportModelAsSvg(model, { include: [element.id] });
     const image = await convertRenderedSVGToPNG(renderedElement);
     const imageUploadResponse = await fileUploaderService.uploadFile(image, `element-${element.id}.png`);
 
     const dragItem = new DragItem();
     dragItem.pictureFilePath = imageUploadResponse.path;
-    const dropLocation = computeDropLocation(renderedElement.clip, model.size);
+    const dropLocation = computeDropLocation(renderedElement.clip, svgSize);
 
     return new DragAndDropMapping(dragItem, dropLocation);
 }
@@ -167,10 +177,10 @@ async function generateDragAndDropItemForElement(element: UMLModelElement, model
  *
  * @return {Promise<DragAndDropMapping>} A Promise resolving to a Drag and Drop mapping
  */
-async function generateDragAndDropItemForText(element: UMLModelElement, model: UMLModel): Promise<DragAndDropMapping> {
+async function generateDragAndDropItemForText(element: UMLModelElement, model: UMLModel, svgSize: { width: number; height: number }): Promise<DragAndDropMapping> {
     const dragItem = new DragItem();
     dragItem.text = element.name;
-    const dropLocation = computeDropLocation(element.bounds, model.size);
+    const dropLocation = computeDropLocation(element.bounds, svgSize);
 
     return new DragAndDropMapping(dragItem, dropLocation);
 }
@@ -184,7 +194,12 @@ async function generateDragAndDropItemForText(element: UMLModelElement, model: U
  *
  * @return {Promise<DragAndDropMapping>} A Promise resolving to a Drag and Drop mapping
  */
-async function generateDragAndDropItemForRelationship(element: UMLModelElement, model: UMLModel, fileUploaderService: FileUploaderService): Promise<DragAndDropMapping> {
+async function generateDragAndDropItemForRelationship(
+    element: UMLModelElement,
+    model: UMLModel,
+    svgSize: { width: number; height: number },
+    fileUploaderService: FileUploaderService,
+): Promise<DragAndDropMapping> {
     const MIN_SIZE = 30;
 
     let margin = {};
@@ -203,7 +218,7 @@ async function generateDragAndDropItemForRelationship(element: UMLModelElement, 
 
     const dragItem = new DragItem();
     dragItem.pictureFilePath = imageUploadResponse.path;
-    const dropLocation = computeDropLocation(renderedElement.clip, model.size);
+    const dropLocation = computeDropLocation(renderedElement.clip, svgSize);
 
     return new DragAndDropMapping(dragItem, dropLocation);
 }
