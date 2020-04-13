@@ -305,6 +305,7 @@ public class TextAssessmentResource extends AssessmentResource {
 
             // If enabled, we want to compute feedback suggestions using Athene.
             if (computeFeedbackSuggestions) {
+                result.setSubmission(textSubmission); // make sure this is not a Hibernate Proxy
                 automaticTextFeedbackService.get().suggestFeedback(result);
             }
         }
