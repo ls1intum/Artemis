@@ -30,8 +30,20 @@ describe('TextSubmissionAssessmentComponent', () => {
     let fixture: ComponentFixture<TextSubmissionAssessmentComponent>;
 
     const route = ({ snapshot: { path: '' } } as unknown) as ActivatedRoute;
-    const exercise = { id: 20, type: ExerciseType.TEXT, assessmentType: AssessmentType.MANUAL, problemStatement: '' } as TextExercise;
-    const participation: StudentParticipation = ({ type: ParticipationType.STUDENT, exercise } as unknown) as StudentParticipation;
+    const exercise =
+        {
+            id: 20,
+            type: ExerciseType.TEXT,
+            assessmentType: AssessmentType.MANUAL,
+            problemStatement: '',
+        } as TextExercise;
+    const participation: StudentParticipation =
+        ({
+            type: ParticipationType.STUDENT,
+            exercise,
+        } as
+            unknown) as
+        StudentParticipation;
     const submission =
         ({
             submissionExerciseType: SubmissionExerciseType.TEXT,
@@ -44,7 +56,7 @@ describe('TextSubmissionAssessmentComponent', () => {
         } as
             unknown) as
         TextSubmission;
-    const result =
+    submission.result =
         ({
             id: 2374,
             resultString: '1 of 12 points',
@@ -59,7 +71,6 @@ describe('TextSubmissionAssessmentComponent', () => {
         } as
             unknown) as
         Result;
-    submission.result = result;
     submission.participation.submissions = [submission];
     submission.participation.results = [submission.result];
 
