@@ -123,6 +123,7 @@ function createDragAndDropQuestion(
  *
  * @param {UMLModelElement} element A particular element of the UML model.
  * @param {UMLModel} model The complete UML model.
+ * @param {svgSize} actual size of the generated svg
  * @param {FileUploaderService} fileUploaderService To upload image base drag items.
  *
  * @return {Promise<DragAndDropMapping>} A Promise resolving to a Drag and Drop mapping
@@ -148,6 +149,7 @@ async function generateDragAndDropItem(
  *
  * @param {UMLModelElement} element An element of the UML model.
  * @param {UMLModel} model The complete UML model.
+ * @param {svgSize} actual size of the generated svg
  * @param {FileUploaderService} fileUploaderService To upload image base drag items.
  *
  * @return {Promise<DragAndDropMapping>} A Promise resolving to a Drag and Drop mapping
@@ -174,6 +176,7 @@ async function generateDragAndDropItemForElement(
  *
  * @param {UMLModelElement} element A textual based element of the UML model.
  * @param {UMLModel} model The complete UML model.
+ * @param {svgSize} actual size of the generated svg
  *
  * @return {Promise<DragAndDropMapping>} A Promise resolving to a Drag and Drop mapping
  */
@@ -190,6 +193,7 @@ async function generateDragAndDropItemForText(element: UMLModelElement, model: U
  *
  * @param {UMLModelElement} element A relationship of the UML model.
  * @param {UMLModel} model The complete UML model.
+ * @param {svgSize} actual size of the generated svg
  * @param {FileUploaderService} fileUploaderService To upload image base drag items.
  *
  * @return {Promise<DragAndDropMapping>} A Promise resolving to a Drag and Drop mapping
