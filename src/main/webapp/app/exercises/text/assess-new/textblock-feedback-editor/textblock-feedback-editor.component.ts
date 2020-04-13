@@ -1,6 +1,6 @@
 import { Component, AfterViewInit, HostBinding, Input, Output, EventEmitter, ViewChild, ElementRef, HostListener } from '@angular/core';
 import { TextBlock } from 'app/entities/text-block.model';
-import { Feedback } from 'app/entities/feedback.model';
+import { Feedback, FeedbackType } from 'app/entities/feedback.model';
 import { ConfirmIconComponent } from 'app/shared/confirm-icon/confirm-icon.component';
 
 @Component({
@@ -9,6 +9,8 @@ import { ConfirmIconComponent } from 'app/shared/confirm-icon/confirm-icon.compo
     styleUrls: ['./textblock-feedback-editor.component.scss'],
 })
 export class TextblockFeedbackEditorComponent implements AfterViewInit {
+    readonly FeedbackType = FeedbackType;
+
     @Input() textBlock: TextBlock;
     @Input() feedback: Feedback = new Feedback();
     @Output() feedbackChange = new EventEmitter<Feedback>();
