@@ -74,14 +74,14 @@ public class ProgrammingSubmissionResultSimulationService {
 
     /**
      * This method creates a new submission for the provided user
-     * @param exerciseID the exerciseId of the exercise for which a submission should be created
+     * @param exerciseId the exerciseId of the exercise for which a submission should be created
      * @return the newly created and stored submission
      */
-    public ProgrammingSubmission createSubmission(Long exerciseID) {
+    public ProgrammingSubmission createSubmission(Long exerciseId) {
         User user = userService.getUserWithGroupsAndAuthorities();
         Participant participant = user;
         ProgrammingExerciseStudentParticipation programmingExerciseStudentParticipation;
-        ProgrammingExercise programmingExercise = programmingExerciseService.findByIdWithEagerStudentParticipationsAndSubmissions(exerciseID);
+        ProgrammingExercise programmingExercise = programmingExerciseService.findByIdWithEagerStudentParticipationsAndSubmissions(exerciseId);
         Optional<StudentParticipation> optionalStudentParticipation = participationService.findOneByExerciseAndStudentLoginWithEagerSubmissionsAnyState(programmingExercise,
                 user.getLogin());
         if (optionalStudentParticipation.isEmpty()) {

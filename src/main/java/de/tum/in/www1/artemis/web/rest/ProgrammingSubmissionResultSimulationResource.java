@@ -49,15 +49,15 @@ public class ProgrammingSubmissionResultSimulationResource {
      * This participation and submission are only SIMULATIONS for the testing
      * of programming exercises without local setup
      *
-     * @param exerciseID the id of the exercise
+     * @param exerciseId the id of the exercise
      * @return HTTP OK and ProgrammingSubmission
      */
 
-    @PostMapping(value = "submissions/no-local-setup/{exerciseID}")
+    @PostMapping(value = "submissions/no-local-setup/{exerciseId}")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<ProgrammingSubmission> createParticipationAndSubmissionSimulation(@PathVariable Long exerciseID) {
+    public ResponseEntity<ProgrammingSubmission> createParticipationAndSubmissionSimulation(@PathVariable Long exerciseId) {
 
-        ProgrammingSubmission programmingSubmission = programmingSubmissionResultSimulationService.createSubmission(exerciseID);
+        ProgrammingSubmission programmingSubmission = programmingSubmissionResultSimulationService.createSubmission(exerciseId);
 
         programmingSubmissionService.notifyUserAboutSubmission(programmingSubmission);
 
@@ -68,16 +68,16 @@ public class ProgrammingSubmissionResultSimulationResource {
      * This method is used to notify artemis that there is a new programming exercise build result.
      * This result is only a SIMULATION for the testing of programming exercises without local setup
      *
-     * @param exerciseID id of the exercise
+     * @param exerciseId id of the exercise
      * @return HTTP OK and Result
      */
-    @PostMapping(value = "results/no-local-setup/{exerciseID}")
+    @PostMapping(value = "results/no-local-setup/{exerciseId}")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Result> createNewProgrammingExerciseResult(@PathVariable Long exerciseID) {
+    public ResponseEntity<Result> createNewProgrammingExerciseResult(@PathVariable Long exerciseId) {
         log.debug("Received result notify (NEW)");
         User user = userService.getUserWithGroupsAndAuthorities();
         Participant participant = user;
-        ProgrammingExercise programmingExercise = programmingExerciseService.findByIdWithEagerStudentParticipationsAndSubmissions(exerciseID);
+        ProgrammingExercise programmingExercise = programmingExerciseService.findByIdWithEagerStudentParticipationsAndSubmissions(exerciseId);
         Optional<StudentParticipation> optionalStudentParticipation = participationService.findOneByExerciseAndParticipantAnyState(programmingExercise, participant);
         ProgrammingExerciseStudentParticipation programmingExerciseStudentParticipation = (ProgrammingExerciseStudentParticipation) optionalStudentParticipation.get();
         Result result = programmingSubmissionResultSimulationService.createResult(programmingExerciseStudentParticipation);
