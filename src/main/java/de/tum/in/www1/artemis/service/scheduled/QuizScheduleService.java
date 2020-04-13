@@ -59,7 +59,7 @@ public class QuizScheduleService {
         threadPoolTaskScheduler.initialize();
     }
 
-    private ScheduledFuture<?> scheduledFuture;
+    private ScheduledFuture<?> scheduledProcessQuizSubmissions;
 
     private final SimpMessageSendingOperations messagingTemplate;
 
@@ -112,6 +112,7 @@ public class QuizScheduleService {
 
     /**
      * add a result to resultHashMap for a statistic-update
+     * this should only be invoked once, when the quiz was submitted
      *
      * @param quizExerciseId the quizExerciseId of the quiz the result belongs to (first Key)
      * @param result the result, which should be added
@@ -198,7 +199,7 @@ public class QuizScheduleService {
      */
     public void startSchedule(long delayInMillis) {
         log.info("QuizScheduleService was started to run repeatedly with {} second delay.", delayInMillis / 1000.0);
-        scheduledFuture = threadPoolTaskScheduler.scheduleWithFixedDelay(this::processCachedQuizSubmissions, delayInMillis);
+        scheduledProcessQuizSubmissions = threadPoolTaskScheduler.scheduleWithFixedDelay(this::processCachedQuizSubmissions, delayInMillis);
 
         // schedule quiz start for all existing quizzes that are planned to start in the future
         List<QuizExercise> quizExercises = quizExerciseService.findAllPlannedToStartInTheFutureWithQuestions();
@@ -211,8 +212,11 @@ public class QuizScheduleService {
      * stop scheduler (interrupts if running)
      */
     public void stopSchedule() {
-        if (scheduledFuture != null) {
-            scheduledFuture.cancel(true);
+        log.info("Try to stop quiz schedule service");
+        if (scheduledProcessQuizSubmissions != null && !scheduledProcessQuizSubmissions.isCancelled()) {
+            boolean cancelSuccess = scheduledProcessQuizSubmissions.cancel(true);
+            log.info("Stop Quiz Schedule Service was successful: " + cancelSuccess);
+            scheduledProcessQuizSubmissions = null;
         }
         for (Long quizExerciseId : quizStartSchedules.keySet()) {
             cancelScheduledQuizStart(quizExerciseId);
@@ -241,8 +245,15 @@ public class QuizScheduleService {
     public void cancelScheduledQuizStart(Long quizExerciseId) {
         ScheduledFuture<?> scheduledFuture = quizStartSchedules.remove(quizExerciseId);
         if (scheduledFuture != null) {
-            scheduledFuture.cancel(true);
+            boolean cancelSuccess = scheduledFuture.cancel(true);
+            log.info("Stop scheduled quiz start for quiz " + quizExerciseId + " was successful: " + cancelSuccess);
         }
+    }
+
+    public void clearAllQuizData() {
+        participationHashMap.clear();
+        submissionHashMap.clear();
+        resultHashMap.clear();
     }
 
     public void clearQuizData(Long quizExerciseId) {
@@ -331,6 +342,7 @@ public class QuizScheduleService {
                 QuizExercise quizExercise = quizExerciseService.findOneWithQuestionsAndStatistics(quizExerciseId);
                 // check if quiz has been deleted (edge case), then do nothing!
                 if (quizExercise == null) {
+                    log.debug("Remove quiz " + quizExerciseId + " from resultHashMap");
                     resultHashMap.remove(quizExerciseId);
                     continue;
                 }
