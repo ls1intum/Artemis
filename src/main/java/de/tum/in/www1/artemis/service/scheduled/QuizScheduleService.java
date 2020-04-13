@@ -52,12 +52,7 @@ public class QuizScheduleService {
      */
     private static Map<Long, ScheduledFuture<?>> quizStartSchedules = new ConcurrentHashMap<>();
 
-    private static ThreadPoolTaskScheduler threadPoolTaskScheduler = new ThreadPoolTaskScheduler();
-    static {
-        threadPoolTaskScheduler.setThreadNamePrefix("QuizScheduler");
-        threadPoolTaskScheduler.setPoolSize(1);
-        threadPoolTaskScheduler.initialize();
-    }
+    private static ThreadPoolTaskScheduler threadPoolTaskScheduler;
 
     private ScheduledFuture<?> scheduledProcessQuizSubmissions;
 
@@ -198,8 +193,14 @@ public class QuizScheduleService {
      * @param delayInMillis gap for which the QuizScheduleService should run repeatly
      */
     public void startSchedule(long delayInMillis) {
-        log.info("QuizScheduleService was started to run repeatedly with {} second delay.", delayInMillis / 1000.0);
+        if (threadPoolTaskScheduler == null) {
+            threadPoolTaskScheduler = new ThreadPoolTaskScheduler();
+            threadPoolTaskScheduler.setThreadNamePrefix("QuizScheduler");
+            threadPoolTaskScheduler.setPoolSize(1);
+            threadPoolTaskScheduler.initialize();
+        }
         scheduledProcessQuizSubmissions = threadPoolTaskScheduler.scheduleWithFixedDelay(this::processCachedQuizSubmissions, delayInMillis);
+        log.info("QuizScheduleService was started to run repeatedly with {} second delay.", delayInMillis / 1000.0);
 
         // schedule quiz start for all existing quizzes that are planned to start in the future
         List<QuizExercise> quizExercises = quizExerciseService.findAllPlannedToStartInTheFutureWithQuestions();
@@ -220,6 +221,10 @@ public class QuizScheduleService {
         }
         for (Long quizExerciseId : quizStartSchedules.keySet()) {
             cancelScheduledQuizStart(quizExerciseId);
+        }
+        if (threadPoolTaskScheduler != null) {
+            threadPoolTaskScheduler.shutdown();
+            threadPoolTaskScheduler = null;
         }
     }
 
@@ -242,6 +247,11 @@ public class QuizScheduleService {
         }
     }
 
+    /**
+     * cancels the quiz start for the given exercise id, e.g. because the quiz was deleted or the quiz start date was changed
+     *
+     * @param quizExerciseId the quiz exercise for which the quiz start should be canceled
+     */
     public void cancelScheduledQuizStart(Long quizExerciseId) {
         ScheduledFuture<?> scheduledFuture = quizStartSchedules.remove(quizExerciseId);
         if (scheduledFuture != null) {
