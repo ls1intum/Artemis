@@ -45,24 +45,39 @@ export class StudentQuestionService {
         return this.http.delete<any>(`${this.resourceUrl}/${studentQuestionId}`, { observe: 'response' });
     }
 
+    /**
+     * Takes a studentQuestion and converts the date from the client
+     * @param   {StudentQuestion} studentQuestion
+     * @return  {StudentQuestion}
+     */
     protected convertDateFromClient(studentQuestion: StudentQuestion): StudentQuestion {
         const copy: StudentQuestion = Object.assign({}, studentQuestion, {
-            creationDate: studentQuestion.creationDate != null && studentQuestion.creationDate.isValid() ? studentQuestion.creationDate.toJSON() : null,
+            creationDate: studentQuestion.creationDate !== null && moment(studentQuestion.creationDate).isValid() ? moment(studentQuestion.creationDate).toJSON() : null,
         });
         return copy;
     }
 
+    /**
+     * Takes a studentQuestion and converts the date from the server
+     * @param   {StudentQuestion} studentQuestion
+     * @return  {StudentQuestion}
+     */
     protected convertDateFromServer(res: EntityResponseType): EntityResponseType {
         if (res.body) {
-            res.body.creationDate = res.body.creationDate != null ? moment(res.body.creationDate) : null;
+            res.body.creationDate = res.body.creationDate !== null ? moment(res.body.creationDate) : null;
         }
         return res;
     }
 
+    /**
+     * Takes an array of studentQuestions and converts the date from the server
+     * @param   {EntityArrayResponseType} res
+     * @return  {EntityArrayResponseType}
+     */
     protected convertDateArrayFromServer(res: EntityArrayResponseType): EntityArrayResponseType {
         if (res.body) {
             res.body.forEach((studentQuestion: StudentQuestion) => {
-                studentQuestion.creationDate = studentQuestion.creationDate != null ? moment(studentQuestion.creationDate) : null;
+                studentQuestion.creationDate = studentQuestion.creationDate !== null ? moment(studentQuestion.creationDate) : null;
             });
         }
         return res;
