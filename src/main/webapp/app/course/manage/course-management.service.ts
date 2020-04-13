@@ -19,6 +19,7 @@ import { StudentParticipation } from 'app/entities/participation/student-partici
 import { AccountService } from 'app/core/auth/account.service';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import { NotificationService } from 'app/overview/notification/notification.service';
+import { createRequestOption } from 'app/shared/util/request-util';
 
 export type EntityResponseType = HttpResponse<Course>;
 export type EntityArrayResponseType = HttpResponse<Course[]>;
@@ -68,6 +69,8 @@ export class CourseManagementService {
             .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
     }
 
+    // TODO: separate course overview and course management REST API calls in a better way
+
     findAll(): Observable<EntityArrayResponseType> {
         return this.http
             .get<Course[]>(`${this.resourceUrl}/for-dashboard`, { observe: 'response' })
@@ -115,17 +118,19 @@ export class CourseManagementService {
             );
     }
 
-    query(): Observable<EntityArrayResponseType> {
+    getAll(req?: any): Observable<EntityArrayResponseType> {
+        const options = createRequestOption(req);
         return this.http
-            .get<Course[]>(this.resourceUrl, { observe: 'response' })
+            .get<Course[]>(this.resourceUrl, { params: options, observe: 'response' })
             .pipe(map((res: EntityArrayResponseType) => this.convertDateArrayFromServer(res)))
             .pipe(map((res: EntityArrayResponseType) => this.checkAccessRights(res)))
             .pipe(map((res: EntityArrayResponseType) => this.subscribeToCourseNotifications(res)));
     }
 
-    getWithUserStats(): Observable<EntityArrayResponseType> {
+    getWithUserStats(req?: any): Observable<EntityArrayResponseType> {
+        const options = createRequestOption(req);
         return this.http
-            .get<Course[]>(`${this.resourceUrl}/with-user-stats`, { observe: 'response' })
+            .get<Course[]>(`${this.resourceUrl}/with-user-stats`, { params: options, observe: 'response' })
             .pipe(map((res: EntityArrayResponseType) => this.convertDateArrayFromServer(res)))
             .pipe(map((res: EntityArrayResponseType) => this.checkAccessRights(res)))
             .pipe(map((res: EntityArrayResponseType) => this.subscribeToCourseNotifications(res)));
