@@ -1,6 +1,7 @@
 {
     "artemisApp": {
         "textAssessment": {
+            "title": "Bewertungseditor für Textaufgaben",
             "loading": "Bitte warte, bis Artemis die Abgabe findet!",
             "heading": {
                 "assessment": "Bewertungseditor der Textaufgabe {{exerciseTitle}}",
@@ -43,7 +44,12 @@
             "updateAfterComplaintSuccessful": "Die Bewertung wurde erfolgreich aktualisiert.",
             "updateAfterComplaintFailed": "Das Aktualisieren der Bewertung ist fehlgeschlagen.",
             "cancel": "Bewertung abbrechen",
-            "confirmCancel": "Bist du sicher, dass du die Bewertung abbrechen möchtest? Dein aktueller Bewertungsfortschritt wird gelöscht und die Abgabe steht anderen Tutoren wieder zur Verfügung."
+            "confirmCancel": "Bist du sicher, dass du die Bewertung abbrechen möchtest? Dein aktueller Bewertungsfortschritt wird gelöscht und die Abgabe steht anderen Tutoren wieder zur Verfügung.",
+            "feedbackEditor": {
+                "dismissFeedback": "Möchtest du das Feedback löschen?",
+                "dismissFeedbackConfirmation": "Bitte bestätige, dass du das Feedback löschen möchtest!",
+                "feedbackCommentPlaceholder": "Gib deine Anmerkung bitte hier ein.."
+            }
         }
     }
 }

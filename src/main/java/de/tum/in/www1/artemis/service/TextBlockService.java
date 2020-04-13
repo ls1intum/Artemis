@@ -31,19 +31,23 @@ public class TextBlockService {
     /**
      * Splits TextSubmission for a given Result into TextBlocks and saves them in the TextSubmission
      * @param result the result, which correspond to the TextSubmission, that gets split
-     * @throws ClassCastException if Result doesn't correspond to a TextSubmission
      */
-    public void prepopulateFeedbackBlocks(Result result) throws ClassCastException {
+    public void prepopulateFeedbackBlocks(Result result) {
         if (result.getFeedbacks().size() != 0 || !(result.getSubmission() instanceof TextSubmission)) {
             return;
         }
 
         final TextSubmission textSubmission = (TextSubmission) result.getSubmission();
-        final List<TextBlock> blocks = splitSubmissionIntoBlocks(textSubmission);
-        textSubmission.setBlocks(blocks);
+        final List<TextBlock> blocks = computeTextBlocksForSubmissionBasedOnSyntax(textSubmission);
         final List<Feedback> feedbacks = blocks.stream().map(block -> (new Feedback()).reference(block.getText()).credits(0d)).collect(toList());
 
         result.getFeedbacks().addAll(feedbacks);
+    }
+
+    public List<TextBlock> computeTextBlocksForSubmissionBasedOnSyntax(TextSubmission textSubmission) {
+        final List<TextBlock> blocks = splitSubmissionIntoBlocks(textSubmission);
+        textSubmission.setBlocks(blocks);
+        return blocks;
     }
 
     /**
