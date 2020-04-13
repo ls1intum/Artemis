@@ -41,15 +41,18 @@ public class ProgrammingSubmissionResultSimulationService {
 
     private final ResultRepository resultRepository;
 
+    private final ProgrammingExerciseSimulationService programmingExerciseSimulationService;
+
     public ProgrammingSubmissionResultSimulationService(ParticipationRepository participationRepository, UserService userService,
             ProgrammingExerciseService programmingExerciseService, ParticipationService participationService, ProgrammingSubmissionRepository programmingSubmissionRepository,
-            ResultRepository resultRepository) {
+            ResultRepository resultRepository, ProgrammingExerciseSimulationService programmingExerciseSimulationService) {
         this.participationRepository = participationRepository;
         this.userService = userService;
         this.programmingSubmissionRepository = programmingSubmissionRepository;
         this.resultRepository = resultRepository;
         this.programmingExerciseService = programmingExerciseService;
         this.participationService = participationService;
+        this.programmingExerciseSimulationService = programmingExerciseSimulationService;
     }
 
     /**
@@ -64,8 +67,8 @@ public class ProgrammingSubmissionResultSimulationService {
         programmingExerciseStudentParticipation.setBuildPlanId(programmingExercise.getProjectKey() + "-" + user.getLogin().toUpperCase());
         programmingExerciseStudentParticipation.setParticipant(participant);
         programmingExerciseStudentParticipation.setInitializationState(InitializationState.INITIALIZED);
-        programmingExerciseStudentParticipation.setRepositoryUrl("http://" + user.getLogin() + "@localhost7990:/scm/" + programmingExercise.getProjectKey() + "/"
-                + programmingExercise.getProjectKey().toLowerCase() + "-" + user.getLogin() + ".git");
+        programmingExerciseStudentParticipation.setRepositoryUrl("http://" + user.getLogin() + "@" + programmingExerciseSimulationService.domain
+                + programmingExercise.getProjectKey() + "/" + programmingExercise.getProjectKey().toLowerCase() + "-" + user.getLogin() + ".git");
         programmingExerciseStudentParticipation.setInitializationDate(ZonedDateTime.now());
         programmingExerciseStudentParticipation.setProgrammingExercise(programmingExercise);
         participationRepository.save(programmingExerciseStudentParticipation);
