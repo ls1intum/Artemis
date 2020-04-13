@@ -113,6 +113,6 @@ describe('TextSubmissionAssessmentComponent', () => {
         textAssessmentAreaComponent.textBlockRefs.push(textBlockRef);
         textAssessmentAreaComponent.textBlockRefsChangeEmit();
 
-        expect(component.result?.score).toBe(42);
+        expect(component.totalScore).toBe(42);
     });
 });

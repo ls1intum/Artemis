@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.web.rest;
 
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
+import static org.hibernate.Hibernate.isInitialized;
 
 import java.time.ZonedDateTime;
 import java.util.List;
@@ -209,13 +210,14 @@ public class TextAssessmentResource extends AssessmentResource {
      * Splits the TextSubmission corresponding to a resultId into TextBlocks.
      * The TextBlocks get a suggested feedback if automatic assessment is enabled and feedback available
      *
-     * @deprecated Text Blocks should be returned with Submission.
+     * TODO: Remove when migrating to Text Assessment V2
+     * @deprecated Text Blocks are now part of the retrieveParticipationForSubmission() response. Please use V2 text assessment which does not need this API call. This API call will be removed soon.
      * @param resultId the resultId the which needs TextBlocks
      * @return 200 Ok if successful with the result, belonging to the TextBlocks as body, but sensitive information are filtered out
      * @throws EntityNotFoundException if the corresponding Exercise isn't a TextExercise
      * @throws AccessForbiddenException if current user is not at least teaching assistant in the given exercise
      */
-    @Deprecated(since = "4.0.0")
+    @Deprecated(since = "4.0.0", forRemoval = true)
     @GetMapping("/result/{resultId}/with-textblocks")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Result> getResultWithPredefinedTextblocks(@PathVariable Long resultId) throws EntityNotFoundException, AccessForbiddenException {
@@ -231,7 +233,12 @@ public class TextAssessmentResource extends AssessmentResource {
 
         final TextExercise textExercise = (TextExercise) exercise;
 
-        computeBlocks(result, textExercise);
+        if (automaticTextFeedbackService.isPresent() && textExercise.isAutomaticAssessmentEnabled()) {
+            automaticTextFeedbackService.get().suggestFeedback(result);
+        }
+        else {
+            textBlockService.prepopulateFeedbackBlocks(result);
+        }
 
         TextSubmission textSubmission = (TextSubmission) result.getSubmission();
         final List<TextBlock> textBlocks = textBlockRepository.findAllBySubmissionId(textSubmission.getId());
@@ -242,15 +249,6 @@ public class TextAssessmentResource extends AssessmentResource {
         }
 
         return ResponseEntity.ok(result);
-    }
-
-    private void computeBlocks(Result result, TextExercise textExercise) {
-        if (automaticTextFeedbackService.isPresent() && textExercise.isAutomaticAssessmentEnabled()) {
-            automaticTextFeedbackService.get().suggestFeedback(result);
-        }
-        else {
-            textBlockService.prepopulateFeedbackBlocks(result);
-        }
     }
 
     /**
@@ -279,15 +277,24 @@ public class TextAssessmentResource extends AssessmentResource {
         final TextExercise exercise = (TextExercise) participation.getExercise();
         checkAuthorization(exercise, user);
         final boolean isAtLeastInstructorForExercise = authCheckService.isAtLeastInstructorForExercise(exercise, user);
+        final boolean computeFeedbackSuggestions = automaticTextFeedbackService.isPresent() && exercise.isAutomaticAssessmentEnabled();
 
         Result result = textSubmission.getResult();
+        // If we already have a result, we need to check if it is locked.
         if (result != null) {
             final User assessor = result.getAssessor();
             if (!isAtLeastInstructorForExercise && assessor != null && !assessor.getLogin().equals(user.getLogin()) && result.getCompletionDate() == null) {
                 throw new BadRequestAlertException("This submission is being assessed by another tutor", ENTITY_NAME, "alreadyAssessed");
             }
 
+            // Load Feedback already created for this assessment
+            final List<Feedback> assessments = textAssessmentService.getAssessmentsForResult(result);
+            result.setFeedbacks(assessments);
+            if (assessments.isEmpty() && computeFeedbackSuggestions) {
+                automaticTextFeedbackService.get().suggestFeedback(result);
+            }
         }
+        // We we are the first ones to open assess this submission, we want to lock it.
         else {
             result = new Result();
             result.setParticipation(participation);
@@ -295,24 +302,29 @@ public class TextAssessmentResource extends AssessmentResource {
             resultService.createNewRatedManualResult(result, false);
             result.setCompletionDate(null);
             result = resultRepository.save(result);
+
+            // If enabled, we want to compute feedback suggestions using Athene.
+            if (computeFeedbackSuggestions) {
+                automaticTextFeedbackService.get().suggestFeedback(result);
+            }
         }
 
-        // Set Submissions and Results of Participation to include requested only
+        // Prepare for Response: Set Submissions and Results of Participation to include requested only.
         participation.setSubmissions(Set.of(textSubmission));
         participation.setResults(Set.of(result));
 
         // Remove Result from Submission, as it is send in participation.results[0]
         textSubmission.setResult(null);
 
-        final List<Feedback> assessments = textAssessmentService.getAssessmentsForResult(result);
-        result.setFeedbacks(assessments);
+        // If we did not call AutomaticTextFeedbackService::suggestFeedback, we need to fetch them now.
+        if (!computeFeedbackSuggestions) {
+            final List<TextBlock> textBlocks = textBlockRepository.findAllBySubmissionId(textSubmission.getId());
+            textSubmission.setBlocks(textBlocks);
+        }
 
-        final List<TextBlock> textBlocks = textBlockRepository.findAllBySubmissionId(textSubmission.getId());
-        textSubmission.setBlocks(textBlocks);
-
-        if (textSubmission.getBlocks() == null || textSubmission.getBlocks().isEmpty()) {
-            result.setSubmission(textSubmission);
-            computeBlocks(result, exercise);
+        // If we did not fetch blocks from the database before, we fall back to computing them based on syntax.
+        if (textSubmission.getBlocks() == null || !isInitialized(textSubmission.getBlocks()) || textSubmission.getBlocks().isEmpty()) {
+            textBlockService.computeTextBlocksForSubmissionBasedOnSyntax(textSubmission);
         }
 
         if (!isAtLeastInstructorForExercise && participation instanceof StudentParticipation) {

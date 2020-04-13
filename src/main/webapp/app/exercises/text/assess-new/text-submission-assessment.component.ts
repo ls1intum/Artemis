@@ -33,6 +33,7 @@ export class TextSubmissionAssessmentComponent implements OnInit {
     result: Result | null = null;
     generalFeedback: Feedback;
     textBlockRefs: TextBlockRef[] = [];
+    totalScore = 0;
 
     isLoading = true;
     busy = false;
@@ -94,6 +95,7 @@ export class TextSubmissionAssessmentComponent implements OnInit {
         this.updateUrlIfNeeded();
 
         this.checkPermissions();
+        this.computeTotalScore();
         this.isLoading = false;
     }
 
@@ -168,13 +170,18 @@ export class TextSubmissionAssessmentComponent implements OnInit {
 
     updateAssessmentAfterComplaint(): void {}
 
+    private computeTotalScore() {
+        const credits = this.assessments.map((feedback) => feedback.credits);
+        this.totalScore = credits.reduce((a, b) => a + b, 0);
+    }
+
     validateFeedback(): void {
         const hasReferencedFeedback = this.referencedFeedback.filter((f) => !Feedback.isEmpty(f)).length > 0;
         const hasGeneralFeedback = Feedback.hasDetailText(this.generalFeedback);
 
         this.assessmentsAreValid = hasReferencedFeedback || hasGeneralFeedback;
 
-        this.result!.score = this.referencedFeedback.map((feedback) => feedback.credits).reduce((a, b) => a + b, 0);
+        this.computeTotalScore();
     }
 
     private prepareTextBlocksAndFeedbacks(): void {

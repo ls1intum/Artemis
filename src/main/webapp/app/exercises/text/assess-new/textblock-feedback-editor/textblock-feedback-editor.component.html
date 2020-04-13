@@ -4,7 +4,7 @@
         <textarea
             class="form-control"
             rows="1"
-            placeholder="Enter Feedback Here"
+            [placeholder]="'artemisApp.textAssessment.feedbackEditor.feedbackCommentPlaceholder' | translate"
             id="detailText-{{ textBlock.id }}"
             [(ngModel)]="feedback.detailText"
             #detailText
