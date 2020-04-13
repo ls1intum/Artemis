@@ -19,7 +19,7 @@ public class PurgeExistingStrategy extends TeamImportStrategy {
     }
 
     /**
-     * Imports all team of the source exercise into the destination exercise
+     * Imports all teams of the source exercise into the destination exercise
      *
      * Conflicts are prevented trivially by first deleting all teams of the destination exercise.
      *
