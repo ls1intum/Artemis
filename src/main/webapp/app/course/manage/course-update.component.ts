@@ -220,7 +220,7 @@ export class CourseUpdateComponent implements OnInit {
     }
 
     /**
-     * Enable and disable presentation score input field based on presentationScoreEnabled checkbox
+     * Enable or disable presentation score input field based on presentationScoreEnabled checkbox
      */
     changePresentationScoreInput() {
         const presentationScoreControl = this.courseForm.controls['presentationScore'];
@@ -234,7 +234,7 @@ export class CourseUpdateComponent implements OnInit {
     }
 
     /**
-     * Enable and disable complaints
+     * Enable or disable complaints
      */
     changeComplaintsEnabled() {
         if (!this.complaintsEnabled) {
@@ -249,7 +249,7 @@ export class CourseUpdateComponent implements OnInit {
     }
 
     /**
-     * Enable and disable presentation score input field based on presentationScoreEnabled checkbox
+     * Enable or disable the customization of groups
      */
     changeCustomizeGroupNames() {
         if (!this.customizeGroupNames) {

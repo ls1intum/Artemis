@@ -29,7 +29,7 @@
             },
             "maxComplaintTimeDays": {
                 "title": "Deadline for complaints in days after result date",
-                "description": "Maximum Complaint Deadline for student complaints. This refers to days after the result is available (assessment due date or after the result date depending on which one is later). Students will not be able to complain anymore after this deadline."
+                "description": "This number refers to days after the result is available (assessment due date or result date, depending on which one is later). Students will not be able to complain anymore after this deadline."
             },
             "studentQuestionsEnabled": {
                 "title": "Enable questions and answers by students",
@@ -37,7 +37,7 @@
             },
             "complaintsEnabled": {
                 "title": "Enable complaints",
-                "description": "Enabling this allows students to complaint about results."
+                "description": "Enabling this allows students to complain about results."
             },
             "customizeGroupNames": {
                 "title": "Customize group names",
