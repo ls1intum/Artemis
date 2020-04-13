@@ -70,7 +70,7 @@ describe('StudentQuestionRowComponent', () => {
         expect(component.selectedQuestionAnswer).to.deep.equal(approvedStudentQuestionAnswer);
     });
 
-    it('should toggle answer mode and set question tp null', () => {
+    it('should toggle answer mode and set question to null', () => {
         component.studentQuestion = studentQuestion;
         componentFixture.detectChanges();
         component.toggleAnswerMode(approvedStudentQuestionAnswer);
