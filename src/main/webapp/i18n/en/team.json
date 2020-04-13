@@ -74,7 +74,7 @@
             "importTeams": {
                 "buttonLabel": "Import teams",
                 "dialogTitle": "Import teams into:",
-                "introText": "This dialog can be used to import teams from another exercise into this exercise.",
+                "introText": "This dialog can be used to import teams from another exercise of this course into this exercise.",
                 "error": "Could not import teams. Please try again."
             },
             "sourceExercise": {
