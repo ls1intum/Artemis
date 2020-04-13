@@ -36,15 +36,15 @@
             </p>
         </div>
         <div *ngIf="!submission?.submitted" class="flex-shrink-0 ml-md-3 ml-lg-4" [ngStyle]="{ zIndex: 1 }">
+            <p class="ml-3 mb-0 text-right">
+                <strong><span jhiTranslate="artemisApp.exercise.maxScore">Max. Score</span>: {{ textExercise!.maxScore }}</strong>
+            </p>
             <jhi-team-participate-info-box
                 *ngIf="textExercise?.teamMode && isActive"
                 [exercise]="textExercise"
                 [participation]="participation"
                 [bounded]="false"
             ></jhi-team-participate-info-box>
-            <p *ngIf="!textExercise?.teamMode" class="ml-3">
-                <strong><span jhiTranslate="artemisApp.exercise.maxScore">Max. Score</span>: {{ textExercise!.maxScore }}</strong>
-            </p>
         </div>
     </div>
 

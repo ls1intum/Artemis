@@ -1,12 +1,16 @@
 .team-participate-info-box {
-    min-width: 255px;
+    $side-padding: 20px;
+
+    position: relative;
+    right: -$side-padding;
+    min-width: 240px;
 
     &.sticky-enabled {
         height: 100%;
     }
 
     .sticky-box {
-        padding: 18px 20px 24px;
+        padding: 18px $side-padding 24px;
         transition: 0.2s box-shadow;
 
         // on mobile (below md breakpoint)

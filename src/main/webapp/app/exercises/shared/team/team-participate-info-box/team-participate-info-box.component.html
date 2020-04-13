@@ -10,12 +10,9 @@
         [boundary]="bounded ? boundary : undefined"
         (stickyStatus)="onStickyStatusChange($event)"
     >
-        <div class="d-flex justify-content-end justify-content-md-between">
+        <div class="d-flex justify-content-end">
             <jhi-connection-status class="text-right"></jhi-connection-status>
-            <p class="ml-3 mb-0">
-                <strong><span jhiTranslate="artemisApp.exercise.maxScore">Max. Score</span>: {{ exercise!.maxScore }}</strong>
-            </p>
         </div>
-        <jhi-team-students-online-list class="mt-4" [participation]="participation"></jhi-team-students-online-list>
+        <jhi-team-students-online-list class="mt-3" [participation]="participation"></jhi-team-students-online-list>
     </div>
 </div>
