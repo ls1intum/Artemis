@@ -20,7 +20,7 @@ import de.tum.in.www1.artemis.repository.SubmissionRepository;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.RequestUtilService;
 
-public class ParticipationSubmissionIntegrationTest extends AbstractSpringIntegrationTest {
+public class ParticipationSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
     SubmissionRepository submissionRepository;

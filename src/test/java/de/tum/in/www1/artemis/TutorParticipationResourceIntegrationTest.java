@@ -21,7 +21,7 @@ import de.tum.in.www1.artemis.repository.TutorParticipationRepository;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.RequestUtilService;
 
-public class TutorParticipationResourceIntegrationTest extends AbstractSpringIntegrationTest {
+public class TutorParticipationResourceIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
     DatabaseUtilService database;
@@ -43,7 +43,7 @@ public class TutorParticipationResourceIntegrationTest extends AbstractSpringInt
     @BeforeEach
     public void initTestCase() throws Exception {
         database.addUsers(1, 5, 1);
-        database.createCoursesWithExercisesAndLectures();
+        database.createCoursesWithExercisesAndLectures(true);
         exercise = exerciseRepository.findAll().get(0);
     }
 

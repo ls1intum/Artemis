@@ -19,7 +19,7 @@ import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.RequestUtilService;
 
-public class SystemNotificationIntegrationTest extends AbstractSpringIntegrationTest {
+public class SystemNotificationIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
     DatabaseUtilService database;

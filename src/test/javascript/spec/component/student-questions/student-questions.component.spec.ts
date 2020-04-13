@@ -18,46 +18,41 @@ describe('StudentQuestionRowComponent', () => {
     let component: StudentQuestionsComponent;
     let componentFixture: ComponentFixture<StudentQuestionsComponent>;
 
-    const unApprovedStudentQuestionAnswer =
-        {
-            id: 1,
-            answerDate: null,
-            answerText: 'not approved',
-            tutorApproved: false,
-        } as StudentQuestionAnswer;
+    const unApprovedStudentQuestionAnswer = {
+        id: 1,
+        answerDate: null,
+        answerText: 'not approved',
+        tutorApproved: false,
+    } as StudentQuestionAnswer;
 
-    const approvedStudentQuestionAnswer =
-        {
-            id: 2,
-            answerDate: null,
-            answerText: 'approved',
-            tutorApproved: true,
-        } as StudentQuestionAnswer;
+    const approvedStudentQuestionAnswer = {
+        id: 2,
+        answerDate: null,
+        answerText: 'approved',
+        tutorApproved: true,
+    } as StudentQuestionAnswer;
 
-    const studentQuestion1 =
-        {
-            id: 1,
-            creationDate: null,
-            answers: [unApprovedStudentQuestionAnswer, approvedStudentQuestionAnswer],
-        } as StudentQuestion;
+    const studentQuestion1 = {
+        id: 1,
+        creationDate: null,
+        answers: [unApprovedStudentQuestionAnswer, approvedStudentQuestionAnswer],
+    } as StudentQuestion;
 
-    const studentQuestion2 =
-        {
-            id: 2,
-            creationDate: null,
-            answers: [unApprovedStudentQuestionAnswer, approvedStudentQuestionAnswer],
-        } as StudentQuestion;
+    const studentQuestion2 = {
+        id: 2,
+        creationDate: null,
+        answers: [unApprovedStudentQuestionAnswer, approvedStudentQuestionAnswer],
+    } as StudentQuestion;
 
-    const lectureDefault =
-        {
-            id: 1,
-            title: 'test',
-            description: 'test',
-            startDate: null,
-            endDate: null,
-            studentQuestions: [studentQuestion1, studentQuestion2],
-            isAtLeastInstructor: true,
-        } as Lecture;
+    const lectureDefault = {
+        id: 1,
+        title: 'test',
+        description: 'test',
+        startDate: null,
+        endDate: null,
+        studentQuestions: [studentQuestion1, studentQuestion2],
+        isAtLeastInstructor: true,
+    } as Lecture;
 
     beforeEach(async () => {
         return TestBed.configureTestingModule({
