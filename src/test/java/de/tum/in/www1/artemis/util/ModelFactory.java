@@ -212,9 +212,10 @@ public class ModelFactory {
             String teachingAssistantGroupName, String instructorGroupName, Integer maxComplaints, Integer maxComplaintTimeDays, Boolean studentQuestionsEnabled) {
         Course course = new Course();
         course.setId(id);
-        course.setTitle(UUID.randomUUID().toString());
-        course.setDescription(UUID.randomUUID().toString());
-        course.setShortName("t" + UUID.randomUUID().toString().substring(0, 3));
+        course.setTitle("Course title " + UUID.randomUUID().toString());
+        course.setDescription("Course description " + UUID.randomUUID().toString());
+        // must start with a letter
+        course.setShortName("short" + UUID.randomUUID().toString().replace("-", "0"));
         course.setMaxComplaints(maxComplaints);
         course.setMaxComplaintTimeDays(maxComplaintTimeDays);
         course.setStudentQuestionsEnabled(studentQuestionsEnabled);
