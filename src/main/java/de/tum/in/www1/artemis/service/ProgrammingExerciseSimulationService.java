@@ -41,6 +41,8 @@ public class ProgrammingExerciseSimulationService {
 
     private final ResultRepository resultRepository;
 
+    private final String domain = "http://nolocalsetup:7990/scm/";
+
     public ProgrammingExerciseSimulationService(ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingExerciseScheduleService programmingExerciseScheduleService,
             GroupNotificationService groupNotificationService, ProgrammingExerciseService programmingExerciseService,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
@@ -100,9 +102,9 @@ public class ProgrammingExerciseSimulationService {
         final var solutionParticipation = programmingExercise.getSolutionParticipation();
         final var templatePlanName = TEMPLATE.getName();
         final var solutionPlanName = SOLUTION.getName();
-        final var exerciseRepoUrl = "http://nolocalsetup:7990/scm/" + projectKey + "/" + exerciseRepoName + ".git";
-        final var testsRepoUrl = "http://nolocalsetup:7990/scm/" + projectKey + "/" + testRepoName + ".git";
-        final var solutionRepoUrl = "http://nolocalsetup:7990/scm/" + projectKey + "/" + solutionRepoName + ".git";
+        final var exerciseRepoUrl = domain + projectKey + "/" + exerciseRepoName + ".git";
+        final var testsRepoUrl = domain + projectKey + "/" + testRepoName + ".git";
+        final var solutionRepoUrl = domain + projectKey + "/" + solutionRepoName + ".git";
         templateParticipation.setBuildPlanId(projectKey + "-" + templatePlanName);
         templateParticipation.setRepositoryUrl(exerciseRepoUrl);
         solutionParticipation.setBuildPlanId(projectKey + "-" + solutionPlanName);
