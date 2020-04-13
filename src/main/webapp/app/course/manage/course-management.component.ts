@@ -43,7 +43,7 @@ export class CourseManagementComponent implements OnInit, OnDestroy, AfterViewIn
     }
 
     loadAll() {
-        this.courseService.getWithUserStats().subscribe(
+        this.courseService.getWithUserStats({ onlyActive: this.showOnlyActive }).subscribe(
             (res: HttpResponse<Course[]>) => {
                 this.courses = res.body!;
                 this.courseForGuidedTour = this.guidedTourService.enableTourForCourseOverview(this.courses, tutorAssessmentTour, true);
@@ -95,5 +95,10 @@ export class CourseManagementComponent implements OnInit, OnDestroy, AfterViewIn
 
     get today(): Date {
         return new Date();
+    }
+
+    toggleShowOnlyActive() {
+        this.showOnlyActive = !this.showOnlyActive;
+        this.loadAll();
     }
 }
