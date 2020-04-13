@@ -198,14 +198,17 @@ public class QuizScheduleService {
             threadPoolTaskScheduler.setThreadNamePrefix("QuizScheduler");
             threadPoolTaskScheduler.setPoolSize(1);
             threadPoolTaskScheduler.initialize();
-        }
-        scheduledProcessQuizSubmissions = threadPoolTaskScheduler.scheduleWithFixedDelay(this::processCachedQuizSubmissions, delayInMillis);
-        log.info("QuizScheduleService was started to run repeatedly with {} second delay.", delayInMillis / 1000.0);
+            scheduledProcessQuizSubmissions = threadPoolTaskScheduler.scheduleWithFixedDelay(this::processCachedQuizSubmissions, delayInMillis);
+            log.info("QuizScheduleService was started to run repeatedly with {} second delay.", delayInMillis / 1000.0);
 
-        // schedule quiz start for all existing quizzes that are planned to start in the future
-        List<QuizExercise> quizExercises = quizExerciseService.findAllPlannedToStartInTheFutureWithQuestions();
-        for (QuizExercise quizExercise : quizExercises) {
-            scheduleQuizStart(quizExercise);
+            // schedule quiz start for all existing quizzes that are planned to start in the future
+            List<QuizExercise> quizExercises = quizExerciseService.findAllPlannedToStartInTheFutureWithQuestions();
+            for (QuizExercise quizExercise : quizExercises) {
+                scheduleQuizStart(quizExercise);
+            }
+        }
+        else {
+            log.debug("Cannot start quiz exercise schedule service, it is already RUNNING");
         }
     }
 
@@ -213,18 +216,22 @@ public class QuizScheduleService {
      * stop scheduler (interrupts if running)
      */
     public void stopSchedule() {
-        log.info("Try to stop quiz schedule service");
-        if (scheduledProcessQuizSubmissions != null && !scheduledProcessQuizSubmissions.isCancelled()) {
-            boolean cancelSuccess = scheduledProcessQuizSubmissions.cancel(true);
-            log.info("Stop Quiz Schedule Service was successful: " + cancelSuccess);
-            scheduledProcessQuizSubmissions = null;
-        }
-        for (Long quizExerciseId : quizStartSchedules.keySet()) {
-            cancelScheduledQuizStart(quizExerciseId);
-        }
         if (threadPoolTaskScheduler != null) {
+            log.info("Try to stop quiz schedule service");
+
+            if (scheduledProcessQuizSubmissions != null && !scheduledProcessQuizSubmissions.isCancelled()) {
+                boolean cancelSuccess = scheduledProcessQuizSubmissions.cancel(true);
+                log.info("Stop Quiz Schedule Service was successful: " + cancelSuccess);
+                scheduledProcessQuizSubmissions = null;
+            }
+            for (Long quizExerciseId : quizStartSchedules.keySet()) {
+                cancelScheduledQuizStart(quizExerciseId);
+            }
             threadPoolTaskScheduler.shutdown();
             threadPoolTaskScheduler = null;
+        }
+        else {
+            log.debug("Cannot stop quiz exercise schedule service, it was already STOPPED");
         }
     }
 
