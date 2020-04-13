@@ -27,7 +27,7 @@ import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.RequestUtilService;
 import de.tum.in.www1.artemis.web.rest.FileResource;
 
-public class FileIntegrationTest extends AbstractSpringIntegrationTest {
+public class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
     CourseRepository courseRepo;

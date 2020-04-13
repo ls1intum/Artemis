@@ -18,7 +18,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import de.tum.in.www1.artemis.util.GitUtilService;
 
-public class GitServiceTest extends AbstractSpringIntegrationTest {
+public class GitServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
     GitUtilService gitUtilService;
