@@ -249,6 +249,11 @@ public class TeamResource {
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Boolean> existsTeamByShortName(@PathVariable long exerciseId, @RequestParam("shortName") String shortName) {
         log.debug("REST request to check Team existence for exercise with id {} for shortName : {}", exerciseId, shortName);
+        Exercise exercise = exerciseService.findOne(exerciseId);
+        User user = userService.getUserWithGroupsAndAuthorities();
+        if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user)) {
+            return forbidden();
+        }
         return ResponseEntity.ok().body(teamRepository.findOneByExerciseIdAndShortName(exerciseId, shortName).isPresent());
     }
 
