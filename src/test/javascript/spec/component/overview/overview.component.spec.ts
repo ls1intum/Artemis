@@ -2,7 +2,6 @@ import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { Router } from '@angular/router';
 import { of } from 'rxjs';
 import { CookieService } from 'ngx-cookie-service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
@@ -16,7 +15,6 @@ import { MockSyncStorage } from '../../mocks/mock-sync.storage';
 import { MockCookieService } from '../../mocks/mock-cookie.service';
 import { RouterTestingModule } from '@angular/router/testing';
 import { courseOverviewTour } from 'app/guided-tour/tours/course-overview-tour';
-import { CourseExerciseService } from 'app/course/manage/course-management.service';
 import { CoursesComponent } from 'app/overview/courses.component';
 import { TranslateTestingModule } from '../../mocks/mock-translate.service';
 import { NavbarComponent } from 'app/shared/layouts/navbar/navbar.component';
@@ -47,13 +45,10 @@ describe('Courses Component', () => {
         let navBarComponentFixture: ComponentFixture<NavbarComponent>;
         let courseCardComponent: CourseCardComponent;
         let courseCardComponentFixture: ComponentFixture<CourseCardComponent>;
-        let footerComponent: FooterComponent;
         let footerComponentFixture: ComponentFixture<FooterComponent>;
 
         let guidedTourService: GuidedTourService;
-        let courseExerciseService: CourseExerciseService;
         let exerciseService: ExerciseService;
-        let router: Router;
 
         beforeEach(() => {
             TestBed.configureTestingModule({
@@ -90,11 +85,8 @@ describe('Courses Component', () => {
                     guidedTourComponent = guidedTourComponentFixture.componentInstance;
                     navBarComponent = navBarComponentFixture.componentInstance;
                     courseCardComponent = courseCardComponentFixture.componentInstance;
-                    footerComponent = footerComponentFixture.componentInstance;
 
-                    router = TestBed.inject(Router);
                     guidedTourService = TestBed.inject(GuidedTourService);
-                    courseExerciseService = TestBed.inject(CourseExerciseService);
                     exerciseService = TestBed.inject(ExerciseService);
 
                     spyOn(courseCardComponent, 'displayTotalRelativeScore').and.returnValue(of());
