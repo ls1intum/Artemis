@@ -124,7 +124,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         this.exercise.participationStatus = participationStatus(this.exercise);
         this.isAfterAssessmentDueDate = !this.exercise.assessmentDueDate || moment().isAfter(this.exercise.assessmentDueDate);
         this.exerciseCategories = this.exerciseService.convertExerciseCategoriesFromServer(this.exercise);
-        if (this.exercise.type.toString() === 'programming') {
+        if (this.exercise.type === ExerciseType.PROGRAMMING) {
             this.getProgrammingExercise();
         }
         this.subscribeForNewResults();
@@ -133,14 +133,14 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     /**
      * The button should be only visible in the dev environment
      */
-    isInProduction(): boolean {
+    get isInProduction(): boolean {
         return this.profileService.isInProduction();
     }
 
     /**
      * checks if exercise has no local setup
      */
-    hasNoLocalSetup(): boolean {
+    get hasNoLocalSetup(): boolean {
         return this.programmingExerciseSimulationUtils.hasNoLocalSetup(this.programmingExercise.testRepositoryUrl);
     }
 
