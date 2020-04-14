@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
+
 import java.net.URI;
 import java.net.URISyntaxException;
 
@@ -17,8 +19,11 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.CourseService;
 import de.tum.in.www1.artemis.service.ProgrammingExerciseSimulationService;
+import de.tum.in.www1.artemis.service.UserService;
 import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
@@ -43,9 +48,16 @@ public class ProgrammingExerciseSimulationResource {
 
     private final ProgrammingExerciseSimulationService programmingExerciseSimulationService;
 
-    public ProgrammingExerciseSimulationResource(CourseService courseService, ProgrammingExerciseSimulationService programmingExerciseSimulationService) {
+    private final UserService userService;
+
+    private final AuthorizationCheckService authCheckService;
+
+    public ProgrammingExerciseSimulationResource(CourseService courseService, ProgrammingExerciseSimulationService programmingExerciseSimulationService, UserService userService,
+            AuthorizationCheckService authCheckService) {
         this.courseService = courseService;
         this.programmingExerciseSimulationService = programmingExerciseSimulationService;
+        this.userService = userService;
+        this.authCheckService = authCheckService;
     }
 
     /**
@@ -63,8 +75,11 @@ public class ProgrammingExerciseSimulationResource {
 
         // fetch course from database to make sure client didn't change groups
         Course course = courseService.findOne(programmingExercise.getCourse().getId());
+        User user = userService.getUserWithGroupsAndAuthorities();
+        if (!authCheckService.isInstructorInCourse(course, user) && !authCheckService.isAdmin()) {
+            return forbidden();
+        }
 
-        // security mechanism: make sure that we use the values from the database and not the once which might have been altered in the client
         programmingExercise.setCourse(course);
 
         programmingExercise.generateAndSetProjectKey();
