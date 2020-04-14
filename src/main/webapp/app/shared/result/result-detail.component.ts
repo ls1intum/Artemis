@@ -2,7 +2,6 @@ import { Component, Input, OnInit } from '@angular/core';
 import { RepositoryService } from 'app/shared/result/repository.service';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { catchError, map, switchMap, tap } from 'rxjs/operators';
-import { HttpErrorResponse } from '@angular/common/http';
 import { of } from 'rxjs';
 import { BuildLogEntry, BuildLogEntryArray, BuildLogType } from 'app/entities/build-log.model';
 import { Feedback } from 'app/entities/feedback.model';

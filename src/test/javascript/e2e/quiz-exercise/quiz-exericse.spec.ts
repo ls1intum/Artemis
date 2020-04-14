@@ -1,7 +1,6 @@
 import { NavBarPage, SignInPage } from '../page-objects/jhi-page-objects';
 import { browser, by, element, ExpectedConditions as ec } from 'protractor';
 import { CoursePage, NewCoursePage } from '../page-objects/entities/course-page-object';
-import { QuizExercisePage } from '../page-objects/entities/quiz-exercise-page-object';
 
 const expect = chai.expect;
 
@@ -73,7 +72,7 @@ describe('quiz-exercise', function () {
         await addMcButton.click();
 
         // set title of mc question
-        const mcQuestionTitle = await element(by.id('mc-question-title')); //TODO: we need to support multiple questions
+        const mcQuestionTitle = await element(by.id('mc-question-title')); // TODO: we need to support multiple questions
         mcQuestionTitle.sendKeys('test-mc');
 
         // deactivate random order to make the test case deterministic
