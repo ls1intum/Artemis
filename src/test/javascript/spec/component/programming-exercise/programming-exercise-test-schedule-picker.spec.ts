@@ -2,7 +2,6 @@ import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
 import * as moment from 'moment';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { DebugElement } from '@angular/core';
 import { TranslateModule } from '@ngx-translate/core';
 import { ArtemisTestModule } from '../../test.module';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
@@ -18,7 +17,6 @@ const expect = chai.expect;
 describe('ProgrammingExerciseTestSchedulePickerComponent', () => {
     let comp: ProgrammingExerciseLifecycleComponent;
     let fixture: ComponentFixture<ProgrammingExerciseLifecycleComponent>;
-    let debugElement: DebugElement;
 
     const nextDueDate = moment().add(5, 'days');
     const afterDueDate = moment().add(7, 'days');
@@ -34,7 +32,6 @@ describe('ProgrammingExerciseTestSchedulePickerComponent', () => {
             .then(() => {
                 fixture = TestBed.createComponent(ProgrammingExerciseLifecycleComponent);
                 comp = fixture.componentInstance;
-                debugElement = fixture.debugElement;
             });
     });
 
