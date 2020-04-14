@@ -223,12 +223,12 @@ public class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractS
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void setupProgrammingExerciseWithoutLocalSetup_validExercise_created(ExerciseMode mode) throws Exception {
         exercise.setMode(mode);
+        assertThat(programmingExerciseRepository.count()).isEqualTo(0);
         final var generatedExercise = request.postWithResponseBody(
                 ProgrammingExerciseSimulationResource.Endpoints.ROOT + ProgrammingExerciseSimulationResource.Endpoints.EXERCISES_SIMULATION, exercise, ProgrammingExercise.class,
                 HttpStatus.CREATED);
 
-        exercise.setId(generatedExercise.getId());
-        assertThat(exercise).isEqualTo(generatedExercise);
+        assertThat(programmingExerciseRepository.findById(generatedExercise.getId()).isPresent());
         assertThat(programmingExerciseRepository.count()).isEqualTo(1);
     }
 
