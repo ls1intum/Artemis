@@ -27,7 +27,7 @@ import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { GradingCriterion } from 'app/exercises/shared/structured-grading-criterion/grading-criterion.model';
 import { CourseExerciseSubmissionResultSimulationService } from 'app/course/manage/course-exercise-submission-result-simulation.service';
 import { ProgrammingExerciseSimulationUtils } from 'app/exercises/programming/shared/utils/programming-exercise-simulation-utils';
-
+import { AlertService } from 'app/core/alert/alert.service';
 const MAX_RESULT_HISTORY_LENGTH = 5;
 
 @Component({
@@ -36,7 +36,6 @@ const MAX_RESULT_HISTORY_LENGTH = 5;
     styleUrls: ['../course-overview.scss'],
 })
 export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
-    [x: string]: any;
     readonly AssessmentType = AssessmentType;
     readonly QUIZ = ExerciseType.QUIZ;
     readonly PROGRAMMING = ExerciseType.PROGRAMMING;
@@ -75,6 +74,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         private guidedTourService: GuidedTourService,
         private courseExerciseSubmissionResultSimulationService: CourseExerciseSubmissionResultSimulationService,
         private programmingExerciseSimulationUtils: ProgrammingExerciseSimulationUtils,
+        private jhiAlertService: AlertService,
     ) {}
 
     ngOnInit() {
@@ -157,18 +157,28 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
      * triggers the simulation of a participation and submission for the currently logged in user
      */
     simulateSubmission() {
-        this.courseExerciseSubmissionResultSimulationService.simulateSubmission(this.exerciseId).subscribe(() => {
-            this.jhiAlertService.success('artemisApp.exercise.submissionSuccessful');
-        });
+        this.courseExerciseSubmissionResultSimulationService.simulateSubmission(this.exerciseId).subscribe(
+            () => {
+                this.jhiAlertService.success('artemisApp.exercise.submissionSuccessful');
+            },
+            () => {
+                this.jhiAlertService.error('artemisApp.exercise.submissionUnsuccessful');
+            },
+        );
     }
 
     /**
      * triggers the simulation of a result for the currently logged in user
      */
     simulateResult() {
-        this.courseExerciseSubmissionResultSimulationService.simulateResult(this.exerciseId).subscribe(() => {
-            this.jhiAlertService.success('artemisApp.exercise.resultCreationSuccessful');
-        });
+        this.courseExerciseSubmissionResultSimulationService.simulateResult(this.exerciseId).subscribe(
+            () => {
+                this.jhiAlertService.success('artemisApp.exercise.resultCreationSuccessful');
+            },
+            () => {
+                this.jhiAlertService.error('artemisApp.exercise.resultCreationUnsuccessful');
+            },
+        );
     }
 
     /**
