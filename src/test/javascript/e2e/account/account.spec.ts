@@ -7,7 +7,6 @@ const expect = chai.expect;
 describe('account', function () {
     let navBarPage: NavBarPage;
     let signInPage: SignInPage;
-    let settingsPage: SettingsPage;
 
     beforeEach(async function () {
         await browser.get('/');

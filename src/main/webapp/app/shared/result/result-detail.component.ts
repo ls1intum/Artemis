@@ -51,7 +51,7 @@ export class ResultDetailComponent implements OnInit {
                     }
                     return of(null);
                 }),
-                catchError((error: HttpErrorResponse) => {
+                catchError(() => {
                     // TODO: When the server would give better error information, we could improve the UI.
                     this.loadingFailed = true;
                     return of(null);

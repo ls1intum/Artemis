@@ -47,7 +47,7 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
     @Input() max: Moment; // Dates after this date are not selectable.
     @Output() valueChange = new EventEmitter();
 
-    _onChange = (val: Moment) => {};
+    _onChange = () => {};
 
     valueChanged() {
         this.valueChange.emit();
@@ -61,7 +61,7 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
             this.value = value;
         }
     }
-    registerOnTouched(fn: any) {}
+    registerOnTouched() {}
     registerOnChange(fn: any) {
         this._onChange = fn;
     }

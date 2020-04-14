@@ -25,7 +25,7 @@ describe('Component Tests', () => {
                     {
                         provide: Renderer2,
                         useValue: {
-                            invokeElementMethod(renderElement: any, methodName: string, args?: any[]) {},
+                            invokeElementMethod() {},
                         },
                     },
                     {
