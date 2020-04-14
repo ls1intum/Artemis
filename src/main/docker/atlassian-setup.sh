@@ -1,3 +1,4 @@
+#!/bin/bash
 # for configuring instance over script
 jira_internal_port=8080
 jira_external_port=8081
@@ -64,6 +65,51 @@ for group_name in "${group_names[@]}"; do
                 \"name\": \"$group_name\"
             }" \
     $jira_group_url
+done
+
+# create users
+
+base_user_name="artemis_test_user_"
+jira_user_url="http://localhost:$jira_external_port/rest/api/latest/user"
+jira_group_add_url="http://localhost:$jira_external_port/rest/api/2/group/user?groupname="
+
+for i in {1..15}; do
+    # User 1-5 are students, 6-10 are tutors, 11-15 are instructors
+    group="student"
+    if ((i > 5)); then
+      group="tutors"
+    fi
+    if ((i > 10)); then
+      group="instructors"
+    fi
+
+    # Create user
+    curl -u $jira_uservar:$jira_passvar \
+    -s \
+    --header "Content-Type: application/json" \
+    --request POST \
+    --fail \
+    --show-error \
+    --data "{
+                \"password\": \"artemis_test_user_$i\",
+                \"emailAddress\": \"artemis_test_user_$i@artemis.local\",
+                \"displayName\": \"Artemis Test User $i\",
+                \"name\": \"artemis_test_user_$i\"
+
+            }" \
+    $jira_user_url
+
+    # Add user to group
+    curl -v -u $jira_uservar:$jira_passvar \
+    -s \
+    --header "Content-Type: application/json" \
+    --request POST \
+    --fail \
+    --show-error \
+    --data "{
+                \"name\": \"artemis_test_user_$i\"
+            }" \
+    "$jira_group_add_url$group"
 done
 
 # Application Links
