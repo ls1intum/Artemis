@@ -55,7 +55,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     isAfterAssessmentDueDate: boolean;
     public gradingCriteria: GradingCriterion[];
     private programmingExercise: ProgrammingExercise;
-
+    public wasSubmissionSimulated = false;
     showWelcomeAlert = false;
 
     constructor(
@@ -159,6 +159,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     simulateSubmission() {
         this.courseExerciseSubmissionResultSimulationService.simulateSubmission(this.exerciseId).subscribe(
             () => {
+                this.wasSubmissionSimulated = true;
                 this.jhiAlertService.success('artemisApp.exercise.submissionSuccessful');
             },
             () => {

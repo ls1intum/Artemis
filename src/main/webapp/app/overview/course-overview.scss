@@ -173,6 +173,9 @@ canvas#complete-chart {
     &:active {
         box-shadow: 0 2px 0 $artemis-dark;
     }
+    &:disabled {
+        background-color: gray;
+    }
     border: none;
     border-radius: 1px;
 }

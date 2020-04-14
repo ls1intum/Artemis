@@ -94,6 +94,11 @@ public class ProgrammingSubmissionResultSimulationResource {
         Participant participant = user;
         ProgrammingExercise programmingExercise = programmingExerciseService.findByIdWithEagerStudentParticipationsAndSubmissions(exerciseId);
         Optional<StudentParticipation> optionalStudentParticipation = participationService.findOneByExerciseAndParticipantAnyState(programmingExercise, participant);
+
+        if (optionalStudentParticipation.isEmpty()) {
+            return forbidden();
+        }
+
         ProgrammingExerciseStudentParticipation programmingExerciseStudentParticipation = (ProgrammingExerciseStudentParticipation) optionalStudentParticipation.get();
         Result result = programmingSubmissionResultSimulationService.createResult(programmingExerciseStudentParticipation);
 
