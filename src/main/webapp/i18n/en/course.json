@@ -24,20 +24,24 @@
             "courseIcon": "Course Icon",
             "shortName": "Short Name",
             "maxComplaints": {
-                "title": "Maximum Amount of Complaints",
+                "title": "Maximum amount of Complaints",
                 "description": "Set the maximum amount of complaints allowed"
             },
             "maxComplaintTimeDays": {
                 "title": "Deadline for complaints in days after result date",
-                "description": "Maximum Complaint Deadline for student complaints. This refers to days after the result is available (assessment due date or after the result date depending on which one is later). Students will not be able to complain anymore after the deadline."
+                "description": "This number refers to days after the result is available (assessment due date or result date, depending on which one is later). Students will not be able to complain anymore after this deadline."
             },
             "studentQuestionsEnabled": {
-                "title": "Enable Questions and Answers by students",
-                "description": "Enable Questions and Answers section on lecture and exercise page"
+                "title": "Enable questions and answers by students",
+                "description": "Enable Questions and Answers section on lecture and exercise page."
             },
             "complaintsEnabled": {
-                "title": "Enable Complaints",
-                "description": "Enabling this allows students to complaint about results"
+                "title": "Enable complaints",
+                "description": "Enabling this allows students to complain about results."
+            },
+            "customizeGroupNames": {
+                "title": "Customize group names",
+                "description": "Make sure that the groups exist in the external user management if you enable this option. The groups are not created automatically then."
             },
             "studentGroupName": "Students",
             "teachingAssistantGroupName": "Tutors",

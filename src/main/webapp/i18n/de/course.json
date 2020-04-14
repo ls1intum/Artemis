@@ -25,29 +25,33 @@
             "shortName": "Kurzname",
             "maxComplaints": {
                 "title": "Maximale Anzahl von Beschwerden",
-                "description": "Erlaubte Anzahl von Studentenbeschwerden setzen"
+                "description": "Erlaubte Anzahl von Beschwerden von Studierenden setzen. Wenn eine Beschwerde abgelehnt wird, verliert der Studierende sie. Wenn eine Beschwerde akzeptiert wird, behält der Studierende sie."
             },
             "maxComplaintTimeDays": {
                 "title": "Beschwerdefrist in Tagen nach dem Ergebnis",
-                "description": "Maximale Beschwerdefrist von Studentenbeschwerden setzen. Diese Anzahl bezieht sich auf die Tage, nachdem das Ergebnis verfügbar ist (Fälligkeitsdatum der Bewertung oder nach dem Ergebnisdatum, je nachdem, welches später liegt). Studenten können sich nach Ablauf der Frist nicht mehr beschweren."
+                "description": "Diese Zahl bezieht sich auf die Tage, nachdem das Ergebnis verfügbar ist (Fälligkeitsdatum der Bewertung oder Ergebnisdatum, je nachdem, welches später liegt). Studierende können sich nach Ablauf dieser Frist nicht mehr beschweren."
             },
             "studentQuestionsEnabled": {
                 "title": "Fragen und Antworten von Studierenden aktivieren",
                 "description": "Fragen und Antworten Abschnitt in Vorlesung- und Übungsseite aktivieren / deaktivieren"
             },
             "complaintsEnabled": {
-                "title": "Studentenbeschwerden aktivieren",
-                "description": "Wenn du diese Option aktivierst, können sich Studenten über Ergebnisse beschweren."
+                "title": "Beschwerden von Studierenden aktivieren",
+                "description": "Wenn du diese Option aktivierst, können sich Studierende über Ergebnisse beschweren."
             },
-            "studentGroupName": "Studenten Gruppe",
-            "teachingAssistantGroupName": "Tutor Gruppe",
-            "instructorGroupName": "Instructor Gruppe",
+            "customizeGroupNames": {
+                "title": "Passe Gruppen Namen an",
+                "description": "Stelle sicher, dass die Gruppen in der externen Nutzerverwaltung existieren, wenn du diese Option aktivierst. Die Gruppen werden dann nicht automatisch erzeugt."
+            },
+            "studentGroupName": "Studierende Gruppe",
+            "teachingAssistantGroupName": "Tutoren Gruppe",
+            "instructorGroupName": "Dozenten Gruppe",
             "description": "Kurs Beschreibung",
             "startDate": "Start",
             "endDate": "Ende",
             "accessGroups": "Zugriffsrechte",
             "onlineCourse": "Online Kurs",
-            "registrationEnabled": "Studenten Registrierung aktiviert",
+            "registrationEnabled": "Studierenden Registrierung aktiviert",
             "exercises": "Aufgaben",
             "programmingExercises": "Programmieraufgaben",
             "quizExercises": "Quizaufgaben",
@@ -72,7 +76,7 @@
             },
             "instructorDashboard": "Instruktor Dashboard",
             "presentationScoreEnabled": {
-                "title": "Präsentationsergebnis aktiviert",
+                "title": "Präsentationsbewertung aktiviert",
                 "description": "Aktiviere diese Checkbox und definiere, wie viele Präsentationen ein Student halten muss, um den Notenbonus für die Vorlesung zu erhalten. Nach der Aktivierung kannst du bei der Erstellung jeder Übung definieren, ob dieses Feature dafür aktiviert sein soll."
             },
             "presentationScore": "Benötigtes Präsentationsergebnis für den Bonus",

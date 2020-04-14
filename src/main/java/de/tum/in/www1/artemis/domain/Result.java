@@ -515,8 +515,7 @@ public class Result implements Serializable {
     @Override
     public String toString() {
         return "Result{" + "id=" + id + ", resultString='" + resultString + '\'' + ", completionDate=" + completionDate + ", successful=" + successful + ", score=" + score
-                + ", rated=" + rated + ", hasFeedback=" + hasFeedback + ", submission=" + submission + ", feedbacks=" + feedbacks + ", participation=" + participation
-                + ", assessmentType=" + assessmentType + ", hasComplaint=" + hasComplaint + ", exampleResult=" + exampleResult + '}';
+                + ", rated=" + rated + ", hasFeedback=" + hasFeedback + ", assessmentType=" + assessmentType + ", hasComplaint=" + hasComplaint + '}';
     }
 
     /**
