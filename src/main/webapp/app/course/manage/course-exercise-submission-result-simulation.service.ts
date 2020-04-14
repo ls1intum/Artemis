@@ -8,19 +8,17 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 
 @Injectable({ providedIn: 'root' })
 export class CourseExerciseSubmissionResultSimulationService {
-    private resourceUrlWithoutLocalSetup = SERVER_API_URL + `api`;
-
     constructor(private http: HttpClient) {}
 
     simulateSubmission(exerciseId: number): Observable<HttpResponse<ProgrammingSubmission>> {
-        return this.http.post<ProgrammingSubmission>(`${this.resourceUrlWithoutLocalSetup}/submissions/no-local-setup/${exerciseId}`, {}, { observe: 'response' });
+        return this.http.post<ProgrammingSubmission>(`api/submissions/no-local-setup/${exerciseId}`, {}, { observe: 'response' });
     }
 
     simulateResult(exerciseId: number): Observable<HttpResponse<Result>> {
-        return this.http.post<Result>(`${this.resourceUrlWithoutLocalSetup}/results/no-local-setup/${exerciseId}`, {}, { observe: 'response' });
+        return this.http.post<Result>(`api/results/no-local-setup/${exerciseId}`, {}, { observe: 'response' });
     }
 
     getProgrammingExercise(exerciseId: number): Observable<ProgrammingExercise> {
-        return this.http.get<ProgrammingExercise>(`${this.resourceUrlWithoutLocalSetup}/programming-exercises/${exerciseId}`);
+        return this.http.get<ProgrammingExercise>(`api/programming-exercises/${exerciseId}`);
     }
 }
