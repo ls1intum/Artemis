@@ -2,11 +2,15 @@ package de.tum.in.www1.artemis.web.rest;
 
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -15,11 +19,15 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.participation.*;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.ProgrammingSubmissionResultSimulationService;
+import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
 @Profile("dev")
 @RestController
 @RequestMapping("/api")
 public class ProgrammingSubmissionResultSimulationResource {
+
+    @Value("${jhipster.clientApp.name}")
+    private String applicationName;
 
     private final Logger log = LoggerFactory.getLogger(ProgrammingSubmissionResource.class);
 
@@ -76,7 +84,14 @@ public class ProgrammingSubmissionResultSimulationResource {
 
         programmingSubmissionService.notifyUserAboutSubmission(programmingSubmission);
 
-        return ResponseEntity.ok().body(programmingSubmission);
+        try {
+            return ResponseEntity.created(new URI("/api/submissions" + programmingSubmission.getId())).body(programmingSubmission);
+        }
+        catch (URISyntaxException e) {
+            log.error("Error while simulating a submission", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .headers(HeaderUtil.createAlert(applicationName, "An error occurred while simulating a submission: " + e.getMessage(), "errorSubmission")).body(null);
+        }
     }
 
     /**
@@ -104,7 +119,14 @@ public class ProgrammingSubmissionResultSimulationResource {
 
         messagingService.broadcastNewResult((Participation) optionalStudentParticipation.get(), result);
         log.info("The new result for {} was saved successfully", ((ProgrammingExerciseStudentParticipation) optionalStudentParticipation.get()).getBuildPlanId());
-        return ResponseEntity.ok().body(result);
+        try {
+            return ResponseEntity.created(new URI("/api/results" + result.getId())).body(result);
+        }
+        catch (URISyntaxException e) {
+            log.error("Error while simulating a result", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .headers(HeaderUtil.createAlert(applicationName, "An error occurred while simulating a result: " + e.getMessage(), "errorResult")).body(null);
+        }
     }
 
     public static final class Endpoints {
