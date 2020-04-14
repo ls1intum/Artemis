@@ -1,0 +1,43 @@
+<jhi-assessment-layout
+    (navigateBack)="navigateBack()"
+    [isLoading]="isLoading"
+    [busy]="busy"
+    [isAssessor]="isAssessor"
+    [isAtLeastInstructor]="isAtLeastInstructor"
+    [canOverride]="canOverride"
+    [result]="result"
+    [assessmentsAreValid]="assessmentsAreValid"
+    [complaint]="complaint"
+    (save)="save()"
+    (submit)="submit()"
+    (cancel)="cancel()"
+    (nextSubmission)="nextSubmission()"
+    (updateAssessmentAfterComplaint)="updateAssessmentAfterComplaint()"
+>
+    <ng-container *ngIf="submission; then assessment; else noSubmission"></ng-container>
+</jhi-assessment-layout>
+
+<ng-template #assessment>
+    <div class="row">
+        <jhi-resizeable-container class="col-12">
+            <!--region Left Panel-->
+            <jhi-score-display left-header [maxScore]="exercise?.maxScore" [score]="totalScore"></jhi-score-display>
+            <jhi-text-assessment-area left-body [submission]="submission" [(textBlockRefs)]="textBlockRefs" (textBlockRefsChange)="validateFeedback()"></jhi-text-assessment-area>
+            <!--endregion-->
+
+            <!--region Right Panel-->
+            <fa-icon right-header [icon]="['far', 'list-alt']"></fa-icon>&nbsp;
+            <span right-header jhiTranslate="artemisApp.textAssessment.instructions">Instructions</span>
+            <jhi-assessment-instructions right-body [exercise]="exercise" class="markdown-preview"></jhi-assessment-instructions>
+            <!--endregion-->
+        </jhi-resizeable-container>
+    </div>
+
+    <div class="row mt-3">
+        <jhi-assessment-general-feedback class="col-md-6" [(feedback)]="generalFeedback" (feedbackChange)="validateFeedback()"></jhi-assessment-general-feedback>
+    </div>
+</ng-template>
+
+<ng-template #noSubmission>
+    <p>No Submission for specified ID</p>
+</ng-template>

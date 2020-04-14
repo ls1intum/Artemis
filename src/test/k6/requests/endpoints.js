@@ -1,6 +1,8 @@
 export const PROGRAMMING_EXERCISES_SETUP = "/programming-exercises/setup";
 export const PROGRAMMING_EXERCISES = "/programming-exercises";
 export const PROGRAMMING_EXERCISE = (exerciseId) => `${PROGRAMMING_EXERCISES}/${exerciseId}`;
+export const QUIZ_EXERCISES = "/quiz-exercises";
+export const QUIZ_EXERCISE = (exerciseId) => `${QUIZ_EXERCISES}/${exerciseId}`;
 export const COURSES = "/courses";
 export const USERS = "/users";
 export const COURSE = (courseId) => `${COURSES}/${courseId}`;
@@ -13,3 +15,4 @@ export const PARTICIPATION = (exerciseId) => `/exercises/${exerciseId}/participa
 export const PARTICIPATIONS = (courseId, exerciseId) => `${EXERCISE(courseId, exerciseId)}/participations`;
 export const COMMIT = (participationId) => `/repository/${participationId}/commit`;
 export const NEW_FILE = (participationId) => `/repository/${participationId}/file`;
+export const PARTICIPATION_WITH_RESULT = (participationId) => `/participations/${participationId}/withLatestResult`;

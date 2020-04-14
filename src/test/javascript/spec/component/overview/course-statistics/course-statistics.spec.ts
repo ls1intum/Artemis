@@ -214,7 +214,7 @@ describe('CourseStatisticsComponent', () => {
 
     it('should transform results correctly', () => {
         const buildFailedsubmission = { id: 42, buildFailed: true, submissionExerciseType: SubmissionExerciseType.PROGRAMMING } as ProgrammingSubmission;
-        const result1 = { resultString: '9 of 26 failed' } as Result;
+        const result1 = { resultString: '17 of 26 passed' } as Result;
         expect(comp.absoluteResult(result1)).to.be.null;
         const result2 = { resultString: 'No tests found' } as Result;
         result2.submission = buildFailedsubmission;
