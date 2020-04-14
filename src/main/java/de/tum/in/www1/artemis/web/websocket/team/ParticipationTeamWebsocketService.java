@@ -19,7 +19,6 @@ import org.springframework.messaging.simp.user.SimpSubscription;
 import org.springframework.messaging.simp.user.SimpUser;
 import org.springframework.messaging.simp.user.SimpUserRegistry;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.socket.messaging.AbstractSubProtocolEvent;
 import org.springframework.web.socket.messaging.SessionDisconnectEvent;
 import org.springframework.web.socket.messaging.SessionUnsubscribeEvent;
 
@@ -30,9 +29,9 @@ public class ParticipationTeamWebsocketService {
 
     private final SimpMessageSendingOperations messagingTemplate;
 
-    private SimpUserRegistry simpUserRegistry;
+    private final SimpUserRegistry simpUserRegistry;
 
-    private Map<String, String> destinationTracker = new HashMap<>();
+    private final Map<String, String> destinationTracker = new HashMap<>();
 
     public ParticipationTeamWebsocketService(SimpMessageSendingOperations messagingTemplate, SimpUserRegistry simpUserRegistry) {
         this.messagingTemplate = messagingTemplate;
@@ -82,7 +81,7 @@ public class ParticipationTeamWebsocketService {
      */
     @EventListener
     public void handleUnsubscribe(SessionUnsubscribeEvent event) {
-        unsubscribe(event);
+        unsubscribe(StompHeaderAccessor.wrap(event.getMessage()).getSessionId());
     }
 
     /**
@@ -92,7 +91,7 @@ public class ParticipationTeamWebsocketService {
      */
     @EventListener
     public void handleDisconnect(SessionDisconnectEvent event) {
-        unsubscribe(event);
+        unsubscribe(event.getSessionId());
     }
 
     /**
@@ -101,14 +100,13 @@ public class ParticipationTeamWebsocketService {
      * The list of subscribed users - explicitly excluding the session that is about to be destroyed - is send to all subscribers.
      * Note: Since a single user can have multiple sessions for a single destination (e.g. by having two open tabs), the user list might not change at all.
      *
-     * @param event SessionUnsubscribeEvent or SessionDisconnectEvent
+     * @param sessionId id of the sessions which is unsubscribing
      */
-    private void unsubscribe(AbstractSubProtocolEvent event) {
-        StompHeaderAccessor headers = StompHeaderAccessor.wrap(event.getMessage());
-        Optional.ofNullable(destinationTracker.get(headers.getSessionId())).ifPresent(destination -> {
-            List<String> userLogins = getSubscriberPrincipals(destination, headers.getSessionId());
+    public void unsubscribe(String sessionId) {
+        Optional.ofNullable(destinationTracker.get(sessionId)).ifPresent(destination -> {
+            List<String> userLogins = getSubscriberPrincipals(destination, sessionId);
             messagingTemplate.convertAndSend(destination, userLogins);
-            destinationTracker.remove(headers.getSessionId());
+            destinationTracker.remove(sessionId);
         });
     }
 
@@ -132,5 +130,13 @@ public class ParticipationTeamWebsocketService {
 
     private static String getDestination(Long participationId) {
         return "/topic/participations/" + participationId + "/team";
+    }
+
+    public Map<String, String> getDestinationTracker() {
+        return destinationTracker;
+    }
+
+    public void clearDestinationTracker() {
+        this.destinationTracker.clear();
     }
 }
