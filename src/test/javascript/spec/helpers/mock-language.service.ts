@@ -17,11 +17,11 @@ export class MockLanguageService extends SpyObject {
 
     init() {}
 
-    changeLanguage(languageKey: string) {}
+    changeLanguage(languageKey: string) {} // eslint-disable-line no-unused-vars
 
-    setLocations(locations: string[]) {}
+    setLocations(locations: string[]) {} // eslint-disable-line no-unused-vars
 
-    addLocation(location: string) {}
+    addLocation(location: string) {} // eslint-disable-line no-unused-vars
 
     reload() {}
 }
