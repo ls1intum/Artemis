@@ -13,7 +13,13 @@
                 <div class="col-12">
                     <div class="form-group">
                         <label class="form-control-label">{{ 'artemisApp.courseOverview.exerciseDetails.faq.newQuestionLabel' | translate }}</label>
-                        <textarea [(ngModel)]="studentQuestionText" class="form-control" name="answer"></textarea>
+                        <jhi-markdown-editor
+                            class="markdown-editor background-editor-color"
+                            [domainCommands]="domainCommands"
+                            [(markdown)]="studentQuestionText"
+                            [editorMode]="EditorMode.LATEX"
+                        ></jhi-markdown-editor>
+                        <!--<textarea [(ngModel)]="studentQuestionText" class="form-control" name="answer"></textarea>-->
                     </div>
                 </div>
                 <div class="col-12 d-flex justify-content-between">

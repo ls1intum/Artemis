@@ -6,6 +6,8 @@ import { StudentQuestion } from 'app/entities/student-question.model';
 import { StudentQuestionAnswer } from 'app/entities/student-question-answer.model';
 import { StudentQuestionService } from 'app/overview/student-questions/student-question.service';
 import { StudentQuestionAnswerService } from 'app/overview/student-questions/student-question-answer.service';
+import { EditorMode } from 'app/shared/markdown-editor/markdown-editor.component';
+import { KatexCommand } from 'app/shared/markdown-editor/commands/katex.command';
 
 export interface StudentQuestionAction {
     name: QuestionActionName;
@@ -37,6 +39,8 @@ export class StudentQuestionRowComponent implements OnInit, OnDestroy {
     studentQuestionText: string | null;
     sortedQuestionAnswers: StudentQuestionAnswer[];
     approvedQuestionAnswers: StudentQuestionAnswer[];
+    EditorMode = EditorMode;
+    domainCommands = [new KatexCommand()];
 
     constructor(private studentQuestionAnswerService: StudentQuestionAnswerService, private studentQuestionService: StudentQuestionService) {}
 

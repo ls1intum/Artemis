@@ -2,7 +2,7 @@
     <div class="col-12">
         <div class="row">
             <div class="col overflow-parent">
-                <h5 class="overflow-ellipsis">Q: {{ studentQuestion.questionText }}</h5>
+                <h5 class="overflow-ellipsis" [innerHTML]="studentQuestion.questionText ? (studentQuestion.questionText | htmlForMarkdown) : ''"><!--Q: {{ studentQuestion.questionText }}--></h5>
             </div>
             <div class="col-auto">
                 <fa-icon [icon]="'angle-down'"></fa-icon>
@@ -25,7 +25,7 @@
         <div *ngIf="!isEditMode">
             <div class="row clickable" (click)="isExpanded = !isExpanded">
                 <div class="col mb-2">
-                    <h5>Q: {{ studentQuestion.questionText }}</h5>
+                    <h5 [innerHTML]="studentQuestion.questionText ? (studentQuestion.questionText | htmlForMarkdown) : ''"><!--Q: {{ studentQuestion.questionText }}--></h5>
                     <h6 class="text-black-50 question-subtitle">{{ studentQuestion.author.name }} - {{ studentQuestion.creationDate | date: 'dd.MM.yy HH:mm' }}</h6>
                 </div>
                 <div class="col-auto">
@@ -54,7 +54,13 @@
                 <div class="col-12">
                     <div class="form-group">
                         <label class="form-control-label">{{ 'artemisApp.courseOverview.exerciseDetails.faq.newQuestionLabel' | translate }}</label>
-                        <textarea [(ngModel)]="studentQuestionText" class="form-control" name="answer"></textarea>
+                        <jhi-markdown-editor
+                            class="markdown-editor background-editor-color"
+                            [domainCommands]="domainCommands"
+                            [(markdown)]="studentQuestionText"
+                            [editorMode]="EditorMode.LATEX"
+                        ></jhi-markdown-editor>
+                        <!--<textarea [(ngModel)]="studentQuestionText" class="form-control" name="answer"></textarea>-->
                     </div>
                 </div>
                 <div class="col-12 d-flex justify-content-between">
@@ -69,7 +75,13 @@
                     <div class="col-12">
                         <div class="form-group">
                             <label class="form-control-label">{{ 'artemisApp.courseOverview.exerciseDetails.faq.answerLabel' | translate }}</label>
-                            <textarea [(ngModel)]="questionAnswerText" class="form-control" name="answer"></textarea>
+                            <jhi-markdown-editor
+                                class="markdown-editor background-editor-color"
+                                [domainCommands]="domainCommands"
+                                [(markdown)]="questionAnswerText"
+                                [editorMode]="EditorMode.LATEX"
+                            ></jhi-markdown-editor>
+                            <!--<textarea [(ngModel)]="questionAnswerText" class="form-control" name="answer"></textarea>-->
                         </div>
                     </div>
                     <div class="col-12 d-flex justify-content-between mb-2">
@@ -77,7 +89,7 @@
                         <button class="btn btn-primary" (click)="saveAnswer()">{{ 'artemisApp.courseOverview.exerciseDetails.faq.saveAnswer' | translate }}</button>
                     </div>
                 </div>
-                <div *ngIf="!selectedQuestionAnswer || selectedQuestionAnswer.id !== approvedQuestionAnswer.id">A: {{ approvedQuestionAnswer.answerText }}</div>
+                <div *ngIf="!selectedQuestionAnswer || selectedQuestionAnswer.id !== approvedQuestionAnswer.id" [innerHTML]="approvedQuestionAnswer.answerText ? (approvedQuestionAnswer.answerText | htmlForMarkdown) : ''"><!--A: {{ approvedQuestionAnswer.answerText }}--></div>
                 <div class="text-black-50 mb-1 question-subtitle" *ngIf="!selectedQuestionAnswer || selectedQuestionAnswer.id !== approvedQuestionAnswer.id">
                     {{ approvedQuestionAnswer.author.name }} - {{ approvedQuestionAnswer.answerDate | date: 'dd.MM.yy HH:mm' }}
                 </div>
@@ -143,7 +155,13 @@
                         <div class="col-12">
                             <div class="form-group">
                                 <label class="form-control-label">{{ 'artemisApp.courseOverview.exerciseDetails.faq.answerLabel' | translate }}</label>
-                                <textarea [(ngModel)]="questionAnswerText" class="form-control" name="answer"></textarea>
+                                <jhi-markdown-editor
+                                    class="markdown-editor background-editor-color"
+                                    [domainCommands]="domainCommands"
+                                    [(markdown)]="questionAnswerText"
+                                    [editorMode]="EditorMode.LATEX"
+                                ></jhi-markdown-editor>
+                                <!--<textarea [(ngModel)]="questionAnswerText" class="form-control" name="answer"></textarea>-->
                             </div>
                         </div>
                         <div class="col-12 d-flex justify-content-between mb-2">
@@ -153,7 +171,7 @@
                             <button class="btn btn-primary" (click)="saveAnswer()">{{ 'artemisApp.courseOverview.exerciseDetails.faq.saveAnswer' | translate }}</button>
                         </div>
                     </div>
-                    <div *ngIf="!selectedQuestionAnswer || selectedQuestionAnswer.id !== questionAnswer.id">A: {{ questionAnswer.answerText }}</div>
+                    <div *ngIf="!selectedQuestionAnswer || selectedQuestionAnswer.id !== questionAnswer.id" [innerHTML]="questionAnswer.answerText ? (questionAnswer.answerText | htmlForMarkdown) : ''"><!--A: {{ questionAnswer.answerText }}--></div>
                     <div class="text-black-50 mb-1 question-subtitle" *ngIf="!selectedQuestionAnswer || selectedQuestionAnswer.id !== questionAnswer.id">
                         {{ questionAnswer.author.name }} - {{ questionAnswer.answerDate | date: 'dd.MM.yy HH:mm' }}
                     </div>
@@ -201,7 +219,13 @@
             <div class="col-12 mb-2">
                 <div class="form-group">
                     <label class="form-control-label">{{ 'artemisApp.courseOverview.exerciseDetails.faq.answerLabel' | translate }}</label>
-                    <textarea [(ngModel)]="questionAnswerText" class="form-control" name="answer"></textarea>
+                    <jhi-markdown-editor
+                        class="markdown-editor background-editor-color"
+                        [domainCommands]="domainCommands"
+                        [(markdown)]="questionAnswerText"
+                        [editorMode]="EditorMode.LATEX"
+                    ></jhi-markdown-editor>
+                    <!--<textarea [(ngModel)]="questionAnswerText" class="form-control" name="answer"></textarea>-->
                 </div>
             </div>
             <div class="col-12 d-flex justify-content-between">
