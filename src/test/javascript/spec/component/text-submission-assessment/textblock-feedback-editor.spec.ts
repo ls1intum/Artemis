@@ -8,7 +8,6 @@ import { ArtemisConfirmIconModule } from 'app/shared/confirm-icon/confirm-icon.m
 import { TranslateModule } from '@ngx-translate/core';
 import { MockComponent } from 'ng-mocks';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { By } from '@angular/platform-browser';
 
 describe('TextblockFeedbackEditorComponent', () => {
     let component: TextblockFeedbackEditorComponent;

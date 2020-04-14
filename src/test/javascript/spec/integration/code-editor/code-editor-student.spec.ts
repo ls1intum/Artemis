@@ -440,7 +440,7 @@ describe('CodeEditorStudentIntegration', () => {
 
     it('should wait for build result after submission if no unsaved changes exist', () => {
         cleanInitialize();
-        const result = { id: 4, successful: true, feedbacks: [] as Feedback[], participation: { id: 3 } } as Result;
+        const successfulResult = { id: 4, successful: true, feedbacks: [] as Feedback[], participation: { id: 3 } } as Result;
         const expectedBuildLog = new BuildLogEntryArray();
         expect(container.unsavedFiles).to.be.empty;
         container.commitState = CommitState.UNCOMMITTED_CHANGES;
@@ -452,21 +452,21 @@ describe('CodeEditorStudentIntegration', () => {
         getLatestPendingSubmissionSubject.next({
             submissionState: ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION,
             submission: {} as ProgrammingSubmission,
-            participationId: result!.participation!.id,
+            participationId: successfulResult!.participation!.id,
         });
         container.actions.commit();
         containerFixture.detectChanges();
 
-        // waiting for build result
+        // waiting for build successfulResult
         expect(container.commitState).to.equal(CommitState.CLEAN);
         expect(container.buildOutput.isBuilding).to.be.true;
 
         getLatestPendingSubmissionSubject.next({
             submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION,
             submission: null,
-            participationId: result!.participation!.id,
+            participationId: successfulResult!.participation!.id,
         });
-        subscribeForLatestResultOfParticipationSubject.next(result);
+        subscribeForLatestResultOfParticipationSubject.next(successfulResult);
         containerFixture.detectChanges();
 
         expect(container.buildOutput.isBuilding).to.be.false;
@@ -603,9 +603,8 @@ describe('CodeEditorStudentIntegration', () => {
         spyOn<any>(guidedTourService, 'checkTourState').and.returnValue(true);
         guidedTourService.guidedTourMapping = guidedTourMapping;
         container.ngOnInit();
-        const exercise = { id: 1, problemStatement };
-        const result = { id: 3, successful: false };
-        const participation = { id: 1, results: [result], exercise: { id: 99 } } as Participation;
+        const successfulResult = { id: 3, successful: false };
+        const participation = { id: 1, results: [successfulResult], exercise: { id: 99 } } as Participation;
         const feedbacks = [{ id: 2 }] as Feedback[];
         const findWithLatestResultSubject = new Subject<Participation>();
         const getFeedbackDetailsForResultSubject = new Subject<{ body: Feedback[] }>();

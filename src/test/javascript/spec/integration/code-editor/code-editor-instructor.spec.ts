@@ -76,7 +76,6 @@ describe('CodeEditorInstructorIntegration', () => {
     let domainService: DomainService;
     let exerciseHintService: IExerciseHintService;
     let route: ActivatedRoute;
-    let router: Router;
 
     let checkIfRepositoryIsCleanStub: SinonStub;
     let getRepositoryContentStub: SinonStub;
@@ -145,7 +144,7 @@ describe('CodeEditorInstructorIntegration', () => {
                 domainService = containerDebugElement.injector.get(DomainService);
                 exerciseHintService = containerDebugElement.injector.get(ExerciseHintService);
                 route = containerDebugElement.injector.get(ActivatedRoute);
-                router = containerDebugElement.injector.get(Router);
+                containerDebugElement.injector.get(Router);
 
                 checkIfRepositoryIsCleanSubject = new Subject<{ isClean: boolean }>();
                 getRepositoryContentSubject = new Subject<{ [fileName: string]: FileType }>();
