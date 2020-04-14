@@ -150,7 +150,7 @@ describe('LectureAttachmentsComponent', () => {
         expect(comp.attachments.length).to.equal(3);
     }));
 
-    it('should not accept too large file', fakeAsync((done: Function) => {
+    it('should not accept too large file', fakeAsync(() => {
         fixture.detectChanges();
         const addAttachmentButton = fixture.debugElement.query(By.css('#add-attachment'));
         expect(comp.attachmentToBeCreated).to.be.undefined;

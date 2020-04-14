@@ -17,7 +17,6 @@ import { Result } from 'app/entities/result.model';
 import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
-import { Attachment } from 'app/entities/attachment.model';
 import { SubmissionExerciseType } from 'app/entities/submission.model';
 import { CourseStatisticsComponent } from 'app/overview/course-statistics/course-statistics.component';
 
@@ -152,15 +151,6 @@ describe('CourseStatisticsComponent', () => {
     course.registrationEnabled = false;
     course.exercises = [];
     course.presentationScore = 1;
-
-    const newAttachment = {
-        id: 53,
-        name: 'TestFile',
-        link: '/api/files/attachments/lecture/4/Mein_Test_PDF3.pdf',
-        version: 1,
-        uploadDate: moment('2019-05-07T08:49:59+02:00'),
-        attachmentType: 'FILE',
-    } as Attachment;
 
     beforeEach(async () => {
         return TestBed.configureTestingModule({

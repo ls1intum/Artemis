@@ -1,8 +1,7 @@
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
-import { DebugElement, NO_ERRORS_SCHEMA } from '@angular/core';
-import { ComponentFixture, TestBed, inject, fakeAsync } from '@angular/core/testing';
-import { Router } from '@angular/router';
+import { NO_ERRORS_SCHEMA } from '@angular/core';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { RouterTestingModule } from '@angular/router/testing';
 import { CookieService } from 'ngx-cookie-service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
@@ -61,9 +60,7 @@ describe('GuidedTourComponent', () => {
 
     let guidedTourComponent: GuidedTourComponent;
     let guidedTourComponentFixture: ComponentFixture<GuidedTourComponent>;
-    let guidedTourDebugElement: DebugElement;
     let guidedTourService: GuidedTourService;
-    let router: Router;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -92,9 +89,7 @@ describe('GuidedTourComponent', () => {
             .then(() => {
                 guidedTourComponentFixture = TestBed.createComponent(GuidedTourComponent);
                 guidedTourComponent = guidedTourComponentFixture.componentInstance;
-                guidedTourDebugElement = guidedTourComponentFixture.debugElement;
                 guidedTourService = TestBed.inject(GuidedTourService);
-                router = TestBed.inject(Router);
             });
     });
 
