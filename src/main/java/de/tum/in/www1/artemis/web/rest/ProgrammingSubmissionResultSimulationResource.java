@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
+
 import java.util.Optional;
 
 import org.slf4j.Logger;
@@ -33,15 +35,22 @@ public class ProgrammingSubmissionResultSimulationResource {
 
     private final ProgrammingSubmissionResultSimulationService programmingSubmissionResultSimulationService;
 
+    private final ExerciseService exerciseService;
+
+    private final AuthorizationCheckService authCheckService;
+
     public ProgrammingSubmissionResultSimulationResource(ProgrammingSubmissionService programmingSubmissionService, UserService userService,
             ParticipationService participationService, WebsocketMessagingService messagingService, ProgrammingExerciseService programmingExerciseService,
-            ProgrammingSubmissionResultSimulationService programmingSubmissionResultSimulationService) {
+            ProgrammingSubmissionResultSimulationService programmingSubmissionResultSimulationService, ExerciseService exerciseService,
+            AuthorizationCheckService authCheckService) {
         this.programmingSubmissionService = programmingSubmissionService;
         this.userService = userService;
         this.participationService = participationService;
         this.messagingService = messagingService;
         this.programmingExerciseService = programmingExerciseService;
         this.programmingSubmissionResultSimulationService = programmingSubmissionResultSimulationService;
+        this.exerciseService = exerciseService;
+        this.authCheckService = authCheckService;
     }
 
     /**
@@ -56,6 +65,12 @@ public class ProgrammingSubmissionResultSimulationResource {
     @PostMapping(value = "submissions/no-local-setup/{exerciseId}")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<ProgrammingSubmission> createParticipationAndSubmissionSimulation(@PathVariable Long exerciseId) {
+
+        User user = userService.getUserWithGroupsAndAuthorities();
+        Exercise exercise = exerciseService.findOne(exerciseId);
+        if (!authCheckService.isAtLeastInstructorForExercise(exercise, user)) {
+            return forbidden();
+        }
 
         ProgrammingSubmission programmingSubmission = programmingSubmissionResultSimulationService.createSubmission(exerciseId);
 
