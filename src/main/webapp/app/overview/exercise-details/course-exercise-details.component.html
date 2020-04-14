@@ -24,7 +24,7 @@
         <button class="dev-button" *ngIf="!isInProduction && hasNoLocalSetup" (click)="simulateSubmission()">
             Submission
         </button>
-        <button class="dev-button" [disabled]="!wasSubmissionSimulated" id="submissionSimulation" *ngIf="!isInProduction && hasNoLocalSetup" (click)="simulateResult()">
+        <button class="dev-button" [disabled]="!wasSubmissionSimulated" *ngIf="!isInProduction && hasNoLocalSetup" (click)="simulateResult()">
             Result
         </button>
         <jhi-submission-result-status [exercise]="exercise" [studentParticipation]="studentParticipation" updatingResultClass="mr-2" [showGradedBadge]="true">
