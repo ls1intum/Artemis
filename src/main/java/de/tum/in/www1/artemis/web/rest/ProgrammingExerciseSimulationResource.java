@@ -76,7 +76,7 @@ public class ProgrammingExerciseSimulationResource {
         // fetch course from database to make sure client didn't change groups
         Course course = courseService.findOne(programmingExercise.getCourse().getId());
         User user = userService.getUserWithGroupsAndAuthorities();
-        if (!authCheckService.isInstructorInCourse(course, user) && !authCheckService.isAdmin()) {
+        if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
             return forbidden();
         }
 
