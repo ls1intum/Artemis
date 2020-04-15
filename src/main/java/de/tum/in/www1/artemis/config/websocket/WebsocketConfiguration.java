@@ -171,6 +171,13 @@ public class WebsocketConfiguration extends WebSocketMessageBrokerConfigurationS
 
     public class TopicSubscriptionInterceptor implements ChannelInterceptor {
 
+        /**
+         * Method is called before the user's message is sent to the controller
+         *
+         * @param message Message that the websocket client is sending (e.g. SUBSCRIBE, MESSAGE, UNSUBSCRIBE)
+         * @param channel Current message channel
+         * @return message that gets passed along further
+         */
         @Override
         public Message<?> preSend(Message<?> message, MessageChannel channel) {
             StompHeaderAccessor headerAccessor = StompHeaderAccessor.wrap(message);
@@ -187,6 +194,13 @@ public class WebsocketConfiguration extends WebSocketMessageBrokerConfigurationS
             return message;
         }
 
+        /**
+         * Returns whether the subscription of the given principal to the given destination is permitted
+         *
+         * @param principal User principal of the user who wants to subscribe
+         * @param destination Destination topic to which the user wants to subscribe
+         * @return flag whether subscription is allowed
+         */
         private boolean allowSubscription(Principal principal, String destination) {
             if (isParticipationTeamDestination(destination)) {
                 Long participationId = getParticipationIdFromDestination(destination);

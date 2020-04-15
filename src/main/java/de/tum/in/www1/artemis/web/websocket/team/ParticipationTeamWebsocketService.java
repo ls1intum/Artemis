@@ -130,10 +130,22 @@ public class ParticipationTeamWebsocketService {
         return getSubscriberPrincipals(destination, null);
     }
 
+    /**
+     * Returns true if the given destination should be handled by this service
+     *
+     * @param destination Websocket destination topic which to check
+     * @return flag whether the destination belongs to this controller
+     */
     public static boolean isParticipationTeamDestination(String destination) {
         return Optional.ofNullable(getParticipationIdFromDestination(destination)).isPresent();
     }
 
+    /**
+     * Returns the participation id from the destination route
+     *
+     * @param destination Websocket destination topic from which to extract the participation id
+     * @return participation id
+     */
     public static Long getParticipationIdFromDestination(String destination) {
         Pattern pattern = Pattern.compile("^" + getDestination("(\\d*)"));
         Matcher matcher = pattern.matcher(destination);
