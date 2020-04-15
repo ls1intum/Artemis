@@ -28,13 +28,15 @@ import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
+/**
+ * Only for local development
+ * Simulates the creation of a programming exercise without a connection to the VCS and CI server
+ * This functionality is only for testing purposes (noVersionControlAndContinuousIntegrationAvailable)
+ */
+
 @Profile("dev")
 @RestController
 @RequestMapping(ProgrammingExerciseSimulationResource.Endpoints.ROOT)
-/**
- * Only for local development
- * Simulates the creation of a programming exercise without a local setup
- */
 public class ProgrammingExerciseSimulationResource {
 
     private final Logger log = LoggerFactory.getLogger(ProgrammingExerciseResource.class);
@@ -61,16 +63,18 @@ public class ProgrammingExerciseSimulationResource {
     }
 
     /**
-     * POST /programming-exercises/no-local-setup: Setup a new programmingExercise
+     * POST /programming-exercises/no-vcs-and-ci-available: Setup a new programmingExercise
      * This method creates a new exercise
-     * This exercise is only a SIMULATION for the testing of programming exercises without local setup
+     * This exercise is only a SIMULATION for the testing of programming exercises without a connection to the VCS and CI server
+     * This functionality is only for testing purposes (noVersionControlAndContinuousIntegrationAvailable)
      * @param programmingExercise the input to create/setup new exercise
      * @return a Response Entity
      */
     @PostMapping(ProgrammingExerciseSimulationResource.Endpoints.EXERCISES_SIMULATION)
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
-    public ResponseEntity<ProgrammingExercise> setupProgrammingExerciseWithoutLocalSetup(@RequestBody ProgrammingExercise programmingExercise) {
+    public ResponseEntity<ProgrammingExercise> setupProgrammingExerciseWithoutVersionControlAndContinuousIntegrationAvailable(
+            @RequestBody ProgrammingExercise programmingExercise) {
         log.debug("REST request to setup ProgrammingExercise : {}", programmingExercise);
 
         // fetch course from database to make sure client didn't change groups
@@ -84,7 +88,8 @@ public class ProgrammingExerciseSimulationResource {
 
         programmingExercise.generateAndSetProjectKey();
         try {
-            ProgrammingExercise newProgrammingExercise = programmingExerciseSimulationService.setupProgrammingExerciseWithoutLocalSetup(programmingExercise);
+            ProgrammingExercise newProgrammingExercise = programmingExerciseSimulationService
+                    .setupProgrammingExerciseWithoutVersionControlAndContinuousIntegrationAvailable(programmingExercise);
             // Setup all repositories etc
             programmingExerciseSimulationService.setupInitialSubmissionsAndResults(programmingExercise);
             return ResponseEntity.created(new URI("/api/programming-exercises" + newProgrammingExercise.getId()))
@@ -103,7 +108,7 @@ public class ProgrammingExerciseSimulationResource {
 
         public static final String PROGRAMMING_EXERCISES = "/programming-exercises";
 
-        public static final String EXERCISES_SIMULATION = PROGRAMMING_EXERCISES + "/no-local-setup";
+        public static final String EXERCISES_SIMULATION = PROGRAMMING_EXERCISES + "/no-vcs-and-ci-available";
 
     }
 }

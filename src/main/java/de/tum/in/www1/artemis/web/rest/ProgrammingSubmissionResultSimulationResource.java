@@ -21,9 +21,15 @@ import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.ProgrammingSubmissionResultSimulationService;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
+/**
+ * Only for local development
+ * Simulates submission and results for a programming exercise without a connection to the VCS and CI server
+ * This functionality is only for testing purposes (noVersionControlAndContinuousIntegrationAvailable)
+ */
+
 @Profile("dev")
 @RestController
-@RequestMapping("/api")
+@RequestMapping(ProgrammingSubmissionResultSimulationResource.Endpoints.ROOT)
 public class ProgrammingSubmissionResultSimulationResource {
 
     @Value("${jhipster.clientApp.name}")
@@ -64,13 +70,13 @@ public class ProgrammingSubmissionResultSimulationResource {
     /**
      * This method is used to create a participation and a submission
      * This participation and submission are only SIMULATIONS for the testing
-     * of programming exercises without local setup
-     *
+     * of programming exercises without a connection to the VCS and CI server
+     * This functionality is only for testing purposes (noVersionControlAndContinuousIntegrationAvailable)
      * @param exerciseId the id of the exercise
      * @return HTTP OK and ProgrammingSubmission
      */
 
-    @PostMapping(value = "submissions/no-local-setup/{exerciseId}")
+    @PostMapping(Endpoints.SUBMISSIONS_SIMULATION)
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<ProgrammingSubmission> createParticipationAndSubmissionSimulation(@PathVariable Long exerciseId) {
 
@@ -96,12 +102,13 @@ public class ProgrammingSubmissionResultSimulationResource {
 
     /**
      * This method is used to notify artemis that there is a new programming exercise build result.
-     * This result is only a SIMULATION for the testing of programming exercises without local setup
-     *
+     * This result is only a SIMULATION for the testing of programming exercises without a connection
+     * to the VCS and CI server
+     * This functionality is only for testing purposes (noVersionControlAndContinuousIntegrationAvailable)
      * @param exerciseId id of the exercise
      * @return HTTP OK and Result
      */
-    @PostMapping(value = "results/no-local-setup/{exerciseId}")
+    @PostMapping(Endpoints.RESULTS_SIMULATION)
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Result> createNewProgrammingExerciseResult(@PathVariable Long exerciseId) {
         log.debug("Received result notify (NEW)");
@@ -131,9 +138,11 @@ public class ProgrammingSubmissionResultSimulationResource {
 
     public static final class Endpoints {
 
-        public static final String SUBMISSIONS_SIMULATION = "/submissions/no-local-setup";
+        public static final String ROOT = "/api";
 
-        public static final String RESULTS_SIMULATION = "/results/no-local-setup";
+        public static final String SUBMISSIONS_SIMULATION = "/submissions/no-vcs-and-ci-available/{exerciseId}";
+
+        public static final String RESULTS_SIMULATION = "/results/no-vcs-and-ci-available/{exerciseId}";
 
     }
 

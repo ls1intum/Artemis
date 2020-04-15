@@ -21,7 +21,7 @@ export class ProgrammingExerciseSimulationService {
     automaticSetupWithoutConnectionToVCSandCI(programmingExercise: ProgrammingExercise): Observable<EntityResponseType> {
         const copy = this.programmingExerciseService.convertDataFromClient(programmingExercise);
         return this.http
-            .post<ProgrammingExercise>(this.resourceUrl + '/no-local-setup', copy, { observe: 'response' })
+            .post<ProgrammingExercise>(this.resourceUrl + '/no-vcs-and-ci-available', copy, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.programmingExerciseService.convertDateFromServer(res)));
     }
 }
