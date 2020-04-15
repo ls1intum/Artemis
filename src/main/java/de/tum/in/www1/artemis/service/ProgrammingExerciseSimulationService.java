@@ -45,7 +45,7 @@ public class ProgrammingExerciseSimulationService {
 
     private final ResultRepository resultRepository;
 
-    public final String domain = "nolocalsetup:7990/scm/";
+    public final String domain = "artemislocalhost:7990/scm/";
 
     public ProgrammingExerciseSimulationService(ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingExerciseScheduleService programmingExerciseScheduleService,
             GroupNotificationService groupNotificationService, ProgrammingExerciseService programmingExerciseService,

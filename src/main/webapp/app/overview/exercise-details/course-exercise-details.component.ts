@@ -314,7 +314,9 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     getProgrammingExerciseAndChecksIfTheSetupHasVCSandCIConnection() {
         this.courseExerciseSubmissionResultSimulationService.getProgrammingExercise(this.exerciseId).subscribe((programmingExercise) => {
             this.programmingExercise = programmingExercise;
-            this.noVersionControlAndContinuousIntegrationServerAvailable = this.programmingExerciseSimulationUtils.hasNoLocalSetup(this.programmingExercise.testRepositoryUrl);
+            this.noVersionControlAndContinuousIntegrationServerAvailable = this.programmingExerciseSimulationUtils.noVersionControlAndContinuousIntegrationAvailableCheck(
+                this.programmingExercise.testRepositoryUrl,
+            );
         });
     }
 

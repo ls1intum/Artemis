@@ -11,7 +11,7 @@ export class ProgrammingExerciseSimulationUtils {
      * that the particular programming exercise is not connected to a version control and continuous integration server
      * @param urlToCheck the url which will be check if it contains the substring
      */
-    hasNoLocalSetup(urlToCheck: string): boolean {
-        return urlToCheck.includes('nolocalsetup');
+    noVersionControlAndContinuousIntegrationAvailableCheck(urlToCheck: string): boolean {
+        return urlToCheck.includes('artemislocalhost');
     }
 }
