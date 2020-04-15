@@ -21,6 +21,9 @@
             [showResult]="showResults && currentResult !== null"
         >
         </jhi-exercise-details-student-actions>
+        <!-- These buttons will be only shown in dev environment and if the programming exercise has no
+        connection to the VCS and CI
+        This functionality is only for testing purposes-->
         <button class="dev-button" *ngIf="!isInProduction && hasNoLocalSetup" (click)="simulateSubmission()">
             Submission
         </button>

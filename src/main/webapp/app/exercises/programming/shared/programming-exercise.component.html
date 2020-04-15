@@ -98,8 +98,10 @@
                     <td class="d-none d-md-table-cell">{{ programmingExercise.maxScore }}</td>
                     <td *ngIf="!isOrion" class="d-flex flex-column">
                         <div class="d-flex justify-content-between">
-                            <span *ngIf="programmingExercise.templateParticipation && programmingExercise.templateParticipation.repositoryUrl"
-                                ><a
+                            <span *ngIf="programmingExercise.templateParticipation && programmingExercise.templateParticipation.repositoryUrl">
+                                <!--Checks if the programming exercise has a setup with VCS and CI, if this not the case
+                                 the links are disabled--->
+                                <a
                                     *ngIf="!hasNoLocalSetup(programmingExercise.templateParticipation.repositoryUrl); else noLocalSetupTemplate"
                                     href="{{ programmingExercise.templateParticipation.repositoryUrl }}"
                                     target="_blank"
