@@ -25,7 +25,7 @@ import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.RequestUtilService;
 
-public class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationTest {
+public class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
     ExerciseRepository exerciseRepo;

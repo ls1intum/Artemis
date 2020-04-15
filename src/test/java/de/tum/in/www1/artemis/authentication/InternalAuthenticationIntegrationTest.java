@@ -2,11 +2,15 @@ package de.tum.in.www1.artemis.authentication;
 
 import static de.tum.in.www1.artemis.util.ModelFactory.USER_PASSWORD;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doReturn;
 
 import java.time.ZonedDateTime;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,22 +19,26 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.TestingAuthenticationToken;
 import org.springframework.security.test.context.support.WithAnonymousUser;
 import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.TestPropertySource;
 
+import de.tum.in.www1.artemis.AbstractSpringIntegrationJenkinsGitlabTest;
+import de.tum.in.www1.artemis.domain.Authority;
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.repository.CourseRepository;
+import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.ArtemisInternalAuthenticationProvider;
+import de.tum.in.www1.artemis.security.AuthoritiesConstants;
 import de.tum.in.www1.artemis.security.jwt.TokenProvider;
 import de.tum.in.www1.artemis.service.UserService;
+import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.ModelFactory;
+import de.tum.in.www1.artemis.util.RequestUtilService;
 import de.tum.in.www1.artemis.web.rest.UserJWTController;
+import de.tum.in.www1.artemis.web.rest.dto.LtiLaunchRequestDTO;
 import de.tum.in.www1.artemis.web.rest.vm.LoginVM;
 import de.tum.in.www1.artemis.web.rest.vm.ManagedUserVM;
 
-@ActiveProfiles("artemis")
-@TestPropertySource(properties = "artemis.user-management.use-external=false")
-public class InternalAuthenticationIntegrationTest extends AuthenticationIntegrationTest {
+public class InternalAuthenticationIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
 
     @Autowired
     private UserService userService;
@@ -44,15 +52,50 @@ public class InternalAuthenticationIntegrationTest extends AuthenticationIntegra
     @Autowired
     private CourseRepository courseRepository;
 
+    @Autowired
+    protected DatabaseUtilService database;
+
+    @Autowired
+    protected RequestUtilService request;
+
+    @Autowired
+    protected ProgrammingExerciseRepository programmingExerciseRepository;
+
+    @Autowired
+    protected UserRepository userRepository;
+
+    @Autowired
+    protected LtiUserIdRepository ltiUserIdRepository;
+
+    @Autowired
+    protected LtiOutcomeUrlRepository ltiOutcomeUrlRepository;
+
+    @Autowired
+    protected AuthorityRepository authorityRepository;
+
     private User student;
 
     private static final String USERNAME = "student1";
 
-    @Override
+    protected ProgrammingExercise programmingExercise;
+
+    protected Course course;
+
+    protected LtiLaunchRequestDTO ltiLaunchRequest;
+
     @BeforeEach
     public void setUp() {
         database.addUsers(1, 0, 0);
-        super.setUp();
+        course = database.addCourseWithOneProgrammingExercise();
+        programmingExercise = programmingExerciseRepository.findAllWithEagerParticipations().get(0);
+        ltiLaunchRequest = AuthenticationIntegrationTestHelper.setupDefaultLtiLaunchRequest();
+        doReturn(true).when(ltiService).verifyRequest(any());
+
+        final var userAuthority = new Authority(AuthoritiesConstants.USER);
+        final var instructorAuthority = new Authority(AuthoritiesConstants.INSTRUCTOR);
+        final var adminAuthority = new Authority(AuthoritiesConstants.ADMIN);
+        final var taAuthority = new Authority(AuthoritiesConstants.TEACHING_ASSISTANT);
+        authorityRepository.saveAll(List.of(userAuthority, instructorAuthority, adminAuthority, taAuthority));
 
         student = userRepository.findOneWithGroupsAndAuthoritiesByLogin(USERNAME).get();
         final var encrPassword = userService.passwordEncoder().encode(USER_PASSWORD);
@@ -61,10 +104,25 @@ public class InternalAuthenticationIntegrationTest extends AuthenticationIntegra
         ltiLaunchRequest.setLis_person_contact_email_primary(student.getEmail());
     }
 
-    @Override
+    @AfterEach
+    public void teardown() {
+        database.resetDatabase();
+    }
+
     @Test
     public void launchLtiRequest_authViaEmail_success() throws Exception {
-        super.launchLtiRequest_authViaEmail_success();
+        ltiLaunchRequest.setCustom_lookup_user_by_email(true);
+        request.postForm("/api/lti/launch/" + programmingExercise.getId(), ltiLaunchRequest, HttpStatus.FOUND);
+
+        final var user = userRepository.findAll().get(0);
+        final var ltiUser = ltiUserIdRepository.findAll().get(0);
+        final var ltiOutcome = ltiOutcomeUrlRepository.findAll().get(0);
+        assertThat(ltiUser.getUser()).isEqualTo(user);
+        assertThat(ltiUser.getLtiUserId()).isEqualTo(ltiLaunchRequest.getUser_id());
+        assertThat(ltiOutcome.getUser()).isEqualTo(user);
+        assertThat(ltiOutcome.getExercise()).isEqualTo(programmingExercise);
+        assertThat(ltiOutcome.getUrl()).isEqualTo(ltiLaunchRequest.getLis_outcome_service_url());
+        assertThat(ltiOutcome.getSourcedId()).isEqualTo(ltiLaunchRequest.getLis_result_sourcedid());
 
         final var updatedStudent = userRepository.findOneWithGroupsAndAuthoritiesByLogin(USERNAME).get();
         assertThat(student).isEqualTo(updatedStudent);
@@ -73,7 +131,7 @@ public class InternalAuthenticationIntegrationTest extends AuthenticationIntegra
     @Test
     @WithAnonymousUser
     public void authenticateAfterLtiRequest_success() throws Exception {
-        super.launchLtiRequest_authViaEmail_success();
+        launchLtiRequest_authViaEmail_success();
 
         final var auth = new TestingAuthenticationToken(student.getLogin(), USER_PASSWORD);
         final var authResponse = artemisInternalAuthenticationProvider.authenticate(auth);

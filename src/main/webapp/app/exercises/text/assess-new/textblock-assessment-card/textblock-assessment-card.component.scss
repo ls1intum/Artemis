@@ -1,0 +1,57 @@
+@import 'src/main/webapp/content/scss/artemis-variables';
+
+span {
+    &:hover {
+        background: $gray-300;
+        padding: 2px 4px;
+        border-radius: 4px;
+    }
+
+    &.text-with-feedback {
+        padding: 2px 4px;
+        border-radius: 4px;
+
+        &.active {
+            text-decoration-line: underline;
+        }
+
+        &.positive-feedback {
+            color: green;
+            background-color: #f2f9f2;
+
+            &.active {
+                text-decoration-style: double;
+                text-decoration-color: green;
+            }
+        }
+
+        &.negative-feedback {
+            color: #c7254e;
+            background-color: #f9f2f4;
+
+            &.active {
+                text-decoration-style: wavy;
+                text-decoration-color: #c7254e;
+            }
+        }
+
+        &.neutral-feedback {
+            color: #1a1a1a;
+            background-color: #f2f2f2;
+
+            &.active {
+                text-decoration-style: dashed;
+                text-decoration-color: #1a1a1a;
+            }
+        }
+    }
+}
+
+jhi-textblock-feedback-editor {
+    margin-top: 1em;
+    border-width: 0;
+
+    &.active {
+        border: 2px $gray-500 solid;
+    }
+}

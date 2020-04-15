@@ -42,7 +42,7 @@ import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.RequestUtilService;
 import de.tum.in.www1.artemis.util.TestConstants;
 
-public class ResultServiceIntegrationTest extends AbstractSpringIntegrationTest {
+public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
     ResultService resultService;

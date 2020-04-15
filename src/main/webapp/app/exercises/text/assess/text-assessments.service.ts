@@ -8,8 +8,11 @@ import * as moment from 'moment';
 import { ComplaintResponse } from 'app/entities/complaint-response.model';
 import { Feedback } from 'app/entities/feedback.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { TextBlock } from 'app/entities/text-block.model';
+import { TextBlockRef } from 'app/entities/text-block-ref.model';
 
 type EntityResponseType = HttpResponse<Result>;
+type TextAssessmentDTO = { feedbacks: Feedback[]; textBlocks: TextBlock[] };
 
 @Injectable({
     providedIn: 'root',
@@ -19,16 +22,18 @@ export class TextAssessmentsService {
 
     constructor(private http: HttpClient) {}
 
-    public save(textAssessments: Feedback[], exerciseId: number, resultId: number): Observable<EntityResponseType> {
+    public save(exerciseId: number, resultId: number, feedbacks: Feedback[], textBlocks: TextBlock[]): Observable<EntityResponseType> {
+        const body = TextAssessmentsService.prepareFeedbacksAndTextblocksForRequest(feedbacks, textBlocks);
         return this.http
-            .put<Result>(`${this.resourceUrl}/exercise/${exerciseId}/result/${resultId}`, textAssessments, { observe: 'response' })
-            .map((res: EntityResponseType) => this.convertResponse(res));
+            .put<Result>(`${this.resourceUrl}/exercise/${exerciseId}/result/${resultId}`, body, { observe: 'response' })
+            .map((res: EntityResponseType) => TextAssessmentsService.convertResponse(res));
     }
 
-    public submit(textAssessments: Feedback[], exerciseId: number, resultId: number): Observable<EntityResponseType> {
+    public submit(exerciseId: number, resultId: number, feedbacks: Feedback[], textBlocks: TextBlock[]): Observable<EntityResponseType> {
+        const body = TextAssessmentsService.prepareFeedbacksAndTextblocksForRequest(feedbacks, textBlocks);
         return this.http
-            .put<Result>(`${this.resourceUrl}/exercise/${exerciseId}/result/${resultId}/submit`, textAssessments, { observe: 'response' })
-            .map((res: EntityResponseType) => this.convertResponse(res));
+            .put<Result>(`${this.resourceUrl}/exercise/${exerciseId}/result/${resultId}/submit`, body, { observe: 'response' })
+            .map((res: EntityResponseType) => TextAssessmentsService.convertResponse(res));
     }
 
     public updateAssessmentAfterComplaint(feedbacks: Feedback[], complaintResponse: ComplaintResponse, submissionId: number): Observable<EntityResponseType> {
@@ -39,7 +44,7 @@ export class TextAssessmentsService {
         };
         return this.http
             .put<Result>(url, assessmentUpdate, { observe: 'response' })
-            .map((res: EntityResponseType) => this.convertResponse(res));
+            .map((res: EntityResponseType) => TextAssessmentsService.convertResponse(res));
     }
 
     public cancelAssessment(exerciseId: number, submissionId: number): Observable<void> {
@@ -49,7 +54,7 @@ export class TextAssessmentsService {
     public getResultWithPredefinedTextblocks(resultId: number): Observable<EntityResponseType> {
         return this.http
             .get<Result>(`${this.resourceUrl}/result/${resultId}/with-textblocks`, { observe: 'response' })
-            .map((res: EntityResponseType) => this.convertResponse(res));
+            .map((res: EntityResponseType) => TextAssessmentsService.convertResponse(res));
     }
 
     public getFeedbackDataForExerciseSubmission(submissionId: number): Observable<StudentParticipation> {
@@ -57,6 +62,10 @@ export class TextAssessmentsService {
             // Wire up Result and Submission
             tap((sp: StudentParticipation) => (sp.submissions[0].result = sp.results[0])),
             tap((sp: StudentParticipation) => (sp.submissions[0].participation = sp)),
+            tap((sp: StudentParticipation) => (sp.results[0].submission = sp.submissions[0])),
+            tap((sp: StudentParticipation) => (sp.results[0].participation = sp)),
+            // Make sure Feedbacks Array is initialized
+            tap((sp: StudentParticipation) => (sp.results[0].feedbacks = sp.results[0].feedbacks || [])),
         );
     }
 
@@ -64,8 +73,23 @@ export class TextAssessmentsService {
         return this.http.get<Result>(`${this.resourceUrl}/exercise/${exerciseId}/submission/${submissionId}/example-result`);
     }
 
-    private convertResponse(res: EntityResponseType): EntityResponseType {
-        const result = this.convertItemFromServer(res.body!);
+    private static prepareFeedbacksAndTextblocksForRequest(feedbacks: Feedback[], textBlocks: TextBlock[]): TextAssessmentDTO {
+        feedbacks = feedbacks.map((f) => {
+            f = Object.assign({}, f);
+            f.result = null;
+            return f;
+        });
+        textBlocks = textBlocks.map((tb) => {
+            tb = Object.assign({}, tb);
+            tb.submission = undefined;
+            return tb;
+        });
+
+        return { feedbacks, textBlocks };
+    }
+
+    private static convertResponse(res: EntityResponseType): EntityResponseType {
+        const result = TextAssessmentsService.convertItemFromServer(res.body!);
 
         if (result.completionDate) {
             result.completionDate = moment(result.completionDate);
@@ -80,7 +104,17 @@ export class TextAssessmentsService {
         return res.clone({ body: result });
     }
 
-    private convertItemFromServer(result: Result): Result {
+    private static convertItemFromServer(result: Result): Result {
         return Object.assign({}, result);
+    }
+
+    public static matchBlocksWithFeedbacks(blocks: TextBlock[], feedbacks: Feedback[]): TextBlockRef[] {
+        return blocks.map(
+            (block: TextBlock) =>
+                new TextBlockRef(
+                    block,
+                    feedbacks.find(({ reference }) => block.id === reference),
+                ),
+        );
     }
 }

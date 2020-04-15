@@ -24,7 +24,7 @@ import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.RequestUtilService;
 
-public class TextExerciseIntegrationTest extends AbstractSpringIntegrationTest {
+public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
     DatabaseUtilService database;

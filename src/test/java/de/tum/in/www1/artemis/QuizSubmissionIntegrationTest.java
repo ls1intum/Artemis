@@ -25,7 +25,7 @@ import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.RequestUtilService;
 import de.tum.in.www1.artemis.web.websocket.QuizSubmissionWebsocketService;
 
-public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationTest {
+public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
     DatabaseUtilService database;
@@ -43,7 +43,7 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationTest
     QuizExerciseService quizExerciseService;
 
     @Autowired
-    QuizScheduleService scheduleService;
+    QuizScheduleService quizScheduleService;
 
     @Autowired
     QuizSubmissionWebsocketService quizSubmissionWebsocketService;
@@ -62,13 +62,14 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationTest
 
     @BeforeEach
     public void init() {
+        quizScheduleService.stopSchedule();
         database.addUsers(10, 5, 1);
         // do not use the schedule service based on a time interval in the tests, because this would result in flaky tests that run much slower
-        scheduleService.stopSchedule();
     }
 
     @AfterEach
     public void tearDown() {
+        quizScheduleService.clearAllQuizData();
         database.resetDatabase();
     }
 
@@ -76,7 +77,7 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationTest
     @WithMockUser(value = "student1", roles = "USER")
     public void testQuizSubmit() throws Exception {
         // change config to make test faster
-        List<Course> courses = database.createCoursesWithExercisesAndLectures();
+        List<Course> courses = database.createCoursesWithExercisesAndLectures(true);
         Course course = courses.get(0);
         QuizExercise quizExercise = database.createQuiz(course, ZonedDateTime.now(), null);
         quizExercise.setDueDate(ZonedDateTime.now().plusSeconds(2));
@@ -111,7 +112,7 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationTest
         // before the quiz submissions are processed, none of them ends up in the database
         assertThat(quizSubmissionRepository.findAll().size()).isEqualTo(0);
 
-        scheduleService.processCachedQuizSubmissions();
+        quizScheduleService.processCachedQuizSubmissions();
 
         // after the quiz submissions have been processed, all submission are saved to the database
         assertThat(quizSubmissionRepository.findAll().size()).isEqualTo(numberOfParticipants);
@@ -144,7 +145,7 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationTest
     @Test
     @WithMockUser(value = "student1", roles = "USER")
     public void testQuizSubmitPractice() throws Exception {
-        List<Course> courses = database.createCoursesWithExercisesAndLectures();
+        List<Course> courses = database.createCoursesWithExercisesAndLectures(false);
         Course course = courses.get(0);
         QuizExercise quizExercise = database.createQuiz(course, ZonedDateTime.now().minusSeconds(4), null);
         quizExercise.setDueDate(ZonedDateTime.now().minusSeconds(2));
@@ -155,6 +156,7 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationTest
         quizExerciseService.save(quizExercise);
 
         assertThat(quizSubmissionRepository.findAll().size()).isEqualTo(0);
+        assertThat(participationRepository.findAll().size()).isEqualTo(0);
 
         var numberOfParticipants = 10;
         var quizSubmission = wrongQuizSubmissionFor(quizExercise);
@@ -170,9 +172,10 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationTest
 
         // after the quiz has ended, all submission are saved to the database
         assertThat(quizSubmissionRepository.findAll().size()).isEqualTo(numberOfParticipants);
+        assertThat(participationRepository.findAll().size()).isEqualTo(numberOfParticipants);
 
         // processing the quiz submissions will update the statistics
-        scheduleService.processCachedQuizSubmissions();
+        quizScheduleService.processCachedQuizSubmissions();
 
         // Test the statistics directly from the database
         QuizExercise quizExerciseWithStatistic = quizExerciseService.findOneWithQuestionsAndStatistics(quizExercise.getId());
@@ -202,7 +205,7 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationTest
     @Test
     @WithMockUser(value = "student1", roles = "USER")
     public void testQuizSubmitPractice_badRequest() throws Exception {
-        List<Course> courses = database.createCoursesWithExercisesAndLectures();
+        List<Course> courses = database.createCoursesWithExercisesAndLectures(true);
         Course course = courses.get(0);
         QuizExercise quizExerciseServer = database.createQuiz(course, ZonedDateTime.now().minusSeconds(4), null);
         quizExerciseServer.setDueDate(ZonedDateTime.now().minusSeconds(2));
@@ -225,7 +228,7 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationTest
     @Test
     @WithMockUser(value = "student1", roles = "USER")
     public void testQuizSubmitPreview_forbidden() throws Exception {
-        List<Course> courses = database.createCoursesWithExercisesAndLectures();
+        List<Course> courses = database.createCoursesWithExercisesAndLectures(true);
         Course course = courses.get(0);
         QuizExercise quizExercise = database.createQuiz(course, ZonedDateTime.now().minusSeconds(4), null);
         quizExerciseService.save(quizExercise);
@@ -235,7 +238,7 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationTest
     @Test
     @WithMockUser(value = "student1", roles = "USER")
     public void testQuizSubmitPractice_forbidden() throws Exception {
-        List<Course> courses = database.createCoursesWithExercisesAndLectures();
+        List<Course> courses = database.createCoursesWithExercisesAndLectures(true);
         Course course = courses.get(0);
         course.setStudentGroupName("abc");
         courseRepository.save(course);
@@ -247,7 +250,7 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationTest
     @Test
     @WithMockUser(value = "tutor1", roles = "TA")
     public void testQuizSubmitPreview_forbidden_otherTa() throws Exception {
-        List<Course> courses = database.createCoursesWithExercisesAndLectures();
+        List<Course> courses = database.createCoursesWithExercisesAndLectures(true);
         Course course = courses.get(0);
         course.setTeachingAssistantGroupName("tutor2");
         courseRepository.save(course);
@@ -271,7 +274,7 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationTest
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void testQuizSubmitPreview_badRequest_submissionId() throws Exception {
-        List<Course> courses = database.createCoursesWithExercisesAndLectures();
+        List<Course> courses = database.createCoursesWithExercisesAndLectures(true);
         Course course = courses.get(0);
         QuizExercise quizExercise = database.createQuiz(course, ZonedDateTime.now().minusSeconds(4), null);
         quizExerciseService.save(quizExercise);
@@ -283,7 +286,7 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationTest
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void testQuizSubmitPractice_badRequest_submissionId() throws Exception {
-        List<Course> courses = database.createCoursesWithExercisesAndLectures();
+        List<Course> courses = database.createCoursesWithExercisesAndLectures(true);
         Course course = courses.get(0);
         QuizExercise quizExercise = database.createQuiz(course, ZonedDateTime.now().minusSeconds(4), null);
         quizExerciseService.save(quizExercise);
@@ -295,7 +298,7 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationTest
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void testQuizSubmitPreview() throws Exception {
-        List<Course> courses = database.createCoursesWithExercisesAndLectures();
+        List<Course> courses = database.createCoursesWithExercisesAndLectures(true);
         Course course = courses.get(0);
         QuizExercise quizExercise = database.createQuiz(course, ZonedDateTime.now().minusSeconds(4), null);
         quizExerciseService.save(quizExercise);
@@ -308,7 +311,7 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationTest
         // in the preview the submission will not be saved to the database
         assertThat(quizSubmissionRepository.findAll().size()).isEqualTo(0);
 
-        scheduleService.processCachedQuizSubmissions();
+        quizScheduleService.processCachedQuizSubmissions();
 
         // all stats must be 0 because we have a preview here
         // Test the statistics directly from the database
@@ -337,7 +340,7 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationTest
     }
 
     private QuizExercise createQuizOnServer() throws Exception {
-        List<Course> courses = database.createCoursesWithExercisesAndLectures();
+        List<Course> courses = database.createCoursesWithExercisesAndLectures(true);
         Course course = courses.get(0);
 
         QuizExercise quizExercise = database.createQuiz(course, ZonedDateTime.now().plusHours(5), null);

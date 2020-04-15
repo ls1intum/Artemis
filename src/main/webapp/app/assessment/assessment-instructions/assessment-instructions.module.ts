@@ -13,6 +13,6 @@ import { StructuredGradingInstructionsAssessmentLayoutComponent } from 'app/asse
 @NgModule({
     imports: [CommonModule, NgbModule, ArtemisSharedModule, ArtemisModelingEditorModule, ArtemisProgrammingExerciseInstructionsRenderModule, ArtemisAssessmentSharedModule],
     declarations: [ExpandableSectionComponent, AssessmentInstructionsComponent, CollapsableAssessmentInstructionsComponent, StructuredGradingInstructionsAssessmentLayoutComponent],
-    exports: [CollapsableAssessmentInstructionsComponent, ExpandableSectionComponent, StructuredGradingInstructionsAssessmentLayoutComponent],
+    exports: [CollapsableAssessmentInstructionsComponent, ExpandableSectionComponent, StructuredGradingInstructionsAssessmentLayoutComponent, AssessmentInstructionsComponent],
 })
 export class AssessmentInstructionsModule {}
