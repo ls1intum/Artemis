@@ -21,6 +21,10 @@ import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.scheduled.ProgrammingExerciseScheduleService;
 import de.tum.in.www1.artemis.service.util.VCSSimulationUtils;
 
+/**
+ * This functionality is only for testing purposes (noVersionControlAndContinuousIntegrationAvailable)
+ */
+
 @Profile("dev")
 @Service
 public class ProgrammingExerciseSimulationService {
@@ -62,9 +66,10 @@ public class ProgrammingExerciseSimulationService {
      * Setups the context of a new programming exercise.
      * @param programmingExercise the exercise which should be stored in the database
      * @return returns the modified and stored programming exercise
+     * This functionality is only for testing purposes (noVersionControlAndContinuousIntegrationAvailable)
      */
     @Transactional
-    public ProgrammingExercise setupProgrammingExerciseWithoutLocalSetup(ProgrammingExercise programmingExercise) {
+    public ProgrammingExercise setupProgrammingExerciseWithoutVersionControlAndContinuousIntegrationAvailable(ProgrammingExercise programmingExercise) {
         programmingExercise.generateAndSetProjectKey();
         final var projectKey = programmingExercise.getProjectKey();
         // TODO: the following code is used quite often and should be done in only one place
@@ -73,7 +78,7 @@ public class ProgrammingExerciseSimulationService {
         final var solutionRepoName = projectKey.toLowerCase() + "-" + RepositoryType.SOLUTION.getName();
 
         programmingExerciseService.initParticipations(programmingExercise);
-        setURLsAndBuildPlanIDsForNewExerciseWithoutLocalSetup(programmingExercise, exerciseRepoName, testRepoName, solutionRepoName);
+        setURLsAndBuildPlanIDsForNewExerciseWithoutVersionControlAndContinuousIntegrationAvailable(programmingExercise, exerciseRepoName, testRepoName, solutionRepoName);
         // Save participations to get the ids required for the webhooks
         programmingExerciseService.connectBaseParticipationsToExerciseAndSave(programmingExercise);
 
@@ -94,9 +99,10 @@ public class ProgrammingExerciseSimulationService {
      * @param exerciseRepoName the repo name of the new exercise
      * @param testRepoName the test repo name of the new exercise
      * @param solutionRepoName the solution repo name of the new exercise
+     * This functionality is only for testing purposes (noVersionControlAndContinuousIntegrationAvailable)
      */
-    private void setURLsAndBuildPlanIDsForNewExerciseWithoutLocalSetup(ProgrammingExercise programmingExercise, String exerciseRepoName, String testRepoName,
-            String solutionRepoName) {
+    private void setURLsAndBuildPlanIDsForNewExerciseWithoutVersionControlAndContinuousIntegrationAvailable(ProgrammingExercise programmingExercise, String exerciseRepoName,
+            String testRepoName, String solutionRepoName) {
         final var projectKey = programmingExercise.getProjectKey();
         final var templateParticipation = programmingExercise.getTemplateParticipation();
         final var solutionParticipation = programmingExercise.getSolutionParticipation();
@@ -114,8 +120,10 @@ public class ProgrammingExerciseSimulationService {
 
     /**
      * This method creates the template and solution submissions and results for the new exercise
-     * These submissions and results are SIMULATIONS for the testing of programming exercises without local setup
+     * These submissions and results are SIMULATIONS for the testing of programming exercises without a connection to
+     * the VCS and Continuous Integration server
      * @param programmingExercise the new exercise
+     * This functionality is only for testing purposes (noVersionControlAndContinuousIntegrationAvailable)
      */
     public void setupInitialSubmissionsAndResults(ProgrammingExercise programmingExercise) {
         Optional<TemplateProgrammingExerciseParticipation> templateProgrammingExerciseParticipation = this.templateProgrammingExerciseParticipationRepository

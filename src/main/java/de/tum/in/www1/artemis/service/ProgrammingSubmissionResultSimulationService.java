@@ -23,6 +23,12 @@ import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.service.util.VCSSimulationUtils;
 
+/**
+ * Only for local development
+ * Simulates the creation of a programming exercise without a connection to the VCS and CI server
+ * This functionality is only for testing purposes (noVersionControlAndContinuousIntegrationAvailable)
+ */
+
 @Profile("dev")
 @Service
 public class ProgrammingSubmissionResultSimulationService {
@@ -57,6 +63,7 @@ public class ProgrammingSubmissionResultSimulationService {
 
     /**
      * This method creates a new participation for the provided user
+     * This functionality is only for testing purposes (noVersionControlAndContinuousIntegrationAvailable)
      * @param programmingExercise the used programmingExercise
      * @param participant the participant object of the user
      * @param user the user who wants to particpate
@@ -78,6 +85,7 @@ public class ProgrammingSubmissionResultSimulationService {
     /**
      * This method creates a new submission for the provided user
      * @param exerciseId the exerciseId of the exercise for which a submission should be created
+     * This functionality is only for testing purposes (noVersionControlAndContinuousIntegrationAvailable)
      * @return the newly created and stored submission
      */
     public ProgrammingSubmission createSubmission(Long exerciseId) {
@@ -107,6 +115,7 @@ public class ProgrammingSubmissionResultSimulationService {
 
     /**
      *  This method creates a new result for the provided participation
+     *  This functionality is only for testing purposes (noVersionControlAndContinuousIntegrationAvailable)
      * @param programmingExerciseStudentParticipation the participation for which the new result should be created
      * @return the newly created and stored result
      */
