@@ -4,6 +4,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -128,7 +130,21 @@ public class ParticipationTeamWebsocketService {
         return getSubscriberPrincipals(destination, null);
     }
 
+    public static boolean isParticipationTeamDestination(String destination) {
+        return Optional.ofNullable(getParticipationIdFromDestination(destination)).isPresent();
+    }
+
+    public static Long getParticipationIdFromDestination(String destination) {
+        Pattern pattern = Pattern.compile("^" + getDestination("(\\d*)"));
+        Matcher matcher = pattern.matcher(destination);
+        return matcher.find() ? Long.parseLong(matcher.group(1)) : null;
+    }
+
     private static String getDestination(Long participationId) {
+        return getDestination(participationId.toString());
+    }
+
+    private static String getDestination(String participationId) {
         return "/topic/participations/" + participationId + "/team";
     }
 

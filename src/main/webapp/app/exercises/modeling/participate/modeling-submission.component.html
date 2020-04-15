@@ -38,15 +38,11 @@
                 </span>
             </p>
         </div>
-        <div *ngIf="!submission?.submitted" class="flex-shrink-0 ml-md-3 ml-lg-4" [ngStyle]="{ zIndex: 1 }">
+        <div *ngIf="isActive || isLate" class="flex-shrink-0 ml-md-3 ml-lg-4" [ngStyle]="{ zIndex: 1 }">
             <p class="ml-3 mb-0 text-right" jhiTranslate="artemisApp.modelingSubmission.maxScore" [translateValues]="{ maxScore: modelingExercise!.maxScore }">
                 <strong>Max. Score: {{ modelingExercise!.maxScore }}</strong>
             </p>
-            <jhi-team-participate-info-box
-                *ngIf="modelingExercise?.teamMode && (isActive || isLate)"
-                [exercise]="modelingExercise"
-                [participation]="participation"
-            ></jhi-team-participate-info-box>
+            <jhi-team-participate-info-box *ngIf="modelingExercise?.teamMode" [exercise]="modelingExercise" [participation]="participation"></jhi-team-participate-info-box>
         </div>
     </div>
 

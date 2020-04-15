@@ -35,12 +35,12 @@
                 <span [innerHTML]="textExercise!.problemStatement! | htmlForMarkdown"></span>
             </p>
         </div>
-        <div *ngIf="!submission?.submitted" class="flex-shrink-0 ml-md-3 ml-lg-4" [ngStyle]="{ zIndex: 1 }">
+        <div *ngIf="isActive" class="flex-shrink-0 ml-md-3 ml-lg-4" [ngStyle]="{ zIndex: 1 }">
             <p class="ml-3 mb-0 text-right">
                 <strong><span jhiTranslate="artemisApp.exercise.maxScore">Max. Score</span>: {{ textExercise!.maxScore }}</strong>
             </p>
             <jhi-team-participate-info-box
-                *ngIf="textExercise?.teamMode && isActive"
+                *ngIf="textExercise?.teamMode"
                 [exercise]="textExercise"
                 [participation]="participation"
                 [bounded]="false"
