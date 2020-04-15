@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.web.websocket.team;
 
+import java.security.Principal;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -13,6 +14,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.event.EventListener;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
+import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.messaging.simp.annotation.SubscribeMapping;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
@@ -23,6 +25,16 @@ import org.springframework.messaging.simp.user.SimpUserRegistry;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.socket.messaging.SessionDisconnectEvent;
 import org.springframework.web.socket.messaging.SessionUnsubscribeEvent;
+
+import de.tum.in.www1.artemis.domain.TextExercise;
+import de.tum.in.www1.artemis.domain.TextSubmission;
+import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.security.SecurityUtils;
+import de.tum.in.www1.artemis.service.ParticipationService;
+import de.tum.in.www1.artemis.service.TextExerciseService;
+import de.tum.in.www1.artemis.service.TextSubmissionService;
+import de.tum.in.www1.artemis.service.UserService;
 
 @Controller
 public class ParticipationTeamWebsocketService {
@@ -35,18 +47,31 @@ public class ParticipationTeamWebsocketService {
 
     private final Map<String, String> destinationTracker = new HashMap<>();
 
-    public ParticipationTeamWebsocketService(SimpMessageSendingOperations messagingTemplate, SimpUserRegistry simpUserRegistry) {
+    private final UserService userService;
+
+    private final ParticipationService participationService;
+
+    private final TextExerciseService textExerciseService;
+
+    private final TextSubmissionService textSubmissionService;
+
+    public ParticipationTeamWebsocketService(SimpMessageSendingOperations messagingTemplate, SimpUserRegistry simpUserRegistry, ParticipationService participationService,
+            TextExerciseService textExerciseService, TextSubmissionService textSubmissionService, UserService userService) {
         this.messagingTemplate = messagingTemplate;
         this.simpUserRegistry = simpUserRegistry;
+        this.participationService = participationService;
+        this.textExerciseService = textExerciseService;
+        this.textSubmissionService = textSubmissionService;
+        this.userService = userService;
     }
 
     /**
      * Called when a user subscribes to the destination specified in the subscribe mapping
-     *
+     * <p>
      * We have to keep track of the destination that this session belongs to since it is
      * needed on unsubscribe and disconnect but is not available there.
      *
-     * @param participationId id of participation
+     * @param participationId     id of participation
      * @param stompHeaderAccessor header from STOMP frame
      */
     @SubscribeMapping("/topic/participations/{participationId}/team")
@@ -64,6 +89,27 @@ public class ParticipationTeamWebsocketService {
     @MessageMapping("/topic/participations/{participationId}/team/trigger")
     public void triggerSend(@DestinationVariable Long participationId) {
         sendOnlineTeamMembers(getDestination(participationId));
+    }
+
+    @MessageMapping("/topic/participations/{participationId}/team/text-submissions/update")
+    public void updateTextSubmission(@DestinationVariable Long participationId, @Payload TextSubmission textSubmission, Principal principal) {
+        // Without this, custom jpa repository methods don't work in websocket channel.
+        SecurityUtils.setAuthorizationObject();
+
+        final StudentParticipation participation = participationService.findOneStudentParticipation(participationId);
+
+        // user must belong to the team who owns the participation in order to update a text submission
+        if (!participation.isOwnedBy(principal.getName())) {
+            return;
+        }
+
+        final User user = userService.getUserWithGroupsAndAuthorities(principal.getName());
+        final TextExercise textExercise = textExerciseService.findOne(participation.getExercise().getId());
+
+        textSubmission = textSubmissionService.handleTextSubmission(textSubmission, textExercise, principal);
+        // TODO: filter out sensitive details?
+
+        messagingTemplate.convertAndSend(getDestination(participationId, "/text-submissions"), textSubmission);
     }
 
     /**
@@ -117,7 +163,7 @@ public class ParticipationTeamWebsocketService {
      * Optionally, a certain session ID can be excluded from consideration (which is handy for the unsubscribe event listener which is
      * called before the session is actually removed).
      *
-     * @param destination destination/topic for which to get the subscribers
+     * @param destination     destination/topic for which to get the subscribers
      * @param exceptSessionID session id that should be excluded from subscription sessions
      * @return list of principals / logins
      */
@@ -152,12 +198,20 @@ public class ParticipationTeamWebsocketService {
         return matcher.find() ? Long.parseLong(matcher.group(1)) : null;
     }
 
+    private static String getDestination(Long participationId, String path) {
+        return getDestination(participationId.toString(), path);
+    }
+
     private static String getDestination(Long participationId) {
-        return getDestination(participationId.toString());
+        return getDestination(participationId, "");
+    }
+
+    private static String getDestination(String participationId, String path) {
+        return "/topic/participations/" + participationId + "/team" + path;
     }
 
     private static String getDestination(String participationId) {
-        return "/topic/participations/" + participationId + "/team";
+        return getDestination(participationId, "");
     }
 
     public Map<String, String> getDestinationTracker() {
