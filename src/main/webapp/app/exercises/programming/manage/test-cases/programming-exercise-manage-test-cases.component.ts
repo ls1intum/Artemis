@@ -232,7 +232,7 @@ export class ProgrammingExerciseManageTestCasesComponent implements OnInit, OnDe
                         this.alertService.success(`artemisApp.programmingExercise.manageTestCases.testCasesUpdated`);
                     }
                 }),
-                catchError((err: HttpErrorResponse) => {
+                catchError(() => {
                     this.alertService.error(`artemisApp.programmingExercise.manageTestCases.testCasesCouldNotBeUpdated`, { testCases: testCasesToUpdate });
                     return of(null);
                 }),
@@ -272,7 +272,7 @@ export class ProgrammingExerciseManageTestCasesComponent implements OnInit, OnDe
                     this.alertService.success(`artemisApp.programmingExercise.manageTestCases.weightsReset`);
                     this.testCaseService.notifyTestCases(this.exercise.id, testCases);
                 }),
-                catchError((err: HttpErrorResponse) => {
+                catchError(() => {
                     this.alertService.error(`artemisApp.programmingExercise.manageTestCases.weightsResetFailed`);
                     return of(null);
                 }),

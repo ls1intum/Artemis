@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpResponse } from '@angular/common/http';
-import { ActivatedRouteSnapshot, Resolve, RouterStateSnapshot, Routes } from '@angular/router';
+import { ActivatedRouteSnapshot, Resolve, Routes } from '@angular/router';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { Observable, of } from 'rxjs';
 import { filter, map } from 'rxjs/operators';
@@ -16,7 +16,7 @@ import { CourseGroupComponent } from 'app/course/manage/course-group.component';
 export class CourseResolve implements Resolve<Course> {
     constructor(private service: CourseManagementService) {}
 
-    resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<Course> {
+    resolve(route: ActivatedRouteSnapshot): Observable<Course> {
         const id = route.params['courseId'] ? route.params['courseId'] : null;
         if (id) {
             return this.service.find(id).pipe(

@@ -173,7 +173,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
 
     private subscribeToSaveResponse(result: Observable<HttpResponse<ProgrammingExercise>>) {
         result.subscribe(
-            (res: HttpResponse<ProgrammingExercise>) => this.onSaveSuccess(),
+            () => this.onSaveSuccess(),
             (res: HttpErrorResponse) => this.onSaveError(res),
         );
     }

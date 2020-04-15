@@ -36,7 +36,7 @@ export class ApollonDiagramListComponent implements OnInit {
             (response) => {
                 this.apollonDiagrams = response.body!;
             },
-            (response) => {
+            () => {
                 this.jhiAlertService.error('artemisApp.apollonDiagram.home.error.loading');
             },
         );

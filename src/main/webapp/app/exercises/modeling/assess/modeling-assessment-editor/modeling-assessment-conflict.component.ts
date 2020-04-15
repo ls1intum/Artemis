@@ -124,10 +124,10 @@ export class ModelingAssessmentConflictComponent implements OnInit, AfterViewIni
         }
 
         this.modelingAssessmentService.saveAssessment(this.mergedFeedbacks, this.submissionId).subscribe(
-            (result) => {
+            () => {
                 this.jhiAlertService.success('modelingAssessmentEditor.messages.saveSuccessful');
             },
-            (error) => this.jhiAlertService.error('modelingAssessmentEditor.messages.saveFailed'),
+            () => this.jhiAlertService.error('modelingAssessmentEditor.messages.saveFailed'),
         );
     }
 
@@ -143,9 +143,9 @@ export class ModelingAssessmentConflictComponent implements OnInit, AfterViewIni
                 escalatedConflicts.push(this.conflicts![i]);
             }
         }
-        this.modelingAssessmentService.escalateConflict(escalatedConflicts).subscribe((value) => {
+        this.modelingAssessmentService.escalateConflict(escalatedConflicts).subscribe(() => {
             this.modelingAssessmentService.saveAssessment(this.mergedFeedbacks, this.submissionId, true).subscribe(
-                (result) => {
+                () => {
                     this.jhiAlertService.success('modelingAssessmentEditor.messages.submitSuccessful');
                     this.router.navigate(['/course-management', this.courseId, 'modeling-exercises', this.modelingExercise.id, 'submissions', this.submissionId, 'assessment']);
                 },

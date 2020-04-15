@@ -314,7 +314,7 @@ export class ExampleModelingSubmissionComponent implements OnInit {
         exampleSubmission.submission.result.feedbacks = this.feedbacks;
 
         this.tutorParticipationService.assessExampleSubmission(exampleSubmission, this.exerciseId).subscribe(
-            (res: HttpResponse<TutorParticipation>) => {
+            () => {
                 this.jhiAlertService.success('artemisApp.exampleSubmission.assessScore.success');
             },
             (error: HttpErrorResponse) => {
@@ -333,7 +333,7 @@ export class ExampleModelingSubmissionComponent implements OnInit {
     }
 
     readAndUnderstood() {
-        this.tutorParticipationService.assessExampleSubmission(this.exampleSubmission, this.exerciseId).subscribe((res: HttpResponse<TutorParticipation>) => {
+        this.tutorParticipationService.assessExampleSubmission(this.exampleSubmission, this.exerciseId).subscribe(() => {
             this.jhiAlertService.success('artemisApp.exampleSubmission.readSuccessfully');
             this.back();
         });
