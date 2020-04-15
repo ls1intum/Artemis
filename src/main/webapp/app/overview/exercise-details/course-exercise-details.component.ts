@@ -28,6 +28,7 @@ import { GradingCriterion } from 'app/exercises/shared/structured-grading-criter
 import { CourseExerciseSubmissionResultSimulationService } from 'app/course/manage/course-exercise-submission-result-simulation.service';
 import { ProgrammingExerciseSimulationUtils } from 'app/exercises/programming/shared/utils/programming-exercise-simulation-utils';
 import { AlertService } from 'app/core/alert/alert.service';
+import { ProgrammingExerciseSimulationService } from 'app/exercises/programming/manage/services/programming-exercise-simulation.service';
 const MAX_RESULT_HISTORY_LENGTH = 5;
 
 @Component({
@@ -77,6 +78,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         private courseExerciseSubmissionResultSimulationService: CourseExerciseSubmissionResultSimulationService,
         private programmingExerciseSimulationUtils: ProgrammingExerciseSimulationUtils,
         private jhiAlertService: AlertService,
+        private programmingExerciseSimulationService: ProgrammingExerciseSimulationService,
     ) {}
 
     ngOnInit() {
@@ -312,6 +314,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
      * This functionality is only for testing purposes(noVersionControlAndContinuousIntegrationAvailable)
      */
     getProgrammingExerciseAndChecksIfTheSetupHasVCSandCIConnection() {
+        this.programmingExerciseSimulationService.failsIfInProduction();
         this.courseExerciseSubmissionResultSimulationService.getProgrammingExercise(this.exerciseId).subscribe((programmingExercise) => {
             this.programmingExercise = programmingExercise;
             this.noVersionControlAndContinuousIntegrationServerAvailable = this.programmingExerciseSimulationUtils.noVersionControlAndContinuousIntegrationAvailableCheck(
@@ -325,6 +328,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
      * This functionality is only for testing purposes(noVersionControlAndContinuousIntegrationAvailable)
      */
     simulateSubmission() {
+        this.programmingExerciseSimulationService.failsIfInProduction();
         this.courseExerciseSubmissionResultSimulationService.simulateSubmission(this.exerciseId).subscribe(
             () => {
                 this.wasSubmissionSimulated = true;
@@ -341,6 +345,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
      * This functionality is only for testing purposes(noVersionControlAndContinuousIntegrationAvailable)
      */
     simulateResult() {
+        this.programmingExerciseSimulationService.failsIfInProduction();
         this.courseExerciseSubmissionResultSimulationService.simulateResult(this.exerciseId).subscribe(
             () => {
                 this.jhiAlertService.success('artemisApp.exercise.resultCreationSuccessful');
