@@ -6,6 +6,10 @@ import { Observable } from 'rxjs/Observable';
 import { HttpResponse, HttpClient } from '@angular/common/http';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 
+/**
+ * This functionality is only for testing purposes (noVersionControlAndContinuousIntegrationAvailable)
+ */
+
 @Injectable({ providedIn: 'root' })
 export class CourseExerciseSubmissionResultSimulationService {
     constructor(private http: HttpClient) {}

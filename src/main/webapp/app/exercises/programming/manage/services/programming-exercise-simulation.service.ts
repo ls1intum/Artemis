@@ -13,10 +13,12 @@ export class ProgrammingExerciseSimulationService {
     constructor(private http: HttpClient, private programmingExerciseService: ProgrammingExerciseService) {}
 
     /**
-     * Triggers the creation and setup of a new programming exercise
+     * Triggers the creation and setup of a new programming exercise without connection
+     * to the VCS and CI
+     * This functionality is only for testing purposes (noVersionControlAndContinuousIntegrationAvailable)
      * @param programmingExercise
      */
-    automaticSetupWithoutLocalSetup(programmingExercise: ProgrammingExercise): Observable<EntityResponseType> {
+    automaticSetupWithoutConnectionToVCSandCI(programmingExercise: ProgrammingExercise): Observable<EntityResponseType> {
         const copy = this.programmingExerciseService.convertDataFromClient(programmingExercise);
         return this.http
             .post<ProgrammingExercise>(this.resourceUrl + '/no-local-setup', copy, { observe: 'response' })

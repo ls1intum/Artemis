@@ -15,9 +15,6 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { User } from 'app/core/user/user.model';
-import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
-import { CourseExerciseSubmissionResultSimulationService } from 'app/course/manage/course-exercise-submission-result-simulation.service';
 
 @Component({
     selector: 'jhi-exercise-details-student-actions',

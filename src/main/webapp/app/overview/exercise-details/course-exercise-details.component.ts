@@ -309,7 +309,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
 
     /**
      * asks the server for the programming exercise with the provided exercise ID
-     * This functionality is only for testing purposes
+     * This functionality is only for testing purposes(noVersionControlAndContinuousIntegrationAvailable)
      */
     getProgrammingExerciseAndChecksIfTheSetupHasVCSandCIConnection() {
         this.courseExerciseSubmissionResultSimulationService.getProgrammingExercise(this.exerciseId).subscribe((programmingExercise) => {
@@ -320,7 +320,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
 
     /**
      * triggers the simulation of a participation and submission for the currently logged in user
-     * This functionality is only for testing purposes
+     * This functionality is only for testing purposes(noVersionControlAndContinuousIntegrationAvailable)
      */
     simulateSubmission() {
         this.courseExerciseSubmissionResultSimulationService.simulateSubmission(this.exerciseId).subscribe(
@@ -336,7 +336,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
 
     /**
      * triggers the simulation of a result for the currently logged in user
-     * This functionality is only for testing purposes
+     * This functionality is only for testing purposes(noVersionControlAndContinuousIntegrationAvailable)
      */
     simulateResult() {
         this.courseExerciseSubmissionResultSimulationService.simulateResult(this.exerciseId).subscribe(

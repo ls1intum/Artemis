@@ -176,7 +176,8 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
             }
             this.subscribeToSaveResponse(this.programmingExerciseService.update(this.programmingExercise, requestOptions));
         } else if (this.programmingExercise.noVersionControlAndContinuousIntegrationAvailable) {
-            this.subscribeToSaveResponse(this.programmingExerciseSimulationService.automaticSetupWithoutLocalSetup(this.programmingExercise));
+            // only for testing purposes(noVersionControlAndContinuousIntegrationAvailable)
+            this.subscribeToSaveResponse(this.programmingExerciseSimulationService.automaticSetupWithoutConnectionToVCSandCI(this.programmingExercise));
         } else {
             this.subscribeToSaveResponse(this.programmingExerciseService.automaticSetup(this.programmingExercise));
         }
