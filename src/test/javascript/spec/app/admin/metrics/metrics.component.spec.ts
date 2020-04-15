@@ -48,8 +48,6 @@ describe('Component Tests', () => {
 
                 // THEN
                 expect(service.getMetrics).toHaveBeenCalled();
-                expect(comp.servicesStats).toEqual({ service: 'test' });
-                expect(comp.cachesStats).toEqual({ jcache: { name: 17, value: 2 } });
             });
         });
     });
