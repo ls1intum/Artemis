@@ -103,15 +103,6 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
         );
     }
 
-    /**
-     * Checks if the url includes the string "nolocalsetup', which is an indication
-     * that the particular programming exercise has no local setup
-     * @param urlToCheck the url which will be check if it contains the substring
-     */
-    hasNoLocalSetup(urlToCheck: string): boolean {
-        return this.programmingExerciseSimulationUtils.hasNoLocalSetup(urlToCheck);
-    }
-
     protected getChangeEventName(): string {
         return 'programmingExerciseListModification';
     }
@@ -139,4 +130,17 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
             this.javaBridge.log(e);
         }
     }
+
+    // ################## ONLY FOR LOCAL TESTING PURPOSE -- START ##################
+
+    /**
+     * Checks if the url includes the string "nolocalsetup', which is an indication
+     * that the particular programming exercise has no local setup
+     * @param urlToCheck the url which will be check if it contains the substring
+     */
+    hasNoLocalSetup(urlToCheck: string): boolean {
+        return this.programmingExerciseSimulationUtils.hasNoLocalSetup(urlToCheck);
+    }
+
+    // ################## ONLY FOR LOCAL TESTING PURPOSE -- END ##################
 }

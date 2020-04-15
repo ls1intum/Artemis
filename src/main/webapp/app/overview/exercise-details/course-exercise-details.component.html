@@ -24,10 +24,15 @@
         <!-- These buttons will be only shown in dev environment and if the programming exercise has no
         connection to the VCS and CI
         This functionality is only for testing purposes-->
-        <button class="dev-button" *ngIf="!isInProduction && hasNoLocalSetup" (click)="simulateSubmission()">
+        <button class="dev-button" *ngIf="!inProductionEnvironment && noVersionControlAndContinuousIntegrationServerAvailable" (click)="simulateSubmission()">
             Submission
         </button>
-        <button class="dev-button" [disabled]="!wasSubmissionSimulated" *ngIf="!isInProduction && hasNoLocalSetup" (click)="simulateResult()">
+        <button
+            class="dev-button"
+            [disabled]="!wasSubmissionSimulated"
+            *ngIf="!inProductionEnvironment && noVersionControlAndContinuousIntegrationServerAvailable"
+            (click)="simulateResult()"
+        >
             Result
         </button>
         <jhi-submission-result-status [exercise]="exercise" [studentParticipation]="studentParticipation" updatingResultClass="mr-2" [showGradedBadge]="true">

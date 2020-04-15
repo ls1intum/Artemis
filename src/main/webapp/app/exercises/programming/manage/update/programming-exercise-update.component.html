@@ -215,7 +215,7 @@
                 <!--This checkbox is only visible in the dev environment. If the checkbox is checked and the user clicks on the generate button
                 a programming exercise without a connection to the VCS and CI will be generated
                 This functionality is only for testing purposes-->
-                <div class="form-group-narrow" *ngIf="!isInProduction()">
+                <div class="form-group-narrow" *ngIf="!inProductionEnvironment">
                     <div class="form-check">
                         <label class="form-check-label" for="field_noLocalSetup">
                             <input class="form-check-input" type="checkbox" name="noLocalSetup" id="field_noLocalSetup" [(ngModel)]="programmingExercise.noLocalSetup" checked />

@@ -57,6 +57,8 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     private programmingExercise: ProgrammingExercise;
     public wasSubmissionSimulated = false;
     showWelcomeAlert = false;
+    public inProductionEnvironment: boolean;
+    public noVersionControlAndContinuousIntegrationServerAvailable: boolean;
 
     constructor(
         private $location: Location,
@@ -98,6 +100,8 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
                 }, 500);
             }
         });
+        // Checks if the current environment is production
+        this.inProductionEnvironment = this.profileService.isInProduction();
     }
 
     ngOnDestroy() {
@@ -125,61 +129,9 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         this.isAfterAssessmentDueDate = !this.exercise.assessmentDueDate || moment().isAfter(this.exercise.assessmentDueDate);
         this.exerciseCategories = this.exerciseService.convertExerciseCategoriesFromServer(this.exercise);
         if (this.exercise.type === ExerciseType.PROGRAMMING) {
-            this.getProgrammingExercise();
+            this.getProgrammingExerciseAndChecksIfTheSetupHasVCSandCIConnection();
         }
         this.subscribeForNewResults();
-    }
-
-    /**
-     * The button should be only visible in the dev environment
-     */
-    get isInProduction(): boolean {
-        return this.profileService.isInProduction();
-    }
-
-    /**
-     * checks if exercise has no local setup
-     */
-    get hasNoLocalSetup(): boolean {
-        return this.programmingExerciseSimulationUtils.hasNoLocalSetup(this.programmingExercise.testRepositoryUrl);
-    }
-
-    /**
-     * asks the server for the programming exercise with the provided exercise ID
-     */
-    getProgrammingExercise() {
-        this.courseExerciseSubmissionResultSimulationService.getProgrammingExercise(this.exerciseId).subscribe((programmingExercise) => {
-            this.programmingExercise = programmingExercise;
-        });
-    }
-
-    /**
-     * triggers the simulation of a participation and submission for the currently logged in user
-     */
-    simulateSubmission() {
-        this.courseExerciseSubmissionResultSimulationService.simulateSubmission(this.exerciseId).subscribe(
-            () => {
-                this.wasSubmissionSimulated = true;
-                this.jhiAlertService.success('artemisApp.exercise.submissionSuccessful');
-            },
-            () => {
-                this.jhiAlertService.error('artemisApp.exercise.submissionUnsuccessful');
-            },
-        );
-    }
-
-    /**
-     * triggers the simulation of a result for the currently logged in user
-     */
-    simulateResult() {
-        this.courseExerciseSubmissionResultSimulationService.simulateResult(this.exerciseId).subscribe(
-            () => {
-                this.jhiAlertService.success('artemisApp.exercise.resultCreationSuccessful');
-            },
-            () => {
-                this.jhiAlertService.error('artemisApp.exercise.resultCreationUnsuccessful');
-            },
-        );
     }
 
     /**
@@ -352,4 +304,50 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     buildPlanId(participation: Participation): string {
         return (participation! as ProgrammingExerciseStudentParticipation).buildPlanId;
     }
+
+    // ################## ONLY FOR LOCAL TESTING PURPOSE -- START ##################
+
+    /**
+     * asks the server for the programming exercise with the provided exercise ID
+     * This functionality is only for testing purposes
+     */
+    getProgrammingExerciseAndChecksIfTheSetupHasVCSandCIConnection() {
+        this.courseExerciseSubmissionResultSimulationService.getProgrammingExercise(this.exerciseId).subscribe((programmingExercise) => {
+            this.programmingExercise = programmingExercise;
+            this.noVersionControlAndContinuousIntegrationServerAvailable = this.programmingExerciseSimulationUtils.hasNoLocalSetup(this.programmingExercise.testRepositoryUrl);
+        });
+    }
+
+    /**
+     * triggers the simulation of a participation and submission for the currently logged in user
+     * This functionality is only for testing purposes
+     */
+    simulateSubmission() {
+        this.courseExerciseSubmissionResultSimulationService.simulateSubmission(this.exerciseId).subscribe(
+            () => {
+                this.wasSubmissionSimulated = true;
+                this.jhiAlertService.success('artemisApp.exercise.submissionSuccessful');
+            },
+            () => {
+                this.jhiAlertService.error('artemisApp.exercise.submissionUnsuccessful');
+            },
+        );
+    }
+
+    /**
+     * triggers the simulation of a result for the currently logged in user
+     * This functionality is only for testing purposes
+     */
+    simulateResult() {
+        this.courseExerciseSubmissionResultSimulationService.simulateResult(this.exerciseId).subscribe(
+            () => {
+                this.jhiAlertService.success('artemisApp.exercise.resultCreationSuccessful');
+            },
+            () => {
+                this.jhiAlertService.error('artemisApp.exercise.resultCreationUnsuccessful');
+            },
+        );
+    }
+
+    // ################## ONLY FOR LOCAL TESTING PURPOSE -- END ##################
 }

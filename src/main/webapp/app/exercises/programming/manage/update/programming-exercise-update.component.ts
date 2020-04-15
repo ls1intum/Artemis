@@ -54,7 +54,8 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     titleNamePattern = '^[a-zA-Z0-9-_ ]+'; // must only contain alphanumeric characters, or whitespaces, or '_' or '-'
     exerciseCategories: ExerciseCategory[];
     existingCategories: ExerciseCategory[];
-    profileInfo: ProfileInfo;
+
+    public inProductionEnvironment: boolean;
 
     constructor(
         private programmingExerciseService: ProgrammingExerciseService,
@@ -145,13 +146,8 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         if (this.programmingExercise.id !== undefined) {
             this.problemStatementLoaded = true;
         }
-    }
-
-    /**
-     * The button should be only visible in the dev environment
-     */
-    isInProduction(): boolean {
-        return this.profileService.isInProduction();
+        // Checks if the current environment is production
+        this.inProductionEnvironment = this.profileService.isInProduction();
     }
 
     previousState() {
