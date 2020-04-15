@@ -48,7 +48,6 @@ import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.service.TeamService;
 import de.tum.in.www1.artemis.util.*;
 import de.tum.in.www1.artemis.web.rest.ParticipationResource;
-import de.tum.in.www1.artemis.web.rest.ProgrammingExerciseSimulationResource;
 
 public class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -215,20 +214,6 @@ public class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractS
 
         exercise.setId(generatedExercise.getId());
         assertThat(exercise).isEqualTo(generatedExercise);
-        assertThat(programmingExerciseRepository.count()).isEqualTo(1);
-    }
-
-    @ParameterizedTest
-    @EnumSource(ExerciseMode.class)
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void setupProgrammingExerciseWithoutLocalSetup_validExercise_created(ExerciseMode mode) throws Exception {
-        exercise.setMode(mode);
-        assertThat(programmingExerciseRepository.count()).isEqualTo(0);
-        final var generatedExercise = request.postWithResponseBody(
-                ProgrammingExerciseSimulationResource.Endpoints.ROOT + ProgrammingExerciseSimulationResource.Endpoints.EXERCISES_SIMULATION, exercise, ProgrammingExercise.class,
-                HttpStatus.CREATED);
-
-        assertThat(programmingExerciseRepository.findById(generatedExercise.getId()).isPresent());
         assertThat(programmingExerciseRepository.count()).isEqualTo(1);
     }
 

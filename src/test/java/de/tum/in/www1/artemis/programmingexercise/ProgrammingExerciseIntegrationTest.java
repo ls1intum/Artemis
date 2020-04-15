@@ -4,7 +4,6 @@ import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.SOLUTION;
 import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.TEMPLATE;
 import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResource.Endpoints.*;
 import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResource.ErrorKeys.*;
-import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseSimulationResource.Endpoints.EXERCISES_SIMULATION;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.doReturn;
@@ -345,12 +344,6 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void setupProgrammingExercise_exerciseIsNull_badRequest() throws Exception {
         request.post(ROOT + SETUP, null, HttpStatus.BAD_REQUEST);
-    }
-
-    @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void setupProgrammingExerciseWithoutLocalSetup_exerciseIsNull_badRequest() throws Exception {
-        request.post(ROOT + EXERCISES_SIMULATION, null, HttpStatus.BAD_REQUEST);
     }
 
     @Test
