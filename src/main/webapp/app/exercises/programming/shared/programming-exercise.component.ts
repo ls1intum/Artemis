@@ -139,7 +139,7 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
      * This functionality is only for testing purposes (noVersionControlAndContinuousIntegrationAvailable)
      * @param urlToCheck the url which will be check if it contains the substring
      */
-    hasNoLocalSetup(urlToCheck: string): boolean {
+    noVersionControlAndContinuousIntegrationAvailableCheck(urlToCheck: string): boolean {
         return this.programmingExerciseSimulationUtils.hasNoLocalSetup(urlToCheck);
     }
 

@@ -102,13 +102,16 @@
                                 <!--Checks if the programming exercise has a setup with VCS and CI, if this not the case
                                  the links are disabled--->
                                 <a
-                                    *ngIf="!hasNoLocalSetup(programmingExercise.templateParticipation.repositoryUrl); else noLocalSetupTemplate"
+                                    *ngIf="
+                                        !noVersionControlAndContinuousIntegrationAvailableCheck(programmingExercise.templateParticipation.repositoryUrl);
+                                        else noVersionControlAndContinuousIntegrationAvailableTemplate
+                                    "
                                     href="{{ programmingExercise.templateParticipation.repositoryUrl }}"
                                     target="_blank"
                                     >Template</a
                                 ></span
                             >
-                            <ng-template #noLocalSetupTemplate>Template</ng-template>
+                            <ng-template #noVersionControlAndContinuousIntegrationAvailableTemplate>Template</ng-template>
                             <jhi-programming-exercise-instructor-status
                                 *ngIf="
                                     programmingExercise.templateParticipation &&
@@ -123,13 +126,16 @@
                         <div class="d-flex justify-content-between">
                             <span *ngIf="programmingExercise.solutionParticipation && programmingExercise.solutionParticipation.repositoryUrl"
                                 ><a
-                                    *ngIf="!hasNoLocalSetup(programmingExercise.solutionParticipation.repositoryUrl); else noLocalSetupSolution"
+                                    *ngIf="
+                                        !noVersionControlAndContinuousIntegrationAvailableCheck(programmingExercise.solutionParticipation.repositoryUrl);
+                                        else noVersionControlAndContinuousIntegrationAvailableSolution
+                                    "
                                     href="{{ programmingExercise.solutionParticipation.repositoryUrl }}"
                                     target="_blank"
                                     >Solution</a
                                 ></span
                             >
-                            <ng-template #noLocalSetupSolution>Solution</ng-template>
+                            <ng-template #noVersionControlAndContinuousIntegrationAvailableSolution>Solution</ng-template>
                             <jhi-programming-exercise-instructor-status
                                 *ngIf="
                                     programmingExercise.solutionParticipation &&
@@ -144,37 +150,46 @@
                         <div>
                             <span *ngIf="programmingExercise.testRepositoryUrl"
                                 ><a
-                                    *ngIf="!hasNoLocalSetup(programmingExercise.testRepositoryUrl); else noLocalSetupTest"
+                                    *ngIf="
+                                        !noVersionControlAndContinuousIntegrationAvailableCheck(programmingExercise.testRepositoryUrl);
+                                        else noVersionControlAndContinuousIntegrationAvailableTest
+                                    "
                                     href="{{ programmingExercise.testRepositoryUrl }}"
                                     target="_blank"
                                     >Test</a
                                 ></span
                             >
-                            <ng-template #noLocalSetupTest>Test</ng-template>
+                            <ng-template #noVersionControlAndContinuousIntegrationAvailableTest>Test</ng-template>
                         </div>
                     </td>
                     <td jhiOrionFilter [showInOrionWindow]="false">
                         <!-- TODO get the correct URL from the server instead of hardcoding Bamboo here -->
                         <span *ngIf="programmingExercise.templateParticipation && programmingExercise.templateParticipation.buildPlanId"
                             ><a
-                                *ngIf="!hasNoLocalSetup(programmingExercise.templateParticipation.repositoryUrl); else noLocalSetupTemplate"
+                                *ngIf="
+                                    !noVersionControlAndContinuousIntegrationAvailableCheck(programmingExercise.templateParticipation.repositoryUrl);
+                                    else noVersionControlAndContinuousIntegrationAvailableTemplate
+                                "
                                 jhiBuildPlanLink
                                 [projectKey]="programmingExercise.projectKey"
                                 [buildPlanId]="programmingExercise.templateParticipation.buildPlanId"
                                 >Template</a
                             ></span
                         >
-                        <ng-template #noLocalSetupTemplate>Template</ng-template> <br />
+                        <ng-template #noVersionControlAndContinuousIntegrationAvailableTemplate>Template</ng-template> <br />
                         <span *ngIf="programmingExercise.solutionParticipation && programmingExercise.solutionParticipation.buildPlanId"
                             ><a
-                                *ngIf="!hasNoLocalSetup(programmingExercise.solutionParticipation.repositoryUrl); else noLocalSetupSolution"
+                                *ngIf="
+                                    !noVersionControlAndContinuousIntegrationAvailableCheck(programmingExercise.solutionParticipation.repositoryUrl);
+                                    else noVersionControlAndContinuousIntegrationAvailableSolution
+                                "
                                 jhiBuildPlanLink
                                 [projectKey]="programmingExercise.projectKey"
                                 [buildPlanId]="programmingExercise.solutionParticipation.buildPlanId"
                                 >Solution</a
                             ></span
                         >
-                        <ng-template #noLocalSetupSolution>Solution</ng-template><br />
+                        <ng-template #noVersionControlAndContinuousIntegrationAvailableSolution>Solution</ng-template><br />
                     </td>
 
                     <td class="d-none d-md-table-cell">{{ programmingExercise.publishBuildPlanUrl }}</td>
