@@ -41,7 +41,7 @@
             "buildplans": "Build Pläne",
             "publishBuildPlanUrl": "Build Plan veröffentlichen",
             "allowOnlineEditor": "Online Editor erlauben",
-            "noLocalSetup": "Kein lokales Setup",
+            "noVersionControlAndContinuousIntegrationAvailable": "Setup ohne Verbindung zur VCS und CI",
             "sequentialTestRuns": {
                 "title": "Sequentielle Testläufe",
                 "description": "Aktiviere diese Checkbox um zuerst Struktur- und erst im Anschluss Verhaltenstests duchzuführen. Dieses Feature hilft Studenten dabei, sich auf die aktuell anliegende Herausforderung zu konzentrieren. Bei Aktivierung werden im Test Repository zusätzliche Informationen bereitgestellt. ACHTUNG: Kann nicht nachträglich geändert werden!"

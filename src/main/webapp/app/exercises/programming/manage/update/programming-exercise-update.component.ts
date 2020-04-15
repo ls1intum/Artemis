@@ -175,7 +175,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
                 requestOptions.notificationText = this.notificationText;
             }
             this.subscribeToSaveResponse(this.programmingExerciseService.update(this.programmingExercise, requestOptions));
-        } else if (this.programmingExercise.noLocalSetup) {
+        } else if (this.programmingExercise.noVersionControlAndContinuousIntegrationAvailable) {
             this.subscribeToSaveResponse(this.programmingExerciseSimulationService.automaticSetupWithoutLocalSetup(this.programmingExercise));
         } else {
             this.subscribeToSaveResponse(this.programmingExerciseService.automaticSetup(this.programmingExercise));

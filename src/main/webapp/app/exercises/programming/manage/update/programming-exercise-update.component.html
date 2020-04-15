@@ -217,9 +217,16 @@
                 This functionality is only for testing purposes-->
                 <div class="form-group-narrow" *ngIf="!inProductionEnvironment">
                     <div class="form-check">
-                        <label class="form-check-label" for="field_noLocalSetup">
-                            <input class="form-check-input" type="checkbox" name="noLocalSetup" id="field_noLocalSetup" [(ngModel)]="programmingExercise.noLocalSetup" checked />
-                            <span jhiTranslate="artemisApp.programmingExercise.noLocalSetup">No Local Setup</span>
+                        <label class="form-check-label" for="field_noVersionControlAndContinuousIntegrationAvailable">
+                            <input
+                                class="form-check-input"
+                                type="checkbox"
+                                name="noVersionControlAndContinuousIntegrationAvailable"
+                                id="field_noVersionControlAndContinuousIntegrationAvailable"
+                                [(ngModel)]="programmingExercise.noVersionControlAndContinuousIntegrationAvailable"
+                                checked
+                            />
+                            <span jhiTranslate="artemisApp.programmingExercise.noVersionControlAndContinuousIntegrationAvailable">Setup without connection to VCS and CI</span>
                         </label>
                     </div>
                 </div>
