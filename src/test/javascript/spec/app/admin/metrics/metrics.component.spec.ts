@@ -52,12 +52,5 @@ describe('Component Tests', () => {
                 expect(comp.cachesStats).toEqual({ jcache: { name: 17, value: 2 } });
             });
         });
-
-        describe('isNan', () => {
-            it('should return if a variable is NaN', () => {
-                expect(comp.filterNaN(1)).toBe(1);
-                expect(comp.filterNaN('test')).toBe(0);
-            });
-        });
     });
 });
