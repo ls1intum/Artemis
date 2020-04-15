@@ -379,7 +379,7 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
         }
     }
 
-    updateAssessment(assessment: Feedback) {
+    updateAssessment() {
         this.validateAssessment();
     }
 

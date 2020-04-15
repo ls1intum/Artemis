@@ -22,7 +22,7 @@ export class AssessmentWarningComponent implements OnChanges {
     currentDate: moment.MomentInput;
     isBeforeDueDate = false;
 
-    ngOnChanges(changes: SimpleChanges): void {
+    ngOnChanges(): void {
         const dueDate = this.exercise.dueDate;
         if (dueDate != null) {
             this.isBeforeDueDate = dueDate.isAfter(this.currentDate);
