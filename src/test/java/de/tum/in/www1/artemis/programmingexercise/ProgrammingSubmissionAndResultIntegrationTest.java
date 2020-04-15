@@ -3,8 +3,8 @@ package de.tum.in.www1.artemis.programmingexercise;
 import static de.tum.in.www1.artemis.config.Constants.*;
 import static de.tum.in.www1.artemis.constants.ProgrammingSubmissionConstants.*;
 import static de.tum.in.www1.artemis.util.TestConstants.COMMIT_HASH_OBJECT_ID;
-import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResource.Endpoints.*;
 import static de.tum.in.www1.artemis.web.rest.ProgrammingSubmissionResultSimulationResource.Endpoints.RESULTS_SIMULATION;
+import static de.tum.in.www1.artemis.web.rest.ProgrammingSubmissionResultSimulationResource.Endpoints.ROOT;
 import static de.tum.in.www1.artemis.web.rest.ProgrammingSubmissionResultSimulationResource.Endpoints.SUBMISSIONS_SIMULATION;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.doReturn;
@@ -472,7 +472,8 @@ class ProgrammingSubmissionAndResultIntegrationTest extends AbstractSpringIntegr
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void shouldCreateSubmissionWithoutLocalSetup() throws Exception {
         assertThat(submissionRepository.findAll()).hasSize(0);
-        final var returnedSubmission = request.postWithResponseBody("/api" + SUBMISSIONS_SIMULATION + "/" + exerciseId, null, ProgrammingSubmission.class, HttpStatus.CREATED);
+        final var returnedSubmission = request.postWithResponseBody(ROOT + SUBMISSIONS_SIMULATION.replace("{exerciseId}", exerciseId + ""), null, ProgrammingSubmission.class,
+                HttpStatus.CREATED);
         assertThat(submissionRepository.findAll()).hasSize(1);
         ProgrammingSubmission submission = submissionRepository.findAll().get(0);
         assertThat(returnedSubmission).isEqualTo(submission);
@@ -489,9 +490,10 @@ class ProgrammingSubmissionAndResultIntegrationTest extends AbstractSpringIntegr
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void shouldCreateResultWithoutLocalSetup() throws Exception {
-        final var returnedSubmission = request.postWithResponseBody("/api" + SUBMISSIONS_SIMULATION + "/" + exerciseId, null, ProgrammingSubmission.class, HttpStatus.CREATED);
+        final var returnedSubmission = request.postWithResponseBody(ROOT + SUBMISSIONS_SIMULATION.replace("{exerciseId}", exerciseId + ""), null, ProgrammingSubmission.class,
+                HttpStatus.CREATED);
         assertThat(resultRepository.findAll()).hasSize(0);
-        Result returnedResult = request.postWithResponseBody("/api" + RESULTS_SIMULATION + "/" + exerciseId, null, Result.class, HttpStatus.CREATED);
+        Result returnedResult = request.postWithResponseBody(ROOT + RESULTS_SIMULATION.replace("{exerciseId}", exerciseId + ""), null, Result.class, HttpStatus.CREATED);
         ProgrammingSubmission submission = submissionRepository.findAll().get(0);
         assertThat(returnedSubmission).isEqualTo(submission);
         assertThat(resultRepository.findAll()).hasSize(1);
