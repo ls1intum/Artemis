@@ -173,14 +173,30 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
             return forbidden();
         }
 
-        Optional<Result> latestResult = participation.getResults().stream().findFirst();
+        Optional<Result> latestResultOptional = participation.getResults().stream().findFirst();
         // We don't try to fetch build logs for manual results (they were not created through the build but manually by an assessor)!
-        if (latestResult.isPresent() && latestResult.get().getAssessmentType().equals(AssessmentType.MANUAL)) {
+        if (latestResultOptional.isPresent() && latestResultOptional.get().getAssessmentType().equals(AssessmentType.MANUAL)) {
             // Don't throw an error here, just return an empty list.
             return ResponseEntity.ok(new ArrayList<>());
         }
 
-        List<BuildLogEntry> logs = continuousIntegrationService.get().getLatestBuildLogs(participation.getProgrammingExercise().getProjectKey(), participation.getBuildPlanId());
+        List<BuildLogEntry> logs;
+
+        // Load build log from result (= from database) if present, load from CI server if not present
+        if (latestResultOptional.isPresent() && latestResultOptional.get().getAssessmentType().equals(AssessmentType.AUTOMATIC)) {
+            Result latestResult = latestResultOptional.get();
+
+            // Only load log from result if result has feedback
+            if (latestResult.getHasFeedback() != null && latestResult.getHasFeedback()) {
+                logs = continuousIntegrationService.get().getLatestBuildLogsForResult(latestResult);
+            }
+            else {
+                logs = continuousIntegrationService.get().getLatestBuildLogs(participation.getProgrammingExercise().getProjectKey(), participation.getBuildPlanId());
+            }
+        }
+        else {
+            logs = continuousIntegrationService.get().getLatestBuildLogs(participation.getProgrammingExercise().getProjectKey(), participation.getBuildPlanId());
+        }
 
         return new ResponseEntity<>(logs, HttpStatus.OK);
     }

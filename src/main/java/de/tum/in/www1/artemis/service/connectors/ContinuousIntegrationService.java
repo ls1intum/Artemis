@@ -23,7 +23,7 @@ public interface ContinuousIntegrationService {
 
     /**
      * Creates the base build plan for the given programming exercise
-     * 
+     *
      * @param exercise          a programming exercise with the required information to create the base build plan
      * @param planKey           the key of the plan
      * @param repositoryURL     the URL of the assignment repository (used to separate between exercise and solution)
@@ -60,7 +60,7 @@ public interface ContinuousIntegrationService {
 
     /**
      * triggers a build for the build plan in the given participation
-     * 
+     *
      * @param participation the participation with the id of the build plan that should be triggered
      * @throws HttpException if the request to the CI failed.
      */
@@ -136,6 +136,14 @@ public interface ContinuousIntegrationService {
      * @return list of build log entries
      */
     List<BuildLogEntry> getLatestBuildLogs(String projectKey, String buildPlanId);
+
+    /**
+     * Get the build logs for the given result.
+     *
+     * @param result The key of the project under which the plan is stored
+     * @return list of build log entries
+     */
+    List<BuildLogEntry> getLatestBuildLogsForResult(Result result);
 
     /**
      * Get the build artifact (JAR/WAR), if any, of the latest build

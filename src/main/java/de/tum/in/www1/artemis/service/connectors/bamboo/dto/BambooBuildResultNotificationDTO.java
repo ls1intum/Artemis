@@ -271,6 +271,8 @@ public class BambooBuildResultNotificationDTO {
 
         private List<BambooTestJobDTO> successfulTests;
 
+        private List<BambooLogEntryDTO> logEntries;
+
         public List<BambooTestJobDTO> getSuccessfulTests() {
             return successfulTests;
         }
@@ -293,6 +295,38 @@ public class BambooBuildResultNotificationDTO {
 
         public void setFailedTests(List<BambooTestJobDTO> failedTests) {
             this.failedTests = failedTests;
+        }
+
+        public List<BambooLogEntryDTO> getLogEntries() {
+            return logEntries;
+        }
+
+        public void setLogEntries(List<BambooLogEntryDTO> logEntries) {
+            this.logEntries = logEntries;
+        }
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public static final class BambooLogEntryDTO {
+
+        private ZonedDateTime date;
+
+        private String logMessage;
+
+        public ZonedDateTime getDate() {
+            return date;
+        }
+
+        public void setDate(ZonedDateTime date) {
+            this.date = date;
+        }
+
+        public String getLogMessage() {
+            return logMessage;
+        }
+
+        public void setLogMessage(String logMessage) {
+            this.logMessage = logMessage;
         }
     }
 

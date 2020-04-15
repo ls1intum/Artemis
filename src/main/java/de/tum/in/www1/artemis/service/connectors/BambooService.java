@@ -283,7 +283,14 @@ public class BambooService implements ContinuousIntegrationService {
 
     @Override
     public List<BuildLogEntry> getLatestBuildLogs(String projectKey, String buildPlanId) {
-        return retrieveLatestBuildLogs(buildPlanId);
+        return retrieveLatestBuildLogsFromBamboo(buildPlanId);
+    }
+
+    @Override
+    public List<BuildLogEntry> getLatestBuildLogsForResult(Result result) {
+        List<BuildLogEntry> buildLogEntries = result.getFeedbacks().stream().filter(f -> f.getText().equals("Build log")).map(f -> new BuildLogEntry(ZonedDateTime.now(), f.getDetailText())).collect(Collectors.toList());
+        buildLogEntries = filterBuildLogEntries(buildLogEntries);
+        return buildLogEntries;
     }
 
     @Override
@@ -670,7 +677,14 @@ public class BambooService implements ContinuousIntegrationService {
                     createAutomaticFeedback(result, methodName, true, null);
                 }
 
-                if (!job.getFailedTests().isEmpty()) {
+                // 3) add feedback for build errors
+                for (final var logEntry : job.getLogEntries()) {
+                    String logMessage = logEntry.getLogMessage();
+
+                    createAutomaticFeedback(result, "Build log", false, logMessage);
+                }
+
+                if (!job.getFailedTests().isEmpty() || !job.getLogEntries().isEmpty()) {
                     result.setHasFeedback(true);
                 }
             }
@@ -820,7 +834,7 @@ public class BambooService implements ContinuousIntegrationService {
      * @return the list of retrieved build logs.
      */
     //TODO: save this on the Artemis server, e.g. in the result class so that Artemis does not need to retrieve it every time
-    public List<BuildLogEntry> retrieveLatestBuildLogs(String planKey) {
+    public List<BuildLogEntry> retrieveLatestBuildLogsFromBamboo(String planKey) {
         HttpHeaders headers = HeaderUtil.createAuthorization(BAMBOO_USER, BAMBOO_PASSWORD);
         HttpEntity<?> entity = new HttpEntity<>(headers);
         ResponseEntity<Map> response = null;
@@ -834,44 +848,77 @@ public class BambooService implements ContinuousIntegrationService {
             log.error("HttpError while retrieving build result logs from Bamboo: " + e.getMessage());
         }
 
-        var logs = new ArrayList<BuildLogEntry>();
+        List<BuildLogEntry> logs = new ArrayList<>();
 
         if (response != null) {
-            for (Map<String, Object> logEntry : (List<Map>) ((Map) response.getBody().get("logEntries")).get("logEntry")) {
-                String logString = (String) logEntry.get("log");
-                boolean compilationErrorFound = false;
+            List<Map> logEntryMap = ((List<Map>) ((Map) response.getBody().get("logEntries")).get("logEntry"));
+            logs = logEntryMap.stream().map(e ->
+                    new BuildLogEntry(
+                        ZonedDateTime.ofInstant(Instant.ofEpochMilli((long) e.get("date")), ZoneId.systemDefault()),
+                        (String) e.get("log"))
+                ).collect(Collectors.toList());
 
-                if (logString.contains("COMPILATION ERROR")) {
-                    compilationErrorFound = true;
-                }
-
-                if (compilationErrorFound && logString.contains("BUILD FAILURE")) {
-                    // hide duplicated information that is displayed in the section COMPILATION ERROR and in the section BUILD FAILURE and stop here
-                    break;
-                }
-
-                //filter unnecessary logs
-                if ((logString.startsWith("[INFO]") && !logString.contains("error")) ||
-                        logString.startsWith("[WARNING]") ||
-                        logString.startsWith("[ERROR] [Help 1]") ||
-                        logString.startsWith("[ERROR] For more information about the errors and possible solutions") ||
-                        logString.startsWith("[ERROR] Re-run Maven using") ||
-                        logString.startsWith("[ERROR] To see the full stack trace of the errors") ||
-                        logString.startsWith("[ERROR] -> [Help 1]")
-                ) {
-                    continue;
-                }
-
-                //Replace some unnecessary information and hide complex details to make it easier to read the important information
-                logString = logString.replaceAll("/opt/bamboo-agent-home/xml-data/build-dir/", "");
-
-                Instant instant = Instant.ofEpochMilli((long) logEntry.get("date"));
-                ZonedDateTime logDate = ZonedDateTime.ofInstant(instant, ZoneId.systemDefault());
-                BuildLogEntry log = new BuildLogEntry(logDate, logString);
-                logs.add(log);
-            }
+            logs = filterBuildLogEntries(logs);
         }
         return logs;
+    }
+
+    /**
+     * Filter build entries and only return entries that are relevant
+     *
+     * @param buildLogEntries the entries that should be filtered
+     * @return the relevant entries
+     */
+    private List<BuildLogEntry> filterBuildLogEntries(List<BuildLogEntry> buildLogEntries) {
+        List<BuildLogEntry> filteredLogs = new ArrayList<>();
+        for (BuildLogEntry buildLogEntry : buildLogEntries) {
+            String logMessage = buildLogEntry.getLog();
+            boolean compilationErrorFound = false;
+
+            if (logMessage.contains("COMPILATION ERROR")) {
+                compilationErrorFound = true;
+            }
+
+            if (compilationErrorFound && logMessage.contains("BUILD FAILURE")) {
+                // hide duplicated information that is displayed in the section COMPILATION ERROR and in the section BUILD FAILURE and stop here
+                break;
+            }
+
+            //filter unnecessary logs
+            if (filterBuildLogEntry(buildLogEntry)) {
+                continue;
+            }
+
+            //Replace some unnecessary information and hide complex details to make it easier to read the important information
+            logMessage = logMessage.replaceAll("/opt/bamboo-agent-home/xml-data/build-dir/", "");
+            buildLogEntry.setLog(logMessage);
+
+            filteredLogs.add(buildLogEntry);
+        }
+
+        return filteredLogs;
+    }
+
+    /**
+     * Checks whether a build log entry should be filtered or not
+     *
+     * @param buildLogEntry the logEntry to check
+     * @return true if the entry should be filtered, false if not
+     */
+    private boolean filterBuildLogEntry(BuildLogEntry buildLogEntry) {
+        String logMessage = buildLogEntry.getLog();
+        if ((logMessage.startsWith("[INFO]") && !logMessage.contains("error")) ||
+            logMessage.startsWith("[WARNING]") ||
+            logMessage.startsWith("[ERROR] [Help 1]") ||
+            logMessage.startsWith("[ERROR] For more information about the errors and possible solutions") ||
+            logMessage.startsWith("[ERROR] Re-run Maven using") ||
+            logMessage.startsWith("[ERROR] To see the full stack trace of the errors") ||
+            logMessage.startsWith("[ERROR] -> [Help 1]")
+        ) {
+            return true;
+        }
+
+        return false;
     }
 
     /**

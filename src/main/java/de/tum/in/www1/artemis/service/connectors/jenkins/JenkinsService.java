@@ -413,6 +413,11 @@ public class JenkinsService implements ContinuousIntegrationService {
         }
     }
 
+    @Override
+    public List<BuildLogEntry> getLatestBuildLogsForResult(Result result) {
+        throw new UnsupportedOperationException("Jenkins service does not support retrieving the build logs from the result");
+    }
+
     private String stripLogEndOfLine(String log) {
         return log.replaceAll("\\r|\\n", "");
     }
