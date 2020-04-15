@@ -15,7 +15,6 @@ import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service'
 import { ModelingAssessmentService } from 'app/exercises/modeling/assess/modeling-assessment.service';
 import { ModelingSubmission } from 'app/entities/modeling-submission.model';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
-import { TutorParticipation } from 'app/entities/participation/tutor-participation.model';
 import { ModelingAssessmentComponent } from 'app/exercises/modeling/assess/modeling-assessment.component';
 
 @Component({

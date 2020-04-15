@@ -51,12 +51,12 @@ export class UserManagementUpdateComponent implements OnInit {
         this.isSaving = true;
         if (this.user.id !== null) {
             this.userService.update(this.user).subscribe(
-                (response) => this.onSaveSuccess(),
+                () => this.onSaveSuccess(),
                 () => this.onSaveError(),
             );
         } else {
             this.userService.create(this.user).subscribe(
-                (response) => this.onSaveSuccess(),
+                () => this.onSaveSuccess(),
                 () => this.onSaveError(),
             );
         }

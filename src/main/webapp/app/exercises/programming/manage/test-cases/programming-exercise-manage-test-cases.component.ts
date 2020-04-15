@@ -261,6 +261,7 @@ export class ProgrammingExerciseManageTestCasesComponent implements OnInit, OnDe
         const existsUnchangedWithCustomWeight = this.testCases.filter(({ id }) => !this.changedTestCaseIds.includes(id)).some(({ weight }) => weight > 1);
         // If the updated weights are unsaved, we can just reset them locally in the browser without contacting the server.
         if (!existsUnchangedWithCustomWeight) {
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
             this.testCases = this.testCases.map(({ weight, ...rest }) => ({ weight: 1, ...rest }));
             return;
         }
