@@ -24,7 +24,7 @@ import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.ModelingExerciseUtilService;
 import de.tum.in.www1.artemis.util.RequestUtilService;
 
-public class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationTest {
+public class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
     ExerciseRepository exerciseRepo;

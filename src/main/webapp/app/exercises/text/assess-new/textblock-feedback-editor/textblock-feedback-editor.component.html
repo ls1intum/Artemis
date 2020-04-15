@@ -1,0 +1,48 @@
+<div class="form-row">
+    <div class="form-group col-10">
+        <label jhiTranslate="artemisApp.assessment.detail.feedback" [for]="'detailText-' + textBlock.id"></label>
+        <textarea
+            class="form-control"
+            rows="1"
+            [placeholder]="'artemisApp.textAssessment.feedbackEditor.feedbackCommentPlaceholder' | translate"
+            id="detailText-{{ textBlock.id }}"
+            [(ngModel)]="feedback.detailText"
+            #detailText
+            (keyup)="textareaAutogrow()"
+            (keydown.escape)="escKeyup()"
+            (focus)="inFocus()"
+            (ngModelChange)="didChange()"
+        ></textarea>
+    </div>
+    <div class="form-group col-2 text-right">
+        <label jhiTranslate="artemisApp.exercise.score" [for]="'score-' + textBlock.id"></label>
+        <input
+            class="form-control"
+            type="number"
+            step="0.5"
+            [(ngModel)]="feedback.credits"
+            id="score-{{ textBlock.id }}"
+            (keydown.escape)="escKeyup()"
+            (keydown.backspace)="$event.preventDefault()"
+            (click)="onScoreClick($event)"
+            (focus)="inFocus()"
+            (ngModelChange)="didChange()"
+        />
+    </div>
+</div>
+
+<div class="close">
+    <ng-container *ngIf="canDismiss; then closeButton; else trashButton"></ng-container>
+    <ng-template #closeButton>
+        <fa-icon icon="times" [ngbTooltip]="'artemisApp.textAssessment.feedbackEditor.dismissFeedback' | translate" (click)="dismiss()"> </fa-icon>
+    </ng-template>
+    <ng-template #trashButton>
+        <jhi-confirm-icon
+            initialIcon="times"
+            confirmIcon="trash"
+            [initialTooltip]="'artemisApp.textAssessment.feedbackEditor.dismissFeedback' | translate"
+            [confirmTooltip]="'artemisApp.textAssessment.feedbackEditor.dismissFeedbackConfirmation' | translate"
+            (confirmEvent)="dismiss()"
+        ></jhi-confirm-icon>
+    </ng-template>
+</div>

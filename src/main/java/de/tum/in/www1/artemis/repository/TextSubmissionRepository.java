@@ -19,8 +19,8 @@ import de.tum.in.www1.artemis.domain.TextSubmission;
 @Repository
 public interface TextSubmissionRepository extends JpaRepository<TextSubmission, Long> {
 
-    @Query("select distinct submission from TextSubmission submission left join fetch submission.participation participation left join fetch participation.exercise left join fetch submission.result result left join fetch result.assessor left join fetch result.feedbacks left join fetch submission.blocks where submission.id = :#{#submissionId}")
-    Optional<TextSubmission> findByIdWithEagerParticipationExerciseResultAssessorAndBlocks(@Param("submissionId") Long submissionId);
+    @Query("select distinct submission from TextSubmission submission left join fetch submission.participation participation left join fetch participation.exercise left join fetch submission.result result left join fetch result.assessor left join fetch result.feedbacks where submission.id = :#{#submissionId}")
+    Optional<TextSubmission> findByIdWithEagerParticipationExerciseResultAssessor(@Param("submissionId") Long submissionId);
 
     @Query("select distinct submission from TextSubmission submission left join fetch submission.result r left join fetch r.assessor where submission.id = :#{#submissionId}")
     Optional<TextSubmission> findByIdWithEagerResultAndAssessor(@Param("submissionId") Long submissionId);
@@ -39,4 +39,7 @@ public interface TextSubmissionRepository extends JpaRepository<TextSubmission, 
      */
     @EntityGraph(type = LOAD, attributePaths = { "blocks", "blocks.cluster", "result", "participation", "participation.submissions" })
     List<TextSubmission> findByParticipation_ExerciseIdAndResultIsNullAndSubmittedIsTrue(Long exerciseId);
+
+    @EntityGraph(type = LOAD, attributePaths = { "result", "result.assessor", "blocks" })
+    Optional<TextSubmission> findByResult_Id(Long resultId);
 }

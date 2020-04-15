@@ -20,21 +20,26 @@
             You have the lock for this assessment
         </span>
         <ng-container *ngIf="!result?.completionDate">
-            <button class="btn ml-2 btn-primary" (click)="save.emit()" [disabled]="!assessmentsAreValid || !isAssessor">
+            <button class="btn ml-2 btn-primary" (click)="save.emit()" [disabled]="!assessmentsAreValid || !isAssessor || busy">
+                <fa-icon *ngIf="busy" [icon]="'spinner'" [spin]="true">&nbsp;</fa-icon>
                 <fa-icon [icon]="'save'"></fa-icon>
                 <span jhiTranslate="entity.action.save">Save</span>
             </button>
-            <button class="btn ml-2 btn-success" (click)="submit.emit()" [disabled]="!assessmentsAreValid || !isAssessor">
+            <button class="btn ml-2 btn-success" (click)="submit.emit()" [disabled]="!assessmentsAreValid || !isAssessor || busy">
+                <fa-icon *ngIf="busy" [icon]="'spinner'" [spin]="true">&nbsp;</fa-icon>
                 <span jhiTranslate="entity.action.submit">Submit</span>
             </button>
-            <button class="btn ml-2 btn-danger" (click)="cancel.emit()" [disabled]="!(isAtLeastInstructor || isAssessor)">
+            <button class="btn ml-2 btn-danger" (click)="cancel.emit()" [disabled]="!(isAtLeastInstructor || isAssessor) || busy">
+                <fa-icon *ngIf="busy" [icon]="'spinner'" [spin]="true">&nbsp;</fa-icon>
                 <span jhiTranslate="entity.action.cancel">Cancel</span>
             </button>
         </ng-container>
-        <button class="btn ml-2 btn-danger" *ngIf="result?.completionDate && canOverride" (click)="submit.emit()" [disabled]="!assessmentsAreValid">
+        <button class="btn ml-2 btn-danger" *ngIf="result?.completionDate && canOverride" (click)="submit.emit()" [disabled]="!assessmentsAreValid || busy">
+            <fa-icon *ngIf="busy" [icon]="'spinner'" [spin]="true">&nbsp;</fa-icon>
             <span jhiTranslate="artemisApp.assessment.button.overrideAssessment">Override Assessment</span>
         </button>
-        <button class="btn ml-2 btn-success" *ngIf="hasConflict" (click)="resolveConflict.emit()">
+        <button class="btn ml-2 btn-success" *ngIf="hasConflict" (click)="resolveConflict.emit()" [disabled]="busy">
+            <fa-icon *ngIf="busy" [icon]="'spinner'" [spin]="true">&nbsp;</fa-icon>
             <span jhiTranslate="artemisApp.assessment.button.resolveConflict">Resolve Conflict</span>
         </button>
         <button

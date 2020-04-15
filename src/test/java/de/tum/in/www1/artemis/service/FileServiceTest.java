@@ -15,9 +15,9 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.util.ResourceUtils;
 
-import de.tum.in.www1.artemis.AbstractSpringIntegrationTest;
+import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 
-public class FileServiceTest extends AbstractSpringIntegrationTest {
+public class FileServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
     FileService fileService;

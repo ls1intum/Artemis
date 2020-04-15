@@ -37,7 +37,7 @@ export class AlertErrorComponent implements OnDestroy {
                     break;
 
                 case 400:
-                    if (httpErrorResponse.error !== '' && httpErrorResponse.error.skipAlert) {
+                    if (httpErrorResponse.error !== null && httpErrorResponse.error.skipAlert) {
                         break;
                     }
                     const arr = httpErrorResponse.headers.keys();
