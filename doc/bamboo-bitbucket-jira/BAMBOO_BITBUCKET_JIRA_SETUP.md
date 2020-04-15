@@ -16,22 +16,24 @@ This page describes how to set up a programming exercise environment based on Ba
 
 ## Docker-Compose
 
-Before you start the docker-compose, check if the bamboo version in the `build.gradle` is equal to the bamboo version number in the Dockerfile of bamboo stored in `docker/bamboo/Dockerfile`
+Before you start the docker-compose, check if the bamboo version in the `build.gradle` is equal to the bamboo version number in the Dockerfile of bamboo stored in `docker/bamboo/Dockerfile`.
+If the version number is not equal adjust the version number 
+
+Execute the docker-compose file `atlassian.yml` stored in `main/docker`
 
 <b>Get evaluation licenses for Atlassian products:</b> [Atlassian Licenses](https://my.atlassian.com/license/evaluation)
 
-Execute the docker-compose file `atlassian.yml` 
-
-
 ## Configure Bamboo, Bitbucket and Jira
 
-1. Create admin user with the same credentials in all 3 applications
-2. Create user groups for students, admins, tutors, etc. in all 3 and assign them to user
-3. Create [application links](https://confluence.atlassian.com/doc/linking-to-another-application-360677690.html) between all 3 (OAuth Impersonate)
-4. In Bamboo create a global variable named <b>SERVER_PLUGIN_SECRET_PASSWORD</b>, the value of this variable will be used as the secret. The value of this variable
+1. Create an admin user with the same credentials in all 3 applications
+2. Execute the shell script `atlassian-setup.sh` in the `main/docker` directory. This script creats groups, users and add them to
+the created groups and diabled application links between the 3 applications   
+3. Enable the created [application links](https://confluence.atlassian.com/doc/linking-to-another-application-360677690.html) between all 3 application (OAuth Impersonate)
+4. Use the [user directories in Jira](https://confluence.atlassian.com/adminjiraserver/allowing-connections-to-jira-for-user-management-938847045.html) to synchronize the users in bitbucket and bamboo
+5. In Bamboo create a global variable named <b>SERVER_PLUGIN_SECRET_PASSWORD</b>, the value of this variable will be used as the secret. The value of this variable
 should be then stored in the `application-artemis.yml` as the value of `artemis-authentication-token-value`
-5. Download the [bamboo-server-notifaction-plugin](https://github.com/ls1intum/bamboo-server-notification-plugin/releases) and add it to bamboo.
-Go to Bamboo → Manage apps → Upload app → then select the downloaded .jar file → Upload
+6. Download the [bamboo-server-notifaction-plugin](https://github.com/ls1intum/bamboo-server-notification-plugin/releases) and add it to bamboo.
+Go to Bamboo → Manage apps → Upload app → select the downloaded .jar file → Upload
   
 ## Configure Artemis
 
