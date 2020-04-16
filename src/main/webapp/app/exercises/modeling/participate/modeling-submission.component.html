@@ -29,8 +29,8 @@
     </div>
     <br />
 
-    <div class="row" *ngIf="modelingExercise">
-        <div [ngClass]="{ 'col-12': submission?.submitted, 'col-9': !submission?.submitted }">
+    <div class="d-flex flex-column flex-md-row" *ngIf="modelingExercise">
+        <div class="flex-grow-1">
             <p class="mb-3 markdown-preview">
                 <span jhiTranslate="artemisApp.modelingSubmission.problemStatement"><strong>Problem Statement:</strong></span>
                 <span class="background-editor-color">
@@ -38,10 +38,11 @@
                 </span>
             </p>
         </div>
-        <div class="col-3 text-right" *ngIf="!submission?.submitted">
-            <p jhiTranslate="artemisApp.modelingSubmission.maxScore" [translateValues]="{ maxScore: modelingExercise!.maxScore }">
+        <div *ngIf="isActive || isLate" class="flex-shrink-0 ml-md-3 ml-lg-4" [ngStyle]="{ zIndex: 1 }">
+            <p class="ml-3 mb-0 text-right" jhiTranslate="artemisApp.modelingSubmission.maxScore" [translateValues]="{ maxScore: modelingExercise!.maxScore }">
                 <strong>Max. Score: {{ modelingExercise!.maxScore }}</strong>
             </p>
+            <jhi-team-participate-info-box *ngIf="modelingExercise?.teamMode" [exercise]="modelingExercise" [participation]="participation"></jhi-team-participate-info-box>
         </div>
     </div>
 
