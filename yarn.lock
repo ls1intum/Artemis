@@ -1952,6 +1952,13 @@
     semver "^6.3.0"
     tsutils "^3.17.1"
 
+"@w11k/angular-sticky-things@1.2.5":
+  version "1.2.5"
+  resolved "https://registry.yarnpkg.com/@w11k/angular-sticky-things/-/angular-sticky-things-1.2.5.tgz#53d0446842b227d46f2f749b9faf648f26d82b58"
+  integrity sha512-Ke/Vuk4t4JhgZx3Wr+I/4mGvLp7n57GcAzCiB7XZ6xG4bX2GBkf+/eZoQt942EkbQniIo7kC0xjDB7PtJ92Fsw==
+  dependencies:
+    tslib "^1.9.0"
+
 "@webassemblyjs/ast@1.9.0":
   version "1.9.0"
   resolved "https://registry.yarnpkg.com/@webassemblyjs/ast/-/ast-1.9.0.tgz#bd850604b4042459a5a41cd7d338cbed695ed964"
