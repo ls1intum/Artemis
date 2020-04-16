@@ -84,9 +84,7 @@
             </div>
             <div
                 class="col-auto"
-                *ngIf="
-                    isAtLeastTutorInCourse || (approvedQuestionAnswer.author.id === user.id && (!selectedQuestionAnswer || selectedQuestionAnswer.id !== approvedQuestionAnswer.id))
-                "
+                *ngIf="isAtLeastTutorInCourse || (isAuthorOfAnswer(approvedQuestionAnswer) && (!selectedQuestionAnswer || selectedQuestionAnswer.id !== approvedQuestionAnswer.id))"
             >
                 <fa-icon
                     class="mr-1 clickable"
@@ -160,7 +158,7 @@
                 </div>
                 <div
                     class="col-auto"
-                    *ngIf="isAtLeastTutorInCourse || (questionAnswer.author.id === user.id && (!selectedQuestionAnswer || selectedQuestionAnswer.id !== questionAnswer.id))"
+                    *ngIf="isAtLeastTutorInCourse || (isAuthorOfAnswer(questionAnswer) && (!selectedQuestionAnswer || selectedQuestionAnswer.id !== questionAnswer.id))"
                 >
                     <fa-icon
                         class="mr-1 clickable"
