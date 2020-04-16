@@ -109,9 +109,11 @@ public final class Constants {
 
     public static final String DELETE_COURSE = "DELETE_COURSE";
 
+    public static final String DELETE_PARTICIPATION = "DELETE_PARTICIPATION";
+
     public static final String DELETE_TEAM = "DELETE_TEAM";
 
-    public static final String DELETE_PARTICIPATION = "DELETE_PARTICIPATION";
+    public static final String IMPORT_TEAMS = "IMPORT_TEAMS";
 
     public static final String INFO_BUILD_PLAN_URL_DETAIL = "buildPlanURLTemplate";
 
