@@ -30,7 +30,7 @@ export class StudentQuestionRowComponent implements OnInit, OnDestroy {
     isExpanded = true;
     isAnswerMode: boolean;
     isEditMode: boolean;
-    isQuestionAuthor: boolean;
+    isQuestionAuthor = false;
     showOtherAnswers = false;
     selectedQuestionAnswer: StudentQuestionAnswer | null;
     questionAnswerText: string | null;
@@ -190,5 +190,18 @@ export class StudentQuestionRowComponent implements OnInit, OnDestroy {
         this.studentQuestionAnswerService.update(studentAnswer).subscribe((studentAnswerResponse: HttpResponse<StudentQuestionAnswer>) => {
             this.sortQuestionAnswers();
         });
+    }
+
+    /**
+     * Takes a studentQuestionAnswer and determines if the user is the author of it
+     * @param {StudentQuestionAnswer} studentQuestionAnswer
+     * @returns {boolean}
+     */
+    isAuthorOfAnswer(studentQuestionAnswer: StudentQuestionAnswer): boolean {
+        if (this.user) {
+            return studentQuestionAnswer.author.id === this.user.id;
+        } else {
+            return false;
+        }
     }
 }
