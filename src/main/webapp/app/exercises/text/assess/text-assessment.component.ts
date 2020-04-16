@@ -237,7 +237,7 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
             return;
         }
 
-        this.assessmentsService.save(this.assessments, this.exercise.id, this.result.id).subscribe(
+        this.assessmentsService.save(this.exercise.id, this.result.id, this.assessments, []).subscribe(
             (response) => {
                 this.result = response.body!;
                 this.updateParticipationWithResult();
@@ -258,7 +258,7 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
             return;
         }
 
-        this.assessmentsService.submit(this.assessments, this.exercise.id, this.result.id).subscribe(
+        this.assessmentsService.submit(this.exercise.id, this.result.id, this.assessments, []).subscribe(
             (response) => {
                 this.result = response.body!;
                 this.updateParticipationWithResult();

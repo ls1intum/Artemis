@@ -14,8 +14,12 @@ export class ConfirmIconComponent implements OnInit {
 
     ngOnInit(): void {}
 
-    confirmAction() {
-        this.showConfirm = !this.showConfirm;
+    confirmAction(): void {
+        this.toggle();
         this.confirmEvent.emit(true);
+    }
+
+    toggle(): void {
+        this.showConfirm = !this.showConfirm;
     }
 }

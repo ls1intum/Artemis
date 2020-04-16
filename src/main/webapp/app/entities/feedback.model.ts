@@ -1,5 +1,6 @@
 import { BaseEntity } from 'app/shared/model/base-entity';
 import { Result } from 'app/entities/result.model';
+import { TextBlock } from 'app/entities/text-block.model';
 
 export const enum FeedbackHighlightColor {
     RED = 'rgba(219, 53, 69, 0.6)',
@@ -20,7 +21,7 @@ export class Feedback implements BaseEntity {
     public text: string | null;
     public detailText: string | null;
     public reference: string | null;
-    public credits: number;
+    public credits = 0;
     public type: FeedbackType | null;
     public result: Result | null;
     public positive: boolean | null;
@@ -29,13 +30,42 @@ export class Feedback implements BaseEntity {
     public referenceType: string | null; // this string needs to follow UMLModelElementType in Apollon in typings.d.ts
     public referenceId: string | null;
 
-    constructor(credits?: number, text?: string, referenceId?: string, referenceType?: string) {
-        this.referenceId = referenceId || null;
-        this.referenceType = referenceType || null;
-        this.credits = credits || 0;
-        this.text = text || null;
+    public static hasDetailText(that: Feedback): boolean {
+        return that.detailText != null && that.detailText.length > 0;
+    }
+
+    public static isEmpty(that: Feedback): boolean {
+        return that.credits === 0 && Feedback.hasDetailText(that);
+    }
+
+    public static forModeling(credits: number, text?: string, referenceId?: string, referenceType?: string): Feedback {
+        const that = new Feedback();
+        that.referenceId = referenceId || null;
+        that.referenceType = referenceType || null;
+        that.credits = credits;
+        that.text = text || null;
         if (referenceType && referenceId) {
-            this.reference = referenceType + ':' + referenceId;
+            that.reference = referenceType + ':' + referenceId;
         }
+        return that;
+    }
+
+    public static forText(textBlock: TextBlock, credits = 0, detailText?: string): Feedback {
+        const that = new Feedback();
+        that.reference = textBlock.id;
+        that.credits = credits;
+        that.detailText = detailText || null;
+
+        // Delete unused properties
+        delete that.referenceId;
+        delete that.referenceType;
+        delete that.text;
+        delete that.positive;
+
+        return that;
+    }
+
+    public static fromServerResponse(response: Feedback): Feedback {
+        return Object.assign(new Feedback(), response);
     }
 }

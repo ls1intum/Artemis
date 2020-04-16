@@ -51,6 +51,10 @@ while (( "$#" )); do
       tests=$2
       shift 2
       ;;
+    -pl|--programming-language)
+      programmingLanguage=$2
+      shift 2
+      ;;
     --) # end argument parsing
       shift
       break
@@ -80,12 +84,14 @@ tests=${tests:?"You have to specify which tests to run"}
 iterations=${iterations:-10}
 timeoutParticipation=${timeoutParticipation:-60}
 timeoutExercise=${timeoutExercise:-10}
+programmingLanguage=${programmingLanguage:-"JAVA"}
 
 echo "################### STARTING API Tests ###################"
-result=$(docker run -i --rm --network=host --name api-tests -v "$baseDir":/src -e BASE_USERNAME="$baseUsername" -e BASE_URL="$baseUrl" \
+result=$(docker run -i --rm --network=host --name api-tests-"$tests"-"$programmingLanguage" -v "$baseDir":/src -e BASE_USERNAME="$baseUsername" -e BASE_URL="$baseUrl" \
   -e BASE_PASSWORD="$basePassword" -e ITERATIONS="$iterations" -e TIMEOUT_PARTICIPATION="$timeoutParticipation" -e CLEANUP="$cleanup" \
   -e ADMIN_USERNAME="$adminUsername" -e ADMIN_PASSWORD="$adminPassword" -e CREATE_USERS="$createUsers" -e TIMEOUT_EXERCISE="$timeoutExercise" \
-  loadimpact/k6 run /src/"$tests".js 2>&1)
+  -e PROGRAMMING_LANGUAGE="$programmingLanguage" \
+  loadimpact/k6 run --address localhost:0 /src/"$tests".js 2>&1)
 
 echo "########## FINISHED testing - evaluating result ##########"
 echo "$result"

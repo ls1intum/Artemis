@@ -1,0 +1,28 @@
+@import 'src/main/webapp/content/scss/artemis-variables';
+
+:host {
+    display: block;
+    width: 100%;
+}
+
+textarea.form-control,
+textarea.form-control:focus,
+input.form-control,
+input.form-control:focus {
+    width: 100%;
+    background: rgba(255, 255, 255, 0.5);
+}
+
+textarea {
+    resize: none;
+    overflow: hidden;
+}
+
+input {
+    text-align: right;
+}
+
+label {
+    font-style: italic;
+    width: 100%;
+}
