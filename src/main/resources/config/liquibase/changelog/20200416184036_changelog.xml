@@ -1,6 +1,6 @@
 <?xml version="1.1" encoding="UTF-8" standalone="no"?>
 <databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog-ext http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
-    <changeSet author="radchuk" id="20200317211036">
+    <changeSet author="krusche" id="20200416184036">
         <dropView viewName="view_tutor_leaderboard_not_answered_more_feedback_requests"/>
         <dropView viewName="view_tutor_leaderboard_accepted_complaints"/>
         <createView replaceIfExists="true" viewName="view_tutor_leaderboard_complaints">select count(*) as all_complaints, sum(case when `cp`.`accepted` = 1 then 1 else 0 end) AS `accepted_complaints`, sum(case when `cp`.`accepted` = 1 then `e`.`max_score` else 0 end) as points, u.id as user_id, u.first_name, c.id as course_id, e.id as exercise_id from jhi_user u, user_groups g, course c, exercise e, participation p, result r, complaint cp
