@@ -1199,9 +1199,9 @@ public class DatabaseUtilService {
     public DragAndDropQuestion createDragAndDropQuestion() {
         DragAndDropQuestion dnd = (DragAndDropQuestion) new DragAndDropQuestion().title("DnD").score(1).text("Q2");
         dnd.setScoringType(ScoringType.PROPORTIONAL_WITH_PENALTY);
-        var dropLocation1 = new DropLocation().posX(10).posY(10).height(10).width(10);
+        var dropLocation1 = new DropLocation().posX(10d).posY(10d).height(10d).width(10d);
         dropLocation1.setTempID(generateTempId());
-        var dropLocation2 = new DropLocation().posX(20).posY(20).height(10).width(10);
+        var dropLocation2 = new DropLocation().posX(20d).posY(20d).height(10d).width(10d);
         dropLocation2.setTempID(generateTempId());
         dnd.getDropLocations().add(dropLocation1);
         dnd.getDropLocations().add(dropLocation2);
