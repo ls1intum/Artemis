@@ -22,7 +22,7 @@ import de.tum.in.www1.artemis.service.StudentQuestionService;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.RequestUtilService;
 
-public class StudentQuestionAnswerIntegrationTest extends AbstractSpringIntegrationTest {
+public class StudentQuestionAnswerIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
     DatabaseUtilService database;
@@ -203,6 +203,25 @@ public class StudentQuestionAnswerIntegrationTest extends AbstractSpringIntegrat
         // delete answer of other student --> forbidden
         request.delete("/api/student-question-answers/" + studentQuestionAnswer_student2.getId(), HttpStatus.FORBIDDEN);
         assertThat(studentQuestionAnswerRepository.findById(studentQuestionAnswer_student2.getId())).isNotEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void toggleStudentQuestionAnswerApproved() throws Exception {
+        List<StudentQuestionAnswer> answers = createStudentQuestionAnswersOnServer();
+        StudentQuestionAnswer studentQuestionAnswer = answers.get(0);
+
+        // approve answer
+        studentQuestionAnswer.setTutorApproved(true);
+        StudentQuestionAnswer updatedStudentQuestionAnswer1 = request.putWithResponseBody("/api/student-question-answers", studentQuestionAnswer, StudentQuestionAnswer.class,
+                HttpStatus.OK);
+        assertThat(updatedStudentQuestionAnswer1).isEqualTo(studentQuestionAnswer);
+
+        // unapprove answer
+        studentQuestionAnswer.setTutorApproved(false);
+        StudentQuestionAnswer updatedStudentQuestionAnswer2 = request.putWithResponseBody("/api/student-question-answers", studentQuestionAnswer, StudentQuestionAnswer.class,
+                HttpStatus.OK);
+        assertThat(updatedStudentQuestionAnswer2).isEqualTo(studentQuestionAnswer);
     }
 
     private List<StudentQuestionAnswer> createStudentQuestionAnswersOnServer() throws Exception {

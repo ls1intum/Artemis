@@ -10,6 +10,8 @@ import { ButtonSize } from 'app/shared/components/button.component';
 import { Exercise } from 'app/entities/exercise.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { formatTeamAsSearchResult } from 'app/exercises/shared/team/team.utils';
+import { AccountService } from 'app/core/auth/account.service';
+import { User } from 'app/core/user/user.model';
 
 @Component({
     selector: 'jhi-teams',
@@ -20,13 +22,15 @@ export class TeamsComponent implements OnInit, OnDestroy {
 
     teams: Team[] = [];
     filteredTeamsSize = 0;
-    paramSub: Subscription;
     exercise: Exercise;
 
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
 
     isLoading: boolean;
+
+    currentUser: User;
+    isAdmin = false;
 
     constructor(
         private route: ActivatedRoute,
@@ -35,7 +39,13 @@ export class TeamsComponent implements OnInit, OnDestroy {
         private eventManager: JhiEventManager,
         private exerciseService: ExerciseService,
         private teamService: TeamService,
-    ) {}
+        private accountService: AccountService,
+    ) {
+        this.accountService.identity().then((user: User) => {
+            this.currentUser = user;
+            this.isAdmin = this.accountService.isAdmin();
+        });
+    }
 
     ngOnInit() {
         this.loadAll();
@@ -46,7 +56,7 @@ export class TeamsComponent implements OnInit, OnDestroy {
     }
 
     loadAll() {
-        this.paramSub = this.route.params.subscribe((params) => {
+        this.route.params.subscribe((params) => {
             this.isLoading = true;
             this.exerciseService.find(params['exerciseId']).subscribe((exerciseResponse) => {
                 this.exercise = exerciseResponse.body!;
@@ -74,6 +84,15 @@ export class TeamsComponent implements OnInit, OnDestroy {
      */
     onTeamDelete(team: Team) {
         this.deleteTeam(team);
+    }
+
+    /**
+     * Called when teams were imported from another team exercise
+     *
+     * @param teams All teams that this exercise has now after the import
+     */
+    onTeamsImport(teams: Team[]) {
+        this.teams = teams;
     }
 
     /**

@@ -34,7 +34,7 @@ import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.RequestUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.StatsForInstructorDashboardDTO;
 
-public class CourseIntegrationTest extends AbstractSpringIntegrationTest {
+public class CourseIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
     DatabaseUtilService database;
@@ -143,7 +143,7 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationTest {
     @WithMockUser(username = "admin", roles = "ADMIN")
     public void testDeleteCourseWithPermission() throws Exception {
         jiraRequestMockProvider.enableMockingOfRequests();
-        List<Course> courses = database.createCoursesWithExercisesAndLectures();
+        List<Course> courses = database.createCoursesWithExercisesAndLectures(true);
         // mock certain requests to JIRA
         for (Course course : courses) {
             if (course.getStudentGroupName().startsWith(ARTEMIS_GROUP_DEFAULT_PREFIX)) {
@@ -243,7 +243,7 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationTest {
     @Test
     @WithMockUser(username = "tutor6", roles = "TA")
     public void testGetCourse_tutorNotInCourse() throws Exception {
-        var courses = database.createCoursesWithExercisesAndLectures();
+        var courses = database.createCoursesWithExercisesAndLectures(true);
         request.getList("/api/courses/" + courses.get(0).getId(), HttpStatus.FORBIDDEN, Course.class);
         request.get("/api/courses/" + courses.get(0).getId() + "/with-exercises", HttpStatus.FORBIDDEN, Course.class);
     }
@@ -251,14 +251,14 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationTest {
     @Test
     @WithMockUser(username = "instructor2", roles = "INSTRUCTOR")
     public void testGetCourseWithExercisesAndRelevantParticipationsWithoutPermissions() throws Exception {
-        var courses = database.createCoursesWithExercisesAndLectures();
+        var courses = database.createCoursesWithExercisesAndLectures(true);
         request.get("/api/courses/" + courses.get(0).getId() + "/with-exercises-and-relevant-participations", HttpStatus.FORBIDDEN, Course.class);
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testGetCoursesWithPermission() throws Exception {
-        database.createCoursesWithExercisesAndLectures();
+        database.createCoursesWithExercisesAndLectures(true);
         List<Course> courses = request.getList("/api/courses", HttpStatus.OK, Course.class);
         assertThat(courses.size()).as("All courses are available").isEqualTo(2);
         for (Exercise exercise : courses.get(0).getExercises()) {
@@ -270,7 +270,7 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationTest {
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     public void testGetAllCoursesForDashboard() throws Exception {
-        database.createCoursesWithExercisesAndLectures();
+        database.createCoursesWithExercisesAndLectures(true);
 
         // Perform the request that is being tested here
         List<Course> courses = request.getList("/api/courses/for-dashboard", HttpStatus.OK, Course.class);
@@ -336,7 +336,7 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationTest {
     }
 
     private void getCourseForDashboardWithStats(boolean isInstructor) throws Exception {
-        List<Course> testCourses = database.createCoursesWithExercisesAndLectures();
+        List<Course> testCourses = database.createCoursesWithExercisesAndLectures(true);
         for (Course testCourse : testCourses) {
             Course course = request.get("/api/courses/" + testCourse.getId() + "/for-tutor-dashboard", HttpStatus.OK, Course.class);
             for (Exercise exercise : course.getExercises()) {
@@ -397,7 +397,7 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationTest {
     @Test
     @WithMockUser(username = "instructor2", roles = "INSTRUCTOR")
     public void testGetCourseForInstructorDashboardWithStats_instructorNotInCourse() throws Exception {
-        List<Course> testCourses = database.createCoursesWithExercisesAndLectures();
+        List<Course> testCourses = database.createCoursesWithExercisesAndLectures(true);
         request.get("/api/courses/" + testCourses.get(0).getId() + "/for-tutor-dashboard", HttpStatus.FORBIDDEN, Course.class);
         request.get("/api/courses/" + testCourses.get(0).getId() + "/stats-for-instructor-dashboard", HttpStatus.FORBIDDEN, StatsForInstructorDashboardDTO.class);
     }
@@ -405,7 +405,7 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationTest {
     @Test
     @WithMockUser(username = "tutor6", roles = "TA")
     public void testGetCourseForTutorDashboardWithStats_tutorNotInCourse() throws Exception {
-        List<Course> testCourses = database.createCoursesWithExercisesAndLectures();
+        List<Course> testCourses = database.createCoursesWithExercisesAndLectures(true);
         request.get("/api/courses/" + testCourses.get(0).getId() + "/for-tutor-dashboard", HttpStatus.FORBIDDEN, Course.class);
         request.get("/api/courses/" + testCourses.get(0).getId() + "/stats-for-tutor-dashboard", HttpStatus.FORBIDDEN, StatsForInstructorDashboardDTO.class);
     }
@@ -453,7 +453,7 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationTest {
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testGetCourse() throws Exception {
-        List<Course> testCourses = database.createCoursesWithExercisesAndLectures();
+        List<Course> testCourses = database.createCoursesWithExercisesAndLectures(true);
         for (Course testCourse : testCourses) {
             Course courseWithExercisesAndRelevantParticipations = request.get("/api/courses/" + testCourse.getId() + "/with-exercises-and-relevant-participations", HttpStatus.OK,
                     Course.class);
@@ -490,7 +490,7 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationTest {
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testGetCategoriesInCourse() throws Exception {
-        List<Course> testCourses = database.createCoursesWithExercisesAndLectures();
+        List<Course> testCourses = database.createCoursesWithExercisesAndLectures(true);
         Course course1 = testCourses.get(0);
         Course course2 = testCourses.get(1);
         Set<String> categories1 = request.get("/api/courses/" + course1.getId() + "/categories", HttpStatus.OK, Set.class);
@@ -502,7 +502,7 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationTest {
     @Test
     @WithMockUser(username = "instructor2", roles = "INSTRUCTOR")
     public void testGetCategoriesInCourse_instructorNotInCourse() throws Exception {
-        List<Course> testCourses = database.createCoursesWithExercisesAndLectures();
+        List<Course> testCourses = database.createCoursesWithExercisesAndLectures(true);
         request.get("/api/courses/" + testCourses.get(0).getId() + "/categories", HttpStatus.FORBIDDEN, Set.class);
     }
 

@@ -33,7 +33,7 @@ import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.RequestUtilService;
 
-public class ParticipationIntegrationTest extends AbstractSpringIntegrationTest {
+public class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
     CourseRepository courseRepo;

@@ -20,6 +20,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.TeamImportStrategyType;
 import de.tum.in.www1.artemis.repository.TeamRepository;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.dto.TeamSearchUserDTO;
@@ -88,6 +89,7 @@ public class TeamResource {
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user)) {
             return forbidden();
         }
+        team.setOwner(user); // the TA (or above) who creates the team, is the owner of the team
         Team result = teamService.save(exercise, team);
         result.filterSensitiveInformation();
         return ResponseEntity.created(new URI("/api/teams/" + result.getId()))
@@ -124,16 +126,32 @@ public class TeamResource {
         if (!team.getShortName().equals(existingTeam.get().getShortName())) {
             return forbidden(ENTITY_NAME, "shortNameChangeForbidden", "The team's short name cannot be changed after the team has been created.");
         }
+
+        // Prepare auth checks
         User user = userService.getUserWithGroupsAndAuthorities();
         Exercise exercise = exerciseService.findOne(exerciseId);
-        if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user)) {
+        final boolean isAtLeastInstructor = authCheckService.isAtLeastInstructorForExercise(exercise, user);
+        final boolean isAtLeastTeachingAssistantAndOwner = authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user)
+                && authCheckService.isOwnerOfTeam(existingTeam.get(), user);
+
+        // User must be (1) at least instructor or (2) TA but the owner of the team
+        if (!isAtLeastInstructor && !isAtLeastTeachingAssistantAndOwner) {
             return forbidden();
         }
+
+        // The team owner can only be changed by instructors
+        if (!isAtLeastInstructor && !existingTeam.get().getOwner().equals(team.getOwner())) {
+            return forbidden();
+        }
+
+        // Save team (includes check for conflicts that no student is assigned to multiple teams for an exercise)
+        Team result = teamService.save(exercise, team);
+
         // For programming exercise teams with existing participation, the repository access needs to be updated according to the new team member set
         if (exercise instanceof ProgrammingExercise) {
             teamService.updateRepositoryMembersIfNeeded(exerciseId, existingTeam.get(), team);
         }
-        Team result = teamService.save(exercise, team);
+
         result.filterSensitiveInformation();
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, team.getId().toString())).body(result);
     }
@@ -221,16 +239,22 @@ public class TeamResource {
     }
 
     /**
-     * GET /teams?shortName={shortName} : get boolean flag whether team with shortName exists
+     * GET /exercises/{exerciseId}/teams/exists?shortName={shortName} : get boolean flag whether team with shortName exists for exercise
      *
+     * @param exerciseId the id of the exercise for which to check teams
      * @param shortName the shortName of the team to check for existence
      * @return Response with status 200 (OK) and boolean flag in the body
      */
-    @GetMapping("/teams") // this check is independent of the exercise (a team's shortName serves as a globally unique identifier)
+    @GetMapping("/exercises/{exerciseId}/teams/exists")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Boolean> existsTeamByShortName(@RequestParam("shortName") String shortName) {
-        log.debug("REST request to check Team existence by shortName : {}", shortName);
-        return ResponseEntity.ok().body(teamRepository.findOneByShortName(shortName).isPresent());
+    public ResponseEntity<Boolean> existsTeamByShortName(@PathVariable long exerciseId, @RequestParam("shortName") String shortName) {
+        log.debug("REST request to check Team existence for exercise with id {} for shortName : {}", exerciseId, shortName);
+        Exercise exercise = exerciseService.findOne(exerciseId);
+        User user = userService.getUserWithGroupsAndAuthorities();
+        if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user)) {
+            return forbidden();
+        }
+        return ResponseEntity.ok().body(teamRepository.findOneByExerciseIdAndShortName(exerciseId, shortName).isPresent());
     }
 
     /**
@@ -258,4 +282,48 @@ public class TeamResource {
         Exercise exercise = exerciseService.findOne(exerciseId);
         return ResponseEntity.ok().body(teamService.searchByLoginOrNameInCourseForExerciseTeam(course, exercise, loginOrName));
     }
+
+    /**
+     * PUT /exercises/:destinationExerciseId/teams/import-from-exercise/:sourceExerciseId : copy teams from source exercise into destination exercise
+     *
+     * @param destinationExerciseId the exercise id of the exercise for which to import teams (= destination exercise)
+     * @param sourceExerciseId the exercise id of the exercise from which to copy the teams (= source exercise)
+     * @param importStrategyType the import strategy to use when importing the teams
+     * @return the ResponseEntity with status 200 (OK) and the list of created teams in body
+     */
+    @PutMapping("/exercises/{destinationExerciseId}/teams/import-from-exercise/{sourceExerciseId}")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<List<Team>> importTeamsFromSourceExercise(@PathVariable long destinationExerciseId, @PathVariable long sourceExerciseId,
+            @RequestParam TeamImportStrategyType importStrategyType) {
+        log.debug("REST request import all teams from source exercise with id {} into destination exercise with id {}", sourceExerciseId, destinationExerciseId);
+
+        User user = userService.getUserWithGroupsAndAuthorities();
+        Exercise destinationExercise = exerciseService.findOne(destinationExerciseId);
+
+        if (!authCheckService.isAtLeastInstructorForExercise(destinationExercise, user)) {
+            return forbidden();
+        }
+        if (destinationExerciseId == sourceExerciseId) {
+            throw new BadRequestAlertException("The source and destination exercise must be different.", ENTITY_NAME, "sourceDestinationExerciseNotDifferent");
+        }
+        if (!destinationExercise.isTeamMode()) {
+            throw new BadRequestAlertException("The destination exercise must be a team-based exercise.", ENTITY_NAME, "destinationExerciseNotTeamBased");
+        }
+        Exercise sourceExercise = exerciseService.findOne(sourceExerciseId);
+        if (!sourceExercise.isTeamMode()) {
+            throw new BadRequestAlertException("The source exercise must be a team-based exercise.", ENTITY_NAME, "sourceExerciseNotTeamBased");
+        }
+
+        // Create audit event for team import action
+        var logMessage = "Import teams from source exercise '" + sourceExercise.getTitle() + "' (id: " + sourceExercise.getId() + ") into destination exercise '"
+                + destinationExercise.getTitle() + "' (id: " + destinationExercise.getId() + ") using strategy " + importStrategyType;
+        var auditEvent = new AuditEvent(user.getLogin(), Constants.IMPORT_TEAMS, logMessage);
+        auditEventRepository.add(auditEvent);
+
+        // Import teams and return the teams that now belong to the destination exercise
+        List<Team> destinationTeams = teamService.importTeamsFromSourceExerciseIntoDestinationExerciseUsingStrategy(sourceExercise, destinationExercise, importStrategyType);
+        destinationTeams.forEach(Team::filterSensitiveInformation);
+        return ResponseEntity.ok().body(destinationTeams);
+    }
+
 }

@@ -48,24 +48,39 @@ export class StudentQuestionAnswerService {
         return this.http.delete<any>(`${this.resourceUrl}/${id}`, { observe: 'response' });
     }
 
+    /**
+     * Takes a studentQuestionAnswer and converts the date from the client
+     * @param   {StudentQuestionAnswer} studentQuestionAnswer
+     * @return  {StudentQuestionAnswer}
+     */
     protected convertDateFromClient(studentQuestionAnswer: StudentQuestionAnswer): StudentQuestionAnswer {
         const copy: StudentQuestionAnswer = Object.assign({}, studentQuestionAnswer, {
-            answerDate: studentQuestionAnswer.answerDate != null && moment(studentQuestionAnswer.answerDate).isValid() ? moment(studentQuestionAnswer.answerDate).toJSON() : null,
+            answerDate: studentQuestionAnswer.answerDate !== null && moment(studentQuestionAnswer.answerDate).isValid() ? moment(studentQuestionAnswer.answerDate).toJSON() : null,
         });
         return copy;
     }
 
+    /**
+     * Takes a studentQuestionAnswer and converts the date from the server
+     * @param   {StudentQuestionAnswer} studentQuestionAnswer
+     * @return  {StudentQuestionAnswer}
+     */
     protected convertDateFromServer(res: EntityResponseType): EntityResponseType {
         if (res.body) {
-            res.body.answerDate = res.body.answerDate != null ? moment(res.body.answerDate) : null;
+            res.body.answerDate = res.body.answerDate !== null ? moment(res.body.answerDate) : null;
         }
         return res;
     }
 
+    /**
+     * Takes an array of studentQuestionAnswers and converts the date from the server
+     * @param   {EntityArrayResponseType} res
+     * @return  {EntityArrayResponseType}
+     */
     protected convertDateArrayFromServer(res: EntityArrayResponseType): EntityArrayResponseType {
         if (res.body) {
             res.body.forEach((studentQuestionAnswer: StudentQuestionAnswer) => {
-                studentQuestionAnswer.answerDate = studentQuestionAnswer.answerDate != null ? moment(studentQuestionAnswer.answerDate) : null;
+                studentQuestionAnswer.answerDate = studentQuestionAnswer.answerDate !== null ? moment(studentQuestionAnswer.answerDate) : null;
             });
         }
         return res;

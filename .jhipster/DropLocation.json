@@ -3,19 +3,19 @@
     "fields": [
         {
             "fieldName": "posX",
-            "fieldType": "Integer"
+            "fieldType": "Double"
         },
         {
             "fieldName": "posY",
-            "fieldType": "Integer"
+            "fieldType": "Double"
         },
         {
             "fieldName": "width",
-            "fieldType": "Integer"
+            "fieldType": "Double"
         },
         {
             "fieldName": "height",
-            "fieldType": "Integer"
+            "fieldType": "Double"
         },
         {
             "fieldName": "invalid",

@@ -26,8 +26,9 @@ import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.RequestUtilService;
 import de.tum.in.www1.artemis.util.TextExerciseUtilService;
+import de.tum.in.www1.artemis.web.rest.dto.TextAssessmentDTO;
 
-public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationTest {
+public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
     CourseRepository courseRepo;
@@ -150,8 +151,11 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationTest
         TextSubmission submissionWithoutAssessment = request.get("/api/exercises/" + textExercise.getId() + "/text-submission-without-assessment", HttpStatus.OK,
                 TextSubmission.class, params);
 
+        final TextAssessmentDTO textAssessmentDTO = new TextAssessmentDTO();
+        textAssessmentDTO.setFeedbacks(new ArrayList<>());
+
         Result result = request.putWithResponseBody("/api/text-assessments/exercise/" + textExercise.getId() + "/result/" + submissionWithoutAssessment.getResult().getId(),
-                new ArrayList<String>(), Result.class, HttpStatus.OK);
+                textAssessmentDTO, Result.class, HttpStatus.OK);
 
         assertThat(result).as("saved result found").isNotNull();
         assertThat(((StudentParticipation) result.getParticipation()).getStudent()).as("student of participation is hidden").isEmpty();
@@ -169,8 +173,11 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationTest
 
         TextSubmission submissionWithoutAssessment = request.get("/api/exercises/" + textExercise.getId() + "/text-submission-without-assessment", HttpStatus.OK,
                 TextSubmission.class, params);
+
+        final TextAssessmentDTO textAssessmentDTO = new TextAssessmentDTO();
+        textAssessmentDTO.setFeedbacks(new ArrayList<>());
         Result result = request.putWithResponseBody(
-                "/api/text-assessments/exercise/" + textExercise.getId() + "/result/" + submissionWithoutAssessment.getResult().getId() + "/submit", new ArrayList<String>(),
+                "/api/text-assessments/exercise/" + textExercise.getId() + "/result/" + submissionWithoutAssessment.getResult().getId() + "/submit", textAssessmentDTO,
                 Result.class, HttpStatus.OK);
 
         assertThat(result).as("saved result found").isNotNull();
@@ -453,6 +460,7 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationTest
         if (submit.equals("true")) {
             path = path + "/submit";
         }
-        request.putWithResponseBodyAndParams(path, feedbacks, Result.class, httpStatus, params);
+        var body = new TextAssessmentDTO(feedbacks);
+        request.putWithResponseBodyAndParams(path, body, Result.class, httpStatus, params);
     }
 }

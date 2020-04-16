@@ -151,7 +151,7 @@ export default function() {
     // The favicon, the translations, some management information and the TUM logo is downloaded next
 		req = [{
 			"method": "get",
-			"url": baseUrl + "/favicon.ico",
+			"url": baseUrl + "/public/images/favicon.ico",
 			"params": {
 				"cookies": {
 					"XSRF-TOKEN": defaultXSRFToken

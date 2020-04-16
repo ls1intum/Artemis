@@ -198,4 +198,8 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
             document.body.removeChild(anchor);
         }, 0);
     }
+
+    previousState() {
+        window.history.back();
+    }
 }
