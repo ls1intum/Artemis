@@ -10,7 +10,7 @@ import de.tum.in.www1.artemis.domain.leaderboard.tutor.TutorLeaderboardAssessmen
 @Repository
 public interface TutorLeaderboardAssessmentViewRepository extends JpaRepository<TutorLeaderboardAssessmentView, Long> {
 
-    List<TutorLeaderboardAssessmentView> findAllByCourseId(Long courseId);
+    List<TutorLeaderboardAssessmentView> findAllByCourseId(long courseId);
 
-    List<TutorLeaderboardAssessmentView> findAllByLeaderboardId_ExerciseId(Long exerciseId);
+    List<TutorLeaderboardAssessmentView> findAllByLeaderboardId_ExerciseId(long exerciseId);
 }
