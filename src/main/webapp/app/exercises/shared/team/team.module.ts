@@ -16,6 +16,9 @@ import { TeamComponent } from 'app/exercises/shared/team/team.component';
 import { TeamDeleteButtonComponent } from 'app/exercises/shared/team/team-update-dialog/team-delete-button.component';
 import { TeamOwnerSearchComponent } from 'app/exercises/shared/team/team-owner-search/team-owner-search.component';
 import { TeamParticipateInfoBoxComponent } from 'app/exercises/shared/team/team-participate-info-box/team-participate-info-box.component';
+import { TeamsImportButtonComponent } from 'app/exercises/shared/team/teams-import-dialog/teams-import-button.component';
+import { TeamsImportDialogComponent } from 'app/exercises/shared/team/teams-import-dialog/teams-import-dialog.component';
+import { TeamExerciseSearchComponent } from 'app/exercises/shared/team/team-exercise-search/team-exercise-search.component';
 
 const ENTITY_STATES = [...teamRoute];
 
@@ -25,15 +28,18 @@ const ENTITY_STATES = [...teamRoute];
         TeamsComponent,
         TeamUpdateButtonComponent,
         TeamUpdateDialogComponent,
+        TeamsImportButtonComponent,
+        TeamsImportDialogComponent,
         TeamDeleteButtonComponent,
         TeamStudentSearchComponent,
         TeamOwnerSearchComponent,
+        TeamExerciseSearchComponent,
         TeamStudentsListComponent,
         TeamStudentsOnlineListComponent,
         TeamParticipateInfoBoxComponent,
         TeamComponent,
     ],
-    exports: [TeamUpdateButtonComponent, TeamStudentsListComponent, TeamParticipateInfoBoxComponent],
-    entryComponents: [TeamUpdateDialogComponent],
+    exports: [TeamUpdateButtonComponent, TeamsImportButtonComponent, TeamStudentsListComponent, TeamParticipateInfoBoxComponent],
+    entryComponents: [TeamUpdateDialogComponent, TeamsImportDialogComponent],
 })
 export class ArtemisTeamModule {}

@@ -22,7 +22,6 @@ export class TeamsComponent implements OnInit, OnDestroy {
 
     teams: Team[] = [];
     filteredTeamsSize = 0;
-    paramSub: Subscription;
     exercise: Exercise;
 
     private dialogErrorSource = new Subject<string>();
@@ -57,7 +56,7 @@ export class TeamsComponent implements OnInit, OnDestroy {
     }
 
     loadAll() {
-        this.paramSub = this.route.params.subscribe((params) => {
+        this.route.params.subscribe((params) => {
             this.isLoading = true;
             this.exerciseService.find(params['exerciseId']).subscribe((exerciseResponse) => {
                 this.exercise = exerciseResponse.body!;
@@ -85,6 +84,15 @@ export class TeamsComponent implements OnInit, OnDestroy {
      */
     onTeamDelete(team: Team) {
         this.deleteTeam(team);
+    }
+
+    /**
+     * Called when teams were imported from another team exercise
+     *
+     * @param teams All teams that this exercise has now after the import
+     */
+    onTeamsImport(teams: Team[]) {
+        this.teams = teams;
     }
 
     /**
