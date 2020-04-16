@@ -263,10 +263,18 @@ public class DatabaseUtilService {
         return users;
     }
 
-    public List<Team> addTeamsForExercise(Exercise exercise, int numberOfTeams, User owner) {
-        List<Team> teams = ModelFactory.generateTeamsForExercise(exercise, numberOfTeams, owner);
+    public List<Team> addTeamsForExercise(Exercise exercise, String shortNamePrefix, String loginPrefix, int numberOfTeams, User owner) {
+        List<Team> teams = ModelFactory.generateTeamsForExercise(exercise, shortNamePrefix, loginPrefix, numberOfTeams, owner);
         userRepo.saveAll(teams.stream().map(Team::getStudents).flatMap(Collection::stream).collect(Collectors.toList()));
         return teamRepo.saveAll(teams);
+    }
+
+    public List<Team> addTeamsForExercise(Exercise exercise, String shortNamePrefix, int numberOfTeams, User owner) {
+        return addTeamsForExercise(exercise, shortNamePrefix, "student", numberOfTeams, owner);
+    }
+
+    public List<Team> addTeamsForExercise(Exercise exercise, int numberOfTeams, User owner) {
+        return addTeamsForExercise(exercise, "team", numberOfTeams, owner);
     }
 
     public Team addTeamForExercise(Exercise exercise, User owner) {
