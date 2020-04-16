@@ -3,16 +3,16 @@ package de.tum.in.www1.artemis.service;
 import java.time.ZonedDateTime;
 import java.util.Optional;
 
+import javax.annotation.Nullable;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
-import de.tum.in.www1.artemis.domain.Result;
-import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
+import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.participation.Participant;
@@ -130,7 +130,49 @@ public class ProgrammingSubmissionResultSimulationService {
         result.score(54L);
         result.setAssessmentType(AssessmentType.AUTOMATIC);
         result.setCompletionDate(ZonedDateTime.now());
+        this.addFeedback(result);
         resultRepository.save(result);
         return result;
     }
+
+    /**
+     * Creates feedback for the provided result
+     * This functionality is only for testing purposes (noVersionControlAndContinuousIntegrationAvailable)
+     * @param result for which the feedback should be created
+     * @param methodName of the testcase
+     * @param positive is the testcase positive or not
+     * @param errorMessageString will only added if the test case fails otherwise use null
+     */
+    public void createFeedback(Result result, String methodName, boolean positive, @Nullable String errorMessageString) {
+        Feedback feedback = new Feedback();
+        feedback.setText(methodName);
+        feedback.setDetailText(errorMessageString);
+        feedback.setType(FeedbackType.AUTOMATIC);
+        feedback.setPositive(positive);
+        result.addFeedback(feedback);
+    }
+
+    /**
+     * adds the feedback to the result
+     * This functionality is only for testing purposes (noVersionControlAndContinuousIntegrationAvailable)
+     * @param result to which the feedback should be added
+     */
+    public void addFeedback(Result result) {
+        this.createFeedback(result, "testClass[BubbleSort]", false,
+                "The class 'BubbleSort' does not implement the interface 'SortStrategy' as expected. Implement the interface and its methods.");
+        this.createFeedback(result, "testBubbleSort", false, "BubbleSort does not sort correctly");
+        this.createFeedback(result, "testUseBubbleSortForSmallList", false, "The class 'Context' was not found within the submission. Make sure to implement it properly.");
+        this.createFeedback(result, "testMergeSort", false, "MergeSort does not sort correctly");
+        this.createFeedback(result, "testUseMergeSortForBigList", false, "The class 'Context' was not found within the submission. Make sure to implement it properly.");
+        this.createFeedback(result, "testClass[MergeSort]", false,
+                "The class 'MergeSort' does not implement the interface 'SortStrategy' as expected. Implement the interface and its methods.");
+        this.createFeedback(result, "testClass[SortStrategy]", true, null);
+        this.createFeedback(result, "testAttributes[Context]", true, null);
+        this.createFeedback(result, "testMethods[Policy]", true, null);
+        this.createFeedback(result, "testMethods[SortStrategy]", true, null);
+        this.createFeedback(result, "testMethods[Context]", true, null);
+        this.createFeedback(result, "testAttributes[Policy]", true, null);
+        this.createFeedback(result, "testConstructors[Policy]", true, null);
+    }
+
 }
