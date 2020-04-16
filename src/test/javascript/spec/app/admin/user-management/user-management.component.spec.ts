@@ -1,11 +1,14 @@
 import { async, ComponentFixture, fakeAsync, inject, TestBed, tick } from '@angular/core/testing';
 import { of } from 'rxjs';
 import { HttpHeaders, HttpResponse } from '@angular/common/http';
+import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 
 import { ArtemisTestModule } from '../../../test.module';
 import { UserManagementComponent } from 'app/admin/user-management/user-management.component';
 import { User } from 'app/core/user/user.model';
 import { UserService } from 'app/core/user/user.service';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockSyncStorage } from '../../../mocks/mock-sync.storage';
 
 describe('Component Tests', () => {
     describe('User Management Component', () => {
@@ -17,6 +20,7 @@ describe('Component Tests', () => {
             TestBed.configureTestingModule({
                 imports: [ArtemisTestModule],
                 declarations: [UserManagementComponent],
+                providers: [AccountService, { provide: SessionStorageService, useClass: MockSyncStorage }, { provide: LocalStorageService, useClass: MockSyncStorage }],
             })
                 .overrideTemplate(UserManagementComponent, '')
                 .compileComponents();
@@ -26,32 +30,6 @@ describe('Component Tests', () => {
             fixture = TestBed.createComponent(UserManagementComponent);
             comp = fixture.componentInstance;
             service = fixture.debugElement.injector.get(UserService);
-        });
-
-        describe('OnInit', () => {
-            it('Should call load all on init', inject(
-                [],
-                fakeAsync(() => {
-                    // GIVEN
-                    const headers = new HttpHeaders().append('link', 'link;link');
-                    spyOn(service, 'query').and.returnValue(
-                        of(
-                            new HttpResponse({
-                                body: [new User(123)],
-                                headers,
-                            }),
-                        ),
-                    );
-
-                    // WHEN
-                    comp.ngOnInit();
-                    tick(); // simulate async
-
-                    // THEN
-                    expect(service.query).toHaveBeenCalled();
-                    expect(comp.users[0]).toEqual(jasmine.objectContaining({ id: 123 }));
-                }),
-            ));
         });
 
         describe('setActive', () => {
