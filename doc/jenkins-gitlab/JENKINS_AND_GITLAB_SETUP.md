@@ -375,20 +375,6 @@ After you click on "Test Connection", everything should work fine.
     
     </details>
 
-4. Copy the ID of the API token and put it into the Artemis configuration _application-artemis.yml_:
-
-        artemis:
-            continuous-integration:
-                vcs-credentials: the.id.of.the.gitlab.api.token.credential
-                
-    <details><summary>Where to find the ID</summary>
-    
-    ![](jeknins_credentials_overview.png)
-    ![](jenkins_credential_single_select.png)
-    ![](jenkins_credential_details.png)
-    
-    </details>
-
 #### Server Notification Token
 1. Create a new Jenkins credential containing the token, which gets send by the server notification plugin to Artemis with every build result:
     1. **Kind**: Secret text
@@ -417,7 +403,7 @@ After you click on "Test Connection", everything should work fine.
     5. Leave the ID field blank
     6. The description is up to you
 
-2. Copy the generated ID of the new credentials and put it into the Artemis configuration file _application-artemis.yml_
+2. Copy the generated ID (e.g. `ea0e3c08-4110-4g2f-9c83-fb2cdf6345fa`) of the new credentials and put it into the Artemis configuration file _application-artemis.yml_
 
         artemis:
             continuous-integration:
@@ -469,7 +455,7 @@ In order to get this token, you have to do the following steps:
 Also disable the option `use-crumb` in `application-jenkins.yml`.
 
 ### Upgrade Jenkins
-Build the latest version of the jenkins image, stop the running container and mount the Jenkins data volume to the new LTS container.
+Build the latest version of the `jenkins-artemis` Docker image, stop the running container and mount the Jenkins data volume to the new LTS container.
 Make sure to perform this command in the folder where the `Dockerfile` was created (e.g. `/opt/jenkins/`).
 
 ```shell script
