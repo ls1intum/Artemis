@@ -52,11 +52,15 @@ describe('Component Tests', () => {
                         activated: true,
                         langKey: 'en',
                         authorities: ['ROLE_USER'],
-                        createdBy: 'admin',
+                        createdBy: null,
                         createdDate: null,
                         lastModifiedBy: null,
                         lastModifiedDate: null,
                         password: null,
+                        groups: 'admin',
+                        guidedTourSettings: [],
+                        imageUrl: null,
+                        lastNotificationRead: null,
                     }),
                 );
             });
