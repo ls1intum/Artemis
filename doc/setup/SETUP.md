@@ -1,7 +1,7 @@
 ## Setup Guide for Artemis
 
 In this guide you learn how to setup the development environment of Artemis.
-Artemis is based on [JHipster](https://jhipster.github.io), i.e. [Spring Boot](http://projects.spring.io/spring-boot) development on the application server using Java 12, and TypeScript development on the application client in the browser using [Angular](https://angular.io) and Webpack. 
+Artemis is based on [JHipster](https://jhipster.github.io), i.e. [Spring Boot](http://projects.spring.io/spring-boot) development on the application server using Java 12, and TypeScript development on the application client in the browser using [Angular](https://angular.io) and Webpack.
 To get an overview of the used technology, have a look at [https://jhipster.github.io/tech-stack](https://jhipster.github.io/tech-stack) and other tutorials on the JHipster homepage.
 
 You can find tutorials how to setup JHipster in an IDE ([IntelliJ IDEA Ultimate](https://www.jetbrains.com/idea) is recommended) on [https://jhipster.github.io/configuring-ide](https://jhipster.github.io/configuring-ide). Note that the Community Edition of IntelliJ IDEA does not provide Spring Boot support (see the [comparison matrix](https://www.jetbrains.com/idea/features/editions_comparison_matrix.html)).
