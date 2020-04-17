@@ -57,6 +57,10 @@ export class GradingInstructionsDetailsComponent implements OnInit {
             const dummyCriterion = new GradingCriterion();
             const exampleCriterion = new GradingCriterion();
             exampleCriterion.title = 'This is an Example criterion';
+            const exampleInstr = new GradingInstruction();
+            exampleCriterion.structuredGradingInstructions = [];
+            exampleCriterion.structuredGradingInstructions.push(exampleInstr);
+            exampleCriterion.structuredGradingInstructions.push(exampleInstr); // to showcase that a criterion consists of multiple instructions
             this.criteria.push(dummyCriterion);
             this.criteria.push(exampleCriterion);
         }
