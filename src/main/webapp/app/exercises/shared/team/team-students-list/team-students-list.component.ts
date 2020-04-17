@@ -8,5 +8,6 @@ import { User } from 'app/core/user/user.model';
 })
 export class TeamStudentsListComponent {
     @Input() students: User[];
+    @Input() errorStudentLogins: string[] = [];
     @Input() renderLinks = false;
 }

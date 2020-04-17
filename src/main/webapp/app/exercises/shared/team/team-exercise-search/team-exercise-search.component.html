@@ -1,0 +1,14 @@
+<input
+    #instance="ngbTypeahead"
+    id="exercise-search-input"
+    type="text"
+    class="form-control"
+    [placeholder]="'artemisApp.team.selectExerciseForImport' | translate"
+    [(ngModel)]="exercise"
+    (selectItem)="onAutocompleteSelect($event.item)"
+    (focus)="focus$.next('')"
+    (click)="click$.next('')"
+    [ngbTypeahead]="onSearch"
+    [resultFormatter]="searchResultFormatter"
+    [inputFormatter]="searchInputFormatter"
+/>

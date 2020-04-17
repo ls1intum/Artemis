@@ -47,6 +47,9 @@
                 "failed": "Search failed. Please try again.",
                 "noResults": "No students found in course for search:"
             },
+            "errors": {
+                "studentAlreadyAssignedToTeam": "Student with login {{ studentLogin }} is already assigned to team with id {{ teamId }."
+            },
             "selectOwnerForTeam": "Select tutor (by searching for login or name)",
             "ownerSearch": {
                 "queryTooShort": "Please enter at least 3 characters.",
@@ -68,9 +71,78 @@
                 "label": "Delete",
                 "error": "Could not remove team. Please try again."
             },
-            "errors": {
-                "studentAlreadyAssignedToTeam": "Student with login {{ studentLogin }} is already assigned to team with id {{ teamId }."
-            }
+            "importTeams": {
+                "buttonLabel": "Import teams",
+                "dialogTitle": "Import teams into:",
+                "introText": "This dialog can be used to import teams from another exercise of this course into this exercise.",
+                "error": "Could not import teams. Please try again."
+            },
+            "sourceExercise": {
+                "label": "Source exercise",
+                "tooltip": "The teams from the selected source exercise will be copied into this exercise."
+            },
+            "selectExerciseForImport": "Select exercise (by searching for the title)",
+            "exerciseSearch": {
+                "failed": "Search failed. Please try again.",
+                "noResults": "There are no other team-based exercises in this course.",
+                "noResultsForSearchTerm": "No other team-based exercise found in course for search:"
+            },
+            "sourceTeams": {
+                "label": "Source teams",
+                "tooltip": "These teams will be copied into the current exercise.",
+                "legend": {
+                    "label": "Legend",
+                    "tooltip": "The legend shows the three different conflict states that a source team can have.",
+                    "teamShortName": "team",
+                    "items": {
+                        "conflictFreeTeam": {
+                            "label": "Conflict-free team",
+                            "tooltip": "This team can be imported without any issues."
+                        },
+                        "teamShortNameConflict": {
+                            "label": "Team short name conflict",
+                            "tooltip": "A team with the same short name already exists in this exercise."
+                        },
+                        "studentConflict": {
+                            "label": "Student conflict",
+                            "tooltip": "The student highlighted in red is already part of a team for this exercise."
+                        }
+                    }
+                }
+            },
+            "loadSourceTeams": {
+                "failed": "Loading teams failed. Please try again."
+            },
+            "noTeamsInSourceExercise": "The source exercise has no teams.",
+            "importStrategy": {
+                "label": "Import strategy",
+                "tooltip": "The import strategy determines which of the source teams will be imported and what happens to existing teams in this exercise.",
+                "options": {
+                    "purgeExisting": {
+                        "label": "Purge existing",
+                        "badge": "dangerous",
+                        "explanation": "Before importing all of the teams from the source exercise above, all existing teams of this exercise will be deleted with their participations."
+                    },
+                    "createOnly": {
+                        "label": "Create only",
+                        "badge": "safe",
+                        "explanation": "Only conflict-free source teams (shown above in green) will be imported. Existing teams of this exercise will not be touched."
+                    }
+                }
+            },
+            "importPreview": {
+                "noTeamsToImport": "No teams to import",
+                "noConflictFreeTeamsToImport": "No conflict-free teams to import",
+                "teamsToBeDeleted": "Existing teams to be deleted:",
+                "teamsToBeImported": "Teams to be imported:",
+                "outOf": "(out of {{ number }})",
+                "totalTeamsAfterImport": "Total teams after import:"
+            },
+            "purgeConfirmationDialog": {
+                "question": "Are you sure you want to delete all teams of exercise <strong>{{ title }}</strong> and their participations in the exercise? This action can NOT be undone!",
+                "typeNameToConfirm": "Please type in the title of the exercise to confirm."
+            },
+            "importError": "Import failed. Please try again or contact an administrator for assistance."
         }
     }
 }

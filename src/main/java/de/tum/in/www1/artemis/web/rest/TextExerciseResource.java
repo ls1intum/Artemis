@@ -18,8 +18,8 @@ import org.springframework.web.bind.annotation.*;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.ExampleSubmissionRepository;
-import de.tum.in.www1.artemis.repository.GradingCriterionRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
+import de.tum.in.www1.artemis.repository.TextBlockRepository;
 import de.tum.in.www1.artemis.repository.TextExerciseRepository;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.scheduled.TextClusteringScheduleService;
@@ -41,13 +41,13 @@ public class TextExerciseResource {
 
     private final TextAssessmentService textAssessmentService;
 
+    private final TextBlockRepository textBlockRepository;
+
     private final TextExerciseService textExerciseService;
 
     private final ExerciseService exerciseService;
 
     private final TextExerciseRepository textExerciseRepository;
-
-    private final GradingCriterionRepository gradingCriterionRepository;
 
     private final UserService userService;
 
@@ -70,9 +70,10 @@ public class TextExerciseResource {
     public TextExerciseResource(TextExerciseRepository textExerciseRepository, TextExerciseService textExerciseService, TextAssessmentService textAssessmentService,
             UserService userService, AuthorizationCheckService authCheckService, CourseService courseService, ParticipationService participationService,
             ResultRepository resultRepository, GroupNotificationService groupNotificationService, ExampleSubmissionRepository exampleSubmissionRepository,
-            Optional<TextClusteringScheduleService> textClusteringScheduleService, ExerciseService exerciseService, GradingCriterionRepository gradingCriterionRepository,
-            GradingCriterionService gradingCriterionService) {
+            Optional<TextClusteringScheduleService> textClusteringScheduleService, ExerciseService exerciseService, GradingCriterionService gradingCriterionService,
+            TextBlockRepository textBlockRepository) {
         this.textAssessmentService = textAssessmentService;
+        this.textBlockRepository = textBlockRepository;
         this.textExerciseService = textExerciseService;
         this.textExerciseRepository = textExerciseRepository;
         this.userService = userService;
@@ -84,7 +85,6 @@ public class TextExerciseResource {
         this.exampleSubmissionRepository = exampleSubmissionRepository;
         this.textClusteringScheduleService = textClusteringScheduleService;
         this.exerciseService = exerciseService;
-        this.gradingCriterionRepository = gradingCriterionRepository;
         this.gradingCriterionService = gradingCriterionService;
     }
 
@@ -307,13 +307,19 @@ public class TextExerciseResource {
             textSubmission.setParticipation(null);
 
             Result result = textSubmission.getResult();
-            if (textSubmission.isSubmitted() && result != null && result.getCompletionDate() != null) {
-                List<Feedback> assessments = textAssessmentService.getAssessmentsForResult(result);
-                result.setFeedbacks(assessments);
-            }
+            if (result != null) {
+                // Load TextBlocks for the Submission. They are needed to display the Feedback in the client.
+                final List<TextBlock> textBlocks = textBlockRepository.findAllBySubmissionId(textSubmission.getId());
+                textSubmission.setBlocks(textBlocks);
 
-            if (result != null && !authCheckService.isAtLeastInstructorForExercise(textExercise, user)) {
-                result.setAssessor(null);
+                if (textSubmission.isSubmitted() && result.getCompletionDate() != null) {
+                    List<Feedback> assessments = textAssessmentService.getAssessmentsForResult(result);
+                    result.setFeedbacks(assessments);
+                }
+
+                if (!authCheckService.isAtLeastInstructorForExercise(textExercise, user)) {
+                    result.setAssessor(null);
+                }
             }
 
             participation.addSubmissions(textSubmission);
