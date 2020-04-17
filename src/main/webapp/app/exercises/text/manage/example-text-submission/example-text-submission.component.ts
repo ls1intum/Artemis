@@ -325,7 +325,7 @@ export class ExampleTextSubmissionComponent implements OnInit, AfterViewInit {
             return;
         }
 
-        this.assessmentsService.save(this.assessments, this.exercise.id, this.result.id).subscribe((response) => {
+        this.assessmentsService.save(this.exercise.id, this.result.id, this.assessments, []).subscribe((response) => {
             this.result = response.body!;
             this.areNewAssessments = false;
             this.jhiAlertService.success('artemisApp.textAssessment.saveSuccessful');

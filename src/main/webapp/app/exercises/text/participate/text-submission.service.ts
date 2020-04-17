@@ -14,22 +14,22 @@ export class TextSubmissionService {
     constructor(private http: HttpClient) {}
 
     create(textSubmission: TextSubmission, exerciseId: number): Observable<EntityResponseType> {
-        const copy = this.convert(textSubmission);
+        const copy = TextSubmissionService.convert(textSubmission);
         return this.http
             .post<TextSubmission>(`api/exercises/${exerciseId}/text-submissions`, copy, {
                 observe: 'response',
             })
-            .map((res: EntityResponseType) => this.convertResponse(res));
+            .map((res: EntityResponseType) => TextSubmissionService.convertResponse(res));
     }
 
     update(textSubmission: TextSubmission, exerciseId: number): Observable<EntityResponseType> {
-        const copy = this.convert(textSubmission);
+        const copy = TextSubmissionService.convert(textSubmission);
         return this.http
             .put<TextSubmission>(`api/exercises/${exerciseId}/text-submissions`, stringifyCircular(copy), {
                 headers: { 'Content-Type': 'application/json' },
                 observe: 'response',
             })
-            .map((res: EntityResponseType) => this.convertResponse(res));
+            .map((res: EntityResponseType) => TextSubmissionService.convertResponse(res));
     }
 
     getTextSubmissionsForExercise(exerciseId: number, req: { submittedOnly?: boolean; assessedByTutor?: boolean }): Observable<HttpResponse<TextSubmission[]>> {
@@ -39,10 +39,10 @@ export class TextSubmissionService {
                 params: options,
                 observe: 'response',
             })
-            .map((res: HttpResponse<TextSubmission[]>) => this.convertArrayResponse(res));
+            .map((res: HttpResponse<TextSubmission[]>) => TextSubmissionService.convertArrayResponse(res));
     }
 
-    getTextSubmissionForExerciseWithoutAssessment(exerciseId: number, lock?: boolean): Observable<TextSubmission> {
+    getTextSubmissionForExerciseWithoutAssessment(exerciseId: number, lock = false): Observable<TextSubmission> {
         let url = `api/exercises/${exerciseId}/text-submission-without-assessment`;
         if (lock) {
             url += '?lock=true';
@@ -53,16 +53,16 @@ export class TextSubmissionService {
         );
     }
 
-    private convertResponse(res: EntityResponseType): EntityResponseType {
-        const body: TextSubmission = this.convertItemFromServer(res.body!);
+    private static convertResponse(res: EntityResponseType): EntityResponseType {
+        const body: TextSubmission = TextSubmissionService.convertItemFromServer(res.body!);
         return res.clone({ body });
     }
 
-    private convertArrayResponse(res: HttpResponse<TextSubmission[]>): HttpResponse<TextSubmission[]> {
+    private static convertArrayResponse(res: HttpResponse<TextSubmission[]>): HttpResponse<TextSubmission[]> {
         const jsonResponse: TextSubmission[] = res.body!;
         const body: TextSubmission[] = [];
         for (let i = 0; i < jsonResponse.length; i++) {
-            body.push(this.convertItemFromServer(jsonResponse[i]));
+            body.push(TextSubmissionService.convertItemFromServer(jsonResponse[i]));
         }
         return res.clone({ body });
     }
@@ -70,14 +70,14 @@ export class TextSubmissionService {
     /**
      * Convert a returned JSON object to TextSubmission.
      */
-    private convertItemFromServer(textSubmission: TextSubmission): TextSubmission {
+    private static convertItemFromServer(textSubmission: TextSubmission): TextSubmission {
         return Object.assign({}, textSubmission);
     }
 
     /**
      * Convert a TextSubmission to a JSON which can be sent to the server.
      */
-    private convert(textSubmission: TextSubmission): TextSubmission {
+    private static convert(textSubmission: TextSubmission): TextSubmission {
         return Object.assign({}, textSubmission);
     }
 }

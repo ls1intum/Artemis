@@ -99,3 +99,12 @@ export const buildUrlWithParams = (url: string, params: string[]): string => {
 export const onError = (jhiAlertService: AlertService, error: HttpErrorResponse) => {
     jhiAlertService.error(error.message);
 };
+
+/**
+ * Checks if provided value is undefined. Can be used to filter an array:
+ * [].filter(notUndefined)
+ *
+ * @param anyValue
+ * @return boolean
+ */
+export const notUndefined = (anyValue: any): boolean => anyValue !== undefined;

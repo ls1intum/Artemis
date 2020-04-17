@@ -246,7 +246,7 @@ public class BambooRequestMockProvider {
         buildResult.setBuildCompletedDate(ZonedDateTime.now().minusMinutes(1));
         buildResult.setBuildReason("Initial clean build");
         buildResult.setBuildState(QueriedBambooBuildResultDTO.BuildState.FAILED);
-        buildResult.setBuildTestSummary("3 of 3 failed");
+        buildResult.setBuildTestSummary("0 of 3 passed");
         buildResult.setVcsRevisionKey(TestConstants.COMMIT_HASH_STRING);
         buildResult.setTestResults(testResults);
 

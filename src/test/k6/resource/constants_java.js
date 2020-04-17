@@ -1,4 +1,4 @@
-export const programmingExerciseProblemStatement = '# Sorting with the Strategy Pattern\n' +
+export const programmingExerciseProblemStatementJava = '# Sorting with the Strategy Pattern\n' +
     '\n' +
     'In this exercise, we want to implement sorting algorithms and choose them based on runtime specific variables.\n' +
     '\n' +
@@ -85,7 +85,7 @@ export const programmingExerciseProblemStatement = '# Sorting with the Strategy 
     '\n' +
     '3. Think about a useful decision in `Policy` when to use the new `QuickSort` algorithm.\n';
 
-export const buildErrorContent = {
+export const buildErrorContentJava = {
     newFiles: [],
     content: [{
         fileName: 'src/de/test/BubbleSort.java',
@@ -93,7 +93,7 @@ export const buildErrorContent = {
     }]
 };
 
-export const testErrorContent = {
+export const testErrorContentJava = {
     newFiles: [],
     content: [{
         fileName: 'src/de/test/BubbleSort.java',
@@ -108,7 +108,7 @@ export const testErrorContent = {
     }]
 };
 
-export const twoSuccessfulErrorContent = {
+export const someSuccessfulErrorContentJava = {
     newFiles: ['src/de/test/SortStrategy.java'],
     content: [{
         fileName: 'src/de/test/SortStrategy.java',
@@ -124,7 +124,7 @@ export const twoSuccessfulErrorContent = {
     }]
 };
 
-export const allSuccessfulContent = {
+export const allSuccessfulContentJava = {
     newFiles: ['src/de/test/Context.java', 'src/de/test/Policy.java'],
     content: [
         {
