@@ -54,8 +54,11 @@ export class GradingInstructionsDetailsComponent implements OnInit {
         let markdownText = '';
         if (this.criteria === undefined || this.criteria.length === 0) {
             this.criteria = [];
-            const newCriteria = new GradingCriterion();
-            this.criteria.push(newCriteria);
+            const dummyCriterion = new GradingCriterion();
+            const exampleCriterion = new GradingCriterion();
+            exampleCriterion.title = 'This is an Example criterion';
+            this.criteria.push(dummyCriterion);
+            this.criteria.push(exampleCriterion);
         }
         for (const criterion of this.criteria) {
             if (criterion.title === null || criterion.title === undefined) {
