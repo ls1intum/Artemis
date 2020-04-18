@@ -14,12 +14,11 @@ import { ResizableInstructionsComponent } from 'app/exercises/text/assess/resiza
 import { DebugElement } from '@angular/core';
 import { By } from '@angular/platform-browser';
 import { MockAccountService } from '../../mocks/mock-account.service';
-import { Location } from '@angular/common';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { ComplaintService } from 'app/complaints/complaint.service';
 import { MockComplaintService } from '../../mocks/mock-complaint.service';
 import { NgxDatatableModule } from '@swimlane/ngx-datatable';
-import { fileUploadSubmissionRoute, routes } from 'app/exercises/file-upload/participate/file-upload-participation.route';
+import { routes } from 'app/exercises/file-upload/participate/file-upload-participation.route';
 import { FileUploadSubmissionComponent } from 'app/exercises/file-upload/participate/file-upload-submission.component';
 import { MomentModule } from 'ngx-moment';
 import { createFileUploadSubmission, MockFileUploadSubmissionService } from '../../mocks/mock-file-upload-submission.service';
@@ -50,7 +49,6 @@ describe('FileUploadSubmissionComponent', () => {
     let fixture: ComponentFixture<FileUploadSubmissionComponent>;
     let debugElement: DebugElement;
     let router: Router;
-    let location: Location;
     let fileUploaderService: FileUploaderService;
     let jhiAlertService: AlertService;
     let fileUploadSubmissionService: FileUploadSubmissionService;
@@ -93,7 +91,6 @@ describe('FileUploadSubmissionComponent', () => {
                 comp = fixture.componentInstance;
                 debugElement = fixture.debugElement;
                 router = debugElement.injector.get(Router);
-                location = debugElement.injector.get(Location);
                 router.initialNavigation();
                 fileUploaderService = TestBed.inject(FileUploaderService);
                 jhiAlertService = TestBed.inject(AlertService);
