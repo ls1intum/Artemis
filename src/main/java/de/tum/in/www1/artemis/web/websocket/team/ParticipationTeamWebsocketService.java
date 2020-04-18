@@ -91,6 +91,13 @@ public class ParticipationTeamWebsocketService {
         sendOnlineTeamMembers(getDestination(participationId));
     }
 
+    /**
+     * Called by a student of a team to update the text submission of the team for their participation
+     *
+     * @param participationId id of participation
+     * @param textSubmission updated text submission
+     * @param principal principal of user who wants to update the text submission
+     */
     @MessageMapping("/topic/participations/{participationId}/team/text-submissions/update")
     public void updateTextSubmission(@DestinationVariable Long participationId, @Payload TextSubmission textSubmission, Principal principal) {
         // Without this, custom jpa repository methods don't work in websocket channel.
