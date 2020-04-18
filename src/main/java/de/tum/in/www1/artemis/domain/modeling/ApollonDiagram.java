@@ -37,6 +37,17 @@ public class ApollonDiagram implements Serializable {
     @Column(name = "diagram_type")
     private DiagramType diagramType;
 
+    @Column(name = "courseId")
+    private Long courseId;
+
+    public Long getCourseId() {
+        return courseId;
+    }
+
+    public void setCourseId(Long courseId) {
+        this.courseId = courseId;
+    }
+
     // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
     public Long getId() {
         return id;
