@@ -1,0 +1,187 @@
+@import 'src/main/webapp/content/scss/bootstrap-variables';
+
+$success-text-color: #155724;
+$success-bg-color: #d4edda;
+
+$warning-text-color: #856404;
+$warning-bg-color: #fff3cd;
+
+$error-text-color: $danger;
+$error-bg-color: #f8d7da;
+
+$text-slightly-muted: #444;
+
+:host {
+    display: block;
+}
+
+.loading-spinner {
+    position: relative;
+    top: -2px;
+}
+
+.error-message {
+    position: relative;
+    top: -4.5px;
+    line-height: 1rem;
+    font-size: 0.8rem;
+    margin-left: 5px;
+}
+
+.intro-text {
+    color: $text-slightly-muted;
+}
+
+.list-group--teams {
+    max-height: max(240px, 100vh - 740px);
+    overflow-y: auto;
+
+    .list-group-item-container {
+        position: relative;
+        margin-bottom: 0.15rem;
+    }
+
+    .list-group-item-index {
+        min-width: 30px;
+        text-align: right;
+        margin-left: 0.5rem;
+        margin-right: 1rem;
+        font-size: 1.1rem;
+        font-weight: 500;
+    }
+}
+
+.list-group-item--teams {
+    display: flex !important;
+    align-items: center;
+
+    flex-grow: 1;
+    overflow-x: hidden;
+    padding: 0.3rem 1rem;
+    border-radius: 0.15rem !important;
+    background-color: white;
+
+    &.has-success {
+        color: $success-text-color;
+        background-color: $success-bg-color;
+    }
+
+    &.has-warning {
+        color: $warning-text-color;
+        background-color: $warning-bg-color;
+    }
+
+    &.has-error {
+        background-color: $error-bg-color;
+
+        .team-name {
+            color: $error-text-color;
+        }
+    }
+}
+
+.source-teams-legend-container {
+    margin-left: calc(30px + 1.5rem);
+    opacity: 0.4;
+    transition: 0.2s ease-out opacity;
+
+    &:hover {
+        opacity: 1;
+        transition: 0.1s ease-in opacity;
+        transition-delay: 0.2s;
+    }
+}
+
+.source-teams-legend-box {
+    background: rgba(0, 100, 220, 0.04);
+    padding: 12px 15px 0;
+    border-radius: 0.2rem;
+    border: 1px solid rgba(0, 0, 0, 0.075);
+}
+
+.source-teams-legend {
+    cursor: default;
+    font-size: 12.5px;
+
+    & > * {
+        flex-grow: 1;
+
+        &:not(:first-child) {
+            margin-left: 25px;
+        }
+    }
+
+    .list-group-item--teams {
+        $legend-font-size: 11px;
+
+        padding: 0 0.5rem;
+        font-size: $legend-font-size;
+        border: 1px solid rgba(0, 0, 0, 0.125);
+        border-radius: 0.15rem;
+
+        .team-name {
+            width: unset;
+        }
+
+        .team-students {
+            font-size: $legend-font-size;
+
+            .student-group-item {
+                padding-top: 0;
+                padding-bottom: 0;
+            }
+        }
+    }
+
+    .label-with-tooltip {
+        margin-top: 3px;
+
+        label {
+            color: $text-slightly-muted;
+        }
+    }
+}
+
+.team-name {
+    width: 135px;
+    margin-right: 15px;
+    flex-shrink: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.team-students {
+    flex-grow: 1;
+    overflow-x: hidden;
+    font-size: 12.5px;
+}
+
+.label-narrow {
+    display: inline-block;
+    margin-bottom: 0.1rem;
+}
+
+.radio-input-with-explanation {
+    height: 0.9rem * 1.5;
+}
+
+.radio-label-with-explanation {
+    .badge {
+        position: relative;
+        top: -1px;
+        font-size: 85%;
+    }
+
+    .explanation {
+        max-width: 66%;
+    }
+}
+
+.modal-footer {
+    justify-content: space-between;
+
+    button[disabled] {
+        cursor: not-allowed;
+    }
+}

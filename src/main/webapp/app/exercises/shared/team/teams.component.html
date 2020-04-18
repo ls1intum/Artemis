@@ -6,6 +6,14 @@
             </h2>
         </div>
         <div class="d-flex ml-auto">
+            <jhi-teams-import-button
+                class="mr-2"
+                *ngIf="exercise?.isAtLeastInstructor"
+                [exercise]="exercise"
+                [teams]="teams"
+                [buttonSize]="ButtonSize.MEDIUM"
+                (save)="onTeamsImport($event)"
+            ></jhi-teams-import-button>
             <jhi-team-update-button [exercise]="exercise" [buttonSize]="ButtonSize.MEDIUM" (save)="onTeamUpdate($event)"></jhi-team-update-button>
         </div>
     </div>

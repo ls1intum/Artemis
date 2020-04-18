@@ -58,7 +58,6 @@
                     [readonly]="!isActive || !submission"
                     [disabled]="!isActive || !submission"
                     (keydown.tab)="onTextEditorTab(textEditor, $event)"
-                    (input)="onTextEditorInput($event)"
                 ></textarea>
             </div>
         </ng-container>
