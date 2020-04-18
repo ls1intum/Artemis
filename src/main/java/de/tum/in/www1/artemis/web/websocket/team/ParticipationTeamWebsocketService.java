@@ -35,6 +35,7 @@ import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.service.TextExerciseService;
 import de.tum.in.www1.artemis.service.TextSubmissionService;
 import de.tum.in.www1.artemis.service.UserService;
+import de.tum.in.www1.artemis.web.websocket.dto.SubmissionSyncPayload;
 
 @Controller
 public class ParticipationTeamWebsocketService {
@@ -116,7 +117,8 @@ public class ParticipationTeamWebsocketService {
         textSubmission = textSubmissionService.handleTextSubmission(textSubmission, textExercise, principal);
         // TODO: filter out sensitive details?
 
-        messagingTemplate.convertAndSend(getDestination(participationId, "/text-submissions"), textSubmission);
+        SubmissionSyncPayload payload = new SubmissionSyncPayload(textSubmission, user);
+        messagingTemplate.convertAndSend(getDestination(participationId, "/text-submissions"), payload);
     }
 
     /**

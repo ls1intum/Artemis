@@ -9,7 +9,6 @@ import { ParticipationWebsocketService } from 'app/overview/participation-websoc
 import { TextEditorService } from 'app/exercises/text/participate/text-editor.service';
 import * as moment from 'moment';
 import { Subject } from 'rxjs';
-import { debounceTime, distinctUntilChanged, tap } from 'rxjs/internal/operators';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { Observable } from 'rxjs/Observable';
@@ -23,7 +22,6 @@ import { TextExercise } from 'app/entities/text-exercise.model';
 import { ButtonType } from 'app/shared/components/button.component';
 import { Result } from 'app/entities/result.model';
 import { TextSubmission } from 'app/entities/text-submission.model';
-import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 
 @Component({
     templateUrl: './text-editor.component.html',
@@ -36,15 +34,14 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
     result: Result;
     submission: TextSubmission;
     isSaving: boolean;
-    textEditorChange = new Subject<string>();
+    private textEditorInput = new Subject<string>();
+    answerStream$ = this.textEditorInput.asObservable();
     // Is submitting always enabled?
     isAlwaysActive: boolean;
     isAllowedToSubmitAfterDeadline: boolean;
     answer: string;
     // indicates if the assessment due date is in the past. the assessment will not be loaded and displayed to the student if it is not.
     isAfterAssessmentDueDate: boolean;
-    // websocket topic for receiving submission from other team members
-    teamSubmissionWebsocketTopic: string;
 
     constructor(
         private route: ActivatedRoute,
@@ -58,7 +55,6 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
         private location: Location,
         private translateService: TranslateService,
         private participationWebsocketService: ParticipationWebsocketService,
-        private teamSubmissionWebsocketService: JhiWebsocketService,
     ) {
         this.isSaving = false;
     }
@@ -87,19 +83,6 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
                     if (this.submission && this.submission.text) {
                         this.answer = this.submission.text;
                     }
-                }
-
-                if (this.textExercise.teamMode) {
-                    this.teamSubmissionWebsocketTopic = this.buildTeamSubmissionWebsocketTopic();
-                    this.teamSubmissionWebsocketService.subscribe(this.teamSubmissionWebsocketTopic);
-                    this.teamSubmissionWebsocketService.receive(this.teamSubmissionWebsocketTopic).subscribe((submission: TextSubmission) => {
-                        this.submission = submission;
-                        this.answer = this.submission.text;
-                    });
-                    this.textEditorChangeStream.subscribe(() => {
-                        this.persistAnswerOnSubmission();
-                        this.teamSubmissionWebsocketService.send(this.buildTeamSubmissionWebsocketTopic('/update'), this.submission);
-                    });
                 }
             },
             (error: HttpErrorResponse) => this.onError(error),
@@ -193,7 +176,9 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
         }
 
         this.isSaving = true;
-        this.persistAnswerOnSubmission();
+        this.submission.text = this.answer;
+        this.submission.language = this.textService.predictLanguage(this.submission.text);
+        this.submission.submitted = true;
         this.textSubmissionService.update(this.submission, this.textExercise.id).subscribe(
             (response) => {
                 this.submission = response.body!;
@@ -217,10 +202,9 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
         );
     }
 
-    persistAnswerOnSubmission() {
-        this.submission.text = this.answer;
-        this.submission.language = this.textService.predictLanguage(this.submission.text);
-        this.submission.submitted = true;
+    onReceiveSubmissionFromTeam(submission: TextSubmission) {
+        this.submission = submission;
+        this.answer = this.submission.text;
     }
 
     onTextEditorTab(editor: HTMLTextAreaElement, event: KeyboardEvent) {
@@ -234,11 +218,7 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
     }
 
     onTextEditorInput(event: Event) {
-        this.textEditorChange.next((<HTMLTextAreaElement>event.target).value);
-    }
-
-    get textEditorChangeStream() {
-        return this.textEditorChange.asObservable().pipe(debounceTime(2000), distinctUntilChanged());
+        this.textEditorInput.next((<HTMLTextAreaElement>event.target).value);
     }
 
     private onError(error: HttpErrorResponse) {
@@ -247,9 +227,5 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
 
     previous() {
         this.location.back();
-    }
-
-    buildTeamSubmissionWebsocketTopic(path = ''): string {
-        return `/topic/participations/${this.participation.id}/team/text-submissions${path}`;
     }
 }
