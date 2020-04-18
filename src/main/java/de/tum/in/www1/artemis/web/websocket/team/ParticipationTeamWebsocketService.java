@@ -67,7 +67,7 @@ public class ParticipationTeamWebsocketService {
 
     /**
      * Called when a user subscribes to the destination specified in the subscribe mapping
-     * <p>
+     *
      * We have to keep track of the destination that this session belongs to since it is
      * needed on unsubscribe and disconnect but is not available there.
      *
