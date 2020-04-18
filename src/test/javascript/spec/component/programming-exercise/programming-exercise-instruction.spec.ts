@@ -61,7 +61,6 @@ describe('ProgrammingExerciseInstructionComponent', () => {
     let getHintsForExerciseStub: SinonStub;
 
     const exerciseHints = [{ id: 1 }, { id: 2 }];
-    const exercise = { id: 1 };
 
     beforeEach(async () => {
         return TestBed.configureTestingModule({
@@ -109,6 +108,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
     });
 
     it('should on participation change clear old subscription for participation results set up new one', () => {
+        const exercise = { id: 1 };
         const oldParticipation = { id: 1 } as Participation;
         const result = { id: 1 };
         const participation = { id: 2, results: [result] } as Participation;
