@@ -19,7 +19,6 @@
         flex-flow: column nowrap;
         flex: 1 1 auto;
         height: 100%;
-        overflow: hidden;
     }
 
     .markdown-editor {
@@ -50,14 +49,11 @@
             &-domain {
                 display: flex;
                 flex-flow: row wrap;
+                align-items: center;
+            }
 
-                > *:not(:last-child) {
-                    margin-right: 5px;
-                }
-
-                > * {
-                    margin-top: 5px;
-                }
+            &-default > * {
+                margin-top: 5px;
             }
         }
 
