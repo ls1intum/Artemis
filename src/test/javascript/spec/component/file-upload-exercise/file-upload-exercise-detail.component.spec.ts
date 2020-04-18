@@ -1,13 +1,10 @@
-/* tslint:disable max-line-length */
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { DebugElement } from '@angular/core';
 import { of } from 'rxjs';
-
 import { ArtemisTestModule } from '../../test.module';
 import { FileUploadExerciseDetailComponent } from 'app/exercises/file-upload/manage/file-upload-exercise-detail.component';
 import { By } from '@angular/platform-browser';
-
 import * as sinonChai from 'sinon-chai';
 import * as chai from 'chai';
 import { fileUploadExercise, MockFileUploadExerciseService } from '../../mocks/mock-file-upload-exercise.service';
@@ -33,7 +30,7 @@ describe('Component Tests', () => {
         let debugElement: DebugElement;
 
         const route = ({
-            data: of({ fileUploadExercise: fileUploadExercise }),
+            data: of({ fileUploadExercise }),
             params: of({ exerciseId: 2 }),
         } as any) as ActivatedRoute;
 
@@ -61,7 +58,6 @@ describe('Component Tests', () => {
         describe('Title should contain exercise id and description list', () => {
             it('Should call load all on init', fakeAsync(() => {
                 comp.ngOnInit();
-
                 tick();
 
                 expect(comp.fileUploadExercise).to.equal(fileUploadExercise);
