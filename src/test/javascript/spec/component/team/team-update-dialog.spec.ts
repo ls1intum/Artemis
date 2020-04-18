@@ -26,7 +26,6 @@ const expect = chai.expect;
 describe('TeamUpdateDialogComponent', () => {
     let comp: TeamUpdateDialogComponent;
     let fixture: ComponentFixture<TeamUpdateDialogComponent>;
-    let service: TeamService;
     let debugElement: DebugElement;
     let ngbActiveModal: NgbActiveModal;
 
@@ -47,7 +46,6 @@ describe('TeamUpdateDialogComponent', () => {
                 fixture = TestBed.createComponent(TeamUpdateDialogComponent);
                 comp = fixture.componentInstance;
                 debugElement = fixture.debugElement;
-                service = debugElement.injector.get(TeamService);
                 ngbActiveModal = TestBed.inject(NgbActiveModal);
             });
     });

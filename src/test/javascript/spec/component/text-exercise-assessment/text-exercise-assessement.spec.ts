@@ -1,4 +1,4 @@
-import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { RouterTestingModule } from '@angular/router/testing';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { AccountService } from 'app/core/auth/account.service';
@@ -22,7 +22,6 @@ import { AssessmentDetailComponent } from 'app/assessment/assessment-detail/asse
 import { DebugElement } from '@angular/core';
 import { By } from '@angular/platform-browser';
 import { MockAccountService } from '../../mocks/mock-account.service';
-import { Location } from '@angular/common';
 import { textAssessmentRoutes } from 'app/exercises/text/assess/text-assessment.route';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { ComplaintService } from 'app/complaints/complaint.service';
@@ -31,9 +30,9 @@ import { TranslateModule } from '@ngx-translate/core';
 import { TextSubmissionService } from 'app/exercises/text/participate/text-submission.service';
 import { ComplaintsForTutorComponent } from 'app/complaints/complaints-for-tutor/complaints-for-tutor.component';
 import { ResultComponent } from 'app/shared/result/result.component';
-import { SubmissionExerciseType, SubmissionType } from 'app/entities/submission.model';
+import { Submission, SubmissionExerciseType, SubmissionType } from 'app/entities/submission.model';
 import { TextExercise } from 'app/entities/text-exercise.model';
-import { ExerciseType } from 'app/entities/exercise.model';
+import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { TextSubmission } from 'app/entities/text-submission.model';
 import { Participation, ParticipationType } from 'app/entities/participation/participation.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
@@ -55,16 +54,15 @@ describe('TextAssessmentComponent', () => {
     let getTextSubmissionForExerciseWithoutAssessmentStub: SinonStub;
     let getFeedbackDataForExerciseSubmissionStub: SinonStub;
     let saveAssessmentStub: SinonStub;
-    let submitAsssessmentStub: SinonStub;
+    let submitAssessmentStub: SinonStub;
     let getResultWithPredefinedTextblocksStub: SinonStub;
     let updateAssessmentAfterComplaintStub: SinonStub;
     let debugElement: DebugElement;
     let router: Router;
-    let location: Location;
-    let activatedRouteMock: MockActivatedRoute = new MockActivatedRoute();
+    const activatedRouteMock: MockActivatedRoute = new MockActivatedRoute();
 
     const exercise = { id: 20, type: ExerciseType.TEXT, assessmentType: AssessmentType.MANUAL } as TextExercise;
-    const participation: Participation = <Participation>(<unknown>{ type: ParticipationType.STUDENT, exercise: exercise });
+    const participation: Participation = <Participation>(<unknown>{ type: ParticipationType.STUDENT, exercise: Exercise });
     const submission = {
         submissionExerciseType: SubmissionExerciseType.TEXT,
         id: 2278,
@@ -72,7 +70,7 @@ describe('TextAssessmentComponent', () => {
         type: SubmissionType.MANUAL,
         submissionDate: moment('2019-07-09T10:47:33.244Z'),
         text: 'asdfasdfasdfasdf',
-        participation: participation,
+        participation: Participation,
     } as TextSubmission;
     const result = ({
         id: 2374,
@@ -83,8 +81,8 @@ describe('TextAssessmentComponent', () => {
         rated: true,
         hasFeedback: false,
         hasComplaint: false,
-        submission: submission,
-        participation: participation,
+        submission: Submission,
+        participation: Participation,
     } as unknown) as Result;
     submission.result = result;
     submission.participation.submissions = [submission];
@@ -122,14 +120,13 @@ describe('TextAssessmentComponent', () => {
                 debugElement = fixture.debugElement;
 
                 router = debugElement.injector.get(Router);
-                location = debugElement.injector.get(Location);
                 textSubmissionService = debugElement.injector.get(TextSubmissionService);
                 assessmentsService = debugElement.injector.get(TextAssessmentsService);
 
                 getTextSubmissionForExerciseWithoutAssessmentStub = stub(textSubmissionService, 'getTextSubmissionForExerciseWithoutAssessment');
                 getFeedbackDataForExerciseSubmissionStub = stub(assessmentsService, 'getFeedbackDataForExerciseSubmission');
                 saveAssessmentStub = stub(assessmentsService, 'save');
-                submitAsssessmentStub = stub(assessmentsService, 'submit');
+                submitAssessmentStub = stub(assessmentsService, 'submit');
                 getResultWithPredefinedTextblocksStub = stub(assessmentsService, 'getResultWithPredefinedTextblocks');
                 updateAssessmentAfterComplaintStub = stub(assessmentsService, 'updateAssessmentAfterComplaint');
 
@@ -141,7 +138,7 @@ describe('TextAssessmentComponent', () => {
         getTextSubmissionForExerciseWithoutAssessmentStub.restore();
         getFeedbackDataForExerciseSubmissionStub.restore();
         saveAssessmentStub.restore();
-        submitAsssessmentStub.restore();
+        submitAssessmentStub.restore();
         getResultWithPredefinedTextblocksStub.restore();
         updateAssessmentAfterComplaintStub.restore();
     });
@@ -162,8 +159,6 @@ describe('TextAssessmentComponent', () => {
         comp.isAssessor = true;
         comp.isAtLeastInstructor = true;
         comp.assessmentsAreValid = true;
-        const unassessedSubmission = { submissionExerciseType: 'text', id: 2279, submitted: true, type: 'MANUAL' };
-
         fixture.detectChanges();
 
         // check if assessNextButton is available
@@ -193,7 +188,7 @@ describe('TextAssessmentComponent', () => {
         activatedRouteMock.testParams = { exerciseId: 1, submissionId: 'new' };
         getTextSubmissionForExerciseWithoutAssessmentStub.returns(throwError({ error: { errorKey: 'lockedSubmissionsLimitReached' } }));
         const spy = stub(router, 'navigateByUrl');
-        spy.returns(new Promise((resolve) => true));
+        spy.returns(new Promise(() => true));
         comp.ngOnInit();
         tick();
         expect(spy.called).to.be.true;
@@ -205,7 +200,7 @@ describe('TextAssessmentComponent', () => {
         exercise.course = course;
         comp.exercise = exercise;
         activatedRouteMock.testParams = { exerciseId: 1, submissionId: 'new' };
-        getTextSubmissionForExerciseWithoutAssessmentStub.returns(throwError({ headers: { get: (s: string) => 'error' } }));
+        getTextSubmissionForExerciseWithoutAssessmentStub.returns(throwError({ headers: { get: () => 'error' } }));
         const spy = stub(TestBed.inject(AlertService), 'error');
         spy.returns({ type: 'danger', msg: '' });
         comp.ngOnInit();
@@ -299,7 +294,7 @@ describe('TextAssessmentComponent', () => {
     it('Should handle error on save assessment', fakeAsync(() => {
         comp.referencedFeedback = [refFeedback];
         comp.result = { id: 1 } as any;
-        saveAssessmentStub.returns(throwError({ headers: { get: (s: string) => 'error' } }));
+        saveAssessmentStub.returns(throwError({ headers: { get: () => 'error' } }));
         const spy = stub(TestBed.inject(AlertService), 'error');
         spy.returns({ type: 'danger', msg: '' });
         comp.save();
@@ -325,9 +320,9 @@ describe('TextAssessmentComponent', () => {
         comp.result = { id: 1 } as any;
         participation.results = [];
         comp.participation = participation;
-        submitAsssessmentStub.returns(of({ body: result }));
+        submitAssessmentStub.returns(of({ body: result }));
         comp.submit();
-        expect(submitAsssessmentStub.called).to.be.true;
+        expect(submitAssessmentStub.called).to.be.true;
         expect(comp.result).to.be.equal(result);
         expect(comp.participation.results[0]).to.be.equal(result);
         expect(comp.showResult).to.be.true;
@@ -335,16 +330,16 @@ describe('TextAssessmentComponent', () => {
 
     it('Should not submit without already existing result', fakeAsync(() => {
         comp.result = {} as any;
-        submitAsssessmentStub.returns(of({ body: result }));
+        submitAssessmentStub.returns(of({ body: result }));
         comp.submit();
-        expect(submitAsssessmentStub.called).to.be.false;
+        expect(submitAssessmentStub.called).to.be.false;
     }));
 
     it('Should not submit without valid assessments', fakeAsync(() => {
         comp.result = { id: 1 } as any;
-        submitAsssessmentStub.returns(of({ body: result }));
+        submitAssessmentStub.returns(of({ body: result }));
         comp.submit();
-        expect(submitAsssessmentStub.called).to.be.false;
+        expect(submitAssessmentStub.called).to.be.false;
     }));
 
     it('Should set predefined text blocks', fakeAsync(() => {

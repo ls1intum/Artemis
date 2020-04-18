@@ -7,7 +7,7 @@ import { ArtemisTestModule } from '../../test.module';
 import { By } from '@angular/platform-browser';
 import { JhiEventManager, NgJhipsterModule } from 'ng-jhipster';
 import { FormsModule } from '@angular/forms';
-import { NgbActiveModal, NgbModule } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { AlertService } from 'app/core/alert/alert.service';
 import { MockAlertService } from '../../helpers/mock-alert.service';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
@@ -30,7 +30,6 @@ import { MockExerciseService } from '../../mocks/mock-exercise.service';
 import { teamRoute } from 'app/exercises/shared/team/team.route.ts';
 import { RouterTestingModule } from '@angular/router/testing';
 import { Router } from '@angular/router';
-import { Location } from '@angular/common';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import { MockParticipationService } from '../../mocks/mock-participation.service';
 import { AccountService } from 'app/core/auth/account.service';
@@ -42,11 +41,8 @@ const expect = chai.expect;
 describe('TeamsComponent', () => {
     let comp: TeamsComponent;
     let fixture: ComponentFixture<TeamsComponent>;
-    let service: TeamService;
     let debugElement: DebugElement;
     let router: Router;
-    let location: Location;
-    let ngbActiveModal: NgbActiveModal;
 
     const route = ({
         params: of({ exerciseId: 1 }),
@@ -88,9 +84,6 @@ describe('TeamsComponent', () => {
                 comp = fixture.componentInstance;
                 debugElement = fixture.debugElement;
                 router = debugElement.injector.get(Router);
-                location = debugElement.injector.get(Location);
-                service = debugElement.injector.get(TeamService);
-                ngbActiveModal = TestBed.inject(NgbActiveModal);
                 router.initialNavigation();
             });
     });
