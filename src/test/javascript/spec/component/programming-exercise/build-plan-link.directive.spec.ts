@@ -24,7 +24,6 @@ class TestComponent {
 }
 
 describe('BuildPlanLinkDirective', () => {
-    let comp: TestComponent;
     let fixture: ComponentFixture<TestComponent>;
     let debugElement: DebugElement;
     let profileService: ProfileService;
@@ -42,7 +41,6 @@ describe('BuildPlanLinkDirective', () => {
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(TestComponent);
-                comp = fixture.componentInstance;
                 debugElement = fixture.debugElement;
 
                 profileService = fixture.debugElement.injector.get(ProfileService);
