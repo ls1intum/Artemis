@@ -237,7 +237,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
                 this.updateSubmissionModel();
                 this.submissionChange.next(this.submission);
             }
-        }, 1000);
+        }, 5000);
     }
 
     saveDiagram(): void {

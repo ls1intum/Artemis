@@ -59,6 +59,8 @@ export class ModelingSubmissionTeamSyncComponent implements OnInit {
         this.submissionStream$.pipe(throttleTime(this.throttleTime)).subscribe(
             (modelingSubmission) => {
                 console.log('sending model', modelingSubmission.model);
+                delete modelingSubmission.participation;
+                // this.receiveSubmission.emit(modelingSubmission);
                 this.teamSubmissionWebsocketService.send(this.buildWebsocketTopic('/update'), modelingSubmission);
             },
             (error) => this.onError(error),
