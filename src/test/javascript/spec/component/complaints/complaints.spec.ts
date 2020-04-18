@@ -1,14 +1,12 @@
 import { async, ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import * as chai from 'chai';
-import { BrowserModule, By } from '@angular/platform-browser';
+import { By } from '@angular/platform-browser';
 import { ComplaintService } from 'app/complaints/complaint.service';
 import { MockComplaintResponse, MockComplaintService } from '../../mocks/mock-complaint.service';
 import { MockAlertService } from '../../helpers/mock-alert.service';
 import { AlertService } from 'app/core/alert/alert.service';
 import { MomentModule } from 'ngx-moment';
-import { ClipboardModule } from 'ngx-clipboard';
 import { DebugElement } from '@angular/core';
-import { HttpClientModule } from '@angular/common/http';
 import { TranslateModule } from '@ngx-translate/core';
 import { ComplaintsComponent } from 'app/complaints/complaints.component';
 import { ArtemisTestModule } from '../../test.module';
@@ -57,6 +55,7 @@ describe('ComplaintsComponent', () => {
         expect(textarea.value).to.be.equal(MockComplaintResponse.body.complaintText);
         expect(textarea.readOnly).to.be.true;
     }));
+
     it('should show accepted message when complaint is accepted', () => {
         comp.resultId = 111;
         comp.ngOnInit();

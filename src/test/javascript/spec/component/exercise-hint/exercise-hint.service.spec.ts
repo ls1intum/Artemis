@@ -1,4 +1,3 @@
-/* tslint:disable max-line-length */
 import { getTestBed, TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { HttpResponse } from '@angular/common/http';
@@ -16,6 +15,7 @@ describe('Service Tests', () => {
         let httpMock: HttpTestingController;
         let elemDefault: ExerciseHint;
         let expectedResult: any;
+
         beforeEach(() => {
             TestBed.configureTestingModule({
                 imports: [HttpClientTestingModule],
@@ -81,7 +81,7 @@ describe('Service Tests', () => {
             });
 
             it('should delete a ExerciseHint', async () => {
-                const rxPromise = service.delete(123).subscribe((resp) => (expectedResult = resp.ok));
+                service.delete(123).subscribe((resp) => (expectedResult = resp.ok));
 
                 const req = httpMock.expectOne({ method: 'DELETE' });
                 req.flush({ status: 200 });

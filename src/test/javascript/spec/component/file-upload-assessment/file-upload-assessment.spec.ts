@@ -1,4 +1,4 @@
-import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { RouterTestingModule } from '@angular/router/testing';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { AccountService } from 'app/core/auth/account.service';
@@ -13,12 +13,10 @@ import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { MockAlertService } from '../../helpers/mock-alert.service';
 import { AlertService } from 'app/core/alert/alert.service';
 import { Router } from '@angular/router';
-import { of } from 'rxjs';
 import { FileUploadAssessmentComponent } from 'app/exercises/file-upload/assess/file-upload-assessment.component';
 import { ResizableInstructionsComponent } from 'app/exercises/text/assess/resizable-instructions/resizable-instructions.component';
 import { DebugElement } from '@angular/core';
 import { MockAccountService } from '../../mocks/mock-account.service';
-import { Location } from '@angular/common';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { ComplaintService } from 'app/complaints/complaint.service';
 import { MockComplaintService } from '../../mocks/mock-complaint.service';
@@ -35,10 +33,13 @@ import { AssessmentType } from 'app/entities/assessment-type.model';
 import { Result } from 'app/entities/result.model';
 import { ModelingAssessmentModule } from 'app/exercises/modeling/assess/modeling-assessment.module';
 import { routes } from 'app/exercises/file-upload/assess/file-upload-assessment.route';
-import { Course } from 'app/entities/course.model';
 import { By } from '@angular/platform-browser';
+import { throwError } from 'rxjs';
+import { MockActivatedRoute } from '../../mocks/mock-activated-route';
+import { Participation, ParticipationType } from 'app/entities/participation/participation.model';
 
 chai.use(sinonChai);
+
 const expect = chai.expect;
 
 describe('FileUploadAssessmentComponent', () => {
@@ -48,9 +49,8 @@ describe('FileUploadAssessmentComponent', () => {
     let getFileUploadSubmissionForExerciseWithoutAssessmentStub: SinonStub;
     let debugElement: DebugElement;
     let router: Router;
-    let location: Location;
+    const activatedRouteMock: MockActivatedRoute = new MockActivatedRoute();
 
-    const course = { id: 5 } as Course;
     const exercise = { id: 20, type: ExerciseType.FILE_UPLOAD } as FileUploadExercise;
 
     beforeEach(async () => {
@@ -85,7 +85,6 @@ describe('FileUploadAssessmentComponent', () => {
                 comp.exercise = exercise;
                 debugElement = fixture.debugElement;
                 router = debugElement.injector.get(Router);
-                location = debugElement.injector.get(Location);
                 fileUploadSubmissionService = TestBed.inject(FileUploadSubmissionService);
                 getFileUploadSubmissionForExerciseWithoutAssessmentStub = stub(fileUploadSubmissionService, 'getFileUploadSubmissionForExerciseWithoutAssessment');
 
@@ -98,6 +97,9 @@ describe('FileUploadAssessmentComponent', () => {
     });
 
     it('AssessNextButton should be visible', fakeAsync(() => {
+        activatedRouteMock.testParams = { exerciseId: 1, submissionId: 'new' };
+        getFileUploadSubmissionForExerciseWithoutAssessmentStub.returns(throwError({ status: 404 }));
+
         // set all attributes for comp
         comp.ngOnInit();
         tick();
@@ -109,6 +111,7 @@ describe('FileUploadAssessmentComponent', () => {
             submitted: true,
             type: SubmissionType.MANUAL,
             submissionDate: moment('2019-07-09T10:47:33.244Z'),
+            participation: ({ type: ParticipationType.STUDENT, exercise } as unknown) as Participation,
         } as FileUploadSubmission;
         comp.result = new Result();
         comp.result.id = 2374;
@@ -123,11 +126,17 @@ describe('FileUploadAssessmentComponent', () => {
         comp.result.assessmentType = AssessmentType.MANUAL;
         comp.result.exampleResult = false;
         comp.result.hasComplaint = false;
+        comp.submission.result = comp.result;
+        comp.submission.participation.submissions = [comp.submission];
+        comp.submission.participation.results = [comp.submission.result];
         comp.isAssessor = true;
         comp.isAtLeastInstructor = true;
         comp.assessmentsAreValid = true;
-        const unassessedSubmission = { submissionExerciseType: SubmissionExerciseType.FILE_UPLOAD, id: 2279, submitted: true, type: 'MANUAL' };
+        comp.isLoading = false;
 
         fixture.detectChanges();
+
+        const assessNextButton = debugElement.query(By.css('#assessNextButton'));
+        expect(assessNextButton).to.exist;
     }));
 });
