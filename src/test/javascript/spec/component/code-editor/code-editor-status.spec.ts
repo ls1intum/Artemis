@@ -1,3 +1,4 @@
+import { DebugElement } from '@angular/core/';
 import { async, ComponentFixture, TestBed } from '@angular/core/testing';
 import { AceEditorModule } from 'ng2-ace-editor';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
@@ -30,34 +31,36 @@ describe('CodeEditorStatusComponent', () => {
         const editorStateSegment = fixture.debugElement.query(By.css('#editor_state'));
         expect(editorStateSegment.children).to.be.empty;
     });
+
     it('should show an empty status segment for EditorState if no EditorState is given', () => {
-        const commitStateSegement = fixture.debugElement.query(By.css('#commit_state'));
-        expect(commitStateSegement.children).to.be.empty;
+        const commitStateSegment = fixture.debugElement.query(By.css('#commit_state'));
+        expect(commitStateSegment.children).to.be.empty;
     });
+
     Object.keys(EditorState).map((editorState) =>
         it(`should show exactly one status segment for EditorState ${editorState} with an icon and a non empty description`, function () {
             comp.editorState = editorState as EditorState;
             fixture.detectChanges();
             const editorStateSegment = fixture.debugElement.query(By.css('#editor_state'));
-            expect(editorStateSegment.children).to.have.length(1);
-            const icon = editorStateSegment.query(By.css('fa-icon'));
-            expect(icon).to.exist;
-            const text = editorStateSegment.query(By.css('span'));
-            expect(text).to.exist;
-            expect(text.nativeElement.textContent).not.to.equal('');
+            showsExactlyOneStatusSegment(editorStateSegment);
         }),
     );
+
     Object.keys(CommitState).map((commitState) =>
         it(`should show exactly one status segment for CommitState ${commitState} with an icon and a non empty description`, function () {
             comp.commitState = commitState as CommitState;
             fixture.detectChanges();
-            const commitStateSegement = fixture.debugElement.query(By.css('#commit_state'));
-            expect(commitStateSegement.children).to.have.length(1);
-            const icon = commitStateSegement.query(By.css('fa-icon'));
-            expect(icon).to.exist;
-            const text = commitStateSegement.query(By.css('span'));
-            expect(text).to.exist;
-            expect(text.nativeElement.textContent).not.to.equal('');
+            const commitStateSegment = fixture.debugElement.query(By.css('#commit_state'));
+            showsExactlyOneStatusSegment(commitStateSegment);
         }),
     );
+
+    const showsExactlyOneStatusSegment = (stateSegment: DebugElement) => {
+        expect(stateSegment.children).to.have.length(1);
+        const icon = stateSegment.query(By.css('fa-icon'));
+        expect(icon).to.exist;
+        const text = stateSegment.query(By.css('span'));
+        expect(text).to.exist;
+        expect(text.nativeElement.textContent).not.to.equal('');
+    };
 });
