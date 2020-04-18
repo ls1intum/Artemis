@@ -2,7 +2,7 @@ import { Observable, of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { ITeamService } from 'app/exercises/shared/team/team.service';
 import { Exercise } from 'app/entities/exercise.model';
-import { Team } from 'app/entities/team.model';
+import { Team, TeamImportStrategyType } from 'app/entities/team.model';
 import { Course } from 'app/entities/course.model';
 import { TeamSearchUser } from 'app/entities/team-search-user.model';
 import { User } from 'app/core/user/user.model';
@@ -79,12 +79,16 @@ export class MockTeamService implements ITeamService {
         return MockTeamService.response({});
     }
 
-    existsByShortName(shortName: string) {
+    existsByShortName(exercise: Exercise, shortName: string) {
         return MockTeamService.response(shortName === mockShortNames.existing);
     }
 
     searchInCourseForExerciseTeam(course: Course, exercise: Exercise, loginOrName: string) {
         return MockTeamService.response(mockTeamSearchUsers);
+    }
+
+    importTeamsFromSourceExercise(exercise: Exercise, sourceExercise: Exercise, importStrategy: TeamImportStrategyType) {
+        return MockTeamService.response(mockTeams);
     }
 
     // helper method
