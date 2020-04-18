@@ -27,6 +27,7 @@ import { ApollonDiagramService } from 'app/exercises/quiz/manage/apollon-diagram
 import { ButtonType } from 'app/shared/components/button.component';
 import { participationStatus } from 'app/exercises/shared/exercise/exercise-utils';
 import { filter } from 'rxjs/operators';
+import { Subject } from 'rxjs';
 
 @Component({
     selector: 'jhi-modeling-submission',
@@ -50,6 +51,9 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     selectedRelationships: string[];
 
     submission: ModelingSubmission;
+
+    private submissionChange = new Subject<ModelingSubmission>();
+    submissionStream$ = this.submissionChange.asObservable();
 
     assessmentResult: Result | null;
     assessmentsNames: Map<string, Map<string, string>>;
@@ -136,6 +140,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
                             });
                         }
                         this.setAutoSaveTimer();
+                        this.setupSubmissionStream();
                         this.isLoading = false;
                         this.guidedTourService.enableTourForExercise(this.modelingExercise, modelingTour, true);
                     },
@@ -226,16 +231,22 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         }, 1000);
     }
 
+    private setupSubmissionStream(): void {
+        window.setInterval(() => {
+            if (!this.canDeactivate()) {
+                this.updateSubmissionModel();
+                this.submissionChange.next(this.submission);
+            }
+        }, 1000);
+    }
+
     saveDiagram(): void {
         if (this.isSaving) {
             // don't execute the function if it is already currently executing
             return;
         }
-        if (!this.submission) {
-            this.submission = new ModelingSubmission();
-        }
-        this.submission.submitted = false;
         this.updateSubmissionModel();
+        this.submission.submitted = false;
         this.isSaving = true;
         this.autoSaveTimer = 0;
 
@@ -273,16 +284,14 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
             );
         }
     }
+
     submit(): void {
         if (this.isSaving) {
             // don't execute the function if it is already currently executing
             return;
         }
-        if (!this.submission) {
-            this.submission = new ModelingSubmission();
-        }
-        this.submission.submitted = true;
         this.updateSubmissionModel();
+        this.submission.submitted = true;
         if (this.isModelEmpty(this.submission.model)) {
             this.jhiAlertService.warning('artemisApp.modelingEditor.empty');
             return;
@@ -342,6 +351,11 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         }
     }
 
+    onReceiveSubmissionFromTeam(submission: ModelingSubmission) {
+        this.submission = submission;
+        this.umlModel = JSON.parse(submission.model);
+    }
+
     private isModelEmpty(model: string): boolean {
         const umlModel: UMLModel = JSON.parse(model);
         return !umlModel || !umlModel.elements || umlModel.elements.length === 0;
@@ -362,6 +376,9 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
      * Updates the model of the submission with the current Apollon model state
      */
     updateSubmissionModel(): void {
+        if (!this.submission) {
+            this.submission = new ModelingSubmission();
+        }
         if (!this.modelingEditor || !this.modelingEditor.getCurrentModel()) {
             return;
         }

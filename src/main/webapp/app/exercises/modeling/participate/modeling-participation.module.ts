@@ -9,6 +9,7 @@ import { ArtemisModelingEditorModule } from 'app/exercises/modeling/shared/model
 import { ModelingAssessmentModule } from 'app/exercises/modeling/assess/modeling-assessment.module';
 import { ArtemisModelingParticipationRoutingModule } from 'app/exercises/modeling/participate/modeling-participation.route';
 import { ArtemisTeamModule } from 'app/exercises/shared/team/team.module';
+import { ModelingSubmissionTeamSyncComponent } from 'app/exercises/modeling/participate/modeling-submission-team-sync.component';
 
 @NgModule({
     imports: [
@@ -22,6 +23,6 @@ import { ArtemisTeamModule } from 'app/exercises/shared/team/team.module';
         MomentModule,
         ArtemisTeamModule,
     ],
-    declarations: [ModelingSubmissionComponent],
+    declarations: [ModelingSubmissionComponent, ModelingSubmissionTeamSyncComponent],
 })
 export class ArtemisModelingParticipationModule {}
