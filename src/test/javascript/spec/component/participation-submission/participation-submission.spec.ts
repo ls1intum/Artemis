@@ -45,7 +45,6 @@ describe('ParticipationSubmissionComponent', () => {
     let findAllSubmissionsOfParticipationStub: SinonStub;
     let debugElement: DebugElement;
     let router: Router;
-    let location: Location;
 
     beforeEach(async () => {
         return TestBed.configureTestingModule({
@@ -75,7 +74,6 @@ describe('ParticipationSubmissionComponent', () => {
                 comp.participationId = 1;
                 debugElement = fixture.debugElement;
                 router = debugElement.injector.get(Router);
-                location = debugElement.injector.get(Location);
                 submissionService = TestBed.inject(SubmissionService);
                 findAllSubmissionsOfParticipationStub = stub(submissionService, 'findAllSubmissionsOfParticipation');
                 router.initialNavigation();

@@ -30,7 +30,6 @@ describe('BuildPlanLinkDirective', () => {
     let profileService: ProfileService;
     let getProfileInfoStub: SinonStub;
     let profileInfoSubject: BehaviorSubject<ProfileInfo | null>;
-    let correctBuildPlan: string;
 
     const profileInfo = { buildPlanURLTemplate: 'https://some.url.com/plans/{buildPlanId}/path/{projectKey}' } as ProfileInfo;
 
@@ -52,8 +51,6 @@ describe('BuildPlanLinkDirective', () => {
 
                 profileInfoSubject = new BehaviorSubject<ProfileInfo | null>(profileInfo);
                 getProfileInfoStub.returns(profileInfoSubject);
-
-                correctBuildPlan = `https://some.url.com/plans/${comp.buildPlanId}/path/${comp.projectKey}`;
             });
     });
 

@@ -21,8 +21,6 @@ describe('ProgrammingExerciseInstructionStepWizard', () => {
     let fixture: ComponentFixture<ProgrammingExerciseInstructionStepWizardComponent>;
     let debugElement: DebugElement;
 
-    let programmingExerciseInstructionService: ProgrammingExerciseInstructionService;
-
     const stepWizardStep = '.stepwizard-step';
 
     beforeEach(async () => {
@@ -37,8 +35,6 @@ describe('ProgrammingExerciseInstructionStepWizard', () => {
                 fixture = TestBed.createComponent(ProgrammingExerciseInstructionStepWizardComponent);
                 comp = fixture.componentInstance;
                 debugElement = fixture.debugElement;
-
-                programmingExerciseInstructionService = debugElement.injector.get(ProgrammingExerciseInstructionService);
             });
     });
 
