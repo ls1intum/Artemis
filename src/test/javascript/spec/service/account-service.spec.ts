@@ -1,7 +1,7 @@
 import { async } from '@angular/core/testing';
 import * as chai from 'chai';
 import { SinonStub, stub } from 'sinon';
-import { Observable, of } from 'rxjs';
+import { of } from 'rxjs';
 import * as sinonChai from 'sinon-chai';
 import { MockWebsocketService } from '../mocks/mock-websocket.service';
 import { MockLanguageService } from '../helpers/mock-language.service';
@@ -18,7 +18,6 @@ describe('AccountService', () => {
     let accountService: AccountService;
     let httpService: MockHttpService;
     let getStub: SinonStub;
-    let getAuthenticated: Observable<User | null>;
 
     const getUserUrl = 'undefinedapi/account';
     const user = { id: 1, groups: ['USER'] } as User;
@@ -29,7 +28,6 @@ describe('AccountService', () => {
         // @ts-ignore
         accountService = new AccountService(new MockLanguageService(), new MockSyncStorage(), httpService, new MockWebsocketService(), new MockFeatureToggleService());
         getStub = stub(httpService, 'get');
-        getAuthenticated = accountService.getAuthenticationState();
 
         expect(accountService.userIdentity).to.deep.equal(null);
         expect(accountService.isAuthenticated()).to.be.false;

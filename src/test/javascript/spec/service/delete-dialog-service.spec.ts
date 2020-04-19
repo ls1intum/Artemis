@@ -7,7 +7,6 @@ import { ArtemisTestModule } from '../test.module';
 import { DeleteDialogService } from 'app/shared/delete-dialog/delete-dialog.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import * as sinon from 'sinon';
-import { DeleteDialogComponent } from 'app/shared/delete-dialog/delete-dialog.component';
 import { TranslateModule } from '@ngx-translate/core';
 import { AlertService } from 'app/core/alert/alert.service';
 import { ActionType, DeleteDialogData } from 'app/shared/delete-dialog/delete-dialog.model';
