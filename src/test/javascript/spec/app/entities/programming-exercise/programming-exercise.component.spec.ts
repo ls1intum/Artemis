@@ -7,10 +7,6 @@ import { ArtemisTestModule } from '../../../test.module';
 import { ProgrammingExerciseComponent } from 'app/exercises/programming/shared/programming-exercise.component';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
-import { MockSyncStorage } from '../../../mocks/mock-sync.storage';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { TranslateService } from '@ngx-translate/core';
-import { MockTranslateService } from '../../../mocks/mock-translate.service';
 
 describe('Component Tests', () => {
     describe('ProgrammingExercise Management Component', () => {
@@ -22,11 +18,7 @@ describe('Component Tests', () => {
             TestBed.configureTestingModule({
                 imports: [ArtemisTestModule],
                 declarations: [ProgrammingExerciseComponent],
-                providers: [
-                    { provide: LocalStorageService, useClass: MockSyncStorage },
-                    { provide: SessionStorageService, useClass: MockSyncStorage },
-                    { provide: TranslateService, useClass: MockTranslateService },
-                ],
+                providers: [],
             })
                 .overrideTemplate(ProgrammingExerciseComponent, '')
                 .compileComponents();
@@ -34,9 +26,6 @@ describe('Component Tests', () => {
             fixture = TestBed.createComponent(ProgrammingExerciseComponent);
             comp = fixture.componentInstance;
             service = fixture.debugElement.injector.get(ProgrammingExerciseService);
-            comp.route.params.subscribe((params) => {
-                comp.instanceNumber = params['12345'];
-            });
         });
 
         it('Should call load all on init', () => {
