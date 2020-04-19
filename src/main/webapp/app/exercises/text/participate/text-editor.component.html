@@ -1,10 +1,4 @@
-<jhi-header-participation-page
-    class="d-block mb-4"
-    [exercise]="textExercise"
-    [onBackClick]="previous.bind(this)"
-    [participation]="isAfterAssessmentDueDate ? participation : null"
-    (submit)="submit()"
->
+<jhi-header-participation-page class="d-block mb-4" [exercise]="textExercise" [onBackClick]="previous.bind(this)" [participation]="participation" (submit)="submit()">
     <jhi-button
         submitbutton
         [title]="!isAllowedToSubmitAfterDeadline ? 'entity.action.submit' : 'entity.action.submitDeadlineMissed'"
