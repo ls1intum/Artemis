@@ -27,6 +27,7 @@ import { ApollonDiagramService } from 'app/exercises/quiz/manage/apollon-diagram
 import { ButtonType } from 'app/shared/components/button.component';
 import { participationStatus } from 'app/exercises/shared/exercise/exercise-utils';
 import { filter } from 'rxjs/operators';
+import { stringifyIgnoringFields } from 'app/shared/util/utils';
 
 @Component({
     selector: 'jhi-modeling-submission',
@@ -448,22 +449,27 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         }
     }
 
-    /**
-     * Checks whether there are pending changes in the current model. Returns true if there are NO unsaved changes, false otherwise.
-     */
     canDeactivate(): Observable<boolean> | boolean {
         if (!this.modelingEditor) {
             return true;
         }
         const model: UMLModel = this.modelingEditor.getCurrentModel();
-        const jsonModel = JSON.stringify(model);
-        if (
-            ((!this.submission || !this.submission.model) && model.elements.length > 0 && jsonModel !== '') ||
-            (this.submission && this.submission.model && JSON.parse(this.submission.model).version === model.version && this.submission.model !== jsonModel)
-        ) {
-            return false;
+        return !this.modelHasUnsavedChanges(model);
+    }
+
+    /**
+     * Checks whether there are pending changes in the current model. Returns true if there are unsaved changes, false otherwise.
+     */
+    private modelHasUnsavedChanges(model: UMLModel): boolean {
+        if (!this.submission || !this.submission.model) {
+            return model.elements.length > 0 && JSON.stringify(model) !== '';
+        } else if (this.submission && this.submission.model) {
+            const currentModel = JSON.parse(this.submission.model);
+            const versionMatch = currentModel.version === model.version;
+            const modelMatch = stringifyIgnoringFields(currentModel, 'size') === stringifyIgnoringFields(model, 'size');
+            return versionMatch && !modelMatch;
         }
-        return true;
+        return false;
     }
 
     // displays the alert for confirming leaving the page if there are unsaved changes
