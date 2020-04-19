@@ -1,47 +1,24 @@
-<div class="course-info-bar">
-    <div class="row justify-content-between">
-        <div class="col-12 col-lg-8">
-            <h2>
-                <fa-icon [icon]="'arrow-left'" (click)="previous()" class="back-button mr-2"></fa-icon>
-                {{ 'artemisApp.fileUploadSubmission.fileUpload' | translate }}
-                <span *ngIf="fileUploadExercise">{{ 'artemisApp.fileUploadSubmission.forExercise' | translate }}: {{ fileUploadExercise.title }}</span>
-            </h2>
-        </div>
-
-        <div class="col-12 col-lg-4 text-right">
-            <div *ngIf="participation">
-                <jhi-submission-result-status
-                    [exercise]="fileUploadExercise"
-                    [studentParticipation]="isAfterAssessmentDueDate ? participation : null"
-                ></jhi-submission-result-status>
-            </div>
-            <br />
-            <jhi-button
-                [disabled]="(!isActive && !isLate) || !submission || !submissionFile || !!result"
-                [title]="!isLate ? 'entity.action.submit' : 'entity.action.submitDeadlineMissed'"
-                (onClick)="submitExercise()"
-                [btnType]="!isLate ? ButtonType.PRIMARY : ButtonType.WARNING"
-                [tooltip]="submitButtonTooltip"
-                [isLoading]="isSaving"
-            >
-            </jhi-button>
-        </div>
-    </div>
-</div>
+<jhi-header-participation-page class="d-block mb-4" [exercise]="fileUploadExercise" [onBackClick]="previous.bind(this)" [participation]="participation">
+    <jhi-button
+        submitbutton
+        [disabled]="(!isActive && !isLate) || !submission || !submissionFile || !!result"
+        [title]="!isLate ? 'entity.action.submit' : 'entity.action.submitDeadlineMissed'"
+        (onClick)="submitExercise()"
+        [btnType]="!isLate ? ButtonType.PRIMARY : ButtonType.WARNING"
+        [tooltip]="submitButtonTooltip"
+        [isLoading]="isSaving"
+    >
+    </jhi-button>
+</jhi-header-participation-page>
 
 <jhi-alert></jhi-alert>
 
-<div class="p-4">
+<div class="mt-4 px-2 pb-2">
     <div class="row" *ngIf="fileUploadExercise">
-        <div class="col-9">
+        <div class="col-12">
             <p class="mb-3 markdown-preview" *ngIf="fileUploadExercise!.problemStatement">
                 <b><span jhiTranslate="artemisApp.exercise.problemStatement">Problem Statement</span>:</b>
                 <span [innerHTML]="fileUploadExercise!.problemStatement! | htmlForMarkdown"></span>
-            </p>
-        </div>
-        <div class="col-3 text-right" *ngIf="!submission?.submitted">
-            <p>
-                <strong><span jhiTranslate="artemisApp.exercise.maxScore">Max. Score</span>: {{ fileUploadExercise!.maxScore }}</strong>
             </p>
         </div>
     </div>
