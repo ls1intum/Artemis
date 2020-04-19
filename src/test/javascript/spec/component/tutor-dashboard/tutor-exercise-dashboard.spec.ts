@@ -38,6 +38,7 @@ import { ModelingSubmissionService } from 'app/exercises/modeling/participate/mo
 import { TutorParticipationStatus } from 'app/entities/participation/tutor-participation.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { ArtemisResultModule } from 'app/exercises/shared/result/result.module';
+import { HeaderParticipationPageComponent } from 'app/exercises/shared/exercise-headers/header-participation-page.component';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -71,6 +72,7 @@ describe('TutorExerciseDashboardComponent', () => {
                 MockComponent(TutorLeaderboardComponent),
                 MockComponent(TutorParticipationGraphComponent),
                 MockComponent(HeaderExercisePageWithDetailsComponent),
+                MockComponent(HeaderParticipationPageComponent),
                 MockComponent(SidePanelComponent),
                 MockComponent(ModelingEditorComponent),
                 MockComponent(CollapsableAssessmentInstructionsComponent),

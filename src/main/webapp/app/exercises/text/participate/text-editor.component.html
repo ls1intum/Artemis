@@ -39,8 +39,8 @@
             <div class="col-12 col-lg-9 col-xl-8">
                 <textarea
                     #textEditor
+                    class="text-editor-textarea"
                     [(ngModel)]="answer"
-                    style="width: 100%; height: 50vh;"
                     [readonly]="!isActive || !submission"
                     [disabled]="!isActive || !submission"
                     (keydown.tab)="onTextEditorTab(textEditor, $event)"

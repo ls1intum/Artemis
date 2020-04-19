@@ -12,6 +12,7 @@ import { ChartsModule } from 'ng2-charts';
 import { TranslateModule } from '@ngx-translate/core';
 import { HeaderExercisePageWithDetailsComponent } from 'app/exercises/shared/exercise-headers/header-exercise-page-with-details.component';
 import { InstructorExerciseDashboardComponent } from 'app/exercises/shared/dashboards/instructor/instructor-exercise-dashboard.component';
+import { HeaderParticipationPageComponent } from 'app/exercises/shared/exercise-headers/header-participation-page.component';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -25,6 +26,7 @@ describe('InstructorExerciseDashboardComponent', () => {
             declarations: [
                 InstructorExerciseDashboardComponent,
                 MockComponent(HeaderExercisePageWithDetailsComponent),
+                MockComponent(HeaderParticipationPageComponent),
                 MockComponent(SidePanelComponent),
                 MockComponent(TutorLeaderboardComponent),
             ],

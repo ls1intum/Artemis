@@ -25,6 +25,7 @@ import { TextSubmission } from 'app/entities/text-submission.model';
 @Component({
     templateUrl: './text-editor.component.html',
     providers: [ParticipationService],
+    styleUrls: ['./text-editor.component.scss'],
 })
 export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeactivate {
     readonly ButtonType = ButtonType;
