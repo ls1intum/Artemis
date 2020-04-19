@@ -139,56 +139,54 @@ describe('CodeEditorFileBrowserComponent', () => {
             'folder2/folder3': FileType.FOLDER,
             'folder2/folder3/file3': FileType.FILE,
         };
-        const expectedTreeviewItems = [
-            new TreeviewItem({
-                internalDisabled: false,
-                internalChecked: false,
-                internalCollapsed: false,
-                text: 'folder',
-                value: 'folder',
-                internalChildren: [
-                    new TreeviewItem({
-                        internalDisabled: false,
-                        internalChecked: false,
-                        internalCollapsed: false,
-                        text: 'file1',
-                        value: 'folder/file1',
-                    } as any),
-                ],
-            } as any),
-            new TreeviewItem({
-                internalDisabled: false,
-                internalChecked: false,
-                internalCollapsed: false,
-                text: 'folder2',
-                value: 'folder2',
-                internalChildren: [
-                    new TreeviewItem({
-                        internalDisabled: false,
-                        internalChecked: false,
-                        internalCollapsed: false,
-                        text: 'file2',
-                        value: 'folder2/file2',
-                    } as any),
-                    new TreeviewItem({
-                        internalDisabled: false,
-                        internalChecked: false,
-                        internalCollapsed: false,
-                        text: 'folder3',
-                        value: 'folder2/folder3',
-                        internalChildren: [
-                            new TreeviewItem({
-                                internalDisabled: false,
-                                internalChecked: false,
-                                internalCollapsed: false,
-                                text: 'file3',
-                                value: 'folder2/file3',
-                            } as any),
-                        ],
-                    } as any),
-                ],
-            } as any),
-        ];
+        new TreeviewItem({
+            internalDisabled: false,
+            internalChecked: false,
+            internalCollapsed: false,
+            text: 'folder',
+            value: 'folder',
+            internalChildren: [
+                new TreeviewItem({
+                    internalDisabled: false,
+                    internalChecked: false,
+                    internalCollapsed: false,
+                    text: 'file1',
+                    value: 'folder/file1',
+                } as any),
+            ],
+        } as any);
+        new TreeviewItem({
+            internalDisabled: false,
+            internalChecked: false,
+            internalCollapsed: false,
+            text: 'folder2',
+            value: 'folder2',
+            internalChildren: [
+                new TreeviewItem({
+                    internalDisabled: false,
+                    internalChecked: false,
+                    internalCollapsed: false,
+                    text: 'file2',
+                    value: 'folder2/file2',
+                } as any),
+                new TreeviewItem({
+                    internalDisabled: false,
+                    internalChecked: false,
+                    internalCollapsed: false,
+                    text: 'folder3',
+                    value: 'folder2/folder3',
+                    internalChildren: [
+                        new TreeviewItem({
+                            internalDisabled: false,
+                            internalChecked: false,
+                            internalCollapsed: false,
+                            text: 'file3',
+                            value: 'folder2/file3',
+                        } as any),
+                    ],
+                } as any),
+            ],
+        } as any);
         comp.repositoryFiles = repositoryFiles;
         comp.setupTreeview();
         fixture.detectChanges();
@@ -311,7 +309,7 @@ describe('CodeEditorFileBrowserComponent', () => {
             folder2: FileType.FOLDER,
             'folder/file2': FileType.FILE,
         };
-        const treeItems = [
+        comp.filesTreeViewItem = [
             new TreeviewItem({
                 internalDisabled: false,
                 internalChecked: false,
@@ -327,7 +325,6 @@ describe('CodeEditorFileBrowserComponent', () => {
                 value: 'file2',
             } as any),
         ];
-        comp.filesTreeViewItem = treeItems;
         comp.repositoryFiles = repositoryFiles;
         comp.selectedFile = selectedFile;
         triggerChanges(comp, { property: 'selectedFile', currentValue: 'folder/file2', firstChange: false });
@@ -349,7 +346,7 @@ describe('CodeEditorFileBrowserComponent', () => {
         expect(areUnSelected).to.be.true;
     });
 
-    it('should add file to node tree if created', fakeAsync((done: any) => {
+    it('should add file to node tree if created', fakeAsync(() => {
         const fileName = 'file2';
         const filePath = 'folder2/file2';
         const repositoryFiles = { file1: FileType.FILE, folder2: FileType.FOLDER };
