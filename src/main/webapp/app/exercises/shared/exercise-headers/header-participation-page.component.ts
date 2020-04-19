@@ -1,4 +1,4 @@
-import { Component, Input, Output, OnChanges, OnInit, SimpleChanges, EventEmitter, ViewEncapsulation } from '@angular/core';
+import { Component, Input, OnChanges, OnInit, SimpleChanges, ViewEncapsulation } from '@angular/core';
 import * as moment from 'moment';
 import { Exercise, ExerciseCategory, getIcon } from 'app/entities/exercise.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
@@ -18,8 +18,6 @@ export class HeaderParticipationPageComponent implements OnInit, OnChanges {
     @Input() exercise: Exercise;
     @Input() participation: StudentParticipation;
     @Input() onBackClick: () => void;
-
-    @Output() submit = new EventEmitter<void>();
 
     public exerciseStatusBadge = 'badge-success';
     public exerciseCategories: ExerciseCategory[];

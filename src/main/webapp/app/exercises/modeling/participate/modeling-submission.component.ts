@@ -28,6 +28,7 @@ import { ButtonType } from 'app/shared/components/button.component';
 import { participationStatus } from 'app/exercises/shared/exercise/exercise-utils';
 import { filter } from 'rxjs/operators';
 import { stringifyIgnoringFields } from 'app/shared/util/utils';
+import { Location } from '@angular/common';
 
 @Component({
     selector: 'jhi-modeling-submission',
@@ -85,6 +86,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         private router: Router,
         private participationWebsocketService: ParticipationWebsocketService,
         private guidedTourService: GuidedTourService,
+        private location: Location,
     ) {
         this.isSaving = false;
         this.autoSaveTimer = 0;
@@ -525,5 +527,9 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         }
 
         return 'entity.action.submitDeadlineMissedTooltip';
+    }
+
+    previous() {
+        this.location.back();
     }
 }
