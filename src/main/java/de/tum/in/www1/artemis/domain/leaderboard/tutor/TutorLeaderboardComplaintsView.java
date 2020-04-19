@@ -8,15 +8,18 @@ import javax.persistence.Table;
 import org.hibernate.annotations.Immutable;
 
 @Entity
-@Table(name = "view_tutor_leaderboard_answered_more_feedback_requests")
+@Table(name = "view_tutor_leaderboard_complaints")
 @Immutable
-public class TutorLeaderboardAnsweredMoreFeedbackRequestsView {
+public class TutorLeaderboardComplaintsView {
 
     @EmbeddedId
     private LeaderboardId leaderboardId;
 
-    @Column(name = "answered_requests")
-    private long answeredRequests;
+    @Column(name = "all_complaints")
+    private long allComplaints;
+
+    @Column(name = "accepted_complaints")
+    private long acceptedComplaints;
 
     @Column(name = "points")
     private Long points;
@@ -27,11 +30,15 @@ public class TutorLeaderboardAnsweredMoreFeedbackRequestsView {
     @Column(name = "first_name")
     private String userFirstName;
 
-    public long getAnsweredRequests() {
-        return answeredRequests;
+    public long getAllComplaints() {
+        return allComplaints;
     }
 
-    public long getPoints() {
+    public long getAcceptedComplaints() {
+        return acceptedComplaints;
+    }
+
+    public Long getPoints() {
         return points;
     }
 
@@ -51,12 +58,13 @@ public class TutorLeaderboardAnsweredMoreFeedbackRequestsView {
         return userFirstName;
     }
 
-    public TutorLeaderboardAnsweredMoreFeedbackRequestsView() {
+    public TutorLeaderboardComplaintsView() {
     }
 
-    public TutorLeaderboardAnsweredMoreFeedbackRequestsView(LeaderboardId leaderboardId, long answeredRequests, Long points, long courseId, String userFirstName) {
+    public TutorLeaderboardComplaintsView(LeaderboardId leaderboardId, long allComplaints, long acceptedComplaints, Long points, long courseId, String userFirstName) {
         this.leaderboardId = leaderboardId;
-        this.answeredRequests = answeredRequests;
+        this.allComplaints = allComplaints;
+        this.acceptedComplaints = acceptedComplaints;
         this.points = points;
         this.courseId = courseId;
         this.userFirstName = userFirstName;

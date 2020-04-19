@@ -8,15 +8,18 @@ import javax.persistence.Table;
 import org.hibernate.annotations.Immutable;
 
 @Entity
-@Table(name = "view_tutor_leaderboard_answered_more_feedback_requests")
+@Table(name = "view_tutor_leaderboard_more_feedback_requests")
 @Immutable
-public class TutorLeaderboardAnsweredMoreFeedbackRequestsView {
+public class TutorLeaderboardMoreFeedbackRequestsView {
 
     @EmbeddedId
     private LeaderboardId leaderboardId;
 
-    @Column(name = "answered_requests")
-    private long answeredRequests;
+    @Column(name = "all_requests")
+    private long allRequests;
+
+    @Column(name = "not_answered_requests")
+    private long notAnsweredRequests;
 
     @Column(name = "points")
     private Long points;
@@ -27,11 +30,15 @@ public class TutorLeaderboardAnsweredMoreFeedbackRequestsView {
     @Column(name = "first_name")
     private String userFirstName;
 
-    public long getAnsweredRequests() {
-        return answeredRequests;
+    public long getAllRequests() {
+        return allRequests;
     }
 
-    public long getPoints() {
+    public long getNotAnsweredRequests() {
+        return notAnsweredRequests;
+    }
+
+    public Long getPoints() {
         return points;
     }
 
@@ -51,12 +58,13 @@ public class TutorLeaderboardAnsweredMoreFeedbackRequestsView {
         return userFirstName;
     }
 
-    public TutorLeaderboardAnsweredMoreFeedbackRequestsView() {
+    public TutorLeaderboardMoreFeedbackRequestsView() {
     }
 
-    public TutorLeaderboardAnsweredMoreFeedbackRequestsView(LeaderboardId leaderboardId, long answeredRequests, Long points, long courseId, String userFirstName) {
+    public TutorLeaderboardMoreFeedbackRequestsView(LeaderboardId leaderboardId, long allRequests, long notAnsweredRequests, Long points, long courseId, String userFirstName) {
         this.leaderboardId = leaderboardId;
-        this.answeredRequests = answeredRequests;
+        this.allRequests = allRequests;
+        this.notAnsweredRequests = notAnsweredRequests;
         this.points = points;
         this.courseId = courseId;
         this.userFirstName = userFirstName;

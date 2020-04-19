@@ -249,6 +249,22 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
     }
 
     @Test
+    @WithMockUser(value = "student1", roles = "USER")
+    public void getDataForTextEditor_hasTextBlocks() throws Exception {
+        TextSubmission textSubmission = ModelFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
+        ArrayList<TextBlock> textBlocks = textExerciseUtilService.generateTextBlocks(1);
+        textBlocks.forEach(TextBlock::computeId);
+        textSubmission = database.addTextSubmissionWithResultAndAssessor(textExercise, textSubmission, "student1", "tutor1");
+        database.addTextBlocksToTextSubmission(textBlocks, textSubmission);
+
+        Participation participation = request.get("/api/text-editor/" + textSubmission.getParticipation().getId(), HttpStatus.OK, Participation.class);
+
+        final TextSubmission submission = (TextSubmission) participation.getResults().iterator().next().getSubmission();
+        assertThat(submission.getBlocks()).isNotNull();
+        assertThat(submission.getBlocks()).isNotEmpty();
+    }
+
+    @Test
     @WithMockUser(value = "student2", roles = "USER")
     public void getDataForTextEditor_asOtherStudent() throws Exception {
         TextSubmission textSubmission = ModelFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
