@@ -87,7 +87,7 @@ describe('GuidedTourService', () => {
 
     describe('Service method', () => {
         let service: GuidedTourService;
-        let httpMock: any;
+        let httpMock: HttpTestingController;
         const expected = new GuidedTourSetting('guided_tour_key', 1, GuidedTourState.STARTED);
 
         beforeEach(() => {
@@ -171,9 +171,6 @@ describe('GuidedTourService', () => {
                     guidedTourComponentFixture = TestBed.createComponent(GuidedTourComponent);
                     guidedTourComponent = guidedTourComponentFixture.componentInstance;
 
-                    const navBarComponentFixture = TestBed.createComponent(NavbarComponent);
-                    const navBarComponent = navBarComponentFixture.componentInstance;
-
                     router = TestBed.inject(Router);
                     guidedTourService = TestBed.inject(GuidedTourService);
                     participationService = TestBed.inject(ParticipationService);
@@ -187,7 +184,7 @@ describe('GuidedTourService', () => {
                 });
         });
 
-        function prepareGuidedTour(tour: GuidedTour) {
+        function prepareGuidedTour(guidedTour: GuidedTour) {
             // Prepare GuidedTourService and GuidedTourComponent
             spyOn(guidedTourService, 'init').and.returnValue(of());
             spyOn(guidedTourService, 'getLastSeenTourStepIndex').and.returnValue(0);
@@ -195,13 +192,13 @@ describe('GuidedTourService', () => {
             spyOn<any>(guidedTourService, 'checkTourState').and.returnValue(true);
             spyOn<any>(guidedTourService, 'updateGuidedTourSettings').and.returnValue(of());
             spyOn<any>(guidedTourService, 'enableTour').and.callFake(() => {
-                guidedTourService['availableTourForComponent'] = tour;
-                guidedTourService.currentTour = tour;
+                guidedTourService['availableTourForComponent'] = guidedTour;
+                guidedTourService.currentTour = guidedTour;
             });
             spyOn<any>(guidedTourComponent, 'subscribeToDotChanges').and.callFake(() => {});
         }
 
-        async function startCourseOverviewTour(tour: GuidedTour) {
+        async function startCourseOverviewTour(guidedTour: GuidedTour) {
             guidedTourComponent.ngAfterViewInit();
 
             await guidedTourComponentFixture.ngZone!.run(() => {
@@ -210,7 +207,7 @@ describe('GuidedTourService', () => {
 
             // Start course overview tour
             expect(guidedTourComponentFixture.debugElement.query(By.css('.tour-step'))).to.not.exist;
-            guidedTourService['enableTour'](tour, true);
+            guidedTourService['enableTour'](guidedTour, true);
             guidedTourService['startTour']();
             guidedTourComponentFixture.detectChanges();
             expect(guidedTourComponentFixture.debugElement.query(By.css('.tour-step'))).to.exist;
@@ -309,8 +306,7 @@ describe('GuidedTourService', () => {
                 expect(guidedTourService['currentExercise']).to.equal(exercise1);
                 resetCurrentTour();
 
-                const tourWithoutExerciseMapping = { courseShortName: 'tutorial', tours: { tour_with_course_and_exercise: '' } } as GuidedTourMapping;
-                guidedTourService.guidedTourMapping = tourWithoutExerciseMapping;
+                guidedTourService.guidedTourMapping = { courseShortName: 'tutorial', tours: { tour_with_course_and_exercise: '' } } as GuidedTourMapping;
 
                 // enable tour for matching course title
                 guidedTourService.enableTourForCourseOverview(courses, tourWithCourseAndExercise, true);

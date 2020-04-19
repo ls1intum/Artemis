@@ -12,6 +12,7 @@ import { TranslateModule } from '@ngx-translate/core';
 import { AlertService } from 'app/core/alert/alert.service';
 import { ActionType, DeleteDialogData } from 'app/shared/delete-dialog/delete-dialog.model';
 import { EventEmitter } from '@angular/core';
+import { Observable } from 'rxjs';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -33,6 +34,7 @@ describe('Delete Dialog Service', () => {
     it('should open delete dialog', () => {
         expect(service.modalRef).to.be.undefined;
         const data: DeleteDialogData = {
+            dialogError: new Observable<string>(),
             entityTitle: 'title',
             deleteQuestion: 'artemisApp.exercise.delete.question',
             deleteConfirmationText: 'artemisApp.exercise.delete.typeNameToConfirm',
@@ -42,8 +44,7 @@ describe('Delete Dialog Service', () => {
         const modalSpy = sinon.spy(modalService, 'open');
         service.openDeleteDialog(data);
         expect(modalSpy.callCount).to.be.equal(1);
-        let call = modalSpy.getCall(0);
-        let args = call.args;
+        const args = modalSpy.getCall(0).args;
         expect(args[0].name).to.be.equal('DeleteDialogComponent');
         expect(args[1]).to.be.not.null;
     });
