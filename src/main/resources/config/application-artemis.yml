@@ -71,6 +71,7 @@ artemis:
         embedding-chunk-size: 50
         clustering-url: http://localhost:8000/cluster
         segmentation-url: http://localhost:8080/segment
+        validation-url: http://localhost:8080/validate
         secret: null
 
 info:

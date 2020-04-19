@@ -14,6 +14,7 @@ import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
+import de.tum.in.www1.artemis.repository.TextClusterRepository;
 import de.tum.in.www1.artemis.repository.TextExerciseRepository;
 import de.tum.in.www1.artemis.repository.TextSubmissionRepository;
 
@@ -29,14 +30,18 @@ public class TextExerciseUtilService {
     @Autowired
     private TextExerciseRepository textExerciseRepository;
 
+    @Autowired
+    private TextClusterRepository textClusterRepository;
+
     private Random random = new Random();
 
-    public ArrayList<TextBlock> generateTextBlocks(int count) {
+    public ArrayList<TextBlock> createTextBlocks(int count) {
         ArrayList<TextBlock> textBlocks = new ArrayList<>();
         TextBlock textBlock;
         for (int i = 0; i < count; i++) {
             textBlock = new TextBlock();
-            textBlock.setText("TextBlock" + i);
+            textBlock.setText(Integer.toString(i));
+            textBlock.computeId();
             textBlocks.add(textBlock);
         }
         return textBlocks;
@@ -96,5 +101,77 @@ public class TextExerciseUtilService {
             textSubmissionRepository.save(submission);
         }
         return textExercise;
+    }
+
+    /**
+     * Creates a Submission to a text exercise with text blocks
+     * @param course Course of the submission
+     * @param textBlocks Text blocks of the submission
+     * @param textExercise Text exercise the submission is referring to
+     * @return Submission
+     */
+    public Submission createSubmissionWithTextBlocks(Course course, List<TextBlock> textBlocks, TextExercise textExercise) {
+        StudentParticipation studentParticipation = new StudentParticipation();
+        studentParticipation.setExercise(textExercise);
+        studentParticipation = participationRepository.save(studentParticipation);
+
+        TextSubmission submission = new TextSubmission();
+        submission.setParticipation(studentParticipation);
+        submission.setLanguage(Language.ENGLISH);
+        submission.setText("Text");
+        submission.setBlocks(textBlocks);
+        submission.setSubmitted(true);
+        submission.setSubmissionDate(ZonedDateTime.now());
+        studentParticipation.addSubmissions(submission);
+        return submission;
+    }
+
+    /**
+     * Creates a text cluster with a text exercise and text blocks
+     * @param textBlocks text blocks of the text cluster
+     * @param exercise text exercise of the text cluster
+     * @return TextCluster
+     */
+    public TextCluster createTextCluster(List<TextBlock> textBlocks, TextExercise exercise) {
+        TextCluster cluster = new TextCluster();
+        cluster.setBlocks(textBlocks);
+        cluster.setDistanceMatrix(createDistanceMatrix(textBlocks.size()));
+        cluster.setExercise(exercise);
+        for (TextBlock textBlock : textBlocks) {
+            textBlock.setCluster(cluster);
+        }
+        return cluster;
+    }
+
+    /**
+     * Creates a symmetric matrix mocking the cosine distances between text blocks
+     * @param size size of the matrix
+     * @return double [][]
+     */
+    public double[][] createDistanceMatrix(int size) {
+        double[][] result = new double[size][size];
+        for (int i = 0; i < size; i++) {
+            for (int j = 0; j < i; j++) {
+
+                // Generate random double between 0 and 1
+                double value = random.nextDouble();
+
+                if (value == 0.0 || value == 1.0) {
+                    value = random.nextDouble();
+                }
+                result[i][j] = value;
+                result[j][i] = value;
+            }
+        }
+
+        // Set the distances of each text block to itself to 0.0
+        for (int i = 0; i < result.length; i++) {
+            for (int j = 0; j < result[i].length; j++) {
+                if (i == j) {
+                    result[i][j] = 0.0;
+                }
+            }
+        }
+        return result;
     }
 }

@@ -51,7 +51,7 @@ public class TextAssessmentQueueServiceTest extends AbstractSpringIntegrationTes
 
     @Test
     public void calculateAddedDistancesTest() {
-        ArrayList<TextBlock> textBlocks = textExerciseUtilService.generateTextBlocks(4);
+        ArrayList<TextBlock> textBlocks = textExerciseUtilService.createTextBlocks(4);
         TextCluster textCluster = addTextBlocksToRandomCluster(textBlocks, 1).get(0);
         double[][] distanceMatrix = new double[][] { { 0, 0.1, 0.2, 0.3 }, { 0.1, 0, 0.4, 0.5 }, { 0.2, 0.4, 0, 0.6 }, { 0.3, 0.5, 0.6, 0 } };
         textCluster.setDistanceMatrix(distanceMatrix);
@@ -71,7 +71,7 @@ public class TextAssessmentQueueServiceTest extends AbstractSpringIntegrationTes
         int submissionCount = 5;
         int submissionSize = 4;
         int[] clusterSizes = new int[] { 4, 5, 10, 1 };
-        ArrayList<TextBlock> textBlocks = textExerciseUtilService.generateTextBlocks(submissionCount * submissionSize);
+        ArrayList<TextBlock> textBlocks = textExerciseUtilService.createTextBlocks(submissionCount * submissionSize);
         TextExercise textExercise = textExerciseUtilService.createSampleTextExerciseWithSubmissions(course, textBlocks, submissionCount, submissionSize);
         textBlocks.forEach(TextBlock::computeId);
         List<TextCluster> clusters = textExerciseUtilService.addTextBlocksToCluster(textBlocks, clusterSizes, textExercise);
