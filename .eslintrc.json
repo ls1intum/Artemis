@@ -37,5 +37,11 @@
         ],
         "@typescript-eslint/no-non-null-assertion": "off",
         "chai-friendly/no-unused-expressions": 2
-    }
+    },
+    "overrides": [{
+        "files": ["mock-*.ts"],
+        "rules": {
+            "@typescript-eslint/no-unused-vars": "off"
+        }
+    }]
 }
