@@ -28,7 +28,6 @@ describe('ProgrammingExerciseInstructorStatusComponent', () => {
     let fixture: ComponentFixture<ProgrammingExerciseInstructorStatusComponent>;
     let participationWebsocketService: ParticipationWebsocketService;
     let subscribeForLatestResultStub: SinonStub;
-    let addParticipationToListStub: SinonStub;
     let latestResultSubject: Subject<Result>;
 
     beforeEach(async(() => {
@@ -48,7 +47,6 @@ describe('ProgrammingExerciseInstructorStatusComponent', () => {
 
                 participationWebsocketService = fixture.debugElement.injector.get(ParticipationWebsocketService);
 
-                addParticipationToListStub = stub(participationWebsocketService, 'addParticipation');
                 subscribeForLatestResultStub = stub(participationWebsocketService, 'subscribeForLatestResultOfParticipation');
                 latestResultSubject = new Subject();
                 subscribeForLatestResultStub.returns(latestResultSubject);

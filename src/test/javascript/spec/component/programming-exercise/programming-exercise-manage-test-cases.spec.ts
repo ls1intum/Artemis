@@ -62,7 +62,6 @@ describe('ProgrammingExerciseManageTestCases', () => {
     const tableEditingInput = '.table-editable-field__input';
     const rowClass = 'datatable-body-row';
     const saveTestCasesButton = '#save-test-cases-button';
-    const resetWeightsButton = '#reset-weights-button';
     const triggerSubmissionRunButton = '#trigger-all-button > button';
     const testCasesNoUnsavedChanges = '#test-case-status-no-unsaved-changes';
     const testCasesUnsavedChanges = '#test-case-status-unsaved-changes';
@@ -95,10 +94,6 @@ describe('ProgrammingExerciseManageTestCases', () => {
 
     const getSaveButton = () => {
         return getElement(debugElement, saveTestCasesButton);
-    };
-
-    const getResetButton = () => {
-        return getElement(debugElement, resetWeightsButton);
     };
 
     const getTriggerButton = () => {
@@ -342,8 +337,6 @@ describe('ProgrammingExerciseManageTestCases', () => {
         comp.showInactive = true;
         routeSubject.next({ exerciseId });
         getExerciseTestCaseStateSubject.next(getExerciseTestCasteStateDTO(true, true, false, null));
-
-        const orderedTests = _sortBy(testCases1, 'testName');
 
         (testCaseService as any).next(testCases1);
 

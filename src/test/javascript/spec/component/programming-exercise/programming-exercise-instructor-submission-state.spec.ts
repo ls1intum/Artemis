@@ -36,7 +36,6 @@ describe('ProgrammingExerciseInstructorSubmissionState', () => {
     let getExerciseSubmissionStateStub: SinonStub;
     let getExerciseSubmissionStateSubject: Subject<ExerciseSubmissionState>;
 
-    let getBuildRunStateStub: SinonStub;
     let getBuildRunStateSubject: Subject<BuildRunState>;
 
     let triggerAllStub: SinonStub;
@@ -75,7 +74,6 @@ describe('ProgrammingExerciseInstructorSubmissionState', () => {
                 getExerciseSubmissionStateStub = stub(submissionService, 'getSubmissionStateOfExercise').returns(getExerciseSubmissionStateSubject);
 
                 getBuildRunStateSubject = new Subject<BuildRunState>();
-                getBuildRunStateStub = stub(buildRunService, 'getBuildRunUpdates').returns(getBuildRunStateSubject);
 
                 triggerAllStub = stub(submissionService, 'triggerInstructorBuildForParticipationsOfExercise').returns(of());
                 triggerParticipationsStub = stub(submissionService, 'triggerInstructorBuildForAllParticipationsOfExercise').returns(of());
