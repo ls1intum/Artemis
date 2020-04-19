@@ -33,6 +33,7 @@ const DEFAULT_COLORS = [
 export class ColorSelectorComponent implements OnInit {
     colorSelectorPosition: Coordinates;
     showColorSelector = false;
+    height = 220;
     @Input() tagColors: string[] = DEFAULT_COLORS;
     @Output() selectedColor = new EventEmitter<string>();
 
@@ -43,16 +44,19 @@ export class ColorSelectorComponent implements OnInit {
     @HostListener('document:click', ['$event'])
     clickOutside(event: any) {
         if (this.showColorSelector) {
-            if (event.target?.className !== 'color-selector' && !event.target?.className.includes('color-preview')) {
+            if (!event.target?.className.includes('color-selector') && !event.target?.className.includes('color-preview')) {
                 this.showColorSelector = false;
             }
         }
     }
 
-    openColorSelector(event: MouseEvent) {
+    openColorSelector(event: MouseEvent, marginTop?: number, height?: number) {
         const parentElement = (event.target as Element).closest('.ng-trigger') as HTMLElement;
         this.colorSelectorPosition.left = parentElement ? parentElement.offsetLeft : 0;
-        this.colorSelectorPosition.top = 65;
+        this.colorSelectorPosition.top = marginTop ?? 65;
+        if (height !== undefined) {
+            this.height = height;
+        }
         this.showColorSelector = !this.showColorSelector;
     }
 
