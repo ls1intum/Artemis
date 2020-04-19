@@ -164,8 +164,8 @@ describe('ProgrammingExerciseInstructionComponent', () => {
     it('should NOT try to fetch README.md from assignment repository if a problemStatement was provided', () => {
         const result = { id: 1, feedbacks: [] as Feedback[] } as Result;
         const participation = { id: 2 } as Participation;
-        const problemStatement = 'lorem ipsum';
-        const exercise = { id: 3, course: { id: 4 }, problemStatement } as ProgrammingExercise;
+        const problemstatement = 'lorem ipsum';
+        const exercise = { id: 3, course: { id: 4 }, problemStatement: problemstatement } as ProgrammingExercise;
         const loadInitialResultStub = stub(comp, 'loadInitialResult').returns(of(result));
         const updateMarkdownStub = stub(comp, 'updateMarkdown');
         comp.participation = participation;
@@ -259,8 +259,8 @@ describe('ProgrammingExerciseInstructionComponent', () => {
 
     it('should still render the instructions if fetching the latest result fails', () => {
         const participation = { id: 2 } as Participation;
-        const problemStatement = 'lorem ipsum';
-        const exercise = { id: 3, course: { id: 4 }, problemStatement } as ProgrammingExercise;
+        const problemstatement = 'lorem ipsum';
+        const exercise = { id: 3, course: { id: 4 }, problemStatement: problemstatement } as ProgrammingExercise;
         const updateMarkdownStub = stub(comp, 'updateMarkdown');
         getLatestResultWithFeedbacks.returns(throwError('fatal error'));
         comp.participation = participation;
