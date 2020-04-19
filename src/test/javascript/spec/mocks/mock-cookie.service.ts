@@ -1,11 +1,11 @@
-import { CookieOptions, ICookieService } from 'ngx-cookie-service';
+import { CookieService } from 'ngx-cookie-service';
 
-export class MockCookieService implements ICookieService {
+export class MockCookieService extends CookieService {
     get(key: string): string {
         return '';
     }
 
-    getAll(): Object {
+    getAll(): any {
         return {};
     }
 
@@ -13,11 +13,11 @@ export class MockCookieService implements ICookieService {
         return {};
     }
 
-    put(key: string, value: string, options?: CookieOptions): void {}
+    put(key: string, value: string, options?: any): void {}
 
-    putObject(key: string, value: Object, options?: CookieOptions): void {}
+    putObject(key: string, value: Object, options?: any): void {}
 
-    remove(key: string, options?: CookieOptions): void {}
+    remove(key: string, options?: any): void {}
 
-    removeAll(options?: CookieOptions): void {}
+    removeAll(options?: any): void {}
 }
