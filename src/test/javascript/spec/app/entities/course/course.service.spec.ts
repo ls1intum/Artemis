@@ -4,26 +4,35 @@ import { HttpClientTestingModule, HttpTestingController } from '@angular/common/
 import { map, take } from 'rxjs/operators';
 import * as moment from 'moment';
 import { DATE_TIME_FORMAT } from 'app/shared/constants/input.constants';
-import { CourseService } from 'app/course/manage/course.service';
-import { Course, ICourse } from 'app/shared/model/course.model';
+import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { Course } from 'app/entities/course.model';
 
 describe('Service Tests', () => {
     describe('Course Service', () => {
         let injector: TestBed;
-        let service: CourseService;
+        let service: CourseManagementService;
         let httpMock: HttpTestingController;
-        let elemDefault: ICourse;
+        let elemDefault: Course;
         let currentDate: moment.Moment;
         beforeEach(() => {
             TestBed.configureTestingModule({
                 imports: [HttpClientTestingModule],
             });
             injector = getTestBed();
-            service = injector.get(CourseService);
+            service = injector.get(CourseManagementService);
             httpMock = injector.get(HttpTestingController);
             currentDate = moment();
 
-            elemDefault = new Course(0, 'AAAAAAA', 'AAAAAAA', 'AAAAAAA', 'AAAAAAA', currentDate, currentDate, false);
+            elemDefault = new Course();
+            elemDefault.id = 0;
+            elemDefault.title = 'AAAAAAA';
+            elemDefault.description = 'AAAAAAA';
+            elemDefault.shortName = 'AAAAAAA';
+            elemDefault.title = 'AAAAAAA';
+            elemDefault.startDate = currentDate;
+            elemDefault.endDate = currentDate;
+            elemDefault.complaintsEnabled = false;
+            elemDefault.studentQuestionsEnabled = false;
         });
 
         describe('Service methods', async () => {
@@ -61,7 +70,7 @@ describe('Service Tests', () => {
                     returnedFromService,
                 );
                 service
-                    .create(new Course(null))
+                    .create(new Course())
                     .pipe(take(1))
                     .subscribe((resp) => expect(resp).toMatchObject({ body: expected }));
                 const req = httpMock.expectOne({ method: 'POST' });
@@ -130,7 +139,7 @@ describe('Service Tests', () => {
             });
 
             it('should delete a Course', async () => {
-                const rxPromise = service.delete(123).subscribe((resp) => expect(resp.ok));
+                service.delete(123).subscribe((resp) => expect(resp.ok));
 
                 const req = httpMock.expectOne({ method: 'DELETE' });
                 req.flush({ status: 200 });

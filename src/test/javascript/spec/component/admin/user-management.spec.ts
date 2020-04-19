@@ -18,7 +18,6 @@ const expect = chai.expect;
 describe('UserManagementComponent', () => {
     let comp: UserManagementComponent;
     let fixture: ComponentFixture<UserManagementComponent>;
-    let debugElement: DebugElement;
 
     beforeEach(async () => {
         return TestBed.configureTestingModule({
@@ -32,7 +31,6 @@ describe('UserManagementComponent', () => {
             .then(() => {
                 fixture = TestBed.createComponent(UserManagementComponent);
                 comp = fixture.componentInstance;
-                debugElement = fixture.debugElement;
             });
     });
 

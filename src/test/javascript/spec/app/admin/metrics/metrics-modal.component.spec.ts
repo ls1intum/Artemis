@@ -8,7 +8,6 @@ describe('Component Tests', () => {
     describe('JhiMetricsMonitoringModalComponent', () => {
         let comp: JhiMetricsMonitoringModalComponent;
         let fixture: ComponentFixture<JhiMetricsMonitoringModalComponent>;
-        let service: JhiMetricsService;
 
         beforeEach(async(() => {
             TestBed.configureTestingModule({
@@ -22,7 +21,7 @@ describe('Component Tests', () => {
         beforeEach(() => {
             fixture = TestBed.createComponent(JhiMetricsMonitoringModalComponent);
             comp = fixture.componentInstance;
-            service = fixture.debugElement.injector.get(JhiMetricsService);
+            fixture.debugElement.injector.get(JhiMetricsService);
         });
 
         describe('ngOnInit', () => {

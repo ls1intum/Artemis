@@ -14,7 +14,6 @@ const expect = chai.expect;
 describe('AdminModule', () => {
     let comp: AuditsComponent;
     let fixture: ComponentFixture<AuditsComponent>;
-    let debugElement: DebugElement;
 
     beforeEach(async () => {
         return TestBed.configureTestingModule({
@@ -24,7 +23,6 @@ describe('AdminModule', () => {
             .then(() => {
                 fixture = TestBed.createComponent(AuditsComponent);
                 comp = fixture.componentInstance;
-                debugElement = fixture.debugElement;
             });
     });
 
