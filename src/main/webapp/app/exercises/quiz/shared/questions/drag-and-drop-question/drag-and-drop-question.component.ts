@@ -1,4 +1,4 @@
-import { Component, EventEmitter, HostListener, Input, OnChanges, Output, SimpleChanges, ViewChild, ViewEncapsulation } from '@angular/core';
+import { Component, EventEmitter, HostListener, Input, OnChanges, Output, ViewChild, ViewEncapsulation } from '@angular/core';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { DragAndDropQuestionUtil } from 'app/exercises/quiz/shared/drag-and-drop-question-util.service';
 import { polyfill } from 'mobile-drag-drop';
