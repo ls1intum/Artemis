@@ -1,29 +1,15 @@
-<div class="course-info-bar">
-    <div class="row justify-content-between">
-        <div class="col-12 col-lg-8">
-            <h2>
-                <fa-icon [icon]="'arrow-left'" (click)="previous()" class="back-button mr-2"></fa-icon>
-                Text Editor <span *ngIf="textExercise">for Exercise: {{ textExercise.title }}</span>
-            </h2>
-        </div>
-
-        <div class="col-12 col-lg-4 text-right">
-            <div *ngIf="participation">
-                <jhi-submission-result-status [exercise]="textExercise" [studentParticipation]="isAfterAssessmentDueDate ? participation : null"></jhi-submission-result-status>
-            </div>
-            <br />
-            <jhi-button
-                [title]="!isAllowedToSubmitAfterDeadline ? 'entity.action.submit' : 'entity.action.submitDeadlineMissed'"
-                (onClick)="submit()"
-                [disabled]="!isActive || !submission"
-                [isLoading]="isSaving"
-                [btnType]="isAllowedToSubmitAfterDeadline ? ButtonType.WARNING : ButtonType.PRIMARY"
-                [tooltip]="submitButtonTooltip"
-            >
-            </jhi-button>
-        </div>
-    </div>
-</div>
+<jhi-header-participation-page [exercise]="textExercise" [onBackClick]="previous.bind(this)" [participation]="isAfterAssessmentDueDate ? participation : null" (submit)="submit()">
+    <jhi-button
+        submitbutton
+        [title]="!isAllowedToSubmitAfterDeadline ? 'entity.action.submit' : 'entity.action.submitDeadlineMissed'"
+        (onClick)="submit()"
+        [disabled]="!isActive || !submission"
+        [isLoading]="isSaving"
+        [btnType]="isAllowedToSubmitAfterDeadline ? ButtonType.WARNING : ButtonType.PRIMARY"
+        [tooltip]="submitButtonTooltip"
+    >
+    </jhi-button>
+</jhi-header-participation-page>
 
 <jhi-alert></jhi-alert>
 

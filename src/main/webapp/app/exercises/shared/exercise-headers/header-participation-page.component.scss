@@ -1,0 +1,40 @@
+@import 'src/main/webapp/content/scss/artemis-variables';
+
+.course-info-bar--participation {
+    $margin: calc(-1.25rem - 1px);
+    $background-color: saturate(lighten($artemis-dark, 10%), 15%);
+    $top-border-radius: 3px;
+
+    min-height: unset;
+    padding: 22px 25px;
+    margin: $margin $margin 0 $margin;
+
+    background-color: $background-color;
+    border-top-left-radius: $top-border-radius;
+    border-top-right-radius: $top-border-radius;
+
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    h6 {
+        &:last-child {
+            margin-bottom: 0;
+        }
+    }
+
+    .text-muted {
+        color: white !important;
+    }
+
+    .row--details {
+        &:not(:last-child) {
+            margin-bottom: 0.25rem;
+        }
+
+        & > [class^='col-']:not(:last-child) {
+            padding-right: 2.5rem;
+        }
+    }
+}

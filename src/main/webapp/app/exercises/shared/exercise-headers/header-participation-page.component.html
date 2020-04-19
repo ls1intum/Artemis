@@ -1,0 +1,69 @@
+<div class="course-info-bar course-info-bar--participation" *ngIf="exercise">
+    <div class="row">
+        <div class="col-12 col-sm-12 col-lg-6 d-flex flex-column justify-content-center">
+            <h4>
+                <fa-icon [icon]="'arrow-left'" (click)="onBackClick()" class="back-button mr-2"></fa-icon>
+                {{ exercise.title }}
+            </h4>
+            <h6>
+                <span class="mr-2"> {{ 'artemisApp.courseOverview.exerciseDetails.dueDate' | translate }} {{ (exercise.dueDate | date: 'dd/MM/yy HH:mm') || 'N/A' }} </span>
+                <span *ngIf="exercise.dueDate" [ngClass]="exerciseStatusBadge" class="badge">
+                    {{ exercise.dueDate | amTimeAgo }}
+                </span>
+            </h6>
+            <h6 *ngIf="exercise.assessmentDueDate">
+                <span class="mr-2"> {{ 'artemisApp.exercise.assessmentDueDate' | translate }}: {{ (exercise.assessmentDueDate | date: 'dd/MM/yy HH:mm') || 'N/A' }} </span>
+                <span [ngClass]="exerciseStatusBadge" class="badge">
+                    {{ exercise.assessmentDueDate | amTimeAgo }}
+                </span>
+            </h6>
+            <div *ngIf="exercise.categories" class="d-sm-flex">
+                <h6 class="mr-1">{{ 'artemisApp.courseOverview.exerciseDetails.categories' | translate }}</h6>
+                <h6 *ngFor="let category of exerciseCategories">
+                    <span class="badge text-white mr-1" [ngStyle]="{ backgroundColor: category.color }">{{ category.category }}</span>
+                </h6>
+            </div>
+        </div>
+        <div class="col-12 col-sm-auto flex-sm-shrink-0 col-lg-4 mt-4 mt-lg-0 d-flex flex-column justify-content-center align-items-start text-nowrap">
+            <div class="row row--details" *ngIf="exercise.type">
+                <div class="col-6">
+                    <h6>
+                        {{ 'artemisApp.courseOverview.exerciseDetails.exerciseType' | translate }}
+                    </h6>
+                </div>
+                <div class="col-6">
+                    <h6>
+                        {{ exercise.type | exerciseTypeLabel }}
+                        <fa-icon [icon]="getIcon(exercise.type)" placement="right"></fa-icon>
+                    </h6>
+                </div>
+            </div>
+            <div class="row row--details" *ngIf="exercise.difficulty">
+                <div class="col-6">
+                    <h6>{{ 'artemisApp.courseOverview.exerciseDetails.difficulty' | translate }}</h6>
+                </div>
+                <div class="col-6">
+                    <h6>
+                        <jhi-difficulty-badge [exercise]="exercise"></jhi-difficulty-badge>
+                    </h6>
+                </div>
+            </div>
+            <div class="row row--details" *ngIf="exercise.maxScore">
+                <div class="col-6">
+                    <h6>{{ 'artemisApp.courseOverview.exerciseDetails.maxPoints' | translate }}</h6>
+                </div>
+                <div class="col-6">
+                    <h6>{{ exercise.maxScore }} pts.</h6>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-sm-auto flex-sm-grow-1 col-lg-2 mt-4 mt-sm-0 d-flex flex-column justify-content-center align-items-end">
+            <div *ngIf="participation" class="row">
+                <jhi-submission-result-status [exercise]="exercise" [studentParticipation]="participation"> </jhi-submission-result-status>
+            </div>
+            <div class="mt-2">
+                <ng-content select="[submitbutton]"></ng-content>
+            </div>
+        </div>
+    </div>
+</div>
