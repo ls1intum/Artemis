@@ -28,7 +28,7 @@ export class TextAssessmentAreaComponent implements OnChanges {
     @Output() textBlockRefsChange = new EventEmitter<TextBlockRef[]>();
     selectedRef: TextBlockRef | null = null;
 
-    ngOnChanges(changes: SimpleChanges): void {
+    ngOnChanges(): void {
         this.textBlockRefs.sort((a, b) => a.block.startIndex - b.block.startIndex);
     }
 

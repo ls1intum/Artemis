@@ -17,7 +17,7 @@ export class DifficultyBadgeComponent implements OnInit, OnDestroy {
     constructor(private translateService: TranslateService) {}
 
     ngOnInit(): void {
-        this.translateSubscription = this.translateService.onLangChange.subscribe((event: LangChangeEvent) => {
+        this.translateSubscription = this.translateService.onLangChange.subscribe(() => {
             this.setBadgeAttributes();
         });
         this.setBadgeAttributes();

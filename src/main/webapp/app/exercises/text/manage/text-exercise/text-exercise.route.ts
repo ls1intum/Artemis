@@ -1,4 +1,4 @@
-import { ActivatedRouteSnapshot, Resolve, RouterStateSnapshot, Routes } from '@angular/router';
+import { ActivatedRouteSnapshot, Resolve, Routes } from '@angular/router';
 
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { TextExerciseComponent } from './text-exercise.component';
@@ -20,9 +20,8 @@ export class TextExerciseResolver implements Resolve<TextExercise> {
     /**
      * Resolves the route and initializes text exercise
      * @param route
-     * @param state
      */
-    resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot) {
+    resolve(route: ActivatedRouteSnapshot) {
         if (route.params['exerciseId']) {
             return this.textExerciseService.find(route.params['exerciseId']).pipe(
                 filter((res) => !!res.body),

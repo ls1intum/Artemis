@@ -17,10 +17,11 @@ polyfill({
 });
 
 // Drag-enter listener for mobile devices
-// tslint:disable-next-line
+/* eslint-disable */
 (event: any) => {
     event.preventDefault();
 };
+/* eslint-enable */
 
 window.addEventListener('touchmove', function () {}, { passive: false });
 
@@ -87,7 +88,7 @@ export class DragAndDropQuestionComponent implements OnChanges {
         resizeImage();
     }
 
-    ngOnChanges(changes: SimpleChanges): void {
+    ngOnChanges(): void {
         this.countCorrectMappings();
     }
 

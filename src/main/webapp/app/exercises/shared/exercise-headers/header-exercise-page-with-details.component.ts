@@ -24,7 +24,7 @@ export class HeaderExercisePageWithDetailsComponent implements OnInit, OnChanges
         this.exerciseCategories = this.exerciseService.convertExerciseCategoriesFromServer(this.exercise);
     }
 
-    ngOnChanges(changes: SimpleChanges): void {
+    ngOnChanges(): void {
         this.setExerciseStatusBadge();
         this.exerciseCategories = this.exerciseService.convertExerciseCategoriesFromServer(this.exercise);
     }

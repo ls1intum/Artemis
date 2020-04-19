@@ -491,7 +491,7 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
                 this.jhiAlertService.clear();
                 this.jhiAlertService.success('artemisApp.textAssessment.updateAfterComplaintSuccessful');
             },
-            (error: HttpErrorResponse) => {
+            () => {
                 this.jhiAlertService.clear();
                 this.jhiAlertService.error('artemisApp.textAssessment.updateAfterComplaintFailed');
             },
