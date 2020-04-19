@@ -1,4 +1,10 @@
-<jhi-header-participation-page [exercise]="textExercise" [onBackClick]="previous.bind(this)" [participation]="isAfterAssessmentDueDate ? participation : null" (submit)="submit()">
+<jhi-header-participation-page
+    class="d-block mb-4"
+    [exercise]="textExercise"
+    [onBackClick]="previous.bind(this)"
+    [participation]="isAfterAssessmentDueDate ? participation : null"
+    (submit)="submit()"
+>
     <jhi-button
         submitbutton
         [title]="!isAllowedToSubmitAfterDeadline ? 'entity.action.submit' : 'entity.action.submitDeadlineMissed'"
@@ -13,7 +19,7 @@
 
 <jhi-alert></jhi-alert>
 
-<div class="p-4">
+<div class="mt-4 px-2 pb-2">
     <div class="d-flex flex-column flex-md-row" *ngIf="textExercise">
         <div class="flex-grow-1">
             <p class="mb-3 markdown-preview">

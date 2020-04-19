@@ -25,7 +25,11 @@
     }
 
     .text-muted {
-        color: white !important;
+        color: #f6f6f6 !important;
+    }
+
+    button[disabled] {
+        cursor: not-allowed;
     }
 
     .row--details {

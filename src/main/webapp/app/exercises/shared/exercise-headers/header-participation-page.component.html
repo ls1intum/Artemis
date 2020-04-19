@@ -1,6 +1,6 @@
 <div class="course-info-bar course-info-bar--participation" *ngIf="exercise">
     <div class="row">
-        <div class="col-12 col-sm-12 col-lg-6 d-flex flex-column justify-content-center">
+        <div class="col-12 col-sm-12 col-lg-5 d-flex flex-column justify-content-center">
             <h4>
                 <fa-icon [icon]="'arrow-left'" (click)="onBackClick()" class="back-button mr-2"></fa-icon>
                 {{ exercise.title }}
@@ -57,7 +57,7 @@
                 </div>
             </div>
         </div>
-        <div class="col-12 col-sm-auto flex-sm-grow-1 col-lg-2 mt-4 mt-sm-0 d-flex flex-column justify-content-center align-items-end">
+        <div class="col-12 col-sm-auto flex-sm-grow-1 col-lg-3 mt-4 mt-sm-0 d-flex flex-column justify-content-center align-items-end">
             <div *ngIf="participation" class="row">
                 <jhi-submission-result-status [exercise]="exercise" [studentParticipation]="participation"> </jhi-submission-result-status>
             </div>
