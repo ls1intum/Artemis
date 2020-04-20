@@ -154,6 +154,7 @@ public class ProgrammingSubmissionResultSimulationService {
 
     /**
      * adds the feedback to the result
+     * currently only the Java standard template is supported
      * This functionality is only for testing purposes (noVersionControlAndContinuousIntegrationAvailable)
      * @param result to which the feedback should be added
      */

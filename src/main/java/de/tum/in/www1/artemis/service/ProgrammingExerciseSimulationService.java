@@ -22,6 +22,8 @@ import de.tum.in.www1.artemis.service.scheduled.ProgrammingExerciseScheduleServi
 import de.tum.in.www1.artemis.service.util.VCSSimulationUtils;
 
 /**
+ * Only for local development
+ * This class simulates a programming exercises without a connection to a vcs and ci server
  * This functionality is only for testing purposes (noVersionControlAndContinuousIntegrationAvailable)
  */
 
