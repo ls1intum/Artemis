@@ -1,4 +1,7 @@
-<jhi-header-participation-page class="d-block mb-4" [exercise]="textExercise" [onBackClick]="previous.bind(this)" [participation]="participation">
+<jhi-header-participation-page class="d-block mb-4" [exercise]="textExercise" [participation]="participation">
+    <span pagetitle>
+        {{ 'artemisApp.textSubmission.textEditor' | translate }}: <span class="font-weight-normal">{{ textExercise.title }}</span>
+    </span>
     <jhi-button
         submitbutton
         [title]="!isAllowedToSubmitAfterDeadline ? 'entity.action.submit' : 'entity.action.submitDeadlineMissed'"

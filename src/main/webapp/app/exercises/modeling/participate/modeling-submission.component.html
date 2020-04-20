@@ -1,4 +1,7 @@
-<jhi-header-participation-page class="d-block mb-4" [exercise]="modelingExercise" [onBackClick]="previous.bind(this)" [participation]="participation">
+<jhi-header-participation-page class="d-block mb-4" [exercise]="modelingExercise" [participation]="participation">
+    <span pagetitle>
+        {{ 'artemisApp.modelingSubmission.modelingEditor' | translate }}: <span class="font-weight-normal">{{ modelingExercise.title }}</span>
+    </span>
     <jhi-button
         submitbutton
         class="guided-tour submission-button"

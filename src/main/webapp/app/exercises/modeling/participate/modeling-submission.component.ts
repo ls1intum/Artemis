@@ -528,8 +528,4 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
 
         return 'entity.action.submitDeadlineMissedTooltip';
     }
-
-    previous() {
-        this.location.back();
-    }
 }

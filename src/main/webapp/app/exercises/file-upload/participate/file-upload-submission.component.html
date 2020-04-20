@@ -1,4 +1,7 @@
-<jhi-header-participation-page class="d-block mb-4" [exercise]="fileUploadExercise" [onBackClick]="previous.bind(this)" [participation]="participation">
+<jhi-header-participation-page class="d-block mb-4" [exercise]="fileUploadExercise" [participation]="participation">
+    <span pagetitle>
+        {{ 'artemisApp.fileUploadSubmission.fileUpload' | translate }}: <span class="font-weight-normal">{{ fileUploadExercise.title }}</span>
+    </span>
     <jhi-button
         submitbutton
         [disabled]="(!isActive && !isLate) || !submission || !submissionFile || !!result"

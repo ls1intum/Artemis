@@ -17,7 +17,6 @@ export class HeaderParticipationPageComponent implements OnInit, OnChanges {
     @Input() title: string;
     @Input() exercise: Exercise;
     @Input() participation: StudentParticipation;
-    @Input() onBackClick: () => void;
 
     public exerciseStatusBadge = 'badge-success';
     public exerciseCategories: ExerciseCategory[];

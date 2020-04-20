@@ -217,8 +217,4 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
     private onError(error: HttpErrorResponse) {
         this.jhiAlertService.error(error.message, null, undefined);
     }
-
-    previous() {
-        this.location.back();
-    }
 }

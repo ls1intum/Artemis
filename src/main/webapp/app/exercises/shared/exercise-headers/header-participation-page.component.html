@@ -2,8 +2,7 @@
     <div class="row">
         <div class="col-12 col-sm-12 col-lg-5 d-flex flex-column justify-content-center">
             <h4>
-                <fa-icon [icon]="'arrow-left'" (click)="onBackClick()" class="back-button mr-2"></fa-icon>
-                {{ exercise.title }}
+                <ng-content select="[pagetitle]"></ng-content>
             </h4>
             <h6>
                 <span class="mr-2"> {{ 'artemisApp.courseOverview.exerciseDetails.dueDate' | translate }} {{ (exercise.dueDate | date: 'dd/MM/yy HH:mm') || 'N/A' }} </span>
