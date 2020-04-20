@@ -69,7 +69,7 @@ export class LoginService {
                 }),
                 // 5: Clear all cached notifications of the user.
                 tap(() => {
-                    return this.notificationService.clearNotificationCache();
+                    return this.notificationService.cleanUp();
                 }),
                 // 6: Navigate to the login screen.
                 switchMap(() => {

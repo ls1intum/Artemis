@@ -21,7 +21,6 @@ type EntityArrayResponseType = HttpResponse<Notification[]>;
 @Injectable({ providedIn: 'root' })
 export class NotificationService {
     public resourceUrl = SERVER_API_URL + 'api/notifications';
-    // TODO: we might need to clean this observer object during logout, so that it is newly initialized during login
     notificationObserver: BehaviorSubject<Notification | null>;
     subscribedTopics: string[] = [];
     cachedNotifications: Observable<EntityArrayResponseType>;
@@ -180,7 +179,8 @@ export class NotificationService {
         this.notificationObserver = new BehaviorSubject<Notification | null>(null);
     }
 
-    public clearNotificationCache(): void {
+    public cleanUp(): void {
         this.cachedNotifications = new Observable<EntityArrayResponseType>();
+        this.initNotificationObserver();
     }
 }
