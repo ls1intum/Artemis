@@ -68,8 +68,6 @@
             <button
                 type="button"
                 [routerLink]="['/course-management', fileUploadExercise.course?.id, 'file-upload-exercises', fileUploadExercise.id, 'edit']"
-                replaceUrl="true"
-                queryParamsHandling="merge"
                 class="btn btn-primary"
             >
                 <fa-icon [icon]="'pencil-alt'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.edit"> Edit</span>
