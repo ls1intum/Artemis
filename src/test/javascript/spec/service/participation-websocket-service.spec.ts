@@ -167,9 +167,10 @@ describe('ParticipationWebsocketService', () => {
         expect(participationSpy).to.have.been.calledOnceWithExactly({ ...participation, results: [...participation.results, newRatedResult] });
     });
 
-    /*eslint no-unused-vars: ["error", { "ignoreRestSiblings": true }]*/
     it('should attach the result to participation if the participation has null for results value', () => {
+        /* eslint-disable no-unused-vars */
         const { results, ...participationWithoutResult } = participation;
+        /* eslint-enable no-unused-vars */
         participationWebsocketService.subscribeForLatestResultOfParticipation(participationWithoutResult.id);
         participationWebsocketService.addParticipation(participationWithoutResult as Participation);
         participationWebsocketService.subscribeForParticipationChanges();

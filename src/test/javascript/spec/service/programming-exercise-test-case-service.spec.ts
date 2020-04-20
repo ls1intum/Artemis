@@ -19,9 +19,7 @@ describe('ProgrammingExerciseTestCaseService', () => {
     let websocketService: IWebsocketService;
     let httpService: MockHttpService;
     let exercise1TestCaseSubject: Subject<Result>;
-    let receiveParticipationSubject: Subject<Participation>;
     let exercise2TestCaseSubject: Subject<Result>;
-    let receiveParticipation2Subject: Subject<Participation>;
     let subscribeSpy: SinonSpy;
     let receiveStub: SinonStub;
     let unsubscribeSpy: SinonSpy;
@@ -58,8 +56,6 @@ describe('ProgrammingExerciseTestCaseService', () => {
 
         exercise1TestCaseSubject = new Subject();
         exercise2TestCaseSubject = new Subject();
-        receiveParticipationSubject = new Subject();
-        receiveParticipation2Subject = new Subject();
         receiveStub.withArgs(exercise1Topic).returns(exercise1TestCaseSubject);
         receiveStub.withArgs(exercise2Topic).returns(exercise2TestCaseSubject);
         getStub.withArgs(`${testCaseService.testCaseUrl}/${exercise1.id}/test-cases`).returns(of(testCases1));

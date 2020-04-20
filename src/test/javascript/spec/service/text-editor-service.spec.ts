@@ -5,7 +5,7 @@ import { Observable } from 'rxjs';
 import { Language } from 'app/entities/tutor-group.model';
 
 class MockHttpHandler implements HttpHandler {
-    handle(_: HttpRequest<any>): Observable<HttpEvent<any>> {
+    handle(): Observable<HttpEvent<any>> {
         return new Observable<HttpEvent<any>>();
     }
 }
