@@ -16,6 +16,7 @@ import { TextExerciseDetailComponent } from 'app/exercises/text/manage/text-exer
 import { ArtemisTeamConfigFormGroupModule } from 'app/exercises/shared/team-config-form-group/team-config-form-group.module';
 import { ExternalSubmissionDialogComponent } from 'app/exercises/shared/external-submission/external-submission-dialog.component';
 import { StructuredGradingCriterionModule } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.module';
+import { AssessmentInstructionsModule } from 'app/assessment/assessment-instructions/assessment-instructions.module';
 
 const ENTITY_STATES = [...textExerciseRoute];
 
@@ -32,6 +33,7 @@ const ENTITY_STATES = [...textExerciseRoute];
         ArtemisAssessmentSharedModule,
         ArtemisTeamConfigFormGroupModule,
         StructuredGradingCriterionModule,
+        AssessmentInstructionsModule,
     ],
     declarations: [TextExerciseComponent, TextExerciseDetailComponent, TextExerciseUpdateComponent],
     exports: [TextExerciseComponent],
