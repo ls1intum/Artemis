@@ -26,6 +26,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.socket.messaging.SessionDisconnectEvent;
 import org.springframework.web.socket.messaging.SessionUnsubscribeEvent;
 
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.TextExercise;
 import de.tum.in.www1.artemis.domain.TextSubmission;
 import de.tum.in.www1.artemis.domain.User;
@@ -51,24 +52,21 @@ public class ParticipationTeamWebsocketService {
 
     private final ParticipationService participationService;
 
-    private final TextExerciseService textExerciseService;
+    private final ExerciseService exerciseService;
 
     private final TextSubmissionService textSubmissionService;
-
-    private final ModelingExerciseService modelingExerciseService;
 
     private final ModelingSubmissionService modelingSubmissionService;
 
     public ParticipationTeamWebsocketService(SimpMessageSendingOperations messagingTemplate, SimpUserRegistry simpUserRegistry, UserService userService,
-            ParticipationService participationService, TextExerciseService textExerciseService, TextSubmissionService textSubmissionService,
-            ModelingExerciseService modelingExerciseService, ModelingSubmissionService modelingSubmissionService) {
+            ParticipationService participationService, ExerciseService exerciseService, TextSubmissionService textSubmissionService,
+            ModelingSubmissionService modelingSubmissionService) {
         this.messagingTemplate = messagingTemplate;
         this.simpUserRegistry = simpUserRegistry;
         this.userService = userService;
         this.participationService = participationService;
-        this.textExerciseService = textExerciseService;
+        this.exerciseService = exerciseService;
         this.textSubmissionService = textSubmissionService;
-        this.modelingExerciseService = modelingExerciseService;
         this.modelingSubmissionService = modelingSubmissionService;
     }
 
@@ -94,37 +92,8 @@ public class ParticipationTeamWebsocketService {
      * @param participationId id of participation
      */
     @MessageMapping("/topic/participations/{participationId}/team/trigger")
-    public void triggerSend(@DestinationVariable Long participationId) {
+    public void triggerSendOnlineTeamMembers(@DestinationVariable Long participationId) {
         sendOnlineTeamMembers(getDestination(participationId));
-    }
-
-    /**
-     * Called by a student of a team to update the text submission of the team for their participation
-     *
-     * @param participationId id of participation
-     * @param textSubmission  updated text submission
-     * @param principal       principal of user who wants to update the text submission
-     */
-    @MessageMapping("/topic/participations/{participationId}/team/text-submissions/update")
-    public void updateTextSubmission(@DestinationVariable Long participationId, @Payload TextSubmission textSubmission, Principal principal) {
-        // Without this, custom jpa repository methods don't work in websocket channel.
-        SecurityUtils.setAuthorizationObject();
-
-        final StudentParticipation participation = participationService.findOneStudentParticipation(participationId);
-
-        // user must belong to the team who owns the participation in order to update a text submission
-        if (!participation.isOwnedBy(principal.getName())) {
-            return;
-        }
-
-        final User user = userService.getUserWithGroupsAndAuthorities(principal.getName());
-        final TextExercise textExercise = textExerciseService.findOne(participation.getExercise().getId());
-
-        textSubmission = textSubmissionService.handleTextSubmission(textSubmission, textExercise, principal);
-        // TODO: textSubmissionService.hideDetails(modelingSubmission, user);
-
-        SubmissionSyncPayload payload = new SubmissionSyncPayload(textSubmission, user);
-        messagingTemplate.convertAndSend(getDestination(participationId, "/text-submissions"), payload);
     }
 
     /**
@@ -136,24 +105,57 @@ public class ParticipationTeamWebsocketService {
      */
     @MessageMapping("/topic/participations/{participationId}/team/modeling-submissions/update")
     public void updateModelingSubmission(@DestinationVariable Long participationId, @Payload ModelingSubmission modelingSubmission, Principal principal) {
+        updateSubmission(participationId, modelingSubmission, principal, "/modeling-submissions");
+    }
+
+    /**
+     * Called by a student of a team to update the text submission of the team for their participation
+     *
+     * @param participationId id of participation
+     * @param textSubmission  updated text submission
+     * @param principal       principal of user who wants to update the text submission
+     */
+    @MessageMapping("/topic/participations/{participationId}/team/text-submissions/update")
+    public void updateTextSubmission(@DestinationVariable Long participationId, @Payload TextSubmission textSubmission, Principal principal) {
+        updateSubmission(participationId, textSubmission, principal, "/text-submissions");
+    }
+
+    /**
+     * Updates a modeling or text submission
+     *
+     * @param participationId id of participation
+     * @param submission      updated modeling text submission
+     * @param principal       principal of user who wants to update the submission
+     * @param topicPath       path of websocket destination topic where to send the new submission
+     */
+    private void updateSubmission(@DestinationVariable Long participationId, @Payload Submission submission, Principal principal, String topicPath) {
         // Without this, custom jpa repository methods don't work in websocket channel.
         SecurityUtils.setAuthorizationObject();
 
         final StudentParticipation participation = participationService.findOneStudentParticipation(participationId);
 
-        // user must belong to the team who owns the participation in order to update a modeling submission
+        // user must belong to the team who owns the participation in order to update a submission
         if (!participation.isOwnedBy(principal.getName())) {
             return;
         }
 
         final User user = userService.getUserWithGroupsAndAuthorities(principal.getName());
-        final ModelingExercise modelingExercise = modelingExerciseService.findOne(participation.getExercise().getId());
+        final Exercise exercise = exerciseService.findOne(participation.getExercise().getId());
 
-        modelingSubmission = modelingSubmissionService.save(modelingSubmission, modelingExercise, principal.getName());
-        // TODO: modelingSubmissionService.hideDetails(modelingSubmission, user);
+        if (submission instanceof ModelingSubmission && exercise instanceof ModelingExercise) {
+            submission = modelingSubmissionService.save((ModelingSubmission) submission, (ModelingExercise) exercise, principal.getName());
+            modelingSubmissionService.hideDetails(submission, user);
+        }
+        else if (submission instanceof TextSubmission && exercise instanceof TextExercise) {
+            submission = textSubmissionService.handleTextSubmission((TextSubmission) submission, (TextExercise) exercise, principal);
+            textSubmissionService.hideDetails(submission, user);
+        }
+        else {
+            throw new IllegalArgumentException("Submission type '" + submission.getType() + "' not allowed.");
+        }
 
-        SubmissionSyncPayload payload = new SubmissionSyncPayload(modelingSubmission, user);
-        messagingTemplate.convertAndSend(getDestination(participationId, "/modeling-submissions"), payload);
+        SubmissionSyncPayload payload = new SubmissionSyncPayload(submission, user);
+        messagingTemplate.convertAndSend(getDestination(participationId, topicPath), payload);
     }
 
     /**
