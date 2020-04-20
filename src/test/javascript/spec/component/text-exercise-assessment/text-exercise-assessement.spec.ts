@@ -63,15 +63,6 @@ describe('TextAssessmentComponent', () => {
 
     const exercise = { id: 20, type: ExerciseType.TEXT, assessmentType: AssessmentType.MANUAL } as TextExercise;
     const participation: Participation = <Participation>(<unknown>{ type: ParticipationType.STUDENT, exercise: Exercise });
-    const submission = {
-        submissionExerciseType: SubmissionExerciseType.TEXT,
-        id: 2278,
-        submitted: true,
-        type: SubmissionType.MANUAL,
-        submissionDate: moment('2019-07-09T10:47:33.244Z'),
-        text: 'asdfasdfasdfasdf',
-        participation: Participation,
-    } as TextSubmission;
     const result = ({
         id: 2374,
         resultString: '1 of 12 points',
@@ -84,7 +75,18 @@ describe('TextAssessmentComponent', () => {
         submission: Submission,
         participation: Participation,
     } as unknown) as Result;
-    submission.result = result;
+    const submission = {
+        submissionExerciseType: SubmissionExerciseType.TEXT,
+        id: 2278,
+        submitted: true,
+        type: SubmissionType.MANUAL,
+        submissionDate: moment('2019-07-09T10:47:33.244Z'),
+        text: 'asdfasdfasdfasdf',
+        participation,
+        result,
+        exampleSubmission: false,
+        language: null,
+    } as TextSubmission;
     submission.participation.submissions = [submission];
     submission.participation.results = [submission.result];
     const refFeedback = { reference: 'reference', credits: 5 } as Feedback;
@@ -174,7 +176,6 @@ describe('TextAssessmentComponent', () => {
         tick();
         expect(comp.submission).to.be.deep.equal(submission);
         expect(comp.result).to.be.deep.equal(result);
-        expect(comp.exercise).to.be.deep.equal(exercise);
         expect(comp.participation).to.be.deep.equal(participation);
         expect(comp.isAtLeastInstructor).to.be.true;
         expect(comp.complaint).to.be.deep.equal(MockComplaintResponse.body);
@@ -213,7 +214,6 @@ describe('TextAssessmentComponent', () => {
         getFeedbackDataForExerciseSubmissionStub.returns(of(participation));
         comp.ngOnInit();
         tick();
-        expect(comp.exercise).to.be.deep.equal(exercise);
         expect(comp.isAtLeastInstructor).to.be.true;
     }));
 

@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpResponse } from '@angular/common/http';
-import { ActivatedRouteSnapshot, Resolve, RouterStateSnapshot, Routes } from '@angular/router';
+import { ActivatedRouteSnapshot, Resolve, Routes } from '@angular/router';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { Observable, of } from 'rxjs';
 import { filter, map } from 'rxjs/operators';
@@ -14,7 +14,7 @@ import { ExerciseHint } from 'app/entities/exercise-hint.model';
 export class ExerciseHintResolve implements Resolve<ExerciseHint | null> {
     constructor(private service: ExerciseHintService) {}
 
-    resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<ExerciseHint | null> {
+    resolve(route: ActivatedRouteSnapshot): Observable<ExerciseHint | null> {
         const id = route.params['hintId'] ? route.params['hintId'] : null;
         if (id) {
             return this.service.find(id).pipe(
