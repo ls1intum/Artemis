@@ -128,9 +128,12 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
         this.fileUploadSubmissionService.update(this.submission!, this.fileUploadExercise.id, file).subscribe(
             (response) => {
                 this.submission = response.body!;
+                this.participation = this.submission.participation as StudentParticipation;
                 // reconnect so that the submission status is displayed correctly in the result.component
                 this.submission.participation.submissions = [this.submission];
-                this.participationWebsocketService.addParticipation(this.submission.participation as StudentParticipation, this.fileUploadExercise);
+                this.participationWebsocketService.addParticipation(this.participation, this.fileUploadExercise);
+                this.fileUploadExercise.studentParticipations = [this.participation];
+                this.fileUploadExercise.participationStatus = participationStatus(this.fileUploadExercise);
                 this.result = this.submission.result;
                 this.setSubmittedFile();
                 if (this.isActive) {

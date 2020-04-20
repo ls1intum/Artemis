@@ -299,9 +299,12 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
                 .subscribe(
                     (response) => {
                         this.submission = response.body!;
+                        this.participation = this.submission.participation as StudentParticipation;
                         // reconnect so that the submission status is displayed correctly in the result.component
                         this.submission.participation.submissions = [this.submission];
-                        this.participationWebsocketService.addParticipation(this.submission.participation as StudentParticipation, this.modelingExercise);
+                        this.participationWebsocketService.addParticipation(this.participation, this.modelingExercise);
+                        this.modelingExercise.studentParticipations = [this.participation];
+                        this.modelingExercise.participationStatus = participationStatus(this.modelingExercise);
                         this.result = this.submission.result;
                         this.retryStarted = false;
 
@@ -329,6 +332,9 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
                 .subscribe(
                     (submission) => {
                         this.submission = submission.body!;
+                        this.participation = this.submission.participation as StudentParticipation;
+                        this.modelingExercise.studentParticipations = [this.participation];
+                        this.modelingExercise.participationStatus = participationStatus(this.modelingExercise);
                         this.result = this.submission.result;
                         if (this.isLate) {
                             this.jhiAlertService.warning('artemisApp.modelingEditor.submitDeadlineMissed');
