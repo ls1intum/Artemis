@@ -43,7 +43,7 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
     QuizExerciseService quizExerciseService;
 
     @Autowired
-    QuizScheduleService scheduleService;
+    QuizScheduleService quizScheduleService;
 
     @Autowired
     QuizSubmissionWebsocketService quizSubmissionWebsocketService;
@@ -62,13 +62,14 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
 
     @BeforeEach
     public void init() {
+        quizScheduleService.stopSchedule();
         database.addUsers(10, 5, 1);
         // do not use the schedule service based on a time interval in the tests, because this would result in flaky tests that run much slower
-        scheduleService.stopSchedule();
     }
 
     @AfterEach
     public void tearDown() {
+        quizScheduleService.clearAllQuizData();
         database.resetDatabase();
     }
 
@@ -111,7 +112,7 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         // before the quiz submissions are processed, none of them ends up in the database
         assertThat(quizSubmissionRepository.findAll().size()).isEqualTo(0);
 
-        scheduleService.processCachedQuizSubmissions();
+        quizScheduleService.processCachedQuizSubmissions();
 
         // after the quiz submissions have been processed, all submission are saved to the database
         assertThat(quizSubmissionRepository.findAll().size()).isEqualTo(numberOfParticipants);
@@ -174,7 +175,7 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         assertThat(participationRepository.findAll().size()).isEqualTo(numberOfParticipants);
 
         // processing the quiz submissions will update the statistics
-        scheduleService.processCachedQuizSubmissions();
+        quizScheduleService.processCachedQuizSubmissions();
 
         // Test the statistics directly from the database
         QuizExercise quizExerciseWithStatistic = quizExerciseService.findOneWithQuestionsAndStatistics(quizExercise.getId());
@@ -310,7 +311,7 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         // in the preview the submission will not be saved to the database
         assertThat(quizSubmissionRepository.findAll().size()).isEqualTo(0);
 
-        scheduleService.processCachedQuizSubmissions();
+        quizScheduleService.processCachedQuizSubmissions();
 
         // all stats must be 0 because we have a preview here
         // Test the statistics directly from the database

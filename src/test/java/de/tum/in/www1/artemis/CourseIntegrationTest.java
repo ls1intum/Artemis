@@ -22,14 +22,12 @@ import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.connector.jira.JiraRequestMockProvider;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.TutorParticipationStatus;
+import de.tum.in.www1.artemis.domain.leaderboard.tutor.*;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
-import de.tum.in.www1.artemis.repository.CourseRepository;
-import de.tum.in.www1.artemis.repository.CustomAuditEventRepository;
-import de.tum.in.www1.artemis.repository.NotificationRepository;
-import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.UserService;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.ModelFactory;
@@ -61,6 +59,21 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
 
     @Autowired
     NotificationRepository notificationRepo;
+
+    @Autowired
+    TutorLeaderboardAssessmentViewRepository tutorLeaderboardAssessmentViewRepo;
+
+    @Autowired
+    TutorLeaderboardComplaintsViewRepository tutorLeaderboardComplaintsViewRepo;
+
+    @Autowired
+    TutorLeaderboardComplaintResponsesViewRepository tutorLeaderboardComplaintResponsesViewRepo;
+
+    @Autowired
+    TutorLeaderboardMoreFeedbackRequestsViewRepository tutorLeaderboardMoreFeedbackRequestsViewRepo;
+
+    @Autowired
+    TutorLeaderboardAnsweredMoreFeedbackRequestsViewRepository tutorLeaderboardAnsweredMoreFeedbackRequestsViewRepo;
 
     private final int numberOfStudents = 4;
 
@@ -395,6 +408,46 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         List<Course> testCourses = database.createCoursesWithExercisesAndLectures(true);
         request.get("/api/courses/" + testCourses.get(0).getId() + "/for-tutor-dashboard", HttpStatus.FORBIDDEN, Course.class);
         request.get("/api/courses/" + testCourses.get(0).getId() + "/stats-for-tutor-dashboard", HttpStatus.FORBIDDEN, StatsForInstructorDashboardDTO.class);
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void testGetTutorDashboardStats_withComplaints() throws Exception {
+        getTutorDashboardsStatsWithComplaints(true);
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void testGetTutorDashboardStats_withComplaints_withoutPoints() throws Exception {
+        getTutorDashboardsStatsWithComplaints(false);
+    }
+
+    private void getTutorDashboardsStatsWithComplaints(boolean withPoints) throws Exception {
+        Course testCourse = database.addCourseWithOneTextExercise();
+        var points = withPoints ? 15L : null;
+        var leaderboardId = new LeaderboardId(database.getUserByLogin("tutor1").getId(), testCourse.getExercises().iterator().next().getId());
+        tutorLeaderboardComplaintsViewRepo.save(new TutorLeaderboardComplaintsView(leaderboardId, 3L, 1L, points, testCourse.getId(), ""));
+        tutorLeaderboardComplaintResponsesViewRepo.save(new TutorLeaderboardComplaintResponsesView(leaderboardId, 1L, points, testCourse.getId(), ""));
+        tutorLeaderboardAnsweredMoreFeedbackRequestsViewRepo.save(new TutorLeaderboardAnsweredMoreFeedbackRequestsView(leaderboardId, 1L, points, testCourse.getId(), ""));
+        tutorLeaderboardMoreFeedbackRequestsViewRepo.save(new TutorLeaderboardMoreFeedbackRequestsView(leaderboardId, 3L, 1L, points, testCourse.getId(), ""));
+        tutorLeaderboardAssessmentViewRepo.save(new TutorLeaderboardAssessmentView(leaderboardId, 2L, points, testCourse.getId(), ""));
+
+        StatsForInstructorDashboardDTO stats = request.get("/api/courses/" + testCourse.getId() + "/stats-for-tutor-dashboard", HttpStatus.OK,
+                StatsForInstructorDashboardDTO.class);
+        var currentTutorLeaderboard = stats.getTutorLeaderboardEntries().get(0);
+        assertThat(currentTutorLeaderboard.getNumberOfTutorComplaints()).isEqualTo(3);
+        assertThat(currentTutorLeaderboard.getNumberOfAcceptedComplaints()).isEqualTo(1);
+        assertThat(currentTutorLeaderboard.getNumberOfComplaintResponses()).isEqualTo(1);
+        assertThat(currentTutorLeaderboard.getNumberOfAnsweredMoreFeedbackRequests()).isEqualTo(1);
+        assertThat(currentTutorLeaderboard.getNumberOfNotAnsweredMoreFeedbackRequests()).isEqualTo(1);
+        assertThat(currentTutorLeaderboard.getNumberOfTutorMoreFeedbackRequests()).isEqualTo(3);
+        assertThat(currentTutorLeaderboard.getNumberOfAssessments()).isEqualTo(2);
+        if (withPoints) {
+            assertThat(currentTutorLeaderboard.getPoints()).isEqualTo(0);
+        }
+        else {
+            assertThat(currentTutorLeaderboard.getPoints()).isEqualTo(1);
+        }
     }
 
     @Test

@@ -1,5 +1,5 @@
 <ul class="list-group list-group-horizontal student-group">
-    <li class="list-group-item student-group-item" *ngFor="let student of students">
+    <li class="list-group-item student-group-item" *ngFor="let student of students" [class.has-error]="errorStudentLogins.includes(student.login)">
         <a *ngIf="renderLinks" [routerLink]="['/admin', 'user-management', student.login, 'view']">{{ student.name }} ({{ student.login }})</a>
         <span *ngIf="!renderLinks">{{ student.name }} ({{ student.login }})</span>
     </li>

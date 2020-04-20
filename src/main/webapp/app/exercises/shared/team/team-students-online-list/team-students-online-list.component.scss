@@ -1,0 +1,53 @@
+@mixin status-change-transition() {
+    transition: 0.1s color ease-out;
+
+    .online & {
+        transition: 0.05s color ease-in;
+    }
+}
+
+:host {
+    display: block;
+}
+
+.student-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.student-item {
+    display: flex;
+    align-items: center;
+    font-size: 14px;
+    font-weight: 400;
+
+    &:not(:first-of-type) {
+        margin-top: 5px;
+    }
+}
+
+.student-name {
+    @include status-change-transition;
+
+    max-width: 190px;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;
+    color: #6c757d;
+
+    .online & {
+        color: initial;
+    }
+}
+
+.student-status {
+    @include status-change-transition;
+
+    display: inline-flex;
+    color: #ccc;
+
+    .online & {
+        color: green;
+    }
+}

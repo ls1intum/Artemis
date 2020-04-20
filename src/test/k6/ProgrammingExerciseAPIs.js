@@ -1,9 +1,11 @@
 import { group, sleep } from 'k6';
 import { login } from "./requests/requests.js";
-import { createExercise, startExercise, simulateSubmission, ParticipationSimulation, TestResult, deleteExercise } from "./requests/programmingExercise.js";
+import { createProgrammingExercise, startExercise, simulateSubmission, ParticipationSimulation, TestResult, deleteProgrammingExercise } from "./requests/programmingExercise.js";
 import { deleteCourse, newCourse, addUserToStudentsInCourse, addUserToInstructorsInCourse } from "./requests/course.js";
-import { newUser, getUser, updateUser } from './requests/user.js';
-import { twoSuccessfulErrorContent, allSuccessfulContent, buildErrorContent } from "./resource/constants.js";
+import { newUser, getUser, updateUser, createUsersIfNeeded } from './requests/user.js';
+import {allSuccessfulContentJava, buildErrorContentJava, someSuccessfulErrorContentJava} from "./resource/constants_java.js";
+import {allSuccessfulContentPython, buildErrorContentPython, someSuccessfulErrorContentPython} from "./resource/constants_python.js";
+import {allSuccessfulContentC, buildErrorContentC, someSuccessfulErrorContentC} from "./resource/constants_c.js";
 
 export const options = {
     maxRedirects: 0,
@@ -18,16 +20,7 @@ const adminUsername = __ENV.ADMIN_USERNAME;
 const adminPassword = __ENV.ADMIN_PASSWORD;
 let baseUsername = __ENV.BASE_USERNAME;
 let basePassword = __ENV.BASE_PASSWORD;
-
-export function updateUserWithGroup(artemis, i, baseUsername, course) {
-
-    const username = baseUsername.replace('USERID', i);
-    addUserToStudentsInCourse(artemis, username, course.id);
-
-    if (i === 1) {
-        addUserToInstructorsInCourse(artemis, username, course.id);
-    }
-}
+let programmingLanguage=  __ENV.PROGRAMMING_LANGUAGE;
 
 export function setup() {
 
@@ -37,37 +30,13 @@ export function setup() {
     console.log("__ENV.ITERATIONS: " + __ENV.ITERATIONS);
 
     let artemis, exerciseId, course, userId;
-    const iterations = parseInt(__ENV.ITERATIONS);
 
     // Create course
     artemis = login(adminUsername, adminPassword);
 
     course = newCourse(artemis);
 
-    const shouldCreateUsers = __ENV.CREATE_USERS === true || __ENV.CREATE_USERS === 'true';
-
-    if(shouldCreateUsers) {
-        console.log("Try to create " + iterations + " users");
-        for (let i = 1; i <= iterations; i++) {
-            userId = newUser(artemis, i, baseUsername, basePassword, course.studentGroupName, course.instructorGroupName);
-            if (userId === -1) {
-                // the creation was not successful, most probably because the user already exists, we need to update the group of the user
-                updateUserWithGroup(artemis, i, baseUsername, course);
-            }
-        }
-    }
-    else {
-        console.log("Do not create users, assume the user exists in the external system, will update their groups");
-        for (let i = 1; i <= iterations; i++) {
-            // we need to login once with the user, so that the user is synced and available for the update with the groups
-            login(baseUsername.replace('USERID', i), basePassword.replace('USERID', i))
-        }
-        artemis = login(adminUsername, adminPassword);
-        for (let i = 1; i <= iterations; i++) {
-            updateUserWithGroup(artemis, i, baseUsername, course);
-        }
-
-    }
+    createUsersIfNeeded(artemis, baseUsername, basePassword, adminUsername, adminPassword, course);
 
     const instructorUsername = baseUsername.replace('USERID', '1');
     const instructorPassword = basePassword.replace('USERID', '1');
@@ -83,7 +52,7 @@ export function setup() {
     }
 
     // Create new exercise
-    exerciseId = createExercise(artemis, course.id);
+    exerciseId = createProgrammingExercise(artemis, course.id, programmingLanguage);
 
     // Wait some time for builds to finish and test results to come in
     sleep(20);
@@ -106,16 +75,42 @@ export default function (data) {
     const delay = Math.floor(__VU / 3);
     sleep(delay * 3);
 
+    let someSuccessfulErrorContent, allSuccessfulContent, buildErrorContent, somePassedString;
+    switch(programmingLanguage) {
+        case 'JAVA':
+            someSuccessfulErrorContent = someSuccessfulErrorContentJava;
+            allSuccessfulContent = allSuccessfulContentJava;
+            buildErrorContent = buildErrorContentJava;
+            somePassedString = '2 of 13 passed';
+            break;
+        case 'PYTHON':
+            someSuccessfulErrorContent = someSuccessfulErrorContentPython;
+            allSuccessfulContent = allSuccessfulContentPython;
+            buildErrorContent = buildErrorContentPython;
+            somePassedString = '2 of 13 passed';
+            break;
+        case 'C':
+            someSuccessfulErrorContent = someSuccessfulErrorContentC;
+            allSuccessfulContent = allSuccessfulContentC;
+            buildErrorContent = buildErrorContentC;
+            somePassedString = '4 of 20 passed';
+            break;
+    }
+
     group('Participate in Programming Exercise', function() {
         let participationId = startExercise(artemis, courseId, exerciseId);
         if (participationId) {
             // partial success, then 100%, then build error -- wait some time between submissions in order to the build server time for the result
-            let simulation = new ParticipationSimulation(timeoutParticipation, exerciseId, participationId, twoSuccessfulErrorContent);
-            simulateSubmission(artemis, simulation, TestResult.FAIL, '2 of 13 passed');
+            let simulation = new ParticipationSimulation(timeoutParticipation, exerciseId, participationId, someSuccessfulErrorContent);
+            simulateSubmission(artemis, simulation, TestResult.FAIL, somePassedString);
             simulation = new ParticipationSimulation(timeoutParticipation, exerciseId, participationId, allSuccessfulContent);
             simulateSubmission(artemis, simulation, TestResult.SUCCESS);
             simulation = new ParticipationSimulation(timeoutParticipation, exerciseId, participationId, buildErrorContent);
-            simulateSubmission(artemis, simulation, TestResult.BUILD_ERROR);
+            if (programmingLanguage === 'C') { // C builds do never fail - they will only show 0/20 passed
+                simulateSubmission(artemis, simulation, TestResult.FAIL, "0 of 20 passed");
+            } else {
+                simulateSubmission(artemis, simulation, TestResult.BUILD_ERROR);
+            }
         }
 
         const delta = (new Date().getTime() - startTime) / 1000;
@@ -133,7 +128,7 @@ export function teardown(data) {
         const courseId = data.courseId;
         const exerciseId = data.exerciseId;
 
-        deleteExercise(artemis, exerciseId);
+        deleteProgrammingExercise(artemis, exerciseId);
         deleteCourse(artemis, courseId);
     }
 }

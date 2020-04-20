@@ -1,0 +1,27 @@
+.team-participate-info-box {
+    $side-padding: 20px;
+
+    position: relative;
+    right: -$side-padding;
+    min-width: 240px;
+
+    &.sticky-enabled {
+        height: 100%;
+    }
+
+    .sticky-box {
+        padding: 18px $side-padding 24px;
+        transition: 0.2s box-shadow;
+
+        // on mobile (below md breakpoint)
+        @media (max-width: 767px) {
+            padding: 10px 0 25px;
+        }
+    }
+
+    &.sticky .sticky-box {
+        background: white;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.08);
+        border-radius: 8px;
+    }
+}
