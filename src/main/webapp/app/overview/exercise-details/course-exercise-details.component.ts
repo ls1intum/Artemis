@@ -55,11 +55,14 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     studentParticipation: StudentParticipation | null;
     isAfterAssessmentDueDate: boolean;
     public gradingCriteria: GradingCriterion[];
-    private programmingExercise: ProgrammingExercise;
-    public wasSubmissionSimulated = false;
     showWelcomeAlert = false;
+
+    /**
+     * variables are only for testing purposes(noVersionControlAndContinuousIntegrationAvailable)
+     */
     public inProductionEnvironment: boolean;
     public noVersionControlAndContinuousIntegrationServerAvailable: boolean;
+    public wasSubmissionSimulated = false;
 
     constructor(
         private $location: Location,
@@ -321,9 +324,8 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     getProgrammingExerciseAndChecksIfTheSetupHasVCSandCIConnection() {
         this.programmingExerciseSimulationService.failsIfInProduction();
         this.courseExerciseSubmissionResultSimulationService.getProgrammingExercise(this.exerciseId).subscribe((programmingExercise) => {
-            this.programmingExercise = programmingExercise;
             this.noVersionControlAndContinuousIntegrationServerAvailable = this.programmingExerciseSimulationUtils.noVersionControlAndContinuousIntegrationAvailableCheck(
-                this.programmingExercise.testRepositoryUrl,
+                programmingExercise.testRepositoryUrl,
             );
         });
     }
