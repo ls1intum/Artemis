@@ -21,8 +21,10 @@ type EntityArrayResponseType = HttpResponse<Notification[]>;
 @Injectable({ providedIn: 'root' })
 export class NotificationService {
     public resourceUrl = SERVER_API_URL + 'api/notifications';
+    // TODO: we might need to clean this observer object during logout, so that it is newly initialized during login
     notificationObserver: BehaviorSubject<Notification | null>;
     subscribedTopics: string[] = [];
+    // TODO: we need to clean this cache during logout, so that it is newly initialized during login
     cachedNotifications: Observable<EntityArrayResponseType>;
 
     constructor(private jhiWebsocketService: JhiWebsocketService, private router: Router, private http: HttpClient, private accountService: AccountService) {}
@@ -61,7 +63,7 @@ export class NotificationService {
     getRecentNotifications(): Observable<EntityArrayResponseType> {
         if (!this.cachedNotifications) {
             this.cachedNotifications = this.http
-                .get<Notification[]>(`${this.resourceUrl}/for-user`, { observe: 'response' })
+                .get<Notification[]>(`${this.resourceUrl}/recent-for-user`, { observe: 'response' })
                 .pipe(map((res: EntityArrayResponseType) => this.convertDateArrayFromServer(res)))
                 .pipe(shareReplay(1));
         }
@@ -77,10 +79,9 @@ export class NotificationService {
     }
 
     protected convertDateFromClient(notification: Notification): Notification {
-        const copy: Notification = Object.assign({}, notification, {
+        return Object.assign({}, notification, {
             notificationDate: notification.notificationDate != null && notification.notificationDate.isValid() ? notification.notificationDate.toJSON() : null,
         });
-        return copy;
     }
 
     protected convertDateFromServer(res: EntityResponseType): EntityResponseType {

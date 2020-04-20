@@ -88,38 +88,31 @@ public class NotificationResource {
      */
     @GetMapping("/notifications")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<List<Notification>> getNotifications(@ApiParam Pageable pageable) {
-        log.debug("REST request to get all Courses the user has access to");
-
+    public ResponseEntity<List<Notification>> getAllNotificationsForCurrentUser(@ApiParam Pageable pageable) {
         User currentUser = userService.getUserWithGroupsAndAuthorities();
-
         final Page<Notification> page = notificationService.findAllExceptSystem(currentUser, pageable);
         HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
         return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
     }
 
     /**
-     * GET /notifications/for-user : get all notifications for users including the active system notification.
+     * GET /notifications/for-user : get recent notifications (after last read) for users including the active system notification.
      *
-     * @param pageable Pagination information for fetching the nofications, <b>currently ignored</b>
      * @return the list notifications
      */
-    @GetMapping("/notifications/for-user")
+    @GetMapping("/notifications/recent-for-user")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<List<Notification>> getAllSystemNotifications(@ApiParam Pageable pageable) {
-        log.debug("REST request to get all Courses the user has access to");
-        List<Notification> page = new ArrayList<>();
+    public ResponseEntity<List<Notification>> getRecentNotificationsForCurrentUser() {
+        List<Notification> notifications = new ArrayList<>();
         SystemNotification activeSystemNotification = systemNotificationService.findActiveSystemNotification();
         if (activeSystemNotification != null) {
-            page.add(activeSystemNotification);
+            notifications.add(activeSystemNotification);
         }
-
         User currentUser = userService.getUserWithGroupsAndAuthorities();
         if (currentUser != null) {
-            page.addAll(notificationService.findAllRecentExceptSystem(currentUser));
+            notifications.addAll(notificationService.findAllRecentExceptSystem(currentUser));
         }
-
-        return new ResponseEntity<>(page, null, HttpStatus.OK);
+        return new ResponseEntity<>(notifications, null, HttpStatus.OK);
     }
 
     /**

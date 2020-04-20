@@ -129,8 +129,11 @@ public class NotificationResourceIntegrationTest extends AbstractSpringIntegrati
         SingleUserNotification singleUserNotification = new SingleUserNotification(recipient, author, "title", "text");
         singleUserNotificationRepository.save(singleUserNotification);
 
-        List<SystemNotification> response = request.get("/api/notifications/for-user", HttpStatus.OK, List.class);
-        assertThat(response.isEmpty()).as("response is not empty").isFalse();
+        List<Notification> recentNotificationsForUser = request.getList("/api/notifications/recent-for-user", HttpStatus.OK, Notification.class);
+        List<Notification> allNotificationsForUser = request.getList("/api/notifications", HttpStatus.OK, Notification.class);
+        // TODO: we should test this in a better way and also add tests for tutors and students
+        // this includes that students do not see notifications for instructors, etc.
+        assertThat(recentNotificationsForUser.isEmpty()).as("response is not empty").isFalse();
     }
 
     @Test
