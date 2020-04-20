@@ -15,7 +15,7 @@ Depending on your system, you can install Yarn either from source or as a pre-pa
 
 ### Server Setup
 
-To start the Artemis application server from the development environment, first import the project into IntelliJ and then make sure to install the Spring Boot plugins to run the main class de.tum.in.www1.artemis.ArtemisApp. Before the application runs, you have to configure the file `application-artemis.yml` in the folder `src/main/resources/config`.
+To start the Artemis application server from the development environment, first import the project into IntelliJ and then make sure to install the Spring Boot plugins to run the main class `de.tum.in.www1.artemis.ArtemisApp`. Before the application runs, you have to configure the file `application-artemis.yml` in the folder `src/main/resources/config`.
 
 ```yaml
 artemis:
