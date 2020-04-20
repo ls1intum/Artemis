@@ -60,10 +60,10 @@
                         <label class="form-control-label">{{ 'artemisApp.courseOverview.exerciseDetails.faq.newQuestionLabel' | translate }}</label>
                         <jhi-markdown-editor
                             class="markdown-editor background-editor-color"
-                            [domainCommands]="domainCommands"
                             [(markdown)]="studentQuestionText"
                             [editorMode]="EditorMode.LATEX"
                             [enableResize]="true"
+                            [enableFullscreen]="false"
                         ></jhi-markdown-editor>
                     </div>
                 </div>
@@ -114,10 +114,10 @@
                             </div>
                             <jhi-markdown-editor
                                 class="markdown-editor background-editor-color"
-                                [domainCommands]="domainCommands"
                                 [(markdown)]="questionAnswerText"
                                 [editorMode]="EditorMode.LATEX"
                                 [enableResize]="true"
+                                [enableFullscreen]="false"
                             ></jhi-markdown-editor>
                         </div>
                     </div>
@@ -236,10 +236,10 @@
                                 </div>
                                 <jhi-markdown-editor
                                     class="markdown-editor background-editor-color"
-                                    [domainCommands]="domainCommands"
                                     [(markdown)]="questionAnswerText"
                                     [editorMode]="EditorMode.LATEX"
                                     [enableResize]="true"
+                                    [enableFullscreen]="false"
                                 ></jhi-markdown-editor>
                             </div>
                         </div>
@@ -300,10 +300,10 @@
                     <label class="form-control-label">{{ 'artemisApp.courseOverview.exerciseDetails.faq.answerLabel' | translate }}</label>
                     <jhi-markdown-editor
                         class="markdown-editor background-editor-color"
-                        [domainCommands]="domainCommands"
                         [(markdown)]="questionAnswerText"
                         [editorMode]="EditorMode.LATEX"
                         [enableResize]="true"
+                        [enableFullscreen]="false"
                     ></jhi-markdown-editor>
                 </div>
             </div>
