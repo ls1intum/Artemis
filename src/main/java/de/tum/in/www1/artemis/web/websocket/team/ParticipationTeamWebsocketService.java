@@ -50,9 +50,9 @@ public class ParticipationTeamWebsocketService {
 
     private final Map<String, String> destinationTracker = new HashMap<>();
 
-    private final Map<String, Instant> lastTypingTracker = new HashMap<>();
+    private final Map<Long, Map<String, Instant>> lastTypingTracker = new HashMap<>();
 
-    private final Map<String, Instant> lastActionTracker = new HashMap<>();
+    private final Map<Long, Map<String, Instant>> lastActionTracker = new HashMap<>();
 
     private final UserService userService;
 
@@ -89,7 +89,7 @@ public class ParticipationTeamWebsocketService {
     public void subscribe(@DestinationVariable Long participationId, StompHeaderAccessor stompHeaderAccessor) {
         final String destination = getDestination(participationId);
         destinationTracker.put(stompHeaderAccessor.getSessionId(), destination);
-        sendOnlineTeamStudents(destination);
+        sendOnlineTeamStudents(participationId);
     }
 
     /**
@@ -99,13 +99,14 @@ public class ParticipationTeamWebsocketService {
      */
     @MessageMapping("/topic/participations/{participationId}/team/trigger")
     public void triggerSendOnlineTeamStudents(@DestinationVariable Long participationId) {
-        sendOnlineTeamStudents(getDestination(participationId));
+        sendOnlineTeamStudents(participationId);
     }
 
     @MessageMapping("/topic/participations/{participationId}/team/typing")
     public void startTyping(@DestinationVariable Long participationId, Principal principal) {
-        lastTypingTracker.put(principal.getName(), Instant.now());
-        sendOnlineTeamStudents(getDestination(participationId));
+        lastTypingTracker.putIfAbsent(participationId, new HashMap<>());
+        lastTypingTracker.get(participationId).put(principal.getName(), Instant.now());
+        sendOnlineTeamStudents(participationId);
     }
 
     /**
@@ -167,8 +168,9 @@ public class ParticipationTeamWebsocketService {
         }
 
         // update the last action date for the user and send out list of team members
-        lastActionTracker.put(principal.getName(), Instant.now());
-        sendOnlineTeamStudents(getDestination(participationId));
+        lastActionTracker.putIfAbsent(participationId, new HashMap<>());
+        lastActionTracker.get(participationId).put(principal.getName(), Instant.now());
+        sendOnlineTeamStudents(participationId);
 
         SubmissionSyncPayload payload = new SubmissionSyncPayload(submission, user);
         messagingTemplate.convertAndSend(getDestination(participationId, topicPath), payload);
@@ -177,13 +179,16 @@ public class ParticipationTeamWebsocketService {
     /**
      * Sends out a list of online team students to all members of the team
      *
-     * @param destination websocket topic to which to send the list of online users
+     * @param participationId id of participation for which to send out the list
      */
-    private void sendOnlineTeamStudents(String destination) {
-        final List<String> userLogins = getSubscriberPrincipals(destination);
+    private void sendOnlineTeamStudents(Long participationId) {
+        final String destination = getDestination(participationId);
 
-        final List<OnlineTeamStudentDTO> onlineTeamStudents = userLogins.stream()
-                .map(login -> new OnlineTeamStudentDTO(login, lastTypingTracker.get(login), lastActionTracker.get(login))).collect(Collectors.toList());
+        Map<String, Instant> lastTypingMap = lastTypingTracker.getOrDefault(participationId, new HashMap<>());
+        Map<String, Instant> lastActionMap = lastActionTracker.getOrDefault(participationId, new HashMap<>());
+
+        final List<OnlineTeamStudentDTO> onlineTeamStudents = getSubscriberPrincipals(destination).stream()
+                .map(login -> new OnlineTeamStudentDTO(login, lastTypingMap.get(login), lastActionMap.get(login))).collect(Collectors.toList());
 
         messagingTemplate.convertAndSend(destination, onlineTeamStudents);
     }

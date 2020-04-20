@@ -28,7 +28,7 @@ import { Result } from 'app/entities/result.model';
 import { ComplaintsComponent } from 'app/complaints/complaints.component';
 import { TextSubmission } from 'app/entities/text-submission.model';
 import { ArtemisTeamModule } from 'app/exercises/shared/team/team.module';
-import { TextSubmissionTeamSyncComponent } from 'app/exercises/text/participate/text-submission-team-sync.component';
+import { ArtemisTeamSubmissionSyncModule } from 'app/exercises/shared/team-submission-sync/team-submission-sync.module';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -55,7 +55,14 @@ describe('TableEditableFieldComponent', () => {
 
     beforeEach(async () => {
         return TestBed.configureTestingModule({
-            imports: [TranslateModule.forRoot(), ArtemisTestModule, ArtemisSharedModule, ArtemisTeamModule, RouterTestingModule.withRoutes([textEditorRoute[0]])],
+            imports: [
+                TranslateModule.forRoot(),
+                ArtemisTestModule,
+                ArtemisSharedModule,
+                ArtemisTeamModule,
+                ArtemisTeamSubmissionSyncModule,
+                RouterTestingModule.withRoutes([textEditorRoute[0]]),
+            ],
             declarations: [
                 TextEditorComponent,
                 MockComponent(SubmissionResultStatusComponent),
@@ -63,7 +70,6 @@ describe('TableEditableFieldComponent', () => {
                 MockComponent(TextResultComponent),
                 MockComponent(ComplaintsComponent),
                 MockComponent(ComplaintInteractionsComponent),
-                MockComponent(TextSubmissionTeamSyncComponent),
             ],
             providers: [
                 AlertService,
