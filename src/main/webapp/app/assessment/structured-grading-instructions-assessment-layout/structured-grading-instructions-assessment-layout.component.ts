@@ -9,14 +9,9 @@ import { Component, Input } from '@angular/core';
 export class StructuredGradingInstructionsAssessmentLayoutComponent {
     @Input() public criteria: GradingCriterion[];
 
-    drag(ev: any, instruction: GradingInstruction) {
-        ev.dataTransfer.setData('text', JSON.stringify(instruction));
-    }
-
     setTooltip(instr: GradingInstruction) {
         return 'Feedback: ' + instr.feedback;
     }
-
     setInstrColour(instr: GradingInstruction) {
         let colour = '#e3f0da';
         if (instr.credits === 0) {
@@ -30,5 +25,14 @@ export class StructuredGradingInstructionsAssessmentLayoutComponent {
     }
     setScore(nr: number) {
         return nr + 'P';
+    }
+    /**
+     * Connects the SGI with the Feedback of a Submission Element in assessment detail
+     * @param {Event} event - The drag event
+     * @param {Object} instruction - The SGI element that should be connected with the feedback on drop
+     * the corresponding drop method is in AssessmentDetailComponent
+     */
+    drag(event: any, instruction: GradingInstruction) {
+        event.dataTransfer.setData('text', JSON.stringify(instruction));
     }
 }

@@ -42,9 +42,18 @@ export class AssessmentDetailComponent {
     public get sanitizedText(): string {
         return sanitize(this.text);
     }
+    /**
+     * Allows the drop of an SGI Element
+     */
     allowDrop(event: DragEvent) {
         event.preventDefault();
     }
+    /**
+     * Connects the SGI with the Feedback of a Submission Element
+     * @param {Event} event - The drop event
+     * the SGI element sent on drag in processed in this method
+     * the corresponding drag method is in StructuredGradingInstructionsAssessmentLayoutComponent
+     */
     drop(event: any) {
         event.preventDefault();
         const data = event.dataTransfer.getData('text');

@@ -8,7 +8,6 @@ import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { GradingCriterion } from 'app/exercises/shared/structured-grading-criterion/grading-criterion.model';
-import { GradingInstruction } from 'app/exercises/shared/structured-grading-criterion/grading-instruction.model';
 
 @Component({
     selector: 'jhi-assessment-instructions',
@@ -58,8 +57,5 @@ export class AssessmentInstructionsComponent {
         if (sampleSolutionMarkdown) {
             this.sampleSolution = this.markdownService.safeHtmlForMarkdown(sampleSolutionMarkdown);
         }
-    }
-    drag(ev: any, instruction: GradingInstruction) {
-        ev.dataTransfer.setData('text', JSON.stringify(instruction));
     }
 }
