@@ -1,6 +1,6 @@
 import { TextEditorService } from 'app/exercises/text/participate/text-editor.service';
 
-import { HttpClient, HttpEvent, HttpHandler, HttpRequest } from '@angular/common/http';
+import { HttpClient, HttpEvent, HttpHandler } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { Language } from 'app/entities/tutor-group.model';
 

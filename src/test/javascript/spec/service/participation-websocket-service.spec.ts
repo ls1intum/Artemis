@@ -167,10 +167,10 @@ describe('ParticipationWebsocketService', () => {
         expect(participationSpy).to.have.been.calledOnceWithExactly({ ...participation, results: [...participation.results, newRatedResult] });
     });
 
+    /* eslint-disable no-unused-vars */
     it('should attach the result to participation if the participation has null for results value', () => {
-        /* eslint-disable no-unused-vars */
         const { results, ...participationWithoutResult } = participation;
-        /* eslint-enable no-unused-vars */
+
         participationWebsocketService.subscribeForLatestResultOfParticipation(participationWithoutResult.id);
         participationWebsocketService.addParticipation(participationWithoutResult as Participation);
         participationWebsocketService.subscribeForParticipationChanges();
@@ -190,4 +190,5 @@ describe('ParticipationWebsocketService', () => {
         expect(resultSpy).to.have.been.calledOnceWithExactly(newRatedResult);
         expect(participationSpy).to.have.been.calledOnceWithExactly({ ...participationWithoutResult, results: [newRatedResult] });
     });
+    /* eslint-enable no-unused-vars */
 });
