@@ -24,7 +24,6 @@ export class ProgrammingExerciseSimulationService {
      * @param programmingExercise
      */
     automaticSetupWithoutConnectionToVCSandCI(programmingExercise: ProgrammingExercise): Observable<EntityResponseType> {
-        this.failsIfInProduction();
         const copy = this.programmingExerciseService.convertDataFromClient(programmingExercise);
         return this.http
             .post<ProgrammingExercise>(this.resourceUrl + '/no-vcs-and-ci-available', copy, { observe: 'response' })
@@ -37,10 +36,6 @@ export class ProgrammingExerciseSimulationService {
      * It should prevent developers from misusing methods, which should be only used for testing
      */
     failsIfInProduction() {
-        if (this.profileService.isInProduction()) {
-            alert('This action is NOT supported on production and should NOT be visible. Please contact a developer immediately!');
-            throw new Error('This action is NOT supported on production and should NOT be visible. Please contact a developer immediately!');
-        } else {
-        }
+        // TODO Adrian Loher: properly reimplement this functionality
     }
 }
