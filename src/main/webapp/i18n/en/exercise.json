@@ -48,13 +48,14 @@
             "hard": "Hard",
             "mode": "Mode",
             "modeTooltip": "The solving mode of an exercise determines whether students work alone or in teams. NOTE: This cannot be changed later on!",
+            "teamModeBetaLabel": "Beta",
             "modes": {
                 "individual": "Individual",
                 "team": "Team"
             },
             "teamAssignmentConfig": {
                 "teamSize": "Team Size",
-                "teamSizeTooltip": "Stipulation regarding the minimum and maximum number of students per team."
+                "teamSizeTooltip": "Recommendation for tutors regarding the minimum and maximum number of students per team."
             },
             "categories": "Categories",
             "participations": "Participations",
