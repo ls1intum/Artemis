@@ -182,5 +182,6 @@ export class NotificationService {
     public cleanUp(): void {
         this.cachedNotifications = new Observable<EntityArrayResponseType>();
         this.initNotificationObserver();
+        this.subscribedTopics = [];
     }
 }
