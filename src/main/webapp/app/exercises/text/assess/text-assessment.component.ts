@@ -26,6 +26,7 @@ import { ResultService } from 'app/exercises/shared/result/result.service';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { ExerciseType } from 'app/entities/exercise.model';
+import { Participation } from 'app/entities/participation/participation.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { TextSubmission } from 'app/entities/text-submission.model';
 import { Result } from 'app/entities/result.model';
@@ -38,7 +39,7 @@ import { Result } from 'app/entities/result.model';
 })
 export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit {
     text: string;
-    participation: StudentParticipation;
+    participation: Participation;
     submission: TextSubmission;
     unassessedSubmission: TextSubmission;
     result: Result;
