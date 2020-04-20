@@ -1,8 +1,10 @@
 import { Component, Input, OnInit, OnDestroy } from '@angular/core';
-import { Team } from 'app/entities/team.model';
+import { OnlineTeamStudent, Team } from 'app/entities/team.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/core/user/user.model';
 import { orderBy } from 'lodash';
+import { map } from 'rxjs/operators';
+import * as moment from 'moment';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 
@@ -15,7 +17,7 @@ export class TeamStudentsOnlineListComponent implements OnInit, OnDestroy {
     @Input() participation: StudentParticipation;
 
     currentUser: User;
-    onlineUserLogins = new Set<string>();
+    onlineTeamStudents: OnlineTeamStudent[] = [];
     websocketTopic: string;
 
     constructor(private accountService: AccountService, private jhiWebsocketService: JhiWebsocketService) {}
@@ -31,9 +33,13 @@ export class TeamStudentsOnlineListComponent implements OnInit, OnDestroy {
             this.currentUser = user;
             this.websocketTopic = this.buildWebsocketTopic();
             this.jhiWebsocketService.subscribe(this.websocketTopic);
-            this.jhiWebsocketService.receive(this.websocketTopic).subscribe((logins: string[]) => {
-                this.onlineUserLogins = new Set<string>(logins);
-            });
+            this.jhiWebsocketService
+                .receive(this.websocketTopic)
+                .pipe(map(this.convertOnlineTeamStudentsFromServer))
+                .subscribe(
+                    (students: OnlineTeamStudent[]) => (this.onlineTeamStudents = students),
+                    (error) => console.error(error),
+                );
             setTimeout(() => {
                 this.jhiWebsocketService.send(this.buildWebsocketTopic('/trigger'), {});
             }, 700);
@@ -78,7 +84,18 @@ export class TeamStudentsOnlineListComponent implements OnInit, OnDestroy {
         return !this.isSelf(user);
     };
 
-    isOnline = (user: User): boolean => {
-        return this.onlineUserLogins.has(user.login!);
+    isActive = (user: User): boolean => {
+        const onlineTeamStudent = this.onlineTeamStudents.find((student: OnlineTeamStudent) => student.login === user.login);
+        return Boolean(onlineTeamStudent?.lastActionDate?.isSameOrAfter(moment().subtract(3, 'seconds')));
     };
+
+    isOnline = (user: User): boolean => {
+        return this.onlineTeamStudents.map((student: OnlineTeamStudent) => student.login).includes(user.login!);
+    };
+
+    private convertOnlineTeamStudentsFromServer(students: OnlineTeamStudent[]) {
+        return students.map((student) => {
+            return { ...student, lastActionDate: student.lastActionDate ? moment(student.lastActionDate) : null };
+        });
+    }
 }

@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.web.websocket.team;
 
 import java.security.Principal;
+import java.time.Instant;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -35,6 +36,7 @@ import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.web.websocket.dto.OnlineTeamStudentDTO;
 import de.tum.in.www1.artemis.web.websocket.dto.SubmissionSyncPayload;
 
 @Controller
@@ -47,6 +49,8 @@ public class ParticipationTeamWebsocketService {
     private final SimpUserRegistry simpUserRegistry;
 
     private final Map<String, String> destinationTracker = new HashMap<>();
+
+    private final Map<String, Instant> lastActionTracker = new HashMap<>();
 
     private final UserService userService;
 
@@ -83,7 +87,7 @@ public class ParticipationTeamWebsocketService {
     public void subscribe(@DestinationVariable Long participationId, StompHeaderAccessor stompHeaderAccessor) {
         final String destination = getDestination(participationId);
         destinationTracker.put(stompHeaderAccessor.getSessionId(), destination);
-        sendOnlineTeamMembers(destination);
+        sendOnlineTeamStudents(destination);
     }
 
     /**
@@ -92,8 +96,8 @@ public class ParticipationTeamWebsocketService {
      * @param participationId id of participation
      */
     @MessageMapping("/topic/participations/{participationId}/team/trigger")
-    public void triggerSendOnlineTeamMembers(@DestinationVariable Long participationId) {
-        sendOnlineTeamMembers(getDestination(participationId));
+    public void triggerSendOnlineTeamStudents(@DestinationVariable Long participationId) {
+        sendOnlineTeamStudents(getDestination(participationId));
     }
 
     /**
@@ -154,18 +158,26 @@ public class ParticipationTeamWebsocketService {
             throw new IllegalArgumentException("Submission type '" + submission.getType() + "' not allowed.");
         }
 
+        // update the last action date for the user and send out list of team members
+        lastActionTracker.put(principal.getName(), Instant.now());
+        sendOnlineTeamStudents(getDestination(participationId));
+
         SubmissionSyncPayload payload = new SubmissionSyncPayload(submission, user);
         messagingTemplate.convertAndSend(getDestination(participationId, topicPath), payload);
     }
 
     /**
-     * Sends out a list of user logins of team students that are online to all team members
+     * Sends out a list of online team students to all members of the team
      *
      * @param destination websocket topic to which to send the list of online users
      */
-    private void sendOnlineTeamMembers(String destination) {
+    private void sendOnlineTeamStudents(String destination) {
         final List<String> userLogins = getSubscriberPrincipals(destination);
-        messagingTemplate.convertAndSend(destination, userLogins);
+
+        final List<OnlineTeamStudentDTO> onlineTeamStudents = userLogins.stream().map(login -> new OnlineTeamStudentDTO(login, lastActionTracker.get(login)))
+                .collect(Collectors.toList());
+
+        messagingTemplate.convertAndSend(destination, onlineTeamStudents);
     }
 
     /**
@@ -215,7 +227,7 @@ public class ParticipationTeamWebsocketService {
      */
     private List<String> getSubscriberPrincipals(String destination, String exceptSessionID) {
         return simpUserRegistry.findSubscriptions(s -> s.getDestination().equals(destination)).stream().map(SimpSubscription::getSession)
-                .filter(simpSession -> !simpSession.getId().equals(exceptSessionID)).map(SimpSession::getUser).map(SimpUser::getName).collect(Collectors.toList());
+                .filter(simpSession -> !simpSession.getId().equals(exceptSessionID)).map(SimpSession::getUser).map(SimpUser::getName).distinct().collect(Collectors.toList());
     }
 
     private List<String> getSubscriberPrincipals(String destination) {
