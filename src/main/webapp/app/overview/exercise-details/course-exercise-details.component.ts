@@ -355,6 +355,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         this.programmingExerciseSimulationService.failsIfInProduction();
         this.courseExerciseSubmissionResultSimulationService.simulateResult(this.exerciseId).subscribe(
             () => {
+                this.wasSubmissionSimulated = false;
                 this.jhiAlertService.success('artemisApp.exercise.resultCreationSuccessful');
             },
             () => {
