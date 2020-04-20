@@ -142,7 +142,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
                         }
                         this.setAutoSaveTimer();
                         if (this.modelingExercise.teamMode) {
-                            this.setupSubmissionStream();
+                            this.setupSubmissionStreamForTeam();
                         }
                         this.isLoading = false;
                         this.guidedTourService.enableTourForExercise(this.modelingExercise, modelingTour, true);
@@ -234,13 +234,13 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         }, 1000);
     }
 
-    private setupSubmissionStream(): void {
+    private setupSubmissionStreamForTeam(): void {
         window.setInterval(() => {
             if (!this.canDeactivate()) {
                 this.updateSubmissionModel();
                 this.submissionChange.next(this.submission);
             }
-        }, 5000);
+        }, 2000);
     }
 
     saveDiagram(): void {
