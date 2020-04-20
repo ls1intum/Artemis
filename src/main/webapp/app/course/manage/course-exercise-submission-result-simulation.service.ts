@@ -15,11 +15,11 @@ export class CourseExerciseSubmissionResultSimulationService {
     constructor(private http: HttpClient) {}
 
     simulateSubmission(exerciseId: number): Observable<HttpResponse<ProgrammingSubmission>> {
-        return this.http.post<ProgrammingSubmission>(`api/submissions/no-vcs-and-ci-available/${exerciseId}`, {}, { observe: 'response' });
+        return this.http.post<ProgrammingSubmission>(`api/exercises/${exerciseId}/submissions/no-vcs-and-ci-available`, {}, { observe: 'response' });
     }
 
     simulateResult(exerciseId: number): Observable<HttpResponse<Result>> {
-        return this.http.post<Result>(`api/results/no-vcs-and-ci-available/${exerciseId}`, {}, { observe: 'response' });
+        return this.http.post<Result>(`api/exercises/${exerciseId}/results/no-vcs-and-ci-available`, {}, { observe: 'response' });
     }
 
     getProgrammingExercise(exerciseId: number): Observable<ProgrammingExercise> {

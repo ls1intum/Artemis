@@ -140,9 +140,9 @@ public class ProgrammingSubmissionResultSimulationResource {
 
         public static final String ROOT = "/api";
 
-        public static final String SUBMISSIONS_SIMULATION = "/submissions/no-vcs-and-ci-available/{exerciseId}";
+        public static final String SUBMISSIONS_SIMULATION = "/exercises/{exerciseId}/submissions/no-vcs-and-ci-available";
 
-        public static final String RESULTS_SIMULATION = "/results/no-vcs-and-ci-available/{exerciseId}";
+        public static final String RESULTS_SIMULATION = "/exercises/{exerciseId}/results/no-vcs-and-ci-available";
 
     }
 
