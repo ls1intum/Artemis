@@ -96,7 +96,7 @@ public class NotificationResource {
     }
 
     /**
-     * GET /notifications/for-user : get recent notifications (after last read) for users including the active system notification.
+     * GET /notifications/recent-for-user : get recent notifications (after last read) for users including the active system notification.
      *
      * @return the list notifications
      */

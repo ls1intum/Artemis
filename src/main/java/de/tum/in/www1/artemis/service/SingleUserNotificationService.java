@@ -1,11 +1,8 @@
 package de.tum.in.www1.artemis.service;
 
-import java.util.List;
-
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
 
-import de.tum.in.www1.artemis.domain.Notification;
 import de.tum.in.www1.artemis.domain.SingleUserNotification;
 import de.tum.in.www1.artemis.domain.StudentQuestionAnswer;
 import de.tum.in.www1.artemis.domain.User;
@@ -46,9 +43,5 @@ public class SingleUserNotificationService {
     private void saveAndSendSingleUserNotification(SingleUserNotification userNotification) {
         singleUserNotificationRepository.save(userNotification);
         messagingTemplate.convertAndSend(userNotification.getTopic(), userNotification);
-    }
-
-    public List<Notification> findAllRecentNewNotificationsForRecipientWithLogin(String login) {
-        return this.singleUserNotificationRepository.findAllRecentNewNotificationsForRecipientWithLogin(login);
     }
 }
