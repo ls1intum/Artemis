@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { BehaviorSubject, Observable } from 'rxjs';
 import * as moment from 'moment';
-import { map, shareReplay } from 'rxjs/operators';
+import { map } from 'rxjs/operators';
 
 import { SERVER_API_URL } from 'app/app.constants';
 import { createRequestOption } from 'app/shared/util/request-util';
@@ -64,8 +64,7 @@ export class NotificationService {
         if (!this.cachedNotifications) {
             this.cachedNotifications = this.http
                 .get<Notification[]>(`${this.resourceUrl}/recent-for-user`, { observe: 'response' })
-                .pipe(map((res: EntityArrayResponseType) => this.convertDateArrayFromServer(res)))
-                .pipe(shareReplay(1));
+                .pipe(map((res: EntityArrayResponseType) => this.convertDateArrayFromServer(res)));
         }
         return this.cachedNotifications;
     }
