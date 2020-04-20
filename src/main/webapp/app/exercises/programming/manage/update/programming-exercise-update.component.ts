@@ -16,6 +16,9 @@ import { AssessmentType } from 'app/entities/assessment-type.model';
 import { ExerciseCategory } from 'app/entities/exercise.model';
 import { EditorMode } from 'app/shared/markdown-editor/markdown-editor.component';
 import { KatexCommand } from 'app/shared/markdown-editor/commands/katex.command';
+import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { ProgrammingExerciseSimulationService } from 'app/exercises/programming/manage/services/programming-exercise-simulation.service';
 
 @Component({
     selector: 'jhi-programming-exercise-update',
@@ -52,6 +55,8 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     exerciseCategories: ExerciseCategory[];
     existingCategories: ExerciseCategory[];
 
+    public inProductionEnvironment: boolean;
+
     constructor(
         private programmingExerciseService: ProgrammingExerciseService,
         private courseService: CourseManagementService,
@@ -60,6 +65,8 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         private fileService: FileService,
         private activatedRoute: ActivatedRoute,
         private translateService: TranslateService,
+        private profileService: ProfileService,
+        private programmingExerciseSimulationService: ProgrammingExerciseSimulationService,
     ) {}
 
     /**
@@ -139,6 +146,13 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         if (this.programmingExercise.id !== undefined) {
             this.problemStatementLoaded = true;
         }
+
+        // Checks if the current environment is production
+        this.profileService.getProfileInfo().subscribe((profileInfo) => {
+            if (profileInfo) {
+                this.inProductionEnvironment = profileInfo.inProduction;
+            }
+        });
     }
 
     previousState() {
@@ -166,6 +180,9 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
                 requestOptions.notificationText = this.notificationText;
             }
             this.subscribeToSaveResponse(this.programmingExerciseService.update(this.programmingExercise, requestOptions));
+        } else if (this.programmingExercise.noVersionControlAndContinuousIntegrationAvailable) {
+            // only for testing purposes(noVersionControlAndContinuousIntegrationAvailable)
+            this.subscribeToSaveResponse(this.programmingExerciseSimulationService.automaticSetupWithoutConnectionToVCSandCI(this.programmingExercise));
         } else {
             this.subscribeToSaveResponse(this.programmingExerciseService.automaticSetup(this.programmingExercise));
         }

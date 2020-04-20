@@ -13,6 +13,7 @@ import { HighlightedTextAreaComponent } from 'app/exercises/text/assess/highligh
 import { ArtemisAssessmentSharedModule } from 'app/assessment/assessment-shared.module';
 import { ArtemisComplaintsForTutorModule } from 'app/complaints/complaints-for-tutor/complaints-for-tutor.module';
 import { ArtemisResultModule } from 'app/exercises/shared/result/result.module';
+import { AssessmentInstructionsModule } from 'app/assessment/assessment-instructions/assessment-instructions.module';
 
 const ENTITY_STATES = [...textAssessmentRoutes];
 @NgModule({
@@ -24,6 +25,7 @@ const ENTITY_STATES = [...textAssessmentRoutes];
         ArtemisResultModule,
         ArtemisComplaintsForTutorModule,
         ArtemisAssessmentSharedModule,
+        AssessmentInstructionsModule,
     ],
     declarations: [
         TextAssessmentComponent,
