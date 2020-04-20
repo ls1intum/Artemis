@@ -70,6 +70,11 @@ public class NotificationResourceIntegrationTest extends AbstractSpringIntegrati
         database.addCourseWithOneTextExercise();
         systemNotificationRepository.deleteAll();
         exercise = exerciseRepo.findAll().get(0);
+
+        User student1 = users.get(0);
+        student1.setLastNotificationRead(ZonedDateTime.now().minusDays(1));
+        users.set(0, student1);
+        userRepository.save(student1);
     }
 
     @AfterEach
@@ -110,6 +115,7 @@ public class NotificationResourceIntegrationTest extends AbstractSpringIntegrati
     }
 
     @Test
+    @Sql({ "/h2/custom-functions.sql" })
     @WithMockUser(username = "student1", roles = "USER")
     public void testGetNotifications_recipientEvaluation() throws Exception {
         User recipient = userService.getUser();
@@ -121,9 +127,14 @@ public class NotificationResourceIntegrationTest extends AbstractSpringIntegrati
         List<Notification> notifications = request.getList("/api/notifications", HttpStatus.OK, Notification.class);
         assertThat(notifications).as("Notification with recipient equal to current user is returned").contains(notification1);
         assertThat(notifications).as("Notification with recipient not equal to current user is not returned").doesNotContain(notification2);
+
+        List<Notification> recentNotifications = request.getList("/api/notifications/recent-for-user", HttpStatus.OK, Notification.class);
+        assertThat(recentNotifications).as("Recent notification with recipient equal to current user is returned").contains(notification1);
+        assertThat(recentNotifications).as("Recent notification with recipient not equal to current user is not returned").doesNotContain(notification2);
     }
 
     @Test
+    @Sql({ "/h2/custom-functions.sql" })
     @WithMockUser(username = "student1", roles = "USER")
     public void testGetNotifications_courseEvaluation() throws Exception {
         // student1 is member of `testgroup` and `tumuser` per default
@@ -140,9 +151,14 @@ public class NotificationResourceIntegrationTest extends AbstractSpringIntegrati
         List<Notification> notifications = request.getList("/api/notifications", HttpStatus.OK, Notification.class);
         assertThat(notifications).as("Notification with course the current user belongs to is returned").contains(notification1);
         assertThat(notifications).as("Notification with course the current user does not belong to is not returned").doesNotContain(notification2);
+
+        List<Notification> recentNotifications = request.getList("/api/notifications/recent-for-user", HttpStatus.OK, Notification.class);
+        assertThat(recentNotifications).as("Recent notification with course the current user belongs to is returned").contains(notification1);
+        assertThat(recentNotifications).as("Recent notification with course the current user does not belong to is not returned").doesNotContain(notification2);
     }
 
     @Test
+    @Sql({ "/h2/custom-functions.sql" })
     @WithMockUser(username = "student1", roles = "USER")
     public void testGetNotifications_groupNotificationTypeEvaluation_asStudent() throws Exception {
         GroupNotification notificationStudent = ModelFactory.generateGroupNotification(ZonedDateTime.now(), courseRepository.findAll().get(0), GroupNotificationType.STUDENT);
@@ -156,9 +172,15 @@ public class NotificationResourceIntegrationTest extends AbstractSpringIntegrati
         assertThat(notifications).as("Notification with type student is returned").contains(notificationStudent);
         assertThat(notifications).as("Notification with type tutor is not returned").doesNotContain(notificationTutor);
         assertThat(notifications).as("Notification with type instructor is not returned").doesNotContain(notificationInstructor);
+
+        List<Notification> recentNotifications = request.getList("/api/notifications/recent-for-user", HttpStatus.OK, Notification.class);
+        assertThat(recentNotifications).as("Recent notification with type student is returned").contains(notificationStudent);
+        assertThat(recentNotifications).as("Recent notification with type tutor is not returned").doesNotContain(notificationTutor);
+        assertThat(recentNotifications).as("Recent notification with type instructor is not returned").doesNotContain(notificationInstructor);
     }
 
     @Test
+    @Sql({ "/h2/custom-functions.sql" })
     @WithMockUser(username = "tutor1", roles = "TA")
     public void testGetNotifications_groupNotificationTypeEvaluation_asTutor() throws Exception {
         GroupNotification notificationStudent = ModelFactory.generateGroupNotification(ZonedDateTime.now(), courseRepository.findAll().get(0), GroupNotificationType.STUDENT);
@@ -172,9 +194,15 @@ public class NotificationResourceIntegrationTest extends AbstractSpringIntegrati
         assertThat(notifications).as("Notification with type student is not returned").doesNotContain(notificationStudent);
         assertThat(notifications).as("Notification with type tutor is returned").contains(notificationTutor);
         assertThat(notifications).as("Notification with type instructor is not returned").doesNotContain(notificationInstructor);
+
+        List<Notification> recentNotifications = request.getList("/api/notifications/recent-for-user", HttpStatus.OK, Notification.class);
+        assertThat(recentNotifications).as("Recent notification with type student is not returned").doesNotContain(notificationStudent);
+        assertThat(recentNotifications).as("Recent notification with type tutor is returned").contains(notificationTutor);
+        assertThat(recentNotifications).as("Recent notification with type instructor is not returned").doesNotContain(notificationInstructor);
     }
 
     @Test
+    @Sql({ "/h2/custom-functions.sql" })
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testGetNotifications_groupNotificationTypeEvaluation_asInstructor() throws Exception {
         GroupNotification notificationStudent = ModelFactory.generateGroupNotification(ZonedDateTime.now(), courseRepository.findAll().get(0), GroupNotificationType.STUDENT);
@@ -188,18 +216,20 @@ public class NotificationResourceIntegrationTest extends AbstractSpringIntegrati
         assertThat(notifications).as("Notification with type student is not returned").doesNotContain(notificationStudent);
         assertThat(notifications).as("Notification with type tutor is not returned").doesNotContain(notificationTutor);
         assertThat(notifications).as("Notification with type instructor is returned").contains(notificationInstructor);
+
+        List<Notification> recentNotifications = request.getList("/api/notifications/recent-for-user", HttpStatus.OK, Notification.class);
+        assertThat(recentNotifications).as("Recent notification with type student is not returned").doesNotContain(notificationStudent);
+        assertThat(recentNotifications).as("Recent notification with type tutor is not returned").doesNotContain(notificationTutor);
+        assertThat(recentNotifications).as("Recent notification with type instructor is returned").contains(notificationInstructor);
     }
 
     @Test
     @Sql({ "/h2/custom-functions.sql" })
     @WithMockUser(username = "student1", roles = "USER")
     public void testGetRecentNotifications() throws Exception {
-        User recipient = userService.getUserWithGroupsAndAuthorities();
-        recipient.setLastNotificationRead(ZonedDateTime.now().minusMinutes(10));
-        userRepository.save(recipient);
-        SingleUserNotification recentNotification = ModelFactory.generateSingleUserNotification(ZonedDateTime.now(), recipient);
+        SingleUserNotification recentNotification = ModelFactory.generateSingleUserNotification(ZonedDateTime.now(), users.get(0));
         notificationRepository.save(recentNotification);
-        SingleUserNotification notRecentNotification = ModelFactory.generateSingleUserNotification(ZonedDateTime.now().minusMinutes(20), recipient);
+        SingleUserNotification notRecentNotification = ModelFactory.generateSingleUserNotification(ZonedDateTime.now().minusDays(2), users.get(0));
         notificationRepository.save(notRecentNotification);
         SystemNotification activeSystemNotification = ModelFactory.generateSystemNotification(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(1));
         notificationRepository.save(activeSystemNotification);
