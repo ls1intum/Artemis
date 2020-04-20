@@ -38,6 +38,7 @@ import { ModelingSubmissionService } from 'app/exercises/modeling/participate/mo
 import { TutorParticipationStatus } from 'app/entities/participation/tutor-participation.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { ArtemisResultModule } from 'app/exercises/shared/result/result.module';
+import { StructuredGradingInstructionsAssessmentLayoutComponent } from 'app/assessment/structured-grading-instructions-assessment-layout/structured-grading-instructions-assessment-layout.component';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -75,6 +76,7 @@ describe('TutorExerciseDashboardComponent', () => {
                 MockComponent(ModelingEditorComponent),
                 MockComponent(CollapsableAssessmentInstructionsComponent),
                 MockComponent(AssessmentInstructionsComponent),
+                MockComponent(StructuredGradingInstructionsAssessmentLayoutComponent),
             ],
             providers: [
                 JhiLanguageHelper,
