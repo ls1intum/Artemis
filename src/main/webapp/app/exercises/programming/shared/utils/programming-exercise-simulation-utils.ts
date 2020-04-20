@@ -15,7 +15,6 @@ export class ProgrammingExerciseSimulationUtils {
      * @param urlToCheck the url which will be check if it contains the substring
      */
     noVersionControlAndContinuousIntegrationAvailableCheck(urlToCheck: string): boolean {
-        this.programmingExerciseSimulationService.failsIfInProduction();
         return urlToCheck.includes('artemislocalhost');
     }
 }

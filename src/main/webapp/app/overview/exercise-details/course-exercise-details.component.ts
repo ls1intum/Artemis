@@ -322,7 +322,6 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
      * This functionality is only for testing purposes(noVersionControlAndContinuousIntegrationAvailable)
      */
     getProgrammingExerciseAndChecksIfTheSetupHasVCSandCIConnection() {
-        this.programmingExerciseSimulationService.failsIfInProduction();
         this.courseExerciseSubmissionResultSimulationService.getProgrammingExercise(this.exerciseId).subscribe((programmingExercise) => {
             this.noVersionControlAndContinuousIntegrationServerAvailable = this.programmingExerciseSimulationUtils.noVersionControlAndContinuousIntegrationAvailableCheck(
                 programmingExercise.testRepositoryUrl,
