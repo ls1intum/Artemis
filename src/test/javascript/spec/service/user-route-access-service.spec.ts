@@ -23,11 +23,10 @@ chai.use(sinonChai);
 const expect = chai.expect;
 
 describe('UserRouteAccessService', () => {
-    let comp: CourseExerciseDetailsComponent;
+    const routeStateMock: any = { snapshot: {}, url: '/' };
+    const route = 'courses/:courseId/exercises/:exerciseId';
     let fixture: ComponentFixture<CourseExerciseDetailsComponent>;
     let service: UserRouteAccessService;
-    let routeStateMock: any = { snapshot: {}, url: '/' };
-    let route = 'courses/:courseId/exercises/:exerciseId';
 
     beforeEach(async(() => {
         TestBed.configureTestingModule({

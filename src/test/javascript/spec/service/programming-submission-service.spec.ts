@@ -82,7 +82,7 @@ describe('ProgrammingSubmissionService', () => {
         // @ts-ignore
         submissionService.submissionSubjects = { [participationId]: cachedSubject };
 
-        const returnedObservable = submissionService.getLatestPendingSubmissionByParticipationId(participationId, 10);
+        submissionService.getLatestPendingSubmissionByParticipationId(participationId, 10);
         expect(fetchLatestPendingSubmissionSpy).to.not.have.been.called;
         expect(setupWebsocketSubscriptionSpy).to.not.have.been.called;
         expect(subscribeForNewResultSpy).to.not.have.been.called;
@@ -258,7 +258,7 @@ describe('ProgrammingSubmissionService', () => {
         expect(fetchLatestPendingSubmissionsByExerciseIdSpy).to.have.been.calledOnceWithExactly(exerciseId);
         expect(receivedSubmissionState).to.deep.equal(expectedSubmissionState);
 
-        let resultEta: number = -1;
+        let resultEta = -1;
         submissionService.getResultEtaInMs().subscribe((eta) => (resultEta = eta));
 
         // With 340 submissions, the eta should now have increased.

@@ -5,7 +5,7 @@ import { Observable } from 'rxjs';
 import { Language } from 'app/entities/tutor-group.model';
 
 class MockHttpHandler implements HttpHandler {
-    handle(req: HttpRequest<any>): Observable<HttpEvent<any>> {
+    handle(_: HttpRequest<any>): Observable<HttpEvent<any>> {
         return new Observable<HttpEvent<any>>();
     }
 }
@@ -30,7 +30,7 @@ describe('TextEditorService', () => {
         expect(textEditorService.predictLanguage(testString)).toBe(Language.ENGLISH);
     });
     it('Can detect a long German text ', () => {
-        //copied from https://de.wikipedia.org/wiki/Bernd_Br%C3%BCgge
+        // copied from https://de.wikipedia.org/wiki/Bernd_Br%C3%BCgge
 
         const testString =
             'Bernd Brügge ist ein deutscher Informatiker und Ordinarius für Angewandte Softwaretechnik' +
@@ -42,7 +42,7 @@ describe('TextEditorService', () => {
         expect(textEditorService.predictLanguage(testString)).toBe(Language.GERMAN);
     });
     it('Can detect a long English text ', () => {
-        //copied from https://en.wikipedia.org/wiki/Bernd_Bruegge
+        // copied from https://en.wikipedia.org/wiki/Bernd_Bruegge
 
         const testString =
             'Bernd Bruegge (German: Bernd Brügge) (born 1951) is a German computer scientist,' +

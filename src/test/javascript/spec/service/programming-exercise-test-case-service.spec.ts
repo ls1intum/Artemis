@@ -114,7 +114,7 @@ describe('ProgrammingExerciseTestCaseService', () => {
     });
 
     it('should notify subscribers on new test case value', () => {
-        const newTestCases = testCases1.map((testCase) => ({ ...testCase, weight: 30 }));
+        const newTestCasesOracle = testCases1.map((testCase) => ({ ...testCase, weight: 30 }));
         let testCasesExercise1Subscriber1;
         let testCasesExercise1Subscriber2;
         // Subscriber 1.
@@ -131,9 +131,9 @@ describe('ProgrammingExerciseTestCaseService', () => {
         expect(testCasesExercise1Subscriber1).to.equal(testCases1);
         expect(testCasesExercise1Subscriber2).to.equal(testCases1);
 
-        testCaseService.notifyTestCases(exercise1.id, newTestCases);
+        testCaseService.notifyTestCases(exercise1.id, newTestCasesOracle);
 
-        expect(testCasesExercise1Subscriber1).to.equal(newTestCases);
-        expect(testCasesExercise1Subscriber2).to.equal(newTestCases);
+        expect(testCasesExercise1Subscriber1).to.equal(newTestCasesOracle);
+        expect(testCasesExercise1Subscriber2).to.equal(newTestCasesOracle);
     });
 });

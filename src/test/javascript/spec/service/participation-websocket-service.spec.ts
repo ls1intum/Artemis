@@ -15,9 +15,7 @@ const expect = chai.expect;
 describe('ParticipationWebsocketService', () => {
     let websocketService: IWebsocketService;
     let receiveResultForParticipationSubject: Subject<Result>;
-    let receiveParticipationSubject: Subject<Participation>;
     let receiveResultForParticipation2Subject: Subject<Result>;
-    let receiveParticipation2Subject: Subject<Participation>;
     let subscribeSpy: SinonSpy;
     let receiveStub: SinonStub;
     let unsubscribeSpy: SinonSpy;
@@ -169,6 +167,7 @@ describe('ParticipationWebsocketService', () => {
         expect(participationSpy).to.have.been.calledOnceWithExactly({ ...participation, results: [...participation.results, newRatedResult] });
     });
 
+    /*eslint no-unused-vars: ["error", { "ignoreRestSiblings": true }]*/
     it('should attach the result to participation if the participation has null for results value', () => {
         const { results, ...participationWithoutResult } = participation;
         participationWebsocketService.subscribeForLatestResultOfParticipation(participationWithoutResult.id);
