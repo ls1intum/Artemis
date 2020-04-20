@@ -102,8 +102,13 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
                 }, 500);
             }
         });
+
         // Checks if the current environment is production
-        this.inProductionEnvironment = this.profileService.isInProduction();
+        this.profileService.getProfileInfo().subscribe((profileInfo) => {
+            if (profileInfo) {
+                this.inProductionEnvironment = profileInfo.inProduction;
+            }
+        });
     }
 
     ngOnDestroy() {

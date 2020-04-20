@@ -146,8 +146,13 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         if (this.programmingExercise.id !== undefined) {
             this.problemStatementLoaded = true;
         }
+
         // Checks if the current environment is production
-        this.inProductionEnvironment = this.profileService.isInProduction();
+        this.profileService.getProfileInfo().subscribe((profileInfo) => {
+            if (profileInfo) {
+                this.inProductionEnvironment = profileInfo.inProduction;
+            }
+        });
     }
 
     previousState() {
