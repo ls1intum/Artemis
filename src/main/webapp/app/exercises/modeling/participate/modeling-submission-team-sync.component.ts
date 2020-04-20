@@ -47,8 +47,7 @@ export class ModelingSubmissionTeamSyncComponent implements OnInit {
             .receive(this.websocketTopic)
             .pipe(filter(({ sender }: ModelingSubmissionSyncPayload) => !this.isSelf(sender)))
             .subscribe(
-                ({ submission, sender }: ModelingSubmissionSyncPayload) => {
-                    console.log(`received model from ${sender.login}`);
+                ({ submission }: ModelingSubmissionSyncPayload) => {
                     this.receiveSubmission.emit(submission);
                 },
                 (error) => this.onError(error),
@@ -58,9 +57,7 @@ export class ModelingSubmissionTeamSyncComponent implements OnInit {
     private setupSender() {
         this.submissionStream$.pipe(throttleTime(this.throttleTime)).subscribe(
             (modelingSubmission) => {
-                console.log('sending model', modelingSubmission.model);
                 delete modelingSubmission.participation;
-                // this.receiveSubmission.emit(modelingSubmission);
                 this.teamSubmissionWebsocketService.send(this.buildWebsocketTopic('/update'), modelingSubmission);
             },
             (error) => this.onError(error),

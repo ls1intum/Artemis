@@ -48,8 +48,7 @@ export class TextSubmissionTeamSyncComponent implements OnInit {
             .receive(this.websocketTopic)
             .pipe(filter(({ sender }: TextSubmissionSyncPayload) => !this.isSelf(sender)))
             .subscribe(
-                ({ submission, sender }: TextSubmissionSyncPayload) => {
-                    console.log(`received answer "${submission.text}" from ${sender.login}`);
+                ({ submission }: TextSubmissionSyncPayload) => {
                     this.receiveSubmission.emit(submission);
                 },
                 (error) => this.onError(error),
@@ -59,7 +58,6 @@ export class TextSubmissionTeamSyncComponent implements OnInit {
     private setupSender() {
         this.answerStream$.pipe(auditTime(this.throttleTime), distinctUntilChanged()).subscribe(
             (answer) => {
-                console.log('sending answer', answer);
                 const submission = this.submissionForAnswer(answer);
                 this.receiveSubmission.emit(submission);
                 this.teamSubmissionWebsocketService.send(this.buildWebsocketTopic('/update'), submission);
