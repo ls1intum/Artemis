@@ -241,7 +241,6 @@ public class ProgrammingExerciseResource {
         if (errorMessageCI != null) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, errorMessageCI, "ciProjectExists")).body(null);
         }
-
         try {
             ProgrammingExercise newProgrammingExercise = programmingExerciseService.setupProgrammingExercise(programmingExercise); // Setup all repositories etc
             return ResponseEntity.created(new URI("/api/programming-exercises" + newProgrammingExercise.getId()))

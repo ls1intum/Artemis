@@ -98,7 +98,11 @@
             "isQuiz": "Das ist eine Quizübung",
             "isText": "Das ist eine Textübung",
             "isFileUpload": "Das ist eine Datei-Upload-Übung",
-            "notificiationText": "Optional: Mitteilung über die Änderung",
+            "notificationText": "Optional: Mitteilung über die Änderung",
+            "submissionSuccessful": "Die Einreichung war erfolgreich",
+            "submissionUnsuccessful": "Die Einreichung war nicht erfolgreich",
+            "resultCreationSuccessful": "Das Ergebnis wurde erfolgreich erzeugt",
+            "resultCreationUnsuccessful": "Das Ergebnis wurde nicht erzeugt",
             "presentationScoreEnabled": {
                 "title": "Präsentationsergebnis aktiviert",
                 "description": "Wenn das Präsentationsergebnis aktiviert ist, dann können Tutoren auf der Seite \"Teilnahmen\" dieser Übung eine Punkt für Präsentation von Studenten eintragen."
