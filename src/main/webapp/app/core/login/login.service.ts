@@ -67,7 +67,7 @@ export class LoginService {
                 tap(() => {
                     return this.alertService.clear();
                 }),
-                // 5: Clear all cached notifications of the user.
+                // 5: Clean up notification service.
                 tap(() => {
                     return this.notificationService.cleanUp();
                 }),
