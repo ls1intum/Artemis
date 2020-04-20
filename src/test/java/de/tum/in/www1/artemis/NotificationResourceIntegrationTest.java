@@ -244,29 +244,6 @@ public class NotificationResourceIntegrationTest extends AbstractSpringIntegrati
     }
 
     @Test
-    @Sql({ "/h2/custom-functions.sql" })
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testGetSystemNotifications() throws Exception {
-        SystemNotification systemNotification = ModelFactory.generateSystemNotification(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(1));
-        systemNotificationRepository.save(systemNotification);
-
-        GroupNotificationType type = GroupNotificationType.INSTRUCTOR;
-        GroupNotification groupNotification = new GroupNotification(exercise.getCourse(), "Title", "Notification Text", null, type);
-        groupNotification.setTarget(groupNotification.getExerciseUpdatedTarget(exercise));
-        groupNotificationRepository.save(groupNotification);
-
-        User author = userService.getUserWithGroupsAndAuthorities();
-        User recipient = userService.getUserWithGroupsAndAuthorities();
-
-        SingleUserNotification singleUserNotification = new SingleUserNotification(recipient, author, "title", "text");
-        singleUserNotificationRepository.save(singleUserNotification);
-
-        List<Notification> recentNotificationsForUser = request.getList("/api/notifications/recent-for-user", HttpStatus.OK, Notification.class);
-        List<Notification> allNotificationsForUser = request.getList("/api/notifications", HttpStatus.OK, Notification.class);
-        assertThat(recentNotificationsForUser.isEmpty()).as("response is not empty").isFalse();
-    }
-
-    @Test
     @WithMockUser(roles = "INSTRUCTOR")
     public void testUpdateNotification_asInstructor_OK() throws Exception {
         GroupNotificationType type = GroupNotificationType.INSTRUCTOR;
