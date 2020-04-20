@@ -180,17 +180,22 @@ public class ParticipationTeamWebsocketService {
      * Sends out a list of online team students to all members of the team
      *
      * @param participationId id of participation for which to send out the list
+     * @param exceptSessionID session id that should be ignored (optional)
      */
-    private void sendOnlineTeamStudents(Long participationId) {
+    private void sendOnlineTeamStudents(Long participationId, String exceptSessionID) {
         final String destination = getDestination(participationId);
 
         Map<String, Instant> lastTypingMap = lastTypingTracker.getOrDefault(participationId, new HashMap<>());
         Map<String, Instant> lastActionMap = lastActionTracker.getOrDefault(participationId, new HashMap<>());
 
-        final List<OnlineTeamStudentDTO> onlineTeamStudents = getSubscriberPrincipals(destination).stream()
+        final List<OnlineTeamStudentDTO> onlineTeamStudents = getSubscriberPrincipals(destination, exceptSessionID).stream()
                 .map(login -> new OnlineTeamStudentDTO(login, lastTypingMap.get(login), lastActionMap.get(login))).collect(Collectors.toList());
 
         messagingTemplate.convertAndSend(destination, onlineTeamStudents);
+    }
+
+    private void sendOnlineTeamStudents(Long participationId) {
+        sendOnlineTeamStudents(participationId, null);
     }
 
     /**
@@ -223,8 +228,8 @@ public class ParticipationTeamWebsocketService {
      */
     public void unsubscribe(String sessionId) {
         Optional.ofNullable(destinationTracker.get(sessionId)).ifPresent(destination -> {
-            List<String> userLogins = getSubscriberPrincipals(destination, sessionId);
-            messagingTemplate.convertAndSend(destination, userLogins);
+            Long participationId = getParticipationIdFromDestination(destination);
+            sendOnlineTeamStudents(participationId, sessionId);
             destinationTracker.remove(sessionId);
         });
     }
@@ -241,10 +246,6 @@ public class ParticipationTeamWebsocketService {
     private List<String> getSubscriberPrincipals(String destination, String exceptSessionID) {
         return simpUserRegistry.findSubscriptions(s -> s.getDestination().equals(destination)).stream().map(SimpSubscription::getSession)
                 .filter(simpSession -> !simpSession.getId().equals(exceptSessionID)).map(SimpSession::getUser).map(SimpUser::getName).distinct().collect(Collectors.toList());
-    }
-
-    private List<String> getSubscriberPrincipals(String destination) {
-        return getSubscriberPrincipals(destination, null);
     }
 
     /**
