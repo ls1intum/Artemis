@@ -7,7 +7,6 @@
                 "editLabel": "Edit Programming Exercise",
                 "importLabel": "Import new Programming Exercise",
                 "linkLabel": "Link new Programming Exercise",
-                "editLinkLabel": "Edit linked Programming Exercise",
                 "generateLabel": "Generate new Programming Exercise",
                 "createOrEditLabel": "Create or edit a Programming Exercise"
             },

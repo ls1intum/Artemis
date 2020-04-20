@@ -3,7 +3,7 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { JhiEventManager } from 'ng-jhipster';
 import { AlertService } from 'app/core/alert/alert.service';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
-import { ProgrammingExerciseService } from '../manage/services/programming-exercise.service';
+import { ProgrammingExerciseService } from './services/programming-exercise.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ExerciseComponent } from 'app/exercises/shared/exercise/exercise.component';
 import { TranslateService } from '@ngx-translate/core';

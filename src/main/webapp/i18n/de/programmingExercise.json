@@ -8,7 +8,6 @@
                 "generateLabel": "Neue Programmieraufgabe generieren",
                 "importLabel": "Neue Programmieraufgabe importieren",
                 "linkLabel": "Neue Programmieraufgabe verlinken",
-                "editLinkLabel": "Verlinkte Programmieraufgabe bearbeiten",
                 "createOrEditLabel": "Programmieraufgabe erstellen oder bearbeiten"
             },
             "created": "Programmieraufgabe erstellt mit Title {{ param }}",
