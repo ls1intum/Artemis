@@ -4,10 +4,10 @@ import { CourseManagementService } from './course-management.service';
 import { ActivatedRoute } from '@angular/router';
 
 @Component({
-    selector: 'jhi-course-overview',
-    templateUrl: './course-exercises-overview.component.html',
+    selector: 'jhi-course-management-exercises',
+    templateUrl: './course-management-exercises.component.html',
 })
-export class CourseExercisesOverviewComponent implements OnInit {
+export class CourseManagementExercisesComponent implements OnInit {
     course: Course;
     courseId = 0;
     quizExercisesCount = 0;

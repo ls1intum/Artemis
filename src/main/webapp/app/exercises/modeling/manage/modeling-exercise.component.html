@@ -86,8 +86,6 @@
                                 type="submit"
                                 *ngIf="modelingExercise.isAtLeastInstructor"
                                 [routerLink]="['/course-management', modelingExercise.course.id, 'modeling-exercises', modelingExercise.id, 'edit']"
-                                replaceUrl="true"
-                                queryParamsHandling="merge"
                                 class="btn btn-primary btn-sm mr-1"
                             >
                                 <fa-icon [icon]="'pencil-alt'"></fa-icon>

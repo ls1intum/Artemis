@@ -54,6 +54,7 @@
                 <dd class="editor-outline-background" [innerHTML]="fileUploadExercise.sampleSolution! | htmlForMarkdown"></dd>
                 <dt><span jhiTranslate="artemisApp.exercise.gradingInstructions">Grading Instructions</span></dt>
                 <dd class="editor-outline-background" [innerHTML]="fileUploadExercise.gradingInstructions! | htmlForMarkdown"></dd>
+                <jhi-structured-grading-instructions-assessment-layout [criteria]="fileUploadExercise.gradingCriteria"></jhi-structured-grading-instructions-assessment-layout>
                 <dt><span jhiTranslate="artemisApp.fileUploadExercise.filePattern">File Pattern</span></dt>
                 <dd>
                     <span>{{ fileUploadExercise.filePattern }}</span>
@@ -67,8 +68,6 @@
             <button
                 type="button"
                 [routerLink]="['/course-management', fileUploadExercise.course?.id, 'file-upload-exercises', fileUploadExercise.id, 'edit']"
-                replaceUrl="true"
-                queryParamsHandling="merge"
                 class="btn btn-primary"
             >
                 <fa-icon [icon]="'pencil-alt'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.edit"> Edit</span>
