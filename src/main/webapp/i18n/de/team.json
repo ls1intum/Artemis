@@ -47,6 +47,9 @@
                 "failed": "Suche fehlgeschlagen. Bitte nochmal versuchen.",
                 "noResults": "Keine Studenten im Kurs gefunden für Suche:"
             },
+            "errors": {
+                "studentAlreadyAssignedToTeam": "Student mit Login {{ studentLogin }} ist bereits in Team mit Id {{ teamId }."
+            },
             "selectOwnerForTeam": "Tutor auswählen (nach Login oder Name suchen)",
             "ownerSearch": {
                 "queryTooShort": "Bitte mindestens 3 Zeichen eingeben.",
@@ -68,9 +71,78 @@
                 "label": "Löschen",
                 "error": "Das Team konnte nicht entfernt werden. Bitte versuche es nochmal."
             },
-            "errors": {
-                "studentAlreadyAssignedToTeam": "Student mit Login {{ studentLogin }} ist bereits in Team mit Id {{ teamId }."
-            }
+            "importTeams": {
+                "buttonLabel": "Importiere Teams",
+                "dialogTitle": "Importiere Teams nach:",
+                "introText": "Dieser Dialog kann dazu verwendet werden, Teams einer anderen Übung dieses Kurses in diese Übung zu importieren.",
+                "error": "Teams konnten nicht importiert werden. Bitte versuche es nochmal."
+            },
+            "sourceExercise": {
+                "label": "Quell-Übung",
+                "tooltip": "Die Teams der ausgewählten Quell-Übung werden in diese Übung kopiert."
+            },
+            "selectExerciseForImport": "Übung auswählen (nach Titel suchen)",
+            "exerciseSearch": {
+                "failed": "Suche fehlgeschlagen. Bitte nochmal versuchen.",
+                "noResults": "Es gibt in diesem Kurs keine anderen Team-Übungen.",
+                "noResultsForSearchTerm": "Es wurde keine andere Team-Übung im Kurs gefunden für die Suche:"
+            },
+            "sourceTeams": {
+                "label": "Quell-Teams",
+                "tooltip": "Diese Teams werden in die aktuelle Übung kopiert.",
+                "legend": {
+                    "label": "Legende",
+                    "tooltip": "Die Legende zeigt die drei möglichen Konflikt-Zustände an, die ein Quell-Team haben kann.",
+                    "teamShortName": "team",
+                    "items": {
+                        "conflictFreeTeam": {
+                            "label": "Konfliktfreies Team",
+                            "tooltip": "Dieses Team kann ohne Probleme importiert werden."
+                        },
+                        "teamShortNameConflict": {
+                            "label": "Team-Kurznamen Konflikt",
+                            "tooltip": "Ein Team mit dem gleichen Kurznamen existiert bereits in dieser Übung."
+                        },
+                        "studentConflict": {
+                            "label": "Studenten Konflikt",
+                            "tooltip": "Der rot markierte Student ist bereits in einem Team dieser Übung."
+                        }
+                    }
+                }
+            },
+            "loadSourceTeams": {
+                "failed": "Teams konnten nicht geladen werden. Bitte versuche es nochmal."
+            },
+            "noTeamsInSourceExercise": "Die Quell-Übung hat keine Teams.",
+            "importStrategy": {
+                "label": "Import-Strategie",
+                "tooltip": "Die Import-Strategie bestimmt, welche Quell-Teams importiert werden und was mit den existierenden Teams in dieser Übung geschieht.",
+                "options": {
+                    "purgeExisting": {
+                        "label": "Bestehende Teams löschen",
+                        "badge": "kritisch",
+                        "explanation": "Bevor alle Teams der Quell-Übung oben importiert werden, werden alle existierenden Teams dieser Übung inklusive ihrer Teilnahmen gelöscht."
+                    },
+                    "createOnly": {
+                        "label": "Nur Teams hinzufügen",
+                        "badge": "sicher",
+                        "explanation": "Nur konfliktfreie Quell-Teams (oben in grün angezeigt) werden importiert. Bereits bestehende Teams in dieser Übung werden nicht angefasst."
+                    }
+                }
+            },
+            "importPreview": {
+                "noTeamsToImport": "Keine Teams zum Importieren",
+                "noConflictFreeTeamsToImport": "Keine konfliktfreien Teams zum Importieren",
+                "teamsToBeDeleted": "Teams zum Löschen:",
+                "teamsToBeImported": "Teams zum Importieren:",
+                "outOf": "(von {{ number }})",
+                "totalTeamsAfterImport": "Teams insgesamt nach Import:"
+            },
+            "purgeConfirmationDialog": {
+                "question": "Sollen alle Teams der Übung <strong>{{ title }}</strong> und ihre Teilnahmen an der Aufgabe wirklich dauerhaft gelöscht werden? Diese Aktion kann NICHT rückgängig gemacht werden!",
+                "typeNameToConfirm": "Bitte gib den Titel der Übung zur Bestätigung ein."
+            },
+            "importError": "Import fehlgeschlagen. Bitte versuche es nochmal oder kontaktiere einen Administrator für Hilfe."
         }
     }
 }

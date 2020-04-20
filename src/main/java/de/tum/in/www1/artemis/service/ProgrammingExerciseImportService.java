@@ -171,7 +171,7 @@ public class ProgrammingExerciseImportService {
         final var templateKey = templateExercise.getProjectKey();
         final var targetKey = newExercise.getProjectKey();
         final var targetName = newExercise.getCourse().getShortName().toUpperCase() + " " + newExercise.getTitle();
-
+        continuousIntegrationService.get().createProjectForExercise(newExercise);
         continuousIntegrationService.get().copyBuildPlan(templateKey, templatePlanName, targetKey, targetName, templatePlanName);
         continuousIntegrationService.get().copyBuildPlan(templateKey, solutionPlanName, targetKey, targetName, solutionPlanName);
         programmingExerciseService.giveCIProjectPermissions(newExercise);

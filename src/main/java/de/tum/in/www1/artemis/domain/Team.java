@@ -7,6 +7,7 @@ import java.util.Objects;
 import java.util.Set;
 
 import javax.persistence.*;
+import javax.validation.constraints.NotNull;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
@@ -20,7 +21,7 @@ import de.tum.in.www1.artemis.domain.participation.Participant;
  * A Team of students.
  */
 @Entity
-@Table(name = "team")
+@Table(name = "team", uniqueConstraints = { @UniqueConstraint(columnNames = { "exercise_id", "short_name" }) })
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class Team extends AbstractAuditingEntity implements Serializable, Participant {
@@ -34,7 +35,7 @@ public class Team extends AbstractAuditingEntity implements Serializable, Partic
     @Column(name = "name")
     private String name;
 
-    @Column(name = "short_name", unique = true)
+    @Column(name = "short_name")
     private String shortName;
 
     @Column(name = "image")
@@ -52,6 +53,22 @@ public class Team extends AbstractAuditingEntity implements Serializable, Partic
 
     @ManyToOne
     private User owner;
+
+    public Team() {
+    }
+
+    /**
+     * Copy constructor (generates a copy of team with no exercise assigned yet)
+     *
+     * @param team Team which to copy
+     */
+    public Team(@NotNull Team team) {
+        this.name = team.name;
+        this.shortName = team.shortName;
+        this.image = team.image;
+        this.students.addAll(team.students);
+        this.owner = team.owner;
+    }
 
     // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
     public Long getId() {
