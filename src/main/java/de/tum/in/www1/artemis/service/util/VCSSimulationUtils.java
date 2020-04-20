@@ -1,6 +1,6 @@
 package de.tum.in.www1.artemis.service.util;
 
-import java.util.Random;
+import java.security.SecureRandom;
 
 import org.springframework.context.annotation.Profile;
 
@@ -12,8 +12,8 @@ public class VCSSimulationUtils {
      * @return the simulated commitHash
      */
     public static String simulateCommitHash() {
-        Random random = new Random();
-        String number = String.valueOf(random.nextInt(10));
+        SecureRandom secureRandom = new SecureRandom();
+        String number = String.valueOf(secureRandom.nextInt(10));
         String commitHash = number;
         for (int i = 0; i < 39; i++) {
             commitHash = commitHash + number;
