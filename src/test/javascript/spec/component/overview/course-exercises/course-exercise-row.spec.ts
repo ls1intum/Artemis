@@ -27,6 +27,8 @@ import { StudentParticipation } from 'app/entities/participation/student-partici
 import { CourseExerciseRowComponent } from 'app/overview/course-exercises/course-exercise-row.component';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { CourseExerciseService, CourseManagementService } from 'app/course/manage/course-management.service';
+import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import { MockSyncStorage } from '../../../mocks/mock-sync.storage';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -49,6 +51,8 @@ describe('CourseExerciseRowComponent', () => {
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: OrionConnectorService, useClass: MockOrionConnectorService },
                 { provide: AlertService, useClass: MockAlertService },
+                { provide: SessionStorageService, useClass: MockSyncStorage },
+                { provide: LocalStorageService, useClass: MockSyncStorage },
             ],
         })
             .overrideModule(ArtemisTestModule, { set: { declarations: [], exports: [] } })
