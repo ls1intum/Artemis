@@ -32,13 +32,9 @@
         cursor: not-allowed;
     }
 
-    .row--details {
-        &:not(:last-child) {
-            margin-bottom: 0.25rem;
-        }
-
-        & > [class^='col-']:not(:last-child) {
-            padding-right: 2.5rem;
+    .exercise-details-table {
+        td:not(:first-child) {
+            padding-left: 0.75rem;
         }
     }
 }

@@ -25,37 +25,26 @@
             </div>
         </div>
         <div class="col-12 col-sm-auto flex-sm-shrink-0 col-lg-3 mt-4 mt-lg-0 d-flex flex-column justify-content-center align-items-start text-nowrap">
-            <div class="row row--details" *ngIf="exercise.type">
-                <div class="col-6">
-                    <h6>
-                        {{ 'artemisApp.courseOverview.exerciseDetails.exerciseType' | translate }}
-                    </h6>
-                </div>
-                <div class="col-6">
-                    <h6>
-                        {{ exercise.type | exerciseTypeLabel }}
-                        <fa-icon [icon]="getIcon(exercise.type)" placement="right"></fa-icon>
-                    </h6>
-                </div>
-            </div>
-            <div class="row row--details" *ngIf="exercise.difficulty">
-                <div class="col-6">
-                    <h6>{{ 'artemisApp.courseOverview.exerciseDetails.difficulty' | translate }}</h6>
-                </div>
-                <div class="col-6">
-                    <h6>
-                        <jhi-difficulty-badge [exercise]="exercise"></jhi-difficulty-badge>
-                    </h6>
-                </div>
-            </div>
-            <div class="row row--details" *ngIf="exercise.maxScore">
-                <div class="col-6">
-                    <h6>{{ 'artemisApp.courseOverview.exerciseDetails.maxPoints' | translate }}</h6>
-                </div>
-                <div class="col-6">
-                    <h6>{{ exercise.maxScore }} pts.</h6>
-                </div>
-            </div>
+            <table class="exercise-details-table">
+                <tr *ngIf="exercise.type">
+                    <td>
+                        <h6>{{ 'artemisApp.courseOverview.exerciseDetails.exerciseType' | translate }}</h6>
+                    </td>
+                    <td>{{ exercise.type | exerciseTypeLabel }} <fa-icon [icon]="getIcon(exercise.type)" placement="right"></fa-icon></td>
+                </tr>
+                <tr *ngIf="exercise.difficulty">
+                    <td>
+                        <h6>{{ 'artemisApp.courseOverview.exerciseDetails.difficulty' | translate }}</h6>
+                    </td>
+                    <td><jhi-difficulty-badge [exercise]="exercise"></jhi-difficulty-badge></td>
+                </tr>
+                <tr *ngIf="exercise.maxScore">
+                    <td>
+                        <h6>{{ 'artemisApp.courseOverview.exerciseDetails.maxPoints' | translate }}</h6>
+                    </td>
+                    <td>{{ exercise.maxScore }} pts.</td>
+                </tr>
+            </table>
         </div>
         <div class="col-12 col-sm-auto flex-sm-grow-1 col-lg-4 mt-4 mt-sm-0 d-flex flex-column justify-content-center align-items-end">
             <div *ngIf="participation" class="row">
