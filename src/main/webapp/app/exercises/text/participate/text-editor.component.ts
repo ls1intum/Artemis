@@ -12,6 +12,7 @@ import { Subject } from 'rxjs';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { Observable } from 'rxjs/Observable';
+import { debounceTime, distinctUntilChanged, map } from 'rxjs/operators';
 import { TextSubmissionService } from 'app/exercises/text/participate/text-submission.service';
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 import { Feedback } from 'app/entities/feedback.model';
@@ -35,7 +36,7 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
     submission: TextSubmission;
     isSaving: boolean;
     private textEditorInput = new Subject<string>();
-    answerStream$ = this.textEditorInput.asObservable();
+    submissionStream$ = this.buildSubmissionStream$();
     // Is submitting always enabled?
     isAlwaysActive: boolean;
     isAllowedToSubmitAfterDeadline: boolean;
@@ -176,8 +177,7 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
         }
 
         this.isSaving = true;
-        this.submission.text = this.answer;
-        this.submission.language = this.textService.predictLanguage(this.submission.text);
+        this.submission = this.submissionForAnswer(this.answer);
         this.submission.submitted = true;
         this.textSubmissionService.update(this.submission, this.textExercise.id).subscribe(
             (response) => {
@@ -200,6 +200,17 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
                 this.isSaving = false;
             },
         );
+    }
+
+    private buildSubmissionStream$() {
+        return this.textEditorInput
+            .asObservable()
+            .pipe(debounceTime(2000), distinctUntilChanged())
+            .pipe(map((answer: string) => this.submissionForAnswer(answer)));
+    }
+
+    private submissionForAnswer(answer: string): TextSubmission {
+        return { ...this.submission, text: answer, language: this.textService.predictLanguage(answer) };
     }
 
     onReceiveSubmissionFromTeam(submission: TextSubmission) {

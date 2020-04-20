@@ -3,7 +3,7 @@ import { Submission } from 'app/entities/submission.model';
 import { TextSubmission } from 'app/entities/text-submission.model';
 import { ModelingSubmission } from 'app/entities/modeling-submission.model';
 
-abstract class SubmissionSyncPayload {
+export class SubmissionSyncPayload {
     public submission: Submission;
     public sender: User;
 }

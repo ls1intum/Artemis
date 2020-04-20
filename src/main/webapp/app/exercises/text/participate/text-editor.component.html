@@ -60,13 +60,13 @@
                     (keydown.tab)="onTextEditorTab(textEditor, $event)"
                     (input)="onTextEditorInput($event)"
                 ></textarea>
-                <jhi-text-submission-team-sync
+                <jhi-team-submission-sync
                     *ngIf="textExercise?.teamMode"
-                    [submission]="submission"
+                    [exerciseType]="textExercise.type"
+                    [submission$]="submissionStream$"
                     [participation]="participation"
-                    [answerStream$]="answerStream$"
                     (receiveSubmission)="onReceiveSubmissionFromTeam($event)"
-                ></jhi-text-submission-team-sync>
+                ></jhi-team-submission-sync>
             </div>
         </ng-container>
 

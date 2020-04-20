@@ -53,9 +53,6 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
 
     submission: ModelingSubmission;
 
-    private submissionChange = new Subject<ModelingSubmission>();
-    submissionStream$ = this.submissionChange.asObservable();
-
     assessmentResult: Result | null;
     assessmentsNames: Map<string, Map<string, string>>;
     totalScore: number;
@@ -75,6 +72,12 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     isLoading: boolean;
     isLate: boolean; // indicates if the submission is late
     ComplaintType = ComplaintType;
+
+    // submission sync with team members
+    teamSyncInterval: number;
+    teamSyncTimer: number;
+    private submissionChange = new Subject<ModelingSubmission>();
+    submissionStream$ = this.submissionChange.asObservable();
 
     constructor(
         private jhiWebsocketService: JhiWebsocketService,
@@ -235,12 +238,14 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     }
 
     private setupSubmissionStreamForTeam(): void {
-        window.setInterval(() => {
-            if (!this.canDeactivate()) {
+        this.teamSyncTimer = 0;
+        this.teamSyncInterval = window.setInterval(() => {
+            this.teamSyncTimer++;
+            if (this.teamSyncTimer >= 2 && !this.canDeactivate()) {
                 this.updateSubmissionModel();
                 this.submissionChange.next(this.submission);
             }
-        }, 2000);
+        }, 1000);
     }
 
     saveDiagram(): void {
@@ -367,6 +372,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     ngOnDestroy(): void {
         this.subscription.unsubscribe();
         clearInterval(this.autoSaveInterval);
+        clearInterval(this.teamSyncInterval);
         if (this.automaticSubmissionWebsocketChannel) {
             this.jhiWebsocketService.unsubscribe(this.automaticSubmissionWebsocketChannel);
         }

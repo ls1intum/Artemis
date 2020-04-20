@@ -1,42 +1,38 @@
 import { Component, Input, Output, OnInit, EventEmitter } from '@angular/core';
-import { ModelingSubmission } from 'app/entities/modeling-submission.model';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { Observable } from 'rxjs';
 import { throttleTime, filter } from 'rxjs/internal/operators';
 import { AlertService } from 'app/core/alert/alert.service';
-import { ModelingSubmissionSyncPayload } from 'app/entities/submission-sync-payload.model';
+import { SubmissionSyncPayload } from 'app/entities/submission-sync-payload.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/core/user/user.model';
-import { ModelingSubmissionService } from 'app/exercises/modeling/participate/modeling-submission.service';
+import { Submission } from 'app/entities/submission.model';
+import { Observable } from 'rxjs';
+import { ExerciseType } from 'app/entities/exercise.model';
 
 @Component({
-    selector: 'jhi-modeling-submission-team-sync',
+    selector: 'jhi-team-submission-sync',
     template: '',
 })
-export class ModelingSubmissionTeamSyncComponent implements OnInit {
+export class TeamSubmissionSyncComponent implements OnInit {
     // Sync settings
     readonly throttleTime = 2000; // ms
 
-    @Input() submissionStream$: Observable<ModelingSubmission>;
+    @Input() exerciseType: ExerciseType;
+    @Input() submission$: Observable<Submission>;
     @Input() participation: StudentParticipation;
 
-    @Output() receiveSubmission = new EventEmitter<ModelingSubmission>();
+    @Output() receiveSubmission = new EventEmitter<Submission>();
 
     currentUser: User;
     websocketTopic: string;
 
-    constructor(
-        private accountService: AccountService,
-        private modelingSubmissionService: ModelingSubmissionService,
-        private teamSubmissionWebsocketService: JhiWebsocketService,
-        private jhiAlertService: AlertService,
-    ) {
+    constructor(private accountService: AccountService, private teamSubmissionWebsocketService: JhiWebsocketService, private jhiAlertService: AlertService) {
         this.accountService.identity().then((user: User) => (this.currentUser = user));
     }
 
     ngOnInit(): void {
-        this.websocketTopic = this.buildWebsocketTopic();
+        this.websocketTopic = this.buildWebsocketTopic('');
         this.teamSubmissionWebsocketService.subscribe(this.websocketTopic);
         this.setupReceiver();
         this.setupSender();
@@ -45,9 +41,9 @@ export class ModelingSubmissionTeamSyncComponent implements OnInit {
     private setupReceiver() {
         this.teamSubmissionWebsocketService
             .receive(this.websocketTopic)
-            .pipe(filter(({ sender }: ModelingSubmissionSyncPayload) => !this.isSelf(sender)))
+            .pipe(filter(({ sender }: SubmissionSyncPayload) => !this.isSelf(sender)))
             .subscribe(
-                ({ submission }: ModelingSubmissionSyncPayload) => {
+                ({ submission }: SubmissionSyncPayload) => {
                     this.receiveSubmission.emit(submission);
                 },
                 (error) => this.onError(error),
@@ -55,10 +51,10 @@ export class ModelingSubmissionTeamSyncComponent implements OnInit {
     }
 
     private setupSender() {
-        this.submissionStream$.pipe(throttleTime(this.throttleTime)).subscribe(
-            (modelingSubmission) => {
-                delete modelingSubmission.participation;
-                this.teamSubmissionWebsocketService.send(this.buildWebsocketTopic('/update'), modelingSubmission);
+        this.submission$.pipe(throttleTime(this.throttleTime, undefined, { leading: true, trailing: true })).subscribe(
+            (submission) => {
+                delete submission.participation;
+                this.teamSubmissionWebsocketService.send(this.buildWebsocketTopic('/update'), submission);
             },
             (error) => this.onError(error),
         );
@@ -69,7 +65,7 @@ export class ModelingSubmissionTeamSyncComponent implements OnInit {
     }
 
     private buildWebsocketTopic(path = ''): string {
-        return `/topic/participations/${this.participation.id}/team/modeling-submissions${path}`;
+        return `/topic/participations/${this.participation.id}/team/${this.exerciseType}-submissions${path}`;
     }
 
     private onError(error: string) {
