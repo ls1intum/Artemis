@@ -50,6 +50,7 @@
                 <dd class="editor-outline-background" [innerHTML]="formattedSampleSolution"></dd>
                 <dt><span jhiTranslate="artemisApp.exercise.gradingInstructions">Grading Instructions</span></dt>
                 <dd class="editor-outline-background"><span [innerHTML]="formattedGradingInstructions"></span></dd>
+                <jhi-structured-grading-instructions-assessment-layout [criteria]="textExercise.gradingCriteria"></jhi-structured-grading-instructions-assessment-layout>
             </dl>
 
             <button type="submit" (click)="previousState()" class="btn btn-info">
