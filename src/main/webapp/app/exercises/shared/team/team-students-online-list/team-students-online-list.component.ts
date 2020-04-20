@@ -5,6 +5,7 @@ import { User } from 'app/core/user/user.model';
 import { orderBy } from 'lodash';
 import { map } from 'rxjs/operators';
 import * as moment from 'moment';
+import { Moment } from 'moment';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 
@@ -14,10 +15,13 @@ import { StudentParticipation } from 'app/entities/participation/student-partici
     styleUrls: ['./team-students-online-list.component.scss'],
 })
 export class TeamStudentsOnlineListComponent implements OnInit, OnDestroy {
+    readonly activeDuration = 2000; // ms
+
     @Input() participation: StudentParticipation;
 
     currentUser: User;
     onlineTeamStudents: OnlineTeamStudent[] = [];
+    activeTeamStudents: OnlineTeamStudent[] = [];
     websocketTopic: string;
 
     constructor(private accountService: AccountService, private jhiWebsocketService: JhiWebsocketService) {}
@@ -37,7 +41,10 @@ export class TeamStudentsOnlineListComponent implements OnInit, OnDestroy {
                 .receive(this.websocketTopic)
                 .pipe(map(this.convertOnlineTeamStudentsFromServer))
                 .subscribe(
-                    (students: OnlineTeamStudent[]) => (this.onlineTeamStudents = students),
+                    (students: OnlineTeamStudent[]) => {
+                        this.onlineTeamStudents = students;
+                        this.computeActiveTeamStudents();
+                    },
                     (error) => console.error(error),
                 );
             setTimeout(() => {
@@ -84,18 +91,29 @@ export class TeamStudentsOnlineListComponent implements OnInit, OnDestroy {
         return !this.isSelf(user);
     };
 
-    isActive = (user: User): boolean => {
-        const onlineTeamStudent = this.onlineTeamStudents.find((student: OnlineTeamStudent) => student.login === user.login);
-        return Boolean(onlineTeamStudent?.lastActionDate?.isSameOrAfter(moment().subtract(3, 'seconds')));
-    };
-
     isOnline = (user: User): boolean => {
         return this.onlineTeamStudents.map((student: OnlineTeamStudent) => student.login).includes(user.login!);
     };
 
+    isActive = (user: User): boolean => {
+        return this.activeTeamStudents.map((student: OnlineTeamStudent) => student.login).includes(user.login!);
+    };
+
+    computeActiveTeamStudents() {
+        this.activeTeamStudents = this.onlineTeamStudents.filter((student: OnlineTeamStudent) => {
+            return Boolean(student?.lastActionDate?.isAfter(moment().subtract(this.activeDuration, 'ms')));
+        });
+        if (this.activeTeamStudents.length > 0) {
+            const lastActionDates = this.activeTeamStudents.map((student: OnlineTeamStudent) => student.lastActionDate).filter(Boolean);
+            const earliestExpiration: Moment = moment(moment.min(lastActionDates)).add(this.activeDuration, 'ms');
+            const timeToExpirationInMilliseconds = earliestExpiration.diff(moment());
+            setTimeout(() => this.computeActiveTeamStudents(), timeToExpirationInMilliseconds);
+        }
+    }
+
     private convertOnlineTeamStudentsFromServer(students: OnlineTeamStudent[]) {
         return students.map((student) => {
-            return { ...student, lastActionDate: student.lastActionDate ? moment(student.lastActionDate) : null };
+            return { ...student, lastActionDate: student.lastActionDate !== null ? moment(student.lastActionDate) : null };
         });
     }
 }
