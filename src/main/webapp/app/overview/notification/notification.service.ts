@@ -184,4 +184,8 @@ export class NotificationService {
         const courseId = target.course || notification.course.id;
         this.router.navigate([target.mainPage, courseId, target.entity, target.id]);
     }
+
+    public clearNotificationCache(): void {
+        this.cachedNotifications = new Observable<EntityArrayResponseType>();
+    }
 }
