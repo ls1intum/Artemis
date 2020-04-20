@@ -27,6 +27,17 @@
     }
 }
 
+.student-status {
+    @include status-change-transition;
+
+    display: inline-flex;
+    color: #ccc;
+
+    .online & {
+        color: green;
+    }
+}
+
 .student-name {
     @include status-change-transition;
 
@@ -41,14 +52,26 @@
     }
 }
 
-.student-status {
-    @include status-change-transition;
+.student-last-action-trigger {
+    opacity: 0.25;
+    background: none;
+    border: none;
 
-    display: inline-flex;
-    color: #ccc;
+    &:hover {
+        opacity: 0.75;
+    }
 
-    .online & {
-        color: green;
+    &:focus {
+        opacity: 1;
+        outline: none;
+    }
+}
+
+.student-last-action-tooltip {
+    width: unset !important;
+
+    .tooltip-inner {
+        min-width: unset !important;
     }
 }
 

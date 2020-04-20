@@ -50,6 +50,8 @@ public class ParticipationTeamWebsocketService {
 
     private final Map<String, String> destinationTracker = new HashMap<>();
 
+    private final Map<String, Instant> lastTypingTracker = new HashMap<>();
+
     private final Map<String, Instant> lastActionTracker = new HashMap<>();
 
     private final UserService userService;
@@ -97,6 +99,12 @@ public class ParticipationTeamWebsocketService {
      */
     @MessageMapping("/topic/participations/{participationId}/team/trigger")
     public void triggerSendOnlineTeamStudents(@DestinationVariable Long participationId) {
+        sendOnlineTeamStudents(getDestination(participationId));
+    }
+
+    @MessageMapping("/topic/participations/{participationId}/team/typing")
+    public void startTyping(@DestinationVariable Long participationId, Principal principal) {
+        lastTypingTracker.put(principal.getName(), Instant.now());
         sendOnlineTeamStudents(getDestination(participationId));
     }
 
@@ -174,8 +182,8 @@ public class ParticipationTeamWebsocketService {
     private void sendOnlineTeamStudents(String destination) {
         final List<String> userLogins = getSubscriberPrincipals(destination);
 
-        final List<OnlineTeamStudentDTO> onlineTeamStudents = userLogins.stream().map(login -> new OnlineTeamStudentDTO(login, lastActionTracker.get(login)))
-                .collect(Collectors.toList());
+        final List<OnlineTeamStudentDTO> onlineTeamStudents = userLogins.stream()
+                .map(login -> new OnlineTeamStudentDTO(login, lastTypingTracker.get(login), lastActionTracker.get(login))).collect(Collectors.toList());
 
         messagingTemplate.convertAndSend(destination, onlineTeamStudents);
     }

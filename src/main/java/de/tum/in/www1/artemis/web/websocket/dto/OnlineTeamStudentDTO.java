@@ -6,10 +6,13 @@ public class OnlineTeamStudentDTO {
 
     private String login;
 
+    private Instant lastTypingDate;
+
     private Instant lastActionDate;
 
-    public OnlineTeamStudentDTO(String login, Instant lastActionDate) {
+    public OnlineTeamStudentDTO(String login, Instant lastTypingDate, Instant lastActionDate) {
         this.login = login;
+        this.lastTypingDate = lastTypingDate;
         this.lastActionDate = lastActionDate;
     }
 
@@ -19,6 +22,14 @@ public class OnlineTeamStudentDTO {
 
     public void setLogin(String login) {
         this.login = login;
+    }
+
+    public Instant getLastTypingDate() {
+        return lastTypingDate;
+    }
+
+    public void setLastTypingDate(Instant lastTypingDate) {
+        this.lastTypingDate = lastTypingDate;
     }
 
     public Instant getLastActionDate() {

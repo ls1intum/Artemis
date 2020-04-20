@@ -2,6 +2,7 @@ import { Component, Input } from '@angular/core';
 import { Exercise } from 'app/entities/exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { StickyStatus } from '@w11k/angular-sticky-things';
+import { Observable } from 'rxjs';
 
 @Component({
     selector: 'jhi-team-participate-info-box',
@@ -13,6 +14,7 @@ export class TeamParticipateInfoBoxComponent {
     @Input() participation: StudentParticipation;
     @Input() stickyEnabled = true;
     @Input() bounded = true;
+    @Input() typing$: Observable<any> | null;
 
     stickyStatus: StickyStatus;
 

@@ -9,6 +9,7 @@ export enum TeamImportStrategyType {
 
 export class OnlineTeamStudent {
     public login: string;
+    public lastTypingDate: Moment;
     public lastActionDate: Moment;
 }
 

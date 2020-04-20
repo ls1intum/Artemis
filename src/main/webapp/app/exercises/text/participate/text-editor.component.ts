@@ -36,6 +36,7 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
     submission: TextSubmission;
     isSaving: boolean;
     private textEditorInput = new Subject<string>();
+    textEditorInputStream$ = this.textEditorInput.asObservable();
     submissionStream$ = this.buildSubmissionStream$();
     // Is submitting always enabled?
     isAlwaysActive: boolean;

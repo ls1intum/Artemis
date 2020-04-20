@@ -1,9 +1,10 @@
-import { Component, Input, OnInit, OnDestroy } from '@angular/core';
+import { Component, Input, OnInit, OnDestroy, ViewEncapsulation } from '@angular/core';
 import { OnlineTeamStudent, Team } from 'app/entities/team.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/core/user/user.model';
 import { orderBy } from 'lodash';
-import { map } from 'rxjs/operators';
+import { Observable } from 'rxjs';
+import { map, throttleTime } from 'rxjs/operators';
 import * as moment from 'moment';
 import { Moment } from 'moment';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
@@ -13,15 +14,18 @@ import { StudentParticipation } from 'app/entities/participation/student-partici
     selector: 'jhi-team-students-online-list',
     templateUrl: './team-students-online-list.component.html',
     styleUrls: ['./team-students-online-list.component.scss'],
+    encapsulation: ViewEncapsulation.None,
 })
 export class TeamStudentsOnlineListComponent implements OnInit, OnDestroy {
-    readonly activeDuration = 2000; // ms
+    readonly showTypingDuration = 2000; // ms
+    readonly sendTypingInterval = this.showTypingDuration / 1.5;
 
+    @Input() typing$: Observable<any> | null;
     @Input() participation: StudentParticipation;
 
     currentUser: User;
     onlineTeamStudents: OnlineTeamStudent[] = [];
-    activeTeamStudents: OnlineTeamStudent[] = [];
+    typingTeamStudents: OnlineTeamStudent[] = [];
     websocketTopic: string;
 
     constructor(private accountService: AccountService, private jhiWebsocketService: JhiWebsocketService) {}
@@ -43,18 +47,28 @@ export class TeamStudentsOnlineListComponent implements OnInit, OnDestroy {
                 .subscribe(
                     (students: OnlineTeamStudent[]) => {
                         this.onlineTeamStudents = students;
-                        this.computeActiveTeamStudents();
+                        this.computeTypingTeamStudents();
                     },
                     (error) => console.error(error),
                 );
             setTimeout(() => {
                 this.jhiWebsocketService.send(this.buildWebsocketTopic('/trigger'), {});
             }, 700);
+            this.setupTypingIndicatorSender();
         });
     }
 
     ngOnDestroy(): void {
         this.jhiWebsocketService.unsubscribe(this.websocketTopic);
+    }
+
+    setupTypingIndicatorSender() {
+        if (this.typing$) {
+            this.typing$.pipe(throttleTime(this.sendTypingInterval)).subscribe(
+                () => this.jhiWebsocketService.send(this.buildWebsocketTopic('/typing'), {}),
+                (error) => console.error(error),
+            );
+        }
     }
 
     /**
@@ -95,25 +109,33 @@ export class TeamStudentsOnlineListComponent implements OnInit, OnDestroy {
         return this.onlineTeamStudents.map((student: OnlineTeamStudent) => student.login).includes(user.login!);
     };
 
-    isActive = (user: User): boolean => {
-        return this.activeTeamStudents.map((student: OnlineTeamStudent) => student.login).includes(user.login!);
+    lastActionDate = (user: User): Moment | undefined => {
+        return this.onlineTeamStudents.find((student: OnlineTeamStudent) => student.login === user.login!)?.lastActionDate;
     };
 
-    computeActiveTeamStudents() {
-        this.activeTeamStudents = this.onlineTeamStudents.filter((student: OnlineTeamStudent) => {
-            return Boolean(student?.lastActionDate?.isAfter(moment().subtract(this.activeDuration, 'ms')));
+    isTyping = (user: User): boolean => {
+        return this.typingTeamStudents.map((student: OnlineTeamStudent) => student.login).includes(user.login!);
+    };
+
+    computeTypingTeamStudents() {
+        this.typingTeamStudents = this.onlineTeamStudents.filter((student: OnlineTeamStudent) => {
+            return Boolean(student?.lastTypingDate?.isAfter(moment().subtract(this.showTypingDuration, 'ms')));
         });
-        if (this.activeTeamStudents.length > 0) {
-            const lastActionDates = this.activeTeamStudents.map((student: OnlineTeamStudent) => student.lastActionDate).filter(Boolean);
-            const earliestExpiration: Moment = moment(moment.min(lastActionDates)).add(this.activeDuration, 'ms');
+        if (this.typingTeamStudents.length > 0) {
+            const lastTypingDates = this.typingTeamStudents.map((student: OnlineTeamStudent) => student.lastTypingDate).filter(Boolean);
+            const earliestExpiration: Moment = moment(moment.min(lastTypingDates)).add(this.showTypingDuration, 'ms');
             const timeToExpirationInMilliseconds = earliestExpiration.diff(moment());
-            setTimeout(() => this.computeActiveTeamStudents(), timeToExpirationInMilliseconds);
+            setTimeout(() => this.computeTypingTeamStudents(), timeToExpirationInMilliseconds);
         }
     }
 
     private convertOnlineTeamStudentsFromServer(students: OnlineTeamStudent[]) {
         return students.map((student) => {
-            return { ...student, lastActionDate: student.lastActionDate !== null ? moment(student.lastActionDate) : null };
+            return {
+                ...student,
+                lastTypingDate: student.lastTypingDate !== null ? moment(student.lastTypingDate) : null,
+                lastActionDate: student.lastActionDate !== null ? moment(student.lastActionDate) : null,
+            };
         });
     }
 }
