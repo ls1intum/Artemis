@@ -4,18 +4,11 @@
             <h4>
                 <ng-content select="[pagetitle]"></ng-content>
             </h4>
-            <h6>
-                <span class="mr-2"> {{ 'artemisApp.courseOverview.exerciseDetails.dueDate' | translate }} {{ (exercise.dueDate | date: 'dd/MM/yy HH:mm') || 'N/A' }} </span>
-                <span *ngIf="exercise.dueDate" [ngClass]="exerciseStatusBadge" class="badge">
-                    {{ exercise.dueDate | amTimeAgo }}
-                </span>
-            </h6>
-            <h6 *ngIf="exercise.assessmentDueDate">
-                <span class="mr-2"> {{ 'artemisApp.exercise.assessmentDueDate' | translate }}: {{ (exercise.assessmentDueDate | date: 'dd/MM/yy HH:mm') || 'N/A' }} </span>
-                <span [ngClass]="exerciseStatusBadge" class="badge">
-                    {{ exercise.assessmentDueDate | amTimeAgo }}
-                </span>
-            </h6>
+            <div class="d-flex align-items-center">
+                <h6 class="mr-2 mb-0">{{ 'artemisApp.courseOverview.exerciseDetails.dueDate' | translate }}</h6>
+                <span>{{ (exercise.dueDate | date: 'dd/MM/yy HH:mm') || 'N/A' }}</span>
+                <span *ngIf="exercise.dueDate" [ngClass]="exerciseStatusBadge" class="badge ml-2">{{ exercise.dueDate | amTimeAgo }}</span>
+            </div>
             <div *ngIf="exercise.categories" class="d-sm-flex">
                 <h6 class="mr-1">{{ 'artemisApp.courseOverview.exerciseDetails.categories' | translate }}</h6>
                 <h6 *ngFor="let category of exerciseCategories">
@@ -25,23 +18,23 @@
         </div>
         <div class="col-12 col-sm-auto flex-sm-shrink-0 col-lg-3 mt-4 mt-lg-0 d-flex flex-column justify-content-center align-items-start text-nowrap">
             <table class="exercise-details-table">
-                <tr *ngIf="exercise.type">
-                    <td>
-                        <h6>{{ 'artemisApp.courseOverview.exerciseDetails.exerciseType' | translate }}</h6>
-                    </td>
-                    <td>{{ exercise.type | exerciseTypeLabel }} <fa-icon [icon]="getIcon(exercise.type)" placement="right"></fa-icon></td>
-                </tr>
-                <tr *ngIf="exercise.difficulty">
-                    <td>
-                        <h6>{{ 'artemisApp.courseOverview.exerciseDetails.difficulty' | translate }}</h6>
-                    </td>
-                    <td><jhi-difficulty-badge [exercise]="exercise"></jhi-difficulty-badge></td>
-                </tr>
                 <tr *ngIf="exercise.maxScore">
                     <td>
                         <h6>{{ 'artemisApp.courseOverview.exerciseDetails.maxPoints' | translate }}</h6>
                     </td>
-                    <td>{{ exercise.maxScore }} pts.</td>
+                    <td>
+                        <span>{{ exercise.maxScore }} pts.</span>
+                        <jhi-difficulty-badge *ngIf="exercise.difficulty" class="ml-1" [exercise]="exercise"></jhi-difficulty-badge>
+                    </td>
+                </tr>
+                <tr *ngIf="exercise.assessmentDueDate">
+                    <td>
+                        <h6>{{ 'artemisApp.exercise.assessmentDueDate' | translate }}:</h6>
+                    </td>
+                    <td>
+                        <span>{{ (exercise.assessmentDueDate | date: 'dd/MM/yy HH:mm') || 'N/A' }}</span>
+                        <span [ngClass]="exerciseStatusBadge" class="badge ml-1">{{ exercise.assessmentDueDate | amTimeAgo }}</span>
+                    </td>
                 </tr>
             </table>
         </div>
