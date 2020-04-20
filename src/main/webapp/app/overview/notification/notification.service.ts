@@ -24,10 +24,11 @@ export class NotificationService {
     // TODO: we might need to clean this observer object during logout, so that it is newly initialized during login
     notificationObserver: BehaviorSubject<Notification | null>;
     subscribedTopics: string[] = [];
-    // TODO: we need to clean this cache during logout, so that it is newly initialized during login
     cachedNotifications: Observable<EntityArrayResponseType>;
 
-    constructor(private jhiWebsocketService: JhiWebsocketService, private router: Router, private http: HttpClient, private accountService: AccountService) {}
+    constructor(private jhiWebsocketService: JhiWebsocketService, private router: Router, private http: HttpClient, private accountService: AccountService) {
+        this.initNotificationObserver();
+    }
 
     create(notification: Notification): Observable<EntityResponseType> {
         const copy = this.convertDateFromClient(notification);
@@ -126,9 +127,6 @@ export class NotificationService {
                 .identity()
                 .then((user: User) => {
                     if (user) {
-                        if (!this.notificationObserver) {
-                            this.notificationObserver = new BehaviorSubject<Notification | null>(null);
-                        }
                         const userTopic = `/topic/user/${user.id}/notifications`;
                         if (!this.subscribedTopics.includes(userTopic)) {
                             this.subscribedTopics.push(userTopic);
@@ -147,9 +145,6 @@ export class NotificationService {
     }
 
     public handleCourseNotifications(course: Course): void {
-        if (!this.notificationObserver) {
-            this.notificationObserver = new BehaviorSubject<Notification | null>(null);
-        }
         let courseTopic = `/topic/course/${course.id}/${GroupNotificationType.STUDENT}`;
         if (this.accountService.isAtLeastInstructorInCourse(course)) {
             courseTopic = `/topic/course/${course.id}/${GroupNotificationType.INSTRUCTOR}`;
@@ -172,9 +167,6 @@ export class NotificationService {
     }
 
     subscribeToSocketMessages(): BehaviorSubject<Notification | null> {
-        if (!this.notificationObserver) {
-            this.notificationObserver = new BehaviorSubject<Notification | null>(null);
-        }
         return this.notificationObserver;
     }
 
@@ -182,6 +174,10 @@ export class NotificationService {
         const target = JSON.parse(notification.target);
         const courseId = target.course || notification.course.id;
         this.router.navigate([target.mainPage, courseId, target.entity, target.id]);
+    }
+
+    private initNotificationObserver(): void {
+        this.notificationObserver = new BehaviorSubject<Notification | null>(null);
     }
 
     public clearNotificationCache(): void {
