@@ -687,8 +687,8 @@ public class UserService {
      */
     public User updateUserNotificationReadDate() {
         User loggedInUser = getUserWithGroupsAndAuthorities();
-        loggedInUser.setLastNotificationRead(ZonedDateTime.now());
-        userRepository.save(loggedInUser);
+        userRepository.updateUserNotificationReadDate(loggedInUser.getId(), ZonedDateTime.now());
+
         return loggedInUser;
     }
 
