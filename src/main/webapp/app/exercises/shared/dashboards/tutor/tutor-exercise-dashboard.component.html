@@ -104,6 +104,7 @@
 
             <p [innerHTML]="formattedGradingInstructions"></p>
         </div>
+        <jhi-structured-grading-instructions-assessment-layout [criteria]="exercise.gradingCriteria"></jhi-structured-grading-instructions-assessment-layout>
     </div>
 
     <div class="col-12 text-center" *ngIf="tutorParticipationStatus === NOT_PARTICIPATED">
