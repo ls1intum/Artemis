@@ -92,8 +92,9 @@ describe('CodeEditorBuildOutputComponent', () => {
             },
             {
                 time: '2019-05-15T10:32:11+02:00',
-                log: `[ERROR] /var/atlassian/application-data/bamboo/xml-data/build-dir/COURSEPROGSHORT-BASE-JOB1
-                /assignment/src/todo/main/BubbleSort.java:[8,12] cannot find symbol`,
+                log:
+                    '[ERROR] /var/atlassian/application-data/bamboo/xml-data/build-dir/COURSEPROGSHORT-BASE-JOB1' +
+                    '/assignment/src/todo/main/BubbleSort.java:[8,12] cannot find symbol',
             },
             {
                 time: '2019-05-15T10:32:11+02:00',
@@ -195,8 +196,9 @@ describe('CodeEditorBuildOutputComponent', () => {
             },
             {
                 time: '2019-05-15T10:32:11+02:00',
-                log: `[ERROR] /var/atlassian/application-data/bamboo/xml-data/build-dir/COURSEPROGSHORT-BASE-JOB1/
-                      assignment/src/todo/main/BubbleSort.java:[8,12] cannot find symbol`,
+                log:
+                    '[ERROR] /var/atlassian/application-data/bamboo/xml-data/build-dir/COURSEPROGSHORT-BASE-JOB1/' +
+                    'assignment/src/todo/main/BubbleSort.java:[8,12] cannot find symbol',
             },
             {
                 time: '2019-05-15T10:32:11+02:00',
