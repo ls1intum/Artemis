@@ -42,7 +42,7 @@
                 "live": "Live",
                 "noDueDate": "Kein Fälligkeitsdatum",
                 "userNotStartedExercise": "Du hast mit der Aufgabe noch nicht angefangen.",
-                "exerciseSubmitted": "Bereits abgegeben, aber Updates sind noch möglich.",
+                "exerciseSubmitted": "Bereits abgegeben, Änderungen sind noch möglich.",
                 "exerciseSubmittedWaitingForGrading": "Bereits abgegeben, aber noch keine Bewertung.",
                 "exerciseNotSubmitted": "Noch nicht abgegeben",
                 "exerciseMissedDeadline": "Abgabefrist abgelaufen",
