@@ -245,7 +245,7 @@ export class GradingInstructionsDetailsComponent implements OnInit {
                 }
             }
         }
-        this.setInstructionParameters(initialCriteriaCommands.filter(([text, command]) => command instanceof GradingCriterionCommand === false));
+        this.setInstructionParameters(initialCriteriaCommands.filter(([, command]) => command instanceof GradingCriterionCommand === false));
     }
 
     /**

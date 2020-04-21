@@ -1,7 +1,6 @@
 /* tslint:disable:no-unused-expression */
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { TranslateModule } from '@ngx-translate/core';
-import { DebugElement } from '@angular/core';
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
 import { ArtemisTestModule } from '../../test.module';

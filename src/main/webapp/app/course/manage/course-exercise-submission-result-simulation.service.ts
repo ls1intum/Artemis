@@ -1,4 +1,3 @@
-import { SERVER_API_URL } from 'app/app.constants';
 import { Injectable } from '@angular/core';
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
 import { Result } from 'app/entities/result.model';
