@@ -6,7 +6,7 @@
             </h4>
             <div class="d-flex align-items-center">
                 <h6 class="mr-2 mb-0">{{ 'artemisApp.courseOverview.exerciseDetails.dueDate' | translate }}</h6>
-                <span>{{ (exercise.dueDate | date: 'dd/MM/yy HH:mm') || 'N/A' }}</span>
+                <span>{{ (exercise.dueDate | date: 'dd.MM.yy HH:mm') || 'N/A' }}</span>
                 <span *ngIf="exercise.dueDate" [ngClass]="exerciseStatusBadge" class="badge ml-2">{{ exercise.dueDate | amTimeAgo }}</span>
             </div>
             <div *ngIf="exercise.categories" class="d-sm-flex">
@@ -32,7 +32,7 @@
                         <h6>{{ 'artemisApp.exercise.assessmentDueDate' | translate }}:</h6>
                     </td>
                     <td>
-                        <span>{{ (exercise.assessmentDueDate | date: 'dd/MM/yy HH:mm') || 'N/A' }}</span>
+                        <span>{{ (exercise.assessmentDueDate | date: 'dd.MM.yy HH:mm') || 'N/A' }}</span>
                         <span [ngClass]="exerciseStatusBadge" class="badge ml-1">{{ exercise.assessmentDueDate | amTimeAgo }}</span>
                     </td>
                 </tr>
