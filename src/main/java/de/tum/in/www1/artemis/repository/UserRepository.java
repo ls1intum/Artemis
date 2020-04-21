@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.repository;
 
 import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -83,8 +84,8 @@ public interface UserRepository extends JpaRepository<User, Long> {
     Page<User> searchByLoginOrNameWithGroups(@Param("searchTerm") String searchTerm, Pageable pageable);
 
     @Modifying
-    @Query("Update User user set user.lastNotificationRead = current_timestamp() where user.id = :#{#userId}")
-    void updateUserNotificationReadDate(@Param("userId") Long userId);
+    @Query("Update User user set user.lastNotificationRead = :#{#lastNotificationRead} where user.id = :#{#userId}")
+    void updateUserNotificationReadDate(@Param("userId") Long userId, @Param("lastNotificationRead") ZonedDateTime lastNotificationRead);
 
     @EntityGraph(type = LOAD, attributePaths = { "groups" })
     @Query("select user from User user where :#{#groupName} member of user.groups and user not in :#{#ignoredUsers}")
