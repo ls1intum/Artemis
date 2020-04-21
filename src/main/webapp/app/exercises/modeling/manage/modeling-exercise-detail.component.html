@@ -64,19 +64,14 @@
                 <dd class="editor-outline-background">
                     <span [innerHTML]="gradingInstructions"></span>
                 </dd>
+                <jhi-structured-grading-instructions-assessment-layout [criteria]="modelingExercise.gradingCriteria"></jhi-structured-grading-instructions-assessment-layout>
             </dl>
 
             <button type="submit" (click)="previousState()" class="btn btn-info">
                 <fa-icon [icon]="'arrow-left'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.back"> Back</span>
             </button>
 
-            <button
-                type="button"
-                [routerLink]="['/course-management', modelingExercise.course?.id, 'modeling-exercises', modelingExercise.id, 'edit']"
-                replaceUrl="true"
-                queryParamsHandling="merge"
-                class="btn btn-primary"
-            >
+            <button type="button" [routerLink]="['/course-management', modelingExercise.course?.id, 'modeling-exercises', modelingExercise.id, 'edit']" class="btn btn-primary">
                 <fa-icon [icon]="'pencil-alt'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.edit"> Edit</span>
             </button>
         </div>

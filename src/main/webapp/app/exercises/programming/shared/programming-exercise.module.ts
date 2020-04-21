@@ -1,5 +1,5 @@
 import { NgModule } from '@angular/core';
-import { ProgrammingExerciseComponent } from 'app/exercises/programming/shared/programming-exercise.component';
+import { ProgrammingExerciseComponent } from 'app/exercises/programming/manage/programming-exercise.component';
 import { ArtemisProgrammingExerciseStatusModule } from 'app/exercises/programming/manage/status/programming-exercise-status.module';
 import { OrionModule } from 'app/shared/orion/orion.module';
 import { ArtemisSharedModule } from 'app/shared/shared.module';

@@ -63,10 +63,12 @@ public class TextAssessmentResource extends AssessmentResource {
 
     private final Optional<AutomaticTextFeedbackService> automaticTextFeedbackService;
 
+    private final GradingCriterionService gradingCriterionService;
+
     public TextAssessmentResource(AuthorizationCheckService authCheckService, ResultService resultService, TextAssessmentService textAssessmentService,
             TextBlockService textBlockService, TextBlockRepository textBlockRepository, TextExerciseService textExerciseService, TextSubmissionRepository textSubmissionRepository,
             UserService userService, TextSubmissionService textSubmissionService, WebsocketMessagingService messagingService, ExerciseService exerciseService,
-            Optional<AutomaticTextFeedbackService> automaticTextFeedbackService, ResultRepository resultRepository) {
+            Optional<AutomaticTextFeedbackService> automaticTextFeedbackService, ResultRepository resultRepository, GradingCriterionService gradingCriterionService) {
         super(authCheckService, userService, exerciseService, textSubmissionService, textAssessmentService, resultRepository);
 
         this.resultService = resultService;
@@ -78,6 +80,7 @@ public class TextAssessmentResource extends AssessmentResource {
         this.textSubmissionService = textSubmissionService;
         this.messagingService = messagingService;
         this.automaticTextFeedbackService = automaticTextFeedbackService;
+        this.gradingCriterionService = gradingCriterionService;
     }
 
     /**
@@ -275,6 +278,8 @@ public class TextAssessmentResource extends AssessmentResource {
         final User user = userService.getUserWithGroupsAndAuthorities();
         final Participation participation = textSubmission.getParticipation();
         final TextExercise exercise = (TextExercise) participation.getExercise();
+        List<GradingCriterion> gradingCriteria = gradingCriterionService.findByExerciseIdWithEagerGradingCriteria(exercise.getId());
+        exercise.setGradingCriteria(gradingCriteria);
         checkAuthorization(exercise, user);
         final boolean isAtLeastInstructorForExercise = authCheckService.isAtLeastInstructorForExercise(exercise, user);
         final boolean computeFeedbackSuggestions = automaticTextFeedbackService.isPresent() && exercise.isAutomaticAssessmentEnabled();
@@ -327,6 +332,7 @@ public class TextAssessmentResource extends AssessmentResource {
         if (textSubmission.getBlocks() == null || !isInitialized(textSubmission.getBlocks()) || textSubmission.getBlocks().isEmpty()) {
             textBlockService.computeTextBlocksForSubmissionBasedOnSyntax(textSubmission);
         }
+        textSubmission.getParticipation().getExercise().setGradingCriteria(gradingCriteria);
 
         if (!isAtLeastInstructorForExercise && participation instanceof StudentParticipation) {
             final StudentParticipation studentParticipation = (StudentParticipation) participation;

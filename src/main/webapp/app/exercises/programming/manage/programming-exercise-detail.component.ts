@@ -2,12 +2,11 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { Observable, of, Subject } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
-
-import { ProgrammingExercise, ProgrammingLanguage } from '../../../entities/programming-exercise.model';
+import { ProgrammingExercise, ProgrammingLanguage } from 'app/entities/programming-exercise.model';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { Result } from 'app/entities/result.model';
 import { AlertService } from 'app/core/alert/alert.service';
-import { ProgrammingExerciseParticipationType } from '../../../entities/programming-exercise-participation.model';
+import { ProgrammingExerciseParticipationType } from 'app/entities/programming-exercise-participation.model';
 import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { HttpErrorResponse } from '@angular/common/http';

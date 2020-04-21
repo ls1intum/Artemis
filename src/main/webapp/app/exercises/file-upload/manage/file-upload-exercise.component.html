@@ -86,8 +86,6 @@
                                 type="submit"
                                 *ngIf="fileUploadExercise.isAtLeastInstructor"
                                 [routerLink]="['/course-management', fileUploadExercise.course.id, 'file-upload-exercises', fileUploadExercise.id, 'edit']"
-                                replaceUrl="true"
-                                queryParamsHandling="merge"
                                 class="btn btn-primary btn-sm mr-1"
                             >
                                 <fa-icon [icon]="'pencil-alt'"></fa-icon>
