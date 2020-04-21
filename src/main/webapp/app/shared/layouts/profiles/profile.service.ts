@@ -57,13 +57,6 @@ export class ProfileService {
         return this.profileInfo;
     }
 
-    /**
-     * Checks if the current profile is production
-     */
-    public isInProduction(): boolean {
-        return this.getProfileInfo().getValue()!.inProduction;
-    }
-
     private mapAllowedOrionVersions(data: any, profileInfo: ProfileInfo) {
         profileInfo.allowedMinimumOrionVersion = data['allowed-minimum-orion-version'];
     }
