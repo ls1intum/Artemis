@@ -9,7 +9,7 @@ import { CourseManagementService } from './course-management.service';
 import { CourseManagementComponent } from './course-management.component';
 import { CourseDetailComponent } from './course-detail.component';
 import { CourseUpdateComponent } from './course-update.component';
-import { CourseExercisesOverviewComponent } from './course-exercises-overview.component';
+import { CourseManagementExercisesComponent } from './course-management-exercises.component';
 import { CourseGroupComponent } from 'app/course/manage/course-group.component';
 
 @Injectable({ providedIn: 'root' })
@@ -64,7 +64,7 @@ export const courseManagementRoute: Routes = [
     },
     {
         path: ':courseId/exercises',
-        component: CourseExercisesOverviewComponent,
+        component: CourseManagementExercisesComponent,
         resolve: {
             course: CourseResolve,
         },

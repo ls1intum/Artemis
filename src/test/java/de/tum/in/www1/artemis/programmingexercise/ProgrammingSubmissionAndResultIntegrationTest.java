@@ -175,7 +175,6 @@ class ProgrammingSubmissionAndResultIntegrationTest extends AbstractSpringIntegr
      * Here the participation provided does exist so Artemis can create the submission.
      *
      * After that the CI builds the code submission and notifies Artemis so it can create the result.
-     *
      */
     @Test
     void shouldHandleNewBuildResultCreatedByCommitWithSpecificTests() throws Exception {

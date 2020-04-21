@@ -2,7 +2,7 @@ import { DomainTagCommand } from 'app/shared/markdown-editor/domainCommands/doma
 import { addTextAtCursor } from 'app/shared/util/markdown-util';
 
 export class UsageCountCommand extends DomainTagCommand {
-    public static readonly identifier = '[count]';
+    public static readonly identifier = '[maxCountInScore]';
     public static readonly text = ' 0';
     // 'Add how often the credits should be taken into consideration for this instruction: 0 -> the credits should be added as often as the instruction occurs' +
     // ' x of type int -> credits will be added x times only, if instruction occurs more than x times it will not be counted and instead marked as subsequent fault';
@@ -32,6 +32,6 @@ export class UsageCountCommand extends DomainTagCommand {
      * @desc identify the end of the usage count
      */
     getClosingIdentifier(): string {
-        return '[/count]';
+        return '[/maxCountInScore]';
     }
 }

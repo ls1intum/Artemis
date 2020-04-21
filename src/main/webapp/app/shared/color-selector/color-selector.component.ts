@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output, HostListener } from '@angular/core';
 import { ARTEMIS_DEFAULT_COLOR } from 'app/app.constants';
 
 export interface Coordinates {
@@ -33,6 +33,7 @@ const DEFAULT_COLORS = [
 export class ColorSelectorComponent implements OnInit {
     colorSelectorPosition: Coordinates;
     showColorSelector = false;
+    height = 220;
     @Input() tagColors: string[] = DEFAULT_COLORS;
     @Output() selectedColor = new EventEmitter<string>();
 
@@ -40,11 +41,23 @@ export class ColorSelectorComponent implements OnInit {
         this.colorSelectorPosition = { left: 0, top: 0 };
     }
 
-    openColorSelector(event: MouseEvent) {
+    @HostListener('document:click', ['$event'])
+    clickOutside(event: any) {
+        if (this.showColorSelector) {
+            if (!event.target?.className.includes('color-selector') && !event.target?.className.includes('color-preview')) {
+                this.showColorSelector = false;
+            }
+        }
+    }
+
+    openColorSelector(event: MouseEvent, marginTop?: number, height?: number) {
         const parentElement = (event.target as Element).closest('.ng-trigger') as HTMLElement;
         this.colorSelectorPosition.left = parentElement ? parentElement.offsetLeft : 0;
-        this.colorSelectorPosition.top = 65;
-        this.showColorSelector = true;
+        this.colorSelectorPosition.top = marginTop ?? 65;
+        if (height !== undefined) {
+            this.height = height;
+        }
+        this.showColorSelector = !this.showColorSelector;
     }
 
     selectColorForTag(selectedColor: string) {

@@ -3,7 +3,7 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { JhiEventManager } from 'ng-jhipster';
 import { AlertService } from 'app/core/alert/alert.service';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
-import { ProgrammingExerciseService } from '../manage/services/programming-exercise.service';
+import { ProgrammingExerciseService } from './services/programming-exercise.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ExerciseComponent } from 'app/exercises/shared/exercise/exercise.component';
 import { TranslateService } from '@ngx-translate/core';
@@ -17,6 +17,7 @@ import { OrionConnectorService } from 'app/shared/orion/orion-connector.service'
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { CourseExerciseService, CourseManagementService } from 'app/course/manage/course-management.service';
+import { ProgrammingExerciseSimulationUtils } from 'app/exercises/programming/shared/utils/programming-exercise-simulation-utils';
 
 @Component({
     selector: 'jhi-programming-exercise',
@@ -38,6 +39,7 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
         private modalService: NgbModal,
         private router: Router,
         private javaBridge: OrionConnectorService,
+        private programmingExerciseSimulationUtils: ProgrammingExerciseSimulationUtils,
         courseService: CourseManagementService,
         translateService: TranslateService,
         eventManager: JhiEventManager,
@@ -128,4 +130,18 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
             this.javaBridge.log(e);
         }
     }
+
+    // ################## ONLY FOR LOCAL TESTING PURPOSE -- START ##################
+
+    /**
+     * Checks if the url includes the string "nolocalsetup', which is an indication
+     * that the particular programming exercise has no local setup
+     * This functionality is only for testing purposes (noVersionControlAndContinuousIntegrationAvailable)
+     * @param urlToCheck the url which will be check if it contains the substring
+     */
+    noVersionControlAndContinuousIntegrationAvailableCheck(urlToCheck: string): boolean {
+        return this.programmingExerciseSimulationUtils.noVersionControlAndContinuousIntegrationAvailableCheck(urlToCheck);
+    }
+
+    // ################## ONLY FOR LOCAL TESTING PURPOSE -- END ##################
 }

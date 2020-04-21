@@ -150,7 +150,9 @@ export class MarkdownEditorComponent implements AfterViewInit {
 
     /** opens the button for selecting the color */
     openColorSelector(event: MouseEvent) {
-        this.colorSelector.openColorSelector(event);
+        const marginTop = 35;
+        const height = 110;
+        this.colorSelector.openColorSelector(event, marginTop, height);
     }
 
     /** selected text is changed into the chosen color */
