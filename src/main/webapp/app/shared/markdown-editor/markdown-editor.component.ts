@@ -91,6 +91,7 @@ export class MarkdownEditorComponent implements AfterViewInit {
      * Use this array for commands that are not related to the markdown but to the editor (e.g. fullscreen mode).
      * These elements will be displayed on the right side of the command bar.
      */
+    @Input()
     metaCommands: Command[] = [new FullscreenCommand()];
 
     /** {array} containing all default commands accessible for the editor per default */
@@ -141,10 +142,6 @@ export class MarkdownEditorComponent implements AfterViewInit {
     resizableMinHeight = MarkdownEditorHeight.SMALL;
     interactResizable: Interactable;
 
-    /** Input to enable fullscreen mode default true **/
-    @Input()
-    enableFullscreen = false;
-
     constructor(private artemisMarkdown: ArtemisMarkdownService, private $window: WindowRef) {}
 
     /** {boolean} true when the plane html view is needed, false when the preview content is needed from the parent */
@@ -190,10 +187,6 @@ export class MarkdownEditorComponent implements AfterViewInit {
             enableLiveAutocompletion: true,
         });
         this.aceEditorContainer.getEditor().completers = [];
-
-        if (!this.enableFullscreen) {
-            this.metaCommands = [];
-        }
 
         if (this.domainCommands == null || this.domainCommands.length === 0) {
             [...this.defaultCommands, ...this.colorCommands, ...(this.headerCommands || []), ...this.metaCommands].forEach((command) => {
