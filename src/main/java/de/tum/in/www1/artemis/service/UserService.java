@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.service;
 import static de.tum.in.www1.artemis.config.Constants.TUM_USERNAME_PATTERN;
 
 import java.time.Instant;
+import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -29,6 +30,7 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.SortingOrder;
 import de.tum.in.www1.artemis.exception.UsernameAlreadyUsedException;
 import de.tum.in.www1.artemis.repository.AuthorityRepository;
+import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.GuidedTourSettingsRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
@@ -56,6 +58,9 @@ public class UserService {
 
     private final Logger log = LoggerFactory.getLogger(UserService.class);
 
+    @Value("${artemis.user-management.external.admin-group-name}")
+    private String ADMIN_GROUP_NAME;
+
     @Value("${artemis.encryption-password}")
     private String ENCRYPTION_PASSWORD;
 
@@ -66,6 +71,8 @@ public class UserService {
     private Optional<String> artemisInternalAdminPassword;
 
     private final UserRepository userRepository;
+
+    private final CourseRepository courseRepository;
 
     private final AuthorityRepository authorityRepository;
 
@@ -80,12 +87,13 @@ public class UserService {
     private ArtemisAuthenticationProvider artemisAuthenticationProvider;
 
     public UserService(UserRepository userRepository, AuthorityRepository authorityRepository, CacheManager cacheManager, Optional<LdapUserService> ldapUserService,
-            GuidedTourSettingsRepository guidedTourSettingsRepository) {
+            GuidedTourSettingsRepository guidedTourSettingsRepository, CourseRepository courseRepository) {
         this.userRepository = userRepository;
         this.authorityRepository = authorityRepository;
         this.cacheManager = cacheManager;
         this.ldapUserService = ldapUserService;
         this.guidedTourSettingsRepository = guidedTourSettingsRepository;
+        this.courseRepository = courseRepository;
     }
 
     @Autowired
@@ -686,7 +694,8 @@ public class UserService {
      */
     public User updateUserNotificationReadDate() {
         User loggedInUser = getUserWithGroupsAndAuthorities();
-        userRepository.updateUserNotificationReadDate(loggedInUser.getId());
+        userRepository.updateUserNotificationReadDate(loggedInUser.getId(), ZonedDateTime.now());
+
         return loggedInUser;
     }
 
@@ -812,5 +821,50 @@ public class UserService {
      */
     public void removeUserFromGroup(User user, String group) {
         artemisAuthenticationProvider.removeUserFromGroup(user, group);
+    }
+
+    /**
+     *
+     * Builds the authorities list from the groups:
+     *
+     * 1) Admin group only if the globally defined ADMIN_GROUP_NAME is contained in the passed groups set
+     * 2) group contains configured instructor group name -> instructor role
+     * 3) group contains configured tutor group name -> tutor role
+     * 4) the user role is always given
+     *
+     * @param groups a set of groups
+     * @return a set of authorities based on the course configuration and the given groups
+     */
+    public Set<Authority> buildAuthoritiesFromGroups(Set<String> groups) {
+        Set<Authority> authorities = new HashSet<>();
+
+        // Check if user is admin
+        if (groups.contains(ADMIN_GROUP_NAME)) {
+            Authority adminAuthority = new Authority();
+            adminAuthority.setName(AuthoritiesConstants.ADMIN);
+            authorities.add(adminAuthority);
+        }
+
+        Set<String> instructorGroups = courseRepository.findAllInstructorGroupNames();
+        Set<String> teachingAssistantGroups = courseRepository.findAllTeachingAssistantGroupNames();
+
+        // Check if user is an instructor in any course
+        if (groups.stream().anyMatch(instructorGroups::contains)) {
+            Authority instructorAuthority = new Authority();
+            instructorAuthority.setName(AuthoritiesConstants.INSTRUCTOR);
+            authorities.add(instructorAuthority);
+        }
+
+        // Check if user is a tutor in any course
+        if (groups.stream().anyMatch(teachingAssistantGroups::contains)) {
+            Authority taAuthority = new Authority();
+            taAuthority.setName(AuthoritiesConstants.TEACHING_ASSISTANT);
+            authorities.add(taAuthority);
+        }
+
+        Authority userAuthority = new Authority();
+        userAuthority.setName(AuthoritiesConstants.USER);
+        authorities.add(userAuthority);
+        return authorities;
     }
 }

@@ -27,6 +27,8 @@ import { ApollonDiagramService } from 'app/exercises/quiz/manage/apollon-diagram
 import { ButtonType } from 'app/shared/components/button.component';
 import { participationStatus } from 'app/exercises/shared/exercise/exercise-utils';
 import { filter } from 'rxjs/operators';
+import { stringifyIgnoringFields } from 'app/shared/util/utils';
+import { Location } from '@angular/common';
 
 @Component({
     selector: 'jhi-modeling-submission',
@@ -84,6 +86,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         private router: Router,
         private participationWebsocketService: ParticipationWebsocketService,
         private guidedTourService: GuidedTourService,
+        private location: Location,
     ) {
         this.isSaving = false;
         this.autoSaveTimer = 0;
@@ -296,9 +299,12 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
                 .subscribe(
                     (response) => {
                         this.submission = response.body!;
+                        this.participation = this.submission.participation as StudentParticipation;
                         // reconnect so that the submission status is displayed correctly in the result.component
                         this.submission.participation.submissions = [this.submission];
-                        this.participationWebsocketService.addParticipation(this.submission.participation as StudentParticipation, this.modelingExercise);
+                        this.participationWebsocketService.addParticipation(this.participation, this.modelingExercise);
+                        this.modelingExercise.studentParticipations = [this.participation];
+                        this.modelingExercise.participationStatus = participationStatus(this.modelingExercise);
                         this.result = this.submission.result;
                         this.retryStarted = false;
 
@@ -326,6 +332,9 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
                 .subscribe(
                     (submission) => {
                         this.submission = submission.body!;
+                        this.participation = this.submission.participation as StudentParticipation;
+                        this.modelingExercise.studentParticipations = [this.participation];
+                        this.modelingExercise.participationStatus = participationStatus(this.modelingExercise);
                         this.result = this.submission.result;
                         if (this.isLate) {
                             this.jhiAlertService.warning('artemisApp.modelingEditor.submitDeadlineMissed');
@@ -448,22 +457,27 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         }
     }
 
-    /**
-     * Checks whether there are pending changes in the current model. Returns true if there are NO unsaved changes, false otherwise.
-     */
     canDeactivate(): Observable<boolean> | boolean {
         if (!this.modelingEditor) {
             return true;
         }
         const model: UMLModel = this.modelingEditor.getCurrentModel();
-        const jsonModel = JSON.stringify(model);
-        if (
-            ((!this.submission || !this.submission.model) && model.elements.length > 0 && jsonModel !== '') ||
-            (this.submission && this.submission.model && JSON.parse(this.submission.model).version === model.version && this.submission.model !== jsonModel)
-        ) {
-            return false;
+        return !this.modelHasUnsavedChanges(model);
+    }
+
+    /**
+     * Checks whether there are pending changes in the current model. Returns true if there are unsaved changes, false otherwise.
+     */
+    private modelHasUnsavedChanges(model: UMLModel): boolean {
+        if (!this.submission || !this.submission.model) {
+            return model.elements.length > 0 && JSON.stringify(model) !== '';
+        } else if (this.submission && this.submission.model) {
+            const currentModel = JSON.parse(this.submission.model);
+            const versionMatch = currentModel.version === model.version;
+            const modelMatch = stringifyIgnoringFields(currentModel, 'size') === stringifyIgnoringFields(model, 'size');
+            return versionMatch && !modelMatch;
         }
-        return true;
+        return false;
     }
 
     // displays the alert for confirming leaving the page if there are unsaved changes
