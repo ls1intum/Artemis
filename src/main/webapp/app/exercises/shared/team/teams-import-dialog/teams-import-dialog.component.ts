@@ -1,7 +1,7 @@
 import { Component, Input, ViewChild, OnInit, OnDestroy, ViewEncapsulation } from '@angular/core';
 import { NgForm } from '@angular/forms';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/alert/alert.service';
 import { HttpResponse } from '@angular/common/http';
 import { Subject } from 'rxjs';
 import { TeamService } from 'app/exercises/shared/team/team.service';
@@ -49,7 +49,7 @@ export class TeamsImportDialogComponent implements OnInit, OnDestroy {
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
 
-    constructor(private teamService: TeamService, private activeModal: NgbActiveModal, private jhiAlertService: JhiAlertService) {}
+    constructor(private teamService: TeamService, private activeModal: NgbActiveModal, private jhiAlertService: AlertService) {}
 
     ngOnInit() {
         this.computePotentialConflictsBasedOnExistingTeams();
@@ -238,6 +238,10 @@ export class TeamsImportDialogComponent implements OnInit, OnDestroy {
     onSaveSuccess(teams: HttpResponse<Team[]>) {
         this.activeModal.close(teams.body);
         this.isImporting = false;
+
+        setTimeout(() => {
+            this.jhiAlertService.success('artemisApp.team.importSuccess', { numberOfImportedTeams: this.numberOfTeamsToBeImported });
+        }, 500);
     }
 
     onSaveError() {
