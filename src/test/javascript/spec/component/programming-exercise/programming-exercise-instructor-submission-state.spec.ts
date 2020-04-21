@@ -31,7 +31,6 @@ describe('ProgrammingExerciseInstructorSubmissionState', () => {
     let fixture: ComponentFixture<ProgrammingExerciseInstructorSubmissionStateComponent>;
     let debugElement: DebugElement;
     let submissionService: ProgrammingSubmissionService;
-    let buildRunService: ProgrammingBuildRunService;
 
     let getExerciseSubmissionStateStub: SinonStub;
     let getExerciseSubmissionStateSubject: Subject<ExerciseSubmissionState>;
@@ -68,7 +67,6 @@ describe('ProgrammingExerciseInstructorSubmissionState', () => {
                 debugElement = fixture.debugElement;
 
                 submissionService = debugElement.injector.get(ProgrammingSubmissionService);
-                buildRunService = debugElement.injector.get(ProgrammingBuildRunService);
 
                 getExerciseSubmissionStateSubject = new Subject<ExerciseSubmissionState>();
                 getExerciseSubmissionStateStub = stub(submissionService, 'getSubmissionStateOfExercise').returns(getExerciseSubmissionStateSubject);

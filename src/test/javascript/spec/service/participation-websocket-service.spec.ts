@@ -169,6 +169,7 @@ describe('ParticipationWebsocketService', () => {
 
     /* eslint-disable no-unused-vars */
     it('should attach the result to participation if the participation has null for results value', () => {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const { results, ...participationWithoutResult } = participation;
 
         participationWebsocketService.subscribeForLatestResultOfParticipation(participationWithoutResult.id);

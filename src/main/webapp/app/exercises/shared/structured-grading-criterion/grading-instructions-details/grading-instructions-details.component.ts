@@ -231,7 +231,7 @@ export class GradingInstructionsDetailsComponent implements OnInit {
                 newCriterion.structuredGradingInstructions = [];
                 const modifiedArray = domainCommands.slice(1); // remove GradingCriterionCommandIdentifier after creating its criterion object
                 let endOfCriterion = 0;
-                for (const [instrText, instrCommand] of modifiedArray) {
+                for (const [, instrCommand] of modifiedArray) {
                     endOfCriterion++;
                     if (instrCommand instanceof GradingInstructionCommand) {
                         const newInstruction = new GradingInstruction(); // create instruction objects that belong to the above created criterion

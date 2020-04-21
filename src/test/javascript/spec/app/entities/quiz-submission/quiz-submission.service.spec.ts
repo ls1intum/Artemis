@@ -88,7 +88,7 @@ describe('Service Tests', () => {
             });
 
             it('should delete a QuizSubmission', async () => {
-                const rxPromise = service.delete(123).subscribe((resp) => expect(resp.ok));
+                service.delete(123).subscribe((resp) => expect(resp.ok));
 
                 const req = httpMock.expectOne({ method: 'DELETE' });
                 req.flush({ status: 200 });
