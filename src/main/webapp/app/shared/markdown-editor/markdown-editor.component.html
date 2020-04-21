@@ -36,7 +36,7 @@
                     <!-- domain commands -->
                     <div class="markdown-editor__commands-domain" *ngIf="domainCommands && domainCommands.length != 0">
                         <ng-container *ngFor="let command of domainCommands | typeCheck: DomainTagCommand">
-                            <div *ngIf="command.displayCommandButton === true" class="btn btn-sm" (click)="command.execute()">
+                            <div *ngIf="command.displayCommandButton" class="btn btn-sm" (click)="command.execute()">
                                 {{ command.buttonTranslationString | translate }}
                             </div>
                         </ng-container>

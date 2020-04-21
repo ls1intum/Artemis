@@ -76,7 +76,7 @@
         <!-- approved answers -->
         <div class="row mb-1 answer-approved" *ngFor="let approvedQuestionAnswer of approvedQuestionAnswers">
             <div class="col">
-                <div *ngIf="isAnswerMode && selectedQuestionAnswer && approvedQuestionAnswer && selectedQuestionAnswer.id === approvedQuestionAnswer.id">
+                <div *ngIf="isAnswerMode && selectedQuestionAnswer && approvedQuestionAnswer && selectedQuestionAnswer.id === approvedQuestionAnswer.id" class="row">
                     <div class="col-12">
                         <div class="form-group">
                             <div class="row">
@@ -198,7 +198,7 @@
             <!-- unapproved answers -->
             <div class="row mb-1" *ngFor="let questionAnswer of sortedQuestionAnswers">
                 <div class="col">
-                    <div *ngIf="isAnswerMode && selectedQuestionAnswer && questionAnswer && selectedQuestionAnswer.id === questionAnswer.id">
+                    <div *ngIf="isAnswerMode && selectedQuestionAnswer && questionAnswer && selectedQuestionAnswer.id === questionAnswer.id" class="row">
                         <div class="col-12">
                             <div class="form-group">
                                 <div class="row">
