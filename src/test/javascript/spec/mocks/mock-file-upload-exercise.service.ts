@@ -10,8 +10,8 @@ fileUploadExercise.filePattern = 'pdf,png';
 fileUploadExercise.problemStatement = 'Example problem statement';
 
 export class MockFileUploadExerciseService {
-    create = (fileUploadExercise: FileUploadExercise) => of();
-    update = (fileUploadExercise: FileUploadExercise, exerciseId: number, req?: any) => of();
+    create = (fileUploadExerciseParam: FileUploadExercise) => of();
+    update = (fileUploadExerciseParam: FileUploadExercise, exerciseId: number, req?: any) => of();
     find = (id: number) => of(new HttpResponse({ body: fileUploadExercise }));
     query = (req?: any) => of();
     delete = (id: number) => of();
