@@ -17,5 +17,5 @@ import de.tum.in.www1.artemis.domain.FileUploadExercise;
 public interface FileUploadExerciseRepository extends JpaRepository<FileUploadExercise, Long> {
 
     @Query("SELECT e FROM FileUploadExercise e WHERE e.course.id = :#{#courseId}")
-    List<FileUploadExercise> findByCourseId(@Param("courseId") Long courseId);
+    List<FileUploadExercise> findAllByCourseId(@Param("courseId") Long courseId);
 }

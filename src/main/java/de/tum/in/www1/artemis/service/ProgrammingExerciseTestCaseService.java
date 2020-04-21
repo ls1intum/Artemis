@@ -35,22 +35,22 @@ public class ProgrammingExerciseTestCaseService {
 
     /**
      * Returns all test cases for a programming exercise.
-     * 
+     *
      * @param id of a programming exercise.
      * @return test cases of a programming exercise.
      */
     public Set<ProgrammingExerciseTestCase> findByExerciseId(Long id) {
-        return this.testCaseRepository.findByExerciseId(id);
+        return this.testCaseRepository.findAllByExerciseId(id);
     }
 
     /**
      * Returns all active test cases for a programming exercise. Only active test cases are evaluated on build runs.
-     * 
+     *
      * @param id of a programming exercise.
      * @return active test cases of a programming exercise.
      */
     public Set<ProgrammingExerciseTestCase> findActiveByExerciseId(Long id) {
-        return this.testCaseRepository.findByExerciseIdAndActive(id, true);
+        return this.testCaseRepository.findAllByExerciseIdAndActive(id, true);
     }
 
     /**
@@ -94,7 +94,7 @@ public class ProgrammingExerciseTestCaseService {
      */
     @Transactional
     public Set<ProgrammingExerciseTestCase> resetWeights(Long exerciseId) {
-        Set<ProgrammingExerciseTestCase> testCases = this.testCaseRepository.findByExerciseId(exerciseId);
+        Set<ProgrammingExerciseTestCase> testCases = this.testCaseRepository.findAllByExerciseId(exerciseId);
         for (ProgrammingExerciseTestCase testCase : testCases) {
             testCase.setWeight(1);
         }
@@ -106,13 +106,13 @@ public class ProgrammingExerciseTestCaseService {
     /**
      * From a list of build run feedback, extract all test cases. If an already stored test case is not found anymore in the build result, it will not be deleted, but set inactive.
      * This way old test cases are not lost, some interfaces in the client might need this information to e.g. show warnings.
-     * 
+     *
      * @param feedbacks list of build log output.
      * @param exercise  programming exercise.
      * @return Returns true if the test cases have changed, false if they haven't.
      */
     public boolean generateTestCasesFromFeedbacks(List<Feedback> feedbacks, ProgrammingExercise exercise) {
-        Set<ProgrammingExerciseTestCase> existingTestCases = testCaseRepository.findByExerciseId(exercise.getId());
+        Set<ProgrammingExerciseTestCase> existingTestCases = testCaseRepository.findAllByExerciseId(exercise.getId());
         Set<ProgrammingExerciseTestCase> testCasesFromFeedbacks = feedbacks.stream()
                 .map(feedback -> new ProgrammingExerciseTestCase().testName(feedback.getText()).weight(1).exercise(exercise).active(true)).collect(Collectors.toSet());
         // Get test cases that are not already in database - those will be added as new entries.

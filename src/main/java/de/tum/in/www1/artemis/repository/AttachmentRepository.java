@@ -16,7 +16,7 @@ import de.tum.in.www1.artemis.domain.Attachment;
 @Repository
 public interface AttachmentRepository extends JpaRepository<Attachment, Long> {
 
-    @Query("select a FROM Attachment a WHERE a.lecture.id =  :#{#lectureId}")
+    @Query("SELECT a FROM Attachment a WHERE a.lecture.id =  :#{#lectureId}")
     List<Attachment> findAllByLectureId(@Param("lectureId") Long lectureId);
 
 }

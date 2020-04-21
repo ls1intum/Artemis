@@ -107,7 +107,7 @@ public class UserService {
     public void applicationReady() {
 
         if (artemisInternalAdminUsername.isPresent() && artemisInternalAdminPassword.isPresent()) {
-            Optional<User> existingInternalAdmin = userRepository.findOneWithGroupsAndAuthoritiesByLogin(artemisInternalAdminUsername.get());
+            Optional<User> existingInternalAdmin = userRepository.findWithGroupsAndAuthoritiesByLogin(artemisInternalAdminUsername.get());
             if (existingInternalAdmin.isPresent()) {
                 log.info("Update internal admin user " + artemisInternalAdminUsername.get());
                 existingInternalAdmin.get().setPassword(passwordEncoder().encode(artemisInternalAdminPassword.get()));
@@ -214,7 +214,7 @@ public class UserService {
      */
     public Optional<User> activateRegistration(String key) {
         log.debug("Activating user for activation key {}", key);
-        return userRepository.findOneByActivationKey(key).map(user -> {
+        return userRepository.findByActivationKey(key).map(user -> {
             // activate given user for the registration key.
             user.setActivated(true);
             user.setActivationKey(null);
@@ -232,7 +232,7 @@ public class UserService {
      */
     public Optional<User> completePasswordReset(String newPassword, String key) {
         log.debug("Reset user password for reset key {}", key);
-        return userRepository.findOneByResetKey(key).filter(user -> user.getResetDate().isAfter(Instant.now().minusSeconds(86400))).map(user -> {
+        return userRepository.findByResetKey(key).filter(user -> user.getResetDate().isAfter(Instant.now().minusSeconds(86400))).map(user -> {
             user.setPassword(passwordEncoder().encode(newPassword));
             user.setResetKey(null);
             user.setResetDate(null);
@@ -247,7 +247,7 @@ public class UserService {
      * @return user if user exists otherwise null
      */
     public Optional<User> requestPasswordReset(String mail) {
-        return userRepository.findOneByEmailIgnoreCase(mail).filter(User::getActivated).map(user -> {
+        return userRepository.findByEmailIgnoreCase(mail).filter(User::getActivated).map(user -> {
             user.setResetKey(RandomUtil.generateResetKey());
             user.setResetDate(Instant.now());
             this.clearUserCaches(user);
@@ -262,13 +262,13 @@ public class UserService {
      * @return newly registered user or throw registration exception
      */
     public User registerUser(UserDTO userDTO, String password) {
-        userRepository.findOneByLogin(userDTO.getLogin().toLowerCase()).ifPresent(existingUser -> {
+        userRepository.findByLogin(userDTO.getLogin().toLowerCase()).ifPresent(existingUser -> {
             boolean removed = removeNonActivatedUser(existingUser);
             if (!removed) {
                 throw new UsernameAlreadyUsedException();
             }
         });
-        userRepository.findOneByEmailIgnoreCase(userDTO.getEmail()).ifPresent(existingUser -> {
+        userRepository.findByEmailIgnoreCase(userDTO.getEmail()).ifPresent(existingUser -> {
             boolean removed = removeNonActivatedUser(existingUser);
             if (!removed) {
                 throw new EmailAlreadyUsedException();
@@ -444,7 +444,7 @@ public class UserService {
      * @param imageUrl  image URL of user
      */
     public void updateUser(String firstName, String lastName, String email, String langKey, String imageUrl) {
-        SecurityUtils.getCurrentUserLogin().flatMap(userRepository::findOneByLogin).ifPresent(user -> {
+        SecurityUtils.getCurrentUserLogin().flatMap(userRepository::findByLogin).ifPresent(user -> {
             user.setFirstName(firstName);
             user.setLastName(lastName);
             user.setEmail(email.toLowerCase());
@@ -512,7 +512,7 @@ public class UserService {
         // Delete the user in the connected VCS if necessary (e.g. for GitLab)
         optionalVcsUserManagementService.ifPresent(userManagementService -> userManagementService.deleteUser(login));
         // Delete the user in the local Artemis database
-        userRepository.findOneByLogin(login).ifPresent(user -> {
+        userRepository.findByLogin(login).ifPresent(user -> {
             userRepository.delete(user);
             this.clearUserCaches(user);
             log.debug("Deleted User: {}", user);
@@ -525,7 +525,7 @@ public class UserService {
      * @param newPassword new password string
      */
     public void changePassword(String currentClearTextPassword, String newPassword) {
-        SecurityUtils.getCurrentUserLogin().flatMap(userRepository::findOneByLogin).ifPresent(user -> {
+        SecurityUtils.getCurrentUserLogin().flatMap(userRepository::findByLogin).ifPresent(user -> {
             String currentEncryptedPassword = user.getPassword();
             if (!passwordEncoder().matches(currentClearTextPassword, currentEncryptedPassword)) {
                 throw new InvalidPasswordException();
@@ -542,7 +542,7 @@ public class UserService {
      * @return decrypted password or empty string
      */
     public String decryptPassword() {
-        User user = userRepository.findOneByLogin(SecurityUtils.getCurrentUserLogin().get()).get();
+        User user = userRepository.findByLogin(SecurityUtils.getCurrentUserLogin().get()).get();
         try {
             return encryptor().decrypt(user.getPassword());
         }
@@ -557,7 +557,7 @@ public class UserService {
      * @return decrypted password or empty string
      */
     public Optional<String> decryptPasswordByLogin(String login) {
-        return userRepository.findOneByLogin(login).map(user -> encryptor().decrypt(user.getPassword()));
+        return userRepository.findByLogin(login).map(user -> encryptor().decrypt(user.getPassword()));
     }
 
     /**
@@ -570,7 +570,7 @@ public class UserService {
         var sorting = Sort.by(userSearch.getSortedColumn());
         sorting = userSearch.getSortingOrder() == SortingOrder.ASCENDING ? sorting.ascending() : sorting.descending();
         final var sorted = PageRequest.of(userSearch.getPage(), userSearch.getPageSize(), sorting);
-        return userRepository.searchByLoginOrNameWithGroups(searchTerm, sorted).map(UserDTO::new);
+        return userRepository.searchAllByLoginOrNameWithGroups(searchTerm, sorted).map(UserDTO::new);
     }
 
     /**
@@ -589,7 +589,7 @@ public class UserService {
      * @return existing user with given login string or null
      */
     public Optional<User> getUserWithGroupsByLogin(String login) {
-        return userRepository.findOneWithGroupsByLogin(login);
+        return userRepository.findWithGroupsByLogin(login);
     }
 
     /**
@@ -598,7 +598,7 @@ public class UserService {
      * @return existing user with given login string or null
      */
     public Optional<User> getUserWithAuthoritiesByLogin(String login) {
-        return userRepository.findOneWithGroupsAndAuthoritiesByLogin(login);
+        return userRepository.findWithGroupsAndAuthoritiesByLogin(login);
     }
 
     /**
@@ -607,7 +607,7 @@ public class UserService {
      * @return existing user for the given login string or null
      */
     public Optional<User> getUserByLogin(String login) {
-        return userRepository.findOneByLogin(login);
+        return userRepository.findByLogin(login);
     }
 
     /**
@@ -616,7 +616,7 @@ public class UserService {
     @NotNull
     public User getUser() {
         String currentUserLogin = getCurrentUserLogin();
-        Optional<User> user = userRepository.findOneByLogin(currentUserLogin);
+        Optional<User> user = userRepository.findByLogin(currentUserLogin);
         return unwrapOptionalUser(user, currentUserLogin);
     }
 
@@ -627,7 +627,7 @@ public class UserService {
     @NotNull
     public User getUserWithGroupsAndAuthorities() {
         String currentUserLogin = getCurrentUserLogin();
-        Optional<User> user = userRepository.findOneWithGroupsAndAuthoritiesByLogin(currentUserLogin);
+        Optional<User> user = userRepository.findWithGroupsAndAuthoritiesByLogin(currentUserLogin);
         return unwrapOptionalUser(user, currentUserLogin);
     }
 
@@ -639,7 +639,7 @@ public class UserService {
     @NotNull
     public User getUserWithGroupsAuthoritiesAndGuidedTourSettings() {
         String currentUserLogin = getCurrentUserLogin();
-        Optional<User> user = userRepository.findOneWithGroupsAuthoritiesAndGuidedTourSettingsByLogin(currentUserLogin);
+        Optional<User> user = userRepository.findWithGroupsAuthoritiesAndGuidedTourSettingsByLogin(currentUserLogin);
         return unwrapOptionalUser(user, currentUserLogin);
     }
 
@@ -665,7 +665,7 @@ public class UserService {
      * @return the user that belongs to the given principal with eagerly loaded groups and authorities
      */
     public User getUserWithGroupsAndAuthorities(@NotNull String username) {
-        Optional<User> user = userRepository.findOneWithGroupsAndAuthoritiesByLogin(username);
+        Optional<User> user = userRepository.findWithGroupsAndAuthoritiesByLogin(username);
         return unwrapOptionalUser(user, username);
     }
 

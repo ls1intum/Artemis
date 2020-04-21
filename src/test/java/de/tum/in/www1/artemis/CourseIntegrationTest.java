@@ -651,9 +651,9 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     }
 
     private void testAddStudentOrTutorOrInstructorToCourse__forbidden(Course course) throws Exception {
-        User student = userRepo.findOneWithGroupsByLogin("student1").get();
-        User tutor = userRepo.findOneWithGroupsByLogin("tutor1").get();
-        User instructor = userRepo.findOneWithGroupsByLogin("instructor1").get();
+        User student = userRepo.findWithGroupsByLogin("student1").get();
+        User tutor = userRepo.findWithGroupsByLogin("tutor1").get();
+        User instructor = userRepo.findWithGroupsByLogin("instructor1").get();
 
         jiraRequestMockProvider.enableMockingOfRequests();
         jiraRequestMockProvider.mockRemoveUserFromGroup(Set.of(course.getStudentGroupName()), student.getLogin());
@@ -672,9 +672,9 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         course = courseRepo.save(course);
 
         // Retrieve users from whom to remove groups
-        User student = userRepo.findOneWithGroupsByLogin("student1").get();
-        User tutor = userRepo.findOneWithGroupsByLogin("tutor1").get();
-        User instructor = userRepo.findOneWithGroupsByLogin("instructor1").get();
+        User student = userRepo.findWithGroupsByLogin("student1").get();
+        User tutor = userRepo.findWithGroupsByLogin("tutor1").get();
+        User instructor = userRepo.findWithGroupsByLogin("instructor1").get();
 
         // Mock remove requests
         jiraRequestMockProvider.enableMockingOfRequests();
@@ -705,9 +705,9 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     }
 
     private void testRemoveStudentOrTutorOrInstructorFromCourse_forbidden(Course course) throws Exception {
-        User student = userRepo.findOneWithGroupsByLogin("student1").get();
-        User tutor = userRepo.findOneWithGroupsByLogin("tutor1").get();
-        User instructor = userRepo.findOneWithGroupsByLogin("instructor1").get();
+        User student = userRepo.findWithGroupsByLogin("student1").get();
+        User tutor = userRepo.findWithGroupsByLogin("tutor1").get();
+        User instructor = userRepo.findWithGroupsByLogin("instructor1").get();
 
         jiraRequestMockProvider.enableMockingOfRequests();
         jiraRequestMockProvider.mockRemoveUserFromGroup(Set.of(course.getStudentGroupName()), student.getLogin());

@@ -20,7 +20,7 @@ import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
 @Repository
 public interface ComplaintRepository extends JpaRepository<Complaint, Long> {
 
-    Optional<Complaint> findByResult_Id(Long resultId);
+    Optional<Complaint> findByResultId(Long resultId);
 
     @Query("SELECT c FROM Complaint c LEFT JOIN FETCH c.result r LEFT JOIN FETCH r.assessor WHERE c.id = :#{#complaintId}")
     Optional<Complaint> findByIdWithEagerAssessor(@Param("complaintId") Long complaintId);
@@ -32,7 +32,7 @@ public interface ComplaintRepository extends JpaRepository<Complaint, Long> {
      * @param tutorId  - the id of the tutor we are interested in
      * @return number of complaints associated to course courseId and tutor tutorId
      */
-    long countByResult_Participation_Exercise_Course_IdAndResult_Assessor_Id(Long courseId, Long tutorId);
+    long countByResultParticipationExerciseCourseIdAndResultAssessorId(Long courseId, Long tutorId);
 
     /**
      * This magic method counts the number of complaints by complaint type associated to a course id
@@ -41,10 +41,10 @@ public interface ComplaintRepository extends JpaRepository<Complaint, Long> {
      * @param complaintType - type of complaint we want to filter by
      * @return number of more feedback requests associated to course courseId
      */
-    long countByResult_Participation_Exercise_Course_IdAndComplaintType(Long courseId, ComplaintType complaintType);
+    long countByResultParticipationExerciseCourseIdAndComplaintType(Long courseId, ComplaintType complaintType);
 
     @Query("SELECT c FROM Complaint c LEFT JOIN FETCH c.result r LEFT JOIN FETCH r.assessor LEFT JOIN FETCH r.participation p LEFT JOIN FETCH p.exercise e LEFT JOIN FETCH r.submission WHERE e.id = :#{#exerciseId} AND c.complaintType = :#{#complaintType}")
-    List<Complaint> findByResult_Participation_Exercise_Id_ComplaintTypeWithEagerSubmissionAndEagerAssessor(@Param("exerciseId") Long exerciseId,
+    List<Complaint> findAllByResultParticipationExerciseIdAndComplaintTypeWithEagerSubmissionAndEagerAssessor(@Param("exerciseId") Long exerciseId,
             @Param("complaintType") ComplaintType complaintType);
 
     /**
@@ -55,7 +55,7 @@ public interface ComplaintRepository extends JpaRepository<Complaint, Long> {
      * @param courseId  the id of the course
      * @return the number of unaccepted
      */
-    @Query("SELECT count(c) FROM Complaint c WHERE c.complaintType = 'COMPLAINT' AND c.student.id = :#{#studentId} AND c.result.participation.exercise.course.id = :#{#courseId} AND (c.accepted = false OR c.accepted is null)")
+    @Query("SELECT count(c) FROM Complaint c WHERE c.complaintType = 'COMPLAINT' AND c.student.id = :#{#studentId} AND c.result.participation.exercise.course.id = :#{#courseId} AND (c.accepted = false OR c.accepted IS NULL)")
     long countUnacceptedComplaintsByComplaintTypeStudentIdAndCourseId(@Param("studentId") Long studentId, @Param("courseId") Long courseId);
 
     /**
@@ -66,7 +66,7 @@ public interface ComplaintRepository extends JpaRepository<Complaint, Long> {
      * @return number of complaints associated to exercise exerciseId
      */
 
-    long countByResult_Participation_Exercise_IdAndComplaintType(Long exerciseId, ComplaintType complaintType);
+    long countByResultParticipationExerciseIdAndComplaintType(Long exerciseId, ComplaintType complaintType);
 
     /**
      * This magic method counts the number of complaints associated to a exercise id and to the results assessed by a specific user, identified by a tutor id
@@ -75,19 +75,19 @@ public interface ComplaintRepository extends JpaRepository<Complaint, Long> {
      * @param tutorId    - the id of the tutor we are interested in
      * @return number of complaints associated to exercise exerciseId and tutor tutorId
      */
-    long countByResult_Participation_Exercise_IdAndResult_Assessor_Id(Long exerciseId, Long tutorId);
+    long countByResultParticipationExerciseIdAndResultAssessorId(Long exerciseId, Long tutorId);
 
     /**
      * Delete all complaints that belong to submission results of a given participation
      * @param participationId the Id of the participation where the complaints should be deleted
      */
-    void deleteByResult_Participation_Id(Long participationId);
+    void deleteByResultParticipationId(Long participationId);
 
     /**
      * Delete all complaints that belong to the given result
      * @param resultId the Id of the result where the complaints should be deleted
      */
-    void deleteByResult_Id(long resultId);
+    void deleteByResultId(long resultId);
 
     /**
      * Given a user id, retrieve all complaints related to assessments made by that assessor
@@ -96,7 +96,7 @@ public interface ComplaintRepository extends JpaRepository<Complaint, Long> {
      * @return a list of complaints
      */
     @EntityGraph(type = LOAD, attributePaths = { "result.participation", "result.submission", "result.assessor" })
-    List<Complaint> getAllByResult_Assessor_Id(Long assessorId);
+    List<Complaint> getAllByResultAssessorId(Long assessorId);
 
     /**
      * Given a exercise id, retrieve all complaints related to that exercise
@@ -105,7 +105,7 @@ public interface ComplaintRepository extends JpaRepository<Complaint, Long> {
      * @return a list of complaints
      */
     @EntityGraph(type = LOAD, attributePaths = { "result.participation", "result.submission", "result.assessor" })
-    List<Complaint> getAllByResult_Participation_Exercise_Id(Long exerciseId);
+    List<Complaint> getAllByResultParticipationExerciseId(Long exerciseId);
 
     /**
      * Given a course id, retrieve all complaints related to assessments related to that course
@@ -114,7 +114,7 @@ public interface ComplaintRepository extends JpaRepository<Complaint, Long> {
      * @return a list of complaints
      */
     @EntityGraph(type = LOAD, attributePaths = { "result.participation", "result.submission", "result.assessor" })
-    List<Complaint> getAllByResult_Participation_Exercise_Course_Id(Long courseId);
+    List<Complaint> getAllByResultParticipationExerciseCourseId(Long courseId);
 
     /**
      * Given a user id and an exercise id retrieve all complaints related to assessments made by that assessor in that exercise.
@@ -124,7 +124,7 @@ public interface ComplaintRepository extends JpaRepository<Complaint, Long> {
      * @return a list of complaints
      */
     @EntityGraph(type = LOAD, attributePaths = { "result.participation", "result.submission", "result.assessor" })
-    List<Complaint> getAllByResult_Assessor_IdAndResult_Participation_Exercise_Id(Long assessorId, Long exerciseId);
+    List<Complaint> getAllByResultAssessorIdAndResultParticipationExerciseId(Long assessorId, Long exerciseId);
 
     /**
      * Given a user id and a course id retrieve all complaints related to assessments made by that assessor in that course.
@@ -134,5 +134,5 @@ public interface ComplaintRepository extends JpaRepository<Complaint, Long> {
      * @return a list of complaints
      */
     @EntityGraph(type = LOAD, attributePaths = { "result.participation", "result.submission", "result.assessor" })
-    List<Complaint> getAllByResult_Assessor_IdAndResult_Participation_Exercise_Course_Id(Long assessorId, Long courseId);
+    List<Complaint> getAllByResultAssessorIdAndResultParticipationExerciseCourseId(Long assessorId, Long courseId);
 }

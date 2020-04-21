@@ -21,20 +21,20 @@ import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentPar
 @Repository
 public interface ProgrammingExerciseStudentParticipationRepository extends JpaRepository<ProgrammingExerciseStudentParticipation, Long> {
 
-    @Query("select p from ProgrammingExerciseStudentParticipation p left join fetch p.results pr left join fetch pr.feedbacks left join fetch pr.submission where p.id = :participationId and (pr.id = (select max(id) from p.results) or pr.id = null)")
-    Optional<ProgrammingExerciseStudentParticipation> findByIdWithLatestResultAndFeedbacksAndRelatedSubmissions(@Param("participationId") Long participationId);
+    @Query("SELECT p FROM ProgrammingExerciseStudentParticipation p LEFT JOIN FETCH p.results pr LEFT JOIN FETCH pr.feedbacks LEFT JOIN FETCH pr.submission WHERE p.id = :participationId AND (pr.id = (SELECT MAX(id) FROM p.results) OR pr.id = NULL)")
+    Optional<ProgrammingExerciseStudentParticipation> findWithLatestResultAndFeedbacksAndRelatedSubmissionsById(@Param("participationId") Long participationId);
 
     @EntityGraph(type = LOAD, attributePaths = { "results", "exercise" })
-    List<ProgrammingExerciseStudentParticipation> findByBuildPlanId(String buildPlanId);
+    List<ProgrammingExerciseStudentParticipation> findAllByBuildPlanId(String buildPlanId);
 
-    @Query("select distinct p from ProgrammingExerciseStudentParticipation p left join fetch p.results where p.buildPlanId is not null and (p.student is not null or p.team is not null)")
+    @Query("SELECT DISTINCT p FROM ProgrammingExerciseStudentParticipation p LEFT JOIN FETCH p.results WHERE p.buildPlanId IS NOT NULL AND (p.student IS NOT NULL OR p.team IS NOT NULL)")
     List<ProgrammingExerciseStudentParticipation> findAllWithBuildPlanId();
 
     Optional<ProgrammingExerciseStudentParticipation> findByExerciseIdAndStudentLogin(Long exerciseId, String username);
 
     Optional<ProgrammingExerciseStudentParticipation> findByExerciseIdAndTeamId(Long exerciseId, Long teamId);
 
-    List<ProgrammingExerciseStudentParticipation> findByExerciseId(Long exerciseId);
+    List<ProgrammingExerciseStudentParticipation> findAllByExerciseId(Long exerciseId);
 
     /**
      * Will return the participations matching the provided participation ids, but only if they belong to the given exercise.
@@ -43,7 +43,7 @@ public interface ProgrammingExerciseStudentParticipationRepository extends JpaRe
      * @param participationIds the participations to retrieve.
      * @return filtered list of participations.
      */
-    @Query("select participation from ProgrammingExerciseStudentParticipation participation where participation.exercise.id = :#{#exerciseId} and participation.id in :#{#participationIds}")
+    @Query("SELECT participation FROM ProgrammingExerciseStudentParticipation participation WHERE participation.exercise.id = :#{#exerciseId} AND participation.id IN :#{#participationIds}")
     List<ProgrammingExerciseStudentParticipation> findByExerciseIdAndParticipationIds(@Param("exerciseId") Long exerciseId,
             @Param("participationIds") Collection<Long> participationIds);
 

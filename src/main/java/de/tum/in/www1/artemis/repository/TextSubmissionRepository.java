@@ -19,17 +19,17 @@ import de.tum.in.www1.artemis.domain.TextSubmission;
 @Repository
 public interface TextSubmissionRepository extends JpaRepository<TextSubmission, Long> {
 
-    @Query("select distinct submission from TextSubmission submission left join fetch submission.participation participation left join fetch participation.exercise left join fetch submission.result result left join fetch result.assessor left join fetch result.feedbacks where submission.id = :#{#submissionId}")
+    @Query("SELECT DISTINCT submission FROM TextSubmission submission LEFT JOIN FETCH submission.participation participation LEFT JOIN FETCH participation.exercise LEFT JOIN FETCH submission.result result LEFT JOIN FETCH result.assessor LEFT JOIN FETCH result.feedbacks WHERE submission.id = :#{#submissionId}")
     Optional<TextSubmission> findByIdWithEagerParticipationExerciseResultAssessor(@Param("submissionId") Long submissionId);
 
-    @Query("select distinct submission from TextSubmission submission left join fetch submission.result r left join fetch r.assessor where submission.id = :#{#submissionId}")
+    @Query("SELECT DISTINCT submission FROM TextSubmission submission LEFT JOIN FETCH submission.result r LEFT JOIN FETCH r.assessor WHERE submission.id = :#{#submissionId}")
     Optional<TextSubmission> findByIdWithEagerResultAndAssessor(@Param("submissionId") Long submissionId);
 
     /**
      * @param submissionId the submission id we are interested in
      * @return the submission with its feedback and assessor
      */
-    @Query("select distinct submission from TextSubmission submission left join fetch submission.result r left join fetch r.feedbacks left join fetch r.assessor where submission.id = :#{#submissionId}")
+    @Query("SELECT DISTINCT submission FROM TextSubmission submission LEFT JOIN FETCH submission.result r LEFT JOIN FETCH r.feedbacks LEFT JOIN FETCH r.assessor WHERE submission.id = :#{#submissionId}")
     Optional<TextSubmission> findByIdWithEagerResultAndFeedback(@Param("submissionId") Long submissionId);
 
     /**
@@ -38,8 +38,8 @@ public interface TextSubmissionRepository extends JpaRepository<TextSubmission, 
      * @return List of Text Submissions
      */
     @EntityGraph(type = LOAD, attributePaths = { "blocks", "blocks.cluster", "result", "participation", "participation.submissions" })
-    List<TextSubmission> findByParticipation_ExerciseIdAndResultIsNullAndSubmittedIsTrue(Long exerciseId);
+    List<TextSubmission> findAllByParticipationExerciseIdAndResultIsNullAndSubmittedIsTrue(Long exerciseId);
 
     @EntityGraph(type = LOAD, attributePaths = { "result", "result.assessor", "blocks" })
-    Optional<TextSubmission> findByResult_Id(Long resultId);
+    Optional<TextSubmission> findByResultId(Long resultId);
 }

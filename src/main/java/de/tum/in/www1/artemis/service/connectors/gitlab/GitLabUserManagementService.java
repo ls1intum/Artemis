@@ -71,8 +71,8 @@ public class GitLabUserManagementService implements VcsUserManagementService {
 
         // Add user to existing exercises
         if (user.getGroups() != null && user.getGroups().size() > 0) {
-            final var instructorExercises = programmingExerciseRepository.findAllByCourse_InstructorGroupNameIn(user.getGroups());
-            final var teachingAssistantExercises = programmingExerciseRepository.findAllByCourse_TeachingAssistantGroupNameIn(user.getGroups()).stream()
+            final var instructorExercises = programmingExerciseRepository.findAllByCourseInstructorGroupNameIn(user.getGroups());
+            final var teachingAssistantExercises = programmingExerciseRepository.findAllByCourseTeachingAssistantGroupNameIn(user.getGroups()).stream()
                     .filter(programmingExercise -> !instructorExercises.contains(programmingExercise)).collect(Collectors.toList());
             addUserToGroups(userId, instructorExercises, MAINTAINER);
             addUserToGroups(userId, teachingAssistantExercises, GUEST);

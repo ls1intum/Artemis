@@ -93,7 +93,7 @@ public class ComplaintResponseResource {
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<ComplaintResponse> getComplaintResponseByComplaintId(@PathVariable long complaintId, Principal principal) {
         log.debug("REST request to get ComplaintResponse associated to complaint : {}", complaintId);
-        Optional<ComplaintResponse> complaintResponse = complaintResponseRepository.findByComplaint_Id(complaintId);
+        Optional<ComplaintResponse> complaintResponse = complaintResponseRepository.findByComplaintId(complaintId);
         return handleComplaintResponse(complaintId, principal, complaintResponse);
     }
 

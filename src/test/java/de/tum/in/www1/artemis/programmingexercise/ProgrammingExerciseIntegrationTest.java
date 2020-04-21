@@ -96,7 +96,7 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     void initTestCase() throws Exception {
         database.addUsers(3, 2, 2);
         database.addCourseWithOneProgrammingExerciseAndTestCases();
-        programmingExercise = programmingExerciseRepository.findAllWithEagerParticipations().get(0);
+        programmingExercise = programmingExerciseRepository.findWithEagerParticipationsAll().get(0);
         database.addStudentParticipationForProgrammingExercise(programmingExercise, "student1");
         database.addStudentParticipationForProgrammingExercise(programmingExercise, "student2");
 
@@ -536,7 +536,7 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     public void getTestCases_asTutor() throws Exception {
         final var endpoint = ProgrammingExerciseTestCaseResource.Endpoints.TEST_CASES.replace("{exerciseId}", programmingExercise.getId() + "");
         final var returnedTests = request.getList(ROOT + endpoint, HttpStatus.OK, ProgrammingExerciseTestCase.class);
-        final var testsInDB = programmingExerciseTestCaseRepository.findByExerciseId(programmingExercise.getId());
+        final var testsInDB = programmingExerciseTestCaseRepository.findAllByExerciseId(programmingExercise.getId());
         returnedTests.forEach(testCase -> testCase.setExercise(programmingExercise));
 
         assertThat(new HashSet<>(returnedTests)).isEqualTo(testsInDB);
@@ -564,7 +564,7 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         bambooRequestMockProvider.enableMockingOfRequests();
         programmingExercise = programmingExerciseRepository.findWithTemplateParticipationAndSolutionParticipationById(programmingExercise.getId()).get();
         bambooRequestMockProvider.mockTriggerBuild(programmingExercise.getSolutionParticipation());
-        final var testCases = programmingExerciseTestCaseRepository.findByExerciseId(programmingExercise.getId());
+        final var testCases = programmingExerciseTestCaseRepository.findAllByExerciseId(programmingExercise.getId());
         final var updates = testCases.stream().map(testCase -> {
             final var testCaseUpdate = new ProgrammingExerciseTestCaseDTO();
             testCaseUpdate.setId(testCase.getId());
@@ -577,7 +577,7 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         final var testCasesResponse = request.patchWithResponseBody(ROOT + endpoint, updates, new TypeReference<List<ProgrammingExerciseTestCase>>() {
         }, HttpStatus.OK);
         testCasesResponse.forEach(testCase -> testCase.setExercise(programmingExercise));
-        final var testCasesInDB = programmingExerciseTestCaseRepository.findByExerciseId(programmingExercise.getId());
+        final var testCasesInDB = programmingExerciseTestCaseRepository.findAllByExerciseId(programmingExercise.getId());
 
         assertThat(new HashSet<>(testCasesResponse)).isEqualTo(testCasesInDB);
         assertThat(testCasesResponse).allSatisfy(testCase -> {
@@ -611,14 +611,14 @@ class ProgrammingExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         programmingExercise = programmingExerciseRepository.findWithTemplateParticipationAndSolutionParticipationById(programmingExercise.getId()).get();
         bambooRequestMockProvider.mockTriggerBuild(programmingExercise.getSolutionParticipation());
         final var endpoint = ProgrammingExerciseTestCaseResource.Endpoints.RESET_WEIGHTS.replace("{exerciseId}", programmingExercise.getId() + "");
-        programmingExerciseTestCaseRepository.findByExerciseId(programmingExercise.getId()).forEach(test -> {
+        programmingExerciseTestCaseRepository.findAllByExerciseId(programmingExercise.getId()).forEach(test -> {
             test.setWeight(42);
             programmingExerciseTestCaseRepository.saveAndFlush(test);
         });
 
         final var testCasesResponse = request.patchWithResponseBody(ROOT + endpoint, "{}", new TypeReference<Set<ProgrammingExerciseTestCase>>() {
         }, HttpStatus.OK);
-        final var testsInDB = programmingExerciseTestCaseRepository.findByExerciseId(programmingExercise.getId());
+        final var testsInDB = programmingExerciseTestCaseRepository.findAllByExerciseId(programmingExercise.getId());
 
         assertThat(testCasesResponse).isEqualTo(testsInDB);
         assertThat(testsInDB).allSatisfy(test -> assertThat(test.getWeight()).isEqualTo(1));

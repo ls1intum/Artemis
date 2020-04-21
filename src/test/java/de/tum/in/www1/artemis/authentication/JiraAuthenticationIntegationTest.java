@@ -100,7 +100,7 @@ public class JiraAuthenticationIntegationTest extends AbstractSpringIntegrationB
     @BeforeEach
     public void setUp() {
         course = database.addCourseWithOneProgrammingExercise();
-        programmingExercise = programmingExerciseRepository.findAllWithEagerParticipations().get(0);
+        programmingExercise = programmingExerciseRepository.findWithEagerParticipationsAll().get(0);
         ltiLaunchRequest = AuthenticationIntegrationTestHelper.setupDefaultLtiLaunchRequest();
         doReturn(true).when(ltiService).verifyRequest(any());
 
@@ -147,7 +147,7 @@ public class JiraAuthenticationIntegationTest extends AbstractSpringIntegrationB
         assertThat(ltiOutcome.getUrl()).isEqualTo(ltiLaunchRequest.getLis_outcome_service_url());
         assertThat(ltiOutcome.getSourcedId()).isEqualTo(ltiLaunchRequest.getLis_result_sourcedid());
 
-        final var mrrobotUser = userRepository.findOneWithGroupsAndAuthoritiesByLogin(username).get();
+        final var mrrobotUser = userRepository.findWithGroupsAndAuthoritiesByLogin(username).get();
         assertThat(mrrobotUser.getEmail()).isEqualTo(email);
         assertThat(mrrobotUser.getFirstName()).isEqualTo(firstName);
         assertThat(mrrobotUser.getGroups()).containsAll(groups);

@@ -12,13 +12,13 @@ import de.tum.in.www1.artemis.domain.modeling.ModelAssessmentConflict;
 @Repository
 public interface ModelAssessmentConflictRepository extends JpaRepository<ModelAssessmentConflict, Long> {
 
-    @Query("select c from ModelAssessmentConflict c where c.causingConflictingResult.result.submission.id = :#{#submissionId}")
+    @Query("SELECT c FROM ModelAssessmentConflict c WHERE c.causingConflictingResult.result.submission.id = :#{#submissionId}")
     List<ModelAssessmentConflict> findAllConflictsByCausingSubmission(@Param("submissionId") Long submissionId);
 
-    @Query("select c from ModelAssessmentConflict c where c.causingConflictingResult.result.id = :#{#result.id}")
+    @Query("SELECT c FROM ModelAssessmentConflict c WHERE c.causingConflictingResult.result.id = :#{#result.id}")
     List<ModelAssessmentConflict> findAllConflictsByCausingResult(@Param("result") Result result);
 
-    @Query("select  c from ModelAssessmentConflict c where c.causingConflictingResult.result.participation.exercise.id = :#{#exerciseId}")
+    @Query("SELECT  c FROM ModelAssessmentConflict c WHERE c.causingConflictingResult.result.participation.exercise.id = :#{#exerciseId}")
     List<ModelAssessmentConflict> findAllConflictsOfExercise(@Param("exerciseId") Long exerciseId);
 
     Optional<ModelAssessmentConflict> findById(Long id);
@@ -29,5 +29,5 @@ public interface ModelAssessmentConflictRepository extends JpaRepository<ModelAs
      * @param causingConflictingResultId the ID of the conflicting result that the returned conflicts should reference
      * @return all modeling assessment conflicts that reference the given conflicting result ID
      */
-    List<ModelAssessmentConflict> findAllConflictsByCausingConflictingResult_Id(Long causingConflictingResultId);
+    List<ModelAssessmentConflict> findAllConflictsByCausingConflictingResultId(Long causingConflictingResultId);
 }

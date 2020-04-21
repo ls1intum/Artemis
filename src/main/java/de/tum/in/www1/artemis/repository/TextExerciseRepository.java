@@ -19,7 +19,7 @@ import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 public interface TextExerciseRepository extends JpaRepository<TextExercise, Long> {
 
     @Query("SELECT e FROM TextExercise e WHERE e.course.id = :#{#courseId}")
-    List<TextExercise> findByCourseId(@Param("courseId") Long courseId);
+    List<TextExercise> findAllByCourseId(@Param("courseId") Long courseId);
 
-    List<TextExercise> findByAssessmentTypeAndDueDateIsAfter(AssessmentType assessmentType, ZonedDateTime dueDate);
+    List<TextExercise> findAllByAssessmentTypeAndDueDateIsAfter(AssessmentType assessmentType, ZonedDateTime dueDate);
 }

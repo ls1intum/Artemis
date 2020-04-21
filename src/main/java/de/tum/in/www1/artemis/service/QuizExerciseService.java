@@ -241,7 +241,7 @@ public class QuizExerciseService {
      */
     public List<QuizExercise> findByCourseId(Long courseId) {
         log.debug("Request to find all Quiz Exercises in Course : {}", courseId);
-        List<QuizExercise> quizExercises = quizExerciseRepository.findByCourseId(courseId);
+        List<QuizExercise> quizExercises = quizExerciseRepository.findAllByCourseId(courseId);
         User user = userService.getUserWithGroupsAndAuthorities();
         if (quizExercises.size() > 0) {
             Course course = quizExercises.get(0).getCourse();
@@ -258,7 +258,7 @@ public class QuizExerciseService {
      * @return the list of quiz exercises
      */
     public List<QuizExercise> findAllPlannedToStartInTheFutureWithQuestions() {
-        return quizExerciseRepository.findByIsPlannedToStartAndReleaseDateIsAfter(true, ZonedDateTime.now());
+        return quizExerciseRepository.findAllByIsPlannedToStartAndReleaseDateIsAfter(true, ZonedDateTime.now());
     }
 
     /**
@@ -268,7 +268,7 @@ public class QuizExerciseService {
      */
     public void adjustResultsOnQuizChanges(QuizExercise quizExercise) {
         // change existing results if an answer or and question was deleted
-        for (Result result : resultRepository.findByParticipationExerciseIdOrderByCompletionDateAsc(quizExercise.getId())) {
+        for (Result result : resultRepository.findAllByParticipationExerciseIdOrderByCompletionDateAsc(quizExercise.getId())) {
 
             Set<SubmittedAnswer> submittedAnswersToDelete = new HashSet<>();
             QuizSubmission quizSubmission = quizSubmissionRepository.findById(result.getSubmission().getId()).get();

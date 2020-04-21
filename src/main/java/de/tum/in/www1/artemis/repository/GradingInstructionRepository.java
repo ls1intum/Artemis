@@ -13,6 +13,6 @@ import de.tum.in.www1.artemis.domain.GradingInstruction;
 @Repository
 public interface GradingInstructionRepository extends JpaRepository<GradingInstruction, Long> {
 
-    List<GradingInstruction> findByGradingCriterionId(long gradingCriterionId);
+    List<GradingInstruction> findAllByGradingCriterionId(long gradingCriterionId);
 
 }

@@ -73,7 +73,7 @@ public class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegr
         List<Feedback> feedbacks = new ArrayList<>();
         testCaseService.generateTestCasesFromFeedbacks(feedbacks, programmingExercise);
 
-        Set<ProgrammingExerciseTestCase> testCases = testCaseRepository.findByExerciseId(programmingExercise.getId());
+        Set<ProgrammingExerciseTestCase> testCases = testCaseRepository.findAllByExerciseId(programmingExercise.getId());
         assertThat(testCases).hasSize(3);
 
         assertThat(testCases.stream().noneMatch(ProgrammingExerciseTestCase::isActive)).isTrue();
@@ -88,7 +88,7 @@ public class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegr
         feedbacks.add(new Feedback().text("test5"));
         testCaseService.generateTestCasesFromFeedbacks(feedbacks, programmingExercise);
 
-        Set<ProgrammingExerciseTestCase> testCases = testCaseRepository.findByExerciseId(programmingExercise.getId());
+        Set<ProgrammingExerciseTestCase> testCases = testCaseRepository.findAllByExerciseId(programmingExercise.getId());
         assertThat(testCases).hasSize(5);
 
         assertThat(testCases.stream().allMatch(testCase -> {
@@ -110,7 +110,7 @@ public class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegr
         feedbacks.add(new Feedback().text("test2"));
         testCaseService.generateTestCasesFromFeedbacks(feedbacks, programmingExercise);
 
-        Set<ProgrammingExerciseTestCase> testCases = testCaseRepository.findByExerciseId(programmingExercise.getId());
+        Set<ProgrammingExerciseTestCase> testCases = testCaseRepository.findAllByExerciseId(programmingExercise.getId());
         assertThat(testCases).hasSize(2);
 
         assertThat(testCases.stream().allMatch(ProgrammingExerciseTestCase::isActive)).isTrue();
@@ -121,14 +121,14 @@ public class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegr
         String dummyHash = "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d";
         when(gitService.getLastCommitHash(ArgumentMatchers.any())).thenReturn(ObjectId.fromString(dummyHash));
         database.addProgrammingParticipationWithResultForExercise(programmingExercise, "student1");
-        new ArrayList<>(testCaseRepository.findByExerciseId(programmingExercise.getId())).get(0).weight(50);
+        new ArrayList<>(testCaseRepository.findAllByExerciseId(programmingExercise.getId())).get(0).weight(50);
         bambooRequestMockProvider.mockTriggerBuild(programmingExercise.getSolutionParticipation());
 
         assertThat(programmingExercise.getTestCasesChanged()).isFalse();
 
         testCaseService.resetWeights(programmingExercise.getId());
 
-        Set<ProgrammingExerciseTestCase> testCases = testCaseRepository.findByExerciseId(programmingExercise.getId());
+        Set<ProgrammingExerciseTestCase> testCases = testCaseRepository.findAllByExerciseId(programmingExercise.getId());
         ProgrammingExercise updatedProgrammingExercise = programmingExerciseRepository.findWithTemplateParticipationAndSolutionParticipationById(programmingExercise.getId()).get();
         assertThat(testCases.stream().mapToInt(ProgrammingExerciseTestCase::getWeight).sum()).isEqualTo(testCases.size());
         assertThat(updatedProgrammingExercise.getTestCasesChanged()).isTrue();
@@ -295,7 +295,7 @@ public class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegr
         Long scoreBeforeUpdate = result.getScore();
 
         // Set all test cases of the programming exercise to be executed after due date.
-        Set<ProgrammingExerciseTestCase> testCases = testCaseRepository.findByExerciseId(programmingExercise.getId());
+        Set<ProgrammingExerciseTestCase> testCases = testCaseRepository.findAllByExerciseId(programmingExercise.getId());
         for (ProgrammingExerciseTestCase testCase : testCases) {
             testCase.setAfterDueDate(true);
         }

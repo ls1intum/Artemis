@@ -122,13 +122,13 @@ public class TutorParticipationService {
 
     /**
      * Given a course and a tutor, it finds all the participation of that tutor in the course, with related assessed exercise and trained example submissions
-     * 
+     *
      * @param course - the course we are interested in
      * @param user   - the tutor who is querying the service
      * @return a list of tutor participation for the course
      */
     public List<TutorParticipation> findAllByCourseAndTutor(Course course, User user) {
-        return tutorParticipationRepository.findAllByAssessedExercise_Course_IdAndTutor_Id(course.getId(), user.getId());
+        return tutorParticipationRepository.findAllByAssessedExerciseCourseIdAndTutorId(course.getId(), user.getId());
     }
 
     /**

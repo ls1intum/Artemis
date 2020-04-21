@@ -19,7 +19,7 @@ import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
 @Repository
 public interface TutorParticipationRepository extends JpaRepository<TutorParticipation, Long> {
 
-    List<TutorParticipation> findByAssessedExercise(Exercise assessedExercise);
+    List<TutorParticipation> findAllByAssessedExercise(Exercise assessedExercise);
 
     @EntityGraph(type = LOAD, attributePaths = "trainedExampleSubmissions")
     TutorParticipation findByAssessedExerciseAndTutor(Exercise assessedExercise, User tutor);
@@ -30,7 +30,7 @@ public interface TutorParticipationRepository extends JpaRepository<TutorPartici
     Boolean existsByAssessedExerciseIdAndTutorId(Long assessedExerciseId, Long tutorId);
 
     @EntityGraph(type = LOAD, attributePaths = "trainedExampleSubmissions")
-    List<TutorParticipation> findAllByAssessedExercise_Course_IdAndTutor_Id(long courseId, long tutorId);
+    List<TutorParticipation> findAllByAssessedExerciseCourseIdAndTutorId(long courseId, long tutorId);
 
     void deleteAllByAssessedExerciseId(long assessedExerciseId);
 }

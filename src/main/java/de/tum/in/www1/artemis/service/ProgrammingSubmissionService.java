@@ -150,7 +150,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
         }
 
         // There can't be two submissions for the same participation and commitHash!
-        ProgrammingSubmission programmingSubmission = programmingSubmissionRepository.findFirstByParticipationIdAndCommitHash(participationId, commit.getCommitHash());
+        ProgrammingSubmission programmingSubmission = programmingSubmissionRepository.findByParticipationIdAndCommitHash(participationId, commit.getCommitHash());
         if (programmingSubmission != null) {
             throw new IllegalStateException("Submission for participation id " + participationId + " and commitHash " + commit.getCommitHash() + " already exists!");
         }
@@ -209,7 +209,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
     private Optional<ProgrammingSubmission> findLatestPendingSubmissionForParticipation(final long participationId, final boolean isGraded) {
         final var optionalSubmission = isGraded
                 ? programmingSubmissionRepository.findGradedByParticipationIdOrderBySubmissionDateDesc(participationId, PageRequest.of(0, 1)).stream().findFirst()
-                : programmingSubmissionRepository.findFirstByParticipationIdOrderBySubmissionDateDesc(participationId);
+                : programmingSubmissionRepository.findByParticipationIdOrderBySubmissionDateDesc(participationId);
         if (optionalSubmission.isEmpty() || optionalSubmission.get().getResult() != null) {
             // This is not an error case, it is very likely that there is no pending submission for a participation.
             return Optional.empty();
@@ -503,7 +503,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
         // If the programming exercise is not released / has no results, there is no point in setting the dirty flag. It is only relevant when there are student submissions that
         // should get an updated result.
 
-        if (testCasesChanged == programmingExercise.getTestCasesChanged() || !resultRepository.existsByParticipation_ExerciseId(programmingExercise.getId())) {
+        if (testCasesChanged == programmingExercise.getTestCasesChanged() || !resultRepository.existsByParticipationExerciseId(programmingExercise.getId())) {
             return programmingExercise;
         }
         programmingExercise.setTestCasesChanged(testCasesChanged);
@@ -552,7 +552,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
      * @return a list of programming submissions
      */
     public List<ProgrammingSubmission> getAllProgrammingSubmissionsByTutorForExercise(long exerciseId, long tutorId) {
-        List<StudentParticipation> participations = this.studentParticipationRepository.findWithLatestSubmissionByExerciseAndAssessor(exerciseId, tutorId);
+        List<StudentParticipation> participations = this.studentParticipationRepository.findAllWithLatestSubmissionByExerciseIdAndAssessorId(exerciseId, tutorId);
         return participations.stream().map(Participation::findLatestSubmission).filter(Optional::isPresent).map(submission -> (ProgrammingSubmission) submission.get())
                 .collect(Collectors.toList());
     }

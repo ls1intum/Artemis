@@ -61,7 +61,7 @@ public class ProgrammingExerciseParticipationIntegrationTest extends AbstractSpr
     public void initTestCase() {
         database.addUsers(3, 2, 2);
         database.addCourseWithOneProgrammingExerciseAndTestCases();
-        programmingExercise = programmingExerciseRepository.findAllWithEagerParticipations().get(0);
+        programmingExercise = programmingExerciseRepository.findWithEagerParticipationsAll().get(0);
     }
 
     @AfterEach

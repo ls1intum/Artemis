@@ -14,5 +14,5 @@ import de.tum.in.www1.artemis.domain.ExerciseHint;
 @Repository
 public interface ExerciseHintRepository extends JpaRepository<ExerciseHint, Long> {
 
-    Set<ExerciseHint> findByExerciseId(Long exerciseId);
+    Set<ExerciseHint> findAllByExerciseId(Long exerciseId);
 }

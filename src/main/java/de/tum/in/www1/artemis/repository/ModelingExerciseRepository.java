@@ -18,9 +18,9 @@ import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 public interface ModelingExerciseRepository extends JpaRepository<ModelingExercise, Long> {
 
     @Query("SELECT e FROM ModelingExercise e WHERE e.course.id = :#{#courseId}")
-    List<ModelingExercise> findByCourseId(@Param("courseId") Long courseId);
+    List<ModelingExercise> findAllByCourseId(@Param("courseId") Long courseId);
 
-    @Query("select distinct modelingExercise from ModelingExercise modelingExercise left join fetch modelingExercise.exampleSubmissions where modelingExercise.id = :#{#exerciseId}")
+    @Query("SELECT DISTINCT modelingExercise FROM ModelingExercise modelingExercise LEFT JOIN FETCH modelingExercise.exampleSubmissions WHERE modelingExercise.id = :#{#exerciseId}")
     Optional<ModelingExercise> findByIdWithEagerExampleSubmissions(@Param("exerciseId") Long exerciseId);
 
 }

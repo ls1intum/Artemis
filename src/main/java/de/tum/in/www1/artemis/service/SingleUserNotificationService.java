@@ -49,6 +49,6 @@ public class SingleUserNotificationService {
     }
 
     public List<Notification> findAllRecentNewNotificationsForRecipientWithLogin(String login) {
-        return this.singleUserNotificationRepository.findAllRecentNewNotificationsForRecipientWithLogin(login);
+        return this.singleUserNotificationRepository.findAllByLogin(login);
     }
 }

@@ -414,7 +414,7 @@ public class DatabaseUtilService {
                 exampleSubmissionRepo.save(exampleSubmission);
             }
 
-            User user = (userRepo.findOneByLogin("student1")).get();
+            User user = (userRepo.findByLogin("student1")).get();
             StudentParticipation participation1 = ModelFactory.generateStudentParticipation(InitializationState.INITIALIZED, modelingExercise, user);
             StudentParticipation participation2 = ModelFactory.generateStudentParticipation(InitializationState.FINISHED, textExercise, user);
             StudentParticipation participation3 = ModelFactory.generateStudentParticipation(InitializationState.UNINITIALIZED, modelingExercise, user);
@@ -739,7 +739,7 @@ public class DatabaseUtilService {
         testCases.add(new ProgrammingExerciseTestCase().testName("testMethods[Policy]").weight(3).active(true).exercise(programmingExercise).afterDueDate(false));
         testCaseRepository.saveAll(testCases);
 
-        List<ProgrammingExerciseTestCase> tests = new ArrayList<>(testCaseRepository.findByExerciseId(programmingExercise.getId()));
+        List<ProgrammingExerciseTestCase> tests = new ArrayList<>(testCaseRepository.findAllByExerciseId(programmingExercise.getId()));
         assertThat(tests).as("test case is initialized").hasSize(3);
 
         return courseRepo.findById(course.getId()).get();
@@ -757,7 +757,7 @@ public class DatabaseUtilService {
         testCases.add(new ProgrammingExerciseTestCase().testName("test3").weight(3).active(true).exercise(programmingExercise).afterDueDate(true));
         testCaseRepository.saveAll(testCases);
 
-        List<ProgrammingExerciseTestCase> tests = new ArrayList<>(testCaseRepository.findByExerciseId(programmingExercise.getId()));
+        List<ProgrammingExerciseTestCase> tests = new ArrayList<>(testCaseRepository.findAllByExerciseId(programmingExercise.getId()));
         assertThat(tests).as("test case is initialized").hasSize(3);
 
         return courseRepo.findById(course.getId()).get();
@@ -1076,7 +1076,7 @@ public class DatabaseUtilService {
     }
 
     public User getUserByLogin(String login) {
-        return userRepo.findOneWithAuthoritiesByLogin(login).orElseThrow(() -> new IllegalArgumentException("Provided login " + login + " does not exist in database"));
+        return userRepo.findWithAuthoritiesByLogin(login).orElseThrow(() -> new IllegalArgumentException("Provided login " + login + " does not exist in database"));
     }
 
     public void updateExerciseDueDate(long exerciseId, ZonedDateTime newDueDate) {

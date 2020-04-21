@@ -20,8 +20,8 @@ import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExercisePa
 public interface SolutionProgrammingExerciseParticipationRepository extends JpaRepository<SolutionProgrammingExerciseParticipation, Long> {
 
     @EntityGraph(type = LOAD, attributePaths = { "results", "programmingExercise" })
-    @Query("select p from SolutionProgrammingExerciseParticipation p where p.buildPlanId = :#{#buildPlanId}")
-    Optional<SolutionProgrammingExerciseParticipation> findByBuildPlanIdWithResults(@Param("buildPlanId") String buildPlanId);
+    @Query("SELECT p FROM SolutionProgrammingExerciseParticipation p WHERE p.buildPlanId = :#{#buildPlanId}")
+    Optional<SolutionProgrammingExerciseParticipation> findWithResultsByBuildPlanId(@Param("buildPlanId") String buildPlanId);
 
     @EntityGraph(type = LOAD, attributePaths = { "results", "submissions" })
     Optional<SolutionProgrammingExerciseParticipation> findWithEagerResultsAndSubmissionsByProgrammingExerciseId(Long exerciseId);

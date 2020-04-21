@@ -21,10 +21,10 @@ import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
 public interface ProgrammingSubmissionRepository extends JpaRepository<ProgrammingSubmission, Long> {
 
     @EntityGraph(type = LOAD, attributePaths = { "result.feedbacks" })
-    ProgrammingSubmission findFirstByParticipationIdAndCommitHash(Long participationId, String commitHash);
+    ProgrammingSubmission findByParticipationIdAndCommitHash(Long participationId, String commitHash);
 
     @EntityGraph(type = LOAD, attributePaths = "result")
-    Optional<ProgrammingSubmission> findFirstByParticipationIdOrderBySubmissionDateDesc(Long participationId);
+    Optional<ProgrammingSubmission> findByParticipationIdOrderBySubmissionDateDesc(Long participationId);
 
     /**
      * Provide a list of graded submissions. To be graded a submission must:
@@ -37,7 +37,7 @@ public interface ProgrammingSubmissionRepository extends JpaRepository<Programmi
      * @return ProgrammingSubmission list (can be empty!)
      */
     @EntityGraph(type = LOAD, attributePaths = "result")
-    @Query("select s from ProgrammingSubmission s left join s.participation p left join p.exercise e where p.id = :#{#participationId} and (s.type = 'INSTRUCTOR' or s.type = 'TEST' or e.dueDate is null or s.submissionDate <= e.dueDate) order by s.submissionDate desc")
+    @Query("SELECT s FROM ProgrammingSubmission s LEFT JOIN s.participation p LEFT JOIN p.exercise e WHERE p.id = :#{#participationId} AND (s.type = 'INSTRUCTOR' OR s.type = 'TEST' OR e.dueDate IS NULL OR s.submissionDate <= e.dueDate) ORDER BY s.submissionDate DESC")
     List<ProgrammingSubmission> findGradedByParticipationIdOrderBySubmissionDateDesc(@Param("participationId") Long participationId, Pageable pageable);
 
     @EntityGraph(type = LOAD, attributePaths = { "result.feedbacks" })

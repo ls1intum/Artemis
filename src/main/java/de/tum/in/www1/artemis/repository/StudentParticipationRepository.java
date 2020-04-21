@@ -22,18 +22,18 @@ import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 @Repository
 public interface StudentParticipationRepository extends JpaRepository<StudentParticipation, Long> {
 
-    List<StudentParticipation> findByExerciseId(@Param("exerciseId") Long exerciseId);
+    List<StudentParticipation> findAllByExerciseId(@Param("exerciseId") Long exerciseId);
 
     boolean existsByExerciseId(@Param("exerciseId") Long exerciseId);
 
-    @Query("select distinct participation from StudentParticipation participation left join fetch participation.results r where participation.exercise.course.id = :#{#courseId} and (r.rated is null or r.rated = true)")
-    List<StudentParticipation> findByCourseIdWithEagerRatedResults(@Param("courseId") Long courseId);
+    @Query("SELECT DISTINCT participation FROM StudentParticipation participation LEFT JOIN FETCH participation.results r WHERE participation.exercise.course.id = :#{#courseId} AND (r.rated IS NULL OR r.rated = true)")
+    List<StudentParticipation> findAllWithEagerRatedResultsByCourseId(@Param("courseId") Long courseId);
 
     Optional<StudentParticipation> findByExerciseIdAndStudentLogin(Long exerciseId, String username);
 
     Optional<StudentParticipation> findByExerciseIdAndTeamId(Long exerciseId, Long teamId);
 
-    List<StudentParticipation> findByTeamId(Long teamId);
+    List<StudentParticipation> findAllByTeamId(Long teamId);
 
     @EntityGraph(type = LOAD, attributePaths = "results")
     Optional<StudentParticipation> findWithEagerResultsByExerciseIdAndStudentLogin(Long exerciseId, String username);
@@ -47,11 +47,11 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
     @EntityGraph(type = LOAD, attributePaths = "submissions")
     Optional<StudentParticipation> findWithEagerSubmissionsByExerciseIdAndTeamId(Long exerciseId, Long teamId);
 
-    @Query("select distinct participation from StudentParticipation participation left join fetch participation.submissions s left join fetch s.result where participation.exercise.id = :#{#exerciseId}")
-    List<StudentParticipation> findByExerciseIdWithEagerSubmissionsResult(@Param("exerciseId") Long exerciseId);
+    @Query("SELECT DISTINCT participation FROM StudentParticipation participation LEFT JOIN FETCH participation.submissions s LEFT JOIN FETCH s.result WHERE participation.exercise.id = :#{#exerciseId}")
+    List<StudentParticipation> findAllWithEagerSubmissionsResultByExerciseId(@Param("exerciseId") Long exerciseId);
 
-    @Query("select distinct participation from StudentParticipation participation left join fetch participation.submissions s left join fetch s.result r left join fetch r.assessor where participation.exercise.id = :#{#exerciseId}")
-    List<StudentParticipation> findByExerciseIdWithEagerSubmissionsResultAssessor(@Param("exerciseId") Long exerciseId);
+    @Query("SELECT DISTINCT participation FROM StudentParticipation participation LEFT JOIN FETCH participation.submissions s left join fetch s.result r LEFT JOIN FETCH r.assessor WHERE participation.exercise.id = :#{#exerciseId}")
+    List<StudentParticipation> findAllWithEagerSubmissionsResultAssessorByExerciseId(@Param("exerciseId") Long exerciseId);
 
     /**
      * Get all participations for an exercise with each latest result (determined by id).
@@ -60,20 +60,20 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
      * @param exerciseId Exercise id.
      * @return participations for exercise.
      */
-    @Query("select distinct participation from StudentParticipation participation left join fetch participation.results result where participation.exercise.id = :#{#exerciseId} and (result.id = (select max(id) from participation.results) or result is null)")
-    List<StudentParticipation> findByExerciseIdWithLatestResult(@Param("exerciseId") Long exerciseId);
+    @Query("SELECT DISTINCT participation FROM StudentParticipation participation LEFT JOIN FETCH participation.results result WHERE participation.exercise.id = :#{#exerciseId} AND (result.id = (SELECT MAX(id) FROM participation.results) OR result IS NULL)")
+    List<StudentParticipation> findAllWithLatestResultByExerciseId(@Param("exerciseId") Long exerciseId);
 
-    @Query("select distinct participation from StudentParticipation participation left join fetch participation.results left join fetch participation.submissions where participation.exercise.id = :#{#exerciseId} and participation.student.id = :#{#studentId}")
-    List<StudentParticipation> findByExerciseIdAndStudentIdWithEagerResultsAndSubmissions(@Param("exerciseId") Long exerciseId, @Param("studentId") Long studentId);
+    @Query("SELECT DISTINCT participation FROM StudentParticipation participation LEFT JOIN FETCH participation.results LEFT JOIN FETCH participation.submissions WHERE participation.exercise.id = :#{#exerciseId} AND participation.student.id = :#{#studentId}")
+    List<StudentParticipation> findAllWithEagerResultsAndSubmissionsByExerciseIdAndStudentId(@Param("exerciseId") Long exerciseId, @Param("studentId") Long studentId);
 
-    @Query("select distinct participation from StudentParticipation participation left join fetch participation.results left join fetch participation.submissions where participation.exercise.id = :#{#exerciseId} and participation.team.id = :#{#teamId}")
-    List<StudentParticipation> findByExerciseIdAndTeamIdWithEagerResultsAndSubmissions(@Param("exerciseId") Long exerciseId, @Param("teamId") Long teamId);
+    @Query("SELECT DISTINCT participation FROM StudentParticipation participation LEFT JOIN FETCH participation.results LEFT JOIN FETCH participation.submissions WHERE participation.exercise.id = :#{#exerciseId} AND participation.team.id = :#{#teamId}")
+    List<StudentParticipation> findAllWithEagerResultsAndSubmissionsByExerciseIdAndTeamId(@Param("exerciseId") Long exerciseId, @Param("teamId") Long teamId);
 
-    @Query("select distinct participation from StudentParticipation participation left join fetch participation.results as par left join fetch par.feedbacks where participation.exercise.id = :#{#exerciseId} and participation.student.id = :#{#studentId} and (par.id = (select max(id) from participation.results) or par.id = null)")
-    Optional<StudentParticipation> findByExerciseIdAndStudentIdWithLatestResult(@Param("exerciseId") Long exerciseId, @Param("studentId") Long studentId);
+    @Query("SELECT DISTINCT participation FROM StudentParticipation participation LEFT JOIN FETCH participation.results as par LEFT JOIN FETCH par.feedbacks WHERE participation.exercise.id = :#{#exerciseId} AND participation.student.id = :#{#studentId} AND (par.id = (SELECT MAX(id) FROM participation.results) OR par.id = NULL)")
+    Optional<StudentParticipation> findWithLatestResultByExerciseIdAndStudentId(@Param("exerciseId") Long exerciseId, @Param("studentId") Long studentId);
 
-    @Query("select distinct participation from StudentParticipation participation left join fetch participation.results as par left join fetch par.feedbacks where participation.exercise.id = :#{#exerciseId} and participation.team.id = :#{#teamId} and (par.id = (select max(id) from participation.results) or par.id = null)")
-    Optional<StudentParticipation> findByExerciseIdAndTeamIdWithLatestResult(@Param("exerciseId") Long exerciseId, @Param("teamId") Long teamId);
+    @Query("SELECT DISTINCT participation FROM StudentParticipation participation LEFT JOIN FETCH participation.results as par LEFT JOIN FETCH par.feedbacks WHERE participation.exercise.id = :#{#exerciseId} AND participation.team.id = :#{#teamId} AND (par.id = (SELECT MAX(id) FROM participation.results) OR par.id = NULL)")
+    Optional<StudentParticipation> findWithLatestResultByExerciseIdAndTeamId(@Param("exerciseId") Long exerciseId, @Param("teamId") Long teamId);
 
     /**
      * Find all participations of submissions that are submitted and do not already have a manual result. No manual result means that no user has started an assessment for the
@@ -84,11 +84,11 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
      * @param exerciseId the exercise id the participations should belong to
      * @return a list of participations including their submitted submissions that do not have a manual result
      */
-    @Query("select distinct participation from Participation participation left join fetch participation.submissions submission left join fetch submission.result result where participation.exercise.id = :#{#exerciseId} and not exists (select prs from participation.results prs where prs.assessmentType = 'MANUAL') and submission.submitted = true and submission.id = (select max(id) from participation.submissions)")
-    List<StudentParticipation> findByExerciseIdWithLatestSubmissionWithoutManualResults(@Param("exerciseId") Long exerciseId);
+    @Query("SELECT DISTINCT participation FROM Participation participation LEFT JOIN FETCH participation.submissions submission LEFT JOIN FETCH submission.result result WHERE participation.exercise.id = :#{#exerciseId} AND NOT EXISTS (SELECT prs FROM participation.results prs where prs.assessmentType = 'MANUAL') and submission.submitted = true and submission.id = (select max(id) from participation.submissions)")
+    List<StudentParticipation> findAllWithLatestSubmissionWithoutManualResultsByExerciseId(@Param("exerciseId") Long exerciseId);
 
-    @Query("select distinct participation from StudentParticipation participation left join fetch participation.results where participation.id = :#{#participationId}")
-    Optional<StudentParticipation> findByIdWithEagerResults(@Param("participationId") Long participationId);
+    @Query("SELECT DISTINCT participation FROM StudentParticipation participation LEFT JOIN FETCH participation.results WHERE participation.id = :#{#participationId}")
+    Optional<StudentParticipation> findWithEagerResultsById(@Param("participationId") Long participationId);
 
     /**
      * Find the participation with the given id. Additionally, load all the submissions and results of the participation from the database. Returns an empty Optional if the
@@ -117,17 +117,17 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
     List<StudentParticipation> findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseId(long exerciseId);
 
     @Query("SELECT DISTINCT participation FROM StudentParticipation participation LEFT JOIN FETCH participation.exercise e LEFT JOIN FETCH e.course WHERE participation.id = :#{#participationId}")
-    StudentParticipation findOneByIdWithEagerExerciseAndEagerCourse(@Param("participationId") Long participationId);
+    StudentParticipation findWithEagerExerciseAndEagerCourseById(@Param("participationId") Long participationId);
 
     @Query("SELECT DISTINCT participation FROM StudentParticipation participation LEFT JOIN FETCH participation.results LEFT JOIN FETCH participation.exercise e LEFT JOIN FETCH e.course WHERE participation.id = :#{#participationId}")
-    StudentParticipation findOneByIdWithEagerResultsAndExerciseAndEagerCourse(@Param("participationId") Long participationId);
+    StudentParticipation findWithEagerResultsAndExerciseAndEagerCourseById(@Param("participationId") Long participationId);
 
-    @Query("select distinct p from StudentParticipation p left join p.team t left join t.students teamStudent left join fetch p.submissions s left join fetch s.result r where p.exercise in :#{#exercises} and (p.student.id = :#{#studentId} or teamStudent.id = :#{#studentId})")
-    List<StudentParticipation> findByStudentIdAndExerciseWithEagerSubmissionsResult(@Param("studentId") Long studentId, @Param("exercises") Set<Exercise> exercises);
+    @Query("SELECT DISTINCT p FROM StudentParticipation p LEFT JOIN p.team t LEFT JOIN t.students teamStudent LEFT JOIN FETCH p.submissions s LEFT JOIN FETCH s.result r WHERE p.exercise IN :#{#exercises} AND (p.student.id = :#{#studentId} OR teamStudent.id = :#{#studentId})")
+    List<StudentParticipation> findAllWithEagerSubmissionsResultByStudentIdAndExercise(@Param("studentId") Long studentId, @Param("exercises") Set<Exercise> exercises);
 
     @EntityGraph(type = LOAD, attributePaths = { "submissions", "submissions.result", "submissions.result.assessor" })
-    @Query("select distinct p from StudentParticipation p left join fetch p.submissions s where p.exercise.id = :#{#exerciseId} and (s.result.assessor.id = :#{#assessorId} and s.id = (select max(id) from p.submissions) or s.id = null)")
-    List<StudentParticipation> findWithLatestSubmissionByExerciseAndAssessor(@Param("exerciseId") Long exerciseId, @Param("assessorId") Long assessorId);
+    @Query("SELECT DISTINCT p FROM StudentParticipation p LEFT JOIN FETCH p.submissions s WHERE p.exercise.id = :#{#exerciseId} AND (s.result.assessor.id = :#{#assessorId} AND s.id = (SELECT MAX(id) FROM p.submissions) OR s.id = NULL)")
+    List<StudentParticipation> findAllWithLatestSubmissionByExerciseIdAndAssessorId(@Param("exerciseId") Long exerciseId, @Param("assessorId") Long assessorId);
 
     /**
      * Count the number of submissions for each participation in a given exercise.
@@ -135,6 +135,6 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
      * @param exerciseId the id of the exercise for which to consider participations
      * @return Tuples of participation ids and number of submissions per participation
      */
-    @Query("select participation.id, count(submissions) from StudentParticipation participation left join participation.submissions submissions where participation.exercise.id = :#{#exerciseId} group by participation.id")
+    @Query("SELECT participation.id, COUNT(submissions) FROM StudentParticipation participation LEFT JOIN participation.submissions submissions WHERE participation.exercise.id = :#{#exerciseId} GROUP BY participation.id")
     List<long[]> countSubmissionsPerParticipationByExerciseId(@Param("exerciseId") long exerciseId);
 }

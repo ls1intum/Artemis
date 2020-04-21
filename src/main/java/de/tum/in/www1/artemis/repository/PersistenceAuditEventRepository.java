@@ -19,7 +19,7 @@ import de.tum.in.www1.artemis.domain.PersistentAuditEvent;
 public interface PersistenceAuditEventRepository extends JpaRepository<PersistentAuditEvent, Long> {
 
     @EntityGraph(type = LOAD, attributePaths = { "data" })
-    List<PersistentAuditEvent> findByPrincipalAndAuditEventDateAfterAndAuditEventType(String principle, Instant after, String type);
+    List<PersistentAuditEvent> findAllByPrincipalAndAuditEventDateAfterAndAuditEventType(String principle, Instant after, String type);
 
     @EntityGraph(type = LOAD, attributePaths = { "data" })
     Page<PersistentAuditEvent> findAllByAuditEventDateBetween(Instant fromDate, Instant toDate, Pageable pageable);

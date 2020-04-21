@@ -101,7 +101,7 @@ public class ArtemisInternalAuthenticationProvider extends ArtemisAuthentication
 
     @Override
     public Optional<String> getUsernameForEmail(String email) {
-        return userRepository.findOneByEmailIgnoreCase(email).flatMap(user -> Optional.of(user.getLogin()));
+        return userRepository.findByEmailIgnoreCase(email).flatMap(user -> Optional.of(user.getLogin()));
     }
 
     @Override

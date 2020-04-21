@@ -199,7 +199,7 @@ public class TeamResource {
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user)) {
             return forbidden();
         }
-        List<Team> teams = teamRepository.findAllByExerciseIdWithEagerStudents(exerciseId);
+        List<Team> teams = teamRepository.findAllWithEagerStudentsByExerciseId(exerciseId);
         teams.forEach(Team::filterSensitiveInformation);
         return ResponseEntity.ok().body(teams);
     }

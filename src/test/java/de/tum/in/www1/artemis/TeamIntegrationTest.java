@@ -86,7 +86,7 @@ public class TeamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         exercise = exerciseRepo.save(exercise);
 
         students = new HashSet<>(userRepo.findAllInGroup("tumuser"));
-        tutor = userRepo.findOneByLogin("tutor1").orElseThrow();
+        tutor = userRepo.findByLogin("tutor1").orElseThrow();
     }
 
     @AfterEach
@@ -208,7 +208,7 @@ public class TeamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     public void testUpdateTeam_Forbidden_OwnerChanged() throws Exception {
         // It should not be allowed to change a team's owner as a tutor
         Team team = database.addTeamForExercise(exercise, tutor);
-        team.setOwner(userRepo.findOneByLogin("tutor2").orElseThrow());
+        team.setOwner(userRepo.findByLogin("tutor2").orElseThrow());
         request.putWithResponseBody(resourceUrl() + "/" + team.getId(), team, Team.class, HttpStatus.FORBIDDEN);
     }
 
@@ -390,7 +390,7 @@ public class TeamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @WithMockUser(username = "student1", roles = "USER")
     public void testAssignedTeamIdOnExerciseForCurrentUser() throws Exception {
         // Create team that contains student "student1" (Team shortName needs to be empty since it is used as a prefix for the generated student logins)
-        Team team = new Team().name("Team").shortName("team").exercise(exercise).students(userRepo.findOneByLogin("student1").map(Set::of).orElseThrow());
+        Team team = new Team().name("Team").shortName("team").exercise(exercise).students(userRepo.findByLogin("student1").map(Set::of).orElseThrow());
         team = teamRepo.save(team);
 
         // Check for endpoint: @GetMapping("/courses/for-dashboard")

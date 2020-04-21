@@ -12,5 +12,5 @@ public interface TutorLeaderboardAssessmentViewRepository extends JpaRepository<
 
     List<TutorLeaderboardAssessmentView> findAllByCourseId(long courseId);
 
-    List<TutorLeaderboardAssessmentView> findAllByLeaderboardId_ExerciseId(long exerciseId);
+    List<TutorLeaderboardAssessmentView> findAllByLeaderboardIdExerciseId(long exerciseId);
 }

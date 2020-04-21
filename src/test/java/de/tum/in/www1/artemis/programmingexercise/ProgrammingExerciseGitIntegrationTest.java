@@ -58,7 +58,7 @@ public class ProgrammingExerciseGitIntegrationTest extends AbstractSpringIntegra
     void initTestCase() throws Exception {
         database.addUsers(3, 2, 2);
         database.addCourseWithOneProgrammingExerciseAndTestCases();
-        programmingExercise = programmingExerciseRepository.findAllWithEagerParticipations().get(0);
+        programmingExercise = programmingExerciseRepository.findWithEagerParticipationsAll().get(0);
         database.addStudentParticipationForProgrammingExercise(programmingExercise, "student1");
         database.addStudentParticipationForProgrammingExercise(programmingExercise, "student2");
 

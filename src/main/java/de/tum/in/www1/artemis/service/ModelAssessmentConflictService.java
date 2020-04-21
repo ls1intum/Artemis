@@ -93,7 +93,7 @@ public class ModelAssessmentConflictService {
 
     /**
      * Loads properties of the given conflicts that are needed by the conflict resolution view of the client
-     * 
+     *
      * @param conflicts The conflicts for which properties should be loaded
      */
     public void loadSubmissionsAndFeedbacksAndAssessorOfConflictingResults(List<ModelAssessmentConflict> conflicts) {
@@ -119,7 +119,7 @@ public class ModelAssessmentConflictService {
     /**
      * Updates the state of the given conflict by escalating the conflict to the next authority. The assessors or instructors then responsible for handling the conflict are getting
      * notified.
-     * 
+     *
      * @param conflictId id of the conflict to escalate
      * @return escalated conflict of the given conflictId
      */

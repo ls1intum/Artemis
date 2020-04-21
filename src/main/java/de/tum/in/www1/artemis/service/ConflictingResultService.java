@@ -107,14 +107,14 @@ public class ConflictingResultService {
      * @param resultId the id of the result for which all referencing conflicting results should be deleted
      */
     void deleteConflictingResultsByResultId(Long resultId) {
-        List<ConflictingResult> conflictingResults = conflictingResultRepository.getAllByResult_Id(resultId);
+        List<ConflictingResult> conflictingResults = conflictingResultRepository.getAllByResultId(resultId);
 
         for (ConflictingResult conflictingResult : conflictingResults) {
             if (conflictingResult.getConflict() != null) {
                 conflictingResult.getConflict().getResultsInConflict().remove(conflictingResult);
             }
 
-            List<ModelAssessmentConflict> conflicts = modelAssessmentConflictRepository.findAllConflictsByCausingConflictingResult_Id(conflictingResult.getId());
+            List<ModelAssessmentConflict> conflicts = modelAssessmentConflictRepository.findAllConflictsByCausingConflictingResultId(conflictingResult.getId());
             for (ModelAssessmentConflict conflict : conflicts) {
                 modelAssessmentConflictRepository.delete(conflict);
             }

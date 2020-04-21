@@ -64,7 +64,7 @@ public class ExerciseHintService {
      */
     public Set<ExerciseHint> findByExerciseId(Long exerciseId) {
         log.debug("Request to get ExerciseHints by Exercise id : {}", exerciseId);
-        return exerciseHintRepository.findByExerciseId(exerciseId);
+        return exerciseHintRepository.findAllByExerciseId(exerciseId);
     }
 
     /**

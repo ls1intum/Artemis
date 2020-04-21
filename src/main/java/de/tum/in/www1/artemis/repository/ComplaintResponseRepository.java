@@ -14,7 +14,7 @@ import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
 @Repository
 public interface ComplaintResponseRepository extends JpaRepository<ComplaintResponse, Long> {
 
-    Optional<ComplaintResponse> findByComplaint_Id(Long complaintId);
+    Optional<ComplaintResponse> findByComplaintId(Long complaintId);
 
     /**
      * This magic method counts the number of complaints responses by complaint type associated to a course id
@@ -23,7 +23,7 @@ public interface ComplaintResponseRepository extends JpaRepository<ComplaintResp
      * @param complaintType - complaint type we want to filter by
      * @return number of complaints response associated to course courseId
      */
-    long countByComplaint_Result_Participation_Exercise_Course_Id_AndComplaint_ComplaintType(Long courseId, ComplaintType complaintType);
+    long countByComplaintResultParticipationExerciseCourseIdAndComplaintComplaintType(Long courseId, ComplaintType complaintType);
 
     /**
      * This magic method counts the number of complaints responses by complaint type associated to a exercise id
@@ -32,17 +32,17 @@ public interface ComplaintResponseRepository extends JpaRepository<ComplaintResp
      * @param complaintType - complaint type we want to filter by
      * @return number of complaints response associated to exercise exerciseId
      */
-    long countByComplaint_Result_Participation_Exercise_Id_AndComplaint_ComplaintType(long exerciseId, ComplaintType complaintType);
+    long countByComplaintResultParticipationExerciseIdAndComplaintComplaintType(long exerciseId, ComplaintType complaintType);
 
     /**
      * Delete all complaint responses that belong to complaints of submission results of a given participation
      * @param participationId the Id of the participation where the complaint response should be deleted
      */
-    void deleteByComplaint_Result_Participation_Id(Long participationId);
+    void deleteByComplaintResultParticipationId(Long participationId);
 
     /**
      * Delete all complaint responses that belong to the given result
      * @param resultId the Id of the result where the complaint response should be deleted
      */
-    void deleteByComplaint_Result_Id(long resultId);
+    void deleteByComplaintResultId(long resultId);
 }

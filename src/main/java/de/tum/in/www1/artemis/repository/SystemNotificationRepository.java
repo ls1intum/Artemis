@@ -15,6 +15,6 @@ import de.tum.in.www1.artemis.domain.SystemNotification;
 @Repository
 public interface SystemNotificationRepository extends JpaRepository<SystemNotification, Long> {
 
-    @Query("SELECT distinct notification FROM SystemNotification notification where notification.notificationDate <= function('UTC_TIMESTAMP') and (function('UTC_TIMESTAMP') <= notification.expireDate OR notification.expireDate IS NULL) ORDER BY notification.notificationDate ASC")
+    @Query("SELECT DISTINCT notification FROM SystemNotification notification WHERE notification.notificationDate <= FUNCTION('UTC_TIMESTAMP') AND (FUNCTION('UTC_TIMESTAMP') <= notification.expireDate OR notification.expireDate IS NULL) ORDER BY notification.notificationDate ASC")
     List<SystemNotification> findAllActiveSystemNotification();
 }

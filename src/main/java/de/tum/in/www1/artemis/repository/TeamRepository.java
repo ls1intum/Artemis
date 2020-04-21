@@ -20,18 +20,18 @@ public interface TeamRepository extends JpaRepository<Team, Long> {
 
     Optional<Team> findOneByExerciseIdAndShortName(@Param("exerciseId") Long exerciseId, @Param("shortName") String shortName);
 
-    @Query(value = "select team from Team team left join team.students student where team.exercise.id = :#{#exerciseId} and student.id = :#{#userId}")
+    @Query(value = "SELECT team FROM Team team LEFT JOIN team.students student WHERE team.exercise.id = :#{#exerciseId} AND student.id = :#{#userId}")
     Optional<Team> findOneByExerciseIdAndUserId(@Param("exerciseId") Long exerciseId, @Param("userId") Long userId);
 
-    @Query(value = "select team from Team team left join team.students student where team.exercise.id = :#{#exerciseId} and student.login = :#{#userLogin}")
+    @Query(value = "SELECT team FROM Team team LEFT JOIN team.students student WHERE team.exercise.id = :#{#exerciseId} AND student.login = :#{#userLogin}")
     Optional<Team> findOneByExerciseIdAndUserLogin(@Param("exerciseId") Long exerciseId, @Param("userLogin") String userLogin);
 
-    @Query(value = "select student.id, team.id from Team team left join team.students student where team.exercise.id = :#{#exerciseId} and student.id in :#{#userIds}")
+    @Query(value = "SELECT student.id, team.id FROM Team team LEFT JOIN team.students student WHERE team.exercise.id = :#{#exerciseId} AND student.id IN :#{#userIds}")
     List<long[]> findAssignedUserIdsWithTeamIdsByExerciseIdAndUserIds(@Param("exerciseId") Long exerciseId, @Param("userIds") List<Long> userIds);
 
-    @Query(value = "select distinct team from Team team left join fetch team.students where team.exercise.id = :#{#exerciseId}")
-    List<Team> findAllByExerciseIdWithEagerStudents(@Param("exerciseId") Long exerciseId);
+    @Query(value = "SELECT DISTINCT team FROM Team team LEFT JOIN FETCH team.students WHERE team.exercise.id = :#{#exerciseId}")
+    List<Team> findAllWithEagerStudentsByExerciseId(@Param("exerciseId") Long exerciseId);
 
-    @Query("select team from Team team left join fetch team.students where team.id = :#{#teamId}")
+    @Query("SELECT team FROM Team team LEFT JOIN FETCH team.students WHERE team.id = :#{#teamId}")
     Optional<Team> findOneWithEagerStudents(@Param("teamId") Long teamId);
 }

@@ -19,10 +19,10 @@ import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 @Repository
 public interface QuizExerciseRepository extends JpaRepository<QuizExercise, Long> {
 
-    List<QuizExercise> findByCourseId(Long courseId);
+    List<QuizExercise> findAllByCourseId(Long courseId);
 
     @EntityGraph(type = LOAD, attributePaths = { "quizQuestions" })
-    List<QuizExercise> findByIsPlannedToStartAndReleaseDateIsAfter(Boolean plannedToStart, ZonedDateTime earliestReleaseDate);
+    List<QuizExercise> findAllByIsPlannedToStartAndReleaseDateIsAfter(Boolean plannedToStart, ZonedDateTime earliestReleaseDate);
 
     @EntityGraph(type = LOAD, attributePaths = { "quizQuestions", "quizPointStatistic", "quizQuestions.quizQuestionStatistic" })
     Optional<QuizExercise> findWithEagerQuestionsAndStatisticsById(Long quizExerciseId);

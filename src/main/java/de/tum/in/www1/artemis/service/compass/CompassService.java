@@ -310,7 +310,7 @@ public class CompassService {
      */
     private void assessAllAutomatically(Collection<Long> submissionIds, long exerciseId) {
         CalculationEngine engine = compassCalculationEngines.get(exerciseId);
-        List<ModelingSubmission> modelingSubmissions = modelingSubmissionRepository.findWithEagerResultAndFeedbackAndAssessorAndParticipationResultsByIdIn(submissionIds);
+        List<ModelingSubmission> modelingSubmissions = modelingSubmissionRepository.findAllWithEagerResultAndFeedbackAndAssessorAndParticipationResultsByIdIn(submissionIds);
 
         if (engine == null) {
             log.error("No calculation engine - submissions of exercise with ID {} could not be assessed automatically", exerciseId);
@@ -520,7 +520,7 @@ public class CompassService {
      * @return the list of modeling submissions
      */
     private Set<ModelingSubmission> getSubmissionsForExercise(long exerciseId) {
-        List<ModelingSubmission> submissions = modelingSubmissionRepository.findSubmittedByExerciseIdWithEagerResultsAndFeedback(exerciseId);
+        List<ModelingSubmission> submissions = modelingSubmissionRepository.findAllWithEagerResultsAndFeedbackByExerciseId(exerciseId);
         return new HashSet<>(submissions);
     }
 
@@ -565,7 +565,7 @@ public class CompassService {
             return;
         }
         compassCalculationEngines.get(exerciseId).printStatistic(exerciseId,
-                resultRepository.findAllWithEagerFeedbackByAssessorIsNotNullAndParticipation_ExerciseIdAndCompletionDateIsNotNull(exerciseId));
+                resultRepository.findAllWithEagerFeedbackByAssessorIsNotNullAndParticipationExerciseIdAndCompletionDateIsNotNull(exerciseId));
     }
 
     /**

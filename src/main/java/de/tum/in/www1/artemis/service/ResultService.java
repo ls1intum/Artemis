@@ -127,7 +127,7 @@ public class ResultService {
     /**
      * Sets the assessor field of the given result with the current user and stores these changes to the database. The User object set as assessor gets Groups and Authorities
      * eagerly loaded.
-     * 
+     *
      * @param result Result for which current user is set as an assessor
      */
     public void setAssessor(Result result) {
@@ -316,8 +316,8 @@ public class ResultService {
      */
     @Transactional // ok
     public void deleteResultWithComplaint(long resultId) {
-        complaintResponseRepository.deleteByComplaint_Result_Id(resultId);
-        complaintRepository.deleteByResult_Id(resultId);
+        complaintResponseRepository.deleteByComplaintResultId(resultId);
+        complaintRepository.deleteByResultId(resultId);
         resultRepository.deleteById(resultId);
     }
 
@@ -328,7 +328,7 @@ public class ResultService {
      * @return the course
      */
     public List<Result> findByCourseId(Long courseId) {
-        return resultRepository.findAllByParticipation_Exercise_CourseId(courseId);
+        return resultRepository.findAllByParticipationExerciseCourseId(courseId);
     }
 
     /**
@@ -338,7 +338,7 @@ public class ResultService {
      * @return a number of assessments for the course
      */
     public long countNumberOfAssessments(Long courseId) {
-        return resultRepository.countByAssessorIsNotNullAndParticipation_Exercise_CourseIdAndRatedAndCompletionDateIsNotNull(courseId, true);
+        return resultRepository.countByAssessorIsNotNullAndParticipationExerciseCourseIdAndRatedAndCompletionDateIsNotNull(courseId, true);
     }
 
     /**
@@ -349,7 +349,7 @@ public class ResultService {
      * @return a number of assessments for the course
      */
     public long countNumberOfAssessmentsForTutor(Long courseId, Long tutorId) {
-        return resultRepository.countByAssessor_IdAndParticipation_Exercise_CourseIdAndRatedAndCompletionDateIsNotNull(tutorId, courseId, true);
+        return resultRepository.countByAssessorIdAndParticipationExerciseCourseIdAndRatedAndCompletionDateIsNotNull(tutorId, courseId, true);
     }
 
     /**
@@ -370,7 +370,7 @@ public class ResultService {
      * @return a number of assessments for the exercise
      */
     public long countNumberOfAssessmentsForTutorInExercise(Long exerciseId, Long tutorId) {
-        return resultRepository.countByAssessor_IdAndParticipation_ExerciseIdAndRatedAndCompletionDateIsNotNull(tutorId, exerciseId, true);
+        return resultRepository.countByAssessorIdAndParticipationExerciseIdAndRatedAndCompletionDateIsNotNull(tutorId, exerciseId, true);
     }
 
     /**
@@ -380,7 +380,7 @@ public class ResultService {
      * @return number of assessments for the exercise
      */
     public Long countNumberOfAutomaticAssistedAssessmentsForExercise(Long exerciseId) {
-        return resultRepository.countByAssessorIsNotNullAndParticipation_ExerciseIdAndRatedAndAssessmentTypeInAndCompletionDateIsNotNull(exerciseId, true,
+        return resultRepository.countByAssessorIsNotNullAndParticipationExerciseIdAndRatedAndAssessmentTypeInAndCompletionDateIsNotNull(exerciseId, true,
                 asList(AssessmentType.AUTOMATIC, AssessmentType.SEMI_AUTOMATIC));
     }
 

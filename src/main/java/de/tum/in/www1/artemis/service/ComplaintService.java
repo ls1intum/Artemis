@@ -96,7 +96,7 @@ public class ComplaintService {
 
     @Transactional(readOnly = true)
     public Optional<Complaint> getByResultId(long resultId) {
-        return complaintRepository.findByResult_Id(resultId);
+        return complaintRepository.findByResultId(resultId);
     }
 
     @Transactional(readOnly = true)
@@ -106,22 +106,22 @@ public class ComplaintService {
 
     @Transactional(readOnly = true)
     public long countComplaintsByCourseId(long courseId) {
-        return complaintRepository.countByResult_Participation_Exercise_Course_IdAndComplaintType(courseId, ComplaintType.COMPLAINT);
+        return complaintRepository.countByResultParticipationExerciseCourseIdAndComplaintType(courseId, ComplaintType.COMPLAINT);
     }
 
     @Transactional(readOnly = true)
     public long countMoreFeedbackRequestsByCourseId(long courseId) {
-        return complaintRepository.countByResult_Participation_Exercise_Course_IdAndComplaintType(courseId, ComplaintType.MORE_FEEDBACK);
+        return complaintRepository.countByResultParticipationExerciseCourseIdAndComplaintType(courseId, ComplaintType.MORE_FEEDBACK);
     }
 
     @Transactional(readOnly = true)
     public long countComplaintsByExerciseId(long exerciseId) {
-        return complaintRepository.countByResult_Participation_Exercise_IdAndComplaintType(exerciseId, ComplaintType.COMPLAINT);
+        return complaintRepository.countByResultParticipationExerciseIdAndComplaintType(exerciseId, ComplaintType.COMPLAINT);
     }
 
     @Transactional(readOnly = true)
     public long countMoreFeedbackRequestsByExerciseId(long exerciseId) {
-        return complaintRepository.countByResult_Participation_Exercise_IdAndComplaintType(exerciseId, ComplaintType.MORE_FEEDBACK);
+        return complaintRepository.countByResultParticipationExerciseIdAndComplaintType(exerciseId, ComplaintType.MORE_FEEDBACK);
     }
 
     /**
@@ -132,7 +132,7 @@ public class ComplaintService {
      */
     @Transactional(readOnly = true)
     public List<Complaint> getAllComplaintsByExerciseIdButMine(long exerciseId) {
-        return complaintRepository.findByResult_Participation_Exercise_Id_ComplaintTypeWithEagerSubmissionAndEagerAssessor(exerciseId, ComplaintType.COMPLAINT);
+        return complaintRepository.findAllByResultParticipationExerciseIdAndComplaintTypeWithEagerSubmissionAndEagerAssessor(exerciseId, ComplaintType.COMPLAINT);
     }
 
     /**
@@ -143,32 +143,32 @@ public class ComplaintService {
      */
     @Transactional(readOnly = true)
     public List<Complaint> getMyMoreFeedbackRequests(long exerciseId) {
-        return complaintRepository.findByResult_Participation_Exercise_Id_ComplaintTypeWithEagerSubmissionAndEagerAssessor(exerciseId, ComplaintType.MORE_FEEDBACK);
+        return complaintRepository.findAllByResultParticipationExerciseIdAndComplaintTypeWithEagerSubmissionAndEagerAssessor(exerciseId, ComplaintType.MORE_FEEDBACK);
     }
 
     @Transactional(readOnly = true)
     public List<Complaint> getAllComplaintsByTutorId(Long tutorId) {
-        return complaintRepository.getAllByResult_Assessor_Id(tutorId);
+        return complaintRepository.getAllByResultAssessorId(tutorId);
     }
 
     @Transactional(readOnly = true)
     public List<Complaint> getAllComplaintsByCourseId(Long courseId) {
-        return complaintRepository.getAllByResult_Participation_Exercise_Course_Id(courseId);
+        return complaintRepository.getAllByResultParticipationExerciseCourseId(courseId);
     }
 
     @Transactional(readOnly = true)
     public List<Complaint> getAllComplaintsByCourseIdAndTutorId(Long courseId, Long tutorId) {
-        return complaintRepository.getAllByResult_Assessor_IdAndResult_Participation_Exercise_Course_Id(tutorId, courseId);
+        return complaintRepository.getAllByResultAssessorIdAndResultParticipationExerciseCourseId(tutorId, courseId);
     }
 
     @Transactional(readOnly = true)
     public List<Complaint> getAllComplaintsByExerciseId(Long exerciseId) {
-        return complaintRepository.getAllByResult_Participation_Exercise_Id(exerciseId);
+        return complaintRepository.getAllByResultParticipationExerciseId(exerciseId);
     }
 
     @Transactional(readOnly = true)
     public List<Complaint> getAllComplaintsByExerciseIdAndTutorId(Long exerciseId, Long tutorId) {
-        return complaintRepository.getAllByResult_Assessor_IdAndResult_Participation_Exercise_Id(tutorId, exerciseId);
+        return complaintRepository.getAllByResultAssessorIdAndResultParticipationExerciseId(tutorId, exerciseId);
     }
 
     /**

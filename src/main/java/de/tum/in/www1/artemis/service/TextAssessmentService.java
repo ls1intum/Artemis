@@ -92,6 +92,6 @@ public class TextAssessmentService extends AssessmentService {
     }
 
     public List<Feedback> getAssessmentsForResult(Result result) {
-        return this.feedbackRepository.findByResult(result);
+        return this.feedbackRepository.findAllByResult(result);
     }
 }

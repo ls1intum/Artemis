@@ -66,7 +66,7 @@ public class ComplaintResponseService {
 
         Complaint originalComplaint = originalComplaintOptional.get();
 
-        if (complaintResponseRepository.findByComplaint_Id(originalComplaint.getId()).isPresent()) {
+        if (complaintResponseRepository.findByComplaintId(originalComplaint.getId()).isPresent()) {
             throw new BadRequestAlertException("The complaint you are referring to does already have a response", ENTITY_NAME, "complaintresponseexists");
         }
 

@@ -285,7 +285,7 @@ public class ProgrammingExerciseResource {
             return forbidden();
         }
 
-        final var optionalOriginalProgrammingExercise = programmingExerciseRepository.findByIdWithEagerTestCasesHintsAndTemplateAndSolutionParticipations(sourceExerciseId);
+        final var optionalOriginalProgrammingExercise = programmingExerciseRepository.findWithEagerTestCasesHintsAndTemplateAndSolutionParticipationsById(sourceExerciseId);
         if (optionalOriginalProgrammingExercise.isEmpty()) {
             return notFound();
         }
@@ -399,7 +399,7 @@ public class ProgrammingExerciseResource {
         if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
             return forbidden();
         }
-        List<ProgrammingExercise> exercises = programmingExerciseRepository.findByCourseIdWithLatestResultForTemplateSolutionParticipations(courseId);
+        List<ProgrammingExercise> exercises = programmingExerciseRepository.findAllWithLatestResultForTemplateSolutionParticipationsByCourseId(courseId);
         for (ProgrammingExercise exercise : exercises) {
             // not required in the returned json body
             exercise.setStudentParticipations(null);
@@ -448,7 +448,7 @@ public class ProgrammingExerciseResource {
             if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
                 return forbidden();
             }
-            Optional<StudentParticipation> assignmentParticipation = studentParticipationRepository.findByExerciseIdAndStudentIdWithLatestResult(programmingExercise.getId(),
+            Optional<StudentParticipation> assignmentParticipation = studentParticipationRepository.findWithLatestResultByExerciseIdAndStudentId(programmingExercise.getId(),
                     user.getId());
             Set<StudentParticipation> participations = new HashSet<>();
             assignmentParticipation.ifPresent(participations::add);

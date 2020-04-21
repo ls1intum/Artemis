@@ -22,7 +22,7 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
     @EntityGraph(type = LOAD, attributePaths = { "result", "result.assessor" })
     Optional<Submission> findWithEagerResultById(Long submissionId);
 
-    @Query("select distinct submission from Submission submission left join fetch submission.result r left join fetch r.feedbacks where submission.exampleSubmission = true and submission.id = :#{#submissionId}")
+    @Query("select distinct submission from Submission submission LEFT JOIN FETCH submission.result r LEFT JOIN FETCH r.feedbacks where submission.exampleSubmission = true and submission.id = :#{#submissionId}")
     Optional<Submission> findSubmissionWithExampleSubmissionByIdWithEagerResult(long submissionId);
 
     /* Get all submissions from a participation_id and load result at the same time */
@@ -37,7 +37,7 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
      * @param courseId the id of the course
      * @return the number of currently locked submissions for a specific user in the given course
      */
-    @Query("SELECT COUNT (DISTINCT submission) FROM Submission submission WHERE submission.result.assessor.id = :#{#userId} AND submission.result.completionDate is null AND submission.participation.exercise.course.id = :#{#courseId}")
+    @Query("SELECT COUNT (DISTINCT submission) FROM Submission submission WHERE submission.result.assessor.id = :#{#userId} AND submission.result.completionDate IS NULL AND submission.participation.exercise.course.id = :#{#courseId}")
     long countLockedSubmissionsByUserIdAndCourseId(@Param("userId") Long userId, @Param("courseId") Long courseId);
 
     /**
@@ -48,6 +48,7 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
      */
     boolean existsByParticipationId(long participationId);
 
+    // TODO: line 30 and 51 need clarification
     List<Submission> findByParticipationId(long participationId);
 
     /**
@@ -55,7 +56,7 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
      * @return the number of submissions belonging to the course id, which have the submitted flag set to true and the submission date before the exercise due date, or no exercise
      *         due date at all
      */
-    @Query("SELECT COUNT (DISTINCT submission) FROM Submission submission WHERE TYPE(submission) IN (ModelingSubmission, TextSubmission, FileUploadSubmission) AND submission.participation.exercise.course.id = :#{#courseId} AND submission.submitted = TRUE AND (submission.submissionDate < submission.participation.exercise.dueDate OR submission.participation.exercise.dueDate IS NULL)")
+    @Query("SELECT COUNT (DISTINCT submission) FROM Submission submission WHERE TYPE(submission) IN (ModelingSubmission, TextSubmission, FileUploadSubmission) AND submission.participation.exercise.course.id = :#{#courseId} AND submission.submitted = true AND (submission.submissionDate < submission.participation.exercise.dueDate OR submission.participation.exercise.dueDate IS NULL)")
     long countByCourseIdSubmittedBeforeDueDate(@Param("courseId") long courseId);
 
     /**

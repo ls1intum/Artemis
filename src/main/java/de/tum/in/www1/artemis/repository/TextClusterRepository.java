@@ -22,7 +22,7 @@ public interface TextClusterRepository extends JpaRepository<TextCluster, Long> 
     @EntityGraph(type = LOAD, attributePaths = "blocks")
     List<TextCluster> findAllByExercise(TextExercise exercise);
 
-    @Query("SELECT distinct cluster FROM TextCluster cluster LEFT JOIN FETCH cluster.blocks WHERE cluster.id IN :#{#clusterIds}")
+    @Query("SELECT DISTINCT cluster FROM TextCluster cluster LEFT JOIN FETCH cluster.blocks WHERE cluster.id IN :#{#clusterIds}")
     List<TextCluster> findAllByIdsWithEagerTextBlocks(@Param("clusterIds") Set<Long> clusterIds);
 
 }

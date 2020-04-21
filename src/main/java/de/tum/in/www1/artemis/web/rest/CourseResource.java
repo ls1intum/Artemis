@@ -643,16 +643,16 @@ public class CourseResource {
 
         StatsForInstructorDashboardDTO stats = new StatsForInstructorDashboardDTO();
 
-        final long numberOfComplaints = complaintRepository.countByResult_Participation_Exercise_Course_IdAndComplaintType(courseId, ComplaintType.COMPLAINT);
+        final long numberOfComplaints = complaintRepository.countByResultParticipationExerciseCourseIdAndComplaintType(courseId, ComplaintType.COMPLAINT);
         stats.setNumberOfComplaints(numberOfComplaints);
-        final long numberOfComplaintResponses = complaintResponseRepository.countByComplaint_Result_Participation_Exercise_Course_Id_AndComplaint_ComplaintType(courseId,
+        final long numberOfComplaintResponses = complaintResponseRepository.countByComplaintResultParticipationExerciseCourseIdAndComplaintComplaintType(courseId,
                 ComplaintType.COMPLAINT);
         stats.setNumberOfOpenComplaints(numberOfComplaints - numberOfComplaintResponses);
 
-        final long numberOfMoreFeedbackRequests = complaintRepository.countByResult_Participation_Exercise_Course_IdAndComplaintType(courseId, ComplaintType.MORE_FEEDBACK);
+        final long numberOfMoreFeedbackRequests = complaintRepository.countByResultParticipationExerciseCourseIdAndComplaintType(courseId, ComplaintType.MORE_FEEDBACK);
         stats.setNumberOfMoreFeedbackRequests(numberOfMoreFeedbackRequests);
-        final long numberOfMoreFeedbackComplaintResponses = complaintResponseRepository
-                .countByComplaint_Result_Participation_Exercise_Course_Id_AndComplaint_ComplaintType(courseId, ComplaintType.MORE_FEEDBACK);
+        final long numberOfMoreFeedbackComplaintResponses = complaintResponseRepository.countByComplaintResultParticipationExerciseCourseIdAndComplaintComplaintType(courseId,
+                ComplaintType.MORE_FEEDBACK);
         stats.setNumberOfOpenMoreFeedbackRequests(numberOfMoreFeedbackRequests - numberOfMoreFeedbackComplaintResponses);
 
         stats.setNumberOfStudents(courseService.countNumberOfStudentsForCourse(course));

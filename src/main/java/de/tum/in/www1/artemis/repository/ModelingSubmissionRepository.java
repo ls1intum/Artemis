@@ -21,11 +21,11 @@ import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 @Repository
 public interface ModelingSubmissionRepository extends JpaRepository<ModelingSubmission, Long> {
 
-    @Query("select distinct submission from ModelingSubmission submission left join fetch submission.result r left join fetch r.assessor where submission.id = :#{#submissionId}")
-    Optional<ModelingSubmission> findByIdWithEagerResult(@Param("submissionId") Long submissionId);
+    @Query("SELECT DISTINCT submission FROM ModelingSubmission submission LEFT JOIN FETCH submission.result r LEFT JOIN FETCH r.assessor WHERE submission.id = :#{#submissionId}")
+    Optional<ModelingSubmission> findWithEagerResultById(@Param("submissionId") Long submissionId);
 
-    @Query("select distinct submission from ModelingSubmission submission left join fetch submission.result r left join fetch r.feedbacks left join fetch r.assessor where submission.id = :#{#submissionId}")
-    Optional<ModelingSubmission> findByIdWithEagerResultAndFeedback(@Param("submissionId") Long submissionId);
+    @Query("SELECT DISTINCT submission FROM ModelingSubmission submission LEFT JOIN FETCH submission.result r LEFT JOIN FETCH r.feedbacks LEFT JOIN FETCH r.assessor WHERE submission.id = :#{#submissionId}")
+    Optional<ModelingSubmission> findWithEagerResultAndFeedbackById(@Param("submissionId") Long submissionId);
 
     /**
      * Load the modeling submission with the given id together with its result, the feedback list of the result, the assessor of the result, its participation and all results of
@@ -46,12 +46,12 @@ public interface ModelingSubmissionRepository extends JpaRepository<ModelingSubm
      *         participations
      */
     @EntityGraph(type = LOAD, attributePaths = { "result", "result.feedbacks", "result.assessor", "participation", "participation.results" })
-    List<ModelingSubmission> findWithEagerResultAndFeedbackAndAssessorAndParticipationResultsByIdIn(Collection<Long> submissionIds);
+    List<ModelingSubmission> findAllWithEagerResultAndFeedbackAndAssessorAndParticipationResultsByIdIn(Collection<Long> submissionIds);
 
-    @Query("select distinct submission from ModelingSubmission submission left join fetch submission.result r left join fetch r.feedbacks where submission.participation.exercise.id = :#{#exerciseId} and submission.submitted = true")
-    List<ModelingSubmission> findSubmittedByExerciseIdWithEagerResultsAndFeedback(@Param("exerciseId") Long exerciseId);
+    @Query("SELECT DISTINCT submission FROM ModelingSubmission submission LEFT JOIN FETCH submission.result r LEFT JOIN FETCH r.feedbacks WHERE submission.participation.exercise.id = :#{#exerciseId} and submission.submitted = true")
+    List<ModelingSubmission> findAllWithEagerResultsAndFeedbackByExerciseId(@Param("exerciseId") Long exerciseId);
 
-    @Query("select distinct submission from ModelingSubmission submission left join fetch submission.result r left join fetch r.feedbacks where submission.exampleSubmission = true and submission.id = :#{#submissionId}")
+    @Query("SELECT DISTINCT submission FROM ModelingSubmission submission LEFT JOIN FETCH submission.result r LEFT JOIN FETCH r.feedbacks WHERE submission.exampleSubmission = true and submission.id = :#{#submissionId}")
     Optional<ModelingSubmission> findExampleSubmissionByIdWithEagerResult(@Param("submissionId") Long submissionId);
 
     /**
@@ -59,5 +59,5 @@ public interface ModelingSubmissionRepository extends JpaRepository<ModelingSubm
      * @param submitted boolean to check if an exercise has been submitted or not
      * @return number of submissions belonging to courseId with submitted status
      */
-    long countByParticipation_Exercise_Course_IdAndSubmitted(Long courseId, boolean submitted);
+    long countByParticipationExerciseCourseIdAndSubmitted(Long courseId, boolean submitted);
 }

@@ -17,10 +17,10 @@ public class StudentQuestionService {
     }
 
     public List<StudentQuestion> findStudentQuestionsForExercise(Long exerciseId) {
-        return studentQuestionRepository.findStudentQuestionsForExercise(exerciseId);
+        return studentQuestionRepository.findAllByExerciseId(exerciseId);
     }
 
     public List<StudentQuestion> findStudentQuestionsForLecture(Long lectureId) {
-        return studentQuestionRepository.findStudentQuestionsForLecture(lectureId);
+        return studentQuestionRepository.findAllByLectureId(lectureId);
     }
 }

@@ -73,7 +73,7 @@ public class ProgrammingExerciseTestCaseResource {
             return forbidden();
         }
 
-        Set<ProgrammingExerciseTestCase> testCases = programmingExerciseTestCaseRepository.findByExerciseId(exerciseId);
+        Set<ProgrammingExerciseTestCase> testCases = programmingExerciseTestCaseRepository.findAllByExerciseId(exerciseId);
         return ResponseEntity.ok(testCases);
     }
 

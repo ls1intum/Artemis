@@ -109,16 +109,16 @@ public class ExerciseService {
         List<Exercise> exercises = null;
         if (authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
             // user can see this exercise
-            exercises = exerciseRepository.findByCourseId(course.getId());
+            exercises = exerciseRepository.findAllByCourseId(course.getId());
         }
         else if (authCheckService.isStudentInCourse(course, user)) {
 
             if (course.isOnlineCourse()) {
                 // students in online courses can only see exercises where the lti outcome url exists, otherwise the result cannot be reported later on
-                exercises = exerciseRepository.findByCourseIdWhereLtiOutcomeUrlExists(course.getId(), user.getLogin());
+                exercises = exerciseRepository.findAllByCourseIdWhereLtiOutcomeUrlExists(course.getId(), user.getLogin());
             }
             else {
-                exercises = exerciseRepository.findByCourseId(course.getId());
+                exercises = exerciseRepository.findAllByCourseId(course.getId());
             }
 
             // user is student for this course and might not have the right to see it so we have to filter
@@ -343,15 +343,15 @@ public class ExerciseService {
      */
     public void calculateNrOfOpenComplaints(Exercise exercise) {
 
-        long numberOfComplaints = complaintRepository.countByResult_Participation_Exercise_IdAndComplaintType(exercise.getId(), ComplaintType.COMPLAINT);
-        long numberOfComplaintResponses = complaintResponseRepository.countByComplaint_Result_Participation_Exercise_Id_AndComplaint_ComplaintType(exercise.getId(),
+        long numberOfComplaints = complaintRepository.countByResultParticipationExerciseIdAndComplaintType(exercise.getId(), ComplaintType.COMPLAINT);
+        long numberOfComplaintResponses = complaintResponseRepository.countByComplaintResultParticipationExerciseIdAndComplaintComplaintType(exercise.getId(),
                 ComplaintType.COMPLAINT);
 
         exercise.setNumberOfOpenComplaints(numberOfComplaints - numberOfComplaintResponses);
         exercise.setNumberOfComplaints(numberOfComplaints);
 
-        long numberOfMoreFeedbackRequests = complaintRepository.countByResult_Participation_Exercise_IdAndComplaintType(exercise.getId(), ComplaintType.MORE_FEEDBACK);
-        long numberOfMoreFeedbackComplaintResponses = complaintResponseRepository.countByComplaint_Result_Participation_Exercise_Id_AndComplaint_ComplaintType(exercise.getId(),
+        long numberOfMoreFeedbackRequests = complaintRepository.countByResultParticipationExerciseIdAndComplaintType(exercise.getId(), ComplaintType.MORE_FEEDBACK);
+        long numberOfMoreFeedbackComplaintResponses = complaintResponseRepository.countByComplaintResultParticipationExerciseIdAndComplaintComplaintType(exercise.getId(),
                 ComplaintType.MORE_FEEDBACK);
 
         exercise.setNumberOfOpenMoreFeedbackRequests(numberOfMoreFeedbackRequests - numberOfMoreFeedbackComplaintResponses);

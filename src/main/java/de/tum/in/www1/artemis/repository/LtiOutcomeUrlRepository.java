@@ -17,10 +17,10 @@ import de.tum.in.www1.artemis.domain.User;
 @SuppressWarnings("unused")
 public interface LtiOutcomeUrlRepository extends JpaRepository<LtiOutcomeUrl, Long> {
 
-    @Query("select ltiOutcomeUrl from LtiOutcomeUrl ltiOutcomeUrl where ltiOutcomeUrl.user.login = ?#{principal}")
+    @Query("SELECT ltiOutcomeUrl FROM LtiOutcomeUrl ltiOutcomeUrl WHERE ltiOutcomeUrl.user.login = ?#{principal}")
     List<LtiOutcomeUrl> findByUserIsCurrentUser();
 
-    @Query("select ltiOutcomeUrl from LtiOutcomeUrl ltiOutcomeUrl where ltiOutcomeUrl.user.login = ?#{principal} and ltiOutcomeUrl.exercise.id = :#{#exercise.id}")
+    @Query("SELECT ltiOutcomeUrl FROM LtiOutcomeUrl ltiOutcomeUrl WHERE ltiOutcomeUrl.user.login = ?#{principal} AND ltiOutcomeUrl.exercise.id = :#{#exercise.id}")
     Optional<LtiOutcomeUrl> findByUserIsCurrentUserAndExercise(@Param("exercise") Exercise exercise);
 
     Optional<LtiOutcomeUrl> findByUserAndExercise(User user, Exercise exercise);

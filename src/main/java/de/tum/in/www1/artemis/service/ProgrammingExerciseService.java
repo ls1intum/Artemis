@@ -385,7 +385,7 @@ public class ProgrammingExerciseService {
 
     /**
      * Replace placeholders in repository files (e.g. ${placeholder}).
-     * 
+     *
      * @param programmingExercise The related programming exercise
      * @param repository The repository in which the placeholders should get replaced
      * @throws IOException If replacing the directory name, or file variables throws an exception
@@ -418,7 +418,7 @@ public class ProgrammingExerciseService {
 
     /**
      * Stage, commit and push.
-     * 
+     *
      * @param repository The repository to which the changes should get pushed
      * @param templateName The template name which should be put in the commit message
      * @throws GitAPIException If committing, or pushing to the repo throws an exception
@@ -452,7 +452,7 @@ public class ProgrammingExerciseService {
 
     /**
      * Find a programming exercise by its id.
-     * 
+     *
      * @param programmingExerciseId of the programming exercise.
      * @return The programming exercise related to the given id
      * @throws EntityNotFoundException the programming exercise could not be found.
@@ -526,7 +526,7 @@ public class ProgrammingExerciseService {
 
     /**
      * Combine all commits of the given repository into one.
-     * 
+     *
      * @param repoUrl of the repository to combine.
      * @throws InterruptedException If the checkout fails
      * @throws GitAPIException If the checkout fails
@@ -704,7 +704,7 @@ public class ProgrammingExerciseService {
     public boolean hasAtLeastOneStudentResult(ProgrammingExercise programmingExercise) {
         // Is true if the exercise is released and has at least one result.
         // We can't use the resultService here due to a circular dependency issue.
-        return resultRepository.existsByParticipation_ExerciseId(programmingExercise.getId());
+        return resultRepository.existsByParticipationExerciseId(programmingExercise.getId());
     }
 
     public ProgrammingExercise save(ProgrammingExercise programmingExercise) {
@@ -727,9 +727,9 @@ public class ProgrammingExerciseService {
         final var searchTerm = search.getSearchTerm();
 
         final var exercisePage = authCheckService.isAdmin()
-                ? programmingExerciseRepository.findByTitleIgnoreCaseContainingAndShortNameNotNullOrCourse_TitleIgnoreCaseContainingAndShortNameNotNull(searchTerm, searchTerm,
+                ? programmingExerciseRepository.findAllByTitleIgnoreCaseContainingAndShortNameNotNullOrCourseTitleIgnoreCaseContainingAndShortNameNotNull(searchTerm, searchTerm,
                         sorted)
-                : programmingExerciseRepository.findByTitleInExerciseOrCourseAndUserHasAccessToCourse(searchTerm, searchTerm, user.getGroups(), sorted);
+                : programmingExerciseRepository.findAllByTitleInExerciseOrCourseAndUserHasAccessToCourse(searchTerm, searchTerm, user.getGroups(), sorted);
 
         return new SearchResultPageDTO<>(exercisePage.getContent(), exercisePage.getTotalPages());
     }

@@ -16,5 +16,5 @@ public interface ConflictingResultRepository extends JpaRepository<ConflictingRe
      * @param resultId the ID of the result for which all referencing conflicting results should be returned
      * @return all conflicting results for the given result ID
      */
-    List<ConflictingResult> getAllByResult_Id(Long resultId);
+    List<ConflictingResult> getAllByResultId(Long resultId);
 }
