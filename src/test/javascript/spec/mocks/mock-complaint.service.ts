@@ -36,7 +36,7 @@ export class MockComplaintService implements IComplaintService {
         return of();
     }
     findByResultId(resultId: number): Observable<EntityResponseType> {
-        if (resultId == 111) {
+        if (resultId === 111) {
             return of(MockComplaintResponse2);
         }
         return of(MockComplaintResponse);
