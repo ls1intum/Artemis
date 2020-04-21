@@ -162,3 +162,20 @@ Course Info Bar
 canvas#complete-chart {
     z-index: 99;
 }
+
+.dev-button {
+    text-align: left;
+    color: white;
+    background-color: #3e8acc;
+    &:hover {
+        background-color: #0f6ab4;
+    }
+    &:active {
+        box-shadow: 0 2px 0 $artemis-dark;
+    }
+    &:disabled {
+        background-color: gray;
+    }
+    border: none;
+    border-radius: 1px;
+}

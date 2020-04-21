@@ -25,7 +25,7 @@ plugins {
     id "idea"
     id "jacoco"
     id "org.springframework.boot"
-    id "com.google.cloud.tools.jib" version "2.1.0"
+    id "com.google.cloud.tools.jib" version "2.2.0"
     id "com.github.node-gradle.node"
     id "net.ltgt.apt-eclipse"
     id "net.ltgt.apt-idea"
@@ -35,7 +35,7 @@ plugins {
 }
 
 group = "de.tum.in.www1.artemis"
-version = "4.0.0"
+version = "4.0.1"
 description = "Interactive Learning with Individual Feedback"
 
 sourceCompatibility=14

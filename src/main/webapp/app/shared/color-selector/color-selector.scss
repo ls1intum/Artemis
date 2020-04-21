@@ -1,7 +1,6 @@
 .color-selector {
     position: absolute;
     width: 220px;
-    height: 220px;
     background-color: #ffffff;
     z-index: 1000;
     display: flex;
@@ -31,6 +30,7 @@
             height: 42px;
             cursor: pointer;
             border-radius: 3px;
+            border: 1px solid #ced4da;
         }
     }
 }

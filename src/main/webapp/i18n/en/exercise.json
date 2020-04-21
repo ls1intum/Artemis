@@ -33,6 +33,11 @@
             "sampleSolution": "Example Solution",
             "gradingInstructions": "Grading Instructions",
             "structuredGradingInstructions": "Structured Grading Instructions",
+            "usageCount": "Max Count in Score",
+            "usageCountHint": "This number specifies how often points for this instruction will be added to the final score",
+            "DragDropInstruction": "Drag & Drop instruction to feedback element",
+            "gradingScale": "Grading Scale",
+            "instrDescription": "Instruction Description",
             "title": "Title",
             "shortName": "Short Name",
             "releaseDate": "Release Date",
@@ -94,6 +99,10 @@
             "isText": "This is a text exercise",
             "isFileUpload": "This is a file upload exercise",
             "notificationText": "Optional: Notification about changes",
+            "submissionSuccessful": "The submission was successful",
+            "submissionUnsuccessful": "The submission was unsuccessful",
+            "resultCreationSuccessful": "The result was created successfully",
+            "resultCreationUnsuccessful": "The result was created unsuccessfully",
             "presentationScoreEnabled": {
                 "title": "Presentation Score enabled",
                 "description": "If the presentation score is enabled, tutors can enter points for students on the \"Participations\" page of the exercise."
