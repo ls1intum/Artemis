@@ -35,8 +35,7 @@
         "preserveWhitespaces": true
     },
     "include": [
-        "src/main/webapp/app",
-        "src/test/javascript"
+        "src/main/webapp/app"
     ],
     "exclude": [
         "node_modules"

@@ -16,13 +16,6 @@ polyfill({
     dragImageTranslateOverride: scrollBehaviourDragImageTranslateOverride,
 });
 
-// Drag-enter listener for mobile devices
-/* eslint-disable */
-(event: any) => {
-    event.preventDefault();
-};
-/* eslint-enable */
-
 window.addEventListener('touchmove', function () {}, { passive: false });
 
 @Component({
