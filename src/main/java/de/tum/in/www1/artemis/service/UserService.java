@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.service;
 import static de.tum.in.www1.artemis.config.Constants.TUM_USERNAME_PATTERN;
 
 import java.time.Instant;
+import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -693,7 +694,8 @@ public class UserService {
      */
     public User updateUserNotificationReadDate() {
         User loggedInUser = getUserWithGroupsAndAuthorities();
-        userRepository.updateUserNotificationReadDate(loggedInUser.getId());
+        userRepository.updateUserNotificationReadDate(loggedInUser.getId(), ZonedDateTime.now());
+
         return loggedInUser;
     }
 
