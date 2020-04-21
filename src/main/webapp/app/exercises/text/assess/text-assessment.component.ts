@@ -484,7 +484,7 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
             return;
         }
 
-        this.assessmentsService.updateAssessmentAfterComplaint(this.assessments, complaintResponse, this.submission.id).subscribe(
+        this.assessmentsService.updateAssessmentAfterComplaint(this.assessments, [], complaintResponse, this.submission.id).subscribe(
             (response) => {
                 this.result = response.body!;
                 this.updateParticipationWithResult();

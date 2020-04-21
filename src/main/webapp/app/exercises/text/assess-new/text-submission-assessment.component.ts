@@ -10,7 +10,8 @@ import { StudentParticipation } from 'app/entities/participation/student-partici
 import { TextSubmission } from 'app/entities/text-submission.model';
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { Result } from 'app/entities/result.model';
-import { Complaint } from 'app/entities/complaint.model';
+import { Complaint, ComplaintType } from 'app/entities/complaint.model';
+import { ComplaintResponse } from 'app/entities/complaint-response.model';
 import { ComplaintService } from 'app/complaints/complaint.service';
 import { TextAssessmentsService } from 'app/exercises/text/assess/text-assessments.service';
 import { TextBlockRef } from 'app/entities/text-block-ref.model';
@@ -168,7 +169,29 @@ export class TextSubmissionAssessmentComponent implements OnInit {
         this.router.navigate(['course-management', this.exercise?.course?.id, 'text-exercises', this.exercise?.id, 'submissions-new', 'new', 'assessment']);
     }
 
-    updateAssessmentAfterComplaint(): void {}
+    /**
+     * Sends the current (updated) assessment to the server to update the original assessment after a complaint was accepted.
+     * The corresponding complaint response is sent along with the updated assessment to prevent additional requests.
+     *
+     * @param complaintResponse the response to the complaint that is sent to the server along with the assessment update
+     */
+    updateAssessmentAfterComplaint(complaintResponse: ComplaintResponse): void {
+        this.validateFeedback();
+        if (!this.assessmentsAreValid) {
+            this.jhiAlertService.error('artemisApp.textAssessment.error.invalidAssessments');
+            return;
+        }
+
+        this.assessmentsService.updateAssessmentAfterComplaint(this.assessments, this.textBlocks, complaintResponse, this.submission?.id!).subscribe(
+            (response) => this.handleSaveOrSubmitSuccessWithAlert(response, 'artemisApp.textAssessment.updateAfterComplaintSuccessful'),
+            (error: HttpErrorResponse) => {
+                console.error(error);
+                this.jhiAlertService.clear();
+                this.jhiAlertService.error('artemisApp.textAssessment.updateAfterComplaintFailed');
+                this.busy = false;
+            },
+        );
+    }
 
     private computeTotalScore() {
         const credits = this.assessments.map((feedback) => feedback.credits);

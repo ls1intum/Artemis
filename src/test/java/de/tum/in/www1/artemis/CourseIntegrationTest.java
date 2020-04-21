@@ -49,7 +49,7 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     CustomAuditEventRepository auditEventRepo;
 
     @Autowired
-    private JiraRequestMockProvider jiraRequestMockProvider;
+    JiraRequestMockProvider jiraRequestMockProvider;
 
     @Autowired
     UserRepository userRepo;
@@ -632,6 +632,8 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         request.postWithoutLocation("/api/courses/" + course.getId() + "/students/student1", null, HttpStatus.OK, null);
         request.postWithoutLocation("/api/courses/" + course.getId() + "/tutors/tutor1", null, HttpStatus.OK, null);
         request.postWithoutLocation("/api/courses/" + course.getId() + "/instructors/instructor1", null, HttpStatus.OK, null);
+
+        // TODO check that the roles have changed accordingly
     }
 
     @Test
@@ -686,6 +688,8 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         request.delete("/api/courses/" + course.getId() + "/students/" + student.getLogin(), HttpStatus.OK);
         request.delete("/api/courses/" + course.getId() + "/tutors/" + tutor.getLogin(), HttpStatus.OK);
         request.delete("/api/courses/" + course.getId() + "/instructors/" + instructor.getLogin(), HttpStatus.OK);
+
+        // TODO check that the roles have changed accordingly
     }
 
     @Test

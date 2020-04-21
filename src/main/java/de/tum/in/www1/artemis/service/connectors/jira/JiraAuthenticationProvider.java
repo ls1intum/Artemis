@@ -10,7 +10,6 @@ import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.actuate.audit.AuditEvent;
@@ -39,7 +38,6 @@ import org.springframework.web.util.UriComponentsBuilder;
 import com.fasterxml.jackson.databind.JsonNode;
 
 import de.tum.in.www1.artemis.config.Constants;
-import de.tum.in.www1.artemis.domain.Authority;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.exception.ArtemisAuthenticationException;
@@ -48,8 +46,6 @@ import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
 import de.tum.in.www1.artemis.security.ArtemisAuthenticationProviderImpl;
-import de.tum.in.www1.artemis.security.AuthoritiesConstants;
-import de.tum.in.www1.artemis.service.UserService;
 import de.tum.in.www1.artemis.service.connectors.ConnectorHealth;
 import de.tum.in.www1.artemis.service.connectors.jira.dto.JiraUserDTO;
 import de.tum.in.www1.artemis.service.connectors.jira.dto.JiraUserDTO.JiraUserGroupDTO;
@@ -68,15 +64,8 @@ public class JiraAuthenticationProvider extends ArtemisAuthenticationProviderImp
 
     private final Logger log = LoggerFactory.getLogger(JiraAuthenticationProvider.class);
 
-    @Value("${artemis.user-management.external.admin-group-name}")
-    private String ADMIN_GROUP_NAME;
-
     @Value("${artemis.user-management.external.url}")
     private URL JIRA_URL;
-
-    private UserService userService;
-
-    private final CourseRepository courseRepository;
 
     private final RestTemplate restTemplate;
 
@@ -87,16 +76,9 @@ public class JiraAuthenticationProvider extends ArtemisAuthenticationProviderImp
     public JiraAuthenticationProvider(UserRepository userRepository, CourseRepository courseRepository, @Qualifier("jiraRestTemplate") RestTemplate restTemplate,
             Optional<LdapUserService> ldapUserService, AuditEventRepository auditEventRepository) {
         super(userRepository);
-        this.courseRepository = courseRepository;
         this.restTemplate = restTemplate;
         this.ldapUserService = ldapUserService;
         this.auditEventRepository = auditEventRepository;
-    }
-
-    @Autowired
-    // break the dependency cycle
-    public void setUserService(UserService userService) {
-        this.userService = userService;
     }
 
     /**
@@ -184,7 +166,7 @@ public class JiraAuthenticationProvider extends ArtemisAuthenticationProviderImp
 
             user.setEmail(emailAddress);
             user.setGroups(groupStrings);
-            user.setAuthorities(buildAuthoritiesFromGroups(groupStrings));
+            user.setAuthorities(userService.buildAuthoritiesFromGroups(groupStrings));
 
             if (!user.getActivated()) {
                 userService.activateRegistration(user.getActivationKey());
@@ -201,42 +183,6 @@ public class JiraAuthenticationProvider extends ArtemisAuthenticationProviderImp
     @Override
     public boolean supports(Class<?> authentication) {
         return true;
-    }
-
-    /**
-     * Builds the authorities list from the groups: group contains configured instructor group name -> instructor role otherwise -> student role
-     */
-    private Set<Authority> buildAuthoritiesFromGroups(Set<String> groups) {
-        Set<Authority> authorities = new HashSet<>();
-
-        // Check if user is admin
-        if (groups.contains(ADMIN_GROUP_NAME)) {
-            Authority adminAuthority = new Authority();
-            adminAuthority.setName(AuthoritiesConstants.ADMIN);
-            authorities.add(adminAuthority);
-        }
-
-        Set<String> instructorGroups = courseRepository.findAllInstructorGroupNames();
-        Set<String> teachingAssistantGroups = courseRepository.findAllTeachingAssistantGroupNames();
-
-        // Check if user is an instructor in any course
-        if (groups.stream().anyMatch(instructorGroups::contains)) {
-            Authority instructorAuthority = new Authority();
-            instructorAuthority.setName(AuthoritiesConstants.INSTRUCTOR);
-            authorities.add(instructorAuthority);
-        }
-
-        // Check if user is a tutor in any course
-        if (groups.stream().anyMatch(teachingAssistantGroups::contains)) {
-            Authority taAuthority = new Authority();
-            taAuthority.setName(AuthoritiesConstants.TEACHING_ASSISTANT);
-            authorities.add(taAuthority);
-        }
-
-        Authority userAuthority = new Authority();
-        userAuthority.setName(AuthoritiesConstants.USER);
-        authorities.add(userAuthority);
-        return authorities;
     }
 
     /**
