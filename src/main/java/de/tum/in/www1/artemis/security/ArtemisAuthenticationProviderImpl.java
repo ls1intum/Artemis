@@ -31,7 +31,7 @@ public abstract class ArtemisAuthenticationProviderImpl implements ArtemisAuthen
         log.info("Add user " + user.getLogin() + " to group " + group);
         if (!user.getGroups().contains(group)) {
             user.getGroups().add(group);
-            final var authorities = userService.buildAuthoritiesFromGroups(user.getGroups());
+            final var authorities = userService.buildAuthorities(user);
             user.setAuthorities(authorities);
             // we only save if this is needed
             userRepository.save(user);
@@ -43,7 +43,7 @@ public abstract class ArtemisAuthenticationProviderImpl implements ArtemisAuthen
         log.info("Remove user " + user.getLogin() + " from group " + group);
         if (user.getGroups().contains(group)) {
             user.getGroups().remove(group);
-            final var authorities = userService.buildAuthoritiesFromGroups(user.getGroups());
+            final var authorities = userService.buildAuthorities(user);
             user.setAuthorities(authorities);
             // we only save if this is needed
             userRepository.save(user);
