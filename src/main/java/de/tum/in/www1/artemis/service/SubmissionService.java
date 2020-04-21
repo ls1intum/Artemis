@@ -107,7 +107,10 @@ public class SubmissionService {
                 // remove information about the student from the submission for tutors to ensure a double-blind assessment
                 if (!authCheckService.isAtLeastInstructorForExercise(exercise, user)) {
                     StudentParticipation studentParticipation = (StudentParticipation) submission.getParticipation();
-                    studentParticipation.filterSensitiveInformation();
+
+                    if (!authCheckService.isOwnerOfParticipation(studentParticipation, user)) {
+                        studentParticipation.filterSensitiveInformation();
+                    }
                 }
             }
         }
