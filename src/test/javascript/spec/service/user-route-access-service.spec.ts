@@ -23,6 +23,8 @@ chai.use(sinonChai);
 const expect = chai.expect;
 
 describe('UserRouteAccessService', () => {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    let comp: CourseExerciseDetailsComponent;
     const routeStateMock: any = { snapshot: {}, url: '/' };
     const route = 'courses/:courseId/exercises/:exerciseId';
     let fixture: ComponentFixture<CourseExerciseDetailsComponent>;
