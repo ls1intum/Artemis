@@ -1,11 +1,16 @@
-/* tslint:disable max-line-length */
+import { TranslateService } from '@ngx-translate/core';
 import { getTestBed, TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import { Router } from '@angular/router';
 import { map, take } from 'rxjs/operators';
+import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import * as moment from 'moment';
 import { DATE_TIME_FORMAT } from 'app/shared/constants/input.constants';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { Course } from 'app/entities/course.model';
+import { MockTranslateService } from '../../../mocks/mock-translate.service';
+import { MockSyncStorage } from '../../../mocks/mock-sync.storage';
+import { MockRouter } from '../../../mocks/mock-router.service';
 
 describe('Service Tests', () => {
     describe('Course Service', () => {
@@ -17,6 +22,12 @@ describe('Service Tests', () => {
         beforeEach(() => {
             TestBed.configureTestingModule({
                 imports: [HttpClientTestingModule],
+                providers: [
+                    { provide: Router, useClass: MockRouter },
+                    { provide: LocalStorageService, useClass: MockSyncStorage },
+                    { provide: SessionStorageService, useClass: MockSyncStorage },
+                    { provide: TranslateService, useClass: MockTranslateService },
+                ],
             });
             injector = getTestBed();
             service = injector.get(CourseManagementService);
@@ -127,7 +138,7 @@ describe('Service Tests', () => {
                     returnedFromService,
                 );
                 service
-                    .query(expected)
+                    .findAll(expected)
                     .pipe(
                         take(1),
                         map((resp) => resp.body),
