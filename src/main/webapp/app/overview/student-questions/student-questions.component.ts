@@ -1,4 +1,4 @@
-import { Component, Input, OnDestroy, OnInit } from '@angular/core';
+import { Component, Input, OnDestroy, OnInit, AfterViewInit } from '@angular/core';
 import { User } from 'app/core/user/user.model';
 import * as moment from 'moment';
 import { HttpResponse } from '@angular/common/http';
@@ -11,17 +11,19 @@ import { Exercise } from 'app/entities/exercise.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { EditorMode } from 'app/shared/markdown-editor/markdown-editor.component';
 import { KatexCommand } from 'app/shared/markdown-editor/commands/katex.command';
+import interact from 'interactjs';
 
 @Component({
     selector: 'jhi-student-questions',
     templateUrl: './student-questions.component.html',
     styleUrls: ['./student-questions.scss'],
 })
-export class StudentQuestionsComponent implements OnInit, OnDestroy {
+export class StudentQuestionsComponent implements OnInit, OnDestroy, AfterViewInit {
     @Input() exercise: Exercise;
     @Input() lecture: Lecture;
     studentQuestions: StudentQuestion[];
     isEditMode: boolean;
+    collapsed = false;
     studentQuestionText: string | null;
     selectedStudentQuestion: StudentQuestion | null;
     currentUser: User;
@@ -44,6 +46,34 @@ export class StudentQuestionsComponent implements OnInit, OnDestroy {
             this.studentQuestions = this.lecture.studentQuestions;
             this.isAtLeastTutorInCourse = this.accountService.isAtLeastTutorInCourse(this.lecture.course);
         }
+    }
+
+    /**
+     * Configures interact to make instructions expandable
+     */
+    ngAfterViewInit(): void {
+        interact('.expanded-questions')
+            .resizable({
+                edges: { left: '.draggable-left', right: false, bottom: false, top: false },
+                modifiers: [
+                    // Set maximum width
+                    interact.modifiers!.restrictSize({
+                        min: { width: 215, height: 0 },
+                        max: { width: 1000, height: 2000 },
+                    }),
+                ],
+                inertia: true,
+            })
+            .on('resizestart', function (event: any) {
+                event.target.classList.add('card-resizable');
+            })
+            .on('resizeend', function (event: any) {
+                event.target.classList.remove('card-resizable');
+            })
+            .on('resizemove', function (event: any) {
+                const target = event.target;
+                target.style.width = event.rect.width + 'px';
+            });
     }
 
     ngOnDestroy(): void {}

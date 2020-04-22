@@ -1,5 +1,40 @@
 @import 'src/main/webapp/content/scss/artemis-variables';
 
+.questions-container {
+    display: flex;
+    height: 100%;
+}
+
+.expanded-questions {
+    width: 30vw;
+
+    .draggable-left {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 15px;
+    }
+}
+
+.collapsed-questions {
+    width: 50px;
+    justify-content: space-between;
+    flex-flow: column nowrap;
+    margin-left: 15px;
+    cursor: pointer;
+
+    span {
+        writing-mode: vertical-rl;
+        margin: auto;
+    }
+
+    fa-icon {
+        display: flex;
+        justify-content: center;
+        padding: 15px 0;
+    }
+}
+
 .add-action {
     color: $primary;
 }
