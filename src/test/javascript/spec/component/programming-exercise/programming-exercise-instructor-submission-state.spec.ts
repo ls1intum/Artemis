@@ -31,10 +31,13 @@ describe('ProgrammingExerciseInstructorSubmissionState', () => {
     let fixture: ComponentFixture<ProgrammingExerciseInstructorSubmissionStateComponent>;
     let debugElement: DebugElement;
     let submissionService: ProgrammingSubmissionService;
+    let buildRunService: ProgrammingBuildRunService;
 
     let getExerciseSubmissionStateStub: SinonStub;
     let getExerciseSubmissionStateSubject: Subject<ExerciseSubmissionState>;
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    let getBuildRunStateStub: SinonStub;
     let getBuildRunStateSubject: Subject<BuildRunState>;
 
     let triggerAllStub: SinonStub;
@@ -67,11 +70,13 @@ describe('ProgrammingExerciseInstructorSubmissionState', () => {
                 debugElement = fixture.debugElement;
 
                 submissionService = debugElement.injector.get(ProgrammingSubmissionService);
+                buildRunService = debugElement.injector.get(ProgrammingBuildRunService);
 
                 getExerciseSubmissionStateSubject = new Subject<ExerciseSubmissionState>();
                 getExerciseSubmissionStateStub = stub(submissionService, 'getSubmissionStateOfExercise').returns(getExerciseSubmissionStateSubject);
 
                 getBuildRunStateSubject = new Subject<BuildRunState>();
+                getBuildRunStateStub = stub(buildRunService, 'getBuildRunUpdates').returns(getBuildRunStateSubject);
 
                 triggerAllStub = stub(submissionService, 'triggerInstructorBuildForParticipationsOfExercise').returns(of());
                 triggerParticipationsStub = stub(submissionService, 'triggerInstructorBuildForAllParticipationsOfExercise').returns(of());
