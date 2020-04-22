@@ -14,6 +14,8 @@ const expect = chai.expect;
 
 describe('ParticipationWebsocketService', () => {
     let websocketService: IWebsocketService;
+    let receiveParticipationSubject: Subject<Participation>;
+    let receiveParticipation2Subject: Subject<Participation>;
     let receiveResultForParticipationSubject: Subject<Result>;
     let receiveResultForParticipation2Subject: Subject<Result>;
     let subscribeSpy: SinonSpy;
