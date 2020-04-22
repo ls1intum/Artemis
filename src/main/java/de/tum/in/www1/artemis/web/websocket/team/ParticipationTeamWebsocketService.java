@@ -102,6 +102,13 @@ public class ParticipationTeamWebsocketService {
         sendOnlineTeamStudents(participationId);
     }
 
+    /**
+     * Called by a user once he starts to type or edit the content of a submission
+     * Updates the user's last typing date in the tracker and broadcasts the list of online team members
+     *
+     * @param participationId id of participation which is being worked on
+     * @param principal       principal of user who is working on the submission
+     */
     @MessageMapping("/topic/participations/{participationId}/team/typing")
     public void startTyping(@DestinationVariable Long participationId, Principal principal) {
         lastTypingTracker.putIfAbsent(participationId, new HashMap<>());

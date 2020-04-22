@@ -38,6 +38,9 @@ export class TeamSubmissionSyncComponent implements OnInit {
         this.setupSender();
     }
 
+    /**
+     * Receives updated submissions from other team members and emits them
+     */
     private setupReceiver() {
         this.teamSubmissionWebsocketService
             .receive(this.websocketTopic)
@@ -50,6 +53,9 @@ export class TeamSubmissionSyncComponent implements OnInit {
             );
     }
 
+    /**
+     * Subscribes to the submission$ stream and sends out updated submissions based on those own changes via websockets
+     */
     private setupSender() {
         this.submission$.pipe(throttleTime(this.throttleTime, undefined, { leading: true, trailing: true })).subscribe(
             (submission: Submission) => {

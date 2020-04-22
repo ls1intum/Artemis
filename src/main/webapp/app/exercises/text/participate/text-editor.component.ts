@@ -207,6 +207,9 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
         );
     }
 
+    /**
+     * Stream of submissions being emitted on text editor input after a debounce time of 2 seconds
+     */
     private buildSubmissionStream$() {
         return this.textEditorInput
             .asObservable()
