@@ -145,9 +145,10 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
                                 this.prepareAssessmentData();
                             });
                         }
-                        this.setAutoSaveTimer();
                         if (this.modelingExercise.teamMode) {
                             this.setupSubmissionStreamForTeam();
+                        } else {
+                            this.setAutoSaveTimer();
                         }
                         this.isLoading = false;
                         this.guidedTourService.enableTourForExercise(this.modelingExercise, modelingTour, true);
