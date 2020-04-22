@@ -51,7 +51,7 @@ describe('Component Tests', () => {
 
                     // WHEN
                     comp.setActive(user, true);
-                    tick(); // simulate async
+                    tick(2000); // simulate async (needs to wait for the debounce time in UserManagementComponent)
 
                     // THEN
                     expect(service.update).toHaveBeenCalledWith(user);
