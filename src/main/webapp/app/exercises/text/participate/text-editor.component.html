@@ -16,7 +16,7 @@
 
 <jhi-alert></jhi-alert>
 
-<div class="mt-4 px-2 pb-2">
+<div class="mt-4 pl-2 pb-2">
     <div class="d-flex flex-column flex-md-row" *ngIf="textExercise">
         <div class="flex-grow-1">
             <p class="mb-3 markdown-preview">
@@ -28,8 +28,9 @@
             <jhi-team-participate-info-box
                 [exercise]="textExercise"
                 [participation]="participation"
-                [bounded]="false"
                 [typing$]="textEditorInputStream$"
+                [bounded]="false"
+                [dockedToRightSide]="true"
             ></jhi-team-participate-info-box>
         </div>
     </div>

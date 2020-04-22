@@ -2,6 +2,8 @@
     <div #spacer></div>
     <div
         class="sticky-box"
+        [class.docked-to-left-side]="dockedToLeftSide"
+        [class.docked-to-right-side]="dockedToRightSide"
         stickyThing
         marginTop="25"
         marginRight="35"

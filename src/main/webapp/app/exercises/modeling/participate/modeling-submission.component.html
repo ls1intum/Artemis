@@ -31,7 +31,12 @@
             </p>
         </div>
         <div *ngIf="modelingExercise?.teamMode && (isActive || isLate)" class="flex-shrink-0 ml-md-3 ml-lg-4" [ngStyle]="{ zIndex: 1 }">
-            <jhi-team-participate-info-box [exercise]="modelingExercise" [participation]="participation" [typing$]="submissionStream$"></jhi-team-participate-info-box>
+            <jhi-team-participate-info-box
+                [exercise]="modelingExercise"
+                [participation]="participation"
+                [typing$]="submissionStream$"
+                [dockedToRightSide]="true"
+            ></jhi-team-participate-info-box>
         </div>
     </div>
 

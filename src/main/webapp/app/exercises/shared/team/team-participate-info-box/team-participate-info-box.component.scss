@@ -23,5 +23,15 @@
         background: white;
         box-shadow: 0 0 10px rgba(0, 0, 0, 0.08);
         border-radius: 8px;
+
+        &.docked-to-left-side {
+            border-top-left-radius: 0;
+            border-bottom-left-radius: 0;
+        }
+
+        &.docked-to-right-side {
+            border-top-right-radius: 0;
+            border-bottom-right-radius: 0;
+        }
     }
 }
