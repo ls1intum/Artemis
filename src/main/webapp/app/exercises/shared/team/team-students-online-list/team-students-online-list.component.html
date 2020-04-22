@@ -1,6 +1,6 @@
 <div>
     <h5>Team</h5>
-    <ul class="student-list">
+    <ul class="team-students-online-list">
         <li class="student-item" *ngFor="let student of studentList" [ngClass]="{ online: isOnline(student) }">
             <div class="mr-2">
                 <div *ngIf="isOther(student) && isTyping(student); else circle" class="typing-indicator">

@@ -10,68 +10,68 @@
     display: block;
 }
 
-.student-list {
+.team-students-online-list {
     list-style: none;
     padding: 0;
     margin: 0;
-}
 
-.student-item {
-    display: flex;
-    align-items: center;
-    font-size: 14px;
-    font-weight: 400;
+    .student-item {
+        display: flex;
+        align-items: center;
+        font-size: 14px;
+        font-weight: 400;
 
-    &:not(:first-of-type) {
-        margin-top: 5px;
-    }
-}
-
-.student-status {
-    @include status-change-transition;
-
-    display: inline-flex;
-    color: #ccc;
-
-    .online & {
-        color: green;
-    }
-}
-
-.student-name {
-    @include status-change-transition;
-
-    max-width: 190px;
-    text-overflow: ellipsis;
-    overflow: hidden;
-    white-space: nowrap;
-    color: #6c757d;
-
-    .online & {
-        color: initial;
-    }
-}
-
-.student-last-action-trigger {
-    opacity: 0.25;
-    background: none;
-    border: none;
-
-    &:hover {
-        opacity: 0.75;
+        &:not(:first-of-type) {
+            margin-top: 5px;
+        }
     }
 
-    &:focus {
-        opacity: 1;
-        outline: none;
+    .student-status {
+        @include status-change-transition;
+
+        display: inline-flex;
+        color: #ccc;
+
+        .online & {
+            color: green;
+        }
     }
-}
 
-.student-last-action-tooltip {
-    width: unset !important;
+    .student-name {
+        @include status-change-transition;
 
-    .tooltip-inner {
-        min-width: unset !important;
+        max-width: 190px;
+        text-overflow: ellipsis;
+        overflow: hidden;
+        white-space: nowrap;
+        color: #6c757d;
+
+        .online & {
+            color: initial;
+        }
+    }
+
+    .student-last-action-trigger {
+        opacity: 0.25;
+        background: none;
+        border: none;
+
+        &:hover {
+            opacity: 0.75;
+        }
+
+        &:focus {
+            opacity: 1;
+            outline: none;
+        }
+    }
+
+    .student-last-action-tooltip {
+        width: unset !important;
+
+        .tooltip-inner {
+            min-width: unset !important;
+        }
     }
 }
 
