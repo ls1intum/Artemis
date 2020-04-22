@@ -40,6 +40,7 @@ import { FileUploadSubmissionService } from 'app/exercises/file-upload/participa
 import { ComplaintsForTutorComponent } from 'app/complaints/complaints-for-tutor/complaints-for-tutor.component';
 import { ArtemisResultModule } from 'app/exercises/shared/result/result.module';
 import { ArtemisComplaintsModule } from 'app/complaints/complaints.module';
+import { ArtemisHeaderExercisePageWithDetailsModule } from 'app/exercises/shared/exercise-headers/exercise-headers.module';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -67,6 +68,7 @@ describe('FileUploadSubmissionComponent', () => {
                 TranslateModule.forRoot(),
                 RouterTestingModule.withRoutes([routes[0]]),
                 ArtemisSharedComponentModule,
+                ArtemisHeaderExercisePageWithDetailsModule,
             ],
             declarations: [
                 FileUploadSubmissionComponent,
@@ -99,6 +101,7 @@ describe('FileUploadSubmissionComponent', () => {
     });
 
     afterEach(fakeAsync(() => {
+        tick();
         fixture.destroy();
         flush();
     }));
@@ -110,10 +113,6 @@ describe('FileUploadSubmissionComponent', () => {
         expect(comp.acceptedFileExtensions.replace(/\./g, '')).to.be.equal(fileUploadExercise.filePattern);
         expect(comp.fileUploadExercise).to.be.equal(fileUploadExercise);
         expect(comp.isAfterAssessmentDueDate).to.be.true;
-
-        const maxScore = debugElement.query(By.css('div p strong'));
-        expect(maxScore).to.exist;
-        expect(maxScore.nativeElement.textContent).to.be.equal(`Max. Score: ${fileUploadExercise.maxScore}`);
 
         // check if fileUploadInput is available
         const fileUploadInput = debugElement.query(By.css('#fileUploadInput'));
@@ -213,6 +212,10 @@ describe('FileUploadSubmissionComponent', () => {
         expect(fileUploadInput).to.exist;
         expect(fileUploadInput.nativeElement.disabled).to.be.false;
         expect(fileUploadInput.nativeElement.value).to.be.equal('');
+
+        tick();
+        fixture.destroy();
+        flush();
     }));
 
     it('should not allow to submit after the deadline if the initialization date is before the due date', fakeAsync(() => {
@@ -228,6 +231,10 @@ describe('FileUploadSubmissionComponent', () => {
         const submitButton = debugElement.query(By.css('jhi-button'));
         expect(submitButton).to.exist;
         expect(submitButton.attributes['ng-reflect-disabled']).to.be.equal('true');
+
+        tick();
+        fixture.destroy();
+        flush();
     }));
 
     it('should allow to submit after the deadline if the initialization date is after the due date', fakeAsync(() => {
@@ -244,6 +251,10 @@ describe('FileUploadSubmissionComponent', () => {
         const submitButton = debugElement.query(By.css('jhi-button'));
         expect(submitButton).to.exist;
         expect(submitButton.attributes['ng-reflect-disabled']).to.be.equal('false');
+
+        tick();
+        fixture.destroy();
+        flush();
     }));
 
     it('should not allow to submit if there is a result and no due date', fakeAsync(() => {
@@ -259,6 +270,10 @@ describe('FileUploadSubmissionComponent', () => {
         const submitButton = debugElement.query(By.css('jhi-button'));
         expect(submitButton).to.exist;
         expect(submitButton.attributes['ng-reflect-disabled']).to.be.equal('true');
+
+        tick();
+        fixture.destroy();
+        flush();
     }));
 
     it('should get inactive as soon as the due date passes the current date', fakeAsync(() => {
@@ -279,5 +294,9 @@ describe('FileUploadSubmissionComponent', () => {
         tick();
 
         expect(comp.isActive).to.be.false;
+
+        tick();
+        fixture.destroy();
+        flush();
     }));
 });

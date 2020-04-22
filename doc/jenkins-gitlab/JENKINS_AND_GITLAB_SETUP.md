@@ -221,8 +221,8 @@ GitLab should configure itself automatically. If there are no issues, you can de
 
     Run the following command to get the latest jenkins LTS docker image.
     
-    In order to install and use Maven with Java 12 in the Jenkins container, you have to first install maven, then download Java 12
-    and finally configure Maven to use Java 12 instead of the default version.
+    In order to install and use Maven with Java in the Jenkins container, you have to first install maven, then download Java
+    and finally configure Maven to use Java instead of the default version.
 
     To perform all these steps automatically, you can prepare a Docker image:
 
@@ -235,6 +235,8 @@ GitLab should configure itself automatically. If there are no issues, you can de
         USER root
         
         RUN apt update
+        
+        # Install Java and Maven dependencies
         RUN apt-get install -y maven
         RUN cd /usr/lib/jvm && \
             wget https://github.com/AdoptOpenJDK/openjdk14-binaries/releases/download/jdk-14%2B36.1_openj9-0.19.0/OpenJDK14U-jdk_x64_linux_openj9_14_36_openj9-0.19.0.tar.gz && \
@@ -244,6 +246,13 @@ GitLab should configure itself automatically. If there are no issues, you can de
         RUN chown -R root:root /usr/lib/jvm/java-14-openjdk-amd64
         RUN JAVA_HOME="/usr/lib/jvm/java-14-openjdk-amd64" && export JAVA_HOME
         ENV JAVA_HOME /usr/lib/jvm/java-14-openjdk-amd64
+        
+        # Install Python dependecies
+        RUN apt install -y python3 python3-pip
+        # Install C dependencies
+        RUN apt install -y gcc-8 gdb make libasan5 libubsan0 liblsan0 libtsan0
+        # Install pytest for python exercises
+        RUN pip3 install -U pytest
         
         USER jenkins
 
