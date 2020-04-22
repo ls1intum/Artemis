@@ -171,6 +171,10 @@ describe('GuidedTourService', () => {
                     guidedTourComponentFixture = TestBed.createComponent(GuidedTourComponent);
                     guidedTourComponent = guidedTourComponentFixture.componentInstance;
 
+                    const navBarComponentFixture = TestBed.createComponent(NavbarComponent);
+                    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                    const navBarComponent = navBarComponentFixture.componentInstance;
+
                     router = TestBed.inject(Router);
                     guidedTourService = TestBed.inject(GuidedTourService);
                     participationService = TestBed.inject(ParticipationService);
@@ -306,7 +310,8 @@ describe('GuidedTourService', () => {
                 expect(guidedTourService['currentExercise']).to.equal(exercise1);
                 resetCurrentTour();
 
-                guidedTourService.guidedTourMapping = { courseShortName: 'tutorial', tours: { tour_with_course_and_exercise: '' } } as GuidedTourMapping;
+                const tourWithoutExerciseMapping = { courseShortName: 'tutorial', tours: { tour_with_course_and_exercise: '' } } as GuidedTourMapping;
+                guidedTourService.guidedTourMapping = tourWithoutExerciseMapping;
 
                 // enable tour for matching course title
                 guidedTourService.enableTourForCourseOverview(courses, tourWithCourseAndExercise, true);
