@@ -16,7 +16,8 @@
                 "title": "Text Submission"
             },
             "text": "Text",
-            "view": "View submission"
+            "view": "View submission",
+            "textEditor": "Text Editor"
         }
     }
 }

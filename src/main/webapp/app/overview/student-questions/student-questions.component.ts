@@ -9,6 +9,8 @@ import { StudentQuestion } from 'app/entities/student-question.model';
 import { StudentQuestionService } from 'app/overview/student-questions/student-question.service';
 import { Exercise } from 'app/entities/exercise.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
+import { EditorMode } from 'app/shared/markdown-editor/markdown-editor.component';
+import { KatexCommand } from 'app/shared/markdown-editor/commands/katex.command';
 
 @Component({
     selector: 'jhi-student-questions',
@@ -24,6 +26,8 @@ export class StudentQuestionsComponent implements OnInit, OnDestroy {
     selectedStudentQuestion: StudentQuestion | null;
     currentUser: User;
     isAtLeastTutorInCourse: boolean;
+    EditorMode = EditorMode;
+    domainCommands = [new KatexCommand()];
 
     constructor(private accountService: AccountService, private studentQuestionService: StudentQuestionService, private exerciseService: ExerciseService) {}
 

@@ -1,34 +1,26 @@
-<div class="submission-container d-flex flex-column">
-    <jhi-alert></jhi-alert>
-    <div class="row" [ngClass]="{ 'align-items-center': submission?.submitted }">
-        <div class="col-12 col-lg-8">
-            <h2>
-                <span *ngIf="!modelingExercise" jhiTranslate="artemisApp.modelingSubmission.modelingEditor">Modeling Editor</span>
-                <span *ngIf="modelingExercise">{{ modelingExercise.title }}</span>
-            </h2>
-        </div>
-        <div class="col-12 col-lg-4 text-right" *ngIf="!isLoading">
-            <div *ngIf="participation">
-                <jhi-submission-result-status [exercise]="modelingExercise" [studentParticipation]="isAfterAssessmentDueDate ? participation : null"></jhi-submission-result-status>
-            </div>
-            <br />
-            <jhi-button
-                class="guided-tour submission-button"
-                [disabled]="(!isActive && !isLate) || !submission || !!result"
-                [title]="!isLate ? 'entity.action.submit' : 'entity.action.submitDeadlineMissed'"
-                (onClick)="submit()"
-                [isLoading]="isSaving"
-                [btnType]="!isLate ? ButtonType.PRIMARY : ButtonType.WARNING"
-                [tooltip]="submitButtonTooltip"
-            ></jhi-button>
-            <!--TODO: enable retry button again-->
-            <!--<button class="btn btn-info" (click)="retry()" *ngIf="isActive && submission?.submitted && result?.rated && !retryStarted">-->
-            <!--<fa-icon [icon]="'sync'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.retry">Retry</span>-->
-            <!--</button>-->
-        </div>
-    </div>
-    <br />
+<jhi-header-participation-page class="d-block mb-4" [exercise]="modelingExercise" [participation]="participation">
+    <span pagetitle>
+        {{ 'artemisApp.modelingSubmission.modelingEditor' | translate }}: <span class="font-weight-normal">{{ modelingExercise?.title }}</span>
+    </span>
+    <jhi-button
+        submitbutton
+        class="guided-tour submission-button"
+        [disabled]="(!isActive && !isLate) || !submission || !!result"
+        [title]="!isLate ? 'entity.action.submit' : 'entity.action.submitDeadlineMissed'"
+        (onClick)="submit()"
+        [isLoading]="isSaving"
+        [btnType]="!isLate ? ButtonType.PRIMARY : ButtonType.WARNING"
+        [tooltip]="submitButtonTooltip"
+    ></jhi-button>
+    <!--TODO: enable retry button again-->
+    <!--<button class="btn btn-info" (click)="retry()" *ngIf="isActive && submission?.submitted && result?.rated && !retryStarted">-->
+    <!--<fa-icon [icon]="'sync'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.retry">Retry</span>-->
+    <!--</button>-->
+</jhi-header-participation-page>
 
+<jhi-alert></jhi-alert>
+
+<div class="submission-container d-flex flex-column mt-3">
     <div class="d-flex flex-column flex-md-row" *ngIf="modelingExercise">
         <div class="flex-grow-1">
             <p class="mb-3 markdown-preview">
@@ -38,16 +30,8 @@
                 </span>
             </p>
         </div>
-        <div *ngIf="isActive || isLate" class="flex-shrink-0 ml-md-3 ml-lg-4" [ngStyle]="{ zIndex: 1 }">
-            <p class="ml-3 mb-0 text-right" jhiTranslate="artemisApp.modelingSubmission.maxScore" [translateValues]="{ maxScore: modelingExercise!.maxScore }">
-                <strong>Max. Score: {{ modelingExercise!.maxScore }}</strong>
-            </p>
-            <jhi-team-participate-info-box
-                *ngIf="modelingExercise?.teamMode"
-                [exercise]="modelingExercise"
-                [participation]="participation"
-                [typing$]="submissionStream$"
-            ></jhi-team-participate-info-box>
+        <div *ngIf="modelingExercise?.teamMode && (isActive || isLate)" class="flex-shrink-0 ml-md-3 ml-lg-4" [ngStyle]="{ zIndex: 1 }">
+            <jhi-team-participate-info-box [exercise]="modelingExercise" [participation]="participation" [typing$]="submissionStream$"></jhi-team-participate-info-box>
         </div>
     </div>
 

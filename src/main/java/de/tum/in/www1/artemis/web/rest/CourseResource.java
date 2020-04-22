@@ -862,7 +862,7 @@ public class CourseResource {
     @NotNull
     public ResponseEntity<Void> addUserToCourseGroup(String userLogin, User instructorOrAdmin, Course course, String group) {
         if (authCheckService.isAdmin() || authCheckService.isInstructorInCourse(course, instructorOrAdmin)) {
-            Optional<User> userToAddToGroup = userService.getUserWithGroupsByLogin(userLogin);
+            Optional<User> userToAddToGroup = userService.getUserWithGroupsAndAuthoritiesByLogin(userLogin);
             if (userToAddToGroup.isEmpty()) {
                 return notFound();
             }
@@ -931,7 +931,7 @@ public class CourseResource {
     @NotNull
     public ResponseEntity<Void> removeUserFromCourseGroup(String userLogin, User instructorOrAdmin, Course course, String group) {
         if (authCheckService.isAdmin() || authCheckService.isInstructorInCourse(course, instructorOrAdmin)) {
-            Optional<User> userToRemoveFromGroup = userService.getUserWithGroupsByLogin(userLogin);
+            Optional<User> userToRemoveFromGroup = userService.getUserWithGroupsAndAuthoritiesByLogin(userLogin);
             if (userToRemoveFromGroup.isEmpty()) {
                 return notFound();
             }

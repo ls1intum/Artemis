@@ -2,7 +2,7 @@ import * as chai from 'chai';
 import { DebugElement } from '@angular/core';
 import * as moment from 'moment';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
-import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, TestBed, tick, flush } from '@angular/core/testing';
 import { AlertService } from 'app/core/alert/alert.service';
 import { ArtemisTestModule } from '../../test.module';
 import { TranslateModule } from '@ngx-translate/core';
@@ -29,6 +29,7 @@ import { ComplaintsComponent } from 'app/complaints/complaints.component';
 import { TextSubmission } from 'app/entities/text-submission.model';
 import { ArtemisTeamModule } from 'app/exercises/shared/team/team.module';
 import { ArtemisTeamSubmissionSyncModule } from 'app/exercises/shared/team-submission-sync/team-submission-sync.module';
+import { ArtemisHeaderExercisePageWithDetailsModule } from 'app/exercises/shared/exercise-headers/exercise-headers.module';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -61,6 +62,7 @@ describe('TableEditableFieldComponent', () => {
                 ArtemisSharedModule,
                 ArtemisTeamModule,
                 ArtemisTeamSubmissionSyncModule,
+                ArtemisHeaderExercisePageWithDetailsModule,
                 RouterTestingModule.withRoutes([textEditorRoute[0]]),
             ],
             declarations: [
@@ -104,6 +106,10 @@ describe('TableEditableFieldComponent', () => {
 
         expect(comp.isAllowedToSubmitAfterDeadline).to.be.false;
         expect(comp.isAlwaysActive).to.be.true;
+
+        tick();
+        fixture.destroy();
+        flush();
     }));
 
     it('should not allow to submit after the deadline if the initialization date is before the due date', fakeAsync(() => {
@@ -117,6 +123,10 @@ describe('TableEditableFieldComponent', () => {
         tick();
 
         expect(comp.isAllowedToSubmitAfterDeadline).to.be.false;
+
+        tick();
+        fixture.destroy();
+        flush();
     }));
 
     it('should allow to submit after the deadline if the initilization date is after the due date', fakeAsync(() => {
@@ -130,6 +140,10 @@ describe('TableEditableFieldComponent', () => {
         tick();
 
         expect(comp.isAllowedToSubmitAfterDeadline).to.be.true;
+
+        tick();
+        fixture.destroy();
+        flush();
     }));
 
     it('should not be always active if there is a result and no due date', fakeAsync(() => {
@@ -142,6 +156,10 @@ describe('TableEditableFieldComponent', () => {
         tick();
 
         expect(comp.isAlwaysActive).to.be.false;
+
+        tick();
+        fixture.destroy();
+        flush();
     }));
 
     it('should be always active if there is no result and the initialization date is after the due date', fakeAsync(() => {
@@ -155,6 +173,10 @@ describe('TableEditableFieldComponent', () => {
         tick();
 
         expect(comp.isAlwaysActive).to.be.true;
+
+        tick();
+        fixture.destroy();
+        flush();
     }));
 
     it('should get inactive as soon as the due date passes the current date', fakeAsync(() => {
@@ -174,5 +196,9 @@ describe('TableEditableFieldComponent', () => {
         tick();
 
         expect(comp.isActive).to.be.false;
+
+        tick();
+        fixture.destroy();
+        flush();
     }));
 });

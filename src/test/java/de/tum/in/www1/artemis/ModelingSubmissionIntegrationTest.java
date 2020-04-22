@@ -218,7 +218,6 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
         StudentParticipation studentParticipation = (StudentParticipation) returnedSubmission.getParticipation();
         assertThat(studentParticipation.getResults()).as("do not send old results to the client").isEmpty();
         assertThat(studentParticipation.getSubmissions()).as("do not send old submissions to the client").isEmpty();
-        assertThat(studentParticipation.getStudent()).as("sensitive information (student) is hidden").isEmpty();
         assertThat(studentParticipation.getExercise().getGradingInstructions()).as("sensitive information (grading instructions) is hidden").isNull();
         assertThat(returnedSubmission.getResult()).as("sensitive information (exercise result) is hidden").isNull();
     }

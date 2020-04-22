@@ -91,6 +91,7 @@ export class MarkdownEditorComponent implements AfterViewInit {
      * Use this array for commands that are not related to the markdown but to the editor (e.g. fullscreen mode).
      * These elements will be displayed on the right side of the command bar.
      */
+    @Input()
     metaCommands: Command[] = [new FullscreenCommand()];
 
     /** {array} containing all default commands accessible for the editor per default */

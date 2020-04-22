@@ -1,5 +1,5 @@
 <h3>{{ complaint.complaintType === ComplaintType.MORE_FEEDBACK ? ('artemisApp.moreFeedback.review' | translate) : ('artemisApp.complaint.review' | translate) }}</h3>
-<div class="col-12 px-0 mt-2">
+<div class="col-12 mt-2" [class.px-0]="zeroIndent">
     <div class="alert alert-info" *ngIf="handled">
         {{
             complaint.complaintType === ComplaintType.MORE_FEEDBACK
