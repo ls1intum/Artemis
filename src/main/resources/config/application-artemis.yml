@@ -69,11 +69,10 @@ artemis:
         name: Artemis
         email: artemis@in.tum.de
     automatic-text:
-        embedding-url: http://localhost:8000/embed
+        segmentation-url: http://localhost:8000/segment
+        embedding-url: http://localhost:8001/embed
         embedding-chunk-size: 50
-        clustering-url: http://localhost:8000/cluster
-        segmentation-url: http://localhost:8080/segment
-        secret: null
+        clustering-url: http://localhost:8001/cluster
 
 info:
     contact: artemis.in@tum.de
