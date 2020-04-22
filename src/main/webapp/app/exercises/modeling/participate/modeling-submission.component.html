@@ -20,7 +20,7 @@
 
 <jhi-alert></jhi-alert>
 
-<div class="submission-container d-flex flex-column mt-3">
+<div class="submission-container d-flex flex-column pl-2 mt-3">
     <div class="d-flex flex-column flex-md-row" *ngIf="modelingExercise">
         <div class="flex-grow-1">
             <p class="mb-3 markdown-preview">
@@ -30,7 +30,7 @@
                 </span>
             </p>
         </div>
-        <div *ngIf="modelingExercise?.teamMode && (isActive || isLate)" class="flex-shrink-0 ml-md-3 ml-lg-4" [ngStyle]="{ zIndex: 1 }">
+        <div *ngIf="modelingExercise?.teamMode && (isActive || isLate)" class="flex-shrink-0 align-self-end align-self-md-stretch mb-2 ml-md-2 ml-lg-3">
             <jhi-team-participate-info-box
                 [exercise]="modelingExercise"
                 [participation]="participation"
