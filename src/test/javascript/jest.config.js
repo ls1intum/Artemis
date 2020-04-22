@@ -14,6 +14,7 @@ module.exports = {
     transformIgnorePatterns: [`/node_modules/(?!${esModules})`],
     rootDir: '../../../',
     testMatch: ['<rootDir>/src/test/javascript/spec/**/*.ts'],
+    testPathIgnorePatterns: ['<rootDir>/src/test/javascript/spec/mocks/*.ts'],
     moduleNameMapper: {
         '^app/(.*)': '<rootDir>/src/main/webapp/app/$1',
         'test/(.*)': '<rootDir>/src/test/javascript/spec/$1',
