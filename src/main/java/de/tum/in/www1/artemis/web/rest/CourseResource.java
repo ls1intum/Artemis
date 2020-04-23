@@ -27,6 +27,7 @@ import org.springframework.web.bind.annotation.*;
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
+import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
 import de.tum.in.www1.artemis.domain.enumeration.TutorParticipationStatus;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
@@ -422,35 +423,37 @@ public class CourseResource {
 
         // get all courses with exercises for this user
         List<Course> courses = courseService.findAllActiveWithExercisesAndLecturesForUser(user);
+        log.debug("          /courses/for-dashboard.findAllActiveWithExercisesAndLecturesForUser in " + (System.currentTimeMillis() - start) + "ms");
 
-        // TODO: filter individual exercises
-        Set<Exercise> activeIndividualExercises = courses.stream().flatMap(course -> course.getExercises().stream()).collect(Collectors.toSet());
-        log.debug("          /courses/for-dashboard.findAllActiveWithExercisesForUser in " + (System.currentTimeMillis() - start) + "ms");
+        Map<Object, List<Exercise>> activeExercises = courses.stream().flatMap(course -> course.getExercises().stream()).collect(Collectors.groupingBy(Exercise::getMode));
+        List<Exercise> activeIndividualExercises = activeExercises.get(ExerciseMode.INDIVIDUAL);
+        List<Exercise> activeTeamExercises = activeExercises.get(ExerciseMode.TEAM);
 
-        // TODO: filter team exercises
-        Set<Exercise> activeTeamExercises = courses.stream().flatMap(course -> course.getExercises().stream()).collect(Collectors.toSet());
-
-        if (activeIndividualExercises.isEmpty()) {
+        if (activeIndividualExercises.isEmpty() && activeTeamExercises.isEmpty()) {
             return courses;
         }
 
-        List<StudentParticipation> individualParticipations = participationService.findWithSubmissionsWithResultByStudentIdAndExercise(user.getId(), activeIndividualExercises);
-        log.debug("          /courses/for-dashboard.findWithSubmissionsWithResultByStudentIdAndExercise in " + (System.currentTimeMillis() - start) + "ms");
+        List<StudentParticipation> individualParticipations = participationService.findByStudentIdAndIndividualExercisesWithEagerSubmissionsResult(user.getId(),
+                activeIndividualExercises);
+        log.debug("          /courses/for-dashboard.findByStudentIdAndIndividualExercisesWithEagerSubmissionsResult in " + (System.currentTimeMillis() - start) + "ms");
 
-        // TODO: fetch team participations with activeTeamExercises and merge them into one List<StudentParticipations> participations
+        List<StudentParticipation> teamParticipations = participationService.findByStudentIdAndTeamExercisesWithEagerSubmissionsResult(user.getId(), activeTeamExercises);
+        log.debug("          /courses/for-dashboard.findByStudentIdAndTeamExercisesWithEagerSubmissionsResult in " + (System.currentTimeMillis() - start) + "ms");
+
+        List<StudentParticipation> participations = Stream.concat(individualParticipations.stream(), teamParticipations.stream()).collect(Collectors.toList());
 
         for (Course course : courses) {
             boolean isStudent = !authCheckService.isAtLeastTeachingAssistantInCourse(course, user);
             for (Exercise exercise : course.getExercises()) {
                 // add participation with submission and result to each exercise
-                exercise.filterForCourseDashboard(individualParticipations, user.getLogin(), isStudent);
+                exercise.filterForCourseDashboard(participations, user.getLogin(), isStudent);
                 // remove sensitive information from the exercise for students
                 if (isStudent) {
                     exercise.filterSensitiveInformation();
                 }
             }
         }
-        log.info("/courses/for-dashboard.done in " + (System.currentTimeMillis() - start) + "ms for " + courses.size() + " courses with " + activeIndividualExercises.size()
+        log.info("/courses/for-dashboard.done in " + (System.currentTimeMillis() - start) + "ms for " + courses.size() + " courses with " + activeExercises.size()
                 + " exercises for user " + user.getLogin());
 
         return courses;

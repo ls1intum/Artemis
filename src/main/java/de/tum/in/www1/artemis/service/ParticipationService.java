@@ -1086,14 +1086,25 @@ public class ParticipationService {
     }
 
     /**
-     * Get all participations (including those for team-based exercises) for the given student and exercises combined with their submissions with a result
+     * Get all participations for the given student and individual-mode exercises combined with their submissions with a result
      *
      * @param studentId the id of the student for which the participations should be found
-     * @param exercises the exercises for which participations should be found
+     * @param exercises the individual-mode exercises for which participations should be found
      * @return student's participations
      */
-    public List<StudentParticipation> findWithSubmissionsWithResultByStudentIdAndExercise(Long studentId, Set<Exercise> exercises) {
-        return studentParticipationRepository.findByStudentIdAndExerciseWithEagerSubmissionsResult(studentId, exercises);
+    public List<StudentParticipation> findByStudentIdAndIndividualExercisesWithEagerSubmissionsResult(Long studentId, List<Exercise> exercises) {
+        return studentParticipationRepository.findByStudentIdAndIndividualExercisesWithEagerSubmissionsResult(studentId, exercises);
+    }
+
+    /**
+     * Get all participations for the given student and team-mode exercises combined with their submissions with a result
+     *
+     * @param studentId the id of the student for which the participations should be found
+     * @param exercises the team-mode exercises for which participations should be found
+     * @return student's team participations
+     */
+    public List<StudentParticipation> findByStudentIdAndTeamExercisesWithEagerSubmissionsResult(Long studentId, List<Exercise> exercises) {
+        return studentParticipationRepository.findByStudentIdAndTeamExercisesWithEagerSubmissionsResult(studentId, exercises);
     }
 
     /**
