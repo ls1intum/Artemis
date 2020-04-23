@@ -16,6 +16,7 @@ module.exports = {
     testMatch: [
         '<rootDir>/src/test/javascript/spec/app/**/*.ts',
         '<rootDir>/src/test/javascript/spec/component/**/*.ts',
+        '<rootDir>/src/test/javascript/spec/directive/**/*.ts',
         '<rootDir>/src/test/javascript/spec/integration/**/*.ts',
         '<rootDir>/src/test/javascript/spec/service/**/*.ts',
     ],

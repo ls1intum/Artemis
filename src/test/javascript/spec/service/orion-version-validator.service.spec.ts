@@ -4,9 +4,9 @@ import { SinonSpy, SinonStub, spy, stub } from 'sinon';
 import { OrionVersionValidator } from 'app/shared/orion/outdated-plugin-warning/orion-version-validator.service';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { Router } from '@angular/router';
-import { MockProfileService } from '../../mocks/mock-profile.service';
-import { MockWindowRef } from '../../mocks/mock-window.service';
-import { MockRouter } from '../../mocks/mock-router.service';
+import { MockProfileService } from '../mocks/mock-profile.service';
+import { MockWindowRef } from '../mocks/mock-window.service';
+import { MockRouter } from '../mocks/mock-router.service';
 import { of } from 'rxjs';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 
