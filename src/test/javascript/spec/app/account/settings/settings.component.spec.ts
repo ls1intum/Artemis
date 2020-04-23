@@ -1,30 +1,36 @@
-import { async, ComponentFixture, TestBed } from '@angular/core/testing';
-import { throwError } from 'rxjs';
+import { ComponentFixture, TestBed, async } from '@angular/core/testing';
+import { FormBuilder } from '@angular/forms';
+import { throwError, of } from 'rxjs';
 
 import { ArtemisTestModule } from '../../../test.module';
-import { Principal } from 'app/core';
 import { AccountService } from 'app/core/auth/account.service';
+import { Account } from 'app/core/user/account.model';
 import { SettingsComponent } from 'app/account/settings/settings.component';
-import { JhiTrackerService } from 'app/core/tracker/tracker.service';
-import { MockTrackerService } from '../../../helpers/mock-tracker.service';
+import { MockAccountService } from '../../../helpers/mock-account.service';
 
 describe('Component Tests', () => {
     describe('SettingsComponent', () => {
         let comp: SettingsComponent;
         let fixture: ComponentFixture<SettingsComponent>;
-        let mockAuth: any;
-        let mockPrincipal: any;
+        let mockAuth: MockAccountService;
+        const accountValues: Account = {
+            firstName: 'John',
+            lastName: 'Doe',
+            activated: true,
+            email: 'john.doe@mail.com',
+            name: 'john',
+            langKey: 'en',
+            login: 'john',
+            authorities: [],
+            imageUrl: '',
+            guidedTourSettings: [],
+        };
 
         beforeEach(async(() => {
             TestBed.configureTestingModule({
                 imports: [ArtemisTestModule],
                 declarations: [SettingsComponent],
-                providers: [
-                    {
-                        provide: JhiTrackerService,
-                        useClass: MockTrackerService,
-                    },
-                ],
+                providers: [FormBuilder],
             })
                 .overrideTemplate(SettingsComponent, '')
                 .compileComponents();
@@ -33,47 +39,41 @@ describe('Component Tests', () => {
         beforeEach(() => {
             fixture = TestBed.createComponent(SettingsComponent);
             comp = fixture.componentInstance;
-            mockAuth = fixture.debugElement.injector.get(AccountService);
-            mockPrincipal = fixture.debugElement.injector.get(Principal);
+            mockAuth = TestBed.get(AccountService);
+            mockAuth.setIdentityResponse(accountValues);
         });
 
         it('should send the current identity upon save', () => {
             // GIVEN
-            const accountValues = {
+            mockAuth.saveSpy.and.returnValue(of({}));
+            const settingsFormValues = {
                 firstName: 'John',
                 lastName: 'Doe',
-
-                activated: true,
                 email: 'john.doe@mail.com',
                 langKey: 'en',
-                login: 'john',
             };
-            mockPrincipal.setResponse(accountValues);
 
             // WHEN
-            comp.settingsAccount = accountValues;
+            comp.ngOnInit();
             comp.save();
 
             // THEN
-            expect(mockPrincipal.identitySpy).toHaveBeenCalled();
+            expect(mockAuth.identitySpy).toHaveBeenCalled();
             expect(mockAuth.saveSpy).toHaveBeenCalledWith(accountValues);
-            expect(comp.settingsAccount).toEqual(accountValues);
+            expect(mockAuth.authenticateSpy).toHaveBeenCalledWith(accountValues);
+            expect(comp.settingsForm.value).toEqual(settingsFormValues);
         });
 
         it('should notify of success upon successful save', () => {
             // GIVEN
-            const accountValues = {
-                firstName: 'John',
-                lastName: 'Doe',
-            };
-            mockPrincipal.setResponse(accountValues);
+            mockAuth.saveSpy.and.returnValue(of({}));
 
             // WHEN
+            comp.ngOnInit();
             comp.save();
 
             // THEN
-            expect(comp.error).toBeNull();
-            expect(comp.success).toBe('OK');
+            expect(comp.success).toBe(true);
         });
 
         it('should notify of error upon failed save', () => {
@@ -81,11 +81,11 @@ describe('Component Tests', () => {
             mockAuth.saveSpy.and.returnValue(throwError('ERROR'));
 
             // WHEN
+            comp.ngOnInit();
             comp.save();
 
             // THEN
-            expect(comp.error).toEqual('ERROR');
-            expect(comp.success).toBeNull();
+            expect(comp.success).toBe(false);
         });
     });
 });
