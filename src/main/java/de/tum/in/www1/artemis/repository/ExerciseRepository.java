@@ -18,7 +18,8 @@ import de.tum.in.www1.artemis.domain.Exercise;
 @Repository
 public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
 
-    List<Exercise> findByCourseId(@Param("courseId") Long courseId);
+    @Query("select e from Exercise e left join fetch e.categories where e.course.id = :#{#courseId}")
+    List<Exercise> findByCourseIdWithCategories(@Param("courseId") Long courseId);
 
     /**
      * Select Exercise for Course ID WHERE there does exist an LtiOutcomeUrl for the current user (-> user has started exercise once using LTI)

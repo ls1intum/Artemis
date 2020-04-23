@@ -422,28 +422,35 @@ public class CourseResource {
 
         // get all courses with exercises for this user
         List<Course> courses = courseService.findAllActiveWithExercisesAndLecturesForUser(user);
-        Set<Exercise> activeExercises = courses.stream().flatMap(course -> course.getExercises().stream()).collect(Collectors.toSet());
+
+        // TODO: filter individual exercises
+        Set<Exercise> activeIndividualExercises = courses.stream().flatMap(course -> course.getExercises().stream()).collect(Collectors.toSet());
         log.debug("          /courses/for-dashboard.findAllActiveWithExercisesForUser in " + (System.currentTimeMillis() - start) + "ms");
 
-        if (activeExercises.isEmpty()) {
+        // TODO: filter team exercises
+        Set<Exercise> activeTeamExercises = courses.stream().flatMap(course -> course.getExercises().stream()).collect(Collectors.toSet());
+
+        if (activeIndividualExercises.isEmpty()) {
             return courses;
         }
 
-        List<StudentParticipation> participations = participationService.findWithSubmissionsWithResultByStudentIdAndExercise(user.getId(), activeExercises);
+        List<StudentParticipation> individualParticipations = participationService.findWithSubmissionsWithResultByStudentIdAndExercise(user.getId(), activeIndividualExercises);
         log.debug("          /courses/for-dashboard.findWithSubmissionsWithResultByStudentIdAndExercise in " + (System.currentTimeMillis() - start) + "ms");
+
+        // TODO: fetch team participations with activeTeamExercises and merge them into one List<StudentParticipations> participations
 
         for (Course course : courses) {
             boolean isStudent = !authCheckService.isAtLeastTeachingAssistantInCourse(course, user);
             for (Exercise exercise : course.getExercises()) {
                 // add participation with submission and result to each exercise
-                exercise.filterForCourseDashboard(participations, user.getLogin(), isStudent);
+                exercise.filterForCourseDashboard(individualParticipations, user.getLogin(), isStudent);
                 // remove sensitive information from the exercise for students
                 if (isStudent) {
                     exercise.filterSensitiveInformation();
                 }
             }
         }
-        log.info("/courses/for-dashboard.done in " + (System.currentTimeMillis() - start) + "ms for " + courses.size() + " courses with " + activeExercises.size()
+        log.info("/courses/for-dashboard.done in " + (System.currentTimeMillis() - start) + "ms for " + courses.size() + " courses with " + activeIndividualExercises.size()
                 + " exercises for user " + user.getLogin());
 
         return courses;

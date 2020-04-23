@@ -108,8 +108,8 @@ public class ExerciseService {
     public List<Exercise> findAllForCourse(Course course, User user) {
         List<Exercise> exercises = null;
         if (authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
-            // user can see this exercise
-            exercises = exerciseRepository.findByCourseId(course.getId());
+            // user can see all exercises of the course
+            exercises = exerciseRepository.findByCourseIdWithCategories(course.getId());
         }
         else if (authCheckService.isStudentInCourse(course, user)) {
 
@@ -118,7 +118,7 @@ public class ExerciseService {
                 exercises = exerciseRepository.findByCourseIdWhereLtiOutcomeUrlExists(course.getId(), user.getLogin());
             }
             else {
-                exercises = exerciseRepository.findByCourseId(course.getId());
+                exercises = exerciseRepository.findByCourseIdWithCategories(course.getId());
             }
 
             // user is student for this course and might not have the right to see it so we have to filter
