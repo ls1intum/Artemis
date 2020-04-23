@@ -1,16 +1,16 @@
-/* tslint:disable max-line-length */
 import { getTestBed, TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { map, take } from 'rxjs/operators';
 import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.service';
-import { IQuizExercise, QuizExercise } from 'app/shared/model/quiz-exercise.model';
+import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
+import { Course } from 'app/entities/course.model';
 
 describe('Service Tests', () => {
     describe('QuizExercise Service', () => {
         let injector: TestBed;
         let service: QuizExerciseService;
         let httpMock: HttpTestingController;
-        let elemDefault: IQuizExercise;
+        let elemDefault: QuizExercise;
         beforeEach(() => {
             TestBed.configureTestingModule({
                 imports: [HttpClientTestingModule],
@@ -19,7 +19,7 @@ describe('Service Tests', () => {
             service = injector.get(QuizExerciseService);
             httpMock = injector.get(HttpTestingController);
 
-            elemDefault = new QuizExercise(0, 'AAAAAAA', 'AAAAAAA', false, 0, false, false, false, 0);
+            elemDefault = new QuizExercise(new Course());
         });
 
         describe('Service methods', async () => {

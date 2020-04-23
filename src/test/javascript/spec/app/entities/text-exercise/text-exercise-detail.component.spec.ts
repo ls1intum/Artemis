@@ -1,11 +1,10 @@
-/* tslint:disable max-line-length */
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { of } from 'rxjs';
 
-import { ArTeMiSTestModule } from '../../../test.module';
+import { ArtemisTestModule } from '../../../test.module';
 import { TextExerciseDetailComponent } from 'app/exercises/text/manage/text-exercise/text-exercise-detail.component';
-import { TextExercise } from 'app/shared/model/text-exercise.model';
+import { TextExercise } from 'app/entities/text-exercise.model';
 
 describe('Component Tests', () => {
     describe('TextExercise Management Detail Component', () => {
@@ -15,7 +14,7 @@ describe('Component Tests', () => {
 
         beforeEach(() => {
             TestBed.configureTestingModule({
-                imports: [ArTeMiSTestModule],
+                imports: [ArtemisTestModule],
                 declarations: [TextExerciseDetailComponent],
                 providers: [{ provide: ActivatedRoute, useValue: route }],
             })

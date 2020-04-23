@@ -5,7 +5,7 @@ import { HttpHeaders, HttpResponse } from '@angular/common/http';
 import { ArtemisTestModule } from '../../../test.module';
 import { LogsComponent } from 'app/admin/logs/logs.component';
 import { LogsService } from 'app/admin/logs/logs.service';
-import { Log } from 'app/admin';
+import { Log } from 'app/admin/logs/log.model';
 
 describe('Component Tests', () => {
     describe('LogsComponent', () => {

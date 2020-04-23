@@ -1,16 +1,15 @@
-/* tslint:disable max-line-length */
 import { getTestBed, TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { map, take } from 'rxjs/operators';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
-import { IProgrammingExercise, ProgrammingExercise } from 'app/shared/model/programming-exercise.model';
+import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 
 describe('Service Tests', () => {
     describe('ProgrammingExercise Service', () => {
         let injector: TestBed;
         let service: ProgrammingExerciseService;
         let httpMock: HttpTestingController;
-        let elemDefault: IProgrammingExercise;
+        let elemDefault: ProgrammingExercise;
         beforeEach(() => {
             TestBed.configureTestingModule({
                 imports: [HttpClientTestingModule],
@@ -19,7 +18,7 @@ describe('Service Tests', () => {
             service = injector.get(ProgrammingExerciseService);
             httpMock = injector.get(HttpTestingController);
 
-            elemDefault = new ProgrammingExercise(0, 'AAAAAAA', 'AAAAAAA', 'AAAAAAA', false, false);
+            elemDefault = new ProgrammingExercise();
         });
 
         describe('Service methods', async () => {

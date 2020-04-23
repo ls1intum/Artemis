@@ -1,12 +1,11 @@
-/* tslint:disable max-line-length */
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { HttpResponse } from '@angular/common/http';
 import { of } from 'rxjs';
 
-import { ArTeMiSTestModule } from '../../../test.module';
+import { ArtemisTestModule } from '../../../test.module';
 import { FileUploadExerciseUpdateComponent } from 'app/exercises/file-upload/manage/file-upload-exercise-update.component';
 import { FileUploadExerciseService } from 'app/exercises/file-upload/manage/file-upload-exercise.service';
-import { FileUploadExercise } from 'app/shared/model/file-upload-exercise.model';
+import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
 
 describe('Component Tests', () => {
     describe('FileUploadExercise Management Update Component', () => {
@@ -16,7 +15,7 @@ describe('Component Tests', () => {
 
         beforeEach(() => {
             TestBed.configureTestingModule({
-                imports: [ArTeMiSTestModule],
+                imports: [ArtemisTestModule],
                 declarations: [FileUploadExerciseUpdateComponent],
             })
                 .overrideTemplate(FileUploadExerciseUpdateComponent, '')

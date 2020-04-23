@@ -1,18 +1,18 @@
-/* tslint:disable max-line-length */
 import { getTestBed, TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { map, take } from 'rxjs/operators';
 import * as moment from 'moment';
 import { DATE_TIME_FORMAT } from 'app/shared/constants/input.constants';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
-import { InitializationState, IParticipation, Participation } from 'app/shared/model/participation.model';
+import { Participation } from 'app/entities/participation/participation.model';
+import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 
 describe('Service Tests', () => {
     describe('Participation Service', () => {
         let injector: TestBed;
         let service: ParticipationService;
         let httpMock: HttpTestingController;
-        let elemDefault: IParticipation;
+        let elemDefault: Participation;
         let currentDate: moment.Moment;
         beforeEach(() => {
             TestBed.configureTestingModule({
@@ -23,7 +23,7 @@ describe('Service Tests', () => {
             httpMock = injector.get(HttpTestingController);
             currentDate = moment();
 
-            elemDefault = new Participation(0, 'AAAAAAA', 'AAAAAAA', InitializationState.UNINITIALIZED, currentDate, 0);
+            elemDefault = new StudentParticipation();
         });
 
         describe('Service methods', async () => {

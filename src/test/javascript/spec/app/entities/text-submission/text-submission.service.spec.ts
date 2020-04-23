@@ -1,16 +1,15 @@
-/* tslint:disable max-line-length */
 import { getTestBed, TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { map, take } from 'rxjs/operators';
 import { TextSubmissionService } from 'app/exercises/text/participate/text-submission.service';
-import { ITextSubmission, TextSubmission } from 'app/shared/model/text-submission.model';
+import { TextSubmission } from 'app/entities/text-submission.model';
 
 describe('Service Tests', () => {
     describe('TextSubmission Service', () => {
         let injector: TestBed;
         let service: TextSubmissionService;
         let httpMock: HttpTestingController;
-        let elemDefault: ITextSubmission;
+        let elemDefault: TextSubmission;
         beforeEach(() => {
             TestBed.configureTestingModule({
                 imports: [HttpClientTestingModule],
@@ -19,7 +18,7 @@ describe('Service Tests', () => {
             service = injector.get(TextSubmissionService);
             httpMock = injector.get(HttpTestingController);
 
-            elemDefault = new TextSubmission(0, 'AAAAAAA');
+            elemDefault = new TextSubmission();
         });
 
         describe('Service methods', async () => {

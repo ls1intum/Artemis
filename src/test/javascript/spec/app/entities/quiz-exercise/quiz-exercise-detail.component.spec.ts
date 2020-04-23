@@ -1,11 +1,10 @@
-/* tslint:disable max-line-length */
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { of } from 'rxjs';
 
 import { ArtemisTestModule } from '../../../test.module';
-import { QuizExerciseDetailComponent } from 'app/entities/quiz-exercise/quiz-exercise-detail.component';
-import { QuizExercise } from 'app/shared/model/quiz-exercise.model';
+import { QuizExerciseDetailComponent } from 'app/exercises/quiz/manage/quiz-exercise-detail.component';
+import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 
 describe('Component Tests', () => {
     describe('QuizExercise Management Detail Component', () => {

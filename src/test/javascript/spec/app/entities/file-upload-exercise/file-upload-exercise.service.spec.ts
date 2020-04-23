@@ -1,16 +1,15 @@
-/* tslint:disable max-line-length */
 import { getTestBed, TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { map, take } from 'rxjs/operators';
 import { FileUploadExerciseService } from 'app/exercises/file-upload/manage/file-upload-exercise.service';
-import { FileUploadExercise, IFileUploadExercise } from 'app/shared/model/file-upload-exercise.model';
+import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
 
 describe('Service Tests', () => {
     describe('FileUploadExercise Service', () => {
         let injector: TestBed;
         let service: FileUploadExerciseService;
         let httpMock: HttpTestingController;
-        let elemDefault: IFileUploadExercise;
+        let elemDefault: FileUploadExercise;
         beforeEach(() => {
             TestBed.configureTestingModule({
                 imports: [HttpClientTestingModule],
@@ -19,7 +18,7 @@ describe('Service Tests', () => {
             service = injector.get(FileUploadExerciseService);
             httpMock = injector.get(HttpTestingController);
 
-            elemDefault = new FileUploadExercise(0, 'AAAAAAA');
+            elemDefault = new FileUploadExercise(0);
         });
 
         describe('Service methods', async () => {

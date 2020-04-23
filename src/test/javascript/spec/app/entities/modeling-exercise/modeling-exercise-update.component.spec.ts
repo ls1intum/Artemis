@@ -1,4 +1,3 @@
-/* tslint:disable max-line-length */
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { HttpResponse } from '@angular/common/http';
 import { of } from 'rxjs';
@@ -6,7 +5,7 @@ import { of } from 'rxjs';
 import { ArtemisTestModule } from '../../../test.module';
 import { ModelingExerciseUpdateComponent } from 'app/exercises/modeling/manage/modeling-exercise-update.component';
 import { ModelingExerciseService } from 'app/exercises/modeling/manage/modeling-exercise.service';
-import { ModelingExercise } from 'app/shared/model/modeling-exercise.model';
+import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 
 describe('Component Tests', () => {
     describe('ModelingExercise Management Update Component', () => {

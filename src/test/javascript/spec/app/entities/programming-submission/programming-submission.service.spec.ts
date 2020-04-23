@@ -1,16 +1,15 @@
-/* tslint:disable max-line-length */
 import { getTestBed, TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { map, take } from 'rxjs/operators';
-import { ProgrammingSubmissionService } from 'app/entities/programming-submission/programming-submission.service';
-import { IProgrammingSubmission, ProgrammingSubmission } from 'app/shared/model/programming-submission.model';
+import { ProgrammingSubmissionService } from 'app/exercises/programming/participate/programming-submission.service';
+import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
 
 describe('Service Tests', () => {
     describe('ProgrammingSubmission Service', () => {
         let injector: TestBed;
         let service: ProgrammingSubmissionService;
         let httpMock: HttpTestingController;
-        let elemDefault: IProgrammingSubmission;
+        let elemDefault: ProgrammingSubmission;
         beforeEach(() => {
             TestBed.configureTestingModule({
                 imports: [HttpClientTestingModule],
@@ -19,7 +18,7 @@ describe('Service Tests', () => {
             service = injector.get(ProgrammingSubmissionService);
             httpMock = injector.get(HttpTestingController);
 
-            elemDefault = new ProgrammingSubmission(0, 'AAAAAAA');
+            elemDefault = new ProgrammingSubmission();
         });
 
         describe('Service methods', async () => {

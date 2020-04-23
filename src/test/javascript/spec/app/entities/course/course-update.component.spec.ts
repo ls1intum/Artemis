@@ -1,18 +1,17 @@
-/* tslint:disable max-line-length */
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { HttpResponse } from '@angular/common/http';
 import { of } from 'rxjs';
 
 import { ArtemisTestModule } from '../../../test.module';
-import { CourseUpdateComponent } from 'app/entities/manage/course-update.component';
-import { CourseService } from 'app/course/manage/course.service';
+import { CourseUpdateComponent } from 'app/course/manage/course-update.component';
+import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { Course } from 'app/entities/course.model';
 
 describe('Component Tests', () => {
     describe('Course Management Update Component', () => {
         let comp: CourseUpdateComponent;
         let fixture: ComponentFixture<CourseUpdateComponent>;
-        let service: CourseService;
+        let service: CourseManagementService;
 
         beforeEach(() => {
             TestBed.configureTestingModule({
@@ -24,7 +23,7 @@ describe('Component Tests', () => {
 
             fixture = TestBed.createComponent(CourseUpdateComponent);
             comp = fixture.componentInstance;
-            service = fixture.debugElement.injector.get(CourseService);
+            service = fixture.debugElement.injector.get(CourseManagementService);
         });
 
         describe('save', () => {

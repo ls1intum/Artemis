@@ -1,12 +1,11 @@
-/* tslint:disable max-line-length */
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
 import { HttpHeaders, HttpResponse } from '@angular/common/http';
 
-import { ArTeMiSTestModule } from '../../../test.module';
-import { FileUploadSubmissionComponent } from 'app/exercises/file-upload-submission/file-upload-submission.component';
+import { ArtemisTestModule } from '../../../test.module';
+import { FileUploadSubmissionComponent } from 'app/exercises/file-upload/participate/file-upload-submission.component';
 import { FileUploadSubmissionService } from 'app/exercises/file-upload/participate/file-upload-submission.service';
-import { FileUploadSubmission } from 'app/shared/model/file-upload-submission.model';
+import { FileUploadSubmission } from 'app/entities/file-upload-submission.model';
 
 describe('Component Tests', () => {
     describe('FileUploadSubmission Management Component', () => {
@@ -16,7 +15,7 @@ describe('Component Tests', () => {
 
         beforeEach(() => {
             TestBed.configureTestingModule({
-                imports: [ArTeMiSTestModule],
+                imports: [ArtemisTestModule],
                 declarations: [FileUploadSubmissionComponent],
                 providers: [],
             })

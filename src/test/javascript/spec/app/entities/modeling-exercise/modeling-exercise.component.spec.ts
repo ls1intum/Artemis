@@ -1,4 +1,3 @@
-/* tslint:disable max-line-length */
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
 import { HttpHeaders, HttpResponse } from '@angular/common/http';
@@ -6,7 +5,7 @@ import { HttpHeaders, HttpResponse } from '@angular/common/http';
 import { ArtemisTestModule } from '../../../test.module';
 import { ModelingExerciseComponent } from 'app/exercises/modeling/manage/modeling-exercise.component';
 import { ModelingExerciseService } from 'app/exercises/modeling/manage/modeling-exercise.service';
-import { ModelingExercise } from 'app/shared/model/modeling-exercise.model';
+import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 
 describe('Component Tests', () => {
     describe('ModelingExercise Management Component', () => {

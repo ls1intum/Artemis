@@ -1,16 +1,15 @@
-/* tslint:disable max-line-length */
 import { getTestBed, TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { map, take } from 'rxjs/operators';
 import { ModelingExerciseService } from 'app/exercises/modeling/manage/modeling-exercise.service';
-import { DiagramType, IModelingExercise, ModelingExercise } from 'app/shared/model/modeling-exercise.model';
+import { DiagramType, ModelingExercise } from 'app/entities/modeling-exercise.model';
 
 describe('Service Tests', () => {
     describe('ModelingExercise Service', () => {
         let injector: TestBed;
         let service: ModelingExerciseService;
         let httpMock: HttpTestingController;
-        let elemDefault: IModelingExercise;
+        let elemDefault: ModelingExercise;
         beforeEach(() => {
             TestBed.configureTestingModule({
                 imports: [HttpClientTestingModule],
@@ -19,7 +18,7 @@ describe('Service Tests', () => {
             service = injector.get(ModelingExerciseService);
             httpMock = injector.get(HttpTestingController);
 
-            elemDefault = new ModelingExercise(0, DiagramType.CLASS, 'AAAAAAA', 'AAAAAAA');
+            elemDefault = new ModelingExercise(DiagramType.ComponentDiagram);
         });
 
         describe('Service methods', async () => {

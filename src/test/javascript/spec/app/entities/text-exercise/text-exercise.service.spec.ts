@@ -3,14 +3,15 @@ import { getTestBed, TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { map, take } from 'rxjs/operators';
 import { TextExerciseService } from 'app/exercises/text/manage/text-exercise/text-exercise.service';
-import { ITextExercise, TextExercise } from 'app/shared/model/text-exercise.model';
+import { TextExercise } from 'app/entities/text-exercise.model';
+import { Course } from 'app/entities/course.model';
 
 describe('Service Tests', () => {
     describe('TextExercise Service', () => {
         let injector: TestBed;
         let service: TextExerciseService;
         let httpMock: HttpTestingController;
-        let elemDefault: ITextExercise;
+        let elemDefault: TextExercise;
         beforeEach(() => {
             TestBed.configureTestingModule({
                 imports: [HttpClientTestingModule],
@@ -19,7 +20,7 @@ describe('Service Tests', () => {
             service = injector.get(TextExerciseService);
             httpMock = injector.get(HttpTestingController);
 
-            elemDefault = new TextExercise(0, 'AAAAAAA');
+            elemDefault = new TextExercise(new Course());
         });
 
         describe('Service methods', async () => {

@@ -1,11 +1,10 @@
-/* tslint:disable max-line-length */
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { of } from 'rxjs';
 
 import { ArtemisTestModule } from '../../../test.module';
-import { CourseDetailComponent } from 'app/entities/manage/course-detail.component';
-import { Course } from 'app/shared/model/course.model';
+import { CourseDetailComponent } from 'app/course/manage/course-detail.component';
+import { Course } from 'app/entities/course.model';
 
 describe('Component Tests', () => {
     describe('Course Management Detail Component', () => {
