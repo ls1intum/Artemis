@@ -11,13 +11,13 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import de.tum.in.www1.artemis.AbstractSpringIntegrationTest;
+import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.util.TextExerciseUtilService;
 
-public class TextClusterUtilityServiceTest extends AbstractSpringIntegrationTest {
+public class TextClusterUtilityServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
     // SUT
