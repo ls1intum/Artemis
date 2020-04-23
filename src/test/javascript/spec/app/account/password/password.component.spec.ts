@@ -5,7 +5,6 @@ import { of, throwError } from 'rxjs';
 import { ArtemisTestModule } from '../../../test.module';
 import { PasswordComponent } from 'app/account/password/password.component';
 import { PasswordService } from 'app/account/password/password.service';
-import { MockTrackerService } from '../../../helpers/mock-tracker.service';
 
 describe('Component Tests', () => {
     describe('PasswordComponent', () => {
@@ -17,12 +16,6 @@ describe('Component Tests', () => {
             TestBed.configureTestingModule({
                 imports: [ArtemisTestModule],
                 declarations: [PasswordComponent],
-                providers: [
-                    {
-                        provide: JhiTrackerService,
-                        useClass: MockTrackerService,
-                    },
-                ],
             })
                 .overrideTemplate(PasswordComponent, '')
                 .compileComponents();
