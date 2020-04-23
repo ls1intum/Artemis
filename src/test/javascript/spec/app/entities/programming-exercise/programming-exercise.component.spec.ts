@@ -4,7 +4,6 @@ import { of } from 'rxjs';
 
 import { ArtemisTestModule } from '../../../test.module';
 import { ProgrammingExerciseComponent } from 'app/exercises/programming/manage/programming-exercise.component';
-import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { MockSyncStorage } from '../../../mocks/mock-sync.storage';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
