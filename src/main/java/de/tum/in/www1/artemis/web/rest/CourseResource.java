@@ -425,7 +425,7 @@ public class CourseResource {
         List<Course> courses = courseService.findAllActiveWithExercisesAndLecturesForUser(user);
         log.debug("          /courses/for-dashboard.findAllActiveWithExercisesAndLecturesForUser in " + (System.currentTimeMillis() - start) + "ms");
 
-        Map<Object, List<Exercise>> activeExercises = courses.stream().flatMap(course -> course.getExercises().stream()).collect(Collectors.groupingBy(Exercise::getMode));
+        Map<ExerciseMode, List<Exercise>> activeExercises = courses.stream().flatMap(course -> course.getExercises().stream()).collect(Collectors.groupingBy(Exercise::getMode));
         List<Exercise> activeIndividualExercises = Optional.ofNullable(activeExercises.get(ExerciseMode.INDIVIDUAL)).orElse(List.of());
         List<Exercise> activeTeamExercises = Optional.ofNullable(activeExercises.get(ExerciseMode.TEAM)).orElse(List.of());
 
@@ -453,8 +453,8 @@ public class CourseResource {
                 }
             }
         }
-        log.info("/courses/for-dashboard.done in " + (System.currentTimeMillis() - start) + "ms for " + courses.size() + " courses with " + activeExercises.size()
-                + " exercises for user " + user.getLogin());
+        log.info("/courses/for-dashboard.done in " + (System.currentTimeMillis() - start) + "ms for " + courses.size() + " courses with " + activeIndividualExercises.size()
+                + " individual exercises and " + activeTeamExercises + " team exercises for user " + user.getLogin());
 
         return courses;
     }
