@@ -425,11 +425,12 @@ public class CourseResource {
         List<Course> courses = courseService.findAllActiveWithExercisesAndLecturesForUser(user);
         log.debug("          /courses/for-dashboard.findAllActiveWithExercisesAndLecturesForUser in " + (System.currentTimeMillis() - start) + "ms");
 
-        Map<Object, List<Exercise>> activeExercises = courses.stream().flatMap(course -> course.getExercises().stream()).collect(Collectors.groupingBy(Exercise::getMode));
-        List<Exercise> activeIndividualExercises = Optional.ofNullable(activeExercises.get(ExerciseMode.INDIVIDUAL)).orElse(List.of());
-        List<Exercise> activeTeamExercises = Optional.ofNullable(activeExercises.get(ExerciseMode.TEAM)).orElse(List.of());
+        Map<Object, List<Exercise>> activeExercisesGrouped = courses.stream().flatMap(course -> course.getExercises().stream()).collect(Collectors.groupingBy(Exercise::getMode));
+        List<Exercise> activeIndividualExercises = Optional.ofNullable(activeExercisesGrouped.get(ExerciseMode.INDIVIDUAL)).orElse(List.of());
+        List<Exercise> activeTeamExercises = Optional.ofNullable(activeExercisesGrouped.get(ExerciseMode.TEAM)).orElse(List.of());
+        List<Exercise> activeExercises = Stream.concat(activeIndividualExercises.stream(), activeTeamExercises.stream()).collect(Collectors.toList());
 
-        if (activeIndividualExercises.isEmpty() && activeTeamExercises.isEmpty()) {
+        if (activeExercises.isEmpty()) {
             return courses;
         }
 
