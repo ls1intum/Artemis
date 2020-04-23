@@ -426,8 +426,8 @@ public class CourseResource {
         log.debug("          /courses/for-dashboard.findAllActiveWithExercisesAndLecturesForUser in " + (System.currentTimeMillis() - start) + "ms");
 
         Map<Object, List<Exercise>> activeExercises = courses.stream().flatMap(course -> course.getExercises().stream()).collect(Collectors.groupingBy(Exercise::getMode));
-        List<Exercise> activeIndividualExercises = activeExercises.get(ExerciseMode.INDIVIDUAL);
-        List<Exercise> activeTeamExercises = activeExercises.get(ExerciseMode.TEAM);
+        List<Exercise> activeIndividualExercises = Optional.ofNullable(activeExercises.get(ExerciseMode.INDIVIDUAL)).orElse(List.of());
+        List<Exercise> activeTeamExercises = Optional.ofNullable(activeExercises.get(ExerciseMode.TEAM)).orElse(List.of());
 
         if (activeIndividualExercises.isEmpty() && activeTeamExercises.isEmpty()) {
             return courses;

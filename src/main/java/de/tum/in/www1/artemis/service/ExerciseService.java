@@ -187,13 +187,13 @@ public class ExerciseService {
     }
 
     /**
-     * Get one exercise by exerciseId with its categories
+     * Get one exercise by exerciseId with its categories and its team assignment config
      *
      * @param exerciseId the exerciseId of the entity
      * @return the entity
      */
-    public Exercise findOneWithCategories(Long exerciseId) {
-        Optional<Exercise> exercise = exerciseRepository.findByIdWithEagerCategories(exerciseId);
+    public Exercise findOneWithCategoriesAndTeamAssignmentConfig(Long exerciseId) {
+        Optional<Exercise> exercise = exerciseRepository.findWithEagerCategoriesAndTeamAssignmentConfigById(exerciseId);
         if (exercise.isEmpty()) {
             throw new EntityNotFoundException("Exercise with exerciseId " + exerciseId + " does not exist!");
         }

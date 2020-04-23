@@ -1,9 +1,12 @@
 package de.tum.in.www1.artemis.repository;
 
+import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
+
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -36,8 +39,8 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
     @Query("select distinct exercise from Exercise exercise left join fetch exercise.studentParticipations where exercise.id = :#{#exerciseId}")
     Optional<Exercise> findByIdWithEagerParticipations(@Param("exerciseId") Long exerciseId);
 
-    @Query("select distinct exercise from Exercise exercise left join fetch exercise.categories where exercise.id = :#{#exerciseId}")
-    Optional<Exercise> findByIdWithEagerCategories(@Param("exerciseId") Long exerciseId);
+    @EntityGraph(type = LOAD, attributePaths = { "categories", "teamAssignmentConfig" })
+    Optional<Exercise> findWithEagerCategoriesAndTeamAssignmentConfigById(Long exerciseId);
 
     @Query("select distinct exercise from Exercise exercise left join fetch exercise.exampleSubmissions where exercise.id = :#{#exerciseId}")
     Optional<Exercise> findByIdWithEagerExampleSubmissions(@Param("exerciseId") Long exerciseId);
