@@ -11,7 +11,7 @@ import { RouterTestingModule } from '@angular/router/testing';
 import { User } from 'app/core/user/user.model';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { AccountService } from 'app/core/auth/account.service';
-import { MockAccountService } from '../../helpers/mock-account.service';
+import { MockAccountService } from '../../mocks/mock-account.service';
 import { AssessmentLayoutComponent } from 'app/assessment/assessment-layout/assessment-layout.component';
 import { AssessmentHeaderComponent } from 'app/assessment/assessment-header/assessment-header.component';
 import { Course } from 'app/entities/course.model';

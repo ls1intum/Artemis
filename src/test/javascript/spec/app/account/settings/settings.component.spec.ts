@@ -6,86 +6,84 @@ import { ArtemisTestModule } from '../../../test.module';
 import { AccountService } from 'app/core/auth/account.service';
 import { Account } from 'app/core/user/account.model';
 import { SettingsComponent } from 'app/account/settings/settings.component';
-import { MockAccountService } from '../../../helpers/mock-account.service';
+import { MockAccountService } from '../../../mocks/mock-account.service';
 
-describe('Component Tests', () => {
-    describe('SettingsComponent', () => {
-        let comp: SettingsComponent;
-        let fixture: ComponentFixture<SettingsComponent>;
-        let mockAuth: MockAccountService;
-        const accountValues: Account = {
+describe('SettingsComponent', () => {
+    let comp: SettingsComponent;
+    let fixture: ComponentFixture<SettingsComponent>;
+    let mockAuth: MockAccountService;
+    const accountValues: Account = {
+        firstName: 'John',
+        lastName: 'Doe',
+        activated: true,
+        email: 'john.doe@mail.com',
+        name: 'john',
+        langKey: 'en',
+        login: 'john',
+        authorities: [],
+        imageUrl: '',
+        guidedTourSettings: [],
+    };
+
+    beforeEach(async(() => {
+        TestBed.configureTestingModule({
+            imports: [ArtemisTestModule],
+            declarations: [SettingsComponent],
+            providers: [FormBuilder],
+        })
+            .overrideTemplate(SettingsComponent, '')
+            .compileComponents();
+    }));
+
+    beforeEach(() => {
+        fixture = TestBed.createComponent(SettingsComponent);
+        comp = fixture.componentInstance;
+        mockAuth = TestBed.get(AccountService);
+        mockAuth.setIdentityResponse(accountValues);
+    });
+
+    it('should send the current identity upon save', () => {
+        // GIVEN
+        mockAuth.saveSpy.and.returnValue(of({}));
+        const settingsFormValues = {
             firstName: 'John',
             lastName: 'Doe',
-            activated: true,
             email: 'john.doe@mail.com',
-            name: 'john',
             langKey: 'en',
-            login: 'john',
-            authorities: [],
-            imageUrl: '',
-            guidedTourSettings: [],
         };
 
-        beforeEach(async(() => {
-            TestBed.configureTestingModule({
-                imports: [ArtemisTestModule],
-                declarations: [SettingsComponent],
-                providers: [FormBuilder],
-            })
-                .overrideTemplate(SettingsComponent, '')
-                .compileComponents();
-        }));
+        // WHEN
+        comp.ngOnInit();
+        comp.save();
 
-        beforeEach(() => {
-            fixture = TestBed.createComponent(SettingsComponent);
-            comp = fixture.componentInstance;
-            mockAuth = TestBed.get(AccountService);
-            mockAuth.setIdentityResponse(accountValues);
-        });
+        // THEN
+        expect(mockAuth.identitySpy).toHaveBeenCalled();
+        expect(mockAuth.saveSpy).toHaveBeenCalledWith(accountValues);
+        expect(mockAuth.authenticateSpy).toHaveBeenCalledWith(accountValues);
+        expect(comp.settingsForm.value).toEqual(settingsFormValues);
+    });
 
-        it('should send the current identity upon save', () => {
-            // GIVEN
-            mockAuth.saveSpy.and.returnValue(of({}));
-            const settingsFormValues = {
-                firstName: 'John',
-                lastName: 'Doe',
-                email: 'john.doe@mail.com',
-                langKey: 'en',
-            };
+    it('should notify of success upon successful save', () => {
+        // GIVEN
+        mockAuth.saveSpy.and.returnValue(of({}));
 
-            // WHEN
-            comp.ngOnInit();
-            comp.save();
+        // WHEN
+        comp.ngOnInit();
+        comp.save();
 
-            // THEN
-            expect(mockAuth.identitySpy).toHaveBeenCalled();
-            expect(mockAuth.saveSpy).toHaveBeenCalledWith(accountValues);
-            expect(mockAuth.authenticateSpy).toHaveBeenCalledWith(accountValues);
-            expect(comp.settingsForm.value).toEqual(settingsFormValues);
-        });
+        // THEN
+        expect(comp.success).toBe(true);
+    });
 
-        it('should notify of success upon successful save', () => {
-            // GIVEN
-            mockAuth.saveSpy.and.returnValue(of({}));
+    it('should notify of error upon failed save', () => {
+        // GIVEN
+        mockAuth.saveSpy.and.returnValue(throwError('ERROR'));
 
-            // WHEN
-            comp.ngOnInit();
-            comp.save();
+        // WHEN
+        comp.ngOnInit();
+        comp.save();
 
-            // THEN
-            expect(comp.success).toBe(true);
-        });
-
-        it('should notify of error upon failed save', () => {
-            // GIVEN
-            mockAuth.saveSpy.and.returnValue(throwError('ERROR'));
-
-            // WHEN
-            comp.ngOnInit();
-            comp.save();
-
-            // THEN
-            expect(comp.success).toBe(false);
-        });
+        // THEN
+        expect(comp.success).toBe(false);
     });
 });
