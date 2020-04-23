@@ -6,7 +6,7 @@ import { ActivatedRoute } from '@angular/router';
 import { ArtemisTestModule } from '../../../../test.module';
 import { PasswordResetFinishComponent } from 'app/account/password-reset/finish/password-reset-finish.component';
 import { PasswordResetFinishService } from 'app/account/password-reset/finish/password-reset-finish.service';
-import { MockActivatedRoute } from '../../../../helpers/mock-route.service';
+import { MockActivatedRoute } from '../../../../mocks/mock-route.service';
 
 describe('Component Tests', () => {
     describe('PasswordResetFinishComponent', () => {

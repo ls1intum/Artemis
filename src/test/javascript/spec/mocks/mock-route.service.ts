@@ -1,5 +1,5 @@
 import { ActivatedRoute, Router } from '@angular/router';
-import { SpyObject } from './spyobject';
+import { SpyObject } from '../helpers/spyobject';
 import { of } from 'rxjs';
 import Spy = jasmine.Spy;
 

@@ -4,7 +4,7 @@ import { SinonStub, stub } from 'sinon';
 import { of } from 'rxjs';
 import * as sinonChai from 'sinon-chai';
 import { MockWebsocketService } from '../mocks/mock-websocket.service';
-import { MockLanguageService } from '../helpers/mock-language.service';
+import { MockLanguageService } from '../mocks/mock-language.service';
 import { MockHttpService } from '../mocks/mock-http.service';
 import { MockFeatureToggleService } from '../mocks/mock-feature-toggle-service';
 import { User } from 'app/core/user/user.model';

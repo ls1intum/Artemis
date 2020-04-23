@@ -1,4 +1,4 @@
-import { SpyObject } from './spyobject';
+import { SpyObject } from '../helpers/spyobject';
 import { JhiLanguageService } from 'ng-jhipster';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { of } from 'rxjs';

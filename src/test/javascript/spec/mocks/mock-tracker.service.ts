@@ -1,4 +1,4 @@
-import { SpyObject } from './spyobject';
+import { SpyObject } from '../helpers/spyobject';
 import { JhiTrackerService } from 'app/core/tracker/tracker.service';
 
 export class MockTrackerService extends SpyObject {
