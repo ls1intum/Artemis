@@ -1,4 +1,3 @@
-/* tslint:disable:no-unused-expression */
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateModule } from '@ngx-translate/core';
 import * as chai from 'chai';
@@ -25,7 +24,8 @@ describe('AuditsComponent', () => {
             });
     });
 
-    // The admin module is lazy loaded - we therefore need a dummy test to load the module and verify that there are no dependency related issues.
+    // The admin module is lazy loaded - we therefore need a dummy test to load
+    // the module and verify that there are no dependency related issues.
     it('should render a component from the admin module', () => {
         expect(comp).to.exist;
     });
