@@ -48,7 +48,7 @@ import { CodeEditorSessionService } from 'app/exercises/programming/shared/code-
 import { DomainService } from 'app/exercises/programming/shared/code-editor/service/code-editor-domain.service';
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
-import { MockActivatedRoute } from '../../mocks/mock-activated.route';
+import { MockActivatedRoute } from '../../mocks/activated-route/mock-activated.route';
 import { MockParticipationWebsocketService } from '../../mocks/mock-participation-websocket.service';
 import { MockSyncStorage } from '../../mocks/mock-sync.storage';
 import { MockResultService } from '../../mocks/mock-result.service';

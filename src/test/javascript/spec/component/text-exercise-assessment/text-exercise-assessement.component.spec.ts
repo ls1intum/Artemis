@@ -36,7 +36,7 @@ import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { TextSubmission } from 'app/entities/text-submission.model';
 import { Participation, ParticipationType } from 'app/entities/participation/participation.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
-import { MockActivatedRoute } from '../../mocks/mock-activated-route';
+import { MockActivatedRoute } from '../../mocks/activated-route/mock-activated-route';
 import { TextAssessmentsService } from 'app/exercises/text/assess/text-assessments.service';
 import { Course } from 'app/entities/course.model';
 import { Feedback } from 'app/entities/feedback.model';

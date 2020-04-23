@@ -16,7 +16,7 @@ import { CookieService } from 'ngx-cookie-service';
 import { DeviceDetectorService } from 'ngx-device-detector';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { Mutable } from '../helpers/mutable';
-import { mockedActivatedRouteSnapshot } from '../helpers/mock-activated-route-snapshot';
+import { mockedActivatedRouteSnapshot } from '../mocks/activated-route/mock-activated-route-snapshot';
 import { CourseExerciseDetailsComponent } from 'app/overview/exercise-details/course-exercise-details.component';
 
 chai.use(sinonChai);

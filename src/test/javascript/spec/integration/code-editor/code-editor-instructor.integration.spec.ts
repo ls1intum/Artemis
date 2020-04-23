@@ -40,7 +40,7 @@ import { ParticipationService } from 'app/exercises/shared/participation/partici
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { SolutionProgrammingExerciseParticipation } from 'app/entities/participation/solution-programming-exercise-participation.model';
-import { MockActivatedRoute } from '../../mocks/mock-activated.route';
+import { MockActivatedRoute } from '../../mocks/activated-route/mock-activated.route';
 import { MockSyncStorage } from '../../mocks/mock-sync.storage';
 import { MockResultService } from '../../mocks/mock-result.service';
 import { MockCodeEditorRepositoryService } from '../../mocks/mock-code-editor-repository.service';

@@ -3,7 +3,7 @@ import { TranslateModule } from '@ngx-translate/core';
 
 import { ArtemisTestModule } from '../../test.module';
 import { By } from '@angular/platform-browser';
-import { mockedActivatedRoute } from '../../helpers/mock-activated-route-query-param-map';
+import { mockedActivatedRoute } from '../../mocks/activated-route/mock-activated-route-query-param-map';
 import { ActivatedRoute, convertToParamMap, ParamMap } from '@angular/router';
 import { Mutable } from '../../helpers/mutable';
 import { BehaviorSubject } from 'rxjs';

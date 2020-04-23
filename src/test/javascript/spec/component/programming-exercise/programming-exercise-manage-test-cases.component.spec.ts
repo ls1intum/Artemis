@@ -29,7 +29,7 @@ import { EditableField, ProgrammingExerciseManageTestCasesComponent } from 'app/
 import { ProgrammingExerciseService, ProgrammingExerciseTestCaseStateDTO } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ProgrammingExerciseTestCaseService } from 'app/exercises/programming/manage/services/programming-exercise-test-case.service';
-import { MockActivatedRoute } from '../../mocks/mock-activated.route';
+import { MockActivatedRoute } from '../../mocks/activated-route/mock-activated.route';
 import { MockCookieService } from '../../mocks/mock-cookie.service';
 import { MockProgrammingExerciseService } from '../../mocks/mock-programming-exercise.service';
 

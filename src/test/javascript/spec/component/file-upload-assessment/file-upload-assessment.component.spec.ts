@@ -35,7 +35,7 @@ import { ModelingAssessmentModule } from 'app/exercises/modeling/assess/modeling
 import { routes } from 'app/exercises/file-upload/assess/file-upload-assessment.route';
 import { By } from '@angular/platform-browser';
 import { throwError } from 'rxjs';
-import { MockActivatedRoute } from '../../mocks/mock-activated-route';
+import { MockActivatedRoute } from '../../mocks/activated-route/mock-activated-route';
 import { Participation, ParticipationType } from 'app/entities/participation/participation.model';
 
 chai.use(sinonChai);

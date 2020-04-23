@@ -4,7 +4,7 @@ import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
 import { SinonStub, stub } from 'sinon';
 import { ArtemisTestModule } from '../../test.module';
-import { MockActivatedRoute } from '../../mocks/mock-activated.route';
+import { MockActivatedRoute } from '../../mocks/activated-route/mock-activated.route';
 import { MockSyncStorage } from '../../mocks/mock-sync.storage';
 import { MockComponent } from 'ng-mocks';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
