@@ -10,6 +10,7 @@ import { ModelingAssessmentModule } from 'app/exercises/modeling/assess/modeling
 import { ArtemisModelingParticipationRoutingModule } from 'app/exercises/modeling/participate/modeling-participation.route';
 import { ArtemisTeamModule } from 'app/exercises/shared/team/team.module';
 import { ArtemisHeaderExercisePageWithDetailsModule } from 'app/exercises/shared/exercise-headers/exercise-headers.module';
+import { ArtemisFullscreenModule } from 'app/shared/fullscreen/fullscreen.module';
 
 @NgModule({
     imports: [
@@ -23,6 +24,7 @@ import { ArtemisHeaderExercisePageWithDetailsModule } from 'app/exercises/shared
         MomentModule,
         ArtemisTeamModule,
         ArtemisHeaderExercisePageWithDetailsModule,
+        ArtemisFullscreenModule,
     ],
     declarations: [ModelingSubmissionComponent],
 })
