@@ -3,7 +3,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { ElementRef, NgModule, Renderer2 } from '@angular/core';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { NgbActiveModal, NgbModal, NgbDatepickerConfig } from '@ng-bootstrap/ng-bootstrap';
-import { AlertService, JhiDataUtils, JhiDateUtils, JhiEventManager, JhiLanguageService, JhiParseLinks } from 'ng-jhipster';
+import { JhiAlertService, JhiDataUtils, JhiDateUtils, JhiEventManager, JhiLanguageService, JhiParseLinks } from 'ng-jhipster';
 
 import { MockLanguageHelper, MockLanguageService } from './helpers/mock-language.service';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
@@ -65,7 +65,7 @@ import { MockComponent } from 'ng-mocks';
             useValue: null,
         },
         {
-            provide: AlertService,
+            provide: JhiAlertService,
             useValue: null,
         },
         {
