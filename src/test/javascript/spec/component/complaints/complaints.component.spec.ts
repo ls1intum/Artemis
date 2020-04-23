@@ -3,7 +3,7 @@ import * as chai from 'chai';
 import { By } from '@angular/platform-browser';
 import { ComplaintService } from 'app/complaints/complaint.service';
 import { MockComplaintResponse, MockComplaintService } from '../../mocks/mock-complaint.service';
-import { MockAlertService } from '../../helpers/mock-alert.service';
+import { MockAlertService } from '../../mocks/mock-alert.service';
 import { AlertService } from 'app/core/alert/alert.service';
 import { MomentModule } from 'ngx-moment';
 import { DebugElement } from '@angular/core';

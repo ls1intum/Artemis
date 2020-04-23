@@ -19,7 +19,7 @@ import { DebugElement } from '@angular/core';
 import { By } from '@angular/platform-browser';
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
-import { MockAlertService } from '../../helpers/mock-alert.service';
+import { MockAlertService } from '../../mocks/mock-alert.service';
 import { MockComplaintService } from '../../mocks/mock-complaint.service';
 import { AlertService } from 'app/core/alert/alert.service';
 import { ArtemisSharedModule } from 'app/shared/shared.module';

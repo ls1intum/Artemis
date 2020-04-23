@@ -7,7 +7,7 @@ import { ArtemisTestModule } from '../../test.module';
 import { MockSyncStorage } from '../../mocks/mock-sync.storage';
 import { MockParticipationWebsocketService } from '../../mocks/mock-participation-websocket.service';
 import { MockComponent } from 'ng-mocks';
-import { MockAlertService } from '../../helpers/mock-alert.service';
+import { MockAlertService } from '../../mocks/mock-alert.service';
 import { AlertService } from 'app/core/alert/alert.service';
 import { Router } from '@angular/router';
 import { ResizableInstructionsComponent } from 'app/exercises/text/assess/resizable-instructions/resizable-instructions.component';

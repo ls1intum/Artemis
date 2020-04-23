@@ -8,7 +8,7 @@ import { MockActivatedRoute } from '../../mocks/activated-route/mock-activated.r
 import { MockSyncStorage } from '../../mocks/mock-sync.storage';
 import { MockComponent } from 'ng-mocks';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
-import { MockAlertService } from '../../helpers/mock-alert.service';
+import { MockAlertService } from '../../mocks/mock-alert.service';
 import { AlertService } from 'app/core/alert/alert.service';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { MockRouter } from '../../mocks/mock-router.service';

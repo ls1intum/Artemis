@@ -5,7 +5,7 @@ import * as sinonChai from 'sinon-chai';
 import { ArtemisTestModule } from '../../test.module';
 import { Result } from 'app/entities/result.model';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
-import { MockAlertService } from '../../helpers/mock-alert.service';
+import { MockAlertService } from '../../mocks/mock-alert.service';
 import { AlertService } from 'app/core/alert/alert.service';
 import { DebugElement } from '@angular/core';
 import { By } from '@angular/platform-browser';

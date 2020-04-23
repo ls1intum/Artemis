@@ -11,7 +11,7 @@ import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { MockOrionConnectorService } from '../../../mocks/mock-orion-connector.service';
 import { MockCourseExerciseService } from '../../../mocks/mock-course-exercise.service';
 import { AlertService } from 'app/core/alert/alert.service';
-import { MockAlertService } from '../../../helpers/mock-alert.service';
+import { MockAlertService } from '../../../mocks/mock-alert.service';
 import { MockParticipationWebsocketService } from '../../../mocks/mock-participation-websocket.service';
 import { Result } from 'app/entities/result.model';
 import { DeviceDetectorService } from 'ngx-device-detector';

@@ -3,7 +3,7 @@ import * as chai from 'chai';
 import { BrowserModule, By } from '@angular/platform-browser';
 import { ComplaintService } from 'app/complaints/complaint.service';
 import { MockComplaintService } from '../../mocks/mock-complaint.service';
-import { MockAlertService } from '../../helpers/mock-alert.service';
+import { MockAlertService } from '../../mocks/mock-alert.service';
 import { AlertService } from 'app/core/alert/alert.service';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { MomentModule } from 'ngx-moment';
