@@ -10,7 +10,7 @@ import { AuditsComponent } from 'app/admin/audits/audits.component';
 chai.use(sinonChai);
 const expect = chai.expect;
 
-describe('AdminModule', () => {
+describe('AuditsComponent', () => {
     let comp: AuditsComponent;
     let fixture: ComponentFixture<AuditsComponent>;
 

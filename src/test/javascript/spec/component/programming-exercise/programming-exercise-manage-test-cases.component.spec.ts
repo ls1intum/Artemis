@@ -38,7 +38,7 @@ const expect = chai.expect;
 
 // TODO: Since the update to v.16 all tests for the ngx-swimlane table need to add a 0 tick to avoid the ViewDestroyedError.
 // The issue is a manual call to changeDetector.detectChanges that is triggered on a timeout.
-describe('ProgrammingExerciseManageTestCases', () => {
+describe('ProgrammingExerciseManageTestCasesComponent', () => {
     let comp: ProgrammingExerciseManageTestCasesComponent;
     let fixture: ComponentFixture<ProgrammingExerciseManageTestCasesComponent>;
     let debugElement: DebugElement;

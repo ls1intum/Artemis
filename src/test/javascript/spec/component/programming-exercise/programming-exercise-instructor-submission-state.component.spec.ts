@@ -26,7 +26,7 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 chai.use(sinonChai);
 const expect = chai.expect;
 
-describe('ProgrammingExerciseInstructorSubmissionState', () => {
+describe('ProgrammingExerciseInstructorSubmissionStateComponent', () => {
     let comp: ProgrammingExerciseInstructorSubmissionStateComponent;
     let fixture: ComponentFixture<ProgrammingExerciseInstructorSubmissionStateComponent>;
     let debugElement: DebugElement;

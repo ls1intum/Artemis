@@ -47,7 +47,7 @@ import { AssessmentGeneralFeedbackComponent } from 'app/assessment/assessment-ge
 chai.use(sinonChai);
 const expect = chai.expect;
 
-describe('TextAssessmentComponent', () => {
+describe('TextExerciseAssessmentComponent', () => {
     let comp: TextAssessmentComponent;
     let fixture: ComponentFixture<TextAssessmentComponent>;
     let textSubmissionService: TextSubmissionService;

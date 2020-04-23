@@ -33,7 +33,7 @@ import { ArtemisHeaderExercisePageWithDetailsModule } from 'app/exercises/shared
 chai.use(sinonChai);
 const expect = chai.expect;
 
-describe('TableEditableFieldComponent', () => {
+describe('TextEditorComponent', () => {
     let comp: TextEditorComponent;
     let fixture: ComponentFixture<TextEditorComponent>;
     let debugElement: DebugElement;

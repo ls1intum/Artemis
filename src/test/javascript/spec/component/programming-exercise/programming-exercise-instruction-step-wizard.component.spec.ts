@@ -16,7 +16,7 @@ import { Task } from 'app/exercises/programming/shared/instructions-render/task/
 chai.use(sinonChai);
 const expect = chai.expect;
 
-describe('ProgrammingExerciseInstructionStepWizard', () => {
+describe('ProgrammingExerciseInstructionStepWizardComponent', () => {
     let comp: ProgrammingExerciseInstructionStepWizardComponent;
     let fixture: ComponentFixture<ProgrammingExerciseInstructionStepWizardComponent>;
     let debugElement: DebugElement;

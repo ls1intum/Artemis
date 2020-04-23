@@ -19,7 +19,7 @@ import { Feedback } from 'app/entities/feedback.model';
 chai.use(sinonChai);
 const expect = chai.expect;
 
-describe('FileUploadSubmissionComponent', () => {
+describe('FileUploadResultComponent', () => {
     let comp: FileUploadResultComponent;
     let fixture: ComponentFixture<FileUploadResultComponent>;
     let debugElement: DebugElement;
