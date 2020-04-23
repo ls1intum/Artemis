@@ -4,40 +4,44 @@ import { AccountService } from 'app/core/auth/account.service';
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
 import { ArtemisTestModule } from '../../test.module';
-import { MockParticipationWebsocketService, MockSyncStorage } from '../../mocks';
-import { ArtemisResultModule, Result } from 'app/entities/result';
+import { MockSyncStorage } from '../../mocks/mock-sync.storage';
+import { MockParticipationWebsocketService } from '../../mocks/mock-participation-websocket.service';
 import { MockComponent } from 'ng-mocks';
-import { ArtemisSharedModule, FileUploaderService } from 'app/shared';
 import { MockAlertService } from '../../helpers/mock-alert.service';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/alert/alert.service';
 import { Router } from '@angular/router';
-import { ResizableInstructionsComponent } from 'app/text-assessment/resizable-instructions/resizable-instructions.component';
-import { ComplaintsForTutorComponent } from 'app/complaints-for-tutor';
+import { ResizableInstructionsComponent } from 'app/exercises/text/assess/resizable-instructions/resizable-instructions.component';
 import { DebugElement } from '@angular/core';
 import { By } from '@angular/platform-browser';
 import { MockAccountService } from '../../mocks/mock-account.service';
 import { Location } from '@angular/common';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { ComplaintService } from 'app/entities/complaint/complaint.service';
+import { ComplaintService } from 'app/complaints/complaint.service';
 import { MockComplaintService } from '../../mocks/mock-complaint.service';
 import { NgxDatatableModule } from '@swimlane/ngx-datatable';
-import { fileUploadSubmissionRoute } from 'app/file-upload-submission/file-upload-submission.route';
-import { FileUploadSubmissionComponent } from 'app/file-upload-submission/file-upload-submission.component';
+import { fileUploadSubmissionRoute, routes } from 'app/exercises/file-upload/participate/file-upload-participation.route';
+import { FileUploadSubmissionComponent } from 'app/exercises/file-upload/participate/file-upload-submission.component';
 import { MomentModule } from 'ngx-moment';
-import { ArtemisComplaintsModule } from 'app/complaints';
-import { FileUploadSubmissionService } from 'app/entities/file-upload-submission';
 import { createFileUploadSubmission, MockFileUploadSubmissionService } from '../../mocks/mock-file-upload-submission.service';
-import { StudentParticipation } from 'app/entities/participation';
-import { ParticipationWebsocketService } from 'app/entities/participation/participation-websocket.service';
+import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import { fileUploadExercise } from '../../mocks/mock-file-upload-exercise.service';
 import { MAX_SUBMISSION_FILE_SIZE } from 'app/shared/constants/input.constants';
 import { TranslateModule } from '@ngx-translate/core';
 import * as sinon from 'sinon';
-import { FileUploadResultComponent } from 'app/file-upload-submission/file-upload-result/file-upload-result.component';
-import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { stub } from 'sinon';
+import { FileUploadResultComponent } from 'app/exercises/file-upload/participate/file-upload-result.component';
+import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import * as moment from 'moment';
 import { of } from 'rxjs';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
+import { FileUploaderService } from 'app/shared/http/file-uploader.service';
+import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { Result } from 'app/entities/result.model';
+import { FileUploadSubmissionService } from 'app/exercises/file-upload/participate/file-upload-submission.service';
+import { ComplaintsForTutorComponent } from 'app/complaints/complaints-for-tutor/complaints-for-tutor.component';
+import { ArtemisResultModule } from 'app/exercises/shared/result/result.module';
+import { ArtemisComplaintsModule } from 'app/complaints/complaints.module';
+import { ArtemisHeaderExercisePageWithDetailsModule } from 'app/exercises/shared/exercise-headers/exercise-headers.module';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -49,7 +53,7 @@ describe('FileUploadSubmissionComponent', () => {
     let router: Router;
     let location: Location;
     let fileUploaderService: FileUploaderService;
-    let jhiAlertService: JhiAlertService;
+    let jhiAlertService: AlertService;
     let fileUploadSubmissionService: FileUploadSubmissionService;
 
     const result = { id: 1 } as Result;
@@ -64,8 +68,9 @@ describe('FileUploadSubmissionComponent', () => {
                 MomentModule,
                 ArtemisComplaintsModule,
                 TranslateModule.forRoot(),
-                RouterTestingModule.withRoutes([fileUploadSubmissionRoute[0]]),
+                RouterTestingModule.withRoutes([routes[0]]),
                 ArtemisSharedComponentModule,
+                ArtemisHeaderExercisePageWithDetailsModule,
             ],
             declarations: [
                 FileUploadSubmissionComponent,
@@ -74,7 +79,7 @@ describe('FileUploadSubmissionComponent', () => {
                 MockComponent(FileUploadResultComponent),
             ],
             providers: [
-                { provide: JhiAlertService, useClass: MockAlertService },
+                { provide: AlertService, useClass: MockAlertService },
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
@@ -92,13 +97,14 @@ describe('FileUploadSubmissionComponent', () => {
                 router = debugElement.injector.get(Router);
                 location = debugElement.injector.get(Location);
                 router.initialNavigation();
-                fileUploaderService = TestBed.get(FileUploaderService);
-                jhiAlertService = TestBed.get(JhiAlertService);
+                fileUploaderService = TestBed.inject(FileUploaderService);
+                jhiAlertService = TestBed.inject(AlertService);
                 fileUploadSubmissionService = debugElement.injector.get(FileUploadSubmissionService);
             });
     });
 
     afterEach(fakeAsync(() => {
+        tick();
         fixture.destroy();
         flush();
     }));
@@ -110,11 +116,6 @@ describe('FileUploadSubmissionComponent', () => {
         expect(comp.acceptedFileExtensions.replace(/\./g, '')).to.be.equal(fileUploadExercise.filePattern);
         expect(comp.fileUploadExercise).to.be.equal(fileUploadExercise);
         expect(comp.isAfterAssessmentDueDate).to.be.true;
-        expect(comp.numberOfAllowedComplaints).to.be.undefined;
-
-        const maxScore = debugElement.query(By.css('div p strong'));
-        expect(maxScore).to.exist;
-        expect(maxScore.nativeElement.textContent).to.be.equal(`Max. Score: ${fileUploadExercise.maxScore}`);
 
         // check if fileUploadInput is available
         const fileUploadInput = debugElement.query(By.css('#fileUploadInput'));
@@ -150,7 +151,7 @@ describe('FileUploadSubmissionComponent', () => {
         let submitFileButton = debugElement.query(By.css('jhi-button'));
         spyOn(fileUploaderService, 'uploadFile').and.returnValue(Promise.resolve({ path: 'test' }));
         submitFileButton.nativeElement.click();
-        comp.submission.submitted = true;
+        comp.submission!.submitted = true;
         comp.result = new Result();
         fixture.detectChanges();
 
@@ -180,7 +181,7 @@ describe('FileUploadSubmissionComponent', () => {
         // check that properties are set properly
         expect(jhiErrorSpy.callCount).to.be.equal(1);
         expect(comp.submissionFile).to.be.undefined;
-        expect(comp.submission.filePath).to.be.undefined;
+        expect(comp.submission!.filePath).to.be.undefined;
 
         // check if fileUploadInput is available
         const fileUploadInput = debugElement.query(By.css('#fileUploadInput'));
@@ -207,13 +208,17 @@ describe('FileUploadSubmissionComponent', () => {
         // check that properties are set properly
         expect(jhiErrorSpy.callCount).to.be.equal(1);
         expect(comp.submissionFile).to.be.undefined;
-        expect(comp.submission.filePath).to.be.undefined;
+        expect(comp.submission!.filePath).to.be.undefined;
 
         // check if fileUploadInput is available
         const fileUploadInput = debugElement.query(By.css('#fileUploadInput'));
         expect(fileUploadInput).to.exist;
         expect(fileUploadInput.nativeElement.disabled).to.be.false;
         expect(fileUploadInput.nativeElement.value).to.be.equal('');
+
+        tick();
+        fixture.destroy();
+        flush();
     }));
 
     it('should not allow to submit after the deadline if the initialization date is before the due date', fakeAsync(() => {
@@ -229,6 +234,10 @@ describe('FileUploadSubmissionComponent', () => {
         const submitButton = debugElement.query(By.css('jhi-button'));
         expect(submitButton).to.exist;
         expect(submitButton.attributes['ng-reflect-disabled']).to.be.equal('true');
+
+        tick();
+        fixture.destroy();
+        flush();
     }));
 
     it('should allow to submit after the deadline if the initialization date is after the due date', fakeAsync(() => {
@@ -245,6 +254,10 @@ describe('FileUploadSubmissionComponent', () => {
         const submitButton = debugElement.query(By.css('jhi-button'));
         expect(submitButton).to.exist;
         expect(submitButton.attributes['ng-reflect-disabled']).to.be.equal('false');
+
+        tick();
+        fixture.destroy();
+        flush();
     }));
 
     it('should not allow to submit if there is a result and no due date', fakeAsync(() => {
@@ -260,6 +273,10 @@ describe('FileUploadSubmissionComponent', () => {
         const submitButton = debugElement.query(By.css('jhi-button'));
         expect(submitButton).to.exist;
         expect(submitButton.attributes['ng-reflect-disabled']).to.be.equal('true');
+
+        tick();
+        fixture.destroy();
+        flush();
     }));
 
     it('should get inactive as soon as the due date passes the current date', fakeAsync(() => {
@@ -280,5 +297,9 @@ describe('FileUploadSubmissionComponent', () => {
         tick();
 
         expect(comp.isActive).to.be.false;
+
+        tick();
+        fixture.destroy();
+        flush();
     }));
 });

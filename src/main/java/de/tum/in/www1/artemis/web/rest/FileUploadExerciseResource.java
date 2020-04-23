@@ -1,7 +1,7 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.notFound;
+import static de.tum.in.www1.artemis.config.Constants.*;
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -15,13 +15,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.Exercise;
-import de.tum.in.www1.artemis.domain.FileUploadExercise;
-import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.repository.FileUploadExerciseRepository;
 import de.tum.in.www1.artemis.service.*;
-import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import io.github.jhipster.web.util.ResponseUtil;
 
@@ -49,14 +45,17 @@ public class FileUploadExerciseResource {
 
     private final GroupNotificationService groupNotificationService;
 
+    private final GradingCriterionService gradingCriterionService;
+
     public FileUploadExerciseResource(FileUploadExerciseRepository fileUploadExerciseRepository, UserService userService, AuthorizationCheckService authCheckService,
-            CourseService courseService, GroupNotificationService groupNotificationService, ExerciseService exerciseService) {
+            CourseService courseService, GroupNotificationService groupNotificationService, ExerciseService exerciseService, GradingCriterionService gradingCriterionService) {
         this.fileUploadExerciseRepository = fileUploadExerciseRepository;
         this.userService = userService;
         this.courseService = courseService;
         this.authCheckService = authCheckService;
         this.groupNotificationService = groupNotificationService;
         this.exerciseService = exerciseService;
+        this.gradingCriterionService = gradingCriterionService;
     }
 
     /**
@@ -71,7 +70,7 @@ public class FileUploadExerciseResource {
     public ResponseEntity<FileUploadExercise> createFileUploadExercise(@RequestBody FileUploadExercise fileUploadExercise) throws URISyntaxException {
         log.debug("REST request to save FileUploadExercise : {}", fileUploadExercise);
         if (fileUploadExercise.getId() != null) {
-            throw new BadRequestAlertException("A new fileUploadExercise cannot already have an ID", ENTITY_NAME, "idexists");
+            return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "A new fileUploadExercise cannot already have an ID", "idexists")).body(null);
         }
         // fetch course from database to make sure client didn't change groups
         Course course = courseService.findOne(fileUploadExercise.getCourse().getId());
@@ -79,10 +78,38 @@ public class FileUploadExerciseResource {
         if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
             return forbidden();
         }
+
+        if (!isFilePatternValid(fileUploadExercise)) {
+            return ResponseEntity.badRequest()
+                    .headers(HeaderUtil.createAlert(applicationName,
+                            "The file pattern is invalid. Please use a comma separated list with actual file endings without dots (e.g. 'png, pdf').", "filepattern.invalid"))
+                    .body(null);
+        }
+
         FileUploadExercise result = fileUploadExerciseRepository.save(fileUploadExercise);
         groupNotificationService.notifyTutorGroupAboutExerciseCreated(fileUploadExercise);
         return ResponseEntity.created(new URI("/api/file-upload-exercises/" + result.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);
+    }
+
+    private boolean isFilePatternValid(FileUploadExercise exercise) {
+        // a file ending should consist of a comma separated list of 1-5 characters / digits
+        var filePattern = exercise.getFilePattern().toLowerCase().replaceAll("\\s+", "");
+        var allowedFileEndings = filePattern.split(",");
+        if (allowedFileEndings.length == 0) {
+            return false;
+        }
+        var isValid = true;
+        for (var allowedFileEnding : allowedFileEndings) {
+            isValid = isValid && FILE_ENDING_PATTERN.matcher(allowedFileEnding).matches();
+        }
+
+        if (isValid) {
+            // use the lowercase version without whitespaces
+            exercise.setFilePattern(filePattern);
+            return true;
+        }
+        return false;
     }
 
     /**
@@ -106,6 +133,14 @@ public class FileUploadExerciseResource {
         if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
             return forbidden();
         }
+
+        if (!isFilePatternValid(fileUploadExercise)) {
+            return ResponseEntity.badRequest()
+                    .headers(HeaderUtil.createAlert(applicationName,
+                            "The file pattern is invalid. Please use a comma separated list with actual file endings without dots (e.g. 'png, pdf').", "filepattern.invalid"))
+                    .body(null);
+        }
+
         FileUploadExercise result = fileUploadExerciseRepository.save(fileUploadExercise);
         if (notificationText != null) {
             groupNotificationService.notifyStudentGroupAboutExerciseUpdate(fileUploadExercise, notificationText);
@@ -148,6 +183,8 @@ public class FileUploadExerciseResource {
     public ResponseEntity<FileUploadExercise> getFileUploadExercise(@PathVariable Long exerciseId) {
         log.debug("REST request to get FileUploadExercise : {}", exerciseId);
         Optional<FileUploadExercise> fileUploadExercise = fileUploadExerciseRepository.findById(exerciseId);
+        List<GradingCriterion> gradingCriteria = gradingCriterionService.findByExerciseIdWithEagerGradingCriteria(exerciseId);
+        fileUploadExercise.ifPresent(exercise -> exercise.setGradingCriteria(gradingCriteria));
         Course course = fileUploadExercise.get().getCourse();
         User user = userService.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {

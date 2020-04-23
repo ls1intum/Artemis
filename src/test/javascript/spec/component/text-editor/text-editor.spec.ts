@@ -1,29 +1,34 @@
 import * as chai from 'chai';
-import { TextEditorComponent, textEditorRoute } from 'app/text-editor';
 import { DebugElement } from '@angular/core';
 import * as moment from 'moment';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
-import { TextExercise } from 'app/entities/text-exercise';
-import { StudentParticipation } from 'app/entities/participation';
-import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
-import { Result, SubmissionResultStatusComponent } from 'app/entities/result';
-import { JhiAlertService } from 'ng-jhipster';
+import { ComponentFixture, fakeAsync, TestBed, tick, flush } from '@angular/core/testing';
+import { AlertService } from 'app/core/alert/alert.service';
 import { ArtemisTestModule } from '../../test.module';
 import { TranslateModule } from '@ngx-translate/core';
 import { MockTextEditorService } from '../../mocks/mock-text-editor.service';
 import { SinonStub, stub } from 'sinon';
 import * as sinonChai from 'sinon-chai';
-import { TextEditorService } from 'app/text-editor/text-editor.service';
+import { TextEditorService } from 'app/exercises/text/participate/text-editor.service';
 import { BehaviorSubject } from 'rxjs';
-import { ArtemisSharedModule } from 'app/shared';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { RouterTestingModule } from '@angular/router/testing';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { MockSyncStorage } from '../../mocks';
+import { MockSyncStorage } from '../../mocks/mock-sync.storage';
 import { MockComponent } from 'ng-mocks';
-import { ButtonComponent } from 'app/shared/components';
-import { TextResultComponent } from 'app/text-editor/text-result/text-result.component';
-import { ComplaintsComponent } from 'app/complaints';
+import { TextResultComponent } from 'app/exercises/text/participate/text-result/text-result.component';
 import { ComplaintInteractionsComponent } from 'app/complaints/complaint-interactions.component';
+import { SubmissionResultStatusComponent } from 'app/overview/submission-result-status.component';
+import { TextEditorComponent } from 'app/exercises/text/participate/text-editor.component';
+import { textEditorRoute } from 'app/exercises/text/participate/text-editor.route';
+import { TextExercise } from 'app/entities/text-exercise.model';
+import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { ButtonComponent } from 'app/shared/components/button.component';
+import { Result } from 'app/entities/result.model';
+import { ComplaintsComponent } from 'app/complaints/complaints.component';
+import { TextSubmission } from 'app/entities/text-submission.model';
+import { ArtemisTeamModule } from 'app/exercises/shared/team/team.module';
+import { ArtemisHeaderExercisePageWithDetailsModule } from 'app/exercises/shared/exercise-headers/exercise-headers.module';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -38,12 +43,26 @@ describe('TableEditableFieldComponent', () => {
 
     const route = { snapshot: { paramMap: convertToParamMap({ participationId: 42 }) } } as ActivatedRoute;
     const textExercise = { id: 1 } as TextExercise;
-    const participation = { id: 42, exercise: textExercise } as StudentParticipation;
-    const result = { id: 1 } as Result;
+    const participation = new StudentParticipation();
+    const result = new Result();
+
+    beforeAll(() => {
+        participation.id = 42;
+        participation.exercise = textExercise;
+        participation.submissions = [new TextSubmission()];
+        result.id = 1;
+    });
 
     beforeEach(async () => {
         return TestBed.configureTestingModule({
-            imports: [TranslateModule.forRoot(), ArtemisTestModule, ArtemisSharedModule, RouterTestingModule.withRoutes([textEditorRoute[0]])],
+            imports: [
+                TranslateModule.forRoot(),
+                ArtemisTestModule,
+                ArtemisSharedModule,
+                ArtemisTeamModule,
+                ArtemisHeaderExercisePageWithDetailsModule,
+                RouterTestingModule.withRoutes([textEditorRoute[0]]),
+            ],
             declarations: [
                 TextEditorComponent,
                 MockComponent(SubmissionResultStatusComponent),
@@ -53,7 +72,7 @@ describe('TableEditableFieldComponent', () => {
                 MockComponent(ComplaintInteractionsComponent),
             ],
             providers: [
-                JhiAlertService,
+                AlertService,
                 { provide: ActivatedRoute, useValue: route },
                 { provide: TextEditorService, useClass: MockTextEditorService },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
@@ -85,6 +104,10 @@ describe('TableEditableFieldComponent', () => {
 
         expect(comp.isAllowedToSubmitAfterDeadline).to.be.false;
         expect(comp.isAlwaysActive).to.be.true;
+
+        tick();
+        fixture.destroy();
+        flush();
     }));
 
     it('should not allow to submit after the deadline if the initialization date is before the due date', fakeAsync(() => {
@@ -98,6 +121,10 @@ describe('TableEditableFieldComponent', () => {
         tick();
 
         expect(comp.isAllowedToSubmitAfterDeadline).to.be.false;
+
+        tick();
+        fixture.destroy();
+        flush();
     }));
 
     it('should allow to submit after the deadline if the initilization date is after the due date', fakeAsync(() => {
@@ -111,6 +138,10 @@ describe('TableEditableFieldComponent', () => {
         tick();
 
         expect(comp.isAllowedToSubmitAfterDeadline).to.be.true;
+
+        tick();
+        fixture.destroy();
+        flush();
     }));
 
     it('should not be always active if there is a result and no due date', fakeAsync(() => {
@@ -123,6 +154,10 @@ describe('TableEditableFieldComponent', () => {
         tick();
 
         expect(comp.isAlwaysActive).to.be.false;
+
+        tick();
+        fixture.destroy();
+        flush();
     }));
 
     it('should be always active if there is no result and the initialization date is after the due date', fakeAsync(() => {
@@ -136,6 +171,10 @@ describe('TableEditableFieldComponent', () => {
         tick();
 
         expect(comp.isAlwaysActive).to.be.true;
+
+        tick();
+        fixture.destroy();
+        flush();
     }));
 
     it('should get inactive as soon as the due date passes the current date', fakeAsync(() => {
@@ -155,5 +194,9 @@ describe('TableEditableFieldComponent', () => {
         tick();
 
         expect(comp.isActive).to.be.false;
+
+        tick();
+        fixture.destroy();
+        flush();
     }));
 });

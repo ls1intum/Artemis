@@ -10,7 +10,8 @@ import { MockAlertService } from '../mocks/mock-alert.service';
 import { IAccountService } from 'app/core/auth/account.service';
 import { IWebsocketService } from 'app/core/websocket/websocket.service';
 import { LoginService } from 'app/core/login/login.service';
-import { IAuthServerProvider } from 'app/core';
+import { IAuthServerProvider } from 'app/core/auth/auth-jwt.service';
+import { MockNotificationService } from '../mocks/mock-notification.service';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -21,11 +22,13 @@ describe('LoginService', () => {
     let authServerProvider: IAuthServerProvider;
     let router: MockRouter;
     let alertService: MockAlertService;
+    let notificationService: MockNotificationService;
     let loginService: LoginService;
 
     let removeAuthTokenFromCachesStub: SinonStub;
     let authenticateStub: SinonStub;
     let alertServiceClearStub: SinonStub;
+    let notificationServiceCleanUpStub: SinonStub;
     let navigateByUrlStub: SinonStub;
     let alertServiceErrorStub: SinonStub;
 
@@ -35,12 +38,14 @@ describe('LoginService', () => {
         authServerProvider = new MockAuthServerProviderService();
         router = new MockRouter();
         alertService = new MockAlertService();
+        notificationService = new MockNotificationService();
         // @ts-ignore
-        loginService = new LoginService(accountService, websocketService, authServerProvider, router, alertService);
+        loginService = new LoginService(accountService, websocketService, authServerProvider, router, alertService, notificationService);
 
         removeAuthTokenFromCachesStub = stub(authServerProvider, 'removeAuthTokenFromCaches');
         authenticateStub = stub(accountService, 'authenticate');
         alertServiceClearStub = stub(alertService, 'clear');
+        notificationServiceCleanUpStub = stub(notificationService, 'cleanUp');
         navigateByUrlStub = stub(router, 'navigateByUrl');
         alertServiceErrorStub = stub(alertService, 'error');
     });
@@ -49,6 +54,7 @@ describe('LoginService', () => {
         removeAuthTokenFromCachesStub.restore();
         authenticateStub.restore();
         alertServiceClearStub.restore();
+        notificationServiceCleanUpStub.restore();
         navigateByUrlStub.restore();
         alertServiceErrorStub.restore();
     });
@@ -61,6 +67,7 @@ describe('LoginService', () => {
         expect(removeAuthTokenFromCachesStub).to.have.been.calledOnceWithExactly();
         expect(authenticateStub).to.have.been.calledOnceWithExactly(null);
         expect(alertServiceClearStub).to.have.been.calledOnceWithExactly();
+        expect(notificationServiceCleanUpStub).to.have.been.calledOnceWithExactly();
         expect(navigateByUrlStub).to.have.been.calledOnceWithExactly('/');
         expect(alertServiceErrorStub).not.to.have.been.called;
     });

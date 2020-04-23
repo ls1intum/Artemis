@@ -6,9 +6,9 @@ import { Observable } from 'rxjs/Observable';
 import { JhiEventManager } from 'ng-jhipster';
 
 import { ArtemisTestModule } from '../../../test.module';
-import { FileUploadExerciseDialogComponent } from '../../../../../../main/webapp/app/entities/file-upload-exercise/file-upload-exercise-dialog.component';
-import { FileUploadExerciseService } from '../../../../../../main/webapp/app/entities/file-upload-exercise/file-upload-exercise.service';
-import { FileUploadExercise } from '../../../../../../main/webapp/app/entities/file-upload-exercise/file-upload-exercise.model';
+import { FileUploadExerciseDialogComponent } from '../../../../../../main/webapp/app/exercises/file-upload/manage/file-upload-exercise/file-upload-exercise-dialog.component';
+import { FileUploadExerciseService } from 'app/exercises/file-upload/manage/file-upload-exercise.service';
+import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
 
 describe('Component Tests', () => {
     describe('FileUploadExercise Management Dialog Component', () => {

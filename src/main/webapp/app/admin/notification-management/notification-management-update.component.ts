@@ -1,8 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-
 import { UserService } from 'app/core/user/user.service';
-import { SystemNotification, SystemNotificationService, SystemNotificationType } from 'app/entities/system-notification';
+import { SystemNotification, SystemNotificationType } from 'app/entities/system-notification.model';
+import { SystemNotificationService } from 'app/core/system-notification/system-notification.service';
 
 @Component({
     selector: 'jhi-notification-mgmt-update',
@@ -43,12 +43,12 @@ export class NotificationMgmtUpdateComponent implements OnInit {
         this.isSaving = true;
         if (this.notification.id) {
             this.systemNotificationService.update(this.notification).subscribe(
-                response => this.onSaveSuccess(response.body!),
+                (response) => this.onSaveSuccess(response.body!),
                 () => this.onSaveError(),
             );
         } else {
             this.systemNotificationService.create(this.notification).subscribe(
-                response => this.onSaveSuccess(response.body!),
+                (response) => this.onSaveSuccess(response.body!),
                 () => this.onSaveError(),
             );
         }

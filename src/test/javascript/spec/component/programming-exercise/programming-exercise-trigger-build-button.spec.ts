@@ -12,16 +12,18 @@ import { of, Subject } from 'rxjs';
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
 import { ArtemisTestModule } from '../../test.module';
-import { MockParticipationWebsocketService, MockSyncStorage } from '../../mocks';
-import { Result } from 'app/entities/result';
-import { InitializationState } from 'app/entities/participation';
-import { ParticipationWebsocketService } from 'app/entities/participation/participation-websocket.service';
+import { MockSyncStorage } from '../../mocks/mock-sync.storage';
+import { MockParticipationWebsocketService } from '../../mocks/mock-participation-websocket.service';
+import { Result } from 'app/entities/result.model';
+import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import { MockAccountService } from '../../mocks/mock-account.service';
-import { Exercise } from 'app/entities/exercise';
-import { ProgrammingSubmissionService, ProgrammingSubmissionState, ProgrammingSubmissionStateObj } from 'app/programming-submission/programming-submission.service';
-import { ArtemisProgrammingExerciseActionsModule } from 'app/entities/programming-exercise/actions/programming-exercise-actions.module';
-import { ProgrammingExerciseStudentTriggerBuildButtonComponent } from 'app/entities/programming-exercise/actions';
+import { Exercise } from 'app/entities/exercise.model';
+import { ProgrammingSubmissionService, ProgrammingSubmissionState, ProgrammingSubmissionStateObj } from 'app/exercises/programming/participate/programming-submission.service';
+import { ArtemisProgrammingExerciseActionsModule } from 'app/exercises/programming/shared/actions/programming-exercise-actions.module';
 import { triggerChanges } from '../../utils/general.utils';
+import { InitializationState } from 'app/entities/participation/participation.model';
+import { ProgrammingExerciseStudentTriggerBuildButtonComponent } from 'app/exercises/programming/shared/actions/programming-exercise-student-trigger-build-button.component';
+import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -90,7 +92,7 @@ describe('TriggerBuildButtonSpec', () => {
 
     it('should not show the trigger button if there is no pending submission and no build is running', () => {
         comp.participation = { ...participation, results: [gradedResult1], initializationState: InitializationState.INITIALIZED };
-        comp.exercise = { id: 4 };
+        comp.exercise = { id: 4 } as ProgrammingExercise;
 
         triggerChanges(comp, { property: 'participation', currentValue: comp.participation });
         fixture.detectChanges();
@@ -109,7 +111,7 @@ describe('TriggerBuildButtonSpec', () => {
 
     it('should be enabled and trigger the build on click if it is provided with a participation including results', () => {
         comp.participation = { ...participation, results: [gradedResult1], initializationState: InitializationState.INITIALIZED };
-        comp.exercise = { id: 5 };
+        comp.exercise = { id: 5 } as ProgrammingExercise;
 
         triggerChanges(comp, { property: 'participation', currentValue: comp.participation });
         getLatestPendingSubmissionSubject.next({ submissionState: ProgrammingSubmissionState.HAS_FAILED_SUBMISSION, submission: null, participationId: comp.participation.id });

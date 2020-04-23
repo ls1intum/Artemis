@@ -1,10 +1,13 @@
 import { TourStep } from 'app/guided-tour/guided-tour-step.model';
+import { ResetParticipation } from 'app/guided-tour/guided-tour.constants';
 
 export interface GuidedTour {
     /** Identifier for tour */
     settingsKey: string;
     /** Steps fo the tour */
     steps: TourStep[];
+    /** Defines the reset participation type for the guided tour */
+    resetParticipation: ResetParticipation;
     /** The given function will be called when tour is skipped */
     skipCallback?: (stepSkippedOn: number) => void;
     /** The given function will be called when tour is completed */
@@ -16,6 +19,4 @@ export interface GuidedTour {
      * This should only be set if you are completely sure your tour is displaying correctly on all screen sizes otherwise a user can get stuck.
      */
     preventBackdropFromAdvancing?: boolean;
-    /** Defines if the UML model in the apollon editor should be resetted if the user restarts the tutorial */
-    resetUMLModel?: boolean;
 }

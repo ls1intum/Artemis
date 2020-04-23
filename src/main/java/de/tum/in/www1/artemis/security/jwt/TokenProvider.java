@@ -7,9 +7,10 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.stream.Collectors;
 
+import javax.annotation.PostConstruct;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.InitializingBean;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
@@ -24,7 +25,7 @@ import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 
 @Component
-public class TokenProvider implements InitializingBean {
+public class TokenProvider {
 
     private final Logger log = LoggerFactory.getLogger(TokenProvider.class);
 
@@ -44,8 +45,11 @@ public class TokenProvider implements InitializingBean {
         this.jHipsterProperties = jHipsterProperties;
     }
 
-    @Override
-    public void afterPropertiesSet() throws Exception {
+    /**
+     * initializes the token provider based on the yml config file
+     */
+    @PostConstruct
+    public void init() {
         byte[] keyBytes;
         String secret = jHipsterProperties.getSecurity().getAuthentication().getJwt().getSecret();
         if (!StringUtils.isEmpty(secret)) {
@@ -105,7 +109,7 @@ public class TokenProvider implements InitializingBean {
      * @return UsernamePasswordAuthenticationToken
      */
     public Authentication getAuthentication(String token) {
-        Claims claims = Jwts.parser().setSigningKey(key).parseClaimsJws(token).getBody();
+        Claims claims = Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token).getBody();
 
         Collection<? extends GrantedAuthority> authorities = Arrays.stream(claims.get(AUTHORITIES_KEY).toString().split(",")).map(SimpleGrantedAuthority::new)
                 .collect(Collectors.toList());
@@ -128,7 +132,7 @@ public class TokenProvider implements InitializingBean {
             return false;
         }
         try {
-            String tokenAuthorities = (String) Jwts.parser().setSigningKey(key).parseClaimsJws(authToken).getBody().get("auth");
+            String tokenAuthorities = (String) Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(authToken).getBody().get("auth");
             return tokenAuthorities.contains(authority + fileName);
         }
         catch (Exception e) {
@@ -144,7 +148,7 @@ public class TokenProvider implements InitializingBean {
      */
     public boolean validateToken(String authToken) {
         try {
-            Jwts.parser().setSigningKey(key).parseClaimsJws(authToken);
+            Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(authToken);
             return true;
         }
         catch (JwtException | IllegalArgumentException e) {

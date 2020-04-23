@@ -1,6 +1,6 @@
 import { AfterViewInit, Component, ElementRef, OnInit, Renderer2 } from '@angular/core';
-import { EMAIL_NOT_FOUND_TYPE } from 'app/shared';
 import { PasswordResetInitService } from './password-reset-init.service';
+import { EMAIL_NOT_FOUND_TYPE } from 'app/shared/constants/error.constants';
 
 @Component({
     selector: 'jhi-password-reset-init',
@@ -30,7 +30,7 @@ export class PasswordResetInitComponent implements OnInit, AfterViewInit {
             () => {
                 this.success = 'OK';
             },
-            response => {
+            (response) => {
                 this.success = null;
                 if (response.status === 400 && response.error.type === EMAIL_NOT_FOUND_TYPE) {
                     this.errorEmailNotExists = 'ERROR';

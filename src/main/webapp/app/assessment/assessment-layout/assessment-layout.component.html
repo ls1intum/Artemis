@@ -1,0 +1,31 @@
+<jhi-assessment-header
+    [hideBackButton]="hideBackButton"
+    (navigateBack)="navigateBack.emit()"
+    [isLoading]="isLoading"
+    [busy]="busy"
+    [isAssessor]="isAssessor"
+    [isAtLeastInstructor]="isAtLeastInstructor"
+    [canOverride]="canOverride"
+    [assessmentsAreValid]="assessmentsAreValid"
+    [result]="result"
+    (save)="save.emit()"
+    (submit)="submit.emit()"
+    (cancel)="cancel.emit()"
+    (nextSubmission)="nextSubmission.emit()"
+    [hasConflict]="conflicts && conflicts.length >= 0"
+    (resolveConflict)="resolveConflict.emit()"
+    [hasComplaint]="!!complaint"
+></jhi-assessment-header>
+
+<jhi-assessment-complaint-alert [complaint]="complaint"></jhi-assessment-complaint-alert>
+
+<ng-content></ng-content>
+
+<jhi-complaints-for-tutor-form
+    class="row mt-4"
+    *ngIf="complaint"
+    [zeroIndent]="false"
+    [complaint]="complaint"
+    [isAllowedToRespond]="complaint.complaintType === ComplaintType.COMPLAINT ? !isAssessor : isAssessor"
+    (updateAssessmentAfterComplaint)="updateAssessmentAfterComplaint.emit($event)"
+></jhi-complaints-for-tutor-form>

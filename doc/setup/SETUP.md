@@ -1,36 +1,39 @@
 ## Setup Guide for Artemis
 
 In this guide you learn how to setup the development environment of Artemis.
-Artemis is based on [JHipster](https://jhipster.github.io), i.e. [Spring Boot](http://projects.spring.io/spring-boot) development on the application server using Java 12, and TypeScript development on the application client in the browser using [Angular 8](https://angular.io) and Webpack. To get an overview of the used technology, have a look at [https://jhipster.github.io/tech-stack](https://jhipster.github.io/tech-stack) and other tutorials on the JHipster homepage.  
+Artemis is based on [JHipster](https://jhipster.github.io), i.e. [Spring Boot](http://projects.spring.io/spring-boot) development on the application server using Java 14, and TypeScript development on the application client in the browser using [Angular](https://angular.io) and Webpack.
+To get an overview of the used technology, have a look at [https://jhipster.github.io/tech-stack](https://jhipster.github.io/tech-stack) and other tutorials on the JHipster homepage.
 
-You can find tutorials how to setup JHipster in an IDE ([IntelliJ](https://www.jetbrains.com/idea) is recommended, but it also runs in other IDEs as well) on [https://jhipster.github.io/configuring-ide](https://jhipster.github.io/configuring-ide).
+You can find tutorials how to setup JHipster in an IDE ([IntelliJ IDEA Ultimate](https://www.jetbrains.com/idea) is recommended) on [https://jhipster.github.io/configuring-ide](https://jhipster.github.io/configuring-ide). Note that the Community Edition of IntelliJ IDEA does not provide Spring Boot support (see the [comparison matrix](https://www.jetbrains.com/idea/features/editions_comparison_matrix.html)).
 Before you can build Artemis, you must install and configure the following dependencies/tools on your machine:
 
-1. [Java 12 JDK](https://www.oracle.com/technetwork/java/javase/downloads/jdk12-downloads-5295953.html): Java is the main development language for the server application of Artemis.
-2. [MySQL Database Server 8](https://dev.mysql.com/downloads/mysql): Artemis uses Hibernate to store entities in a MySQL database. Download and install the MySQL Community Server (8.0.x) and configure the 'root' user with an empty password. (In case you want to use a different password, make sure to change the value in application-dev.yml and in liquibase.gradle). The required Artemis scheme will be created / updated automatically at startup time of the server application.
-3. [Node.js](https://nodejs.org): We use Node (>=12.3.1) to run a development web server and build the project. Depending on your system, you can install Node either from source or as a pre-packaged bundle. 
-4. [Yarn](https://yarnpkg.com): We use Yarn (>=1.15.2) to manage Node dependencies.
+1. [Java JDK](https://www.oracle.com/java/technologies/javase-downloads.html): We use Java (>= JDK 14) to develop and run the Artemis application server which is based on [Spring Boot](http://projects.spring.io/spring-boot).
+2. [MySQL Database Server 8](https://dev.mysql.com/downloads/mysql): Artemis uses Hibernate to store entities in a MySQL database. Download and install the MySQL Community Server (8.0.x) and configure the 'root' user with an empty password. (In case you want to use a different password, make sure to change the value in application-dev.yml and in liquibase.gradle). The required Artemis scheme will be created / updated automatically at startup time of the server application. Alternatively, you can run the MySQL Database Server inside a Docker container using e.g. ```docker-compose -f src/main/docker/mysql.yml up```
+3. [Node.js](https://nodejs.org): We use Node (>=12.8.0) to compile and run the client Angular application. Depending on your system, you can install Node either from source or as a pre-packaged bundle.
+4. [Yarn](https://yarnpkg.com): We use Yarn (>=1.17.3) to manage client side Node dependencies.
 Depending on your system, you can install Yarn either from source or as a pre-packaged bundle.
 
 ### Server Setup
 
-To start the Artemis application server from the development environment, first import the project into IntelliJ and then make sure to install the Spring Boot plugins to run the main class de.tum.in.www1.artemis.ArtemisApp. Before the application runs, you have to configure the file `application-artemis.yml` in the folder `src/main/resources/config`. 
+To start the Artemis application server from the development environment, first import the project into IntelliJ and then make sure to install the Spring Boot plugins to run the main class `de.tum.in.www1.artemis.ArtemisApp`. Before the application runs, you have to configure the file `application-artemis.yml` in the folder `src/main/resources/config`.
 
 ```yaml
 artemis:
     repo-clone-path: ./repos/
     repo-download-clone-path: ./repos-download/
     encryption-password: <encrypt-password>     # arbitrary password for encrypting database values
-    ldap:     # note: this section is optional
-        url: <url>
-        user-dn: <user-dn>
-        password: <password>
-        base: <base>
-    jira:
-        url: https://jira.ase.in.tum.de
-        user: <username>    # e.g. ga12abc
-        password: <password>
-        admin-group-name: tumuser
+    user-management:
+        use-external: true
+        external:
+            url: https://jira.ase.in.tum.de
+            user: <username>    # e.g. ga12abc
+            password: <password>
+            admin-group-name: tumuser
+        ldap:
+            url: <url>
+            user-dn: <user-dn>
+            password: <password>
+            base: <base>
     version-control:
         url: https://bitbucket.ase.in.tum.de
         user: <username>    # e.g. ga12abc
@@ -38,7 +41,7 @@ artemis:
         secret: <token>                 # VCS API token giving Artemis full Admin access. Not needed for Bamboo+Bitbucket
         ci-token: <token from the CI>   # Token generated by the CI (e.g. Jenkins) for webhooks from the VCS to the CI. Not needed for Bamboo+Bitbucket
     continuous-integration:
-        url: https://bamboobruegge.in.tum.de
+        url: https://bamboo.ase.in.tum.de
         user: <username>    # e.g. ga12abc
         password: <password>
         vcs-application-link-name: LS1 Bitbucket Server     # If the VCS and CI are directly linked (normally only for Bitbucket + Bamboo)
@@ -84,41 +87,47 @@ artemis:
         clustering-url: http://localhost:8000/cluster
         segmentation-url: http://localhost:8080/segment
         secret: null
+info:
+    contact: artemis.in@tum.de
+    imprint: https://ase.in.tum.de/lehrstuhl_1/component/content/article/179-imprint
 ```
 Change all entries with ```<...>``` with proper values, e.g. your TUM Online account credentials to connect to the given instances of JIRA, Bitbucket and Bamboo. Alternatively, you can connect to your local JIRA, Bitbucket and Bamboo instances.
-Be careful that you don't commit changes in this file. Best practice is to specify that your local git repository ignores this file or assumes that this file is unchanged. 
+Be careful that you don't commit changes in this file. Best practice is to specify that your local git repository ignores this file or assumes that this file is unchanged.
 
 The Artemis server should startup by running the main class ```de.tum.in.www1.artemis.ArtemisApp``` using Spring Boot.
 
-One typical problem in the development setup is that an exception occurs during the database initialization. Artemis uses [Liquibase](https://www.liquibase.org) to automatically upgrade the database scheme after changes to the data model. This ensures that the changes can also be applied to the production server. In some development environments, it can be the case that the liquibase migration from an empty database scheme to the current version of the database scheme fails, e.g. due to the fact that the asynchronous migration is too slow. In these cases, it can help to manually import an existing database scheme using e.g. MySQL Workbench or Sequel Pro into the `Artemis` database scheme in your MySQL server. You can find a recent scheme in the `data` folder in this git repository. If you then start the application server, liquibase will recognize that all migration steps have already been executed. In case you encounter errors with liquibase checksum values, run the following command in your terminal / command line:
-
-```
-java -jar liquibase-core-3.5.5.jar --url='jdbc:mysql://localhost:3306/Artemis?useUnicode=true&characterEncoding=utf8&useSSL=false&useLegacyDatetimeCode=false&serverTimezone=UTC' --username=root --password='' --classpath=mysql-connector-java-8.0.17.jar clearCheckSums
-```
-You can download the required jar files here:
-
-* [liquibase-core-3.5.5.jar](http://central.maven.org/maven2/org/liquibase/liquibase-core/3.5.5/liquibase-core-3.5.5.jar)
-* [mysql-connector-java-8.0.17.jar](http://central.maven.org/maven2/mysql/mysql-connector-java/8.0.17/mysql-connector-java-8.0.17.jar)
-
-As an alternative you can use this gradle command:
+One typical problem in the development setup is that an exception occurs during the database initialization.
+Artemis uses [Liquibase](https://www.liquibase.org) to automatically upgrade the database scheme after changes to the data model.
+This ensures that the changes can also be applied to the production server.
+In case you encounter errors with liquibase checksum values, run the following command in your terminal / command line:
 
 ```
 ./gradlew liquibaseClearChecksums
 ```
 
-If you use a password, you need to adapt it in Artemis/gradle/liquibase.gradle.
+If you use a password, you need to adapt it in `gradle/liquibase.gradle`.
 
-**Important:** Artemis uses Spring profiles to segregate parts of the application configuration and make it only available in certain environments. For development purposes, the following program arguments can be used to enable the `dev` profile and the profiles for JIRA, Bitbucket and Bamboo:
+**Important:** Artemis uses Spring profiles to segregate parts of the application configuration and make it only available in certain environments.
+For development purposes, the following program arguments can be used to enable the `dev` profile and the profiles for JIRA, Bitbucket and Bamboo:
 
     --spring.profiles.active=dev,bamboo,bitbucket,jira,artemis
 
 If you use IntelliJ, add the following entry to the section `Active Profiles` (within `Spring Boot`) in the server run configuration:
 
-    dev,bamboo,bitbucket,jira,artemis 
+    dev,bamboo,bitbucket,jira,artemis
+
+If you want to run the application via the command line instead, make sure to pass the active profiles to the `gradlew` command like this:
+
+    ./gradlew bootRun --args='--spring.profiles.active=dev,bamboo,bitbucket,jira,artemis'
+
+As an alternative, you might want to use Jenkins and Gitlab with an internal user management in Artemis, then you would use the profiles:
+
+    dev,jenkins,gitlab,artemis
 
 ### Client Setup
 
-After installing Node and Yarn, you should be able to run the following command to install development tools. You will only need to run this command when dependencies change in [package.json](package.json).
+After installing Node and Yarn, you should be able to run the following command to install development tools and dependencies.
+You will only need to run this command when dependencies change in [package.json](package.json).
 
 ```
 yarn install
@@ -130,20 +139,33 @@ To start the client application in the browser, use the following command:
 yarn start
 ```
 
-This compiles TypeScript code to JavaScript code, starts the hot module replacement feature in Webpack (i.e. whenever you change a TypeScript file and save, the client is automatically reloaded with the new code) and will start the client application in your browser on `http://localhost:9000`. If you have activated the JIRA profile (see above in Server Setup) and if you have configured `application-artemis.yml` correctly, then you should be able to login with your TUM Online account.
+This compiles TypeScript code to JavaScript code, starts the hot module replacement feature in Webpack (i.e. whenever you change a TypeScript file and save, the client is automatically reloaded with the new code) and will start the client application in your browser on `http://localhost:9000`.
+If you have activated the JIRA profile (see above in Server Setup) and if you have configured `application-artemis.yml` correctly, then you should be able to login with your TUM Online account.
 
-For more information, review [Working with Angular](https://www.jhipster.tech/development/#working-with-angular). For further instructions on how to develop with JHipster, have a look at [Using JHipster in development](http://www.jhipster.tech/development).
+For more information, review [Working with Angular](https://www.jhipster.tech/development/#working-with-angular).
+For further instructions on how to develop with JHipster, have a look at [Using JHipster in development](http://www.jhipster.tech/development).
+
+### Customize your Artemis instance
+
+You can define the following custom assets for Artemis to be used instead of the TUM defaults:
+* The logo next to the "Artemis" heading on the navbar &#8594; `${artemisRunDirectory}/public/images/logo.png`
+* The favicon &#8594; `${artemisRunDirectory}/public/images/favicon.ico`
+* The privacy statement HTML &#8594; `${artemisRunDirectory}/public/content/privacy_statement.html`
+* The contact email address in the `application-{prod,artemis}.yml` configuration file under the key `info.contact`
+* The imprint link in the `application-{prod,artemis}.yml` configuration file under the key `info.imprint`
 
 ### Alternative: Using docker-compose
 
-A full functioning development environment can also be set up using docker-compose: 
+A full functioning development environment can also be set up using docker-compose:
 
 1. Install [docker](https://docs.docker.com/install/) and [docker-compose](https://docs.docker.com/compose/install/)
 2. Configure the credentials in `application-artemis.yml` in the folder `src/main/resources/config` as described above
 3. Run `docker-compose up`
 4. Go to [http://localhost:9000](http://localhost:9000)
 
-The client and the server will run in different containers. As yarn is used with its live reload mode to build and run the client, any change in the client's codebase will trigger a rebuild automatically. In case of changes in the codebase of the server one has to restart the `artemis-server` container via `docker-compose restart artemis-server`.
+The client and the server will run in different containers.
+As yarn is used with its live reload mode to build and run the client, any change in the client's codebase will trigger a rebuild automatically.
+In case of changes in the codebase of the server one has to restart the `artemis-server` container via `docker-compose restart artemis-server`.
 
 (Native) Running and Debugging from IDEs is currently not supported.
 

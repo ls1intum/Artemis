@@ -2,14 +2,12 @@ package de.tum.in.www1.artemis.web.rest;
 
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 
-import java.security.Principal;
 import java.time.ZonedDateTime;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
-import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
@@ -46,16 +44,13 @@ public class QuizSubmissionResource {
 
     private final WebsocketMessagingService messagingService;
 
-    private final SimpMessageSendingOperations messagingTemplate;
-
     private final AuthorizationCheckService authCheckService;
 
     public QuizSubmissionResource(QuizExerciseService quizExerciseService, QuizSubmissionService quizSubmissionService, ParticipationService participationService,
-            SimpMessageSendingOperations messagingTemplate, WebsocketMessagingService messagingService, UserService userService, AuthorizationCheckService authCheckService) {
+            WebsocketMessagingService messagingService, UserService userService, AuthorizationCheckService authCheckService) {
         this.quizExerciseService = quizExerciseService;
         this.quizSubmissionService = quizSubmissionService;
         this.participationService = participationService;
-        this.messagingTemplate = messagingTemplate;
         this.messagingService = messagingService;
         this.userService = userService;
         this.authCheckService = authCheckService;
@@ -65,13 +60,12 @@ public class QuizSubmissionResource {
      * POST /exercises/:exerciseId/submissions/practice : Submit a new quizSubmission for practice mode.
      *
      * @param exerciseId     the id of the exercise for which to init a participation
-     * @param principal      the current user principal
      * @param quizSubmission the quizSubmission to submit
      * @return the ResponseEntity with status 200 (OK) and the Result as its body, or with status 4xx if the request is invalid
      */
     @PostMapping("/exercises/{exerciseId}/submissions/practice")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Result> submitForPractice(@PathVariable Long exerciseId, Principal principal, @RequestBody QuizSubmission quizSubmission) {
+    public ResponseEntity<Result> submitForPractice(@PathVariable Long exerciseId, @RequestBody QuizSubmission quizSubmission) {
         log.debug("REST request to submit QuizSubmission for practice : {}", quizSubmission);
 
         // recreate pointers back to submission in each submitted answer

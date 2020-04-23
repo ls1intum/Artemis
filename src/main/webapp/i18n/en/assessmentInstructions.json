@@ -1,8 +1,19 @@
 {
     "assessmentInstructions": {
-        "instructions": "Instructions",
+        "instructions": {
+            "instructions": "Instructions",
+            "editor": {
+                "addCredits": "[credits] Points",
+                "addInstruction": "[instruction] Grading Instructions",
+                "addFeedback": "[feedback] Feedback",
+                "addGradingScale": "[gradingScale] Grading Scale",
+                "addCountUsage": "[count] Usage Number",
+                "addCriterion": "[criterion] Grading Criterion"
+            }
+        },
         "problemStatement": "Problem Statement",
         "sampleSolution": "Example Solution",
-        "gradingCriteria": "Grading Criteria"
+        "gradingCriteria": "Grading Criteria",
+        "usageCount": "Usage Count"
     }
 }

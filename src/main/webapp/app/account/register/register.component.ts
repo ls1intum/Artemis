@@ -3,9 +3,9 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { JhiLanguageService } from 'ng-jhipster';
 
-import { EMAIL_ALREADY_USED_TYPE, LOGIN_ALREADY_USED_TYPE } from '../../shared';
 import { RegisterService } from 'app/account/register/register.service';
 import { User } from 'app/core/user/user.model';
+import { EMAIL_ALREADY_USED_TYPE, LOGIN_ALREADY_USED_TYPE } from 'app/shared/constants/error.constants';
 
 @Component({
     selector: 'jhi-register',
@@ -44,13 +44,13 @@ export class RegisterComponent implements OnInit, AfterViewInit {
             this.error = null;
             this.errorUserExists = null;
             this.errorEmailExists = null;
-            this.languageService.getCurrent().then(key => {
+            this.languageService.getCurrent().then((key) => {
                 this.registerAccount.langKey = key;
                 this.registerService.save(this.registerAccount).subscribe(
                     () => {
                         this.success = true;
                     },
-                    response => this.processError(response),
+                    (response) => this.processError(response),
                 );
             });
         }

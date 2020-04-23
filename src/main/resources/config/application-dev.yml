@@ -32,7 +32,7 @@ spring:
             indent-output: true
     datasource:
         type: com.zaxxer.hikari.HikariDataSource
-        url: jdbc:mysql://localhost:3306/Artemis?createDatabaseIfNotExist=true&useUnicode=true&characterEncoding=utf8&useSSL=false&useLegacyDatetimeCode=false&serverTimezone=UTC
+        url: jdbc:mysql://localhost:3306/Artemis?createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true&useUnicode=true&characterEncoding=utf8&useSSL=false&useLegacyDatetimeCode=false&serverTimezone=UTC
         username: root
         password:
         hikari:
@@ -125,3 +125,4 @@ info:
             - modeling_tour: 'UML Class Diagram'
             - programming_exercise_fail_tour: 'test'
             - programming_exercise_success_tour: 'test'
+            - tutor_assessment_tour: 'Patterns in Software Engineering'

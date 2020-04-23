@@ -1,7 +1,8 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs/Subscription';
-import { SystemNotification, SystemNotificationService } from 'app/entities/system-notification';
+import { SystemNotification } from 'app/entities/system-notification.model';
+import { SystemNotificationService } from 'app/core/system-notification/system-notification.service';
 
 @Component({
     selector: 'jhi-notification-mgmt-detail',
@@ -17,7 +18,7 @@ export class NotificationMgmtDetailComponent implements OnInit, OnDestroy {
      * Assigns the subscription to system notification service
      */
     ngOnInit() {
-        this.subscription = this.route.params.subscribe(params => {
+        this.subscription = this.route.params.subscribe((params) => {
             this.load(params['id']);
         });
     }
@@ -27,7 +28,7 @@ export class NotificationMgmtDetailComponent implements OnInit, OnDestroy {
      * @param id of the system notification
      */
     load(id: string) {
-        this.systemNotificationService.find(parseInt(id, 10)).subscribe(response => {
+        this.systemNotificationService.find(parseInt(id, 10)).subscribe((response) => {
             this.notification = response.body!;
         });
     }

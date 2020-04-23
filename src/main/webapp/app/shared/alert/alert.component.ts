@@ -1,11 +1,12 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { JhiAlert, JhiAlertService } from 'ng-jhipster';
+import { JhiAlert } from 'ng-jhipster';
+import { AlertService } from 'app/core/alert/alert.service';
 
 @Component({
     selector: 'jhi-alert',
     template: `
         <div class="alerts" role="alert">
-            <div *ngFor="let alert of alerts" [ngClass]="{ 'alert.position': true, toast: alert.toast }">
+            <div *ngFor="let alert of alerts" [ngClass]="setClasses(alert)">
                 <ngb-alert *ngIf="alert && alert.type && alert.msg" [type]="alert.type" (close)="alert.close(alerts)">
                     <pre [innerHTML]="alert.msg"></pre>
                 </ngb-alert>
@@ -13,23 +14,24 @@ import { JhiAlert, JhiAlertService } from 'ng-jhipster';
         </div>
     `,
 })
-export class JhiAlertComponent implements OnInit, OnDestroy {
-    alerts: JhiAlert[];
+export class AlertComponent implements OnInit, OnDestroy {
+    alerts: JhiAlert[] = [];
 
-    constructor(private alertService: JhiAlertService) {}
+    constructor(private alertService: AlertService) {}
 
-    ngOnInit() {
+    ngOnInit(): void {
         this.alerts = this.alertService.get();
     }
 
-    setClasses(alert: JhiAlert) {
-        return {
-            'jhi-toast': alert.toast,
-            [alert.position!]: true,
-        };
+    setClasses(alert: JhiAlert): { [key: string]: boolean } {
+        const classes = { 'jhi-toast': Boolean(alert.toast) };
+        if (alert.position) {
+            return { ...classes, [alert.position]: true };
+        }
+        return classes;
     }
 
-    ngOnDestroy() {
-        this.alerts = [];
+    ngOnDestroy(): void {
+        this.alertService.clear();
     }
 }

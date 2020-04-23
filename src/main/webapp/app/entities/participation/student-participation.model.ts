@@ -1,16 +1,16 @@
 import { User } from 'app/core/user/user.model';
-import { Exercise } from '../exercise';
+import { Team } from 'app/entities/team.model';
 import { Participation, ParticipationType } from 'app/entities/participation/participation.model';
+import { Exercise } from 'app/entities/exercise.model';
 
 export class StudentParticipation extends Participation {
     public student: User;
+    public team: Team;
     public exercise: Exercise;
+    public participantIdentifier: string;
+    public participantName: string;
 
     constructor(type?: ParticipationType) {
         super(type ? type : ParticipationType.STUDENT);
-    }
-
-    getExercise(): Exercise {
-        return this.exercise;
     }
 }

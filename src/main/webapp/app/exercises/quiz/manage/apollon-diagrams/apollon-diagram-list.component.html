@@ -1,0 +1,50 @@
+<h2>
+    <span jhiTranslate="artemisApp.apollonDiagram.home.title">Apollon Diagrams</span>
+</h2>
+
+<jhi-alert></jhi-alert>
+
+<div class="row">
+    <div class="col">
+        <button type="submit" (click)="previousState()" class="btn btn-info">
+            <fa-icon [icon]="'arrow-left'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.back"> Back</span>
+        </button>
+        <button (click)="openCreateDiagramDialog()" class="btn btn-primary">
+            <fa-icon [icon]="'plus'"></fa-icon>
+            <span jhiTranslate="artemisApp.apollonDiagram.home.createLabel">Create a New Apollon Diagram</span>
+        </button>
+    </div>
+</div>
+
+<div class="table-responsive" *ngIf="apollonDiagrams && apollonDiagrams.length > 0">
+    <table class="table table-striped">
+        <thead>
+            <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" [callback]="callback">
+                <th jhiSortBy="id"><span jhiTranslate="global.field.id">ID</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon></th>
+                <th jhiSortBy="title"><span jhiTranslate="artemisApp.exercise.title">Title</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon></th>
+                <th jhiSortBy="diagramType"><span jhiTranslate="artemisApp.modelingExercise.diagramType">Diagram Type</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon></th>
+                <th jhiTranslate="artemisApp.exercise.actions">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr *ngFor="let apollonDiagram of apollonDiagrams | sortBy: predicate:reverse; trackBy: trackId">
+                <td>
+                    <a [routerLink]="['/course-management', 'apollon-diagrams', apollonDiagram.id]">{{ apollonDiagram.id }}</a>
+                </td>
+                <td>{{ getTitleForApollonDiagram(apollonDiagram) }}</td>
+                <td jhiTranslate="{{ 'artemisApp.DiagramType.' + apollonDiagram.diagramType }}">{{ apollonDiagram.diagramType }}</td>
+                <td>
+                    <button class="btn btn-primary mr-1" (click)="goToDetailsPage(apollonDiagram.id)" jhiTranslate="entity.action.open">Open</button>
+                    <button
+                        *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']"
+                        class="btn btn-danger mr-1"
+                        (click)="delete(apollonDiagram)"
+                        jhiTranslate="entity.action.delete"
+                    >
+                        Delete
+                    </button>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>

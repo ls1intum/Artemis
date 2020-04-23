@@ -4,19 +4,20 @@ import { DebugElement, NO_ERRORS_SCHEMA } from '@angular/core';
 import { ComponentFixture, TestBed, inject, fakeAsync } from '@angular/core/testing';
 import { Router } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
-import { CookieService } from 'ngx-cookie';
+import { CookieService } from 'ngx-cookie-service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { of } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import { ArtemisTestModule } from '../../test.module';
-import { MockCookieService, MockSyncStorage } from '../../mocks';
+import { MockSyncStorage } from '../../mocks/mock-sync.storage';
+import { MockCookieService } from '../../mocks/mock-cookie.service';
 import { TextTourStep } from 'app/guided-tour/guided-tour-step.model';
 import { GuidedTour } from 'app/guided-tour/guided-tour.model';
 import { GuidedTourComponent } from 'app/guided-tour/guided-tour.component';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
-import { Orientation, OverlayPosition } from 'app/guided-tour/guided-tour.constants';
+import { Orientation, OverlayPosition, ResetParticipation } from 'app/guided-tour/guided-tour.constants';
 import { DeviceDetectorService } from 'ngx-device-detector';
-import { ArtemisSharedModule } from 'app/shared';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { By } from '@angular/platform-browser';
 import { MockTranslateService } from '../../mocks/mock-translate.service';
 
@@ -44,6 +45,7 @@ describe('GuidedTourComponent', () => {
 
     const courseOverviewTour: GuidedTour = {
         settingsKey: 'course_overview_tour',
+        resetParticipation: ResetParticipation.EXERCISE_PARTICIPATION,
         steps: [
             tourStep,
             tourStepWithHighlightPadding,
@@ -70,7 +72,7 @@ describe('GuidedTourComponent', () => {
                 ArtemisSharedModule,
                 RouterTestingModule.withRoutes([
                     {
-                        path: 'overview',
+                        path: 'courses',
                         component: GuidedTourComponent,
                     },
                 ]),
@@ -91,8 +93,8 @@ describe('GuidedTourComponent', () => {
                 guidedTourComponentFixture = TestBed.createComponent(GuidedTourComponent);
                 guidedTourComponent = guidedTourComponentFixture.componentInstance;
                 guidedTourDebugElement = guidedTourComponentFixture.debugElement;
-                guidedTourService = TestBed.get(GuidedTourService);
-                router = TestBed.get(Router);
+                guidedTourService = TestBed.inject(GuidedTourService);
+                router = TestBed.inject(Router);
             });
     });
 
@@ -100,6 +102,7 @@ describe('GuidedTourComponent', () => {
         const currentStepSpy = spyOn<any>(guidedTourComponent, 'subscribeToGuidedTourCurrentStepStream');
         const resizeEventSpy = spyOn<any>(guidedTourComponent, 'subscribeToResizeEvent');
         const scrollEventSpy = spyOn<any>(guidedTourComponent, 'subscribeToScrollEvent');
+        const dotNavigationSpy = spyOn<any>(guidedTourComponent, 'subscribeToDotChanges').and.returnValue(of());
         const guidedTourInitSpy = spyOn(guidedTourService, 'init').and.returnValue(of());
 
         guidedTourComponent.ngAfterViewInit();
@@ -107,6 +110,7 @@ describe('GuidedTourComponent', () => {
         expect(currentStepSpy.calls.count()).to.equal(1);
         expect(resizeEventSpy.calls.count()).to.equal(1);
         expect(scrollEventSpy.calls.count()).to.equal(1);
+        expect(dotNavigationSpy.calls.count()).to.equal(1);
         expect(guidedTourInitSpy.calls.count()).to.equal(1);
     });
 
@@ -119,21 +123,22 @@ describe('GuidedTourComponent', () => {
     describe('Keydown Element', () => {
         beforeEach(async () => {
             // Prepare guided tour service
-            spyOn(guidedTourService, 'updateGuidedTourSettings');
             spyOn(guidedTourService, 'init').and.returnValue(of());
             spyOn(guidedTourService, 'getLastSeenTourStepIndex').and.returnValue(0);
-            spyOn(guidedTourService, 'enableTour').and.callFake(() => {
+            spyOn<any>(guidedTourService, 'updateGuidedTourSettings');
+            spyOn<any>(guidedTourService, 'enableTour').and.callFake(() => {
                 guidedTourService['availableTourForComponent'] = courseOverviewTour;
                 guidedTourService.currentTour = courseOverviewTour;
             });
+            spyOn<any>(guidedTourComponent, 'subscribeToDotChanges').and.returnValue(of());
 
             // Prepare guided tour component
             guidedTourComponent.ngAfterViewInit();
 
             // Start course overview tour
             expect(guidedTourComponent.currentTourStep).to.not.exist;
-            guidedTourService.enableTour(courseOverviewTour);
-            guidedTourService.startTour();
+            guidedTourService['enableTour'](courseOverviewTour, true);
+            guidedTourService['startTour']();
             expect(guidedTourComponent.currentTourStep).to.exist;
 
             // Check highlight (current) dot and small dot
@@ -154,38 +159,31 @@ describe('GuidedTourComponent', () => {
         });
 
         it('should navigate next with the right arrow key', () => {
-            const nextStep = spyOn(guidedTourService, 'nextStep').and.callThrough();
-            const dotCalculation = spyOn(guidedTourService, 'calculateAndDisplayDotNavigation');
+            guidedTourComponent['currentStepIndex'] = guidedTourService.currentTourStepIndex;
+            guidedTourComponent['nextStepIndex'] = guidedTourService.currentTourStepIndex + 1;
+            const nextStep = spyOn(guidedTourService, 'nextStep');
             const eventMock = new KeyboardEvent('keydown', { code: 'ArrowRight' });
             guidedTourComponent.handleKeyboardEvent(eventMock);
             expect(nextStep.calls.count()).to.equal(1);
-            expect(dotCalculation.calls.count()).to.equal(1);
             nextStep.calls.reset();
-            dotCalculation.calls.reset();
         });
 
         it('should navigate back with the left arrow key', () => {
-            const backStep = spyOn(guidedTourService, 'backStep').and.callThrough();
+            const backStep = spyOn(guidedTourService, 'backStep').and.returnValue(of());
             const nextStep = spyOn(guidedTourService, 'nextStep').and.callThrough();
-            const dotCalculation = spyOn(guidedTourService, 'calculateAndDisplayDotNavigation');
             const eventMockRight = new KeyboardEvent('keydown', { code: 'ArrowRight' });
             const eventMockLeft = new KeyboardEvent('keydown', { code: 'ArrowLeft' });
 
             guidedTourComponent.handleKeyboardEvent(eventMockLeft);
             expect(backStep.calls.count()).to.equal(0);
-            expect(dotCalculation.calls.count()).to.equal(0);
 
             guidedTourComponent.handleKeyboardEvent(eventMockRight);
-            expect(nextStep.calls.count()).to.equal(1);
-            expect(dotCalculation.calls.count()).to.equal(1);
 
             guidedTourComponent.handleKeyboardEvent(eventMockLeft);
             expect(backStep.calls.count()).to.equal(1);
-            expect(dotCalculation.calls.count()).to.equal(2);
 
             nextStep.calls.reset();
             backStep.calls.reset();
-            dotCalculation.calls.reset();
         });
 
         it('should skip the tour with the escape key', () => {
@@ -251,7 +249,7 @@ describe('GuidedTourComponent', () => {
 
         afterEach(() => {
             if (guidedTourComponent.currentTourStep) {
-                guidedTourComponent.currentTourStep!.orientation = undefined;
+                guidedTourComponent.currentTourStep.orientation = undefined;
             }
         });
 

@@ -4,7 +4,6 @@ import static de.tum.in.www1.artemis.config.Constants.*;
 import static de.tum.in.www1.artemis.constants.ProgrammingSubmissionConstants.*;
 import static de.tum.in.www1.artemis.util.TestConstants.COMMIT_HASH_OBJECT_ID;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doReturn;
 
 import java.net.URL;
@@ -29,7 +28,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import de.tum.in.www1.artemis.AbstractSpringIntegrationTest;
+import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.connector.bamboo.BambooRequestMockProvider;
 import de.tum.in.www1.artemis.domain.Feedback;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
@@ -40,13 +39,12 @@ import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.service.ProgrammingSubmissionService;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.RequestUtilService;
 import de.tum.in.www1.artemis.web.rest.ProgrammingSubmissionResource;
 import de.tum.in.www1.artemis.web.rest.ResultResource;
 
-class ProgrammingSubmissionAndResultIntegrationTest extends AbstractSpringIntegrationTest {
+class ProgrammingSubmissionAndResultIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     private enum IntegrationTestParticipationType {
         STUDENT, TEMPLATE, SOLUTION
@@ -69,9 +67,6 @@ class ProgrammingSubmissionAndResultIntegrationTest extends AbstractSpringIntegr
 
     @Autowired
     ResultResource resultResource;
-
-    @Autowired
-    ProgrammingSubmissionService programmingSubmissionService;
 
     @Autowired
     ProgrammingSubmissionRepository submissionRepository;
@@ -109,7 +104,6 @@ class ProgrammingSubmissionAndResultIntegrationTest extends AbstractSpringIntegr
 
     @BeforeEach
     void setUp() {
-        doReturn(true).when(continuousIntegrationService).isBuildPlanEnabled(anyString(), anyString());
         bambooRequestMockProvider.enableMockingOfRequests();
 
         database.addUsers(3, 2, 2);
@@ -181,7 +175,6 @@ class ProgrammingSubmissionAndResultIntegrationTest extends AbstractSpringIntegr
      * Here the participation provided does exist so Artemis can create the submission.
      *
      * After that the CI builds the code submission and notifies Artemis so it can create the result.
-     *
      */
     @Test
     void shouldHandleNewBuildResultCreatedByCommitWithSpecificTests() throws Exception {
@@ -489,7 +482,7 @@ class ProgrammingSubmissionAndResultIntegrationTest extends AbstractSpringIntegr
         Object obj = jsonParser.parse(BITBUCKET_REQUEST);
 
         Map<String, Object> requestBodyMap = (Map<String, Object>) obj;
-        List<HashMap<String, Object>> changes = (List<HashMap<String, Object>>) requestBodyMap.get("changes");
+        List<Map<String, Object>> changes = (List<Map<String, Object>>) requestBodyMap.get("changes");
         changes.get(0).put("toHash", TEST_COMMIT);
 
         // Api should return ok.
@@ -552,7 +545,7 @@ class ProgrammingSubmissionAndResultIntegrationTest extends AbstractSpringIntegr
 
     private String getStudentLoginFromParticipation(int participationNumber) {
         StudentParticipation participation = studentParticipationRepository.findWithStudentById(participationIds.get(participationNumber)).get();
-        return participation.getStudent().getLogin();
+        return participation.getParticipantIdentifier();
     }
 
     private Long getParticipationIdByType(IntegrationTestParticipationType participationType, int participationNumber) {

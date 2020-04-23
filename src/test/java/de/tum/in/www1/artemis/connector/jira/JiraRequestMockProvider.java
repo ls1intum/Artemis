@@ -10,11 +10,11 @@ import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.regex.Pattern;
 
-import org.codehaus.jackson.map.ObjectMapper;
 import org.hamcrest.text.MatchesPattern;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -23,6 +23,9 @@ import org.springframework.test.web.client.ExpectedCount;
 import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.service.connectors.jira.dto.JiraUserDTO;
 import de.tum.in.www1.artemis.service.connectors.jira.dto.JiraUserDTO.JiraUserGroupDTO;
@@ -36,6 +39,8 @@ public class JiraRequestMockProvider {
     private URL JIRA_URL;
 
     private final RestTemplate restTemplate;
+
+    private final ObjectMapper mapper = new ObjectMapper();
 
     private MockRestServiceServer mockServer;
 
@@ -72,7 +77,6 @@ public class JiraRequestMockProvider {
     }
 
     public void mockGetUsernameForEmail(String email, String usernameToBeReturned) throws IOException, URISyntaxException {
-        final var mapper = new ObjectMapper();
         final var path = UriComponentsBuilder.fromUri(JIRA_URL.toURI()).path("/rest/api/2/user/search").queryParam("username", email).build().toUri();
         final var response = List.of(Map.of("name", usernameToBeReturned));
 
@@ -80,9 +84,19 @@ public class JiraRequestMockProvider {
                 .andRespond(withStatus(HttpStatus.OK).contentType(MediaType.APPLICATION_JSON).body(mapper.writeValueAsString(response)));
     }
 
-    public void mockGetOrCreateUser(String authUsername, String password, String username, String email, String firstName, Set<String> groups)
+    public void mockCreateGroup(String groupName) throws URISyntaxException, JsonProcessingException {
+        final var path = UriComponentsBuilder.fromUri(JIRA_URL.toURI()).path("/rest/api/2/group").build().toUri();
+        final var body = Map.of("name", groupName);
+        mockServer.expect(requestTo(path)).andExpect(method(HttpMethod.POST)).andExpect(content().json(mapper.writeValueAsString(body))).andRespond(withStatus(HttpStatus.OK));
+    }
+
+    public void mockDeleteGroup(String groupName) throws URISyntaxException {
+        final var path = UriComponentsBuilder.fromUri(JIRA_URL.toURI()).path("/rest/api/2/group").queryParam("groupname", groupName).build().toUri();
+        mockServer.expect(requestTo(path)).andExpect(method(HttpMethod.DELETE)).andRespond(withStatus(HttpStatus.OK));
+    }
+
+    public void mockGetOrCreateUserLti(String authUsername, String password, String username, String email, String firstName, Set<String> groups)
             throws URISyntaxException, IOException {
-        final var mapper = new ObjectMapper();
         final var response = new JiraUserDTO();
         final var groupsResponse = new JiraUserGroupsDTO();
         final var groupDTOs = new HashSet<JiraUserGroupDTO>();
@@ -104,5 +118,51 @@ public class JiraRequestMockProvider {
 
         mockServer.expect(requestTo(path)).andExpect(method(HttpMethod.GET)).andExpect(header("Authorization", "Basic " + authHeader))
                 .andRespond(withStatus(HttpStatus.OK).contentType(MediaType.APPLICATION_JSON).body(mapper.writeValueAsString(response)));
+    }
+
+    public void mockGetOrCreateUserJira(String username, String email, String firstName, Set<String> groups) throws URISyntaxException, IOException {
+        final var response = new JiraUserDTO();
+        final var groupsResponse = new JiraUserGroupsDTO();
+        final var groupDTOs = new HashSet<JiraUserGroupDTO>();
+        for (final var group : groups) {
+            final var groupDTO = new JiraUserGroupDTO();
+            groupDTO.setName(group);
+            groupDTO.setSelf(new URL("http://localhost:8080/" + group));
+            groupDTOs.add(groupDTO);
+        }
+        groupsResponse.setSize(groups.size());
+        groupsResponse.setItems(groupDTOs);
+        response.setName(username);
+        response.setDisplayName(firstName);
+        response.setEmailAddress(email);
+        response.setGroups(groupsResponse);
+        final var path = UriComponentsBuilder.fromUri(JIRA_URL.toURI()).path("/rest/api/2/user").queryParam("username", username).queryParam("expand", "groups").build().toUri();
+
+        mockServer.expect(requestTo(path)).andExpect(method(HttpMethod.GET))
+                .andRespond(withStatus(HttpStatus.OK).contentType(MediaType.APPLICATION_JSON).body(mapper.writeValueAsString(response)));
+    }
+
+    public void mockGetOrCreateUserJiraCaptchaException(String username, String email, String firstName, Set<String> groups) throws URISyntaxException, IOException {
+        final var response = new JiraUserDTO();
+        final var groupsResponse = new JiraUserGroupsDTO();
+        final var groupDTOs = new HashSet<JiraUserGroupDTO>();
+        for (final var group : groups) {
+            final var groupDTO = new JiraUserGroupDTO();
+            groupDTO.setName(group);
+            groupDTO.setSelf(new URL("http://localhost:8080/" + group));
+            groupDTOs.add(groupDTO);
+        }
+        groupsResponse.setSize(groups.size());
+        groupsResponse.setItems(groupDTOs);
+        response.setName(username);
+        response.setDisplayName(firstName);
+        response.setEmailAddress(email);
+        response.setGroups(groupsResponse);
+        final var path = UriComponentsBuilder.fromUri(JIRA_URL.toURI()).path("/rest/api/2/user").queryParam("username", username).queryParam("expand", "groups").build().toUri();
+
+        var headers = new HttpHeaders();
+        headers.add("X-Authentication-Denied-Reason", "captcha");
+        mockServer.expect(requestTo(path)).andExpect(method(HttpMethod.GET))
+                .andRespond(withStatus(HttpStatus.UNAUTHORIZED).contentType(MediaType.APPLICATION_JSON).headers(headers).body(mapper.writeValueAsString(response)));
     }
 }

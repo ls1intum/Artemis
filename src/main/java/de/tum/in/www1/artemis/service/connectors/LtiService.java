@@ -90,7 +90,7 @@ public class LtiService {
     // TODO Although this works, this is a bad design practice and we should move all response related code to the controller
     private final HttpServletResponse response;
 
-    public final HashMap<String, Pair<LtiLaunchRequestDTO, Exercise>> launchRequestForSession = new HashMap<>();
+    public final Map<String, Pair<LtiLaunchRequestDTO, Exercise>> launchRequestForSession = new HashMap<>();
 
     public LtiService(UserService userService, UserRepository userRepository, LtiOutcomeUrlRepository ltiOutcomeUrlRepository, ResultRepository resultRepository,
             ArtemisAuthenticationProvider artemisAuthenticationProvider, LtiUserIdRepository ltiUserIdRepository, HttpServletResponse response) {
@@ -302,7 +302,7 @@ public class LtiService {
             if (!user.getLogin().startsWith("edx")) {
                 // try to sync with authentication service for actual users (not for edx users)
                 try {
-                    artemisAuthenticationProvider.addUserToGroup(user.getLogin(), courseStudentGroupName);
+                    artemisAuthenticationProvider.addUserToGroup(user, courseStudentGroupName);
                 }
                 catch (ArtemisAuthenticationException e) {
                     /*
@@ -382,40 +382,41 @@ public class LtiService {
     }
 
     /**
-     * This method is pinged on new build results. It sends an message to the LTI consumer with the new score.
+     * This method is pinged on new programming exercise results. It sends an message to the LTI consumer with the new score.
      *
      * @param participation The programming exercise participation for which a new build result is available
      */
-    public void onNewBuildResult(ProgrammingExerciseStudentParticipation participation) {
-
+    public void onNewResult(ProgrammingExerciseStudentParticipation participation) {
         // Get the LTI outcome URL
-        ltiOutcomeUrlRepository.findByUserAndExercise(participation.getStudent(), participation.getExercise()).ifPresent(ltiOutcomeUrl -> {
+        participation.getStudents().forEach(student -> {
+            ltiOutcomeUrlRepository.findByUserAndExercise(student, participation.getExercise()).ifPresent(ltiOutcomeUrl -> {
 
-            String score = "0.00";
+                String score = "0.00";
 
-            // Get the latest result
-            Optional<Result> latestResult = resultRepository.findFirstByParticipationIdOrderByCompletionDateDesc(participation.getId());
+                // Get the latest result
+                Optional<Result> latestResult = resultRepository.findFirstByParticipationIdOrderByCompletionDateDesc(participation.getId());
 
-            if (latestResult.isPresent() && latestResult.get().getScore() != null) {
-                // LTI scores needs to be formatted as String between "0.00" and "1.00"
-                score = String.format(Locale.ROOT, "%.2f", latestResult.get().getScore().floatValue() / 100);
-            }
-
-            try {
-                log.info("Reporting score {} for participation {} to LTI consumer with outcome URL {} using the source id {}", score, participation, ltiOutcomeUrl.getUrl(),
-                        ltiOutcomeUrl.getSourcedId());
-                HttpPost request = IMSPOXRequest.buildReplaceResult(ltiOutcomeUrl.getUrl(), OAUTH_KEY, OAUTH_SECRET, ltiOutcomeUrl.getSourcedId(), score, null, false);
-                HttpClient client = HttpClientBuilder.create().build();
-                HttpResponse response = client.execute(request);
-                String responseString = new BasicResponseHandler().handleResponse(response);
-                log.info("Response from LTI consumer: {}", responseString);
-                if (response.getStatusLine().getStatusCode() >= 400) {
-                    throw new HttpResponseException(response.getStatusLine().getStatusCode(), response.getStatusLine().getReasonPhrase());
+                if (latestResult.isPresent() && latestResult.get().getScore() != null) {
+                    // LTI scores needs to be formatted as String between "0.00" and "1.00"
+                    score = String.format(Locale.ROOT, "%.2f", latestResult.get().getScore().floatValue() / 100);
                 }
-            }
-            catch (Exception e) {
-                log.error("Reporting to LTI consumer failed: {}", e, e);
-            }
+
+                try {
+                    log.info("Reporting score {} for participation {} to LTI consumer with outcome URL {} using the source id {}", score, participation, ltiOutcomeUrl.getUrl(),
+                            ltiOutcomeUrl.getSourcedId());
+                    HttpPost request = IMSPOXRequest.buildReplaceResult(ltiOutcomeUrl.getUrl(), OAUTH_KEY, OAUTH_SECRET, ltiOutcomeUrl.getSourcedId(), score, null, false);
+                    HttpClient client = HttpClientBuilder.create().build();
+                    HttpResponse response = client.execute(request);
+                    String responseString = new BasicResponseHandler().handleResponse(response);
+                    log.info("Response from LTI consumer: {}", responseString);
+                    if (response.getStatusLine().getStatusCode() >= 400) {
+                        throw new HttpResponseException(response.getStatusLine().getStatusCode(), response.getStatusLine().getReasonPhrase());
+                    }
+                }
+                catch (Exception e) {
+                    log.error("Reporting to LTI consumer failed: {}", e, e);
+                }
+            });
         });
     }
 

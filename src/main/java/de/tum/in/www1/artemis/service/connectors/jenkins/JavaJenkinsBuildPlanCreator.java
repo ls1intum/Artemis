@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.service.connectors.jenkins;
 
-import java.io.IOException;
 import java.net.URL;
 import java.nio.file.Path;
 import java.util.Map;
@@ -48,7 +47,7 @@ public class JavaJenkinsBuildPlanCreator implements JenkinsXmlConfigBuilder {
     private String gitCredentialsKey;
 
     @Value("${server.url}")
-    private String ARTEMIS_BASE_URL;
+    private String ARTEMIS_SERVER_URL;
 
     @Value("${artemis.continuous-integration.artemis-authentication-token-key}")
     private String ARTEMIS_AUTHENTICATION_TOKEN_KEY;
@@ -61,11 +60,11 @@ public class JavaJenkinsBuildPlanCreator implements JenkinsXmlConfigBuilder {
 
     @PostConstruct
     public void init() {
-        this.artemisNotificationUrl = ARTEMIS_BASE_URL + "/api" + Constants.NEW_RESULT_RESOURCE_PATH;
+        this.artemisNotificationUrl = ARTEMIS_SERVER_URL + "/api" + Constants.NEW_RESULT_RESOURCE_PATH;
     }
 
     @Override
-    public Document buildBasicConfig(URL testRepositoryURL, URL assignmentRepositoryURL) throws IOException {
+    public Document buildBasicConfig(URL testRepositoryURL, URL assignmentRepositoryURL) {
         final var resourcePath = Path.of("templates", "jenkins", "java", "config.xml");
         final var replacements = Map.of(REPLACE_TEST_REPO, testRepositoryURL.toString(), REPLACE_ASSIGNMENT_REPO, assignmentRepositoryURL.toString(), REPLACE_GIT_CREDENTIALS,
                 gitCredentialsKey, REPLACE_ASSIGNMENT_CHECKOUT_PATH, Constants.ASSIGNMENT_CHECKOUT_PATH, REPLACE_PUSH_TOKEN, pushToken, REPLACE_ARTEMIS_NOTIFICATION_URL,
@@ -76,7 +75,7 @@ public class JavaJenkinsBuildPlanCreator implements JenkinsXmlConfigBuilder {
     }
 
     @Override
-    public Document buildBasicConfig(URL testRepositoryURL, URL assignmentRepositoryURL, boolean isSequential) throws IOException {
+    public Document buildBasicConfig(URL testRepositoryURL, URL assignmentRepositoryURL, boolean isSequential) {
         if (!isSequential) {
             return buildBasicConfig(testRepositoryURL, assignmentRepositoryURL);
         }

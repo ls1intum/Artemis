@@ -56,15 +56,15 @@ export function isElementInViewPortHorizontally(orientation: Orientation, left: 
             break;
         }
         case Orientation.LEFT: {
-            elementInViewPort = left - tourStepWidth > window.screenLeft;
+            elementInViewPort = left - tourStepWidth > 0;
             break;
         }
         case Orientation.TOPRIGHT: {
-            elementInViewPort = left + width - tourStepWidth > window.screenLeft;
+            elementInViewPort = left + width - tourStepWidth > 0;
             break;
         }
         case Orientation.BOTTOMRIGHT: {
-            elementInViewPort = left + width - tourStepWidth > window.screenLeft;
+            elementInViewPort = left + width - tourStepWidth > 0;
             break;
         }
         case Orientation.RIGHT: {
@@ -73,4 +73,42 @@ export function isElementInViewPortHorizontally(orientation: Orientation, left: 
         }
     }
     return elementInViewPort;
+}
+
+/**
+ * Determines if the given tour step url matches with the current router url
+ * @param pageUrl   current page url
+ * @param tourStepUrl   tour step url as string
+ */
+export function determineUrlMatching(pageUrl: string, tourStepUrl: string) {
+    if (tourStepUrl.indexOf('?') !== -1) {
+        return pageUrl.match(tourStepUrl.slice(0, tourStepUrl.indexOf('?')));
+    } else {
+        return pageUrl.match(tourStepUrl);
+    }
+}
+
+/**
+ * Helper function to retrieve the parameters of a URL string
+ * @param url   url as string
+ */
+export function getUrlParams(url: string): string {
+    if (url.indexOf('?') !== -1) {
+        return url.slice(url.indexOf('?'), url.length);
+    } else {
+        return '';
+    }
+}
+
+/**
+ * Checks if the page url matches with the matching url result
+ * @param pageUrl
+ * @param matchingUrl
+ */
+export function checkPageUrlEnding(pageUrl: string, matchingUrl: string): boolean {
+    let tempPageUrl = pageUrl;
+    if (pageUrl.indexOf('?') !== -1) {
+        tempPageUrl = pageUrl.slice(0, pageUrl.indexOf('?'));
+    }
+    return tempPageUrl.endsWith(matchingUrl);
 }

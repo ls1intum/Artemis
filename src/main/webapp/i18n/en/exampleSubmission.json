@@ -31,6 +31,9 @@
             "deleted": "Example submission deleted successfully",
             "assessmentExplanation": "Explanation",
             "assessmentExplanationInfo": "Additional explanation for this example assessment"
+        },
+        "tutorParticipation": {
+            "deleted": "The tutor participation was deleted successfully"
         }
     }
 }

@@ -9,9 +9,9 @@
         },
         "menu": {
             "home": "Home",
-            "overview": "Overview",
+            "overview": "Course Overview",
             "courses": "Courses",
-            "course": "Course Administration",
+            "course": "Course Management",
             "jhipster-needle-menu-add-element": "JHipster will add additional menu entries here (do not translate!)",
             "entities": {
                 "main": "Entities",
@@ -179,7 +179,6 @@
             "editInEditor": "Edit in editor",
             "editInIntelliJ": "Edit in IntelliJ",
             "editEntity": "Edit {{entity}}",
-            "editLink": "Edit Link",
             "generate": "Generate",
             "open": "Open",
             "save": "Save",
@@ -187,6 +186,8 @@
             "view": "View",
             "preview": "Preview",
             "cleanup": "Cleanup",
+            "remove": "Remove",
+            "purge": "Purge",
             "archive": "Archive",
             "submit": "Submit",
             "submitTooltip": "You can submit multiple times until the exercise deadline. Your last submission will count towards your score.",
@@ -194,13 +195,14 @@
             "submitDeadlineMissedTooltip": "The deadline has expired. Your submissions will not get graded!",
             "deadlineMissedTooltip": "The deadline has expired. You can no longer submit any solutions!",
             "submitDeadlineMissed": "Submit (deadline missed)",
-            "submitSuccessfulAlert": "Your submission successful! You can change your submission or wait for your feedback.",
+            "submitSuccessfulAlert": "Your submission was successful! You can change your submission or wait for your feedback.",
             "submitDeadlineMissedAlert": "Your submission was successful! You can change your submission or wait for your feedback. As you missed the deadline the score will not be counted.",
             "retry": "Retry",
             "reset": "Reset",
             "re-evaluate": "Re-evaluate",
             "close": "Close",
             "import": "Import",
+            "to-import": "Import",
             "export": "Export",
             "lecture": "Lectures",
             "attachments": "Attachments",
@@ -230,6 +232,9 @@
         },
         "cleanup": {
             "title": "Confirm cleanup operation"
+        },
+        "remove": {
+            "title": "Confirm remove operation"
         },
         "archive": {
             "title": "Confirm archive operation"
@@ -278,5 +283,9 @@
         "lectures": "Lectures",
         "exercise": "Exercise details",
         "statistics": "Course statistics"
+    },
+    "connectionStatus": {
+        "connected": "Connected",
+        "disconnected": "Disconnected"
     }
 }

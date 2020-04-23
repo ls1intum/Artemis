@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.repository;
 
+import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
+
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -19,12 +21,12 @@ public interface QuizExerciseRepository extends JpaRepository<QuizExercise, Long
 
     List<QuizExercise> findByCourseId(Long courseId);
 
-    @EntityGraph(attributePaths = { "quizQuestions" })
+    @EntityGraph(type = LOAD, attributePaths = { "quizQuestions" })
     List<QuizExercise> findByIsPlannedToStartAndReleaseDateIsAfter(Boolean plannedToStart, ZonedDateTime earliestReleaseDate);
 
-    @EntityGraph(attributePaths = { "quizQuestions", "quizPointStatistic", "quizQuestions.quizQuestionStatistic" })
+    @EntityGraph(type = LOAD, attributePaths = { "quizQuestions", "quizPointStatistic", "quizQuestions.quizQuestionStatistic" })
     Optional<QuizExercise> findWithEagerQuestionsAndStatisticsById(Long quizExerciseId);
 
-    @EntityGraph(attributePaths = { "quizQuestions" })
+    @EntityGraph(type = LOAD, attributePaths = { "quizQuestions" })
     Optional<QuizExercise> findWithEagerQuestionsById(Long quizExerciseId);
 }

@@ -10,13 +10,13 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 
-import de.tum.in.www1.artemis.AbstractSpringIntegrationTest;
+import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.TextExerciseUtilService;
 
-public class TextAssessmentQueueServiceTest extends AbstractSpringIntegrationTest {
+public class TextAssessmentQueueServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
     private TextAssessmentQueueService textAssessmentQueueService;
@@ -78,7 +78,7 @@ public class TextAssessmentQueueServiceTest extends AbstractSpringIntegrationTes
         textClusterRepository.saveAll(clusters);
         textBlockRepository.saveAll(textBlocks);
         List<TextSubmission> textSubmissions = textSubmissionService.getTextSubmissionsByExerciseId(textExercise.getId(), true);
-        HashMap<TextBlock, Double> smallerClusterPercentages = textAssessmentQueueService.calculateSmallerClusterPercentageBatch(textSubmissions);
+        Map<TextBlock, Double> smallerClusterPercentages = textAssessmentQueueService.calculateSmallerClusterPercentageBatch(textSubmissions);
         textBlocks.forEach(textBlock -> {
             if (textBlock.getCluster() == clusters.get(0)) {
                 // cluster has size 4 Therefore 25% are smaller

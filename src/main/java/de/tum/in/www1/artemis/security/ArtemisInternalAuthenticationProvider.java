@@ -1,11 +1,11 @@
 package de.tum.in.www1.artemis.security;
 
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.actuate.audit.AuditEvent;
 import org.springframework.boot.actuate.audit.AuditEventRepository;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -20,28 +20,19 @@ import org.springframework.stereotype.Component;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.UserRepository;
-import de.tum.in.www1.artemis.service.UserService;
+import de.tum.in.www1.artemis.service.connectors.ConnectorHealth;
 
 @Component
 @ConditionalOnProperty(value = "artemis.user-management.use-external", havingValue = "false")
-public class ArtemisInternalAuthenticationProvider implements ArtemisAuthenticationProvider {
+public class ArtemisInternalAuthenticationProvider extends ArtemisAuthenticationProviderImpl implements ArtemisAuthenticationProvider {
 
     private final Logger log = LoggerFactory.getLogger(ArtemisInternalAuthenticationProvider.class);
-
-    private UserService userService;
-
-    private final UserRepository userRepository;
 
     private final AuditEventRepository auditEventRepository;
 
     public ArtemisInternalAuthenticationProvider(UserRepository userRepository, AuditEventRepository auditEventRepository) {
-        this.userRepository = userRepository;
+        super(userRepository);
         this.auditEventRepository = auditEventRepository;
-    }
-
-    @Autowired
-    public void setUserService(UserService userService) {
-        this.userService = userService;
     }
 
     @Override
@@ -81,22 +72,22 @@ public class ArtemisInternalAuthenticationProvider implements ArtemisAuthenticat
     }
 
     @Override
-    public void addUserToGroup(String username, String group) {
-        final var user = userService.getUserWithGroupsByLogin(username).get();
-        addUserToGroup(user, group);
-    }
+    public void addUserToGroups(User user, Set<String> groups) {
+        if (groups == null) {
+            return;
+        }
+        boolean userChanged = false;
+        for (String group : groups) {
+            if (!user.getGroups().contains(group)) {
+                userChanged = true;
+                user.getGroups().add(group);
+            }
+        }
 
-    @Override
-    public void removeUserFromGroup(String username, String group) {
-        final var user = userService.getUserWithGroupsByLogin(username).get();
-        user.getGroups().remove(group);
-        userRepository.save(user);
-    }
-
-    private void addUserToGroup(User user, String group) {
-        log.info("Add user " + user.getLogin() + " to group " + group);
-        user.getGroups().add(group);
-        userRepository.save(user);
+        if (userChanged) {
+            // we only save if this is needed
+            userRepository.save(user);
+        }
     }
 
     @Override
@@ -112,11 +103,28 @@ public class ArtemisInternalAuthenticationProvider implements ArtemisAuthenticat
     }
 
     @Override
+    public void createGroup(String groupName) {
+        // Not needed since we don't have any externally specified groups. If we only use the Artemis DB (which is the case
+        // for this service), creating a group is not necessary, since groups are just referenced as strings when connected to users.
+    }
+
+    @Override
+    public void deleteGroup(String groupName) {
+        userService.removeGroupFromUsers(groupName);
+    }
+
+    @Override
     public void registerUserForCourse(User user, Course course) {
         addUserToGroup(user, course.getStudentGroupName());
         final var auditEvent = new AuditEvent(user.getLogin(), "REGISTER_FOR_COURSE", "course=" + course.getTitle());
         auditEventRepository.add(auditEvent);
         log.info("User " + user.getLogin() + " has successfully registered for course " + course.getTitle());
+    }
+
+    @Override
+    public ConnectorHealth health() {
+        // the internal authentication provider is always running when Artemis is running
+        return new ConnectorHealth(true);
     }
 
     @Override

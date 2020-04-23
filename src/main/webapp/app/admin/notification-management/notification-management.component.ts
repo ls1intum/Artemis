@@ -2,17 +2,19 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { HttpErrorResponse, HttpHeaders, HttpResponse } from '@angular/common/http';
 
 import { ActivatedRoute, Router } from '@angular/router';
-import { JhiAlertService, JhiEventManager, JhiParseLinks } from 'ng-jhipster';
+import { JhiEventManager, JhiParseLinks } from 'ng-jhipster';
 import { Subscription } from 'rxjs/Subscription';
 
-import { ITEMS_PER_PAGE } from 'app/shared';
 import { User } from 'app/core/user/user.model';
 import { UserService } from 'app/core/user/user.service';
 import { AccountService } from 'app/core/auth/account.service';
-import { SystemNotification, SystemNotificationService } from 'app/entities/system-notification';
 import * as moment from 'moment';
-import { onError } from 'app/utils/global.utils';
+import { onError } from 'app/shared/util/global.utils';
 import { Subject } from 'rxjs';
+import { SystemNotification } from 'app/entities/system-notification.model';
+import { ITEMS_PER_PAGE } from 'app/shared/constants/pagination.constants';
+import { SystemNotificationService } from 'app/core/system-notification/system-notification.service';
+import { AlertService } from 'app/core/alert/alert.service';
 
 @Component({
     selector: 'jhi-notification-mgmt',
@@ -38,7 +40,7 @@ export class NotificationMgmtComponent implements OnInit, OnDestroy {
     constructor(
         private userService: UserService,
         private systemNotificationService: SystemNotificationService,
-        private alertService: JhiAlertService,
+        private alertService: AlertService,
         private accountService: AccountService,
         private parseLinks: JhiParseLinks,
         private activatedRoute: ActivatedRoute,
@@ -46,7 +48,7 @@ export class NotificationMgmtComponent implements OnInit, OnDestroy {
         private eventManager: JhiEventManager,
     ) {
         this.itemsPerPage = ITEMS_PER_PAGE;
-        this.routeData = this.activatedRoute.data.subscribe(data => {
+        this.routeData = this.activatedRoute.data.subscribe((data) => {
             this.page = data['pagingParams'].page;
             this.previousPage = data['pagingParams'].page;
             this.reverse = data['pagingParams'].ascending;
@@ -58,7 +60,7 @@ export class NotificationMgmtComponent implements OnInit, OnDestroy {
      * Initializes current account and system notifications
      */
     ngOnInit() {
-        this.accountService.identity().then(user => {
+        this.accountService.identity().then((user) => {
             this.currentAccount = user!;
             this.loadAll();
             this.registerChangeInUsers();

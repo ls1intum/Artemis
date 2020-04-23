@@ -15,8 +15,8 @@ describe('Service Tests', () => {
                 imports: [HttpClientTestingModule],
             });
 
-            service = TestBed.get(AuditsService);
-            httpMock = TestBed.get(HttpTestingController);
+            service = TestBed.inject(AuditsService);
+            httpMock = TestBed.inject(HttpTestingController);
         });
 
         afterEach(() => {
@@ -35,7 +35,7 @@ describe('Service Tests', () => {
             it('should return Audits', () => {
                 const audit = new Audit({ remoteAddress: '127.0.0.1', sessionId: '123' }, 'user', '20140101', 'AUTHENTICATION_SUCCESS');
 
-                service.query({}).subscribe(received => {
+                service.query({}).subscribe((received) => {
                     expect(received.body[0]).toEqual(audit);
                 });
 

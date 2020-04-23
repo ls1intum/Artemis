@@ -2,7 +2,9 @@ const webpack = require('webpack');
 const { BaseHrefWebpackPlugin } = require('base-href-webpack-plugin');
 const CopyWebpackPlugin = require('copy-webpack-plugin');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
+const AngularCompilerPlugin = require('@ngtools/webpack').AngularCompilerPlugin;
 const MergeJsonWebpackPlugin = require("merge-jsons-webpack-plugin");
+
 const utils = require('./utils.js');
 
 module.exports = (options) => ({
@@ -15,8 +17,16 @@ module.exports = (options) => ({
     stats: {
         children: false
     },
+    performance: {
+        maxEntrypointSize: 1024*1024,
+        maxAssetSize: 1024*1024,
+    },
     module: {
         rules: [
+            {
+                test: /(?:\.ngfactory\.js|\.ngstyle\.js|\.ts)$/,
+                loader: '@ngtools/webpack'
+            },
             {
                 test: /\.html$/,
                 loader: 'html-loader',
@@ -70,7 +80,7 @@ module.exports = (options) => ({
         }),
         new CopyWebpackPlugin([
             { from: './src/main/webapp/content/', to: 'content' },
-            { from: './src/main/webapp/favicon.ico', to: 'favicon.ico' },
+            { from: './src/main/resources/public/images/favicon.ico', to: 'public/images/favicon.ico' },
             { from: './src/main/webapp/manifest.webapp', to: 'manifest.webapp' },
             // jhipster-needle-add-assets-to-webpack - JHipster will add/remove third-party resources in this array
             { from: './src/main/webapp/robots.txt', to: 'robots.txt' }
@@ -90,6 +100,11 @@ module.exports = (options) => ({
             chunksSortMode: 'manual',
             inject: 'body'
         }),
-        new BaseHrefWebpackPlugin({ baseHref: '/' })
+        new BaseHrefWebpackPlugin({ baseHref: '/' }),
+        new AngularCompilerPlugin({
+            mainPath: utils.root('src/main/webapp/app/app.main.ts'),
+            tsConfigPath: utils.root('tsconfig.app.json'),
+            sourceMap: true
+        })
     ]
 });

@@ -2,16 +2,22 @@ package de.tum.in.www1.artemis.util;
 
 import java.time.ZonedDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.*;
+import de.tum.in.www1.artemis.domain.modeling.ApollonDiagram;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
+import de.tum.in.www1.artemis.security.AuthoritiesConstants;
+import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildResultNotificationDTO;
 
 public class ModelFactory {
+
+    public static final String USER_PASSWORD = "0000";
 
     public static Lecture generateLecture(ZonedDateTime startDate, ZonedDateTime endDate, Course course) {
         Lecture lecture = new Lecture();
@@ -86,6 +92,7 @@ public class ModelFactory {
         exercise.assessmentDueDate(assessmentDueDate);
         exercise.setCourse(course);
         exercise.setDifficulty(DifficultyLevel.MEDIUM);
+        exercise.setMode(ExerciseMode.INDIVIDUAL);
         exercise.getCategories().add("Category");
         exercise.setPresentationScoreEnabled(course.getPresentationScore() != 0);
         return exercise;
@@ -104,10 +111,10 @@ public class ModelFactory {
         return generatedUsers;
     }
 
-    public static User generateActivatedUser(String login) {
+    public static User generateActivatedUser(String login, String password) {
         User user = new User();
         user.setLogin(login);
-        user.setPassword("0000");
+        user.setPassword(password);
         user.setFirstName(login + "First");
         user.setLastName(login + "Last");
         user.setEmail(login + "@test.de");
@@ -118,8 +125,39 @@ public class ModelFactory {
         return user;
     }
 
+    public static User generateActivatedUser(String login) {
+        return generateActivatedUser(login, USER_PASSWORD);
+    }
+
+    public static Team generateTeamForExercise(Exercise exercise, String name, String shortName, String loginPrefix, int numberOfStudents, User owner) {
+        List<User> students = generateActivatedUsers(shortName + loginPrefix, new String[] { "tumuser", "testgroup" }, Set.of(new Authority(AuthoritiesConstants.USER)),
+                numberOfStudents);
+
+        Team team = new Team();
+        team.setName(name);
+        team.setShortName(shortName);
+        team.setExercise(exercise);
+        team.setStudents(new HashSet<>(students));
+        team.setOwner(owner);
+
+        return team;
+    }
+
+    public static Team generateTeamForExercise(Exercise exercise, String name, String shortName, int numberOfStudents, User owner) {
+        return generateTeamForExercise(exercise, name, shortName, "student", numberOfStudents, owner);
+    }
+
+    public static List<Team> generateTeamsForExercise(Exercise exercise, String shortNamePrefix, String loginPrefix, int numberOfTeams, User owner) {
+        List<Team> teams = new ArrayList<>();
+        for (int i = 1; i <= numberOfTeams; i++) {
+            int numberOfStudents = new Random().nextInt(4) + 1; // range: 1-4 students
+            teams.add(generateTeamForExercise(exercise, "Team " + i, shortNamePrefix + i, loginPrefix, numberOfStudents, owner));
+        }
+        return teams;
+    }
+
     public static Course generateCourse(Long id, ZonedDateTime startDate, ZonedDateTime endDate, Set<Exercise> exercises) {
-        return generateCourse(id, startDate, endDate, exercises, UUID.randomUUID().toString(), UUID.randomUUID().toString(), UUID.randomUUID().toString());
+        return generateCourse(id, startDate, endDate, exercises, null, null, null);
     }
 
     public static TextSubmission generateTextSubmission(String text, Language language, boolean submitted) {
@@ -171,21 +209,51 @@ public class ModelFactory {
 
     public static Course generateCourse(Long id, ZonedDateTime startDate, ZonedDateTime endDate, Set<Exercise> exercises, String studentGroupName,
             String teachingAssistantGroupName, String instructorGroupName) {
+        return generateCourse(id, startDate, endDate, exercises, studentGroupName, teachingAssistantGroupName, instructorGroupName, 3, 7, true);
+    }
+
+    public static Course generateCourse(Long id, ZonedDateTime startDate, ZonedDateTime endDate, Set<Exercise> exercises, String studentGroupName,
+            String teachingAssistantGroupName, String instructorGroupName, Integer maxComplaints, Integer maxComplaintTimeDays, Boolean studentQuestionsEnabled) {
         Course course = new Course();
         course.setId(id);
-        course.setTitle(UUID.randomUUID().toString());
-        course.setDescription(UUID.randomUUID().toString());
-        course.setShortName("t" + UUID.randomUUID().toString().substring(0, 3));
+        course.setTitle("Course title " + UUID.randomUUID().toString());
+        course.setDescription("Course description " + UUID.randomUUID().toString());
+        // must start with a letter
+        course.setShortName("short" + UUID.randomUUID().toString().replace("-", "0"));
+        course.setMaxComplaints(maxComplaints);
+        course.setMaxComplaintTimeDays(maxComplaintTimeDays);
+        course.setStudentQuestionsEnabled(studentQuestionsEnabled);
         course.setStudentGroupName(studentGroupName);
         course.setTeachingAssistantGroupName(teachingAssistantGroupName);
         course.setInstructorGroupName(instructorGroupName);
         course.setStartDate(startDate);
         course.setEndDate(endDate);
-        course.setMaxComplaints(5);
         course.setExercises(exercises);
         course.setOnlineCourse(false);
         course.setPresentationScore(2);
         return course;
+    }
+
+    public static GradingCriterion generateGradingCriterion(String title) {
+        var criterion = new GradingCriterion();
+        criterion.setTitle(title);
+        return criterion;
+    }
+
+    public static List<GradingInstruction> generateGradingInstructions(GradingCriterion criterion, int numberOfTestInstructions) {
+        var instructions = new ArrayList<GradingInstruction>();
+        var exampleInstruction1 = new GradingInstruction();
+        while (numberOfTestInstructions > 0) {
+            exampleInstruction1.setGradingCriterion(criterion);
+            exampleInstruction1.setCredits(0.5);
+            exampleInstruction1.setGradingScale("good test");
+            exampleInstruction1.setInstructionDescription("created first instruction with empty criteria for testing");
+            exampleInstruction1.setFeedback("test feedback");
+            exampleInstruction1.setUsageCount(3);
+            instructions.add(exampleInstruction1);
+            numberOfTestInstructions--;
+        }
+        return instructions;
     }
 
     public static List<Feedback> generateFeedback() {
@@ -221,6 +289,7 @@ public class ModelFactory {
         toBeImported.setMaxScore(template.getMaxScore());
         toBeImported.setGradingInstructions(template.getGradingInstructions());
         toBeImported.setDifficulty(template.getDifficulty());
+        toBeImported.setMode(template.getMode());
         toBeImported.setAssessmentType(template.getAssessmentType());
         toBeImported.setCategories(template.getCategories());
         toBeImported.setPackageName(template.getPackageName());
@@ -248,7 +317,7 @@ public class ModelFactory {
         studentParticipation.setInitializationState(initializationState);
         studentParticipation.setInitializationDate(ZonedDateTime.now().minusDays(5));
         studentParticipation.setExercise(exercise);
-        studentParticipation.setStudent(user);
+        studentParticipation.setParticipant(user);
         return studentParticipation;
     }
 
@@ -258,7 +327,7 @@ public class ModelFactory {
         studentParticipation.setInitializationState(initializationState);
         studentParticipation.setInitializationDate(ZonedDateTime.now().minusDays(5));
         studentParticipation.setExercise(exercise);
-        studentParticipation.setStudent(user);
+        studentParticipation.setParticipant(user);
         return studentParticipation;
     }
 
@@ -282,10 +351,86 @@ public class ModelFactory {
         return generateTextBlock(startIndex, endIndex, "");
     }
 
-    public static SystemNotification generateSystemNotification(ZonedDateTime expireDate, ZonedDateTime notificationDate) {
+    public static SingleUserNotification generateSingleUserNotification(ZonedDateTime notificationDate, User recipient) {
+        SingleUserNotification singleUserNotification = new SingleUserNotification();
+        singleUserNotification.setNotificationDate(notificationDate);
+        singleUserNotification.setRecipient(recipient);
+        return singleUserNotification;
+    }
+
+    public static GroupNotification generateGroupNotification(ZonedDateTime notificationDate, Course course, GroupNotificationType type) {
+        GroupNotification groupNotification = new GroupNotification();
+        groupNotification.setNotificationDate(notificationDate);
+        groupNotification.setCourse(course);
+        groupNotification.setType(type);
+        return groupNotification;
+    }
+
+    public static SystemNotification generateSystemNotification(ZonedDateTime notificationDate, ZonedDateTime expireDate) {
         SystemNotification systemNotification = new SystemNotification();
-        systemNotification.setExpireDate(expireDate);
         systemNotification.setNotificationDate(notificationDate);
+        systemNotification.setExpireDate(expireDate);
         return systemNotification;
+    }
+
+    public static ApollonDiagram generateApollonDiagram(DiagramType diagramType, String title) {
+        ApollonDiagram apollonDiagram = new ApollonDiagram();
+        apollonDiagram.setDiagramType(diagramType);
+        apollonDiagram.setTitle(title);
+        return apollonDiagram;
+    }
+
+    public static BambooBuildResultNotificationDTO generateBambooBuildResult(String repoName, List<String> successfulTestNames, List<String> failedTestNames) {
+        final var notification = new BambooBuildResultNotificationDTO();
+        final var build = new BambooBuildResultNotificationDTO.BambooBuildDTO();
+        final var summary = new BambooBuildResultNotificationDTO.BambooTestSummaryDTO();
+        final var job = new BambooBuildResultNotificationDTO.BambooJobDTO();
+        final var successfulTests = successfulTestNames.stream().map(name -> generateBambooTestJob(name, true)).collect(Collectors.toList());
+        final var failedTests = failedTestNames.stream().map(name -> generateBambooTestJob(name, false)).collect(Collectors.toList());
+        final var vcs = new BambooBuildResultNotificationDTO.BambooVCSDTO();
+
+        vcs.setRepositoryName(repoName);
+        vcs.setId(TestConstants.COMMIT_HASH_STRING);
+
+        job.setId(42);
+        job.setFailedTests(failedTests);
+        job.setSuccessfulTests(successfulTests);
+
+        summary.setTotalCount(successfulTestNames.size() + failedTestNames.size());
+        summary.setSuccessfulCount(successfulTestNames.size());
+        summary.setSkippedCount(0);
+        summary.setQuarantineCount(0);
+        summary.setNewFailedCount(failedTestNames.size());
+        summary.setIgnoreCount(0);
+        summary.setFixedCount(0);
+        summary.setFailedCount(failedTestNames.size());
+        summary.setExistingFailedCount(failedTestNames.size());
+        summary.setDuration(42);
+        summary.setDescription("foobar");
+
+        build.setNumber(42);
+        build.setReason("foobar");
+        build.setSuccessful(failedTestNames.isEmpty());
+        build.setBuildCompletedDate(ZonedDateTime.now().minusSeconds(5));
+        build.setArtifact(false);
+        build.setTestSummary(summary);
+        build.setJobs(List.of(job));
+        build.setVcs(List.of(vcs));
+
+        notification.setSecret("secret");
+        notification.setNotificationType("TestNotification");
+        notification.setBuild(build);
+
+        return notification;
+    }
+
+    private static BambooBuildResultNotificationDTO.BambooTestJobDTO generateBambooTestJob(String name, boolean successful) {
+        final var test = new BambooBuildResultNotificationDTO.BambooTestJobDTO();
+        test.setErrors(successful ? List.of() : List.of("bad solution, did not work"));
+        test.setMethodName(name);
+        test.setClassName("SpringTestClass");
+        test.setName(name);
+
+        return test;
     }
 }

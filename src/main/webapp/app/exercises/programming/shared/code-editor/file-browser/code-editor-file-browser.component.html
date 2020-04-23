@@ -1,0 +1,106 @@
+<div id="cardFiles" class="card file-browser resizable-filebrowser guided-tour-file-browser">
+    <div class="card-header d-flex justify-content-center bg-primary text-white" (click)="toggleEditorCollapse($event)">
+        <h3 class="card-title">
+            <fa-icon [icon]="'folder-open'"></fa-icon>
+            <span class="ml-2" jhiTranslate="artemisApp.editor.fileBrowser.fileBrowser">File Browser</span>
+        </h3>
+        <fa-icon class="ml-auto" [icon]="'chevron-left'"></fa-icon>
+    </div>
+
+    <!-- Root actions -->
+    <div class="card-second-header">
+        <button
+            id="create_file_root"
+            [disabled]="disableActions || isLoadingFiles || commitState === CommitState.CONFLICT"
+            class="btn btn-light"
+            (click)="setCreatingFileInRoot(FileType.FILE)"
+            title="{{ 'artemisApp.editor.fileBrowser.createFileRoot' | translate }}"
+        >
+            <fa-icon [icon]="'plus'"></fa-icon>
+            <fa-icon [icon]="'file'" class="ml-1"></fa-icon>
+        </button>
+        <button
+            id="create_folder_root"
+            [disabled]="disableActions || isLoadingFiles || commitState === CommitState.CONFLICT"
+            class="btn btn-light ml-2"
+            (click)="setCreatingFileInRoot(FileType.FOLDER)"
+            title="{{ 'artemisApp.editor.fileBrowser.createFolderRoot' | translate }}"
+        >
+            <fa-icon [icon]="'plus'"></fa-icon>
+            <fa-icon [icon]="'folder'" class="ml-1"></fa-icon>
+        </button>
+        <button
+            id="compress_tree"
+            [disabled]="isLoadingFiles"
+            class="btn btn-light ml-auto"
+            (click)="toggleTreeCompress()"
+            title="{{ 'artemisApp.editor.fileBrowser.compressTree' | translate }}"
+        >
+            <fa-icon [icon]="compressFolders ? 'angle-double-up' : 'angle-double-down'"></fa-icon>
+        </button>
+    </div>
+
+    <!-- File Tree -->
+    <div class="card-body">
+        <!-- Root level create file/folder tree element -->
+        <ng-container *ngIf="creatingFile && creatingFile[0] === ''">
+            <jhi-code-editor-file-browser-create-node
+                [createFileType]="creatingFile[1]"
+                [folder]="''"
+                (onClearCreatingFile)="clearCreatingFile()"
+                (onCreateFile)="onCreateFile($event)"
+            ></jhi-code-editor-file-browser-create-node>
+        </ng-container>
+        <ngx-treeview *ngIf="!isLoadingFiles" #treeview [config]="treeviewConfig" [items]="filesTreeViewItem" [itemTemplate]="itemTemplate"> </ngx-treeview>
+        <!-- Loading files indicator -->
+        <div *ngIf="isLoadingFiles" class="text-center lead text-muted pt-2">
+            <fa-icon [icon]="'circle-notch'" spin="true"></fa-icon>
+            <span jhiTranslate="artemisApp.editor.loadingFiles">Loading file</span>
+        </div>
+    </div>
+    <jhi-code-editor-status #status [editorState]="editorState" [commitState]="commitState"></jhi-code-editor-status>
+</div>
+
+<!--Treeview Item Template-->
+<ng-template #itemTemplate let-item="item" let-onCollapseExpand="onCollapseExpand" let-onCheckedChange="onCheckedChange">
+    <!--file-->
+    <jhi-code-editor-file-browser-folder
+        *ngIf="repositoryFiles[item.value] === FileType.FOLDER"
+        [item]="item"
+        [isBeingRenamed]="renamingFile && renamingFile[0] === item.value"
+        [hasUnsavedChanges]="unsavedFiles && unsavedFiles.includes(item.value)"
+        [hasError]="errorFiles && errorFiles.includes(item.value)"
+        [onCollapseExpand]="onCollapseExpand"
+        [isCompressed]="compressFolders"
+        [disableActions]="disableActions || commitState === CommitState.CONFLICT"
+        (onSetRenamingNode)="setRenamingFile(item)"
+        (onRenameNode)="onRenameFile($event)"
+        (onNodeSelect)="handleNodeSelected(item)"
+        (onDeleteNode)="openDeleteFileModal(item)"
+        (onClearRenamingNode)="clearRenamingFile()"
+        (onSetCreatingNodeInFolder)="setCreatingFile($event)"
+    ></jhi-code-editor-file-browser-folder>
+    <!--folder-->
+    <jhi-code-editor-file-browser-file
+        *ngIf="repositoryFiles[item.value] === FileType.FILE"
+        [item]="item"
+        [isBeingRenamed]="renamingFile && renamingFile[0] === item.value"
+        [hasUnsavedChanges]="unsavedFiles && unsavedFiles.includes(item.value)"
+        [hasError]="errorFiles && errorFiles.includes(item.value)"
+        [disableActions]="disableActions || commitState === CommitState.CONFLICT"
+        (onSetRenamingNode)="setRenamingFile(item)"
+        (onRenameNode)="onRenameFile($event)"
+        (onNodeSelect)="handleNodeSelected(item)"
+        (onDeleteNode)="openDeleteFileModal(item)"
+        (onClearRenamingNode)="clearRenamingFile()"
+    ></jhi-code-editor-file-browser-file>
+    <!--new item-->
+    <ng-container *ngIf="creatingFile && creatingFile[0] === item.value">
+        <jhi-code-editor-file-browser-create-node
+            [createFileType]="creatingFile[1]"
+            [folder]="''"
+            (onClearCreatingFile)="clearCreatingFile()"
+            (onCreateFile)="onCreateFile($event)"
+        ></jhi-code-editor-file-browser-create-node>
+    </ng-container>
+</ng-template>

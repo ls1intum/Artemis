@@ -18,7 +18,6 @@ import org.springframework.util.LinkedMultiValueMap;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
@@ -27,16 +26,20 @@ import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.ComplaintRepository;
 import de.tum.in.www1.artemis.repository.ComplaintResponseRepository;
+import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.RequestUtilService;
 
-public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationTest {
+public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
     ExerciseRepository exerciseRepo;
+
+    @Autowired
+    CourseRepository courseRepository;
 
     @Autowired
     RequestUtilService request;
@@ -66,11 +69,14 @@ public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegratio
 
     private Complaint moreFeedbackRequest;
 
+    private Course course;
+
     @BeforeEach
     public void initTestCase() throws Exception {
         database.addUsers(2, 2, 1);
-        database.addCourseWithOneModelingExercise();
-        modelingExercise = (ModelingExercise) exerciseRepo.findAll().get(0);
+        // Initialize with 5 max complaints and 2 weeks max complaint deadline
+        course = database.addCourseWithOneModelingExercise();
+        modelingExercise = (ModelingExercise) course.getExercises().iterator().next();
         saveModelingSubmissionAndAssessment();
         complaint = new Complaint().result(modelingAssessment).complaintText("This is not fair").complaintType(ComplaintType.COMPLAINT);
         moreFeedbackRequest = new Complaint().result(modelingAssessment).complaintText("Please explain").complaintType(ComplaintType.MORE_FEEDBACK);
@@ -100,8 +106,21 @@ public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegratio
 
     @Test
     @WithMockUser(username = "student1")
+    public void submitComplaintAboutModellingAssessment_complaintLimitNotReached() throws Exception {
+        // 2 complaints are allowed, the course is created with 3 max complaints
+        database.addComplaints("student1", modelingAssessment.getParticipation(), 2, ComplaintType.COMPLAINT);
+
+        request.post("/api/complaints", complaint, HttpStatus.CREATED);
+
+        assertThat(complaintRepo.findByResult_Id(modelingAssessment.getId())).as("complaint is saved").isPresent();
+        Result storedResult = resultRepo.findByIdWithEagerFeedbacksAndAssessor(modelingAssessment.getId()).get();
+        assertThat(storedResult.hasComplaint()).as("hasComplaint flag of result is true").isTrue();
+    }
+
+    @Test
+    @WithMockUser(username = "student1")
     public void submitComplaintAboutModelingAssessment_complaintLimitReached() throws Exception {
-        database.addComplaints("student1", modelingAssessment.getParticipation(), 3, ComplaintType.COMPLAINT);
+        database.addComplaints("student1", modelingAssessment.getParticipation(), 5, ComplaintType.COMPLAINT);
 
         request.post("/api/complaints", complaint, HttpStatus.BAD_REQUEST);
 
@@ -129,9 +148,24 @@ public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegratio
 
     @Test
     @WithMockUser(username = "student1")
+    public void submitComplaintAboutModelingAssessment_validDeadline() throws Exception {
+        // Mock object initialized with 2 weeks deadline. One week after result date is fine.
+        database.updateAssessmentDueDate(modelingExercise.getId(), ZonedDateTime.now().minusWeeks(1));
+        database.updateResultCompletionDate(modelingAssessment.getId(), ZonedDateTime.now().minusWeeks(1));
+
+        request.post("/api/complaints", complaint, HttpStatus.CREATED);
+
+        assertThat(complaintRepo.findByResult_Id(modelingAssessment.getId())).as("complaint is saved").isPresent();
+        Result storedResult = resultRepo.findByIdWithEagerFeedbacksAndAssessor(modelingAssessment.getId()).get();
+        assertThat(storedResult.hasComplaint()).as("hasComplaint flag of result is true").isTrue();
+    }
+
+    @Test
+    @WithMockUser(username = "student1")
     public void submitComplaintAboutModelingAssessment_assessmentTooOld() throws Exception {
-        database.updateAssessmentDueDate(modelingExercise.getId(), ZonedDateTime.now().minusWeeks(Constants.MAX_COMPLAINT_TIME_WEEKS + 1));
-        database.updateResultCompletionDate(modelingAssessment.getId(), ZonedDateTime.now().minusWeeks(Constants.MAX_COMPLAINT_TIME_WEEKS + 1));
+        // 3 weeks is already past the deadline
+        database.updateAssessmentDueDate(modelingExercise.getId(), ZonedDateTime.now().minusWeeks(3));
+        database.updateResultCompletionDate(modelingAssessment.getId(), ZonedDateTime.now().minusWeeks(3));
 
         request.post("/api/complaints", complaint, HttpStatus.BAD_REQUEST);
 
@@ -167,7 +201,7 @@ public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegratio
         Result receivedResult = request.putWithResponseBody("/api/modeling-submissions/" + modelingSubmission.getId() + "/assessment-after-complaint", assessmentUpdate,
                 Result.class, HttpStatus.OK);
 
-        assertThat(((StudentParticipation) receivedResult.getParticipation()).getStudent()).as("student is hidden in response").isNull();
+        assertThat(((StudentParticipation) receivedResult.getParticipation()).getStudent()).as("student is hidden in response").isEmpty();
         Complaint storedComplaint = complaintRepo.findByResult_Id(modelingAssessment.getId()).get();
         assertThat(storedComplaint.isAccepted()).as("complaint is accepted").isTrue();
         Result resultBeforeComplaint = mapper.readValue(storedComplaint.getResultBeforeComplaint(), Result.class);
@@ -375,6 +409,13 @@ public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegratio
         request.getList("/api/complaints", HttpStatus.FORBIDDEN, ComplaintResponse.class, params);
     }
 
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void getComplaintById() throws Exception {
+        complaintRepo.save(complaint);
+        request.get("/api/complaints/" + complaint.getId(), HttpStatus.OK, Complaint.class);
+    }
+
     private void checkFeedbackCorrectlyStored(List<Feedback> sentFeedback, List<Feedback> storedFeedback) {
         assertThat(sentFeedback.size()).as("contains the same amount of feedback").isEqualTo(storedFeedback.size());
         Result storedFeedbackResult = new Result();
@@ -429,6 +470,20 @@ public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegratio
             assertThat(exercise.getStudentParticipations()).as("Exercise only contains title and ID").isNullOrEmpty();
             assertThat(exercise.getTutorParticipations()).as("Exercise only contains title and ID").isNullOrEmpty();
             // TODO check exercise type specific sensitive attributes
+            if (exercise instanceof ModelingExercise) {
+                ModelingExercise modelingExercise = (ModelingExercise) exercise;
+                assertThat(modelingExercise.getSampleSolutionModel()).as("Exercise only contains title and ID").isNull();
+                assertThat(modelingExercise.getSampleSolutionExplanation()).as("Exercise only contains title and ID").isNull();
+            }
+            if (exercise instanceof TextExercise) {
+                TextExercise textExercise = (TextExercise) exercise;
+                assertThat(textExercise.getSampleSolution()).as("Exercise only contains title and ID").isNull();
+                assertThat(textExercise.getExampleSubmissions()).as("Exercise only contains title and ID").isNull();
+            }
+            if (exercise instanceof ProgrammingExercise) {
+                ProgrammingExercise programmingExercise = (ProgrammingExercise) exercise;
+                assertThat(programmingExercise.getProgrammingLanguage()).as("Exercise only contains title and ID").isNull();
+            }
         }
     }
 
@@ -438,7 +493,7 @@ public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegratio
 
         if (complaint.getResult() != null && complaint.getResult().getParticipation() != null) {
             assertThat(((StudentParticipation) receivedComplaint.getResult().getParticipation()).getStudent()).as("Result in complaint shouldn't contain student participation")
-                    .isNull();
+                    .isEmpty();
         }
     }
 
@@ -455,4 +510,35 @@ public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegratio
 
         complaints.forEach(c -> checkComplaintContainsNoSensitiveData(c, true));
     }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void getNumberOfAllowedComplaintsInCourse() throws Exception {
+        complaint.setStudent(database.getUserByLogin("student1"));
+        complaintRepo.save(complaint);
+        Long nrOfAllowedComplaints = request.get("/api/courses/" + modelingExercise.getCourse().getId() + "/allowed-complaints", HttpStatus.OK, Long.class);
+        assertThat(nrOfAllowedComplaints.intValue()).isEqualTo(course.getMaxComplaints());
+        // TODO: there should be a second test case where the student already has 2 complaints and the number is reduced
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void getMoreFeedbackRequestsForTutorDashboard() throws Exception {
+        complaint.setStudent(database.getUserByLogin("student1"));
+        moreFeedbackRequest.setAccepted(true);
+        complaintRepo.save(moreFeedbackRequest);
+
+        final var params = new LinkedMultiValueMap<String, String>();
+        params.add("complaintType", ComplaintType.MORE_FEEDBACK.name());
+        final var complaints = request.getList("/api/exercises/" + modelingExercise.getId() + "/more-feedback-for-tutor-dashboard", HttpStatus.OK, Complaint.class, params);
+
+        complaints.forEach(compl -> {
+            final var participation = (StudentParticipation) compl.getResult().getParticipation();
+            assertThat(participation.getStudent()).as("No student information").isEmpty();
+            assertThat(compl.getStudent()).as("No student information").isNull();
+            assertThat(participation.getExercise()).as("No additional exercise information").isNull();
+            assertThat(compl.getResultBeforeComplaint()).as("No old result information").isNull();
+        });
+    }
+
 }

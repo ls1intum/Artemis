@@ -16,7 +16,8 @@
                 "title": "Einreichung"
             },
             "text": "Text",
-            "view": "Einreichung ansehen"
+            "view": "Einreichung ansehen",
+            "textEditor": "Text Editor"
         }
     }
 }

@@ -7,23 +7,50 @@
         <span pagetitle>{{ exercise.title }}</span>
     </jhi-header-exercise-page-with-details>
     <!-- HEADER INFORMATION END -->
+    <jhi-alert></jhi-alert>
+    <jhi-alert-error></jhi-alert-error>
     <!-- EXERCISE ACTIONS START -->
     <div class="tab-bar tab-bar-exercise-details pl-2 pr-2 mb-2 justify-content-between">
-        <jhi-programming-exercise-student-ide-actions jhiIdeFilter [showInIDE]="true" [courseId]="courseId" [exercise]="exercise"> </jhi-programming-exercise-student-ide-actions>
-        <jhi-exercise-details-student-actions jhiIdeFilter [showInIDE]="false" [courseId]="courseId" [exercise]="exercise" [showResult]="showResults && currentResult !== null">
+        <jhi-programming-exercise-student-ide-actions jhiOrionFilter [showInOrionWindow]="true" [courseId]="courseId" [exercise]="exercise">
+        </jhi-programming-exercise-student-ide-actions>
+        <jhi-exercise-details-student-actions
+            jhiOrionFilter
+            [showInOrionWindow]="false"
+            [courseId]="courseId"
+            [exercise]="exercise"
+            [showResult]="showResults && currentResult !== null"
+        >
         </jhi-exercise-details-student-actions>
+        <!-- These buttons will be only shown in dev environment and if the programming exercise has no
+        connection to the VCS and CI
+        This functionality is only for testing purposes-->
+        <button class="dev-button" *ngIf="!inProductionEnvironment && noVersionControlAndContinuousIntegrationServerAvailable" (click)="simulateSubmission()">
+            Submission
+        </button>
+        <button
+            class="dev-button"
+            [disabled]="!wasSubmissionSimulated"
+            *ngIf="!inProductionEnvironment && noVersionControlAndContinuousIntegrationServerAvailable"
+            (click)="simulateResult()"
+        >
+            Result
+        </button>
         <jhi-submission-result-status [exercise]="exercise" [studentParticipation]="studentParticipation" updatingResultClass="mr-2" [showGradedBadge]="true">
         </jhi-submission-result-status>
         <div class="col-auto d-none d-md-flex align-items-center" *ngIf="exercise.isAtLeastInstructor">
             <span class="mr-1">{{ 'artemisApp.courseOverview.exerciseDetails.instructorActions.title' | translate }}</span>
             <div class="btn-group">
-                <div class="btn btn-outline-primary" routerLink="/course/{{ courseId }}/exercise/{{ exercise.id }}/dashboard">
+                <div class="btn btn-outline-primary" routerLink="/course-management/{{ courseId }}/exercises/{{ exercise.id }}/scores">
                     {{ 'artemisApp.courseOverview.exerciseDetails.instructorActions.scores' | translate }}
                 </div>
                 <div class="btn btn-outline-primary" *ngIf="exerciseRouterLink" routerLink="{{ exerciseRouterLink }}">
                     {{ 'artemisApp.courseOverview.exerciseDetails.instructorActions.submissions' | translate }}
                 </div>
-                <div class="btn btn-outline-primary" *ngIf="exercise.type === MODELING" routerLink="/course/{{ courseId }}/exercise/{{ exercise.id }}/statistics">
+                <div
+                    *ngIf="exercise.type === MODELING"
+                    [routerLink]="['/course-management', courseId, 'modeling-exercises', exercise.id, 'statistics']"
+                    class="btn btn-outline-primary"
+                >
                     {{ 'artemisApp.courseOverview.exerciseDetails.instructorActions.statistics' | translate }}
                 </div>
             </div>
@@ -81,7 +108,7 @@
                     <jhi-result [result]="studentParticipation!.results[0]" [participation]="studentParticipation" showUngradedResults="true" short="true"></jhi-result>
                 </div>
                 <div class="col text-left d-none d-md-flex">
-                    <h6 [ngbTooltip]="studentParticipation!.results[0]!.completionDate | date: 'dd/MM/yy HH:mm'">
+                    <h6 [ngbTooltip]="studentParticipation!.results[0]!.completionDate | date: 'dd.MM.yy HH:mm'">
                         ({{ studentParticipation!.results[0]!.completionDate! | amTimeAgo }})
                     </h6>
                 </div>
@@ -110,7 +137,7 @@
                                 <jhi-result [result]="result" [participation]="exercise.studentParticipations[0]" showUngradedResults="true" short="true"></jhi-result>
                             </div>
                             <div class="col text-left d-none d-md-flex">
-                                <h6 [ngbTooltip]="result.completionDate | date: 'dd/MM/yy HH:mm'">({{ result.completionDate! | amTimeAgo }})</h6>
+                                <h6 [ngbTooltip]="result.completionDate | date: 'dd.MM.yy HH:mm'">({{ result.completionDate! | amTimeAgo }})</h6>
                             </div>
                         </div>
                     </div>
@@ -135,7 +162,7 @@
             </div>
             <!-- RESULTS END -->
             <jhi-complaint-interactions
-                *ngIf="exercise.type === PROGRAMMING && studentParticipation && currentResult && currentResult.assessmentType === AssessmentType.MANUAL"
+                *ngIf="exercise && exercise.type === PROGRAMMING && studentParticipation && currentResult && currentResult.assessmentType === AssessmentType.MANUAL"
                 class="mb-2 mt-2 ml-3"
                 [exercise]="exercise"
                 [participation]="studentParticipation"
@@ -143,7 +170,7 @@
             >
             </jhi-complaint-interactions>
         </div>
-        <div class="col-sm-12 col-md-4 col-lg-4" jhiIdeFilter [showInIDE]="false">
+        <div class="col-sm-12 col-md-4 col-lg-4" jhiOrionFilter [showInOrionWindow]="false" *ngIf="exercise.course && exercise.course.studentQuestionsEnabled">
             <jhi-student-questions [exercise]="exercise"></jhi-student-questions>
         </div>
     </div>

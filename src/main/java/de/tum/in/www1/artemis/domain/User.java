@@ -18,7 +18,9 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
+
 import de.tum.in.www1.artemis.config.Constants;
+import de.tum.in.www1.artemis.domain.participation.Participant;
 
 /**
  * A user.
@@ -27,7 +29,7 @@ import de.tum.in.www1.artemis.config.Constants;
 @Table(name = "jhi_user")
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class User extends AbstractAuditingEntity implements Serializable {
+public class User extends AbstractAuditingEntity implements Serializable, Participant {
 
     private static final long serialVersionUID = 1L;
 
@@ -42,7 +44,7 @@ public class User extends AbstractAuditingEntity implements Serializable {
     private String login;
 
     @JsonIgnore
-    @Column(name = "password_hash", length = 60)
+    @Column(name = "password_hash")
     private String password;
 
     @Size(max = 50)
@@ -130,6 +132,10 @@ public class User extends AbstractAuditingEntity implements Serializable {
     // Lowercase the login before saving it in database
     public void setLogin(String login) {
         this.login = StringUtils.lowerCase(login, Locale.ENGLISH);
+    }
+
+    public String getParticipantIdentifier() {
+        return login;
     }
 
     public String getPassword() {
@@ -306,6 +312,10 @@ public class User extends AbstractAuditingEntity implements Serializable {
                 + '\'' + ", activated='" + activated + '\'' + ", langKey='" + langKey + '\'' + ", activationKey='" + activationKey + '\'' + "}";
     }
 
+    /**
+     * copy the basic user settings to hide not needed information before sending the user object to the client
+     * @return the basic user
+     */
     public User copyBasicUser() {
         User user = new User();
         user.setId(getId());

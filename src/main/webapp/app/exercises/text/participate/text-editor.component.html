@@ -1,0 +1,64 @@
+<jhi-header-participation-page class="d-block mb-4" [exercise]="textExercise" [participation]="participation">
+    <span pagetitle>
+        {{ 'artemisApp.textSubmission.textEditor' | translate }}: <span class="font-weight-normal">{{ textExercise?.title }}</span>
+    </span>
+    <jhi-button
+        submitbutton
+        [title]="!isAllowedToSubmitAfterDeadline ? 'entity.action.submit' : 'entity.action.submitDeadlineMissed'"
+        (onClick)="submit()"
+        [disabled]="!isActive || !submission"
+        [isLoading]="isSaving"
+        [btnType]="isAllowedToSubmitAfterDeadline ? ButtonType.WARNING : ButtonType.PRIMARY"
+        [tooltip]="submitButtonTooltip"
+    >
+    </jhi-button>
+</jhi-header-participation-page>
+
+<jhi-alert></jhi-alert>
+
+<div class="mt-4 px-2 pb-2">
+    <div class="d-flex flex-column flex-md-row" *ngIf="textExercise">
+        <div class="flex-grow-1">
+            <p class="mb-3 markdown-preview">
+                <b><span jhiTranslate="artemisApp.exercise.problemStatement">Problem Statement</span>:</b>
+                <span [innerHTML]="textExercise!.problemStatement! | htmlForMarkdown"></span>
+            </p>
+        </div>
+        <div *ngIf="textExercise?.teamMode && isActive" class="flex-shrink-0 ml-md-3 ml-lg-4" [ngStyle]="{ zIndex: 1 }">
+            <jhi-team-participate-info-box [exercise]="textExercise" [participation]="participation" [bounded]="false"></jhi-team-participate-info-box>
+        </div>
+    </div>
+
+    <div class="row">
+        <ng-container *ngIf="!result; else hasFeedback">
+            <div class="col-12 col-lg-9 col-xl-8">
+                <textarea
+                    #textEditor
+                    class="text-editor-textarea"
+                    [(ngModel)]="answer"
+                    [readonly]="!isActive || !submission"
+                    [disabled]="!isActive || !submission"
+                    (keydown.tab)="onTextEditorTab(textEditor, $event)"
+                ></textarea>
+            </div>
+        </ng-container>
+
+        <ng-template #hasFeedback>
+            <div class="col-md-12 col-lg-10 col-xl-8">
+                <b><span jhiTranslate="artemisApp.textExercise.assessedSubmission">Your assessed submission</span>:</b>
+                <hr />
+                <jhi-text-result [result]="result"></jhi-text-result>
+                <hr />
+            </div>
+
+            <div class="col-md-12 col-lg-10 col-xl-8 feedback-text mt-5 alert alert-info" *ngIf="generalFeedback">
+                <b><fa-icon [icon]="['far', 'comment-dots']"></fa-icon>&nbsp;<span jhiTranslate="artemisApp.assessment.generalFeedback">General Feedback</span>:</b>
+                <br />
+                {{ generalFeedback.detailText }}
+            </div>
+        </ng-template>
+    </div>
+
+    <jhi-complaint-interactions *ngIf="textExercise && result && participation" [exercise]="textExercise" [result]="result" [participation]="participation">
+    </jhi-complaint-interactions>
+</div>

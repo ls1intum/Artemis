@@ -1,5 +1,6 @@
 import http from 'k6/http';
 import ws from 'k6/ws';
+import {fail} from 'k6';
 
 const defaultXSRFToken = "42d141b5-9e1c-4390-ae06-5143753b4459";
 const protocol = "https"; // https or http
@@ -49,6 +50,8 @@ const request = function(method, endpoint, authToken, xsrftoken, body, params) {
 export function login(username, password) {
     let req, res;
 
+    console.log('Try to login with ' + username + ':' + password);
+
     // The user logs in; the authToken gets saved as we need it later
     req = [{
         'method': 'post',
@@ -74,8 +77,11 @@ export function login(username, password) {
         }
     }];
     res = http.batch(req);
+    if (res[0].status !== 200) {
+        fail('Failed to login as user ' + username + ' (' + res[0].status + ')! Response was + ' + res[0].body);
+    }
     const authToken = JSON.parse(res[0].body).id_token;
-    console.log('GOT authToken ' + authToken);
+    // console.log('GOT authToken ' + authToken + ' for user ' + username);
 
     // The user requests it own information of the account
     req = [{

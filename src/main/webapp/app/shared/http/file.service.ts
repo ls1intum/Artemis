@@ -2,7 +2,7 @@ import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 
 import { SERVER_API_URL } from 'app/app.constants';
-import { ProgrammingLanguage } from 'app/entities/programming-exercise';
+import { ProgrammingLanguage } from 'app/entities/programming-exercise.model';
 
 @Injectable({ providedIn: 'root' })
 export class FileService {
@@ -20,7 +20,7 @@ export class FileService {
      *
      * @param downloadUrl url that is stored in the attachment model
      */
-    downloadAttachment(downloadUrl: string) {
+    downloadFileWithAccessToken(downloadUrl: string) {
         const downloadUrlComponents = downloadUrl.split('/');
         // take the last element
         const fileName = downloadUrlComponents.pop()!;

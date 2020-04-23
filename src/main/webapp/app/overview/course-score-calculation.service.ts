@@ -1,13 +1,11 @@
 import { Injectable } from '@angular/core';
-
-import { Result } from 'app/entities/result/result.model';
-import { Course } from 'app/entities/course';
-import { Exercise } from 'app/entities/exercise';
-import { Participation } from '../entities/participation';
-
+import { Result } from 'app/entities/result.model';
+import { Course } from 'app/entities/course.model';
+import { Exercise } from 'app/entities/exercise.model';
 import * as moment from 'moment';
 import { Moment } from 'moment';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { Participation } from 'app/entities/participation/participation.model';
 
 export const ABSOLUTE_SCORE = 'absoluteScore';
 export const RELATIVE_SCORE = 'relativeScore';
@@ -81,7 +79,7 @@ export class CourseScoreCalculationService {
     }
 
     getCourse(courseId: number): Course | null {
-        return this.courses.find(course => course.id === courseId) || null;
+        return this.courses.find((course) => course.id === courseId) || null;
     }
 
     getParticipationForExercise(exercise: Exercise): Participation | null {
@@ -112,7 +110,7 @@ export class CourseScoreCalculationService {
                 return chosenResult;
             }
 
-            const ratedResults = resultsArray.filter(el => el.rated);
+            const ratedResults = resultsArray.filter((el) => el.rated);
 
             if (ratedResults.length === 1) {
                 return ratedResults[0];

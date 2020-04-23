@@ -5,7 +5,6 @@ import { of, throwError } from 'rxjs';
 import { ArtemisTestModule } from '../../../test.module';
 import { PasswordComponent } from 'app/account/password/password.component';
 import { PasswordService } from 'app/account/password/password.service';
-import { JhiTrackerService } from 'app/core/tracker/tracker.service';
 import { MockTrackerService } from '../../../helpers/mock-tracker.service';
 
 describe('Component Tests', () => {
@@ -65,7 +64,7 @@ describe('Component Tests', () => {
             expect(service.save).toHaveBeenCalledWith(passwordValues.newPassword, passwordValues.currentPassword);
         });
 
-        it('should set success to OK upon success', function() {
+        it('should set success to OK upon success', function () {
             // GIVEN
             spyOn(service, 'save').and.returnValue(of(new HttpResponse({ body: true })));
             comp.newPassword = comp.confirmPassword = 'myPassword';
@@ -79,7 +78,7 @@ describe('Component Tests', () => {
             expect(comp.success).toBe('OK');
         });
 
-        it('should notify of error if change password fails', function() {
+        it('should notify of error if change password fails', function () {
             // GIVEN
             spyOn(service, 'save').and.returnValue(throwError('ERROR'));
             comp.newPassword = comp.confirmPassword = 'myPassword';

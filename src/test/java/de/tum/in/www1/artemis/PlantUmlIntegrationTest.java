@@ -18,7 +18,7 @@ import org.springframework.util.LinkedMultiValueMap;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.RequestUtilService;
 
-public class PlantUmlIntegrationTest extends AbstractSpringIntegrationTest {
+public class PlantUmlIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     private final String UML_DIAGRAM_STRING = "@someplantuml";
 

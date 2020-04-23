@@ -3,6 +3,8 @@ package de.tum.in.www1.artemis.service;
 import java.time.ZonedDateTime;
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Result;
@@ -17,6 +19,8 @@ import de.tum.in.www1.artemis.service.scheduled.QuizScheduleService;
 
 @Service
 public class QuizSubmissionService {
+
+    private final Logger log = LoggerFactory.getLogger(QuizSubmissionService.class);
 
     private final QuizSubmissionRepository quizSubmissionRepository;
 
@@ -77,7 +81,7 @@ public class QuizSubmissionService {
 
         // add result to statistics
         QuizScheduleService.addResultForStatisticUpdate(quizExercise.getId(), result);
-
+        log.debug("submit practice quiz finished: " + quizSubmission);
         return result;
     }
 

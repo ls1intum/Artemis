@@ -1,0 +1,39 @@
+<div class="editor-wrapper">
+    <!-- Top bar -->
+    <nav class="editor-statusbar">
+        <!-- Exercise title -->
+        <span class="editor-statusbar__title">{{ exerciseTitle }}</span>
+        <ng-content select="[editorNavbar]"> </ng-content>
+    </nav>
+
+    <div class="editor-main">
+        <div class="editor-main__content">
+            <!-- File browser -->
+            <div class="editor-sidebar-left collapsable">
+                <ng-content select="[editorSidebarLeft]"></ng-content>
+                <!-- Required for resizing; don't remove empty span -->
+                <fa-icon [icon]="'grip-lines-vertical'" class="rg-sidebar-left text-lightgrey"><span></span></fa-icon>
+            </div>
+
+            <!-- Editor -->
+            <div class="guided-tour-editor editor-center">
+                <ng-content select="[editorCenter]"></ng-content>
+            </div>
+
+            <!-- Instructions -->
+            <div class="editor-sidebar-right collapsable">
+                <fa-icon [icon]="'grip-lines-vertical'" class="rg-sidebar-right text-lightgrey"><span></span></fa-icon>
+                <ng-content select="[editorSidebarRight]"></ng-content>
+            </div>
+        </div>
+
+        <!-- Required for resizing; don't remove empty span -->
+        <fa-icon [icon]="'grip-lines'" class="rg-main-bottom text-lightgrey"><span></span></fa-icon>
+    </div>
+
+    <div class="editor-bottom collapsable">
+        <ng-content select="[editorBottomArea]" class="editor-bottom-resizable"></ng-content>
+        <!-- Required for resizing; don't remove empty span -->
+        <fa-icon [icon]="'grip-lines'" class="rg-bottom-bottom text-lightgrey"><span></span></fa-icon>
+    </div>
+</div>

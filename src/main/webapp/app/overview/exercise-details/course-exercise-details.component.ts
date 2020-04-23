@@ -1,29 +1,34 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Location } from '@angular/common';
 import { HttpResponse } from '@angular/common/http';
-import { Exercise, ExerciseCategory, ExerciseService, ExerciseType, participationStatus } from 'app/entities/exercise';
-import { CourseService } from 'app/entities/course/course.service';
+import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs/Subscription';
-import { Result } from 'app/entities/result';
+import { Result } from 'app/entities/result.model';
 import * as moment from 'moment';
 import { User } from 'app/core/user/user.model';
-import { InitializationState, Participation, ProgrammingExerciseStudentParticipation, StudentParticipation } from 'app/entities/participation';
-import { ParticipationService } from 'app/entities/participation/participation.service';
-import { ParticipationWebsocketService } from 'app/entities/participation/participation-websocket.service';
+import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
+import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { programmingExerciseFail, programmingExerciseSuccess } from 'app/guided-tour/tours/course-exercise-detail-tour';
-import { SourceTreeService } from 'app/components/util/sourceTree.service';
-import { CourseScoreCalculationService } from 'app/overview';
-import { AssessmentType } from 'app/entities/assessment-type';
+import { SourceTreeService } from 'app/exercises/programming/shared/service/sourceTree.service';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
+import { InitializationState, Participation } from 'app/entities/participation/participation.model';
+import { Exercise, ExerciseCategory, ExerciseType } from 'app/entities/exercise.model';
+import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
+import { AssessmentType } from 'app/entities/assessment-type.model';
+import { participationStatus } from 'app/exercises/shared/exercise/exercise-utils';
+import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
-import { ProgrammingExercise } from 'app/entities/programming-exercise';
-import { take, tap } from 'rxjs/operators';
-import { ProfileInfo } from 'app/layouts';
-import { createBuildPlanUrl } from 'app/entities/programming-exercise/utils/build-plan-link.directive';
-import { ProfileService } from 'app/layouts/profiles/profile.service';
-
+import { GradingCriterion } from 'app/exercises/shared/structured-grading-criterion/grading-criterion.model';
+import { CourseExerciseSubmissionResultSimulationService } from 'app/course/manage/course-exercise-submission-result-simulation.service';
+import { ProgrammingExerciseSimulationUtils } from 'app/exercises/programming/shared/utils/programming-exercise-simulation-utils';
+import { AlertService } from 'app/core/alert/alert.service';
+import { ProgrammingExerciseSimulationService } from 'app/exercises/programming/manage/services/programming-exercise-simulation.service';
 const MAX_RESULT_HISTORY_LENGTH = 5;
 
 @Component({
@@ -49,27 +54,38 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     private participationUpdateListener: Subscription;
     studentParticipation: StudentParticipation | null;
     isAfterAssessmentDueDate: boolean;
-
+    public gradingCriteria: GradingCriterion[];
     showWelcomeAlert = false;
+
+    /**
+     * variables are only for testing purposes(noVersionControlAndContinuousIntegrationAvailable)
+     */
+    public inProductionEnvironment: boolean;
+    public noVersionControlAndContinuousIntegrationServerAvailable: boolean;
+    public wasSubmissionSimulated = false;
 
     constructor(
         private $location: Location,
         private exerciseService: ExerciseService,
-        private courseService: CourseService,
+        private courseService: CourseManagementService,
         private jhiWebsocketService: JhiWebsocketService,
         private accountService: AccountService,
         private courseCalculationService: CourseScoreCalculationService,
         private participationWebsocketService: ParticipationWebsocketService,
         private participationService: ParticipationService,
         private sourceTreeService: SourceTreeService,
-        private courseServer: CourseService,
+        private courseServer: CourseManagementService,
         private route: ActivatedRoute,
         private profileService: ProfileService,
         private guidedTourService: GuidedTourService,
+        private courseExerciseSubmissionResultSimulationService: CourseExerciseSubmissionResultSimulationService,
+        private programmingExerciseSimulationUtils: ProgrammingExerciseSimulationUtils,
+        private jhiAlertService: AlertService,
+        private programmingExerciseSimulationService: ProgrammingExerciseSimulationService,
     ) {}
 
     ngOnInit() {
-        this.subscription = this.route.params.subscribe(params => {
+        this.subscription = this.route.params.subscribe((params) => {
             const didExerciseChange = this.exerciseId !== parseInt(params['exerciseId'], 10);
             const didCourseChange = this.courseId !== parseInt(params['courseId'], 10);
             this.exerciseId = parseInt(params['exerciseId'], 10);
@@ -82,11 +98,18 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
             }
         });
 
-        this.route.queryParams.subscribe(queryParams => {
+        this.route.queryParams.subscribe((queryParams) => {
             if (queryParams['welcome'] === '') {
                 setTimeout(() => {
                     this.showWelcomeAlert = true;
                 }, 500);
+            }
+        });
+
+        // Checks if the current environment is production
+        this.profileService.getProfileInfo().subscribe((profileInfo) => {
+            if (profileInfo) {
+                this.inProductionEnvironment = profileInfo.inProduction;
             }
         });
     }
@@ -103,12 +126,6 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     loadExercise() {
         this.exercise = null;
         this.studentParticipation = this.participationWebsocketService.getParticipationForExercise(this.exerciseId);
-        // TODO: we should refactor this because we are sending multiple requests to the server. It would be better to create a new REST call for exercise details including:
-        // * the exercise (without the course, no template / solution participations)
-        // * all submissions (with their result) of the user (to be displayed in the result history)
-        // * the student questions
-        // * the hints
-        // --> The retrieved data then needs to be passed correctly into the sub components
         this.exerciseService.getExerciseDetails(this.exerciseId).subscribe((exerciseResponse: HttpResponse<Exercise>) => {
             this.handleNewExercise(exerciseResponse.body!);
         });
@@ -121,6 +138,9 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         this.exercise.participationStatus = participationStatus(this.exercise);
         this.isAfterAssessmentDueDate = !this.exercise.assessmentDueDate || moment().isAfter(this.exercise.assessmentDueDate);
         this.exerciseCategories = this.exerciseService.convertExerciseCategoriesFromServer(this.exercise);
+        if (this.exercise.type === ExerciseType.PROGRAMMING) {
+            this.getProgrammingExerciseAndChecksIfTheSetupHasVCSandCIConnection();
+        }
         this.subscribeForNewResults();
     }
 
@@ -132,7 +152,11 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         if (!participations) {
             return null;
         }
-        const filteredParticipations = participations.filter((participation: StudentParticipation) => participation.student && participation.student.id === this.currentUser.id);
+        const filteredParticipations = participations.filter((participation: StudentParticipation) => {
+            const personal = participation.student?.id === this.currentUser.id;
+            const team = participation.team?.students.map((s) => s.id).includes(this.currentUser.id);
+            return personal || team;
+        });
         filteredParticipations.forEach((participation: Participation) => {
             if (participation.results) {
                 participation.results = participation.results.filter((result: Result) => result.completionDate);
@@ -187,14 +211,14 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
 
     subscribeForNewResults() {
         if (this.exercise && this.exercise.studentParticipations && this.exercise.studentParticipations.length > 0) {
-            this.exercise.studentParticipations.forEach(participation => {
+            this.exercise.studentParticipations.forEach((participation) => {
                 this.participationWebsocketService.addParticipation(participation, this.exercise!);
             });
             if (this.currentResult) {
                 if (this.currentResult.successful) {
-                    this.guidedTourService.enableTourForExercise(this.exercise, programmingExerciseSuccess);
+                    this.guidedTourService.enableTourForExercise(this.exercise, programmingExerciseSuccess, true);
                 } else if (this.currentResult.hasFeedback && !this.currentResult.successful) {
-                    this.guidedTourService.enableTourForExercise(this.exercise, programmingExerciseFail);
+                    this.guidedTourService.enableTourForExercise(this.exercise, programmingExerciseFail, true);
                 }
             }
         }
@@ -202,7 +226,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
             if (changedParticipation && this.exercise && changedParticipation.exercise.id === this.exercise.id) {
                 this.exercise.studentParticipations =
                     this.exercise.studentParticipations && this.exercise.studentParticipations.length > 0
-                        ? this.exercise.studentParticipations.map(el => {
+                        ? this.exercise.studentParticipations.map((el) => {
                               return el.id === changedParticipation.id ? changedParticipation : el;
                           })
                         : [changedParticipation];
@@ -228,15 +252,11 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     }
 
     get exerciseRouterLink(): string | null {
-        if (this.exercise && this.exercise.type === ExerciseType.MODELING) {
-            return `/course/${this.courseId}/exercise/${this.exercise!.id}/assessment`;
-        } else if (this.exercise && this.exercise.type === ExerciseType.TEXT) {
-            return `/text/${this.exercise.id}/assessment`;
-        } else if (this.exercise && this.exercise.type === ExerciseType.FILE_UPLOAD) {
-            return `/file-upload-exercise/${this.exercise.id}/assessment`;
-        } else {
-            return null;
+        if (this.exercise && [ExerciseType.MODELING, ExerciseType.TEXT, ExerciseType.FILE_UPLOAD].includes(this.exercise.type)) {
+            return `/course-management/${this.courseId}/${this.exercise.type}-exercises/${this.exercise!.id}/assessment`;
         }
+
+        return null;
     }
 
     get showResults(): boolean {
@@ -294,4 +314,54 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     buildPlanId(participation: Participation): string {
         return (participation! as ProgrammingExerciseStudentParticipation).buildPlanId;
     }
+
+    // ################## ONLY FOR LOCAL TESTING PURPOSE -- START ##################
+
+    /**
+     * asks the server for the programming exercise with the provided exercise ID
+     * This functionality is only for testing purposes(noVersionControlAndContinuousIntegrationAvailable)
+     */
+    getProgrammingExerciseAndChecksIfTheSetupHasVCSandCIConnection() {
+        this.courseExerciseSubmissionResultSimulationService.getProgrammingExercise(this.exerciseId).subscribe((programmingExercise) => {
+            this.noVersionControlAndContinuousIntegrationServerAvailable = this.programmingExerciseSimulationUtils.noVersionControlAndContinuousIntegrationAvailableCheck(
+                programmingExercise.testRepositoryUrl,
+            );
+        });
+    }
+
+    /**
+     * triggers the simulation of a participation and submission for the currently logged in user
+     * This functionality is only for testing purposes(noVersionControlAndContinuousIntegrationAvailable)
+     */
+    simulateSubmission() {
+        this.programmingExerciseSimulationService.failsIfInProduction();
+        this.courseExerciseSubmissionResultSimulationService.simulateSubmission(this.exerciseId).subscribe(
+            () => {
+                this.wasSubmissionSimulated = true;
+                this.jhiAlertService.success('artemisApp.exercise.submissionSuccessful');
+            },
+            () => {
+                this.jhiAlertService.error('artemisApp.exercise.submissionUnsuccessful');
+            },
+        );
+    }
+
+    /**
+     * triggers the simulation of a result for the currently logged in user
+     * This functionality is only for testing purposes(noVersionControlAndContinuousIntegrationAvailable)
+     */
+    simulateResult() {
+        this.programmingExerciseSimulationService.failsIfInProduction();
+        this.courseExerciseSubmissionResultSimulationService.simulateResult(this.exerciseId).subscribe(
+            () => {
+                this.wasSubmissionSimulated = false;
+                this.jhiAlertService.success('artemisApp.exercise.resultCreationSuccessful');
+            },
+            () => {
+                this.jhiAlertService.error('artemisApp.exercise.resultCreationUnsuccessful');
+            },
+        );
+    }
+
+    // ################## ONLY FOR LOCAL TESTING PURPOSE -- END ##################
 }

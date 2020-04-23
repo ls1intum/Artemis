@@ -1,0 +1,15 @@
+@import 'src/main/webapp/content/scss/artemis-variables';
+
+.add-action {
+    color: $primary;
+}
+
+.question-subtitle {
+    font-size: 12px;
+}
+
+.answer-approved {
+    color: green;
+    background-color: #f2f9f2;
+    border-radius: 4px;
+}

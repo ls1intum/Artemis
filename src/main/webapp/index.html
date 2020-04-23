@@ -9,7 +9,7 @@
         <meta name="google" content="notranslate" />
         <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
         <meta name="theme-color" content="#000000" />
-        <link rel="shortcut icon" href="favicon.ico" />
+        <link rel="shortcut icon" href="public/images/favicon.ico" />
         <link rel="manifest" href="manifest.webapp" />
         <link rel="stylesheet" href="content/css/loading.css" />
         <link rel="stylesheet" href="content/css/icons.css" />
@@ -23,7 +23,7 @@
         <![endif]-->
         <jhi-main>
             <div class="app-loading">
-                <div id="jhipster-error" style="display:none">
+                <div id="jhipster-error" style="display: none;">
                     <!-- This content is for troubleshooting purpose and will be removed when app renders -->
                     <h1>An error has occurred while loading and displaying the Artemis website :-(</h1>
                     <p>Troubleshooting:</p>
@@ -39,7 +39,7 @@
         </noscript>
         <script type="text/javascript" language="javascript">
             // show an error message if the app loading takes more than 5 sec
-            window.onload = function() {
+            window.onload = function () {
                 setTimeout(showError, 4000);
             };
             function showError() {
@@ -49,37 +49,5 @@
                 }
             }
         </script>
-        <!-- uncomment this for adding service worker
-        <script>
-            if ('serviceWorker' in navigator) {
-                window.addEventListener('load', function() {
-                    navigator.serviceWorker.register('/service-worker.js')
-                        .then(function () { });
-                });
-            }
-        </script>
-    -->
-
-        <!-- Matomo -->
-        <script type="text/javascript">
-            var _paq = window._paq || [];
-            /* tracker methods like "setCustomDimension" should be called before "trackPageView" */
-            _paq.push(['setDoNotTrack', true]);
-            _paq.push(['enableLinkTracking']);
-            (function() {
-                var u = 'https://www.piwik.tum.de/';
-                _paq.push(['setTrackerUrl', u + 'matomo.php']);
-                _paq.push(['setSiteId', '125']);
-                var d = document,
-                    g = d.createElement('script'),
-                    s = d.getElementsByTagName('script')[0];
-                g.type = 'text/javascript';
-                g.async = true;
-                g.defer = true;
-                g.src = u + 'matomo.js';
-                s.parentNode.insertBefore(g, s);
-            })();
-        </script>
-        <!-- End Matomo Code -->
     </body>
 </html>

@@ -14,9 +14,7 @@ import org.hibernate.annotations.DiscriminatorOptions;
 
 import com.fasterxml.jackson.annotation.*;
 
-import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
-import de.tum.in.www1.artemis.domain.enumeration.DifficultyLevel;
-import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
+import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
@@ -87,7 +85,7 @@ public abstract class Exercise implements Serializable {
     @Lob
     private String gradingInstructions;
 
-    @ElementCollection(fetch = FetchType.LAZY)
+    @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "exercise_categories", joinColumns = @JoinColumn(name = "exercise_id"))
     @Column(name = "categories")
     private Set<String> categories = new HashSet<>();
@@ -96,6 +94,20 @@ public abstract class Exercise implements Serializable {
     @Column(name = "difficulty")
     private DifficultyLevel difficulty;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "mode")
+    private ExerciseMode mode;
+
+    @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
+    @JsonIgnoreProperties("exercise")
+    private TeamAssignmentConfig teamAssignmentConfig;
+
+    @OneToMany(mappedBy = "exercise", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
+    @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
+    @JsonIgnoreProperties("exercise")
+    private Set<Team> teams = new HashSet<>();
+
     @Nullable
     @Column(name = "presentation_score_enabled")
     private Boolean presentationScoreEnabled = false;
@@ -103,6 +115,11 @@ public abstract class Exercise implements Serializable {
     @ManyToOne
     @JsonView(QuizView.Before.class)
     private Course course;
+
+    @OneToMany(mappedBy = "exercise", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JsonIgnoreProperties(value = "exercise", allowSetters = true)
+    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+    private List<GradingCriterion> gradingCriteria = new ArrayList<>();
 
     @OneToMany(mappedBy = "exercise", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
@@ -133,10 +150,7 @@ public abstract class Exercise implements Serializable {
     @JsonIgnore
     private Set<ExerciseHint> exerciseHints = new HashSet<>();
 
-    // Helpers
-    // variable names must be different from Getter name,
-    // so that Jackson ignores the @Transient annotation,
-    // but Hibernate still respects it
+    // NOTE: Helpers variable names must be different from Getter name, so that Jackson ignores the @Transient annotation, but Hibernate still respects it
     @Transient
     private Long numberOfParticipationsTransient;
 
@@ -154,6 +168,9 @@ public abstract class Exercise implements Serializable {
 
     @Transient
     private Long numberOfOpenMoreFeedbackRequestsTransient;
+
+    @Transient
+    private Long studentAssignedTeamIdTransient; // id of the team that the logged-in user is assigned to (only relevant if team mode is enabled)
 
     // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
     public Long getId() {
@@ -303,6 +320,57 @@ public abstract class Exercise implements Serializable {
         this.difficulty = difficulty;
     }
 
+    public ExerciseMode getMode() {
+        return mode;
+    }
+
+    public Exercise mode(ExerciseMode mode) {
+        this.mode = mode;
+        return this;
+    }
+
+    public void setMode(ExerciseMode mode) {
+        this.mode = mode;
+    }
+
+    public TeamAssignmentConfig getTeamAssignmentConfig() {
+        return teamAssignmentConfig;
+    }
+
+    public Exercise teamAssignmentConfig(TeamAssignmentConfig teamAssignmentConfig) {
+        this.teamAssignmentConfig = teamAssignmentConfig;
+        return this;
+    }
+
+    public void setTeamAssignmentConfig(TeamAssignmentConfig teamAssignmentConfig) {
+        this.teamAssignmentConfig = teamAssignmentConfig;
+    }
+
+    public Set<Team> getTeams() {
+        return teams;
+    }
+
+    public Exercise teams(Set<Team> teams) {
+        this.teams = teams;
+        return this;
+    }
+
+    public Exercise addTeam(Team team) {
+        this.teams.add(team);
+        team.setExercise(this);
+        return this;
+    }
+
+    public Exercise removeTeam(Team team) {
+        this.teams.remove(team);
+        team.setExercise(null);
+        return this;
+    }
+
+    public void setTeams(Set<Team> teams) {
+        this.teams = teams;
+    }
+
     public Set<String> getCategories() {
         return categories;
     }
@@ -441,6 +509,10 @@ public abstract class Exercise implements Serializable {
         return ZonedDateTime.now().isAfter(getDueDate());
     }
 
+    public boolean isTeamMode() {
+        return mode == ExerciseMode.TEAM;
+    }
+
     /**
      * check if students are allowed to see this exercise
      *
@@ -459,6 +531,7 @@ public abstract class Exercise implements Serializable {
      */
     public void filterSensitiveInformation() {
         setGradingInstructions(null);
+        setGradingCriteria(null);
     }
 
     /**
@@ -724,8 +797,8 @@ public abstract class Exercise implements Serializable {
     public String toString() {
         return "Exercise{" + "id=" + getId() + ", problemStatement='" + getProblemStatement() + "'" + ", gradingInstructions='" + getGradingInstructions() + "'" + ", title='"
                 + getTitle() + "'" + ", shortName='" + getShortName() + "'" + ", releaseDate='" + getReleaseDate() + "'" + ", dueDate='" + getDueDate() + "'"
-                + ", assessmentDueDate='" + getAssessmentDueDate() + "'" + ", maxScore=" + getMaxScore() + ", difficulty='" + getDifficulty() + "'" + ", categories='"
-                + getCategories() + ", presentationScoreEnabled='" + getPresentationScoreEnabled() + "'" + "}";
+                + ", assessmentDueDate='" + getAssessmentDueDate() + "'" + ", maxScore=" + getMaxScore() + ", difficulty='" + getDifficulty() + "'" + ", mode='" + getMode() + "'"
+                + ", categories='" + getCategories() + "'" + ", presentationScoreEnabled='" + getPresentationScoreEnabled() + "'" + "}";
     }
 
     public Set<TutorParticipation> getTutorParticipations() {
@@ -789,11 +862,53 @@ public abstract class Exercise implements Serializable {
         return releaseDate == null || releaseDate.isBefore(ZonedDateTime.now());
     }
 
+    public Long getStudentAssignedTeamId() {
+        return studentAssignedTeamIdTransient;
+    }
+
+    public void setStudentAssignedTeamId(Long studentAssignedTeamIdTransient) {
+        this.studentAssignedTeamIdTransient = studentAssignedTeamIdTransient;
+    }
+
     public Boolean getPresentationScoreEnabled() {
         return presentationScoreEnabled;
     }
 
     public void setPresentationScoreEnabled(Boolean presentationScoreEnabled) {
         this.presentationScoreEnabled = presentationScoreEnabled;
+    }
+
+    public List<GradingCriterion> getGradingCriteria() {
+        return gradingCriteria;
+    }
+
+    public Exercise gradingCriteria(List<GradingCriterion> gradingCriteria) {
+        reconnectCriteriaWithExercise(gradingCriteria);
+        return this;
+    }
+
+    public Exercise addGradingCriteria(GradingCriterion gradingCriterion) {
+        this.gradingCriteria.add(gradingCriterion);
+        gradingCriterion.setExercise(this);
+        return this;
+    }
+
+    public Exercise removeGradingCriteria(GradingCriterion gradingCriterion) {
+        this.gradingCriteria.remove(gradingCriterion);
+        gradingCriterion.setExercise(null);
+        return this;
+    }
+
+    public void setGradingCriteria(List<GradingCriterion> gradingCriteria) {
+        reconnectCriteriaWithExercise(gradingCriteria);
+    }
+
+    private void reconnectCriteriaWithExercise(List<GradingCriterion> gradingCriteria) {
+        this.gradingCriteria = gradingCriteria;
+        if (gradingCriteria != null) {
+            this.gradingCriteria.forEach(gradingCriterion -> {
+                gradingCriterion.setExercise(this);
+            });
+        }
     }
 }

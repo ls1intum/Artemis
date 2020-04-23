@@ -1,11 +1,16 @@
-import { IProgrammingSubmissionService, ProgrammingSubmissionState, ProgrammingSubmissionStateObj } from 'app/programming-submission/programming-submission.service';
-import { of } from 'rxjs';
+import { IProgrammingSubmissionService, ProgrammingSubmissionState, ProgrammingSubmissionStateObj } from 'app/exercises/programming/participate/programming-submission.service';
+import { of, Observable } from 'rxjs';
+import { Exercise } from 'app/entities/exercise.model';
 
 export class MockProgrammingSubmissionService implements IProgrammingSubmissionService {
-    getLatestPendingSubmissionByParticipationId = (participationId: number) => of([ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, null] as ProgrammingSubmissionStateObj);
-    getSubmissionStateOfExercise = (exerciseId: number) => of(null);
+    getLatestPendingSubmissionByParticipationId = (participationId: number) =>
+        of(([1, ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, null] as unknown) as ProgrammingSubmissionStateObj);
+    getSubmissionStateOfExercise = (exerciseId: number) => Observable.empty();
     triggerBuild = (participationId: number) => of({});
     triggerInstructorBuild = (participationId: number) => of({});
-    unsubscribeAllWebsocketTopics = (exerciseId: number) => of(null);
+    unsubscribeAllWebsocketTopics = (exercise: Exercise) => of(null);
     unsubscribeForLatestSubmissionOfParticipation = (participationId: number) => of(null);
+    getResultEtaInMs: () => Observable<number>;
+    triggerInstructorBuildForAllParticipationsOfExercise: (exerciseId: number) => Observable<void>;
+    triggerInstructorBuildForParticipationsOfExercise: (exerciseId: number, participationIds: number[]) => Observable<void>;
 }

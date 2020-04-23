@@ -11,10 +11,7 @@ export class CoursePage {
 
     async navigateIntoLastCourseExercises() {
         const rows = element.all(by.tagName('tbody')).all(by.tagName('tr'));
-        const courseId = await rows
-            .last()
-            .element(by.css('td:nth-child(1) > a'))
-            .getText();
+        const courseId = await rows.last().element(by.css('td:nth-child(1) > a')).getText();
 
         await browser.sleep(1000);
 
@@ -33,6 +30,7 @@ export class NewCoursePage {
     upload = element(by.className('icon-upload'));
     title = element(by.id('field_title'));
     shortName = element(by.id('field_shortName'));
+    maxComplaints = element(by.id('field_maxComplaints'));
     studentGroupName = element(by.id('field_studentGroupName'));
     instructorGroupName = element(by.id('field_instructorGroupName'));
     tutorGroupName = element(by.id('field_teachingAssistantGroupName'));

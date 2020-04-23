@@ -225,11 +225,11 @@ public class AuthorizationCheckService {
      * @return true, if user is student is owner of this participation, otherwise false
      */
     public boolean isOwnerOfParticipation(StudentParticipation participation) {
-        if (participation.getStudent() == null) {
+        if (participation.getParticipant() == null) {
             return false;
         }
         else {
-            return participation.getStudent().getLogin().equals(SecurityUtils.getCurrentUserLogin().get());
+            return participation.isOwnedBy(SecurityUtils.getCurrentUserLogin().get());
         }
     }
 
@@ -245,12 +245,23 @@ public class AuthorizationCheckService {
             // only retrieve the user and the groups if the user is null or the groups are missing (to save performance)
             user = userService.getUserWithGroupsAndAuthorities();
         }
-        if (participation.getStudent() == null) {
+        if (participation.getParticipant() == null) {
             return false;
         }
         else {
-            return participation.getStudent().equals(user);
+            return participation.isOwnedBy(user);
         }
+    }
+
+    /**
+     * checks if the currently logged in user is owner of the given team
+     *
+     * @param team the team that needs to be checked
+     * @param user the user whose permissions should be checked
+     * @return true, if user is student is owner of this team, otherwise false
+     */
+    public boolean isOwnerOfTeam(Team team, User user) {
+        return user.equals(team.getOwner());
     }
 
     /**
@@ -261,7 +272,7 @@ public class AuthorizationCheckService {
      * @return true, if user is student is owner of this participation, otherwise false
      */
     public boolean isOwnerOfParticipation(StudentParticipation participation, Principal principal) {
-        return participation.getStudent() != null && participation.getStudent().getLogin().equals(principal.getName());
+        return participation.getParticipant() != null && participation.isOwnedBy(principal.getName());
     }
 
     /**

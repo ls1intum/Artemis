@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.repository;
 
+import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
+
 import java.util.List;
 
 import org.springframework.data.jpa.repository.EntityGraph;
@@ -19,12 +21,15 @@ public interface TutorParticipationRepository extends JpaRepository<TutorPartici
 
     List<TutorParticipation> findByAssessedExercise(Exercise assessedExercise);
 
-    @EntityGraph(attributePaths = "trainedExampleSubmissions")
+    @EntityGraph(type = LOAD, attributePaths = "trainedExampleSubmissions")
     TutorParticipation findByAssessedExerciseAndTutor(Exercise assessedExercise, User tutor);
+
+    @EntityGraph(type = LOAD, attributePaths = "trainedExampleSubmissions")
+    TutorParticipation findWithEagerExampleSubmissionByAssessedExerciseAndTutor(Exercise assessedExercise, User tutor);
 
     Boolean existsByAssessedExerciseIdAndTutorId(Long assessedExerciseId, Long tutorId);
 
-    @EntityGraph(attributePaths = "trainedExampleSubmissions")
+    @EntityGraph(type = LOAD, attributePaths = "trainedExampleSubmissions")
     List<TutorParticipation> findAllByAssessedExercise_Course_IdAndTutor_Id(long courseId, long tutorId);
 
     void deleteAllByAssessedExerciseId(long assessedExerciseId);

@@ -8,6 +8,7 @@ import javax.persistence.*;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
+import org.hibernate.annotations.DiscriminatorOptions;
 
 import com.fasterxml.jackson.annotation.*;
 
@@ -19,10 +20,12 @@ import de.tum.in.www1.artemis.domain.view.QuizView;
  * A Participation.
  */
 @Entity
-@Table(name = "participation", uniqueConstraints = @UniqueConstraint(columnNames = { "student_id", "exercise_id", "initialization_state" }))
+@Table(name = "participation", uniqueConstraints = { @UniqueConstraint(columnNames = { "student_id", "exercise_id", "initialization_state" }),
+        @UniqueConstraint(columnNames = { "team_id", "exercise_id", "initialization_state" }) })
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
 @DiscriminatorColumn(name = "discriminator", discriminatorType = DiscriminatorType.STRING)
 @DiscriminatorValue(value = "P")
+@DiscriminatorOptions(force = true)
 // NOTE: Use strict cache to prevent lost updates when updating statistics in semaphore (see StatisticService.java)
 @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "type")
@@ -82,6 +85,22 @@ public abstract class Participation implements Serializable, ParticipationInterf
     @JsonIgnoreProperties({ "participation", "result" })
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     private Set<Submission> submissions = new HashSet<>();
+
+    /**
+     * This property stores the total number of submissions in this participation. Not stored in the database, computed dynamically and used in showing statistics to the user in
+     * the exercise view.
+     */
+    @Transient
+    @JsonProperty
+    private Integer submissionCount;
+
+    public Integer getSubmissionCount() {
+        return submissionCount;
+    }
+
+    public void setSubmissionCount(Integer submissionCount) {
+        this.submissionCount = submissionCount;
+    }
 
     // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
     public Long getId() {
@@ -244,7 +263,7 @@ public abstract class Participation implements Serializable, ParticipationInterf
     @Override
     public String toString() {
         return "Participation{" + "id=" + id + ", initializationState=" + initializationState + ", initializationDate=" + initializationDate + ", results=" + results
-                + ", submissions=" + submissions + '}';
+                + ", submissions=" + submissions + ", submissionCount=" + submissionCount + "}";
     }
 
     /**

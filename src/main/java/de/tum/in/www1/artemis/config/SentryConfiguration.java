@@ -21,7 +21,7 @@ public class SentryConfiguration {
     private final Logger log = LoggerFactory.getLogger(SentryConfiguration.class);
 
     @Value("${server.url}")
-    private String SERVER_URL;
+    private String ARTEMIS_SERVER_URL;
 
     @Value("${artemis.version}")
     private String VERSION;
@@ -29,6 +29,9 @@ public class SentryConfiguration {
     @Value("${info.sentry.dsn}")
     private String SENTRY_DSN;
 
+    /**
+     * init sentry with the correct pacakge name and Artemis version
+     */
     @PostConstruct
     public void init() {
         final String dsn = SENTRY_DSN + "?stacktrace.app.packages=de.tum.in.www1.artemis";
@@ -54,7 +57,7 @@ public class SentryConfiguration {
     }
 
     private String getEnvironment() {
-        switch (SERVER_URL) {
+        switch (ARTEMIS_SERVER_URL) {
         case "https://artemis.ase.in.tum.de":
             return "prod";
         case "https://artemistest.ase.in.tum.de":

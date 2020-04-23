@@ -23,15 +23,35 @@
             "color": "Farbe",
             "courseIcon": "Kursicon",
             "shortName": "Kurzname",
-            "studentGroupName": "Studenten Gruppe",
-            "teachingAssistantGroupName": "Tutor Gruppe",
-            "instructorGroupName": "Instructor Gruppe",
+            "maxComplaints": {
+                "title": "Maximale Anzahl von Beschwerden",
+                "description": "Erlaubte Anzahl von Beschwerden von Studierenden setzen. Wenn eine Beschwerde abgelehnt wird, verliert der Studierende sie. Wenn eine Beschwerde akzeptiert wird, behält der Studierende sie."
+            },
+            "maxComplaintTimeDays": {
+                "title": "Beschwerdefrist in Tagen nach dem Ergebnis",
+                "description": "Diese Zahl bezieht sich auf die Tage, nachdem das Ergebnis verfügbar ist (Fälligkeitsdatum der Bewertung oder Ergebnisdatum, je nachdem, welches später liegt). Studierende können sich nach Ablauf dieser Frist nicht mehr beschweren."
+            },
+            "studentQuestionsEnabled": {
+                "title": "Fragen und Antworten von Studierenden aktivieren",
+                "description": "Fragen und Antworten Abschnitt in Vorlesung- und Übungsseite aktivieren / deaktivieren"
+            },
+            "complaintsEnabled": {
+                "title": "Beschwerden von Studierenden aktivieren",
+                "description": "Wenn du diese Option aktivierst, können sich Studierende über Ergebnisse beschweren."
+            },
+            "customizeGroupNames": {
+                "title": "Passe Gruppen Namen an",
+                "description": "Stelle sicher, dass die Gruppen in der externen Nutzerverwaltung existieren, wenn du diese Option aktivierst. Die Gruppen werden dann nicht automatisch erzeugt."
+            },
+            "studentGroupName": "Studierende Gruppe",
+            "teachingAssistantGroupName": "Tutoren Gruppe",
+            "instructorGroupName": "Dozenten Gruppe",
             "description": "Kurs Beschreibung",
             "startDate": "Start",
             "endDate": "Ende",
             "accessGroups": "Zugriffsrechte",
             "onlineCourse": "Online Kurs",
-            "registrationEnabled": "Registrierung aktiviert",
+            "registrationEnabled": "Studierenden Registrierung aktiviert",
             "exercises": "Aufgaben",
             "programmingExercises": "Programmieraufgaben",
             "quizExercises": "Quizaufgaben",
@@ -40,9 +60,12 @@
             "upload": "Hochladen",
             "uploading": "Lade hoch...",
             "fileUploadExercises": "Datei Upload Aufgabe",
-            "students": "Studenten",
+            "students": "Studierende",
             "tutors": "Tutoren",
-            "instructors": "Instruktoren",
+            "instructors": "Dozenten",
+            "student": "Student",
+            "tutor": "Tutor",
+            "instructor": "Dozent",
             "onlineCourseFalse": "Nein",
             "onlineCourseTrue": "Ja",
             "form": {
@@ -53,10 +76,23 @@
             },
             "instructorDashboard": "Instruktor Dashboard",
             "presentationScoreEnabled": {
-                "title": "Präsentationsergebnis aktiviert",
+                "title": "Präsentationsbewertung aktiviert",
                 "description": "Aktiviere diese Checkbox und definiere, wie viele Präsentationen ein Student halten muss, um den Notenbonus für die Vorlesung zu erhalten. Nach der Aktivierung kannst du bei der Erstellung jeder Übung definieren, ob dieses Feature dafür aktiviert sein soll."
             },
-            "presentationScore": "Benötigtes Präsentationsergebnis für den Bonus"
+            "presentationScore": "Benötigtes Präsentationsergebnis für den Bonus",
+            "courseGroup": {
+                "outOf": "von",
+                "usersPerPage": "{{number}} Benutzer pro Seite",
+                "showAllUsers": "Alle Benutzer anzeigen",
+                "searchForUsers": "Benutzer zu dieser Kurs-Gruppe hinzufügen durch Suchen nach Login oder Namen",
+                "searchNoResults": "Keine Benutzer gefunden",
+                "login": "Login",
+                "name": "Name",
+                "email": "E-Mail",
+                "removeFromGroup": {
+                    "modalQuestion": "Soll der Nutzer mit dem Login <strong>{{ title }}</strong> wirklich aus dieser Kurs-Gruppe entfernt werden?"
+                }
+            }
         }
     }
 }

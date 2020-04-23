@@ -11,7 +11,7 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.security.Principal;
 import java.util.HashMap;
-import java.util.Iterator;
+import java.util.Map;
 import java.util.Optional;
 
 import org.apache.commons.io.FileUtils;
@@ -47,18 +47,17 @@ public class RepositoryService {
 
     /**
      * Get the repository content (files and folders).
-     * 
+     *
      * @param repository VCS repository to get files for.
      * @return a map of files with the information if they are a file or a folder.
      */
-    @SuppressWarnings("unchecked")
-    public HashMap<String, FileType> getFiles(Repository repository) {
-        Iterator itr = gitService.listFilesAndFolders(repository).entrySet().iterator();
+    public Map<String, FileType> getFiles(Repository repository) {
+        var iterator = gitService.listFilesAndFolders(repository).entrySet().iterator();
 
-        HashMap<String, FileType> fileList = new HashMap<>();
+        Map<String, FileType> fileList = new HashMap<>();
 
-        while (itr.hasNext()) {
-            HashMap.Entry<File, FileType> pair = (HashMap.Entry) itr.next();
+        while (iterator.hasNext()) {
+            Map.Entry<File, FileType> pair = (Map.Entry<File, FileType>) iterator.next();
             fileList.put(pair.getKey().toString(), pair.getValue());
         }
 
@@ -67,7 +66,7 @@ public class RepositoryService {
 
     /**
      * Get a single file/folder from repository.
-     * 
+     *
      * @param repository in which the requested file is located.
      * @param filename of the file to be retrieved.
      * @return The file if found or throw an exception.
@@ -85,7 +84,7 @@ public class RepositoryService {
 
     /**
      * Create a file in a repository.
-     * 
+     *
      * @param repository in which the file should be created.
      * @param filename of the file to be created.
      * @param inputStream byte representation of the file to be created.
@@ -130,7 +129,7 @@ public class RepositoryService {
 
     /**
      * Rename a file in a repository.
-     * 
+     *
      * @param repository in which the file is located.
      * @param fileMove dto for describing the old and the new filename.
      * @throws FileNotFoundException if the file to rename is not available.
@@ -159,7 +158,7 @@ public class RepositoryService {
 
     /**
      * Delete a file in a repository.
-     * 
+     *
      * @param repository in which the file to delete is located.
      * @param filename to delete.
      * @throws IOException if the file can't be deleted.
@@ -187,7 +186,7 @@ public class RepositoryService {
 
     /**
      * Pull from a git repository.
-     * 
+     *
      * @param repository for which to pull the current state of the remote.
      */
     public void pullChanges(Repository repository) {
@@ -196,7 +195,7 @@ public class RepositoryService {
 
     /**
      * Commit all staged and unstaged changes in the given repository.
-     * 
+     *
      * @param repository for which to execute the commit.
      * @param user the user who has committed the changes in the online editor
      * @throws GitAPIException if the staging/committing process fails.
@@ -208,7 +207,7 @@ public class RepositoryService {
 
     /**
      * Retrieve the status of the repository. Also pulls the repository.
-     * 
+     *
      * @param repositoryUrl of the repository to check the status for.
      * @return a dto to determine the status of the repository.
      * @throws InterruptedException if the repository can't be checked out on the server.
@@ -222,7 +221,7 @@ public class RepositoryService {
 
     /**
      * Retrieve a repository by its name.
-     * 
+     *
      * @param exercise to which the repository belongs.
      * @param repoUrl of the repository on the server.
      * @param pullOnCheckout if true pulls after checking out the git repository.
@@ -255,7 +254,7 @@ public class RepositoryService {
      * @throws InterruptedException if the repository can't be checked out.
      */
     public Repository checkoutRepositoryByName(Principal principal, Exercise exercise, URL repoUrl) throws IllegalAccessException, InterruptedException, GitAPIException {
-        User user = userService.getUserWithGroupsAndAuthorities(principal);
+        User user = userService.getUserWithGroupsAndAuthorities(principal.getName());
         Course course = exercise.getCourse();
         boolean hasPermissions = authCheckService.isAtLeastTeachingAssistantInCourse(course, user);
         if (!hasPermissions) {

@@ -4,13 +4,13 @@ import { SinonSpy, SinonStub, spy, stub } from 'sinon';
 import { of, Subject } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import * as sinonChai from 'sinon-chai';
-import { Participation } from '../../../../main/webapp/app/entities/participation';
 import { MockWebsocketService } from '../mocks/mock-websocket.service';
 import { IWebsocketService } from 'app/core/websocket/websocket.service.ts';
-import { Result } from '../../../../main/webapp/app/entities/result';
-import { ProgrammingExerciseTestCaseService } from 'app/entities/programming-exercise/services/programming-exercise-test-case.service';
+import { ProgrammingExerciseTestCaseService } from 'app/exercises/programming/manage/services/programming-exercise-test-case.service';
 import { MockHttpService } from '../mocks/mock-http.service';
-import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise/programming-exercise-test-case.model';
+import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise-test-case.model';
+import { Participation } from 'app/entities/participation/participation.model';
+import { Result } from 'app/entities/result.model';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -79,7 +79,7 @@ describe('ProgrammingExerciseTestCaseService', () => {
 
         testCaseService
             .subscribeForTestCases(exercise1.id)
-            .pipe(tap(newTestCases => (testCasesExercise1 = newTestCases)))
+            .pipe(tap((newTestCases) => (testCasesExercise1 = newTestCases)))
             .subscribe();
 
         expect(getStub).to.have.been.calledOnce;
@@ -88,7 +88,7 @@ describe('ProgrammingExerciseTestCaseService', () => {
 
         testCaseService
             .subscribeForTestCases(exercise2.id)
-            .pipe(tap(newTestCases => (testCasesExercise2 = newTestCases)))
+            .pipe(tap((newTestCases) => (testCasesExercise2 = newTestCases)))
             .subscribe();
 
         expect(getStub).to.have.been.calledTwice;
@@ -101,12 +101,12 @@ describe('ProgrammingExerciseTestCaseService', () => {
         // Subscriber 1.
         testCaseService
             .subscribeForTestCases(exercise1.id)
-            .pipe(tap(newTestCases => (testCasesExercise1 = newTestCases)))
+            .pipe(tap((newTestCases) => (testCasesExercise1 = newTestCases)))
             .subscribe();
         // Subscriber 2.
         testCaseService
             .subscribeForTestCases(exercise1.id)
-            .pipe(tap(newTestCases => (testCasesExercise1 = newTestCases)))
+            .pipe(tap((newTestCases) => (testCasesExercise1 = newTestCases)))
             .subscribe();
 
         expect(getStub).to.have.been.calledOnce;
@@ -114,18 +114,18 @@ describe('ProgrammingExerciseTestCaseService', () => {
     });
 
     it('should notify subscribers on new test case value', () => {
-        const newTestCases = testCases1.map(testCase => ({ ...testCase, weight: 30 }));
+        const newTestCases = testCases1.map((testCase) => ({ ...testCase, weight: 30 }));
         let testCasesExercise1Subscriber1;
         let testCasesExercise1Subscriber2;
         // Subscriber 1.
         testCaseService
             .subscribeForTestCases(exercise1.id)
-            .pipe(tap(newTestCases => (testCasesExercise1Subscriber1 = newTestCases)))
+            .pipe(tap((newTestCases) => (testCasesExercise1Subscriber1 = newTestCases)))
             .subscribe();
         // Subscriber 2.
         testCaseService
             .subscribeForTestCases(exercise1.id)
-            .pipe(tap(newTestCases => (testCasesExercise1Subscriber2 = newTestCases)))
+            .pipe(tap((newTestCases) => (testCasesExercise1Subscriber2 = newTestCases)))
             .subscribe();
 
         expect(testCasesExercise1Subscriber1).to.equal(testCases1);
