@@ -25,8 +25,8 @@ public interface TextExerciseRepository extends JpaRepository<TextExercise, Long
     @Query("SELECT e FROM TextExercise e WHERE e.course.id = :#{#courseId}")
     List<TextExercise> findByCourseId(@Param("courseId") Long courseId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "teamAssignmentConfig" })
-    Optional<TextExercise> findWithEagerTeamAssignmentConfigById(Long exerciseId);
+    @EntityGraph(type = LOAD, attributePaths = { "teamAssignmentConfig", "categories" })
+    Optional<TextExercise> findWithEagerTeamAssignmentConfigAndCategoriesById(Long exerciseId);
 
     List<TextExercise> findByAssessmentTypeAndDueDateIsAfter(AssessmentType assessmentType, ZonedDateTime dueDate);
 }

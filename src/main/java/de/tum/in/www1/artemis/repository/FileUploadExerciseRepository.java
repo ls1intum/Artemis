@@ -23,6 +23,6 @@ public interface FileUploadExerciseRepository extends JpaRepository<FileUploadEx
     @Query("SELECT e FROM FileUploadExercise e WHERE e.course.id = :#{#courseId}")
     List<FileUploadExercise> findByCourseId(@Param("courseId") Long courseId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "teamAssignmentConfig" })
-    Optional<FileUploadExercise> findWithEagerTeamAssignmentConfigById(Long exerciseId);
+    @EntityGraph(type = LOAD, attributePaths = { "teamAssignmentConfig", "categories" })
+    Optional<FileUploadExercise> findWithEagerTeamAssignmentConfigAndCategoriesById(Long exerciseId);
 }

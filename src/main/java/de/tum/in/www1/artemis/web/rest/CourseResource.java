@@ -433,13 +433,18 @@ public class CourseResource {
             return courses;
         }
 
+        // Note: we need two database calls here, because of performance reasons: the entity structure for team is significantly different and a combined database call
+        // would lead to a SQL statement that cannot be optimized
+        // 1st: fetch participations, submissions and results for individual exercises
         List<StudentParticipation> individualParticipations = participationService.findByStudentIdAndIndividualExercisesWithEagerSubmissionsResult(user.getId(),
                 activeIndividualExercises);
         log.debug("          /courses/for-dashboard.findByStudentIdAndIndividualExercisesWithEagerSubmissionsResult in " + (System.currentTimeMillis() - start) + "ms");
 
+        // 2nd: fetch participations, submissions and results for team exercises
         List<StudentParticipation> teamParticipations = participationService.findByStudentIdAndTeamExercisesWithEagerSubmissionsResult(user.getId(), activeTeamExercises);
         log.debug("          /courses/for-dashboard.findByStudentIdAndTeamExercisesWithEagerSubmissionsResult in " + (System.currentTimeMillis() - start) + "ms");
 
+        // 3rd: merge both into one list for further processing
         List<StudentParticipation> participations = Stream.concat(individualParticipations.stream(), teamParticipations.stream()).collect(Collectors.toList());
 
         for (Course course : courses) {
