@@ -138,8 +138,8 @@
                 "practice": "Übung",
                 "faq": {
                     "header": "Fragen und Antworten",
-                    "show": "Zeige Fragen und Antworten",
-                    "hide": "Verstecke Fragen und Antworten",
+                    "show": "Antworten anzeigen",
+                    "hide": "Antworten einklappen",
                     "noQuestions": "Es wurden noch keine Fragen gestellt.",
                     "addNewQuestion": "+ Eine neue Frage stellen",
                     "newQuestionLabel": "Neue Frage",

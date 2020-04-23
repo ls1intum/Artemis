@@ -1,18 +1,34 @@
-<!-- unexpanded questions -->
-<div class="row mb-2 clickable" *ngIf="!isExpanded" (click)="isExpanded = true">
+<!-- unexpanded asnwers -->
+<div class="row mb-2 clickable" *ngIf="!isExpanded">
     <div class="col-12">
         <div class="row">
             <div class="col">
-                <fa-icon [icon]="'question'" container="body"></fa-icon>
+                <fa-icon [icon]="'question'" [ngbTooltip]="'artemisApp.courseOverview.exerciseDetails.faq.questionLabel' | translate" container="body"></fa-icon>
             </div>
             <div class="col-auto">
-                <fa-icon [icon]="'angle-down'"></fa-icon>
+                <fa-icon
+                    class="mr-1"
+                    *ngIf="isQuestionAuthor || isAtLeastTutorInCourse"
+                    [ngbTooltip]="'artemisApp.courseOverview.exerciseDetails.faq.editQuestion' | translate"
+                    container="body"
+                    [icon]="'pencil-alt'"
+                    (click)="$event.stopPropagation(); toggleQuestionEditMode()"
+                ></fa-icon>
+                <jhi-confirm-icon
+                    *ngIf="isQuestionAuthor || isAtLeastTutorInCourse"
+                    (click)="$event.stopPropagation()"
+                    (confirmEvent)="deleteQuestion()"
+                    [ngClass]="'mr-1'"
+                    [initialTooltip]="'artemisApp.courseOverview.exerciseDetails.faq.deleteQuestion' | translate"
+                    [confirmTooltip]="'artemisApp.courseOverview.exerciseDetails.faq.confirmDeleteQuestion' | translate"
+                ></jhi-confirm-icon>
+                <fa-icon class="clickable" [icon]="'angle-down'" [ngbTooltip]="'artemisApp.courseOverview.exerciseDetails.faq.show' | translate" (click)="isExpanded = true"></fa-icon>
             </div>
         </div>
         <div class="row">
             <div class="col" [innerHTML]="studentQuestion.questionText ? (studentQuestion.questionText | htmlForMarkdown) : ''"></div>
         </div>
-        <div class="row">
+        <div class="row" class="clickable" [ngbTooltip]="'artemisApp.courseOverview.exerciseDetails.faq.show' | translate" (click)="isExpanded = true">
             <div class="col-auto">
                 <p>{{ 'artemisApp.courseOverview.exerciseDetails.faq.answerCount' | translate: { count: studentQuestion.answers ? studentQuestion.answers.length : 0 } }}</p>
             </div>
@@ -24,15 +40,14 @@
         </div>
     </div>
 </div>
-<!-- expanded question -->
+<!-- expanded answers -->
 <div class="row mb-2" *ngIf="isExpanded">
     <div class="col-12">
         <!-- question not in edit mode -->
-        <div *ngIf="!isEditMode">
-            <div class="row clickable" (click)="isExpanded = !isExpanded">
-                <div class="col mb-2">
-                    <h5 [innerHTML]="studentQuestion.questionText ? ('Q: ' + studentQuestion.questionText | htmlForMarkdown) : ''"></h5>
-                    <h6 class="text-black-50 question-subtitle">{{ studentQuestion.author.name }} - {{ studentQuestion.creationDate | date: 'dd.MM.yy HH:mm' }}</h6>
+        <ng-container *ngIf="!isEditMode">
+            <div class="row">
+                <div class="col">
+                    <fa-icon [icon]="'question'" [ngbTooltip]="'artemisApp.courseOverview.exerciseDetails.faq.questionLabel' | translate"></fa-icon>
                 </div>
                 <div class="col-auto">
                     <fa-icon
@@ -51,28 +66,49 @@
                         [initialTooltip]="'artemisApp.courseOverview.exerciseDetails.faq.deleteQuestion' | translate"
                         [confirmTooltip]="'artemisApp.courseOverview.exerciseDetails.faq.confirmDeleteQuestion' | translate"
                     ></jhi-confirm-icon>
-                    <fa-icon [icon]="'angle-up'"></fa-icon>
+                    <fa-icon
+                        [icon]="'angle-up'"
+                        [ngbTooltip]="'artemisApp.courseOverview.exerciseDetails.faq.hide' | translate"
+                        (click)="isExpanded = !isExpanded"
+                    ></fa-icon>
                 </div>
             </div>
-        </div>
+            <div class="row">
+                <div class="col mb-2">
+                    <div [innerHTML]="studentQuestion.questionText ? (studentQuestion.questionText | htmlForMarkdown) : ''"></div>
+                    <span class="text-black-50 question-subtitle">{{ studentQuestion.author.name }} - {{ studentQuestion.creationDate | date: 'dd.MM.yy HH:mm' }}</span>
+                </div>
+            </div>
+        </ng-container>
         <!-- question in edit mode -->
         <div *ngIf="isEditMode">
-            <div class="row mb-1 mt-2">
+            <div class="row mb-2">
                 <div class="col-12">
-                    <div class="form-group">
-                        <label class="form-control-label">{{ 'artemisApp.courseOverview.exerciseDetails.faq.editQuestion' | translate }}</label>
-                        <jhi-markdown-editor
-                            class="markdown-editor background-editor-color"
-                            [(markdown)]="studentQuestionText"
-                            [editorMode]="EditorMode.LATEX"
-                            [enableResize]="true"
-                            [metaCommands]="[]"
-                        ></jhi-markdown-editor>
+                    <div class="row mb-1">
+                        <div class="col-auto">
+                            <fa-icon [icon]="'question'" [ngbTooltip]="'artemisApp.courseOverview.exerciseDetails.faq.questionLabel' | translate"></fa-icon>&nbsp;
+                        </div>
+                        <div class="col">
+                            <h5 class="form-control-label">{{ 'artemisApp.courseOverview.exerciseDetails.faq.editQuestion' | translate }}</h5>
+                        </div>
                     </div>
                 </div>
-                <div class="col-12 d-flex justify-content-between">
-                    <button class="btn btn-outline-primary" (click)="toggleQuestionEditMode()">{{ 'artemisApp.courseOverview.exerciseDetails.faq.cancel' | translate }}</button>
-                    <button class="btn btn-primary" (click)="saveQuestion()">{{ 'artemisApp.courseOverview.exerciseDetails.faq.saveQuestion' | translate }}</button>
+                <div class="col-12">
+                    <jhi-markdown-editor
+                        class="markdown-editor background-editor-color"
+                        [(markdown)]="studentQuestionText"
+                        [editorMode]="EditorMode.LATEX"
+                        [enableResize]="true"
+                        [metaCommands]="[]"
+                    ></jhi-markdown-editor>
+                </div>
+                <div class="col-12 d-flex justify-content-around">
+                    <button class="btn btn-sm btn-outline-secondary" (click)="toggleQuestionEditMode()">
+                        {{ 'artemisApp.courseOverview.exerciseDetails.faq.cancel' | translate }}
+                    </button>
+                    <button class="btn btn-sm btn-outline-secondary" (click)="saveQuestion()">
+                        {{ 'artemisApp.courseOverview.exerciseDetails.faq.saveQuestion' | translate }}
+                    </button>
                 </div>
             </div>
         </div>
@@ -287,14 +323,18 @@
                 </div>
             </div>
         </div>
-        <div class="row" *ngIf="!studentQuestion.answers || studentQuestion.answers.length === 0">
-            <div class="col">
-                <p>{{ 'artemisApp.courseOverview.exerciseDetails.faq.noAnswers' | translate }}</p>
+        <!-- no answers -->
+        <div class="row mb-3" *ngIf="!studentQuestion.answers || studentQuestion.answers.length === 0">
+            <div class="col-12">
+                <span>{{ 'artemisApp.courseOverview.exerciseDetails.faq.noAnswers' | translate }}</span>
             </div>
         </div>
+        <!-- new answer -->
         <div class="row mb-3" *ngIf="!isAnswerMode">
-            <div class="col">
-                <button class="btn btn-primary" (click)="toggleAnswerModeForNewAnswer()">{{ 'artemisApp.courseOverview.exerciseDetails.faq.answerNow' | translate }}</button>
+            <div class="col-12">
+                <button class="btn btn-sm btn-outline-secondary" (click)="toggleAnswerModeForNewAnswer()">
+                    {{ 'artemisApp.courseOverview.exerciseDetails.faq.answerNow' | translate }}
+                </button>
             </div>
         </div>
         <div *ngIf="isAnswerMode && !selectedQuestionAnswer">

@@ -140,8 +140,8 @@
                 "practice": "Practice",
                 "faq": {
                     "header": "Questions and Answers",
-                    "show": "Show Questions and Answers",
-                    "hide": "Hide Questions and Answers",
+                    "show": "Show answers",
+                    "hide": "Hide answers",
                     "noQuestions": "No questions have been asked yet.",
                     "addNewQuestion": "+ Add a new question",
                     "newQuestionLabel": "New question",

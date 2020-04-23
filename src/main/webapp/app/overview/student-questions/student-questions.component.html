@@ -63,7 +63,9 @@
             <!-- new question button -->
             <div class="row" *ngIf="!isEditMode">
                 <div class="col-12">
-                    <button class="btn btn-sm btn-outline-secondary" (click)="toggleEditMode()">{{ 'artemisApp.courseOverview.exerciseDetails.faq.addNewQuestion' | translate }}</button>
+                    <button class="btn btn-sm btn-outline-secondary" (click)="toggleEditMode()">
+                        {{ 'artemisApp.courseOverview.exerciseDetails.faq.addNewQuestion' | translate }}
+                    </button>
                 </div>
             </div>
             <!-- no questions -->
