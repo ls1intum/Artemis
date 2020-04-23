@@ -140,6 +140,8 @@
                 "practice": "Practice",
                 "faq": {
                     "header": "Questions and Answers",
+                    "show": "Show Questions and Answers",
+                    "hide": "Hide Questions and Answers",
                     "noQuestions": "No questions have been asked yet.",
                     "addNewQuestion": "+ Add a new question",
                     "newQuestionLabel": "New question",
@@ -162,6 +164,7 @@
                     "confirmDeleteAnswer": "Please confirm that you want to delete your answer!",
                     "editAnswer": "Edit answer",
                     "approveAnswer": "Approve answer",
+                    "unapproveAnswer": "Unapprove answer",
                     "hideAnswers": "Show less answers",
                     "showAnswers": "Show more answers ({{count}})"
                 }

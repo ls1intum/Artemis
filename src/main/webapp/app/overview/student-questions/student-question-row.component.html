@@ -1,21 +1,24 @@
 <!-- unexpanded questions -->
-<div class="row mb-2 clickable" *ngIf="!isExpanded" (click)="isExpanded = !isExpanded">
+<div class="row mb-2 clickable" *ngIf="!isExpanded" (click)="isExpanded = true">
     <div class="col-12">
         <div class="row">
-            <div class="col overflow-parent">
-                <h5 class="overflow-ellipsis" [innerHTML]="studentQuestion.questionText ? ('Q: ' + studentQuestion.questionText | htmlForMarkdown) : ''"></h5>
+            <div class="col">
+                <fa-icon [icon]="'question'" container="body"></fa-icon>
             </div>
             <div class="col-auto">
                 <fa-icon [icon]="'angle-down'"></fa-icon>
             </div>
         </div>
         <div class="row">
+            <div class="col" [innerHTML]="studentQuestion.questionText ? (studentQuestion.questionText | htmlForMarkdown) : ''"></div>
+        </div>
+        <div class="row">
             <div class="col-auto">
                 <p>{{ 'artemisApp.courseOverview.exerciseDetails.faq.answerCount' | translate: { count: studentQuestion.answers ? studentQuestion.answers.length : 0 } }}</p>
             </div>
-            <div class="col-auto">
+            <div class="col-auto" *ngIf="isQuestionAuthor">
                 <h5>
-                    <span class="badge badge-light" *ngIf="isQuestionAuthor">{{ 'artemisApp.courseOverview.exerciseDetails.faq.yourQuestion' | translate }}</span>
+                    <span class="badge badge-light">{{ 'artemisApp.courseOverview.exerciseDetails.faq.yourQuestion' | translate }}</span>
                 </h5>
             </div>
         </div>
@@ -57,7 +60,7 @@
             <div class="row mb-1 mt-2">
                 <div class="col-12">
                     <div class="form-group">
-                        <label class="form-control-label">{{ 'artemisApp.courseOverview.exerciseDetails.faq.newQuestionLabel' | translate }}</label>
+                        <label class="form-control-label">{{ 'artemisApp.courseOverview.exerciseDetails.faq.editQuestion' | translate }}</label>
                         <jhi-markdown-editor
                             class="markdown-editor background-editor-color"
                             [(markdown)]="studentQuestionText"

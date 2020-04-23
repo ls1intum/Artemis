@@ -58,8 +58,8 @@ export class StudentQuestionsComponent implements OnInit, OnDestroy, AfterViewIn
                 modifiers: [
                     // Set maximum width
                     interact.modifiers!.restrictSize({
-                        min: { width: 215, height: 0 },
-                        max: { width: 1000, height: 2000 },
+                        min: { width: 200, height: 0 },
+                        max: { width: 750, height: 2000 },
                     }),
                 ],
                 inertia: true,

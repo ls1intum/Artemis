@@ -138,6 +138,8 @@
                 "practice": "Übung",
                 "faq": {
                     "header": "Fragen und Antworten",
+                    "show": "Zeige Fragen und Antworten",
+                    "hide": "Verstecke Fragen und Antworten",
                     "noQuestions": "Es wurden noch keine Fragen gestellt.",
                     "addNewQuestion": "+ Eine neue Frage stellen",
                     "newQuestionLabel": "Neue Frage",
@@ -160,6 +162,7 @@
                     "confirmDeleteAnswer": "Bitte bestätige, dass du deine Antwort löschen möchtest!",
                     "editAnswer": "Antwort bearbeiten",
                     "approveAnswer": "Antwort bestätigen",
+                    "unapproveAnswer": "Antwort nicht bestätigen",
                     "hideAnswers": "Weniger Anworten anzeigen",
                     "showAnswers": "Weitere Anworten anzeigen ({{count}})"
                 }
