@@ -68,8 +68,8 @@ public class AutomaticTextFeedbackServiceTest extends AbstractSpringIntegrationT
     private Result result;
 
     @BeforeEach
-    public void setUp() throws NetworkingError {
-        textBlocks = textExerciseUtilService.createTextBlocks(10);
+    public void setUp() {
+        textBlocks = textExerciseUtilService.generateTextBlocks(10);
 
         textExercise = new TextExercise();
         textExerciseRepository.save(textExercise);
@@ -91,6 +91,9 @@ public class AutomaticTextFeedbackServiceTest extends AbstractSpringIntegrationT
         textClusterRepository.save(textCluster);
         mockedTextBlockRepository.saveAll(textBlocks);
 
+        for(TextBlock textBlock: textBlocks) {
+            textBlock.computeId();
+        }
         // Mock the text feedback validation service + text block repo to avoid network calls but still use the injected text cluster utility service
         automaticTextFeedbackService = new AutomaticTextFeedbackService(mockedTextBlockRepository, textClusterUtilityService, mockedTextFeedbackValidationService);
     }
@@ -134,22 +137,26 @@ public class AutomaticTextFeedbackServiceTest extends AbstractSpringIntegrationT
             feedback.setCredits(1.0);
             feedbacks.add(feedback);
         }
-        Feedback feedbackWithScoreTwo = new Feedback();
-        feedbackWithScoreTwo.setReference(textBlocks.get(5).getId());
-        feedbackWithScoreTwo.setResult(result);
-        feedbackWithScoreTwo.setCredits(2.0);
-        feedbacks.add(feedbackWithScoreTwo);
 
+        for (int i = 5; i < 7; i++) {
+            Feedback feedbackWithScoreTwo = new Feedback();
+            feedbackWithScoreTwo.setReference(textBlocks.get(i).getId());
+            feedbackWithScoreTwo.setResult(result);
+            feedbackWithScoreTwo.setCredits(2.0);
+            feedbacks.add(feedbackWithScoreTwo);
+        }
         feedbackRepository.saveAll(feedbacks);
-        TextBlock candidate = textBlocks.get(6);
+        TextBlock candidate = textBlocks.get(9);
+
         double suggestedScore = automaticTextFeedbackService.createScore(candidate);
+
         assertThat(suggestedScore).as("entire text cluster is weighted").isGreaterThan(1.0);
     }
 
     @Test
     public void createScoreWithManualDistanceMatrix() {
         List<Feedback> feedbacks = new ArrayList<>();
-        List<TextBlock> textBlocks = textExerciseUtilService.createTextBlocks(4);
+        List<TextBlock> textBlocks = textExerciseUtilService.generateTextBlocks(4);
         textCluster = textExerciseUtilService.createTextCluster(textBlocks, textExercise);
         double[][] distanceMatrix = { { 0, 0.1, 0.9, 0.9 }, { 0.1, 0, 0.5, 0.5 }, { 0.9, 0.5, 0, 0.1 }, { 0.9, 0.5, 0.1, 0 } };
         textCluster.setDistanceMatrix(distanceMatrix);
@@ -187,10 +194,13 @@ public class AutomaticTextFeedbackServiceTest extends AbstractSpringIntegrationT
     public void createCommentTest() {
         List<Feedback> feedbacks = new ArrayList<>();
         String givenComment = "The quick brown fox jumps over the lazy dog";
-        List<TextBlock> textBlocks = textExerciseUtilService.createTextBlocks(4);
+        List<TextBlock> textBlocks = textExerciseUtilService.generateTextBlocks(4);
         textCluster = textExerciseUtilService.createTextCluster(textBlocks, textExercise);
         double[][] distanceMatrix = { { 0, 0.1, 0.9, 0.9 }, { 0.1, 0, 0.5, 0.5 }, { 0.9, 0.5, 0, 0.1 }, { 0.9, 0.5, 0.1, 0 } };
         textCluster.setDistanceMatrix(distanceMatrix);
+        for(TextBlock textBlock: textBlocks) {
+            textBlock.computeId();
+        }
         Feedback closestFeedback = new Feedback();
         closestFeedback.setReference(textBlocks.get(1).getId());
         closestFeedback.setResult(result);
@@ -254,6 +264,9 @@ public class AutomaticTextFeedbackServiceTest extends AbstractSpringIntegrationT
 
     @Test
     public void validateFeedbackTest() throws NetworkingError {
+        // Stub network call
+        when(mockedTextFeedbackValidationService.validateFeedback(any(), any())).thenReturn(50.0);
+
         TextBlock candidate = textBlocks.get(0);
         Feedback suggestedFeedback = new Feedback();
         suggestedFeedback.setReference(candidate.getId());
@@ -270,7 +283,6 @@ public class AutomaticTextFeedbackServiceTest extends AbstractSpringIntegrationT
 
         feedbackRepository.saveAll(feedbacks);
 
-        when(mockedTextFeedbackValidationService.validateFeedback(any(), any())).thenReturn(50.0);
         double confidencePercentage = automaticTextFeedbackService.calculateConfidence(candidate, suggestedFeedback);
 
         assertThat(confidencePercentage).isBetween(0.0, 100.0);
@@ -297,6 +309,7 @@ public class AutomaticTextFeedbackServiceTest extends AbstractSpringIntegrationT
         feedbackRepository.save(feedback);
 
         Optional<Feedback> suggestedFeedback = automaticTextFeedbackService.createFeedback(candidate, 3, 40.0);
+
         assertThat(suggestedFeedback.isEmpty()).as("text block already has feedback").isTrue();
     }
 
@@ -330,11 +343,6 @@ public class AutomaticTextFeedbackServiceTest extends AbstractSpringIntegrationT
             feedback.setResult(result);
             feedbacks.add(feedback);
         }
-        Feedback feedbackScoreTwo = new Feedback();
-        feedbackScoreTwo.setReference(textBlocks.get(6).getId());
-        feedbackScoreTwo.setCredits(2.0);
-        feedbackScoreTwo.setResult(result);
-        feedbacks.add(feedbackScoreTwo);
         feedbackRepository.saveAll(feedbacks);
 
         Optional<Feedback> suggestedFeedback = automaticTextFeedbackService.createFeedback(candidate, 2, 40.0);
@@ -356,14 +364,7 @@ public class AutomaticTextFeedbackServiceTest extends AbstractSpringIntegrationT
             feedback.setResult(result);
             feedbacks.add(feedback);
         }
-        Feedback feedbackScoreTwo = new Feedback();
-        feedbackScoreTwo.setReference(textBlocks.get(5).getId());
-        feedbackScoreTwo.setCredits(2.0);
-        feedbackScoreTwo.setResult(result);
-        feedbacks.add(feedbackScoreTwo);
         feedbackRepository.saveAll(feedbacks);
-
-        when(mockedTextFeedbackValidationService.validateFeedback(any(), anyList())).thenReturn(50.0);
 
         Optional<Feedback> suggestedFeedback = automaticTextFeedbackService.createFeedback(candidate, 2, 40.0);
 

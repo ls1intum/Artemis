@@ -179,11 +179,9 @@ public class TextClusterUtilityService {
      */
     public List<TextBlock> getAssessedBlocks(TextCluster textCluster) {
         List<TextBlock> assessedBlocks = new ArrayList<>();
-        if (textCluster == null) {
-            return assessedBlocks;
+        if (textCluster != null) {
+            assessedBlocks = textCluster.getBlocks().stream().filter(block -> getScoreOfTextBlock(block).isPresent()).collect(toList());
         }
-
-        assessedBlocks = textCluster.getBlocks().stream().filter(block -> getScoreOfTextBlock(block).isPresent()).collect(toList());
 
         return assessedBlocks;
     }
@@ -221,9 +219,11 @@ public class TextClusterUtilityService {
             return Optional.empty();
         }
 
-        final Optional<TextBlock> nearestNeighorWithScore = getAssessedBlocks(textCluster).stream().filter(elem -> elem.getId() != textBlock.getId())
-                .filter(blockIterator -> getScoreOfTextBlock(blockIterator).getAsDouble() == score)
-                .min(comparing(element -> textCluster.distanceBetweenBlocks(textBlock, element)));
+        // Filter out the the text block itself as a text block's distance to itself will always be 0 and therefore the minimum
+        final Optional<TextBlock> nearestNeighorWithScore = getAssessedBlocks(textCluster)
+            .stream()
+            .filter(blockIterator -> getScoreOfTextBlock(blockIterator).getAsDouble() == score && blockIterator.getId() != textBlock.getId())
+            .min(comparing(element -> Math.abs(textCluster.distanceBetweenBlocks(textBlock, element))));
 
         return nearestNeighorWithScore;
     }
@@ -235,14 +235,12 @@ public class TextClusterUtilityService {
      * @return List<TextBlock> text blocks which have all received the given score
      */
     public List<TextBlock> filterTextCluster(TextCluster textCluster, double score) {
-        final List<TextBlock> assesesedBlocks = getAssessedBlocks(textCluster);
+        final List<TextBlock> assessedBlocks = getAssessedBlocks(textCluster);
         List<TextBlock> filteredTextCluster = new ArrayList<>();
 
-        if (assesesedBlocks.size() == 0) {
-            return filteredTextCluster;
+        if (assessedBlocks.size() > 0) {
+            filteredTextCluster = assessedBlocks.stream().filter(block -> getScoreOfTextBlock(block).getAsDouble() == score).collect(toList());
         }
-
-        filteredTextCluster = assesesedBlocks.stream().filter(block -> getScoreOfTextBlock(block).getAsDouble() == score).collect(toList());
 
         return filteredTextCluster;
     }

@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.service.connectors;
 import static de.tum.in.www1.artemis.service.connectors.RemoteArtemisServiceConnector.authenticationHeaderForSecret;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,24 +23,24 @@ public class TextFeedbackValidationService {
     // Region Request/Response DTOs
     private static class Request {
 
-        public TextBlock candidate;
+        public String candidate;
 
-        public List<TextBlock> references;
+        public List<String> references;
 
         Request(TextBlock candidate, List<TextBlock> references) {
-            this.candidate = candidate;
-            this.references = references;
+            this.candidate = candidate.getText();
+            this.references = references.stream().map(textBlock -> textBlock.getText()).collect(Collectors.toList());
         }
     }
 
     private static class Response {
 
-        public double percentage;
+        public float confidence;
 
     }
     // Endregion
 
-    @Value("${artemis.automatic-text.segmentation-url}")
+    @Value("${artemis.automatic-text.validation-url}")
     private String API_ENDPOINT;
 
     @Value("${artemis.automatic-text.secret}")
@@ -72,7 +73,7 @@ public class TextFeedbackValidationService {
         final Request request = new Request(candidate, references);
 
         final Response response = connector.invokeWithRetry(API_ENDPOINT, request, authenticationHeaderForSecret(API_SECRET), maxRetries);
-        return response.percentage;
+        return response.confidence;
     }
 
 }

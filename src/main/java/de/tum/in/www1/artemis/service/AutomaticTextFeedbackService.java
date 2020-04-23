@@ -109,8 +109,8 @@ public class AutomaticTextFeedbackService {
                         * textClusterUtilityService.getScoreOfTextBlock(blockIterator).getAsDouble())
                 .sum();
 
-        // Round to 2 decimals as we would e.g. receive 0.999999 instead of 1
-        return new BigDecimal(weightedScore).setScale(2, RoundingMode.HALF_UP).doubleValue();
+        // Round to 1 decimals as we would e.g. receive 0.999999 instead of 1.0
+        return new BigDecimal(weightedScore).setScale(1, RoundingMode.HALF_UP).doubleValue();
     }
 
     /**
@@ -205,8 +205,6 @@ public class AutomaticTextFeedbackService {
         }
         catch (NoSuchElementException exception) {
             log.error(exception.toString());
-
-            return false;
         }
 
         return false;
@@ -224,7 +222,7 @@ public class AutomaticTextFeedbackService {
             final TextCluster textCluster = textBlock.getCluster();
             final List<TextBlock> references = textClusterUtilityService.filterTextCluster(textCluster, feedback.getCredits());
 
-            // @TODO: UI for this
+            // @TODO UI
             final double confidencePercentage = textFeedbackValidationService.validateFeedback(textBlock, references);
 
             return confidencePercentage;
