@@ -48,7 +48,7 @@ import { CodeEditorSessionService } from 'app/exercises/programming/shared/code-
 import { DomainService } from 'app/exercises/programming/shared/code-editor/service/code-editor-domain.service';
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
-import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated.route';
+import { MockActivatedRouteWithSubjects } from '../../helpers/mocks/activated-route/mock-activated-route-with-subjects';
 import { MockParticipationWebsocketService } from '../../helpers/mocks/service/mock-participation-websocket.service';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { MockResultService } from '../../helpers/mocks/service/mock-result.service';
@@ -111,7 +111,7 @@ describe('CodeEditorStudentIntegration', () => {
                 DeviceDetectorService,
                 CodeEditorConflictStateService,
                 { provide: AccountService, useClass: MockAccountService },
-                { provide: ActivatedRoute, useClass: MockActivatedRoute },
+                { provide: ActivatedRoute, useClass: MockActivatedRouteWithSubjects },
                 { provide: JhiWebsocketService, useClass: MockWebsocketService },
                 { provide: ParticipationWebsocketService, useClass: MockParticipationWebsocketService },
                 { provide: ProgrammingExerciseParticipationService, useClass: MockProgrammingExerciseParticipationService },
@@ -150,7 +150,7 @@ describe('CodeEditorStudentIntegration', () => {
 
                 routeSubject = new Subject<Params>();
                 // @ts-ignore
-                (route as MockActivatedRoute).setSubject(routeSubject);
+                (route as MockActivatedRouteWithSubjects).setSubject(routeSubject);
 
                 getLatestPendingSubmissionSubject = new Subject<ProgrammingSubmissionStateObj>();
 
@@ -186,7 +186,7 @@ describe('CodeEditorStudentIntegration', () => {
 
         routeSubject = new Subject<Params>();
         // @ts-ignore
-        (route as MockActivatedRoute).setSubject(routeSubject);
+        (route as MockActivatedRouteWithSubjects).setSubject(routeSubject);
 
         getLatestPendingSubmissionSubject = new Subject<ProgrammingSubmissionStateObj>();
         getLatestPendingSubmissionStub.returns(getLatestPendingSubmissionSubject);

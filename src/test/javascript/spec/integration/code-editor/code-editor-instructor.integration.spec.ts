@@ -40,7 +40,7 @@ import { ParticipationService } from 'app/exercises/shared/participation/partici
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { SolutionProgrammingExerciseParticipation } from 'app/entities/participation/solution-programming-exercise-participation.model';
-import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated.route';
+import { MockActivatedRouteWithSubjects } from '../../helpers/mocks/activated-route/mock-activated-route-with-subjects';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { MockResultService } from '../../helpers/mocks/service/mock-result.service';
 import { MockCodeEditorRepositoryService } from '../../helpers/mocks/service/mock-code-editor-repository.service';
@@ -109,7 +109,7 @@ describe('CodeEditorInstructorIntegration', () => {
                 DeviceDetectorService,
                 { provide: Router, useClass: MockRouter },
                 { provide: AccountService, useClass: MockAccountService },
-                { provide: ActivatedRoute, useClass: MockActivatedRoute },
+                { provide: ActivatedRoute, useClass: MockActivatedRouteWithSubjects },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: ResultService, useClass: MockResultService },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
@@ -153,7 +153,7 @@ describe('CodeEditorInstructorIntegration', () => {
 
                 routeSubject = new Subject<Params>();
                 // @ts-ignore
-                (route as MockActivatedRoute).setSubject(routeSubject);
+                (route as MockActivatedRouteWithSubjects).setSubject(routeSubject);
 
                 checkIfRepositoryIsCleanStub = stub(codeEditorRepositoryService, 'getStatus');
                 getRepositoryContentStub = stub(codeEditorRepositoryFileService, 'getRepositoryContent');
@@ -194,7 +194,7 @@ describe('CodeEditorInstructorIntegration', () => {
 
         routeSubject = new Subject<Params>();
         // @ts-ignore
-        (route as MockActivatedRoute).setSubject(routeSubject);
+        (route as MockActivatedRouteWithSubjects).setSubject(routeSubject);
 
         findWithParticipationsSubject = new Subject<{ body: ProgrammingExercise }>();
         findWithParticipationsStub.returns(findWithParticipationsSubject);

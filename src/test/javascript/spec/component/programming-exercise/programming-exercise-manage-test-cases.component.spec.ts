@@ -29,7 +29,7 @@ import { EditableField, ProgrammingExerciseManageTestCasesComponent } from 'app/
 import { ProgrammingExerciseService, ProgrammingExerciseTestCaseStateDTO } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ProgrammingExerciseTestCaseService } from 'app/exercises/programming/manage/services/programming-exercise-test-case.service';
-import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated.route';
+import { MockActivatedRouteWithSubjects } from '../../helpers/mocks/activated-route/mock-activated-route-with-subjects';
 import { MockCookieService } from '../../helpers/mocks/service/mock-cookie.service';
 import { MockProgrammingExerciseService } from '../../helpers/mocks/service/mock-programming-exercise.service';
 
@@ -128,7 +128,7 @@ describe('ProgrammingExerciseManageTestCasesComponent', () => {
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: CookieService, useClass: MockCookieService },
-                { provide: ActivatedRoute, useClass: MockActivatedRoute },
+                { provide: ActivatedRoute, useClass: MockActivatedRouteWithSubjects },
                 { provide: FeatureToggleService, useClass: MockFeatureToggleService },
             ],
         })
@@ -155,7 +155,7 @@ describe('ProgrammingExerciseManageTestCasesComponent', () => {
 
                 routeSubject = new Subject();
                 // @ts-ignore
-                (route as MockActivatedRoute).setSubject(routeSubject);
+                (route as MockActivatedRouteWithSubjects).setSubject(routeSubject);
                 getExerciseTestCaseStateSubject = new Subject();
 
                 testCasesChangedSubject = new Subject<boolean>();

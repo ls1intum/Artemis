@@ -4,7 +4,7 @@ import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
 import { SinonStub, stub } from 'sinon';
 import { ArtemisTestModule } from '../../test.module';
-import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated.route';
+import { MockActivatedRouteWithSubjects } from '../../helpers/mocks/activated-route/mock-activated-route-with-subjects';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { MockComponent } from 'ng-mocks';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
@@ -84,7 +84,7 @@ describe('TutorExerciseDashboardComponent', () => {
                 JhiLanguageHelper,
                 DeviceDetectorService,
                 { provide: AlertService, useClass: MockAlertService },
-                { provide: ActivatedRoute, useClass: MockActivatedRoute },
+                { provide: ActivatedRoute, useClass: MockActivatedRouteWithSubjects },
                 { provide: Router, useClass: MockRouter },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
