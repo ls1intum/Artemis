@@ -12,7 +12,7 @@ export interface StudentQuestionAnswerAction {
 export enum QuestionAnswerActionName {
     DELETE,
     ADD,
-    APPROVE
+    APPROVE,
 }
 
 @Component({
@@ -72,8 +72,8 @@ export class StudentQuestionAnswerComponent {
         this.studentQuestionAnswerService.update(this.studentQuestionAnswer).subscribe(() => {
             this.interactAnswer.emit({
                 name: QuestionAnswerActionName.APPROVE,
-                studentQuestionAnswer: this.studentQuestionAnswer
-            })
+                studentQuestionAnswer: this.studentQuestionAnswer,
+            });
         });
     }
 }

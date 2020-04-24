@@ -11,7 +11,7 @@ export interface StudentQuestionAction {
 
 export enum QuestionActionName {
     DELETE,
-    EXPAND
+    EXPAND,
 }
 
 @Component({

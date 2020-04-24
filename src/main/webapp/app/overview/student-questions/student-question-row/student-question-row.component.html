@@ -11,14 +11,13 @@
     <div class="col-12" *ngIf="studentQuestion.answers && studentQuestion.answers.length !== 0">
         <div class="row clickable mb-1" [ngbTooltip]="'artemisApp.courseOverview.exerciseDetails.faq.show' | translate" (click)="isExpanded = true">
             <div class="col-auto pl-0">
-                <span class="question-subtitle">{{ 'artemisApp.courseOverview.exerciseDetails.faq.answerCount' | translate: { count: studentQuestion.answers ? studentQuestion.answers.length : 0 } }}</span>
+                <span class="question-subtitle">{{
+                    'artemisApp.courseOverview.exerciseDetails.faq.answerCount' | translate: { count: studentQuestion.answers ? studentQuestion.answers.length : 0 }
+                }}</span>
             </div>
             <div class="col px-0 line"></div>
             <div class="col-auto">
-                <fa-icon
-                    class="clickable"
-                    [icon]="'angle-down'"
-                ></fa-icon>
+                <fa-icon class="clickable" [icon]="'angle-down'"></fa-icon>
             </div>
             <div class="col pl-0 line"></div>
         </div>
@@ -37,7 +36,7 @@
         <!-- hide answers -->
         <div
             class="row clickable mb-1"
-            *ngIf="isExpanded && (studentQuestion.answers && studentQuestion.answers.length !== 0)"
+            *ngIf="isExpanded && studentQuestion.answers && studentQuestion.answers.length !== 0"
             [ngbTooltip]="'artemisApp.courseOverview.exerciseDetails.faq.hide' | translate"
             (click)="isExpanded = false"
         >
@@ -46,10 +45,7 @@
             </div>
             <div class="col px-0 line"></div>
             <div class="col-auto">
-                <fa-icon
-                    class="clickable"
-                    [icon]="'angle-up'"
-                ></fa-icon>
+                <fa-icon class="clickable" [icon]="'angle-up'"></fa-icon>
             </div>
             <div class="col pl-0 line"></div>
         </div>
@@ -87,9 +83,10 @@
                 <!-- show less answers -->
                 <div *ngIf="isExpanded && (approvedQuestionAnswers.length === 0 || showOtherAnswers)">
                     <ng-container *ngIf="approvedQuestionAnswers.length !== 0 && sortedQuestionAnswers.length !== 0 && showOtherAnswers">
-                        <div class="row mb-1 clickable"
-                             [ngbTooltip]="'artemisApp.courseOverview.exerciseDetails.faq.hideAnswers' | translate"
-                             (click)="showOtherAnswers = !showOtherAnswers"
+                        <div
+                            class="row mb-1 clickable"
+                            [ngbTooltip]="'artemisApp.courseOverview.exerciseDetails.faq.hideAnswers' | translate"
+                            (click)="showOtherAnswers = !showOtherAnswers"
                         >
                             <div class="col-auto overflow-parent">
                                 <div class="overflow-ellipsis question-subtitle">{{ 'artemisApp.courseOverview.exerciseDetails.faq.hideAnswers' | translate }}</div>
@@ -147,7 +144,9 @@
                         </div>
                     </div>
                     <div class="col-12 d-flex justify-content-between">
-                        <button class="btn btn-sm btn-outline-secondary" (click)="isAnswerMode = false">{{ 'artemisApp.courseOverview.exerciseDetails.faq.cancel' | translate }}</button>
+                        <button class="btn btn-sm btn-outline-secondary" (click)="isAnswerMode = false">
+                            {{ 'artemisApp.courseOverview.exerciseDetails.faq.cancel' | translate }}
+                        </button>
                         <button class="btn btn-sm btn-outline-secondary" (click)="addAnswer()">{{ 'artemisApp.courseOverview.exerciseDetails.faq.addAnswer' | translate }}</button>
                     </div>
                 </ng-container>

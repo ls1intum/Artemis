@@ -83,7 +83,7 @@ export class StudentQuestionsComponent implements OnInit, AfterViewInit {
      * interact with actions send from studentQuestionRow
      * @param {StudentQuestionRowAction} action
      */
-    interactQuestion (action: StudentQuestionRowAction) {
+    interactQuestion(action: StudentQuestionRowAction) {
         switch (action.name) {
             case QuestionRowActionName.DELETE:
                 this.deleteQuestionFromList(action.studentQuestion);

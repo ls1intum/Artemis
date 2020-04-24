@@ -5,11 +5,9 @@
         <!-- header -->
         <div class="card-header text-white bg-secondary" [ngbTooltip]="'artemisApp.courseOverview.exerciseDetails.faq.hide' | translate" (click)="collapsed = true">
             <div class="row">
-                <div class="col-auto">
-                    <fa-icon [icon]="'question'"></fa-icon>&nbsp;
-                </div>
+                <div class="col-auto"><fa-icon [icon]="'question'"></fa-icon></div>
                 <div class="col">
-                    <h4 jhiTranslate="artemisApp.courseOverview.exerciseDetails.faq.header"> &nbsp; Q & A &nbsp; </h4>
+                    <h4 jhiTranslate="artemisApp.courseOverview.exerciseDetails.faq.header">Q & A</h4>
                 </div>
                 <div class="col-auto">
                     <fa-icon [icon]="'chevron-right'"></fa-icon>
@@ -77,9 +75,13 @@
 </div>
 <!-- collapsed questions -->
 <ng-template #collapsedQuestions>
-    <div class="questions-container collapsed-questions text-white bg-secondary" (click)="collapsed = false" [ngbTooltip]="'artemisApp.courseOverview.exerciseDetails.faq.show' | translate">
+    <div
+        class="questions-container collapsed-questions text-white bg-secondary"
+        (click)="collapsed = false"
+        [ngbTooltip]="'artemisApp.courseOverview.exerciseDetails.faq.show' | translate"
+    >
         <fa-icon [icon]="'chevron-left'"></fa-icon>
-        <span jhiTranslate="artemisApp.courseOverview.exerciseDetails.faq.header"> &nbsp; Q & A &nbsp; </span>
+        <span jhiTranslate="artemisApp.courseOverview.exerciseDetails.faq.header">Q & A</span>
         <fa-icon [icon]="'chevron-left'"></fa-icon>
     </div>
 </ng-template>

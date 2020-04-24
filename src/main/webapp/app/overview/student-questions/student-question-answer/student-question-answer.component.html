@@ -1,4 +1,4 @@
-<div class="row mb-1 pl-2 answer" [ngClass]="{'answer-approved': studentQuestionAnswer.tutorApproved}">
+<div class="row mb-1 pl-2 answer" [ngClass]="{ 'answer-approved': studentQuestionAnswer.tutorApproved }">
     <div class="col-12">
         <!-- edit Mode on -->
         <ng-container *ngIf="isEditMode">
@@ -11,10 +11,7 @@
                         <div class="col">
                             <span class="form-control-label">{{ 'artemisApp.courseOverview.exerciseDetails.faq.editAnswer' | translate }}</span>
                         </div>
-                        <div
-                            class="col-auto px-0"
-                            *ngIf="isAtLeastTutorInCourse || isAuthorOfAnswer(studentQuestionAnswer)"
-                        >
+                        <div class="col-auto px-0" *ngIf="isAtLeastTutorInCourse || isAuthorOfAnswer(studentQuestionAnswer)">
                             <fa-icon
                                 class="mr-1 clickable"
                                 [ngbTooltip]="'artemisApp.courseOverview.exerciseDetails.faq.editAnswer' | translate"
@@ -33,7 +30,12 @@
                             <fa-icon
                                 class="mr-1 clickable"
                                 *ngIf="isAtLeastTutorInCourse"
-                                [ngbTooltip]="(studentQuestionAnswer.tutorApproved ? 'artemisApp.courseOverview.exerciseDetails.faq.unapproveAnswer' : 'artemisApp.courseOverview.exerciseDetails.faq.approveAnswer') | translate"
+                                [ngbTooltip]="
+                                    (studentQuestionAnswer.tutorApproved
+                                        ? 'artemisApp.courseOverview.exerciseDetails.faq.unapproveAnswer'
+                                        : 'artemisApp.courseOverview.exerciseDetails.faq.approveAnswer'
+                                    ) | translate
+                                "
                                 container="body"
                                 [icon]="'check'"
                                 (click)="$event.stopPropagation(); toggleAnswerTutorApproved()"
@@ -66,10 +68,7 @@
                 <div class="col px-0">
                     <fa-icon [icon]="'lightbulb'" [ngbTooltip]="'artemisApp.courseOverview.exerciseDetails.faq.answerLabel' | translate"></fa-icon>
                 </div>
-                <div
-                    class="col-auto px-0"
-                    *ngIf="isAtLeastTutorInCourse || isAuthorOfAnswer(studentQuestionAnswer)"
-                >
+                <div class="col-auto px-0" *ngIf="isAtLeastTutorInCourse || isAuthorOfAnswer(studentQuestionAnswer)">
                     <fa-icon
                         class="mr-1 clickable"
                         [ngbTooltip]="'artemisApp.courseOverview.exerciseDetails.faq.editAnswer' | translate"
@@ -88,7 +87,12 @@
                     <fa-icon
                         class="mr-1 clickable"
                         *ngIf="isAtLeastTutorInCourse"
-                        [ngbTooltip]="(studentQuestionAnswer.tutorApproved ? 'artemisApp.courseOverview.exerciseDetails.faq.unapproveAnswer' : 'artemisApp.courseOverview.exerciseDetails.faq.approveAnswer') | translate"
+                        [ngbTooltip]="
+                            (studentQuestionAnswer.tutorApproved
+                                ? 'artemisApp.courseOverview.exerciseDetails.faq.unapproveAnswer'
+                                : 'artemisApp.courseOverview.exerciseDetails.faq.approveAnswer'
+                            ) | translate
+                        "
                         container="body"
                         [icon]="'check'"
                         (click)="$event.stopPropagation(); toggleAnswerTutorApproved()"
@@ -103,9 +107,7 @@
                 ></div>
             </div>
             <div class="row mb-2 mt-1">
-                <span class="text-black-50 answer-subtitle">
-                    {{ studentQuestionAnswer.author.name }} - {{ studentQuestionAnswer.answerDate | date: 'dd.MM.yy HH:mm' }}
-                </span>
+                <span class="text-black-50 answer-subtitle"> {{ studentQuestionAnswer.author.name }} - {{ studentQuestionAnswer.answerDate | date: 'dd.MM.yy HH:mm' }} </span>
             </div>
         </ng-container>
     </div>

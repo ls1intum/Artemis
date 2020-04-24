@@ -1,17 +1,14 @@
-import {Component, EventEmitter, Input, OnInit, Output} from '@angular/core';
-import {User} from 'app/core/user/user.model';
+import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { User } from 'app/core/user/user.model';
 import * as moment from 'moment';
-import {HttpResponse} from '@angular/common/http';
-import {StudentQuestion} from 'app/entities/student-question.model';
-import {StudentQuestionAnswer} from 'app/entities/student-question-answer.model';
-import {StudentQuestionService} from 'app/overview/student-questions/student-question/student-question.service';
-import {StudentQuestionAnswerService} from 'app/overview/student-questions/student-question-answer/student-question-answer.service';
-import {
-    QuestionAnswerActionName,
-    StudentQuestionAnswerAction
-} from 'app/overview/student-questions/student-question-answer/student-question-answer.component';
-import {EditorMode} from 'app/shared/markdown-editor/markdown-editor.component';
-import {QuestionActionName, StudentQuestionAction} from "app/overview/student-questions/student-question/student-question.component";
+import { HttpResponse } from '@angular/common/http';
+import { StudentQuestion } from 'app/entities/student-question.model';
+import { StudentQuestionAnswer } from 'app/entities/student-question-answer.model';
+import { StudentQuestionService } from 'app/overview/student-questions/student-question/student-question.service';
+import { StudentQuestionAnswerService } from 'app/overview/student-questions/student-question-answer/student-question-answer.service';
+import { QuestionAnswerActionName, StudentQuestionAnswerAction } from 'app/overview/student-questions/student-question-answer/student-question-answer.component';
+import { EditorMode } from 'app/shared/markdown-editor/markdown-editor.component';
+import { QuestionActionName, StudentQuestionAction } from 'app/overview/student-questions/student-question/student-question.component';
 
 export interface StudentQuestionRowAction {
     name: QuestionRowActionName;
@@ -55,7 +52,7 @@ export class StudentQuestionRowComponent implements OnInit {
      * interact with asnwer component
      * @param {StudentQuestionAnswerAction} action
      */
-    interactAnswer (action: StudentQuestionAnswerAction) {
+    interactAnswer(action: StudentQuestionAnswerAction) {
         switch (action.name) {
             case QuestionAnswerActionName.DELETE:
                 this.deleteAnswerFromList(action.studentQuestionAnswer);
@@ -73,13 +70,13 @@ export class StudentQuestionRowComponent implements OnInit {
      * interact with question component
      * @param {StudentQuestionAction} action
      */
-    interactQuestion (action: StudentQuestionAction): void {
+    interactQuestion(action: StudentQuestionAction): void {
         switch (action.name) {
             case QuestionActionName.DELETE:
                 this.deleteQuestion();
                 break;
             case QuestionActionName.EXPAND:
-                this.isExpanded = !this.isExpanded
+                this.isExpanded = !this.isExpanded;
                 break;
         }
     }

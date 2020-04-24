@@ -56,11 +56,13 @@
     }
 }
 
-.question-subtitle, .answer-subtitle {
+.question-subtitle,
+.answer-subtitle {
     font-size: 12px;
 }
 
-.question-text, .answer-text {
+.question-text,
+.answer-text {
     background: rgba(0, 0, 0, 0.1);
     border-radius: 3px;
 }
@@ -82,7 +84,7 @@
 .line {
     width: auto;
     height: 2px;
-    background: rgba(0, 0, 0, 0.1);;
+    background: rgba(0, 0, 0, 0.1);
     content: ' ';
     margin: auto 0;
 }
@@ -100,7 +102,7 @@
         width: 94vw;
 
         .draggable-left {
-            display: none
+            display: none;
         }
     }
 }
