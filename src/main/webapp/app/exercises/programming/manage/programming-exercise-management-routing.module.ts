@@ -24,7 +24,7 @@ export class ProgrammingExerciseResolve implements Resolve<ProgrammingExercise> 
     }
 }
 
-const routes: Routes = [
+export const routes: Routes = [
     {
         path: ':courseId/programming-exercises/new',
         component: ProgrammingExerciseUpdateComponent,

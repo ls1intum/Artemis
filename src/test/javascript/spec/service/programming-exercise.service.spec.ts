@@ -3,6 +3,17 @@ import { HttpClientTestingModule, HttpTestingController } from '@angular/common/
 import { map, take } from 'rxjs/operators';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from '../helpers/mocks/service/mock-translate.service';
+import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import { MockSyncStorage } from '../helpers/mocks/service/mock-sync-storage.service';
+import { routes } from 'app/exercises/programming/manage/programming-exercise-management-routing.module';
+import { RouterTestingModule } from '@angular/router/testing';
+import { ArtemisTestModule } from '../test.module';
+import { FormsModule } from '@angular/forms';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
+import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
+import { ArtemisProgrammingExerciseManagementModule } from 'app/exercises/programming/manage/programming-exercise-management.module';
 
 describe('ProgrammingExercise Service', () => {
     let injector: TestBed;
@@ -11,7 +22,21 @@ describe('ProgrammingExercise Service', () => {
     let elemDefault: ProgrammingExercise;
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [HttpClientTestingModule],
+            imports: [
+                HttpClientTestingModule,
+                RouterTestingModule.withRoutes(routes),
+                ArtemisTestModule,
+                FormsModule,
+                ArtemisSharedModule,
+                ArtemisSharedComponentModule,
+                ArtemisProgrammingExerciseManagementModule,
+            ],
+            providers: [
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: SessionStorageService, useClass: MockSyncStorage },
+                { provide: LocalStorageService, useClass: MockSyncStorage },
+                { provide: LocalStorageService, useClass: MockSyncStorage },
+            ],
         });
         injector = getTestBed();
         service = injector.get(ProgrammingExerciseService);
@@ -20,7 +45,7 @@ describe('ProgrammingExercise Service', () => {
         elemDefault = new ProgrammingExercise();
     });
 
-    describe('Service methods', async () => {
+    describe('Service methods', () => {
         it('should find an element', async () => {
             const returnedFromService = Object.assign({}, elemDefault);
             service
@@ -41,7 +66,7 @@ describe('ProgrammingExercise Service', () => {
             );
             const expected = Object.assign({}, returnedFromService);
             service
-                .create(new ProgrammingExercise(null))
+                .automaticSetup(new ProgrammingExercise())
                 .pipe(take(1))
                 .subscribe((resp) => expect(resp).toMatchObject({ body: expected }));
             const req = httpMock.expectOne({ method: 'POST' });
@@ -94,7 +119,7 @@ describe('ProgrammingExercise Service', () => {
         });
 
         it('should delete a ProgrammingExercise', async () => {
-            service.delete(123).subscribe((resp) => expect(resp.ok));
+            service.delete(123, false, false).subscribe((resp) => expect(resp.ok));
 
             const req = httpMock.expectOne({ method: 'DELETE' });
             req.flush({ status: 200 });
