@@ -180,7 +180,7 @@ public class TextClusterUtilityService {
     public List<TextBlock> getAssessedBlocks(TextCluster textCluster) {
         List<TextBlock> assessedBlocks = new ArrayList<>();
         if (textCluster != null) {
-            assessedBlocks = textCluster.getBlocks().stream().filter(block -> getScoreOfTextBlock(block).isPresent()).collect(toList());
+            assessedBlocks = textCluster.getBlocks().parallelStream().filter(block -> getScoreOfTextBlock(block).isPresent()).collect(toList());
         }
 
         return assessedBlocks;
