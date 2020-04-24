@@ -24,55 +24,53 @@ import { AssessmentInstructionsModule } from 'app/assessment/assessment-instruct
 chai.use(sinonChai);
 const expect = chai.expect;
 
-describe('Component Tests', () => {
-    describe('FileUploadExercise Management Detail Component', () => {
-        let comp: FileUploadExerciseDetailComponent;
-        let fixture: ComponentFixture<FileUploadExerciseDetailComponent>;
-        let debugElement: DebugElement;
+describe('FileUploadExercise Management Detail Component', () => {
+    let comp: FileUploadExerciseDetailComponent;
+    let fixture: ComponentFixture<FileUploadExerciseDetailComponent>;
+    let debugElement: DebugElement;
 
-        const route = ({
-            data: of({ fileUploadExercise }),
-            params: of({ exerciseId: 2 }),
-        } as any) as ActivatedRoute;
+    const route = ({
+        data: of({ fileUploadExercise }),
+        params: of({ exerciseId: 2 }),
+    } as any) as ActivatedRoute;
 
-        beforeEach(() => {
-            TestBed.configureTestingModule({
-                imports: [ArtemisTestModule, ArtemisSharedModule, ArtemisAssessmentSharedModule, RouterTestingModule, TranslateModule.forRoot(), AssessmentInstructionsModule],
-                declarations: [FileUploadExerciseDetailComponent],
-                providers: [
-                    JhiLanguageHelper,
-                    AlertService,
-                    { provide: ActivatedRoute, useValue: route },
-                    { provide: FileUploadExerciseService, useClass: MockFileUploadExerciseService },
-                    { provide: LocalStorageService, useClass: MockSyncStorage },
-                    { provide: SessionStorageService, useClass: MockSyncStorage },
-                    { provide: CookieService, useClass: MockCookieService },
-                ],
-            })
-                .overrideModule(ArtemisTestModule, { set: { declarations: [], exports: [] } })
-                .compileComponents();
-            fixture = TestBed.createComponent(FileUploadExerciseDetailComponent);
-            comp = fixture.componentInstance;
-            debugElement = fixture.debugElement;
-        });
+    beforeEach(() => {
+        TestBed.configureTestingModule({
+            imports: [ArtemisTestModule, ArtemisSharedModule, ArtemisAssessmentSharedModule, RouterTestingModule, TranslateModule.forRoot(), AssessmentInstructionsModule],
+            declarations: [FileUploadExerciseDetailComponent],
+            providers: [
+                JhiLanguageHelper,
+                AlertService,
+                { provide: ActivatedRoute, useValue: route },
+                { provide: FileUploadExerciseService, useClass: MockFileUploadExerciseService },
+                { provide: LocalStorageService, useClass: MockSyncStorage },
+                { provide: SessionStorageService, useClass: MockSyncStorage },
+                { provide: CookieService, useClass: MockCookieService },
+            ],
+        })
+            .overrideModule(ArtemisTestModule, { set: { declarations: [], exports: [] } })
+            .compileComponents();
+        fixture = TestBed.createComponent(FileUploadExerciseDetailComponent);
+        comp = fixture.componentInstance;
+        debugElement = fixture.debugElement;
+    });
 
-        describe('Title should contain exercise id and description list', () => {
-            it('Should call load all on init', fakeAsync(() => {
-                comp.ngOnInit();
-                tick();
+    describe('Title should contain exercise id and description list', () => {
+        it('Should call load all on init', fakeAsync(() => {
+            comp.ngOnInit();
+            tick();
 
-                expect(comp.fileUploadExercise).to.equal(fileUploadExercise);
+            expect(comp.fileUploadExercise).to.equal(fileUploadExercise);
 
-                fixture.detectChanges();
+            fixture.detectChanges();
 
-                const title = debugElement.query(By.css('h2'));
-                expect(title).to.exist;
-                const h2: HTMLElement = title.nativeElement;
-                expect(h2.textContent!.endsWith(fileUploadExercise.id.toString())).to.be.true;
+            const title = debugElement.query(By.css('h2'));
+            expect(title).to.exist;
+            const h2: HTMLElement = title.nativeElement;
+            expect(h2.textContent!.endsWith(fileUploadExercise.id.toString())).to.be.true;
 
-                const descList = debugElement.query(By.css('dl'));
-                expect(descList).to.exist;
-            }));
-        });
+            const descList = debugElement.query(By.css('dl'));
+            expect(descList).to.exist;
+        }));
     });
 });

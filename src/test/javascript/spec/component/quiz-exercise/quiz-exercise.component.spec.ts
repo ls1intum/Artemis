@@ -7,44 +7,42 @@ import { QuizExerciseComponent } from 'app/exercises/quiz/manage/quiz-exercise.c
 import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.service';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 
-describe('Component Tests', () => {
-    describe('QuizExercise Management Component', () => {
-        let comp: QuizExerciseComponent;
-        let fixture: ComponentFixture<QuizExerciseComponent>;
-        let service: QuizExerciseService;
+describe('QuizExercise Management Component', () => {
+    let comp: QuizExerciseComponent;
+    let fixture: ComponentFixture<QuizExerciseComponent>;
+    let service: QuizExerciseService;
 
-        beforeEach(() => {
-            TestBed.configureTestingModule({
-                imports: [ArtemisTestModule],
-                declarations: [QuizExerciseComponent],
-                providers: [],
-            })
-                .overrideTemplate(QuizExerciseComponent, '')
-                .compileComponents();
+    beforeEach(() => {
+        TestBed.configureTestingModule({
+            imports: [ArtemisTestModule],
+            declarations: [QuizExerciseComponent],
+            providers: [],
+        })
+            .overrideTemplate(QuizExerciseComponent, '')
+            .compileComponents();
 
-            fixture = TestBed.createComponent(QuizExerciseComponent);
-            comp = fixture.componentInstance;
-            service = fixture.debugElement.injector.get(QuizExerciseService);
-        });
+        fixture = TestBed.createComponent(QuizExerciseComponent);
+        comp = fixture.componentInstance;
+        service = fixture.debugElement.injector.get(QuizExerciseService);
+    });
 
-        it('Should call load all on init', () => {
-            // GIVEN
-            const headers = new HttpHeaders().append('link', 'link;link');
-            spyOn(service, 'query').and.returnValue(
-                of(
-                    new HttpResponse({
-                        body: [new QuizExercise(123)],
-                        headers,
-                    }),
-                ),
-            );
+    it('Should call load all on init', () => {
+        // GIVEN
+        const headers = new HttpHeaders().append('link', 'link;link');
+        spyOn(service, 'query').and.returnValue(
+            of(
+                new HttpResponse({
+                    body: [new QuizExercise(123)],
+                    headers,
+                }),
+            ),
+        );
 
-            // WHEN
-            comp.ngOnInit();
+        // WHEN
+        comp.ngOnInit();
 
-            // THEN
-            expect(service.query).toHaveBeenCalled();
-            expect(comp.quizExercises[0]).toEqual(jasmine.objectContaining({ id: 123 }));
-        });
+        // THEN
+        expect(service.query).toHaveBeenCalled();
+        expect(comp.quizExercises[0]).toEqual(jasmine.objectContaining({ id: 123 }));
     });
 });
