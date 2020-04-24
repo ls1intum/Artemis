@@ -99,17 +99,17 @@ for i in {1..15}; do
             }" \
     $jira_user_url
 
-    # Add user to group
-    curl -v -u $jira_uservar:$jira_passvar \
-    -s \
-    --header "Content-Type: application/json" \
-    --request POST \
-    --fail \
-    --show-error \
-    --data "{
-                \"name\": \"artemis_test_user_$i\"
-            }" \
-    "$jira_group_add_url$group"
+#    # Add user to group
+#    curl -v -u $jira_uservar:$jira_passvar \
+#    -s \
+#    --header "Content-Type: application/json" \
+#    --request POST \
+#    --fail \
+#    --show-error \
+#    --data "{
+#                \"name\": \"artemis_test_user_$i\"
+#            }" \
+#    "$jira_group_add_url$group"
 done
 
 # Application Links
