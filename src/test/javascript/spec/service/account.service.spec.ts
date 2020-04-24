@@ -3,13 +3,13 @@ import * as chai from 'chai';
 import { SinonStub, stub } from 'sinon';
 import { of } from 'rxjs';
 import * as sinonChai from 'sinon-chai';
-import { MockWebsocketService } from '../mocks/mock-websocket.service';
-import { MockLanguageService } from '../mocks/mock-language.service';
-import { MockHttpService } from '../mocks/mock-http.service';
-import { MockFeatureToggleService } from '../mocks/mock-feature-toggle-service';
+import { MockWebsocketService } from '../mocks/service/mock-websocket.service';
+import { MockLanguageService } from '../mocks/service/mock-language.service';
+import { MockHttpService } from '../mocks/service/mock-http.service';
+import { MockFeatureToggleService } from '../mocks/service/mock-feature-toggle.service';
 import { User } from 'app/core/user/user.model';
 import { AccountService } from 'app/core/auth/account.service';
-import { MockSyncStorage } from '../mocks/mock-sync.storage';
+import { MockSyncStorage } from '../mocks/service/mock-sync-storage.service';
 
 chai.use(sinonChai);
 const expect = chai.expect;

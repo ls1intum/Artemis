@@ -6,7 +6,7 @@ import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testin
 import { ArtemisTestModule } from '../../test.module';
 import { ProgrammingExerciseUtilsModule } from 'app/exercises/programming/shared/utils/programming-exercise-utils.module';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
-import { MockProfileService } from '../../mocks/mock-profile.service';
+import { MockProfileService } from '../../mocks/service/mock-profile.service';
 import { BehaviorSubject } from 'rxjs';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { By } from '@angular/platform-browser';

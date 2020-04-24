@@ -5,16 +5,16 @@ import { of } from 'rxjs';
 import { ArtemisTestModule } from '../../../test.module';
 import { ProgrammingExerciseComponent } from 'app/exercises/programming/manage/programming-exercise.component';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
-import { MockSyncStorage } from '../../../mocks/mock-sync.storage';
+import { MockSyncStorage } from '../../../mocks/service/mock-sync-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { MockTranslateService } from '../../../mocks/mock-translate.service';
+import { MockTranslateService } from '../../../mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { Course } from 'app/entities/course.model';
 import { OrionConnectorService } from 'app/shared/orion/orion-connector.service';
-import { MockOrionConnectorService } from '../../../mocks/mock-orion-connector.service';
+import { MockOrionConnectorService } from '../../../mocks/service/mock-orion-connector.service';
 import { CourseExerciseService } from 'app/course/manage/course-management.service';
-import { MockCourseExerciseService } from '../../../mocks/mock-course-exercise.service';
+import { MockCourseExerciseService } from '../../../mocks/service/mock-course-exercise.service';
 
 describe('Component Tests', () => {
     describe('ProgrammingExercise Management Component', () => {

@@ -5,13 +5,13 @@ import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { NgbActiveModal, NgbModal, NgbDatepickerConfig } from '@ng-bootstrap/ng-bootstrap';
 import { JhiAlertService, JhiDataUtils, JhiDateUtils, JhiEventManager, JhiLanguageService, JhiParseLinks } from 'ng-jhipster';
 
-import { MockLanguageHelper, MockLanguageService } from './mocks/mock-language.service';
+import { MockLanguageHelper, MockLanguageService } from './mocks/service/mock-language.service';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { AccountService } from 'app/core/auth/account.service';
-import { MockAccountService } from './mocks/mock-account.service';
-import { MockActivatedRoute, MockRouter } from './mocks/mock-route.service';
-import { MockActiveModal } from './mocks/mock-active-modal.service';
-import { MockEventManager } from './mocks/mock-event-manager.service';
+import { MockAccountService } from './mocks/service/mock-account.service';
+import { MockActivatedRoute, MockRouter } from './mocks/service/mock-route.service';
+import { MockActiveModal } from './mocks/service/mock-active-modal.service';
+import { MockEventManager } from './mocks/service/mock-event-manager.service';
 import { CookieService } from 'ngx-cookie-service';
 import { FaIconLibrary, FontAwesomeModule, FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { fas } from '@fortawesome/free-solid-svg-icons';

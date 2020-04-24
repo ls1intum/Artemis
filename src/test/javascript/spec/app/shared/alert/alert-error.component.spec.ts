@@ -5,7 +5,7 @@ import { TranslateModule } from '@ngx-translate/core';
 
 import { ArtemisTestModule } from '../../../test.module';
 import { AlertErrorComponent } from 'app/shared/alert/alert-error.component';
-import { MockAlertService } from '../../../mocks/mock-alert.service';
+import { MockAlertService } from '../../../mocks/service/mock-alert.service';
 import { AlertService } from 'app/core/alert/alert.service';
 
 describe('Component Tests', () => {

@@ -21,12 +21,12 @@ import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { ResultService } from 'app/exercises/shared/result/result.service';
 import { AnnotationArray } from 'app/entities/annotation.model';
 import { Feedback } from 'app/entities/feedback.model';
-import { MockResultService } from '../../mocks/mock-result.service';
-import { MockCodeEditorBuildLogService } from '../../mocks/mock-code-editor-build-log.service';
-import { MockCodeEditorSessionService } from '../../mocks/mock-code-editor-session.service';
-import { MockSyncStorage } from '../../mocks/mock-sync.storage';
-import { MockParticipationWebsocketService } from '../../mocks/mock-participation-websocket.service';
-import { MockCookieService } from '../../mocks/mock-cookie.service';
+import { MockResultService } from '../../mocks/service/mock-result.service';
+import { MockCodeEditorBuildLogService } from '../../mocks/service/mock-code-editor-build-log.service';
+import { MockCodeEditorSessionService } from '../../mocks/service/mock-code-editor-session.service';
+import { MockSyncStorage } from '../../mocks/service/mock-sync-storage.service';
+import { MockParticipationWebsocketService } from '../../mocks/service/mock-participation-websocket.service';
+import { MockCookieService } from '../../mocks/service/mock-cookie.service';
 
 chai.use(sinonChai);
 const expect = chai.expect;

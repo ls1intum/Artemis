@@ -1,4 +1,4 @@
-import { SpyObject } from '../helpers/spyobject';
+import { SpyObject } from '../../helpers/spyobject';
 import { JhiAlert, JhiAlertService } from 'ng-jhipster';
 
 export class MockAlertService extends SpyObject {

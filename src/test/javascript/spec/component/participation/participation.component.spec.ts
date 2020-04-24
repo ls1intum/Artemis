@@ -6,7 +6,7 @@ import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { ArtemisTestModule } from '../../test.module';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { MockActivatedRoute } from '../../mocks/activated-route/mock-activated.route';
-import { MockSyncStorage } from '../../mocks/mock-sync.storage';
+import { MockSyncStorage } from '../../mocks/service/mock-sync-storage.service';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import { ParticipationComponent } from 'app/exercises/shared/participation/participation.component';
 import { Course } from 'app/entities/course.model';

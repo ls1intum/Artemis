@@ -7,7 +7,7 @@ import { SinonStub, stub } from 'sinon';
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
 import { ArtemisTestModule } from '../../test.module';
-import { MockCacheableImageService } from '../../mocks/mock-cacheable-image.service';
+import { MockCacheableImageService } from '../../mocks/service/mock-cacheable-image.service';
 import { triggerChanges } from '../../utils/general.utils';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { UpdatingResultComponent } from 'app/shared/result/updating-result.component';

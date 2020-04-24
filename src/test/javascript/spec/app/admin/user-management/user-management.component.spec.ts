@@ -8,7 +8,7 @@ import { UserManagementComponent } from 'app/admin/user-management/user-manageme
 import { User } from 'app/core/user/user.model';
 import { UserService } from 'app/core/user/user.service';
 import { AccountService } from 'app/core/auth/account.service';
-import { MockSyncStorage } from '../../../mocks/mock-sync.storage';
+import { MockSyncStorage } from '../../../mocks/service/mock-sync-storage.service';
 
 describe('Component Tests', () => {
     describe('User Management Component', () => {

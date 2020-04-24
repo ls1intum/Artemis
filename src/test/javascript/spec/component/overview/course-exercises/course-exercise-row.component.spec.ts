@@ -8,18 +8,18 @@ import { ParticipationWebsocketService } from 'app/overview/participation-websoc
 import { ArtemisTestModule } from '../../../test.module';
 import { TranslateModule } from '@ngx-translate/core';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
-import { MockOrionConnectorService } from '../../../mocks/mock-orion-connector.service';
-import { MockCourseExerciseService } from '../../../mocks/mock-course-exercise.service';
+import { MockOrionConnectorService } from '../../../mocks/service/mock-orion-connector.service';
+import { MockCourseExerciseService } from '../../../mocks/service/mock-course-exercise.service';
 import { AlertService } from 'app/core/alert/alert.service';
-import { MockAlertService } from '../../../mocks/mock-alert.service';
-import { MockParticipationWebsocketService } from '../../../mocks/mock-participation-websocket.service';
+import { MockAlertService } from '../../../mocks/service/mock-alert.service';
+import { MockParticipationWebsocketService } from '../../../mocks/service/mock-participation-websocket.service';
 import { Result } from 'app/entities/result.model';
 import { DeviceDetectorService } from 'ngx-device-detector';
 import { of } from 'rxjs';
 import { AccountService } from 'app/core/auth/account.service';
-import { MockAccountService } from '../../../mocks/mock-account.service';
+import { MockAccountService } from '../../../mocks/service/mock-account.service';
 import * as moment from 'moment';
-import { MockCourseService } from '../../../mocks/mock-course.service';
+import { MockCourseService } from '../../../mocks/service/mock-course.service';
 import { Exercise, ExerciseType, ParticipationStatus } from 'app/entities/exercise.model';
 import { ArtemisCoursesModule } from 'app/overview/courses.module';
 import { InitializationState } from 'app/entities/participation/participation.model';
@@ -28,7 +28,7 @@ import { CourseExerciseRowComponent } from 'app/overview/course-exercises/course
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { CourseExerciseService, CourseManagementService } from 'app/course/manage/course-management.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { MockSyncStorage } from '../../../mocks/mock-sync.storage';
+import { MockSyncStorage } from '../../../mocks/service/mock-sync-storage.service';
 
 chai.use(sinonChai);
 const expect = chai.expect;

@@ -6,7 +6,7 @@ import { ComponentFixture, fakeAsync, TestBed, tick, flush } from '@angular/core
 import { AlertService } from 'app/core/alert/alert.service';
 import { ArtemisTestModule } from '../../test.module';
 import { TranslateModule } from '@ngx-translate/core';
-import { MockTextEditorService } from '../../mocks/mock-text-editor.service';
+import { MockTextEditorService } from '../../mocks/service/mock-text-editor.service';
 import { SinonStub, stub } from 'sinon';
 import * as sinonChai from 'sinon-chai';
 import { TextEditorService } from 'app/exercises/text/participate/text-editor.service';
@@ -14,7 +14,7 @@ import { BehaviorSubject } from 'rxjs';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { RouterTestingModule } from '@angular/router/testing';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { MockSyncStorage } from '../../mocks/mock-sync.storage';
+import { MockSyncStorage } from '../../mocks/service/mock-sync-storage.service';
 import { MockComponent } from 'ng-mocks';
 import { TextResultComponent } from 'app/exercises/text/participate/text-result/text-result.component';
 import { ComplaintInteractionsComponent } from 'app/complaints/complaint-interactions.component';

@@ -9,8 +9,8 @@ import { of, Subject } from 'rxjs';
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
 import { ArtemisTestModule } from '../../test.module';
-import { MockSyncStorage } from '../../mocks/mock-sync.storage';
-import { MockParticipationWebsocketService } from '../../mocks/mock-participation-websocket.service';
+import { MockSyncStorage } from '../../mocks/service/mock-sync-storage.service';
+import { MockParticipationWebsocketService } from '../../mocks/service/mock-participation-websocket.service';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import { Exercise } from 'app/entities/exercise.model';
 import { ExerciseSubmissionState, ProgrammingSubmissionService, ProgrammingSubmissionState } from 'app/exercises/programming/participate/programming-submission.service';
@@ -18,9 +18,9 @@ import { ArtemisProgrammingExerciseActionsModule } from 'app/exercises/programmi
 import { ProgrammingExerciseInstructorSubmissionStateComponent } from 'app/exercises/programming/shared/actions/programming-exercise-instructor-submission-state.component';
 import { triggerChanges } from '../../utils/general.utils';
 import { BuildRunState, ProgrammingBuildRunService } from 'app/exercises/programming/participate/programming-build-run.service';
-import { MockProgrammingBuildRunService } from '../../mocks/mock-programming-build-run.service';
+import { MockProgrammingBuildRunService } from '../../mocks/service/mock-programming-build-run.service';
 import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
-import { MockFeatureToggleService } from '../../mocks/mock-feature-toggle-service';
+import { MockFeatureToggleService } from '../../mocks/service/mock-feature-toggle.service';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 
 chai.use(sinonChai);

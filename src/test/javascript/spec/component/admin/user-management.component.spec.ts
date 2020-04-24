@@ -6,9 +6,9 @@ import { ArtemisTestModule } from '../../test.module';
 import { ArtemisAdminModule } from 'app/admin/admin.module';
 import { UserManagementComponent } from 'app/admin/user-management/user-management.component';
 import { UserService } from 'app/core/user/user.service';
-import { MockUserService } from '../../mocks/mock-user.service';
+import { MockUserService } from '../../mocks/service/mock-user.service';
 import { AccountService } from 'app/core/auth/account.service';
-import { MockAccountService } from '../../mocks/mock-account.service';
+import { MockAccountService } from '../../mocks/service/mock-account.service';
 
 chai.use(sinonChai);
 const expect = chai.expect;

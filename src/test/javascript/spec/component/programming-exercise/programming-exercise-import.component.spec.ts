@@ -12,13 +12,13 @@ import { SortByModule } from 'app/shared/pipes/sort-by.module';
 import { DifferencePipe } from 'ngx-moment';
 import { FeatureToggleModule } from 'app/shared/feature-toggle/feature-toggle.module';
 import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
-import { MockFeatureToggleService } from '../../mocks/mock-feature-toggle-service';
+import { MockFeatureToggleService } from '../../mocks/service/mock-feature-toggle.service';
 import { ProgrammingExerciseImportComponent } from 'app/exercises/programming/manage/programming-exercise-import.component';
 import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
 import { ProgrammingExercise, ProgrammingLanguage } from 'app/entities/programming-exercise.model';
 import { SearchResult } from 'app/shared/table/pageable-table';
 import { ButtonComponent } from 'app/shared/components/button.component';
-import { MockProgrammingExercisePagingService } from '../../mocks/mock-programming-exercise-paging.service';
+import { MockProgrammingExercisePagingService } from '../../mocks/service/mock-programming-exercise-paging.service';
 
 chai.use(sinonChai);
 const expect = chai.expect;

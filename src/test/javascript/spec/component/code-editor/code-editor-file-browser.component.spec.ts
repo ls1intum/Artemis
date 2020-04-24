@@ -24,11 +24,11 @@ import { CodeEditorFileBrowserCreateNodeComponent } from 'app/exercises/programm
 import { CodeEditorFileBrowserFileComponent } from 'app/exercises/programming/shared/code-editor/file-browser/code-editor-file-browser-file.component';
 import { CodeEditorFileBrowserComponent } from 'app/exercises/programming/shared/code-editor/file-browser/code-editor-file-browser.component';
 import { CodeEditorStatusComponent } from 'app/exercises/programming/shared/code-editor/status/code-editor-status.component';
-import { MockCodeEditorRepositoryService } from '../../mocks/mock-code-editor-repository.service';
-import { MockCodeEditorRepositoryFileService } from '../../mocks/mock-code-editor-repository-file.service';
-import { MockCodeEditorConflictStateService } from '../../mocks/mock-code-editor-conflict-state.service';
-import { MockSyncStorage } from '../../mocks/mock-sync.storage';
-import { MockCookieService } from '../../mocks/mock-cookie.service';
+import { MockCodeEditorRepositoryService } from '../../mocks/service/mock-code-editor-repository.service';
+import { MockCodeEditorRepositoryFileService } from '../../mocks/service/mock-code-editor-repository-file.service';
+import { MockCodeEditorConflictStateService } from '../../mocks/service/mock-code-editor-conflict-state.service';
+import { MockSyncStorage } from '../../mocks/service/mock-sync-storage.service';
+import { MockCookieService } from '../../mocks/service/mock-cookie.service';
 
 chai.use(sinonChai);
 const expect = chai.expect;

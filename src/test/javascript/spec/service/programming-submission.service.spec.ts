@@ -4,8 +4,8 @@ import { SinonStub, spy, stub } from 'sinon';
 import { BehaviorSubject, of, Subject } from 'rxjs';
 import { range as _range } from 'lodash';
 import * as sinonChai from 'sinon-chai';
-import { MockWebsocketService } from '../mocks/mock-websocket.service';
-import { MockHttpService } from '../mocks/mock-http.service';
+import { MockWebsocketService } from '../mocks/service/mock-websocket.service';
+import { MockHttpService } from '../mocks/service/mock-http.service';
 import {
     ExerciseSubmissionState,
     IProgrammingSubmissionService,
@@ -14,13 +14,13 @@ import {
     ProgrammingSubmissionStateObj,
 } from 'app/exercises/programming/participate/programming-submission.service';
 import { IParticipationWebsocketService } from 'app/overview/participation-websocket.service';
-import { MockAlertService } from '../mocks/mock-alert.service';
+import { MockAlertService } from '../mocks/service/mock-alert.service';
 import { Result } from 'app/entities/result.model';
 import { SERVER_API_URL } from 'app/app.constants';
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
 import { Submission } from 'app/entities/submission.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { MockParticipationWebsocketService } from '../mocks/mock-participation-websocket.service';
+import { MockParticipationWebsocketService } from '../mocks/service/mock-participation-websocket.service';
 
 chai.use(sinonChai);
 const expect = chai.expect;

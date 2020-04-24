@@ -1,4 +1,4 @@
-import { SpyObject } from '../helpers/spyobject';
+import { SpyObject } from '../../helpers/spyobject';
 import { JhiEventManager } from 'ng-jhipster';
 import Spy = jasmine.Spy;
 

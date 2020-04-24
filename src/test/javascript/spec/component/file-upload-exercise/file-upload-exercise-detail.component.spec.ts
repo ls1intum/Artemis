@@ -7,15 +7,15 @@ import { FileUploadExerciseDetailComponent } from 'app/exercises/file-upload/man
 import { By } from '@angular/platform-browser';
 import * as sinonChai from 'sinon-chai';
 import * as chai from 'chai';
-import { fileUploadExercise, MockFileUploadExerciseService } from '../../mocks/mock-file-upload-exercise.service';
+import { fileUploadExercise, MockFileUploadExerciseService } from '../../mocks/service/mock-file-upload-exercise.service';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { AlertService } from 'app/core/alert/alert.service';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { RouterTestingModule } from '@angular/router/testing';
 import { TranslateModule } from '@ngx-translate/core';
 import { ArtemisAssessmentSharedModule } from 'app/assessment/assessment-shared.module';
-import { MockSyncStorage } from '../../mocks/mock-sync.storage';
-import { MockCookieService } from '../../mocks/mock-cookie.service';
+import { MockSyncStorage } from '../../mocks/service/mock-sync-storage.service';
+import { MockCookieService } from '../../mocks/service/mock-cookie.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { CookieService } from 'ngx-cookie-service';
 import { FileUploadExerciseService } from 'app/exercises/file-upload/manage/file-upload-exercise.service';
