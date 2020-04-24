@@ -16,31 +16,34 @@ This page describes how to set up a programming exercise environment based on Ba
 
 ## Docker-Compose
 
-Before you start the docker-compose, check if the bamboo version in the `build.gradle` is equal to the bamboo version number in the Dockerfile of bamboo stored in `docker/bamboo/Dockerfile`.
-If the version number is not equal adjust the version number 
+Before you start the docker-compose, check if the bamboo version in the `build.gradle` (search for `com.atlassian.bamboo:bamboo-specs`) is equal to the bamboo version number in the Dockerfile of bamboo stored in `src/main/docker/bamboo/Dockerfile`.
+If the version number is not equal adjust the version number in the Dockerfile.
 
-Execute the docker-compose file `atlassian.yml` stored in `main/docker`
-
-<b>Get evaluation licenses for Atlassian products:</b> [Atlassian Licenses](https://my.atlassian.com/license/evaluation)
+Execute the docker-compose file `atlassian.yml` stored in `src/main/docker` e.g. with `docker-compose -f src/main/docker/atlassian.yml up -d`
 
 ## Configure Bamboo, Bitbucket and Jira
+By default, the Jira instance is reachable under `localhost:8081`, the Bamboo instance under `localhost:8085` and the Bitbucket instance under `localhost:7990`.
 
-1. Create an admin user with the same credentials in all 3 applications
-2. Execute the shell script `atlassian-setup.sh` in the `main/docker` directory. This script creats groups, users and add them to
-the created groups and diabled application links between the 3 applications   
-3. Enable the created [application links](https://confluence.atlassian.com/doc/linking-to-another-application-360677690.html) between all 3 application (OAuth Impersonate)
-4. Use the [user directories in Jira](https://confluence.atlassian.com/adminjiraserver/allowing-connections-to-jira-for-user-management-938847045.html) to synchronize the users in bitbucket and bamboo
-5. In Bamboo create a global variable named <b>SERVER_PLUGIN_SECRET_PASSWORD</b>, the value of this variable will be used as the secret. The value of this variable
-should be then stored in the `application-artemis.yml` as the value of `artemis-authentication-token-value`
-6. Download the [bamboo-server-notifaction-plugin](https://github.com/ls1intum/bamboo-server-notification-plugin/releases) and add it to bamboo.
+**Get evaluation licenses for Atlassian products:** [Atlassian Licenses](https://my.atlassian.com/license/evaluation)
+
+
+1. Create an admin user with the same credentials in all 3 applications. Create a sample project in Jira. Also, you can select the evaluation/internal/test/dev setups if you are asked. Select a `Bitbucket (Server)` license if asked. Do not connect Bitbucket with Jira yet.
+2. Execute the shell script `atlassian-setup.sh` in the `src/main/docker` directory (e.g. with `src/main/docker/./atlassian-setup.sh`). This script creates groups, users (~~and adds them to
+the created groups~~ NOT YET) and disabled application links between the 3 applications   
+3. Enable the created [application links](https://confluence.atlassian.com/doc/linking-to-another-application-360677690.html) between all 3 application (OAuth Impersonate). **You manually have to adjust the Display URL for the Bamboo->Bitbucket AND Bitbucket->Bamboo URl to `http://localhost:7990` and `http://localhost:8085`**
+4. Add the users to the groups. In our test setup, users 1-5 are students, 6-10 are tutors and 11-15 are instructors.
+5. Use the [user directories in Jira](https://confluence.atlassian.com/adminjiraserver/allowing-connections-to-jira-for-user-management-938847045.html) to synchronize the users in bitbucket and bamboo. Add the IP-address `0.0.0.0/0` in Jira and use `Atlassian Crowd` as directory type. Use the URL `http://jira:8080`. Also, you should decrease the synchronisation period (e.g. to 2 minutes). Press synchronise after adding the directory, the users and groups should now be available.
+6. In Bamboo create a global variable named <b>SERVER_PLUGIN_SECRET_PASSWORD</b>, the value of this variable will be used as the secret. The value of this variable
+should be then stored in `src/main/resources/config/application-artemis.yml` as the value of `artemis-authentication-token-value`
+7. Download the [bamboo-server-notifaction-plugin](https://github.com/ls1intum/bamboo-server-notification-plugin/releases) and add it to bamboo.
 Go to Bamboo → Manage apps → Upload app → select the downloaded .jar file → Upload
+8. Go to Bamboo → Agents → Default Agent and click on `Add executable`. Select type `Maven 3.x`, insert `Maven 3` as executable label and insert `/usr` as path. Then click on `Add JDK`, insert `JDK 12` as JDK label and insert `/usr/lib/jvm/java-14-oracle` as java home.
   
 ## Configure Artemis
 
-1. Modify the application-artemis.yml
+1. Modify `src/main/resources/config/application-artemis.yml`
 
-
-    artemis:
+    ```artemis:
         repo-clone-path: ./repos/
         repo-download-clone-path: ./repos-download/
         encryption-password: artemis-encrypt     # arbitrary password for encrypting database values
@@ -62,12 +65,9 @@ Go to Bamboo → Manage apps → Upload app → select the downloaded .jar file 
             url: http://localhost:8085
             user:  <bamboo-admin-user>
             password: <bamboo-admin-password>
-            vcs-application-link-name: <The application link name of bitbucket created in bamoo>
+            vcs-application-link-name: LS1 Bitbucket Server
             empty-commit-necessary: true
             artemis-authentication-token-value: <artemis-authentication-token-value>
-
-In order to find the `vcs-application-link-name`:
-Go to Bamboo → Overview → Application links → The name of the bitbucket application is the `vcs-application-link-name` 
 
 2. Modify the application-dev.yml
 
@@ -81,3 +81,18 @@ In addition, you have to start Artemis with the profiles `bamboo`, `bitbucket` a
     --spring.profiles.active=dev,bamboo,bitbucket,jira,artemis
 
 Please read [Development Setup](doc/setup/SETUP.md) for more details.
+
+
+### How to verify the connection works?
+#### Artemis -> Jira
+You can login to Artemis with the admin user you created in Jira
+#### Artemis -> Bitbucket
+You can create a programming exercise
+#### Artemis -> Bamboo
+You can create a programming exercise
+#### Bitbucket -> Bamboo
+The build of the students repository gets started after pushing to it
+#### Bitbucket -> Artemis
+When using the code editor, after clicking on "Submit", the text `Building and testing...` should appear.
+#### Bamboo -> Artemis
+The build result is displayed in the code editor.

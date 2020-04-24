@@ -50,7 +50,7 @@ fi
 
 # create groups
 
-declare -a group_names=("admins" "tutors" "instructors")
+declare -a group_names=("tutors" "instructors" "students")
 
 jira_group_url="http://localhost:$jira_external_port/rest/api/latest/group"
 
@@ -75,7 +75,7 @@ jira_group_add_url="http://localhost:$jira_external_port/rest/api/2/group/user?g
 
 for i in {1..15}; do
     # User 1-5 are students, 6-10 are tutors, 11-15 are instructors
-    group="student"
+    group="students"
     if ((i > 5)); then
       group="tutors"
     fi
@@ -119,7 +119,7 @@ bamboo_url="http://localhost:$bamboo_port/rest/applinks/latest/applicationlinkFo
 bitbucket_url="http://localhost:$bitbucket_port/rest/applinks/latest/applicationlinkForm/createAppLink"
 
 internal_jira_url="http://jira:$jira_internal_port"
-internal_babmoo_url="http://bamboo:$bamboo_port"
+internal_bamboo_url="http://bamboo:$bamboo_port"
 internal_bitbucket_url="http://bitbucket:$bitbucket_port"
 
 echo $'\nConfiguring ApplicationLinks'
@@ -161,8 +161,8 @@ curl -u $jira_uservar:$jira_passvar \
                 \"applicationLink\": {
                     \"typeId\": \"bamboo\",
                     \"name\": \"LS1 Bamboo Server\",
-                    \"displayUrl\": \"$internal_babmoo_url\",
-                    \"rpcUrl\": \"$internal_babmoo_url\",
+                    \"displayUrl\": \"$internal_bamboo_url\",
+                    \"rpcUrl\": \"$internal_bamboo_url\",
                     \"isPrimary\": true,
                     \"isSystem\": true
                 },
@@ -196,7 +196,7 @@ curl -u $bamboo_uservar:$bamboo_passvar \
                 \"username\": \"$bitbucket_uservar\",
                 \"password\": \"$bitbucket_passvar\",
                 \"customRpcURL\": false,
-                \"rpcUrl\": \"$internal_babmoo_url\",
+                \"rpcUrl\": \"$internal_bamboo_url\",
                 \"createTwoWayLink\": false,
                 \"configFormValues\": {
                 \"trustEachOther\": true,
@@ -222,7 +222,7 @@ curl -u $bamboo_uservar:$bamboo_passvar \
                 \"username\": \"$jira_uservar\",
                 \"password\": \"$jira_passvar\",
                 \"customRpcURL\": false,
-                \"rpcUrl\": \"$internal_babmoo_url\",
+                \"rpcUrl\": \"$internal_bamboo_url\",
                 \"createTwoWayLink\": false,
                 \"configFormValues\": {
                 \"trustEachOther\": true,
@@ -267,8 +267,8 @@ curl -u $bitbucket_uservar:$bitbucket_passvar \
                 \"applicationLink\": {
                     \"typeId\": \"bamboo\",
                     \"name\": \"LS1 Bamboo Server\",
-                    \"displayUrl\": \"$internal_babmoo_url\",
-                    \"rpcUrl\": \"$internal_babmoo_url\",
+                    \"displayUrl\": \"$internal_bamboo_url\",
+                    \"rpcUrl\": \"$internal_bamboo_url\",
                     \"isPrimary\": true,
                     \"isSystem\": true
                 },
