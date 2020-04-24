@@ -5,11 +5,11 @@ import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { RouterTestingModule } from '@angular/router/testing';
 import { SortByModule } from 'app/shared/pipes/sort-by.module';
 import { AlertService } from 'app/core/alert/alert.service';
-import { MockAlertService } from '../../mocks/service/mock-alert.service';
+import { MockAlertService } from '../../helpers/mocks/service/mock-alert.service';
 import { ComplaintService } from 'app/complaints/complaint.service';
 import { DifferencePipe } from 'ngx-moment';
 import { ActivatedRoute } from '@angular/router';
-import { MockActivatedRoute } from '../../mocks/service/mock-route.service';
+import { MockActivatedRoute } from '../../helpers/mocks/service/mock-route.service';
 import { ListOfComplaintsComponent } from 'app/complaints/list-of-complaints/list-of-complaints.component';
 
 describe('ListOfComplaintsComponent', () => {

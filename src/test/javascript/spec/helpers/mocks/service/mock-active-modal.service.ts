@@ -1,4 +1,4 @@
-import { SpyObject } from '../../helpers/spyobject';
+import { SpyObject } from '../../spyobject';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import Spy = jasmine.Spy;
 

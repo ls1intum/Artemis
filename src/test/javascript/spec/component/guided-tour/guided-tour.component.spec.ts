@@ -8,8 +8,8 @@ import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { of } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import { ArtemisTestModule } from '../../test.module';
-import { MockSyncStorage } from '../../mocks/service/mock-sync-storage.service';
-import { MockCookieService } from '../../mocks/service/mock-cookie.service';
+import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
+import { MockCookieService } from '../../helpers/mocks/service/mock-cookie.service';
 import { TextTourStep } from 'app/guided-tour/guided-tour-step.model';
 import { GuidedTour } from 'app/guided-tour/guided-tour.model';
 import { GuidedTourComponent } from 'app/guided-tour/guided-tour.component';
@@ -18,7 +18,7 @@ import { Orientation, OverlayPosition, ResetParticipation } from 'app/guided-tou
 import { DeviceDetectorService } from 'ngx-device-detector';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { By } from '@angular/platform-browser';
-import { MockTranslateService } from '../../mocks/service/mock-translate.service';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 
 chai.use(sinonChai);
 const expect = chai.expect;

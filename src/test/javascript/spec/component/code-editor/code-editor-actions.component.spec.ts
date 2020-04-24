@@ -15,16 +15,16 @@ import { CodeEditorRepositoryFileService, CodeEditorRepositoryService } from 'ap
 import { ArtemisTestModule } from '../../test.module';
 import { FeatureToggleModule } from 'app/shared/feature-toggle/feature-toggle.module';
 import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
-import { MockFeatureToggleService } from '../../mocks/service/mock-feature-toggle.service';
+import { MockFeatureToggleService } from '../../helpers/mocks/service/mock-feature-toggle.service';
 
 import { cartesianProduct } from 'app/shared/util/utils';
-import { MockSyncStorage } from '../../mocks/service/mock-sync-storage.service';
+import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { CodeEditorConflictStateService } from 'app/exercises/programming/shared/code-editor/service/code-editor-conflict-state.service';
 import { CodeEditorActionsComponent } from 'app/exercises/programming/shared/code-editor/actions/code-editor-actions.component';
-import { MockCodeEditorConflictStateService } from '../../mocks/service/mock-code-editor-conflict-state.service';
-import { MockCodeEditorRepositoryFileService } from '../../mocks/service/mock-code-editor-repository-file.service';
-import { MockCodeEditorRepositoryService } from '../../mocks/service/mock-code-editor-repository.service';
-import { MockCookieService } from '../../mocks/service/mock-cookie.service';
+import { MockCodeEditorConflictStateService } from '../../helpers/mocks/service/mock-code-editor-conflict-state.service';
+import { MockCodeEditorRepositoryFileService } from '../../helpers/mocks/service/mock-code-editor-repository-file.service';
+import { MockCodeEditorRepositoryService } from '../../helpers/mocks/service/mock-code-editor-repository.service';
+import { MockCookieService } from '../../helpers/mocks/service/mock-cookie.service';
 import { CommitState, EditorState } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 
 chai.use(sinonChai);

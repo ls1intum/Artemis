@@ -11,12 +11,12 @@ import { SinonStub, spy, stub } from 'sinon';
 import { Subject } from 'rxjs';
 import { ArtemisTestModule } from '../../test.module';
 import { CreateFileChange, FileType, RenameFileChange } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
-import { triggerChanges } from '../../utils/general.utils';
+import { triggerChanges } from '../../helpers/utils/general.utils';
 import { AnnotationArray } from 'app/entities/annotation.model';
 import { CodeEditorRepositoryFileService } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
 import { CodeEditorFileService } from 'app/exercises/programming/shared/code-editor/service/code-editor-file.service';
 import { CodeEditorAceComponent } from 'app/exercises/programming/shared/code-editor/ace/code-editor-ace.component';
-import { MockCodeEditorRepositoryFileService } from '../../mocks/service/mock-code-editor-repository-file.service';
+import { MockCodeEditorRepositoryFileService } from '../../helpers/mocks/service/mock-code-editor-repository-file.service';
 
 chai.use(sinonChai);
 const expect = chai.expect;

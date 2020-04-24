@@ -5,7 +5,7 @@ import { DebugElement } from '@angular/core';
 import * as chai from 'chai';
 import { ArtemisTestModule } from '../../test.module';
 import { ArtemisTableModule } from 'app/shared/table/table.module';
-import { triggerChanges } from '../../utils/general.utils';
+import { triggerChanges } from '../../helpers/utils/general.utils';
 import { TableEditableFieldComponent } from 'app/shared/table/table-editable-field.component';
 
 const expect = chai.expect;

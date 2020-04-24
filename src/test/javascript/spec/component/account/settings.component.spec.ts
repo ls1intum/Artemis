@@ -6,7 +6,7 @@ import { ArtemisTestModule } from '../../test.module';
 import { AccountService } from 'app/core/auth/account.service';
 import { Account } from 'app/core/user/account.model';
 import { SettingsComponent } from 'app/account/settings/settings.component';
-import { MockAccountService } from '../../mocks/service/mock-account.service';
+import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
 
 describe('SettingsComponent', () => {
     let comp: SettingsComponent;

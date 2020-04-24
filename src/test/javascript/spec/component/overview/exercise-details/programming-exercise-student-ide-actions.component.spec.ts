@@ -15,19 +15,19 @@ import { FeatureToggleModule } from 'app/shared/feature-toggle/feature-toggle.mo
 import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 import { ProgrammingExerciseStudentIdeActionsComponent } from 'app/overview/exercise-details/programming-exercise-student-ide-actions.component';
 import { InitializationState } from 'app/entities/participation/participation.model';
-import { MockFeatureToggleService } from '../../../mocks/service/mock-feature-toggle.service';
+import { MockFeatureToggleService } from '../../../helpers/mocks/service/mock-feature-toggle.service';
 import { Exercise, ParticipationStatus } from 'app/entities/exercise.model';
-import { MockCourseExerciseService } from '../../../mocks/service/mock-course-exercise.service';
+import { MockCourseExerciseService } from '../../../helpers/mocks/service/mock-course-exercise.service';
 import { ExerciseActionButtonComponent } from 'app/overview/exercise-details/exercise-action-button.component';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { ArtemisTestModule } from '../../../test.module';
 import { JhiAlertService } from 'ng-jhipster';
-import { MockAlertService } from '../../../mocks/service/mock-alert.service';
-import { MockOrionConnectorService } from '../../../mocks/service/mock-orion-connector.service';
+import { MockAlertService } from '../../../helpers/mocks/service/mock-alert.service';
+import { MockOrionConnectorService } from '../../../helpers/mocks/service/mock-orion-connector.service';
 import { ArtemisOrionConnector, OrionState } from 'app/shared/orion/orion';
 import { OrionModule } from 'app/shared/orion/orion.module';
-import { MockIdeBuildAndTestService } from '../../../mocks/service/mock-ide-build-and-test.service';
+import { MockIdeBuildAndTestService } from '../../../helpers/mocks/service/mock-ide-build-and-test.service';
 import { OrionBuildAndTestService } from 'app/shared/orion/orion-build-and-test.service';
 
 chai.use(sinonChai);

@@ -18,11 +18,11 @@ import { GuidedTourState, Orientation, ResetParticipation, UserInteractionEvent 
 import { GuidedTourComponent } from 'app/guided-tour/guided-tour.component';
 import { GuidedTourMapping, GuidedTourSetting } from 'app/guided-tour/guided-tour-setting.model';
 import { ModelingTaskTourStep, TextTourStep, UserInterActionTourStep } from 'app/guided-tour/guided-tour-step.model';
-import { MockAccountService } from '../mocks/service/mock-account.service';
+import { MockAccountService } from '../helpers/mocks/service/mock-account.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { DeviceDetectorService } from 'ngx-device-detector';
 import { Course } from 'app/entities/course.model';
-import { MockTranslateService } from '../mocks/service/mock-translate.service';
+import { MockTranslateService } from '../helpers/mocks/service/mock-translate.service';
 import { GuidedTourModelingTask, personUML } from 'app/guided-tour/guided-tour-task.model';
 import { completedTour } from 'app/guided-tour/tours/general-tour';
 import { SinonStub, stub } from 'sinon';
@@ -32,8 +32,8 @@ import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { InitializationState } from 'app/entities/participation/participation.model';
 import { NavbarComponent } from 'app/shared/layouts/navbar/navbar.component';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { MockSyncStorage } from '../mocks/service/mock-sync-storage.service';
-import { MockCookieService } from '../mocks/service/mock-cookie.service';
+import { MockSyncStorage } from '../helpers/mocks/service/mock-sync-storage.service';
+import { MockCookieService } from '../helpers/mocks/service/mock-cookie.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 
 chai.use(sinonChai);

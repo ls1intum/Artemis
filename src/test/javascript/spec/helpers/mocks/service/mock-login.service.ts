@@ -1,4 +1,4 @@
-import { SpyObject } from '../../helpers/spyobject';
+import { SpyObject } from '../../spyobject';
 import { LoginService } from 'app/core/login/login.service';
 import Spy = jasmine.Spy;
 

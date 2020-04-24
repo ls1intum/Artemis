@@ -1,5 +1,5 @@
-import { problemStatement } from '../sample/problemStatement.json';
-import { MockTranslateService } from '../mocks/service/mock-translate.service';
+import { problemStatement } from '../helpers/sample/problemStatement.json';
+import { MockTranslateService } from '../helpers/mocks/service/mock-translate.service';
 import { ExerciseHint } from 'app/entities/exercise-hint.model';
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';

@@ -8,9 +8,9 @@ import * as moment from 'moment';
 import { DATE_TIME_FORMAT } from 'app/shared/constants/input.constants';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { Course } from 'app/entities/course.model';
-import { MockTranslateService } from '../mocks/service/mock-translate.service';
-import { MockSyncStorage } from '../mocks/service/mock-sync-storage.service';
-import { MockRouter } from '../mocks/service/mock-router.service';
+import { MockTranslateService } from '../helpers/mocks/service/mock-translate.service';
+import { MockSyncStorage } from '../helpers/mocks/service/mock-sync-storage.service';
+import { MockRouter } from '../helpers/mocks/service/mock-router.service';
 
 describe('Service Tests', () => {
     describe('Course Service', () => {

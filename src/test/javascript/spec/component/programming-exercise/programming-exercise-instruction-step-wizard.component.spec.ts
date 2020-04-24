@@ -9,7 +9,7 @@ import * as moment from 'moment';
 import { ArtemisTestModule } from '../../test.module';
 import { ProgrammingExerciseInstructionStepWizardComponent } from 'app/exercises/programming/shared/instructions-render/step-wizard/programming-exercise-instruction-step-wizard.component';
 import { ProgrammingExerciseInstructionService } from 'app/exercises/programming/shared/instructions-render/service/programming-exercise-instruction.service';
-import { triggerChanges } from '../../utils/general.utils';
+import { triggerChanges } from '../../helpers/utils/general.utils';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { Task } from 'app/exercises/programming/shared/instructions-render/task/programming-exercise-task.model';
 

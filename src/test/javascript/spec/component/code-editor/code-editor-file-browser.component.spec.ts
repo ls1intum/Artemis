@@ -14,7 +14,7 @@ import { SinonStub, spy, stub } from 'sinon';
 import { Observable, Subject } from 'rxjs';
 import { ArtemisTestModule } from '../../test.module';
 import { CommitState, FileType, GitConflictState } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
-import { triggerChanges } from '../../utils/general.utils';
+import { triggerChanges } from '../../helpers/utils/general.utils';
 import { DeviceDetectorService } from 'ngx-device-detector';
 import { CodeEditorRepositoryFileService, CodeEditorRepositoryService } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
 import { CodeEditorConflictStateService } from 'app/exercises/programming/shared/code-editor/service/code-editor-conflict-state.service';
@@ -24,11 +24,11 @@ import { CodeEditorFileBrowserCreateNodeComponent } from 'app/exercises/programm
 import { CodeEditorFileBrowserFileComponent } from 'app/exercises/programming/shared/code-editor/file-browser/code-editor-file-browser-file.component';
 import { CodeEditorFileBrowserComponent } from 'app/exercises/programming/shared/code-editor/file-browser/code-editor-file-browser.component';
 import { CodeEditorStatusComponent } from 'app/exercises/programming/shared/code-editor/status/code-editor-status.component';
-import { MockCodeEditorRepositoryService } from '../../mocks/service/mock-code-editor-repository.service';
-import { MockCodeEditorRepositoryFileService } from '../../mocks/service/mock-code-editor-repository-file.service';
-import { MockCodeEditorConflictStateService } from '../../mocks/service/mock-code-editor-conflict-state.service';
-import { MockSyncStorage } from '../../mocks/service/mock-sync-storage.service';
-import { MockCookieService } from '../../mocks/service/mock-cookie.service';
+import { MockCodeEditorRepositoryService } from '../../helpers/mocks/service/mock-code-editor-repository.service';
+import { MockCodeEditorRepositoryFileService } from '../../helpers/mocks/service/mock-code-editor-repository-file.service';
+import { MockCodeEditorConflictStateService } from '../../helpers/mocks/service/mock-code-editor-conflict-state.service';
+import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
+import { MockCookieService } from '../../helpers/mocks/service/mock-cookie.service';
 
 chai.use(sinonChai);
 const expect = chai.expect;

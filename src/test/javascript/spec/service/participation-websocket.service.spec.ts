@@ -4,7 +4,7 @@ import { SinonSpy, SinonStub, spy, stub } from 'sinon';
 import { BehaviorSubject, Subject } from 'rxjs';
 import * as sinonChai from 'sinon-chai';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
-import { MockWebsocketService } from '../mocks/service/mock-websocket.service';
+import { MockWebsocketService } from '../helpers/mocks/service/mock-websocket.service';
 import { Participation } from 'app/entities/participation/participation.model';
 import { Result } from 'app/entities/result.model';
 import { IWebsocketService } from 'app/core/websocket/websocket.service';

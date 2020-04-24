@@ -4,10 +4,10 @@ import { SinonSpy, SinonStub, spy, stub } from 'sinon';
 import { of, Subject } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import * as sinonChai from 'sinon-chai';
-import { MockWebsocketService } from '../mocks/service/mock-websocket.service';
+import { MockWebsocketService } from '../helpers/mocks/service/mock-websocket.service';
 import { IWebsocketService } from 'app/core/websocket/websocket.service.ts';
 import { ProgrammingExerciseTestCaseService } from 'app/exercises/programming/manage/services/programming-exercise-test-case.service';
-import { MockHttpService } from '../mocks/service/mock-http.service';
+import { MockHttpService } from '../helpers/mocks/service/mock-http.service';
 import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise-test-case.model';
 import { Result } from 'app/entities/result.model';
 
