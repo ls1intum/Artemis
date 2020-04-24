@@ -2,11 +2,11 @@ import { Component, Input, OnDestroy, OnInit, AfterViewInit } from '@angular/cor
 import { User } from 'app/core/user/user.model';
 import * as moment from 'moment';
 import { HttpResponse } from '@angular/common/http';
-import { QuestionActionName, StudentQuestionAction } from 'app/overview/student-questions/student-question-row.component';
+import { QuestionRowActionName, StudentQuestionRowAction } from 'app/overview/student-questions/student-question-row/student-question-row.component';
 import { Lecture } from 'app/entities/lecture.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { StudentQuestion } from 'app/entities/student-question.model';
-import { StudentQuestionService } from 'app/overview/student-questions/student-question.service';
+import { StudentQuestionService } from 'app/overview/student-questions/student-question/student-question.service';
 import { Exercise } from 'app/entities/exercise.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { EditorMode } from 'app/shared/markdown-editor/markdown-editor.component';
@@ -78,9 +78,9 @@ export class StudentQuestionsComponent implements OnInit, OnDestroy, AfterViewIn
 
     ngOnDestroy(): void {}
 
-    interactQuestion (action: StudentQuestionAction) {
+    interactQuestion (action: StudentQuestionRowAction) {
         switch (action.name) {
-            case QuestionActionName.DELETE:
+            case QuestionRowActionName.DELETE:
                 this.deleteQuestionFromList(action.studentQuestion);
                 break;
         }

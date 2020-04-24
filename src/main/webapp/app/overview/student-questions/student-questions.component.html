@@ -3,7 +3,7 @@
     <div class="draggable-left"><fa-icon [icon]="'grip-lines-vertical'"></fa-icon></div>
     <div class="card">
         <!-- header -->
-        <div class="card-header text-white bg-secondary" (click)="collapsed = true">
+        <div class="card-header text-white bg-secondary" [ngbTooltip]="'artemisApp.courseOverview.exerciseDetails.faq.hide' | translate" (click)="collapsed = true">
             <div class="row">
                 <div class="col-auto">
                     <fa-icon [icon]="'question'"></fa-icon>&nbsp;
@@ -12,7 +12,7 @@
                     <h4 jhiTranslate="artemisApp.courseOverview.exerciseDetails.faq.header"> &nbsp; Q & A &nbsp; </h4>
                 </div>
                 <div class="col-auto">
-                    <fa-icon [icon]="'chevron-right'" [ngbTooltip]="'artemisApp.courseOverview.exerciseDetails.faq.hide' | translate"></fa-icon>
+                    <fa-icon [icon]="'chevron-right'"></fa-icon>
                 </div>
             </div>
         </div>
@@ -24,7 +24,7 @@
                 [user]="currentUser"
                 [isAtLeastTutorInCourse]="isAtLeastTutorInCourse"
                 [selectedStudentQuestion]="selectedStudentQuestion"
-                (interactQuestion)="interactQuestion($event)"
+                (interactQuestionRow)="interactQuestion($event)"
                 *ngFor="let studentQuestion of studentQuestions"
             ></jhi-student-question-row>
             <!-- new question editor -->
@@ -32,15 +32,15 @@
                 <div class="row">
                     <div class="col-12">
                         <div class="row mb-1">
-                            <div class="col-auto">
+                            <div class="col-auto px-0">
                                 <fa-icon [icon]="'question'" [ngbTooltip]="'artemisApp.courseOverview.exerciseDetails.faq.questionLabel' | translate"></fa-icon>&nbsp;
                             </div>
                             <div class="col">
-                                <h5 class="form-control-label">{{ 'artemisApp.courseOverview.exerciseDetails.faq.newQuestionLabel' | translate }}</h5>
+                                <span class="form-control-label">{{ 'artemisApp.courseOverview.exerciseDetails.faq.newQuestionLabel' | translate }}</span>
                             </div>
                         </div>
                     </div>
-                    <div class="col-12">
+                    <div class="col-12 px-0">
                         <jhi-markdown-editor
                             class="markdown-editor background-editor-color"
                             [domainCommands]="domainCommands"
@@ -62,7 +62,7 @@
             </div>
             <!-- new question button -->
             <div class="row" *ngIf="!isEditMode">
-                <div class="col-12">
+                <div class="col-12 px-0">
                     <button class="btn btn-sm btn-outline-secondary" (click)="toggleEditMode()">
                         {{ 'artemisApp.courseOverview.exerciseDetails.faq.addNewQuestion' | translate }}
                     </button>

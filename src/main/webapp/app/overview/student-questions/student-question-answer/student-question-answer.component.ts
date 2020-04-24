@@ -1,10 +1,7 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { User } from 'app/core/user/user.model';
-import * as moment from 'moment';
-import { HttpResponse } from '@angular/common/http';
-import { StudentQuestion } from 'app/entities/student-question.model';
 import { StudentQuestionAnswer } from 'app/entities/student-question-answer.model';
-import { StudentQuestionAnswerService } from 'app/overview/student-questions/student-question-answer.service';
+import { StudentQuestionAnswerService } from 'app/overview/student-questions/student-question-answer/student-question-answer.service';
 import { EditorMode } from 'app/shared/markdown-editor/markdown-editor.component';
 
 export interface StudentQuestionAnswerAction {
@@ -21,7 +18,7 @@ export enum QuestionAnswerActionName {
 @Component({
     selector: 'jhi-student-question-answer',
     templateUrl: './student-question-answer.component.html',
-    styleUrls: ['./student-questions.scss'],
+    styleUrls: ['./../student-questions.scss'],
 })
 export class StudentQuestionAnswerComponent {
     @Input() studentQuestionAnswer: StudentQuestionAnswer;

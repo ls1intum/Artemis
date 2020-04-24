@@ -56,12 +56,41 @@
     }
 }
 
-.question-subtitle {
+.question-subtitle, .answer-subtitle {
     font-size: 12px;
 }
 
-.answer-approved {
-    color: green;
-    background-color: #f2f9f2;
+.question-text, .answer-text {
+    background: rgba(0, 0, 0, 0.1);
+    border-radius: 3px;
+}
+
+.answer {
+    background-color: rgba(0, 0, 0, 0.05);
     border-radius: 4px;
+
+    &.answer-approved {
+        color: green;
+        background-color: #f2f9f2;
+
+        .answer-text {
+            color: initial;
+        }
+    }
+}
+
+.line {
+    width: auto;
+    height: 2px;
+    background: rgba(0, 0, 0, 0.1);;
+    content: ' ';
+    margin: auto 0;
+}
+
+.answers-line {
+    height: auto;
+    margin: 0 7px;
+    background: rgba(0, 0, 0, 0.1);
+    width: 2px;
+    content: ' ';
 }

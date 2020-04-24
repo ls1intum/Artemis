@@ -4,55 +4,57 @@ import * as moment from 'moment';
 import {HttpResponse} from '@angular/common/http';
 import {StudentQuestion} from 'app/entities/student-question.model';
 import {StudentQuestionAnswer} from 'app/entities/student-question-answer.model';
-import {StudentQuestionService} from 'app/overview/student-questions/student-question.service';
-import {StudentQuestionAnswerService} from 'app/overview/student-questions/student-question-answer.service';
+import {StudentQuestionService} from 'app/overview/student-questions/student-question/student-question.service';
+import {StudentQuestionAnswerService} from 'app/overview/student-questions/student-question-answer/student-question-answer.service';
 import {
     QuestionAnswerActionName,
     StudentQuestionAnswerAction
-} from 'app/overview/student-questions/student-question-answer.component';
+} from 'app/overview/student-questions/student-question-answer/student-question-answer.component';
 import {EditorMode} from 'app/shared/markdown-editor/markdown-editor.component';
+import {QuestionActionName, StudentQuestionAction} from "app/overview/student-questions/student-question/student-question.component";
 
-export interface StudentQuestionAction {
-    name: QuestionActionName;
+export interface StudentQuestionRowAction {
+    name: QuestionRowActionName;
     studentQuestion: StudentQuestion;
 }
 
-export enum QuestionActionName {
+export enum QuestionRowActionName {
     DELETE,
 }
 
 @Component({
     selector: 'jhi-student-question-row',
     templateUrl: './student-question-row.component.html',
-    styleUrls: ['./student-questions.scss'],
+    styleUrls: ['./../student-questions.scss'],
 })
 export class StudentQuestionRowComponent implements OnInit {
     @Input() studentQuestion: StudentQuestion;
     @Input() selectedStudentQuestion: StudentQuestion;
     @Input() user: User;
     @Input() isAtLeastTutorInCourse: boolean;
-    @Output() interactQuestion = new EventEmitter<StudentQuestionAction>();
+    @Output() interactQuestionRow = new EventEmitter<StudentQuestionRowAction>();
     isExpanded = true;
     isAnswerMode: boolean;
-    isEditMode: boolean;
-    isQuestionAuthor = false;
     showOtherAnswers = false;
     selectedQuestionAnswer: StudentQuestionAnswer | null;
     questionAnswerText: string | null;
-    studentQuestionText: string | null;
     sortedQuestionAnswers: StudentQuestionAnswer[];
     approvedQuestionAnswers: StudentQuestionAnswer[];
     EditorMode = EditorMode;
 
     constructor(private studentQuestionAnswerService: StudentQuestionAnswerService, private studentQuestionService: StudentQuestionService) {}
 
+    /**
+     * sort answers when component is initialized
+     */
     ngOnInit(): void {
-        if (this.user) {
-            this.isQuestionAuthor = this.studentQuestion.author.id === this.user.id;
-        }
         this.sortQuestionAnswers();
     }
 
+    /**
+     * interact with asnwer component
+     * @param {StudentQuestionAnswerAction} action
+     */
     interactAnswer (action: StudentQuestionAnswerAction) {
         switch (action.name) {
             case QuestionAnswerActionName.DELETE:
@@ -63,6 +65,21 @@ export class StudentQuestionRowComponent implements OnInit {
                 break;
             case QuestionAnswerActionName.APPROVE:
                 this.sortQuestionAnswers();
+                break;
+        }
+    }
+
+    /**
+     * interact with question component
+     * @param {StudentQuestionAction} action
+     */
+    interactQuestion (action: StudentQuestionAction): void {
+        switch (action.name) {
+            case QuestionActionName.DELETE:
+                this.deleteQuestion();
+                break;
+            case QuestionActionName.EXPAND:
+                this.isExpanded = !this.isExpanded
                 break;
         }
     }
@@ -94,61 +111,13 @@ export class StudentQuestionRowComponent implements OnInit {
             });
     }
 
-    toggleQuestionEditMode(): void {
-        this.studentQuestionText = this.studentQuestion.questionText;
-        this.isEditMode = !this.isEditMode;
-    }
-
-    /**
-     * Takes a studentQuestionAnswer and toggles the edit field for it
-     * If a studentQuestionAnswer is already selected it closes the edit field for the old one and opens it for the new one
-     * @param   {StudentQuestionAnswer} questionAnswer
-     */
-    toggleAnswerMode(questionAnswer: StudentQuestionAnswer | null): void {
-        if (questionAnswer) {
-            if (this.selectedQuestionAnswer && questionAnswer.id === this.selectedQuestionAnswer.id) {
-                this.isAnswerMode = false;
-                this.questionAnswerText = '';
-                this.selectedQuestionAnswer = null;
-            } else {
-                this.isAnswerMode = true;
-                this.questionAnswerText = questionAnswer.answerText;
-                this.selectedQuestionAnswer = questionAnswer;
-            }
-        } else {
-            this.isAnswerMode = false;
-            this.questionAnswerText = '';
-            this.selectedQuestionAnswer = questionAnswer;
-        }
-    }
-
-    /**
-     * Toggles the field for a new Answer
-     */
-    toggleAnswerModeForNewAnswer(): void {
-        this.isAnswerMode = true;
-        this.questionAnswerText = '';
-        this.selectedQuestionAnswer = null;
-    }
-
-    /**
-     * Changes the question text
-     */
-    saveQuestion(): void {
-        this.studentQuestion.questionText = this.studentQuestionText;
-        this.studentQuestionService.update(this.studentQuestion).subscribe(() => {
-            this.studentQuestionText = null;
-            this.isEditMode = false;
-        });
-    }
-
     /**
      * deletes the studentQuestion
      */
     deleteQuestion(): void {
         this.studentQuestionService.delete(this.studentQuestion.id).subscribe(() => {
-            this.interactQuestion.emit({
-                name: QuestionActionName.DELETE,
+            this.interactQuestionRow.emit({
+                name: QuestionRowActionName.DELETE,
                 studentQuestion: this.studentQuestion,
             });
         });
@@ -177,31 +146,8 @@ export class StudentQuestionRowComponent implements OnInit {
     }
 
     /**
-     * Updates the text of the selected studentAnswer
-     */
-    saveAnswer(): void {
-        this.selectedQuestionAnswer!.answerText = this.questionAnswerText;
-        this.studentQuestionAnswerService.update(this.selectedQuestionAnswer!).subscribe((studentAnswerResponse: HttpResponse<StudentQuestionAnswer>) => {
-            this.questionAnswerText = null;
-            this.selectedQuestionAnswer = null;
-            this.isAnswerMode = false;
-        });
-    }
-
-    /**
      * Takes a studentAnswer and deletes it
-     * @param   {studentQuestionAnswer} studentAnswer
-     */
-    deleteAnswer(studentAnswer: StudentQuestionAnswer): void {
-        this.studentQuestionAnswerService.delete(studentAnswer.id).subscribe(() => {
-            this.studentQuestion.answers = this.studentQuestion.answers.filter((el: StudentQuestionAnswer) => el.id !== studentAnswer.id);
-            this.sortQuestionAnswers();
-        });
-    }
-
-    /**
-     * Takes a studentAnswer and deletes it
-     * @param   {studentQuestionAnswer} studentAnswer
+     * @param   {studentQuestionAnswer} studentQuestionAnswer
      */
     deleteAnswerFromList(studentQuestionAnswer: StudentQuestionAnswer): void {
         this.studentQuestion.answers = this.studentQuestion.answers.filter((el: StudentQuestionAnswer) => el.id !== studentQuestionAnswer.id);
@@ -210,22 +156,11 @@ export class StudentQuestionRowComponent implements OnInit {
 
     /**
      * Takes a studentAnswer and adds it to the others
-     * @param   {studentQuestionAnswer} studentAnswer
+     * @param   {StudentQuestionAnswer} studentQuestionAnswer
      */
     addAnswerToList(studentQuestionAnswer: StudentQuestionAnswer): void {
         this.studentQuestion.answers.push(studentQuestionAnswer);
         this.sortQuestionAnswers();
-    }
-
-    /**
-     * Takes a studentAnswer and toggles the tutorApproved field
-     * @param   {studentQuestionAnswer} studentAnswer
-     */
-    toggleAnswerTutorApproved(studentAnswer: StudentQuestionAnswer): void {
-        studentAnswer.tutorApproved = !studentAnswer.tutorApproved;
-        this.studentQuestionAnswerService.update(studentAnswer).subscribe((studentAnswerResponse: HttpResponse<StudentQuestionAnswer>) => {
-            this.sortQuestionAnswers();
-        });
     }
 
     /**

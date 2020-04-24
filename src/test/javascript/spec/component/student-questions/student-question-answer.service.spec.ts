@@ -3,7 +3,7 @@ import { HttpClientTestingModule, HttpTestingController } from '@angular/common/
 import { HttpResponse } from '@angular/common/http';
 import * as chai from 'chai';
 import { take } from 'rxjs/operators';
-import { StudentQuestionAnswerService } from 'app/overview/student-questions/student-question-answer.service';
+import { StudentQuestionAnswerService } from 'app/overview/student-questions/student-question-answer/student-question-answer.service';
 import { StudentQuestionAnswer } from 'app/entities/student-question-answer.model';
 
 const expect = chai.expect;
