@@ -9,7 +9,9 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 describe('ProgrammingExercise Management Detail Component', () => {
     let comp: ProgrammingExerciseDetailComponent;
     let fixture: ComponentFixture<ProgrammingExerciseDetailComponent>;
-    const route = ({ data: of({ programmingExercise: new ProgrammingExercise(123) }) } as any) as ActivatedRoute;
+    const programmingExercise = new ProgrammingExercise();
+    programmingExercise.id = 123;
+    const route = ({ data: of({ programmingExercise }) } as any) as ActivatedRoute;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
