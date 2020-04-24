@@ -45,10 +45,12 @@ describe('RegisterComponent', () => {
             comp.register();
             tick();
 
-            expect(service.save).toHaveBeenCalledWith({
-                password: 'password',
-                langKey: 'en',
-            });
+            expect(service.save).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    password: 'password',
+                    langKey: 'en',
+                }),
+            );
             expect(comp.success).toEqual(true);
             expect(comp.registerAccount.langKey).toEqual('en');
             expect(mockTranslate.getCurrentSpy).toHaveBeenCalled();
