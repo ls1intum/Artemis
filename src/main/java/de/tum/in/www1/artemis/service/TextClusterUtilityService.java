@@ -220,10 +220,9 @@ public class TextClusterUtilityService {
         }
 
         // Filter out the the text block itself as a text block's distance to itself will always be 0 and therefore the minimum
-        final Optional<TextBlock> nearestNeighorWithScore = getAssessedBlocks(textCluster)
-            .stream()
-            .filter(blockIterator -> getScoreOfTextBlock(blockIterator).getAsDouble() == score && blockIterator.getId() != textBlock.getId())
-            .min(comparing(element -> Math.abs(textCluster.distanceBetweenBlocks(textBlock, element))));
+        final Optional<TextBlock> nearestNeighorWithScore = getAssessedBlocks(textCluster).stream()
+                .filter(blockIterator -> getScoreOfTextBlock(blockIterator).getAsDouble() == score && blockIterator.getId() != textBlock.getId())
+                .min(comparing(element -> Math.abs(textCluster.distanceBetweenBlocks(textBlock, element))));
 
         return nearestNeighorWithScore;
     }

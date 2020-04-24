@@ -56,7 +56,7 @@ public class TextClusterUtilityServiceTest extends AbstractSpringIntegrationBamb
     @BeforeEach
     public void init() {
         textBlocks = textExerciseUtilService.generateTextBlocks(10);
-        for(TextBlock textBlock: textBlocks) {
+        for (TextBlock textBlock : textBlocks) {
             textBlock.computeId();
         }
         TextExercise textExercise = new TextExercise();

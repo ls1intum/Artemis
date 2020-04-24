@@ -9,13 +9,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
@@ -91,7 +91,7 @@ public class AutomaticTextFeedbackServiceTest extends AbstractSpringIntegrationB
         textClusterRepository.save(textCluster);
         mockedTextBlockRepository.saveAll(textBlocks);
 
-        for(TextBlock textBlock: textBlocks) {
+        for (TextBlock textBlock : textBlocks) {
             textBlock.computeId();
         }
         // Mock the text feedback validation service + text block repo to avoid network calls but still use the injected text cluster utility service
@@ -198,7 +198,7 @@ public class AutomaticTextFeedbackServiceTest extends AbstractSpringIntegrationB
         textCluster = textExerciseUtilService.createTextCluster(textBlocks, textExercise);
         double[][] distanceMatrix = { { 0, 0.1, 0.9, 0.9 }, { 0.1, 0, 0.5, 0.5 }, { 0.9, 0.5, 0, 0.1 }, { 0.9, 0.5, 0.1, 0 } };
         textCluster.setDistanceMatrix(distanceMatrix);
-        for(TextBlock textBlock: textBlocks) {
+        for (TextBlock textBlock : textBlocks) {
             textBlock.computeId();
         }
         Feedback closestFeedback = new Feedback();
