@@ -1,7 +1,5 @@
-import { ActivatedRoute, Router } from '@angular/router';
-import { SpyObject } from '../../spyobject';
+import { ActivatedRoute } from '@angular/router';
 import { of } from 'rxjs';
-import Spy = jasmine.Spy;
 
 export class MockActivatedRoute extends ActivatedRoute {
     constructor(parameters?: any) {
@@ -16,14 +14,5 @@ export class MockActivatedRoute extends ActivatedRoute {
                 predicate: 'id',
             },
         });
-    }
-}
-
-export class MockRouter extends SpyObject {
-    navigateSpy: Spy;
-
-    constructor() {
-        super(Router);
-        this.navigateSpy = this.spy('navigate');
     }
 }
