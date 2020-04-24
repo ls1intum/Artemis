@@ -9,7 +9,7 @@ import { MockAlertService } from '../../helpers/mocks/service/mock-alert.service
 import { ComplaintService } from 'app/complaints/complaint.service';
 import { DifferencePipe } from 'ngx-moment';
 import { ActivatedRoute } from '@angular/router';
-import { MockActivatedRoute } from '../../helpers/mocks/service/mock-route.service';
+import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
 import { ListOfComplaintsComponent } from 'app/complaints/list-of-complaints/list-of-complaints.component';
 
 describe('ListOfComplaintsComponent', () => {

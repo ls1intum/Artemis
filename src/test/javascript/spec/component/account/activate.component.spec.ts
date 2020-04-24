@@ -3,7 +3,7 @@ import { ActivatedRoute } from '@angular/router';
 import { of, throwError } from 'rxjs';
 
 import { ArtemisTestModule } from '../../test.module';
-import { MockActivatedRoute } from '../../helpers/mocks/service/mock-route.service';
+import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
 import { ActivateService } from 'app/account/activate/activate.service';
 import { ActivateComponent } from 'app/account/activate/activate.component';
 
