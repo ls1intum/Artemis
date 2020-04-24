@@ -11,7 +11,7 @@ import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { MockAlertService } from '../../helpers/mocks/service/mock-alert.service';
 import { AlertService } from 'app/core/alert/alert.service';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
-import { MockRouter } from '../../helpers/mocks/service/mock-router.service';
+import { MockRouter } from '../../helpers/mocks/mock-router';
 import { of, throwError } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
 import { SidePanelComponent } from 'app/shared/side-panel/side-panel.component';

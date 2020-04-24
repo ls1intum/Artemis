@@ -10,7 +10,7 @@ import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from './helpers/mocks/service/mock-account.service';
 import { MockActivatedRoute } from './helpers/mocks/service/mock-route.service';
-import { MockRouter } from './helpers/mocks/service/mock-router.service';
+import { MockRouter } from './helpers/mocks/mock-router';
 import { MockActiveModal } from './helpers/mocks/service/mock-active-modal.service';
 import { MockEventManager } from './helpers/mocks/service/mock-event-manager.service';
 import { CookieService } from 'ngx-cookie-service';

@@ -6,7 +6,7 @@ import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { Router } from '@angular/router';
 import { MockProfileService } from '../helpers/mocks/service/mock-profile.service';
 import { MockWindowRef } from '../helpers/mocks/service/mock-window.service';
-import { MockRouter } from '../helpers/mocks/service/mock-router.service';
+import { MockRouter } from '../helpers/mocks/mock-router';
 import { of } from 'rxjs';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 

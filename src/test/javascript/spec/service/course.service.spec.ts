@@ -10,7 +10,7 @@ import { CourseManagementService } from 'app/course/manage/course-management.ser
 import { Course } from 'app/entities/course.model';
 import { MockTranslateService } from '../helpers/mocks/service/mock-translate.service';
 import { MockSyncStorage } from '../helpers/mocks/service/mock-sync-storage.service';
-import { MockRouter } from '../helpers/mocks/service/mock-router.service';
+import { MockRouter } from '../helpers/mocks/mock-router';
 
 describe('Course Service', () => {
     let injector: TestBed;

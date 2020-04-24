@@ -3,7 +3,7 @@ import * as sinonChai from 'sinon-chai';
 import { SinonStub, stub } from 'sinon';
 import { of, throwError } from 'rxjs';
 import { MockWebsocketService } from '../helpers/mocks/service/mock-websocket.service';
-import { MockRouter } from '../helpers/mocks/service/mock-router.service';
+import { MockRouter } from '../helpers/mocks/mock-router';
 import { MockAccountService } from '../helpers/mocks/service/mock-account.service';
 import { MockAuthServerProviderService } from '../helpers/mocks/service/mock-auth-server-provider.service';
 import { MockAlertService } from '../helpers/mocks/service/mock-alert.service';
