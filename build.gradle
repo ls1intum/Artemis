@@ -235,7 +235,7 @@ dependencies {
     implementation "org.mapstruct:mapstruct:${mapstruct_version}"
 
     implementation "org.zalando:problem-spring-web:0.25.2"
-    implementation "com.ibm.icu:icu4j:66.1"
+    implementation "com.ibm.icu:icu4j:67.1"
 
     annotationProcessor "org.mapstruct:mapstruct-processor:${mapstruct_version}"
     annotationProcessor "org.hibernate:hibernate-jpamodelgen:${hibernate_version}"
