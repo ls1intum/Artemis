@@ -25,8 +25,7 @@ plugins {
     id "idea"
     id "jacoco"
     id "org.springframework.boot"
-    id "com.google.cloud.tools.jib" version "2.1.0"
-    id "com.gorylenko.gradle-git-properties"
+    id "com.google.cloud.tools.jib" version "2.2.0"
     id "com.github.node-gradle.node"
     id "net.ltgt.apt-eclipse"
     id "net.ltgt.apt-idea"
@@ -36,11 +35,11 @@ plugins {
 }
 
 group = "de.tum.in.www1.artemis"
-version = "3.11.1"
+version = "4.0.1"
 description = "Interactive Learning with Individual Feedback"
 
-sourceCompatibility=12
-targetCompatibility=12
+sourceCompatibility=14
+targetCompatibility=14
 
 apply plugin: "com.github.ben-manes.versions"
 
@@ -158,7 +157,7 @@ repositories {
 
 dependencies {
     implementation 'com.offbytwo.jenkins:jenkins-client:0.3.8'
-    implementation 'org.gitlab4j:gitlab4j-api:4.14.24'
+    implementation 'org.gitlab4j:gitlab4j-api:4.14.26'
 
     // TODO: at the moment we cannot upgrade to a higher version of acli due to conflicts with the used LoggerFactory
     // the problem is that newer versions integrate the logging framework directly into the jar file instead of referencing
@@ -201,7 +200,7 @@ dependencies {
     implementation "org.hibernate:hibernate-jcache"
     implementation "org.hibernate:hibernate-entitymanager"
     implementation "org.hibernate.validator:hibernate-validator:6.1.2.Final"
-    implementation "org.liquibase:liquibase-core:3.8.8"
+    implementation "org.liquibase:liquibase-core:3.8.9"
     implementation "org.springframework.boot:spring-boot-loader-tools:${spring_boot_version}"
     implementation "org.springframework.boot:spring-boot-starter-mail:${spring_boot_version}"
     implementation "org.springframework.boot:spring-boot-starter-logging:${spring_boot_version}"
@@ -223,6 +222,8 @@ dependencies {
     implementation "org.springframework.security:spring-security-data:${spring_security_version}"
     implementation "org.springframework.security:spring-security-web:${spring_security_version}"
     implementation "org.springframework.security:spring-security-messaging:${spring_security_version}"
+    implementation "org.springframework.security:spring-security-ldap:${spring_security_version}"
+    implementation "org.xmlbeam:xmlprojector:1.4.16"
     implementation "io.jsonwebtoken:jjwt-api:0.11.1"
     runtimeOnly "io.jsonwebtoken:jjwt-impl:0.11.1"
     runtimeOnly "io.jsonwebtoken:jjwt-jackson:0.11.1"
@@ -234,7 +235,7 @@ dependencies {
     implementation "org.mapstruct:mapstruct:${mapstruct_version}"
 
     implementation "org.zalando:problem-spring-web:0.25.2"
-    implementation "com.ibm.icu:icu4j:66.1"
+    implementation "com.ibm.icu:icu4j:67.1"
 
     annotationProcessor "org.mapstruct:mapstruct-processor:${mapstruct_version}"
     annotationProcessor "org.hibernate:hibernate-jpamodelgen:${hibernate_version}"
@@ -244,15 +245,13 @@ dependencies {
     }
     testImplementation ("org.springframework.boot:spring-boot-starter-test:${spring_boot_version}") {
         exclude module: "junit"
+        exclude group: "org.junit.vintage", module: "junit-vintage-engine"
         exclude group: "com.vaadin.external.google", module: "android-json"
     }
     testImplementation "org.springframework.security:spring-security-test:${spring_security_version}"
     testImplementation "org.springframework.boot:spring-boot-test:${spring_boot_version}"
     testImplementation "org.assertj:assertj-core:3.15.0"
-    testImplementation "org.junit.jupiter:junit-jupiter-api:${junit_version}"
-    testImplementation "org.junit.jupiter:junit-jupiter-params:${junit_version}"
-    testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:${junit_version}"
-    testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:${junit_version}"
+    testImplementation "org.junit.jupiter:junit-jupiter:${junit_version}"
     testImplementation 'com.tngtech.archunit:archunit-junit5-api:0.13.1'
     testRuntimeOnly 'com.tngtech.archunit:archunit-junit5-engine:0.13.1'
     testImplementation "org.mockito:mockito-core:3.3.3"
@@ -326,15 +325,10 @@ if (project.hasProperty("nodeInstall")) {
     }
 }
 
-gitProperties {
-    failOnNoGitDirectory = false
-    keys = ["git.branch", "git.commit.id.abbrev", "git.commit.id.describe"]
-}
-
 // Command to execute the JavaDoc checkstyle verification ./gradlew checkstyleMain
 checkstyle {
     toolVersion "8.10"
-    configFile file("checkstyle.xml")
+    configFile file("${rootDir}/checkstyle.xml")
     checkstyleTest.enabled = false
     maxErrors = 0
 }
@@ -350,7 +344,7 @@ task buildJarForDocker (type: Exec) {
 // Available commands:
 //
 // 1) Build production:                             ./gradlew -Pprod -Pwar clean bootWar
-// 2) Execute tests with code coverage report:      ./gradlew executeTests jacocoTestReport -x yarn_install -x webpack -x generateGitProperties
+// 2) Execute tests with code coverage report:      ./gradlew executeTests jacocoTestReport -x yarn_install -x webpack
 // 3) Check Java code format:                       ./gradlew spotlessCheck -x yarn_install -x webpack
 // 4) Apply Java code formatter:                    ./gradlew spotlessApply -x yarn_install -x webpack
 // 5) Find dependency updates:                      ./gradlew dependencyUpdates

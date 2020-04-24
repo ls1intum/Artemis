@@ -187,6 +187,7 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Quiz
                 this.isUploadingBackgroundFile = false;
                 this.backgroundFile = null;
                 this.backgroundFileName = '';
+                resizeImage();
             },
             (error) => {
                 console.error('Error during file upload in uploadBackground()', error.message);

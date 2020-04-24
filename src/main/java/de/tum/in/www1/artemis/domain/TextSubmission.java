@@ -7,6 +7,7 @@ import java.util.Objects;
 
 import javax.persistence.*;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 /**
@@ -17,6 +18,8 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 public class TextSubmission extends Submission implements Serializable {
 
     private static final long serialVersionUID = 1L;
+
+    private static final int MAX_EXCERPT_LENGTH = 100;
 
     @Column(name = "text")
     @Lob
@@ -37,6 +40,20 @@ public class TextSubmission extends Submission implements Serializable {
 
     public String getText() {
         return text;
+    }
+
+    /**
+     * Excerpt of Text, used for toString() so log messages do not get too long.
+     * @return excerpt of text, maximum String length of 104 characters
+     */
+    @JsonIgnore()
+    public String getExcerpt() {
+        if (getText().length() > MAX_EXCERPT_LENGTH) {
+            return getText().substring(0, MAX_EXCERPT_LENGTH) + " ...";
+        }
+        else {
+            return getText();
+        }
     }
 
     public TextSubmission text(String text) {
@@ -96,6 +113,6 @@ public class TextSubmission extends Submission implements Serializable {
 
     @Override
     public String toString() {
-        return "TextSubmission{" + "id=" + getId() + ", text='" + getText() + "'" + ", language='" + getLanguage() + "'" + "}";
+        return "TextSubmission{" + "id=" + getId() + ", text='" + getExcerpt() + "'" + ", language='" + getLanguage() + "'" + "}";
     }
 }

@@ -101,4 +101,8 @@ export class ApollonDiagramListComponent implements OnInit {
      * Used in the template for jhiSort
      */
     callback() {}
+
+    previousState() {
+        window.history.back();
+    }
 }

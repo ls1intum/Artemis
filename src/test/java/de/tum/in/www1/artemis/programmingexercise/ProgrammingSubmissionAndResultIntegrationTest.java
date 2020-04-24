@@ -28,7 +28,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import de.tum.in.www1.artemis.AbstractSpringIntegrationTest;
+import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.connector.bamboo.BambooRequestMockProvider;
 import de.tum.in.www1.artemis.domain.Feedback;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
@@ -39,13 +39,12 @@ import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.service.ProgrammingSubmissionService;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.RequestUtilService;
 import de.tum.in.www1.artemis.web.rest.ProgrammingSubmissionResource;
 import de.tum.in.www1.artemis.web.rest.ResultResource;
 
-class ProgrammingSubmissionAndResultIntegrationTest extends AbstractSpringIntegrationTest {
+class ProgrammingSubmissionAndResultIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     private enum IntegrationTestParticipationType {
         STUDENT, TEMPLATE, SOLUTION
@@ -68,9 +67,6 @@ class ProgrammingSubmissionAndResultIntegrationTest extends AbstractSpringIntegr
 
     @Autowired
     ResultResource resultResource;
-
-    @Autowired
-    ProgrammingSubmissionService programmingSubmissionService;
 
     @Autowired
     ProgrammingSubmissionRepository submissionRepository;
@@ -179,7 +175,6 @@ class ProgrammingSubmissionAndResultIntegrationTest extends AbstractSpringIntegr
      * Here the participation provided does exist so Artemis can create the submission.
      *
      * After that the CI builds the code submission and notifies Artemis so it can create the result.
-     *
      */
     @Test
     void shouldHandleNewBuildResultCreatedByCommitWithSpecificTests() throws Exception {

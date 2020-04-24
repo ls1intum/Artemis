@@ -38,6 +38,8 @@ import { Result } from 'app/entities/result.model';
 import { ModelingAssessmentModule } from 'app/exercises/modeling/assess/modeling-assessment.module';
 import { routes } from 'app/exercises/modeling/participate/modeling-participation.route';
 import { stub } from 'sinon';
+import { ArtemisTeamModule } from 'app/exercises/shared/team/team.module';
+import { ArtemisHeaderExercisePageWithDetailsModule } from 'app/exercises/shared/exercise-headers/exercise-headers.module';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -66,6 +68,8 @@ describe('Component Tests', () => {
                     ArtemisSharedComponentModule,
                     ModelingAssessmentModule,
                     ArtemisComplaintsModule,
+                    ArtemisTeamModule,
+                    ArtemisHeaderExercisePageWithDetailsModule,
                     RouterTestingModule.withRoutes([routes[0]]),
                 ],
                 declarations: [ModelingSubmissionComponent, MockComponent(ModelingEditorComponent)],

@@ -19,7 +19,7 @@ import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.RequestUtilService;
 
-public class SystemNotificationIntegrationTest extends AbstractSpringIntegrationTest {
+public class SystemNotificationIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
     DatabaseUtilService database;
@@ -36,18 +36,18 @@ public class SystemNotificationIntegrationTest extends AbstractSpringIntegration
     @Sql({ "/h2/custom-functions.sql" })
     public void initTestCase() {
         // Generate a system notification that has expired.
-        SystemNotification systemNotificationExpired = ModelFactory.generateSystemNotification((ZonedDateTime.now().minusDays(5)), (ZonedDateTime.now().minusDays(8)));
+        SystemNotification systemNotificationExpired = ModelFactory.generateSystemNotification((ZonedDateTime.now().minusDays(8)), (ZonedDateTime.now().minusDays(5)));
         systemNotificationRepo.save(systemNotificationExpired);
 
         // Generate a system notification whose notification date is in the future.
-        SystemNotification systemNotificationFuture = ModelFactory.generateSystemNotification((ZonedDateTime.now().plusDays(8)), (ZonedDateTime.now().plusDays(5)));
+        SystemNotification systemNotificationFuture = ModelFactory.generateSystemNotification((ZonedDateTime.now().plusDays(5)), (ZonedDateTime.now().plusDays(8)));
         systemNotificationRepo.save(systemNotificationFuture);
 
         // Generate an active system notification
-        SystemNotification systemNotificationActive = ModelFactory.generateSystemNotification(ZonedDateTime.now().plusDays(3), ZonedDateTime.now().minusDays(3));
+        SystemNotification systemNotificationActive = ModelFactory.generateSystemNotification(ZonedDateTime.now().minusDays(3), ZonedDateTime.now().plusDays(3));
         systemNotificationRepo.save(systemNotificationActive);
 
-        systemNotification = ModelFactory.generateSystemNotification(ZonedDateTime.now().plusDays(3), ZonedDateTime.now().minusDays(3));
+        systemNotification = ModelFactory.generateSystemNotification(ZonedDateTime.now().minusDays(3), ZonedDateTime.now().plusDays(3));
     }
 
     @AfterEach
@@ -103,7 +103,7 @@ public class SystemNotificationIntegrationTest extends AbstractSpringIntegration
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testUpdateSystemNotification_BadRequest() throws Exception {
-        SystemNotification systemNotification = ModelFactory.generateSystemNotification(ZonedDateTime.now().plusDays(3), ZonedDateTime.now().minusDays(3));
+        SystemNotification systemNotification = ModelFactory.generateSystemNotification(ZonedDateTime.now().minusDays(3), ZonedDateTime.now().plusDays(3));
         request.put("/api/system-notifications", systemNotification, HttpStatus.BAD_REQUEST);
     }
 

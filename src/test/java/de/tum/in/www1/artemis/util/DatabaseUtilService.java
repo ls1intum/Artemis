@@ -263,10 +263,18 @@ public class DatabaseUtilService {
         return users;
     }
 
-    public List<Team> addTeamsForExercise(Exercise exercise, int numberOfTeams, User owner) {
-        List<Team> teams = ModelFactory.generateTeamsForExercise(exercise, numberOfTeams, owner);
+    public List<Team> addTeamsForExercise(Exercise exercise, String shortNamePrefix, String loginPrefix, int numberOfTeams, User owner) {
+        List<Team> teams = ModelFactory.generateTeamsForExercise(exercise, shortNamePrefix, loginPrefix, numberOfTeams, owner);
         userRepo.saveAll(teams.stream().map(Team::getStudents).flatMap(Collection::stream).collect(Collectors.toList()));
         return teamRepo.saveAll(teams);
+    }
+
+    public List<Team> addTeamsForExercise(Exercise exercise, String shortNamePrefix, int numberOfTeams, User owner) {
+        return addTeamsForExercise(exercise, shortNamePrefix, "student", numberOfTeams, owner);
+    }
+
+    public List<Team> addTeamsForExercise(Exercise exercise, int numberOfTeams, User owner) {
+        return addTeamsForExercise(exercise, "team", numberOfTeams, owner);
     }
 
     public Team addTeamForExercise(Exercise exercise, User owner) {
@@ -325,7 +333,7 @@ public class DatabaseUtilService {
         return lecture;
     }
 
-    public List<Course> createCoursesWithExercisesAndLectures() throws Exception {
+    public List<Course> createCoursesWithExercisesAndLectures(boolean withParticipations) throws Exception {
         ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(5);
         ZonedDateTime futureTimestamp = ZonedDateTime.now().plusDays(5);
         ZonedDateTime futureFutureTimestamp = ZonedDateTime.now().plusDays(8);
@@ -386,56 +394,59 @@ public class DatabaseUtilService {
         programmingExercise = exerciseRepo.save(programmingExercise);
         quizExercise = exerciseRepo.save(quizExercise);
 
-        // create 5 tutor participations and 5 example submissions and connect all of them (to test the many-to-many relationship)
-        var tutorParticipations = new ArrayList<TutorParticipation>();
-        for (int i = 1; i < 6; i++) {
-            var tutorParticipation = new TutorParticipation().tutor(getUserByLogin("tutor" + i));
-            tutorParticipationRepo.save(tutorParticipation);
-            tutorParticipations.add(tutorParticipation);
-        }
+        if (withParticipations) {
 
-        for (int i = 0; i < 5; i++) {
-            String validModel = loadFileFromResources("test-data/model-submission/model.54727.json");
-            var exampleSubmission = addExampleSubmission(generateExampleSubmission(validModel, modelingExercise, true));
-            exampleSubmission.assessmentExplanation("exp");
-            for (var tutorParticipation : tutorParticipations) {
-                exampleSubmission.addTutorParticipations(tutorParticipation);
+            // create 5 tutor participations and 5 example submissions and connect all of them (to test the many-to-many relationship)
+            var tutorParticipations = new ArrayList<TutorParticipation>();
+            for (int i = 1; i < 6; i++) {
+                var tutorParticipation = new TutorParticipation().tutor(getUserByLogin("tutor" + i));
+                tutorParticipationRepo.save(tutorParticipation);
+                tutorParticipations.add(tutorParticipation);
             }
-            exampleSubmissionRepo.save(exampleSubmission);
+
+            for (int i = 0; i < 5; i++) {
+                String validModel = loadFileFromResources("test-data/model-submission/model.54727.json");
+                var exampleSubmission = addExampleSubmission(generateExampleSubmission(validModel, modelingExercise, true));
+                exampleSubmission.assessmentExplanation("exp");
+                for (var tutorParticipation : tutorParticipations) {
+                    exampleSubmission.addTutorParticipations(tutorParticipation);
+                }
+                exampleSubmissionRepo.save(exampleSubmission);
+            }
+
+            User user = (userRepo.findOneByLogin("student1")).get();
+            StudentParticipation participation1 = ModelFactory.generateStudentParticipation(InitializationState.INITIALIZED, modelingExercise, user);
+            StudentParticipation participation2 = ModelFactory.generateStudentParticipation(InitializationState.FINISHED, textExercise, user);
+            StudentParticipation participation3 = ModelFactory.generateStudentParticipation(InitializationState.UNINITIALIZED, modelingExercise, user);
+
+            Submission modelingSubmission1 = ModelFactory.generateModelingSubmission("model1", true);
+            Submission modelingSubmission2 = ModelFactory.generateModelingSubmission("model2", true);
+            Submission textSubmission = ModelFactory.generateTextSubmission("text", Language.ENGLISH, true);
+
+            Result result1 = ModelFactory.generateResult(true, 10);
+            Result result2 = ModelFactory.generateResult(true, 12);
+            Result result3 = ModelFactory.generateResult(false, 0);
+
+            result1 = resultRepo.save(result1);
+            result2 = resultRepo.save(result2);
+            result3 = resultRepo.save(result3);
+
+            modelingSubmission1.setResult(result1);
+            modelingSubmission2.setResult(result2);
+            textSubmission.setResult(result3);
+
+            participation1 = participationRepo.save(participation1);
+            participation2 = participationRepo.save(participation2);
+            participation3 = participationRepo.save(participation3);
+
+            modelingSubmission1.setParticipation(participation1);
+            textSubmission.setParticipation(participation2);
+            modelingSubmission2.setParticipation(participation3);
+
+            submissionRepository.save(modelingSubmission1);
+            submissionRepository.save(modelingSubmission2);
+            submissionRepository.save(textSubmission);
         }
-
-        User user = (userRepo.findOneByLogin("student1")).get();
-        StudentParticipation participation1 = ModelFactory.generateStudentParticipation(InitializationState.INITIALIZED, modelingExercise, user);
-        StudentParticipation participation2 = ModelFactory.generateStudentParticipation(InitializationState.FINISHED, textExercise, user);
-        StudentParticipation participation3 = ModelFactory.generateStudentParticipation(InitializationState.UNINITIALIZED, modelingExercise, user);
-
-        Submission modelingSubmission1 = ModelFactory.generateModelingSubmission("model1", true);
-        Submission modelingSubmission2 = ModelFactory.generateModelingSubmission("model2", true);
-        Submission textSubmission = ModelFactory.generateTextSubmission("text", Language.ENGLISH, true);
-
-        Result result1 = ModelFactory.generateResult(true, 10);
-        Result result2 = ModelFactory.generateResult(true, 12);
-        Result result3 = ModelFactory.generateResult(false, 0);
-
-        result1 = resultRepo.save(result1);
-        result2 = resultRepo.save(result2);
-        result3 = resultRepo.save(result3);
-
-        modelingSubmission1.setResult(result1);
-        modelingSubmission2.setResult(result2);
-        textSubmission.setResult(result3);
-
-        participation1 = participationRepo.save(participation1);
-        participation2 = participationRepo.save(participation2);
-        participation3 = participationRepo.save(participation3);
-
-        modelingSubmission1.setParticipation(participation1);
-        textSubmission.setParticipation(participation2);
-        modelingSubmission2.setParticipation(participation3);
-
-        submissionRepository.save(modelingSubmission1);
-        submissionRepository.save(modelingSubmission2);
-        submissionRepository.save(textSubmission);
 
         return Arrays.asList(course1, course2);
     }
@@ -1196,9 +1207,9 @@ public class DatabaseUtilService {
     public DragAndDropQuestion createDragAndDropQuestion() {
         DragAndDropQuestion dnd = (DragAndDropQuestion) new DragAndDropQuestion().title("DnD").score(1).text("Q2");
         dnd.setScoringType(ScoringType.PROPORTIONAL_WITH_PENALTY);
-        var dropLocation1 = new DropLocation().posX(10).posY(10).height(10).width(10);
+        var dropLocation1 = new DropLocation().posX(10d).posY(10d).height(10d).width(10d);
         dropLocation1.setTempID(generateTempId());
-        var dropLocation2 = new DropLocation().posX(20).posY(20).height(10).width(10);
+        var dropLocation2 = new DropLocation().posX(20d).posY(20d).height(10d).width(10d);
         dropLocation2.setTempID(generateTempId());
         dnd.getDropLocations().add(dropLocation1);
         dnd.getDropLocations().add(dropLocation2);

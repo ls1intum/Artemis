@@ -42,7 +42,8 @@
                 "live": "Live",
                 "noDueDate": "Kein Fälligkeitsdatum",
                 "userNotStartedExercise": "Du hast mit der Aufgabe noch nicht angefangen.",
-                "exerciseSubmitted": "Bereits abgegeben, aber noch keine Bewertung.",
+                "exerciseSubmitted": "Bereits abgegeben, Änderungen sind noch möglich.",
+                "exerciseSubmittedWaitingForGrading": "Bereits abgegeben, noch keine Bewertung.",
                 "exerciseNotSubmitted": "Noch nicht abgegeben",
                 "exerciseMissedDeadline": "Abgabefrist abgelaufen",
                 "exerciseLateSubmission": "Verspätete Abgabe, noch kein Feedback.",
@@ -142,6 +143,7 @@
                     "newQuestionLabel": "Neue Frage",
                     "answerLabel": "Antwort",
                     "questionLabel": "Frage",
+                    "approvedLabel": "Von einem Tutor bestätigt",
                     "answerNow": "Jetzt beantworten",
                     "noAnswers": "Diese Frage wurde noch nicht beantwortet.",
                     "answerCount": "Antworten: {{count}}",
@@ -156,7 +158,10 @@
                     "editQuestion": "Frage bearbeiten",
                     "deleteAnswer": "Möchtest du deine Antwort löschen?",
                     "confirmDeleteAnswer": "Bitte bestätige, dass du deine Antwort löschen möchtest!",
-                    "editAnswer": "Answort bearbeiten"
+                    "editAnswer": "Antwort bearbeiten",
+                    "approveAnswer": "Antwort bestätigen",
+                    "hideAnswers": "Weniger Anworten anzeigen",
+                    "showAnswers": "Weitere Anworten anzeigen ({{count}})"
                 }
             }
         }

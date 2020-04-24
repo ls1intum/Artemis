@@ -1,3 +1,8 @@
+@import 'src/main/webapp/content/scss/bootstrap-variables';
+
+$error-text-color: $danger;
+$error-bg-color: #f8d7da;
+
 :host {
     max-width: 100%;
 }
@@ -5,6 +10,7 @@
 .list-group-horizontal.student-group {
     padding: 3px 0;
     overflow-x: auto;
+    max-width: 100%;
 
     // show custom thinner scrollbar for Webkit-based browsers
     $size: 4px;
@@ -28,4 +34,9 @@
 .list-group-item.student-group-item {
     padding: 0.175rem 0.75rem;
     white-space: nowrap;
+
+    &.has-error {
+        color: $error-text-color;
+        background-color: lighten($error-bg-color, 5%);
+    }
 }

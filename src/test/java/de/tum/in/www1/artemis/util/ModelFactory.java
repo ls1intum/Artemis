@@ -129,8 +129,8 @@ public class ModelFactory {
         return generateActivatedUser(login, USER_PASSWORD);
     }
 
-    public static Team generateTeamForExercise(Exercise exercise, String name, String shortName, int numberOfStudents, User owner) {
-        List<User> students = generateActivatedUsers(shortName + "student", new String[] { "tumuser", "testgroup" }, Set.of(new Authority(AuthoritiesConstants.USER)),
+    public static Team generateTeamForExercise(Exercise exercise, String name, String shortName, String loginPrefix, int numberOfStudents, User owner) {
+        List<User> students = generateActivatedUsers(shortName + loginPrefix, new String[] { "tumuser", "testgroup" }, Set.of(new Authority(AuthoritiesConstants.USER)),
                 numberOfStudents);
 
         Team team = new Team();
@@ -143,11 +143,15 @@ public class ModelFactory {
         return team;
     }
 
-    public static List<Team> generateTeamsForExercise(Exercise exercise, int numberOfTeams, User owner) {
+    public static Team generateTeamForExercise(Exercise exercise, String name, String shortName, int numberOfStudents, User owner) {
+        return generateTeamForExercise(exercise, name, shortName, "student", numberOfStudents, owner);
+    }
+
+    public static List<Team> generateTeamsForExercise(Exercise exercise, String shortNamePrefix, String loginPrefix, int numberOfTeams, User owner) {
         List<Team> teams = new ArrayList<>();
         for (int i = 1; i <= numberOfTeams; i++) {
             int numberOfStudents = new Random().nextInt(4) + 1; // range: 1-4 students
-            teams.add(generateTeamForExercise(exercise, "Team " + i, "team" + i, numberOfStudents, owner));
+            teams.add(generateTeamForExercise(exercise, "Team " + i, shortNamePrefix + i, loginPrefix, numberOfStudents, owner));
         }
         return teams;
     }
@@ -212,9 +216,10 @@ public class ModelFactory {
             String teachingAssistantGroupName, String instructorGroupName, Integer maxComplaints, Integer maxComplaintTimeDays, Boolean studentQuestionsEnabled) {
         Course course = new Course();
         course.setId(id);
-        course.setTitle(UUID.randomUUID().toString());
-        course.setDescription(UUID.randomUUID().toString());
-        course.setShortName("t" + UUID.randomUUID().toString().substring(0, 3));
+        course.setTitle("Course title " + UUID.randomUUID().toString());
+        course.setDescription("Course description " + UUID.randomUUID().toString());
+        // must start with a letter
+        course.setShortName("short" + UUID.randomUUID().toString().replace("-", "0"));
         course.setMaxComplaints(maxComplaints);
         course.setMaxComplaintTimeDays(maxComplaintTimeDays);
         course.setStudentQuestionsEnabled(studentQuestionsEnabled);
@@ -346,10 +351,25 @@ public class ModelFactory {
         return generateTextBlock(startIndex, endIndex, "");
     }
 
-    public static SystemNotification generateSystemNotification(ZonedDateTime expireDate, ZonedDateTime notificationDate) {
+    public static SingleUserNotification generateSingleUserNotification(ZonedDateTime notificationDate, User recipient) {
+        SingleUserNotification singleUserNotification = new SingleUserNotification();
+        singleUserNotification.setNotificationDate(notificationDate);
+        singleUserNotification.setRecipient(recipient);
+        return singleUserNotification;
+    }
+
+    public static GroupNotification generateGroupNotification(ZonedDateTime notificationDate, Course course, GroupNotificationType type) {
+        GroupNotification groupNotification = new GroupNotification();
+        groupNotification.setNotificationDate(notificationDate);
+        groupNotification.setCourse(course);
+        groupNotification.setType(type);
+        return groupNotification;
+    }
+
+    public static SystemNotification generateSystemNotification(ZonedDateTime notificationDate, ZonedDateTime expireDate) {
         SystemNotification systemNotification = new SystemNotification();
-        systemNotification.setExpireDate(expireDate);
         systemNotification.setNotificationDate(notificationDate);
+        systemNotification.setExpireDate(expireDate);
         return systemNotification;
     }
 

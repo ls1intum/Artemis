@@ -8,6 +8,8 @@ import { ArtemisComplaintsModule } from 'app/complaints/complaints.module';
 import { ArtemisModelingEditorModule } from 'app/exercises/modeling/shared/modeling-editor.module';
 import { ModelingAssessmentModule } from 'app/exercises/modeling/assess/modeling-assessment.module';
 import { ArtemisModelingParticipationRoutingModule } from 'app/exercises/modeling/participate/modeling-participation.route';
+import { ArtemisTeamModule } from 'app/exercises/shared/team/team.module';
+import { ArtemisHeaderExercisePageWithDetailsModule } from 'app/exercises/shared/exercise-headers/exercise-headers.module';
 
 @NgModule({
     imports: [
@@ -19,6 +21,8 @@ import { ArtemisModelingParticipationRoutingModule } from 'app/exercises/modelin
         ArtemisModelingParticipationRoutingModule,
         ModelingAssessmentModule,
         MomentModule,
+        ArtemisTeamModule,
+        ArtemisHeaderExercisePageWithDetailsModule,
     ],
     declarations: [ModelingSubmissionComponent],
 })
