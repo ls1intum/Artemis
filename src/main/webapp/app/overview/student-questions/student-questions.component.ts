@@ -78,7 +78,7 @@ export class StudentQuestionsComponent implements OnInit, OnDestroy, AfterViewIn
 
     ngOnDestroy(): void {}
 
-    interactQuestion(action: StudentQuestionAction) {
+    interactQuestion (action: StudentQuestionAction) {
         switch (action.name) {
             case QuestionActionName.DELETE:
                 this.deleteQuestionFromList(action.studentQuestion);
@@ -91,7 +91,7 @@ export class StudentQuestionsComponent implements OnInit, OnDestroy, AfterViewIn
         this.selectedStudentQuestion = null;
     }
 
-    deleteQuestionFromList(studentQuestion: StudentQuestion) {
+    deleteQuestionFromList(studentQuestion: StudentQuestion): void {
         this.studentQuestions = this.studentQuestions.filter((el) => el.id !== studentQuestion.id);
     }
 

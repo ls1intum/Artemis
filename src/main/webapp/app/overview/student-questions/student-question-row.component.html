@@ -81,12 +81,12 @@
             </div>
         </ng-container>
         <!-- question in edit mode -->
-        <div *ngIf="isEditMode">
+        <ng-container *ngIf="isEditMode">
             <div class="row mb-2">
                 <div class="col-12">
                     <div class="row mb-1">
                         <div class="col-auto">
-                            <fa-icon [icon]="'question'" [ngbTooltip]="'artemisApp.courseOverview.exerciseDetails.faq.questionLabel' | translate"></fa-icon>&nbsp;
+                            <fa-icon [icon]="'question'" [ngbTooltip]="'artemisApp.courseOverview.exerciseDetails.faq.questionLabel' | translate"></fa-icon>
                         </div>
                         <div class="col">
                             <h5 class="form-control-label">{{ 'artemisApp.courseOverview.exerciseDetails.faq.editQuestion' | translate }}</h5>
@@ -111,7 +111,7 @@
                     </button>
                 </div>
             </div>
-        </div>
+        </ng-container>
         <!-- approved answers -->
         <div class="row mb-1 answer-approved" *ngFor="let approvedQuestionAnswer of approvedQuestionAnswers">
             <div class="col">

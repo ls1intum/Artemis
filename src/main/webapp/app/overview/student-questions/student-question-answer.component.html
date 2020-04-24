@@ -1,0 +1,110 @@
+<div class="row mb-1 pl-2" [ngClass]="{'answer-approved': studentQuestionAnswer.tutorApproved}">
+    <div class="col-12">
+        <!-- edit Mode on -->
+        <ng-container *ngIf="isEditMode">
+            <div class="row mb-2">
+                <div class="col-12">
+                    <div class="row mb-1">
+                        <div class="col-auto">
+                            <fa-icon [icon]="'lightbulb'" [ngbTooltip]="'artemisApp.courseOverview.exerciseDetails.faq.answerLabel' | translate"></fa-icon>
+                        </div>
+                        <div class="col">
+                            <h5 class="form-control-label">{{ 'artemisApp.courseOverview.exerciseDetails.faq.editAnswer' | translate }}</h5>
+                        </div>
+                        <!-- maybe not needed
+                        <div
+                            class="col-auto"
+                            *ngIf="isAtLeastTutorInCourse || isAuthorOfAnswer(studentQuestionAnswer)"
+                        >
+                            <fa-icon
+                                class="mr-1 clickable"
+                                [ngbTooltip]="'artemisApp.courseOverview.exerciseDetails.faq.editAnswer' | translate"
+                                container="body"
+                                [icon]="'pencil-alt'"
+                                (click)="$event.stopPropagation(); isEditMode = false"
+                            ></fa-icon>
+                            <jhi-confirm-icon
+                                (click)="$event.stopPropagation()"
+                                (confirmEvent)="deleteAnswer()"
+                                [ngClass]="'mr-1 clickable'"
+                                [initialTooltip]="'artemisApp.courseOverview.exerciseDetails.faq.deleteAnswer' | translate"
+                                [confirmTooltip]="'artemisApp.courseOverview.exerciseDetails.faq.confirmDeleteAnswer' | translate"
+                            ></jhi-confirm-icon>
+                            <fa-icon
+                                class="mr-1 clickable"
+                                *ngIf="isAtLeastTutorInCourse"
+                                [ngbTooltip]="(studentQuestionAnswer.tutorApproved ? 'artemisApp.courseOverview.exerciseDetails.faq.unapproveAnswer' : 'artemisApp.courseOverview.exerciseDetails.faq.approveAnswer') | translate"
+                                container="body"
+                                [icon]="'check'"
+                                (click)="$event.stopPropagation(); toggleAnswerTutorApproved()"
+                            ></fa-icon>
+                        </div>
+                        -->
+                    </div>
+                </div>
+                <div class="col-12">
+                    <jhi-markdown-editor
+                        class="markdown-editor background-editor-color"
+                        [(markdown)]="studentQuestionAnswer.answerText"
+                        [editorMode]="EditorMode.LATEX"
+                        [enableResize]="true"
+                        [metaCommands]="[]"
+                    ></jhi-markdown-editor>
+                </div>
+                <div class="col-12 d-flex justify-content-around">
+                    <button class="btn btn-sm btn-outline-secondary" (click)="isEditMode = false">
+                        {{ 'artemisApp.courseOverview.exerciseDetails.faq.cancel' | translate }}
+                    </button>
+                    <button class="btn btn-sm btn-outline-secondary" (click)="saveAnswer()">
+                        {{ 'artemisApp.courseOverview.exerciseDetails.faq.saveAnswer' | translate }}
+                    </button>
+                </div>
+            </div>
+        </ng-container>
+        <!-- edit Mode off -->
+        <ng-container *ngIf="!isEditMode">
+            <div class="row">
+                <div class="col">
+                    <fa-icon [icon]="'lightbulb'" [ngbTooltip]="'artemisApp.courseOverview.exerciseDetails.faq.answerLabel' | translate"></fa-icon>
+                </div>
+                <div
+                    class="col-auto"
+                    *ngIf="isAtLeastTutorInCourse || isAuthorOfAnswer(studentQuestionAnswer)"
+                >
+                    <fa-icon
+                        class="mr-1 clickable"
+                        [ngbTooltip]="'artemisApp.courseOverview.exerciseDetails.faq.editAnswer' | translate"
+                        container="body"
+                        [icon]="'pencil-alt'"
+                        (click)="$event.stopPropagation(); isEditMode = true"
+                    ></fa-icon>
+                    <jhi-confirm-icon
+                        (click)="$event.stopPropagation()"
+                        (confirmEvent)="deleteAnswer()"
+                        [ngClass]="'mr-1 clickable'"
+                        [initialTooltip]="'artemisApp.courseOverview.exerciseDetails.faq.deleteAnswer' | translate"
+                        [confirmTooltip]="'artemisApp.courseOverview.exerciseDetails.faq.confirmDeleteAnswer' | translate"
+                    ></jhi-confirm-icon>
+                    <fa-icon
+                        class="mr-1 clickable"
+                        *ngIf="isAtLeastTutorInCourse"
+                        [ngbTooltip]="(studentQuestionAnswer.tutorApproved ? 'artemisApp.courseOverview.exerciseDetails.faq.unapproveAnswer' : 'artemisApp.courseOverview.exerciseDetails.faq.approveAnswer') | translate"
+                        container="body"
+                        [icon]="'check'"
+                        (click)="$event.stopPropagation(); toggleAnswerTutorApproved()"
+                    ></fa-icon>
+                </div>
+            </div>
+            <div class="row">
+                <div
+                    class="col mb-2"
+                    [innerHTML]="studentQuestionAnswer.answerText ? (studentQuestionAnswer.answerText | htmlForMarkdown) : ''"
+                    [ngbTooltip]="'artemisApp.courseOverview.exerciseDetails.faq.approvedLabel' | translate"
+                ></div>
+                <span class="text-black-50question-subtitle">
+                    {{ studentQuestionAnswer.author.name }} - {{ studentQuestionAnswer.answerDate | date: 'dd.MM.yy HH:mm' }}
+                </span>
+            </div>
+        </ng-container>
+    </div>
+</div>

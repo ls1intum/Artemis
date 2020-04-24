@@ -1,12 +1,16 @@
-import { Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angular/core';
-import { User } from 'app/core/user/user.model';
+import {Component, EventEmitter, Input, OnInit, Output} from '@angular/core';
+import {User} from 'app/core/user/user.model';
 import * as moment from 'moment';
-import { HttpResponse } from '@angular/common/http';
-import { StudentQuestion } from 'app/entities/student-question.model';
-import { StudentQuestionAnswer } from 'app/entities/student-question-answer.model';
-import { StudentQuestionService } from 'app/overview/student-questions/student-question.service';
-import { StudentQuestionAnswerService } from 'app/overview/student-questions/student-question-answer.service';
-import { EditorMode } from 'app/shared/markdown-editor/markdown-editor.component';
+import {HttpResponse} from '@angular/common/http';
+import {StudentQuestion} from 'app/entities/student-question.model';
+import {StudentQuestionAnswer} from 'app/entities/student-question-answer.model';
+import {StudentQuestionService} from 'app/overview/student-questions/student-question.service';
+import {StudentQuestionAnswerService} from 'app/overview/student-questions/student-question-answer.service';
+import {
+    QuestionAnswerActionName,
+    StudentQuestionAnswerAction
+} from 'app/overview/student-questions/student-question-answer.component';
+import {EditorMode} from 'app/shared/markdown-editor/markdown-editor.component';
 
 export interface StudentQuestionAction {
     name: QuestionActionName;
@@ -22,7 +26,7 @@ export enum QuestionActionName {
     templateUrl: './student-question-row.component.html',
     styleUrls: ['./student-questions.scss'],
 })
-export class StudentQuestionRowComponent implements OnInit, OnDestroy {
+export class StudentQuestionRowComponent implements OnInit {
     @Input() studentQuestion: StudentQuestion;
     @Input() selectedStudentQuestion: StudentQuestion;
     @Input() user: User;
@@ -47,6 +51,20 @@ export class StudentQuestionRowComponent implements OnInit, OnDestroy {
             this.isQuestionAuthor = this.studentQuestion.author.id === this.user.id;
         }
         this.sortQuestionAnswers();
+    }
+
+    interactAnswer (action: StudentQuestionAnswerAction) {
+        switch (action.name) {
+            case QuestionAnswerActionName.DELETE:
+                this.deleteAnswerFromList(action.studentQuestionAnswer);
+                break;
+            case QuestionAnswerActionName.ADD:
+                this.addAnswerToList(action.studentQuestionAnswer);
+                break;
+            case QuestionAnswerActionName.APPROVE:
+                this.sortQuestionAnswers();
+                break;
+        }
     }
 
     /**
@@ -75,8 +93,6 @@ export class StudentQuestionRowComponent implements OnInit, OnDestroy {
                 return aValue - bValue;
             });
     }
-
-    ngOnDestroy(): void {}
 
     toggleQuestionEditMode(): void {
         this.studentQuestionText = this.studentQuestion.questionText;
@@ -120,7 +136,7 @@ export class StudentQuestionRowComponent implements OnInit, OnDestroy {
      */
     saveQuestion(): void {
         this.studentQuestion.questionText = this.studentQuestionText;
-        this.studentQuestionService.update(this.studentQuestion).subscribe((studentQuestionResponse: HttpResponse<StudentQuestion>) => {
+        this.studentQuestionService.update(this.studentQuestion).subscribe(() => {
             this.studentQuestionText = null;
             this.isEditMode = false;
         });
@@ -130,7 +146,7 @@ export class StudentQuestionRowComponent implements OnInit, OnDestroy {
      * deletes the studentQuestion
      */
     deleteQuestion(): void {
-        this.studentQuestionService.delete(this.studentQuestion.id).subscribe((res: HttpResponse<any>) => {
+        this.studentQuestionService.delete(this.studentQuestion.id).subscribe(() => {
             this.interactQuestion.emit({
                 name: QuestionActionName.DELETE,
                 studentQuestion: this.studentQuestion,
@@ -177,10 +193,28 @@ export class StudentQuestionRowComponent implements OnInit, OnDestroy {
      * @param   {studentQuestionAnswer} studentAnswer
      */
     deleteAnswer(studentAnswer: StudentQuestionAnswer): void {
-        this.studentQuestionAnswerService.delete(studentAnswer.id).subscribe((res: HttpResponse<any>) => {
-            this.studentQuestion.answers = this.studentQuestion.answers.filter((el) => el.id !== studentAnswer.id);
+        this.studentQuestionAnswerService.delete(studentAnswer.id).subscribe(() => {
+            this.studentQuestion.answers = this.studentQuestion.answers.filter((el: StudentQuestionAnswer) => el.id !== studentAnswer.id);
             this.sortQuestionAnswers();
         });
+    }
+
+    /**
+     * Takes a studentAnswer and deletes it
+     * @param   {studentQuestionAnswer} studentAnswer
+     */
+    deleteAnswerFromList(studentQuestionAnswer: StudentQuestionAnswer): void {
+        this.studentQuestion.answers = this.studentQuestion.answers.filter((el: StudentQuestionAnswer) => el.id !== studentQuestionAnswer.id);
+        this.sortQuestionAnswers();
+    }
+
+    /**
+     * Takes a studentAnswer and adds it to the others
+     * @param   {studentQuestionAnswer} studentAnswer
+     */
+    addAnswerToList(studentQuestionAnswer: StudentQuestionAnswer): void {
+        this.studentQuestion.answers.push(studentQuestionAnswer);
+        this.sortQuestionAnswers();
     }
 
     /**
