@@ -5,54 +5,52 @@ import { Audit } from 'app/admin/audits/audit.model';
 import { SERVER_API_URL } from 'app/app.constants';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 
-describe('Service Tests', () => {
-    describe('Audits Service', () => {
-        let service: AuditsService;
-        let httpMock;
+describe('Audits Service', () => {
+    let service: AuditsService;
+    let httpMock;
 
-        beforeEach(() => {
-            TestBed.configureTestingModule({
-                imports: [HttpClientTestingModule],
-            });
-
-            service = TestBed.inject(AuditsService);
-            httpMock = TestBed.inject(HttpTestingController);
+    beforeEach(() => {
+        TestBed.configureTestingModule({
+            imports: [HttpClientTestingModule],
         });
 
-        afterEach(() => {
-            httpMock.verify();
+        service = TestBed.inject(AuditsService);
+        httpMock = TestBed.inject(HttpTestingController);
+    });
+
+    afterEach(() => {
+        httpMock.verify();
+    });
+
+    describe('Service methods', () => {
+        it('should call correct URL', () => {
+            service.query({}).subscribe(() => {});
+
+            const req = httpMock.expectOne({ method: 'GET' });
+            const resourceUrl = SERVER_API_URL + 'management/audits';
+            expect(req.request.url).toEqual(resourceUrl);
         });
 
-        describe('Service methods', () => {
-            it('should call correct URL', () => {
-                service.query({}).subscribe(() => {});
+        it('should return Audits', () => {
+            const audit = new Audit({ remoteAddress: '127.0.0.1', sessionId: '123' }, 'user', '20140101', 'AUTHENTICATION_SUCCESS');
 
-                const req = httpMock.expectOne({ method: 'GET' });
-                const resourceUrl = SERVER_API_URL + 'management/audits';
-                expect(req.request.url).toEqual(resourceUrl);
+            service.query({}).subscribe((received) => {
+                expect(received.body[0]).toEqual(audit);
             });
 
-            it('should return Audits', () => {
-                const audit = new Audit({ remoteAddress: '127.0.0.1', sessionId: '123' }, 'user', '20140101', 'AUTHENTICATION_SUCCESS');
+            const req = httpMock.expectOne({ method: 'GET' });
+            req.flush([audit]);
+        });
 
-                service.query({}).subscribe((received) => {
-                    expect(received.body[0]).toEqual(audit);
-                });
-
-                const req = httpMock.expectOne({ method: 'GET' });
-                req.flush([audit]);
+        it('should propagate not found response', () => {
+            service.query({}).subscribe(null, (_error: any) => {
+                expect(_error.status).toEqual(404);
             });
 
-            it('should propagate not found response', () => {
-                service.query({}).subscribe(null, (_error: any) => {
-                    expect(_error.status).toEqual(404);
-                });
-
-                const req = httpMock.expectOne({ method: 'GET' });
-                req.flush('Invalid request parameters', {
-                    status: 404,
-                    statusText: 'Bad Request',
-                });
+            const req = httpMock.expectOne({ method: 'GET' });
+            req.flush('Invalid request parameters', {
+                status: 404,
+                statusText: 'Bad Request',
             });
         });
     });

@@ -5,54 +5,52 @@ import { Log } from 'app/admin/logs/log.model';
 import { SERVER_API_URL } from 'app/app.constants';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 
-describe('Service Tests', () => {
-    describe('Logs Service', () => {
-        let service: LogsService;
-        let httpMock;
+describe('Logs Service', () => {
+    let service: LogsService;
+    let httpMock;
 
-        beforeEach(() => {
-            TestBed.configureTestingModule({
-                imports: [HttpClientTestingModule],
-            });
-
-            service = TestBed.inject(LogsService);
-            httpMock = TestBed.inject(HttpTestingController);
+    beforeEach(() => {
+        TestBed.configureTestingModule({
+            imports: [HttpClientTestingModule],
         });
 
-        afterEach(() => {
-            httpMock.verify();
+        service = TestBed.inject(LogsService);
+        httpMock = TestBed.inject(HttpTestingController);
+    });
+
+    afterEach(() => {
+        httpMock.verify();
+    });
+
+    describe('Service methods', () => {
+        it('should call correct URL', () => {
+            service.findAll().subscribe(() => {});
+
+            const req = httpMock.expectOne({ method: 'GET' });
+            const resourceUrl = SERVER_API_URL + 'management/logs';
+            expect(req.request.url).toEqual(resourceUrl);
         });
 
-        describe('Service methods', () => {
-            it('should call correct URL', () => {
-                service.findAll().subscribe(() => {});
+        it('should return Logs', () => {
+            const log = new Log('main', 'ERROR');
 
-                const req = httpMock.expectOne({ method: 'GET' });
-                const resourceUrl = SERVER_API_URL + 'management/logs';
-                expect(req.request.url).toEqual(resourceUrl);
+            service.findAll().subscribe((received) => {
+                expect(received.body[0]).toEqual(log);
             });
 
-            it('should return Logs', () => {
-                const log = new Log('main', 'ERROR');
+            const req = httpMock.expectOne({ method: 'GET' });
+            req.flush([log]);
+        });
 
-                service.findAll().subscribe((received) => {
-                    expect(received.body[0]).toEqual(log);
-                });
+        it('should change log level', () => {
+            const log = new Log('main', 'ERROR');
 
-                const req = httpMock.expectOne({ method: 'GET' });
-                req.flush([log]);
+            service.changeLevel(log).subscribe((received) => {
+                expect(received.body[0]).toEqual(log);
             });
 
-            it('should change log level', () => {
-                const log = new Log('main', 'ERROR');
-
-                service.changeLevel(log).subscribe((received) => {
-                    expect(received.body[0]).toEqual(log);
-                });
-
-                const req = httpMock.expectOne({ method: 'PUT' });
-                req.flush([log]);
-            });
+            const req = httpMock.expectOne({ method: 'PUT' });
+            req.flush([log]);
         });
     });
 });
