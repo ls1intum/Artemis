@@ -162,17 +162,4 @@ export class StudentQuestionRowComponent implements OnInit {
         this.studentQuestion.answers.push(studentQuestionAnswer);
         this.sortQuestionAnswers();
     }
-
-    /**
-     * Takes a studentQuestionAnswer and determines if the user is the author of it
-     * @param {StudentQuestionAnswer} studentQuestionAnswer
-     * @returns {boolean}
-     */
-    isAuthorOfAnswer(studentQuestionAnswer: StudentQuestionAnswer): boolean {
-        if (this.user) {
-            return studentQuestionAnswer.author.id === this.user.id;
-        } else {
-            return false;
-        }
-    }
 }

@@ -94,3 +94,13 @@
     width: 2px;
     content: ' ';
 }
+
+@media screen and (max-width: 992px) {
+    .expanded-questions {
+        width: 94vw;
+
+        .draggable-left {
+            display: none
+        }
+    }
+}

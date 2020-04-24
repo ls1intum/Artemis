@@ -51,7 +51,7 @@
                         ></jhi-markdown-editor>
                     </div>
                     <div class="col-12 d-flex justify-content-around">
-                        <button class="btn btn-sm btn-outline-secondary" (click)="toggleEditMode()">
+                        <button class="btn btn-sm btn-outline-secondary" (click)="isEditMode = false">
                             {{ 'artemisApp.courseOverview.exerciseDetails.faq.cancel' | translate }}
                         </button>
                         <button class="btn btn-sm btn-outline-secondary" *ngIf="!selectedStudentQuestion" (click)="addQuestion()">
@@ -63,7 +63,7 @@
             <!-- new question button -->
             <div class="row" *ngIf="!isEditMode">
                 <div class="col-12 px-0">
-                    <button class="btn btn-sm btn-outline-secondary" (click)="toggleEditMode()">
+                    <button class="btn btn-sm btn-outline-secondary" (click)="isEditMode = true">
                         {{ 'artemisApp.courseOverview.exerciseDetails.faq.addNewQuestion' | translate }}
                     </button>
                 </div>

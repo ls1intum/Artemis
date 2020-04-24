@@ -54,12 +54,4 @@ export class StudentQuestionComponent implements OnInit {
             this.isEditMode = false;
         });
     }
-
-    toggleExpanded(): void {
-        this.interactQuestion.emit({
-            name: QuestionActionName.EXPAND,
-            studentQuestion: this.studentQuestion
-        })
-    }
-
 }
