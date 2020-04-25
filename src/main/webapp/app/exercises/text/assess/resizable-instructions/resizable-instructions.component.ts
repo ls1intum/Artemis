@@ -13,6 +13,7 @@ export class ResizableInstructionsComponent {
     @Input() public gradingInstructions: string | null;
     @Input() public toggleCollapse: ($event: any, type?: string) => void;
     @Input() public toggleCollapseId?: string;
+    @Input() readOnly: boolean;
 
     constructor() {}
 }

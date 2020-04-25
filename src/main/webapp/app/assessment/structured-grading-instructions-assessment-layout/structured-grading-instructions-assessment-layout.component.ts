@@ -1,13 +1,18 @@
 import { GradingInstruction } from 'app/exercises/shared/structured-grading-criterion/grading-instruction.model';
 import { GradingCriterion } from 'app/exercises/shared/structured-grading-criterion/grading-criterion.model';
-import { Component, Input } from '@angular/core';
+import { Component, Input, OnInit } from '@angular/core';
 
 @Component({
     selector: 'jhi-structured-grading-instructions-assessment-layout',
     templateUrl: './structured-grading-instructions-assessment-layout.component.html',
 })
-export class StructuredGradingInstructionsAssessmentLayoutComponent {
+export class StructuredGradingInstructionsAssessmentLayoutComponent implements OnInit {
     @Input() public criteria: GradingCriterion[];
+    @Input() readonly: boolean;
+    allowDrop: boolean;
+    ngOnInit(): void {
+        this.allowDrop = !this.readonly;
+    }
 
     setTooltip(instr: GradingInstruction) {
         return 'Feedback: ' + instr.feedback;
@@ -34,5 +39,11 @@ export class StructuredGradingInstructionsAssessmentLayoutComponent {
      */
     drag(event: any, instruction: GradingInstruction) {
         event.dataTransfer.setData('artemis/sgi', JSON.stringify(instruction));
+    }
+    /**
+     * disables drag if on readOnly mode
+     */
+    disableDrag() {
+        return this.allowDrop;
     }
 }

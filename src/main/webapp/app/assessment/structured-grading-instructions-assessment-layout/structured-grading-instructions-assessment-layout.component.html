@@ -4,7 +4,8 @@
         <div
             class="rounded"
             *ngFor="let instruction of criterion!.structuredGradingInstructions; let instructionIndex = index"
-            draggable="true"
+            draggable="{{ allowDrop }}"
+            (dragstart)="disableDrag()"
             (dragstart)="drag($event, instruction)"
             id="criterion-{{ criterionIndex }}-instruction-{{ instructionIndex }}"
             [style.background-color]="setInstrColour(instruction)"
