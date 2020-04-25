@@ -6,8 +6,7 @@ import { ArtemisTestModule } from '../../test.module';
 import { TextExerciseUpdateComponent } from 'app/exercises/text/manage/text-exercise/text-exercise-update.component';
 import { TextExerciseService } from 'app/exercises/text/manage/text-exercise/text-exercise.service';
 import { TextExercise } from 'app/entities/text-exercise.model';
-import { MockTextExerciseService } from '../../helpers/mocks/service/mock-text-exercise.service';
-import { LocalStorageService } from 'ngx-webstorage';
+import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 
 describe('TextExercise Management Update Component', () => {
@@ -19,8 +18,8 @@ describe('TextExercise Management Update Component', () => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
             providers: [
-                { provide: TextExerciseService, useClass: MockTextExerciseService },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
+                { provide: SessionStorageService, useClass: MockSyncStorage },
             ],
             declarations: [TextExerciseUpdateComponent],
         })
@@ -35,7 +34,8 @@ describe('TextExercise Management Update Component', () => {
     describe('save', () => {
         it('Should call update service on save for existing entity', fakeAsync(() => {
             // GIVEN
-            const entity = new TextExercise(123);
+            const entity = new TextExercise();
+            entity.id = 123;
             spyOn(service, 'update').and.returnValue(of(new HttpResponse({ body: entity })));
             comp.textExercise = entity;
             // WHEN
@@ -43,7 +43,7 @@ describe('TextExercise Management Update Component', () => {
             tick(); // simulate async
 
             // THEN
-            expect(service.update).toHaveBeenCalledWith(entity);
+            expect(service.update).toHaveBeenCalledWith(entity, {});
             expect(comp.isSaving).toEqual(false);
         }));
 
