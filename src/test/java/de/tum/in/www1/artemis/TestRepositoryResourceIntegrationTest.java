@@ -119,7 +119,7 @@ public class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegra
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void getFiles() throws Exception {
+    public void shouldGetFiles() throws Exception {
         programmingExerciseRepository.save(exercise);
         var files = request.getMap("/api/test-repository/" + exercise.getId() + "/files", HttpStatus.OK, String.class, FileType.class);
         assertThat(files).isNotEmpty();
@@ -127,7 +127,7 @@ public class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegra
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void getFile() throws Exception {
+    public void shouldGetFile() throws Exception {
         programmingExerciseRepository.save(exercise);
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("file", "test");
@@ -138,13 +138,35 @@ public class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegra
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void createFile() throws Exception {
+    public void shouldCreateFile() throws Exception {
         programmingExerciseRepository.save(exercise);
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         assertThat(Files.exists(Paths.get(testRepo.localRepoFile + "/newFile"))).isFalse();
         params.add("file", "newFile");
         request.postWithoutResponseBody("/api/test-repository/" + exercise.getId() + "/file", HttpStatus.OK, params);
         assertThat(Files.exists(Paths.get(testRepo.localRepoFile + "/newFile"))).isTrue();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void shouldCreateFolder() throws Exception {
+        programmingExerciseRepository.save(exercise);
+        LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        assertThat(Files.exists(Paths.get(testRepo.localRepoFile + "/newFolder"))).isFalse();
+        params.add("folder", "newFolder");
+        request.postWithoutResponseBody("/api/test-repository/" + exercise.getId() + "/folder", HttpStatus.OK, params);
+        assertThat(Files.exists(Paths.get(testRepo.localRepoFile + "/newFolder"))).isTrue();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void shouldDeleteFile() throws Exception {
+        programmingExerciseRepository.save(exercise);
+        LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        assertThat(Files.exists(Paths.get(testRepo.localRepoFile + "/test"))).isTrue();
+        params.add("file", "test");
+        request.delete("/api/test-repository/" + exercise.getId() + "/file", HttpStatus.OK, params);
+        assertThat(Files.exists(Paths.get(testRepo.localRepoFile + "/test"))).isFalse();
     }
 
 }
