@@ -172,6 +172,17 @@ public class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegra
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void shouldCommitChanges() throws Exception {
+        programmingExerciseRepository.save(exercise);
+        var receivedStatusBeforeCommit = request.get("/api/test-repository/" + exercise.getId(), HttpStatus.OK, RepositoryStatusDTO.class);
+        assertThat(receivedStatusBeforeCommit.repositoryStatus.toString()).isEqualTo("UNCOMMITTED_CHANGES");
+        request.postWithoutLocation("/api/test-repository/" + exercise.getId() + "/commit", null, HttpStatus.OK, null);
+        var receivedStatusAfterCommit = request.get("/api/test-repository/" + exercise.getId(), HttpStatus.OK, RepositoryStatusDTO.class);
+        assertThat(receivedStatusAfterCommit.repositoryStatus.toString()).isEqualTo("CLEAN");
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void shouldGetStatus() throws Exception {
         programmingExerciseRepository.save(exercise);
         var receivedStatus = request.get("/api/test-repository/" + exercise.getId(), HttpStatus.OK, RepositoryStatusDTO.class);
