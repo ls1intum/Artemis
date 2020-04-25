@@ -26,10 +26,10 @@ import de.tum.in.www1.artemis.domain.User;
 @DiscriminatorOptions(force = true)
 // NOTE: Use strict cache to prevent lost updates
 @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
-@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "notificationType")
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "notificationType")
 // Annotation necessary to distinguish between concrete implementations of Notification when deserializing from JSON
 @JsonSubTypes({ @JsonSubTypes.Type(value = GroupNotification.class, name = "group"), @JsonSubTypes.Type(value = SingleUserNotification.class, name = "single"),
-        @JsonSubTypes.Type(value = SystemNotification.class, name = "system"), })
+        @JsonSubTypes.Type(value = SystemNotification.class, name = "system") })
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public abstract class Notification implements Serializable {
 
