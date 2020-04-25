@@ -6,6 +6,9 @@ import { ArtemisTestModule } from '../../test.module';
 import { TextExerciseUpdateComponent } from 'app/exercises/text/manage/text-exercise/text-exercise-update.component';
 import { TextExerciseService } from 'app/exercises/text/manage/text-exercise/text-exercise.service';
 import { TextExercise } from 'app/entities/text-exercise.model';
+import { MockTextExerciseService } from '../../helpers/mocks/service/mock-text-exercise.service';
+import { LocalStorageService } from 'ngx-webstorage';
+import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 
 describe('TextExercise Management Update Component', () => {
     let comp: TextExerciseUpdateComponent;
@@ -15,6 +18,10 @@ describe('TextExercise Management Update Component', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
+            providers: [
+                { provide: TextExerciseService, useClass: MockTextExerciseService },
+                { provide: LocalStorageService, useClass: MockSyncStorage },
+            ],
             declarations: [TextExerciseUpdateComponent],
         })
             .overrideTemplate(TextExerciseUpdateComponent, '')
