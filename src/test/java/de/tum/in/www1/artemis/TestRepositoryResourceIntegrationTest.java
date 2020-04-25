@@ -32,6 +32,7 @@ import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.GitUtilService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.RequestUtilService;
+import de.tum.in.www1.artemis.web.rest.dto.FileMove;
 import de.tum.in.www1.artemis.web.rest.dto.RepositoryStatusDTO;
 
 public class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -64,7 +65,7 @@ public class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegra
         void configureRepos(String localRepoFileName, String originRepoFileName) throws Exception {
 
             this.localRepoFile = Files.createTempDirectory(localRepoFileName).toFile();
-            Path filePath = Paths.get(localRepoFile + "/test");
+            Path filePath = Paths.get(localRepoFile + "/currentFileName");
             var file = Files.createFile(filePath).toFile();
             FileUtils.write(file, "awesome");
             this.localGit = Git.init().setDirectory(localRepoFile).call();
@@ -131,7 +132,7 @@ public class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegra
     public void shouldGetFile() throws Exception {
         programmingExerciseRepository.save(exercise);
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
-        params.add("file", "test");
+        params.add("file", "currentFileName");
         var file = request.get("/api/test-repository/" + exercise.getId() + "/file", HttpStatus.OK, byte[].class, params);
         assertThat(file).isNotEmpty();
         assertThat(new String(file)).isEqualTo("awesome");
@@ -161,13 +162,27 @@ public class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegra
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void shouldRenameFile() throws Exception {
+        programmingExerciseRepository.save(exercise);
+        assertThat(Files.exists(Paths.get(testRepo.localRepoFile + "/currentFileName"))).isTrue();
+        assertThat(Files.exists(Paths.get(testRepo.localRepoFile + "/newFileName"))).isFalse();
+        FileMove fileMove = new FileMove();
+        fileMove.setCurrentFilePath("currentFileName");
+        fileMove.setNewFilename("newFileName");
+        request.postWithoutLocation("/api/test-repository/" + exercise.getId() + "/rename-file", fileMove, HttpStatus.OK, null);
+        assertThat(Files.exists(Paths.get(testRepo.localRepoFile + "/currentFileName"))).isFalse();
+        assertThat(Files.exists(Paths.get(testRepo.localRepoFile + "/newFileName"))).isTrue();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void shouldDeleteFile() throws Exception {
         programmingExerciseRepository.save(exercise);
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
-        assertThat(Files.exists(Paths.get(testRepo.localRepoFile + "/test"))).isTrue();
-        params.add("file", "test");
+        assertThat(Files.exists(Paths.get(testRepo.localRepoFile + "/currentFileName"))).isTrue();
+        params.add("file", "currentFileName");
         request.delete("/api/test-repository/" + exercise.getId() + "/file", HttpStatus.OK, params);
-        assertThat(Files.exists(Paths.get(testRepo.localRepoFile + "/test"))).isFalse();
+        assertThat(Files.exists(Paths.get(testRepo.localRepoFile + "/currentFileName"))).isFalse();
     }
 
     @Test
@@ -179,6 +194,13 @@ public class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegra
         request.postWithoutLocation("/api/test-repository/" + exercise.getId() + "/commit", null, HttpStatus.OK, null);
         var receivedStatusAfterCommit = request.get("/api/test-repository/" + exercise.getId(), HttpStatus.OK, RepositoryStatusDTO.class);
         assertThat(receivedStatusAfterCommit.repositoryStatus.toString()).isEqualTo("CLEAN");
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void shouldPullChanges() throws Exception {
+        programmingExerciseRepository.save(exercise);
+        request.get("/api/test-repository/" + exercise.getId() + "/pull", HttpStatus.OK, Void.class);
     }
 
     @Test

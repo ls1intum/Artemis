@@ -269,6 +269,9 @@ public class RequestUtilService {
         if (responseType == byte[].class) {
             return (T) res.getResponse().getContentAsByteArray();
         }
+        if (responseType == Void.class && contentAsString.isEmpty()) {
+            return (T) "";
+        }
         return mapper.readValue(contentAsString, responseType);
     }
 
