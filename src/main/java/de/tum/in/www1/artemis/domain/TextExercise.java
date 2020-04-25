@@ -24,6 +24,9 @@ public class TextExercise extends Exercise implements Serializable {
     @JsonIgnore
     private List<TextCluster> clusters;
 
+    @Column(name = "markdown_enabled")
+    private boolean markdownEnabled;
+
     public String getSampleSolution() {
         return sampleSolution;
     }
@@ -35,6 +38,19 @@ public class TextExercise extends Exercise implements Serializable {
 
     public void setSampleSolution(String sampleSolution) {
         this.sampleSolution = sampleSolution;
+    }
+
+    public boolean isMarkdownEnabled() {
+        return markdownEnabled;
+    }
+
+    public TextExercise markdownEnabled(boolean markdownEnabled) {
+        this.markdownEnabled = markdownEnabled;
+        return this;
+    }
+
+    public void setMarkdownEnabled(boolean markdownEnabled) {
+        this.markdownEnabled = markdownEnabled;
     }
 
     public boolean isAutomaticAssessmentEnabled() {

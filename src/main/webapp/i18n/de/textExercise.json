@@ -16,6 +16,7 @@
             "exampleSubmissions": "Beispielabgabe",
             "assessedSubmission": "Deine bewertete Abgabe",
             "createExampleSubmissions": "Beispielabgabe erstellen",
+            "markdownEnabled": "Markdown-Editor aktiviert",
             "automaticAssessmentEnabled": "Automatische Bewertung aktiviert",
             "exampleSubmissionsRequireExercise": "Um eine Beispielabgabe zu erstellen, musst du zunächst die Erstellung der Textaufgabe abschließen.",
             "saveSuccessful": "Dein Antwort wurde erfolgreich gespeichert!",

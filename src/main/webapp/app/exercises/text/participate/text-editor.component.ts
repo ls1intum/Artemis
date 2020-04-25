@@ -21,6 +21,8 @@ import { TextExercise } from 'app/entities/text-exercise.model';
 import { ButtonType } from 'app/shared/components/button.component';
 import { Result } from 'app/entities/result.model';
 import { TextSubmission } from 'app/entities/text-submission.model';
+import { AssessmentType } from 'app/entities/assessment-type.model';
+import { MarkdownEditorHeight } from 'app/shared/markdown-editor/markdown-editor.component';
 
 @Component({
     templateUrl: './text-editor.component.html',
@@ -29,6 +31,8 @@ import { TextSubmission } from 'app/entities/text-submission.model';
 })
 export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeactivate {
     readonly ButtonType = ButtonType;
+    readonly AssessmentType = AssessmentType;
+    readonly MarkdownEditorHeight = MarkdownEditorHeight;
     textExercise: TextExercise;
     participation: StudentParticipation;
     result: Result;

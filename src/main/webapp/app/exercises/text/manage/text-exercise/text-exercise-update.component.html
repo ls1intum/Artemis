@@ -28,6 +28,19 @@
             </div>
         </div>
         <jhi-team-config-form-group [exercise]="textExercise"></jhi-team-config-form-group>
+        <div class="form-group">
+            <div class="form-check custom-control custom-checkbox">
+                <input
+                    type="checkbox"
+                    id="markdown_enabled"
+                    [ngModel]="textExercise.markdownEnabled"
+                    (ngModelChange)="textExercise.markdownEnabled = $event"
+                    class="form-check-input custom-control-input"
+                    name="markdownEnabled"
+                />
+                <label class="form-check-label custom-control-label" for="markdown_enabled" jhiTranslate="artemisApp.textExercise.markdownEnabled"></label>
+            </div>
+        </div>
         <div class="d-flex">
             <div class="form-group flex-grow-1">
                 <jhi-date-time-picker

@@ -11,6 +11,7 @@ import { TextEditorScoreCardComponent } from 'app/exercises/text/participate/tex
 import { TextResultComponent } from 'app/exercises/text/participate/text-result/text-result.component';
 import { ArtemisTeamModule } from 'app/exercises/shared/team/team.module';
 import { ArtemisHeaderExercisePageWithDetailsModule } from 'app/exercises/shared/exercise-headers/exercise-headers.module';
+import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown-editor.module';
 
 const ENTITY_STATES = [...textEditorRoute];
 
@@ -24,6 +25,7 @@ const ENTITY_STATES = [...textEditorRoute];
         MomentModule,
         ArtemisTeamModule,
         ArtemisHeaderExercisePageWithDetailsModule,
+        ArtemisMarkdownEditorModule,
     ],
     declarations: [TextEditorComponent, TextEditorScoreCardComponent, TextResultComponent],
 })

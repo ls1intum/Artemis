@@ -32,14 +32,23 @@
     <div class="row">
         <ng-container *ngIf="!result; else hasFeedback">
             <div class="col-12 col-lg-9 col-xl-8">
-                <textarea
-                    #textEditor
-                    class="text-editor-textarea"
-                    [(ngModel)]="answer"
-                    [readonly]="!isActive || !submission"
-                    [disabled]="!isActive || !submission"
-                    (keydown.tab)="onTextEditorTab(textEditor, $event)"
-                ></textarea>
+                <jhi-markdown-editor
+                    class="markdown-editor"
+                    *ngIf="textExercise?.markdownEnabled; else plainTextEditor"
+                    [(markdown)]="answer"
+                    [initialHeight]="500"
+                    [enableResize]="true"
+                ></jhi-markdown-editor>
+                <ng-template #plainTextEditor>
+                    <textarea
+                        #textEditor
+                        class="text-editor-textarea"
+                        [(ngModel)]="answer"
+                        [readonly]="!isActive || !submission"
+                        [disabled]="!isActive || !submission"
+                        (keydown.tab)="onTextEditorTab(textEditor, $event)"
+                    ></textarea>
+                </ng-template>
             </div>
         </ng-container>
 
