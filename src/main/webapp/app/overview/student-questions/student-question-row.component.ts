@@ -6,6 +6,7 @@ import { StudentQuestion } from 'app/entities/student-question.model';
 import { StudentQuestionAnswer } from 'app/entities/student-question-answer.model';
 import { StudentQuestionService } from 'app/overview/student-questions/student-question.service';
 import { StudentQuestionAnswerService } from 'app/overview/student-questions/student-question-answer.service';
+import { EditorMode } from 'app/shared/markdown-editor/markdown-editor.component';
 
 export interface StudentQuestionAction {
     name: QuestionActionName;
@@ -30,13 +31,14 @@ export class StudentQuestionRowComponent implements OnInit, OnDestroy {
     isExpanded = true;
     isAnswerMode: boolean;
     isEditMode: boolean;
-    isQuestionAuthor: boolean;
+    isQuestionAuthor = false;
     showOtherAnswers = false;
     selectedQuestionAnswer: StudentQuestionAnswer | null;
     questionAnswerText: string | null;
     studentQuestionText: string | null;
     sortedQuestionAnswers: StudentQuestionAnswer[];
     approvedQuestionAnswers: StudentQuestionAnswer[];
+    EditorMode = EditorMode;
 
     constructor(private studentQuestionAnswerService: StudentQuestionAnswerService, private studentQuestionService: StudentQuestionService) {}
 
@@ -190,5 +192,18 @@ export class StudentQuestionRowComponent implements OnInit, OnDestroy {
         this.studentQuestionAnswerService.update(studentAnswer).subscribe((studentAnswerResponse: HttpResponse<StudentQuestionAnswer>) => {
             this.sortQuestionAnswers();
         });
+    }
+
+    /**
+     * Takes a studentQuestionAnswer and determines if the user is the author of it
+     * @param {StudentQuestionAnswer} studentQuestionAnswer
+     * @returns {boolean}
+     */
+    isAuthorOfAnswer(studentQuestionAnswer: StudentQuestionAnswer): boolean {
+        if (this.user) {
+            return studentQuestionAnswer.author.id === this.user.id;
+        } else {
+            return false;
+        }
     }
 }

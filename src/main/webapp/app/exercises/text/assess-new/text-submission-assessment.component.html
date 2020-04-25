@@ -12,7 +12,7 @@
     (submit)="submit()"
     (cancel)="cancel()"
     (nextSubmission)="nextSubmission()"
-    (updateAssessmentAfterComplaint)="updateAssessmentAfterComplaint()"
+    (updateAssessmentAfterComplaint)="updateAssessmentAfterComplaint($event)"
 >
     <ng-container *ngIf="submission; then assessment; else noSubmission"></ng-container>
 </jhi-assessment-layout>

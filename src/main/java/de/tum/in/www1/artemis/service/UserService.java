@@ -1,8 +1,11 @@
 package de.tum.in.www1.artemis.service;
 
 import static de.tum.in.www1.artemis.config.Constants.TUM_USERNAME_PATTERN;
+import static de.tum.in.www1.artemis.domain.Authority.ADMIN_AUTHORITY;
+import static de.tum.in.www1.artemis.security.AuthoritiesConstants.*;
 
 import java.time.Instant;
+import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -29,10 +32,10 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.SortingOrder;
 import de.tum.in.www1.artemis.exception.UsernameAlreadyUsedException;
 import de.tum.in.www1.artemis.repository.AuthorityRepository;
+import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.GuidedTourSettingsRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
-import de.tum.in.www1.artemis.security.AuthoritiesConstants;
 import de.tum.in.www1.artemis.security.PBEPasswordEncoder;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.connectors.VcsUserManagementService;
@@ -56,6 +59,9 @@ public class UserService {
 
     private final Logger log = LoggerFactory.getLogger(UserService.class);
 
+    @Value("${artemis.user-management.external.admin-group-name:#{null}}")
+    private Optional<String> ADMIN_GROUP_NAME;
+
     @Value("${artemis.encryption-password}")
     private String ENCRYPTION_PASSWORD;
 
@@ -66,6 +72,8 @@ public class UserService {
     private Optional<String> artemisInternalAdminPassword;
 
     private final UserRepository userRepository;
+
+    private final CourseRepository courseRepository;
 
     private final AuthorityRepository authorityRepository;
 
@@ -80,12 +88,13 @@ public class UserService {
     private ArtemisAuthenticationProvider artemisAuthenticationProvider;
 
     public UserService(UserRepository userRepository, AuthorityRepository authorityRepository, CacheManager cacheManager, Optional<LdapUserService> ldapUserService,
-            GuidedTourSettingsRepository guidedTourSettingsRepository) {
+            GuidedTourSettingsRepository guidedTourSettingsRepository, CourseRepository courseRepository) {
         this.userRepository = userRepository;
         this.authorityRepository = authorityRepository;
         this.cacheManager = cacheManager;
         this.ldapUserService = ldapUserService;
         this.guidedTourSettingsRepository = guidedTourSettingsRepository;
+        this.courseRepository = courseRepository;
     }
 
     @Autowired
@@ -111,10 +120,8 @@ public class UserService {
             if (existingInternalAdmin.isPresent()) {
                 log.info("Update internal admin user " + artemisInternalAdminUsername.get());
                 existingInternalAdmin.get().setPassword(passwordEncoder().encode(artemisInternalAdminPassword.get()));
-                var authorities = new HashSet<Authority>();
-                authorities.add(new Authority(AuthoritiesConstants.ADMIN));
-                authorities.add(new Authority(AuthoritiesConstants.USER));
-                existingInternalAdmin.get().setAuthorities(authorities);
+                // needs to be mutable --> new HashSet<>(Set.of(...))
+                existingInternalAdmin.get().setAuthorities(new HashSet<>(Set.of(ADMIN_AUTHORITY, new Authority(USER))));
                 userRepository.save(existingInternalAdmin.get());
                 updateUserInConnectorsAndAuthProvider(existingInternalAdmin.get(), existingInternalAdmin.get().getGroups());
             }
@@ -130,7 +137,8 @@ public class UserService {
                 userDto.setLangKey("en");
                 userDto.setCreatedBy("system");
                 userDto.setLastModifiedBy("system");
-                userDto.setAuthorities(Set.of(AuthoritiesConstants.ADMIN, AuthoritiesConstants.USER));
+                // needs to be mutable --> new HashSet<>(Set.of(...))
+                userDto.setAuthorities(new HashSet<>(Set.of(ADMIN, USER)));
                 userDto.setGroups(new HashSet<>());
                 createUser(userDto);
             }
@@ -289,7 +297,7 @@ public class UserService {
         // new user gets registration key
         newUser.setActivationKey(RandomUtil.generateActivationKey());
         Set<Authority> authorities = new HashSet<>();
-        authorityRepository.findById(AuthoritiesConstants.USER).ifPresent(authorities::add);
+        authorityRepository.findById(USER).ifPresent(authorities::add);
         newUser.setAuthorities(authorities);
         userRepository.save(newUser);
         log.debug("Created Information for User: {}", newUser);
@@ -380,7 +388,8 @@ public class UserService {
         // new user gets registration key
         newUser.setActivationKey(RandomUtil.generateActivationKey());
 
-        final var authority = authorityRepository.findById(AuthoritiesConstants.USER).get();
+        final var authority = authorityRepository.findById(USER).get();
+        // needs to be mutable --> new HashSet<>(Set.of(...))
         final var authorities = new HashSet<>(Set.of(authority));
         newUser.setAuthorities(authorities);
 
@@ -593,6 +602,15 @@ public class UserService {
     }
 
     /**
+     * Get user with groups and authorities by given login string
+     * @param login user login string
+     * @return existing user with given login string or null
+     */
+    public Optional<User> getUserWithGroupsAndAuthoritiesByLogin(String login) {
+        return userRepository.findOneWithGroupsAndAuthoritiesByLogin(login);
+    }
+
+    /**
      * Get user with authorities by given login string
      * @param login user login string
      * @return existing user with given login string or null
@@ -686,7 +704,8 @@ public class UserService {
      */
     public User updateUserNotificationReadDate() {
         User loggedInUser = getUserWithGroupsAndAuthorities();
-        userRepository.updateUserNotificationReadDate(loggedInUser.getId());
+        userRepository.updateUserNotificationReadDate(loggedInUser.getId(), ZonedDateTime.now());
+
         return loggedInUser;
     }
 
@@ -812,5 +831,52 @@ public class UserService {
      */
     public void removeUserFromGroup(User user, String group) {
         artemisAuthenticationProvider.removeUserFromGroup(user, group);
+    }
+
+    /**
+     *
+     * Builds the authorities list from the groups:
+     *
+     * 1) Admin group if the globally defined ADMIN_GROUP_NAME is available and is contained in the users groups, or if the user was an admin before
+     * 2) group contains configured instructor group name -> instructor role
+     * 3) group contains configured tutor group name -> tutor role
+     * 4) the user role is always given
+     *
+     * @param user a user with groups
+     * @return a set of authorities based on the course configuration and the given groups
+     */
+    public Set<Authority> buildAuthorities(User user) {
+        Set<Authority> authorities = new HashSet<>();
+        Set<String> groups = user.getGroups();
+        if (groups == null) {
+            // prevent null pointer exceptions
+            groups = new HashSet<>();
+        }
+
+        // Check if the user is admin in case the admin group is defined
+        if (ADMIN_GROUP_NAME.isPresent() && groups.contains(ADMIN_GROUP_NAME.get())) {
+            authorities.add(ADMIN_AUTHORITY);
+        }
+
+        // Users who already have admin access, keep admin access.
+        if (user.getAuthorities() != null && user.getAuthorities().contains(ADMIN_AUTHORITY)) {
+            authorities.add(ADMIN_AUTHORITY);
+        }
+
+        Set<String> instructorGroups = courseRepository.findAllInstructorGroupNames();
+        Set<String> teachingAssistantGroups = courseRepository.findAllTeachingAssistantGroupNames();
+
+        // Check if user is an instructor in any course
+        if (groups.stream().anyMatch(instructorGroups::contains)) {
+            authorities.add(new Authority(INSTRUCTOR));
+        }
+
+        // Check if user is a tutor in any course
+        if (groups.stream().anyMatch(teachingAssistantGroups::contains)) {
+            authorities.add(new Authority(TEACHING_ASSISTANT));
+        }
+
+        authorities.add(new Authority(USER));
+        return authorities;
     }
 }

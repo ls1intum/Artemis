@@ -85,7 +85,7 @@ public abstract class Exercise implements Serializable {
     @Lob
     private String gradingInstructions;
 
-    @ElementCollection(fetch = FetchType.LAZY)
+    @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "exercise_categories", joinColumns = @JoinColumn(name = "exercise_id"))
     @Column(name = "categories")
     private Set<String> categories = new HashSet<>();

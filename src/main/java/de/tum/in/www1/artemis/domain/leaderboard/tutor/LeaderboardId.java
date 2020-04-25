@@ -13,25 +13,25 @@ import org.hibernate.annotations.Immutable;
 public class LeaderboardId implements Serializable {
 
     @Column(name = "user_id")
-    private Long userId;
+    private long userId;
 
     @Column(name = "exercise_id")
-    private Long exerciseId;
+    private long exerciseId;
 
     public LeaderboardId() {
 
     }
 
-    public LeaderboardId(Long userId, Long exerciseId) {
+    public LeaderboardId(long userId, long exerciseId) {
         this.userId = userId;
         this.exerciseId = exerciseId;
     }
 
-    public Long getUserId() {
+    public long getUserId() {
         return userId;
     }
 
-    public Long getExerciseId() {
+    public long getExerciseId() {
         return exerciseId;
     }
 

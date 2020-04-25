@@ -36,10 +36,16 @@ export class TextAssessmentsService {
             .map((res: EntityResponseType) => TextAssessmentsService.convertResponse(res));
     }
 
-    public updateAssessmentAfterComplaint(feedbacks: Feedback[], complaintResponse: ComplaintResponse, submissionId: number): Observable<EntityResponseType> {
+    public updateAssessmentAfterComplaint(
+        feedbacks: Feedback[],
+        textBlocks: TextBlock[],
+        complaintResponse: ComplaintResponse,
+        submissionId: number,
+    ): Observable<EntityResponseType> {
         const url = `${this.resourceUrl}/text-submissions/${submissionId}/assessment-after-complaint`;
         const assessmentUpdate = {
             feedbacks,
+            textBlocks,
             complaintResponse,
         };
         return this.http

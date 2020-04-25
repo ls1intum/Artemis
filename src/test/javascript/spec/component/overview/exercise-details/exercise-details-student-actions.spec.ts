@@ -7,7 +7,7 @@ import { CourseExerciseService } from 'app/course/manage/course-management.servi
 import { SinonStub, stub } from 'sinon';
 import { TranslateModule } from '@ngx-translate/core';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
-import { Subject } from 'rxjs';
+import { Subject, of } from 'rxjs';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { MockComponent } from 'ng-mocks';
 import { FeatureToggleModule } from 'app/shared/feature-toggle/feature-toggle.module';
@@ -30,6 +30,9 @@ import { MockAccountService } from '../../../mocks/mock-account.service';
 import { User } from 'app/core/user/user.model';
 import { By } from '@angular/platform-browser';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { MockProfileService } from '../../../mocks/mock-profile.service';
+import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -39,7 +42,9 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
     let fixture: ComponentFixture<ExerciseDetailsStudentActionsComponent>;
     let debugElement: DebugElement;
     let courseExerciseService: CourseExerciseService;
+    let profileService: ProfileService;
     let startExerciseStub: SinonStub;
+    let getProfileInfoSub: SinonStub;
 
     const team = { id: 1, students: [{ id: 99 } as User] } as Team;
     const teamExerciseWithoutTeamAssigned = { id: 42, type: ExerciseType.PROGRAMMING, mode: ExerciseMode.TEAM, teamMode: true, studentParticipations: [] } as ProgrammingExercise;
@@ -54,6 +59,7 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
                 { provide: JhiAlertService, useClass: MockAlertService },
                 { provide: FeatureToggleService, useClass: MockFeatureToggleService },
                 { provide: AccountService, useClass: MockAccountService },
+                { provide: ProfileService, useClass: MockProfileService },
             ],
         })
             .overrideModule(ArtemisTestModule, { set: { declarations: [], exports: [] } })
@@ -63,12 +69,17 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
                 comp = fixture.componentInstance;
                 debugElement = fixture.debugElement;
                 courseExerciseService = debugElement.injector.get(CourseExerciseService);
+                profileService = debugElement.injector.get(ProfileService);
+
+                getProfileInfoSub = stub(profileService, 'getProfileInfo');
+                getProfileInfoSub.returns(of({ inProduction: false } as ProfileInfo));
                 startExerciseStub = stub(courseExerciseService, 'startExercise');
             });
     });
 
     afterEach(() => {
         startExerciseStub.restore();
+        getProfileInfoSub.restore();
     });
 
     it('should not show the buttons "Team" and "Start exercise" for a team exercise when not assigned to a team yet', fakeAsync(() => {
