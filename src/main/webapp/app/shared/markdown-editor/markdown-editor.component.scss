@@ -44,7 +44,7 @@
         }
 
         &__commands {
-            margin: 0 5px 5px 5px;
+            padding: 0 5px 5px 5px;
 
             &-default,
             &-domain {
@@ -66,5 +66,5 @@
 
 .background-editor-high {
     min-height: 150px;
-    overflow: scroll;
+    overflow: auto;
 }
