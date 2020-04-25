@@ -13,7 +13,7 @@ export class StructuredGradingInstructionsAssessmentLayoutComponent {
         return 'Feedback: ' + instr.feedback;
     }
     setInstrColour(instr: GradingInstruction) {
-        let colour = '#e3f0da';
+        let colour;
         if (instr.credits === 0) {
             colour = '#fff2cc';
         } else if (instr.credits < 0) {
@@ -33,6 +33,6 @@ export class StructuredGradingInstructionsAssessmentLayoutComponent {
      * the corresponding drop method is in AssessmentDetailComponent
      */
     drag(event: any, instruction: GradingInstruction) {
-        event.dataTransfer.setData('text', JSON.stringify(instruction));
+        event.dataTransfer.setData('artemis/sgi', JSON.stringify(instruction));
     }
 }
