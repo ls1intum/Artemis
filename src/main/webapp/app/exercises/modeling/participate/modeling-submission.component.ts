@@ -93,7 +93,6 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         private router: Router,
         private participationWebsocketService: ParticipationWebsocketService,
         private guidedTourService: GuidedTourService,
-        private location: Location,
     ) {
         this.isSaving = false;
         this.autoSaveTimer = 0;
@@ -270,13 +269,9 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
                     this.participationWebsocketService.addParticipation(this.submission.participation as StudentParticipation, this.modelingExercise);
                     this.result = this.submission.result;
                     this.jhiAlertService.success('artemisApp.modelingEditor.saveSuccessful');
+                    this.onSaveSuccess();
                 },
-                () => {
-                    this.jhiAlertService.error('artemisApp.modelingEditor.error');
-                },
-                () => {
-                    this.isSaving = false;
-                },
+                () => this.onSaveError(),
             );
         } else {
             this.modelingSubmissionService.create(this.submission, this.modelingExercise.id).subscribe(
@@ -285,13 +280,9 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
                     this.result = this.submission.result;
                     this.jhiAlertService.success('artemisApp.modelingEditor.saveSuccessful');
                     this.subscribeToAutomaticSubmissionWebsocket();
+                    this.onSaveSuccess();
                 },
-                () => {
-                    this.jhiAlertService.error('artemisApp.modelingEditor.error');
-                },
-                () => {
-                    this.isSaving = false;
-                },
+                () => this.onSaveError(),
             );
         }
     }
@@ -335,12 +326,9 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
                         if (this.automaticSubmissionWebsocketChannel) {
                             this.jhiWebsocketService.unsubscribe(this.automaticSubmissionWebsocketChannel);
                         }
+                        this.onSaveSuccess();
                     },
-                    () => {
-                        this.jhiAlertService.error('artemisApp.modelingEditor.error');
-                        this.submission.submitted = false;
-                    },
-                    () => (this.isSaving = false),
+                    () => this.onSaveError(),
                 );
         } else {
             this.modelingSubmissionService
@@ -359,13 +347,20 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
                             this.jhiAlertService.success('artemisApp.modelingEditor.submitSuccessful');
                         }
                         this.subscribeToAutomaticSubmissionWebsocket();
+                        this.onSaveSuccess();
                     },
-                    () => {
-                        this.jhiAlertService.error('artemisApp.modelingEditor.error');
-                    },
-                    () => (this.isSaving = false),
+                    () => this.onSaveError(),
                 );
         }
+    }
+
+    private onSaveSuccess() {
+        this.isSaving = false;
+    }
+
+    private onSaveError() {
+        this.jhiAlertService.error('artemisApp.modelingEditor.error');
+        this.isSaving = false;
     }
 
     onReceiveSubmissionFromTeam(submission: ModelingSubmission) {

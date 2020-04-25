@@ -12,10 +12,6 @@
         [btnType]="!isLate ? ButtonType.PRIMARY : ButtonType.WARNING"
         [tooltip]="submitButtonTooltip"
     ></jhi-button>
-    <!--TODO: enable retry button again-->
-    <!--<button class="btn btn-info" (click)="retry()" *ngIf="isActive && submission?.submitted && result?.rated && !retryStarted">-->
-    <!--<fa-icon [icon]="'sync'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.retry">Retry</span>-->
-    <!--</button>-->
 </jhi-header-participation-page>
 
 <jhi-alert></jhi-alert>
