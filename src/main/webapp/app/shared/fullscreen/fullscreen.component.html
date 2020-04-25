@@ -1,6 +1,21 @@
 <ng-container>
     <ng-content></ng-content>
-    <button type="button" class="btn btn-sm" (click)="toggleFullscreen()" style="position: absolute; bottom: 10px; right: 10px;" [ngbTooltip]="buttonTranslationString | translate">
-        <fa-icon [icon]="buttonIcon"></fa-icon>
+    <button
+        [ngSwitch]="mode"
+        type="button"
+        class="btn"
+        style="position: absolute;"
+        [class.btn-primary]="mode == 'extended'"
+        [class.mb-2]="mode == 'extended'"
+        [class.btn-sm]="mode == 'compact'"
+        [class.top-left]="position == 'top-left'"
+        [class.top-right]="position == 'top-right'"
+        [class.bottom-left]="position == 'bottom-left'"
+        [class.bottom-right]="position == 'bottom-right'"
+        (click)="toggleFullscreen()"
+        [ngbTooltip]="'artemisApp.modelingEditor.fullscreen.tooltip' | translate"
+    >
+        <fa-icon [icon]="buttonIcon" *ngSwitchCase="'compact'"></fa-icon>
+        <span *ngSwitchCase="'extended'">{{ 'artemisApp.modelingEditor.fullscreen.buttonContent' | translate }}</span>
     </button>
 </ng-container>

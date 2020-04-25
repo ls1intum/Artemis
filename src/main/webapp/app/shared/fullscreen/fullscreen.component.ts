@@ -1,19 +1,22 @@
-import { Component, OnInit, ElementRef } from '@angular/core';
+import { Component, OnInit, ElementRef, Input } from '@angular/core';
 
 @Component({
     selector: 'jhi-fullscreen',
     templateUrl: './fullscreen.component.html',
-    styles: [],
+    styleUrls: ['./fullscreen.scss'],
 })
 export class FullscreenComponent implements OnInit {
     buttonIcon = 'compress';
-    buttonTranslationString = 'artemisApp.markdownEditor.commands.fullscreen';
+
+    @Input()
+    position: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right' = 'top-right';
+
+    @Input()
+    mode: 'compact' | 'extended' = 'extended';
 
     constructor(private fullScreenWrapper: ElementRef) {}
 
-    ngOnInit(): void {
-        this.fullScreenWrapper.nativeElement.style = 'display: flex; position: relative; background-color: white;';
-    }
+    ngOnInit(): void {}
 
     private enterFullscreen() {
         const element: any = this.fullScreenWrapper.nativeElement;
