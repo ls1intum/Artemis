@@ -35,7 +35,6 @@ describe('ProgrammingExercise Service', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
-                { provide: LocalStorageService, useClass: MockSyncStorage },
             ],
         });
         injector = getTestBed();
