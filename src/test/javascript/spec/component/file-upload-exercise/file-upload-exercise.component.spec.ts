@@ -5,7 +5,6 @@ import { of } from 'rxjs';
 
 import { ArtemisTestModule } from '../../test.module';
 import { FileUploadExerciseComponent } from 'app/exercises/file-upload/manage/file-upload-exercise.component';
-import { FileUploadExerciseService } from 'app/exercises/file-upload/manage/file-upload-exercise.service';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
