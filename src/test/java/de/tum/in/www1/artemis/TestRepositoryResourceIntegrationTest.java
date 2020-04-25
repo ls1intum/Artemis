@@ -32,6 +32,7 @@ import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.GitUtilService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.RequestUtilService;
+import de.tum.in.www1.artemis.web.rest.dto.RepositoryStatusDTO;
 
 public class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -169,4 +170,11 @@ public class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegra
         assertThat(Files.exists(Paths.get(testRepo.localRepoFile + "/test"))).isFalse();
     }
 
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void shouldGetStatus() throws Exception {
+        programmingExerciseRepository.save(exercise);
+        var receivedStatus = request.get("/api/test-repository/" + exercise.getId(), HttpStatus.OK, RepositoryStatusDTO.class);
+        assertThat(receivedStatus).isNotNull();
+    }
 }
