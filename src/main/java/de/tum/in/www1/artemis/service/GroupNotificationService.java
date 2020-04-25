@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.GroupNotificationType;
+import de.tum.in.www1.artemis.domain.notification.GroupNotification;
 import de.tum.in.www1.artemis.repository.GroupNotificationRepository;
 
 // TODO: There is a lot of code duplication in this class. This could be solved by e.g. using a builder or factory pattern.

@@ -6,7 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
-import de.tum.in.www1.artemis.domain.SystemNotification;
+import de.tum.in.www1.artemis.domain.notification.SystemNotification;
 
 /**
  * Spring Data repository for the Notification entity.
