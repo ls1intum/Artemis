@@ -18,5 +18,4 @@ export class MockAccountService implements IAccountService {
     isAuthenticated = () => true;
     isAdmin = () => true;
     save = (account: any) => ({} as any);
-    setIdentityResponse = (account: Account | null) => {};
 }
