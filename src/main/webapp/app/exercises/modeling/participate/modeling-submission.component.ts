@@ -248,7 +248,6 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         this.teamSyncInterval = window.setInterval(() => {
             this.teamSyncTimer++;
             if (this.teamSyncTimer >= 2 && !this.canDeactivate()) {
-                this.submission.submitted = false;
                 this.updateSubmissionModel();
                 this.submissionChange.next(this.submission);
             }
@@ -260,7 +259,6 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
             // don't execute the function if it is already currently executing
             return;
         }
-        this.submission.submitted = false;
         this.updateSubmissionModel();
         this.isSaving = true;
         this.autoSaveTimer = 0;
