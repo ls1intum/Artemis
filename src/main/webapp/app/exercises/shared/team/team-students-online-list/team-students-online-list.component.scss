@@ -31,10 +31,6 @@
 
         display: inline-flex;
         color: #ccc;
-
-        .online & {
-            color: green;
-        }
     }
 
     .student-name {
@@ -45,8 +41,14 @@
         overflow: hidden;
         white-space: nowrap;
         color: #6c757d;
+    }
 
-        .online & {
+    .online {
+        .student-status {
+            color: green;
+        }
+
+        .student-name {
             color: initial;
         }
     }
