@@ -86,7 +86,7 @@ describe('Participation Service', () => {
                 returnedFromService,
             );
             service
-                .query(expected)
+                .findAllParticipationsByExercise(expected)
                 .pipe(
                     take(1),
                     map((resp) => resp.body),
