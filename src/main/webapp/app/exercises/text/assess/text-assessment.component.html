@@ -97,6 +97,7 @@
             <div class="card-body">
                 <jhi-text-assessment-editor
                     [submissionText]="submission?.text"
+                    [markdownEnabled]="exercise.markdownEnabled"
                     [assessments]="referencedFeedback"
                     [blocks]="referencedTextBlocks"
                     (assessedText)="addAssessment($event)"

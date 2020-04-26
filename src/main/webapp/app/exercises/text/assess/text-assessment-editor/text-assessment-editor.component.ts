@@ -12,6 +12,7 @@ import { convertToHtmlLinebreaks } from 'app/utils/text.utils';
 export class TextAssessmentEditorComponent {
     public hostRectangle: SelectionRectangle | null;
     @Input() public submissionText: string;
+    @Input() public markdownEnabled = false;
     @Input() public assessments: Feedback[];
     @Input() public blocks: (TextBlock | undefined)[];
     @Input() public disabled = false;

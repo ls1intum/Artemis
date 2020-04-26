@@ -3,6 +3,7 @@ import { Feedback } from 'app/entities/feedback.model';
 import { HighlightColors } from 'app/exercises/text/assess/highlight-colors';
 import { TextBlock } from 'app/entities/text-block.model';
 import { escapeString, convertToHtmlLinebreaks, sanitize } from 'app/utils/text.utils';
+import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 
 @Component({
     selector: 'jhi-highlighted-text-area',
@@ -11,16 +12,20 @@ import { escapeString, convertToHtmlLinebreaks, sanitize } from 'app/utils/text.
 })
 export class HighlightedTextAreaComponent implements OnChanges, DoCheck {
     @Input() public submissionText: string;
+    @Input() public markdownEnabled = false;
     @Input() public assessments: Feedback[];
     @Input() public blocks: (TextBlock | undefined)[];
     public displayedText: string;
     private differ: any;
 
-    constructor(differs: IterableDiffers) {
+    constructor(differs: IterableDiffers, private artemisMarkdown: ArtemisMarkdownService) {
         this.differ = differs.find([]).create(undefined);
     }
 
     private get submissionTextWithHtmlLinebreaks(): string {
+        if (this.markdownEnabled) {
+            return this.artemisMarkdown.htmlForMarkdown(this.submissionText || '');
+        }
         return convertToHtmlLinebreaks(escapeString(this.submissionText || ''));
     }
 
