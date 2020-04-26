@@ -29,6 +29,9 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
     @Query("select distinct participation from StudentParticipation participation left join fetch participation.results r where participation.exercise.course.id = :#{#courseId} and (r.rated is null or r.rated = true)")
     List<StudentParticipation> findByCourseIdWithEagerRatedResults(@Param("courseId") Long courseId);
 
+    @Query("select distinct participation from StudentParticipation participation left join fetch participation.results result where participation.team.shortName = :#{#teamShortName} and participation.exercise.course.id = :#{#courseId} and (result.id = (select max(id) from participation.results) or result is null)")
+    List<StudentParticipation> findWithLatestResultByCourseIdAndTeamShortName(@Param("courseId") Long courseId, @Param("teamShortName") String teamShortName);
+
     Optional<StudentParticipation> findByExerciseIdAndStudentLogin(Long exerciseId, String username);
 
     Optional<StudentParticipation> findByExerciseIdAndTeamId(Long exerciseId, Long teamId);
@@ -137,4 +140,14 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
      */
     @Query("select participation.id, count(submissions) from StudentParticipation participation left join participation.submissions submissions where participation.exercise.id = :#{#exerciseId} group by participation.id")
     List<long[]> countSubmissionsPerParticipationByExerciseId(@Param("exerciseId") long exerciseId);
+
+    /**
+     * Count the number of submissions for each participation for a given team in a course
+     *
+     * @param courseId the id of the course for which to consider participations
+     * @param teamShortName the short name of the team for which to consider participations
+     * @return Tuples of participation ids and number of submissions per participation
+     */
+    @Query("select participation.id, count(submissions) from StudentParticipation participation left join participation.submissions submissions where participation.team.shortName = :#{#teamShortName} and participation.exercise.course.id = :#{#courseId} group by participation.id")
+    List<long[]> countSubmissionsPerParticipationByCourseIdAndTeamShortName(@Param("courseId") long courseId, @Param("teamShortName") String teamShortName);
 }

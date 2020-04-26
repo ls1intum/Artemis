@@ -2,8 +2,7 @@
     <div *ngIf="exercise && team" class="d-flex">
         <div class="mb-2">
             <h2 class="mb-2">
-                <span>{{ exercise.title }} - {{ team.name }}</span>
-                <span class="text-muted"> ({{ team.shortName }})</span>
+                <span>{{ exercise.title }} - {{ team.name }}</span> <code class="team-short-name text-muted">({{ team.shortName }})</code>
             </h2>
             <div>
                 <span class="d-inline-block">
@@ -47,19 +46,7 @@
         </div>
     </div>
     <jhi-alert></jhi-alert>
-    <jhi-data-table
-        [isLoading]="isLoading"
-        [showPageSizeDropdownAndSearchField]="false"
-        entityType="student"
-        [allEntities]="team?.students || []"
-        entitiesPerPageTranslation="artemisApp.exercise.resultsPerPage"
-        showAllEntitiesTranslation="artemisApp.exercise.showAllResults"
-        searchPlaceholderTranslation="artemisApp.exercise.searchForStudents"
-        [searchFields]="['login', 'name']"
-        [searchTextFromEntity]="searchTextFromStudent"
-        [searchResultFormatter]="searchResultFormatter"
-        (entitiesSizeChange)="handleStudentsSizeChange($event)"
-    >
+    <jhi-data-table [isLoading]="isLoading" [showPageSizeDropdownAndSearchField]="false" [allEntities]="team?.students">
         <ng-template let-settings="settings" let-controls="controls">
             <ngx-datatable
                 class="bootstrap"
@@ -67,7 +54,7 @@
                 [sortType]="settings.sortType"
                 [columnMode]="settings.columnMode"
                 [headerHeight]="settings.headerHeight"
-                [footerHeight]="settings.footerHeight"
+                [footerHeight]="0"
                 [rowHeight]="settings.rowHeight"
                 [rows]="settings.rows"
                 [rowClass]="settings.rowClass"
@@ -117,4 +104,12 @@
             </ngx-datatable>
         </ng-template>
     </jhi-data-table>
+
+    <ng-container *ngIf="exercise?.isAtLeastTutor && team">
+        <hr class="my-5" />
+        <h4>
+            Participations in "{{ exercise.course!.title }}" for <code class="team-short-name text-muted">{{ team.shortName }}</code>
+        </h4>
+        <jhi-team-participation-table [team]="team" [course]="exercise.course" [exercise]="exercise"> </jhi-team-participation-table>
+    </ng-container>
 </div>

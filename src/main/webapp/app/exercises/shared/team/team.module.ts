@@ -19,6 +19,7 @@ import { TeamParticipateInfoBoxComponent } from 'app/exercises/shared/team/team-
 import { TeamsImportButtonComponent } from 'app/exercises/shared/team/teams-import-dialog/teams-import-button.component';
 import { TeamsImportDialogComponent } from 'app/exercises/shared/team/teams-import-dialog/teams-import-dialog.component';
 import { TeamExerciseSearchComponent } from 'app/exercises/shared/team/team-exercise-search/team-exercise-search.component';
+import { TeamParticipationTableComponent } from 'app/exercises/shared/team/team-participation-table/team-participation-table.component';
 
 const ENTITY_STATES = [...teamRoute];
 
@@ -37,6 +38,7 @@ const ENTITY_STATES = [...teamRoute];
         TeamStudentsListComponent,
         TeamStudentsOnlineListComponent,
         TeamParticipateInfoBoxComponent,
+        TeamParticipationTableComponent,
         TeamComponent,
     ],
     exports: [TeamUpdateButtonComponent, TeamsImportButtonComponent, TeamStudentsListComponent, TeamParticipateInfoBoxComponent],

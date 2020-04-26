@@ -362,6 +362,32 @@ public class ParticipationResource {
     }
 
     /**
+     * GET /courses/:courseId/teams/:teamShortName/participations : get all participations of a team for a course
+     *
+     * @param courseId id of the course
+     * @param teamShortName short name of the team (all teams with the short name in the course are seen as the same team)
+     * @return A list of all participations of the team for the course
+     */
+    @GetMapping(value = "/courses/{courseId}/teams/{teamShortName}/participations")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<List<StudentParticipation>> getAllParticipationsForCourseAndTeamShortName(@PathVariable Long courseId, @PathVariable String teamShortName) {
+        log.debug("REST request to get all Participations for Course {} and Team {}", courseId, teamShortName);
+        Course course = courseService.findOne(courseId);
+        User user = userService.getUserWithGroupsAndAuthorities();
+        if (!authorizationCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
+            throw new AccessForbiddenException("You are not allowed to access this resource");
+        }
+
+        List<StudentParticipation> participations = participationService.findWithLatestResultByCourseIdAndTeamShortName(courseId, teamShortName);
+        participations = participations.stream().filter(participation -> participation.getParticipant() != null).collect(Collectors.toList());
+
+        Map<Long, Integer> submissionCountMap = participationService.countSubmissionsPerParticipationByCourseIdAndTeamShortName(courseId, teamShortName);
+        participations.forEach(participation -> participation.setSubmissionCount(submissionCountMap.get(participation.getId())));
+
+        return ResponseEntity.ok(participations);
+    }
+
+    /**
      * GET /participations/:participationId : get the participation for the given "participationId" including its latest result.
      *
      * @param participationId the participationId of the participation to retrieve
