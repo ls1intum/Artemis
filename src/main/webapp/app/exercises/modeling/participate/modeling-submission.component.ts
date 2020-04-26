@@ -312,6 +312,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
                         this.submission = response.body!;
                         this.submissionChange.next(this.submission);
                         this.participation = this.submission.participation as StudentParticipation;
+                        this.participation.exercise = this.modelingExercise;
                         // reconnect so that the submission status is displayed correctly in the result.component
                         this.submission.participation.submissions = [this.submission];
                         this.participationWebsocketService.addParticipation(this.participation, this.modelingExercise);
@@ -343,6 +344,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
                         this.submission = submission.body!;
                         this.submissionChange.next(this.submission);
                         this.participation = this.submission.participation as StudentParticipation;
+                        this.participation.exercise = this.modelingExercise;
                         this.modelingExercise.studentParticipations = [this.participation];
                         this.modelingExercise.participationStatus = participationStatus(this.modelingExercise);
                         this.result = this.submission.result;
