@@ -58,9 +58,13 @@ public class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegra
         course = database.addEmptyCourse();
         exercise = ModelFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(7), course);
         testRepo.configureRepos("testLocalRepo", "testOriginRepo");
+
+        // add file to the repository folder
         Path filePath = Paths.get(testRepo.localRepoFile + "/" + currentLocalFileName);
         var file = Files.createFile(filePath).toFile();
+        // write content to the created file
         FileUtils.write(file, currentLocalFileContent);
+
         var testRepoTestUrl = new GitUtilService.MockFileRepositoryUrl(testRepo.originRepoFile);
         exercise.setTestRepositoryUrl(testRepoTestUrl.toString());
         doReturn(gitService.getRepositoryByLocalPath(testRepo.localRepoFile.toPath())).when(gitService).getOrCheckoutRepository(testRepoTestUrl.getURL(), true);
