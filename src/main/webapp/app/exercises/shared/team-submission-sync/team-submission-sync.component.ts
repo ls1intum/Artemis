@@ -60,6 +60,7 @@ export class TeamSubmissionSyncComponent implements OnInit {
         this.submission$.pipe(throttleTime(this.throttleTime, undefined, { leading: true, trailing: true })).subscribe(
             (submission: Submission) => {
                 delete submission.participation?.exercise;
+                delete submission.participation?.submissions;
                 this.teamSubmissionWebsocketService.send(this.buildWebsocketTopic('/update'), submission);
             },
             (error) => this.onError(error),
