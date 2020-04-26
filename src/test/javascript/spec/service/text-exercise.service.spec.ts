@@ -4,6 +4,12 @@ import { map, take } from 'rxjs/operators';
 import { TextExerciseService } from 'app/exercises/text/manage/text-exercise/text-exercise.service';
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { Course } from 'app/entities/course.model';
+import { MockTranslateService } from '../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
+import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import { Router } from '@angular/router';
+import { MockSyncStorage } from '../helpers/mocks/service/mock-sync-storage.service';
+import { MockRouter } from '../helpers/mocks/mock-router';
 
 describe('TextExercise Service', () => {
     let injector: TestBed;
@@ -13,6 +19,12 @@ describe('TextExercise Service', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [HttpClientTestingModule],
+            providers: [
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: SessionStorageService, useClass: MockSyncStorage },
+                { provide: Router, useClass: MockRouter },
+                { provide: LocalStorageService, useClass: MockSyncStorage },
+            ],
         });
         injector = getTestBed();
         service = injector.get(TextExerciseService);
@@ -21,7 +33,7 @@ describe('TextExercise Service', () => {
         elemDefault = new TextExercise(new Course());
     });
 
-    describe('Service methods', async () => {
+    describe('Service methods', () => {
         it('should find an element', async () => {
             const returnedFromService = Object.assign({}, elemDefault);
             service
