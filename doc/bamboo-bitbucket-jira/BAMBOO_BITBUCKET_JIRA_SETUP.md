@@ -21,6 +21,10 @@ If the version number is not equal adjust the version number in the Dockerfile.
 
 Execute the docker-compose file `atlassian.yml` stored in `src/main/docker` e.g. with `docker-compose -f src/main/docker/atlassian.yml up -d`
 
+Error Handling:
+It can happen that there is an overload with other docker networks `ERROR: Pool overlaps with other one on this address space`.
+Use the command `docker network prune` to resolve this issue.
+
 ## Configure Bamboo, Bitbucket and Jira
 By default, the Jira instance is reachable under `localhost:8081`, the Bamboo instance under `localhost:8085` and the Bitbucket instance under `localhost:7990`.
 
@@ -31,13 +35,42 @@ By default, the Jira instance is reachable under `localhost:8081`, the Bamboo in
 2. Execute the shell script `atlassian-setup.sh` in the `src/main/docker` directory (e.g. with `src/main/docker/./atlassian-setup.sh`). This script creates groups, users (~~and adds them to
 the created groups~~ NOT YET) and disabled application links between the 3 applications   
 3. Enable the created [application links](https://confluence.atlassian.com/doc/linking-to-another-application-360677690.html) between all 3 application (OAuth Impersonate). **You manually have to adjust the Display URL for the Bamboo->Bitbucket AND Bitbucket->Bamboo URl to `http://localhost:7990` and `http://localhost:8085`**
-4. Add the users to the groups. In our test setup, users 1-5 are students, 6-10 are tutors and 11-15 are instructors.
-5. Use the [user directories in Jira](https://confluence.atlassian.com/adminjiraserver/allowing-connections-to-jira-for-user-management-938847045.html) to synchronize the users in bitbucket and bamboo. Add the IP-address `0.0.0.0/0` in Jira and use `Atlassian Crowd` as directory type. Use the URL `http://jira:8080`. Also, you should decrease the synchronisation period (e.g. to 2 minutes). Press synchronise after adding the directory, the users and groups should now be available.
-6. In Bamboo create a global variable named <b>SERVER_PLUGIN_SECRET_PASSWORD</b>, the value of this variable will be used as the secret. The value of this variable
-should be then stored in `src/main/resources/config/application-artemis.yml` as the value of `artemis-authentication-token-value`
-7. Download the [bamboo-server-notifaction-plugin](https://github.com/ls1intum/bamboo-server-notification-plugin/releases) and add it to bamboo.
+    
+    <details><summary>Screenshot</summary>
+   
+    ![](bamboo_bitbucket_applicationLink.png)
+    
+    ![](bitbucket_bamboo_applicationLink.png)
+   
+    </details>
+4. The script has already created users and groups but you need to manually assign the users into their respective group. In our test setup, users 1-5 are students, 6-10 are tutors and 11-15 are instructors.
+5. Use the [user directories in Jira](https://confluence.atlassian.com/adminjiraserver/allowing-connections-to-jira-for-user-management-938847045.html) to synchronize the users in bitbucket and bamboo: 
+  * Go to Jira → User management → Jira user server → Add application → Create one application for bitbucket and one for bamboo → add the IP-address `0.0.0.0/0` to IP Addresses
+  
+  <details><summary>Screenshot</summary>
+     
+  ![](jira_add_application.png)
+     
+  </details>
+   
+  * Go to Bitbucket and Bamboo → User Directories → Add Directories → Atlassian Crowd → use the URL `http://jira:8080` as Server URL → use the application name and password which you used in the previous step. Also, you should decrease the synchronisation period (e.g. to 2 minutes). Press synchronise after adding the directory, the users and groups should now be available.
+  <details><summary>Screenshot</summary>
+     
+  ![](user_directories.png)
+     
+  </details>
+  
+6\. In Bamboo create a global variable named <b>SERVER_PLUGIN_SECRET_PASSWORD</b>, the value of this variable will be used as the secret. The value of this variable
+should be then stored in `src/main/resources/config/application-artemis.yml` as the value of `artemis-authentication-token-value`.
+
+7\. Download the [bamboo-server-notifaction-plugin](https://github.com/ls1intum/bamboo-server-notification-plugin/releases) and add it to bamboo.
 Go to Bamboo → Manage apps → Upload app → select the downloaded .jar file → Upload
-8. Go to Bamboo → Agents → Default Agent and click on `Add executable`. Select type `Maven 3.x`, insert `Maven 3` as executable label and insert `/usr` as path. Then click on `Add JDK`, insert `JDK 12` as JDK label and insert `/usr/lib/jvm/java-14-oracle` as java home.
+
+8\. Add Maven and JDK:
+
+  * Go to Bamboo → Server capabilities → Add capabilities menu →  Capability type `Executable` → select type `Maven 3.x` → insert `Maven 3` as executable label → insert `/usr` as path. 
+   
+  * Add capabilities menu → Capability type `JDK` → insert `JDK 12` as JDK label → insert `/usr/lib/jvm/java-14-oracle` as Java home.
   
 ## Configure Artemis
 
