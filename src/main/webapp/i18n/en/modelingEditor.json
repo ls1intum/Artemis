@@ -10,7 +10,8 @@
             "submitDeadlineMissed": "Your diagram was submitted successfully! You can still submit again or wait for your feedback. As you missed the deadline the score will not be counted.",
             "empty": "Unable to submit an empty diagram.",
             "fullscreen": {
-                "buttonContent": "Fullscreen",
+                "enterButtonText": "Fullscreen",
+                "exitButtonText": "Exit Fullscreen",
                 "tooltip": "Fullscreen"
             },
             "autoSubmit": "The exercise has ended. Now you can't edit your diagram anymore.",

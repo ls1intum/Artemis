@@ -44,7 +44,7 @@ export class FullscreenComponent implements OnInit {
         }
     }
 
-    private isFullScreen() {
+    isFullScreen() {
         const docElement = document as any;
         if (docElement.fullscreenElement !== undefined) {
             return docElement.fullscreenElement;

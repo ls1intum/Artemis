@@ -10,7 +10,8 @@
             "submitDeadlineMissed": "Dein Diagramm wurde erfolgreich abgesendet! Du kannst es ändern oder auf dein Feedback warten. Da du die Deadline verpasst hast wird deine Bewertung nicht gezählt.",
             "empty": "Ein leeres Diagramm kann nicht abgegeben werden.",
             "fullscreen": {
-                "buttonContent": "Fullscreen",
+                "enterButtonText": "Fullscreen",
+                "exitButtonText": "Fullscreen verlassen",
                 "tooltip": "Fullscreen"
             },
             "autoSubmit": "Die Übung ist zu Ende. Du kannst dein Diagramm nun nicht mehr bearbeiten.",

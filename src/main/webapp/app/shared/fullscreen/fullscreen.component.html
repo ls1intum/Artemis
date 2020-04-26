@@ -16,6 +16,9 @@
         [ngbTooltip]="'artemisApp.modelingEditor.fullscreen.tooltip' | translate"
     >
         <fa-icon [icon]="buttonIcon" *ngSwitchCase="'compact'"></fa-icon>
-        <span *ngSwitchCase="'extended'">{{ 'artemisApp.modelingEditor.fullscreen.buttonContent' | translate }}</span>
+        <span *ngSwitchCase="'extended'"
+            ><ng-container *ngIf="!isFullScreen(); else exitButtonText"> {{ 'artemisApp.modelingEditor.fullscreen.enterButtonText' | translate }}</ng-container>
+            <ng-template #exitButtonText>{{ 'artemisApp.modelingEditor.fullscreen.exitButtonText' | translate }}</ng-template>
+        </span>
     </button>
 </ng-container>
