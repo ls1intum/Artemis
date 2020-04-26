@@ -5,7 +5,7 @@ import { UserRouteAccessService } from 'app/core/auth/user-route-access-service'
 
 export const apollonDiagramsRoutes: Routes = [
     {
-        path: 'apollon-diagrams',
+        path: ':courseId/apollon-diagrams',
         component: ApollonDiagramListComponent,
         data: {
             authorities: ['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'],

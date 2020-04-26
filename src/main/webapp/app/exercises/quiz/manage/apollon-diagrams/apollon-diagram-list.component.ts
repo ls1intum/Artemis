@@ -14,6 +14,7 @@ import { UMLDiagramType } from 'app/entities/modeling-exercise.model';
 })
 export class ApollonDiagramListComponent implements OnInit {
     apollonDiagrams: ApollonDiagram[] = [];
+    matchingDiagrams: ApollonDiagram[] = [];
     predicate: string;
     reverse: boolean;
 
@@ -28,6 +29,19 @@ export class ApollonDiagramListComponent implements OnInit {
         this.reverse = true;
     }
 
+    getCourseId() {
+        return parseInt(location.toString().split('ment/')[1].split('/')[0]);
+    }
+
+    matchingCourses() {
+        let matchingDiagrams = [] as ApollonDiagram[];
+        for (let i = 0; i < this.apollonDiagrams.length; i++) {
+            if (this.apollonDiagrams[i].courseId === this.getCourseId()) {
+                matchingDiagrams.push(this.apollonDiagrams[i]);
+            }
+        }
+        return matchingDiagrams;
+    }
     /**
      * Initializes Apollon diagrams from the server
      */
@@ -81,11 +95,11 @@ export class ApollonDiagramListComponent implements OnInit {
     /**
      * Opens dialog for creating a new diagram
      */
-    openCreateDiagramDialog() {
+    openCreateDiagramDialog(courseId: number) {
         const modalRef = this.modalService.open(ApollonDiagramCreateFormComponent, { size: 'lg', backdrop: 'static' });
         const formComponentInstance = modalRef.componentInstance as ApollonDiagramCreateFormComponent;
         // class diagram is the default value and can be changed by the user in the creation dialog
-        formComponentInstance.apollonDiagram = new ApollonDiagram(UMLDiagramType.ClassDiagram);
+        formComponentInstance.apollonDiagram = new ApollonDiagram(UMLDiagramType.ClassDiagram, courseId);
     }
 
     /**
