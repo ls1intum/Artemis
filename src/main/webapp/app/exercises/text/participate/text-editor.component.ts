@@ -191,6 +191,7 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
                 // reconnect so that the submission status is displayed correctly in the result.component
                 this.submission.participation.submissions = [this.submission];
                 this.participation = this.submission.participation as StudentParticipation;
+                this.participation.exercise = this.textExercise;
                 this.participationWebsocketService.addParticipation(this.participation, this.textExercise);
                 this.textExercise.studentParticipations = [this.participation];
                 this.textExercise.participationStatus = participationStatus(this.textExercise);
