@@ -3,15 +3,28 @@ import { HttpClientTestingModule, HttpTestingController } from '@angular/common/
 import { take } from 'rxjs/operators';
 import { ModelingExerciseService } from 'app/exercises/modeling/manage/modeling-exercise.service';
 import { DiagramType, ModelingExercise } from 'app/entities/modeling-exercise.model';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from '../helpers/mocks/service/mock-translate.service';
+import { MockSyncStorage } from '../helpers/mocks/service/mock-sync-storage.service';
+import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import { routes } from 'app/exercises/modeling/manage/modeling-exercise.route';
+import { RouterTestingModule } from '@angular/router/testing';
+import { ArtemisModelingExerciseModule } from 'app/exercises/modeling/manage/modeling-exercise.module';
 
 describe('ModelingExercise Service', () => {
     let injector: TestBed;
     let service: ModelingExerciseService;
     let httpMock: HttpTestingController;
     let elemDefault: ModelingExercise;
+
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [HttpClientTestingModule],
+            imports: [ArtemisModelingExerciseModule, HttpClientTestingModule, RouterTestingModule.withRoutes(routes)],
+            providers: [
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: SessionStorageService, useClass: MockSyncStorage },
+                { provide: LocalStorageService, useClass: MockSyncStorage },
+            ],
         });
         injector = getTestBed();
         service = injector.get(ModelingExerciseService);
