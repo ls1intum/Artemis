@@ -5,22 +5,18 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
-import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.nio.file.Files;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
-import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.diff.DiffEntry;
 import org.eclipse.jgit.lib.ObjectReader;
 import org.eclipse.jgit.lib.Repository;
-import org.eclipse.jgit.lib.StoredConfig;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.treewalk.CanonicalTreeParser;
 import org.junit.jupiter.api.AfterEach;
@@ -88,39 +84,15 @@ public class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractS
 
     private final static String teamShortName = "team1";
 
-    public class LocalRepo {
+    LocalRepository exerciseRepo = new LocalRepository();
 
-        File localRepoFile;
+    LocalRepository testRepo = new LocalRepository();
 
-        File originRepoFile;
+    LocalRepository solutionRepo = new LocalRepository();
 
-        Git localGit;
+    LocalRepository studentRepo = new LocalRepository();
 
-        Git originGit;
-
-        void configureRepos(String localRepoFileName, String originRepoFileName) throws Exception {
-
-            this.localRepoFile = Files.createTempDirectory(localRepoFileName).toFile();
-            this.localGit = Git.init().setDirectory(localRepoFile).call();
-
-            this.originRepoFile = Files.createTempDirectory(originRepoFileName).toFile();
-            this.originGit = Git.init().setDirectory(originRepoFile).call();
-
-            StoredConfig config = this.localGit.getRepository().getConfig();
-            config.setString("remote", "origin", "url", this.originRepoFile.getAbsolutePath());
-            config.save();
-        }
-    }
-
-    LocalRepo exerciseRepo = new LocalRepo();
-
-    LocalRepo testRepo = new LocalRepo();
-
-    LocalRepo solutionRepo = new LocalRepo();
-
-    LocalRepo studentRepo = new LocalRepo();
-
-    LocalRepo studentTeamRepo = new LocalRepo();
+    LocalRepository studentTeamRepo = new LocalRepository();
 
     @BeforeEach
     public void setup() throws Exception {
@@ -183,25 +155,9 @@ public class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractS
         reset(bambooServer);
         bitbucketRequestMockProvider.reset();
         bambooRequestMockProvider.reset();
-        resetLocalRepo(exerciseRepo);
-        resetLocalRepo(testRepo);
-        resetLocalRepo(solutionRepo);
-    }
-
-    private void resetLocalRepo(LocalRepo localRepo) throws IOException {
-        if (localRepo.localRepoFile != null && localRepo.localRepoFile.exists()) {
-            FileUtils.deleteDirectory(localRepo.localRepoFile);
-        }
-        if (localRepo.localGit != null) {
-            localRepo.localGit.close();
-        }
-
-        if (localRepo.originRepoFile != null && localRepo.originRepoFile.exists()) {
-            FileUtils.deleteDirectory(localRepo.originRepoFile);
-        }
-        if (localRepo.originGit != null) {
-            localRepo.originGit.close();
-        }
+        LocalRepository.resetLocalRepo(exerciseRepo);
+        LocalRepository.resetLocalRepo(testRepo);
+        LocalRepository.resetLocalRepo(solutionRepo);
     }
 
     @ParameterizedTest
