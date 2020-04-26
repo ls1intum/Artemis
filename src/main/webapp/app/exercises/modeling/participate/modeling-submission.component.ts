@@ -103,55 +103,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         this.subscription = this.route.params.subscribe((params) => {
             if (params['participationId']) {
                 this.modelingSubmissionService.getLatestSubmissionForModelingEditor(params['participationId']).subscribe(
-                    (modelingSubmission) => {
-                        if (!modelingSubmission) {
-                            this.jhiAlertService.error('artemisApp.apollonDiagram.submission.noSubmission');
-                        }
-                        // reconnect participation <--> result
-                        if (modelingSubmission.result) {
-                            modelingSubmission.participation.results = [modelingSubmission.result];
-                        }
-                        this.participation = modelingSubmission.participation as StudentParticipation;
-
-                        // reconnect participation <--> submission
-                        this.participation.submissions = [<ModelingSubmission>omit(modelingSubmission, 'participation')];
-
-                        this.modelingExercise = this.participation.exercise as ModelingExercise;
-                        this.modelingExercise.studentParticipations = [this.participation];
-                        this.modelingExercise.participationStatus = participationStatus(this.modelingExercise);
-                        if (this.modelingExercise.diagramType == null) {
-                            this.modelingExercise.diagramType = UMLDiagramType.ClassDiagram;
-                        }
-                        // checks if the student started the exercise after the due date
-                        this.isLate =
-                            this.modelingExercise &&
-                            !!this.modelingExercise.dueDate &&
-                            !!this.participation.initializationDate &&
-                            moment(this.participation.initializationDate).isAfter(this.modelingExercise.dueDate);
-                        this.isAfterAssessmentDueDate = !this.modelingExercise.assessmentDueDate || moment().isAfter(this.modelingExercise.assessmentDueDate);
-                        this.submission = modelingSubmission;
-                        if (this.submission.model) {
-                            this.umlModel = JSON.parse(this.submission.model);
-                            this.hasElements = this.umlModel.elements && this.umlModel.elements.length !== 0;
-                        }
-                        this.subscribeToWebsockets();
-                        if (this.submission.result && this.isAfterAssessmentDueDate) {
-                            this.result = this.submission.result;
-                        }
-                        if (this.submission.submitted && this.result && this.result.completionDate) {
-                            this.modelingAssessmentService.getAssessment(this.submission.id).subscribe((assessmentResult: Result) => {
-                                this.assessmentResult = assessmentResult;
-                                this.prepareAssessmentData();
-                            });
-                        }
-                        if (this.modelingExercise.teamMode) {
-                            this.setupSubmissionStreamForTeam();
-                        } else {
-                            this.setAutoSaveTimer();
-                        }
-                        this.isLoading = false;
-                        this.guidedTourService.enableTourForExercise(this.modelingExercise, modelingTour, true);
-                    },
+                    (modelingSubmission) => this.updateModelingSubmission(modelingSubmission),
                     (error) => {
                         if (error.status === 403) {
                             this.router.navigate(['accessdenied']);
@@ -161,6 +113,58 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
             }
         });
         window.scroll(0, 0);
+    }
+
+    private updateModelingSubmission(modelingSubmission: ModelingSubmission) {
+        if (!modelingSubmission) {
+            this.jhiAlertService.error('artemisApp.apollonDiagram.submission.noSubmission');
+        }
+
+        this.submission = modelingSubmission;
+
+        // reconnect participation <--> result
+        if (modelingSubmission.result) {
+            modelingSubmission.participation.results = [modelingSubmission.result];
+        }
+        this.participation = modelingSubmission.participation as StudentParticipation;
+
+        // reconnect participation <--> submission
+        this.participation.submissions = [<ModelingSubmission>omit(modelingSubmission, 'participation')];
+
+        this.modelingExercise = this.participation.exercise as ModelingExercise;
+        this.modelingExercise.studentParticipations = [this.participation];
+        this.modelingExercise.participationStatus = participationStatus(this.modelingExercise);
+        if (this.modelingExercise.diagramType == null) {
+            this.modelingExercise.diagramType = UMLDiagramType.ClassDiagram;
+        }
+        // checks if the student started the exercise after the due date
+        this.isLate =
+            this.modelingExercise &&
+            !!this.modelingExercise.dueDate &&
+            !!this.participation.initializationDate &&
+            moment(this.participation.initializationDate).isAfter(this.modelingExercise.dueDate);
+        this.isAfterAssessmentDueDate = !this.modelingExercise.assessmentDueDate || moment().isAfter(this.modelingExercise.assessmentDueDate);
+        if (this.submission.model) {
+            this.umlModel = JSON.parse(this.submission.model);
+            this.hasElements = this.umlModel.elements && this.umlModel.elements.length !== 0;
+        }
+        this.subscribeToWebsockets();
+        if (this.submission.result && this.isAfterAssessmentDueDate) {
+            this.result = this.submission.result;
+        }
+        if (this.submission.submitted && this.result && this.result.completionDate) {
+            this.modelingAssessmentService.getAssessment(this.submission.id).subscribe((assessmentResult: Result) => {
+                this.assessmentResult = assessmentResult;
+                this.prepareAssessmentData();
+            });
+        }
+        if (this.modelingExercise.teamMode) {
+            this.setupSubmissionStreamForTeam();
+        } else {
+            this.setAutoSaveTimer();
+        }
+        this.isLoading = false;
+        this.guidedTourService.enableTourForExercise(this.modelingExercise, modelingTour, true);
     }
 
     /**
@@ -256,7 +260,6 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
             return;
         }
         this.updateSubmissionModel();
-        this.submission.submitted = false;
         this.isSaving = true;
         this.autoSaveTimer = 0;
 
@@ -307,6 +310,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
                 .subscribe(
                     (response) => {
                         this.submission = response.body!;
+                        this.submissionChange.next(this.submission);
                         this.participation = this.submission.participation as StudentParticipation;
                         // reconnect so that the submission status is displayed correctly in the result.component
                         this.submission.participation.submissions = [this.submission];
@@ -337,6 +341,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
                 .subscribe(
                     (submission) => {
                         this.submission = submission.body!;
+                        this.submissionChange.next(this.submission);
                         this.participation = this.submission.participation as StudentParticipation;
                         this.modelingExercise.studentParticipations = [this.participation];
                         this.modelingExercise.participationStatus = participationStatus(this.modelingExercise);
@@ -364,8 +369,9 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     }
 
     onReceiveSubmissionFromTeam(submission: ModelingSubmission) {
-        this.submission = submission;
-        this.umlModel = JSON.parse(submission.model);
+        submission.participation.exercise = this.modelingExercise;
+        submission.participation.submissions = [submission];
+        this.updateModelingSubmission(submission);
     }
 
     private isModelEmpty(model: string): boolean {

@@ -231,7 +231,6 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
     }
 
     onReceiveSubmissionFromTeam(submission: TextSubmission) {
-        console.log('received', submission);
         submission.participation.exercise = this.textExercise;
         submission.participation.submissions = [submission];
         this.updateParticipation(submission.participation as StudentParticipation);
