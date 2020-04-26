@@ -1,6 +1,6 @@
 import { getTestBed, TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
-import { map, take } from 'rxjs/operators';
+import { take } from 'rxjs/operators';
 import { ModelingSubmissionService } from 'app/exercises/modeling/participate/modeling-submission.service';
 import { ModelingSubmission } from 'app/entities/modeling-submission.model';
 
@@ -24,7 +24,7 @@ describe('ModelingSubmission Service', () => {
         it('should find an element', async () => {
             const returnedFromService = Object.assign({}, elemDefault);
             service
-                .find(123)
+                .getSubmission(123)
                 .pipe(take(1))
                 .subscribe((resp) => expect(resp).toMatchObject({ body: elemDefault }));
 
@@ -41,7 +41,7 @@ describe('ModelingSubmission Service', () => {
             );
             const expected = Object.assign({}, returnedFromService);
             service
-                .create(new ModelingSubmission(null))
+                .create(new ModelingSubmission(), 1)
                 .pipe(take(1))
                 .subscribe((resp) => expect(resp).toMatchObject({ body: expected }));
             const req = httpMock.expectOne({ method: 'POST' });
@@ -59,7 +59,7 @@ describe('ModelingSubmission Service', () => {
 
             const expected = Object.assign({}, returnedFromService);
             service
-                .update(expected)
+                .update(expected, 1)
                 .pipe(take(1))
                 .subscribe((resp) => expect(resp).toMatchObject({ body: expected }));
             const req = httpMock.expectOne({ method: 'PUT' });

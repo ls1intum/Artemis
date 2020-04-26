@@ -1,6 +1,6 @@
 import { getTestBed, TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
-import { map, take } from 'rxjs/operators';
+import { take } from 'rxjs/operators';
 import { ModelingExerciseService } from 'app/exercises/modeling/manage/modeling-exercise.service';
 import { DiagramType, ModelingExercise } from 'app/entities/modeling-exercise.model';
 
