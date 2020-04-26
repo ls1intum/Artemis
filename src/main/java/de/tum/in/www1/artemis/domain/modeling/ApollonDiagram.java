@@ -37,7 +37,7 @@ public class ApollonDiagram implements Serializable {
     @Column(name = "diagram_type")
     private DiagramType diagramType;
 
-    @Column(name = "courseId")
+    @Column(name = "course_id")
     private Long courseId;
 
     public Long getCourseId() {
