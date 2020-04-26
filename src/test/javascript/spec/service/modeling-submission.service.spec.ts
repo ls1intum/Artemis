@@ -66,35 +66,6 @@ describe('ModelingSubmission Service', () => {
             req.flush(JSON.stringify(returnedFromService));
         });
 
-        it('should return a list of ModelingSubmission', async () => {
-            const returnedFromService = Object.assign(
-                {
-                    model: 'BBBBBB',
-                    explanationText: 'BBBBBB',
-                },
-                elemDefault,
-            );
-            const expected = Object.assign({}, returnedFromService);
-            service
-                .query(expected)
-                .pipe(
-                    take(1),
-                    map((resp) => resp.body),
-                )
-                .subscribe((body) => expect(body).toContainEqual(expected));
-            const req = httpMock.expectOne({ method: 'GET' });
-            req.flush(JSON.stringify([returnedFromService]));
-            httpMock.verify();
-        });
-
-        it('should delete a ModelingSubmission', async () => {
-            service.delete(123).subscribe((resp) => expect(resp.ok));
-
-            const req = httpMock.expectOne({ method: 'DELETE' });
-            req.flush({ status: 200 });
-        });
-    });
-
     afterEach(() => {
         httpMock.verify();
     });

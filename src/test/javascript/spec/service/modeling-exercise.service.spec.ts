@@ -41,7 +41,7 @@ describe('ModelingExercise Service', () => {
             );
             const expected = Object.assign({}, returnedFromService);
             service
-                .create(new ModelingExercise(null))
+                .create(new ModelingExercise(DiagramType.ComponentDiagram))
                 .pipe(take(1))
                 .subscribe((resp) => expect(resp).toMatchObject({ body: expected }));
             const req = httpMock.expectOne({ method: 'POST' });
@@ -65,28 +65,6 @@ describe('ModelingExercise Service', () => {
                 .subscribe((resp) => expect(resp).toMatchObject({ body: expected }));
             const req = httpMock.expectOne({ method: 'PUT' });
             req.flush(JSON.stringify(returnedFromService));
-        });
-
-        it('should return a list of ModelingExercise', async () => {
-            const returnedFromService = Object.assign(
-                {
-                    diagramType: 'BBBBBB',
-                    sampleSolutionModel: 'BBBBBB',
-                    sampleSolutionExplanation: 'BBBBBB',
-                },
-                elemDefault,
-            );
-            const expected = Object.assign({}, returnedFromService);
-            service
-                .query(expected)
-                .pipe(
-                    take(1),
-                    map((resp) => resp.body),
-                )
-                .subscribe((body) => expect(body).toContainEqual(expected));
-            const req = httpMock.expectOne({ method: 'GET' });
-            req.flush(JSON.stringify([returnedFromService]));
-            httpMock.verify();
         });
 
         it('should delete a ModelingExercise', async () => {
