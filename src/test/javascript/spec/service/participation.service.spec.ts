@@ -42,28 +42,6 @@ describe('Participation Service', () => {
             req.flush(JSON.stringify(returnedFromService));
         });
 
-        it('should create a Participation', async () => {
-            const returnedFromService = Object.assign(
-                {
-                    id: 0,
-                    initializationDate: currentDate.format(DATE_TIME_FORMAT),
-                },
-                elemDefault,
-            );
-            const expected = Object.assign(
-                {
-                    initializationDate: currentDate,
-                },
-                returnedFromService,
-            );
-            service
-                .create(new Participation(null))
-                .pipe(take(1))
-                .subscribe((resp) => expect(resp).toMatchObject({ body: expected }));
-            const req = httpMock.expectOne({ method: 'POST' });
-            req.flush(JSON.stringify(returnedFromService));
-        });
-
         it('should update a Participation', async () => {
             const returnedFromService = Object.assign(
                 {
