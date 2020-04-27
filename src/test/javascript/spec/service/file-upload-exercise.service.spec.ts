@@ -1,6 +1,9 @@
 import { getTestBed, TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { map, take } from 'rxjs/operators';
+import { ActivatedRoute, convertToParamMap } from '@angular/router';
+import { of } from 'rxjs';
+
 import { FileUploadExerciseService } from 'app/exercises/file-upload/manage/file-upload-exercise.service';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
 import { ArtemisTestModule } from '../test.module';
@@ -9,6 +12,7 @@ import { MockTranslateService } from '../helpers/mocks/service/mock-translate.se
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { TranslateService } from '@ngx-translate/core';
 import { Course } from 'app/entities/course.model';
+import { CourseExerciseService } from 'app/course/manage/course-management.service';
 
 describe('FileUploadExercise Service', () => {
     let injector: TestBed;
@@ -16,10 +20,17 @@ describe('FileUploadExercise Service', () => {
     let httpMock: HttpTestingController;
     let elemDefault: FileUploadExercise;
 
+    const course: Course = { id: 123 } as Course;
+    const fileUploadExercise = new FileUploadExercise(course);
+    fileUploadExercise.id = 456;
+    fileUploadExercise.filePattern = 'pdf';
+    const route = ({ snapshot: { paramMap: convertToParamMap({ courseId: course.id }) } } as any) as ActivatedRoute;
+
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, HttpClientTestingModule],
             providers: [
+                { provide: ActivatedRoute, useValue: route },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: TranslateService, useClass: MockTranslateService },
