@@ -30,6 +30,8 @@ services:
         build: bamboo
         volumes:
             - artemis-bamboo:/var/atlassian/application-data/bamboo
+            - /var/run/docker.sock:/var/run/docker.sock
+            - /usr/bin/docker:/usr/bin/docker
         ports:
             - "54663:54663"
             - "8085:8085"
