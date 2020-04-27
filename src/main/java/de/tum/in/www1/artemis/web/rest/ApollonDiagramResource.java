@@ -97,7 +97,6 @@ public class ApollonDiagramResource {
     @GetMapping("/apollon-diagrams/list/{courseId}")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public List<ApollonDiagram> getDiagramsByCourse(@PathVariable Long courseId) {
-        //TODO: security, userService.getCourses()
         log.debug("REST request to get ApollonDiagrams matching current course");
         return apollonDiagramRepository.findDiagramsByCourse(courseId);
     }
