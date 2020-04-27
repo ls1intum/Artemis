@@ -9,6 +9,7 @@ describe('ModelingSubmission Service', () => {
     let service: ModelingSubmissionService;
     let httpMock: HttpTestingController;
     let elemDefault: ModelingSubmission;
+
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [HttpClientTestingModule],
@@ -65,6 +66,7 @@ describe('ModelingSubmission Service', () => {
             const req = httpMock.expectOne({ method: 'PUT' });
             req.flush(JSON.stringify(returnedFromService));
         });
+    });
 
     afterEach(() => {
         httpMock.verify();

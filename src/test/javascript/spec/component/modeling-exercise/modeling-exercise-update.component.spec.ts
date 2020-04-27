@@ -5,7 +5,9 @@ import { of } from 'rxjs';
 import { ArtemisTestModule } from '../../test.module';
 import { ModelingExerciseUpdateComponent } from 'app/exercises/modeling/manage/modeling-exercise-update.component';
 import { ModelingExerciseService } from 'app/exercises/modeling/manage/modeling-exercise.service';
-import { ModelingExercise } from 'app/entities/modeling-exercise.model';
+import { ModelingExercise, UMLDiagramType } from 'app/entities/modeling-exercise.model';
+import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
+import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 
 describe('ModelingExercise Management Update Component', () => {
     let comp: ModelingExerciseUpdateComponent;
@@ -16,6 +18,10 @@ describe('ModelingExercise Management Update Component', () => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
             declarations: [ModelingExerciseUpdateComponent],
+            providers: [
+                { provide: LocalStorageService, useClass: MockSyncStorage },
+                { provide: SessionStorageService, useClass: MockSyncStorage },
+            ],
         })
             .overrideTemplate(ModelingExerciseUpdateComponent, '')
             .compileComponents();
@@ -28,7 +34,8 @@ describe('ModelingExercise Management Update Component', () => {
     describe('save', () => {
         it('Should call update service on save for existing entity', fakeAsync(() => {
             // GIVEN
-            const entity = new ModelingExercise(123);
+            const entity = new ModelingExercise(UMLDiagramType.ActivityDiagram);
+            entity.id = 123;
             spyOn(service, 'update').and.returnValue(of(new HttpResponse({ body: entity })));
             comp.modelingExercise = entity;
             // WHEN
@@ -36,13 +43,13 @@ describe('ModelingExercise Management Update Component', () => {
             tick(); // simulate async
 
             // THEN
-            expect(service.update).toHaveBeenCalledWith(entity);
+            expect(service.update).toHaveBeenCalledWith(entity, {});
             expect(comp.isSaving).toEqual(false);
         }));
 
         it('Should call create service on save for new entity', fakeAsync(() => {
             // GIVEN
-            const entity = new ModelingExercise();
+            const entity = new ModelingExercise(UMLDiagramType.ClassDiagram);
             spyOn(service, 'create').and.returnValue(of(new HttpResponse({ body: entity })));
             comp.modelingExercise = entity;
             // WHEN

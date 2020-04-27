@@ -31,7 +31,7 @@ export class ModelingExerciseResolver implements Resolve<ModelingExercise> {
     }
 }
 
-const routes: Routes = [
+export const routes: Routes = [
     {
         path: ':courseId/modeling-exercises/new',
         component: ModelingExerciseUpdateComponent,
