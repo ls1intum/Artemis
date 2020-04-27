@@ -22,6 +22,7 @@ export class TeamComponent implements OnInit {
     team: Team;
     exercise: Exercise;
     isLoading: boolean;
+    isTransitioning: boolean;
 
     currentUser: User;
     isAdmin = false;
@@ -42,17 +43,25 @@ export class TeamComponent implements OnInit {
 
     ngOnInit() {
         this.route.params.subscribe((params) => {
-            this.isLoading = true;
+            this.setLoadingState(true);
             this.exerciseService.find(params['exerciseId']).subscribe((exerciseResponse) => {
                 this.exercise = exerciseResponse.body!;
                 this.exercise.isAtLeastTutor = this.accountService.isAtLeastTutorInCourse(this.exercise.course!);
                 this.exercise.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.exercise.course!);
                 this.teamService.find(this.exercise, params['teamId']).subscribe((teamResponse) => {
                     this.team = teamResponse.body!;
-                    this.isLoading = false;
+                    this.setLoadingState(false);
                 }, this.onLoadError);
             }, this.onLoadError);
         }, this.onLoadError);
+    }
+
+    setLoadingState(loading: boolean) {
+        if (this.exercise && this.team && !this.isLoading) {
+            this.isTransitioning = loading;
+        } else {
+            this.isLoading = loading;
+        }
     }
 
     onLoadError(error: any) {

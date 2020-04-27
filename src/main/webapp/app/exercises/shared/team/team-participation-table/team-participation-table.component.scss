@@ -1,6 +1,14 @@
 $current-exercise-bg-color: lighten(#d4edda, 5%);
 $current-exercise-text-color: #155724;
 
+.ngx-datatable.bootstrap .datatable-header .datatable-header-cell {
+    border-bottom: none !important;
+}
+
+.datatable-row-wrapper:last-child .datatable-body-row {
+    border-bottom: 1px solid #d1d4d7;
+}
+
 .datatable-row-left {
     & > .datatable-body-cell:last-child {
         position: relative;

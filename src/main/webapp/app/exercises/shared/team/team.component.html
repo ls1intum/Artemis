@@ -47,7 +47,7 @@
         </div>
     </div>
     <jhi-alert></jhi-alert>
-    <jhi-data-table [isLoading]="isLoading" [showPageSizeDropdownAndSearchField]="false" [allEntities]="team?.students">
+    <jhi-data-table [isLoading]="isLoading" [isTransitioning]="isTransitioning" [showPageSizeDropdownAndSearchField]="false" [allEntities]="team?.students">
         <ng-template let-settings="settings" let-controls="controls">
             <ngx-datatable
                 class="bootstrap"
