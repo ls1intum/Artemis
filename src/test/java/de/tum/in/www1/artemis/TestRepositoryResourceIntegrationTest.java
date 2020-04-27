@@ -44,8 +44,6 @@ public class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegra
 
     private ProgrammingExercise exercise;
 
-    private final static int numberOfStudents = 2;
-
     private String currentLocalFileName = "currentFileName";
 
     private String currentLocalFileContent = "testContent";
@@ -56,7 +54,7 @@ public class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegra
 
     @BeforeEach
     public void setup() throws Exception {
-        database.addUsers(numberOfStudents, 1, 1);
+        database.addUsers(0, 0, 1);
         course = database.addEmptyCourse();
         exercise = ModelFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(7), course);
         testRepo.configureRepos("testLocalRepo", "testOriginRepo");
