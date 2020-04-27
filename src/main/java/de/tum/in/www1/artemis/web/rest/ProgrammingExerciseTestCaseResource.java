@@ -134,7 +134,7 @@ public class ProgrammingExerciseTestCaseResource {
 
         public static final String TEST_CASES = PROGRAMMING_EXERCISE + "/test-cases";
 
-        public static final String RESET_WEIGHTS = PROGRAMMING_EXERCISE + "/reset-weights";
+        public static final String RESET_WEIGHTS = PROGRAMMING_EXERCISE + "/test-cases/reset-weights";
 
         public static final String UPDATE_TEST_CASES = PROGRAMMING_EXERCISE + "/update-test-cases";
 
