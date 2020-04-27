@@ -2,7 +2,21 @@ $current-exercise-bg-color: lighten(#d4edda, 5%);
 $current-exercise-text-color: #155724;
 
 .datatable-row-left {
-    box-shadow: 4px 0 5px -5px #888;
+    & > .datatable-body-cell:last-child {
+        position: relative;
+        overflow: visible !important;
+
+        &:after {
+            $border-width: 1px;
+            content: ' ';
+            position: absolute;
+            width: 5px;
+            right: -5px;
+            top: -$border-width;
+            height: calc(100% + #{$border-width});
+            box-shadow: 8px 0 12px -15px inset;
+        }
+    }
 
     .datatable-row-even & {
         background-color: #f2f2f2;
