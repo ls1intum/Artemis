@@ -487,7 +487,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     }
 
     canDeactivate(): Observable<boolean> | boolean {
-        if (!this.modelingEditor) {
+        if (!this.modelingEditor || !this.modelingEditor.isApollonEditorMounted) {
             return true;
         }
         const model: UMLModel = this.modelingEditor.getCurrentModel();
