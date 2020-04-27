@@ -43,7 +43,12 @@ export class TeamParticipationTableComponent implements OnInit {
         );
     }
 
-    rowClass = (row: StudentParticipation): string => {
-        return this.exercise.id === row.exercise.id ? currentExerciseRowClass : '';
+    /**
+     * Computes the class for a row (used to highlight the exercise to which the current team belongs to)
+     *
+     * @param exercise Exercise is passed in from the template (instead of doing this.exercise) to trigger the ngx-datatable change detection
+     */
+    rowClass = (exercise: Exercise) => (row: StudentParticipation): string => {
+        return exercise.id === row.exercise.id ? currentExerciseRowClass : '';
     };
 }

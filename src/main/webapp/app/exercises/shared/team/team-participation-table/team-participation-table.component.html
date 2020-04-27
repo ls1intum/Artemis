@@ -9,7 +9,7 @@
             [footerHeight]="0"
             [rowHeight]="settings.rowHeight"
             [rows]="settings.rows"
-            [rowClass]="rowClass"
+            [rowClass]="rowClass(exercise)"
             [scrollbarH]="settings.scrollbarH"
         >
             <ngx-datatable-column prop="exercise.title" [minWidth]="140" [width]="140" [frozenLeft]="true">
@@ -54,7 +54,7 @@
                         {{ value.team.id }}
                     </a>
                     <ng-template #teamId>
-                        <span [ngStyle]="{ fontWeight: 500 }">{{ value.team.id }}</span>
+                        <span class="current-team">{{ value.team.id }}</span>
                     </ng-template>
                 </ng-template>
             </ngx-datatable-column>
