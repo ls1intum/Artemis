@@ -1179,6 +1179,8 @@ public class DatabaseUtilService {
         quizExercise.addQuestions(createDragAndDropQuestion());
         quizExercise.addQuestions(createShortAnswerQuestion());
         quizExercise.setMaxScore(quizExercise.getMaxTotalScore().doubleValue());
+        quizExercise.setGradingInstructions("Grading Instructions");
+        quizExercise.setGradingCriteria(createGradingCriteria(quizExercise));
         return quizExercise;
     }
 
@@ -1200,6 +1202,7 @@ public class DatabaseUtilService {
         sa.getSolutions().add(shortAnswerSolution2);
         sa.getCorrectMappings().add(new ShortAnswerMapping().spot(sa.getSpots().get(0)).solution(sa.getSolutions().get(0)));
         sa.getCorrectMappings().add(new ShortAnswerMapping().spot(sa.getSpots().get(1)).solution(sa.getSolutions().get(1)));
+        sa.setExplanation("Explanation");
         return sa;
     }
 
@@ -1221,6 +1224,7 @@ public class DatabaseUtilService {
         dnd.getDragItems().add(dragItem2);
         dnd.getCorrectMappings().add(new DragAndDropMapping().dragItem(dragItem1).dropLocation(dropLocation1));
         dnd.getCorrectMappings().add(new DragAndDropMapping().dragItem(dragItem2).dropLocation(dropLocation2));
+        dnd.setExplanation("Explanation");
         return dnd;
     }
 
@@ -1234,6 +1238,15 @@ public class DatabaseUtilService {
         mc.setScoringType(ScoringType.ALL_OR_NOTHING);
         mc.getAnswerOptions().add(new AnswerOption().text("A").hint("H1").explanation("E1").isCorrect(true));
         mc.getAnswerOptions().add(new AnswerOption().text("B").hint("H2").explanation("E2").isCorrect(false));
+        mc.setExplanation("Explanation");
         return mc;
+    }
+
+    @NotNull
+    public List<GradingCriterion> createGradingCriteria(Exercise exercise) {
+        List <GradingCriterion> list = new ArrayList<>();
+        list.add(new GradingCriterion().title("GC1").exercise(exercise));
+        list.add(new GradingCriterion().title("GC2").exercise(exercise));
+        return list;
     }
 }

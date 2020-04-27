@@ -229,8 +229,10 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         QuizExercise quizExercise = database.createQuiz(course, ZonedDateTime.now().plusHours(5), null);
         QuizExercise quizExerciseServer = request.postWithResponseBody("/api/quiz-exercises", quizExercise, QuizExercise.class, HttpStatus.CREATED);
         QuizExercise quizExerciseDatabase = quizExerciseService.findOneWithQuestionsAndStatistics(quizExerciseServer.getId());
-        assertThat(quizExercise.getQuizQuestions()).hasSize(quizExerciseServer.getQuizQuestions().size());
-        assertThat(quizExercise.getQuizQuestions()).hasSize(quizExerciseDatabase.getQuizQuestions().size());
+
+        checkQuizExercises(quizExercise, quizExerciseServer);
+        checkQuizExercises(quizExercise, quizExerciseDatabase);
+
         for (int i = 0; i < quizExercise.getQuizQuestions().size(); i++) {
             var question = quizExercise.getQuizQuestions().get(i);
             var questionServer = quizExerciseServer.getQuizQuestions().get(i);
@@ -239,28 +241,25 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
             assertThat(question.getId()).as("Question IDs are correct").isNull();
             assertThat(questionDatabase.getId()).as("Question IDs are correct").isEqualTo(questionServer.getId());
 
-            assertThat(question.getExercise().getId()).as("Exercise IDs are equal").isEqualTo(questionDatabase.getExercise().getId());
-            assertThat(question.getExercise().getId()).as("Exercise IDs are equal").isEqualTo(questionServer.getExercise().getId());
-            assertThat(questionDatabase.getExercise().getId()).as("Exercise IDs are equal").isEqualTo(questionServer.getExercise().getId());
+            assertThat(question.getExercise().getId()).as("Exercise IDs are correct").isNull();
+            assertThat(questionDatabase.getExercise().getId()).as("Exercise IDs are correct").isEqualTo(quizExerciseDatabase.getId());
 
-            assertThat(question.getTitle()).as("Question titles are equal").isEqualTo(questionDatabase.getTitle());
-            assertThat(question.getTitle()).as("Question titles are equal").isEqualTo(questionServer.getTitle());
-            assertThat(questionDatabase.getTitle()).as("Question titles are equal").isEqualTo(questionServer.getTitle());
+            assertThat(question.getTitle()).as("Question titles are correct").isEqualTo(questionDatabase.getTitle());
+            assertThat(question.getTitle()).as("Question titles are correct").isEqualTo(questionServer.getTitle());
 
-            assertThat(question.getScore()).as("Question scores are equal").isEqualTo(questionDatabase.getScore());
-            assertThat(question.getScore()).as("Question scores are equal").isEqualTo(questionServer.getScore());
-            assertThat(questionDatabase.getScore()).as("Question scores are equal").isEqualTo(questionServer.getScore());
+            assertThat(question.getScore()).as("Question scores are correct").isEqualTo(questionDatabase.getScore());
+            assertThat(question.getScore()).as("Question scores are correct").isEqualTo(questionServer.getScore());
         }
         return quizExerciseServer;
-        // TODO: add some additional checks
     }
 
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void testDeleteQuizExercise() throws Exception {
         QuizExercise quizExerciseServer = createQuizOnServer();
+        assertThat(quizExerciseService.findOneWithQuestionsAndStatistics(quizExerciseServer.getId())).as("Exercise is created correctly").isNotNull();
         request.delete("/api/quiz-exercises/" + quizExerciseServer.getId(), HttpStatus.OK);
-        assertThat(quizExerciseService.findOneWithQuestionsAndStatistics(quizExerciseServer.getId())).isNull();
+        assertThat(quizExerciseService.findOneWithQuestionsAndStatistics(quizExerciseServer.getId())).as("Exercise is deleted correctly").isNull();
     }
 
     @Test
@@ -305,9 +304,43 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     public void testGetQuizExercise() throws Exception {
         QuizExercise quizExercise = createQuizOnServer();
         QuizExercise quizExerciseGet = request.get("/api/quiz-exercises/" + quizExercise.getId(), HttpStatus.OK, QuizExercise.class);
-        QuizExercise quizExerciseForStudent = request.get("/api/quiz-exercises/" + quizExercise.getId() + "/for-student", HttpStatus.OK, QuizExercise.class);
+        checkQuizExercises(quizExercise, quizExerciseGet);
+
+        QuizExercise quizExerciseForStudent_notStarted = request.get("/api/quiz-exercises/" + quizExercise.getId() + "/for-student", HttpStatus.OK, QuizExercise.class);
+        assertThat(quizExerciseForStudent_notStarted.getQuizPointStatistic().getPointCounters().size()).isEqualTo(0);
+        assertThat(quizExerciseForStudent_notStarted.getQuizQuestions()).hasSize(0);
+        assertThat(quizExerciseForStudent_notStarted.getGradingInstructions()).isNull();
+        assertThat(quizExerciseForStudent_notStarted.getGradingCriteria()).isEmpty();
+
+        quizExercise.setReleaseDate(ZonedDateTime.now().minusMinutes(10));
+        quizExercise.setDuration(3600);
+        quizExercise.setDueDate(ZonedDateTime.now().plusHours(5));
+        quizExerciseService.save(quizExercise);
+        QuizExercise quizExerciseForStudent_Started = request.get("/api/quiz-exercises/" + quizExercise.getId() + "/for-student", HttpStatus.OK, QuizExercise.class);
+        assertThat(quizExerciseForStudent_Started.getQuizPointStatistic().getPointCounters().size()).isEqualTo(0);
+        assertThat(quizExerciseForStudent_Started.getGradingInstructions()).isNull();
+        assertThat(quizExerciseForStudent_Started.getGradingCriteria()).isEmpty();
+        for (QuizQuestion question : quizExerciseForStudent_Started.getQuizQuestions()){
+            assertThat(question.getExplanation()).isNull();
+        }
+
+        quizExercise.setReleaseDate(ZonedDateTime.now().minusHours(5));
+        quizExercise.setDueDate(ZonedDateTime.now().minusHours(4));
+        quizExerciseService.save(quizExercise);
+        QuizExercise quizExerciseForStudent_Finished = request.get("/api/quiz-exercises/" + quizExercise.getId() + "/for-student", HttpStatus.OK, QuizExercise.class);
+        assertThat(quizExerciseForStudent_Finished.getQuizPointStatistic().getPointCounters().size()).isGreaterThan(0);
+        assertThat(quizExerciseForStudent_Finished.getGradingInstructions()).isNotNull();
+        assertThat(quizExerciseForStudent_Finished.getGradingCriteria()).isEmpty();
+        for (QuizQuestion question : quizExerciseForStudent_Finished.getQuizQuestions()){
+            assertThat(question.getExplanation()).isNotNull();
+        }
+
+        QuizExercise quizExercise1 = database.createQuiz(quizExercise.getCourse(), ZonedDateTime.now().plusHours(5), null);
+        quizExerciseService.save(quizExercise1);
         List<QuizExercise> allQuizExercisesForCourse = request.getList("/api/courses/" + quizExercise.getCourse().getId() + "/quiz-exercises", HttpStatus.OK, QuizExercise.class);
-        // TODO: add some additional checks for the retrieved data
+        assertThat(allQuizExercisesForCourse.size()).isEqualTo(3);
+        assertThat(allQuizExercisesForCourse.get(1)).isEqualTo(quizExercise);
+        assertThat(allQuizExercisesForCourse.get(2)).isEqualTo(quizExercise1);
     }
 
     @Test
@@ -390,6 +423,15 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         QuizExercise updatedQuizExercise = request.putWithResponseBody("/api/quiz-exercises/" + quizExercise.getId() + "/open-for-practice", quizExercise, QuizExercise.class,
                 HttpStatus.OK);
         assertThat(updatedQuizExercise.isIsOpenForPractice()).isTrue();
+    }
+
+    private void checkQuizExercises(QuizExercise quizExercise, QuizExercise quizExerciseServer){
+        assertThat(quizExercise.getQuizQuestions()).as("Same amount of questions saved").hasSize(quizExerciseServer.getQuizQuestions().size());
+        assertThat(quizExercise.getTitle()).as("Title saved correctly").isEqualTo(quizExerciseServer.getTitle());
+        assertThat(quizExercise.getAllowedNumberOfAttempts()).as("Number of attempts saved correctly").isEqualTo(quizExerciseServer.getAllowedNumberOfAttempts());
+        assertThat(quizExercise.getMaxScore()).as("Max score saved correctly").isEqualTo(quizExerciseServer.getMaxScore());
+        assertThat(quizExercise.getDuration()).as("Duration saved correctly").isEqualTo(quizExerciseServer.getDuration());
+        assertThat(quizExercise.getType()).as("Type saved correctly").isEqualTo(quizExerciseServer.getType());
     }
 
 }
