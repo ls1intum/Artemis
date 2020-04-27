@@ -29,6 +29,8 @@ import de.tum.in.www1.artemis.web.rest.dto.RepositoryStatusDTO;
 
 public class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
+    private final String testRepoBaseUrl = "/api/test-repository/";
+
     @Autowired
     private DatabaseUtilService database;
 
@@ -65,9 +67,9 @@ public class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegra
         // write content to the created file
         FileUtils.write(file, currentLocalFileContent);
 
-        var testRepoTestUrl = new GitUtilService.MockFileRepositoryUrl(testRepo.originRepoFile);
-        exercise.setTestRepositoryUrl(testRepoTestUrl.toString());
-        doReturn(gitService.getRepositoryByLocalPath(testRepo.localRepoFile.toPath())).when(gitService).getOrCheckoutRepository(testRepoTestUrl.getURL(), true);
+        var testRepoUrl = new GitUtilService.MockFileRepositoryUrl(testRepo.originRepoFile);
+        exercise.setTestRepositoryUrl(testRepoUrl.toString());
+        doReturn(gitService.getRepositoryByLocalPath(testRepo.localRepoFile.toPath())).when(gitService).getOrCheckoutRepository(testRepoUrl.getURL(), true);
     }
 
     @AfterEach
@@ -81,7 +83,7 @@ public class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegra
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void shouldGetFiles() throws Exception {
         programmingExerciseRepository.save(exercise);
-        var files = request.getMap("/api/test-repository/" + exercise.getId() + "/files", HttpStatus.OK, String.class, FileType.class);
+        var files = request.getMap(testRepoBaseUrl + exercise.getId() + "/files", HttpStatus.OK, String.class, FileType.class);
         assertThat(files).isNotEmpty();
     }
 
@@ -91,7 +93,7 @@ public class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegra
         programmingExerciseRepository.save(exercise);
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("file", currentLocalFileName);
-        var file = request.get("/api/test-repository/" + exercise.getId() + "/file", HttpStatus.OK, byte[].class, params);
+        var file = request.get(testRepoBaseUrl + exercise.getId() + "/file", HttpStatus.OK, byte[].class, params);
         assertThat(file).isNotEmpty();
         assertThat(new String(file)).isEqualTo(currentLocalFileContent);
     }
@@ -103,7 +105,7 @@ public class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegra
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         assertThat(Files.exists(Paths.get(testRepo.localRepoFile + "/newFile"))).isFalse();
         params.add("file", "newFile");
-        request.postWithoutResponseBody("/api/test-repository/" + exercise.getId() + "/file", HttpStatus.OK, params);
+        request.postWithoutResponseBody(testRepoBaseUrl + exercise.getId() + "/file", HttpStatus.OK, params);
         assertThat(Files.exists(Paths.get(testRepo.localRepoFile + "/newFile"))).isTrue();
     }
 
@@ -114,7 +116,7 @@ public class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegra
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         assertThat(Files.exists(Paths.get(testRepo.localRepoFile + "/newFolder"))).isFalse();
         params.add("folder", "newFolder");
-        request.postWithoutResponseBody("/api/test-repository/" + exercise.getId() + "/folder", HttpStatus.OK, params);
+        request.postWithoutResponseBody(testRepoBaseUrl + exercise.getId() + "/folder", HttpStatus.OK, params);
         assertThat(Files.exists(Paths.get(testRepo.localRepoFile + "/newFolder"))).isTrue();
     }
 
@@ -127,7 +129,7 @@ public class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegra
         FileMove fileMove = new FileMove();
         fileMove.setCurrentFilePath(currentLocalFileName);
         fileMove.setNewFilename(newLocalFileName);
-        request.postWithoutLocation("/api/test-repository/" + exercise.getId() + "/rename-file", fileMove, HttpStatus.OK, null);
+        request.postWithoutLocation(testRepoBaseUrl + exercise.getId() + "/rename-file", fileMove, HttpStatus.OK, null);
         assertThat(Files.exists(Paths.get(testRepo.localRepoFile + "/" + currentLocalFileName))).isFalse();
         assertThat(Files.exists(Paths.get(testRepo.localRepoFile + "/" + newLocalFileName))).isTrue();
     }
@@ -139,7 +141,7 @@ public class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegra
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         assertThat(Files.exists(Paths.get(testRepo.localRepoFile + "/" + currentLocalFileName))).isTrue();
         params.add("file", currentLocalFileName);
-        request.delete("/api/test-repository/" + exercise.getId() + "/file", HttpStatus.OK, params);
+        request.delete(testRepoBaseUrl + exercise.getId() + "/file", HttpStatus.OK, params);
         assertThat(Files.exists(Paths.get(testRepo.localRepoFile + "/" + currentLocalFileName))).isFalse();
     }
 
@@ -147,10 +149,10 @@ public class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegra
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void shouldCommitChanges() throws Exception {
         programmingExerciseRepository.save(exercise);
-        var receivedStatusBeforeCommit = request.get("/api/test-repository/" + exercise.getId(), HttpStatus.OK, RepositoryStatusDTO.class);
+        var receivedStatusBeforeCommit = request.get(testRepoBaseUrl + exercise.getId(), HttpStatus.OK, RepositoryStatusDTO.class);
         assertThat(receivedStatusBeforeCommit.repositoryStatus.toString()).isEqualTo("UNCOMMITTED_CHANGES");
-        request.postWithoutLocation("/api/test-repository/" + exercise.getId() + "/commit", null, HttpStatus.OK, null);
-        var receivedStatusAfterCommit = request.get("/api/test-repository/" + exercise.getId(), HttpStatus.OK, RepositoryStatusDTO.class);
+        request.postWithoutLocation(testRepoBaseUrl + exercise.getId() + "/commit", null, HttpStatus.OK, null);
+        var receivedStatusAfterCommit = request.get(testRepoBaseUrl + exercise.getId(), HttpStatus.OK, RepositoryStatusDTO.class);
         assertThat(receivedStatusAfterCommit.repositoryStatus.toString()).isEqualTo("CLEAN");
     }
 
@@ -158,14 +160,14 @@ public class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegra
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void shouldPullChanges() throws Exception {
         programmingExerciseRepository.save(exercise);
-        request.get("/api/test-repository/" + exercise.getId() + "/pull", HttpStatus.OK, Void.class);
+        request.get(testRepoBaseUrl + exercise.getId() + "/pull", HttpStatus.OK, Void.class);
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void shouldGetStatus() throws Exception {
         programmingExerciseRepository.save(exercise);
-        var receivedStatus = request.get("/api/test-repository/" + exercise.getId(), HttpStatus.OK, RepositoryStatusDTO.class);
+        var receivedStatus = request.get(testRepoBaseUrl + exercise.getId(), HttpStatus.OK, RepositoryStatusDTO.class);
         assertThat(receivedStatus).isNotNull();
     }
 }
