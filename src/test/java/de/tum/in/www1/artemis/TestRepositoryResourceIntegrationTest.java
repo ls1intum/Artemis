@@ -48,7 +48,11 @@ public class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegra
 
     private String currentLocalFileContent = "testContent";
 
+    private String currentLocalFolderName = "currentFolderName";
+
     private String newLocalFileName = "newFileName";
+
+    private String newLocalFolderName = "newFolderName";
 
     LocalRepository testRepo = new LocalRepository();
 
@@ -64,6 +68,10 @@ public class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegra
         var file = Files.createFile(filePath).toFile();
         // write content to the created file
         FileUtils.write(file, currentLocalFileContent);
+
+        filePath = Paths.get(testRepo.localRepoFile + "/" + currentLocalFolderName);
+        var folder = Files.createDirectory(filePath).toFile();
+        // write content to the created file
 
         var testRepoUrl = new GitUtilService.MockFileRepositoryUrl(testRepo.originRepoFile);
         exercise.setTestRepositoryUrl(testRepoUrl.toString());
@@ -130,6 +138,20 @@ public class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegra
         request.postWithoutLocation(testRepoBaseUrl + exercise.getId() + "/rename-file", fileMove, HttpStatus.OK, null);
         assertThat(Files.exists(Paths.get(testRepo.localRepoFile + "/" + currentLocalFileName))).isFalse();
         assertThat(Files.exists(Paths.get(testRepo.localRepoFile + "/" + newLocalFileName))).isTrue();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void shouldRenameFolder() throws Exception {
+        programmingExerciseRepository.save(exercise);
+        assertThat(Files.exists(Paths.get(testRepo.localRepoFile + "/" + currentLocalFolderName))).isTrue();
+        assertThat(Files.exists(Paths.get(testRepo.localRepoFile + "/" + newLocalFolderName))).isFalse();
+        FileMove fileMove = new FileMove();
+        fileMove.setCurrentFilePath(currentLocalFolderName);
+        fileMove.setNewFilename(newLocalFolderName);
+        request.postWithoutLocation(testRepoBaseUrl + exercise.getId() + "/rename-file", fileMove, HttpStatus.OK, null);
+        assertThat(Files.exists(Paths.get(testRepo.localRepoFile + "/" + currentLocalFolderName))).isFalse();
+        assertThat(Files.exists(Paths.get(testRepo.localRepoFile + "/" + newLocalFolderName))).isTrue();
     }
 
     @Test
