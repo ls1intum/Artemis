@@ -24,7 +24,11 @@
     <jhi-course-registration-selector [courses]="courses" (courseRegistered)="loadAndFilterCourses()" class="col-12 col-sm-auto d-flex"></jhi-course-registration-selector>
 </div>
 <div class="row">
-    <div class="col-12 col-md-6 col-lg-3 pr-2 pl-2 mb-2" *ngFor="let course of courses">
-        <jhi-overview-course-card [course]="course" [hasGuidedTour]="course === courseForGuidedTour"></jhi-overview-course-card>
-    </div>
+    <jhi-overview-course-card
+        *ngFor="let course of courses"
+        class="col-12 col-md-6 col-lg-4 col-xl-3 pr-2 pl-2 mb-2"
+        [course]="course"
+        [hasGuidedTour]="course === courseForGuidedTour"
+    >
+    </jhi-overview-course-card>
 </div>
