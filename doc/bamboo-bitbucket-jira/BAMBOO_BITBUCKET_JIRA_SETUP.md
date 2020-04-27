@@ -37,11 +37,22 @@ the created groups~~ NOT YET) and disabled application links between the 3 appli
 3. Enable the created [application links](https://confluence.atlassian.com/doc/linking-to-another-application-360677690.html) between all 3 application (OAuth Impersonate). **You manually have to adjust the Display URL for the Bamboo->Bitbucket AND Bitbucket->Bamboo URl to `http://localhost:7990` and `http://localhost:8085`**
     
     <details><summary>Screenshot</summary>
+    
+    Bamboo:   
    
     ![](bamboo_bitbucket_applicationLink.png)
+    ![](bamboo_jira_applicationLink.png)
+    
+    Bitbucket:
     
     ![](bitbucket_bamboo_applicationLink.png)
-   
+    ![](bitbucket_jira_applicationLink.png)
+    
+    Jira:
+    
+    ![](jira_bamboo_applicationLink.png)
+    ![](jira_bitbucket_applicationLink.png)
+    
     </details>
 4. The script has already created users and groups but you need to manually assign the users into their respective group. In our test setup, users 1-5 are students, 6-10 are tutors and 11-15 are instructors.
 5. Use the [user directories in Jira](https://confluence.atlassian.com/adminjiraserver/allowing-connections-to-jira-for-user-management-938847045.html) to synchronize the users in bitbucket and bamboo: 
