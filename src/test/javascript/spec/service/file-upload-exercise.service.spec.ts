@@ -1,17 +1,35 @@
 import { getTestBed, TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { map, take } from 'rxjs/operators';
+
 import { FileUploadExerciseService } from 'app/exercises/file-upload/manage/file-upload-exercise.service';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
+import { ArtemisTestModule } from '../test.module';
+import { MockSyncStorage } from '../helpers/mocks/service/mock-sync-storage.service';
+import { MockTranslateService } from '../helpers/mocks/service/mock-translate.service';
+import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import { TranslateService } from '@ngx-translate/core';
+import { Course } from 'app/entities/course.model';
 
 describe('FileUploadExercise Service', () => {
     let injector: TestBed;
     let service: FileUploadExerciseService;
     let httpMock: HttpTestingController;
     let elemDefault: FileUploadExercise;
+
+    const course: Course = { id: 123 } as Course;
+    const fileUploadExercise = new FileUploadExercise(course);
+    fileUploadExercise.id = 456;
+    fileUploadExercise.filePattern = 'pdf';
+
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [HttpClientTestingModule],
+            imports: [ArtemisTestModule, HttpClientTestingModule],
+            providers: [
+                { provide: LocalStorageService, useClass: MockSyncStorage },
+                { provide: SessionStorageService, useClass: MockSyncStorage },
+                { provide: TranslateService, useClass: MockTranslateService },
+            ],
         });
         injector = getTestBed();
         service = injector.get(FileUploadExerciseService);
@@ -41,7 +59,7 @@ describe('FileUploadExercise Service', () => {
             );
             const expected = Object.assign({}, returnedFromService);
             service
-                .create(new FileUploadExercise(null))
+                .create(fileUploadExercise)
                 .pipe(take(1))
                 .subscribe((resp) => expect(resp).toMatchObject({ body: expected }));
             const req = httpMock.expectOne({ method: 'POST' });
