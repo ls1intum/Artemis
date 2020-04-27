@@ -48,16 +48,6 @@ export class ApollonDiagramListComponent implements OnInit {
     }
 
     /**
-     * Navigates to details pages of specified Apollon diagram
-     * @param id of the Apolon Diagram
-     */
-    goToDetailsPage(id: number) {
-        this.router.navigate([id], {
-            relativeTo: this.route,
-        });
-    }
-
-    /**
      * Deletes specified Apollon diagram
      * @param apollonDiagram
      */
