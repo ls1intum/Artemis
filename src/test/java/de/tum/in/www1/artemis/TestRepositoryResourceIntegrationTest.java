@@ -112,7 +112,7 @@ public class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegra
         assertThat(Files.exists(Paths.get(testRepo.localRepoFile + "/newFile"))).isFalse();
         params.add("file", "newFile");
         request.postWithoutResponseBody(testRepoBaseUrl + exercise.getId() + "/file", HttpStatus.OK, params);
-        assertThat(Files.exists(Paths.get(testRepo.localRepoFile + "/newFile"))).isTrue();
+        assertThat(Files.isRegularFile(Paths.get(testRepo.localRepoFile + "/newFile"))).isTrue();
     }
 
     @Test
@@ -123,7 +123,7 @@ public class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegra
         assertThat(Files.exists(Paths.get(testRepo.localRepoFile + "/newFolder"))).isFalse();
         params.add("folder", "newFolder");
         request.postWithoutResponseBody(testRepoBaseUrl + exercise.getId() + "/folder", HttpStatus.OK, params);
-        assertThat(Files.exists(Paths.get(testRepo.localRepoFile + "/newFolder"))).isTrue();
+        assertThat(Files.isDirectory(Paths.get(testRepo.localRepoFile + "/newFolder"))).isTrue();
     }
 
     @Test
