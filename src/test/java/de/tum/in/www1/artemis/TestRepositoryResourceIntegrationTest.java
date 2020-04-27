@@ -185,6 +185,13 @@ public class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegra
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void shouldResetToLastCommit() throws Exception {
+        programmingExerciseRepository.save(exercise);
+        request.postWithoutLocation(testRepoBaseUrl + exercise.getId() + "/reset", null, HttpStatus.OK, null);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void shouldGetStatus() throws Exception {
         programmingExerciseRepository.save(exercise);
         var receivedStatus = request.get(testRepoBaseUrl + exercise.getId(), HttpStatus.OK, RepositoryStatusDTO.class);
