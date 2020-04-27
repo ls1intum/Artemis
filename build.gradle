@@ -157,7 +157,7 @@ repositories {
 
 dependencies {
     implementation 'com.offbytwo.jenkins:jenkins-client:0.3.8'
-    implementation 'org.gitlab4j:gitlab4j-api:4.14.26'
+    implementation 'org.gitlab4j:gitlab4j-api:4.14.27'
 
     // TODO: at the moment we cannot upgrade to a higher version of acli due to conflicts with the used LoggerFactory
     // the problem is that newer versions integrate the logging framework directly into the jar file instead of referencing
@@ -181,17 +181,17 @@ dependencies {
 
     implementation "io.github.jhipster:jhipster-framework"
     implementation "org.springframework.boot:spring-boot-starter-cache:${spring_boot_version}"
-    implementation "io.micrometer:micrometer-registry-prometheus:1.4.1"
+    implementation "io.micrometer:micrometer-registry-prometheus:1.4.2"
     implementation "net.logstash.logback:logstash-logback-encoder:6.3"
-    implementation "com.fasterxml.jackson.datatype:jackson-datatype-hppc:2.10.3"
-    implementation "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.10.3"
-    implementation "com.fasterxml.jackson.datatype:jackson-datatype-hibernate5:2.10.3"
-    implementation "com.fasterxml.jackson.core:jackson-annotations:2.10.3"
-    implementation "com.fasterxml.jackson.core:jackson-databind:2.10.3"
-    implementation "com.fasterxml.jackson.module:jackson-module-afterburner:2.10.3"
+    implementation "com.fasterxml.jackson.datatype:jackson-datatype-hppc:${fasterxml_version}"
+    implementation "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:${fasterxml_version}"
+    implementation "com.fasterxml.jackson.datatype:jackson-datatype-hibernate5:${fasterxml_version}"
+    implementation "com.fasterxml.jackson.core:jackson-annotations:${fasterxml_version}"
+    implementation "com.fasterxml.jackson.core:jackson-databind:${fasterxml_version}"
+    implementation "com.fasterxml.jackson.module:jackson-module-afterburner:${fasterxml_version}"
     implementation "javax.cache:cache-api:1.1.1"
     implementation "org.hibernate:hibernate-core"
-    implementation "com.zaxxer:HikariCP:3.4.2"
+    implementation "com.zaxxer:HikariCP:3.4.3"
     implementation "org.apache.commons:commons-lang3:3.10"
     implementation "org.apache.commons:commons-text:1.8"
     implementation "commons-io:commons-io"
@@ -231,7 +231,7 @@ dependencies {
         exclude module: "mapstruct"
     }
     implementation "io.springfox:springfox-bean-validators"
-    implementation "mysql:mysql-connector-java:8.0.19"
+    implementation "mysql:mysql-connector-java:8.0.20"
     implementation "org.mapstruct:mapstruct:${mapstruct_version}"
 
     implementation "org.zalando:problem-spring-web:0.25.2"
