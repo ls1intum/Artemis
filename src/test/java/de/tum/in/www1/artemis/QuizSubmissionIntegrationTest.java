@@ -339,15 +339,6 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         // TODO: check more statistics (e.g. for each question)
     }
 
-    private QuizExercise createQuizOnServer() throws Exception {
-        List<Course> courses = database.createCoursesWithExercisesAndLectures(true);
-        Course course = courses.get(0);
-
-        QuizExercise quizExercise = database.createQuiz(course, ZonedDateTime.now().plusHours(5), null);
-        return request.postWithResponseBody("/api/quiz-exercises", quizExercise, QuizExercise.class, HttpStatus.CREATED);
-        // TODO: add some checks
-    }
-
     private QuizSubmission wrongQuizSubmissionFor(QuizExercise quizExercise) {
         var quizSubmission = new QuizSubmission();
         for (var question : quizExercise.getQuizQuestions()) {

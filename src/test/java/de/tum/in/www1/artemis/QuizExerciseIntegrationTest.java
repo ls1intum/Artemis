@@ -235,8 +235,21 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
             var question = quizExercise.getQuizQuestions().get(i);
             var questionServer = quizExerciseServer.getQuizQuestions().get(i);
             var questionDatabase = quizExerciseDatabase.getQuizQuestions().get(i);
-            assertThat(questionDatabase).isEqualTo(questionServer);
-            // TODO check additional values
+
+            assertThat(question.getId()).as("Question IDs are correct").isNull();
+            assertThat(questionDatabase.getId()).as("Question IDs are correct").isEqualTo(questionServer.getId());
+
+            assertThat(question.getExercise().getId()).as("Exercise IDs are equal").isEqualTo(questionDatabase.getExercise().getId());
+            assertThat(question.getExercise().getId()).as("Exercise IDs are equal").isEqualTo(questionServer.getExercise().getId());
+            assertThat(questionDatabase.getExercise().getId()).as("Exercise IDs are equal").isEqualTo(questionServer.getExercise().getId());
+
+            assertThat(question.getTitle()).as("Question titles are equal").isEqualTo(questionDatabase.getTitle());
+            assertThat(question.getTitle()).as("Question titles are equal").isEqualTo(questionServer.getTitle());
+            assertThat(questionDatabase.getTitle()).as("Question titles are equal").isEqualTo(questionServer.getTitle());
+
+            assertThat(question.getScore()).as("Question scores are equal").isEqualTo(questionDatabase.getScore());
+            assertThat(question.getScore()).as("Question scores are equal").isEqualTo(questionServer.getScore());
+            assertThat(questionDatabase.getScore()).as("Question scores are equal").isEqualTo(questionServer.getScore());
         }
         return quizExerciseServer;
         // TODO: add some additional checks
@@ -247,7 +260,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     public void testDeleteQuizExercise() throws Exception {
         QuizExercise quizExerciseServer = createQuizOnServer();
         request.delete("/api/quiz-exercises/" + quizExerciseServer.getId(), HttpStatus.OK);
-        // TODO: check that the quiz was actually deleted from the database
+        assertThat(quizExerciseService.findOneWithQuestionsAndStatistics(quizExerciseServer.getId())).isNull();
     }
 
     @Test
