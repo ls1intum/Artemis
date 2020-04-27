@@ -4,14 +4,15 @@ import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.StudentQuestionAnswer;
-import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
 import de.tum.in.www1.artemis.domain.notification.SingleUserNotification;
+import de.tum.in.www1.artemis.domain.notification.SingleUserNotificationFactory;
 import de.tum.in.www1.artemis.repository.SingleUserNotificationRepository;
 
 @Service
 public class SingleUserNotificationService {
 
-    private SingleUserNotificationRepository singleUserNotificationRepository;
+    private final SingleUserNotificationRepository singleUserNotificationRepository;
 
     private final SimpMessageSendingOperations messagingTemplate;
 
@@ -20,28 +21,31 @@ public class SingleUserNotificationService {
         this.messagingTemplate = messagingTemplate;
     }
 
-    private SingleUserNotification createUserNotificationForNewAnswer(StudentQuestionAnswer studentQuestionAnswer) {
-        User recipient = studentQuestionAnswer.getQuestion().getAuthor();
-        User author = studentQuestionAnswer.getAuthor();
-        String title = "New Answer";
-        String text = "Your Question got answered!";
-        return new SingleUserNotification(recipient, author, title, text);
+    /**
+     * Notify author of a question for an exercise that there is a new answer.
+     *
+     * @param answer for exercise that is new
+     */
+    public void notifyUserAboutNewAnswerForExercise(StudentQuestionAnswer answer) {
+        saveAndSend(SingleUserNotificationFactory.createNotification(answer, NotificationType.NEW_ANSWER_FOR_EXERCISE));
     }
 
-    public void notifyUserAboutNewAnswerForExercise(StudentQuestionAnswer studentQuestionAnswer) {
-        SingleUserNotification userNotification = createUserNotificationForNewAnswer(studentQuestionAnswer);
-        userNotification.setTarget(userNotification.studentQuestionAnswerTargetForExercise(studentQuestionAnswer));
-        saveAndSendSingleUserNotification(userNotification);
+    /**
+     * Notify author of a question for a lecture that there is a new answer.
+     *
+     * @param answer for lecture that is new
+     */
+    public void notifyUserAboutNewAnswerForLecture(StudentQuestionAnswer answer) {
+        saveAndSend(SingleUserNotificationFactory.createNotification(answer, NotificationType.NEW_ANSWER_FOR_LECTURE));
     }
 
-    public void notifyUserAboutNewAnswerForLecture(StudentQuestionAnswer studentQuestionAnswer) {
-        SingleUserNotification userNotification = createUserNotificationForNewAnswer(studentQuestionAnswer);
-        userNotification.setTarget(userNotification.studentQuestionAnswerTargetForLecture(studentQuestionAnswer));
-        saveAndSendSingleUserNotification(userNotification);
-    }
-
-    private void saveAndSendSingleUserNotification(SingleUserNotification userNotification) {
-        singleUserNotificationRepository.save(userNotification);
-        messagingTemplate.convertAndSend(userNotification.getTopic(), userNotification);
+    /**
+     * Saves the given notification in database and sends it to the client via websocket.
+     *
+     * @param notification that should be saved and sent
+     */
+    private void saveAndSend(SingleUserNotification notification) {
+        singleUserNotificationRepository.save(notification);
+        messagingTemplate.convertAndSend(notification.getTopic(), notification);
     }
 }
