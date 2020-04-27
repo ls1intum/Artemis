@@ -1,0 +1,32 @@
+$bg-current-exercise: lighten(#d4edda, 5%);
+
+.datatable-row-left {
+    box-shadow: 4px 0 5px -5px #888;
+
+    .datatable-row-even & {
+        background-color: #f2f2f2;
+    }
+
+    .datatable-row-odd &,
+    .datatable-header-inner & {
+        background-color: white;
+    }
+
+    & + [class^='datatable-row'] {
+        .datatable-header-cell:first-child .datatable-header-cell-template-wrap,
+        .datatable-body-cell:first-child .datatable-body-cell-label {
+            padding-left: 30px;
+        }
+    }
+}
+
+.datatable-row-current-exercise {
+    background-color: $bg-current-exercise !important;
+
+    &.datatable-row-even,
+    &.datatable-row-odd {
+        .datatable-row-left {
+            background-color: $bg-current-exercise;
+        }
+    }
+}

@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnInit, ViewEncapsulation } from '@angular/core';
 import { Team } from 'app/entities/team.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
@@ -7,9 +7,13 @@ import { Course } from 'app/entities/course.model';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import { AlertService } from 'app/core/alert/alert.service';
 
+const currentExerciseRowClass = 'datatable-row-current-exercise';
+
 @Component({
     selector: 'jhi-team-participation-table',
     templateUrl: './team-participation-table.component.html',
+    styleUrls: ['./team-participation-table.component.scss'],
+    encapsulation: ViewEncapsulation.None,
 })
 export class TeamParticipationTableComponent implements OnInit {
     readonly ExerciseType = ExerciseType;
@@ -38,4 +42,8 @@ export class TeamParticipationTableComponent implements OnInit {
             },
         );
     }
+
+    rowClass = (row: StudentParticipation): string => {
+        return this.exercise.id === row.exercise.id ? currentExerciseRowClass : '';
+    };
 }
