@@ -343,6 +343,7 @@ public class QuizExercise extends Exercise implements Serializable {
         else if (shouldFilterForStudents()) {
             filterForStudentsDuringQuiz();
         }
+        super.filterSensitiveInformation();
     }
 
     /**
@@ -352,7 +353,6 @@ public class QuizExercise extends Exercise implements Serializable {
     public void filterSensitiveInformation() {
         setQuizPointStatistic(null);
         setQuizQuestions(new ArrayList<>());
-        super.filterSensitiveInformation();
     }
 
     /**
