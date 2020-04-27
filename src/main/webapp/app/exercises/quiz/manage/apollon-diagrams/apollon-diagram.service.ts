@@ -45,6 +45,13 @@ export class ApollonDiagramService {
         return this.http.delete<void>(`${this.resourceUrl}/${id}`, { observe: 'response' });
     }
 
+    getDiagramsByCourse(courseId: number): Observable<HttpResponse<ApollonDiagram[]>> {
+        const options = createRequestOption(courseId);
+        return this.http
+            .get<ApollonDiagram[]>(`${this.resourceUrl}/list/${courseId}`, { params: options, observe: 'response' })
+            .map((res: HttpResponse<ApollonDiagram[]>) => this.convertArrayResponse(res));
+    }
+
     private convertResponse(res: EntityResponseType): EntityResponseType {
         const body: ApollonDiagram = this.convertItemFromServer(res.body!);
         return res.clone({ body });

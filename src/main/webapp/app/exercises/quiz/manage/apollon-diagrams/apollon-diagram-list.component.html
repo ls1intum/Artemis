@@ -28,7 +28,7 @@
             </tr>
         </thead>
         <tbody>
-            <tr *ngFor="let apollonDiagram of matchingCourses() | sortBy: predicate:reverse; trackBy: trackId">
+            <tr *ngFor="let apollonDiagram of apollonDiagrams | sortBy: predicate:reverse; trackBy: trackId">
                 <td>
                     <a [routerLink]="['/course-management', 'apollon-diagrams', apollonDiagram.id]">{{ apollonDiagram.id }}</a>
                 </td>

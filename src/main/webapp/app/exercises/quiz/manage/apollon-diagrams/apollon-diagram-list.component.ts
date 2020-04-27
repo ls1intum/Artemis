@@ -14,7 +14,6 @@ import { UMLDiagramType } from 'app/entities/modeling-exercise.model';
 })
 export class ApollonDiagramListComponent implements OnInit {
     apollonDiagrams: ApollonDiagram[] = [];
-    matchingDiagrams: ApollonDiagram[] = [];
     predicate: string;
     reverse: boolean;
 
@@ -30,23 +29,15 @@ export class ApollonDiagramListComponent implements OnInit {
     }
 
     getCourseId() {
-        return parseInt(location.toString().split('ment/')[1].split('/')[0]);
+        // tslint:disable-next-line:radix
+        return parseInt(location.toString().split('management/')[1].split('/')[0]);
     }
 
-    matchingCourses() {
-        let matchingDiagrams = [] as ApollonDiagram[];
-        for (let i = 0; i < this.apollonDiagrams.length; i++) {
-            if (this.apollonDiagrams[i].courseId === this.getCourseId()) {
-                matchingDiagrams.push(this.apollonDiagrams[i]);
-            }
-        }
-        return matchingDiagrams;
-    }
     /**
      * Initializes Apollon diagrams from the server
      */
     ngOnInit() {
-        this.apollonDiagramsService.query().subscribe(
+        this.apollonDiagramsService.getDiagramsByCourse(this.getCourseId()).subscribe(
             (response) => {
                 this.apollonDiagrams = response.body!;
             },

@@ -89,6 +89,21 @@ public class ApollonDiagramResource {
     }
 
     /**
+     * GET /apollon-diagrams : get all the apollonDiagrams for current course.
+     *
+     * @param courseId id of current course
+     * @return the ResponseEntity with status 200 (OK) and the list of apollonDiagrams in body
+     */
+    @GetMapping("/apollon-diagrams/list/{courseId}")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    public List<ApollonDiagram> getDiagramsByCourse(@PathVariable Long courseId) {
+        //TODO: security, userService.getCourses()
+        log.debug("REST request to get ApollonDiagrams matching current course");
+        return apollonDiagramRepository.findDiagramsByCourse(courseId);
+    }
+
+
+    /**
      * GET /apollon-diagrams/:id : get the "id" apollonDiagram.
      *
      * @param id the id of the apollonDiagram to retrieve
