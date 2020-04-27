@@ -6,8 +6,13 @@ import static org.mockito.Mockito.verify;
 
 import java.security.Principal;
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
+import de.tum.in.www1.artemis.domain.SubmittedAnswer;
+import liquibase.pro.packaged.D;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -89,8 +94,12 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         int numberOfParticipants = 10;
 
         for (int i = 1; i <= numberOfParticipants; i++) {
-            var quizSubmission = wrongQuizSubmissionFor(quizExercise);
-            // TODO: add more submitted answers
+            QuizSubmission quizSubmission = new QuizSubmission();
+            for (var question : quizExercise.getQuizQuestions()) {
+                for (int j = 1; j <= 10; j++) {
+                    quizSubmission.addSubmittedAnswers(submittedAnswerFor(question, j % 2 == 0));
+                }
+            }
             final var username = "student" + i;
             final Principal principal = () -> username;
             // save
@@ -99,8 +108,10 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         }
 
         for (int i = 1; i <= numberOfParticipants; i++) {
-            var quizSubmission = wrongQuizSubmissionFor(quizExercise);
-            // TODO: add more submitted answers
+            QuizSubmission quizSubmission = new QuizSubmission();
+            for (var question : quizExercise.getQuizQuestions()) {
+                quizSubmission.addSubmittedAnswers(submittedAnswerFor(question, false));
+            }
             quizSubmission.setSubmitted(true);
             final var username = "student" + i;
             final Principal principal = () -> username;
@@ -159,8 +170,10 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         assertThat(participationRepository.findAll().size()).isEqualTo(0);
 
         var numberOfParticipants = 10;
-        var quizSubmission = wrongQuizSubmissionFor(quizExercise);
-        // TODO: add more submitted answers
+        QuizSubmission quizSubmission = new QuizSubmission();
+        for (var question : quizExercise.getQuizQuestions()) {
+            quizSubmission.addSubmittedAnswers(submittedAnswerFor(question, true));
+        }
         quizSubmission.setSubmitted(true);
 
         // submit 10 times for 10 different students
@@ -217,8 +230,12 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
 
         assertThat(quizSubmissionRepository.findAll().size()).isEqualTo(0);
 
-        var quizSubmission = wrongQuizSubmissionFor(quizExerciseServer);
-        // TODO: add more submitted answers
+        QuizSubmission quizSubmission = new QuizSubmission();
+        for (var question : quizExerciseServer.getQuizQuestions()) {
+            for (int i = 1; i <= 10; i++) {
+                quizSubmission.addSubmittedAnswers(submittedAnswerFor(question, i % 2 == 0));
+            }
+        }
         quizSubmission.setSubmitted(true);
         // quiz not open for practice --> bad request expected
         Result result = request.postWithResponseBody("/api/exercises/" + quizExerciseServer.getId() + "/submissions/practice", quizSubmission, Result.class,
@@ -303,8 +320,13 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         QuizExercise quizExercise = database.createQuiz(course, ZonedDateTime.now().minusSeconds(4), null);
         quizExerciseService.save(quizExercise);
 
-        var quizSubmission = wrongQuizSubmissionFor(quizExercise);
-        // TODO: add more submitted answers
+        QuizSubmission quizSubmission = new QuizSubmission();
+        for (var question : quizExercise.getQuizQuestions()) {
+            for (int i = 1; i <= 10; i++) {
+                quizSubmission.addSubmittedAnswers(submittedAnswerFor(question, i % 2 == 0));
+            }
+        }
+
         Result result = request.postWithResponseBody("/api/exercises/" + quizExercise.getId() + "/submissions/preview", quizSubmission, Result.class, HttpStatus.OK);
         // TODO: check the result
 
@@ -339,31 +361,37 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         // TODO: check more statistics (e.g. for each question)
     }
 
-    private QuizSubmission wrongQuizSubmissionFor(QuizExercise quizExercise) {
-        var quizSubmission = new QuizSubmission();
-        for (var question : quizExercise.getQuizQuestions()) {
-            if (question instanceof MultipleChoiceQuestion) {
-                var submittedAnswer = new MultipleChoiceSubmittedAnswer();
-                submittedAnswer.setQuizQuestion(question);
-                for (var answerOption : ((MultipleChoiceQuestion) question).getAnswerOptions()) {
-                    if (!answerOption.isIsCorrect()) {
-                        submittedAnswer.addSelectedOptions(answerOption);
-                    }
+    private SubmittedAnswer submittedAnswerFor(QuizQuestion question, boolean correct) {
+        if (question instanceof MultipleChoiceQuestion) {
+            var submittedAnswer = new MultipleChoiceSubmittedAnswer();
+            submittedAnswer.setQuizQuestion(question);
+            for (var answerOption : ((MultipleChoiceQuestion) question).getAnswerOptions()) {
+                if (answerOption.isIsCorrect().equals(correct)) {
+                    submittedAnswer.addSelectedOptions(answerOption);
                 }
-                quizSubmission.addSubmittedAnswers(submittedAnswer);
             }
-            else if (question instanceof DragAndDropQuestion) {
-                var submittedAnswer = new DragAndDropSubmittedAnswer();
-                submittedAnswer.setQuizQuestion(question);
-                quizSubmission.addSubmittedAnswers(submittedAnswer);
-            }
-            else if (question instanceof ShortAnswerQuestion) {
-                var submittedAnswer = new ShortAnswerSubmittedAnswer();
-                submittedAnswer.setQuizQuestion(question);
-                quizSubmission.addSubmittedAnswers(submittedAnswer);
-            }
+            return submittedAnswer;
         }
-        return quizSubmission;
+        else if (question instanceof DragAndDropQuestion) {
+            var submittedAnswer = new DragAndDropSubmittedAnswer();
+            submittedAnswer.setQuizQuestion(question);
+            return submittedAnswer;
+        }
+        else if (question instanceof ShortAnswerQuestion) {
+            var submittedAnswer = new ShortAnswerSubmittedAnswer();
+            submittedAnswer.setQuizQuestion(question);
+            for(var spot : ((ShortAnswerQuestion) question).getSpots()) {
+                ShortAnswerSubmittedText submittedText = new ShortAnswerSubmittedText();
+                submittedText.setSpot(spot);
+                if(correct){
+                    submittedText.setText(((ShortAnswerQuestion) question).getCorrectSolutionForSpot(spot).iterator().next().getText());
+                } else {
+                    submittedText.setText("wrong short answer");
+                }
+                submittedAnswer.addSubmittedTexts(submittedText);
+            }
+            return submittedAnswer;
+        }
+        return null;
     }
-
 }
