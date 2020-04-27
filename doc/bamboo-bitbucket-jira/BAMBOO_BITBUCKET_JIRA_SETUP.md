@@ -2,6 +2,11 @@
 
 This page describes how to set up a programming exercise environment based on Bamboo, Bitbucket and Jira. 
 
+Please note that this setup will create a deployment that is very similiar to the one used in production but has one difference:  
+In production, the builds are performed within Docker containers that are created by Bamboo (or its build agents). As we run Bamboo in a Docker container in this setup, creating new Docker containers within that container is not recommended (e.g. see [this article](https://itnext.io/docker-in-docker-521958d34efd)).
+There are some solution where one can pass the Docker socket to the Bamboo container, but none of these approachs work quite well here as Bamboo uses mounted directories that cause issues.
+
+Therefor, a check is included within the BambooBuildPlanService that ensures that builds are not started in Docker agents if the development setup is present.
 
 **Prerequisites:** 
 * [Docker](https://docs.docker.com/install)
@@ -54,7 +59,7 @@ the created groups~~ NOT YET) and disabled application links between the 3 appli
     ![](jira_bitbucket_applicationLink.png)
     
     </details>
-4. The script has already created users and groups but you need to manually assign the users into their respective group. In our test setup, users 1-5 are students, 6-10 are tutors and 11-15 are instructors.
+4. The script has already created users and groups but you need to manually assign the users into their respective group in Jira. In our test setup, users 1-5 are students, 6-10 are tutors and 11-15 are instructors.
 5. Use the [user directories in Jira](https://confluence.atlassian.com/adminjiraserver/allowing-connections-to-jira-for-user-management-938847045.html) to synchronize the users in bitbucket and bamboo: 
   * Go to Jira → User management → Jira user server → Add application → Create one application for bitbucket and one for bamboo → add the IP-address `0.0.0.0/0` to IP Addresses
   

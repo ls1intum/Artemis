@@ -11,6 +11,7 @@ import java.util.stream.Collectors;
 import org.apache.commons.io.IOUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
+import org.springframework.core.env.Environment;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.core.io.support.ResourcePatternUtils;
@@ -50,6 +51,7 @@ import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.enumeration.BuildPlanType;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.exception.ContinuousIntegrationBuildPlanException;
+import io.github.jhipster.config.JHipsterConstants;
 
 @Service
 @Profile("bamboo")
@@ -71,9 +73,12 @@ public class BambooBuildPlanService {
 
     private final BambooServer bambooServer;
 
-    public BambooBuildPlanService(ResourceLoader resourceLoader, BambooServer bambooServer) {
+    private final Environment env;
+
+    public BambooBuildPlanService(ResourceLoader resourceLoader, BambooServer bambooServer, Environment env) {
         this.resourceLoader = resourceLoader;
         this.bambooServer = bambooServer;
+        this.env = env;
     }
 
     /**
@@ -112,9 +117,17 @@ public class BambooBuildPlanService {
         Stage defaultStage = new Stage("Default Stage");
         Job defaultJob = new Job("Default Job", new BambooKey("JOB1")).cleanWorkingDirectory(true);
 
+        /*
+         * We need the profiles to not run the jobs within Docker containers in the dev-setup as the Bamboo server itself runs in a Docker container when developing.
+         */
+        Collection<String> activeProfiles = Arrays.asList(env.getActiveProfiles());
+
         switch (programmingLanguage) {
         case JAVA: {
-            defaultJob.dockerConfiguration(new DockerConfiguration().image("ls1tum/artemis-maven-template"));
+            // Do not run the builds in extra docker containers if the dev-profile is active
+            if (!activeProfiles.contains(JHipsterConstants.SPRING_PROFILE_DEVELOPMENT)) {
+                defaultJob.dockerConfiguration(new DockerConfiguration().image("ls1tum/artemis-maven-template"));
+            }
             if (!sequentialBuildRuns) {
                 return defaultStage
                         .jobs(defaultJob.tasks(checkoutTask, new MavenTask().goal("clean test").jdk("JDK").executableLabel("Maven 3").description("Tests").hasTests(true)));
@@ -127,7 +140,10 @@ public class BambooBuildPlanService {
         }
         case PYTHON:
         case C: {
-            defaultJob.dockerConfiguration(new DockerConfiguration().image("ls1tum/artemis-python-docker"));
+            // Do not run the builds in extra docker containers if the dev-profile is active
+            if (!activeProfiles.contains(JHipsterConstants.SPRING_PROFILE_DEVELOPMENT)) {
+                defaultJob.dockerConfiguration(new DockerConfiguration().image("ls1tum/artemis-python-docker"));
+            }
             final var testParserTask = new TestParserTask(TestParserTaskProperties.TestType.JUNIT).resultDirectories("test-reports/*results.xml");
             var tasks = readScriptTasksFromTemplate(programmingLanguage, sequentialBuildRuns == null ? false : sequentialBuildRuns);
             tasks.add(0, checkoutTask);
