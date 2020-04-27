@@ -69,4 +69,26 @@ export class TextblockFeedbackEditorComponent implements AfterViewInit {
     didChange(): void {
         this.feedbackChange.emit(this.feedback);
     }
+    /**
+     * Allows the drop of an SGI Element
+     */
+    allowDrop(event: DragEvent) {
+        event.preventDefault();
+    }
+    /**
+     * Connects the SGI with the Feedback of a Submission Element
+     * @param {Event} event - The drop event
+     * the SGI element sent on drag in processed in this method
+     * the corresponding drag method is in StructuredGradingInstructionsAssessmentLayoutComponent
+     */
+    drop(event: any) {
+        event.preventDefault();
+        const data = event.dataTransfer.getData('text');
+        const instruction = JSON.parse(data);
+        const credits = instruction.credits;
+        const feedback = instruction.feedback;
+        this.feedback.credits = credits;
+        this.feedback.detailText = feedback;
+        this.didChange();
+    }
 }

@@ -1,4 +1,4 @@
-<div class="form-row">
+<div class="form-row" (drop)="drop($event)" (dragover)="allowDrop($event)">
     <div class="form-group col-10">
         <label jhiTranslate="artemisApp.assessment.detail.feedback" [for]="'detailText-' + textBlock.id"></label>
         <textarea
