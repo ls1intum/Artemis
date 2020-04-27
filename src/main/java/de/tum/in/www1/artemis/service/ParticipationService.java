@@ -871,8 +871,8 @@ public class ParticipationService {
      * @param teamShortName the team short name (all teams with this short name in the course are seen as the same team)
      * @return the list of exercise participations for the team in the course
      */
-    public List<StudentParticipation> findWithLatestResultByCourseIdAndTeamShortName(Long courseId, String teamShortName) {
-        return studentParticipationRepository.findWithLatestResultByCourseIdAndTeamShortName(courseId, teamShortName);
+    public List<StudentParticipation> findAllByCourseIdAndTeamShortName(Long courseId, String teamShortName) {
+        return studentParticipationRepository.findAllByCourseIdAndTeamShortName(courseId, teamShortName);
     }
 
     /**

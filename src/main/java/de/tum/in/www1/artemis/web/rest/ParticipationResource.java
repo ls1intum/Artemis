@@ -378,8 +378,7 @@ public class ParticipationResource {
             throw new AccessForbiddenException("You are not allowed to access this resource");
         }
 
-        List<StudentParticipation> participations = participationService.findWithLatestResultByCourseIdAndTeamShortName(courseId, teamShortName);
-        participations = participations.stream().filter(participation -> participation.getParticipant() != null).collect(Collectors.toList());
+        List<StudentParticipation> participations = participationService.findAllByCourseIdAndTeamShortName(courseId, teamShortName);
 
         Map<Long, Integer> submissionCountMap = participationService.countSubmissionsPerParticipationByCourseIdAndTeamShortName(courseId, teamShortName);
         participations.forEach(participation -> participation.setSubmissionCount(submissionCountMap.get(participation.getId())));
