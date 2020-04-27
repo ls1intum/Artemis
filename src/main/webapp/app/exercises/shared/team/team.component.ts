@@ -1,6 +1,5 @@
 import { Component, OnInit, ViewEncapsulation } from '@angular/core';
 import { Router } from '@angular/router';
-import { JhiAlertService, JhiEventManager } from 'ng-jhipster';
 import { ActivatedRoute } from '@angular/router';
 import { Team } from 'app/entities/team.model';
 import { TeamService } from 'app/exercises/shared/team/team.service';
@@ -9,11 +8,12 @@ import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service'
 import { User } from 'app/core/user/user.model';
 import { ButtonSize } from 'app/shared/components/button.component';
 import { AccountService } from 'app/core/auth/account.service';
+import { AlertService } from 'app/core/alert/alert.service';
 
 @Component({
     selector: 'jhi-team',
     templateUrl: './team.component.html',
-    styles: ['.date-tooltip { width: 115px !important }', '.team-short-name { font-size: 100% }'],
+    styleUrls: ['./team.component.scss'],
     encapsulation: ViewEncapsulation.None,
 })
 export class TeamComponent implements OnInit {
@@ -28,8 +28,7 @@ export class TeamComponent implements OnInit {
 
     constructor(
         private route: ActivatedRoute,
-        private jhiAlertService: JhiAlertService,
-        private eventManager: JhiEventManager,
+        private jhiAlertService: AlertService,
         private exerciseService: ExerciseService,
         private teamService: TeamService,
         private accountService: AccountService,
@@ -42,26 +41,24 @@ export class TeamComponent implements OnInit {
     }
 
     ngOnInit() {
-        this.load();
+        this.route.params.subscribe((params) => {
+            this.isLoading = true;
+            this.exerciseService.find(params['exerciseId']).subscribe((exerciseResponse) => {
+                this.exercise = exerciseResponse.body!;
+                this.exercise.isAtLeastTutor = this.accountService.isAtLeastTutorInCourse(this.exercise.course!);
+                this.exercise.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.exercise.course!);
+                this.teamService.find(this.exercise, params['teamId']).subscribe((teamResponse) => {
+                    this.team = teamResponse.body!;
+                    this.isLoading = false;
+                }, this.onLoadError);
+            }, this.onLoadError);
+        }, this.onLoadError);
     }
 
-    load() {
-        this.route.params.subscribe(
-            (params) => {
-                this.isLoading = true;
-                this.exerciseService.find(params['exerciseId']).subscribe((exerciseResponse) => {
-                    this.exercise = exerciseResponse.body!;
-                    this.exercise.isAtLeastTutor = this.accountService.isAtLeastTutorInCourse(this.exercise.course!);
-                    this.exercise.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.exercise.course!);
-                    this.teamService.find(this.exercise, params['teamId']).subscribe((teamResponse) => {
-                        this.team = teamResponse.body!;
-                        console.log(this.exercise);
-                        this.isLoading = false;
-                    });
-                });
-            },
-            (error) => console.log(error),
-        );
+    onLoadError(error: any) {
+        console.error(error);
+        this.jhiAlertService.error(error.message);
+        this.isLoading = false;
     }
 
     /**

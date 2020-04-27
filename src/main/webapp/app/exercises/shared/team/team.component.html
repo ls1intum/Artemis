@@ -1,8 +1,9 @@
 <div>
     <div *ngIf="exercise && team" class="d-flex">
         <div class="mb-2">
-            <h2 class="mb-2">
-                <span>{{ exercise.title }} - {{ team.name }}</span> <code class="team-short-name text-muted">({{ team.shortName }})</code>
+            <h2 class="d-flex align-items-baseline mb-2">
+                <span>{{ exercise.title }} - {{ team.name }}</span
+                ><code class="ml-2 team-short-name">{{ team.shortName }}</code>
             </h2>
             <div>
                 <span class="d-inline-block">
@@ -107,8 +108,8 @@
 
     <ng-container *ngIf="exercise?.isAtLeastTutor && team">
         <hr class="my-5" />
-        <h4>
-            Participations in "{{ exercise.course!.title }}" for <code class="team-short-name text-muted">{{ team.shortName }}</code>
+        <h4 class="d-flex align-items-baseline">
+            Participations in "{{ exercise.course!.title }}" for <code class="ml-2 team-short-name">{{ team.shortName }}</code>
         </h4>
         <jhi-team-participation-table [team]="team" [course]="exercise.course" [exercise]="exercise"> </jhi-team-participation-table>
     </ng-container>

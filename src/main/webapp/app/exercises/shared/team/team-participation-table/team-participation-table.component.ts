@@ -5,6 +5,7 @@ import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import * as moment from 'moment';
 import { Course } from 'app/entities/course.model';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
+import { AlertService } from 'app/core/alert/alert.service';
 
 @Component({
     selector: 'jhi-team-participation-table',
@@ -21,13 +22,20 @@ export class TeamParticipationTableComponent implements OnInit {
     participations: StudentParticipation[];
     isLoading: boolean;
 
-    constructor(private participationService: ParticipationService) {}
+    constructor(private participationService: ParticipationService, private jhiAlertService: AlertService) {}
 
     ngOnInit(): void {
         this.isLoading = true;
-        this.participationService.findAllParticipationsByCourseIdAndTeamShortName(this.course.id, this.team.shortName).subscribe((participationsResponse) => {
-            this.participations = participationsResponse.body!;
-            this.isLoading = false;
-        });
+        this.participationService.findAllParticipationsByCourseIdAndTeamShortName(this.course.id, this.team.shortName).subscribe(
+            (participationsResponse) => {
+                this.participations = participationsResponse.body!;
+                this.isLoading = false;
+            },
+            (error) => {
+                console.error(error);
+                this.jhiAlertService.error(error.message);
+                this.isLoading = false;
+            },
+        );
     }
 }
