@@ -7,18 +7,19 @@ import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.GroupNotificationType;
+import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
 import de.tum.in.www1.artemis.domain.notification.GroupNotification;
+import de.tum.in.www1.artemis.domain.notification.GroupNotificationFactory;
 import de.tum.in.www1.artemis.repository.GroupNotificationRepository;
 
-// TODO: There is a lot of code duplication in this class. This could be solved by e.g. using a builder or factory pattern.
 @Service
 public class GroupNotificationService {
 
-    private GroupNotificationRepository groupNotificationRepository;
+    private final GroupNotificationRepository groupNotificationRepository;
 
     private final SimpMessageSendingOperations messagingTemplate;
 
-    private UserService userService;
+    private final UserService userService;
 
     public GroupNotificationService(GroupNotificationRepository groupNotificationRepository, SimpMessageSendingOperations messagingTemplate, UserService userService) {
         this.groupNotificationRepository = groupNotificationRepository;
@@ -26,202 +27,125 @@ public class GroupNotificationService {
         this.userService = userService;
     }
 
-    private GroupNotification createExerciseCreatedGroupNotificationForTutors(Exercise exercise) {
-        String title = "Exercise created";
-        String notificationText = "A new exercise \"" + exercise.getTitle() + "\" got created.";
-        User user = userService.getUser();
-        GroupNotificationType type = GroupNotificationType.TA;
-        GroupNotification groupNotification = new GroupNotification(exercise.getCourse(), title, notificationText, user, type);
-        groupNotification.setTarget(groupNotification.getExerciseCreatedTarget(exercise));
-        return groupNotification;
-    }
-
-    private GroupNotification createExerciseUpdatedGroupNotificationForStudents(Exercise exercise, String title, String notificationText) {
-        User user = userService.getUser();
-        GroupNotificationType type = GroupNotificationType.STUDENT;
-        GroupNotification groupNotification = new GroupNotification(exercise.getCourse(), title, notificationText, user, type);
-        groupNotification.setTarget(groupNotification.getExerciseUpdatedTarget(exercise));
-        return groupNotification;
-    }
-
-    private GroupNotification createExerciseUpdatedGroupNotificationForInstructors(Exercise exercise, String title, String notificationText) {
-        GroupNotificationType type = GroupNotificationType.INSTRUCTOR;
-        GroupNotification groupNotification = new GroupNotification(exercise.getCourse(), title, notificationText, null, type);
-        groupNotification.setTarget(groupNotification.getExerciseUpdatedTarget(exercise));
-        return groupNotification;
-    }
-
-    private GroupNotification createExerciseQuestionCreatedGroupNotification(StudentQuestion studentQuestion, GroupNotificationType type) {
-        Exercise exercise = studentQuestion.getExercise();
-        String title = "New Question";
-        String notificationText = "Exercise \"" + exercise.getTitle() + "\" got a new question.";
-        User user = userService.getUser();
-        GroupNotification groupNotification = new GroupNotification(exercise.getCourse(), title, notificationText, user, type);
-        groupNotification.setTarget(groupNotification.getExerciseQuestionTarget(exercise));
-        return groupNotification;
-    }
-
-    private GroupNotification createLectureQuestionCreatedGroupNotification(StudentQuestion studentQuestion, GroupNotificationType type) {
-        Lecture lecture = studentQuestion.getLecture();
-        String title = "New Question";
-        String notificationText = "Lecture \"" + lecture.getTitle() + "\" got a new question.";
-        User user = userService.getUser();
-        GroupNotification groupNotification = new GroupNotification(lecture.getCourse(), title, notificationText, user, type);
-        groupNotification.setTarget(groupNotification.getLectureQuestionTarget(lecture));
-        return groupNotification;
-    }
-
-    private GroupNotification createExerciseAnswerCreatedGroupNotification(StudentQuestionAnswer studentQuestionAnswer, GroupNotificationType type) {
-        Exercise exercise = studentQuestionAnswer.getQuestion().getExercise();
-        String title = "New Answer";
-        String notificationText = "Exercise \"" + exercise.getTitle() + "\" got a new answer.";
-        User user = userService.getUser();
-        GroupNotification groupNotification = new GroupNotification(exercise.getCourse(), title, notificationText, user, type);
-        groupNotification.setTarget(groupNotification.getExerciseAnswerTarget(exercise));
-        return groupNotification;
-    }
-
-    private GroupNotification createLectureAnswerCreatedGroupNotification(StudentQuestionAnswer studentQuestionAnswer, GroupNotificationType type) {
-        Lecture lecture = studentQuestionAnswer.getQuestion().getLecture();
-        String title = "New Answer";
-        String notificationText = "Lecture \"" + lecture.getTitle() + "\" got a new answer.";
-        User user = userService.getUser();
-        GroupNotification groupNotification = new GroupNotification(lecture.getCourse(), title, notificationText, user, type);
-        groupNotification.setTarget(groupNotification.getLectureAnswerTarget(lecture));
-        return groupNotification;
-    }
-
-    private GroupNotification createAttachmentUpdatedGroupNotification(Attachment attachment, String notificationText) {
-        Course course = attachment.getLecture().getCourse();
-        String title = "Attachment " + attachment.getName() + " updated";
-        User user = userService.getUser();
-        GroupNotificationType type = GroupNotificationType.STUDENT;
-        GroupNotification groupNotification = new GroupNotification(course, title, notificationText, user, type);
-        groupNotification.setTarget(groupNotification.getAttachmentUpdated(attachment.getLecture()));
-        return groupNotification;
-    }
-
-    public void notifyStudentGroupAboutExerciseStart(Exercise exercise) {
-        String title = "Exercise started";
-        String notificationText = "Exercise \"" + exercise.getTitle() + "\" just started.";
-        notifyStudentGroupAboutExerciseChange(exercise, title, notificationText);
-    }
-
-    public void notifyStudentGroupAboutExerciseVisibility(Exercise exercise) {
-        String title = "New exercise available";
-        String notificationText = "Exercise \"" + exercise.getTitle() + "\" is now available.";
-        notifyStudentGroupAboutExerciseChange(exercise, title, notificationText);
-    }
-
-    public void notifyStudentGroupAboutExercisePractice(Exercise exercise) {
-        String title = "Exercise open for practice";
-        String notificationText = "Exercise \"" + exercise.getTitle() + "\" is now open for practice.";
-        notifyStudentGroupAboutExerciseChange(exercise, title, notificationText);
+    /**
+     * Notify student groups about an attachment change.
+     *
+     * @param attachment that has been changed
+     * @param notificationText that should be displayed  TODO: can be removed in the future as notification's text attribute is not used in the client
+     */
+    public void notifyStudentGroupAboutAttachmentChange(Attachment attachment, String notificationText) {
+        // Do not send a notification before the release date of the attachment.
+        if (attachment.getReleaseDate() != null && !attachment.getReleaseDate().isBefore(ZonedDateTime.now())) {
+            return;
+        }
+        // Create and send the notification.
+        saveAndSend(GroupNotificationFactory.createNotification(attachment, userService.getUser(), GroupNotificationType.STUDENT, NotificationType.ATTACHMENT_CHANGE));
     }
 
     /**
-     * Notify student group about an exercise update
+     * Notify students groups about an exercise opened for practice.
+     *
+     * @param exercise that has been opened for practice
+     */
+    public void notifyStudentGroupAboutExercisePractice(Exercise exercise) {
+        saveAndSend(GroupNotificationFactory.createNotification(exercise, userService.getUser(), GroupNotificationType.STUDENT, NotificationType.EXERCISE_PRACTICE));
+    }
+
+    /**
+     * Notify student groups about an exercise started.
+     *
+     * @param exercise that has been started
+     */
+    public void notifyStudentGroupAboutExerciseStart(Exercise exercise) {
+        saveAndSend(GroupNotificationFactory.createNotification(exercise, userService.getUser(), GroupNotificationType.STUDENT, NotificationType.EXERCISE_STARTED));
+    }
+
+    /**
+     * Notify student groups about an exercise update.
      *
      * @param exercise that has been updated
-     * @param notificationText that should be displayed
+     * @param notificationText that should be displayed  TODO: can be removed in the future as notification's text attribute is not used in the client
      */
     public void notifyStudentGroupAboutExerciseUpdate(Exercise exercise, String notificationText) {
+        // Do not send a notification before the release date of the exercise.
         if (exercise.getReleaseDate() != null && exercise.getReleaseDate().isAfter(ZonedDateTime.now())) {
             return;
         }
-        String title = "Exercise \"" + exercise.getTitle() + "\" updated";
-        notifyStudentGroupAboutExerciseChange(exercise, title, notificationText);
-    }
-
-    public void notifyInstructorGroupAboutExerciseUpdate(Exercise exercise, String notificationText) {
-        String title = "Exercise \"" + exercise.getTitle() + "\" updated";
-        notifyInstructorGroupAboutExerciseChange(exercise, title, notificationText);
-    }
-
-    private void notifyInstructorGroupAboutExerciseChange(Exercise exercise, String title, String notificationText) {
-        GroupNotification groupNotification = createExerciseUpdatedGroupNotificationForInstructors(exercise, title, notificationText);
-        saveAndSendGroupNotification(groupNotification);
-    }
-
-    private void notifyStudentGroupAboutExerciseChange(Exercise exercise, String title, String notificationText) {
-        GroupNotification groupNotification = createExerciseUpdatedGroupNotificationForStudents(exercise, title, notificationText);
-        saveAndSendGroupNotification(groupNotification);
+        // Create and send the notification.
+        saveAndSend(GroupNotificationFactory.createNotification(exercise, userService.getUser(), GroupNotificationType.STUDENT, NotificationType.EXERCISE_UPDATED));
     }
 
     /**
-     * Notify tutor group about the creation of an exercise
+     * Notify tutor groups about the creation of an exercise.
      *
      * @param exercise that has been created
      */
     public void notifyTutorGroupAboutExerciseCreated(Exercise exercise) {
-        GroupNotification groupNotification = createExerciseCreatedGroupNotificationForTutors(exercise);
-        saveAndSendGroupNotification(groupNotification);
+        saveAndSend(GroupNotificationFactory.createNotification(exercise, userService.getUser(), GroupNotificationType.TA, NotificationType.EXERCISE_CREATED));
     }
 
     /**
-     * Notify tutor and instructor group about a new question in an exercise
+     * Notify instructor groups about an exercise update.
+     *
+     * @param exercise that has been updated
+     * @param notificationText that should be displayed  TODO: can be removed in the future as notification's text attribute is not used in the client
+     */
+    public void notifyInstructorGroupAboutExerciseUpdate(Exercise exercise, String notificationText) {
+        // TODO: why null for author?
+        saveAndSend(GroupNotificationFactory.createNotification(exercise, null, GroupNotificationType.INSTRUCTOR, NotificationType.EXERCISE_UPDATED));
+    }
+
+    /**
+     * Notify tutor and instructor groups about a new question in an exercise.
      *
      * @param studentQuestion that has been posted
      */
     public void notifyTutorAndInstructorGroupAboutNewQuestionForExercise(StudentQuestion studentQuestion) {
-        GroupNotification tutorNotification = createExerciseQuestionCreatedGroupNotification(studentQuestion, GroupNotificationType.TA);
-        GroupNotification instructorNotification = createExerciseQuestionCreatedGroupNotification(studentQuestion, GroupNotificationType.INSTRUCTOR);
-        saveAndSendGroupNotification(tutorNotification);
-        saveAndSendGroupNotification(instructorNotification);
+        saveAndSend(GroupNotificationFactory.createNotification(studentQuestion, userService.getUser(), GroupNotificationType.TA, NotificationType.NEW_QUESTION_FOR_EXERCISE));
+        saveAndSend(
+                GroupNotificationFactory.createNotification(studentQuestion, userService.getUser(), GroupNotificationType.INSTRUCTOR, NotificationType.NEW_QUESTION_FOR_EXERCISE));
     }
 
     /**
-     * Notify tutor and instructor group about a new question in a lecture
+     * Notify tutor and instructor groups about a new question in a lecture.
      *
      * @param studentQuestion that has been posted
      */
     public void notifyTutorAndInstructorGroupAboutNewQuestionForLecture(StudentQuestion studentQuestion) {
-        GroupNotification tutorNotification = createLectureQuestionCreatedGroupNotification(studentQuestion, GroupNotificationType.TA);
-        GroupNotification instructorNotification = createLectureQuestionCreatedGroupNotification(studentQuestion, GroupNotificationType.INSTRUCTOR);
-        saveAndSendGroupNotification(tutorNotification);
-        saveAndSendGroupNotification(instructorNotification);
+        saveAndSend(GroupNotificationFactory.createNotification(studentQuestion, userService.getUser(), GroupNotificationType.TA, NotificationType.NEW_QUESTION_FOR_LECTURE));
+        saveAndSend(
+                GroupNotificationFactory.createNotification(studentQuestion, userService.getUser(), GroupNotificationType.INSTRUCTOR, NotificationType.NEW_QUESTION_FOR_LECTURE));
     }
 
     /**
-     * Notify tutor and instructor group about a new answer for an exercise
+     * Notify tutor and instructor groups about a new answer for an exercise.
      *
      * @param studentQuestionAnswer that has been submitted for a question
      */
     public void notifyTutorAndInstructorGroupAboutNewAnswerForExercise(StudentQuestionAnswer studentQuestionAnswer) {
-        GroupNotification tutorNotification = createExerciseAnswerCreatedGroupNotification(studentQuestionAnswer, GroupNotificationType.TA);
-        GroupNotification instructorNotification = createExerciseAnswerCreatedGroupNotification(studentQuestionAnswer, GroupNotificationType.INSTRUCTOR);
-        saveAndSendGroupNotification(tutorNotification);
-        saveAndSendGroupNotification(instructorNotification);
+        saveAndSend(GroupNotificationFactory.createNotification(studentQuestionAnswer, userService.getUser(), GroupNotificationType.TA, NotificationType.NEW_ANSWER_FOR_EXERCISE));
+        saveAndSend(GroupNotificationFactory.createNotification(studentQuestionAnswer, userService.getUser(), GroupNotificationType.INSTRUCTOR,
+                NotificationType.NEW_ANSWER_FOR_EXERCISE));
     }
 
     /**
-     * Notify tutor and instructor group about a new answer for a lecture
+     * Notify tutor and instructor groups about a new answer for a lecture.
      *
      * @param studentQuestionAnswer that has been submitted for a question
      */
     public void notifyTutorAndInstructorGroupAboutNewAnswerForLecture(StudentQuestionAnswer studentQuestionAnswer) {
-        GroupNotification tutorNotification = createLectureAnswerCreatedGroupNotification(studentQuestionAnswer, GroupNotificationType.TA);
-        GroupNotification instructorNotification = createLectureAnswerCreatedGroupNotification(studentQuestionAnswer, GroupNotificationType.INSTRUCTOR);
-        saveAndSendGroupNotification(tutorNotification);
-        saveAndSendGroupNotification(instructorNotification);
+        saveAndSend(GroupNotificationFactory.createNotification(studentQuestionAnswer, userService.getUser(), GroupNotificationType.TA, NotificationType.NEW_ANSWER_FOR_LECTURE));
+        saveAndSend(GroupNotificationFactory.createNotification(studentQuestionAnswer, userService.getUser(), GroupNotificationType.INSTRUCTOR,
+                NotificationType.NEW_ANSWER_FOR_LECTURE));
     }
 
     /**
-     * Notify student group about an attachment change
+     * Saves the given notification in database and sends it to the client via websocket.
      *
-     * @param attachment that has been changed
-     * @param notificationText that should be displayed
+     * @param notification that should be saved and sent
      */
-    public void notifyStudentGroupAboutAttachmentChange(Attachment attachment, String notificationText) {
-        if (attachment.getReleaseDate() != null && !attachment.getReleaseDate().isBefore(ZonedDateTime.now())) {
-            return;
-        }
-        GroupNotification groupNotification = createAttachmentUpdatedGroupNotification(attachment, notificationText);
-        saveAndSendGroupNotification(groupNotification);
-    }
-
-    private void saveAndSendGroupNotification(GroupNotification groupNotification) {
-        groupNotificationRepository.save(groupNotification);
-        messagingTemplate.convertAndSend(groupNotification.getTopic(), groupNotification);
+    private void saveAndSend(GroupNotification notification) {
+        groupNotificationRepository.save(notification);
+        messagingTemplate.convertAndSend(notification.getTopic(), notification);
     }
 }

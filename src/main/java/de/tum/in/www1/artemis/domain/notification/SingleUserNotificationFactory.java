@@ -18,7 +18,7 @@ public class SingleUserNotificationFactory {
             User recipient = studentQuestionAnswer.getQuestion().getAuthor();
             User author = studentQuestionAnswer.getAuthor();
             String title = "New Answer";
-            String text = "Your Question got answered!";
+            String text = "Your Question got answered.";
             SingleUserNotification notification = new SingleUserNotification(recipient, author, title, text);
             if (notificationType == NotificationType.NEW_ANSWER_FOR_EXERCISE) {
                 notification.setTarget(notification.studentQuestionAnswerTargetForExercise(studentQuestionAnswer));
@@ -28,6 +28,6 @@ public class SingleUserNotificationFactory {
             }
             return notification;
         }
-        throw new UnsupportedOperationException("Unknown NotificationType.");
+        throw new UnsupportedOperationException("Unsupported NotificationType.");
     }
 }
