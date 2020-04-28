@@ -39,5 +39,8 @@
 </ng-template>
 
 <ng-template #noSubmission>
-    <p>No Submission for specified ID</p>
+    <div *ngIf="noNewSubmissions" class="alert alert-warning text-center mt-4" role="alert">
+        <p jhiTranslate="artemisApp.textAssessment.notFound">We haven't found any new text submission without an assessment, please go back.</p>
+    </div>
+    <p *ngIf="!noNewSubmissions">No Submission for specified ID</p>
 </ng-template>
