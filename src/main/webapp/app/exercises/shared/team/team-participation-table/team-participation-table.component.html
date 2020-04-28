@@ -26,7 +26,7 @@
                 </ng-template>
             </ngx-datatable-column>
 
-            <ngx-datatable-column prop="exercise.releaseDate" [minWidth]="125" [width]="125" [maxWidth]="130" [frozenLeft]="true">
+            <ngx-datatable-column prop="exercise.releaseDate" [minWidth]="170" [width]="170" [maxWidth]="170" [frozenLeft]="true">
                 <ng-template ngx-datatable-header-template>
                     <span class="datatable-header-cell-wrapper" (click)="controls.onSort('exercise.releaseDate')">
                         <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.exercise.releaseDate">
@@ -36,7 +36,7 @@
                     </span>
                 </ng-template>
                 <ng-template ngx-datatable-cell-template let-value="value" class="mr-5">
-                    {{ moment(value) | date: 'dd.MM.yyyy' }}
+                    {{ value ? (moment(value) | date: 'dd.MM.yyyy') : ('artemisApp.exercise.dateNotSet' | translate) }}
                 </ng-template>
             </ngx-datatable-column>
 
