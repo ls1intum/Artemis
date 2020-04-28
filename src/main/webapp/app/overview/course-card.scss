@@ -2,7 +2,8 @@
     height: 320px;
     cursor: pointer;
     .card-header {
-        height: 60px;
+        min-height: 60px;
+        max-height: 100px;
         display: flex;
         justify-content: center;
         align-items: center;
