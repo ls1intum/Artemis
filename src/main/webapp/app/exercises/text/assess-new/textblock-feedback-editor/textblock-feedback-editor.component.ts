@@ -29,7 +29,7 @@ export class TextblockFeedbackEditorComponent implements AfterViewInit {
     @HostBinding('class.alert-danger') get setNegativeFeedbackClass(): boolean {
         return this.feedback.credits < 0;
     }
-    constructor(private structuredGradingCriterionService: StructuredGradingCriterionService) {}
+    constructor(public structuredGradingCriterionService: StructuredGradingCriterionService) {}
 
     ngAfterViewInit(): void {
         this.textareaElement = this.textareaRef.nativeElement as HTMLTextAreaElement;
