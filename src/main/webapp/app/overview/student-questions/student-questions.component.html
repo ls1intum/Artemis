@@ -27,15 +27,8 @@
             <!-- new question editor -->
             <div *ngIf="isEditMode">
                 <div class="row">
-                    <div class="col-12">
-                        <div class="row mb-1">
-                            <div class="col-auto px-0">
-                                <fa-icon [icon]="'question'" [ngbTooltip]="'artemisApp.courseOverview.exerciseDetails.faq.questionLabel' | translate"></fa-icon>&nbsp;
-                            </div>
-                            <div class="col">
-                                <span class="form-control-label">{{ 'artemisApp.courseOverview.exerciseDetails.faq.newQuestionLabel' | translate }}</span>
-                            </div>
-                        </div>
+                    <div class="col-12 px-0">
+                        <span class="form-control-label">{{ 'artemisApp.courseOverview.exerciseDetails.faq.newQuestionLabel' | translate }}</span>
                     </div>
                     <div class="col-12 px-0">
                         <jhi-markdown-editor

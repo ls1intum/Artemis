@@ -121,18 +121,15 @@
                         </button>
                     </div>
                 </div>
-                <ng-container *ngIf="isAnswerMode && !selectedQuestionAnswer">
+                <ng-container *ngIf="isAnswerMode">
                     <div class="row mb-2">
                         <div class="col-12">
                             <div class="row mb-1">
-                                <div class="col-auto px-0">
-                                    <fa-icon [icon]="'lightbulb'" [ngbTooltip]="'artemisApp.courseOverview.exerciseDetails.faq.answerLabel' | translate"></fa-icon>
-                                </div>
-                                <div class="col">
+                                <div class="col-12 px-0">
                                     <span class="form-control-label">{{ 'artemisApp.courseOverview.exerciseDetails.faq.newAnswerLabel' | translate }}</span>
                                 </div>
                             </div>
-                            <div class="col-12 px-0">
+                            <div class="row px-0">
                                 <jhi-markdown-editor
                                     class="markdown-editor background-editor-color"
                                     [(markdown)]="questionAnswerText"

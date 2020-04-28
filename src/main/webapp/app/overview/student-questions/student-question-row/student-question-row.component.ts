@@ -33,7 +33,6 @@ export class StudentQuestionRowComponent implements OnInit {
     isExpanded = true;
     isAnswerMode: boolean;
     showOtherAnswers = false;
-    selectedQuestionAnswer: StudentQuestionAnswer | null;
     questionAnswerText: string | null;
     sortedQuestionAnswers: StudentQuestionAnswer[];
     approvedQuestionAnswers: StudentQuestionAnswer[];
