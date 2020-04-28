@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.web.websocket.team;
 
+import java.security.Principal;
+import java.time.Instant;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -13,6 +15,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.event.EventListener;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
+import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.messaging.simp.annotation.SubscribeMapping;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
@@ -23,6 +26,18 @@ import org.springframework.messaging.simp.user.SimpUserRegistry;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.socket.messaging.SessionDisconnectEvent;
 import org.springframework.web.socket.messaging.SessionUnsubscribeEvent;
+
+import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.TextExercise;
+import de.tum.in.www1.artemis.domain.TextSubmission;
+import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
+import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
+import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.security.SecurityUtils;
+import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.web.websocket.dto.OnlineTeamStudentDTO;
+import de.tum.in.www1.artemis.web.websocket.dto.SubmissionSyncPayload;
 
 @Controller
 public class ParticipationTeamWebsocketService {
@@ -35,9 +50,30 @@ public class ParticipationTeamWebsocketService {
 
     private final Map<String, String> destinationTracker = new HashMap<>();
 
-    public ParticipationTeamWebsocketService(SimpMessageSendingOperations messagingTemplate, SimpUserRegistry simpUserRegistry) {
+    private final Map<Long, Map<String, Instant>> lastTypingTracker = new HashMap<>();
+
+    private final Map<Long, Map<String, Instant>> lastActionTracker = new HashMap<>();
+
+    private final UserService userService;
+
+    private final ParticipationService participationService;
+
+    private final ExerciseService exerciseService;
+
+    private final TextSubmissionService textSubmissionService;
+
+    private final ModelingSubmissionService modelingSubmissionService;
+
+    public ParticipationTeamWebsocketService(SimpMessageSendingOperations messagingTemplate, SimpUserRegistry simpUserRegistry, UserService userService,
+            ParticipationService participationService, ExerciseService exerciseService, TextSubmissionService textSubmissionService,
+            ModelingSubmissionService modelingSubmissionService) {
         this.messagingTemplate = messagingTemplate;
         this.simpUserRegistry = simpUserRegistry;
+        this.userService = userService;
+        this.participationService = participationService;
+        this.exerciseService = exerciseService;
+        this.textSubmissionService = textSubmissionService;
+        this.modelingSubmissionService = modelingSubmissionService;
     }
 
     /**
@@ -46,14 +82,14 @@ public class ParticipationTeamWebsocketService {
      * We have to keep track of the destination that this session belongs to since it is
      * needed on unsubscribe and disconnect but is not available there.
      *
-     * @param participationId id of participation
+     * @param participationId     id of participation
      * @param stompHeaderAccessor header from STOMP frame
      */
     @SubscribeMapping("/topic/participations/{participationId}/team")
     public void subscribe(@DestinationVariable Long participationId, StompHeaderAccessor stompHeaderAccessor) {
         final String destination = getDestination(participationId);
         destinationTracker.put(stompHeaderAccessor.getSessionId(), destination);
-        sendOnlineTeamMembers(destination);
+        sendOnlineTeamStudents(participationId);
     }
 
     /**
@@ -62,18 +98,111 @@ public class ParticipationTeamWebsocketService {
      * @param participationId id of participation
      */
     @MessageMapping("/topic/participations/{participationId}/team/trigger")
-    public void triggerSend(@DestinationVariable Long participationId) {
-        sendOnlineTeamMembers(getDestination(participationId));
+    public void triggerSendOnlineTeamStudents(@DestinationVariable Long participationId) {
+        sendOnlineTeamStudents(participationId);
     }
 
     /**
-     * Sends out a list of user logins of team students that are online to all team members
+     * Called by a user once he starts to type or edit the content of a submission
+     * Updates the user's last typing date in the tracker and broadcasts the list of online team members
      *
-     * @param destination websocket topic to which to send the list of online users
+     * @param participationId id of participation which is being worked on
+     * @param principal       principal of user who is working on the submission
      */
-    private void sendOnlineTeamMembers(String destination) {
-        final List<String> userLogins = getSubscriberPrincipals(destination);
-        messagingTemplate.convertAndSend(destination, userLogins);
+    @MessageMapping("/topic/participations/{participationId}/team/typing")
+    public void startTyping(@DestinationVariable Long participationId, Principal principal) {
+        lastTypingTracker.putIfAbsent(participationId, new HashMap<>());
+        lastTypingTracker.get(participationId).put(principal.getName(), Instant.now());
+        sendOnlineTeamStudents(participationId);
+    }
+
+    /**
+     * Called by a student of a team to update the modeling submission of the team for their participation
+     *
+     * @param participationId    id of participation
+     * @param modelingSubmission updated modeling submission
+     * @param principal          principal of user who wants to update the text submission
+     */
+    @MessageMapping("/topic/participations/{participationId}/team/modeling-submissions/update")
+    public void updateModelingSubmission(@DestinationVariable Long participationId, @Payload ModelingSubmission modelingSubmission, Principal principal) {
+        updateSubmission(participationId, modelingSubmission, principal, "/modeling-submissions");
+    }
+
+    /**
+     * Called by a student of a team to update the text submission of the team for their participation
+     *
+     * @param participationId id of participation
+     * @param textSubmission  updated text submission
+     * @param principal       principal of user who wants to update the text submission
+     */
+    @MessageMapping("/topic/participations/{participationId}/team/text-submissions/update")
+    public void updateTextSubmission(@DestinationVariable Long participationId, @Payload TextSubmission textSubmission, Principal principal) {
+        updateSubmission(participationId, textSubmission, principal, "/text-submissions");
+    }
+
+    /**
+     * Updates a modeling or text submission
+     *
+     * @param participationId id of participation
+     * @param submission      updated modeling text submission
+     * @param principal       principal of user who wants to update the submission
+     * @param topicPath       path of websocket destination topic where to send the new submission
+     */
+    private void updateSubmission(@DestinationVariable Long participationId, @Payload Submission submission, Principal principal, String topicPath) {
+        // Without this, custom jpa repository methods don't work in websocket channel.
+        SecurityUtils.setAuthorizationObject();
+
+        final StudentParticipation participation = participationService.findOneStudentParticipation(participationId);
+
+        // user must belong to the team who owns the participation in order to update a submission
+        if (!participation.isOwnedBy(principal.getName())) {
+            return;
+        }
+
+        final User user = userService.getUserWithGroupsAndAuthorities(principal.getName());
+        final Exercise exercise = exerciseService.findOne(participation.getExercise().getId());
+
+        if (submission instanceof ModelingSubmission && exercise instanceof ModelingExercise) {
+            submission = modelingSubmissionService.save((ModelingSubmission) submission, (ModelingExercise) exercise, principal.getName());
+            modelingSubmissionService.hideDetails(submission, user);
+        }
+        else if (submission instanceof TextSubmission && exercise instanceof TextExercise) {
+            submission = textSubmissionService.handleTextSubmission((TextSubmission) submission, (TextExercise) exercise, principal);
+            textSubmissionService.hideDetails(submission, user);
+        }
+        else {
+            throw new IllegalArgumentException("Submission type '" + submission.getType() + "' not allowed.");
+        }
+
+        // update the last action date for the user and send out list of team members
+        lastActionTracker.putIfAbsent(participationId, new HashMap<>());
+        lastActionTracker.get(participationId).put(principal.getName(), Instant.now());
+        sendOnlineTeamStudents(participationId);
+
+        SubmissionSyncPayload payload = new SubmissionSyncPayload(submission, user);
+        messagingTemplate.convertAndSend(getDestination(participationId, topicPath), payload);
+    }
+
+    /**
+     * Sends out a list of online team students to all members of the team
+     *
+     * @param participationId id of participation for which to send out the list
+     * @param exceptSessionID session id that should be ignored (optional)
+     */
+    private void sendOnlineTeamStudents(Long participationId, String exceptSessionID) {
+        final String destination = getDestination(participationId);
+
+        Map<String, Instant> lastTypingMap = lastTypingTracker.getOrDefault(participationId, new HashMap<>());
+        Map<String, Instant> lastActionMap = lastActionTracker.getOrDefault(participationId, new HashMap<>());
+
+        final List<OnlineTeamStudentDTO> onlineTeamStudents = getSubscriberPrincipals(destination, exceptSessionID).stream()
+                .map(login -> new OnlineTeamStudentDTO(login, lastTypingMap.get(login), lastActionMap.get(login))).collect(Collectors.toList());
+
+        messagingTemplate.convertAndSend(destination, onlineTeamStudents);
+    }
+
+    private void sendOnlineTeamStudents(Long participationId) {
+        sendOnlineTeamStudents(participationId, null);
     }
 
     /**
@@ -106,8 +235,8 @@ public class ParticipationTeamWebsocketService {
      */
     public void unsubscribe(String sessionId) {
         Optional.ofNullable(destinationTracker.get(sessionId)).ifPresent(destination -> {
-            List<String> userLogins = getSubscriberPrincipals(destination, sessionId);
-            messagingTemplate.convertAndSend(destination, userLogins);
+            Long participationId = getParticipationIdFromDestination(destination);
+            sendOnlineTeamStudents(participationId, sessionId);
             destinationTracker.remove(sessionId);
         });
     }
@@ -117,17 +246,13 @@ public class ParticipationTeamWebsocketService {
      * Optionally, a certain session ID can be excluded from consideration (which is handy for the unsubscribe event listener which is
      * called before the session is actually removed).
      *
-     * @param destination destination/topic for which to get the subscribers
+     * @param destination     destination/topic for which to get the subscribers
      * @param exceptSessionID session id that should be excluded from subscription sessions
      * @return list of principals / logins
      */
     private List<String> getSubscriberPrincipals(String destination, String exceptSessionID) {
         return simpUserRegistry.findSubscriptions(s -> s.getDestination().equals(destination)).stream().map(SimpSubscription::getSession)
-                .filter(simpSession -> !simpSession.getId().equals(exceptSessionID)).map(SimpSession::getUser).map(SimpUser::getName).collect(Collectors.toList());
-    }
-
-    private List<String> getSubscriberPrincipals(String destination) {
-        return getSubscriberPrincipals(destination, null);
+                .filter(simpSession -> !simpSession.getId().equals(exceptSessionID)).map(SimpSession::getUser).map(SimpUser::getName).distinct().collect(Collectors.toList());
     }
 
     /**
@@ -152,12 +277,20 @@ public class ParticipationTeamWebsocketService {
         return matcher.find() ? Long.parseLong(matcher.group(1)) : null;
     }
 
+    private static String getDestination(Long participationId, String path) {
+        return getDestination(participationId.toString(), path);
+    }
+
     private static String getDestination(Long participationId) {
-        return getDestination(participationId.toString());
+        return getDestination(participationId, "");
+    }
+
+    private static String getDestination(String participationId, String path) {
+        return "/topic/participations/" + participationId + "/team" + path;
     }
 
     private static String getDestination(String participationId) {
-        return "/topic/participations/" + participationId + "/team";
+        return getDestination(participationId, "");
     }
 
     public Map<String, String> getDestinationTracker() {
