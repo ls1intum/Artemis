@@ -29,6 +29,6 @@
             <h4 jhiTranslate="artemisApp.exercise.gradingInstructions">Grading instructions</h4>
             <p class="markdown-preview" [innerHTML]="gradingInstructions | htmlForMarkdown"></p>
         </div>
-        <jhi-structured-grading-instructions-assessment-layout [criteria]="criteria"></jhi-structured-grading-instructions-assessment-layout>
+        <jhi-structured-grading-instructions-assessment-layout [readonly]="readOnly" [criteria]="criteria"></jhi-structured-grading-instructions-assessment-layout>
     </div>
 </div>
