@@ -40,6 +40,7 @@ import { routes } from 'app/exercises/modeling/participate/modeling-participatio
 import { stub } from 'sinon';
 import { ArtemisTeamModule } from 'app/exercises/shared/team/team.module';
 import { ArtemisHeaderExercisePageWithDetailsModule } from 'app/exercises/shared/exercise-headers/exercise-headers.module';
+import { ArtemisFullscreenModule } from 'app/shared/fullscreen/fullscreen.module';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -69,6 +70,7 @@ describe('Component Tests', () => {
                     ModelingAssessmentModule,
                     ArtemisComplaintsModule,
                     ArtemisTeamModule,
+                    ArtemisFullscreenModule,
                     ArtemisHeaderExercisePageWithDetailsModule,
                     RouterTestingModule.withRoutes([routes[0]]),
                 ],
