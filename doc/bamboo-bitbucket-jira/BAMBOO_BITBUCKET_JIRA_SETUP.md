@@ -84,7 +84,7 @@ Go to Bamboo → Manage apps → Upload app → select the downloaded .jar file 
 
 8\. Add Maven and JDK:
 
-  * Go to Bamboo → Server capabilities → Add capabilities menu →  Capability type `Executable` → select type `Maven 3.x` → insert `Maven 3` as executable label → insert `/usr` as path. 
+  * Go to Bamboo → Server capabilities → Add capabilities menu →  Capability type `Executable` → select type `Maven 3.x` → insert `Maven 3` as executable label → insert `/artemis` as path. 
    
   * Add capabilities menu → Capability type `JDK` → insert `JDK 12` as JDK label → insert `/usr/lib/jvm/java-14-oracle` as Java home.
   
