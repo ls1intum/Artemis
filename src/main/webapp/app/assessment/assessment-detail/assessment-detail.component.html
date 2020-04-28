@@ -1,4 +1,4 @@
-<div (drop)="drop($event)" (dragover)="allowDrop($event)" class="card mb-3">
+<div (drop)="structuredGradingCriterionService.updateFeedbackWithStructuredGradingInstructionEvent(assessment, $event)" (dragover)="$event.preventDefault()" class="card mb-3">
     <div class="card-header" [class.color-cyan]="assessment.type == FeedbackType_AUTOMATIC">
         <fa-icon [icon]="'trash-alt'" class="float-right" (click)="delete()" *ngIf="!disabled"></fa-icon>
         <h4 *ngIf="block?.text || assessment.reference" class="card-title">

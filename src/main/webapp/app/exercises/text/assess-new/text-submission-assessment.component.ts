@@ -43,6 +43,7 @@ export class TextSubmissionAssessmentComponent implements OnInit {
     canOverride = false;
     assessmentsAreValid = false;
     complaint: Complaint;
+    noNewSubmissions = false;
 
     private cancelConfirmationText: string;
 
@@ -86,6 +87,9 @@ export class TextSubmissionAssessmentComponent implements OnInit {
     }
 
     private setPropertiesFromServerResponse(studentParticipation: StudentParticipation) {
+        // Update noNewSubmissions
+        this.noNewSubmissions = this.isNewAssessmentRoute ? studentParticipation === null : false;
+
         this.participation = studentParticipation;
         this.submission = this.participation?.submissions[0] as TextSubmission;
         this.exercise = this.participation?.exercise as TextExercise;
@@ -101,16 +105,17 @@ export class TextSubmissionAssessmentComponent implements OnInit {
     }
 
     private updateUrlIfNeeded() {
-        if (this.activatedRoute.routeConfig?.path === NEW_ASSESSMENT_PATH) {
+        if (this.isNewAssessmentRoute) {
             // Update the url with the new id, without reloading the page, to make the history consistent
             const newUrl = this.router
-                .createUrlTree(
-                    // TODO:  Remove '-new' when migrating to Text Assessment V2
-                    ['course-management', this.exercise?.course?.id, 'text-exercises', this.exercise?.id, 'submissions-new', this.submission?.id, 'assessment'],
-                )
+                .createUrlTree(['course-management', this.exercise?.course?.id, 'text-exercises', this.exercise?.id, 'submissions', this.submission?.id, 'assessment'])
                 .toString();
             this.location.go(newUrl);
         }
+    }
+
+    private get isNewAssessmentRoute(): boolean {
+        return this.activatedRoute.routeConfig?.path === NEW_ASSESSMENT_PATH;
     }
 
     navigateBack(): void {
@@ -165,8 +170,7 @@ export class TextSubmissionAssessmentComponent implements OnInit {
 
     nextSubmission(): void {
         this.busy = true;
-        // TODO:  Remove '-new' when migrating to Text Assessment V2
-        this.router.navigate(['course-management', this.exercise?.course?.id, 'text-exercises', this.exercise?.id, 'submissions-new', 'new', 'assessment']);
+        this.router.navigate(['course-management', this.exercise?.course?.id, 'text-exercises', this.exercise?.id, 'submissions', 'new', 'assessment']);
     }
 
     /**
