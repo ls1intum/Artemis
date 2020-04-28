@@ -1,8 +1,12 @@
-import { Component, Input, OnInit, OnDestroy } from '@angular/core';
-import { Team } from 'app/entities/team.model';
+import { Component, Input, OnInit, OnDestroy, ViewEncapsulation } from '@angular/core';
+import { OnlineTeamStudent, Team } from 'app/entities/team.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/core/user/user.model';
 import { orderBy } from 'lodash';
+import { Observable } from 'rxjs';
+import { map, throttleTime } from 'rxjs/operators';
+import * as moment from 'moment';
+import { Moment } from 'moment';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 
@@ -10,12 +14,18 @@ import { StudentParticipation } from 'app/entities/participation/student-partici
     selector: 'jhi-team-students-online-list',
     templateUrl: './team-students-online-list.component.html',
     styleUrls: ['./team-students-online-list.component.scss'],
+    encapsulation: ViewEncapsulation.None,
 })
 export class TeamStudentsOnlineListComponent implements OnInit, OnDestroy {
+    readonly showTypingDuration = 2000; // ms
+    readonly sendTypingInterval = this.showTypingDuration / 1.5;
+
+    @Input() typing$: Observable<any> | null;
     @Input() participation: StudentParticipation;
 
     currentUser: User;
-    onlineUserLogins = new Set<string>();
+    onlineTeamStudents: OnlineTeamStudent[] = [];
+    typingTeamStudents: OnlineTeamStudent[] = [];
     websocketTopic: string;
 
     constructor(private accountService: AccountService, private jhiWebsocketService: JhiWebsocketService) {}
@@ -29,26 +39,40 @@ export class TeamStudentsOnlineListComponent implements OnInit, OnDestroy {
     ngOnInit(): void {
         this.accountService.identity().then((user: User) => {
             this.currentUser = user;
-            this.websocketTopic = this.buildWebsocketTopic();
-            this.jhiWebsocketService.subscribe(this.websocketTopic);
-            this.jhiWebsocketService.receive(this.websocketTopic).subscribe((logins: string[]) => {
-                this.onlineUserLogins = new Set<string>(logins);
-            });
-            setTimeout(() => {
-                this.jhiWebsocketService.send(this.buildWebsocketTopic('/trigger'), {});
-            }, 700);
+            this.setupOnlineTeamStudentsReceiver();
+            this.setupTypingIndicatorSender();
         });
+    }
+
+    private setupOnlineTeamStudentsReceiver() {
+        this.websocketTopic = this.buildWebsocketTopic();
+        this.jhiWebsocketService.subscribe(this.websocketTopic);
+        this.jhiWebsocketService
+            .receive(this.websocketTopic)
+            .pipe(map(this.convertOnlineTeamStudentsFromServer))
+            .subscribe(
+                (students: OnlineTeamStudent[]) => {
+                    this.onlineTeamStudents = students;
+                    this.computeTypingTeamStudents();
+                },
+                (error) => console.error(error),
+            );
+        setTimeout(() => {
+            this.jhiWebsocketService.send(this.buildWebsocketTopic('/trigger'), {});
+        }, 700);
+    }
+
+    private setupTypingIndicatorSender() {
+        if (this.typing$) {
+            this.typing$.pipe(throttleTime(this.sendTypingInterval)).subscribe(
+                () => this.jhiWebsocketService.send(this.buildWebsocketTopic('/typing'), {}),
+                (error) => console.error(error),
+            );
+        }
     }
 
     ngOnDestroy(): void {
         this.jhiWebsocketService.unsubscribe(this.websocketTopic);
-    }
-
-    /**
-     * Topic for updates on online status of team members (needs to match route in ParticipationTeamWebsocketService.java)
-     */
-    buildWebsocketTopic(path = ''): string {
-        return `/topic/participations/${this.participation.id}/team${path}`;
     }
 
     get team(): Team {
@@ -79,6 +103,50 @@ export class TeamStudentsOnlineListComponent implements OnInit, OnDestroy {
     };
 
     isOnline = (user: User): boolean => {
-        return this.onlineUserLogins.has(user.login!);
+        return this.onlineTeamStudents.map((student: OnlineTeamStudent) => student.login).includes(user.login!);
     };
+
+    lastActionDate = (user: User): Moment | undefined => {
+        return this.onlineTeamStudents.find((student: OnlineTeamStudent) => student.login === user.login!)?.lastActionDate;
+    };
+
+    isTyping = (user: User): boolean => {
+        return this.typingTeamStudents.map((student: OnlineTeamStudent) => student.login).includes(user.login!);
+    };
+
+    /**
+     * Computes which of the online team members are currently typing
+     *
+     * Typing students are those online students whose {lastTypingDate} is more recent than {showTypingDuration} ms ago.
+     * If there are any typing students, find the timestamp of the earliest expiration of the typing state among them.
+     * Then, schedule another computation for that timestamp.
+     */
+    private computeTypingTeamStudents() {
+        this.typingTeamStudents = this.onlineTeamStudents.filter((student: OnlineTeamStudent) => {
+            return Boolean(student.lastTypingDate?.isAfter(moment().subtract(this.showTypingDuration, 'ms')));
+        });
+        if (this.typingTeamStudents.length > 0) {
+            const lastTypingDates = this.typingTeamStudents.map((student: OnlineTeamStudent) => student.lastTypingDate).filter(Boolean);
+            const earliestExpiration: Moment = moment(moment.min(lastTypingDates)).add(this.showTypingDuration, 'ms');
+            const timeToExpirationInMilliseconds = earliestExpiration.diff(moment());
+            setTimeout(() => this.computeTypingTeamStudents(), timeToExpirationInMilliseconds);
+        }
+    }
+
+    private convertOnlineTeamStudentsFromServer(students: OnlineTeamStudent[]) {
+        return students.map((student) => {
+            return {
+                ...student,
+                lastTypingDate: student.lastTypingDate !== null ? moment(student.lastTypingDate) : null,
+                lastActionDate: student.lastActionDate !== null ? moment(student.lastActionDate) : null,
+            };
+        });
+    }
+
+    /**
+     * Topic for updates on online status of team members (needs to match route in ParticipationTeamWebsocketService.java)
+     */
+    private buildWebsocketTopic(path = ''): string {
+        return `/topic/participations/${this.participation.id}/team${path}`;
+    }
 }
