@@ -18,8 +18,12 @@ export class FullscreenComponent implements OnInit {
 
     ngOnInit(): void {}
 
+    /**
+     * enter full screen
+     */
     private enterFullscreen() {
         const element: any = this.fullScreenWrapper.nativeElement;
+        // requestFullscreen for different browser types
         if (element.requestFullscreen) {
             element.requestFullscreen();
         } else if (element.mozRequestFullScreen) {
@@ -31,8 +35,12 @@ export class FullscreenComponent implements OnInit {
         }
     }
 
+    /**
+     * exit fullscreen
+     */
     private exitFullscreen() {
         const docElement = document as any;
+        // exit fullscreen for different browser types
         if (document.exitFullscreen) {
             document.exitFullscreen();
         } else if (docElement.mozCancelFullScreen) {
@@ -44,8 +52,12 @@ export class FullscreenComponent implements OnInit {
         }
     }
 
+    /**
+     * checks if this component is the current fullscreen component
+     */
     isFullScreen() {
         const docElement = document as any;
+        // check if this component is the current fullscreen component for different browser types
         if (docElement.fullscreenElement !== undefined) {
             return docElement.fullscreenElement;
         } else if (docElement.webkitFullscreenElement !== undefined) {
@@ -57,6 +69,9 @@ export class FullscreenComponent implements OnInit {
         }
     }
 
+    /**
+     * check current state and toggle fullscreen
+     */
     toggleFullscreen() {
         if (this.isFullScreen()) {
             this.exitFullscreen();
