@@ -1,3 +1,5 @@
+@import 'src/main/webapp/content/scss/artemis-variables';
+
 @mixin status-change-transition() {
     transition: 0.1s color ease-out;
 
@@ -10,44 +12,108 @@
     display: block;
 }
 
-.student-list {
+.team-students-online-list {
     list-style: none;
     padding: 0;
     margin: 0;
+
+    .student-item {
+        display: flex;
+        align-items: center;
+        font-size: 14px;
+        font-weight: 400;
+
+        &:not(:first-of-type) {
+            margin-top: 5px;
+        }
+    }
+
+    .student-status {
+        @include status-change-transition;
+
+        display: inline-flex;
+        color: #ccc;
+    }
+
+    .student-name {
+        @include status-change-transition;
+
+        max-width: 190px;
+        text-overflow: ellipsis;
+        overflow: hidden;
+        white-space: nowrap;
+        color: #6c757d;
+    }
+
+    .online {
+        .student-status {
+            color: green;
+        }
+
+        .student-name {
+            color: initial;
+        }
+    }
+
+    .student-last-action-trigger {
+        margin: -1px 0;
+        opacity: 0.25;
+        background: none;
+        border: none;
+
+        &:hover {
+            opacity: 0.75;
+        }
+
+        &:focus {
+            opacity: 1;
+            outline: none;
+        }
+    }
+
+    .student-last-action-tooltip {
+        width: unset !important;
+
+        .tooltip-inner {
+            min-width: unset !important;
+        }
+    }
 }
 
-.student-item {
+.typing-indicator {
+    $side-overlap: 3px;
+
     display: flex;
-    align-items: center;
-    font-size: 14px;
-    font-weight: 400;
+    width: 12.25px + 2 * $side-overlap;
+    margin: 0 -$side-overlap;
+    opacity: 0.6;
 
-    &:not(:first-of-type) {
-        margin-top: 5px;
+    & > div {
+        $size: 6px;
+        width: $size;
+        height: $size;
+        border-radius: 100%;
+        -webkit-animation: bounce-delay 1.4s infinite ease-in-out both;
+        animation: bounce-delay 1.4s infinite ease-in-out both;
+        background: black;
     }
-}
 
-.student-name {
-    @include status-change-transition;
-
-    max-width: 190px;
-    text-overflow: ellipsis;
-    overflow: hidden;
-    white-space: nowrap;
-    color: #6c757d;
-
-    .online & {
-        color: initial;
+    .bounce1 {
+        animation-delay: -0.32s;
     }
-}
 
-.student-status {
-    @include status-change-transition;
+    .bounce2 {
+        animation-delay: -0.16s;
+    }
 
-    display: inline-flex;
-    color: #ccc;
-
-    .online & {
-        color: green;
+    @keyframes bounce-delay {
+        0%,
+        80%,
+        100% {
+            transform: scale(0);
+        }
+        40% {
+            transform: scale(1);
+        }
     }
 }

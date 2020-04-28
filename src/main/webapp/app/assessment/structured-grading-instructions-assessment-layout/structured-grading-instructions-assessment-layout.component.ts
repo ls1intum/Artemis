@@ -1,19 +1,24 @@
 import { GradingInstruction } from 'app/exercises/shared/structured-grading-criterion/grading-instruction.model';
 import { GradingCriterion } from 'app/exercises/shared/structured-grading-criterion/grading-criterion.model';
-import { Component, Input } from '@angular/core';
+import { Component, Input, OnInit } from '@angular/core';
 
 @Component({
     selector: 'jhi-structured-grading-instructions-assessment-layout',
     templateUrl: './structured-grading-instructions-assessment-layout.component.html',
 })
-export class StructuredGradingInstructionsAssessmentLayoutComponent {
+export class StructuredGradingInstructionsAssessmentLayoutComponent implements OnInit {
     @Input() public criteria: GradingCriterion[];
+    @Input() readonly: boolean;
+    allowDrop: boolean;
+    ngOnInit(): void {
+        this.allowDrop = !this.readonly;
+    }
 
     setTooltip(instr: GradingInstruction) {
         return 'Feedback: ' + instr.feedback;
     }
     setInstrColour(instr: GradingInstruction) {
-        let colour = '#e3f0da';
+        let colour;
         if (instr.credits === 0) {
             colour = '#fff2cc';
         } else if (instr.credits < 0) {
@@ -33,6 +38,12 @@ export class StructuredGradingInstructionsAssessmentLayoutComponent {
      * the corresponding drop method is in AssessmentDetailComponent
      */
     drag(event: any, instruction: GradingInstruction) {
-        event.dataTransfer.setData('text', JSON.stringify(instruction));
+        event.dataTransfer.setData('artemis/sgi', JSON.stringify(instruction));
+    }
+    /**
+     * disables drag if on readOnly mode
+     */
+    disableDrag() {
+        return this.allowDrop;
     }
 }

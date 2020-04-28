@@ -32,7 +32,12 @@
             [highlightedElements]="highlightedElements"
             (feedbackChanged)="onFeedbackChanged($event)"
         ></jhi-modeling-assessment>
-        <jhi-collapsable-assessment-instructions *ngIf="modelingExercise" [exercise]="modelingExercise" [collapsed]="false"></jhi-collapsable-assessment-instructions>
+        <jhi-collapsable-assessment-instructions
+            *ngIf="modelingExercise"
+            [readOnly]="false"
+            [exercise]="modelingExercise"
+            [collapsed]="false"
+        ></jhi-collapsable-assessment-instructions>
     </div>
 
     <div class="row mt-3">
