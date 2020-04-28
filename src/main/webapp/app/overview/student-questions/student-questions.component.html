@@ -14,7 +14,7 @@
             </div>
         </div>
         <!-- body -->
-        <div class="card-body py-1">
+        <div class="card-body py-2">
             <!-- questions with answers -->
             <jhi-student-question-row
                 [studentQuestion]="studentQuestion"
@@ -59,7 +59,7 @@
             </div>
             <!-- new question button -->
             <div class="row" *ngIf="!isEditMode">
-                <div class="col-12 px-0">
+                <div class="col-12">
                     <button
                         class="btn btn-sm btn-outline-secondary"
                         [ngbTooltip]="'artemisApp.courseOverview.exerciseDetails.faq.addNewQuestion' | translate"

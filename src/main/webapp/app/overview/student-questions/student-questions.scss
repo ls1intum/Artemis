@@ -32,6 +32,12 @@ $background-color: #353d47;
             .card-title {
                 display: flex;
             }
+
+            .row > .col-auto:last-child {
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+            }
         }
     }
 }
@@ -64,7 +70,12 @@ $background-color: #353d47;
 .question-text,
 .answer-text {
     background: rgba(0, 0, 0, 0.1);
+    padding: 8px 15px;
     border-radius: 3px;
+
+    ::ng-deep p {
+        margin: 0;
+    }
 }
 
 .answer {
