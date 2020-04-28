@@ -3,11 +3,10 @@
     <div class="draggable-left"><fa-icon [icon]="'grip-lines-vertical'"></fa-icon></div>
     <div class="card">
         <!-- header -->
-        <div class="card-header text-white bg-secondary" [ngbTooltip]="'artemisApp.courseOverview.exerciseDetails.faq.hide' | translate" (click)="collapsed = true">
-            <div class="row">
-                <div class="col-auto"><fa-icon [icon]="'question'"></fa-icon></div>
+        <div class="card-header text-white" [ngbTooltip]="'artemisApp.courseOverview.exerciseDetails.faq.hide' | translate" (click)="collapsed = true">
+            <div class="row flex-grow-1">
                 <div class="col">
-                    <h4 jhiTranslate="artemisApp.courseOverview.exerciseDetails.faq.header">Q & A</h4>
+                    <h4 class="mb-0" jhiTranslate="artemisApp.courseOverview.exerciseDetails.faq.header">Q & A</h4>
                 </div>
                 <div class="col-auto">
                     <fa-icon [icon]="'chevron-right'"></fa-icon>
@@ -15,7 +14,7 @@
             </div>
         </div>
         <!-- body -->
-        <div class="card-body">
+        <div class="card-body py-1">
             <!-- questions with answers -->
             <jhi-student-question-row
                 [studentQuestion]="studentQuestion"
@@ -61,8 +60,13 @@
             <!-- new question button -->
             <div class="row" *ngIf="!isEditMode">
                 <div class="col-12 px-0">
-                    <button class="btn btn-sm btn-outline-secondary" (click)="isEditMode = true">
-                        {{ 'artemisApp.courseOverview.exerciseDetails.faq.addNewQuestion' | translate }}
+                    <button
+                        class="btn btn-sm btn-outline-secondary"
+                        [ngbTooltip]="'artemisApp.courseOverview.exerciseDetails.faq.addNewQuestion' | translate"
+                        (click)="isEditMode = true"
+                    >
+                        <fa-icon [icon]="'plus'"></fa-icon>
+                        <span class="d-none d-md-inline">{{ 'artemisApp.courseOverview.exerciseDetails.faq.addNewQuestion' | translate }}</span>
                     </button>
                 </div>
             </div>
@@ -75,11 +79,7 @@
 </div>
 <!-- collapsed questions -->
 <ng-template #collapsedQuestions>
-    <div
-        class="questions-container collapsed-questions text-white bg-secondary"
-        (click)="collapsed = false"
-        [ngbTooltip]="'artemisApp.courseOverview.exerciseDetails.faq.show' | translate"
-    >
+    <div class="questions-container collapsed-questions text-white" (click)="collapsed = false" [ngbTooltip]="'artemisApp.courseOverview.exerciseDetails.faq.show' | translate">
         <fa-icon [icon]="'chevron-left'"></fa-icon>
         <span jhiTranslate="artemisApp.courseOverview.exerciseDetails.faq.header">Q & A</span>
         <fa-icon [icon]="'chevron-left'"></fa-icon>

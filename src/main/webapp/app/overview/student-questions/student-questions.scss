@@ -1,5 +1,7 @@
 @import 'src/main/webapp/content/scss/artemis-variables';
 
+$background-color: #353d47;
+
 .questions-container {
     display: flex;
     height: 100%;
@@ -24,6 +26,7 @@
             display: inline-flex;
             justify-content: space-between;
             align-items: center;
+            background-color: $background-color;
             cursor: pointer;
 
             .card-title {
@@ -37,6 +40,7 @@
     width: 50px;
     justify-content: space-between;
     flex-flow: column nowrap;
+    background-color: $background-color;
     margin-left: 15px;
     cursor: pointer;
 
