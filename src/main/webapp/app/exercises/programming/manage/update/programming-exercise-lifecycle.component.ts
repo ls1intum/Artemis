@@ -31,25 +31,23 @@ export class ProgrammingExerciseLifecycleComponent implements OnInit {
     }
 
     /**
-     * Sets the new release date and updates teh due and after due date if the release date if they are before the
-     * release date now.
+     * Sets the new release date and updates "due date" and "after due date" if the release date is after the due date
      *
-     * @param releaseDate The new release date
+     * @param newReleaseDate The new release date
      */
-    updateReleaseDate(releaseDate: moment.Moment | null) {
-        if (this.exercise.dueDate && releaseDate && releaseDate.isAfter(this.exercise.dueDate)) {
-            this.updateDueDate(releaseDate);
+    updateReleaseDate(newReleaseDate: moment.Moment | null) {
+        if (this.exercise.dueDate && newReleaseDate && moment(newReleaseDate).isAfter(this.exercise.dueDate)) {
+            this.updateDueDate(moment(newReleaseDate));
         }
-
-        this.exercise.releaseDate = releaseDate;
+        this.exercise.releaseDate = newReleaseDate;
     }
 
     private updateDueDate(dueDate: moment.Moment) {
-        const afterDue = this.exercise.buildAndTestStudentSubmissionsAfterDueDate;
         alert(this.translator.instant('artemisApp.programmingExercise.timeline.alertNewDueDate'));
         this.exercise.dueDate = dueDate;
 
         // If the new due date is after the "After Due Date", then we have to set the "After Due Date" to the new due date
+        const afterDue = this.exercise.buildAndTestStudentSubmissionsAfterDueDate;
         if (afterDue && this.exercise.dueDate.isAfter(afterDue)) {
             this.exercise.buildAndTestStudentSubmissionsAfterDueDate = dueDate;
             alert(this.translator.instant('artemisApp.programmingExercise.timeline.alertNewAfterDueDate'));
