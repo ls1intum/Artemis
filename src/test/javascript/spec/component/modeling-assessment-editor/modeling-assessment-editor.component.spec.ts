@@ -59,7 +59,7 @@ describe('ModelingAssessmentEditorComponent', () => {
     });
 
     it('should propagate isAtLeastInstructor', () => {
-        let course = new Course();
+        const course = new Course();
         course.isAtLeastInstructor = true;
         component.modelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, course);
         mockAuth.isAtLeastInstructorInCourse(course);

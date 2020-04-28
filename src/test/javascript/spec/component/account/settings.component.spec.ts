@@ -12,18 +12,6 @@ describe('SettingsComponent', () => {
     let comp: SettingsComponent;
     let fixture: ComponentFixture<SettingsComponent>;
     let accountService: AccountService;
-    const accountValues: Account = {
-        firstName: 'John',
-        lastName: 'Doe',
-        activated: true,
-        email: 'john.doe@mail.com',
-        name: 'john',
-        langKey: 'en',
-        login: 'john',
-        authorities: [],
-        imageUrl: '',
-        guidedTourSettings: [],
-    };
 
     beforeEach(async(() => {
         TestBed.configureTestingModule({
