@@ -103,7 +103,7 @@ Go to Bamboo → Manage apps → Upload app → select the downloaded .jar file 
                 url: http://localhost:8081
                 user:  <jira-admin-user>
                 password: <jira-admin-password>
-                admin-group-name: <group name which is used in all three applications(Bitbucket,Bamboo,Jira)>
+                admin-group-name: instructors
             internal-admin:
                 username: artemis_admin
                 password: artemis_admin            
