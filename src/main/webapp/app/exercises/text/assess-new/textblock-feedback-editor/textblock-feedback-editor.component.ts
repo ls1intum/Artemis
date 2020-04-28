@@ -2,6 +2,7 @@ import { Component, AfterViewInit, HostBinding, Input, Output, EventEmitter, Vie
 import { TextBlock } from 'app/entities/text-block.model';
 import { Feedback } from 'app/entities/feedback.model';
 import { ConfirmIconComponent } from 'app/shared/confirm-icon/confirm-icon.component';
+import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
 
 @Component({
     selector: 'jhi-textblock-feedback-editor',
@@ -28,6 +29,7 @@ export class TextblockFeedbackEditorComponent implements AfterViewInit {
     @HostBinding('class.alert-danger') get setNegativeFeedbackClass(): boolean {
         return this.feedback.credits < 0;
     }
+    constructor(private structuredGradingCriterionService: StructuredGradingCriterionService) {}
 
     ngAfterViewInit(): void {
         this.textareaElement = this.textareaRef.nativeElement as HTMLTextAreaElement;
@@ -68,19 +70,5 @@ export class TextblockFeedbackEditorComponent implements AfterViewInit {
 
     didChange(): void {
         this.feedbackChange.emit(this.feedback);
-    }
-    /**
-     * Connects the structured grading instructions with the feedback of a text block
-     * @param {Event} event - The drop event
-     * the SGI element sent on drag in processed in this method
-     * the corresponding drag method is in StructuredGradingInstructionsAssessmentLayoutComponent
-     */
-    dropStructuredGradingInstruction(event: any) {
-        event.preventDefault();
-        const data = event.dataTransfer.getData('text');
-        const instruction = JSON.parse(data);
-        this.feedback.credits = instruction.credits;
-        this.feedback.detailText = instruction.feedback;
-        this.didChange();
     }
 }

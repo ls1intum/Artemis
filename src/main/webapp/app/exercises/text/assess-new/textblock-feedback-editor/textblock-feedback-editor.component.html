@@ -1,4 +1,4 @@
-<div class="form-row" (drop)="dropStructuredGradingInstruction($event)" (dragover)="$event.preventDefault()">
+<div class="form-row" (drop)="structuredGradingCriterionService.updateFeedbackWithStructuredGradingInstructionEvent(feedback, $event)" (dragover)="$event.preventDefault()">
     <div class="form-group col-10">
         <label jhiTranslate="artemisApp.assessment.detail.feedback" [for]="'detailText-' + textBlock.id"></label>
         <textarea
