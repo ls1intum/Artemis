@@ -13,11 +13,11 @@
                 <dd class="markdown-preview editor-outline-background" [innerHTML]="lecture.description | htmlForMarkdown"></dd>
                 <dt><span jhiTranslate="artemisApp.lecture.startDate">Start Date</span></dt>
                 <dd>
-                    <span>{{ lecture.startDate }}</span>
+                    <span>{{ lecture.startDate | date: 'medium' }}</span>
                 </dd>
                 <dt><span jhiTranslate="artemisApp.lecture.endDate">End Date</span></dt>
                 <dd>
-                    <span>{{ lecture.endDate }}</span>
+                    <span>{{ lecture.endDate | date: 'medium' }}</span>
                 </dd>
                 <dt><span jhiTranslate="artemisApp.lecture.course">Course</span></dt>
                 <dd>
