@@ -141,6 +141,8 @@ public class FileUploadExerciseIntegrationTest extends AbstractSpringIntegration
 
         List<FileUploadExercise> receivedFileUploadExercises = request.getList("/api/courses/" + courseID + "/file-upload-exercises", HttpStatus.OK, FileUploadExercise.class);
 
+        // this seems to be a flaky test, based on the execution order, the following line has a problem with authentication, this should fix it
+        database.changeUser("instructor1");
         assertThat(receivedFileUploadExercises.size() == courseRepo.findAllActiveWithEagerExercisesAndLectures(ZonedDateTime.now()).get(0).getExercises().size());
     }
 
