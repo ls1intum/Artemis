@@ -8,9 +8,11 @@ import { ParticipationService } from 'app/exercises/shared/participation/partici
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import { TextEditorService } from 'app/exercises/text/participate/text-editor.service';
 import * as moment from 'moment';
+import { Subject, merge } from 'rxjs';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { Observable } from 'rxjs/Observable';
+import { debounceTime, distinctUntilChanged, map } from 'rxjs/operators';
 import { TextSubmissionService } from 'app/exercises/text/participate/text-submission.service';
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 import { Feedback } from 'app/entities/feedback.model';
@@ -34,6 +36,10 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
     result: Result;
     submission: TextSubmission;
     isSaving: boolean;
+    private textEditorInput = new Subject<string>();
+    textEditorInputStream$ = this.textEditorInput.asObservable();
+    private submissionChange = new Subject<TextSubmission>();
+    submissionStream$ = this.buildSubmissionStream$();
     // Is submitting always enabled?
     isAlwaysActive: boolean;
     isAllowedToSubmitAfterDeadline: boolean;
@@ -64,27 +70,29 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
         }
 
         this.textService.get(participationId).subscribe(
-            (data: StudentParticipation) => {
-                this.participation = data;
-                this.textExercise = this.participation.exercise as TextExercise;
-                this.textExercise.studentParticipations = [this.participation];
-                this.textExercise.participationStatus = participationStatus(this.textExercise);
-                this.checkIfSubmitAlwaysEnabled();
-                this.isAfterAssessmentDueDate = !this.textExercise.assessmentDueDate || moment().isAfter(this.textExercise.assessmentDueDate);
-
-                if (data.submissions && data.submissions.length > 0) {
-                    this.submission = data.submissions[0] as TextSubmission;
-                    if (this.submission && data.results && this.isAfterAssessmentDueDate) {
-                        this.result = data.results.find((r) => r.submission!.id === this.submission.id)!;
-                    }
-
-                    if (this.submission && this.submission.text) {
-                        this.answer = this.submission.text;
-                    }
-                }
-            },
+            (data: StudentParticipation) => this.updateParticipation(data),
             (error: HttpErrorResponse) => this.onError(error),
         );
+    }
+
+    private updateParticipation(participation: StudentParticipation) {
+        this.participation = participation;
+        this.textExercise = this.participation.exercise as TextExercise;
+        this.textExercise.studentParticipations = [this.participation];
+        this.textExercise.participationStatus = participationStatus(this.textExercise);
+        this.checkIfSubmitAlwaysEnabled();
+        this.isAfterAssessmentDueDate = !this.textExercise.assessmentDueDate || moment().isAfter(this.textExercise.assessmentDueDate);
+
+        if (participation.submissions && participation.submissions.length > 0) {
+            this.submission = participation.submissions[0] as TextSubmission;
+            if (this.submission && participation.results && this.isAfterAssessmentDueDate) {
+                this.result = participation.results.find((r) => r.submission!.id === this.submission.id)!;
+            }
+
+            if (this.submission && this.submission.text) {
+                this.answer = this.submission.text;
+            }
+        }
     }
 
     ngOnDestroy() {
@@ -174,16 +182,16 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
         }
 
         this.isSaving = true;
-        this.submission.text = this.answer;
-        this.submission.language = this.textService.predictLanguage(this.submission.text);
-
+        this.submission = this.submissionForAnswer(this.answer);
         this.submission.submitted = true;
         this.textSubmissionService.update(this.submission, this.textExercise.id).subscribe(
             (response) => {
                 this.submission = response.body!;
+                this.submissionChange.next(this.submission);
                 // reconnect so that the submission status is displayed correctly in the result.component
                 this.submission.participation.submissions = [this.submission];
                 this.participation = this.submission.participation as StudentParticipation;
+                this.participation.exercise = this.textExercise;
                 this.participationWebsocketService.addParticipation(this.participation, this.textExercise);
                 this.textExercise.studentParticipations = [this.participation];
                 this.textExercise.participationStatus = participationStatus(this.textExercise);
@@ -204,6 +212,30 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
         );
     }
 
+    /**
+     * Stream of submissions being emitted on:
+     * 1. text editor input after a debounce time of 2 seconds
+     * 2. manually triggered change on submission (e.g. when submit was clicked)
+     */
+    private buildSubmissionStream$() {
+        const textEditorStream$ = this.textEditorInput
+            .asObservable()
+            .pipe(debounceTime(2000), distinctUntilChanged())
+            .pipe(map((answer: string) => this.submissionForAnswer(answer)));
+        const submissionChangeStream$ = this.submissionChange.asObservable();
+        return merge(textEditorStream$, submissionChangeStream$);
+    }
+
+    private submissionForAnswer(answer: string): TextSubmission {
+        return { ...this.submission, text: answer, language: this.textService.predictLanguage(answer) };
+    }
+
+    onReceiveSubmissionFromTeam(submission: TextSubmission) {
+        submission.participation.exercise = this.textExercise;
+        submission.participation.submissions = [submission];
+        this.updateParticipation(submission.participation as StudentParticipation);
+    }
+
     onTextEditorTab(editor: HTMLTextAreaElement, event: KeyboardEvent) {
         event.preventDefault();
         const value = editor.value;
@@ -212,6 +244,10 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
 
         editor.value = value.substring(0, start) + '\t' + value.substring(end);
         editor.selectionStart = editor.selectionEnd = start + 1;
+    }
+
+    onTextEditorInput(event: Event) {
+        this.textEditorInput.next((<HTMLTextAreaElement>event.target).value);
     }
 
     private onError(error: HttpErrorResponse) {
