@@ -9,15 +9,16 @@ import { AccountService } from 'app/core/auth/account.service';
 import { NotificationService } from 'app/overview/notification/notification.service';
 
 @Component({
-    selector: 'jhi-notification-container',
-    templateUrl: './notification-container.component.html',
-    styleUrls: ['./notification-container.scss'],
+    selector: 'jhi-notification-sidebar',
+    templateUrl: './notification-sidebar.component.html',
+    styleUrls: ['./notification-sidebar.scss'],
 })
-export class NotificationContainerComponent implements OnInit {
+export class NotificationSidebarComponent implements OnInit {
     notifications: Notification[] = [];
     sortedNotifications: Notification[] = [];
     currentUser: User;
     notificationCount = 0;
+    showSidebar = false;
 
     constructor(private notificationService: NotificationService, private userService: UserService, private accountService: AccountService) {}
 
@@ -79,5 +80,9 @@ export class NotificationContainerComponent implements OnInit {
                 this.updateNotifications();
             }, 1500);
         });
+    }
+
+    toggleSidebar(): void {
+        this.showSidebar = !this.showSidebar;
     }
 }

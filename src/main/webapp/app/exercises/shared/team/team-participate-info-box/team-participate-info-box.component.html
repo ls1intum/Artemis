@@ -1,18 +1,8 @@
-<div #boundary class="team-participate-info-box" [class.sticky]="isSticky" [class.sticky-enabled]="stickyEnabled">
-    <div #spacer></div>
-    <div
-        class="sticky-box"
-        stickyThing
-        marginTop="25"
-        marginRight="35"
-        [enable]="stickyEnabled"
-        [spacer]="spacer"
-        [boundary]="bounded ? boundary : undefined"
-        (stickyStatus)="onStickyStatusChange($event)"
-    >
+<div class="team-participate-info-box" [class.sticky-enabled]="stickyEnabled">
+    <div class="sticky-box" [class.docked-to-left-side]="dockedToLeftSide" [class.docked-to-right-side]="dockedToRightSide">
         <div class="d-flex justify-content-end">
             <jhi-connection-status class="text-right"></jhi-connection-status>
         </div>
-        <jhi-team-students-online-list class="mt-3" [participation]="participation"></jhi-team-students-online-list>
+        <jhi-team-students-online-list class="mt-3" [participation]="participation" [typing$]="typing$"></jhi-team-students-online-list>
     </div>
 </div>

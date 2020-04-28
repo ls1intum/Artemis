@@ -7,6 +7,12 @@ export enum TeamImportStrategyType {
     CREATE_ONLY = 'CREATE_ONLY',
 }
 
+export class OnlineTeamStudent {
+    public login: string;
+    public lastTypingDate: Moment;
+    public lastActionDate: Moment;
+}
+
 export class Team implements BaseEntity {
     public id: number;
     public name: string;
