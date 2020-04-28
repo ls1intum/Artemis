@@ -60,6 +60,7 @@ the created groups~~ NOT YET) and disabled application links between the 3 appli
     
     </details>
 4. The script has already created users and groups but you need to manually assign the users into their respective group in Jira. In our test setup, users 1-5 are students, 6-10 are tutors and 11-15 are instructors.
+The usernames are artemis_test_user_{1-15} and the password is again the username. When you create a course in artemis you have to manually choose the created groups(students, tutors, instructors).
 5. Use the [user directories in Jira](https://confluence.atlassian.com/adminjiraserver/allowing-connections-to-jira-for-user-management-938847045.html) to synchronize the users in bitbucket and bamboo: 
   * Go to Jira → User management → Jira user server → Add application → Create one application for bitbucket and one for bamboo → add the IP-address `0.0.0.0/0` to IP Addresses
   
