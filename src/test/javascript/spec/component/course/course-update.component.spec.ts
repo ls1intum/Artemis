@@ -1,7 +1,7 @@
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { HttpResponse } from '@angular/common/http';
 import { of } from 'rxjs';
-
+import { FormControl, FormGroup } from '@angular/forms';
 import { ArtemisTestModule } from '../../test.module';
 import { CourseUpdateComponent } from 'app/course/manage/course-update.component';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
@@ -39,7 +39,18 @@ describe('Course Management Update Component', () => {
             entity.id = 123;
             spyOn(service, 'update').and.returnValue(of(new HttpResponse({ body: entity })));
             comp.course = entity;
-            comp.courseForm = { value: entity }; // mocking reactive form
+            comp.courseForm = new FormGroup({
+                id: new FormControl(entity.id),
+                onlineCourse: new FormControl(entity.onlineCourse),
+                registrationEnabled: new FormControl(entity.registrationEnabled),
+                presentationScore: new FormControl(entity.presentationScore),
+                maxComplaints: new FormControl(entity.maxComplaints),
+                maxComplaintTimeDays: new FormControl(entity.maxComplaintTimeDays),
+                complaintsEnabled: new FormControl(entity.complaintsEnabled),
+                studentQuestionsEnabled: new FormControl(entity.studentQuestionsEnabled),
+                isAtLeastTutor: new FormControl(entity.isAtLeastTutor),
+                isAtLeastInstructor: new FormControl(entity.isAtLeastInstructor),
+            });
             // WHEN
             comp.save();
             tick(); // simulate async
@@ -54,7 +65,17 @@ describe('Course Management Update Component', () => {
             const entity = new Course();
             spyOn(service, 'create').and.returnValue(of(new HttpResponse({ body: entity })));
             comp.course = entity;
-            comp.courseForm = { value: entity }; // mocking reactive form
+            comp.courseForm = new FormGroup({
+                onlineCourse: new FormControl(entity.onlineCourse),
+                registrationEnabled: new FormControl(entity.registrationEnabled),
+                presentationScore: new FormControl(entity.presentationScore),
+                maxComplaints: new FormControl(entity.maxComplaints),
+                maxComplaintTimeDays: new FormControl(entity.maxComplaintTimeDays),
+                complaintsEnabled: new FormControl(entity.complaintsEnabled),
+                studentQuestionsEnabled: new FormControl(entity.studentQuestionsEnabled),
+                isAtLeastTutor: new FormControl(entity.isAtLeastTutor),
+                isAtLeastInstructor: new FormControl(entity.isAtLeastInstructor),
+            }); // mocking reactive form
             // WHEN
             comp.save();
             tick(); // simulate async
