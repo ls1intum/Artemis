@@ -75,7 +75,7 @@ public class CourseService {
      */
     public List<Course> findAllActive() {
         log.debug("Request to get all active courses");
-        return courseRepository.findAllActive();
+        return courseRepository.findAllActive(ZonedDateTime.now());
     }
 
     /**
@@ -85,7 +85,7 @@ public class CourseService {
      */
     public List<Course> findAllCurrentlyActiveAndNotOnlineAndEnabled() {
         log.debug("Request to get all active courses which are not online and enabled");
-        return courseRepository.findAllCurrentlyActiveAndNotOnlineAndEnabled();
+        return courseRepository.findAllCurrentlyActiveAndNotOnlineAndEnabled(ZonedDateTime.now());
     }
 
     /**
