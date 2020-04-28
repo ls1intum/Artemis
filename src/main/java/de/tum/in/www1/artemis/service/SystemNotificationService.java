@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service;
 
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Objects;
 
@@ -22,7 +23,7 @@ public class SystemNotificationService {
     }
 
     public SystemNotification findActiveSystemNotification() {
-        List<SystemNotification> allActiveSystemNotification = systemNotificationRepository.findAllActiveSystemNotification();
+        List<SystemNotification> allActiveSystemNotification = systemNotificationRepository.findAllActiveSystemNotification(ZonedDateTime.now());
         return allActiveSystemNotification.size() > 0 ? allActiveSystemNotification.get(0) : null;
     }
 
