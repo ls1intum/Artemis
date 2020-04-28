@@ -1,0 +1,54 @@
+<li class="nav-item pointer">
+    <button class="guided-tour-notification nav-link notification-button light-button" (click)="toggleSidebar(); updateNotificationDate()">
+        <fa-icon [icon]="'bell'"></fa-icon>
+        <span class="badge badge-danger badge-pill" *ngIf="notificationCount > 0">
+            {{ notificationCount }}
+        </span>
+    </button>
+</li>
+
+<div class="notification-overlay" (click)="toggleSidebar()" [ngClass]="showSidebar ? 'show' : 'hide'"></div>
+
+<div class="notification-sidebar" [ngClass]="showSidebar ? 'show' : 'hide'">
+    <div>
+        <div>
+            <!--
+            <a href="">
+                <fa-icon [icon]="'cog'"></fa-icon>
+                Notification Settings
+            </a>
+            -->
+        </div>
+        <div>
+            <button class="light-button" (click)="toggleSidebar()">
+                <fa-icon [icon]="'times'"></fa-icon>
+            </button>
+        </div>
+    </div>
+    <h3>{{ 'global.menu.notifications' | translate }}</h3>
+    <a routerLink="notifications">
+        {{ 'global.menu.showAllNotifications' | translate }}
+    </a>
+    <div class="notification-item" *ngFor="let notification of sortedNotifications" (click)="startNotification(notification)">
+        <div>
+            <h5>
+                {{ notification.title }}
+                <span class="badge ml-1 badge-primary" *ngIf="!currentUser || notification.notificationDate.isAfter(currentUser.lastNotificationRead)">
+                    new
+                </span>
+            </h5>
+            <div class="mb-1">
+                {{ notification.text }}
+            </div>
+            <div class="notification-info">
+                {{ notification.notificationDate | date: 'dd.MM.yy HH:mm' }} by <span *ngIf="notification.author; else noAuthor">{{ notification.author.name }}</span>
+                <ng-template #noAuthor>
+                    <span jhiTranslate="global.title"></span>
+                </ng-template>
+            </div>
+        </div>
+    </div>
+    <span class="no-notifications" *ngIf="notifications && notifications.length === 0">
+        {{ 'global.menu.noNotifications' | translate }}
+    </span>
+</div>

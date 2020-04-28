@@ -56,7 +56,7 @@ export class AssessmentDetailComponent {
      */
     drop(event: any) {
         event.preventDefault();
-        const data = event.dataTransfer.getData('text');
+        const data = event.dataTransfer.getData('artemis/sgi');
         const instruction = JSON.parse(data);
         const credits = instruction.credits;
         const feedback = instruction.feedback;

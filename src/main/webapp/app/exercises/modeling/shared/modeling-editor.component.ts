@@ -81,6 +81,10 @@ export class ModelingEditorComponent implements AfterViewInit, OnDestroy, OnChan
         });
     }
 
+    get isApollonEditorMounted(): boolean {
+        return this.apollonEditor !== null;
+    }
+
     /**
      * Removes the Assessments from a given UMLModel. In modeling mode the assessments are not needed.
      * Also they should not be sent to the server and persisted as part of the model JSON.
@@ -122,6 +126,7 @@ export class ModelingEditorComponent implements AfterViewInit, OnDestroy, OnChan
     ngOnDestroy(): void {
         if (this.apollonEditor !== null) {
             this.apollonEditor.destroy();
+            this.apollonEditor = null;
         }
     }
 

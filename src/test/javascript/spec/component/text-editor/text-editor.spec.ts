@@ -28,6 +28,7 @@ import { Result } from 'app/entities/result.model';
 import { ComplaintsComponent } from 'app/complaints/complaints.component';
 import { TextSubmission } from 'app/entities/text-submission.model';
 import { ArtemisTeamModule } from 'app/exercises/shared/team/team.module';
+import { ArtemisTeamSubmissionSyncModule } from 'app/exercises/shared/team-submission-sync/team-submission-sync.module';
 import { ArtemisHeaderExercisePageWithDetailsModule } from 'app/exercises/shared/exercise-headers/exercise-headers.module';
 
 chai.use(sinonChai);
@@ -60,6 +61,7 @@ describe('TableEditableFieldComponent', () => {
                 ArtemisTestModule,
                 ArtemisSharedModule,
                 ArtemisTeamModule,
+                ArtemisTeamSubmissionSyncModule,
                 ArtemisHeaderExercisePageWithDetailsModule,
                 RouterTestingModule.withRoutes([textEditorRoute[0]]),
             ],

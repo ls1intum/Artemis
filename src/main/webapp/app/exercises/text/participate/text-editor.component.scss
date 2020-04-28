@@ -1,7 +1,37 @@
 @import 'src/main/webapp/content/scss/artemis-variables';
 
+.text-editor-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    grid-template-areas:
+        'problem-statement'
+        'team-info'
+        'main';
+
+    @media (min-width: map-get($grid-breakpoints, 'md')) {
+        grid-template-columns: 1fr min-content;
+        grid-template-areas:
+            'problem-statement team-info'
+            'main              team-info';
+    }
+
+    .grid-area-problem-statement {
+        grid-area: problem-statement;
+    }
+
+    .grid-area-team-info {
+        grid-area: team-info;
+        justify-self: flex-end;
+    }
+
+    .grid-area-main {
+        grid-area: main;
+    }
+}
+
 .text-editor-textarea {
     width: 100%;
+    max-width: 750px;
     height: 50vh;
     padding: 10px 12px;
     border: 1px solid #d5d5d5;
