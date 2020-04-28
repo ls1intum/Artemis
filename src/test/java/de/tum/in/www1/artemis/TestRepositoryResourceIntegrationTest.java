@@ -69,9 +69,9 @@ public class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegra
         // write content to the created file
         FileUtils.write(file, currentLocalFileContent);
 
+        // add folder to the repository folder
         filePath = Paths.get(testRepo.localRepoFile + "/" + currentLocalFolderName);
         var folder = Files.createDirectory(filePath).toFile();
-        // write content to the created file
 
         var testRepoUrl = new GitUtilService.MockFileRepositoryUrl(testRepo.originRepoFile);
         exercise.setTestRepositoryUrl(testRepoUrl.toString());
