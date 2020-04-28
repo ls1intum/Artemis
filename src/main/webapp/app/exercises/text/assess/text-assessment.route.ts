@@ -4,7 +4,7 @@ import { TextAssessmentComponent } from './text-assessment.component';
 import { TextAssessmentDashboardComponent } from './text-assessment-dashboard/text-assessment-dashboard.component';
 
 export const textAssessmentRoutes: Routes = [
-    {
+    /*    {
         path: ':courseId/text-exercises/:exerciseId/submissions/:submissionId/assessment',
         component: TextAssessmentComponent,
         data: {
@@ -12,7 +12,7 @@ export const textAssessmentRoutes: Routes = [
             pageTitle: 'artemisApp.textExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
-    },
+    },*/
     {
         path: ':courseId/text-exercises/:exerciseId/assessment',
         component: TextAssessmentDashboardComponent,

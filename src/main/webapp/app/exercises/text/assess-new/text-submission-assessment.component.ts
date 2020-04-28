@@ -104,10 +104,7 @@ export class TextSubmissionAssessmentComponent implements OnInit {
         if (this.activatedRoute.routeConfig?.path === NEW_ASSESSMENT_PATH) {
             // Update the url with the new id, without reloading the page, to make the history consistent
             const newUrl = this.router
-                .createUrlTree(
-                    // TODO:  Remove '-new' when migrating to Text Assessment V2
-                    ['course-management', this.exercise?.course?.id, 'text-exercises', this.exercise?.id, 'submissions-new', this.submission?.id, 'assessment'],
-                )
+                .createUrlTree(['course-management', this.exercise?.course?.id, 'text-exercises', this.exercise?.id, 'submissions', this.submission?.id, 'assessment'])
                 .toString();
             this.location.go(newUrl);
         }
@@ -165,8 +162,7 @@ export class TextSubmissionAssessmentComponent implements OnInit {
 
     nextSubmission(): void {
         this.busy = true;
-        // TODO:  Remove '-new' when migrating to Text Assessment V2
-        this.router.navigate(['course-management', this.exercise?.course?.id, 'text-exercises', this.exercise?.id, 'submissions-new', 'new', 'assessment']);
+        this.router.navigate(['course-management', this.exercise?.course?.id, 'text-exercises', this.exercise?.id, 'submissions', 'new', 'assessment']);
     }
 
     /**
