@@ -333,6 +333,7 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         courseRepo.save(courseNotActiveFuture);
         List<Course> courses = request.getList("/api/courses/for-dashboard", HttpStatus.OK, Course.class);
         assertThat(courses.size()).as("Exactly one course is returned").isEqualTo(1);
+        courses.get(0).setId(courseActive.getId());
         assertThat(courses.get(0)).as("Active course is returned").isEqualTo(courseActive);
     }
 
@@ -356,6 +357,7 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
 
         List<Course> courses = request.getList("/api/courses/to-register", HttpStatus.OK, Course.class);
         assertThat(courses.size()).as("Exactly one course is available to register").isEqualTo(1);
+        courses.get(0).setId(courseActiveRegistrationEnabled.getId());
         assertThat(courses.get(0)).as("Only active course is returned").isEqualTo(courseActiveRegistrationEnabled);
     }
 
