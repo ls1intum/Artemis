@@ -85,7 +85,7 @@ public abstract class Exercise implements Serializable {
     @Lob
     private String gradingInstructions;
 
-    @ElementCollection(fetch = FetchType.EAGER)
+    @ElementCollection(fetch = FetchType.LAZY)
     @CollectionTable(name = "exercise_categories", joinColumns = @JoinColumn(name = "exercise_id"))
     @Column(name = "categories")
     private Set<String> categories = new HashSet<>();
@@ -98,7 +98,7 @@ public abstract class Exercise implements Serializable {
     @Column(name = "mode")
     private ExerciseMode mode;
 
-    @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
     @JsonIgnoreProperties("exercise")
     private TeamAssignmentConfig teamAssignmentConfig;
