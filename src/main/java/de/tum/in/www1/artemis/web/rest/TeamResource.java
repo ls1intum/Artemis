@@ -5,7 +5,10 @@ import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,9 +24,11 @@ import org.springframework.web.server.ResponseStatusException;
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.TeamImportStrategyType;
+import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.TeamRepository;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.dto.TeamSearchUserDTO;
+import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
@@ -239,22 +244,22 @@ public class TeamResource {
     }
 
     /**
-     * GET /exercises/{exerciseId}/teams/exists?shortName={shortName} : get boolean flag whether team with shortName exists for exercise
+     * GET /courses/{courseId}/teams/exists?shortName={shortName} : get boolean flag whether team with shortName exists for course
      *
-     * @param exerciseId the id of the exercise for which to check teams
+     * @param courseId the id of the course for which to check teams
      * @param shortName the shortName of the team to check for existence
      * @return Response with status 200 (OK) and boolean flag in the body
      */
-    @GetMapping("/exercises/{exerciseId}/teams/exists")
+    @GetMapping("/courses/{courseId}/teams/exists")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Boolean> existsTeamByShortName(@PathVariable long exerciseId, @RequestParam("shortName") String shortName) {
-        log.debug("REST request to check Team existence for exercise with id {} for shortName : {}", exerciseId, shortName);
-        Exercise exercise = exerciseService.findOne(exerciseId);
+    public ResponseEntity<Boolean> existsTeamByShortName(@PathVariable long courseId, @RequestParam("shortName") String shortName) {
+        log.debug("REST request to check Team existence for course with id {} for shortName : {}", courseId, shortName);
+        Course course = courseService.findOne(courseId);
         User user = userService.getUserWithGroupsAndAuthorities();
-        if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user)) {
+        if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
             return forbidden();
         }
-        return ResponseEntity.ok().body(teamRepository.findOneByExerciseIdAndShortName(exerciseId, shortName).isPresent());
+        return ResponseEntity.ok().body(teamRepository.existsByExerciseCourseIdAndShortName(courseId, shortName));
     }
 
     /**
@@ -326,4 +331,48 @@ public class TeamResource {
         return ResponseEntity.ok().body(destinationTeams);
     }
 
+    /**
+     * GET /courses/:courseId/teams/:teamShortName/exercises-with-participations : get all released exercises for course "id" in which the team "teamShortName" exists with
+     * its participations
+     *
+     * @param courseId id of the course
+     * @param teamShortName short name of the team (all teams with the short name in the course are seen as the same team)
+     * @return Exercises with their participations for the team
+     */
+    @GetMapping(value = "/courses/{courseId}/teams/{teamShortName}/exercises-with-participations")
+    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<Set<Exercise>> getExercisesWithParticipationsForTeam(@PathVariable Long courseId, @PathVariable String teamShortName) {
+        log.debug("REST request to get Course {} with exercises and participations for Team with short name {}", courseId, teamShortName);
+        Course course = courseService.findOneWithExercises(courseId);
+        User user = userService.getUserWithGroupsAndAuthorities();
+        if (!(authCheckService.isAtLeastTeachingAssistantInCourse(course, user) || authCheckService.isStudentInTeam(course, teamShortName, user))) {
+            throw new AccessForbiddenException("You are not allowed to access this resource");
+        }
+
+        // Get all team instances in course with the given team short name
+        List<Team> teams = teamRepository.findAllByExerciseCourseIdAndShortName(course.getId(), teamShortName);
+
+        // Filter course exercises by: 1. released, 2. team needs to exist for exercise
+        Set<Exercise> exercises = course.getExercises().stream().filter(exercise -> {
+            return exercise.isVisibleToStudents() && teams.stream().map(Team::getExercise).collect(Collectors.toSet()).contains(exercise);
+        }).collect(Collectors.toSet());
+
+        // Set teams on all exercises
+        exercises.forEach(exercise -> {
+            exercise.setTeams(Set.of(teams.stream().filter(team -> team.getExercise().equals(exercise)).findAny().orElseThrow()));
+        });
+
+        // Fetch participations for team and set the submission count for each participation
+        List<StudentParticipation> participations = participationService.findAllByCourseIdAndTeamShortName(courseId, teamShortName);
+        Map<Long, Integer> submissionCountMap = participationService.countSubmissionsPerParticipationByCourseIdAndTeamShortName(courseId, teamShortName);
+        participations.forEach(participation -> participation.setSubmissionCount(submissionCountMap.get(participation.getId())));
+
+        // Set studentParticipations on all exercises
+        exercises.forEach(exercise -> {
+            Optional<StudentParticipation> studentParticipation = participations.stream().filter(participation -> participation.getExercise().equals(exercise)).findAny();
+            studentParticipation.ifPresent(participation -> exercise.setStudentParticipations(Set.of(participation)));
+        });
+
+        return ResponseEntity.ok(exercises);
+    }
 }

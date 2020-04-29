@@ -1,4 +1,4 @@
-<jhi-data-table [isLoading]="isLoading" [showPageSizeDropdownAndSearchField]="false" [allEntities]="participations">
+<jhi-data-table [isLoading]="isLoading" [showPageSizeDropdownAndSearchField]="false" [allEntities]="exercises">
     <ng-template let-settings="settings" let-controls="controls">
         <ngx-datatable
             class="bootstrap"
@@ -12,13 +12,13 @@
             [rowClass]="rowClass(exercise)"
             [scrollbarH]="settings.scrollbarH"
         >
-            <ngx-datatable-column prop="exercise.title" [minWidth]="140" [width]="140" [frozenLeft]="true">
+            <ngx-datatable-column prop="title" [minWidth]="140" [width]="140" [frozenLeft]="true">
                 <ng-template ngx-datatable-header-template>
-                    <span class="datatable-header-cell-wrapper" (click)="controls.onSort('exercise.title')">
+                    <span class="datatable-header-cell-wrapper" (click)="controls.onSort('title')">
                         <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.exercise.exercise">
                             Exercise
                         </span>
-                        <fa-icon [icon]="controls.iconForSortPropField('exercise.title')"></fa-icon>
+                        <fa-icon [icon]="controls.iconForSortPropField('title')"></fa-icon>
                     </span>
                 </ng-template>
                 <ng-template ngx-datatable-cell-template let-value="value">
@@ -26,13 +26,13 @@
                 </ng-template>
             </ngx-datatable-column>
 
-            <ngx-datatable-column prop="exercise.releaseDate" [minWidth]="170" [width]="170" [maxWidth]="170" [frozenLeft]="true">
+            <ngx-datatable-column prop="releaseDate" [minWidth]="170" [width]="170" [maxWidth]="170" [frozenLeft]="true">
                 <ng-template ngx-datatable-header-template>
-                    <span class="datatable-header-cell-wrapper" (click)="controls.onSort('exercise.releaseDate')">
+                    <span class="datatable-header-cell-wrapper" (click)="controls.onSort('releaseDate')">
                         <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.exercise.releaseDate">
                             Release Date
                         </span>
-                        <fa-icon [icon]="controls.iconForSortPropField('exercise.releaseDate')"></fa-icon>
+                        <fa-icon [icon]="controls.iconForSortPropField('releaseDate')"></fa-icon>
                     </span>
                 </ng-template>
                 <ng-template ngx-datatable-cell-template let-value="value" class="mr-5">
@@ -40,17 +40,17 @@
                 </ng-template>
             </ngx-datatable-column>
 
-            <ngx-datatable-column [minWidth]="120" [width]="120">
+            <ngx-datatable-column prop="team" [minWidth]="120" [width]="120">
                 <ng-template ngx-datatable-header-template>
-                    <span class="datatable-header-cell-wrapper" (click)="controls.onSort('team.id')">
+                    <span class="datatable-header-cell-wrapper" (click)="controls.onSort('participation.team.id')">
                         <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.team.team">
                             Team
                         </span>
-                        <fa-icon [icon]="controls.iconForSortPropField('team.id')"></fa-icon>
+                        <fa-icon [icon]="controls.iconForSortPropField('participation.team.id')"></fa-icon>
                     </span>
                 </ng-template>
                 <ng-template ngx-datatable-cell-template let-value="row">
-                    <a *ngIf="exercise.id !== value.exercise.id; else teamId" [routerLink]="['/courses', course.id, 'exercises', value.exercise.id, 'teams', value.team.id]">
+                    <a *ngIf="exercise.id !== value.id; else teamId" [routerLink]="['/courses', course.id, 'exercises', value.id, 'teams', value.team.id]">
                         {{ value.team.id }}
                     </a>
                     <ng-template #teamId>
@@ -59,7 +59,7 @@
                 </ng-template>
             </ngx-datatable-column>
 
-            <ngx-datatable-column [minWidth]="90" [width]="90">
+            <ngx-datatable-column prop="participation" [minWidth]="90" [width]="90">
                 <ng-template ngx-datatable-header-template>
                     <span class="datatable-header-cell-wrapper" (click)="controls.onSort('id')">
                         <span class="datatable-header-cell-label bold sortable" jhiTranslate="global.field.id">
@@ -69,30 +69,42 @@
                     </span>
                 </ng-template>
                 <ng-template ngx-datatable-cell-template let-value="row">
-                    <div *ngIf="exercise.isAtLeastInstructor; else displayId">
-                        <a [routerLink]="['/course-management', course.id, 'exercises', value.exercise.id, 'participations', value.id, 'submissions']">{{ value.id }}</a>
-                    </div>
-                    <ng-template #displayId>
-                        {{ value.id }}
+                    <ng-container *ngIf="value.participation; else participationIdUnavailable">
+                        <div *ngIf="exercise.isAtLeastInstructor; else displayId">
+                            <a [routerLink]="['/course-management', course.id, 'exercises', value.id, 'participations', value.participation.id, 'submissions']">{{
+                                value.participation.id
+                            }}</a>
+                        </div>
+                        <ng-template #displayId>
+                            {{ value.participation.id }}
+                        </ng-template>
+                    </ng-container>
+                    <ng-template #participationIdUnavailable>
+                        <div class="text-center">–</div>
                     </ng-template>
                 </ng-template>
             </ngx-datatable-column>
 
-            <ngx-datatable-column prop="initializationDate" [minWidth]="130" [width]="130">
+            <ngx-datatable-column prop="participation.initializationDate" [minWidth]="130" [width]="130">
                 <ng-template ngx-datatable-header-template>
-                    <span class="datatable-header-cell-wrapper" (click)="controls.onSort('initializationDate')">
+                    <span class="datatable-header-cell-wrapper" (click)="controls.onSort('participation.initializationDate')">
                         <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.participation.initializationDate">
                             Initialization Date
                         </span>
-                        <fa-icon [icon]="controls.iconForSortPropField('initializationDate')"></fa-icon>
+                        <fa-icon [icon]="controls.iconForSortPropField('participation.initializationDate')"></fa-icon>
                     </span>
                 </ng-template>
-                <ng-template ngx-datatable-cell-template let-value="value">
-                    {{ value | date: 'dd.MM.yyyy HH:mm' }}
+                <ng-template ngx-datatable-cell-template let-value="row">
+                    <ng-container *ngIf="value.participation; else initializationDateUnavailable">
+                        {{ value.participation.initializationDate | date: 'dd.MM.yyyy HH:mm' }}
+                    </ng-container>
+                    <ng-template #initializationDateUnavailable>
+                        {{ 'artemisApp.InitializationState.UNINITIALIZED' | translate }}
+                    </ng-template>
                 </ng-template>
             </ngx-datatable-column>
 
-            <ngx-datatable-column [minWidth]="100" [width]="120">
+            <ngx-datatable-column prop="participation.submissionCount" [minWidth]="100" [width]="120">
                 <ng-template ngx-datatable-header-template>
                     <span class="datatable-header-cell-wrapper d-inline-block w-100 text-center" (click)="controls.onSort('submissionCount')">
                         <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.exercise.submissionCount">
@@ -103,30 +115,40 @@
                 </ng-template>
                 <ng-template ngx-datatable-cell-template let-value="row">
                     <div class="w-100 text-center">
-                        <a
-                            *ngIf="exercise.isAtLeastInstructor; else displayTextOnly"
-                            [routerLink]="['/course-management', course.id, 'exercises', value.exercise.id, 'participations', value.id, 'submissions']"
-                        >
-                            {{ value.submissionCount }}
-                        </a>
-                        <ng-template #displayTextOnly>
-                            {{ value.submissionCount }}
+                        <ng-container *ngIf="value.participation; else submissionCountUnavailable">
+                            <a
+                                *ngIf="exercise.isAtLeastInstructor; else displayTextOnly"
+                                [routerLink]="['/course-management', course.id, 'exercises', value.id, 'participations', value.participation.id, 'submissions']"
+                            >
+                                {{ value.participation.submissionCount }}
+                            </a>
+                            <ng-template #displayTextOnly>
+                                {{ value.participation.submissionCount }}
+                            </ng-template>
+                        </ng-container>
+                        <ng-template #submissionCountUnavailable>
+                            0
                         </ng-template>
                     </div>
                 </ng-template>
             </ngx-datatable-column>
 
-            <ngx-datatable-column prop="initializationState" [minWidth]="80" [width]="80">
+            <ngx-datatable-column prop="participation.initializationState" [minWidth]="80" [width]="80">
                 <ng-template ngx-datatable-header-template>
-                    <span class="datatable-header-cell-wrapper" (click)="controls.onSort('initializationState')">
+                    <span class="datatable-header-cell-wrapper" (click)="controls.onSort('participation.initializationState')">
                         <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.participation.initializationState">
                             Initialization State
                         </span>
-                        <fa-icon [icon]="controls.iconForSortPropField('initializationState')"></fa-icon>
+                        <fa-icon [icon]="controls.iconForSortPropField('participation.initializationState')"></fa-icon>
                     </span>
                 </ng-template>
-                <ng-template ngx-datatable-cell-template let-value="value">
-                    {{ 'artemisApp.InitializationState.' + value | translate }}
+                <ng-template ngx-datatable-cell-template let-value="row">
+                    <ng-container *ngIf="value.participation; else initializationState">
+                        {{ 'artemisApp.InitializationState.' + value.participation.initializationState | translate }}
+                    </ng-container>
+                    <ng-template #initializationState>
+                        {{ 'artemisApp.InitializationState.UNINITIALIZED' | translate }}
+                    </ng-template>
                 </ng-template>
             </ngx-datatable-column>
         </ngx-datatable>

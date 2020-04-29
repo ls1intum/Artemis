@@ -86,6 +86,10 @@ export class TeamService implements ITeamService {
         );
     }
 
+    findExercisesWithParticipationsForTeam(course: Course, teamShortName: string): Observable<HttpResponse<Exercise[]>> {
+        return this.http.get<Exercise[]>(`${SERVER_API_URL}api/courses/${course.id}/teams/${teamShortName}/exercises-with-participations`, { observe: 'response' });
+    }
+
     /**
      * Helper methods for date conversion from server and client
      */

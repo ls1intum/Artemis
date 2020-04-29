@@ -64,14 +64,6 @@ export class ParticipationService {
             .map((res: EntityArrayResponseType) => this.convertDateArrayFromServer(res));
     }
 
-    findAllParticipationsByCourseIdAndTeamShortName(courseId: number, teamShortName: string): Observable<EntityArrayResponseType> {
-        return this.http
-            .get<StudentParticipation[]>(SERVER_API_URL + `api/courses/${courseId}/teams/${teamShortName}/participations`, {
-                observe: 'response',
-            })
-            .map((res: EntityArrayResponseType) => this.convertDateArrayFromServer(res));
-    }
-
     delete(participationId: number, req?: any): Observable<HttpResponse<any>> {
         const options = createRequestOption(req);
         return this.http.delete<void>(`${this.resourceUrl}/${participationId}`, { params: options, observe: 'response' });

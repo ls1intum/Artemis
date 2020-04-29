@@ -258,10 +258,21 @@ public class AuthorizationCheckService {
      *
      * @param team the team that needs to be checked
      * @param user the user whose permissions should be checked
-     * @return true, if user is student is owner of this team, otherwise false
+     * @return true if user is owner of this team, otherwise false
      */
     public boolean isOwnerOfTeam(Team team, User user) {
         return user.equals(team.getOwner());
+    }
+
+    /**
+     * checks if the currently logged in user is student of the given team
+     *
+     * @param teamShortName the short name of the team(s) that need(s) to be checked
+     * @param user the user whose permissions should be checked
+     * @return true, if user is student is owner of this team, otherwise false
+     */
+    public boolean isStudentInTeam(Course course, String teamShortName, User user) {
+        return userService.findAllUsersInTeam(course, teamShortName).contains(user);
     }
 
     /**
