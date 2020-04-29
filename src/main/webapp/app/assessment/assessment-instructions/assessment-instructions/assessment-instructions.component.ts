@@ -22,6 +22,7 @@ export class AssessmentInstructionsComponent {
     sampleSolutionModel?: UMLModel;
     sampleSolutionDiagramType?: UMLDiagramType;
     criteria: GradingCriterion[];
+    @Input() readOnly: boolean;
 
     readonly ExerciseType = ExerciseType;
 

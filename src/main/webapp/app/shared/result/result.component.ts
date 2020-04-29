@@ -31,6 +31,7 @@ enum ResultTemplateStatus {
 @Component({
     selector: 'jhi-result',
     templateUrl: './result.component.html',
+    styles: ['span { display: inline-block; line-height: 1.25 }'],
     providers: [ResultService],
 })
 

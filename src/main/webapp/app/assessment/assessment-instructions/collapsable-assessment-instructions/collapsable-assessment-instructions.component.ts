@@ -10,6 +10,7 @@ import interact from 'interactjs';
 export class CollapsableAssessmentInstructionsComponent implements AfterViewInit {
     @Input() exercise: Exercise;
     @Input() collapsed = false;
+    @Input() readOnly: boolean;
 
     /**
      * Configures interact to make instructions expandable
