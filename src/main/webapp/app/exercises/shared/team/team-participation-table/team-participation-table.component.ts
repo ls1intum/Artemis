@@ -24,6 +24,7 @@ class ExerciseWithTeamAndOptionalParticipation extends Exercise {
 export class TeamParticipationTableComponent implements OnInit {
     readonly ExerciseType = ExerciseType;
     readonly moment = moment;
+    readonly cellClassLeftSpace = 'datatable-cell-space-left';
 
     @Input() team: Team;
     @Input() course: Course;

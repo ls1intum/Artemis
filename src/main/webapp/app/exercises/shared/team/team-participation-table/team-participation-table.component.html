@@ -12,7 +12,7 @@
             [rowClass]="rowClass(exercise)"
             [scrollbarH]="settings.scrollbarH"
         >
-            <ngx-datatable-column prop="title" [minWidth]="160" [width]="180" [frozenLeft]="true">
+            <ngx-datatable-column prop="title" [minWidth]="180" [width]="200" [maxWidth]="240" [frozenLeft]="true">
                 <ng-template ngx-datatable-header-template>
                     <span class="datatable-header-cell-wrapper" (click)="controls.onSort('title')">
                         <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.exercise.exercise">
@@ -26,7 +26,7 @@
                 </ng-template>
             </ngx-datatable-column>
 
-            <ngx-datatable-column prop="releaseDate" [minWidth]="170" [width]="170" [maxWidth]="170" [frozenLeft]="true">
+            <ngx-datatable-column prop="releaseDate" [minWidth]="170" [width]="170" [maxWidth]="190" [frozenLeft]="true">
                 <ng-template ngx-datatable-header-template>
                     <span class="datatable-header-cell-wrapper" (click)="controls.onSort('releaseDate')">
                         <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.exercise.releaseDate">
@@ -40,7 +40,7 @@
                 </ng-template>
             </ngx-datatable-column>
 
-            <ngx-datatable-column *ngIf="isAdmin" prop="team" [minWidth]="120" [width]="120">
+            <ngx-datatable-column *ngIf="isAdmin" prop="team" [minWidth]="140" [width]="140" [maxWidth]="140" [cellClass]="cellClassLeftSpace" [headerClass]="cellClassLeftSpace">
                 <ng-template ngx-datatable-header-template>
                     <span class="datatable-header-cell-wrapper" (click)="controls.onSort('team.id')">
                         <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.team.team">
@@ -59,7 +59,7 @@
                 </ng-template>
             </ngx-datatable-column>
 
-            <ngx-datatable-column *ngIf="isAdmin" prop="participation" [minWidth]="90" [width]="90">
+            <ngx-datatable-column *ngIf="isAdmin" prop="participation" [minWidth]="90" [width]="90" [maxWidth]="90">
                 <ng-template ngx-datatable-header-template>
                     <span class="datatable-header-cell-wrapper" (click)="controls.onSort('id')">
                         <span class="datatable-header-cell-label bold sortable" jhiTranslate="global.field.id">
@@ -85,7 +85,14 @@
                 </ng-template>
             </ngx-datatable-column>
 
-            <ngx-datatable-column prop="participation.initializationDate" [minWidth]="210" [width]="210">
+            <ngx-datatable-column
+                prop="participation.initializationDate"
+                [minWidth]="isAdmin ? 150 : 200"
+                [width]="isAdmin ? 150 : 200"
+                [maxWidth]="isAdmin ? 150 : 200"
+                [cellClass]="isAdmin ? '' : cellClassLeftSpace"
+                [headerClass]="isAdmin ? '' : cellClassLeftSpace"
+            >
                 <ng-template ngx-datatable-header-template>
                     <span class="datatable-header-cell-wrapper" (click)="controls.onSort('participation.initializationDate')">
                         <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.participation.initializationDate">
@@ -104,7 +111,7 @@
                 </ng-template>
             </ngx-datatable-column>
 
-            <ngx-datatable-column prop="participation.submissionCount" [minWidth]="100" [width]="250">
+            <ngx-datatable-column prop="participation.submissionCount" [minWidth]="110" [width]="110" [maxWidth]="170">
                 <ng-template ngx-datatable-header-template>
                     <span class="datatable-header-cell-wrapper d-inline-block w-100 text-center" (click)="controls.onSort('submissionCount')">
                         <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.exercise.submissionCount">

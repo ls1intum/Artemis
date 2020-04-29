@@ -74,6 +74,10 @@ public class TeamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         return "/api/courses/" + course.getId() + "/exercises/" + exercise.getId() + "/team-search-users?loginOrName=" + loginOrName;
     }
 
+    private String resourceUrlCourseWithExercisesAndParticipationsForTeam(Course course, Team team) {
+        return "/api/courses/" + course.getId() + "/teams/" + team.getShortName() + "/with-exercises-and-participations";
+    }
+
     @BeforeEach
     public void initTestCase() {
         database.addUsers(numberOfStudentsInCourse, 5, 1);
@@ -416,7 +420,7 @@ public class TeamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void getExercisesWithParticipationsForTeam_AsTutor() throws Exception {
+    public void getCourseWithExercisesAndParticipationsForTeam_AsTutor() throws Exception {
         List<Course> courses = database.createCoursesWithExercisesAndLectures(false);
         Course course = courses.get(0);
 
@@ -445,32 +449,30 @@ public class TeamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         database.addTeamParticipationForExercise(programmingExercise, team2a.getId());
         database.addTeamParticipationForExercise(textExercise, team2b.getId());
 
-        List<Exercise> exercises1 = request.getList("/api/courses/" + course.getId() + "/teams/" + team1a.getShortName() + "/exercises-with-participations", HttpStatus.OK,
-                Exercise.class);
-        assertThat(exercises1).as("All exercises of team 1 in course were returned").hasSize(3);
-        assertThat(exercises1.stream().map(Exercise::getTeams).collect(Collectors.toSet())).as("All team instances of team 1 in course were returned").hasSize(3);
-        assertThat(exercises1.stream().flatMap(exercise -> exercise.getStudentParticipations().stream()).collect(Collectors.toSet()))
+        Course course1 = request.get(resourceUrlCourseWithExercisesAndParticipationsForTeam(course, team1a), HttpStatus.OK, Course.class);
+        assertThat(course1.getExercises()).as("All exercises of team 1 in course were returned").hasSize(3);
+        assertThat(course1.getExercises().stream().map(Exercise::getTeams).collect(Collectors.toSet())).as("All team instances of team 1 in course were returned").hasSize(3);
+        assertThat(course1.getExercises().stream().flatMap(exercise -> exercise.getStudentParticipations().stream()).collect(Collectors.toSet()))
                 .as("All participations of team 1 in course were returned").hasSize(2);
 
-        List<Exercise> exercises2 = request.getList("/api/courses/" + course.getId() + "/teams/" + team2a.getShortName() + "/exercises-with-participations", HttpStatus.OK,
-                Exercise.class);
-        assertThat(exercises2).as("All exercises of team 2 in course were returned").hasSize(2);
+        Course course2 = request.get(resourceUrlCourseWithExercisesAndParticipationsForTeam(course, team2a), HttpStatus.OK, Course.class);
+        assertThat(course2.getExercises()).as("All exercises of team 2 in course were returned").hasSize(2);
 
-        StudentParticipation studentParticipation = exercises2.get(0).getStudentParticipations().iterator().next();
+        StudentParticipation studentParticipation = course2.getExercises().iterator().next().getStudentParticipations().iterator().next();
         assertThat(studentParticipation.getSubmissionCount()).as("Participation includes submission count").isNotNull();
     }
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void getExercisesWithParticipationsForTeam_AsStudentInTeam_Allowed() throws Exception {
+    public void getCourseWithExercisesAndParticipationsForTeam_AsStudentInTeam_Allowed() throws Exception {
         Team team = teamRepo.save(new Team().name("Team").shortName("team").exercise(exercise).students(userRepo.findOneByLogin("student1").map(Set::of).orElseThrow()));
-        request.getList("/api/courses/" + course.getId() + "/teams/" + team.getShortName() + "/exercises-with-participations", HttpStatus.OK, Exercise.class);
+        request.get(resourceUrlCourseWithExercisesAndParticipationsForTeam(course, team), HttpStatus.OK, Course.class);
     }
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void getExercisesWithParticipationsForTeam_AsStudentNotInTeam_Forbidden() throws Exception {
+    public void getCourseWithExercisesAndParticipationsForTeam_AsStudentNotInTeam_Forbidden() throws Exception {
         Team team = database.addTeamsForExercise(exercise, "team", "otherStudent", 1, tutor).get(0);
-        request.getList("/api/courses/" + course.getId() + "/teams/" + team.getShortName() + "/exercises-with-participations", HttpStatus.FORBIDDEN, Exercise.class);
+        request.get(resourceUrlCourseWithExercisesAndParticipationsForTeam(course, team), HttpStatus.FORBIDDEN, Course.class);
     }
 }

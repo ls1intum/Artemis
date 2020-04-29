@@ -368,8 +368,14 @@ public class TeamResource {
         // Set studentParticipations on all exercises
         exercises.forEach(exercise -> {
             Optional<StudentParticipation> studentParticipation = participations.stream().filter(participation -> participation.getExercise().equals(exercise)).findAny();
-            studentParticipation.ifPresent(participation -> exercise.setStudentParticipations(Set.of(participation)));
+            studentParticipation.ifPresent(participation -> {
+                participation.setResults(null);
+                exercise.setStudentParticipations(Set.of(participation));
+            });
         });
+
+        // Filter sensitive information
+        exercises.forEach(Exercise::filterSensitiveInformation);
 
         course.setExercises(exercises);
         return ResponseEntity.ok(course);
