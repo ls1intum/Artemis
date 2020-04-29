@@ -10,6 +10,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.test.context.support.WithAnonymousUser;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.domain.SystemNotification;
@@ -56,8 +57,25 @@ public class SystemNotificationIntegrationTest extends AbstractSpringIntegration
     }
 
     @Test
+    @WithAnonymousUser
+    public void testGetActiveSystemNotificationWithAnonymousUser() throws Exception {
+        // Do the actual request that is tested here.
+        getActiveSystemNotification();
+    }
+
+    @Test
+    public void testGetActiveSystemNotificationWithoutUser() throws Exception {
+        getActiveSystemNotification();
+    }
+
+    @Test
     @WithMockUser(roles = "USER")
     public void testGetActiveSystemNotification() throws Exception {
+        // Do the actual request that is tested here.
+        getActiveSystemNotification();
+    }
+
+    public void getActiveSystemNotification() throws Exception {
         // Do the actual request that is tested here.
         SystemNotification notification = request.get("/api/system-notifications/active-notification", HttpStatus.OK, SystemNotification.class);
 
