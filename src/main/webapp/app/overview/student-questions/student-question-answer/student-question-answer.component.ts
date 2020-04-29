@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output, OnInit } from '@angular/core';
 import { User } from 'app/core/user/user.model';
 import { StudentQuestionAnswer } from 'app/entities/student-question-answer.model';
 import { StudentQuestionAnswerService } from 'app/overview/student-questions/student-question-answer/student-question-answer.service';
@@ -20,15 +20,23 @@ export enum QuestionAnswerActionName {
     templateUrl: './student-question-answer.component.html',
     styleUrls: ['./../student-questions.scss'],
 })
-export class StudentQuestionAnswerComponent {
+export class StudentQuestionAnswerComponent implements OnInit {
     @Input() studentQuestionAnswer: StudentQuestionAnswer;
     @Input() user: User;
     @Input() isAtLeastTutorInCourse: boolean;
     @Output() interactAnswer = new EventEmitter<StudentQuestionAnswerAction>();
+    editText: string | null;
     isEditMode: boolean;
     EditorMode = EditorMode;
 
     constructor(private studentQuestionAnswerService: StudentQuestionAnswerService) {}
+
+    /**
+     * Sets the text of the answer as the editor text
+     */
+    ngOnInit(): void {
+        this.editText = this.studentQuestionAnswer.answerText;
+    }
 
     /**
      * Takes a studentQuestionAnswer and determines if the user is the author of it
@@ -59,6 +67,7 @@ export class StudentQuestionAnswerComponent {
      * Updates the text of the selected studentAnswer
      */
     saveAnswer(): void {
+        this.studentQuestionAnswer.answerText = this.editText;
         this.studentQuestionAnswerService.update(this.studentQuestionAnswer).subscribe(() => {
             this.isEditMode = false;
         });
@@ -75,5 +84,14 @@ export class StudentQuestionAnswerComponent {
                 studentQuestionAnswer: this.studentQuestionAnswer,
             });
         });
+    }
+
+    /**
+     * toggles the edit Mode
+     * set the editor text to the answer text
+     */
+    toggleEditMode(): void {
+        this.isEditMode = !this.isEditMode;
+        this.editText = this.studentQuestionAnswer.answerText;
     }
 }

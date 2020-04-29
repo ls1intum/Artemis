@@ -25,15 +25,21 @@ export class StudentQuestionComponent implements OnInit {
     @Input() isAtLeastTutorInCourse: boolean;
     @Output() interactQuestion = new EventEmitter<StudentQuestionAction>();
     isQuestionAuthor = false;
+    editText: string | null;
     isEditMode: boolean;
     EditorMode = EditorMode;
 
     constructor(private studentQuestionService: StudentQuestionService) {}
 
+    /**
+     * checks if the user is the author of the question
+     * sets the question text as the editor text
+     */
     ngOnInit(): void {
         if (this.user) {
             this.isQuestionAuthor = this.studentQuestion.author.id === this.user.id;
         }
+        this.editText = this.studentQuestion.questionText;
     }
 
     /**
@@ -50,8 +56,18 @@ export class StudentQuestionComponent implements OnInit {
      * Changes the question text
      */
     saveQuestion(): void {
+        this.studentQuestion.questionText = this.editText;
         this.studentQuestionService.update(this.studentQuestion).subscribe(() => {
             this.isEditMode = false;
         });
+    }
+
+    /**
+     * toggles the edit Mode
+     * set the editor text to the question text
+     */
+    toggleEditMode(): void {
+        this.isEditMode = !this.isEditMode;
+        this.editText = this.studentQuestion.questionText;
     }
 }

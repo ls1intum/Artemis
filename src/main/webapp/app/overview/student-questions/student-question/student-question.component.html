@@ -14,7 +14,7 @@
                 [ngbTooltip]="'artemisApp.courseOverview.exerciseDetails.faq.editQuestion' | translate"
                 container="body"
                 [icon]="'pencil-alt'"
-                (click)="isEditMode = true"
+                (click)="toggleEditMode()"
             ></fa-icon>
             <jhi-confirm-icon
                 class="clickable mr-1"
@@ -51,7 +51,7 @@
                         [ngbTooltip]="'artemisApp.courseOverview.exerciseDetails.faq.editQuestion' | translate"
                         container="body"
                         [icon]="'pencil-alt'"
-                        (click)="isEditMode = false"
+                        (click)="toggleEditMode()"
                     ></fa-icon>
                     <jhi-confirm-icon
                         class="clickable mr-1"
@@ -67,14 +67,14 @@
         <div class="col-12 px-0">
             <jhi-markdown-editor
                 class="markdown-editor background-editor-color"
-                [(markdown)]="studentQuestion.questionText"
+                [(markdown)]="editText"
                 [editorMode]="EditorMode.LATEX"
                 [enableResize]="true"
                 [metaCommands]="[]"
             ></jhi-markdown-editor>
         </div>
         <div class="col-12 d-flex justify-content-around">
-            <button class="btn btn-sm btn-outline-secondary" (click)="isEditMode = false">
+            <button class="btn btn-sm btn-outline-secondary" (click)="toggleEditMode()">
                 {{ 'artemisApp.courseOverview.exerciseDetails.faq.cancel' | translate }}
             </button>
             <button class="btn btn-sm btn-outline-secondary" (click)="saveQuestion()">

@@ -54,12 +54,16 @@ describe('StudentQuestionAnswerComponent', () => {
     });
 
     it('should be author of answer', () => {
+        component.studentQuestionAnswer = approvedStudentQuestionAnswer;
+        componentFixture.detectChanges();
         component.user = user2;
         componentFixture.detectChanges();
         expect(component.isAuthorOfAnswer(approvedStudentQuestionAnswer)).to.be.true;
     });
 
     it('should not be author of answer', () => {
+        component.studentQuestionAnswer = approvedStudentQuestionAnswer;
+        componentFixture.detectChanges();
         component.user = user2;
         componentFixture.detectChanges();
         expect(component.isAuthorOfAnswer(unApprovedStudentQuestionAnswer)).to.be.false;
@@ -81,10 +85,28 @@ describe('StudentQuestionAnswerComponent', () => {
         expect(component.studentQuestionAnswer.tutorApproved).to.be.false;
     });
 
+    it('should toggle edit mode and reset editor Text', () => {
+        component.studentQuestionAnswer = approvedStudentQuestionAnswer;
+        componentFixture.detectChanges();
+        component.isEditMode = true;
+        componentFixture.detectChanges();
+        component.editText = 'test';
+        componentFixture.detectChanges();
+        component.toggleEditMode();
+        componentFixture.detectChanges();
+        expect(component.editText).to.deep.equal('approved');
+        expect(component.isEditMode).to.be.false;
+        component.toggleEditMode();
+        componentFixture.detectChanges();
+        expect(component.isEditMode).to.be.true;
+    });
+
     it('should update answerText', () => {
         component.studentQuestionAnswer = approvedStudentQuestionAnswer;
         componentFixture.detectChanges();
-        component.studentQuestionAnswer.answerText = 'test';
+        component.isEditMode = true;
+        componentFixture.detectChanges();
+        component.editText = 'test';
         componentFixture.detectChanges();
         component.saveAnswer();
         componentFixture.detectChanges();
