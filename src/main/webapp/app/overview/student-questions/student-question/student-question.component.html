@@ -1,8 +1,11 @@
 <!-- question not in edit mode -->
 <ng-container *ngIf="!isEditMode">
-    <div class="row mb-1">
-        <div class="col px-0">
-            <span>{{ 'artemisApp.courseOverview.exerciseDetails.faq.questionLabel' | translate }}</span>
+    <div class="row pl-2 mb-1">
+        <div class="col-auto px-0">
+            <fa-icon [icon]="'comment'"></fa-icon>
+        </div>
+        <div class="col">
+            <span class="question-subtitle">{{ 'artemisApp.courseOverview.exerciseDetails.faq.questionLabel' | translate }}</span>
         </div>
         <div class="col-auto px-0">
             <fa-icon
@@ -11,12 +14,11 @@
                 [ngbTooltip]="'artemisApp.courseOverview.exerciseDetails.faq.editQuestion' | translate"
                 container="body"
                 [icon]="'pencil-alt'"
-                (click)="$event.stopPropagation(); isEditMode = true"
+                (click)="isEditMode = true"
             ></fa-icon>
             <jhi-confirm-icon
                 class="clickable mr-1"
                 *ngIf="isQuestionAuthor || isAtLeastTutorInCourse"
-                (click)="$event.stopPropagation()"
                 (confirmEvent)="deleteQuestion()"
                 [ngClass]="'mr-1'"
                 [initialTooltip]="'artemisApp.courseOverview.exerciseDetails.faq.deleteQuestion' | translate"
@@ -24,10 +26,10 @@
             ></jhi-confirm-icon>
         </div>
     </div>
-    <div class="row">
+    <div class="row pl-2">
         <div class="col question-text" [innerHTML]="studentQuestion.questionText ? (studentQuestion.questionText | htmlForMarkdown) : ''"></div>
     </div>
-    <div class="row mb-2">
+    <div class="row pl-2 mb-2">
         <span class="text-black-50 question-subtitle">{{ studentQuestion.author.name }} - {{ studentQuestion.creationDate | date: 'dd.MM.yy HH:mm' }}</span>
     </div>
 </ng-container>
@@ -35,9 +37,12 @@
 <ng-container *ngIf="isEditMode">
     <div class="row mb-2">
         <div class="col-12">
-            <div class="row mb-1">
-                <div class="col px-0">
-                    <span class="form-control-label">{{ 'artemisApp.courseOverview.exerciseDetails.faq.editQuestion' | translate }}</span>
+            <div class="row pl-2 mb-1">
+                <div class="col-auto px-0">
+                    <fa-icon [icon]="'comment'"></fa-icon>
+                </div>
+                <div class="col">
+                    <span class="form-control-label question-subtitle">{{ 'artemisApp.courseOverview.exerciseDetails.faq.editQuestion' | translate }}</span>
                 </div>
                 <div class="col-auto px-0">
                     <fa-icon
@@ -46,12 +51,11 @@
                         [ngbTooltip]="'artemisApp.courseOverview.exerciseDetails.faq.editQuestion' | translate"
                         container="body"
                         [icon]="'pencil-alt'"
-                        (click)="$event.stopPropagation(); isEditMode = false"
+                        (click)="isEditMode = false"
                     ></fa-icon>
                     <jhi-confirm-icon
                         class="clickable mr-1"
                         *ngIf="isQuestionAuthor || isAtLeastTutorInCourse"
-                        (click)="$event.stopPropagation()"
                         (confirmEvent)="deleteQuestion()"
                         [ngClass]="'mr-1'"
                         [initialTooltip]="'artemisApp.courseOverview.exerciseDetails.faq.deleteQuestion' | translate"

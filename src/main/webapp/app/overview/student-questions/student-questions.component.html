@@ -26,9 +26,12 @@
             ></jhi-student-question-row>
             <!-- new question editor -->
             <div *ngIf="isEditMode">
-                <div class="row">
-                    <div class="col-12 px-0">
-                        <span class="form-control-label">{{ 'artemisApp.courseOverview.exerciseDetails.faq.newQuestionLabel' | translate }}</span>
+                <div class="row pl-2">
+                    <div class="col-auto px-0">
+                        <fa-icon [icon]="'comment'"></fa-icon>
+                    </div>
+                    <div class="col">
+                        <span class="form-control-label question-subtitle">{{ 'artemisApp.courseOverview.exerciseDetails.faq.newQuestionLabel' | translate }}</span>
                     </div>
                     <div class="col-12 px-0">
                         <jhi-markdown-editor

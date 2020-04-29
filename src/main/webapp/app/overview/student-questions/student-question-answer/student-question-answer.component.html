@@ -1,12 +1,15 @@
-<div class="row mb-1 pl-2 answer" [ngClass]="{ 'answer-approved': studentQuestionAnswer.tutorApproved }">
+<div class="row mb-1 pl-2 answer" [class.answer-approved]="studentQuestionAnswer.tutorApproved">
     <div class="col-12">
         <!-- edit Mode on -->
         <ng-container *ngIf="isEditMode">
             <div class="row mb-2">
                 <div class="col-12">
                     <div class="row mb-1">
-                        <div class="col px-0">
-                            <span class="form-control-label">{{ 'artemisApp.courseOverview.exerciseDetails.faq.editAnswer' | translate }}</span>
+                        <div class="col-auto px-0">
+                            <fa-icon [icon]="'comment'"></fa-icon>
+                        </div>
+                        <div class="col">
+                            <span class="form-control-label question-subtitle">{{ 'artemisApp.courseOverview.exerciseDetails.faq.editAnswer' | translate }}</span>
                         </div>
                         <div class="col-auto px-0" *ngIf="isAtLeastTutorInCourse || isAuthorOfAnswer(studentQuestionAnswer)">
                             <fa-icon
@@ -14,11 +17,10 @@
                                 [ngbTooltip]="'artemisApp.courseOverview.exerciseDetails.faq.editAnswer' | translate"
                                 container="body"
                                 [icon]="'pencil-alt'"
-                                (click)="$event.stopPropagation(); isEditMode = false"
+                                (click)="isEditMode = false"
                             ></fa-icon>
                             <jhi-confirm-icon
                                 class="mr-1 clickable"
-                                (click)="$event.stopPropagation()"
                                 (confirmEvent)="deleteAnswer()"
                                 [ngClass]="'mr-1 clickable'"
                                 [initialTooltip]="'artemisApp.courseOverview.exerciseDetails.faq.deleteAnswer' | translate"
@@ -35,7 +37,7 @@
                                 "
                                 container="body"
                                 [icon]="'check'"
-                                (click)="$event.stopPropagation(); toggleAnswerTutorApproved()"
+                                (click)="toggleAnswerTutorApproved()"
                             ></fa-icon>
                         </div>
                     </div>
@@ -62,8 +64,11 @@
         <!-- edit Mode off -->
         <ng-container *ngIf="!isEditMode">
             <div class="row">
-                <div class="col px-0">
-                    <span>{{ 'artemisApp.courseOverview.exerciseDetails.faq.answerLabel' | translate }}</span>
+                <div class="col-auto px-0">
+                    <fa-icon [icon]="'comment'"></fa-icon>
+                </div>
+                <div class="col">
+                    <span class="question-subtitle">{{ 'artemisApp.courseOverview.exerciseDetails.faq.answerLabel' | translate }}</span>
                 </div>
                 <div class="col-auto px-0" *ngIf="isAtLeastTutorInCourse || isAuthorOfAnswer(studentQuestionAnswer)">
                     <fa-icon
@@ -71,11 +76,10 @@
                         [ngbTooltip]="'artemisApp.courseOverview.exerciseDetails.faq.editAnswer' | translate"
                         container="body"
                         [icon]="'pencil-alt'"
-                        (click)="$event.stopPropagation(); isEditMode = true"
+                        (click)="isEditMode = true"
                     ></fa-icon>
                     <jhi-confirm-icon
                         class="mr-1 clickable"
-                        (click)="$event.stopPropagation()"
                         (confirmEvent)="deleteAnswer()"
                         [ngClass]="'mr-1 clickable'"
                         [initialTooltip]="'artemisApp.courseOverview.exerciseDetails.faq.deleteAnswer' | translate"
@@ -92,7 +96,7 @@
                         "
                         container="body"
                         [icon]="'check'"
-                        (click)="$event.stopPropagation(); toggleAnswerTutorApproved()"
+                        (click)="toggleAnswerTutorApproved()"
                     ></fa-icon>
                 </div>
             </div>
