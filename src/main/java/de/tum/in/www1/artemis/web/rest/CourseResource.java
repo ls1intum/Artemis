@@ -459,7 +459,7 @@ public class CourseResource {
             }
         }
         log.info("/courses/for-dashboard.done in " + (System.currentTimeMillis() - start) + "ms for " + courses.size() + " courses with " + activeIndividualExercises.size()
-                + " individual exercises and " + activeTeamExercises + " team exercises for user " + user.getLogin());
+                + " individual exercises and " + activeTeamExercises.size() + " team exercises for user " + user.getLogin());
 
         return courses;
     }

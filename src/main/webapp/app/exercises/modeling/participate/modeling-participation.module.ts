@@ -11,6 +11,7 @@ import { ArtemisModelingParticipationRoutingModule } from 'app/exercises/modelin
 import { ArtemisHeaderExercisePageWithDetailsModule } from 'app/exercises/shared/exercise-headers/exercise-headers.module';
 import { ArtemisTeamModule } from 'app/exercises/shared/team/team.module';
 import { ArtemisTeamSubmissionSyncModule } from 'app/exercises/shared/team-submission-sync/team-submission-sync.module';
+import { ArtemisFullscreenModule } from 'app/shared/fullscreen/fullscreen.module';
 
 @NgModule({
     imports: [
@@ -25,6 +26,7 @@ import { ArtemisTeamSubmissionSyncModule } from 'app/exercises/shared/team-submi
         MomentModule,
         ArtemisTeamModule,
         ArtemisTeamSubmissionSyncModule,
+        ArtemisFullscreenModule,
     ],
     declarations: [ModelingSubmissionComponent],
 })
