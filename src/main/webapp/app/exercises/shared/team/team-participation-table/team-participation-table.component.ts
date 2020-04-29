@@ -28,6 +28,7 @@ export class TeamParticipationTableComponent implements OnInit {
     @Input() team: Team;
     @Input() course: Course;
     @Input() exercise: Exercise;
+    @Input() isAdmin = false;
 
     exercises: ExerciseWithTeamAndOptionalParticipation[];
     isLoading: boolean;
@@ -52,7 +53,7 @@ export class TeamParticipationTableComponent implements OnInit {
     transformExercisesFromServer(exercises: Exercise[]): ExerciseWithTeamAndOptionalParticipation[] {
         return exercises.map((exercise: ExerciseWithTeamAndOptionalParticipation) => {
             exercise.team = exercise.teams[0];
-            exercise.participation = get(exercise, 'studentParticipations[0]');
+            exercise.participation = get(exercise, 'studentParticipations[0]', null);
             return exercise;
         });
     }
