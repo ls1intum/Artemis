@@ -1,17 +1,20 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { map, shareReplay } from 'rxjs/operators';
 import * as moment from 'moment';
 
 import { SERVER_API_URL } from 'app/app.constants';
-import { Team, TeamImportStrategyType } from 'app/entities/team.model';
+import { Team, TeamAssignmentPayload, TeamImportStrategyType } from 'app/entities/team.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { Course } from 'app/entities/course.model';
 import { TeamSearchUser } from 'app/entities/team-search-user.model';
+import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 
 export type TeamResponse = HttpResponse<Team>;
 export type TeamArrayResponse = HttpResponse<Team[]>;
+
+const teamAssignmentUpdatesWebsocketTopic = '/user/topic/team-assignments';
 
 export interface ITeamService {
     create(exercise: Exercise, team: Team): Observable<TeamResponse>;
@@ -33,7 +36,9 @@ export interface ITeamService {
 
 @Injectable({ providedIn: 'root' })
 export class TeamService implements ITeamService {
-    constructor(protected http: HttpClient) {}
+    private teamAssignmentUpdates$: Observable<TeamAssignmentPayload>;
+
+    constructor(protected http: HttpClient, private websocketService: JhiWebsocketService) {}
 
     private static resourceUrl(exerciseId: number) {
         return `${SERVER_API_URL}api/exercises/${exerciseId}/teams`;
@@ -84,6 +89,15 @@ export class TeamService implements ITeamService {
             {},
             { observe: 'response' },
         );
+    }
+
+    get teamAssignmentUpdates(): Observable<TeamAssignmentPayload> {
+        if (this.teamAssignmentUpdates$) {
+            return this.teamAssignmentUpdates$;
+        }
+        this.websocketService.subscribe(teamAssignmentUpdatesWebsocketTopic);
+        this.teamAssignmentUpdates$ = this.websocketService.receive(teamAssignmentUpdatesWebsocketTopic).pipe(shareReplay(64));
+        return this.teamAssignmentUpdates$;
     }
 
     /**

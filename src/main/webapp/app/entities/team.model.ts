@@ -13,6 +13,11 @@ export class OnlineTeamStudent {
     public lastActionDate: Moment;
 }
 
+export class TeamAssignmentPayload {
+    public exerciseId: number;
+    public teamId?: number;
+}
+
 export class Team implements BaseEntity {
     public id: number;
     public name: string;

@@ -7,6 +7,10 @@ import { HttpResponse } from '@angular/common/http';
 import { isOrion } from 'app/shared/orion/orion';
 import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
 import { CachingStrategy } from 'app/shared/image/secured-image.component';
+import { TeamService } from 'app/exercises/shared/team/team.service';
+import { TeamAssignmentPayload } from 'app/entities/team.model';
+import { AlertService } from 'app/core/alert/alert.service';
+import { participationStatus } from 'app/exercises/shared/exercise/exercise-utils';
 
 const DESCRIPTION_READ = 'isDescriptionRead';
 
@@ -30,6 +34,8 @@ export class CourseOverviewComponent implements OnInit {
         private courseCalculationService: CourseScoreCalculationService,
         private courseServer: CourseManagementService,
         private route: ActivatedRoute,
+        private teamService: TeamService,
+        private jhiAlertService: AlertService,
     ) {}
 
     ngOnInit() {
@@ -46,6 +52,7 @@ export class CourseOverviewComponent implements OnInit {
             });
         }
         this.adjustCourseDescription();
+        this.subscribeToTeamAssignmentUpdates();
     }
 
     adjustCourseDescription() {
@@ -68,5 +75,22 @@ export class CourseOverviewComponent implements OnInit {
     showShortDescription() {
         this.courseDescription = this.course!.description.substr(0, 50) + '...';
         this.longTextShown = false;
+    }
+
+    subscribeToTeamAssignmentUpdates() {
+        this.teamService.teamAssignmentUpdates.subscribe(
+            (teamAssignment: TeamAssignmentPayload) => {
+                const exercise = this.course!.exercises.find((courseExercise) => courseExercise.id === teamAssignment.exerciseId);
+                if (exercise) {
+                    exercise.studentAssignedTeamId = teamAssignment.teamId;
+                    exercise.participationStatus = participationStatus(exercise);
+                }
+            },
+            (error) => this.onError(error),
+        );
+    }
+
+    private onError(error: string) {
+        this.jhiAlertService.error('error.unexpectedError', { error }, undefined);
     }
 }
