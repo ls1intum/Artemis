@@ -73,6 +73,7 @@ artemis:
         embedding-url: http://localhost:8001/embed
         embedding-chunk-size: 50
         clustering-url: http://localhost:8001/cluster
+        secret: null
 
 info:
     contact: artemis.in@tum.de

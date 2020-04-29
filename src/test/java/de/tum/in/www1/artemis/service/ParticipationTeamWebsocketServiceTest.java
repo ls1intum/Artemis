@@ -72,7 +72,7 @@ class ParticipationTeamWebsocketServiceTest extends AbstractSpringIntegrationBam
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     void testTriggerSendOnlineTeamMembers() {
-        participationTeamWebsocketService.triggerSend(participation.getId());
+        participationTeamWebsocketService.triggerSendOnlineTeamStudents(participation.getId());
         verify(messagingTemplate, times(1)).convertAndSend(websocketTopic(participation), List.of());
     }
 

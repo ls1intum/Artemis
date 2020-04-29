@@ -53,6 +53,9 @@ export const notificationMgmtRoutes3: Route = {
     resolve: {
         notification: NotificationMgmtResolve,
     },
+    data: {
+        pageTitle: 'artemisApp.notificationManagement.home.title',
+    },
 };
 
 export const notificationMgmtRoutes4: Route = {
@@ -60,5 +63,8 @@ export const notificationMgmtRoutes4: Route = {
     component: NotificationMgmtUpdateComponent,
     resolve: {
         notification: NotificationMgmtResolve,
+    },
+    data: {
+        pageTitle: 'artemisApp.notificationManagement.home.title',
     },
 };

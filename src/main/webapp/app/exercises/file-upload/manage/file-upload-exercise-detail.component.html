@@ -54,7 +54,10 @@
                 <dd class="editor-outline-background" [innerHTML]="fileUploadExercise.sampleSolution! | htmlForMarkdown"></dd>
                 <dt><span jhiTranslate="artemisApp.exercise.gradingInstructions">Grading Instructions</span></dt>
                 <dd class="editor-outline-background" [innerHTML]="fileUploadExercise.gradingInstructions! | htmlForMarkdown"></dd>
-                <jhi-structured-grading-instructions-assessment-layout [criteria]="fileUploadExercise.gradingCriteria"></jhi-structured-grading-instructions-assessment-layout>
+                <jhi-structured-grading-instructions-assessment-layout
+                    [readonly]="true"
+                    [criteria]="fileUploadExercise.gradingCriteria"
+                ></jhi-structured-grading-instructions-assessment-layout>
                 <dt><span jhiTranslate="artemisApp.fileUploadExercise.filePattern">File Pattern</span></dt>
                 <dd>
                     <span>{{ fileUploadExercise.filePattern }}</span>

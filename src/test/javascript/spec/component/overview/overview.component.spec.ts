@@ -19,7 +19,7 @@ import { CoursesComponent } from 'app/overview/courses.component';
 import { TranslateTestingModule } from '../../helpers/mocks/service/mock-translate.service';
 import { NavbarComponent } from 'app/shared/layouts/navbar/navbar.component';
 import { ActiveMenuDirective } from 'app/shared/layouts/navbar/active-menu.directive';
-import { NotificationContainerComponent } from 'app/shared/layouts/notification-container/notification-container.component';
+import { NotificationSidebarComponent } from 'app/shared/layouts/notification-sidebar/notification-sidebar.component';
 import { User } from 'app/core/user/user.model';
 import { MockHasAnyAuthorityDirective } from '../../helpers/mocks/directive/mock-has-any-authority.directive';
 import { ArtemisSharedPipesModule } from 'app/shared/pipes/shared-pipes.module';
@@ -65,7 +65,7 @@ describe('Courses Component', () => {
                         },
                     ]),
                 ],
-                declarations: [GuidedTourComponent, NavbarComponent, NotificationContainerComponent, FooterComponent, ActiveMenuDirective, MockHasAnyAuthorityDirective],
+                declarations: [GuidedTourComponent, NavbarComponent, NotificationSidebarComponent, FooterComponent, ActiveMenuDirective, MockHasAnyAuthorityDirective],
                 providers: [
                     { provide: AccountService, useClass: MockAccountService },
                     { provide: CookieService, useClass: MockCookieService },
