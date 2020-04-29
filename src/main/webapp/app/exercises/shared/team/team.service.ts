@@ -72,7 +72,7 @@ export class TeamService implements ITeamService {
     }
 
     existsByShortName(course: Course, shortName: string): Observable<HttpResponse<boolean>> {
-        return this.http.get<boolean>(`${SERVER_API_URL}api/courses/${course.id}/exists?shortName=${shortName}`, { observe: 'response' });
+        return this.http.get<boolean>(`${SERVER_API_URL}api/courses/${course.id}/teams/exists?shortName=${shortName}`, { observe: 'response' });
     }
 
     searchInCourseForExerciseTeam(course: Course, exercise: Exercise, loginOrName: string): Observable<HttpResponse<TeamSearchUser[]>> {
