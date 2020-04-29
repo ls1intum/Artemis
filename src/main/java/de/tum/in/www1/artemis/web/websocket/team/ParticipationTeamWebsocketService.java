@@ -125,7 +125,9 @@ public class ParticipationTeamWebsocketService {
      */
     @MessageMapping("/topic/participations/{participationId}/team/modeling-submissions/update")
     public void updateModelingSubmission(@DestinationVariable Long participationId, @Payload ModelingSubmission modelingSubmission, Principal principal) {
+        long start = System.currentTimeMillis();
         updateSubmission(participationId, modelingSubmission, principal, "/modeling-submissions");
+        log.info("Websocket endpoint updateModelingSubmission took " + (System.currentTimeMillis() - start) + "ms for submission with id " + modelingSubmission.getId());
     }
 
     /**
@@ -137,7 +139,9 @@ public class ParticipationTeamWebsocketService {
      */
     @MessageMapping("/topic/participations/{participationId}/team/text-submissions/update")
     public void updateTextSubmission(@DestinationVariable Long participationId, @Payload TextSubmission textSubmission, Principal principal) {
+        long start = System.currentTimeMillis();
         updateSubmission(participationId, textSubmission, principal, "/text-submissions");
+        log.info("Websocket endpoint updateTextSubmission took " + (System.currentTimeMillis() - start) + "ms for submission with id " + textSubmission.getId());
     }
 
     /**
