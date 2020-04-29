@@ -267,7 +267,8 @@ public class AuthorizationCheckService {
     /**
      * checks if the currently logged in user is student of the given team
      *
-     * @param teamShortName the short name of the team(s) that need(s) to be checked
+     * @param course the course to which the team belongs to (acts as scope for team short name)
+     * @param teamShortName the short name of the team that needs to be checked
      * @param user the user whose permissions should be checked
      * @return true, if user is student is owner of this team, otherwise false
      */
