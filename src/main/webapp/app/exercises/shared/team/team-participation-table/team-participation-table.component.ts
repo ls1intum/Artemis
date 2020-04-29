@@ -37,9 +37,9 @@ export class TeamParticipationTableComponent implements OnInit {
 
     ngOnInit(): void {
         this.isLoading = true;
-        this.teamService.findExercisesWithParticipationsForTeam(this.course, this.team.shortName).subscribe(
-            (exercisesResponse) => {
-                this.exercises = this.transformExercisesFromServer(exercisesResponse.body!);
+        this.teamService.findCourseWithExercisesAndParticipationsForTeam(this.course, this.team).subscribe(
+            (courseResponse) => {
+                this.exercises = this.transformExercisesFromServer(courseResponse.body!.exercises);
                 this.isLoading = false;
             },
             (error) => {

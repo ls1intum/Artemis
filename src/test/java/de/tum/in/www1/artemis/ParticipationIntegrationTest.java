@@ -6,7 +6,6 @@ import static org.mockito.Mockito.*;
 
 import java.net.URI;
 import java.time.ZonedDateTime;
-import java.util.List;
 import java.util.Optional;
 
 import org.junit.jupiter.api.AfterEach;
@@ -393,51 +392,6 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationBambo
     @WithMockUser(username = "instructor3", roles = "INSTRUCTOR")
     public void getAllParticipationsForCourse_noInstructorInCourse() throws Exception {
         request.getList("/api/courses/" + course.getId() + "/participations", HttpStatus.FORBIDDEN, StudentParticipation.class);
-    }
-
-    @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
-    public void getAllParticipationsForCourseAndTeamShortName() throws Exception {
-        String shortNamePrefix1 = "team";
-        String shortNamePrefix2 = "otherTeam";
-
-        Team team1a = database.addTeamsForExercise(programmingExercise, shortNamePrefix1, "team1astudent", 1, null).get(0);
-        Team team1b = database.addTeamsForExercise(textExercise, shortNamePrefix1, "team1bstudent", 1, null).get(0);
-        Team team1c = database.addTeamsForExercise(modelingExercise, shortNamePrefix1, "team1cstudent", 1, null).get(0);
-
-        Team team2a = database.addTeamsForExercise(programmingExercise, shortNamePrefix2, "team2astudent", 1, null).get(0);
-        Team team2b = database.addTeamsForExercise(textExercise, shortNamePrefix2, "team2bstudent", 1, null).get(0);
-
-        assertThat(List.of(team1a, team1b, team1c).stream().map(Team::getShortName).distinct()).as("Teams 1 need the same short name for this test").hasSize(1);
-        assertThat(List.of(team2a, team2b).stream().map(Team::getShortName).distinct()).as("Teams 2 need the same short name for this test").hasSize(1);
-        assertThat(List.of(team1a, team1b, team1c, team2a, team2b).stream().map(Team::getShortName).distinct()).as("Teams 1 and Teams 2 need different short names").hasSize(2);
-
-        database.addTeamParticipationForExercise(programmingExercise, team1a.getId());
-        database.addTeamParticipationForExercise(textExercise, team1b.getId());
-        database.addTeamParticipationForExercise(modelingExercise, team1c.getId());
-
-        database.addTeamParticipationForExercise(programmingExercise, team2a.getId());
-        database.addTeamParticipationForExercise(textExercise, team2b.getId());
-
-        List<StudentParticipation> participations1 = request.getList("/api/courses/" + course.getId() + "/teams/" + team1a.getShortName() + "/participations", HttpStatus.OK,
-                StudentParticipation.class);
-        assertThat(participations1).as("All participations of team 1 in course were returned").hasSize(3);
-
-        List<StudentParticipation> participations2 = request.getList("/api/courses/" + course.getId() + "/teams/" + team2a.getShortName() + "/participations", HttpStatus.OK,
-                StudentParticipation.class);
-        assertThat(participations2).as("All participations of team 2 in course were returned").hasSize(2);
-
-        assertThat(participations2.get(0).getExercise()).as("Participation includes exercise").isNotNull();
-        assertThat(participations2.get(0).getParticipant()).as("Participation includes team").isNotNull();
-        assertThat(participations2.get(0).getSubmissionCount()).as("Participation includes submission count").isNotNull();
-    }
-
-    @Test
-    @WithMockUser(username = "student1", roles = "USER")
-    public void getAllParticipationsForCourseAndTeamShortName_ForbiddenAsStudent() throws Exception {
-        Team team = database.addTeamsForExercise(programmingExercise, "team", "teamStudent", 1, null).get(0);
-        database.addTeamParticipationForExercise(programmingExercise, team.getId());
-        request.getList("/api/courses/" + course.getId() + "/teams/" + team.getShortName() + "/participations", HttpStatus.FORBIDDEN, StudentParticipation.class);
     }
 
     @Test

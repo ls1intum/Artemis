@@ -332,16 +332,16 @@ public class TeamResource {
     }
 
     /**
-     * GET /courses/:courseId/teams/:teamShortName/exercises-with-participations : get all released exercises for course "id" in which the team "teamShortName" exists with
-     * its participations
+     * GET /courses/:courseId/teams/:teamShortName/with-exercises-and-participations : get course "id" with all released exercises in which the team "teamShortName" exists
+     * together with its participations for those exercises
      *
      * @param courseId id of the course
      * @param teamShortName short name of the team (all teams with the short name in the course are seen as the same team)
-     * @return Exercises with their participations for the team
+     * @return Course with exercises and participations for the team
      */
-    @GetMapping(value = "/courses/{courseId}/teams/{teamShortName}/exercises-with-participations")
+    @GetMapping(value = "/courses/{courseId}/teams/{teamShortName}/with-exercises-and-participations")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Set<Exercise>> getExercisesWithParticipationsForTeam(@PathVariable Long courseId, @PathVariable String teamShortName) {
+    public ResponseEntity<Course> getCourseWithExercisesAndParticipationsForTeam(@PathVariable Long courseId, @PathVariable String teamShortName) {
         log.debug("REST request to get Course {} with exercises and participations for Team with short name {}", courseId, teamShortName);
         Course course = courseService.findOneWithExercises(courseId);
         User user = userService.getUserWithGroupsAndAuthorities();
@@ -351,16 +351,14 @@ public class TeamResource {
 
         // Get all team instances in course with the given team short name
         List<Team> teams = teamRepository.findAllByExerciseCourseIdAndShortName(course.getId(), teamShortName);
+        Map<Long, Team> exerciseTeamMap = teams.stream().collect(Collectors.toMap(team -> team.getExercise().getId(), team -> team));
 
         // Filter course exercises by: 1. released, 2. team needs to exist for exercise
-        Set<Exercise> exercises = course.getExercises().stream().filter(exercise -> {
-            return exercise.isVisibleToStudents() && teams.stream().map(Team::getExercise).collect(Collectors.toSet()).contains(exercise);
-        }).collect(Collectors.toSet());
+        Set<Exercise> exercises = course.getExercises().stream().filter(exercise -> exercise.isVisibleToStudents() && exerciseTeamMap.containsKey(exercise.getId()))
+                .collect(Collectors.toSet());
 
-        // Set teams on all exercises
-        exercises.forEach(exercise -> {
-            exercise.setTeams(Set.of(teams.stream().filter(team -> team.getExercise().equals(exercise)).findAny().orElseThrow()));
-        });
+        // Set teams on exercises
+        exercises.forEach(exercise -> exercise.setTeams(Set.of(exerciseTeamMap.get(exercise.getId()))));
 
         // Fetch participations for team and set the submission count for each participation
         List<StudentParticipation> participations = participationService.findAllByCourseIdAndTeamShortName(courseId, teamShortName);
@@ -373,6 +371,7 @@ public class TeamResource {
             studentParticipation.ifPresent(participation -> exercise.setStudentParticipations(Set.of(participation)));
         });
 
-        return ResponseEntity.ok(exercises);
+        course.setExercises(exercises);
+        return ResponseEntity.ok(course);
     }
 }

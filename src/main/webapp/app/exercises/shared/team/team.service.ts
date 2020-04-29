@@ -24,11 +24,13 @@ export interface ITeamService {
 
     delete(exercise: Exercise, teamId: number): Observable<HttpResponse<any>>;
 
-    existsByShortName(exercise: Exercise, shortName: string): Observable<HttpResponse<boolean>>;
+    existsByShortName(course: Course, shortName: string): Observable<HttpResponse<boolean>>;
 
     searchInCourseForExerciseTeam(course: Course, exercise: Exercise, loginOrName: string): Observable<HttpResponse<TeamSearchUser[]>>;
 
     importTeamsFromSourceExercise(exercise: Exercise, sourceExercise: Exercise, importStrategy: TeamImportStrategyType): Observable<HttpResponse<Team[]>>;
+
+    findCourseWithExercisesAndParticipationsForTeam(course: Course, team: Team): Observable<HttpResponse<Course>>;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -69,8 +71,8 @@ export class TeamService implements ITeamService {
         return this.http.delete<any>(`${TeamService.resourceUrl(exercise.id)}/${teamId}`, { observe: 'response' });
     }
 
-    existsByShortName(exercise: Exercise, shortName: string): Observable<HttpResponse<boolean>> {
-        return this.http.get<boolean>(`${TeamService.resourceUrl(exercise.id)}/exists?shortName=${shortName}`, { observe: 'response' });
+    existsByShortName(course: Course, shortName: string): Observable<HttpResponse<boolean>> {
+        return this.http.get<boolean>(`${SERVER_API_URL}api/courses/${course.id}/exists?shortName=${shortName}`, { observe: 'response' });
     }
 
     searchInCourseForExerciseTeam(course: Course, exercise: Exercise, loginOrName: string): Observable<HttpResponse<TeamSearchUser[]>> {
@@ -86,8 +88,8 @@ export class TeamService implements ITeamService {
         );
     }
 
-    findExercisesWithParticipationsForTeam(course: Course, teamShortName: string): Observable<HttpResponse<Exercise[]>> {
-        return this.http.get<Exercise[]>(`${SERVER_API_URL}api/courses/${course.id}/teams/${teamShortName}/exercises-with-participations`, { observe: 'response' });
+    findCourseWithExercisesAndParticipationsForTeam(course: Course, team: Team): Observable<HttpResponse<Course>> {
+        return this.http.get<Course>(`${SERVER_API_URL}api/courses/${course.id}/teams/${team.shortName}/with-exercises-and-participations`, { observe: 'response' });
     }
 
     /**

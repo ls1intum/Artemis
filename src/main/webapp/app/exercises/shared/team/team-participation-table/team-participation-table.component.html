@@ -12,7 +12,7 @@
             [rowClass]="rowClass(exercise)"
             [scrollbarH]="settings.scrollbarH"
         >
-            <ngx-datatable-column prop="title" [minWidth]="140" [width]="140" [frozenLeft]="true">
+            <ngx-datatable-column prop="title" [minWidth]="160" [width]="180" [frozenLeft]="true">
                 <ng-template ngx-datatable-header-template>
                     <span class="datatable-header-cell-wrapper" (click)="controls.onSort('title')">
                         <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.exercise.exercise">
