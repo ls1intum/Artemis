@@ -1,7 +1,7 @@
 import { ActivatedRoute } from '@angular/router';
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
-import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { HttpErrorResponse, HttpResponse, HttpHeaders } from '@angular/common/http';
 import { AlertService } from 'app/core/alert/alert.service';
 import { Observable } from 'rxjs';
 import { ImageCroppedEvent } from 'ngx-image-cropper';
@@ -207,10 +207,13 @@ export class CourseUpdateComponent implements OnInit {
     }
 
     private onSaveError(error: HttpErrorResponse) {
-        const errorMessage = error.error.title;
+        const errorMessage = error.headers.get('x-artemisapp-alert');
         // TODO: this is a workaround to avoid translation not found issues. Provide proper translations
-        const jhiAlert = this.jhiAlertService.error(errorMessage);
-        jhiAlert.msg = errorMessage;
+        if (errorMessage != null) {
+            const jhiAlert = this.jhiAlertService.error(errorMessage);
+            jhiAlert.msg = errorMessage;
+        }
+
         this.isSaving = false;
         window.scrollTo(0, 0);
     }
