@@ -320,19 +320,45 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     }
 
     @Test
-    @WithMockUser(username = "student1")
-    public void testGetCoursesToRegister() throws Exception {
-        ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(5);
-        ZonedDateTime futureTimestamp = ZonedDateTime.now().plusDays(5);
-        Course course1 = ModelFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "tumuser", "tutor", "instructor");
-        Course course2 = ModelFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "tumuser", "tutor", "instructor");
-        course1.setRegistrationEnabled(true);
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void testGetCoursesAccurateTimezoneEvaluation() throws Exception {
+        Course courseActive = ModelFactory.generateCourse(1L, ZonedDateTime.now().minusMinutes(25), ZonedDateTime.now().plusMinutes(25), new HashSet<>(), "tumuser", "tutor",
+                "instructor");
+        Course courseNotActivePast = ModelFactory.generateCourse(2L, ZonedDateTime.now().minusDays(5), ZonedDateTime.now().minusMinutes(25), new HashSet<>(), "tumuser", "tutor",
+                "instructor");
+        Course courseNotActiveFuture = ModelFactory.generateCourse(3L, ZonedDateTime.now().plusMinutes(25), ZonedDateTime.now().plusDays(5), new HashSet<>(), "tumuser", "tutor",
+                "instructor");
+        courseRepo.save(courseActive);
+        courseRepo.save(courseNotActivePast);
+        courseRepo.save(courseNotActiveFuture);
+        List<Course> courses = request.getList("/api/courses/for-dashboard", HttpStatus.OK, Course.class);
+        assertThat(courses.size()).as("Exactly one course is returned").isEqualTo(1);
+        courses.get(0).setId(courseActive.getId());
+        assertThat(courses.get(0)).as("Active course is returned").isEqualTo(courseActive);
+    }
 
-        courseRepo.save(course1);
-        courseRepo.save(course2);
+    @Test
+    @WithMockUser(username = "student1")
+    public void testGetCoursesToRegisterAndAccurateTimeZoneEvaluation() throws Exception {
+        Course courseActiveRegistrationEnabled = ModelFactory.generateCourse(1L, ZonedDateTime.now().minusMinutes(25), ZonedDateTime.now().plusMinutes(25), new HashSet<>(),
+                "tumuser", "tutor", "instructor");
+        courseActiveRegistrationEnabled.setRegistrationEnabled(true);
+        Course courseActiveRegistrationDisabled = ModelFactory.generateCourse(2L, ZonedDateTime.now().minusMinutes(25), ZonedDateTime.now().plusMinutes(25), new HashSet<>(),
+                "tumuser", "tutor", "instructor");
+        courseActiveRegistrationDisabled.setRegistrationEnabled(false);
+        Course courseNotActivePast = ModelFactory.generateCourse(3L, ZonedDateTime.now().minusDays(5), ZonedDateTime.now().minusMinutes(25), new HashSet<>(), "tumuser", "tutor",
+                "instructor");
+        Course courseNotActiveFuture = ModelFactory.generateCourse(4L, ZonedDateTime.now().plusMinutes(25), ZonedDateTime.now().plusDays(5), new HashSet<>(), "tumuser", "tutor",
+                "instructor");
+        courseRepo.save(courseActiveRegistrationEnabled);
+        courseRepo.save(courseActiveRegistrationDisabled);
+        courseRepo.save(courseNotActivePast);
+        courseRepo.save(courseNotActiveFuture);
 
         List<Course> courses = request.getList("/api/courses/to-register", HttpStatus.OK, Course.class);
-        assertThat(courses.size()).as("One course is available to register").isEqualTo(1);
+        assertThat(courses.size()).as("Exactly one course is available to register").isEqualTo(1);
+        courses.get(0).setId(courseActiveRegistrationEnabled.getId());
+        assertThat(courses.get(0)).as("Only active course is returned").isEqualTo(courseActiveRegistrationEnabled);
     }
 
     private void getCourseForDashboardWithStats(boolean isInstructor) throws Exception {

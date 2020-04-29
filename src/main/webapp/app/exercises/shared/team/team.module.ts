@@ -1,7 +1,6 @@
 import { NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { NgxDatatableModule } from '@swimlane/ngx-datatable';
-import { AngularStickyThingsModule } from '@w11k/angular-sticky-things';
 import { TeamsComponent } from 'app/exercises/shared/team/teams.component';
 import { teamRoute } from 'app/exercises/shared/team/team.route';
 import { ArtemisDataTableModule } from 'app/shared/data-table/data-table.module';
@@ -23,7 +22,7 @@ import { TeamExerciseSearchComponent } from 'app/exercises/shared/team/team-exer
 const ENTITY_STATES = [...teamRoute];
 
 @NgModule({
-    imports: [RouterModule.forChild(ENTITY_STATES), ArtemisSharedModule, NgxDatatableModule, AngularStickyThingsModule, ArtemisDataTableModule, ArtemisSharedComponentModule],
+    imports: [RouterModule.forChild(ENTITY_STATES), ArtemisSharedModule, NgxDatatableModule, ArtemisDataTableModule, ArtemisSharedComponentModule],
     declarations: [
         TeamsComponent,
         TeamUpdateButtonComponent,
