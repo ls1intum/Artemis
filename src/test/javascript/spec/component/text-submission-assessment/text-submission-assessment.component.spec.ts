@@ -24,6 +24,7 @@ import moment = require('moment');
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ActivatedRoute } from '@angular/router';
 import { ArtemisConfirmIconModule } from 'app/shared/confirm-icon/confirm-icon.module';
+import { Course } from 'app/entities/course.model';
 
 describe('TextSubmissionAssessmentComponent', () => {
     let component: TextSubmissionAssessmentComponent;
@@ -35,6 +36,7 @@ describe('TextSubmissionAssessmentComponent', () => {
         type: ExerciseType.TEXT,
         assessmentType: AssessmentType.MANUAL,
         problemStatement: '',
+        course: { id: 123, isAtLeastInstructor: true } as Course,
     } as TextExercise;
     const participation: StudentParticipation = ({
         type: ParticipationType.STUDENT,
