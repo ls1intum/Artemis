@@ -29,6 +29,7 @@ import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { CourseExerciseService, CourseManagementService } from 'app/course/manage/course-management.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
+import { Course } from 'app/entities/course.model';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -60,6 +61,7 @@ describe('CourseExerciseRowComponent', () => {
             .then(() => {
                 fixture = TestBed.createComponent(CourseExerciseRowComponent);
                 comp = fixture.componentInstance;
+                comp.course = { id: 123, isAtLeastInstructor: true } as Course;
                 debugElement = fixture.debugElement;
                 participationWebsocketService = debugElement.injector.get(ParticipationWebsocketService);
                 getAllParticipationsStub = stub(participationWebsocketService, 'getParticipationForExercise');
