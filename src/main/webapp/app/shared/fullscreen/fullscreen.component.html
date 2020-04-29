@@ -1,0 +1,24 @@
+<ng-container>
+    <ng-content></ng-content>
+    <button
+        [ngSwitch]="mode"
+        type="button"
+        class="btn"
+        style="position: absolute;"
+        [class.btn-primary]="mode == 'extended'"
+        [class.mb-2]="mode == 'extended'"
+        [class.btn-sm]="mode == 'compact'"
+        [class.top-left]="position == 'top-left'"
+        [class.top-right]="position == 'top-right'"
+        [class.bottom-left]="position == 'bottom-left'"
+        [class.bottom-right]="position == 'bottom-right'"
+        (click)="toggleFullscreen()"
+        [ngbTooltip]="'artemisApp.modelingEditor.fullscreen.tooltip' | translate"
+    >
+        <fa-icon [icon]="buttonIcon" *ngSwitchCase="'compact'"></fa-icon>
+        <span *ngSwitchCase="'extended'"
+            ><ng-container *ngIf="!isFullScreen(); else exitButtonText"> {{ 'artemisApp.modelingEditor.fullscreen.enterButtonText' | translate }}</ng-container>
+            <ng-template #exitButtonText>{{ 'artemisApp.modelingEditor.fullscreen.exitButtonText' | translate }}</ng-template>
+        </span>
+    </button>
+</ng-container>

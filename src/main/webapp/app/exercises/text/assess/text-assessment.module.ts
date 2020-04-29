@@ -1,7 +1,6 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { textAssessmentRoutes } from './text-assessment.route';
-import { TextAssessmentComponent } from './text-assessment.component';
 import { TextSelectDirective } from './text-assessment-editor/text-select.directive';
 import { TextAssessmentEditorComponent } from './text-assessment-editor/text-assessment-editor.component';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
@@ -27,14 +26,7 @@ const ENTITY_STATES = [...textAssessmentRoutes];
         ArtemisAssessmentSharedModule,
         AssessmentInstructionsModule,
     ],
-    declarations: [
-        TextAssessmentComponent,
-        TextSelectDirective,
-        TextAssessmentEditorComponent,
-        TextAssessmentDashboardComponent,
-        ResizableInstructionsComponent,
-        HighlightedTextAreaComponent,
-    ],
+    declarations: [TextSelectDirective, TextAssessmentEditorComponent, TextAssessmentDashboardComponent, ResizableInstructionsComponent, HighlightedTextAreaComponent],
     exports: [TextAssessmentEditorComponent, ResizableInstructionsComponent],
 })
 export class ArtemisTextExerciseAssessmentModule {}

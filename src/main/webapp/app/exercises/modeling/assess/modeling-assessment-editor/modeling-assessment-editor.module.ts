@@ -9,11 +9,13 @@ import { ModelingAssessmentModule } from 'app/exercises/modeling/assess/modeling
 import { ModelingAssessmentDashboardComponent } from 'app/exercises/modeling/assess/modeling-assessment-editor/modeling-assessment-dashboard.component';
 import { ModelingAssessmentEditorComponent } from 'app/exercises/modeling/assess/modeling-assessment-editor/modeling-assessment-editor.component';
 import { ModelingAssessmentConflictComponent } from 'app/exercises/modeling/assess/modeling-assessment-editor/modeling-assessment-conflict.component';
+import { ArtemisFullscreenModule } from 'app/shared/fullscreen/fullscreen.module';
 
 @NgModule({
     imports: [
         ArtemisSharedModule,
         ArtemisResultModule,
+        ArtemisFullscreenModule,
         AssessmentInstructionsModule,
         ArtemisAssessmentSharedModule,
         ArtemisModelingAssessmentEditorRoutingModule,
