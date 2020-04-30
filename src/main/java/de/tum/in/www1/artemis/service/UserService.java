@@ -752,7 +752,7 @@ public class UserService {
      *
      * @param course The course to which the team belongs (acts as a scope for the team short name)
      * @param teamShortName The short name of the team for which to get all students
-     * @return A list of all users that belong to the team
+     * @return A set of all users that belong to the team
      */
     public Set<User> findAllUsersInTeam(Course course, String teamShortName) {
         return userRepository.findAllInTeam(course.getId(), teamShortName);
