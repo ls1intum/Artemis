@@ -1,15 +1,20 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { HttpHeaders, HttpResponse } from '@angular/common/http';
 import { ActivatedRoute } from '@angular/router';
 import { of } from 'rxjs';
 
 import { ArtemisTestModule } from '../../test.module';
 import { ModelingExerciseDetailComponent } from 'app/exercises/modeling/manage/modeling-exercise-detail.component';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
+import { ModelingExerciseService } from 'app/exercises/modeling/manage/modeling-exercise.service';
 
 describe('ModelingExercise Management Detail Component', () => {
     let comp: ModelingExerciseDetailComponent;
     let fixture: ComponentFixture<ModelingExerciseDetailComponent>;
-    const route = ({ data: of({ modelingExercise: new ModelingExercise(123) }) } as any) as ActivatedRoute;
+    let modelingExerciseService: ModelingExerciseService;
+
+    let modelingExercise = { id: 123 } as ModelingExercise;
+    const route = ({ params: of({ exerciseId: modelingExercise.id }) } as any) as ActivatedRoute;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -21,17 +26,26 @@ describe('ModelingExercise Management Detail Component', () => {
             .compileComponents();
         fixture = TestBed.createComponent(ModelingExerciseDetailComponent);
         comp = fixture.componentInstance;
+        modelingExerciseService = fixture.debugElement.injector.get(ModelingExerciseService);
     });
 
-    describe('OnInit', () => {
-        it('Should call load all on init', () => {
-            // GIVEN
+    it('Should load exercise on init', () => {
+        // GIVEN
+        const headers = new HttpHeaders().append('link', 'link;link');
+        spyOn(modelingExerciseService, 'find').and.returnValue(
+            of(
+                new HttpResponse({
+                    body: modelingExercise,
+                    headers,
+                }),
+            ),
+        );
 
-            // WHEN
-            comp.ngOnInit();
+        // WHEN
+        comp.ngOnInit();
 
-            // THEN
-            expect(comp.modelingExercise).toEqual(jasmine.objectContaining({ id: 123 }));
-        });
+        // THEN
+        expect(modelingExerciseService.find).toHaveBeenCalled();
+        expect(comp.modelingExercise).toEqual(modelingExercise);
     });
 });
