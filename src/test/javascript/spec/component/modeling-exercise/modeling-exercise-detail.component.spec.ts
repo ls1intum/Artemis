@@ -13,7 +13,7 @@ describe('ModelingExercise Management Detail Component', () => {
     let fixture: ComponentFixture<ModelingExerciseDetailComponent>;
     let modelingExerciseService: ModelingExerciseService;
 
-    let modelingExercise = { id: 123 } as ModelingExercise;
+    const modelingExercise = { id: 123 } as ModelingExercise;
     const route = ({ params: of({ exerciseId: modelingExercise.id }) } as any) as ActivatedRoute;
 
     beforeEach(() => {
