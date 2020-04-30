@@ -140,8 +140,8 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         this.exerciseCategories = this.exerciseService.convertExerciseCategoriesFromServer(this.exercise);
 
         // This is only needed in the local environment
-        if (!this.inProductionEnvironment && this.exercise.type === ExerciseType.PROGRAMMING && this.exercise.isLocalSimulation !== undefined) {
-            this.noVersionControlAndContinuousIntegrationServerAvailable = this.exercise.isLocalSimulation;
+        if (!this.inProductionEnvironment && this.exercise.type === ExerciseType.PROGRAMMING && (<ProgrammingExercise>this.exercise).isLocalSimulation !== undefined) {
+            this.noVersionControlAndContinuousIntegrationServerAvailable = (<ProgrammingExercise>this.exercise).isLocalSimulation!;
         }
 
         this.subscribeForNewResults();
