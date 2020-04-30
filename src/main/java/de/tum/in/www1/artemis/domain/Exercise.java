@@ -173,7 +173,7 @@ public abstract class Exercise implements Serializable {
     private Long studentAssignedTeamIdTransient; // id of the team that the logged-in user is assigned to (only relevant if team mode is enabled)
 
     @Transient
-    private String testRepositoryUrlTransient;
+    private boolean isLocalSimulationTransient;
 
     // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
     public Long getId() {
@@ -873,12 +873,12 @@ public abstract class Exercise implements Serializable {
         this.studentAssignedTeamIdTransient = studentAssignedTeamIdTransient;
     }
 
-    public String getTestRepositoryUrl() {
-        return testRepositoryUrlTransient;
+    public boolean getIsLocalSimulation() {
+        return this.isLocalSimulationTransient;
     }
 
-    public void setTestRepositoryUrlTransient(String testRepositoryUrlTransient) {
-        this.testRepositoryUrlTransient = testRepositoryUrlTransient;
+    public void setIsLocalSimulation(Boolean isLocalSimulationTransient) {
+        this.isLocalSimulationTransient = isLocalSimulationTransient;
     }
 
     public Boolean getPresentationScoreEnabled() {

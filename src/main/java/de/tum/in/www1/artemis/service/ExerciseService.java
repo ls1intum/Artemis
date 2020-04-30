@@ -380,7 +380,8 @@ public class ExerciseService {
      */
     public void setTestRepositoryUrlForProgrammingExercise(Exercise exercise) {
         if (exercise instanceof ProgrammingExercise) {
-            exercise.setTestRepositoryUrlTransient(programmingExerciseService.findByIdWithEagerStudentParticipations(exercise.getId()).getTestRepositoryUrl());
+            boolean isLocalSimulation = (((ProgrammingExercise) exercise).getTestRepositoryUrl()).contains("artemislocalhost");
+            exercise.setIsLocalSimulation(isLocalSimulation);
         }
     }
 }
