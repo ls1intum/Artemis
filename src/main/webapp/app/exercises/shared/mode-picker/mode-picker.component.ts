@@ -17,7 +17,6 @@ export class ModePickerComponent {
 
     /**
      * Set the mode and emit the changes to the parent component to notice changes
-     * @function setMode
      * @param mode chosen exercise solving mode of type {ExerciseMode}
      */
     setMode(mode: ExerciseMode) {
