@@ -16,8 +16,8 @@ export class ModePickerComponent {
     @Output() ngModelChange = new EventEmitter<ExerciseMode>();
 
     /**
+     * Set the mode and emit the changes to the parent component to notice changes
      * @function setMode
-     * @desc set the mode and emit the changes to the parent component to notice changes
      * @param mode chosen exercise solving mode of type {ExerciseMode}
      */
     setMode(mode: ExerciseMode) {

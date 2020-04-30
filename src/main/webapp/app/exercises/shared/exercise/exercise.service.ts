@@ -279,6 +279,10 @@ export class ExerciseLtiConfigurationService {
 
     constructor(private http: HttpClient) {}
 
+    /**
+     * Load exercise with exerciseId from server
+     * @param { number } exerciseId - Id of exercise that is loaded
+     */
     find(exerciseId: number): Observable<HttpResponse<LtiConfiguration>> {
         return this.http.get<LtiConfiguration>(`${this.resourceUrl}/${exerciseId}`, { observe: 'response' });
     }
