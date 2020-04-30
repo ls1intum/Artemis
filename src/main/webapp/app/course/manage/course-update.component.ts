@@ -207,7 +207,12 @@ export class CourseUpdateComponent implements OnInit {
     }
 
     private onSaveError(error: HttpErrorResponse) {
-        const errorMessage = error.headers.get('x-artemisapp-alert');
+        let errorMessage: string | null;
+        if (error.error !== null) {
+            errorMessage = error.error.title;
+        } else {
+            errorMessage = error.headers.get('x-artemisapp-alert');
+        }
         // TODO: this is a workaround to avoid translation not found issues. Provide proper translations
         if (errorMessage != null) {
             const jhiAlert = this.jhiAlertService.error(errorMessage);
