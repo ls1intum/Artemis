@@ -138,9 +138,12 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         this.exercise.participationStatus = participationStatus(this.exercise);
         this.isAfterAssessmentDueDate = !this.exercise.assessmentDueDate || moment().isAfter(this.exercise.assessmentDueDate);
         this.exerciseCategories = this.exerciseService.convertExerciseCategoriesFromServer(this.exercise);
-        if (this.exercise.type === ExerciseType.PROGRAMMING) {
+
+        // This is only needed in the local environment
+        if (!this.inProductionEnvironment && this.exercise.type === ExerciseType.PROGRAMMING) {
             this.getProgrammingExerciseAndChecksIfTheSetupHasVCSandCIConnection();
         }
+
         this.subscribeForNewResults();
     }
 
@@ -322,6 +325,8 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
      * This functionality is only for testing purposes(noVersionControlAndContinuousIntegrationAvailable)
      */
     getProgrammingExerciseAndChecksIfTheSetupHasVCSandCIConnection() {
+        // TODO: this REST call is not necessary, instead we could send this information as part of the exercise (transient property) for programming exercises with
+        // the exercise details call that is executed anyway
         this.courseExerciseSubmissionResultSimulationService.getProgrammingExercise(this.exerciseId).subscribe((programmingExercise) => {
             this.noVersionControlAndContinuousIntegrationServerAvailable = this.programmingExerciseSimulationUtils.noVersionControlAndContinuousIntegrationAvailableCheck(
                 programmingExercise.testRepositoryUrl,
