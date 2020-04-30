@@ -9,6 +9,7 @@ describe('FileUploadSubmission Service', () => {
     let service: FileUploadSubmissionService;
     let httpMock: HttpTestingController;
     let elemDefault: FileUploadSubmission;
+
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [HttpClientTestingModule],
@@ -24,7 +25,7 @@ describe('FileUploadSubmission Service', () => {
         it('should find an element', async () => {
             const returnedFromService = Object.assign({}, elemDefault);
             service
-                .find(123)
+                .get(123)
                 .pipe(take(1))
                 .subscribe((resp) => expect(resp).toMatchObject({ body: elemDefault }));
 
@@ -32,7 +33,7 @@ describe('FileUploadSubmission Service', () => {
             req.flush(JSON.stringify(returnedFromService));
         });
 
-        it('should create a FileUploadSubmission', async () => {
+        it('should create/update a FileUploadSubmission', async () => {
             const returnedFromService = Object.assign(
                 {
                     id: 0,
@@ -41,31 +42,14 @@ describe('FileUploadSubmission Service', () => {
             );
             const expected = Object.assign({}, returnedFromService);
             service
-                .create(new FileUploadSubmission(null))
+                .update(new FileUploadSubmission(), 1, null)
                 .pipe(take(1))
                 .subscribe((resp) => expect(resp).toMatchObject({ body: expected }));
             const req = httpMock.expectOne({ method: 'POST' });
             req.flush(JSON.stringify(returnedFromService));
         });
 
-        it('should update a FileUploadSubmission', async () => {
-            const returnedFromService = Object.assign(
-                {
-                    filePath: 'BBBBBB',
-                },
-                elemDefault,
-            );
-
-            const expected = Object.assign({}, returnedFromService);
-            service
-                .update(expected)
-                .pipe(take(1))
-                .subscribe((resp) => expect(resp).toMatchObject({ body: expected }));
-            const req = httpMock.expectOne({ method: 'PUT' });
-            req.flush(JSON.stringify(returnedFromService));
-        });
-
-        it('should return a list of FileUploadSubmission', async () => {
+        it('should return a list of FileUploadSubmission for an exercise', async () => {
             const returnedFromService = Object.assign(
                 {
                     filePath: 'BBBBBB',
@@ -74,7 +58,7 @@ describe('FileUploadSubmission Service', () => {
             );
             const expected = Object.assign({}, returnedFromService);
             service
-                .query(expected)
+                .getFileUploadSubmissionsForExercise(1, expected)
                 .pipe(
                     take(1),
                     map((resp) => resp.body),
@@ -83,13 +67,6 @@ describe('FileUploadSubmission Service', () => {
             const req = httpMock.expectOne({ method: 'GET' });
             req.flush(JSON.stringify([returnedFromService]));
             httpMock.verify();
-        });
-
-        it('should delete a FileUploadSubmission', async () => {
-            service.delete(123).subscribe((resp) => expect(resp.ok));
-
-            const req = httpMock.expectOne({ method: 'DELETE' });
-            req.flush({ status: 200 });
         });
     });
 
