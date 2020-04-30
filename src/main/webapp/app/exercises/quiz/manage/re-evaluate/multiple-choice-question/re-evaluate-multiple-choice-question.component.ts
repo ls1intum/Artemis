@@ -39,16 +39,30 @@ export class ReEvaluateMultipleChoiceQuestionComponent implements OnInit, AfterV
     // Create Backup Question for resets
     backupQuestion: MultipleChoiceQuestion;
 
+    /**
+     * Constructs the re-evaluate component.
+     * @param artemisMarkdown the ArtemisMarkdownService
+     */
     constructor(private artemisMarkdown: ArtemisMarkdownService) {}
 
+    /**
+     * Do nothing
+     */
     ngOnInit(): void {}
 
+    /**
+     * Setup editor after view init
+     */
     ngAfterViewInit(): void {
         /** Setup editor **/
         requestAnimationFrame(this.setupQuestionEditor.bind(this));
         this.setupAnswerEditors();
     }
 
+    /**
+     * Backup changed questions before applying changes.
+     * @param changes the changes that should be applied.
+     */
     ngOnChanges(changes: SimpleChanges): void {
         if (changes.question && changes.question.currentValue != null) {
             this.backupQuestion = Object.assign({}, this.question);
@@ -56,8 +70,7 @@ export class ReEvaluateMultipleChoiceQuestionComponent implements OnInit, AfterV
     }
 
     /**
-     * @function setupQuestionEditor
-     * @desc Setup Question text editor
+     * Setup Question text editor
      */
     setupQuestionEditor() {
         // Default editor settings for inline markup editor
@@ -83,8 +96,7 @@ export class ReEvaluateMultipleChoiceQuestionComponent implements OnInit, AfterV
     }
 
     /**
-     * @function
-     * @desc Setup answerOption editors
+     * Setup answerOption editors
      */
     setupAnswerEditors() {
         /** Array with all answer option Ace Editors
@@ -121,8 +133,7 @@ export class ReEvaluateMultipleChoiceQuestionComponent implements OnInit, AfterV
     }
 
     /**
-     * @function generateAnswerMarkdown
-     * @desc Generate the markdown text for this question
+     * Generate the markdown text for this question
      *
      * The markdown is generated according to these rules:
      *
@@ -137,8 +148,7 @@ export class ReEvaluateMultipleChoiceQuestionComponent implements OnInit, AfterV
     }
 
     /**
-     * @function parseQuestionMarkdown
-     * @desc Parse the question-markdown and apply the result to the question's data
+     * Parse the question-markdown and apply the result to the question's data
      *
      * The markdown rules are as follows:
      *
@@ -156,8 +166,7 @@ export class ReEvaluateMultipleChoiceQuestionComponent implements OnInit, AfterV
     }
 
     /**
-     * @function
-     * @desc Parse the an answer markdown and apply the result to the question's data
+     * Parse the an answer markdown and apply the result to the question's data
      *
      * The markdown rules are as follows:
      *
@@ -183,40 +192,35 @@ export class ReEvaluateMultipleChoiceQuestionComponent implements OnInit, AfterV
     }
 
     /**
-     * @function
-     * @desc Delete this question from the quiz
+     * Delete this question from the quiz
      */
     delete() {
         this.questionDeleted.emit();
     }
 
     /**
-     * @function moveUp
-     * @desc Move this question one position up
+     * Move this question one position up
      */
     moveUp() {
         this.questionMoveUp.emit();
     }
 
     /**
-     * @function moveDown
-     * @desc Move this question one position down
+     * Move this question one position down
      */
     moveDown() {
         this.questionMoveDown.emit();
     }
 
     /**
-     * @function
-     * @desc Resets the question title
+     * Resets the question title
      */
     resetQuestionTitle() {
         this.question.title = this.backupQuestion.title;
     }
 
     /**
-     * @function resetQuestionText
-     * @desc Resets the question text
+     * Resets the question text
      */
     resetQuestionText() {
         this.question.text = this.backupQuestion.text;
@@ -226,8 +230,7 @@ export class ReEvaluateMultipleChoiceQuestionComponent implements OnInit, AfterV
     }
 
     /**
-     * @function resetQuestion
-     * @desc Resets the whole question
+     * Resets the whole question
      */
     resetQuestion() {
         this.resetQuestionTitle();
@@ -241,8 +244,7 @@ export class ReEvaluateMultipleChoiceQuestionComponent implements OnInit, AfterV
     }
 
     /**
-     * @function resetAnswer
-     * @desc Resets the whole answer
+     * Resets the whole answer
      * @param answer {AnswerOption} the answer, which will be reset
      */
     resetAnswer(answer: AnswerOption) {
@@ -256,8 +258,7 @@ export class ReEvaluateMultipleChoiceQuestionComponent implements OnInit, AfterV
     }
 
     /**
-     * @function deleteAnswer
-     * @desc Delete the answer
+     * Delete the answer
      * @param answer {AnswerOption} the Answer which should be deleted
      */
     deleteAnswer(answer: AnswerOption) {
@@ -266,8 +267,7 @@ export class ReEvaluateMultipleChoiceQuestionComponent implements OnInit, AfterV
     }
 
     /**
-     * @function setAnswerInvalid
-     * @desc Set the answer invalid
+     * Set the answer invalid
      * @param  answer {AnswerOption} the Answer which should be deleted
      */
     setAnswerInvalid(answer: AnswerOption) {
@@ -277,8 +277,7 @@ export class ReEvaluateMultipleChoiceQuestionComponent implements OnInit, AfterV
     }
 
     /**
-     * @function isAnswerInvalid
-     * @desc Checks if the given answer is invalid
+     * Checks if the given answer is invalid
      * @param  answer {AnswerOption} the Answer which should be checked
      * @return {boolean} true if the answer is invalid
      */
