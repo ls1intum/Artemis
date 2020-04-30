@@ -89,7 +89,8 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
     }
 
     /**
-     * @return if practiceMode is available
+     * check if practiceMode is available
+     * @return {boolean}
      */
     isPracticeModeAvailable(): boolean {
         const quizExercise = this.exercise as QuizExercise;
@@ -104,7 +105,8 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
     }
 
     /**
-     * @return if onlineEditor is allowed
+     * check if onlineEditor is allowed
+     * @return {boolean}
      */
     isOnlineEditorAllowed(): boolean {
         return (this.exercise as ProgrammingExercise).allowOnlineEditor;

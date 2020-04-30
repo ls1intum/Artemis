@@ -215,7 +215,8 @@ export class NotificationService {
     }
 
     /**
-     * @return notificationObserver
+     * get the notificationObserver
+     * @return {BehaviorSubject<Notification}
      */
     subscribeToSocketMessages(): BehaviorSubject<Notification | null> {
         return this.notificationObserver;
