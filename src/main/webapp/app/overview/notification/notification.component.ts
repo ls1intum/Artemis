@@ -76,6 +76,7 @@ export class NotificationComponent implements OnInit, OnDestroy {
     }
 
     /**
+     * get id of the item
      * @param {number} index
      * @param {User} item
      * @return id of item
@@ -85,8 +86,9 @@ export class NotificationComponent implements OnInit, OnDestroy {
     }
 
     /**
+     * if systemNotification is active
      * @param {SystemNotification} systemNotification
-     * @return if systemNotification is active
+     * @return {boolean}
      */
     isNotificationActive(systemNotification: SystemNotification) {
         return systemNotification.notificationDate!.isBefore(moment()) && systemNotification.expireDate!.isAfter(moment());
