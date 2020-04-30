@@ -138,10 +138,9 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         this.exercise.participationStatus = participationStatus(this.exercise);
         this.isAfterAssessmentDueDate = !this.exercise.assessmentDueDate || moment().isAfter(this.exercise.assessmentDueDate);
         this.exerciseCategories = this.exerciseService.convertExerciseCategoriesFromServer(this.exercise);
-
         // This is only needed in the local environment
-        if (!this.inProductionEnvironment && this.exercise.type === ExerciseType.PROGRAMMING) {
-            this.getProgrammingExerciseAndChecksIfTheSetupHasVCSandCIConnection();
+        if (!this.inProductionEnvironment && this.exercise.type === ExerciseType.PROGRAMMING && this.exercise.testRepositoryUrl !== undefined) {
+            this.checksIfTheSetupHasVCSandCIConnection(this.exercise.testRepositoryUrl);
         }
 
         this.subscribeForNewResults();
@@ -321,17 +320,14 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     // ################## ONLY FOR LOCAL TESTING PURPOSE -- START ##################
 
     /**
-     * asks the server for the programming exercise with the provided exercise ID
+     * checks if the testRepositoryUrl is the url of an programming exercise without the connection
+     * to a version control an continuous integration server
      * This functionality is only for testing purposes(noVersionControlAndContinuousIntegrationAvailable)
      */
-    getProgrammingExerciseAndChecksIfTheSetupHasVCSandCIConnection() {
-        // TODO: this REST call is not necessary, instead we could send this information as part of the exercise (transient property) for programming exercises with
-        // the exercise details call that is executed anyway
-        this.courseExerciseSubmissionResultSimulationService.getProgrammingExercise(this.exerciseId).subscribe((programmingExercise) => {
-            this.noVersionControlAndContinuousIntegrationServerAvailable = this.programmingExerciseSimulationUtils.noVersionControlAndContinuousIntegrationAvailableCheck(
-                programmingExercise.testRepositoryUrl,
-            );
-        });
+    checksIfTheSetupHasVCSandCIConnection(testRepositoryUrl: string) {
+        this.noVersionControlAndContinuousIntegrationServerAvailable = this.programmingExerciseSimulationUtils.noVersionControlAndContinuousIntegrationAvailableCheck(
+            testRepositoryUrl,
+        );
     }
 
     /**
