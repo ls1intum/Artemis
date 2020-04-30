@@ -19,6 +19,10 @@ export class CategorySelectorComponent implements OnChanges {
     @Output() selectedCategories = new EventEmitter<ExerciseCategory[]>();
     uniqueCategories: ExerciseCategory[] = [];
 
+    /**
+     * set unique categories on changes
+     * @param {SimpleChanges} changes
+     */
     ngOnChanges(changes: SimpleChanges) {
         if (!this.existingCategories) {
             return;
@@ -33,11 +37,20 @@ export class CategorySelectorComponent implements OnChanges {
         });
     }
 
+    /**
+     * open colorSelector for tagItem
+     * @param {MouseEvent} event
+     * @param {ExerciseCategory} tagItem
+     */
     openColorSelector(event: MouseEvent, tagItem: ExerciseCategory) {
         this.selectedCategory = tagItem;
         this.colorSelector.openColorSelector(event);
     }
 
+    /**
+     * set color of selected category
+     * @param {string} selectedColor
+     */
     onSelectedColor(selectedColor: string) {
         this.selectedCategory.color = selectedColor;
         this.exerciseCategories = this.exerciseCategories.map((el) => {
@@ -49,6 +62,10 @@ export class CategorySelectorComponent implements OnChanges {
         this.selectedCategories.emit(this.exerciseCategories);
     }
 
+    /**
+     * set color if not selected and add exerciseCategory
+     * @param {ExerciseCategory} exerciseCategory
+     */
     onItemAdded(exerciseCategory: ExerciseCategory) {
         if (!exerciseCategory.color) {
             const randomIndex = Math.floor(Math.random() * this.categoryColors.length);
@@ -58,6 +75,10 @@ export class CategorySelectorComponent implements OnChanges {
         this.selectedCategories.emit(this.exerciseCategories);
     }
 
+    /**
+     * cancel colorSelector and remove exerciseCategory
+     * @param {ExerciseCategory} tagItem
+     */
     onItemRemove(tagItem: ExerciseCategory) {
         this.colorSelector.cancelColorSelector();
         this.exerciseCategories = this.exerciseCategories.filter((el) => el !== tagItem);

@@ -13,6 +13,10 @@ export interface StudentQuestionAction {
     studentQuestion: StudentQuestion;
 }
 
+/**
+ * Delete QuestionActionName
+ * @enum {number}
+ */
 export enum QuestionActionName {
     DELETE,
 }
@@ -42,6 +46,9 @@ export class StudentQuestionRowComponent implements OnInit, OnDestroy {
 
     constructor(private studentQuestionAnswerService: StudentQuestionAnswerService, private studentQuestionService: StudentQuestionService) {}
 
+    /**
+     * check if user is author of question and sort answers
+     */
     ngOnInit(): void {
         if (this.user) {
             this.isQuestionAuthor = this.studentQuestion.author.id === this.user.id;
@@ -76,8 +83,14 @@ export class StudentQuestionRowComponent implements OnInit, OnDestroy {
             });
     }
 
+    /**
+     * do nothing for now
+     */
     ngOnDestroy(): void {}
 
+    /**
+     * toggles editMode and sets the studentQuestionText
+     */
     toggleQuestionEditMode(): void {
         this.studentQuestionText = this.studentQuestion.questionText;
         this.isEditMode = !this.isEditMode;
