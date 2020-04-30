@@ -8,11 +8,21 @@ import { BaseEntity } from 'app/shared/model/base-entity';
 import { LocalStorageService } from 'ngx-webstorage';
 import { SortByPipe } from 'app/shared/pipes/sort-by.pipe';
 
+/**
+ * Enum for ascending and descending order.
+ * @readonly
+ * @enum {string}
+ */
 enum SortOrder {
     ASC = 'asc',
     DESC = 'desc',
 }
 
+/**
+ * Enum for the sort icon.
+ * @readonly
+ * @enum {string}
+ */
 enum SortIcon {
     NONE = 'sort',
     ASC = 'sort-up',
@@ -132,6 +142,9 @@ export class DataTableComponent implements OnInit, OnChanges {
         };
     }
 
+    /**
+     * Life cycle hook called by Angular to indicate that Angular is done creating the component
+     */
     ngOnInit() {
         this.pagingValue = this.getCachedEntitiesPerPage();
 
