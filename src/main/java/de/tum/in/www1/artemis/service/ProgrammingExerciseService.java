@@ -777,4 +777,16 @@ public class ProgrammingExerciseService {
         log.debug("countSubmissionsByCourseIdSubmitted took " + (System.currentTimeMillis() - start) + "ms");
         return count;
     }
+
+    /**
+     * Sets the transient attribute "testRepositoryUrl" if the exercises is a programming exercise
+     *
+     * @param exercise the exercise for which to set the url
+     */
+    public void setTestRepositoryUrlForProgrammingExercise(Exercise exercise) {
+        if (exercise instanceof ProgrammingExercise) {
+            boolean isLocalSimulation = (((ProgrammingExercise) exercise).getTestRepositoryUrl()).contains("artemislocalhost");
+            ((ProgrammingExercise) exercise).setIsLocalSimulation(isLocalSimulation);
+        }
+    }
 }

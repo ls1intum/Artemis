@@ -322,7 +322,7 @@ public class ExerciseResource {
                 exercise.addParticipation(participation);
             }
 
-            this.exerciseService.setTestRepositoryUrlForProgrammingExercise(exercise);
+            this.programmingExerciseService.setTestRepositoryUrlForProgrammingExercise(exercise);
             // TODO: we should also check that the submissions do not contain sensitive data
 
             // remove sensitive information for students
