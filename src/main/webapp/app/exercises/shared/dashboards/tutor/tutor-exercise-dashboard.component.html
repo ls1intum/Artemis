@@ -104,7 +104,7 @@
 
             <p [innerHTML]="formattedGradingInstructions"></p>
         </div>
-        <jhi-structured-grading-instructions-assessment-layout [criteria]="exercise.gradingCriteria"></jhi-structured-grading-instructions-assessment-layout>
+        <jhi-structured-grading-instructions-assessment-layout [readonly]="true" [criteria]="exercise.gradingCriteria"></jhi-structured-grading-instructions-assessment-layout>
     </div>
 
     <div class="col-12 text-center" *ngIf="tutorParticipationStatus === NOT_PARTICIPATED">
@@ -417,7 +417,7 @@
                 </div>
             </ng-container>
         </div>
-        <jhi-collapsable-assessment-instructions [exercise]="exercise" [collapsed]="true"></jhi-collapsable-assessment-instructions>
+        <jhi-collapsable-assessment-instructions [readOnly]="true" [exercise]="exercise" [collapsed]="true"></jhi-collapsable-assessment-instructions>
     </div>
 
     <h2>{{ 'artemisApp.instructorExerciseDashboard.leaderboardTitle' | translate }}</h2>

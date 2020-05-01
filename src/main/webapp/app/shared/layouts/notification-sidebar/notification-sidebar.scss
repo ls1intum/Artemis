@@ -1,0 +1,97 @@
+.light-button {
+    border: 0;
+    background-color: transparent;
+}
+
+.notification-overlay {
+    display: none;
+    z-index: 998;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(70, 70, 70, 0.5);
+    &.show {
+        display: block;
+    }
+}
+
+.notification-sidebar {
+    width: 280px;
+    position: fixed;
+    top: 0;
+    right: -285px;
+    bottom: 0;
+    z-index: 999;
+    transition: 0.3s;
+    overflow-y: auto;
+    background-color: #ffffff;
+    box-shadow: 0 0 4px 0 rgba(136, 136, 136, 1);
+    &.show {
+        right: 0;
+        transition: 0.3s;
+    }
+    > div:nth-child(1) {
+        display: flex;
+        padding: 15px 18px 0 18px;
+        > div {
+            &:nth-child(1) {
+                flex: 1;
+                padding-top: 6px;
+                a {
+                    font-weight: normal;
+                    color: #999999;
+                    &:hover {
+                        text-decoration: none;
+                    }
+                }
+                fa-icon {
+                    margin-right: 4px;
+                }
+            }
+            &:nth-child(2) {
+                button {
+                    font-size: 1.4rem;
+                    color: #757575;
+                }
+            }
+        }
+    }
+    h3 {
+        font-size: 1.15rem;
+        font-weight: 600;
+        text-align: center;
+        margin: -35px 0 0 0;
+        padding: 5px 18px;
+    }
+    > a {
+        font-weight: normal;
+        color: #555555;
+        text-align: right;
+        display: block;
+        margin: 10px 18px 15px 18px;
+    }
+    .notification-item {
+        cursor: pointer;
+        padding: 18px 18px 15px 18px;
+        &:nth-child(even) {
+            background-color: #f1f1f1;
+        }
+        &:hover {
+            background-color: rgba(62, 138, 204, 0.2);
+        }
+        h5 {
+            font-size: 1rem;
+        }
+        .notification-info {
+            font-size: 0.8rem;
+            color: #999999;
+            text-align: right;
+        }
+    }
+    .no-notifications {
+        display: block;
+        padding: 20px 18px;
+    }
+}

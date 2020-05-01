@@ -45,6 +45,7 @@
             [criteria]="this.exercise.gradingCriteria"
             [toggleCollapse]="toggleCollapse.bind(this)"
             toggleCollapseId="submission"
+            [readOnly]="readOnly"
         >
             <div resizingbar class="resizing-bar"><span></span></div>
         </jhi-resizable-instructions>
@@ -98,8 +99,10 @@
                 *ngIf="!isAtLeastInstructor || readOnly || toComplete"
                 [problemStatement]="this.exercise.problemStatement"
                 [gradingInstructions]="this.exercise.gradingInstructions"
+                [criteria]="this.exercise.gradingCriteria"
                 [sampleSolution]="this.exercise.sampleSolution"
                 [toggleCollapse]="toggleCollapse.bind(this)"
+                [readOnly]="readOnly"
                 toggleCollapseId="assessment"
             >
                 <div resizingbar class="resizing-bar-assessment"><span></span></div>
