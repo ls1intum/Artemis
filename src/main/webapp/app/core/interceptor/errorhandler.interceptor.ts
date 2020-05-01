@@ -8,6 +8,14 @@ import { tap } from 'rxjs/operators';
 export class ErrorHandlerInterceptor implements HttpInterceptor {
     constructor(private eventManager: JhiEventManager) {}
 
+    /**
+     * Identifies and handles a given HTTP request. If the request's error status is not 401 and the error message is empty
+     * or the error url includes '/api/account' the httpError is broadcasted to the observer.
+     * @param request The outgoing request object to handle.
+     * @param next The next interceptor in the chain, or the backend
+     * if no interceptors remain in the chain.
+     * @returns An observable of the event stream.
+     */
     intercept(request: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
         return next.handle(request).pipe(
             tap(
