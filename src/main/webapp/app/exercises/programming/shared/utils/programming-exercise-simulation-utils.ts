@@ -7,7 +7,7 @@ import { ProgrammingExerciseSimulationService } from 'app/exercises/programming/
 
 @Injectable({ providedIn: 'root' })
 export class ProgrammingExerciseSimulationUtils {
-    constructor(private programmingExerciseSimulationService: ProgrammingExerciseSimulationService) {}
+    constructor() {}
 
     /**
      * Checks if the url includes the string "nolocalsetup', which is an indication
