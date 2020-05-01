@@ -1,6 +1,7 @@
 import { Component, ElementRef, EventEmitter, forwardRef, Input, Output, ViewChild } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { isMoment, Moment } from 'moment';
+import * as moment from 'moment';
 
 @Component({
     selector: 'jhi-date-time-picker',
@@ -46,7 +47,8 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
     @Input() max: Moment; // Dates after this date are not selectable.
     @Output() valueChange = new EventEmitter();
 
-    _onChange = () => {};
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    _onChange = (val: Moment) => {};
 
     valueChanged() {
         this.valueChange.emit();
@@ -60,13 +62,14 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
             this.value = value;
         }
     }
-    registerOnTouched() {}
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    registerOnTouched(fn: any) {}
     registerOnChange(fn: any) {
         this._onChange = fn;
     }
     updateField(newValue: Moment) {
         this.value = newValue;
-        this._onChange();
+        this._onChange(moment(this.value));
         this.valueChanged();
     }
 }
