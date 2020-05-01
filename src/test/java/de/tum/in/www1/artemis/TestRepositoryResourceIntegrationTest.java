@@ -91,6 +91,9 @@ public class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegra
         programmingExerciseRepository.save(exercise);
         var files = request.getMap(testRepoBaseUrl + exercise.getId() + "/files", HttpStatus.OK, String.class, FileType.class);
         assertThat(files).isNotEmpty();
+        for (String key : files.keySet()) {
+            assertThat(Files.exists(Paths.get(testRepo.localRepoFile + "/" + key))).isTrue();
+        }
     }
 
     @Test

@@ -16,7 +16,7 @@ public class LocalRepository {
 
     public Git localGit;
 
-    Git originGit;
+    public Git originGit;
 
     public void configureRepos(String localRepoFileName, String originRepoFileName) throws Exception {
 
