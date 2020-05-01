@@ -15,6 +15,6 @@ import de.tum.in.www1.artemis.domain.modeling.ApollonDiagram;
 @Repository
 public interface ApollonDiagramRepository extends JpaRepository<ApollonDiagram, Long> {
 
-    @Query("SELECT a FROM ApollonDiagram a WHERE a.courseId = :#{#courseId}")
+    @Query("SELECT a FROM ApollonDiagram a WHERE a.courseId = :#{#courseId} OR a.courseId is null")
     List<ApollonDiagram> findDiagramsByCourse(Long courseId);
 }
