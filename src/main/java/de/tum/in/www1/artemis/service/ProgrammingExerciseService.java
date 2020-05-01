@@ -779,14 +779,14 @@ public class ProgrammingExerciseService {
     }
 
     /**
-     * Sets the transient attribute "testRepositoryUrl" if the exercises is a programming exercise
-     *
-     * @param exercise the exercise for which to set the url
+     * Sets the transient attribute "isLocalSimulation" if the exercises is a programming exercise
+     * and the testRepositoryUrl contains the String "artemislocalhost" which is the indicator that the programming exercise has
+     * no connection to a version control and continuous integration server
+     * @param exercise the exercise for which to set if it is a local simulation
      */
-    public void setTestRepositoryUrlForProgrammingExercise(Exercise exercise) {
-        if (exercise instanceof ProgrammingExercise) {
-            boolean isLocalSimulation = (((ProgrammingExercise) exercise).getTestRepositoryUrl()).contains("artemislocalhost");
-            ((ProgrammingExercise) exercise).setIsLocalSimulation(isLocalSimulation);
+    public void checksAndSetsIfProgrammingExerciseIsLocalSimulation(Exercise exercise) {
+        if (exercise instanceof ProgrammingExercise && (((ProgrammingExercise) exercise).getTestRepositoryUrl()).contains("artemislocalhost")) {
+            ((ProgrammingExercise) exercise).setIsLocalSimulation(true);
         }
     }
 }

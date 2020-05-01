@@ -61,7 +61,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
      * variables are only for testing purposes(noVersionControlAndContinuousIntegrationAvailable)
      */
     public inProductionEnvironment: boolean;
-    public noVersionControlAndContinuousIntegrationServerAvailable: boolean;
+    public noVersionControlAndContinuousIntegrationServerAvailable = false;
     public wasSubmissionSimulated = false;
 
     constructor(
@@ -140,8 +140,8 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         this.exerciseCategories = this.exerciseService.convertExerciseCategoriesFromServer(this.exercise);
 
         // This is only needed in the local environment
-        if (!this.inProductionEnvironment && this.exercise.type === ExerciseType.PROGRAMMING && (<ProgrammingExercise>this.exercise).isLocalSimulation !== undefined) {
-            this.noVersionControlAndContinuousIntegrationServerAvailable = (<ProgrammingExercise>this.exercise).isLocalSimulation!;
+        if (!this.inProductionEnvironment && this.exercise.type === ExerciseType.PROGRAMMING && (<ProgrammingExercise>this.exercise).isLocalSimulation) {
+            this.noVersionControlAndContinuousIntegrationServerAvailable = true;
         }
 
         this.subscribeForNewResults();
