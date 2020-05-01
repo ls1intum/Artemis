@@ -35,7 +35,9 @@
                 }
             },
             "title": "Titel",
-            "jsonRepresentation": "JSON-Repräsentation"
+            "jsonRepresentation": "JSON-Repräsentation",
+            "courseId": "Kurs ID",
+            "noCourseSet": "ohne Kurs"
         }
     }
 }

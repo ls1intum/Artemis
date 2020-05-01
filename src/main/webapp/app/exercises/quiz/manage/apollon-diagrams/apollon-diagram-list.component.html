@@ -21,7 +21,7 @@
         <thead>
             <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" [callback]="callback">
                 <th jhiSortBy="id"><span jhiTranslate="global.field.id">ID</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon></th>
-                <th jhiSortBy="courseId"><span>Course ID</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon></th>
+                <th jhiSortBy="courseId"><span jhiTranslate="artemisApp.apollonDiagram.courseId">Course ID</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon></th>
                 <th jhiSortBy="title"><span jhiTranslate="artemisApp.exercise.title">Title</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon></th>
                 <th jhiSortBy="diagramType"><span jhiTranslate="artemisApp.modelingExercise.diagramType">Diagram Type</span>&nbsp;<fa-icon [icon]="'sort'"></fa-icon></th>
                 <th jhiTranslate="artemisApp.exercise.actions">Actions</th>
@@ -33,7 +33,8 @@
                     <a [routerLink]="['/course-management', 'apollon-diagrams', apollonDiagram.id]">{{ apollonDiagram.id }}</a>
                 </td>
                 <td>
-                    <a>{{ apollonDiagram.courseId == null ? "no course" : apollonDiagram.courseId }}</a>
+                    <span *ngIf="apollonDiagram.courseId == null" jhiTranslate="artemisApp.apollonDiagram.noCourseSet"></span>
+                    <span *ngIf="apollonDiagram.courseId != null">{{ apollonDiagram.courseId }}</span>
                 </td>
                 <td>{{ getTitleForApollonDiagram(apollonDiagram) }}</td>
                 <td jhiTranslate="{{ 'artemisApp.DiagramType.' + apollonDiagram.diagramType }}">{{ apollonDiagram.diagramType }}</td>
