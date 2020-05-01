@@ -35,6 +35,7 @@
     </div>
 
     <div class="row mt-3">
+        <jhi-unreferenced-feedback [assessmentsAreValid]="assessmentsAreValid"></jhi-unreferenced-feedback>
         <jhi-assessment-general-feedback class="col-md-6" [(feedback)]="generalFeedback" (feedbackChange)="validateFeedback()"></jhi-assessment-general-feedback>
     </div>
 </ng-template>
