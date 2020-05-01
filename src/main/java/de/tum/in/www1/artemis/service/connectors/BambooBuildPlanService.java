@@ -126,7 +126,7 @@ public class BambooBuildPlanService {
         case JAVA: {
             // Do not run the builds in extra docker containers if the dev-profile is active
             if (!activeProfiles.contains(JHipsterConstants.SPRING_PROFILE_DEVELOPMENT)) {
-                defaultJob.dockerConfiguration(new DockerConfiguration().image("ls1tum/artemis-maven-template"));
+                defaultJob.dockerConfiguration(new DockerConfiguration().image("ls1tum/artemis-maven-template:latest"));
             }
             if (!sequentialBuildRuns) {
                 return defaultStage
@@ -142,7 +142,7 @@ public class BambooBuildPlanService {
         case C: {
             // Do not run the builds in extra docker containers if the dev-profile is active
             if (!activeProfiles.contains(JHipsterConstants.SPRING_PROFILE_DEVELOPMENT)) {
-                defaultJob.dockerConfiguration(new DockerConfiguration().image("ls1tum/artemis-python-docker"));
+                defaultJob.dockerConfiguration(new DockerConfiguration().image("ls1tum/artemis-python-docker:latest"));
             }
             final var testParserTask = new TestParserTask(TestParserTaskProperties.TestType.JUNIT).resultDirectories("test-reports/*results.xml");
             var tasks = readScriptTasksFromTemplate(programmingLanguage, sequentialBuildRuns == null ? false : sequentialBuildRuns);
