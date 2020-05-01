@@ -18,6 +18,10 @@ export interface SelectionRectangle {
     height: number;
 }
 
+/**
+ * Enum for different event types of text select directive.
+ * @type {{SelectionChange: string, MouseUp: string, MouseDown: string}}
+ */
 enum EventType {
     SelectionChange = 'selectionchange',
     MouseUp = 'mouseup',
@@ -34,6 +38,9 @@ export class TextSelectDirective implements OnInit, OnDestroy {
 
     constructor(private elementRef: ElementRef, private zone: NgZone) {}
 
+    /**
+     * Init text select directive by adding event listenes mouseDown and selectionChange event listeners to element.
+     */
     public ngOnInit(): void {
         // Since not all interactions will lead to an event that is meaningful to the
         // calling context, we want to setup the DOM bindings outside of the Angular
@@ -52,6 +59,9 @@ export class TextSelectDirective implements OnInit, OnDestroy {
         });
     }
 
+    /**
+     * Unbind all event listeners on destruction.
+     */
     public ngOnDestroy(): void {
         // Unbind all handlers, even ones that may not be bounds at this moment.
         this.elementRef.nativeElement.removeEventListener(EventType.MouseDown, this.handleMouseDown, false);

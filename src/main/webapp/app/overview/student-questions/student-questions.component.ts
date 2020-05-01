@@ -31,6 +31,9 @@ export class StudentQuestionsComponent implements OnInit, OnDestroy {
 
     constructor(private accountService: AccountService, private studentQuestionService: StudentQuestionService, private exerciseService: ExerciseService) {}
 
+    /**
+     * get the current user and check if he is at least a tutor for this course
+     */
     ngOnInit(): void {
         this.accountService.identity().then((user: User) => {
             this.currentUser = user;
@@ -46,8 +49,15 @@ export class StudentQuestionsComponent implements OnInit, OnDestroy {
         }
     }
 
+    /**
+     * do nothing for now
+     */
     ngOnDestroy(): void {}
 
+    /**
+     * react to delete action
+     * @param {StudentQuestionAction} action
+     */
     interactQuestion(action: StudentQuestionAction) {
         switch (action.name) {
             case QuestionActionName.DELETE:
@@ -56,15 +66,25 @@ export class StudentQuestionsComponent implements OnInit, OnDestroy {
         }
     }
 
+    /**
+     * toggle editMode and reset the selected studentQuestion
+     */
     toggleEditMode(): void {
         this.isEditMode = !this.isEditMode;
         this.selectedStudentQuestion = null;
     }
 
+    /**
+     * delete the studentQuestion from the list of studentQuestions
+     * @param {StudentQuestion} studentQuestion
+     */
     deleteQuestionFromList(studentQuestion: StudentQuestion) {
         this.studentQuestions = this.studentQuestions.filter((el) => el.id !== studentQuestion.id);
     }
 
+    /**
+     * add a new studentQuestion and reset temporary values
+     */
     addQuestion(): void {
         const studentQuestion = new StudentQuestion();
         studentQuestion.questionText = this.studentQuestionText;

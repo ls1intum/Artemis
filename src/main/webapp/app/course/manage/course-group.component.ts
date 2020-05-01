@@ -58,14 +58,24 @@ export class CourseGroupComponent implements OnInit, OnDestroy {
         private userService: UserService,
     ) {}
 
+    /**
+     * Init the course group component by loading all users of course group.
+     */
     ngOnInit() {
         this.loadAll();
     }
 
+    /**
+     * Unsubscribe dialog error source on component destruction.
+     */
     ngOnDestroy() {
         this.dialogErrorSource.unsubscribe();
     }
 
+    /**
+     * Load all users of given cours group.
+     * Redirect to course-management when given course group is in predefined standard course groups.
+     */
     loadAll() {
         this.isLoading = true;
         this.route.data.subscribe(({ course }) => {

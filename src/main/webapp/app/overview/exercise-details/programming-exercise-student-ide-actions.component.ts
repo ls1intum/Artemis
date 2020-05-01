@@ -45,6 +45,9 @@ export class ProgrammingExerciseStudentIdeActionsComponent implements OnInit {
         private route: ActivatedRoute,
     ) {}
 
+    /**
+     * get ideState and submit changes if withIdeSubmit set in route query
+     */
     ngOnInit(): void {
         this.javaBridge.state().subscribe((ideState: OrionState) => (this.ideState = ideState));
         this.route.queryParams.subscribe((params) => {
@@ -127,6 +130,9 @@ export class ProgrammingExerciseStudentIdeActionsComponent implements OnInit {
         return this.exercise.studentParticipations && this.participationStatus(this.exercise) === this.INITIALIZED && this.exercise.studentParticipations.length > 0;
     }
 
+    /**
+     * resume programming exercise
+     */
     resumeProgrammingExercise() {
         this.exercise.loading = true;
         this.courseExerciseService
