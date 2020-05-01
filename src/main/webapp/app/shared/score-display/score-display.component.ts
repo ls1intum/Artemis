@@ -10,5 +10,8 @@ export class ScoreDisplayComponent implements OnInit {
     @Input() score: number;
     constructor() {}
 
+    /**
+     * Do nothing on initialization.
+     */
     ngOnInit() {}
 }
