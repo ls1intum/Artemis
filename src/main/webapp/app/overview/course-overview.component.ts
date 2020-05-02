@@ -77,6 +77,9 @@ export class CourseOverviewComponent implements OnInit {
         this.longTextShown = false;
     }
 
+    /**
+     * Receives team assignment changes and updates related attributes of the affected exercise
+     */
     subscribeToTeamAssignmentUpdates() {
         this.teamService.teamAssignmentUpdates.subscribe(
             (teamAssignment: TeamAssignmentPayload) => {
