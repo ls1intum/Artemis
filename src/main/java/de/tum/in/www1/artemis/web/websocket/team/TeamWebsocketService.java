@@ -12,6 +12,7 @@ import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Controller;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.web.websocket.dto.TeamAssignmentPayload;
 
 @Controller
@@ -38,11 +39,12 @@ public class TeamWebsocketService {
      * @param exercise Exercise for which the team assignment has been made
      * @param existingTeam Team before the update (null when a team was created)
      * @param updatedTeam Team after the update (null when a team was deleted)
+     * @param participationOfUpdatedTeam Optional participation of the updated team
      */
-    public void sendTeamAssignmentUpdate(Exercise exercise, @Nullable Team existingTeam, @Nullable Team updatedTeam) {
+    public void sendTeamAssignmentUpdate(Exercise exercise, @Nullable Team existingTeam, @Nullable Team updatedTeam, @Nullable StudentParticipation participationOfUpdatedTeam) {
         // Users in the existing team that are no longer in the updated team were unassigned => inform them
         if (existingTeam != null) {
-            TeamAssignmentPayload payload = new TeamAssignmentPayload(exercise, null);
+            TeamAssignmentPayload payload = new TeamAssignmentPayload(exercise, null, null);
             Set<User> unassignedUsers = new HashSet<>(existingTeam.getStudents());
             unassignedUsers.removeAll(Optional.ofNullable(updatedTeam).map(Team::getStudents).orElse(Set.of()));
             unassignedUsers.forEach(user -> messagingTemplate.convertAndSendToUser(user.getLogin(), assignmentTopic, payload));
@@ -50,7 +52,7 @@ public class TeamWebsocketService {
 
         // Users in the updated team that were not yet part of the existing team were newly assigned => inform them
         if (updatedTeam != null) {
-            TeamAssignmentPayload payload = new TeamAssignmentPayload(exercise, updatedTeam);
+            TeamAssignmentPayload payload = new TeamAssignmentPayload(exercise, updatedTeam, participationOfUpdatedTeam);
             Set<User> assignedUsers = new HashSet<>(updatedTeam.getStudents());
             assignedUsers.removeAll(Optional.ofNullable(existingTeam).map(Team::getStudents).orElse(Set.of()));
             assignedUsers.forEach(user -> messagingTemplate.convertAndSendToUser(user.getLogin(), assignmentTopic, payload));

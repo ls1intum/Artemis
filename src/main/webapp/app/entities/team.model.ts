@@ -1,6 +1,7 @@
 import { Moment } from 'moment';
 import { User } from 'app/core/user/user.model';
 import { BaseEntity } from 'app/shared/model/base-entity';
+import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 
 export enum TeamImportStrategyType {
     PURGE_EXISTING = 'PURGE_EXISTING',
@@ -15,7 +16,8 @@ export class OnlineTeamStudent {
 
 export class TeamAssignmentPayload {
     public exerciseId: number;
-    public teamId?: number;
+    public teamId: number | null;
+    public participation: StudentParticipation | null;
 }
 
 export class Team implements BaseEntity {

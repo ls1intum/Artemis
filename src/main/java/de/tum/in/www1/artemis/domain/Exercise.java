@@ -169,8 +169,9 @@ public abstract class Exercise implements Serializable {
     @Transient
     private Long numberOfOpenMoreFeedbackRequestsTransient;
 
+    // id of the team that the logged-in user is assigned to (only relevant if team mode is enabled)
     @Transient
-    private Long studentAssignedTeamIdTransient; // id of the team that the logged-in user is assigned to (only relevant if team mode is enabled)
+    private Long studentAssignedTeamIdTransient = Long.MIN_VALUE; // initial value indicating that transient has not been set (as opposed to being explicitly set to null)
 
     // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
     public Long getId() {
@@ -862,8 +863,13 @@ public abstract class Exercise implements Serializable {
         return releaseDate == null || releaseDate.isBefore(ZonedDateTime.now());
     }
 
-    public Long getStudentAssignedTeamId() {
-        return studentAssignedTeamIdTransient;
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    public Optional<Long> getStudentAssignedTeamId() {
+        // if transient has not been set (i.e. still has the initial value), return null to not include it in the payload
+        if (studentAssignedTeamIdTransient != null && studentAssignedTeamIdTransient == Long.MIN_VALUE) {
+            return null;
+        }
+        return Optional.ofNullable(studentAssignedTeamIdTransient);
     }
 
     public void setStudentAssignedTeamId(Long studentAssignedTeamIdTransient) {

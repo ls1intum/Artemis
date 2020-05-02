@@ -5,7 +5,10 @@ import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,6 +24,7 @@ import org.springframework.web.server.ResponseStatusException;
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.TeamImportStrategyType;
+import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.TeamRepository;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.dto.TeamSearchUserDTO;
@@ -97,7 +101,7 @@ public class TeamResource {
         team.setOwner(user); // the TA (or above) who creates the team, is the owner of the team
         Team savedTeam = teamService.save(exercise, team);
         savedTeam.filterSensitiveInformation();
-        teamWebsocketService.sendTeamAssignmentUpdate(exercise, null, savedTeam);
+        teamWebsocketService.sendTeamAssignmentUpdate(exercise, null, savedTeam, null);
         return ResponseEntity.created(new URI("/api/teams/" + savedTeam.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, savedTeam.getId().toString())).body(savedTeam);
     }
@@ -159,7 +163,8 @@ public class TeamResource {
         }
 
         savedTeam.filterSensitiveInformation();
-        teamWebsocketService.sendTeamAssignmentUpdate(exercise, existingTeam.get(), savedTeam);
+        StudentParticipation participationOfSavedTeam = participationService.findOneByExerciseAndTeamIdAnyState(exercise, savedTeam.getId()).orElse(null);
+        teamWebsocketService.sendTeamAssignmentUpdate(exercise, existingTeam.get(), savedTeam, participationOfSavedTeam);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, team.getId().toString())).body(savedTeam);
     }
 
@@ -243,7 +248,7 @@ public class TeamResource {
         participationService.deleteAllByTeamId(id, false, false);
         teamRepository.delete(team);
 
-        teamWebsocketService.sendTeamAssignmentUpdate(exercise, team, null);
+        teamWebsocketService.sendTeamAssignmentUpdate(exercise, team, null, null);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, Long.toString(id))).build();
     }
 
@@ -332,7 +337,12 @@ public class TeamResource {
         // Import teams and return the teams that now belong to the destination exercise
         List<Team> destinationTeams = teamService.importTeamsFromSourceExerciseIntoDestinationExerciseUsingStrategy(sourceExercise, destinationExercise, importStrategyType);
         destinationTeams.forEach(Team::filterSensitiveInformation);
-        destinationTeams.forEach(team -> teamWebsocketService.sendTeamAssignmentUpdate(destinationExercise, null, team));
+
+        // Send out team assignment update via websockets
+        Map<String, StudentParticipation> participationsMap = participationService.findByExerciseId(destinationExercise.getId()).stream()
+                .collect(Collectors.toMap(StudentParticipation::getParticipantIdentifier, Function.identity()));
+        destinationTeams.forEach(team -> teamWebsocketService.sendTeamAssignmentUpdate(destinationExercise, null, team, participationsMap.get(team.getParticipantIdentifier())));
+
         return ResponseEntity.ok().body(destinationTeams);
     }
 }

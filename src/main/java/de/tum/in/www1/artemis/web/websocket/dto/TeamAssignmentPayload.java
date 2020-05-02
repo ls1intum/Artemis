@@ -6,6 +6,7 @@ import javax.annotation.Nullable;
 
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.Team;
+import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 
 public class TeamAssignmentPayload {
 
@@ -14,9 +15,13 @@ public class TeamAssignmentPayload {
     @Nullable
     private Team team;
 
-    public TeamAssignmentPayload(Exercise exercise, @Nullable Team team) {
+    @Nullable
+    private StudentParticipation participation;
+
+    public TeamAssignmentPayload(Exercise exercise, @Nullable Team team, @Nullable StudentParticipation participation) {
         this.exercise = exercise;
         this.team = team;
+        this.participation = participation;
     }
 
     public void setExercise(Exercise exercise) {
@@ -27,11 +32,19 @@ public class TeamAssignmentPayload {
         this.team = team;
     }
 
+    public void setParticipation(@Nullable StudentParticipation participation) {
+        this.participation = participation;
+    }
+
     public long getExerciseId() {
         return this.exercise.getId();
     }
 
     public Long getTeamId() {
         return Optional.ofNullable(this.team).map(Team::getId).orElse(null);
+    }
+
+    public @Nullable StudentParticipation getParticipation() {
+        return this.participation;
     }
 }

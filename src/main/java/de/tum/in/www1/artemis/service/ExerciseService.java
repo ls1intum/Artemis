@@ -367,9 +367,8 @@ public class ExerciseService {
     private void setAssignedTeamIdForExerciseAndUser(Exercise exercise, User user) {
         // if the exercise is not team-based, there is nothing to do here
         if (exercise.isTeamMode()) {
-            teamService.findOneByExerciseAndUser(exercise, user).ifPresent(team -> {
-                exercise.setStudentAssignedTeamId(team.getId());
-            });
+            Optional<Team> team = teamService.findOneByExerciseAndUser(exercise, user);
+            exercise.setStudentAssignedTeamId(team.map(Team::getId).orElse(null));
         }
     }
 }
