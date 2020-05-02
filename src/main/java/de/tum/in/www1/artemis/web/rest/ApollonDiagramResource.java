@@ -101,7 +101,6 @@ public class ApollonDiagramResource {
         return apollonDiagramRepository.findDiagramsByCourse(courseId);
     }
 
-
     /**
      * GET /apollon-diagrams/:id : get the "id" apollonDiagram.
      *
