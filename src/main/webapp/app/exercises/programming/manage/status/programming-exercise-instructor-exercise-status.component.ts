@@ -6,6 +6,9 @@ import { Participation } from 'app/entities/participation/participation.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { hasSolutionParticipationChanged, hasTemplateParticipationChanged } from 'app/overview/participation-utils';
 
+/**
+ * Describes programming exercise issues
+ */
 enum ProgrammingExerciseIssues {
     TEMPLATE_PASSING = 'TEMPLATE_PASSING',
     SOLUTION_FAILING = 'SOLUTION_FAILING',
