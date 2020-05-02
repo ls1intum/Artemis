@@ -82,7 +82,7 @@ export class TeamStudentSearchComponent {
                     this.searchNoResults.emit(loginOrName);
                 }
             }),
-            map(([_, users]) => users || []),
+            map(([, users]) => users || []),
             tap((users) => {
                 setTimeout(() => {
                     for (let i = 0; i < this.typeaheadButtons.length; i++) {

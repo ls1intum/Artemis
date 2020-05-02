@@ -4,7 +4,7 @@ import { Observable } from 'rxjs/Observable';
 import { map } from 'rxjs/operators';
 import { SERVER_API_URL } from 'app/app.constants';
 
-import { QuizExercise } from '../../../entities/quiz/quiz-exercise.model';
+import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { createRequestOption } from 'app/shared/util/request-util';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { QuizQuestion } from 'app/entities/quiz/quiz-question.model';
@@ -88,7 +88,7 @@ export class QuizExerciseService {
             .pipe(map((res: EntityResponseType) => this.exerciseService.convertDateFromServer(res)));
     }
 
-    query(req?: any): Observable<EntityArrayResponseType> {
+    query(): Observable<EntityArrayResponseType> {
         return this.http
             .get<QuizExercise[]>(this.resourceUrl, { observe: 'response' })
             .pipe(map((res: EntityArrayResponseType) => this.exerciseService.convertDateArrayFromServer(res)));

@@ -1,4 +1,3 @@
-import { SERVER_API_URL } from 'app/app.constants';
 import { Injectable } from '@angular/core';
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
 import { Result } from 'app/entities/result.model';
@@ -20,9 +19,5 @@ export class CourseExerciseSubmissionResultSimulationService {
 
     simulateResult(exerciseId: number): Observable<HttpResponse<Result>> {
         return this.http.post<Result>(`api/exercises/${exerciseId}/results/no-vcs-and-ci-available`, {}, { observe: 'response' });
-    }
-
-    getProgrammingExercise(exerciseId: number): Observable<ProgrammingExercise> {
-        return this.http.get<ProgrammingExercise>(`api/programming-exercises/${exerciseId}`);
     }
 }

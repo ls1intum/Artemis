@@ -91,7 +91,7 @@ export class TeamOwnerSearchComponent implements OnInit {
                     this.searchNoResults.emit(loginOrName);
                 }
             }),
-            map(([_, ownerOptions]) => ownerOptions || []),
+            map(([, ownerOptions]) => ownerOptions || []),
         );
     };
 

@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges, ViewChild, ViewEncapsulation } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, Output, ViewChild, ViewEncapsulation } from '@angular/core';
 import { ExerciseCategory } from 'app/entities/exercise.model';
 import { ColorSelectorComponent } from 'app/shared/color-selector/color-selector.component';
 
@@ -19,11 +19,12 @@ export class CategorySelectorComponent implements OnChanges {
     @Output() selectedCategories = new EventEmitter<ExerciseCategory[]>();
     uniqueCategories: ExerciseCategory[] = [];
 
-    ngOnChanges(changes: SimpleChanges) {
+    ngOnChanges() {
         if (!this.existingCategories) {
             return;
         }
         this.existingCategories.forEach((category) => {
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
             const categoryIsInArray = (el: ExerciseCategory, index: number, categories: ExerciseCategory[]): boolean => {
                 return el.category === category.category;
             };
