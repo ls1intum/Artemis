@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.web.websocket.dto;
 
+import java.util.Objects;
 import java.util.Optional;
 
 import javax.annotation.Nullable;
@@ -46,5 +47,15 @@ public class TeamAssignmentPayload {
 
     public @Nullable StudentParticipation getParticipation() {
         return this.participation;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
+        TeamAssignmentPayload that = (TeamAssignmentPayload) o;
+        return exercise.equals(that.exercise) && Objects.equals(team, that.team) && Objects.equals(participation, that.participation);
     }
 }

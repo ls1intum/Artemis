@@ -98,6 +98,9 @@ public class TeamResource {
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user)) {
             return forbidden();
         }
+        if (!exercise.isTeamMode()) {
+            throw new BadRequestAlertException("A team cannot be created for an exercise that is not team-based.", ENTITY_NAME, "exerciseNotTeamBased");
+        }
         team.setOwner(user); // the TA (or above) who creates the team, is the owner of the team
         Team savedTeam = teamService.save(exercise, team);
         savedTeam.filterSensitiveInformation();
