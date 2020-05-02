@@ -1,7 +1,6 @@
 import { Component, OnDestroy, OnInit, ViewEncapsulation } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute } from '@angular/router';
-import { HttpErrorResponse } from '@angular/common/http';
 import { of, Subscription, zip } from 'rxjs';
 import { catchError, distinctUntilChanged, map, take, tap } from 'rxjs/operators';
 import { differenceBy as _differenceBy, differenceWith as _differenceWith, intersectionWith as _intersectionWith, unionBy as _unionBy } from 'lodash';
@@ -232,7 +231,7 @@ export class ProgrammingExerciseManageTestCasesComponent implements OnInit, OnDe
                         this.alertService.success(`artemisApp.programmingExercise.manageTestCases.testCasesUpdated`);
                     }
                 }),
-                catchError((err: HttpErrorResponse) => {
+                catchError(() => {
                     this.alertService.error(`artemisApp.programmingExercise.manageTestCases.testCasesCouldNotBeUpdated`, { testCases: testCasesToUpdate });
                     return of(null);
                 }),
@@ -261,6 +260,7 @@ export class ProgrammingExerciseManageTestCasesComponent implements OnInit, OnDe
         const existsUnchangedWithCustomWeight = this.testCases.filter(({ id }) => !this.changedTestCaseIds.includes(id)).some(({ weight }) => weight > 1);
         // If the updated weights are unsaved, we can just reset them locally in the browser without contacting the server.
         if (!existsUnchangedWithCustomWeight) {
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
             this.testCases = this.testCases.map(({ weight, ...rest }) => ({ weight: 1, ...rest }));
             return;
         }
@@ -272,7 +272,7 @@ export class ProgrammingExerciseManageTestCasesComponent implements OnInit, OnDe
                     this.alertService.success(`artemisApp.programmingExercise.manageTestCases.weightsReset`);
                     this.testCaseService.notifyTestCases(this.exercise.id, testCases);
                 }),
-                catchError((err: HttpErrorResponse) => {
+                catchError(() => {
                     this.alertService.error(`artemisApp.programmingExercise.manageTestCases.weightsResetFailed`);
                     return of(null);
                 }),

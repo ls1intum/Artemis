@@ -2,28 +2,26 @@ import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { Router } from '@angular/router';
 import { of } from 'rxjs';
 import { CookieService } from 'ngx-cookie-service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { ArtemisTestModule } from '../../test.module';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { GuidedTourComponent } from 'app/guided-tour/guided-tour.component';
-import { MockAccountService } from '../../mocks/mock-account.service';
+import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { DeviceDetectorService } from 'ngx-device-detector';
-import { MockSyncStorage } from '../../mocks/mock-sync.storage';
-import { MockCookieService } from '../../mocks/mock-cookie.service';
+import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
+import { MockCookieService } from '../../helpers/mocks/service/mock-cookie.service';
 import { RouterTestingModule } from '@angular/router/testing';
 import { courseOverviewTour } from 'app/guided-tour/tours/course-overview-tour';
-import { CourseExerciseService } from 'app/course/manage/course-management.service';
 import { CoursesComponent } from 'app/overview/courses.component';
-import { TranslateTestingModule } from '../../mocks/mock-translate.service';
+import { TranslateTestingModule } from '../../helpers/mocks/service/mock-translate.service';
 import { NavbarComponent } from 'app/shared/layouts/navbar/navbar.component';
 import { ActiveMenuDirective } from 'app/shared/layouts/navbar/active-menu.directive';
 import { NotificationSidebarComponent } from 'app/shared/layouts/notification-sidebar/notification-sidebar.component';
 import { User } from 'app/core/user/user.model';
-import { MockHasAnyAuthorityDirective } from '../../mocks/mock-has-any-authority.directive';
+import { MockHasAnyAuthorityDirective } from '../../helpers/mocks/directive/mock-has-any-authority.directive';
 import { ArtemisSharedPipesModule } from 'app/shared/pipes/shared-pipes.module';
 import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
 import { CourseCardComponent } from 'app/overview/course-card.component';
@@ -47,13 +45,10 @@ describe('Courses Component', () => {
         let navBarComponentFixture: ComponentFixture<NavbarComponent>;
         let courseCardComponent: CourseCardComponent;
         let courseCardComponentFixture: ComponentFixture<CourseCardComponent>;
-        let footerComponent: FooterComponent;
         let footerComponentFixture: ComponentFixture<FooterComponent>;
 
         let guidedTourService: GuidedTourService;
-        let courseExerciseService: CourseExerciseService;
         let exerciseService: ExerciseService;
-        let router: Router;
 
         beforeEach(() => {
             TestBed.configureTestingModule({
@@ -90,11 +85,8 @@ describe('Courses Component', () => {
                     guidedTourComponent = guidedTourComponentFixture.componentInstance;
                     navBarComponent = navBarComponentFixture.componentInstance;
                     courseCardComponent = courseCardComponentFixture.componentInstance;
-                    footerComponent = footerComponentFixture.componentInstance;
 
-                    router = TestBed.inject(Router);
                     guidedTourService = TestBed.inject(GuidedTourService);
-                    courseExerciseService = TestBed.inject(CourseExerciseService);
                     exerciseService = TestBed.inject(ExerciseService);
 
                     spyOn(courseCardComponent, 'displayTotalRelativeScore').and.returnValue(of());

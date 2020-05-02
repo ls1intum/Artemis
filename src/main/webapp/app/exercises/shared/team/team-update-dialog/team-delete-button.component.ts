@@ -47,6 +47,7 @@ export class TeamDeleteButtonComponent implements OnDestroy {
      *
      * @param additionalChecksValues Not used here
      */
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     removeTeam = (additionalChecksValues: { [key: string]: boolean }) => {
         this.teamService.delete(this.exercise, this.team.id).subscribe(
             () => {

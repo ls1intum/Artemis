@@ -43,18 +43,18 @@ export class NotificationMgmtUpdateComponent implements OnInit {
         this.isSaving = true;
         if (this.notification.id) {
             this.systemNotificationService.update(this.notification).subscribe(
-                (response) => this.onSaveSuccess(response.body!),
+                () => this.onSaveSuccess(),
                 () => this.onSaveError(),
             );
         } else {
             this.systemNotificationService.create(this.notification).subscribe(
-                (response) => this.onSaveSuccess(response.body!),
+                () => this.onSaveSuccess(),
                 () => this.onSaveError(),
             );
         }
     }
 
-    private onSaveSuccess(result: SystemNotification) {
+    private onSaveSuccess() {
         this.isSaving = false;
         this.previousState();
     }

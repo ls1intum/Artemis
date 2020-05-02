@@ -43,7 +43,7 @@
                             <div *ngFor="let assessment of referencedFeedback; let i = index" class="col-12 col-lg-6 col-xl-6">
                                 <jhi-assessment-detail
                                     [(assessment)]="referencedFeedback[i]"
-                                    (assessmentChange)="updateAssessment(assessment)"
+                                    (assessmentChange)="updateAssessment()"
                                     (deleteAssessment)="deleteAssessment($event)"
                                 ></jhi-assessment-detail>
                             </div>
