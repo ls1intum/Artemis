@@ -86,7 +86,7 @@ export class CourseOverviewComponent implements OnInit {
                 const exercise = this.course!.exercises.find((courseExercise) => courseExercise.id === teamAssignment.exerciseId);
                 if (exercise) {
                     exercise.studentAssignedTeamId = teamAssignment.teamId;
-                    exercise.studentParticipations = teamAssignment.participation ? [teamAssignment.participation] : [];
+                    exercise.studentParticipations = teamAssignment.studentParticipations;
                     exercise.participationStatus = participationStatus(exercise);
                 }
             },

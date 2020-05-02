@@ -17,7 +17,7 @@ export class OnlineTeamStudent {
 export class TeamAssignmentPayload {
     public exerciseId: number;
     public teamId: number | null;
-    public participation: StudentParticipation | null;
+    public studentParticipations: StudentParticipation[];
 }
 
 export class Team implements BaseEntity {

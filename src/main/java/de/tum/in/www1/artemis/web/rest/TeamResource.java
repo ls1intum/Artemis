@@ -7,8 +7,8 @@ import java.net.URISyntaxException;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -104,7 +104,7 @@ public class TeamResource {
         team.setOwner(user); // the TA (or above) who creates the team, is the owner of the team
         Team savedTeam = teamService.save(exercise, team);
         savedTeam.filterSensitiveInformation();
-        teamWebsocketService.sendTeamAssignmentUpdate(exercise, null, savedTeam, null);
+        teamWebsocketService.sendTeamAssignmentUpdate(exercise, null, savedTeam);
         return ResponseEntity.created(new URI("/api/teams/" + savedTeam.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, savedTeam.getId().toString())).body(savedTeam);
     }
@@ -166,8 +166,8 @@ public class TeamResource {
         }
 
         savedTeam.filterSensitiveInformation();
-        StudentParticipation participationOfSavedTeam = participationService.findOneByExerciseAndTeamIdAnyState(exercise, savedTeam.getId()).orElse(null);
-        teamWebsocketService.sendTeamAssignmentUpdate(exercise, existingTeam.get(), savedTeam, participationOfSavedTeam);
+        List<StudentParticipation> participationsOfSavedTeam = participationService.findByExerciseAndTeamWithEagerResultsAndSubmissions(exercise, savedTeam);
+        teamWebsocketService.sendTeamAssignmentUpdate(exercise, existingTeam.get(), savedTeam, participationsOfSavedTeam);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, team.getId().toString())).body(savedTeam);
     }
 
@@ -251,7 +251,7 @@ public class TeamResource {
         participationService.deleteAllByTeamId(id, false, false);
         teamRepository.delete(team);
 
-        teamWebsocketService.sendTeamAssignmentUpdate(exercise, team, null, null);
+        teamWebsocketService.sendTeamAssignmentUpdate(exercise, team, null);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, Long.toString(id))).build();
     }
 
@@ -342,9 +342,10 @@ public class TeamResource {
         destinationTeams.forEach(Team::filterSensitiveInformation);
 
         // Send out team assignment update via websockets
-        Map<String, StudentParticipation> participationsMap = participationService.findByExerciseId(destinationExercise.getId()).stream()
-                .collect(Collectors.toMap(StudentParticipation::getParticipantIdentifier, Function.identity()));
-        destinationTeams.forEach(team -> teamWebsocketService.sendTeamAssignmentUpdate(destinationExercise, null, team, participationsMap.get(team.getParticipantIdentifier())));
+        Map<String, List<StudentParticipation>> participationsMap = participationService.findByExerciseIdWithEagerSubmissionsResult(destinationExercise.getId()).stream()
+                .collect(Collectors.toMap(StudentParticipation::getParticipantIdentifier, List::of, (a, b) -> Stream.concat(a.stream(), b.stream()).collect(Collectors.toList())));
+        destinationTeams.forEach(
+                team -> teamWebsocketService.sendTeamAssignmentUpdate(destinationExercise, null, team, participationsMap.getOrDefault(team.getParticipantIdentifier(), List.of())));
 
         return ResponseEntity.ok().body(destinationTeams);
     }

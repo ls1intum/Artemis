@@ -1,9 +1,11 @@
 package de.tum.in.www1.artemis.web.websocket.dto;
 
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
 import javax.annotation.Nullable;
+import javax.validation.constraints.NotNull;
 
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.Team;
@@ -11,21 +13,26 @@ import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 
 public class TeamAssignmentPayload {
 
+    @NotNull
     private Exercise exercise;
 
     @Nullable
     private Team team;
 
-    @Nullable
-    private StudentParticipation participation;
+    @NotNull
+    private List<StudentParticipation> studentParticipations = List.of();
 
-    public TeamAssignmentPayload(Exercise exercise, @Nullable Team team, @Nullable StudentParticipation participation) {
+    public TeamAssignmentPayload(@NotNull Exercise exercise, @Nullable Team team) {
         this.exercise = exercise;
         this.team = team;
-        this.participation = participation;
     }
 
-    public void setExercise(Exercise exercise) {
+    public TeamAssignmentPayload(@NotNull Exercise exercise, @Nullable Team team, @NotNull List<StudentParticipation> studentParticipations) {
+        this(exercise, team);
+        this.studentParticipations = studentParticipations;
+    }
+
+    public void setExercise(@NotNull Exercise exercise) {
         this.exercise = exercise;
     }
 
@@ -33,8 +40,8 @@ public class TeamAssignmentPayload {
         this.team = team;
     }
 
-    public void setParticipation(@Nullable StudentParticipation participation) {
-        this.participation = participation;
+    public void setStudentParticipations(@NotNull List<StudentParticipation> studentParticipations) {
+        this.studentParticipations = studentParticipations;
     }
 
     public long getExerciseId() {
@@ -45,8 +52,8 @@ public class TeamAssignmentPayload {
         return Optional.ofNullable(this.team).map(Team::getId).orElse(null);
     }
 
-    public @Nullable StudentParticipation getParticipation() {
-        return this.participation;
+    public List<StudentParticipation> getStudentParticipations() {
+        return this.studentParticipations;
     }
 
     @Override
@@ -56,6 +63,6 @@ public class TeamAssignmentPayload {
         if (o == null || getClass() != o.getClass())
             return false;
         TeamAssignmentPayload that = (TeamAssignmentPayload) o;
-        return exercise.equals(that.exercise) && Objects.equals(team, that.team) && Objects.equals(participation, that.participation);
+        return exercise.equals(that.exercise) && Objects.equals(team, that.team) && studentParticipations.equals(that.studentParticipations);
     }
 }
