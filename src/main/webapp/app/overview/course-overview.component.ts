@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Course } from 'app/entities/course.model';
 import { CourseManagementService } from '../course/manage/course-management.service';
 import { ActivatedRoute } from '@angular/router';
@@ -9,7 +9,6 @@ import { CourseScoreCalculationService } from 'app/overview/course-score-calcula
 import { CachingStrategy } from 'app/shared/image/secured-image.component';
 import { TeamService } from 'app/exercises/shared/team/team.service';
 import { TeamAssignmentPayload } from 'app/entities/team.model';
-import { AlertService } from 'app/core/alert/alert.service';
 import { participationStatus } from 'app/exercises/shared/exercise/exercise-utils';
 
 const DESCRIPTION_READ = 'isDescriptionRead';
@@ -19,7 +18,7 @@ const DESCRIPTION_READ = 'isDescriptionRead';
     templateUrl: './course-overview.component.html',
     styleUrls: ['course-overview.scss'],
 })
-export class CourseOverviewComponent implements OnInit {
+export class CourseOverviewComponent implements OnInit, OnDestroy {
     readonly isOrion = isOrion;
     CachingStrategy = CachingStrategy;
     private courseId: number;
@@ -28,6 +27,7 @@ export class CourseOverviewComponent implements OnInit {
     public courseDescription: string;
     public enableShowMore: boolean;
     public longTextShown: boolean;
+    private teamAssignmentUpdateListener: Subscription;
 
     constructor(
         private courseService: CourseManagementService,
@@ -35,7 +35,6 @@ export class CourseOverviewComponent implements OnInit {
         private courseServer: CourseManagementService,
         private route: ActivatedRoute,
         private teamService: TeamService,
-        private jhiAlertService: AlertService,
     ) {}
 
     ngOnInit() {
@@ -53,6 +52,12 @@ export class CourseOverviewComponent implements OnInit {
         }
         this.adjustCourseDescription();
         this.subscribeToTeamAssignmentUpdates();
+    }
+
+    ngOnDestroy() {
+        if (this.teamAssignmentUpdateListener) {
+            this.teamAssignmentUpdateListener.unsubscribe();
+        }
     }
 
     adjustCourseDescription() {
@@ -81,20 +86,13 @@ export class CourseOverviewComponent implements OnInit {
      * Receives team assignment changes and updates related attributes of the affected exercise
      */
     subscribeToTeamAssignmentUpdates() {
-        this.teamService.teamAssignmentUpdates.subscribe(
-            (teamAssignment: TeamAssignmentPayload) => {
-                const exercise = this.course!.exercises.find((courseExercise) => courseExercise.id === teamAssignment.exerciseId);
-                if (exercise) {
-                    exercise.studentAssignedTeamId = teamAssignment.teamId;
-                    exercise.studentParticipations = teamAssignment.studentParticipations;
-                    exercise.participationStatus = participationStatus(exercise);
-                }
-            },
-            (error) => this.onError(error),
-        );
-    }
-
-    private onError(error: string) {
-        this.jhiAlertService.error('error.unexpectedError', { error }, undefined);
+        this.teamAssignmentUpdateListener = this.teamService.teamAssignmentUpdates.subscribe((teamAssignment: TeamAssignmentPayload) => {
+            const exercise = this.course!.exercises.find((courseExercise) => courseExercise.id === teamAssignment.exerciseId);
+            if (exercise) {
+                exercise.studentAssignedTeamId = teamAssignment.teamId;
+                exercise.studentParticipations = teamAssignment.studentParticipations;
+                exercise.participationStatus = participationStatus(exercise);
+            }
+        });
     }
 }
