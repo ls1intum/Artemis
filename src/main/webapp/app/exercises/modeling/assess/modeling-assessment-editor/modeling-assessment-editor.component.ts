@@ -182,7 +182,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
                     (res) => {
                         this.complaint = res.body!;
                     },
-                    (err: HttpErrorResponse) => {
+                    () => {
                         this.onError();
                     },
                 );
@@ -328,7 +328,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
                 this.jhiAlertService.clear();
                 this.jhiAlertService.success('modelingAssessmentEditor.messages.updateAfterComplaintSuccessful');
             },
-            (error: HttpErrorResponse) => {
+            () => {
                 this.jhiAlertService.clear();
                 this.jhiAlertService.error('modelingAssessmentEditor.messages.updateAfterComplaintFailed');
             },

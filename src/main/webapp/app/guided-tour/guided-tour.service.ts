@@ -649,7 +649,7 @@ export class GuidedTourService {
                                 mutation.addedNodes.length !== mutation.removedNodes.length && (mutation.addedNodes.length >= 1 || mutation.removedNodes.length >= 1),
                         ),
                     )
-                    .subscribe((mutation: MutationRecord) => {
+                    .subscribe(() => {
                         this.enableNextStepClick();
                     });
             } else if (userInteraction === UserInteractionEvent.MODELING) {

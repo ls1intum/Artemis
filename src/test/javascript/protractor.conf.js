@@ -1,4 +1,3 @@
-
 exports.config = {
     allScriptsTimeout: 20000,
 
@@ -11,9 +10,9 @@ exports.config = {
         browserName: 'chrome',
         chromeOptions: {
             args: process.env.JHI_E2E_HEADLESS
-                ? [ "--headless", "--disable-gpu", "--window-size=1280,1024", "--disable-extensions", "incognito" ]
-                : [ "--disable-gpu", "--window-size=1280,1024", "--disable-extensions", "incognito" ]
-        }
+                ? ['--headless', '--disable-gpu', '--window-size=1280,1024', '--disable-extensions', 'incognito']
+                : ['--disable-gpu', '--window-size=1280,1024', '--disable-extensions', 'incognito'],
+        },
     },
 
     directConnect: true,
@@ -28,17 +27,17 @@ exports.config = {
         reporter: 'spec',
         slow: 3000,
         ui: 'bdd',
-        timeout: 720000
+        timeout: 720000,
     },
 
-    beforeLaunch: function() {
+    beforeLaunch: function () {
         require('ts-node').register({
-            project: 'tsconfig.e2e.json'
+            project: 'tsconfig.e2e.json',
         });
     },
 
-    onPrepare: function() {
-        browser.driver.manage().window().setRect({x: 100, y: 100, width: 1280, height: 1024});
+    onPrepare: function () {
+        browser.driver.manage().window().setRect({ x: 100, y: 100, width: 1280, height: 1024 });
         // Disable animations
         // @ts-ignore
         browser.executeScript('document.body.className += " notransition";');
@@ -51,5 +50,5 @@ exports.config = {
         global.chai = chai;
     },
 
-    useAllAngular2AppRoots: true
+    useAllAngular2AppRoots: true,
 };

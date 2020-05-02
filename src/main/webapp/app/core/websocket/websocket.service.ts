@@ -107,7 +107,7 @@ export class JhiWebsocketService implements IWebsocketService, OnDestroy {
         };
         this.stompClient = over(socket, options);
         // Note: at the moment, debugging is deactivated to prevent console log statements
-        this.stompClient.debug = function (str) {};
+        this.stompClient.debug = function () {};
         const headers = <ConnectionHeaders>{};
         headers['X-CSRF-TOKEN'] = this.csrfService.getCSRF();
 
@@ -148,7 +148,7 @@ export class JhiWebsocketService implements IWebsocketService, OnDestroy {
 
                 // Setup periodic logs of websocket connection numbers
                 this.logTimers.push(
-                    timer(0, 60000).subscribe((x) => {
+                    timer(0, 60000).subscribe(() => {
                         console.log('\n\n');
                         console.log(`${this.subscribers.size} websocket subscriptions: `, this.subscribers.keys());
                         // this.subscribers.forEach((sub, topic) => console.log(topic));

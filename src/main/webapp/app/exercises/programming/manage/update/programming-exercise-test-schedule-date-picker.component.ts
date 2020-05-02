@@ -30,9 +30,9 @@ export class ProgrammingExerciseTestScheduleDatePickerComponent implements Contr
         this._onChange = fn;
     }
 
-    registerOnTouched(fn: any): void {}
+    registerOnTouched(): void {}
 
-    setDisabledState(isDisabled: boolean): void {}
+    setDisabledState(): void {}
 
     writeValue(obj: any): void {
         if (obj !== undefined && this.selectedDate !== obj) {

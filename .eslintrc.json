@@ -1,11 +1,10 @@
 {
     "plugins": [
         "@typescript-eslint",
-        "@typescript-eslint/tslint"
+        "@typescript-eslint/tslint",
+        "chai-friendly"
     ],
     "extends": [
-//        "plugin:@typescript-eslint/eslint-recommended",
-//        "plugin:@typescript-eslint/recommended",
         "prettier/@typescript-eslint",
         "plugin:prettier/recommended"
     ],
@@ -22,7 +21,10 @@
         "@typescript-eslint/tslint/config": [
             "error",
             {
-                "lintFile": "./tslint.json"
+                "lintFile": "./tslint.json",
+                "rules": {
+                    "no-unused-expressions": "off"
+                }
             }
         ],
         "@typescript-eslint/no-unused-vars": [
@@ -33,6 +35,13 @@
                 "ignoreRestSiblings": false
             }
         ],
-        "@typescript-eslint/no-non-null-assertion": "off"
-    }
+        "@typescript-eslint/no-non-null-assertion": "off",
+        "chai-friendly/no-unused-expressions": 2
+    },
+    "overrides": [{
+        "files": ["mock-*.ts"],
+        "rules": {
+            "@typescript-eslint/no-unused-vars": "off"
+        }
+    }]
 }

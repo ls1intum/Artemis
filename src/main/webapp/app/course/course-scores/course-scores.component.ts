@@ -404,7 +404,7 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
             if (this.exerciseTitlesPerType.get(exerciseType) && this.exerciseTitlesPerType.get(exerciseType)!.length !== 0) {
                 const exerciseTypeName = capitalizeFirstLetter(exerciseType);
                 const exerciseTitleKeys = this.exerciseTitlesPerType.get(exerciseType)!;
-                exerciseTitleKeys.forEach((title, index) => {
+                exerciseTitleKeys.forEach((title) => {
                     emptyLine[title] = '';
                 });
                 emptyLine[exerciseTypeName + ' ' + POINTS_KEY] = '';

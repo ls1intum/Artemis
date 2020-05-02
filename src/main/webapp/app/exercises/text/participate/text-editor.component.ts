@@ -204,7 +204,7 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
                     this.jhiAlertService.warning('entity.action.submitDeadlineMissedAlert');
                 }
             },
-            (err) => {
+            () => {
                 this.jhiAlertService.error('artemisApp.modelingEditor.error');
                 this.submission.submitted = false;
                 this.isSaving = false;

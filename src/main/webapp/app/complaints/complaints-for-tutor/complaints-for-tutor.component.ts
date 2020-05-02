@@ -57,6 +57,7 @@ export class ComplaintsForTutorComponent implements OnInit {
             this.complaintResponseService.create(this.complaintResponse).subscribe(
                 (response) => {
                     this.handled = true;
+                    // eslint-disable-next-line chai-friendly/no-unused-expressions
                     this.complaint.complaintType === ComplaintType.MORE_FEEDBACK
                         ? this.jhiAlertService.success('artemisApp.moreFeedbackResponse.created')
                         : this.jhiAlertService.success('artemisApp.complaintResponse.created');

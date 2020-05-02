@@ -2,7 +2,6 @@ import { Component, Input, OnInit } from '@angular/core';
 import { RepositoryService } from 'app/shared/result/repository.service';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { catchError, map, switchMap, tap } from 'rxjs/operators';
-import { HttpErrorResponse } from '@angular/common/http';
 import { of } from 'rxjs';
 import { BuildLogEntry, BuildLogEntryArray, BuildLogType } from 'app/entities/build-log.model';
 import { Feedback } from 'app/entities/feedback.model';
@@ -51,7 +50,7 @@ export class ResultDetailComponent implements OnInit {
                     }
                     return of(null);
                 }),
-                catchError((error: HttpErrorResponse) => {
+                catchError(() => {
                     // TODO: When the server would give better error information, we could improve the UI.
                     this.loadingFailed = true;
                     return of(null);

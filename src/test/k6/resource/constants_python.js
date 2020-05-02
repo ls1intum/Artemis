@@ -1,4 +1,5 @@
-export const programmingExerciseProblemStatementPython = '# Sorting with the Strategy Pattern\n' +
+export const programmingExerciseProblemStatementPython =
+    '# Sorting with the Strategy Pattern\n' +
     '\n' +
     'In this exercise, we want to implement sorting algorithms and choose them based on runtime specific variables.\n' +
     '\n' +
@@ -91,28 +92,32 @@ export const programmingExerciseProblemStatementPython = '# Sorting with the Str
     '\n' +
     '2. Think about a useful decision in `Policy` when to use the new `QuickSort` algorithm.\n';
 
-
 export const buildErrorContentPython = {
     newFiles: [],
-    content: [{
-        fileName: 'context.py',
-        fileContent: 'a'
-    }]
+    content: [
+        {
+            fileName: 'context.py',
+            fileContent: 'a',
+        },
+    ],
 };
 
 export const someSuccessfulErrorContentPython = {
     newFiles: [],
-    content: [{
-        fileName: 'sort_strategy.py',
-        fileContent: 'from abc import ABC, abstractmethod\n' +
-        '\n' +
-        '\n' +
-        'class SortStrategy(ABC):\n' +
-        '\n' +
-        '\t@abstractmethod\n' +
-        '\tdef perform_sort(self, array):\n' +
-        '\t\tpass'
-    }]
+    content: [
+        {
+            fileName: 'sort_strategy.py',
+            fileContent:
+                'from abc import ABC, abstractmethod\n' +
+                '\n' +
+                '\n' +
+                'class SortStrategy(ABC):\n' +
+                '\n' +
+                '\t@abstractmethod\n' +
+                '\tdef perform_sort(self, array):\n' +
+                '\t\tpass',
+        },
+    ],
 };
 
 export const allSuccessfulContentPython = {
@@ -120,7 +125,8 @@ export const allSuccessfulContentPython = {
     content: [
         {
             fileName: 'sorting_algorithms.py',
-            fileContent: 'from .sort_strategy import SortStrategy\n' +
+            fileContent:
+                'from .sort_strategy import SortStrategy\n' +
                 '\n' +
                 '\n' +
                 'class BubbleSort(SortStrategy):\n' +
@@ -181,7 +187,8 @@ export const allSuccessfulContentPython = {
         },
         {
             fileName: 'policy.py',
-            fileContent: 'from .sorting_algorithms import *\n' +
+            fileContent:
+                'from .sorting_algorithms import *\n' +
                 '\n' +
                 '\n' +
                 'class Policy:\n' +
@@ -192,16 +199,16 @@ export const allSuccessfulContentPython = {
                 '\n' +
                 '\tdef configure(self):\n' +
                 '\t\tif len(self.context.numbers) > 10:\n' +
-                '\t\t\tprint(\'More than 10 numbers, choosing merge sort!\')\n' +
+                "\t\t\tprint('More than 10 numbers, choosing merge sort!')\n" +
                 '\t\t\tself.context.sorting_algorithm = MergeSort()\n' +
                 '\t\telse:\n' +
-                '\t\t\tprint(\'Less or equal than 10 numbers, choosing bubble sort!\')\n' +
-                '\t\t\tself.context.sorting_algorithm = BubbleSort()\n'
-
+                "\t\t\tprint('Less or equal than 10 numbers, choosing bubble sort!')\n" +
+                '\t\t\tself.context.sorting_algorithm = BubbleSort()\n',
         },
         {
-            fileName: "context.py",
-            fileContent: 'package de.test;\n' +
+            fileName: 'context.py',
+            fileContent:
+                'package de.test;\n' +
                 '\n' +
                 'import java.text.*;\n' +
                 'import java.util.*;\n' +
@@ -282,17 +289,17 @@ export const allSuccessfulContentPython = {
                 '    private static void printDateList(List<Date> list) {\n' +
                 '        System.out.println(list.toString());\n' +
                 '    }\n' +
-                '}'
+                '}',
         },
         {
-            fileName: "context.py",
-            fileContent: 'class Context:\n' +
+            fileName: 'context.py',
+            fileContent:
+                'class Context:\n' +
                 '\tsorting_algorithm = None\n' +
                 '\tnumbers = None\n' +
                 '\n' +
                 '\tdef sort(self):\n' +
-                '\t\tself.sorting_algorithm.perform_sort(self.numbers)\n'
-
-        }
-    ]
+                '\t\tself.sorting_algorithm.perform_sort(self.numbers)\n',
+        },
+    ],
 };

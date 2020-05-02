@@ -79,7 +79,7 @@ export class TeamExerciseSearchComponent implements OnInit {
                     this.searchNoResults.emit(searchTerm);
                 }
             }),
-            map(([_, exerciseOptions]) => exerciseOptions || []),
+            map(([, exerciseOptions]) => exerciseOptions || []),
             map((exerciseOptions) => orderBy(exerciseOptions, ['releaseDate', 'id'])),
         );
     };
