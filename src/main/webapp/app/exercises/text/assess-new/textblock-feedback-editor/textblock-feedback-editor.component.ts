@@ -1,4 +1,4 @@
-import { Component, AfterViewInit, HostBinding, Input, Output, EventEmitter, ViewChild, ElementRef, HostListener } from '@angular/core';
+import { Component, AfterViewInit, HostBinding, Input, Output, EventEmitter, ViewChild, ElementRef } from '@angular/core';
 import { TextBlock } from 'app/entities/text-block.model';
 import { Feedback } from 'app/entities/feedback.model';
 import { ConfirmIconComponent } from 'app/shared/confirm-icon/confirm-icon.component';

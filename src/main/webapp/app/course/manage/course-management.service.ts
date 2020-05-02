@@ -206,11 +206,11 @@ export class CourseManagementService {
     }
 
     private reconnectObjects(res: EntityArrayResponseType): EntityArrayResponseType {
-        if (res.body) {
+        /*if (res.body) {
             res.body.forEach((course: Course) => {
                 // TODO: implement
             });
-        }
+        }*/
         return res;
     }
 

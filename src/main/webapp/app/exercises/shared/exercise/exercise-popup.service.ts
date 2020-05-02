@@ -20,7 +20,7 @@ export class ExercisePopupService {
     }
 
     open(component: Component, id?: number | any, lti?: boolean | any): Promise<NgbModalRef> {
-        return new Promise<NgbModalRef>((resolve, reject) => {
+        return new Promise<NgbModalRef>((resolve) => {
             if (this.ngbModalRef != null) {
                 resolve(this.ngbModalRef);
             }
@@ -49,11 +49,11 @@ export class ExercisePopupService {
         modalRef.componentInstance.exercise = exercise;
         modalRef.componentInstance.ltiConfiguration = ltiConfiguration;
         modalRef.result.then(
-            (result) => {
+            () => {
                 this.router.navigate([{ outlets: { popup: null } }], { replaceUrl: true, queryParamsHandling: 'merge' });
                 this.ngbModalRef = null;
             },
-            (reason) => {
+            () => {
                 this.router.navigate([{ outlets: { popup: null } }], { replaceUrl: true, queryParamsHandling: 'merge' });
                 this.ngbModalRef = null;
             },

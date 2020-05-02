@@ -153,7 +153,7 @@ export class CourseUpdateComponent implements OnInit {
      */
     private subscribeToSaveResponse(result: Observable<HttpResponse<Course>>) {
         result.subscribe(
-            (_: HttpResponse<Course>) => this.onSaveSuccess(),
+            () => this.onSaveSuccess(),
             (res: HttpErrorResponse) => this.onSaveError(res),
         );
     }
@@ -208,7 +208,7 @@ export class CourseUpdateComponent implements OnInit {
                 this.courseImageFile = null;
                 this.courseImageFileName = result.path;
             },
-            (error) => {
+            () => {
                 this.isUploadingCourseImage = false;
                 this.courseImageFile = null;
                 this.courseImageFileName = this.course.courseIcon;

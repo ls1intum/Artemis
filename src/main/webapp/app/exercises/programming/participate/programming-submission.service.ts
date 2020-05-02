@@ -74,7 +74,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
     ngOnDestroy(): void {
         Object.values(this.resultSubscriptions).forEach((sub) => sub.unsubscribe());
         Object.values(this.resultTimerSubscriptions).forEach((sub) => sub.unsubscribe());
-        this.submissionTopicsSubscribed.forEach((topic, _) => this.websocketService.unsubscribe(topic));
+        this.submissionTopicsSubscribed.forEach((topic) => this.websocketService.unsubscribe(topic));
     }
 
     get exerciseBuildState() {
@@ -538,7 +538,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
         this.resultSubscriptions = {};
         Object.values(this.resultTimerSubscriptions).forEach((sub) => sub.unsubscribe());
         this.resultTimerSubscriptions = {};
-        this.submissionTopicsSubscribed.forEach((topic, _) => this.websocketService.unsubscribe(topic));
+        this.submissionTopicsSubscribed.forEach((topic) => this.websocketService.unsubscribe(topic));
         this.submissionTopicsSubscribed.forEach((_, participationId) => this.participationWebsocketService.unsubscribeForLatestResultOfParticipation(participationId, exercise));
         this.submissionTopicsSubscribed.clear();
         this.submissionSubjects = {};

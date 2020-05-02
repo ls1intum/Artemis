@@ -78,10 +78,8 @@ export class TeamComponent implements OnInit {
      * Called when the team was deleted by TeamDeleteButtonComponent
      *
      * Navigates back to the overviews of teams for the exercise.
-     *
-     * @param team Deleted team
      */
-    onTeamDelete(team: Team) {
+    onTeamDelete() {
         this.router.navigate(['/course-management', this.exercise.course?.id, 'exercises', this.exercise.id, 'teams']);
     }
 

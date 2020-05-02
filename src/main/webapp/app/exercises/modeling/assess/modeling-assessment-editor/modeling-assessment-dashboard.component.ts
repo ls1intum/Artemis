@@ -143,7 +143,7 @@ export class ModelingAssessmentDashboardComponent implements OnInit, OnDestroy {
                     this.nextOptimalSubmissionIds = optimal;
                     this.applyFilter();
                 },
-                (error) => {
+                () => {
                     this.applyFilter();
                 },
             );
