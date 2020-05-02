@@ -92,6 +92,35 @@ public class ApollonDiagramResourceIntegrationTest extends AbstractSpringIntegra
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
+    public void testGetDiagramsByCourse() throws Exception {
+        apollonDiagram.setCourseId((long) 1);
+        apollonDiagramRepository.save(apollonDiagram);
+        List<ApollonDiagram> response = request.get("/api/apollon-diagrams/list/1", HttpStatus.OK, List.class);
+        assertThat(response.isEmpty()).as("response is not empty").isFalse();
+        assertThat(response.size()).as("response has length 1 ").isEqualTo(1);
+
+        ApollonDiagram newApollonDiagram = ModelFactory.generateApollonDiagram(DiagramType.ClassDiagram, "new title");
+        newApollonDiagram.setCourseId((long) 1);
+        apollonDiagramRepository.save(newApollonDiagram);
+        List<ApollonDiagram> updatedResponse = request.get("/api/apollon-diagrams/list/1", HttpStatus.OK, List.class);
+        assertThat(updatedResponse.isEmpty()).as("updated response is not empty").isFalse();
+        assertThat(updatedResponse.size()).as("updated response has length 2").isEqualTo(2);
+
+        ApollonDiagram newerApollonDiagram = ModelFactory.generateApollonDiagram(DiagramType.ClassDiagram, "newer title");
+        newerApollonDiagram.setCourseId((long) 2);
+        apollonDiagramRepository.save(newerApollonDiagram);
+        updatedResponse = request.get("/api/apollon-diagrams/list/1", HttpStatus.OK, List.class);
+        assertThat(updatedResponse.isEmpty()).as("updateder response is not empty").isFalse();
+        assertThat(updatedResponse.size()).as("updateder response has length 2").isEqualTo(2);
+
+        updatedResponse = request.get("/api/apollon-diagrams/list/2", HttpStatus.OK, List.class);
+        assertThat(updatedResponse.isEmpty()).as("updateder response is not empty").isFalse();
+        assertThat(updatedResponse.size()).as("updateder response has length 1").isEqualTo(1);
+
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
     public void testGetApollonDiagram() throws Exception {
         ApollonDiagram savedDiagram = apollonDiagramRepository.save(apollonDiagram);
 
