@@ -27,6 +27,11 @@ export class ProgrammingExerciseInstructorExerciseStatusComponent implements OnC
 
     constructor(private participationWebsocketService: ParticipationWebsocketService) {}
 
+    /**
+     * If there are changes for the template or solution participation, check if there are issues
+     * for the results of the template or solution participation
+     * @param changes The hashtable of occurred changes represented as SimpleChanges object.
+     */
     ngOnChanges(changes: SimpleChanges): void {
         if (hasTemplateParticipationChanged(changes)) {
             if (this.templateParticipationSubscription) {
@@ -59,6 +64,9 @@ export class ProgrammingExerciseInstructorExerciseStatusComponent implements OnC
         this.findIssues();
     }
 
+    /**
+     * Finds issues of the template and the solution participation result
+     */
     findIssues() {
         const newestTemplateParticipationResult = this.templateParticipation.results ? this.templateParticipation.results.reduce((acc, x) => (acc.id > x.id ? acc : x)) : null;
         const newestSolutionParticipationResult = this.solutionParticipation.results ? this.solutionParticipation.results.reduce((acc, x) => (acc.id > x.id ? acc : x)) : null;
