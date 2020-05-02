@@ -967,7 +967,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
                         this.onSaveError();
                     }
                 },
-                (res: HttpErrorResponse) => this.onSaveError(),
+                () => this.onSaveError(),
             );
             this.pendingChangesCache = false;
         }

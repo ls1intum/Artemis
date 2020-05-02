@@ -115,7 +115,7 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
             (result: ProgrammingExercise) => {
                 this.router.navigate(['course-management', this.courseId, 'programming-exercises', 'import', result.id]);
             },
-            (reason) => {},
+            () => {},
         );
     }
 

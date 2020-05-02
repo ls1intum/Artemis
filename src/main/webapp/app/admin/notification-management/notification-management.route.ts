@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { ActivatedRouteSnapshot, Resolve, Route, RouterStateSnapshot } from '@angular/router';
+import { ActivatedRouteSnapshot, Resolve, Route } from '@angular/router';
 import { JhiResolvePagingParams } from 'ng-jhipster';
 import { NotificationMgmtUpdateComponent } from 'app/admin/notification-management/notification-management-update.component';
 import { SystemNotification } from 'app/entities/system-notification.model';
@@ -14,9 +14,8 @@ export class NotificationMgmtResolve implements Resolve<any> {
     /**
      * Resolves the route and initializes system notification from id route param
      * @param route
-     * @param state
      */
-    resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot) {
+    resolve(route: ActivatedRouteSnapshot) {
         const id = route.params['id'] ? route.params['id'] : null;
         if (id) {
             return this.service.find(parseInt(id, 10));

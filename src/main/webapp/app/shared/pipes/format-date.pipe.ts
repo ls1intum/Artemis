@@ -8,10 +8,8 @@ export class DatePipe implements PipeTransform {
     /**
      * Displays the date in a readable format.
      * @param date The date expression (number or string)
-     * @param args arguments specification on how the date is returned, this includes format, timezone and locale
-     * parameters.
      */
-    transform(date: any, args?: any): any {
+    transform(date: any): any {
         if (date == null) {
             return 'DD MMMM YYYY, hh:mm:ss PM';
         }

@@ -31,7 +31,7 @@ export class LoginService {
         return new Promise((resolve, reject) => {
             this.authServerProvider.login(credentials).subscribe(
                 (data) => {
-                    this.accountService.identity(true).then((user) => {
+                    this.accountService.identity(true).then(() => {
                         this.websocketService.sendActivity();
                         resolve(data);
                     });

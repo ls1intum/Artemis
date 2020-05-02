@@ -18,7 +18,7 @@ export class QuizExercisePopupService {
      * @param quizExercise the quiz exercise for which the modal should be shown
      */
     open(component: Component, quizExercise: QuizExercise): Promise<NgbModalRef> {
-        return new Promise<NgbModalRef>((resolve, reject) => {
+        return new Promise<NgbModalRef>((resolve) => {
             if (this.ngbModalRef == null) {
                 this.ngbModalRef = this.quizExerciseModalRef(component, quizExercise);
             }
@@ -43,7 +43,7 @@ export class QuizExercisePopupService {
                     this.ngbModalRef = null;
                 }
             },
-            (reason) => {
+            () => {
                 this.router.navigate([{ outlets: { popup: null } }], { replaceUrl: true, queryParamsHandling: 'merge' });
                 this.ngbModalRef = null;
             },

@@ -411,7 +411,7 @@ export class DataTableComponent implements OnInit, OnChanges {
      *
      * @param entity Entity that was selected via autocomplete
      */
-    filterAfterAutocompleteSelect = (entity: BaseEntity) => {
+    filterAfterAutocompleteSelect = () => {
         this.updateEntities();
     };
 

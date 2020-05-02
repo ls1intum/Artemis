@@ -27,7 +27,6 @@ export class ProgrammingExerciseInstructionService {
      * @param latestResult
      */
     public testStatusForTask = (tests: string[], latestResult: Result | null): TaskResult => {
-        const totalTests = tests.length;
         if (latestResult && latestResult.successful && (!latestResult.feedbacks || !latestResult.feedbacks.length)) {
             // Case 1: Submission fulfills all test cases and there are no feedbacks (legacy case), no further checking needed.
             return { testCaseState: TestCaseState.SUCCESS, detailed: { successfulTests: tests, failedTests: [], notExecutedTests: [] } };
