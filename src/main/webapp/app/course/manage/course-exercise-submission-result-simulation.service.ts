@@ -3,7 +3,6 @@ import { ProgrammingSubmission } from 'app/entities/programming-submission.model
 import { Result } from 'app/entities/result.model';
 import { Observable } from 'rxjs/Observable';
 import { HttpResponse, HttpClient } from '@angular/common/http';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 
 /**
  * This functionality is only for testing purposes (noVersionControlAndContinuousIntegrationAvailable)

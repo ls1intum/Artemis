@@ -1,7 +1,7 @@
 import { ActivatedRoute } from '@angular/router';
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
-import { HttpErrorResponse, HttpResponse, HttpHeaders } from '@angular/common/http';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService } from 'app/core/alert/alert.service';
 import { Observable } from 'rxjs';
 import { ImageCroppedEvent } from 'ngx-image-cropper';
