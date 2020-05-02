@@ -9,8 +9,6 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.time.ZonedDateTime;
 import java.util.*;
-import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
 
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
@@ -182,7 +180,7 @@ public class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractS
                 HttpStatus.OK);
         assertThat(response).startsWith("Successfully generated the structure oracle");
 
-        List<RevCommit> testRepoCommits = getAllCommits(testRepo.localGit);
+        List<RevCommit> testRepoCommits = LocalRepository.getAllCommits(testRepo.localGit);
         assertThat(testRepoCommits.size()).isEqualTo(2);
 
         assertThat(testRepoCommits.get(0).getFullMessage()).isEqualTo("Update the structure oracle file.");
@@ -366,10 +364,6 @@ public class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractS
 
         // TODO: check the actual plan and plan permissions that get passed here
         doReturn(null).when(bambooServer).publish(any());
-    }
-
-    public List<RevCommit> getAllCommits(Git gitRepo) throws Exception {
-        return StreamSupport.stream(gitRepo.log().call().spliterator(), false).collect(Collectors.toList());
     }
 
     public List<DiffEntry> getChanges(Repository repository, RevCommit commit) throws Exception {

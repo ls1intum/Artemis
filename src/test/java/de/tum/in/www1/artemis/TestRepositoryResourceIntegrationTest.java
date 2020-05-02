@@ -177,6 +177,9 @@ public class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegra
         request.postWithoutLocation(testRepoBaseUrl + exercise.getId() + "/commit", null, HttpStatus.OK, null);
         var receivedStatusAfterCommit = request.get(testRepoBaseUrl + exercise.getId(), HttpStatus.OK, RepositoryStatusDTO.class);
         assertThat(receivedStatusAfterCommit.repositoryStatus.toString()).isEqualTo("CLEAN");
+        var testRepoCommits = LocalRepository.getAllCommits(testRepo.localGit);
+        assertThat(testRepoCommits.size() == 1).isTrue();
+        assertThat(database.getUserByLogin("instructor1").getName()).isEqualTo(testRepoCommits.get(0).getAuthorIdent().getName());
     }
 
     @Test

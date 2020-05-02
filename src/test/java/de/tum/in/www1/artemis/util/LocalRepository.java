@@ -3,10 +3,14 @@ package de.tum.in.www1.artemis.util;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.lib.StoredConfig;
+import org.eclipse.jgit.revwalk.RevCommit;
 
 public class LocalRepository {
 
@@ -45,5 +49,9 @@ public class LocalRepository {
         if (localRepo.originGit != null) {
             localRepo.originGit.close();
         }
+    }
+
+    public static List<RevCommit> getAllCommits(Git gitRepo) throws Exception {
+        return StreamSupport.stream(gitRepo.log().call().spliterator(), false).collect(Collectors.toList());
     }
 }
