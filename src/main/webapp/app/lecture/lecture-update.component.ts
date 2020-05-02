@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { AlertService } from 'app/core/alert/alert.service';
 import { LectureService } from './lecture.service';
@@ -58,8 +58,8 @@ export class LectureUpdateComponent implements OnInit {
 
     protected subscribeToSaveResponse(result: Observable<HttpResponse<Lecture>>) {
         result.subscribe(
-            (res: HttpResponse<Lecture>) => this.onSaveSuccess(),
-            (res: HttpErrorResponse) => this.onSaveError(),
+            () => this.onSaveSuccess(),
+            () => this.onSaveError(),
         );
     }
 

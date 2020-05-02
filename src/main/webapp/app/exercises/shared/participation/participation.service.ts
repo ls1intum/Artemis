@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs/Observable';
 import { SERVER_API_URL } from 'app/app.constants';
+import { map } from 'rxjs/operators';
 
 import * as moment from 'moment';
 import { createRequestOption } from 'app/shared/util/request-util';
@@ -25,19 +26,19 @@ export class ParticipationService {
         const copy = this.convertDateFromClient(participation);
         return this.http
             .put<StudentParticipation>(this.resourceUrl, copy, { observe: 'response' })
-            .map((res: EntityResponseType) => this.convertDateFromServer(res));
+            .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
     }
 
     find(participationId: number): Observable<EntityResponseType> {
         return this.http
             .get<StudentParticipation>(`${this.resourceUrl}/${participationId}`, { observe: 'response' })
-            .map((res: EntityResponseType) => this.convertDateFromServer(res));
+            .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
     }
 
     findWithLatestResult(participationId: number): Observable<EntityResponseType> {
         return this.http
             .get<StudentParticipation>(`${this.resourceUrl}/${participationId}/withLatestResult`, { observe: 'response' })
-            .map((res: EntityResponseType) => this.convertDateFromServer(res));
+            .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
     }
 
     /*
@@ -46,12 +47,14 @@ export class ParticipationService {
     findParticipation(exerciseId: number): Observable<EntityResponseType | null> {
         return this.http
             .get<StudentParticipation>(SERVER_API_URL + `api/exercises/${exerciseId}/participation`, { observe: 'response' })
-            .map((res: EntityResponseType) => {
-                if (typeof res === 'undefined' || res === null) {
-                    return null;
-                }
-                return this.convertDateFromServer(res);
-            });
+            .pipe(
+                map((res: EntityResponseType) => {
+                    if (typeof res === 'undefined' || res === null) {
+                        return null;
+                    }
+                    return this.convertDateFromServer(res);
+                }),
+            );
     }
 
     findAllParticipationsByExercise(exerciseId: number, withLatestResult = false): Observable<EntityArrayResponseType> {
@@ -61,7 +64,7 @@ export class ParticipationService {
                 params: options,
                 observe: 'response',
             })
-            .map((res: EntityArrayResponseType) => this.convertDateArrayFromServer(res));
+            .pipe(map((res: EntityArrayResponseType) => this.convertDateArrayFromServer(res)));
     }
 
     delete(participationId: number, req?: any): Observable<HttpResponse<any>> {
@@ -78,18 +81,21 @@ export class ParticipationService {
         const copy = this.convertDateFromClient(participation);
         return this.http
             .put<StudentParticipation>(`${this.resourceUrl}/${participation.id}/cleanupBuildPlan`, copy, { observe: 'response' })
-            .map((res: EntityResponseType) => this.convertDateFromServer(res));
+            .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
     }
 
     downloadArtifact(participationId: number) {
-        return this.http.get(`${this.resourceUrl}/${participationId}/buildArtifact`, { responseType: 'blob' }).map((artifact) => {
-            return artifact;
-        });
+        return this.http.get(`${this.resourceUrl}/${participationId}/buildArtifact`, { responseType: 'blob' }).pipe(
+            map((artifact) => {
+                return artifact;
+            }),
+        );
     }
 
     protected convertDateFromClient(participation: StudentParticipation): StudentParticipation {
         const copy: StudentParticipation = Object.assign({}, participation, {
-            initializationDate: participation.initializationDate != null && moment(participation.initializationDate).isValid() ? participation.initializationDate.toJSON() : null,
+            initializationDate:
+                participation.initializationDate != null && moment(participation.initializationDate).isValid() ? JSON.stringify(participation.initializationDate) : null,
         });
         return copy;
     }

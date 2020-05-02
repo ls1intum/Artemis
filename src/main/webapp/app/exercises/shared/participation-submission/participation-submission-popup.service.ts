@@ -11,7 +11,7 @@ export class ParticipationSubmissionPopupService {
     }
 
     open(component: Component, participationId?: number | any, submissionId?: number | any): Promise<NgbModalRef> {
-        return new Promise<NgbModalRef>((resolve, reject) => {
+        return new Promise<NgbModalRef>((resolve) => {
             if (this.ngbModalRef != null) {
                 resolve(this.ngbModalRef);
             }
@@ -28,11 +28,11 @@ export class ParticipationSubmissionPopupService {
         modalRef.componentInstance.participationId = participationId;
         modalRef.componentInstance.submissionId = submissionId;
         modalRef.result.then(
-            (result) => {
+            () => {
                 this.router.navigate([{ outlets: { popup: null } }], { replaceUrl: true, queryParamsHandling: 'merge' });
                 this.ngbModalRef = null;
             },
-            (reason) => {
+            () => {
                 this.router.navigate([{ outlets: { popup: null } }], { replaceUrl: true, queryParamsHandling: 'merge' });
                 this.ngbModalRef = null;
             },

@@ -19,7 +19,10 @@ export class PasswordResetInitComponent implements OnInit, AfterViewInit {
     }
 
     ngAfterViewInit() {
-        this.renderer.selectRootElement('#email', true).focus();
+        const emailElement = this.elementRef.nativeElement.querySelector('#email');
+        if (emailElement != null) {
+            this.renderer.selectRootElement(emailElement, true).focus();
+        }
     }
 
     requestReset() {

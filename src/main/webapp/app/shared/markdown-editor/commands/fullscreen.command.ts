@@ -10,7 +10,7 @@ export class FullscreenCommand extends Command {
     buttonIcon = 'compress';
     buttonTranslationString = 'artemisApp.markdownEditor.commands.fullscreen';
 
-    execute(input?: string): void {
+    execute(): void {
         if (this.isFullScreen()) {
             this.exitFullscreen();
         } else {

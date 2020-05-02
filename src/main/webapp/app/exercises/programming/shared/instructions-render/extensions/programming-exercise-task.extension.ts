@@ -65,7 +65,7 @@ export class ProgrammingExerciseTaskExtensionWrapper implements ArtemisShowdownE
     getExtension() {
         const extension: showdown.ShowdownExtension = {
             type: 'lang',
-            filter: (text: string, converter: showdown.Converter, options: showdown.ConverterOptions) => {
+            filter: (text: string) => {
                 const idPlaceholder = '%idPlaceholder%';
                 // E.g. [task][Implement BubbleSort](testBubbleSort)
                 const taskRegex = /\[task\]\[.*\]\(.*\)({.*})?/g;
@@ -92,7 +92,7 @@ export class ProgrammingExerciseTaskExtensionWrapper implements ArtemisShowdownE
                 // Emit new found elements that need to be injected into html after it is rendered.
                 this.injectableElementsFoundSubject.next(() => this.injectTasks(testsForTask));
                 return testsForTask.reduce(
-                    (acc: string, { completeString: task, taskName, tests }, index: number): string =>
+                    (acc: string, { completeString: task }, index: number): string =>
                         // Insert anchor divs into the text so that injectable elements can be inserted into them.
                         acc.replace(new RegExp(escapeStringForUseInRegex(task), 'g'), taskContainer.replace(idPlaceholder, index.toString())),
                     text,

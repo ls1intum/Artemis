@@ -20,7 +20,7 @@ export function newCourse(artemis) {
 
     const res = artemis.post(COURSES, course);
     if (res[0].status !== 201) {
-        console.log("ERROR when creating a new course. Response headers:");
+        console.log('ERROR when creating a new course. Response headers:');
         for (let [key, value] of Object.entries(res[0].headers)) {
             console.log(`${key}: ${value}`);
         }
@@ -33,22 +33,22 @@ export function newCourse(artemis) {
 
 export function addUserToStudentsInCourse(artemis, username, courseId) {
     const res = artemis.post(COURSE_STUDENTS(courseId, username));
-    console.log("Add user " + username + " to students in course " + courseId + " status: " + res[0].status);
+    console.log('Add user ' + username + ' to students in course ' + courseId + ' status: ' + res[0].status);
 }
 
 export function removeUserFromStudentsInCourse(artemis, username, courseId) {
     const res = artemis.delete(COURSE_STUDENTS(courseId, username));
-    console.log("Remove user " + username + " from students in course " + courseId + " status: " + res[0].status);
+    console.log('Remove user ' + username + ' from students in course ' + courseId + ' status: ' + res[0].status);
 }
 
 export function addUserToInstructorsInCourse(artemis, username, courseId) {
     const res = artemis.post(COURSE_INSTRUCTORS(courseId, username));
-    console.log("Add user " + username + " to instructors in course " + courseId + " status: " + res[0].status);
+    console.log('Add user ' + username + ' to instructors in course ' + courseId + ' status: ' + res[0].status);
 }
 
 export function removeUserFromInstructorsInCourse(artemis, username, courseId) {
     const res = artemis.delete(COURSE_INSTRUCTORS(courseId, username));
-    console.log("Remove user " + username + " from instructors in course " + courseId + " status: " + res[0].status);
+    console.log('Remove user ' + username + ' from instructors in course ' + courseId + ' status: ' + res[0].status);
 }
 
 export function deleteCourse(artemis, courseId) {
