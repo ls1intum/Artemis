@@ -11,7 +11,7 @@ Before you can build Artemis, you must install and configure the following depen
 2. [MySQL Database Server 8](https://dev.mysql.com/downloads/mysql): Artemis uses Hibernate to store entities in a MySQL database. Download and install the MySQL Community Server (8.0.x) and configure the 'root' user with an empty password. (In case you want to use a different password, make sure to change the value in application-dev.yml and in liquibase.gradle). The required Artemis scheme will be created / updated automatically at startup time of the server application. Alternatively, you can run the MySQL Database Server inside a Docker container using e.g. ```docker-compose -f src/main/docker/mysql.yml up```
 3. [Node.js](https://nodejs.org): We use Node (>=12.8.0) to compile and run the client Angular application. Depending on your system, you can install Node either from source or as a pre-packaged bundle.
 4. [Yarn](https://yarnpkg.com): We use Yarn (>=1.17.3) to manage client side Node dependencies.
-Depending on your system, you can install Yarn either from source or as a pre-packaged bundle.
+Depending on your system, you can install Yarn either from source or as a pre-packaged bundle. Note that not only the newest version is not necessary, it can even lead to errors. The **global install** of step 2, Installation, of the "Getting started" tab is sufficient to run the application.
 
 ### Server Setup
 
@@ -92,7 +92,7 @@ info:
     imprint: https://ase.in.tum.de/lehrstuhl_1/component/content/article/179-imprint
 ```
 Change all entries with ```<...>``` with proper values, e.g. your TUM Online account credentials to connect to the given instances of JIRA, Bitbucket and Bamboo. Alternatively, you can connect to your local JIRA, Bitbucket and Bamboo instances.
-Be careful that you don't commit changes in this file. Best practice is to specify that your local git repository ignores this file or assumes that this file is unchanged.
+Be careful that you don't commit changes in this file. Best practice is to specify that your local git repository ignores this file or assumes that this file is unchanged. Also note that except for the credentials and a random encryption-password, other fields like `ldap` can be left blank.
 
 The Artemis server should startup by running the main class ```de.tum.in.www1.artemis.ArtemisApp``` using Spring Boot.
 
