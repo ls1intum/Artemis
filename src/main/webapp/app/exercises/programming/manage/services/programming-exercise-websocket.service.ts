@@ -11,6 +11,12 @@ export type EntityResponseType = HttpResponse<ProgrammingExercise>;
 export type EntityArrayResponseType = HttpResponse<ProgrammingExercise[]>;
 
 export interface IProgrammingExerciseWebsocketService {
+    /**
+     * Gets the current state of test cases of a particular programming exercise
+     * True => The test cases were changed and the student submissions should be built again.
+     * False => There are no outstanding test case changes, the student results are up-to-date.
+     * @param programmingExerciseId of the particular programming exercise
+     */
     getTestCaseState(programmingExerciseId: number): Observable<boolean>;
 }
 
