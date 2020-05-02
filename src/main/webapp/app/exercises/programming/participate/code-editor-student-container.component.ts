@@ -99,6 +99,9 @@ export class CodeEditorStudentContainerComponent extends CodeEditorContainer imp
         });
     }
 
+    /**
+     * If a subscription exists for paramSub, unsubscribe
+     */
     ngOnDestroy() {
         if (this.paramSub) {
             this.paramSub.unsubscribe();
@@ -128,8 +131,7 @@ export class CodeEditorStudentContainerComponent extends CodeEditorContainer imp
     }
 
     /**
-     * @function loadResultDetails
-     * @desc Fetches details for the result (if we received one) and attach them to the result.
+     * Fetches details for the result (if we received one) and attach them to the result.
      * Mutates the input parameter result.
      */
     loadResultDetails(result: Result): Observable<Feedback[] | null> {
