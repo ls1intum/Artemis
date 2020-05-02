@@ -29,8 +29,9 @@ export class PasswordResetFinishComponent implements OnInit, AfterViewInit {
     }
 
     ngAfterViewInit() {
-        if (this.elementRef.nativeElement.querySelector('#password') != null) {
-            this.renderer.selectRootElement('#password', true).focus();
+        const passwordElement = this.elementRef.nativeElement.querySelector('#password');
+        if (passwordElement != null) {
+            this.renderer.selectRootElement(passwordElement, true).focus();
         }
     }
 

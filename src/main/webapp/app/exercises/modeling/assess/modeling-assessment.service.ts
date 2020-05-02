@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs/Observable';
 import { SERVER_API_URL } from 'app/app.constants';
-import { UMLElementType, UMLModel, UMLModelElementType, UMLRelationshipType } from '@ls1intum/apollon';
+import { UMLElementType, UMLModel, UMLRelationshipType } from '@ls1intum/apollon';
 import { mergeMap } from 'rxjs/operators';
 import { timer } from 'rxjs';
 import * as moment from 'moment';

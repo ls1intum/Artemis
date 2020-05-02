@@ -43,7 +43,7 @@ export class QuizReEvaluateWarningComponent implements OnInit {
         this.isSaving = false;
         this.quizExerciseService.find(this.quizExercise.id).subscribe((res) => {
             this.backUpQuiz = res.body!;
-            this.loadQuizSuccess(this.quizExercise);
+            this.loadQuizSuccess();
         });
     }
 
@@ -66,10 +66,8 @@ export class QuizReEvaluateWarningComponent implements OnInit {
      *  3. check for each question-element if:
      *          - it is set invalid
      *          - the correctness was changed
-     *
-     * @param quiz {quizExercise} the reference Quiz from Server
      */
-    loadQuizSuccess(quiz: QuizExercise): void {
+    loadQuizSuccess(): void {
         // question deleted?
         this.questionDeleted = this.backUpQuiz.quizQuestions.length !== this.quizExercise.quizQuestions.length;
 
@@ -250,7 +248,7 @@ export class QuizReEvaluateWarningComponent implements OnInit {
         this.busy = true;
 
         this.quizReEvaluateService.update(this.quizExercise).subscribe(
-            (res) => {
+            () => {
                 this.busy = false;
                 this.successful = true;
             },

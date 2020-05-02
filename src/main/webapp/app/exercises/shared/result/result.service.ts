@@ -69,10 +69,9 @@ export class ResultService implements IResultService {
      * Create a new example result for the provided submission ID.
      *
      * @param submissionId The ID of the example submission for which a result should get created
-     * @param isProgrammingExerciseWithFeedback defines if the programming exercise contains feedback
      * @return The newly created (and empty) example result
      */
-    createNewExampleResult(submissionId: number, isProgrammingExerciseWithFeedback = false): Observable<HttpResponse<Result>> {
+    createNewExampleResult(submissionId: number): Observable<HttpResponse<Result>> {
         return this.http.post<Result>(`${this.submissionResourceUrl}/${submissionId}/example-result`, null, { observe: 'response' });
     }
 

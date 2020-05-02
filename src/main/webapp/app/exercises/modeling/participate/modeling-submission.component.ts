@@ -28,7 +28,6 @@ import { ButtonType } from 'app/shared/components/button.component';
 import { participationStatus } from 'app/exercises/shared/exercise/exercise-utils';
 import { filter } from 'rxjs/operators';
 import { stringifyIgnoringFields } from 'app/shared/util/utils';
-import { Location } from '@angular/common';
 import { Subject } from 'rxjs';
 
 @Component({

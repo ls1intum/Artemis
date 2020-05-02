@@ -1,4 +1,3 @@
-/* tslint:disable:no-unused-expression */
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateModule } from '@ngx-translate/core';
 import * as chai from 'chai';
