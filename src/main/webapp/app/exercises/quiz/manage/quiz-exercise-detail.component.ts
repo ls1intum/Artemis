@@ -957,7 +957,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
                         this.onSaveError();
                     }
                 },
-                (res: HttpErrorResponse) => this.onSaveError(res),
+                () => this.onSaveError(),
             );
             this.pendingChangesCache = false;
         } else {
@@ -969,7 +969,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
                         this.onSaveError();
                     }
                 },
-                (res: HttpErrorResponse) => this.onSaveError(res),
+                () => this.onSaveError(),
             );
             this.pendingChangesCache = false;
         }
@@ -993,7 +993,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
      * @function onSaveError
      * @desc Callback function for when the save fails
      */
-    private onSaveError = (error?: HttpErrorResponse): void => {
+    private onSaveError = (): void => {
         console.error('Saving Quiz Failed! Please try again later.');
         this.jhiAlertService.error('artemisApp.quizExercise.saveError');
         this.isSaving = false;

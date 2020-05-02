@@ -15,7 +15,6 @@ import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service'
 import { ModelingAssessmentService } from 'app/exercises/modeling/assess/modeling-assessment.service';
 import { ModelingSubmission } from 'app/entities/modeling-submission.model';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
-import { TutorParticipation } from 'app/entities/participation/tutor-participation.model';
 import { ModelingAssessmentComponent } from 'app/exercises/modeling/assess/modeling-assessment.component';
 
 @Component({
@@ -314,7 +313,7 @@ export class ExampleModelingSubmissionComponent implements OnInit {
         exampleSubmission.submission.result.feedbacks = this.feedbacks;
 
         this.tutorParticipationService.assessExampleSubmission(exampleSubmission, this.exerciseId).subscribe(
-            (res: HttpResponse<TutorParticipation>) => {
+            () => {
                 this.jhiAlertService.success('artemisApp.exampleSubmission.assessScore.success');
             },
             (error: HttpErrorResponse) => {
@@ -333,7 +332,7 @@ export class ExampleModelingSubmissionComponent implements OnInit {
     }
 
     readAndUnderstood() {
-        this.tutorParticipationService.assessExampleSubmission(this.exampleSubmission, this.exerciseId).subscribe((res: HttpResponse<TutorParticipation>) => {
+        this.tutorParticipationService.assessExampleSubmission(this.exampleSubmission, this.exerciseId).subscribe(() => {
             this.jhiAlertService.success('artemisApp.exampleSubmission.readSuccessfully');
             this.back();
         });

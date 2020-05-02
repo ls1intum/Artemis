@@ -103,12 +103,12 @@ public class NotificationResource {
     @GetMapping("/notifications/recent-for-user")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<List<Notification>> getRecentNotificationsForCurrentUser() {
+        User currentUser = userService.getUserWithGroupsAndAuthorities();
         List<Notification> notifications = new ArrayList<>();
         SystemNotification activeSystemNotification = systemNotificationService.findActiveSystemNotification();
         if (activeSystemNotification != null) {
             notifications.add(activeSystemNotification);
         }
-        User currentUser = userService.getUserWithGroupsAndAuthorities();
         if (currentUser != null) {
             notifications.addAll(notificationService.findAllRecentExceptSystem(currentUser));
         }

@@ -49,7 +49,8 @@
                 "dismissFeedback": "Möchtest du das Feedback löschen?",
                 "dismissFeedbackConfirmation": "Bitte bestätige, dass du das Feedback löschen möchtest!",
                 "feedbackCommentPlaceholder": "Gib deine Anmerkung bitte hier ein.."
-            }
+            },
+            "assessmentInstruction": "Bitte fahren Sie mit der Maus darüber und klicken Sie auf den Textblock, den du bewerten möchten."
         }
     }
 }

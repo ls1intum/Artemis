@@ -1,4 +1,4 @@
-import { Component, EventEmitter, HostListener, Input, OnChanges, Output, SimpleChanges, ViewChild, ViewEncapsulation } from '@angular/core';
+import { Component, EventEmitter, HostListener, Input, OnChanges, Output, ViewChild, ViewEncapsulation } from '@angular/core';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { DragAndDropQuestionUtil } from 'app/exercises/quiz/shared/drag-and-drop-question-util.service';
 import { polyfill } from 'mobile-drag-drop';
@@ -15,12 +15,6 @@ polyfill({
     // use this to make use of the scroll behaviour
     dragImageTranslateOverride: scrollBehaviourDragImageTranslateOverride,
 });
-
-// Drag-enter listener for mobile devices
-// tslint:disable-next-line
-(event: any) => {
-    event.preventDefault();
-};
 
 window.addEventListener('touchmove', function () {}, { passive: false });
 
@@ -87,7 +81,7 @@ export class DragAndDropQuestionComponent implements OnChanges {
         resizeImage();
     }
 
-    ngOnChanges(changes: SimpleChanges): void {
+    ngOnChanges(): void {
         this.countCorrectMappings();
     }
 

@@ -5,7 +5,7 @@ import { Observable } from 'rxjs';
 import { AlertService } from 'app/core/alert/alert.service';
 import { FileUploadExerciseService } from './file-upload-exercise.service';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
-import { CourseManagementService } from '../../../course/manage/course-management.service';
+import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { MAX_SCORE_PATTERN } from 'app/app.constants';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { ExerciseCategory } from 'app/entities/exercise.model';
@@ -95,7 +95,7 @@ export class FileUploadExerciseUpdateComponent implements OnInit {
 
     private subscribeToSaveResponse(result: Observable<HttpResponse<FileUploadExercise>>) {
         result.subscribe(
-            (res: HttpResponse<FileUploadExercise>) => this.onSaveSuccess(),
+            () => this.onSaveSuccess(),
             (res: HttpErrorResponse) => this.onSaveError(res),
         );
     }

@@ -3,15 +3,16 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { ElementRef, NgModule, Renderer2 } from '@angular/core';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { NgbActiveModal, NgbModal, NgbDatepickerConfig } from '@ng-bootstrap/ng-bootstrap';
-import { AlertService, JhiDataUtils, JhiDateUtils, JhiEventManager, JhiLanguageService, JhiParseLinks } from 'ng-jhipster';
+import { JhiAlertService, JhiDataUtils, JhiDateUtils, JhiEventManager, JhiLanguageService, JhiParseLinks } from 'ng-jhipster';
 
-import { MockLanguageHelper, MockLanguageService } from './helpers/mock-language.service';
+import { MockLanguageHelper, MockLanguageService } from './helpers/mocks/service/mock-language.service';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { AccountService } from 'app/core/auth/account.service';
-import { MockAccountService } from './helpers/mock-account.service';
-import { MockActivatedRoute, MockRouter } from './helpers/mock-route.service';
-import { MockActiveModal } from './helpers/mock-active-modal.service';
-import { MockEventManager } from './helpers/mock-event-manager.service';
+import { MockAccountService } from './helpers/mocks/service/mock-account.service';
+import { MockActivatedRoute } from './helpers/mocks/activated-route/mock-activated-route';
+import { MockRouter } from './helpers/mocks/mock-router';
+import { MockActiveModal } from './helpers/mocks/service/mock-active-modal.service';
+import { MockEventManager } from './helpers/mocks/service/mock-event-manager.service';
 import { CookieService } from 'ngx-cookie-service';
 import { FaIconLibrary, FontAwesomeModule, FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { fas } from '@fortawesome/free-solid-svg-icons';
@@ -65,7 +66,7 @@ import { MockComponent } from 'ng-mocks';
             useValue: null,
         },
         {
-            provide: AlertService,
+            provide: JhiAlertService,
             useValue: null,
         },
         {

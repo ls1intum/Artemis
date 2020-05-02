@@ -102,7 +102,7 @@ public class ExerciseResource {
         log.debug("REST request to get Exercise : {}", exerciseId);
 
         User user = userService.getUserWithGroupsAndAuthorities();
-        Exercise exercise = exerciseService.findOneWithCategories(exerciseId);
+        Exercise exercise = exerciseService.findOneWithCategoriesAndTeamAssignmentConfig(exerciseId);
         List<GradingCriterion> gradingCriteria = gradingCriterionService.findByExerciseIdWithEagerGradingCriteria(exerciseId);
         exercise.setGradingCriteria(gradingCriteria);
         if (!authCheckService.isAllowedToSeeExercise(exercise, user)) {
@@ -322,6 +322,7 @@ public class ExerciseResource {
                 exercise.addParticipation(participation);
             }
 
+            this.programmingExerciseService.checksAndSetsIfProgrammingExerciseIsLocalSimulation(exercise);
             // TODO: we should also check that the submissions do not contain sensitive data
 
             // remove sensitive information for students

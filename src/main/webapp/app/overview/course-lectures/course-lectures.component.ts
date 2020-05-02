@@ -1,9 +1,9 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Course } from 'app/entities/course.model';
-import { CourseManagementService } from '../../course/manage/course-management.service';
+import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs/Subscription';
-import { LangChangeEvent, TranslateService } from '@ngx-translate/core';
+import { TranslateService } from '@ngx-translate/core';
 import { HttpResponse } from '@angular/common/http';
 import * as moment from 'moment';
 import { Lecture } from 'app/entities/lecture.model';
@@ -52,7 +52,7 @@ export class CourseLecturesComponent implements OnInit, OnDestroy {
         }
         this.groupLectures(this.DUE_DATE_DESC);
 
-        this.translateSubscription = this.translateService.onLangChange.subscribe((event: LangChangeEvent) => {
+        this.translateSubscription = this.translateService.onLangChange.subscribe(() => {
             this.groupLectures(this.DUE_DATE_DESC);
         });
 

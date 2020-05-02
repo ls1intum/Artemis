@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.security;
 
 import java.util.Collection;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Stream;
 
 import org.springframework.security.core.Authentication;
@@ -56,7 +57,7 @@ public final class SecurityUtils {
     }
 
     private static Stream<String> getAuthorities(Authentication authentication) {
-        return authentication.getAuthorities().stream().map(GrantedAuthority::getAuthority);
+        return Optional.ofNullable(authentication.getAuthorities()).orElse(Set.of()).stream().map(GrantedAuthority::getAuthority);
     }
 
     /**

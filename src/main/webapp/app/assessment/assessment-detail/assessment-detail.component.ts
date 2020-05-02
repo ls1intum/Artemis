@@ -3,6 +3,7 @@ import { HighlightColors } from 'app/exercises/text/assess/highlight-colors';
 import { TextBlock } from 'app/entities/text-block.model';
 import { Feedback, FeedbackType } from 'app/entities/feedback.model';
 import { convertFromHtmlLinebreaks, sanitize } from 'app/utils/text.utils';
+import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
 
 @Component({
     selector: 'jhi-assessment-detail',
@@ -18,7 +19,7 @@ export class AssessmentDetailComponent {
     @Input() public disabled = false;
 
     public FeedbackType_AUTOMATIC = FeedbackType.AUTOMATIC;
-
+    constructor(public structuredGradingCriterionService: StructuredGradingCriterionService) {}
     public emitChanges(): void {
         if (this.assessment.type === FeedbackType.AUTOMATIC) {
             this.assessment.type = FeedbackType.AUTOMATIC_ADAPTED;
@@ -41,27 +42,5 @@ export class AssessmentDetailComponent {
 
     public get sanitizedText(): string {
         return sanitize(this.text);
-    }
-    /**
-     * Allows the drop of an SGI Element
-     */
-    allowDrop(event: DragEvent) {
-        event.preventDefault();
-    }
-    /**
-     * Connects the SGI with the Feedback of a Submission Element
-     * @param {Event} event - The drop event
-     * the SGI element sent on drag in processed in this method
-     * the corresponding drag method is in StructuredGradingInstructionsAssessmentLayoutComponent
-     */
-    drop(event: any) {
-        event.preventDefault();
-        const data = event.dataTransfer.getData('text');
-        const instruction = JSON.parse(data);
-        const credits = instruction.credits;
-        const feedback = instruction.feedback;
-        this.assessment.credits = credits;
-        this.assessment.detailText = feedback;
-        this.assessmentChange.emit(this.assessment);
     }
 }

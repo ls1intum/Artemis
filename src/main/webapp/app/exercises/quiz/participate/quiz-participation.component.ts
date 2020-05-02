@@ -350,7 +350,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
                         this.applyQuizFull(payload);
                     }
                 },
-                (error) => {},
+                () => {},
             );
         }
     }
