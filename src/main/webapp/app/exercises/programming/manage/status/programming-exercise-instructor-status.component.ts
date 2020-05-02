@@ -6,7 +6,7 @@ import { Result } from 'app/entities/result.model';
 import { Participation } from 'app/entities/participation/participation.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { hasParticipationChanged } from 'app/overview/participation-utils';
-import { ProgrammingExerciseParticipationType } from '../../../../entities/programming-exercise-participation.model';
+import { ProgrammingExerciseParticipationType } from 'app/entities/programming-exercise-participation.model';
 
 @Component({
     selector: 'jhi-programming-exercise-instructor-status',
@@ -53,6 +53,9 @@ export class ProgrammingExerciseInstructorStatusComponent implements OnChanges, 
             .subscribe((result) => (this.latestResult = result));
     }
 
+    /**
+     * If there is an existing subscription, unsubscribe.
+     */
     ngOnDestroy(): void {
         if (this.resultSubscription) {
             this.resultSubscription.unsubscribe();
