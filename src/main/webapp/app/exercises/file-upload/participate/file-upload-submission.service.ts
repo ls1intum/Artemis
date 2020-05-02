@@ -1,8 +1,9 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs/Observable';
+import { map } from 'rxjs/operators';
 
-import { FileUploadSubmission } from '../../../entities/file-upload-submission.model';
+import { FileUploadSubmission } from 'app/entities/file-upload-submission.model';
 import { createRequestOption } from 'app/shared/util/request-util';
 import { stringifyCircular } from 'app/shared/util/utils';
 
@@ -28,7 +29,7 @@ export class FileUploadSubmissionService {
             .post<FileUploadSubmission>(`api/exercises/${exerciseId}/file-upload-submissions`, formData, {
                 observe: 'response',
             })
-            .map((res: EntityResponseType) => this.convertResponse(res));
+            .pipe(map((res: EntityResponseType) => this.convertResponse(res)));
     }
 
     /**
@@ -40,7 +41,7 @@ export class FileUploadSubmissionService {
             .get<FileUploadSubmission>(`api/file-upload-submissions/${fileUploadSubmissionId}`, {
                 observe: 'response',
             })
-            .map((res: HttpResponse<FileUploadSubmission>) => this.convertResponse(res));
+            .pipe(map((res: HttpResponse<FileUploadSubmission>) => this.convertResponse(res)));
     }
 
     /**
@@ -55,7 +56,7 @@ export class FileUploadSubmissionService {
                 params: options,
                 observe: 'response',
             })
-            .map((res: HttpResponse<FileUploadSubmission[]>) => this.convertArrayResponse(res));
+            .pipe(map((res: HttpResponse<FileUploadSubmission[]>) => this.convertArrayResponse(res)));
     }
 
     /**

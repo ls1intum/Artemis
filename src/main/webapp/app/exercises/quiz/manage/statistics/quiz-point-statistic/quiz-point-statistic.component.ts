@@ -84,7 +84,7 @@ export class QuizPointStatisticComponent implements OnInit, OnDestroy, DataSetPr
                             this.loadQuizSuccess(quiz);
                         }
                     },
-                    (error) => {},
+                    () => {},
                 );
             }
 

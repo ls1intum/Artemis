@@ -167,6 +167,7 @@ export class CodeEditorGridComponent implements AfterViewInit {
      * @param minWidth {number} Width to set the element to after toggling the collapse
      * @param minHeight {number} Height to set the element to after toggling the collapse
      */
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     toggleCollapse($event: any, horizontal: boolean, interactResizable: Interactable, minWidth?: number, minHeight?: number) {
         const target = $event.toElement || $event.relatedTarget || $event.target;
         target.blur();

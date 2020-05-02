@@ -67,20 +67,20 @@ $error-bg-color: #f8d7da;
         margin-left: 2rem;
         color: $error-text-color;
     }
-}
 
-.student-name {
-    flex-grow: 1;
-    width: 0;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
+    .student-name {
+        flex-grow: 1;
+        width: 0;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
 
-.student-remove-link {
-    background-color: transparent;
-    border: none;
-    -webkit-appearance: none;
+    .student-remove-link {
+        background-color: transparent;
+        border: none;
+        -webkit-appearance: none;
+    }
 }
 
 .modal-footer {

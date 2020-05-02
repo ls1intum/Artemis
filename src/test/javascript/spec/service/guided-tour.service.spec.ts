@@ -18,11 +18,11 @@ import { GuidedTourState, Orientation, ResetParticipation, UserInteractionEvent 
 import { GuidedTourComponent } from 'app/guided-tour/guided-tour.component';
 import { GuidedTourMapping, GuidedTourSetting } from 'app/guided-tour/guided-tour-setting.model';
 import { ModelingTaskTourStep, TextTourStep, UserInterActionTourStep } from 'app/guided-tour/guided-tour-step.model';
-import { MockAccountService } from '../mocks/mock-account.service';
+import { MockAccountService } from '../helpers/mocks/service/mock-account.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { DeviceDetectorService } from 'ngx-device-detector';
 import { Course } from 'app/entities/course.model';
-import { MockTranslateService } from '../mocks/mock-translate.service';
+import { MockTranslateService } from '../helpers/mocks/service/mock-translate.service';
 import { GuidedTourModelingTask, personUML } from 'app/guided-tour/guided-tour-task.model';
 import { completedTour } from 'app/guided-tour/tours/general-tour';
 import { SinonStub, stub } from 'sinon';
@@ -32,8 +32,8 @@ import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { InitializationState } from 'app/entities/participation/participation.model';
 import { NavbarComponent } from 'app/shared/layouts/navbar/navbar.component';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { MockSyncStorage } from '../mocks/mock-sync.storage';
-import { MockCookieService } from '../mocks/mock-cookie.service';
+import { MockSyncStorage } from '../helpers/mocks/service/mock-sync-storage.service';
+import { MockCookieService } from '../helpers/mocks/service/mock-cookie.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 
 chai.use(sinonChai);
@@ -87,7 +87,7 @@ describe('GuidedTourService', () => {
 
     describe('Service method', () => {
         let service: GuidedTourService;
-        let httpMock: any;
+        let httpMock: HttpTestingController;
         const expected = new GuidedTourSetting('guided_tour_key', 1, GuidedTourState.STARTED);
 
         beforeEach(() => {
@@ -172,6 +172,7 @@ describe('GuidedTourService', () => {
                     guidedTourComponent = guidedTourComponentFixture.componentInstance;
 
                     const navBarComponentFixture = TestBed.createComponent(NavbarComponent);
+                    // eslint-disable-next-line @typescript-eslint/no-unused-vars
                     const navBarComponent = navBarComponentFixture.componentInstance;
 
                     router = TestBed.inject(Router);
@@ -187,7 +188,7 @@ describe('GuidedTourService', () => {
                 });
         });
 
-        function prepareGuidedTour(tour: GuidedTour) {
+        function prepareGuidedTour(guidedTour: GuidedTour) {
             // Prepare GuidedTourService and GuidedTourComponent
             spyOn(guidedTourService, 'init').and.returnValue(of());
             spyOn(guidedTourService, 'getLastSeenTourStepIndex').and.returnValue(0);
@@ -195,13 +196,13 @@ describe('GuidedTourService', () => {
             spyOn<any>(guidedTourService, 'checkTourState').and.returnValue(true);
             spyOn<any>(guidedTourService, 'updateGuidedTourSettings').and.returnValue(of());
             spyOn<any>(guidedTourService, 'enableTour').and.callFake(() => {
-                guidedTourService['availableTourForComponent'] = tour;
-                guidedTourService.currentTour = tour;
+                guidedTourService['availableTourForComponent'] = guidedTour;
+                guidedTourService.currentTour = guidedTour;
             });
             spyOn<any>(guidedTourComponent, 'subscribeToDotChanges').and.callFake(() => {});
         }
 
-        async function startCourseOverviewTour(tour: GuidedTour) {
+        async function startCourseOverviewTour(guidedTour: GuidedTour) {
             guidedTourComponent.ngAfterViewInit();
 
             await guidedTourComponentFixture.ngZone!.run(() => {
@@ -210,7 +211,7 @@ describe('GuidedTourService', () => {
 
             // Start course overview tour
             expect(guidedTourComponentFixture.debugElement.query(By.css('.tour-step'))).to.not.exist;
-            guidedTourService['enableTour'](tour, true);
+            guidedTourService['enableTour'](guidedTour, true);
             guidedTourService['startTour']();
             guidedTourComponentFixture.detectChanges();
             expect(guidedTourComponentFixture.debugElement.query(By.css('.tour-step'))).to.exist;

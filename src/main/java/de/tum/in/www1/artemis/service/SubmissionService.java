@@ -104,10 +104,14 @@ public class SubmissionService {
                     exercise.filterSensitiveInformation();
                     submission.setResult(null);
                 }
-                // remove information about the student from the submission for tutors to ensure a double-blind assessment
+                // remove information about the student or team from the submission for tutors to ensure a double-blind assessment
                 if (!authCheckService.isAtLeastInstructorForExercise(exercise, user)) {
                     StudentParticipation studentParticipation = (StudentParticipation) submission.getParticipation();
-                    studentParticipation.filterSensitiveInformation();
+
+                    // the student himself is allowed to see the participant (i.e. himself or his team) of his participation
+                    if (!authCheckService.isOwnerOfParticipation(studentParticipation, user)) {
+                        studentParticipation.filterSensitiveInformation();
+                    }
                 }
             }
         }

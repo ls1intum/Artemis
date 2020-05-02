@@ -25,7 +25,10 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { GradingCriterion } from 'app/exercises/shared/structured-grading-criterion/grading-criterion.model';
-
+import { CourseExerciseSubmissionResultSimulationService } from 'app/course/manage/course-exercise-submission-result-simulation.service';
+import { ProgrammingExerciseSimulationUtils } from 'app/exercises/programming/shared/utils/programming-exercise-simulation-utils';
+import { AlertService } from 'app/core/alert/alert.service';
+import { ProgrammingExerciseSimulationService } from 'app/exercises/programming/manage/services/programming-exercise-simulation.service';
 const MAX_RESULT_HISTORY_LENGTH = 5;
 
 @Component({
@@ -52,8 +55,14 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     studentParticipation: StudentParticipation | null;
     isAfterAssessmentDueDate: boolean;
     public gradingCriteria: GradingCriterion[];
-
     showWelcomeAlert = false;
+
+    /**
+     * variables are only for testing purposes(noVersionControlAndContinuousIntegrationAvailable)
+     */
+    public inProductionEnvironment: boolean;
+    public noVersionControlAndContinuousIntegrationServerAvailable = false;
+    public wasSubmissionSimulated = false;
 
     constructor(
         private $location: Location,
@@ -69,6 +78,10 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         private route: ActivatedRoute,
         private profileService: ProfileService,
         private guidedTourService: GuidedTourService,
+        private courseExerciseSubmissionResultSimulationService: CourseExerciseSubmissionResultSimulationService,
+        private programmingExerciseSimulationUtils: ProgrammingExerciseSimulationUtils,
+        private jhiAlertService: AlertService,
+        private programmingExerciseSimulationService: ProgrammingExerciseSimulationService,
     ) {}
 
     ngOnInit() {
@@ -90,6 +103,13 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
                 setTimeout(() => {
                     this.showWelcomeAlert = true;
                 }, 500);
+            }
+        });
+
+        // Checks if the current environment is production
+        this.profileService.getProfileInfo().subscribe((profileInfo) => {
+            if (profileInfo) {
+                this.inProductionEnvironment = profileInfo.inProduction;
             }
         });
     }
@@ -118,6 +138,12 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         this.exercise.participationStatus = participationStatus(this.exercise);
         this.isAfterAssessmentDueDate = !this.exercise.assessmentDueDate || moment().isAfter(this.exercise.assessmentDueDate);
         this.exerciseCategories = this.exerciseService.convertExerciseCategoriesFromServer(this.exercise);
+
+        // This is only needed in the local environment
+        if (!this.inProductionEnvironment && this.exercise.type === ExerciseType.PROGRAMMING && (<ProgrammingExercise>this.exercise).isLocalSimulation) {
+            this.noVersionControlAndContinuousIntegrationServerAvailable = true;
+        }
+
         this.subscribeForNewResults();
     }
 
@@ -291,4 +317,42 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     buildPlanId(participation: Participation): string {
         return (participation! as ProgrammingExerciseStudentParticipation).buildPlanId;
     }
+
+    // ################## ONLY FOR LOCAL TESTING PURPOSE -- START ##################
+
+    /**
+     * triggers the simulation of a participation and submission for the currently logged in user
+     * This functionality is only for testing purposes(noVersionControlAndContinuousIntegrationAvailable)
+     */
+    simulateSubmission() {
+        this.programmingExerciseSimulationService.failsIfInProduction();
+        this.courseExerciseSubmissionResultSimulationService.simulateSubmission(this.exerciseId).subscribe(
+            () => {
+                this.wasSubmissionSimulated = true;
+                this.jhiAlertService.success('artemisApp.exercise.submissionSuccessful');
+            },
+            () => {
+                this.jhiAlertService.error('artemisApp.exercise.submissionUnsuccessful');
+            },
+        );
+    }
+
+    /**
+     * triggers the simulation of a result for the currently logged in user
+     * This functionality is only for testing purposes(noVersionControlAndContinuousIntegrationAvailable)
+     */
+    simulateResult() {
+        this.programmingExerciseSimulationService.failsIfInProduction();
+        this.courseExerciseSubmissionResultSimulationService.simulateResult(this.exerciseId).subscribe(
+            () => {
+                this.wasSubmissionSimulated = false;
+                this.jhiAlertService.success('artemisApp.exercise.resultCreationSuccessful');
+            },
+            () => {
+                this.jhiAlertService.error('artemisApp.exercise.resultCreationUnsuccessful');
+            },
+        );
+    }
+
+    // ################## ONLY FOR LOCAL TESTING PURPOSE -- END ##################
 }

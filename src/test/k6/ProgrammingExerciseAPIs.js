@@ -1,11 +1,11 @@
 import { group, sleep } from 'k6';
-import { login } from "./requests/requests.js";
-import { createProgrammingExercise, startExercise, simulateSubmission, ParticipationSimulation, TestResult, deleteProgrammingExercise } from "./requests/programmingExercise.js";
-import { deleteCourse, newCourse, addUserToStudentsInCourse, addUserToInstructorsInCourse } from "./requests/course.js";
+import { login } from './requests/requests.js';
+import { createProgrammingExercise, startExercise, simulateSubmission, ParticipationSimulation, TestResult, deleteProgrammingExercise } from './requests/programmingExercise.js';
+import { deleteCourse, newCourse, addUserToStudentsInCourse, addUserToInstructorsInCourse } from './requests/course.js';
 import { newUser, getUser, updateUser, createUsersIfNeeded } from './requests/user.js';
-import {allSuccessfulContentJava, buildErrorContentJava, someSuccessfulErrorContentJava} from "./resource/constants_java.js";
-import {allSuccessfulContentPython, buildErrorContentPython, someSuccessfulErrorContentPython} from "./resource/constants_python.js";
-import {allSuccessfulContentC, buildErrorContentC, someSuccessfulErrorContentC} from "./resource/constants_c.js";
+import { allSuccessfulContentJava, buildErrorContentJava, someSuccessfulErrorContentJava } from './resource/constants_java.js';
+import { allSuccessfulContentPython, buildErrorContentPython, someSuccessfulErrorContentPython } from './resource/constants_python.js';
+import { allSuccessfulContentC, buildErrorContentC, someSuccessfulErrorContentC } from './resource/constants_c.js';
 
 export const options = {
     maxRedirects: 0,
@@ -13,21 +13,20 @@ export const options = {
     vus: __ENV.ITERATIONS,
     rps: 4,
     setupTimeout: '240s',
-    teardownTimeout: '240s'
+    teardownTimeout: '240s',
 };
 
 const adminUsername = __ENV.ADMIN_USERNAME;
 const adminPassword = __ENV.ADMIN_PASSWORD;
 let baseUsername = __ENV.BASE_USERNAME;
 let basePassword = __ENV.BASE_PASSWORD;
-let programmingLanguage=  __ENV.PROGRAMMING_LANGUAGE;
+let programmingLanguage = __ENV.PROGRAMMING_LANGUAGE;
 
 export function setup() {
-
-    console.log("__ENV.CREATE_USERS: " + __ENV.CREATE_USERS);
-    console.log("__ENV.TIMEOUT_PARTICIPATION: " + __ENV.TIMEOUT_PARTICIPATION);
-    console.log("__ENV.TIMEOUT_EXERCISE: " + __ENV.TIMEOUT_EXERCISE);
-    console.log("__ENV.ITERATIONS: " + __ENV.ITERATIONS);
+    console.log('__ENV.CREATE_USERS: ' + __ENV.CREATE_USERS);
+    console.log('__ENV.TIMEOUT_PARTICIPATION: ' + __ENV.TIMEOUT_PARTICIPATION);
+    console.log('__ENV.TIMEOUT_EXERCISE: ' + __ENV.TIMEOUT_EXERCISE);
+    console.log('__ENV.ITERATIONS: ' + __ENV.ITERATIONS);
 
     let artemis, exerciseId, course, userId;
 
@@ -47,7 +46,7 @@ export function setup() {
     // it might be necessary that the newly created groups or accounts are synced with the version control and continuous integration servers, so we wait for 1 minute
     const timeoutExercise = parseFloat(__ENV.TIMEOUT_EXERCISE);
     if (timeoutExercise > 0) {
-        console.log("Wait " + timeoutExercise + "s before creating the programming exercise so that the setup can finish properly");
+        console.log('Wait ' + timeoutExercise + 's before creating the programming exercise so that the setup can finish properly');
         sleep(timeoutExercise);
     }
 
@@ -76,7 +75,7 @@ export default function (data) {
     sleep(delay * 3);
 
     let someSuccessfulErrorContent, allSuccessfulContent, buildErrorContent, somePassedString;
-    switch(programmingLanguage) {
+    switch (programmingLanguage) {
         case 'JAVA':
             someSuccessfulErrorContent = someSuccessfulErrorContentJava;
             allSuccessfulContent = allSuccessfulContentJava;
@@ -97,7 +96,7 @@ export default function (data) {
             break;
     }
 
-    group('Participate in Programming Exercise', function() {
+    group('Participate in Programming Exercise', function () {
         let participationId = startExercise(artemis, courseId, exerciseId);
         if (participationId) {
             // partial success, then 100%, then build error -- wait some time between submissions in order to the build server time for the result
@@ -106,8 +105,9 @@ export default function (data) {
             simulation = new ParticipationSimulation(timeoutParticipation, exerciseId, participationId, allSuccessfulContent);
             simulateSubmission(artemis, simulation, TestResult.SUCCESS);
             simulation = new ParticipationSimulation(timeoutParticipation, exerciseId, participationId, buildErrorContent);
-            if (programmingLanguage === 'C') { // C builds do never fail - they will only show 0/20 passed
-                simulateSubmission(artemis, simulation, TestResult.FAIL, "0 of 20 passed");
+            if (programmingLanguage === 'C') {
+                // C builds do never fail - they will only show 0/20 passed
+                simulateSubmission(artemis, simulation, TestResult.FAIL, '0 of 20 passed');
             } else {
                 simulateSubmission(artemis, simulation, TestResult.BUILD_ERROR);
             }
@@ -121,7 +121,6 @@ export default function (data) {
 }
 
 export function teardown(data) {
-
     const shouldCleanup = __ENV.CLEANUP === true || __ENV.CLEANUP === 'true';
     if (shouldCleanup) {
         const artemis = login(adminUsername, adminPassword);

@@ -51,12 +51,12 @@ export class UserManagementUpdateComponent implements OnInit {
         this.isSaving = true;
         if (this.user.id !== null) {
             this.userService.update(this.user).subscribe(
-                (response) => this.onSaveSuccess(response.body!),
+                () => this.onSaveSuccess(),
                 () => this.onSaveError(),
             );
         } else {
             this.userService.create(this.user).subscribe(
-                (response) => this.onSaveSuccess(response.body!),
+                () => this.onSaveSuccess(),
                 () => this.onSaveError(),
             );
         }
@@ -66,7 +66,7 @@ export class UserManagementUpdateComponent implements OnInit {
      * Set isSaving to false and navigate to previous page
      * @param result
      */
-    private onSaveSuccess(result: User) {
+    private onSaveSuccess() {
         this.isSaving = false;
         this.previousState();
     }

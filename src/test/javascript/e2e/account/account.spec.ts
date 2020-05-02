@@ -1,13 +1,12 @@
 import { browser, by, element, ExpectedConditions as ec } from 'protractor';
 
-import { NavBarPage, SettingsPage, SignInPage } from '../page-objects/jhi-page-objects';
+import { NavBarPage, SignInPage } from '../page-objects/jhi-page-objects';
 
 const expect = chai.expect;
 
 describe('account', function () {
     let navBarPage: NavBarPage;
     let signInPage: SignInPage;
-    let settingsPage: SettingsPage;
 
     beforeEach(async function () {
         await browser.get('/');

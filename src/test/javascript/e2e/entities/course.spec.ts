@@ -57,7 +57,7 @@ describe('course', function () {
         await newCoursePage.browseCourseIcon();
         await newCoursePage.uploadCourseIcon();
 
-        expect(await element(by.css('.headline jhi-secured-image img'))).to.not.be.undefined;
+        expect(await element(by.css('.headline jhi-secured-image img'))).to.not.equal(undefined);
         await newCoursePage.clickCancel();
     });
 

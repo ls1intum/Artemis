@@ -26,6 +26,7 @@ import de.tum.in.www1.artemis.repository.TextBlockRepository;
 import de.tum.in.www1.artemis.repository.TextSubmissionRepository;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.web.rest.dto.TextAssessmentDTO;
+import de.tum.in.www1.artemis.web.rest.dto.TextAssessmentUpdateDTO;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
@@ -63,10 +64,12 @@ public class TextAssessmentResource extends AssessmentResource {
 
     private final Optional<AutomaticTextFeedbackService> automaticTextFeedbackService;
 
+    private final GradingCriterionService gradingCriterionService;
+
     public TextAssessmentResource(AuthorizationCheckService authCheckService, ResultService resultService, TextAssessmentService textAssessmentService,
             TextBlockService textBlockService, TextBlockRepository textBlockRepository, TextExerciseService textExerciseService, TextSubmissionRepository textSubmissionRepository,
             UserService userService, TextSubmissionService textSubmissionService, WebsocketMessagingService messagingService, ExerciseService exerciseService,
-            Optional<AutomaticTextFeedbackService> automaticTextFeedbackService, ResultRepository resultRepository) {
+            Optional<AutomaticTextFeedbackService> automaticTextFeedbackService, ResultRepository resultRepository, GradingCriterionService gradingCriterionService) {
         super(authCheckService, userService, exerciseService, textSubmissionService, textAssessmentService, resultRepository);
 
         this.resultService = resultService;
@@ -78,6 +81,7 @@ public class TextAssessmentResource extends AssessmentResource {
         this.textSubmissionService = textSubmissionService;
         this.messagingService = messagingService;
         this.automaticTextFeedbackService = automaticTextFeedbackService;
+        this.gradingCriterionService = gradingCriterionService;
     }
 
     /**
@@ -105,11 +109,7 @@ public class TextAssessmentResource extends AssessmentResource {
             return forbidden("assessment", "assessmentSaveNotAllowed", "The user is not allowed to override the assessment");
         }
 
-        if (textAssessment.getTextBlocks() != null) {
-            textAssessment.getTextBlocks().forEach(tb -> tb.setSubmission(optionalTextSubmission.get()));
-            textBlockRepository.saveAll(textAssessment.getTextBlocks());
-        }
-
+        saveTextBlocks(textAssessment.getTextBlocks(), optionalTextSubmission.get());
         Result result = textAssessmentService.saveAssessment(resultId, textAssessment.getFeedbacks(), textExercise);
 
         if (result.getParticipation() != null && result.getParticipation() instanceof StudentParticipation
@@ -145,10 +145,7 @@ public class TextAssessmentResource extends AssessmentResource {
             return forbidden("assessment", "assessmentSaveNotAllowed", "The user is not allowed to override the assessment");
         }
 
-        if (textAssessment.getTextBlocks() != null) {
-            textAssessment.getTextBlocks().forEach(tb -> tb.setSubmission(optionalTextSubmission.get()));
-            textBlockRepository.saveAll(textAssessment.getTextBlocks());
-        }
+        saveTextBlocks(textAssessment.getTextBlocks(), optionalTextSubmission.get());
         Result result = textAssessmentService.submitAssessment(resultId, textExercise, textAssessment.getFeedbacks());
         StudentParticipation studentParticipation = (StudentParticipation) result.getParticipation();
         if (studentParticipation.getExercise().getAssessmentDueDate() == null || studentParticipation.getExercise().getAssessmentDueDate().isBefore(ZonedDateTime.now())) {
@@ -173,7 +170,7 @@ public class TextAssessmentResource extends AssessmentResource {
     @ResponseStatus(HttpStatus.OK)
     @PutMapping("/text-submissions/{submissionId}/assessment-after-complaint")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Result> updateTextAssessmentAfterComplaint(@PathVariable Long submissionId, @RequestBody AssessmentUpdate assessmentUpdate) {
+    public ResponseEntity<Result> updateTextAssessmentAfterComplaint(@PathVariable Long submissionId, @RequestBody TextAssessmentUpdateDTO assessmentUpdate) {
         log.debug("REST request to update the assessment of submission {} after complaint.", submissionId);
         User user = userService.getUserWithGroupsAndAuthorities();
         TextSubmission textSubmission = textSubmissionService.findOneWithEagerResultAndFeedback(submissionId);
@@ -181,9 +178,8 @@ public class TextAssessmentResource extends AssessmentResource {
         long exerciseId = studentParticipation.getExercise().getId();
         TextExercise textExercise = textExerciseService.findOne(exerciseId);
         checkAuthorization(textExercise, user);
+        saveTextBlocks(assessmentUpdate.getTextBlocks(), textSubmission);
         Result result = textAssessmentService.updateAssessmentAfterComplaint(textSubmission.getResult(), textExercise, assessmentUpdate);
-
-        // TODO: in case of automatic assessment, we might want to update the assessment engine
 
         if (result.getParticipation() != null && result.getParticipation() instanceof StudentParticipation && !authCheckService.isAtLeastInstructorForExercise(textExercise)) {
             ((StudentParticipation) result.getParticipation()).setParticipant(null);
@@ -275,6 +271,8 @@ public class TextAssessmentResource extends AssessmentResource {
         final User user = userService.getUserWithGroupsAndAuthorities();
         final Participation participation = textSubmission.getParticipation();
         final TextExercise exercise = (TextExercise) participation.getExercise();
+        List<GradingCriterion> gradingCriteria = gradingCriterionService.findByExerciseIdWithEagerGradingCriteria(exercise.getId());
+        exercise.setGradingCriteria(gradingCriteria);
         checkAuthorization(exercise, user);
         final boolean isAtLeastInstructorForExercise = authCheckService.isAtLeastInstructorForExercise(exercise, user);
         final boolean computeFeedbackSuggestions = automaticTextFeedbackService.isPresent() && exercise.isAutomaticAssessmentEnabled();
@@ -327,6 +325,7 @@ public class TextAssessmentResource extends AssessmentResource {
         if (textSubmission.getBlocks() == null || !isInitialized(textSubmission.getBlocks()) || textSubmission.getBlocks().isEmpty()) {
             textBlockService.computeTextBlocksForSubmissionBasedOnSyntax(textSubmission);
         }
+        textSubmission.getParticipation().getExercise().setGradingCriteria(gradingCriteria);
 
         if (!isAtLeastInstructorForExercise && participation instanceof StudentParticipation) {
             final StudentParticipation studentParticipation = (StudentParticipation) participation;
@@ -387,5 +386,19 @@ public class TextAssessmentResource extends AssessmentResource {
 
         validateExercise(textExercise);
         checkAuthorization(textExercise, user);
+    }
+
+    /**
+     * Save TextBlocks received from Client (if present). We need to reference them to the submission first.
+     * @param textBlocks received from Client
+     * @param textSubmission to associate blocks with
+     */
+    private void saveTextBlocks(List<TextBlock> textBlocks, TextSubmission textSubmission) {
+        if (textBlocks != null) {
+            textBlocks.forEach(tb -> {
+                tb.setSubmission(textSubmission);
+            });
+            textBlockRepository.saveAll(textBlocks);
+        }
     }
 }
