@@ -397,11 +397,11 @@ public class TeamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         List<Course> courses = request.getList("/api/courses/for-dashboard", HttpStatus.OK, Course.class);
         Exercise serverExercise = courses.stream().filter(c -> c.getId().equals(course.getId())).findAny()
                 .flatMap(c -> c.getExercises().stream().filter(e -> e.getId().equals(exercise.getId())).findAny()).orElseThrow();
-        assertThat(serverExercise.getStudentAssignedTeamId()).as("Assigned team id on exercise from dashboard is correct for student.").isEqualTo(team.getId());
+        assertThat(serverExercise.getStudentAssignedTeamId().orElseThrow()).as("Assigned team id on exercise from dashboard is correct for student.").isEqualTo(team.getId());
 
         // Check for endpoint: @GetMapping("/exercises/{exerciseId}/details")
         Exercise exerciseWithDetails = request.get("/api/exercises/" + exercise.getId() + "/details", HttpStatus.OK, Exercise.class);
-        assertThat(exerciseWithDetails.getStudentAssignedTeamId()).as("Assigned team id on exercise from details is correct for student.").isEqualTo(team.getId());
+        assertThat(exerciseWithDetails.getStudentAssignedTeamId().orElseThrow()).as("Assigned team id on exercise from details is correct for student.").isEqualTo(team.getId());
     }
 
     /**
