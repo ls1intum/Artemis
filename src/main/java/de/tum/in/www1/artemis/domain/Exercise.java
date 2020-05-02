@@ -866,9 +866,10 @@ public abstract class Exercise implements Serializable {
     }
 
     /**
-     * Returns the id of the team that the current user is assigned to for this exercise
      * If the transient attribute has not been set, do not include it in the payload.
      * If it has been set, include it in the payload, even if it has been set to null (i.e. the user is not assigned to any team).
+     *
+     * @return the id of the team that the current user is assigned to for this exercise
      */
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public Optional<Long> getStudentAssignedTeamId() {
