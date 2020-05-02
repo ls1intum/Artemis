@@ -88,6 +88,9 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         return this.selectedProgrammingLanguageValue;
     }
 
+    /**
+     * Sets the values for the creation/update of a programming exercise
+     */
     ngOnInit() {
         this.isSaving = false;
         this.notificationText = null;
@@ -155,14 +158,24 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         });
     }
 
+    /**
+     * If an user clicks on the back button the previous page should be loaded
+     */
     previousState() {
         window.history.back();
     }
 
+    /**
+     * Updates the categories
+     * @param categories which should be set
+     */
     updateCategories(categories: ExerciseCategory[]) {
         this.programmingExercise.categories = categories.map((el) => JSON.stringify(el));
     }
 
+    /**
+     * Saves the programming exercise with the provided input
+     */
     save() {
         // If no release date is set, we warn the user.
         if (!this.programmingExercise.releaseDate) {
