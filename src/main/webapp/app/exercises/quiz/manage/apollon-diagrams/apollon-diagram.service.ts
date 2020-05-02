@@ -45,6 +45,9 @@ export class ApollonDiagramService {
         return this.http.delete<void>(`${this.resourceUrl}/${id}`, { observe: 'response' });
     }
 
+    /**
+     * Gets all apollon diagrams that belong to the course with the id courseId.
+     */
     getDiagramsByCourse(courseId: number): Observable<HttpResponse<ApollonDiagram[]>> {
         const options = createRequestOption(courseId);
         return this.http
