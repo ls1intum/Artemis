@@ -13,6 +13,9 @@ import { ProgrammingExerciseService } from 'app/exercises/programming/manage/ser
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ProgrammingExerciseTestCaseService } from 'app/exercises/programming/manage/services/programming-exercise-test-case.service';
 
+/**
+ * Describes the editableField
+ */
 export enum EditableField {
     WEIGHT = 'weight',
 }
