@@ -29,6 +29,10 @@ export class TeamsImportButtonComponent {
 
     constructor(private modalService: NgbModal) {}
 
+    /**
+     * Open up import dialog for teams
+     * @param {Event} event - Mouse Event which invoked the opening
+     */
     openTeamsImportDialog(event: MouseEvent) {
         event.stopPropagation();
         const modalRef: NgbModalRef = this.modalService.open(TeamsImportDialogComponent, { keyboard: true, size: 'lg', backdrop: 'static' });
