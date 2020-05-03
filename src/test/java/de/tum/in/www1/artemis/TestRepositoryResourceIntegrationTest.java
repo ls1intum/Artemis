@@ -17,6 +17,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.in.www1.artemis.domain.Course;
@@ -27,6 +28,7 @@ import de.tum.in.www1.artemis.util.*;
 import de.tum.in.www1.artemis.web.rest.dto.FileMove;
 import de.tum.in.www1.artemis.web.rest.dto.RepositoryStatusDTO;
 
+@TestPropertySource(properties = "artemis.repo-clone-path=")
 public class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     private final String testRepoBaseUrl = "/api/test-repository/";
@@ -73,7 +75,7 @@ public class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegra
         filePath = Paths.get(testRepo.localRepoFile + "/" + currentLocalFolderName);
         var folder = Files.createDirectory(filePath).toFile();
 
-        var testRepoUrl = new GitUtilService.MockFileRepositoryUrl(testRepo.originRepoFile);
+        var testRepoUrl = new GitUtilService.MockFileRepositoryUrl(testRepo.localRepoFile);
         exercise.setTestRepositoryUrl(testRepoUrl.toString());
         doReturn(gitService.getRepositoryByLocalPath(testRepo.localRepoFile.toPath())).when(gitService).getOrCheckoutRepository(testRepoUrl.getURL(), true);
     }
@@ -193,7 +195,49 @@ public class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegra
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void shouldResetToLastCommit() throws Exception {
         programmingExerciseRepository.save(exercise);
+        String fileName = "change";
+
+        // Check status of git before the commit
+        var receivedStatusBeforeCommit = request.get(testRepoBaseUrl + exercise.getId(), HttpStatus.OK, RepositoryStatusDTO.class);
+        assertThat(receivedStatusBeforeCommit.repositoryStatus.toString()).isEqualTo("UNCOMMITTED_CHANGES");
+
+        // Create a commit for the local and the remote repository
+        request.postWithoutLocation(testRepoBaseUrl + exercise.getId() + "/commit", null, HttpStatus.OK, null);
+        var localRepo = gitService.getRepositoryByLocalPath(testRepo.localRepoFile.toPath());
+
+        // Create a second commit for the local repository
+        gitService.stageAllChanges(localRepo);
+        testRepo.localGit.commit().setMessage("TestCommit").setAllowEmpty(true).setCommitter("testname", "test@email").call();
+
+        // Check status of git after the commit
+        var receivedStatusAfterCommit = request.get(testRepoBaseUrl + exercise.getId(), HttpStatus.OK, RepositoryStatusDTO.class);
+        assertThat(receivedStatusAfterCommit.repositoryStatus.toString()).isEqualTo("CLEAN");
+
+        // Create a new file
+        LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("file", fileName);
+        request.postWithoutResponseBody(testRepoBaseUrl + exercise.getId() + "/file", HttpStatus.OK, params);
+
+        // Check if file exist
+        assertThat(Files.exists(Paths.get(testRepo.localRepoFile + "/" + fileName))).isTrue();
+
+        // Checks status of git after the file creation and before the reset
+        var receivedStatusBeforeReset = request.get(testRepoBaseUrl + exercise.getId(), HttpStatus.OK, RepositoryStatusDTO.class);
+        assertThat(receivedStatusBeforeReset.repositoryStatus.toString()).isEqualTo("UNCOMMITTED_CHANGES");
+
+        // Stages the new file, otherwise the reset will not delete it
+        gitService.stageAllChanges(localRepo);
+
+        // Executes the reset Rest call
         request.postWithoutLocation(testRepoBaseUrl + exercise.getId() + "/reset", null, HttpStatus.OK, null);
+        ;
+
+        // Checks if the file still exists after the reset
+        assertThat(Files.exists(Paths.get(testRepo.localRepoFile + "/" + fileName))).isFalse();
+
+        // Checks the git status after the reset
+        var receivedStatusAfterReset = request.get(testRepoBaseUrl + exercise.getId(), HttpStatus.OK, RepositoryStatusDTO.class);
+        assertThat(receivedStatusAfterReset.repositoryStatus.toString()).isEqualTo("CLEAN");
     }
 
     @Test

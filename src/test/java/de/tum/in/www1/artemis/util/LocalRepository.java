@@ -9,7 +9,6 @@ import java.util.stream.StreamSupport;
 
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.Git;
-import org.eclipse.jgit.lib.StoredConfig;
 import org.eclipse.jgit.revwalk.RevCommit;
 
 public class LocalRepository {
@@ -30,9 +29,7 @@ public class LocalRepository {
         this.originRepoFile = Files.createTempDirectory(originRepoFileName).toFile();
         this.originGit = Git.init().setDirectory(originRepoFile).call();
 
-        StoredConfig config = this.localGit.getRepository().getConfig();
-        config.setString("remote", "origin", "url", this.originRepoFile.getAbsolutePath());
-        config.save();
+        this.localGit.remoteAdd().setName("origin").setUri(new URIish(String.valueOf(this.originRepoFile))).call();
     }
 
     public static void resetLocalRepo(LocalRepository localRepo) throws IOException {
