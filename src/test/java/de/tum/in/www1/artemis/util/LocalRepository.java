@@ -10,6 +10,7 @@ import java.util.stream.StreamSupport;
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.revwalk.RevCommit;
+import org.eclipse.jgit.transport.URIish;
 
 public class LocalRepository {
 
