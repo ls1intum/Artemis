@@ -1,4 +1,4 @@
-import { Component, AfterViewInit, HostBinding, Input, Output, EventEmitter, ViewChild, ElementRef } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, EventEmitter, HostBinding, Input, Output, ViewChild } from '@angular/core';
 import { TextBlock } from 'app/entities/text-block.model';
 import { Feedback } from 'app/entities/feedback.model';
 import { ConfirmIconComponent } from 'app/shared/confirm-icon/confirm-icon.component';
@@ -20,15 +20,19 @@ export class TextblockFeedbackEditorComponent implements AfterViewInit {
     private textareaElement: HTMLTextAreaElement;
 
     @HostBinding('class.alert') @HostBinding('class.alert-dismissible') readonly classes = true;
+
     @HostBinding('class.alert-secondary') get setNeutralFeedbackClass(): boolean {
         return this.feedback.credits === 0;
     }
+
     @HostBinding('class.alert-success') get setPositiveFeedbackClass(): boolean {
         return this.feedback.credits > 0;
     }
+
     @HostBinding('class.alert-danger') get setNegativeFeedbackClass(): boolean {
         return this.feedback.credits < 0;
     }
+
     constructor(public structuredGradingCriterionService: StructuredGradingCriterionService) {}
 
     ngAfterViewInit(): void {
@@ -69,6 +73,7 @@ export class TextblockFeedbackEditorComponent implements AfterViewInit {
     }
 
     didChange(): void {
+        Feedback.updateFeedbackTypeOnChange(this.feedback);
         this.feedbackChange.emit(this.feedback);
     }
 }

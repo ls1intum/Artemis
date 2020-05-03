@@ -5,6 +5,7 @@ import static java.util.stream.Collectors.toList;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 
 import javax.validation.constraints.NotNull;
@@ -52,7 +53,6 @@ public class AutomaticTextFeedbackService {
 
         final List<Feedback> suggestedFeedback = blocks.stream().map(block -> {
             final TextCluster cluster = block.getCluster();
-            Feedback newFeedback = new Feedback().reference(block.getId());
 
             // if TextBlock is part of a cluster, we try to find an existing Feedback Element
             if (cluster != null) {
@@ -64,7 +64,7 @@ public class AutomaticTextFeedbackService {
                     final Optional<TextBlock> mostSimilarBlockInClusterWithFeedback = allBlocksInCluster.parallelStream()
 
                             // Filter all other blocks in the cluster for those with Feedback
-                            .filter(element -> feedbackForTextExerciseInCluster.keySet().contains(element.getId()))
+                            .filter(element -> feedbackForTextExerciseInCluster.containsKey(element.getId()))
 
                             // Find the closest block
                             .min(comparing(element -> cluster.distanceBetweenBlocks(block, element)));
@@ -72,14 +72,14 @@ public class AutomaticTextFeedbackService {
                     if (mostSimilarBlockInClusterWithFeedback.isPresent()
                             && cluster.distanceBetweenBlocks(block, mostSimilarBlockInClusterWithFeedback.get()) < DISTANCE_THRESHOLD) {
                         final Feedback similarFeedback = feedbackForTextExerciseInCluster.get(mostSimilarBlockInClusterWithFeedback.get().getId());
-                        return newFeedback.credits(similarFeedback.getCredits()).detailText(similarFeedback.getDetailText()).type(FeedbackType.AUTOMATIC);
-
+                        return new Feedback().reference(block.getId()).credits(similarFeedback.getCredits()).detailText(similarFeedback.getDetailText())
+                                .type(FeedbackType.AUTOMATIC);
                     }
                 }
             }
 
-            return newFeedback.credits(0d).type(FeedbackType.MANUAL);
-        }).collect(toList());
+            return null;
+        }).filter(Objects::nonNull).collect(toList());
 
         result.setFeedbacks(suggestedFeedback);
     }
