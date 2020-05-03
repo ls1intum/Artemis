@@ -35,6 +35,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     result: Result | null;
     generalFeedback = new Feedback();
     referencedFeedback: Feedback[] = [];
+    unreferencedFeedback: Feedback[] = [];
     conflicts: Conflict[] | null;
     highlightedElements: Map<string, string>; // map elementId -> highlight color
     highlightMissingFeedback = false;
@@ -72,10 +73,11 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     }
 
     private get feedback(): Feedback[] {
-        if (!this.referencedFeedback) {
-            return [this.generalFeedback];
+        if (Feedback.hasDetailText(this.generalFeedback)) {
+            return [this.generalFeedback, ...this.referencedFeedback, ...this.unreferencedFeedback];
+        } else {
+            return [...this.referencedFeedback, ...this.unreferencedFeedback];
         }
-        return [this.generalFeedback, ...this.referencedFeedback];
     }
 
     ngOnInit() {
@@ -408,6 +410,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     validateFeedback() {
         if (
             (!this.referencedFeedback || this.referencedFeedback.length === 0) &&
+            (!this.unreferencedFeedback || this.unreferencedFeedback.length === 0) &&
             (!this.generalFeedback || !this.generalFeedback.detailText || this.generalFeedback.detailText.length === 0)
         ) {
             this.assessmentsAreValid = false;
