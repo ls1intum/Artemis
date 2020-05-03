@@ -94,7 +94,7 @@ function factory(cs) {
          * Our main visitor, which will be called recursively for each node in the source file's AST
          * @param node The node to be visited
          */
-        var visitor = function(node) {
+        var visitor = function (node) {
             var resultNode;
             // before we create a deep clone to modify, we make sure that
             // this is an assignment which we want to transform
@@ -110,8 +110,8 @@ function factory(cs) {
         };
         return visitor;
     }
-    return function(ctx) {
-        return function(sf) {
+    return function (ctx) {
+        return function (sf) {
             return ts.visitNode(sf, createVisitor(ctx, sf));
         };
     };

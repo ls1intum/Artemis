@@ -1,4 +1,3 @@
-/* tslint:disable max-line-length */
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { HttpResponse } from '@angular/common/http';
 import { FormBuilder } from '@angular/forms';
@@ -9,55 +8,53 @@ import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/manage/e
 import { ExerciseHint } from 'app/entities/exercise-hint.model';
 import { ArtemisTestModule } from '../../test.module';
 
-describe('Component Tests', () => {
-    describe('ExerciseHint Management Update Component', () => {
-        let comp: ExerciseHintUpdateComponent;
-        let fixture: ComponentFixture<ExerciseHintUpdateComponent>;
-        let service: ExerciseHintService;
+describe('ExerciseHint Management Update Component', () => {
+    let comp: ExerciseHintUpdateComponent;
+    let fixture: ComponentFixture<ExerciseHintUpdateComponent>;
+    let service: ExerciseHintService;
 
-        beforeEach(() => {
-            TestBed.configureTestingModule({
-                imports: [ArtemisTestModule],
-                declarations: [ExerciseHintUpdateComponent],
-                providers: [FormBuilder],
-            })
-                .overrideTemplate(ExerciseHintUpdateComponent, '')
-                .compileComponents();
+    beforeEach(() => {
+        TestBed.configureTestingModule({
+            imports: [ArtemisTestModule],
+            declarations: [ExerciseHintUpdateComponent],
+            providers: [FormBuilder],
+        })
+            .overrideTemplate(ExerciseHintUpdateComponent, '')
+            .compileComponents();
 
-            fixture = TestBed.createComponent(ExerciseHintUpdateComponent);
-            comp = fixture.componentInstance;
-            service = fixture.debugElement.injector.get(ExerciseHintService);
-        });
+        fixture = TestBed.createComponent(ExerciseHintUpdateComponent);
+        comp = fixture.componentInstance;
+        service = fixture.debugElement.injector.get(ExerciseHintService);
+    });
 
-        describe('save', () => {
-            it('Should call update service on save for existing entity', fakeAsync(() => {
-                // GIVEN
-                const entity = new ExerciseHint();
-                entity.id = 123;
-                spyOn(service, 'update').and.returnValue(of(new HttpResponse({ body: entity })));
-                comp.exerciseHint = entity;
-                // WHEN
-                comp.save();
-                tick(); // simulate async
+    describe('save', () => {
+        it('Should call update service on save for existing entity', fakeAsync(() => {
+            // GIVEN
+            const entity = new ExerciseHint();
+            entity.id = 123;
+            spyOn(service, 'update').and.returnValue(of(new HttpResponse({ body: entity })));
+            comp.exerciseHint = entity;
+            // WHEN
+            comp.save();
+            tick(); // simulate async
 
-                // THEN
-                expect(service.update).toHaveBeenCalledWith(entity);
-                expect(comp.isSaving).toEqual(false);
-            }));
+            // THEN
+            expect(service.update).toHaveBeenCalledWith(entity);
+            expect(comp.isSaving).toEqual(false);
+        }));
 
-            it('Should call create service on save for new entity', fakeAsync(() => {
-                // GIVEN
-                const entity = new ExerciseHint();
-                spyOn(service, 'create').and.returnValue(of(new HttpResponse({ body: entity })));
-                comp.exerciseHint = entity;
-                // WHEN
-                comp.save();
-                tick(); // simulate async
+        it('Should call create service on save for new entity', fakeAsync(() => {
+            // GIVEN
+            const entity = new ExerciseHint();
+            spyOn(service, 'create').and.returnValue(of(new HttpResponse({ body: entity })));
+            comp.exerciseHint = entity;
+            // WHEN
+            comp.save();
+            tick(); // simulate async
 
-                // THEN
-                expect(service.create).toHaveBeenCalledWith(entity);
-                expect(comp.isSaving).toEqual(false);
-            }));
-        });
+            // THEN
+            expect(service.create).toHaveBeenCalledWith(entity);
+            expect(comp.isSaving).toEqual(false);
+        }));
     });
 });

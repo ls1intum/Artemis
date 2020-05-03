@@ -61,7 +61,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
      * variables are only for testing purposes(noVersionControlAndContinuousIntegrationAvailable)
      */
     public inProductionEnvironment: boolean;
-    public noVersionControlAndContinuousIntegrationServerAvailable: boolean;
+    public noVersionControlAndContinuousIntegrationServerAvailable = false;
     public wasSubmissionSimulated = false;
 
     constructor(
@@ -140,8 +140,8 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         this.exerciseCategories = this.exerciseService.convertExerciseCategoriesFromServer(this.exercise);
 
         // This is only needed in the local environment
-        if (!this.inProductionEnvironment && this.exercise.type === ExerciseType.PROGRAMMING) {
-            this.getProgrammingExerciseAndChecksIfTheSetupHasVCSandCIConnection();
+        if (!this.inProductionEnvironment && this.exercise.type === ExerciseType.PROGRAMMING && (<ProgrammingExercise>this.exercise).isLocalSimulation) {
+            this.noVersionControlAndContinuousIntegrationServerAvailable = true;
         }
 
         this.subscribeForNewResults();
@@ -319,20 +319,6 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     }
 
     // ################## ONLY FOR LOCAL TESTING PURPOSE -- START ##################
-
-    /**
-     * asks the server for the programming exercise with the provided exercise ID
-     * This functionality is only for testing purposes(noVersionControlAndContinuousIntegrationAvailable)
-     */
-    getProgrammingExerciseAndChecksIfTheSetupHasVCSandCIConnection() {
-        // TODO: this REST call is not necessary, instead we could send this information as part of the exercise (transient property) for programming exercises with
-        // the exercise details call that is executed anyway
-        this.courseExerciseSubmissionResultSimulationService.getProgrammingExercise(this.exerciseId).subscribe((programmingExercise) => {
-            this.noVersionControlAndContinuousIntegrationServerAvailable = this.programmingExerciseSimulationUtils.noVersionControlAndContinuousIntegrationAvailableCheck(
-                programmingExercise.testRepositoryUrl,
-            );
-        });
-    }
 
     /**
      * triggers the simulation of a participation and submission for the currently logged in user

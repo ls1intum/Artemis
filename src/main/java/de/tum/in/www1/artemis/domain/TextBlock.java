@@ -121,6 +121,12 @@ public class TextBlock implements Serializable {
         this.text = text;
     }
 
+    public void setTextFromSubmission() {
+        final String submissionText = submission.getText();
+        final String blockText = submissionText.substring(startIndex, endIndex);
+        setText(blockText);
+    }
+
     public TextBlockType getType() {
         return type;
     }
