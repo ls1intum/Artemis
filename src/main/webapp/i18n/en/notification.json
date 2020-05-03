@@ -29,7 +29,10 @@
             "createOrEditLabel": "Create or edit a system notification",
             "delete": {
                 "question": "Are you sure you want to delete the system notification <strong>{{ title }}</strong>?"
-            }
+            },
+            "created": "A new system notification is created with identifier {{ param }}",
+            "updated": "A system notification is updated with identifier {{ param }}",
+            "deleted": "A system notification is deleted with identifier {{ param }}"
         }
     }
 }

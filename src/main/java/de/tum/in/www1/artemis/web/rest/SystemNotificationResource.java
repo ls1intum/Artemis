@@ -34,7 +34,7 @@ public class SystemNotificationResource {
 
     private final Logger log = LoggerFactory.getLogger(SystemNotificationResource.class);
 
-    private static final String ENTITY_NAME = "notificationManagement";
+    private static final String ENTITY_NAME = "systemNotification";
 
     @Value("${jhipster.clientApp.name}")
     private String applicationName;

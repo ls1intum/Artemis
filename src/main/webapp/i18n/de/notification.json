@@ -29,7 +29,10 @@
             "createOrEditLabel": "Systemmitteilung erstellen oder bearbeiten",
             "delete": {
                 "question": "Bist du sicher, dass du die Systemmitteilung <strong>{{ title }}</strong> löschen möchtest?"
-            }
+            },
+            "created": "Eine neue Mitteilung wurde mit ID {{ param }} erstellt",
+            "updated": "Eine Mitteilung mit ID {{ param }} wurde geändert",
+            "deleted": "Eine Mitteilung mit ID {{ param }} wurde gelöscht"
         }
     }
 }
