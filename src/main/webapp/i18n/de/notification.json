@@ -1,0 +1,19 @@
+{
+    "artemisApp": {
+        "notification": {
+            "notifications": "Mitteilungen",
+            "noNotifications": "Keine Mitteilungen verfügbar",
+            "showAllNotifications": "Alle Mitteilungen anzeigen",
+            "title": "Titel",
+            "text": "Text",
+            "notificationDate": "Mitteilungsdatum",
+            "target": {
+                "newAnswer": "Antwort ansehen",
+                "newQuestion": "Frage ansehen",
+                "exerciseCreated": "Übung ansehen",
+                "exerciseUpdated": "Übung ansehen",
+                "attachmentUpdated": "Vorlesung ansehen"
+            }
+        }
+    }
+}

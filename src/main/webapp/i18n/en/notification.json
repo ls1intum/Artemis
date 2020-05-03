@@ -1,0 +1,19 @@
+{
+    "artemisApp": {
+        "notification": {
+            "notifications": "Notifications",
+            "noNotifications": "No notifications available",
+            "showAllNotifications": "Show all notifications",
+            "title": "Title",
+            "text": "Text",
+            "notificationDate": "Notification Date",
+            "target": {
+                "newAnswer": "View answer",
+                "newQuestion": "View question",
+                "exerciseCreated": "View exercise",
+                "exerciseUpdated": "View exercise",
+                "attachmentUpdated": "View lecture"
+            }
+        }
+    }
+}

@@ -96,10 +96,7 @@
             "guidedTutorial": "Guided tutorial",
             "startTutorial": "Start tutorial",
             "restartTutorial": "Restart tutorial",
-            "continueTutorial": "Continue tutorial",
-            "notifications": "Notifications",
-            "noNotifications": "No notifications available",
-            "showAllNotifications": "Show all notifications"
+            "continueTutorial": "Continue tutorial"
         },
         "form": {
             "username": "Username",
