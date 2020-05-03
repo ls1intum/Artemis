@@ -1,5 +1,4 @@
 import { Injectable } from '@angular/core';
-import { ProgrammingExerciseSimulationService } from 'app/exercises/programming/manage/services/programming-exercise-simulation.service';
 
 /**
  * This functionality is only for testing purposes (noVersionControlAndContinuousIntegrationAvailable)
