@@ -24,7 +24,7 @@ export class NotificationMgmtResolve implements Resolve<any> {
     }
 }
 
-export const notificationMgmtRoutes1: Route = {
+export const systemNotificationMgmtRoutes1: Route = {
     path: 'system-notification-management',
     component: NotificationMgmtComponent,
     resolve: {
@@ -36,7 +36,7 @@ export const notificationMgmtRoutes1: Route = {
     },
 };
 
-export const notificationMgmtRoutes2: Route = {
+export const systemNotificationMgmtRoutes2: Route = {
     path: 'system-notification-management/:id/view',
     component: NotificationMgmtDetailComponent,
     resolve: {
@@ -47,7 +47,7 @@ export const notificationMgmtRoutes2: Route = {
     },
 };
 
-export const notificationMgmtRoutes3: Route = {
+export const systemNotificationMgmtRoutes3: Route = {
     path: 'system-notification-management/new',
     component: NotificationMgmtUpdateComponent,
     resolve: {
@@ -58,7 +58,7 @@ export const notificationMgmtRoutes3: Route = {
     },
 };
 
-export const notificationMgmtRoutes4: Route = {
+export const systemNotificationMgmtRoutes4: Route = {
     path: 'system-notification-management/:id/edit',
     component: NotificationMgmtUpdateComponent,
     resolve: {
