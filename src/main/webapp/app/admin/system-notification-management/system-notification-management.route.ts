@@ -25,7 +25,7 @@ export class NotificationMgmtResolve implements Resolve<any> {
 }
 
 export const notificationMgmtRoutes1: Route = {
-    path: 'notification-management',
+    path: 'system-notification-management',
     component: NotificationMgmtComponent,
     resolve: {
         pagingParams: JhiResolvePagingParams,
@@ -37,7 +37,7 @@ export const notificationMgmtRoutes1: Route = {
 };
 
 export const notificationMgmtRoutes2: Route = {
-    path: 'notification-management/:id/view',
+    path: 'system-notification-management/:id/view',
     component: NotificationMgmtDetailComponent,
     resolve: {
         notification: NotificationMgmtResolve,
@@ -48,7 +48,7 @@ export const notificationMgmtRoutes2: Route = {
 };
 
 export const notificationMgmtRoutes3: Route = {
-    path: 'notification-management/new',
+    path: 'system-notification-management/new',
     component: NotificationMgmtUpdateComponent,
     resolve: {
         notification: NotificationMgmtResolve,
@@ -59,7 +59,7 @@ export const notificationMgmtRoutes3: Route = {
 };
 
 export const notificationMgmtRoutes4: Route = {
-    path: 'notification-management/:id/edit',
+    path: 'system-notification-management/:id/edit',
     component: NotificationMgmtUpdateComponent,
     resolve: {
         notification: NotificationMgmtResolve,

@@ -158,7 +158,7 @@ export class NotificationMgmtComponent implements OnInit, OnDestroy {
      * Transitions to another page and/or sorting order
      */
     transition() {
-        this.router.navigate(['/admin/notification-management'], {
+        this.router.navigate(['/admin/system-notification-management'], {
             queryParams: {
                 page: this.page,
                 sort: this.predicate + ',' + (this.reverse ? 'asc' : 'desc'),
