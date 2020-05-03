@@ -1,7 +1,34 @@
-<ngb-tabset #wrapper class="markdown-editor-wrapper bg-white" [destroyOnHide]="false" (tabChange)="togglePreview($event)">
-    <!--Begin Editor-->
-    <ngb-tab title="{{ 'entity.action.edit' | translate }}" id="editor_edit">
-        <ng-template ngbTabContent>
+<div #wrapper class="markdown-editor-wrapper">
+    <nav ngbNav #nav="ngbNav" class="nav-tabs" [destroyOnHide]="false" (navChange)="togglePreview($event)">
+        <!-- editor -->
+        <ng-container ngbNavItem="editor_edit">
+            <a ngbNavLink class="btn-sm text-dark">{{ 'entity.action.edit' | translate }}</a>
+            <ng-template ngbNavContent>
+                <div class="height-100 border-0 markdown-editor d-flex flex-column">
+                    <ace-editor
+                        #aceEditor
+                        [mode]="aceEditorOptions.mode"
+                        [autoUpdateContent]="aceEditorOptions.autoUpdateContent"
+                        [(text)]="markdown"
+                        (textChange)="markdownChange.emit($event)"
+                        class="form-control markdown-editor__content"
+                    ></ace-editor>
+                    <!-- Required for resizing; don't remove empty span -->
+                    <fa-icon *ngIf="enableResize" [icon]="'grip-lines'" class="rg-bottom text-lightgrey"><span></span></fa-icon>
+                </div>
+            </ng-template>
+        </ng-container>
+        <!-- preview -->
+        <ng-container ngbNavItem="editor_preview">
+            <a ngbNavLink class="btn-sm text-dark" *ngIf="showPreviewButton">{{ 'entity.action.preview' | translate }}</a>
+            <ng-template ngbNavContent>
+                <div class="pt-1 background-editor-high markdown-preview" *ngIf="showDefaultPreview" [innerHTML]="previewTextAsHtml">
+                    Preview
+                </div>
+            </ng-template>
+        </ng-container>
+        <!-- commands -->
+        <ng-container ngbNavItem>
             <div class="markdown-editor__commands">
                 <div class="markdown-editor__commands-default">
                     <!--default commands (e.g. bold)-->
@@ -21,7 +48,7 @@
                         </button>
                         <div class="dropdown-menu" ngbDropdownMenu>
                             <ng-container *ngFor="let command of headerCommands"
-                                ><button class="dropdown-item" (click)="command.execute()" type="button">{{ command.buttonTranslationString | translate }}</button></ng-container
+                            ><button class="dropdown-item" (click)="command.execute()" type="button">{{ command.buttonTranslationString | translate }}</button></ng-container
                             >
                         </div>
                     </div>
@@ -70,30 +97,7 @@
                     </div>
                 </div>
             </div>
-            <div class="height-100 border-0 markdown-editor d-flex flex-column">
-                <ace-editor
-                    #aceEditor
-                    [mode]="aceEditorOptions.mode"
-                    [autoUpdateContent]="aceEditorOptions.autoUpdateContent"
-                    [(text)]="markdown"
-                    (textChange)="markdownChange.emit($event)"
-                    class="form-control markdown-editor__content"
-                ></ace-editor>
-                <!-- Required for resizing; don't remove empty span -->
-                <fa-icon *ngIf="enableResize" [icon]="'grip-lines'" class="rg-bottom text-lightgrey"><span></span></fa-icon>
-            </div>
-        </ng-template>
-    </ngb-tab>
-    <!--End Editor-->
-
-    <!--Begin Preview-->
-    <ngb-tab title="{{ 'entity.action.preview' | translate }}" id="editor_preview" *ngIf="showPreviewButton">
-        <ng-template ngbTabContent>
-            <ng-content></ng-content>
-            <div class="pt-1 background-editor-high markdown-preview" *ngIf="showDefaultPreview" [innerHTML]="previewTextAsHtml">
-                Preview
-            </div>
-        </ng-template>
-    </ngb-tab>
-    <!--End Preview-->
-</ngb-tabset>
+        </ng-container>
+    </nav>
+    <div [ngbNavOutlet]="nav"></div>
+</div>
