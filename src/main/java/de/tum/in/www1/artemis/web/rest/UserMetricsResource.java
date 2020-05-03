@@ -7,7 +7,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api")
+@RequestMapping("/api/management")
 public class UserMetricsResource {
 
     private final SimpUserRegistry simpUserRegistry;
@@ -20,9 +20,9 @@ public class UserMetricsResource {
      * GET - number of current users using the application.
      * @return number of current users using the application.
      */
-    @GetMapping("/management/usermetrics")
+    @GetMapping("/usermetrics")
     @PreAuthorize("hasAnyRole('ADMIN')")
-    public int retrieveNumberOfUsers() {
+    public int getNumberOfUsers() {
         return this.simpUserRegistry.getUserCount();
     }
 
