@@ -24,12 +24,18 @@ export class HighlightedTextAreaComponent implements OnChanges, DoCheck {
         return convertToHtmlLinebreaks(escapeString(this.submissionText || ''));
     }
 
+    /**
+     * Life cycle hook to indicate component changes
+     */
     ngOnChanges(changes: SimpleChanges): void {
         if (changes) {
             this.displayedText = this.highlightText;
         }
     }
 
+    /**
+     * Life cycle hook to check component changes
+     */
     ngDoCheck(): void {
         const changes = this.differ.diff(this.assessments);
         if (changes) {
