@@ -80,7 +80,7 @@
             "admin": {
                 "main": "Server-Administration",
                 "userManagement": "Benutzerverwaltung",
-                "notificationManagement": "Mitteilungsverwaltung",
+                "systemNotifications": "Systemmitteilungen",
                 "featureToggles": "Feature Toggles",
                 "tracker": "Benutzer Aktivitäten",
                 "metrics": "Metriken",
