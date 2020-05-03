@@ -1,16 +1,15 @@
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
-import { DebugElement, NO_ERRORS_SCHEMA } from '@angular/core';
-import { ComponentFixture, TestBed, inject, fakeAsync } from '@angular/core/testing';
-import { Router } from '@angular/router';
+import { NO_ERRORS_SCHEMA } from '@angular/core';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { RouterTestingModule } from '@angular/router/testing';
 import { CookieService } from 'ngx-cookie-service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { of } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import { ArtemisTestModule } from '../../test.module';
-import { MockSyncStorage } from '../../mocks/mock-sync.storage';
-import { MockCookieService } from '../../mocks/mock-cookie.service';
+import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
+import { MockCookieService } from '../../helpers/mocks/service/mock-cookie.service';
 import { TextTourStep } from 'app/guided-tour/guided-tour-step.model';
 import { GuidedTour } from 'app/guided-tour/guided-tour.model';
 import { GuidedTourComponent } from 'app/guided-tour/guided-tour.component';
@@ -19,7 +18,7 @@ import { Orientation, OverlayPosition, ResetParticipation } from 'app/guided-tou
 import { DeviceDetectorService } from 'ngx-device-detector';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { By } from '@angular/platform-browser';
-import { MockTranslateService } from '../../mocks/mock-translate.service';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -61,9 +60,7 @@ describe('GuidedTourComponent', () => {
 
     let guidedTourComponent: GuidedTourComponent;
     let guidedTourComponentFixture: ComponentFixture<GuidedTourComponent>;
-    let guidedTourDebugElement: DebugElement;
     let guidedTourService: GuidedTourService;
-    let router: Router;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -92,9 +89,7 @@ describe('GuidedTourComponent', () => {
             .then(() => {
                 guidedTourComponentFixture = TestBed.createComponent(GuidedTourComponent);
                 guidedTourComponent = guidedTourComponentFixture.componentInstance;
-                guidedTourDebugElement = guidedTourComponentFixture.debugElement;
                 guidedTourService = TestBed.inject(GuidedTourService);
-                router = TestBed.inject(Router);
             });
     });
 

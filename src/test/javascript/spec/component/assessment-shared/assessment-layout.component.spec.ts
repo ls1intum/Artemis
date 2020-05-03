@@ -1,7 +1,6 @@
 import { async, ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { TranslateModule } from '@ngx-translate/core';
-import { AlertService } from 'app/core/alert/alert.service';
 
 import { ArtemisTestModule } from '../../test.module';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';

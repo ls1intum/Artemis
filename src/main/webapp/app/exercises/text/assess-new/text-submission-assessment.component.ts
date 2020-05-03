@@ -10,7 +10,7 @@ import { StudentParticipation } from 'app/entities/participation/student-partici
 import { TextSubmission } from 'app/entities/text-submission.model';
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { Result } from 'app/entities/result.model';
-import { Complaint, ComplaintType } from 'app/entities/complaint.model';
+import { Complaint } from 'app/entities/complaint.model';
 import { ComplaintResponse } from 'app/entities/complaint-response.model';
 import { ComplaintService } from 'app/complaints/complaint.service';
 import { TextAssessmentsService } from 'app/exercises/text/assess/text-assessments.service';

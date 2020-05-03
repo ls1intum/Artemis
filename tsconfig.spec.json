@@ -12,6 +12,6 @@
         }
     },
     "files": ["src/test/javascript/spec/entry.ts"],
-    "include": ["src/test/javascript/spec", "src/main/webapp/app"],
+    "include": ["src/test/javascript", "src/main/webapp/app"],
     "exclude": ["node_modules"]
 }

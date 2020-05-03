@@ -1,4 +1,4 @@
-import { ActivatedRouteSnapshot, Resolve, RouterModule, RouterStateSnapshot, Routes } from '@angular/router';
+import { ActivatedRouteSnapshot, Resolve, RouterModule, Routes } from '@angular/router';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { FileUploadExerciseComponent } from './file-upload-exercise.component';
 import { FileUploadExerciseDetailComponent } from './file-upload-exercise-detail.component';
@@ -9,7 +9,7 @@ import { Injectable, NgModule } from '@angular/core';
 import { filter, map } from 'rxjs/operators';
 import { FileUploadExerciseService } from 'app/exercises/file-upload/manage/file-upload-exercise.service';
 import { FileUploadExerciseUpdateComponent } from 'app/exercises/file-upload/manage/file-upload-exercise-update.component';
-import { CourseManagementService } from '../../../course/manage/course-management.service';
+import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { Course } from 'app/entities/course.model';
 
 @Injectable({ providedIn: 'root' })
@@ -20,9 +20,8 @@ export class FileUploadExerciseResolve implements Resolve<FileUploadExercise> {
      * Resolves the route and initializes file upload exercise either from exerciseId (existing exercise) or
      * from course id (new exercise)
      * @param route
-     * @param state
      */
-    resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot) {
+    resolve(route: ActivatedRouteSnapshot) {
         if (route.params['exerciseId']) {
             return this.fileUploadExerciseService.find(route.params['exerciseId']).pipe(
                 filter((res) => !!res.body),

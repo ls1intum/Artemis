@@ -115,7 +115,7 @@ export class ListOfComplaintsComponent implements OnInit {
                 modalRef.componentInstance.result = cloneDeep(complaint.result);
                 modalRef.componentInstance.onResultModified.subscribe(() => this.loadComplaints());
                 modalRef.result.then(
-                    (_) => this.loadComplaints(),
+                    () => this.loadComplaints(),
                     () => {},
                 );
                 return;

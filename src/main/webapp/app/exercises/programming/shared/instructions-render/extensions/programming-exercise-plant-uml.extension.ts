@@ -48,7 +48,7 @@ export class ProgrammingExercisePlantUmlExtensionWrapper implements ArtemisShowd
     getExtension() {
         const extension: showdown.ShowdownExtension = {
             type: 'lang',
-            filter: (text: string, converter: showdown.Converter, options: showdown.ConverterOptions) => {
+            filter: (text: string) => {
                 const idPlaceholder = '%idPlaceholder%';
                 // E.g. [task][Implement BubbleSort](testBubbleSort)
                 const plantUmlRegex = /@startuml([^@]*)@enduml/g;

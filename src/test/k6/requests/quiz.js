@@ -1,7 +1,7 @@
-import {PARTICIPATION, QUIZ_EXERCISES} from "./endpoints.js";
-import {fail, sleep} from 'k6';
-import {nextAlphanumeric, nextWSSubscriptionId, randomArrayValue} from "../util/utils.js";
-import {QUIZ_EXERCISE} from "./endpoints.js";
+import { PARTICIPATION, QUIZ_EXERCISES } from './endpoints.js';
+import { fail, sleep } from 'k6';
+import { nextAlphanumeric, nextWSSubscriptionId, randomArrayValue } from '../util/utils.js';
+import { QUIZ_EXERCISE } from './endpoints.js';
 
 export function createQuizExercise(artemis, course) {
     let res;
@@ -24,12 +24,12 @@ export function createQuizExercise(artemis, course) {
         isVisibleBeforeStart: false,
         mode: 'INDIVIDUAL',
         course: course,
-        quizQuestions: generateQuizQuestions(10)
+        quizQuestions: generateQuizQuestions(10),
     };
 
     res = artemis.post(QUIZ_EXERCISES, exercise);
     if (res[0].status !== 201) {
-        console.log("ERROR when creating a new quiz exercise. Response headers:");
+        console.log('ERROR when creating a new quiz exercise. Response headers:');
         for (let [key, value] of Object.entries(res[0].headers)) {
             console.log(`${key}: ${value}`);
         }
@@ -39,13 +39,13 @@ export function createQuizExercise(artemis, course) {
     console.log('CREATED new quiz exercise, ID=' + exerciseId);
 
     console.log('Setting quiz to visible');
-    res = artemis.put(QUIZ_EXERCISE(exerciseId) + "/set-visible");
+    res = artemis.put(QUIZ_EXERCISE(exerciseId) + '/set-visible');
     if (res[0].status !== 200) {
         fail('Could not set quiz to visible (' + res[0].status + ')! Response was + ' + res[0].body);
     }
 
     console.log('Starting quiz');
-    res = artemis.put(QUIZ_EXERCISE(exerciseId) + "/start-now");
+    res = artemis.put(QUIZ_EXERCISE(exerciseId) + '/start-now');
     if (res[0].status !== 200) {
         fail('Could not start quiz (' + res[0].status + ')! Response was + ' + res[0].body);
     }
@@ -66,7 +66,7 @@ export function generateQuizQuestions(amount) {
             invalid: false,
             hint: 'Some question hint',
             exportQuiz: 'false',
-            answerOptions: generateAnswerOptions()
+            answerOptions: generateAnswerOptions(),
         };
         questions.push(question);
     }
@@ -80,14 +80,14 @@ export function generateQuizQuestions(amount) {
             hint: 'Correct answer hint',
             invalid: false,
             isCorrect: true,
-            text: 'Correct answer option'
+            text: 'Correct answer option',
         };
         let wrongAnswerOption = {
             explanation: 'Wrong answer explanation',
             hint: 'Wrong answer hint',
             invalid: false,
             isCorrect: false,
-            text: 'Wrong answer option'
+            text: 'Wrong answer option',
         };
 
         answerOptions.push(correctAnswerOption);
@@ -117,14 +117,14 @@ export function getQuizQuestions(artemis, courseId, exerciseId) {
 export function simulateQuizWork(artemis, exerciseId, questions, timeout) {
     artemis.websocket(function (socket) {
         function subscribe() {
-            socket.send('SUBSCRIBE\nid:sub-' + nextWSSubscriptionId() + '\ndestination:/user/topic/quizExercise/' + exerciseId +'/submission\n\n\u0000');
+            socket.send('SUBSCRIBE\nid:sub-' + nextWSSubscriptionId() + '\ndestination:/user/topic/quizExercise/' + exerciseId + '/submission\n\n\u0000');
         }
 
         function submitRandomAnswer() {
             const answer = {
                 submissionExerciseType: 'quiz',
                 submitted: false,
-                submittedAnswers: questions.map(q => generateAnswer(q))
+                submittedAnswers: questions.map((q) => generateAnswer(q)),
             };
             const answerString = JSON.stringify(answer);
             const wsMessage = `SEND\ndestination:/topic/quizExercise/${exerciseId}/submission\ncontent-length:${answerString.length}\n\n${answerString}\u0000`;
@@ -137,12 +137,12 @@ export function simulateQuizWork(artemis, exerciseId, questions, timeout) {
             return {
                 type: question.type,
                 quizQuestion: question,
-                selectedOptions: [randAnswer]
+                selectedOptions: [randAnswer],
             };
         }
 
         // Subscribe to callback response from server (response after submitted answer
-        socket.setTimeout(function() {
+        socket.setTimeout(function () {
             subscribe();
         }, 5 * 1000);
 
@@ -156,13 +156,13 @@ export function simulateQuizWork(artemis, exerciseId, questions, timeout) {
         });
 
         // submit new quiz answer
-        socket.setTimeout(function() {
+        socket.setTimeout(function () {
             submitRandomAnswer();
         }, 10 * 1000);
 
         // Stop after timeout
-        socket.setTimeout(function() {
+        socket.setTimeout(function () {
             socket.close();
         }, timeout * 1000);
-    })
+    });
 }

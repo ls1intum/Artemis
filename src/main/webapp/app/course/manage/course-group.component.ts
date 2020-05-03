@@ -157,7 +157,7 @@ export class CourseGroupComponent implements OnInit, OnDestroy {
                     // Flash green background color to signal to the user that this record was added
                     this.flashRowClass(cssClasses.newlyAddedMember);
                 },
-                (err) => {
+                () => {
                     this.isTransitioning = false;
                 },
             );
@@ -237,10 +237,8 @@ export class CourseGroupComponent implements OnInit, OnDestroy {
 
     /**
      * Computes the row class that is being added to all rows of the datatable
-     *
-     * @param row Row from ngx datatable
      */
-    dataTableRowClass = (row: any) => {
+    dataTableRowClass = () => {
         return this.rowClass;
     };
 
