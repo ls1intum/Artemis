@@ -95,7 +95,6 @@ public class ProgrammingExerciseService {
         this.groupNotificationService = groupNotificationService;
     }
 
-    // TODO We too many many generic throws Exception declarations.
     /**
      * Setups the context of a new programming exercise. This includes:
      * <ul>
@@ -776,5 +775,17 @@ public class ProgrammingExerciseService {
         var count = programmingExerciseRepository.countSubmissionsByCourseIdSubmitted(courseId);
         log.debug("countSubmissionsByCourseIdSubmitted took " + (System.currentTimeMillis() - start) + "ms");
         return count;
+    }
+
+    /**
+     * Sets the transient attribute "isLocalSimulation" if the exercises is a programming exercise
+     * and the testRepositoryUrl contains the String "artemislocalhost" which is the indicator that the programming exercise has
+     * no connection to a version control and continuous integration server
+     * @param exercise the exercise for which to set if it is a local simulation
+     */
+    public void checksAndSetsIfProgrammingExerciseIsLocalSimulation(Exercise exercise) {
+        if (exercise instanceof ProgrammingExercise && (((ProgrammingExercise) exercise).getTestRepositoryUrl()).contains("artemislocalhost")) {
+            ((ProgrammingExercise) exercise).setIsLocalSimulation(true);
+        }
     }
 }

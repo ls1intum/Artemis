@@ -76,7 +76,7 @@ export class ExerciseHintComponent implements OnInit, OnDestroy {
         if (this.eventSubscriber) {
             this.eventSubscriber.unsubscribe();
         }
-        this.eventSubscriber = this.eventManager.subscribe('exerciseHintListModification', (response: any) => this.loadAllByExerciseId());
+        this.eventSubscriber = this.eventManager.subscribe('exerciseHintListModification', () => this.loadAllByExerciseId());
     }
 
     /**

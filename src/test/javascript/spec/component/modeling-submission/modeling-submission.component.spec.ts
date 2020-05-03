@@ -1,4 +1,3 @@
-/* tslint:disable max-line-length */
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { of, throwError } from 'rxjs';
 
@@ -6,9 +5,9 @@ import { ArtemisTestModule } from '../../test.module';
 import { ModelingSubmissionComponent } from 'app/exercises/modeling/participate/modeling-submission.component';
 import { ModelingSubmissionService } from 'app/exercises/modeling/participate/modeling-submission.service';
 import { ModelingSubmission } from 'app/entities/modeling-submission.model';
-import { MockSyncStorage } from '../../mocks/mock-sync.storage';
-import { MockParticipationWebsocketService } from '../../mocks/mock-participation-websocket.service';
-import { MockCookieService } from '../../mocks/mock-cookie.service';
+import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
+import { MockParticipationWebsocketService } from '../../helpers/mocks/service/mock-participation-websocket.service';
+import { MockCookieService } from '../../helpers/mocks/service/mock-cookie.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { CookieService } from 'ngx-cookie-service';
 import { TranslateModule } from '@ngx-translate/core';
@@ -19,8 +18,8 @@ import { DebugElement } from '@angular/core';
 import { By } from '@angular/platform-browser';
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
-import { MockAlertService } from '../../helpers/mock-alert.service';
-import { MockComplaintService } from '../../mocks/mock-complaint.service';
+import { MockAlertService } from '../../helpers/mocks/service/mock-alert.service';
+import { MockComplaintService } from '../../helpers/mocks/service/mock-complaint.service';
 import { AlertService } from 'app/core/alert/alert.service';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
@@ -186,7 +185,7 @@ describe('Component Tests', () => {
         it('should navigate to access denied page on 403 error status', () => {
             sinon.replace(service, 'getLatestSubmissionForModelingEditor', sinon.fake.returns(throwError({ status: 403 })));
             const spy = stub(router, 'navigate');
-            spy.returns(new Promise((resolve) => true));
+            spy.returns(new Promise(() => true));
             fixture.detectChanges();
             expect(spy.called).to.be.true;
         });

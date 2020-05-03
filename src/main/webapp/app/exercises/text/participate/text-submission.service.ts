@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs/Observable';
-import { tap } from 'rxjs/operators';
+import { tap, map } from 'rxjs/operators';
 
 import { TextSubmission } from 'app/entities/text-submission.model';
 import { createRequestOption } from 'app/shared/util/request-util';
@@ -19,7 +19,7 @@ export class TextSubmissionService {
             .post<TextSubmission>(`api/exercises/${exerciseId}/text-submissions`, copy, {
                 observe: 'response',
             })
-            .map((res: EntityResponseType) => TextSubmissionService.convertResponse(res));
+            .pipe(map((res: EntityResponseType) => TextSubmissionService.convertResponse(res)));
     }
 
     update(textSubmission: TextSubmission, exerciseId: number): Observable<EntityResponseType> {
@@ -29,7 +29,7 @@ export class TextSubmissionService {
                 headers: { 'Content-Type': 'application/json' },
                 observe: 'response',
             })
-            .map((res: EntityResponseType) => TextSubmissionService.convertResponse(res));
+            .pipe(map((res: EntityResponseType) => TextSubmissionService.convertResponse(res)));
     }
 
     getTextSubmissionsForExercise(exerciseId: number, req: { submittedOnly?: boolean; assessedByTutor?: boolean }): Observable<HttpResponse<TextSubmission[]>> {
@@ -39,7 +39,7 @@ export class TextSubmissionService {
                 params: options,
                 observe: 'response',
             })
-            .map((res: HttpResponse<TextSubmission[]>) => TextSubmissionService.convertArrayResponse(res));
+            .pipe(map((res: HttpResponse<TextSubmission[]>) => TextSubmissionService.convertArrayResponse(res)));
     }
 
     getTextSubmissionForExerciseWithoutAssessment(exerciseId: number, lock = false): Observable<TextSubmission> {

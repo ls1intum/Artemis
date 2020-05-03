@@ -58,6 +58,7 @@ public class ModelFactory {
         programmingExercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
         programmingExercise.setProgrammingLanguage(ProgrammingLanguage.JAVA);
         programmingExercise.setPackageName("de.test");
+        programmingExercise.setTestRepositoryUrl("test@url");
         return programmingExercise;
     }
 
