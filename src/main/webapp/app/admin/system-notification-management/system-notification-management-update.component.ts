@@ -6,7 +6,7 @@ import { SystemNotificationService } from 'app/core/system-notification/system-n
 
 @Component({
     selector: 'jhi-notification-mgmt-update',
-    templateUrl: './notification-management-update.component.html',
+    templateUrl: './system-notification-management-update.component.html',
 })
 export class NotificationMgmtUpdateComponent implements OnInit {
     notification: SystemNotification;

@@ -18,7 +18,7 @@ import { AlertService } from 'app/core/alert/alert.service';
 
 @Component({
     selector: 'jhi-notification-mgmt',
-    templateUrl: './notification-management.component.html',
+    templateUrl: './system-notification-management.component.html',
 })
 export class NotificationMgmtComponent implements OnInit, OnDestroy {
     currentAccount: User;

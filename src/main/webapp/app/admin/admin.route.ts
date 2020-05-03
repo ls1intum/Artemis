@@ -11,7 +11,7 @@ import {
     notificationMgmtRoutes2,
     notificationMgmtRoutes3,
     notificationMgmtRoutes4,
-} from 'app/admin/system-notification-management/notification-management.route';
+} from 'app/admin/system-notification-management/system-notification-management.route';
 import { healthRoute } from 'app/admin/health/health.route';
 import { metricsRoute } from 'app/admin/metrics/metrics.route';
 
