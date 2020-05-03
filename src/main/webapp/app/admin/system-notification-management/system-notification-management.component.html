@@ -1,8 +1,8 @@
 <div>
     <h2>
-        <span id="system-notification-management-page-heading" jhiTranslate="artemisApp.notificationManagement.home.title">Notifications</span>
+        <span id="system-notification-management-page-heading" jhiTranslate="artemisApp.systemNotification.systemNotifications">System notifications</span>
         <button class="btn btn-primary float-right jh-create-entity" [routerLink]="['./new']">
-            <fa-icon [icon]="'plus'"></fa-icon> <span jhiTranslate="artemisApp.notificationManagement.home.createLabel">Create a new notification</span>
+            <fa-icon [icon]="'plus'"></fa-icon> <span jhiTranslate="artemisApp.systemNotification.createLabel">Create a new system notification</span>
         </button>
     </h2>
     <jhi-alert></jhi-alert>
@@ -11,14 +11,12 @@
             <thead>
                 <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" [callback]="transition.bind(this)">
                     <th jhiSortBy="id"><span jhiTranslate="global.field.id">ID</span> <fa-icon [icon]="'sort'"></fa-icon></th>
-                    <th jhiSortBy="title"><span jhiTranslate="artemisApp.notificationManagement.title">Title</span> <fa-icon [icon]="'sort'"></fa-icon></th>
-                    <th jhiSortBy="text"><span jhiTranslate="artemisApp.notificationManagement.text">Text</span> <fa-icon [icon]="'sort'"></fa-icon></th>
-                    <th jhiSortBy="type"><span jhiTranslate="artemisApp.notificationManagement.type">Type</span> <fa-icon [icon]="'sort'"></fa-icon></th>
+                    <th jhiSortBy="title"><span jhiTranslate="artemisApp.systemNotification.title">Title</span> <fa-icon [icon]="'sort'"></fa-icon></th>
+                    <th jhiSortBy="text"><span jhiTranslate="artemisApp.systemNotification.text">Text</span> <fa-icon [icon]="'sort'"></fa-icon></th>
+                    <th jhiSortBy="type"><span jhiTranslate="artemisApp.systemNotification.type">Type</span> <fa-icon [icon]="'sort'"></fa-icon></th>
                     <th></th>
-                    <th jhiSortBy="expireDate">
-                        <span jhiTranslate="artemisApp.notificationManagement.notificationDate">Notification Date</span> <fa-icon [icon]="'sort'"></fa-icon>
-                    </th>
-                    <th jhiSortBy="expireDate"><span jhiTranslate="artemisApp.notificationManagement.expireDate">Expire Date</span> <fa-icon [icon]="'sort'"></fa-icon></th>
+                    <th jhiSortBy="expireDate"><span jhiTranslate="artemisApp.systemNotification.notificationDate">Notification Date</span> <fa-icon [icon]="'sort'"></fa-icon></th>
+                    <th jhiSortBy="expireDate"><span jhiTranslate="artemisApp.systemNotification.expireDate">Expire Date</span> <fa-icon [icon]="'sort'"></fa-icon></th>
                     <th></th>
                 </tr>
             </thead>
@@ -29,11 +27,9 @@
                     <td>{{ notification.text }}</td>
                     <td>{{ notification.type }}</td>
                     <td>
-                        <span *ngIf="isNotificationActive(notification); else notActive" class="badge badge-success">{{
-                            'artemisApp.notificationManagement.active' | translate
-                        }}</span>
+                        <span *ngIf="isNotificationActive(notification); else notActive" class="badge badge-success">{{ 'artemisApp.systemNotification.active' | translate }}</span>
                         <ng-template #notActive>
-                            <span class="badge badge-danger">{{ 'artemisApp.notificationManagement.notActive' | translate }}</span>
+                            <span class="badge badge-danger">{{ 'artemisApp.systemNotification.notActive' | translate }}</span>
                         </ng-template>
                     </td>
                     <td>{{ notification.notificationDate | date: 'yyyy-MM-dd HH:mm' }}</td>
@@ -51,7 +47,7 @@
                             <button
                                 jhiDeleteButton
                                 [entityTitle]="notification.id"
-                                deleteQuestion="artemisApp.notificationManagement.delete.question"
+                                deleteQuestion="artemisApp.systemNotification.delete.question"
                                 (delete)="deleteNotification(notification.id)"
                                 [dialogError]="dialogError$"
                             >
