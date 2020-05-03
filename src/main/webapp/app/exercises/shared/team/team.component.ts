@@ -48,10 +48,16 @@ export class TeamComponent implements OnInit {
         });
     }
 
+    /**
+     * Life cycle hook to indicate component creation is done
+     */
     ngOnInit() {
         this.load();
     }
 
+    /**
+     * Load the team component
+     */
     load() {
         this.paramSub = this.route.params.subscribe((params) => {
             this.isLoading = true;
