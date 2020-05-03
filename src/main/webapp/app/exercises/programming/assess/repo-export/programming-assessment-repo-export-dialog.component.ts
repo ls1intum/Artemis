@@ -74,11 +74,9 @@ export class ProgrammingAssessmentRepoExportDialogComponent implements OnInit {
         if (this.participationIdList) {
             // We anonymize the assessment process ("double-blind").
             this.repositoryExportOptions.addParticipantName = false;
-            this.repoExportService
-                .exportReposByParticipations(exerciseId, this.participationIdList, this.repositoryExportOptions)
-                .subscribe(this.handleExportRepoResponse, (err) => {
-                    this.exportInProgress = false;
-                });
+            this.repoExportService.exportReposByParticipations(exerciseId, this.participationIdList, this.repositoryExportOptions).subscribe(this.handleExportRepoResponse, () => {
+                this.exportInProgress = false;
+            });
             return;
         }
         const participantIdentifierList =
@@ -86,7 +84,7 @@ export class ProgrammingAssessmentRepoExportDialogComponent implements OnInit {
 
         this.repoExportService
             .exportReposByParticipantIdentifiers(exerciseId, participantIdentifierList, this.repositoryExportOptions)
-            .subscribe(this.handleExportRepoResponse, (err) => {
+            .subscribe(this.handleExportRepoResponse, () => {
                 this.exportInProgress = false;
             });
     }

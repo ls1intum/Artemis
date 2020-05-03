@@ -377,7 +377,7 @@ export class TutorExerciseDashboardComponent implements OnInit, AfterViewInit {
         modalRef.componentInstance.exercise = this.exercise;
         modalRef.componentInstance.onResultModified.subscribe(() => this.loadAll());
         modalRef.result.then(
-            (_) => this.loadAll(),
+            () => this.loadAll(),
             () => {},
         );
         return;
