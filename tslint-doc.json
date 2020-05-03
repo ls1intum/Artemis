@@ -7,7 +7,7 @@
     ],
     "rules": {
         "completed-docs": [
-            false,
+            true,
             {
                 "enums": { "visibilities": ["all"] },
                 "functions": { "visibilities": ["all"] },
