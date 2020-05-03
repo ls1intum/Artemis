@@ -15,7 +15,7 @@
         <dt><span jhiTranslate="artemisApp.systemNotification.type">Type</span></dt>
         <dd>{{ notification.type }}</dd>
         <dt><span jhiTranslate="artemisApp.systemNotification.expireDate">Expire Date</span></dt>
-        <dd>{{ notification.expireDate }}</dd>
+        <dd>{{ notification.expireDate | date: 'yyyy-MM-dd HH:mm' }}</dd>
     </dl>
     <button type="submit" routerLink="/admin/system-notification-management" class="btn btn-info">
         <fa-icon [icon]="'arrow-left'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.back"> Back</span>
