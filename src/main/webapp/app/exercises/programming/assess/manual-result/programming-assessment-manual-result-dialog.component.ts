@@ -60,6 +60,9 @@ export class ProgrammingAssessmentManualResultDialogComponent implements OnInit 
         private jhiAlertService: AlertService,
     ) {}
 
+    /**
+     * Creates or updates a manual result and checks permissions on component initialization
+     */
     ngOnInit() {
         // If there already is a manual result, update it instead of creating a new one.
         this.accountService.identity().then((user) => {
@@ -74,6 +77,12 @@ export class ProgrammingAssessmentManualResultDialogComponent implements OnInit 
         });
     }
 
+    /**
+     * If the result has feedbacks, override the feedbacks of this instance with them.
+     *  Else get them from the result service and override the feedbacks of the instance.
+     * Get the complaint of this result, if there is one.
+     * Override the participation of this instance with its result's.
+     */
     initializeForResultUpdate() {
         if (this.result.feedbacks) {
             this.feedbacks = this.result.feedbacks;
@@ -94,6 +103,10 @@ export class ProgrammingAssessmentManualResultDialogComponent implements OnInit 
         this.participation = this.result.participation! as ProgrammingExerciseStudentParticipation;
     }
 
+    /**
+     * Generates a manual result and sets the result of this instance to it.
+     * Sets its assessor to the current user.
+     */
     initializeForResultCreation() {
         this.isLoading = true;
         this.result = this.manualResultService.generateInitialManualResult();
@@ -116,6 +129,9 @@ export class ProgrammingAssessmentManualResultDialogComponent implements OnInit 
         this.canOverride = (this.isAssessor && isBeforeAssessmentDueDate) || this.isAtLeastInstructor;
     }
 
+    /**
+     * Gets the participation of this instance from the participation service
+     */
     getParticipation() {
         this.participationService
             .find(this.participationId)
@@ -136,6 +152,9 @@ export class ProgrammingAssessmentManualResultDialogComponent implements OnInit 
             });
     }
 
+    /**
+     * Emits the result if it was modified and dismisses the activeModal
+     */
     clear() {
         if (this.resultModified) {
             this.onResultModified.emit(this.result);
@@ -143,6 +162,11 @@ export class ProgrammingAssessmentManualResultDialogComponent implements OnInit 
         this.activeModal.dismiss('cancel');
     }
 
+    /**
+     * Overrides the feedbacks of the result with the current feedbacks and sets their type to MANUAL
+     * Sets isSaving to true
+     * Creates or updates this result in the manual result service
+     */
     save() {
         this.result.feedbacks = this.feedbacks;
         this.isSaving = true;
@@ -164,20 +188,33 @@ export class ProgrammingAssessmentManualResultDialogComponent implements OnInit 
         );
     }
 
+    /**
+     * Closes the active model, sets iSaving to false and broadcasts the corresponding message on a successful save
+     * @param {HttpResponse<Result>} result - The HTTP Response with the result
+     */
     onSaveSuccess(result: HttpResponse<Result>) {
         this.activeModal.close(result.body);
         this.isSaving = false;
         this.eventManager.broadcast({ name: 'resultListModification', content: 'Added a manual result' });
     }
 
+    /**
+     * Only sets isSaving to false
+     */
     onSaveError() {
         this.isSaving = false;
     }
 
+    /**
+     * Pushes a new feedback to the feedbacks
+     */
     pushFeedback() {
         this.feedbacks.push(new Feedback());
     }
 
+    /**
+     * Pops a feedback out of feedbacks, if it is not empty
+     */
     popFeedback() {
         if (this.feedbacks.length > 0) {
             this.feedbacks.pop();
