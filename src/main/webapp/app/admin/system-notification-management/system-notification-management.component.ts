@@ -20,7 +20,7 @@ import { AlertService } from 'app/core/alert/alert.service';
     selector: 'jhi-notification-mgmt',
     templateUrl: './system-notification-management.component.html',
 })
-export class NotificationMgmtComponent implements OnInit, OnDestroy {
+export class SystemNotificationMgmtComponent implements OnInit, OnDestroy {
     currentAccount: User;
     notifications: SystemNotification[];
     error: string;

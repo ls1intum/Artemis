@@ -8,7 +8,7 @@ import { SystemNotificationService } from 'app/core/system-notification/system-n
     selector: 'jhi-notification-mgmt-detail',
     templateUrl: './system-notification-management-detail.component.html',
 })
-export class NotificationMgmtDetailComponent implements OnInit, OnDestroy {
+export class SystemNotificationMgmtDetailComponent implements OnInit, OnDestroy {
     notification: SystemNotification;
     private subscription: Subscription;
 
