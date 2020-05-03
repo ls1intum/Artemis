@@ -126,6 +126,10 @@ export class CourseUpdateComponent implements OnInit {
         window.history.back();
     }
 
+    /**
+     * Save the changes on a course
+     * This function is called by pressing save after creating or editing a course
+     */
     save() {
         this.isSaving = true;
         if (this.course.id !== undefined) {
@@ -143,6 +147,10 @@ export class CourseUpdateComponent implements OnInit {
         this.courseForm.patchValue({ color: selectedColor });
     }
 
+    /**
+     * Async response after saving a course, handles appropriate action in case of error
+     * @param result The Http response from the server
+     */
     private subscribeToSaveResponse(result: Observable<HttpResponse<Course>>) {
         result.subscribe(
             () => this.onSaveSuccess(),
@@ -150,6 +158,9 @@ export class CourseUpdateComponent implements OnInit {
         );
     }
 
+    /**
+     * Action on successful course creation or edit
+     */
     private onSaveSuccess() {
         this.isSaving = false;
         this.previousState();
@@ -206,11 +217,23 @@ export class CourseUpdateComponent implements OnInit {
         this.showCropper = false;
     }
 
+    /**
+     * Action on unsuccessful course creation or edit
+     * @param error The error for providing feedback
+     */
     private onSaveError(error: HttpErrorResponse) {
-        const errorMessage = error.error.title;
+        let errorMessage: string | null;
+        if (error.error !== null) {
+            errorMessage = error.error.title;
+        } else {
+            errorMessage = error.headers.get('x-artemisapp-alert');
+        }
         // TODO: this is a workaround to avoid translation not found issues. Provide proper translations
-        const jhiAlert = this.jhiAlertService.error(errorMessage);
-        jhiAlert.msg = errorMessage;
+        if (errorMessage != null) {
+            const jhiAlert = this.jhiAlertService.error(errorMessage);
+            jhiAlert.msg = errorMessage;
+        }
+
         this.isSaving = false;
         window.scrollTo(0, 0);
     }
