@@ -14,20 +14,61 @@ export type TeamResponse = HttpResponse<Team>;
 export type TeamArrayResponse = HttpResponse<Team[]>;
 
 export interface ITeamService {
+    /**
+     * Create a team for a given exercise
+     * @param {Exercise} exercise - Exercise to create the team for
+     * @param {Team} team - Team to create
+     */
     create(exercise: Exercise, team: Team): Observable<TeamResponse>;
 
+    /**
+     * Update a team
+     * @param {Exercise} exercise - Exercise the team belongs to
+     * @param {Team} team - Team to update
+     */
     update(exercise: Exercise, team: Team): Observable<TeamResponse>;
 
+    /**
+     * Get a team belonging to a given exercise
+     * @param {Exercise} exercise - Exercise to search through
+     * @param {number} teamId - Team to search for
+     */
     find(exercise: Exercise, teamId: number): Observable<TeamResponse>;
 
+    /**
+     * Get all teams belonging to a given exercise
+     * @param {number} exerciseId - Exercise to search through
+     */
     findAllByExerciseId(exerciseId: number): Observable<HttpResponse<Team[]>>;
 
+    /**
+     * Delete a team
+     * @param {Exercise} exercise - Exercise the team belongs to
+     * @param {number} teamId - Team to delete
+     */
     delete(exercise: Exercise, teamId: number): Observable<HttpResponse<any>>;
 
+    /**
+     * Check if a given short team name exists in an exercise
+     * @param {Exercise} exercise - Exercise to search through
+     * @param {string} shortName - Short name to search for
+     */
     existsByShortName(exercise: Exercise, shortName: string): Observable<HttpResponse<boolean>>;
 
+    /**
+     * Find the team of a login/name in a given exercise and course
+     * @param {Course} course - Course to search in
+     * @param {Exercise} exercise - Exercise to search in
+     * @param {string} loginOrName - Login/Name to search for
+     */
     searchInCourseForExerciseTeam(course: Course, exercise: Exercise, loginOrName: string): Observable<HttpResponse<TeamSearchUser[]>>;
 
+    /**
+     * Import the teams of an existing source exercise
+     * @param {Exercise} exercise - Exercise the teams should be transferred to
+     * @param {Exercise} sourceExercise - Exercise the teams should be transferred from
+     * @param {TeamImportStrategyType} importStrategyType - Strategy to use for the import
+     */
     importTeamsFromSourceExercise(exercise: Exercise, sourceExercise: Exercise, importStrategy: TeamImportStrategyType): Observable<HttpResponse<Team[]>>;
 }
 
@@ -39,6 +80,11 @@ export class TeamService implements ITeamService {
         return `${SERVER_API_URL}api/exercises/${exerciseId}/teams`;
     }
 
+    /**
+     * Create a team for a given exercise
+     * @param {Exercise} exercise - Exercise to create the team for
+     * @param {Team} team - Team to create
+     */
     create(exercise: Exercise, team: Team): Observable<TeamResponse> {
         const copy = TeamService.convertDateFromClient(team);
         return this.http
@@ -46,6 +92,11 @@ export class TeamService implements ITeamService {
             .pipe(map((res: TeamResponse) => TeamService.convertDateFromServer(res)));
     }
 
+    /**
+     * Update a team
+     * @param {Exercise} exercise - Exercise the team belongs to
+     * @param {Team} team - Team to update
+     */
     update(exercise: Exercise, team: Team): Observable<TeamResponse> {
         const copy = TeamService.convertDateFromClient(team);
         return this.http
@@ -53,31 +104,62 @@ export class TeamService implements ITeamService {
             .pipe(map((res: TeamResponse) => TeamService.convertDateFromServer(res)));
     }
 
+    /**
+     * Get a team belonging to a given exercise
+     * @param {Exercise} exercise - Exercise to search through
+     * @param {number} teamId - Team to search for
+     */
     find(exercise: Exercise, teamId: number): Observable<TeamResponse> {
         return this.http
             .get<Team>(`${TeamService.resourceUrl(exercise.id)}/${teamId}`, { observe: 'response' })
             .pipe(map((res: TeamResponse) => TeamService.convertDateFromServer(res)));
     }
 
+    /**
+     * Get all teams belonging to a given exercise
+     * @param {number} exerciseId - Exercise to search through
+     */
     findAllByExerciseId(exerciseId: number): Observable<TeamArrayResponse> {
         return this.http
             .get<Team[]>(TeamService.resourceUrl(exerciseId), { observe: 'response' })
             .pipe(map((res: TeamArrayResponse) => TeamService.convertDateArrayFromServer(res)));
     }
 
+    /**
+     * Delete a team
+     * @param {Exercise} exercise - Exercise the team belongs to
+     * @param {number} teamId - Team to delete
+     */
     delete(exercise: Exercise, teamId: number): Observable<HttpResponse<any>> {
         return this.http.delete<any>(`${TeamService.resourceUrl(exercise.id)}/${teamId}`, { observe: 'response' });
     }
 
+    /**
+     * Check if a given short team name exists in an exercise
+     * @param {Exercise} exercise - Exercise to search through
+     * @param {string} shortName - Short name to search for
+     */
     existsByShortName(exercise: Exercise, shortName: string): Observable<HttpResponse<boolean>> {
         return this.http.get<boolean>(`${TeamService.resourceUrl(exercise.id)}/exists?shortName=${shortName}`, { observe: 'response' });
     }
 
+    /**
+     * Find the team of a login/name in a given exercise and course
+     * @param {Course} course - Course to search in
+     * @param {Exercise} exercise - Exercise to search in
+     * @param {string} loginOrName - Login/Name to search for
+     */
     searchInCourseForExerciseTeam(course: Course, exercise: Exercise, loginOrName: string): Observable<HttpResponse<TeamSearchUser[]>> {
         const url = `${SERVER_API_URL}api/courses/${course.id}/exercises/${exercise.id}/team-search-users?loginOrName=${loginOrName}`;
         return this.http.get<TeamSearchUser[]>(url, { observe: 'response' });
     }
 
+    /**
+     * Import the teams of an existing source exercise
+     * @param {Exercise} exercise - Exercise the teams should be transferred to
+     * @param {Exercise} sourceExercise - Exercise the teams should be transferred from
+     * @param {TeamImportStrategyType} importStrategyType - Strategy to use for the import
+     */
     importTeamsFromSourceExercise(exercise: Exercise, sourceExercise: Exercise, importStrategyType: TeamImportStrategyType) {
         return this.http.put<Team[]>(
             `${TeamService.resourceUrl(exercise.id)}/import-from-exercise/${sourceExercise.id}?importStrategyType=${importStrategyType}`,
