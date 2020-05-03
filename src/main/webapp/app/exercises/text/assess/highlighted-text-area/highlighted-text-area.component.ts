@@ -26,6 +26,7 @@ export class HighlightedTextAreaComponent implements OnChanges, DoCheck {
 
     /**
      * Life cycle hook to indicate component changes
+     * @param {SimpleChanges} changes - Changes being made to the component
      */
     ngOnChanges(changes: SimpleChanges): void {
         if (changes) {

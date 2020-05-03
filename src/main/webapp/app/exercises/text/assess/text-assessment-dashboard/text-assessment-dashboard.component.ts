@@ -85,6 +85,10 @@ export class TextAssessmentDashboardComponent implements OnInit {
         return this.momentDiff.transform(completionDate, initializationDate, 'minutes');
     }
 
+    /**
+     *
+     * @param result
+     */
     public assessmentTypeTranslationKey(result?: Result): string {
         if (result) {
             return `artemisApp.AssessmentType.${result.assessmentType}`;
