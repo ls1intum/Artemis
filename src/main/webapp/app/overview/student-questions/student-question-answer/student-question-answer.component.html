@@ -102,7 +102,7 @@
             </div>
             <div class="row">
                 <div
-                    class="col mt-1 answer-text"
+                    class="col mt-1 answer-text markdown-preview"
                     [innerHTML]="studentQuestionAnswer.answerText ? (studentQuestionAnswer.answerText | htmlForMarkdown) : ''"
                     [ngbTooltip]="studentQuestionAnswer.tutorApproved ? ('artemisApp.courseOverview.exerciseDetails.faq.approvedLabel' | translate) : ''"
                 ></div>
