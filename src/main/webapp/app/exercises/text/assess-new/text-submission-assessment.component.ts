@@ -46,6 +46,7 @@ export class TextSubmissionAssessmentComponent implements OnInit {
     noNewSubmissions = false;
 
     private cancelConfirmationText: string;
+    unreferencedFeedback: Feedback[] = [];
 
     private get referencedFeedback(): Feedback[] {
         return this.textBlockRefs.map(({ feedback }) => feedback).filter(notUndefined) as Feedback[];
@@ -53,9 +54,9 @@ export class TextSubmissionAssessmentComponent implements OnInit {
 
     private get assessments(): Feedback[] {
         if (Feedback.hasDetailText(this.generalFeedback)) {
-            return [this.generalFeedback, ...this.referencedFeedback];
+            return [this.generalFeedback, ...this.referencedFeedback, ...this.unreferencedFeedback];
         } else {
-            return this.referencedFeedback;
+            return [...this.referencedFeedback, ...this.unreferencedFeedback];
         }
     }
 
@@ -204,9 +205,10 @@ export class TextSubmissionAssessmentComponent implements OnInit {
 
     validateFeedback(): void {
         const hasReferencedFeedback = this.referencedFeedback.filter((f) => !Feedback.isEmpty(f)).length > 0;
+        const hasUnreferencedFeedback = this.unreferencedFeedback.filter((f) => !Feedback.isEmpty(f)).length > 0;
         const hasGeneralFeedback = Feedback.hasDetailText(this.generalFeedback);
 
-        this.assessmentsAreValid = hasReferencedFeedback || hasGeneralFeedback;
+        this.assessmentsAreValid = hasReferencedFeedback || hasGeneralFeedback || hasUnreferencedFeedback;
 
         this.computeTotalScore();
     }
