@@ -1,4 +1,7 @@
 export namespace HighlightColors {
+    /**
+     * Enum for highlight colors
+     */
     export enum Color {
         yellow = 'yellow',
         lime = 'lime',
@@ -18,6 +21,10 @@ export namespace HighlightColors {
         silver = 'silver',
     }
 
+    /**
+     * Get highlight color at a specified index
+     * @param {number} index - Index to get the color at
+     */
     export function forIndex(index: number): Color {
         const colors = Object.values(Color);
         return colors[index % colors.length];

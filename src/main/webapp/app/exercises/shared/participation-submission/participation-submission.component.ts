@@ -28,11 +28,17 @@ export class ParticipationSubmissionComponent implements OnInit {
         private eventManager: JhiEventManager,
     ) {}
 
+    /**
+     * Initialize component by setting up page and subscribe to eventManager
+     */
     ngOnInit() {
         this.setupPage();
         this.eventSubscriber = this.eventManager.subscribe('submissionsModification', () => this.setupPage());
     }
 
+    /**
+     * Set up page by loading participation and all submissions
+     */
     setupPage() {
         this.route.params.subscribe((params) => {
             this.participationId = +params['participationId'];

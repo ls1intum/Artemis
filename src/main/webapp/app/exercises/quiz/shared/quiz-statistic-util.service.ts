@@ -50,6 +50,11 @@ export class QuizStatisticUtil {
         }
     }
 
+    /**
+     * Uses the router to navigate to the statistics page depending on the question type
+     * @param quizExercise Quiz exercise to which the quiz question belongs
+     * @param question Question for which to navigate to the statistics
+     */
     navigateToStatisticOf(quizExercise: QuizExercise, question: QuizQuestion) {
         if (question.type === QuizQuestionType.MULTIPLE_CHOICE) {
             this.router.navigateByUrl(`/course-management/${quizExercise.course?.id}/quiz-exercises/${quizExercise.id}/mc-question-statistic/${question.id}`);

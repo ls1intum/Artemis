@@ -12,6 +12,11 @@ export class QuizExercisePopupService {
         this.ngbModalRef = null;
     }
 
+    /**
+     * Open the modal with the given content for the given exercise.
+     * @param component the content that should be shown
+     * @param quizExercise the quiz exercise for which the modal should be shown
+     */
     open(component: Component, quizExercise: QuizExercise): Promise<NgbModalRef> {
         return new Promise<NgbModalRef>((resolve) => {
             if (this.ngbModalRef == null) {
@@ -21,6 +26,11 @@ export class QuizExercisePopupService {
         });
     }
 
+    /**
+     * Open the modal with the given content for the given exercise.
+     * @param component the content that should be shown
+     * @param quizExercise the quiz exercise for which the modal should be shown
+     */
     quizExerciseModalRef(component: Component, quizExercise: QuizExercise): NgbModalRef {
         const modalRef: NgbModalRef = this.modalService.open(component, { size: 'lg', backdrop: 'static' });
         modalRef.componentInstance.quizExercise = quizExercise;

@@ -16,6 +16,9 @@ export class FullscreenComponent implements OnInit {
 
     constructor(private fullScreenWrapper: ElementRef) {}
 
+    /**
+     * Life cycle hook called by Angular to indicate that Angular is done creating the component
+     */
     ngOnInit(): void {}
 
     /**

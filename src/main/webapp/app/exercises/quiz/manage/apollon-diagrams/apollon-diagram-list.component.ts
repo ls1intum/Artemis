@@ -102,6 +102,9 @@ export class ApollonDiagramListComponent implements OnInit {
      */
     callback() {}
 
+    /**
+     * Revert to the previous state, equivalent with pressing the back button on your browser
+     */
     previousState() {
         window.history.back();
     }

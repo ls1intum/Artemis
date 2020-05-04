@@ -23,6 +23,9 @@ export class OrionOutdatedComponent implements OnInit {
 
     constructor(private activatedRoute: ActivatedRoute, private profileService: ProfileService) {}
 
+    /**
+     * On initialization, sets the values of the used version and the minimum allowed version of orion.
+     */
     ngOnInit(): void {
         this.activatedRoute.queryParams.subscribe((params) => {
             this.versionString = params['versionString'];

@@ -25,14 +25,24 @@ export class ProgrammingExerciseTaskExtensionWrapper implements ArtemisShowdownE
         private injector: Injector,
     ) {}
 
+    /**
+     * Sets latest result according to parameter.
+     * @param result - either a result or null.
+     */
     public setLatestResult(result: Result | null) {
         this.latestResult = result;
     }
 
+    /**
+     * Subscribes to testsForTaskSubject.
+     */
     public subscribeForFoundTestsInTasks() {
         return this.testsForTaskSubject.asObservable();
     }
 
+    /**
+     * Subscribes to injectableElementsFoundSubject.
+     */
     public subscribeForInjectableElementsFound(): Observable<() => void> {
         return this.injectableElementsFoundSubject.asObservable();
     }
@@ -62,6 +72,9 @@ export class ProgrammingExerciseTaskExtensionWrapper implements ArtemisShowdownE
         });
     };
 
+    /**
+     * Creates and returns an extension to current exercise.
+     */
     getExtension() {
         const extension: showdown.ShowdownExtension = {
             type: 'lang',

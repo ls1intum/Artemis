@@ -12,6 +12,9 @@ export class ICodeEditorGridService {
 export class CodeEditorGridService implements ICodeEditorGridService, OnDestroy {
     private resizeSubject = new Subject<ResizeType>();
 
+    /**
+     * Completes resizing on closing.
+     */
     ngOnDestroy(): void {
         this.resizeSubject.complete();
     }

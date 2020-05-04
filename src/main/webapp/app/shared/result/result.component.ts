@@ -18,6 +18,10 @@ import { ExerciseType } from 'app/entities/exercise.model';
 import { ResultDetailComponent } from 'app/shared/result/result-detail.component';
 import { Result } from 'app/entities/result.model';
 
+/**
+ * Enumeration object representing the possible options that
+ * the status of the result's template can be in.
+ */
 enum ResultTemplateStatus {
     IS_BUILDING = 'IS_BUILDING',
     HAS_RESULT = 'HAS_RESULT',
@@ -69,6 +73,10 @@ export class ResultComponent implements OnInit, OnChanges {
         private modalService: NgbModal,
     ) {}
 
+    /**
+     * Executed on initialization. It retrieves the results of a given
+     * participation and displays the corresponding message.
+     */
     ngOnInit(): void {
         if (!this.result && this.participation && this.participation.id) {
             const exercise = getExercise(this.participation);
@@ -103,6 +111,10 @@ export class ResultComponent implements OnInit, OnChanges {
         this.evaluate();
     }
 
+    /**
+     * Executed when changes happen sets the corresponding template status to display a message.
+     * @param changes The hashtable of the occurred changes as SimpleChanges object.
+     */
     ngOnChanges(changes: SimpleChanges) {
         if (changes.participation || changes.result) {
             this.ngOnInit();
@@ -115,6 +127,9 @@ export class ResultComponent implements OnInit, OnChanges {
         }
     }
 
+    /**
+     * Sets the corresponding icon, styling and message to display results.
+     */
     evaluate() {
         this.templateStatus = this.evaluateTemplateStatus();
 
@@ -202,6 +217,9 @@ export class ResultComponent implements OnInit, OnChanges {
         return moment.isMoment(date) ? date : moment(date);
     }
 
+    /**
+     * Gets the build result string.
+     */
     buildResultString() {
         if (this.submission && this.submission.submissionExerciseType === SubmissionExerciseType.PROGRAMMING && (this.submission as ProgrammingSubmission).buildFailed) {
             return this.translate.instant('artemisApp.editor.buildFailed');
@@ -217,8 +235,10 @@ export class ResultComponent implements OnInit, OnChanges {
         return this.result!.resultString;
     }
 
+    /**
+     * Only show the 'preliminary' tooltip for programming student participation results and if the buildAndTestAfterDueDate has not passed.
+     */
     buildResultTooltip() {
-        // Only show the 'preliminary' tooltip for programming student participation results and if the buildAndTestAfterDueDate has not passed.
         if (
             this.participation &&
             isProgrammingExerciseStudentParticipation(this.participation) &&
@@ -228,6 +248,9 @@ export class ResultComponent implements OnInit, OnChanges {
         }
     }
 
+    /**
+     * Checks if there is feedback or not for a build result.
+     */
     getHasFeedback() {
         if (this.submission && this.submission.submissionExerciseType === SubmissionExerciseType.PROGRAMMING && (this.submission as ProgrammingSubmission).buildFailed) {
             return true;
@@ -241,6 +264,10 @@ export class ResultComponent implements OnInit, OnChanges {
         return this.participation && this.participation.results && this.participation.results.length > 0;
     }
 
+    /**
+     * Show details of a result.
+     * @param result Result object whose details will be displayed.
+     */
     showDetails(result: Result) {
         if (!result.participation) {
             result.participation = this.participation;
@@ -254,15 +281,21 @@ export class ResultComponent implements OnInit, OnChanges {
         }
     }
 
+    /**
+     * Checks whether a build artifact exists for a submission.
+     */
     hasBuildArtifact() {
         if (this.result && this.submission instanceof ProgrammingSubmission) {
             const submission = this.submission as ProgrammingSubmission;
             return submission.buildArtifact;
         }
-
         return false;
     }
 
+    /**
+     * Download the build results of a specific participation.
+     * @param participationId The identifier of the participation.
+     */
     downloadBuildResult(participationId: number) {
         this.participationService.downloadArtifact(participationId).subscribe((artifact) => {
             const fileURL = URL.createObjectURL(artifact);

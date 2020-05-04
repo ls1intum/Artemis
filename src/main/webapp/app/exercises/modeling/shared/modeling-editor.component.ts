@@ -29,6 +29,11 @@ export class ModelingEditorComponent implements AfterViewInit, OnDestroy, OnChan
 
     constructor(private jhiAlertService: AlertService, private renderer: Renderer2, private modalService: NgbModal, private guidedTourService: GuidedTourService) {}
 
+    /**
+     * Initializes the Apollon editor.
+     * If this is a guided tour, than calls assessModelForGuidedTour.
+     * If resizeOptions is set to true, resizes the editor according to interactions.
+     */
     ngAfterViewInit(): void {
         this.initializeApollonEditor();
         this.guidedTourService.checkModelingComponent().subscribe((key) => {
@@ -114,6 +119,10 @@ export class ModelingEditorComponent implements AfterViewInit, OnDestroy, OnChan
         this.modalService.open(content, { size: 'lg' });
     }
 
+    /**
+     * If changes are made to the the uml model, update the model and remove assessments
+     * @param {simpleChanges} changes - Changes made
+     */
     ngOnChanges(changes: SimpleChanges): void {
         if (changes.umlModel && changes.umlModel.currentValue && this.apollonEditor) {
             this.umlModel = changes.umlModel.currentValue;
@@ -123,6 +132,9 @@ export class ModelingEditorComponent implements AfterViewInit, OnDestroy, OnChan
         }
     }
 
+    /**
+     * If the apollon editor is not null, destroy it and set it to null, on component destruction
+     */
     ngOnDestroy(): void {
         if (this.apollonEditor !== null) {
             this.apollonEditor.destroy();

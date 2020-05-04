@@ -18,6 +18,10 @@ export class TextAssessmentEditorComponent {
     @Output() public assessedText = new EventEmitter<string>();
     private selectedText: string | null;
 
+    /**
+     * Handle user's selection of solution text.
+     * @param event fired on text selection of type {TextSelectEvent}
+     */
     didSelectSolutionText(event: TextSelectEvent): void {
         if (this.disabled) {
             return;
@@ -34,12 +38,18 @@ export class TextAssessmentEditorComponent {
         }
     }
 
+    /**
+     * Remove selection from text.
+     */
     deselectText(): void {
         document.getSelection()!.removeAllRanges();
         this.hostRectangle = null;
         this.selectedText = null;
     }
 
+    /**
+     * Add an assessment to a selection.
+     */
     assessSelection(): void {
         if (this.disabled || this.selectedText == null) {
             return;
