@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnDestroy, OnInit, Output, ViewEncapsulation } from '@angular/core';
+import { Component, EventEmitter, Input, Output, ViewEncapsulation } from '@angular/core';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { ShortAnswerQuestionUtil } from 'app/exercises/quiz/shared/short-answer-question-util.service';
 import { ShortAnswerSolution } from 'app/entities/quiz/short-answer-solution.model';
@@ -13,7 +13,7 @@ import { RenderedQuizQuestionMarkDownElement } from 'app/entities/quiz/quiz-ques
     styleUrls: ['./short-answer-question.component.scss', '../../../participate/quiz-participation.scss'],
     encapsulation: ViewEncapsulation.None,
 })
-export class ShortAnswerQuestionComponent implements OnInit, OnDestroy {
+export class ShortAnswerQuestionComponent {
     _question: ShortAnswerQuestion;
     _forceSampleSolution: boolean;
 
@@ -62,16 +62,13 @@ export class ShortAnswerQuestionComponent implements OnInit, OnDestroy {
 
     constructor(private artemisMarkdown: ArtemisMarkdownService, public shortAnswerQuestionUtil: ShortAnswerQuestionUtil) {}
 
-    ngOnInit() {}
-
-    ngOnDestroy() {}
-
+    /**
+     * Update html for text, hint and explanation for the question and every answer option
+     */
     watchCollection() {
-        // update html for text, hint and explanation for the question and every answer option
         const artemisMarkdown = this.artemisMarkdown;
         this.renderedQuestion = new RenderedQuizQuestionMarkDownElement();
 
-        // new way
         const textParts = this.shortAnswerQuestionUtil.divideQuestionTextIntoTextParts(this.question.text!);
         this.textParts = this.shortAnswerQuestionUtil.transformTextPartsIntoHTML(textParts, this.artemisMarkdown);
 
@@ -123,15 +120,27 @@ export class ShortAnswerQuestionComponent implements OnInit, OnDestroy {
         this.showingSampleSolution = false;
     }
 
+    /**
+     * Returns the submitted text for a short answer for the given spot tag
+     * @param spotTag Spot tag for which to get the submitted text
+     */
     getSubmittedTextForSpot(spotTag: string): ShortAnswerSubmittedText {
         return this.submittedTexts.filter((submittedText) => submittedText.spot.spotNr === this.shortAnswerQuestionUtil.getSpotNr(spotTag))[0];
     }
 
+    /**
+     * Returns the sample solution for a short answer for the given spot tag
+     * @param spotTag Spot tag for which to get the sample solution
+     */
     getSampleSolutionForSpot(spotTag: string): ShortAnswerSolution {
         const index = this.question.spots.findIndex((spot) => spot.spotNr === this.shortAnswerQuestionUtil.getSpotNr(spotTag));
         return this.sampleSolutions[index];
     }
 
+    /**
+     * Returns the background color for the input field of the given spot tag
+     * @param spotTag Spot tag for which to return the input field's background color
+     */
     getBackgroundColourForInputField(spotTag: string): string {
         if (this.getSubmittedTextForSpot(spotTag) === undefined) {
             return 'red';
@@ -139,6 +148,10 @@ export class ShortAnswerQuestionComponent implements OnInit, OnDestroy {
         return this.getSubmittedTextForSpot(spotTag).isCorrect ? (this.isSubmittedTextCompletelyCorrect(spotTag) ? 'lightgreen' : 'yellow') : 'red';
     }
 
+    /**
+     * Returns whether the submitted text for the answer regarding the given spot tag is completely correct
+     * @param spotTag Spot tag for which to evaluate
+     */
     isSubmittedTextCompletelyCorrect(spotTag: string): boolean {
         let isTextCorrect = false;
         const solutionsForSpot = this.shortAnswerQuestionUtil.getAllSolutionsForSpot(

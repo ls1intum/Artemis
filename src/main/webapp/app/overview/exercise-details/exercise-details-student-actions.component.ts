@@ -51,6 +51,9 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
         private router: Router,
     ) {}
 
+    /**
+     * load password if user login starts with 'edx_' or 'u4i_'
+     */
     ngOnInit(): void {
         this.accountService.identity().then((user) => {
             this.user = user!;
@@ -62,6 +65,11 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
         });
     }
 
+    /**
+     * get repositoryUrl for participation
+     *
+     * @param {Participation} participation
+     */
     repositoryUrl(participation: Participation) {
         const programmingParticipation = participation as ProgrammingExerciseStudentParticipation;
         if (programmingParticipation.team) {
@@ -80,6 +88,10 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
         return participation.repositoryUrl.replace(/^(\w*:\/\/)(.*)$/, `$1${this.user.login}@$2`);
     }
 
+    /**
+     * check if practiceMode is available
+     * @return {boolean}
+     */
     isPracticeModeAvailable(): boolean {
         const quizExercise = this.exercise as QuizExercise;
         return quizExercise.isPlannedToStart && quizExercise.isOpenForPractice && moment(quizExercise.dueDate!).isBefore(moment());
@@ -92,14 +104,24 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
         return isStartExerciseAvailable(this.exercise as ProgrammingExercise);
     }
 
+    /**
+     * check if onlineEditor is allowed
+     * @return {boolean}
+     */
     isOnlineEditorAllowed(): boolean {
         return (this.exercise as ProgrammingExercise).allowOnlineEditor;
     }
 
+    /**
+     * console log if copy fails
+     */
     onCopyFailure() {
         console.log('copy fail!');
     }
 
+    /**
+     * set wasCopied for 3 seconds on success
+     */
     onCopySuccess() {
         this.wasCopied = true;
         setTimeout(() => {
@@ -107,6 +129,9 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
         }, 3000);
     }
 
+    /**
+     * start the exercise
+     */
     startExercise() {
         if (this.exercise.type === ExerciseType.QUIZ) {
             // Start the quiz
@@ -134,10 +159,18 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
             );
     }
 
+    /**
+     * build the sourceTreeUrl from the cloneUrl
+     * @param {string} cloneUrl
+     * @return sourceTreeUrl
+     */
     buildSourceTreeUrl(cloneUrl: string): string {
         return this.sourceTreeService.buildSourceTreeUrl(cloneUrl);
     }
 
+    /**
+     * resume the programming exercise
+     */
     resumeProgrammingExercise() {
         this.exercise.loading = true;
         this.courseExerciseService
@@ -178,10 +211,16 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
         return participation ? participation.team?.id : this.exercise.studentAssignedTeamId;
     }
 
+    /**
+     * start practice
+     */
     startPractice() {
         return this.router.navigate(['/courses', this.exercise.course?.id, 'quiz-exercises', this.exercise.id, 'practice']);
     }
 
+    /**
+     * get the repositoryPassword
+     */
     getRepositoryPassword() {
         this.sourceTreeService.getRepositoryPassword().subscribe((res) => {
             const password = res['password'];

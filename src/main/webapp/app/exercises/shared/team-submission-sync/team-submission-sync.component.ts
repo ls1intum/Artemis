@@ -31,6 +31,9 @@ export class TeamSubmissionSyncComponent implements OnInit {
         this.accountService.identity().then((user: User) => (this.currentUser = user));
     }
 
+    /**
+     * Life cycle hook to indicate component creation is done
+     */
     ngOnInit(): void {
         this.websocketTopic = this.buildWebsocketTopic('');
         this.teamSubmissionWebsocketService.subscribe(this.websocketTopic);

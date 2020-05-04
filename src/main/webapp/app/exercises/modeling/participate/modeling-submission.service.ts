@@ -16,6 +16,11 @@ export class ModelingSubmissionService {
 
     constructor(private http: HttpClient) {}
 
+    /**
+     * Create a new modeling submission
+     * @param {ModelingSubmission} modelingSubmission - New submission to be created
+     * @param {number} exerciseId - Id of the exercise, for which the submission is made
+     */
     create(modelingSubmission: ModelingSubmission, exerciseId: number): Observable<EntityResponseType> {
         const copy = this.convert(modelingSubmission);
         return this.http
@@ -25,6 +30,11 @@ export class ModelingSubmissionService {
             .pipe(map((res: EntityResponseType) => this.convertResponse(res)));
     }
 
+    /**
+     * Update an existing modeling submission
+     * @param {ModelingSubmission} modelingSubmission - Updated submission
+     * @param {number} exerciseId - Id of the exercise, for which the submission is made
+     */
     update(modelingSubmission: ModelingSubmission, exerciseId: number): Observable<EntityResponseType> {
         const copy = this.convert(modelingSubmission);
         return this.http
@@ -35,6 +45,11 @@ export class ModelingSubmissionService {
             .pipe(map((res: EntityResponseType) => this.convertResponse(res)));
     }
 
+    /**
+     * Get all submissions for an exercise
+     * @param {number} exerciseId - Id of the exercise
+     * @param {any?} req - Request option
+     */
     getModelingSubmissionsForExercise(exerciseId: number, req?: any): Observable<HttpResponse<ModelingSubmission[]>> {
         const options = createRequestOption(req);
         return this.http
@@ -45,6 +60,11 @@ export class ModelingSubmissionService {
             .pipe(map((res: HttpResponse<ModelingSubmission[]>) => this.convertArrayResponse(res)));
     }
 
+    /**
+     * Get an unassessed modeling exercise for an exercise
+     * @param {number} exerciseId - Id of the exercise
+     * @param {boolean?} lock - True if assessment is locked
+     */
     getModelingSubmissionForExerciseWithoutAssessment(exerciseId: number, lock?: boolean): Observable<ModelingSubmission> {
         let url = `api/exercises/${exerciseId}/modeling-submission-without-assessment`;
         if (lock) {
@@ -53,10 +73,18 @@ export class ModelingSubmissionService {
         return this.http.get<ModelingSubmission>(url);
     }
 
+    /**
+     * Get a submission with given Id
+     * @param {number} submissionId - Id of the submission
+     */
     getSubmission(submissionId: number): Observable<ModelingSubmission> {
         return this.http.get<ModelingSubmission>(`api/modeling-submissions/${submissionId}`);
     }
 
+    /**
+     * Get latest submission for a given participation
+     * @param {number} participationId - Id of the participation
+     */
     getLatestSubmissionForModelingEditor(participationId: number): Observable<ModelingSubmission> {
         return this.http.get<ModelingSubmission>(`api/participations/${participationId}/latest-modeling-submission`, { responseType: 'json' });
     }

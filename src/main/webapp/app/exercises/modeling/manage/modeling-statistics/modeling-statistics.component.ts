@@ -19,6 +19,9 @@ export class ModelingStatisticsComponent implements OnInit, OnDestroy {
 
     constructor(private route: ActivatedRoute, private jhiAlertService: AlertService, private router: Router, private modelingExerciseService: ModelingExerciseService) {}
 
+    /**
+     * Displays the statistics for this modeling exercise on initialization
+     */
     ngOnInit() {
         this.paramSub = this.route.params.subscribe((params) => {
             this.modelingExerciseService.getStatistics(params['exerciseId']).subscribe((res: HttpResponse<ModelingStatistic>) => {
@@ -33,6 +36,9 @@ export class ModelingStatisticsComponent implements OnInit, OnDestroy {
         });
     }
 
+    /**
+     * Unsubscribe the parameter subscription on component destruction
+     */
     ngOnDestroy() {
         this.paramSub.unsubscribe();
     }

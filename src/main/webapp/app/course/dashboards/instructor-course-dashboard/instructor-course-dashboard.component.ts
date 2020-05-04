@@ -33,11 +33,18 @@ export class InstructorCourseDashboardComponent implements OnInit {
 
     constructor(private courseService: CourseManagementService, private resultService: ResultService, private route: ActivatedRoute, private jhiAlertService: AlertService) {}
 
+    /**
+     * On init fetch the course from the server.
+     */
     ngOnInit(): void {
         this.isLoading = true;
         this.loadCourse(Number(this.route.snapshot.paramMap.get('courseId')));
     }
 
+    /**
+     * Load the course and statistics relevant for instructors for a course.
+     * @param courseId ID of the course to load.
+     */
     private loadCourse(courseId: number) {
         // Load the course.
         const loadCourseObservable = this.courseService.findWithExercisesAndParticipations(courseId).pipe(
@@ -68,6 +75,11 @@ export class InstructorCourseDashboardComponent implements OnInit {
         });
     }
 
+    /**
+     * Calculate percentage for given numerator an denominator.
+     * @param numerator
+     * @param denominator
+     */
     calculatePercentage(numerator: number, denominator: number): number {
         if (denominator === 0) {
             return 0;
@@ -76,6 +88,12 @@ export class InstructorCourseDashboardComponent implements OnInit {
         return Math.round((numerator / denominator) * 100);
     }
 
+    /**
+     * Return class of assessment progress.
+     * @param numberOfAssessments Number of assessed submissions.
+     * @param length Total number of participations.
+     * @return {string} 'bg-danger', 'bg-warning' or 'bg-success' depending on percentage of assessed submissions.
+     */
     calculateClass(numberOfAssessments: number, length: number): string {
         const percentage = this.calculatePercentage(numberOfAssessments, length);
 
@@ -88,8 +106,15 @@ export class InstructorCourseDashboardComponent implements OnInit {
         return 'bg-success';
     }
 
+    /**
+     * Empty callback function.
+     */
     callback() {}
 
+    /**
+     * Pass an error to the jhiAlertService.
+     * @param error
+     */
     private onError(error: string) {
         this.jhiAlertService.error(error, null, undefined);
     }

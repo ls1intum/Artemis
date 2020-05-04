@@ -42,6 +42,9 @@ export class ExerciseHintComponent implements OnInit, OnDestroy {
         });
     }
 
+    /**
+     * Unsubscribe from subscriptions
+     */
     ngOnDestroy() {
         if (this.paramSub) {
             this.paramSub.unsubscribe();
@@ -68,10 +71,18 @@ export class ExerciseHintComponent implements OnInit, OnDestroy {
             );
     }
 
+    /**
+     * Returns the track id of an exercise hint
+     * @param index Index of the item
+     * @param item Item for which to get the id
+     */
     trackId(index: number, item: ExerciseHint) {
         return item.id;
     }
 
+    /**
+     * (Re-)subscribe to the exercise hint list modification subscription
+     */
     registerChangeInExerciseHints() {
         if (this.eventSubscriber) {
             this.eventSubscriber.unsubscribe();

@@ -71,6 +71,9 @@ export class TeamStudentsOnlineListComponent implements OnInit, OnDestroy {
         }
     }
 
+    /**
+     * Life cycle hook to indicate component destruction is done
+     */
     ngOnDestroy(): void {
         this.jhiWebsocketService.unsubscribe(this.websocketTopic);
     }

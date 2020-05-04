@@ -15,6 +15,9 @@ export class ProgrammingExerciseLifecycleComponent implements OnInit {
 
     constructor(private translator: TranslateService) {}
 
+    /**
+     * If the programming exercise does not have an id, set the assessment Type to AUTOMATIC
+     */
     ngOnInit(): void {
         if (!this.exercise.id) {
             this.exercise.assessmentType = AssessmentType.AUTOMATIC;
@@ -42,6 +45,10 @@ export class ProgrammingExerciseLifecycleComponent implements OnInit {
         this.exercise.releaseDate = newReleaseDate;
     }
 
+    /**
+     * Updates the due Date of the programming exercise
+     * @param dueDate the new dueDate
+     */
     private updateDueDate(dueDate: moment.Moment) {
         alert(this.translator.instant('artemisApp.programmingExercise.timeline.alertNewDueDate'));
         this.exercise.dueDate = dueDate;

@@ -38,6 +38,10 @@ export class UpdatingResultComponent implements OnChanges, OnDestroy {
 
     constructor(private participationWebsocketService: ParticipationWebsocketService, private submissionService: ProgrammingSubmissionService) {}
 
+    /**
+     * If there are changes, reorders the participation results and subscribes for new participation results.
+     * @param changes The hashtable of occurred changes represented as SimpleChanges object.
+     */
     ngOnChanges(changes: SimpleChanges) {
         if (hasParticipationChanged(changes)) {
             // Sort participation results by completionDate desc.
@@ -57,6 +61,9 @@ export class UpdatingResultComponent implements OnChanges, OnDestroy {
         }
     }
 
+    /**
+     * On component close, unsubscribe from all previous subscriptions.
+     */
     ngOnDestroy() {
         if (this.resultSubscription) {
             this.participationWebsocketService.unsubscribeForLatestResultOfParticipation(this.participation.id, this.exercise);
@@ -68,6 +75,9 @@ export class UpdatingResultComponent implements OnChanges, OnDestroy {
         }
     }
 
+    /**
+     * Subscribes to new results for the current participation.
+     */
     subscribeForNewResults() {
         if (this.resultSubscription) {
             this.resultSubscription.unsubscribe();
