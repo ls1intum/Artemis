@@ -28,6 +28,9 @@ export class DeleteDialogComponent implements OnInit, OnDestroy {
 
     constructor(private activeModal: NgbActiveModal, private jhiAlertService: AlertService) {}
 
+    /**
+     * Life cycle hook called by Angular to indicate that Angular is done creating the component
+     */
     ngOnInit(): void {
         this.dialogErrorSubscription = this.dialogError.subscribe((errorMessage: string) => {
             if (errorMessage === '') {
@@ -42,6 +45,9 @@ export class DeleteDialogComponent implements OnInit, OnDestroy {
         }
     }
 
+    /**
+     * Life cycle hook called by Angular for cleanup just before Angular destroys the component
+     */
     ngOnDestroy(): void {
         if (this.dialogErrorSubscription) {
             this.dialogErrorSubscription.unsubscribe();

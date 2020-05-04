@@ -33,6 +33,9 @@ export class TeamExerciseSearchComponent implements OnInit {
 
     constructor(private courseService: CourseManagementService) {}
 
+    /**
+     * Life cycle hook to indicate component creation is done
+     */
     ngOnInit() {}
 
     onAutocompleteSelect = (exercise: Exercise) => {
@@ -49,6 +52,11 @@ export class TeamExerciseSearchComponent implements OnInit {
         return title + (releaseDate ? ` (${releaseDate.format('DD.MM.YYYY')})` : '');
     };
 
+    /**
+     * Check if given searchTerm is included in given exercise
+     * @param {string} searchTerm - Term to search for
+     * @param {Exercise} exercise - Exercise to search through
+     */
     searchMatchesExercise(searchTerm: string, exercise: Exercise) {
         return exercise.title.toLowerCase().includes(searchTerm.toLowerCase());
     }
@@ -84,6 +92,9 @@ export class TeamExerciseSearchComponent implements OnInit {
         );
     };
 
+    /**
+     * Load options of team exercise
+     */
     loadExerciseOptions() {
         return this.courseService
             .findWithExercises(this.course.id)

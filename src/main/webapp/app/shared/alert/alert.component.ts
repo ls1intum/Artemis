@@ -19,10 +19,18 @@ export class AlertComponent implements OnInit, OnDestroy {
 
     constructor(private alertService: AlertService) {}
 
+    /**
+     * get alerts on init
+     */
     ngOnInit(): void {
         this.alerts = this.alertService.get();
     }
 
+    /**
+     * set classes for alert
+     * @param {JhiAlert} alert
+     * @return {{ [key: string]: boolean }}
+     */
     setClasses(alert: JhiAlert): { [key: string]: boolean } {
         const classes = { 'jhi-toast': Boolean(alert.toast) };
         if (alert.position) {
@@ -31,6 +39,9 @@ export class AlertComponent implements OnInit, OnDestroy {
         return classes;
     }
 
+    /**
+     * call clear() for alertService on destroy
+     */
     ngOnDestroy(): void {
         this.alertService.clear();
     }

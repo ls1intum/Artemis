@@ -171,8 +171,8 @@ export class ShortAnswerQuestionUtil {
      * Get all solutions that are mapped to the given spot
      *
      * @param mappings {Array} the existing mappings to consider
-     * @param solution {object} the solutions that the returned spots have to be mapped to
-     * @return {Array} the resulting spots
+     * @param spot {object} the spot for which to get the solutions
+     * @return {Array} the resulting solutions
      */
     getAllSolutionsForSpot(mappings: ShortAnswerMapping[], spot: ShortAnswerSpot): ShortAnswerSolution[] {
         return mappings
@@ -417,6 +417,13 @@ export class ShortAnswerQuestionUtil {
      */
     divideQuestionTextIntoTextParts(questionText: string): string[][] {
         const spotRegExpo = /\[-spot\s*[0-9]+\]/g;
+
+        /**
+         * Interleaves elements of two lists xs and ys recursively
+         * @param x First element
+         * @param xs Rest of the list
+         * @param ys Other list
+         */
         function interleave([x, ...xs]: string[], ys: string[] = []): string[] {
             return x === undefined
                 ? ys // base: no x

@@ -10,6 +10,11 @@ export type EntityResponseType = HttpResponse<ExampleSubmission>;
 export class ExampleSubmissionService {
     constructor(private http: HttpClient) {}
 
+    /**
+     * Creates an example submission
+     * @param exampleSubmission Example submission to create
+     * @param exerciseId Id of the exercise to which it belongs
+     */
     create(exampleSubmission: ExampleSubmission, exerciseId: number): Observable<EntityResponseType> {
         const copy = this.convert(exampleSubmission);
         return this.http
@@ -19,6 +24,11 @@ export class ExampleSubmissionService {
             .map((res: EntityResponseType) => this.convertResponse(res));
     }
 
+    /**
+     * Updates an example submission
+     * @param exampleSubmission Example submission to update
+     * @param exerciseId Id of the exercise to which it belongs
+     */
     update(exampleSubmission: ExampleSubmission, exerciseId: number): Observable<EntityResponseType> {
         const copy = this.convert(exampleSubmission);
         return this.http
@@ -28,6 +38,10 @@ export class ExampleSubmissionService {
             .map((res: EntityResponseType) => this.convertResponse(res));
     }
 
+    /**
+     * Gets an example submission
+     * @param exampleSubmissionId Id of example submission to get
+     */
     get(exampleSubmissionId: number): Observable<EntityResponseType> {
         return this.http
             .get<ExampleSubmission>(`api/example-submissions/${exampleSubmissionId}`, {
@@ -36,6 +50,10 @@ export class ExampleSubmissionService {
             .map((res: HttpResponse<ExampleSubmission>) => this.convertResponse(res));
     }
 
+    /**
+     * Deletes an example submission
+     * @param exampleSubmissionId Id of example submission to delete
+     */
     delete(exampleSubmissionId: number): Observable<HttpResponse<void>> {
         return this.http.delete<void>(`api/example-submissions/${exampleSubmissionId}`, { observe: 'response' });
     }

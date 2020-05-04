@@ -10,6 +10,12 @@ export class FileService {
 
     constructor(private http: HttpClient) {}
 
+    /**
+     * Fetches the template file for the given programming language
+     * @param {string} filename
+     * @param {ProgrammingLanguage} language
+     * @returns json test file
+     */
     getTemplateFile(filename: string, language?: ProgrammingLanguage) {
         const languagePrefix = !!language ? `${language}/` : '';
         return this.http.get<string>(`${this.resourceUrl}/templates/${languagePrefix}${filename}`, { responseType: 'text' as 'json' });

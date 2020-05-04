@@ -38,10 +38,9 @@ export class CodeEditorInstructionsComponent implements AfterViewInit, OnDestroy
     constructor(private $window: WindowRef, public artemisMarkdown: ArtemisMarkdownService, private codeEditorGridService: CodeEditorGridService) {}
 
     /**
-     * @function ngAfterViewInit
-     * @desc After the view was initialized, we create an interact.js resizable object,
-     *       designate the edges which can be used to resize the target element and set min and max values.
-     *       The 'resizemove' callback function processes the event values and sets new width and height values for the element.
+     * After the view was initialized, we create an interact.js resizable object,
+     * designate the edges which can be used to resize the target element and set min and max values.
+     * The 'resizemove' callback function processes the event values and sets new width and height values for the element.
      */
     ngAfterViewInit(): void {
         this.initialInstructionsWidth = this.$window.nativeWindow.screen.width - 300 / 2;
@@ -55,6 +54,9 @@ export class CodeEditorInstructionsComponent implements AfterViewInit, OnDestroy
         });
     }
 
+    /**
+     * If there is a subscription do unsubscribe.
+     */
     ngOnDestroy(): void {
         if (this.resizeSubscription) {
             this.resizeSubscription.unsubscribe();
@@ -71,15 +73,16 @@ export class CodeEditorInstructionsComponent implements AfterViewInit, OnDestroy
     }
 
     /**
-     * @function toggleEditorCollapse
-     * @desc Calls the parent (editorComponent) toggleCollapse method
-     * @param $event
-     * @param {boolean} horizontal
+     * Calls the parent (editorComponent) toggleCollapse method
+     * @param $event - any event
      */
     toggleEditorCollapse($event: any) {
         this.onToggleCollapse.emit({ event: $event, horizontal: true, interactable: this.interactResizable, resizableMinWidth: this.minInstructionsWidth });
     }
 
+    /**
+     * Sets noInstructionsAvailable to true, if no instructions are available.
+     */
     onNoInstructionsAvailable() {
         this.noInstructionsAvailable = true;
     }
