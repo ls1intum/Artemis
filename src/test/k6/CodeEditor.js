@@ -1,14 +1,7 @@
 import { login } from './requests/requests.js';
 import { group, sleep } from 'k6';
 import { deleteCourse, newCourse } from './requests/course.js';
-import {
-    startExercise,
-    createExercise,
-    deleteExercise,
-    ParticipationSimulation,
-    simulateSubmission,
-    TestResult
-} from './requests/programmingExercise.js';
+import { startExercise, createExercise, deleteExercise, ParticipationSimulation, simulateSubmission, TestResult } from './requests/programmingExercise.js';
 import { buildErrorContent } from './resource/constants.js';
 
 // Version: 1.1
@@ -19,7 +12,7 @@ export let options = {
     maxRedirects: 0,
     iterations: __ENV.ITERATIONS,
     vus: __ENV.ITERATIONS,
-    rps: 5
+    rps: 5,
 };
 
 const adminUsername = __ENV.ADMIN_USERNAME;
@@ -44,14 +37,14 @@ export function setup() {
     return { exerciseId: exerciseId, courseId: courseId };
 }
 
-export default function(data) {
+export default function (data) {
     const websocketConnectionTime = parseFloat(__ENV.TIMEOUT_PARTICIPATION); // Time in seconds the websocket is kept open, if set to 0 no websocket connection is estahblished
 
     // Delay so that not all users start at the same time, batches of 3 users per second
     const delay = Math.floor(__VU / 3);
     sleep(delay);
 
-    group('Artemis Programming Exercise Participation Loadtest', function() {
+    group('Artemis Programming Exercise Participation Loadtest', function () {
         // The user is randomly selected
         const userId = __VU; // Math.floor((Math.random() * maxTestUser)) + 1;
         const currentUsername = baseUsername.replace('USERID', userId);
@@ -71,7 +64,7 @@ export default function(data) {
         }
     });
 
-  return data;
+    return data;
 }
 
 export function teardown(data) {

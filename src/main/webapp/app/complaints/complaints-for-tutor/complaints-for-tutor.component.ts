@@ -12,6 +12,7 @@ import { Complaint, ComplaintType } from 'app/entities/complaint.model';
     providers: [],
 })
 export class ComplaintsForTutorComponent implements OnInit {
+    @Input() zeroIndent = true;
     @Input() complaint: Complaint;
     @Input() isAllowedToRespond: boolean; // indicates if the tutor is allowed to respond (i.e. that he is not the assessor)
     // Indicates that the assessment should be updated after a complaint. Includes the corresponding complaint
@@ -56,6 +57,7 @@ export class ComplaintsForTutorComponent implements OnInit {
             this.complaintResponseService.create(this.complaintResponse).subscribe(
                 (response) => {
                     this.handled = true;
+                    // eslint-disable-next-line chai-friendly/no-unused-expressions
                     this.complaint.complaintType === ComplaintType.MORE_FEEDBACK
                         ? this.jhiAlertService.success('artemisApp.moreFeedbackResponse.created')
                         : this.jhiAlertService.success('artemisApp.complaintResponse.created');

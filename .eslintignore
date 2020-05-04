@@ -16,11 +16,6 @@ src/main/generated/
 src/main/java/
 src/main/jib/
 src/main/resources/
-src/test/
-src/test/javascript/e2e/
-src/test/javascript/protractor.conf.js
-src/test/javascript/jest.conf.js
-src/test/k6/
 uploads/
 webpack/
 target/

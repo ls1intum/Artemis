@@ -1,9 +1,12 @@
 package de.tum.in.www1.artemis.repository;
 
+import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
+
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -18,7 +21,8 @@ import de.tum.in.www1.artemis.domain.Exercise;
 @Repository
 public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
 
-    List<Exercise> findByCourseId(@Param("courseId") Long courseId);
+    @Query("select e from Exercise e left join fetch e.categories where e.course.id = :#{#courseId}")
+    List<Exercise> findByCourseIdWithCategories(@Param("courseId") Long courseId);
 
     /**
      * Select Exercise for Course ID WHERE there does exist an LtiOutcomeUrl for the current user (-> user has started exercise once using LTI)
@@ -35,8 +39,8 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
     @Query("select distinct exercise from Exercise exercise left join fetch exercise.studentParticipations where exercise.id = :#{#exerciseId}")
     Optional<Exercise> findByIdWithEagerParticipations(@Param("exerciseId") Long exerciseId);
 
-    @Query("select distinct exercise from Exercise exercise left join fetch exercise.categories where exercise.id = :#{#exerciseId}")
-    Optional<Exercise> findByIdWithEagerCategories(@Param("exerciseId") Long exerciseId);
+    @EntityGraph(type = LOAD, attributePaths = { "categories", "teamAssignmentConfig" })
+    Optional<Exercise> findWithEagerCategoriesAndTeamAssignmentConfigById(Long exerciseId);
 
     @Query("select distinct exercise from Exercise exercise left join fetch exercise.exampleSubmissions where exercise.id = :#{#exerciseId}")
     Optional<Exercise> findByIdWithEagerExampleSubmissions(@Param("exerciseId") Long exerciseId);

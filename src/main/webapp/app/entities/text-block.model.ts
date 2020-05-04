@@ -17,7 +17,8 @@ export class TextBlock {
         this.id = sha1Hex(idString);
     }
 
-    setTextFromSubmission(): void {
+    setTextFromSubmission(submission?: TextSubmission): void {
+        this.submission = submission || this.submission;
         if (this.submission) {
             this.text = this.submission.text.substring(this.startIndex, this.endIndex);
         }

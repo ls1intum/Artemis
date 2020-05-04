@@ -43,17 +43,12 @@
                             <div *ngFor="let assessment of referencedFeedback; let i = index" class="col-12 col-lg-6 col-xl-6">
                                 <jhi-assessment-detail
                                     [(assessment)]="referencedFeedback[i]"
-                                    (assessmentChange)="updateAssessment(assessment)"
+                                    (assessmentChange)="updateAssessment()"
                                     (deleteAssessment)="deleteAssessment($event)"
                                 ></jhi-assessment-detail>
                             </div>
                         </div>
-                        <div class="row mt-2">
-                            <h4 class="col-12" jhiTranslate="artemisApp.assessment.generalFeedback">General Feedback</h4>
-                            <div class="col-12 col-lg-8 col-xl-6">
-                                <textarea class="form-control" rows="2" maxlength="5000" [(ngModel)]="generalFeedback.detailText" (ngModelChange)="validateAssessment()"></textarea>
-                            </div>
-                        </div>
+                        <jhi-assessment-general-feedback [(feedback)]="generalFeedback" (feedbackChange)="validateAssessment()"></jhi-assessment-general-feedback>
                     </ng-container>
                 </div>
             </div>
@@ -61,6 +56,7 @@
             <jhi-resizable-instructions
                 class="resizable-submission card resizable-instructions"
                 id="instructions"
+                [criteria]="this.exercise.gradingCriteria"
                 [problemStatement]="this.exercise.problemStatement"
                 [gradingInstructions]="this.exercise.gradingInstructions"
                 [sampleSolution]="this.exercise.sampleSolution"

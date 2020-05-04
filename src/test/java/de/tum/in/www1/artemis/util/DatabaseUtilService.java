@@ -263,10 +263,18 @@ public class DatabaseUtilService {
         return users;
     }
 
-    public List<Team> addTeamsForExercise(Exercise exercise, int numberOfTeams, User owner) {
-        List<Team> teams = ModelFactory.generateTeamsForExercise(exercise, numberOfTeams, owner);
+    public List<Team> addTeamsForExercise(Exercise exercise, String shortNamePrefix, String loginPrefix, int numberOfTeams, User owner) {
+        List<Team> teams = ModelFactory.generateTeamsForExercise(exercise, shortNamePrefix, loginPrefix, numberOfTeams, owner);
         userRepo.saveAll(teams.stream().map(Team::getStudents).flatMap(Collection::stream).collect(Collectors.toList()));
         return teamRepo.saveAll(teams);
+    }
+
+    public List<Team> addTeamsForExercise(Exercise exercise, String shortNamePrefix, int numberOfTeams, User owner) {
+        return addTeamsForExercise(exercise, shortNamePrefix, "student", numberOfTeams, owner);
+    }
+
+    public List<Team> addTeamsForExercise(Exercise exercise, int numberOfTeams, User owner) {
+        return addTeamsForExercise(exercise, "team", numberOfTeams, owner);
     }
 
     public Team addTeamForExercise(Exercise exercise, User owner) {
@@ -627,7 +635,7 @@ public class DatabaseUtilService {
         course.addExercises(textExercise);
         courseRepo.save(course);
         exerciseRepo.save(textExercise);
-        List<Course> courseRepoContent = courseRepo.findAllActiveWithEagerExercisesAndLectures();
+        List<Course> courseRepoContent = courseRepo.findAllActiveWithEagerExercisesAndLectures(ZonedDateTime.now());
         List<Exercise> exerciseRepoContent = exerciseRepo.findAll();
         assertThat(exerciseRepoContent.size()).as("one exercise got stored").isEqualTo(1);
         assertThat(courseRepoContent.size()).as("a course got stored").isEqualTo(1);
@@ -643,7 +651,7 @@ public class DatabaseUtilService {
         courseRepo.save(course);
         exerciseRepo.save(modelingExercise);
         exerciseRepo.save(textExercise);
-        List<Course> courseRepoContent = courseRepo.findAllActiveWithEagerExercisesAndLectures();
+        List<Course> courseRepoContent = courseRepo.findAllActiveWithEagerExercisesAndLectures(ZonedDateTime.now());
         List<Exercise> exerciseRepoContent = exerciseRepo.findAll();
         assertThat(exerciseRepoContent.size()).as("two exercises got stored").isEqualTo(2);
         assertThat(courseRepoContent.size()).as("a course got stored").isEqualTo(1);
@@ -668,7 +676,7 @@ public class DatabaseUtilService {
         exerciseRepo.save(objectExercise);
         exerciseRepo.save(useCaseExercise);
         exerciseRepo.save(afterDueDateExercise);
-        List<Course> courseRepoContent = courseRepo.findAllActiveWithEagerExercisesAndLectures();
+        List<Course> courseRepoContent = courseRepo.findAllActiveWithEagerExercisesAndLectures(ZonedDateTime.now());
         List<Exercise> exerciseRepoContent = exerciseRepo.findAll();
         assertThat(exerciseRepoContent.size()).as("four exercises got stored").isEqualTo(5);
         assertThat(courseRepoContent.size()).as("a course got stored").isEqualTo(1);
@@ -776,7 +784,7 @@ public class DatabaseUtilService {
         course.addExercises(afterDueDateFileUploadExercise);
         course.addExercises(afterAssessmentDateFileUploadExercise);
         courseRepo.save(course);
-        List<Course> courseRepoContent = courseRepo.findAllActiveWithEagerExercisesAndLectures();
+        List<Course> courseRepoContent = courseRepo.findAllActiveWithEagerExercisesAndLectures(ZonedDateTime.now());
         assertThat(courseRepoContent.size()).as("a course got stored").isEqualTo(1);
 
         var fileUploadExercises = new ArrayList<FileUploadExercise>();
@@ -791,7 +799,7 @@ public class DatabaseUtilService {
         exerciseRepo.save(fileUploadExercises.get(0));
         exerciseRepo.save(fileUploadExercises.get(1));
         exerciseRepo.save(fileUploadExercises.get(2));
-        List<Course> courseRepoContent = courseRepo.findAllActiveWithEagerExercisesAndLectures();
+        List<Course> courseRepoContent = courseRepo.findAllActiveWithEagerExercisesAndLectures(ZonedDateTime.now());
         List<Exercise> exerciseRepoContent = exerciseRepo.findAll();
         assertThat(exerciseRepoContent.size()).as("one exercise got stored").isEqualTo(3);
         assertThat(courseRepoContent.size()).as("a course got stored").isEqualTo(1);
@@ -1199,9 +1207,9 @@ public class DatabaseUtilService {
     public DragAndDropQuestion createDragAndDropQuestion() {
         DragAndDropQuestion dnd = (DragAndDropQuestion) new DragAndDropQuestion().title("DnD").score(1).text("Q2");
         dnd.setScoringType(ScoringType.PROPORTIONAL_WITH_PENALTY);
-        var dropLocation1 = new DropLocation().posX(10).posY(10).height(10).width(10);
+        var dropLocation1 = new DropLocation().posX(10d).posY(10d).height(10d).width(10d);
         dropLocation1.setTempID(generateTempId());
-        var dropLocation2 = new DropLocation().posX(20).posY(20).height(10).width(10);
+        var dropLocation2 = new DropLocation().posX(20d).posY(20d).height(10d).width(10d);
         dropLocation2.setTempID(generateTempId());
         dnd.getDropLocations().add(dropLocation1);
         dnd.getDropLocations().add(dropLocation2);

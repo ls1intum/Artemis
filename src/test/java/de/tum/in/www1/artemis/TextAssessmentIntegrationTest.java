@@ -26,6 +26,7 @@ import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.RequestUtilService;
 import de.tum.in.www1.artemis.util.TextExerciseUtilService;
+import de.tum.in.www1.artemis.web.rest.dto.TextAssessmentDTO;
 
 public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -150,8 +151,11 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
         TextSubmission submissionWithoutAssessment = request.get("/api/exercises/" + textExercise.getId() + "/text-submission-without-assessment", HttpStatus.OK,
                 TextSubmission.class, params);
 
+        final TextAssessmentDTO textAssessmentDTO = new TextAssessmentDTO();
+        textAssessmentDTO.setFeedbacks(new ArrayList<>());
+
         Result result = request.putWithResponseBody("/api/text-assessments/exercise/" + textExercise.getId() + "/result/" + submissionWithoutAssessment.getResult().getId(),
-                new ArrayList<String>(), Result.class, HttpStatus.OK);
+                textAssessmentDTO, Result.class, HttpStatus.OK);
 
         assertThat(result).as("saved result found").isNotNull();
         assertThat(((StudentParticipation) result.getParticipation()).getStudent()).as("student of participation is hidden").isEmpty();
@@ -169,8 +173,11 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
 
         TextSubmission submissionWithoutAssessment = request.get("/api/exercises/" + textExercise.getId() + "/text-submission-without-assessment", HttpStatus.OK,
                 TextSubmission.class, params);
+
+        final TextAssessmentDTO textAssessmentDTO = new TextAssessmentDTO();
+        textAssessmentDTO.setFeedbacks(new ArrayList<>());
         Result result = request.putWithResponseBody(
-                "/api/text-assessments/exercise/" + textExercise.getId() + "/result/" + submissionWithoutAssessment.getResult().getId() + "/submit", new ArrayList<String>(),
+                "/api/text-assessments/exercise/" + textExercise.getId() + "/result/" + submissionWithoutAssessment.getResult().getId() + "/submit", textAssessmentDTO,
                 Result.class, HttpStatus.OK);
 
         assertThat(result).as("saved result found").isNotNull();
@@ -239,6 +246,22 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
         assertThat(participation).as("participation found").isNotNull();
         assertThat(participation.getResults().iterator().next()).as("result found").isNotNull();
         assertThat(participation.getResults().iterator().next().getAssessor()).as("assessor of participation is hidden").isNull();
+    }
+
+    @Test
+    @WithMockUser(value = "student1", roles = "USER")
+    public void getDataForTextEditor_hasTextBlocks() throws Exception {
+        TextSubmission textSubmission = ModelFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
+        ArrayList<TextBlock> textBlocks = textExerciseUtilService.generateTextBlocks(1);
+        textBlocks.forEach(TextBlock::computeId);
+        textSubmission = database.addTextSubmissionWithResultAndAssessor(textExercise, textSubmission, "student1", "tutor1");
+        database.addTextBlocksToTextSubmission(textBlocks, textSubmission);
+
+        Participation participation = request.get("/api/text-editor/" + textSubmission.getParticipation().getId(), HttpStatus.OK, Participation.class);
+
+        final TextSubmission submission = (TextSubmission) participation.getResults().iterator().next().getSubmission();
+        assertThat(submission.getBlocks()).isNotNull();
+        assertThat(submission.getBlocks()).isNotEmpty();
     }
 
     @Test
@@ -453,6 +476,7 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
         if (submit.equals("true")) {
             path = path + "/submit";
         }
-        request.putWithResponseBodyAndParams(path, feedbacks, Result.class, httpStatus, params);
+        var body = new TextAssessmentDTO(feedbacks);
+        request.putWithResponseBodyAndParams(path, body, Result.class, httpStatus, params);
     }
 }

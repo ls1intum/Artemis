@@ -169,7 +169,7 @@ Edit the Gitlab configuration
 12. (Optional) Allow outbound requests to local network
 
 There is a known limitation for the local setup: webhook URLs for the communication between Gitlab and Artemis and between Gitlab and Jenkins cannot include local IP addresses.
-This option can be deactivate in Gitlab on `<https://gitlab-url>/admin/application_settings/network` -> Outbound requests. 
+This option can be deactivate in Gitlab on `<https://gitlab-url>/admin/application_settings/network` → Outbound requests. 
 Another possible solution is to register a local URL, e.g. using [ngrok](https://ngrok.com/), to be available over a domain the Internet.
                 
 13. Adjust the monitoring-endpoint whitelist.
@@ -221,8 +221,8 @@ GitLab should configure itself automatically. If there are no issues, you can de
 
     Run the following command to get the latest jenkins LTS docker image.
     
-    In order to install and use Maven with Java 12 in the Jenkins container, you have to first install maven, then download Java 12
-    and finally configure Maven to use Java 12 instead of the default version.
+    In order to install and use Maven with Java in the Jenkins container, you have to first install maven, then download Java
+    and finally configure Maven to use Java instead of the default version.
 
     To perform all these steps automatically, you can prepare a Docker image:
 
@@ -233,11 +233,11 @@ GitLab should configure itself automatically. If there are no issues, you can de
         LABEL description="Jenkins with maven pre-installed for Artemis"
         
         USER root
-        # Make sure all sources are up to date
+        
         RUN apt update
-        # Install Maven
+        
+        # Install Java and Maven dependencies
         RUN apt-get install -y maven
-        # Install Java 14 JDK
         RUN cd /usr/lib/jvm && \
             wget https://github.com/AdoptOpenJDK/openjdk14-binaries/releases/download/jdk-14%2B36.1_openj9-0.19.0/OpenJDK14U-jdk_x64_linux_openj9_14_36_openj9-0.19.0.tar.gz && \
             tar -zxf OpenJDK14U-jdk_x64_linux_openj9_14_36_openj9-0.19.0.tar.gz \
@@ -247,9 +247,9 @@ GitLab should configure itself automatically. If there are no issues, you can de
         RUN JAVA_HOME="/usr/lib/jvm/java-14-openjdk-amd64" && export JAVA_HOME
         ENV JAVA_HOME /usr/lib/jvm/java-14-openjdk-amd64
         
-        # Install python dependecies
+        # Install Python dependecies
         RUN apt install -y python3 python3-pip
-        # Install all C dependencies
+        # Install C dependencies
         RUN apt install -y gcc-8 gdb make libasan5 libubsan0 liblsan0 libtsan0
         # Install pytest for python exercises
         RUN pip3 install -U pytest
@@ -258,7 +258,7 @@ GitLab should configure itself automatically. If there are no issues, you can de
 
     Now run the command `docker build --no-cache -t jenkins-artemis .`
 
-    This might take a while because Java is downloaded, but this is only required once.
+    This might take a while because Docker will download Java, but this is only required once.
        
 3. Run steps 4-6 only if you are **not** using a separate instance, otherwise continue with [Start Jenkins](#Start-Jenkins).
 
@@ -306,8 +306,17 @@ Run the following command to start it (make sure to change the email-address).
             -p <some port of your choosing>:8080 \                        # Alternative 2: If you ARE using a separate NGINX instance
             jenkins-artemis
             
-8. Wait until the docker container is deployed and Jenkins is running.
-Open Jenkins in your browser (e.g. `localhost:8080`) and setup the admin user account (install all suggested plugins). 
+8. Wait until the docker container has started and Jenkins is running.
+
+9. Run the following commands to navigate into the docker container and check the Maven and JDK version
+
+        sudo docker exec -it jenkins /bin/bash 
+        
+        mvn -version
+        
+    This should print `Maven 3.x` as Maven version, `Java 14` as Java version and `/usr/lib/jvm/java-14-openjdk-amd64` as Java home.
+       
+10. Open Jenkins in your browser (e.g. `localhost:8080`) and setup the admin user account (install all suggested plugins). 
 You can get the initial admin password using the following command.
 
         # Jenkins highlights the password in the logs, you can't miss it
@@ -315,13 +324,25 @@ You can get the initial admin password using the following command.
         or alternatively
         docker exec jenkins cat /var/jenkins_home/secrets/initialAdminPassword
 
-9. Set the chosen credentials in the Artemis configuration _application-artemis.yml_
+11. Set the chosen credentials in the Artemis configuration _application-artemis.yml_
 
         artemis:
             continuous-integration:
                 user: your.chosen.username
                 password: your.chosen.password
-                
+
+12. Setup JDK 14 in Jenkins Settings
+
+    Navigate in your browser into Jenkins → Manage Jenkins → Global Tool Configuration → JDK. Change the existing JDK installation or click on Add JDK.
+    
+    Use `OpenJDK 14` as Name and `/usr/lib/jvm/java-14-openjdk-amd64` as JAVA_HOME
+    
+<details><summary>Screenshot</summary>
+
+![](jenkins_jdk_config.png)
+
+</details>    
+
 ### Required Jenkins Plugins
 You will need to install the following plugins (apart from the recommended ones that got installed during the setup process):
 * [GitLab](https://plugins.jenkins.io/gitlab-plugin/) for enabling webhooks to and from GitLab
@@ -384,20 +405,6 @@ After you click on "Test Connection", everything should work fine.
     
     </details>
 
-4. Copy the ID of the API token and put it into the Artemis configuration _application-artemis.yml_:
-
-        artemis:
-            continuous-integration:
-                vcs-credentials: the.id.of.the.gitlab.api.token.credential
-                
-    <details><summary>Where to find the ID</summary>
-    
-    ![](jeknins_credentials_overview.png)
-    ![](jenkins_credential_single_select.png)
-    ![](jenkins_credential_details.png)
-    
-    </details>
-
 #### Server Notification Token
 1. Create a new Jenkins credential containing the token, which gets send by the server notification plugin to Artemis with every build result:
     1. **Kind**: Secret text
@@ -426,7 +433,7 @@ After you click on "Test Connection", everything should work fine.
     5. Leave the ID field blank
     6. The description is up to you
 
-2. Copy the generated ID of the new credentials and put it into the Artemis configuration file _application-artemis.yml_
+2. Copy the generated ID (e.g. `ea0e3c08-4110-4g2f-9c83-fb2cdf6345fa`) of the new credentials and put it into the Artemis configuration file _application-artemis.yml_
 
         artemis:
             continuous-integration:
@@ -478,7 +485,7 @@ In order to get this token, you have to do the following steps:
 Also disable the option `use-crumb` in `application-jenkins.yml`.
 
 ### Upgrade Jenkins
-Build the latest version of the jenkins image, stop the running container and mount the Jenkins data volume to the new LTS container.
+Build the latest version of the `jenkins-artemis` Docker image, stop the running container and mount the Jenkins data volume to the new LTS container.
 Make sure to perform this command in the folder where the `Dockerfile` was created (e.g. `/opt/jenkins/`).
 
 ```shell script

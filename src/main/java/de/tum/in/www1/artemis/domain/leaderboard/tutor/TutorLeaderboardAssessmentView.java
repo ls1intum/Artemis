@@ -13,18 +13,18 @@ public class TutorLeaderboardAssessmentView {
     private LeaderboardId leaderboardId;
 
     @Column(name = "assessments")
-    private Long assessments;
+    private long assessments;
 
     @Column(name = "points")
     private Long points;
 
     @Column(name = "course_id")
-    private Long courseId;
+    private long courseId;
 
     @Column(name = "first_name")
     private String userFirstName;
 
-    public Long getAssessments() {
+    public long getAssessments() {
         return assessments;
     }
 
@@ -32,15 +32,15 @@ public class TutorLeaderboardAssessmentView {
         return points;
     }
 
-    public Long getUserId() {
+    public long getUserId() {
         return leaderboardId.getUserId();
     }
 
-    public Long getCourseId() {
+    public long getCourseId() {
         return courseId;
     }
 
-    public Long getExerciseId() {
+    public long getExerciseId() {
         return leaderboardId.getExerciseId();
     }
 
@@ -48,4 +48,14 @@ public class TutorLeaderboardAssessmentView {
         return userFirstName;
     }
 
+    public TutorLeaderboardAssessmentView() {
+    }
+
+    public TutorLeaderboardAssessmentView(LeaderboardId leaderboardId, long assessments, Long points, long courseId, String userFirstName) {
+        this.leaderboardId = leaderboardId;
+        this.assessments = assessments;
+        this.points = points;
+        this.courseId = courseId;
+        this.userFirstName = userFirstName;
+    }
 }

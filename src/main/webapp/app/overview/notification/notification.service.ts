@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { BehaviorSubject, Observable } from 'rxjs';
 import * as moment from 'moment';
-import { map, shareReplay } from 'rxjs/operators';
+import { map } from 'rxjs/operators';
 
 import { SERVER_API_URL } from 'app/app.constants';
 import { createRequestOption } from 'app/shared/util/request-util';
@@ -25,7 +25,9 @@ export class NotificationService {
     subscribedTopics: string[] = [];
     cachedNotifications: Observable<EntityArrayResponseType>;
 
-    constructor(private jhiWebsocketService: JhiWebsocketService, private router: Router, private http: HttpClient, private accountService: AccountService) {}
+    constructor(private jhiWebsocketService: JhiWebsocketService, private router: Router, private http: HttpClient, private accountService: AccountService) {
+        this.initNotificationObserver();
+    }
 
     create(notification: Notification): Observable<EntityResponseType> {
         const copy = this.convertDateFromClient(notification);
@@ -61,9 +63,8 @@ export class NotificationService {
     getRecentNotifications(): Observable<EntityArrayResponseType> {
         if (!this.cachedNotifications) {
             this.cachedNotifications = this.http
-                .get<Notification[]>(`${this.resourceUrl}/for-user`, { observe: 'response' })
-                .pipe(map((res: EntityArrayResponseType) => this.convertDateArrayFromServer(res)))
-                .pipe(shareReplay(1));
+                .get<Notification[]>(`${this.resourceUrl}/recent-for-user`, { observe: 'response' })
+                .pipe(map((res: EntityArrayResponseType) => this.convertDateArrayFromServer(res)));
         }
         return this.cachedNotifications;
     }
@@ -77,10 +78,9 @@ export class NotificationService {
     }
 
     protected convertDateFromClient(notification: Notification): Notification {
-        const copy: Notification = Object.assign({}, notification, {
+        return Object.assign({}, notification, {
             notificationDate: notification.notificationDate != null && notification.notificationDate.isValid() ? notification.notificationDate.toJSON() : null,
         });
-        return copy;
     }
 
     protected convertDateFromServer(res: EntityResponseType): EntityResponseType {
@@ -126,9 +126,6 @@ export class NotificationService {
                 .identity()
                 .then((user: User) => {
                     if (user) {
-                        if (!this.notificationObserver) {
-                            this.notificationObserver = new BehaviorSubject<Notification | null>(null);
-                        }
                         const userTopic = `/topic/user/${user.id}/notifications`;
                         if (!this.subscribedTopics.includes(userTopic)) {
                             this.subscribedTopics.push(userTopic);
@@ -147,9 +144,6 @@ export class NotificationService {
     }
 
     public handleCourseNotifications(course: Course): void {
-        if (!this.notificationObserver) {
-            this.notificationObserver = new BehaviorSubject<Notification | null>(null);
-        }
         let courseTopic = `/topic/course/${course.id}/${GroupNotificationType.STUDENT}`;
         if (this.accountService.isAtLeastInstructorInCourse(course)) {
             courseTopic = `/topic/course/${course.id}/${GroupNotificationType.INSTRUCTOR}`;
@@ -172,9 +166,6 @@ export class NotificationService {
     }
 
     subscribeToSocketMessages(): BehaviorSubject<Notification | null> {
-        if (!this.notificationObserver) {
-            this.notificationObserver = new BehaviorSubject<Notification | null>(null);
-        }
         return this.notificationObserver;
     }
 
@@ -182,5 +173,15 @@ export class NotificationService {
         const target = JSON.parse(notification.target);
         const courseId = target.course || notification.course.id;
         this.router.navigate([target.mainPage, courseId, target.entity, target.id]);
+    }
+
+    private initNotificationObserver(): void {
+        this.notificationObserver = new BehaviorSubject<Notification | null>(null);
+    }
+
+    public cleanUp(): void {
+        this.cachedNotifications = new Observable<EntityArrayResponseType>();
+        this.initNotificationObserver();
+        this.subscribedTopics = [];
     }
 }

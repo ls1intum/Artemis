@@ -22,7 +22,8 @@ enum ResultTemplateStatus {
     IS_BUILDING = 'IS_BUILDING',
     HAS_RESULT = 'HAS_RESULT',
     NO_RESULT = 'NO_RESULT',
-    SUBMITTED = 'SUBMITTED', // submitted, not yet graded
+    SUBMITTED = 'SUBMITTED', // submitted and can still continue to submit
+    SUBMITTED_WAITING_FOR_GRADING = 'SUBMITTED_WAITING_FOR_GRADING', // submitted and can no longer submit, not yet graded
     LATE_NO_FEEDBACK = 'LATE_NO_FEEDBACK', // started, submitted too late, not graded
     LATE = 'LATE', // submitted too late, graded
 }
@@ -30,6 +31,7 @@ enum ResultTemplateStatus {
 @Component({
     selector: 'jhi-result',
     templateUrl: './result.component.html',
+    styles: ['span { display: inline-block; line-height: 1.25 }'],
     providers: [ResultService],
 })
 
@@ -145,15 +147,30 @@ export class ResultComponent implements OnInit, OnChanges {
         if (isModelingOrTextOrFileUpload(this.participation)) {
             // Based on its submission we test if the participation is in due time of the given exercise.
             const inDueTime = isParticipationInDueTime(this.participation, getExercise(this.participation));
+            const dueDate = this.dateAsMoment(getExercise(this.participation).dueDate);
             const assessmentDueDate = this.dateAsMoment(getExercise(this.participation).assessmentDueDate);
 
-            // Submission is in due time of exercise and has a result with score.
             if (inDueTime && initializedResultWithScore(this.result)) {
-                // Prevent that the result is shown before assessment due date
-                return !assessmentDueDate || assessmentDueDate.isBefore() ? ResultTemplateStatus.HAS_RESULT : ResultTemplateStatus.NO_RESULT;
+                // Submission is in due time of exercise and has a result with score
+                if (!assessmentDueDate || assessmentDueDate.isBefore()) {
+                    // the assessment due date has passed (or there was none)
+                    return ResultTemplateStatus.HAS_RESULT;
+                } else {
+                    // the assessment period is still active
+                    return ResultTemplateStatus.SUBMITTED_WAITING_FOR_GRADING;
+                }
             } else if (inDueTime && !initializedResultWithScore(this.result)) {
                 // Submission is in due time of exercise and doesn't have a result with score.
-                return ResultTemplateStatus.SUBMITTED;
+                if (!dueDate || dueDate.isSameOrAfter()) {
+                    // the due date is in the future (or there is none) => the exercise is still ongoing
+                    return ResultTemplateStatus.SUBMITTED;
+                } else if (!assessmentDueDate || assessmentDueDate.isSameOrAfter()) {
+                    // the due date is over, further submissions are no longer possible, waiting for grading
+                    return ResultTemplateStatus.SUBMITTED_WAITING_FOR_GRADING;
+                } else {
+                    // the due date is over, further submissions are no longer possible, no result after assessment due date
+                    return ResultTemplateStatus.NO_RESULT;
+                }
             } else if (initializedResultWithScore(this.result) && (!assessmentDueDate || assessmentDueDate.isBefore())) {
                 // Submission is not in due time of exercise, has a result with score and there is no assessmentDueDate for the exercise or it lies in the past.
                 // TODO handle external submissions with new status "External"

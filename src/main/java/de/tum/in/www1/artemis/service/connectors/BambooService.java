@@ -106,7 +106,7 @@ public class BambooService implements ContinuousIntegrationService {
      * @return The repository slug
      */
     public String getRepositorySlugFromUrl(URL repositoryUrl) {
-        // https://ga42xab@repobruegge.in.tum.de/scm/EIST2016RME/RMEXERCISE-ga42xab.git
+        // https://ga42xab@bitbucket.ase.in.tum.de/scm/EIST2016RME/RMEXERCISE-ga42xab.git
         String[] urlParts = repositoryUrl.getFile().split("/");
         String repositorySlug = urlParts[urlParts.length - 1];
         if (repositorySlug.endsWith(".git")) {
@@ -127,7 +127,7 @@ public class BambooService implements ContinuousIntegrationService {
      */
     //TODO: this method has moved to BitbucketService, but missed the toUpperCase() there, so we reactivated it here
     private String getProjectKeyFromUrl(URL repositoryUrl) {
-        // https://ga42xab@repobruegge.in.tum.de/scm/EIST2016RME/RMEXERCISE-ga42xab.git
+        // https://ga42xab@bitbucket.ase.in.tum.de/scm/EIST2016RME/RMEXERCISE-ga42xab.git
         return repositoryUrl.getFile().split("/")[2].toUpperCase();
     }
 
@@ -519,7 +519,13 @@ public class BambooService implements ContinuousIntegrationService {
         result.setAssessmentType(AssessmentType.AUTOMATIC);
         result.setSuccessful(buildResult.getBuild().isSuccessful());
 
-        result.setResultString(buildResult.getBuild().getTestSummary().getDescription());
+        if (buildResult.getBuild().getTestSummary().getDescription().equals("No tests found")) {
+            result.setResultString("No tests found");
+        } else {
+            int total = buildResult.getBuild().getTestSummary().getTotalCount();
+            int passed = buildResult.getBuild().getTestSummary().getSuccessfulCount();
+            result.setResultString(String.format("%d of %d passed", passed, total));
+        }
 
         result.setCompletionDate(buildResult.getBuild().getBuildCompletedDate());
         result.setScore(calculateScoreForResult(result, buildResult.getBuild().getTestSummary().getSkippedCount()));
@@ -690,13 +696,13 @@ public class BambooService implements ContinuousIntegrationService {
 
         if (result.getResultString() != null && !result.getResultString().isEmpty()) {
 
-            Pattern pattern = Pattern.compile("^([0-9]+) of ([0-9]+) failed");
+            Pattern pattern = Pattern.compile("^([0-9]+) of ([0-9]+) passed");
             Matcher matcher = pattern.matcher(result.getResultString());
 
             if (matcher.find()) {
-                float failedTests = Float.parseFloat(matcher.group(1));
+                float successfulTests = Float.parseFloat(matcher.group(1));
                 float totalTests = Float.parseFloat(matcher.group(2));
-                float score = (totalTests - failedTests - skippedTests) / totalTests;
+                float score = successfulTests / totalTests;
                 return (long) (score * 100);
             }
         }
@@ -718,7 +724,15 @@ public class BambooService implements ContinuousIntegrationService {
         result.setRatedIfNotExceeded(participation.getProgrammingExercise().getDueDate(), submission);
         result.setAssessmentType(AssessmentType.AUTOMATIC);
         result.setSuccessful(buildResults.getBuildState() == QueriedBambooBuildResultDTO.BuildState.SUCCESS);
-        result.setResultString(buildResults.getBuildTestSummary());
+
+        if (buildResults.getBuildTestSummary().equals("No tests found")) {
+            result.setResultString("No tests found");
+        } else {
+            int total = buildResults.getTestResults().getAll();
+            int passed = buildResults.getTestResults().getSuccessful();
+            result.setResultString(String.format("%d of %d passed", passed, total));
+        }
+
         result.setCompletionDate(buildResults.getBuildCompletedDate());
         result.setScore(calculateScoreForResult(result, buildResults.getTestResults().getSkipped()));
         result.setParticipation((Participation) participation);

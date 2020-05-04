@@ -22,14 +22,12 @@ import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.connector.jira.JiraRequestMockProvider;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.TutorParticipationStatus;
+import de.tum.in.www1.artemis.domain.leaderboard.tutor.*;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
-import de.tum.in.www1.artemis.repository.CourseRepository;
-import de.tum.in.www1.artemis.repository.CustomAuditEventRepository;
-import de.tum.in.www1.artemis.repository.NotificationRepository;
-import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.UserService;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.ModelFactory;
@@ -51,7 +49,7 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     CustomAuditEventRepository auditEventRepo;
 
     @Autowired
-    private JiraRequestMockProvider jiraRequestMockProvider;
+    JiraRequestMockProvider jiraRequestMockProvider;
 
     @Autowired
     UserRepository userRepo;
@@ -61,6 +59,21 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
 
     @Autowired
     NotificationRepository notificationRepo;
+
+    @Autowired
+    TutorLeaderboardAssessmentViewRepository tutorLeaderboardAssessmentViewRepo;
+
+    @Autowired
+    TutorLeaderboardComplaintsViewRepository tutorLeaderboardComplaintsViewRepo;
+
+    @Autowired
+    TutorLeaderboardComplaintResponsesViewRepository tutorLeaderboardComplaintResponsesViewRepo;
+
+    @Autowired
+    TutorLeaderboardMoreFeedbackRequestsViewRepository tutorLeaderboardMoreFeedbackRequestsViewRepo;
+
+    @Autowired
+    TutorLeaderboardAnsweredMoreFeedbackRequestsViewRepository tutorLeaderboardAnsweredMoreFeedbackRequestsViewRepo;
 
     private final int numberOfStudents = 4;
 
@@ -307,19 +320,45 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     }
 
     @Test
-    @WithMockUser(username = "student1")
-    public void testGetCoursesToRegister() throws Exception {
-        ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(5);
-        ZonedDateTime futureTimestamp = ZonedDateTime.now().plusDays(5);
-        Course course1 = ModelFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "tumuser", "tutor", "instructor");
-        Course course2 = ModelFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "tumuser", "tutor", "instructor");
-        course1.setRegistrationEnabled(true);
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void testGetCoursesAccurateTimezoneEvaluation() throws Exception {
+        Course courseActive = ModelFactory.generateCourse(1L, ZonedDateTime.now().minusMinutes(25), ZonedDateTime.now().plusMinutes(25), new HashSet<>(), "tumuser", "tutor",
+                "instructor");
+        Course courseNotActivePast = ModelFactory.generateCourse(2L, ZonedDateTime.now().minusDays(5), ZonedDateTime.now().minusMinutes(25), new HashSet<>(), "tumuser", "tutor",
+                "instructor");
+        Course courseNotActiveFuture = ModelFactory.generateCourse(3L, ZonedDateTime.now().plusMinutes(25), ZonedDateTime.now().plusDays(5), new HashSet<>(), "tumuser", "tutor",
+                "instructor");
+        courseRepo.save(courseActive);
+        courseRepo.save(courseNotActivePast);
+        courseRepo.save(courseNotActiveFuture);
+        List<Course> courses = request.getList("/api/courses/for-dashboard", HttpStatus.OK, Course.class);
+        assertThat(courses.size()).as("Exactly one course is returned").isEqualTo(1);
+        courses.get(0).setId(courseActive.getId());
+        assertThat(courses.get(0)).as("Active course is returned").isEqualTo(courseActive);
+    }
 
-        courseRepo.save(course1);
-        courseRepo.save(course2);
+    @Test
+    @WithMockUser(username = "student1")
+    public void testGetCoursesToRegisterAndAccurateTimeZoneEvaluation() throws Exception {
+        Course courseActiveRegistrationEnabled = ModelFactory.generateCourse(1L, ZonedDateTime.now().minusMinutes(25), ZonedDateTime.now().plusMinutes(25), new HashSet<>(),
+                "tumuser", "tutor", "instructor");
+        courseActiveRegistrationEnabled.setRegistrationEnabled(true);
+        Course courseActiveRegistrationDisabled = ModelFactory.generateCourse(2L, ZonedDateTime.now().minusMinutes(25), ZonedDateTime.now().plusMinutes(25), new HashSet<>(),
+                "tumuser", "tutor", "instructor");
+        courseActiveRegistrationDisabled.setRegistrationEnabled(false);
+        Course courseNotActivePast = ModelFactory.generateCourse(3L, ZonedDateTime.now().minusDays(5), ZonedDateTime.now().minusMinutes(25), new HashSet<>(), "tumuser", "tutor",
+                "instructor");
+        Course courseNotActiveFuture = ModelFactory.generateCourse(4L, ZonedDateTime.now().plusMinutes(25), ZonedDateTime.now().plusDays(5), new HashSet<>(), "tumuser", "tutor",
+                "instructor");
+        courseRepo.save(courseActiveRegistrationEnabled);
+        courseRepo.save(courseActiveRegistrationDisabled);
+        courseRepo.save(courseNotActivePast);
+        courseRepo.save(courseNotActiveFuture);
 
         List<Course> courses = request.getList("/api/courses/to-register", HttpStatus.OK, Course.class);
-        assertThat(courses.size()).as("One course is available to register").isEqualTo(1);
+        assertThat(courses.size()).as("Exactly one course is available to register").isEqualTo(1);
+        courses.get(0).setId(courseActiveRegistrationEnabled.getId());
+        assertThat(courses.get(0)).as("Only active course is returned").isEqualTo(courseActiveRegistrationEnabled);
     }
 
     private void getCourseForDashboardWithStats(boolean isInstructor) throws Exception {
@@ -395,6 +434,46 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         List<Course> testCourses = database.createCoursesWithExercisesAndLectures(true);
         request.get("/api/courses/" + testCourses.get(0).getId() + "/for-tutor-dashboard", HttpStatus.FORBIDDEN, Course.class);
         request.get("/api/courses/" + testCourses.get(0).getId() + "/stats-for-tutor-dashboard", HttpStatus.FORBIDDEN, StatsForInstructorDashboardDTO.class);
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void testGetTutorDashboardStats_withComplaints() throws Exception {
+        getTutorDashboardsStatsWithComplaints(true);
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void testGetTutorDashboardStats_withComplaints_withoutPoints() throws Exception {
+        getTutorDashboardsStatsWithComplaints(false);
+    }
+
+    private void getTutorDashboardsStatsWithComplaints(boolean withPoints) throws Exception {
+        Course testCourse = database.addCourseWithOneTextExercise();
+        var points = withPoints ? 15L : null;
+        var leaderboardId = new LeaderboardId(database.getUserByLogin("tutor1").getId(), testCourse.getExercises().iterator().next().getId());
+        tutorLeaderboardComplaintsViewRepo.save(new TutorLeaderboardComplaintsView(leaderboardId, 3L, 1L, points, testCourse.getId(), ""));
+        tutorLeaderboardComplaintResponsesViewRepo.save(new TutorLeaderboardComplaintResponsesView(leaderboardId, 1L, points, testCourse.getId(), ""));
+        tutorLeaderboardAnsweredMoreFeedbackRequestsViewRepo.save(new TutorLeaderboardAnsweredMoreFeedbackRequestsView(leaderboardId, 1L, points, testCourse.getId(), ""));
+        tutorLeaderboardMoreFeedbackRequestsViewRepo.save(new TutorLeaderboardMoreFeedbackRequestsView(leaderboardId, 3L, 1L, points, testCourse.getId(), ""));
+        tutorLeaderboardAssessmentViewRepo.save(new TutorLeaderboardAssessmentView(leaderboardId, 2L, points, testCourse.getId(), ""));
+
+        StatsForInstructorDashboardDTO stats = request.get("/api/courses/" + testCourse.getId() + "/stats-for-tutor-dashboard", HttpStatus.OK,
+                StatsForInstructorDashboardDTO.class);
+        var currentTutorLeaderboard = stats.getTutorLeaderboardEntries().get(0);
+        assertThat(currentTutorLeaderboard.getNumberOfTutorComplaints()).isEqualTo(3);
+        assertThat(currentTutorLeaderboard.getNumberOfAcceptedComplaints()).isEqualTo(1);
+        assertThat(currentTutorLeaderboard.getNumberOfComplaintResponses()).isEqualTo(1);
+        assertThat(currentTutorLeaderboard.getNumberOfAnsweredMoreFeedbackRequests()).isEqualTo(1);
+        assertThat(currentTutorLeaderboard.getNumberOfNotAnsweredMoreFeedbackRequests()).isEqualTo(1);
+        assertThat(currentTutorLeaderboard.getNumberOfTutorMoreFeedbackRequests()).isEqualTo(3);
+        assertThat(currentTutorLeaderboard.getNumberOfAssessments()).isEqualTo(2);
+        if (withPoints) {
+            assertThat(currentTutorLeaderboard.getPoints()).isEqualTo(0);
+        }
+        else {
+            assertThat(currentTutorLeaderboard.getPoints()).isEqualTo(1);
+        }
     }
 
     @Test
@@ -579,6 +658,8 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         request.postWithoutLocation("/api/courses/" + course.getId() + "/students/student1", null, HttpStatus.OK, null);
         request.postWithoutLocation("/api/courses/" + course.getId() + "/tutors/tutor1", null, HttpStatus.OK, null);
         request.postWithoutLocation("/api/courses/" + course.getId() + "/instructors/instructor1", null, HttpStatus.OK, null);
+
+        // TODO check that the roles have changed accordingly
     }
 
     @Test
@@ -633,6 +714,8 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         request.delete("/api/courses/" + course.getId() + "/students/" + student.getLogin(), HttpStatus.OK);
         request.delete("/api/courses/" + course.getId() + "/tutors/" + tutor.getLogin(), HttpStatus.OK);
         request.delete("/api/courses/" + course.getId() + "/instructors/" + instructor.getLogin(), HttpStatus.OK);
+
+        // TODO check that the roles have changed accordingly
     }
 
     @Test

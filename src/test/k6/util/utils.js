@@ -13,7 +13,10 @@ export function nextAlphanumeric(length) {
 }
 
 export function nextWSSubscriptionId() {
-    return Math.random().toString(36).replace(/[^a-z]+/g, '').substr(0, 12);
+    return Math.random()
+        .toString(36)
+        .replace(/[^a-z]+/g, '')
+        .substr(0, 12);
 }
 
 export function randomArrayValue(array) {

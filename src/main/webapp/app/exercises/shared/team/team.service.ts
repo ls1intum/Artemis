@@ -5,7 +5,7 @@ import { map } from 'rxjs/operators';
 import * as moment from 'moment';
 
 import { SERVER_API_URL } from 'app/app.constants';
-import { Team } from 'app/entities/team.model';
+import { Team, TeamImportStrategyType } from 'app/entities/team.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { Course } from 'app/entities/course.model';
 import { TeamSearchUser } from 'app/entities/team-search-user.model';
@@ -24,9 +24,11 @@ export interface ITeamService {
 
     delete(exercise: Exercise, teamId: number): Observable<HttpResponse<any>>;
 
-    existsByShortName(shortName: string): Observable<HttpResponse<boolean>>;
+    existsByShortName(exercise: Exercise, shortName: string): Observable<HttpResponse<boolean>>;
 
     searchInCourseForExerciseTeam(course: Course, exercise: Exercise, loginOrName: string): Observable<HttpResponse<TeamSearchUser[]>>;
+
+    importTeamsFromSourceExercise(exercise: Exercise, sourceExercise: Exercise, importStrategy: TeamImportStrategyType): Observable<HttpResponse<Team[]>>;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -67,13 +69,21 @@ export class TeamService implements ITeamService {
         return this.http.delete<any>(`${TeamService.resourceUrl(exercise.id)}/${teamId}`, { observe: 'response' });
     }
 
-    existsByShortName(shortName: string): Observable<HttpResponse<boolean>> {
-        return this.http.get<boolean>(`${SERVER_API_URL}api/teams?shortName=${shortName}`, { observe: 'response' });
+    existsByShortName(exercise: Exercise, shortName: string): Observable<HttpResponse<boolean>> {
+        return this.http.get<boolean>(`${TeamService.resourceUrl(exercise.id)}/exists?shortName=${shortName}`, { observe: 'response' });
     }
 
     searchInCourseForExerciseTeam(course: Course, exercise: Exercise, loginOrName: string): Observable<HttpResponse<TeamSearchUser[]>> {
         const url = `${SERVER_API_URL}api/courses/${course.id}/exercises/${exercise.id}/team-search-users?loginOrName=${loginOrName}`;
         return this.http.get<TeamSearchUser[]>(url, { observe: 'response' });
+    }
+
+    importTeamsFromSourceExercise(exercise: Exercise, sourceExercise: Exercise, importStrategyType: TeamImportStrategyType) {
+        return this.http.put<Team[]>(
+            `${TeamService.resourceUrl(exercise.id)}/import-from-exercise/${sourceExercise.id}?importStrategyType=${importStrategyType}`,
+            {},
+            { observe: 'response' },
+        );
     }
 
     /**

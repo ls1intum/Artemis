@@ -44,9 +44,9 @@ export class NewCoursePage {
     }
 
     async browseCourseIcon() {
-        let path = require('path');
-        let fileToUpload = '../entities/tum-logo.png';
-        let absolutePath = path.resolve(__dirname, fileToUpload);
+        const path = require('path');
+        const fileToUpload = '../entities/tum-logo.png';
+        const absolutePath = path.resolve(__dirname, fileToUpload);
         await this.browse.sendKeys(absolutePath);
     }
 

@@ -2,6 +2,17 @@ import { Moment } from 'moment';
 import { User } from 'app/core/user/user.model';
 import { BaseEntity } from 'app/shared/model/base-entity';
 
+export enum TeamImportStrategyType {
+    PURGE_EXISTING = 'PURGE_EXISTING',
+    CREATE_ONLY = 'CREATE_ONLY',
+}
+
+export class OnlineTeamStudent {
+    public login: string;
+    public lastTypingDate: Moment;
+    public lastActionDate: Moment;
+}
+
 export class Team implements BaseEntity {
     public id: number;
     public name: string;

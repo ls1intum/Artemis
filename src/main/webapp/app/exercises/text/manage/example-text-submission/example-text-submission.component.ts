@@ -21,7 +21,6 @@ import { Feedback } from 'app/entities/feedback.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { ResultService } from 'app/exercises/shared/result/result.service';
 import { TextExercise } from 'app/entities/text-exercise.model';
-import { TutorParticipation } from 'app/entities/participation/tutor-participation.model';
 import { TextSubmission } from 'app/entities/text-submission.model';
 import { Result } from 'app/entities/result.model';
 
@@ -325,7 +324,7 @@ export class ExampleTextSubmissionComponent implements OnInit, AfterViewInit {
             return;
         }
 
-        this.assessmentsService.save(this.assessments, this.exercise.id, this.result.id).subscribe((response) => {
+        this.assessmentsService.save(this.exercise.id, this.result.id, this.assessments, []).subscribe((response) => {
             this.result = response.body!;
             this.areNewAssessments = false;
             this.jhiAlertService.success('artemisApp.textAssessment.saveSuccessful');
@@ -355,7 +354,7 @@ export class ExampleTextSubmissionComponent implements OnInit, AfterViewInit {
         exampleSubmission.submission.result.feedbacks = this.assessments;
 
         this.tutorParticipationService.assessExampleSubmission(exampleSubmission, this.exerciseId).subscribe(
-            (res: HttpResponse<TutorParticipation>) => {
+            () => {
                 this.jhiAlertService.success('artemisApp.exampleSubmission.assessScore.success');
             },
             (error: HttpErrorResponse) => {
@@ -373,7 +372,7 @@ export class ExampleTextSubmissionComponent implements OnInit, AfterViewInit {
     }
 
     readAndUnderstood() {
-        this.tutorParticipationService.assessExampleSubmission(this.exampleSubmission, this.exerciseId).subscribe((res: HttpResponse<TutorParticipation>) => {
+        this.tutorParticipationService.assessExampleSubmission(this.exampleSubmission, this.exerciseId).subscribe(() => {
             this.jhiAlertService.success('artemisApp.exampleSubmission.readSuccessfully');
             this.back();
         });

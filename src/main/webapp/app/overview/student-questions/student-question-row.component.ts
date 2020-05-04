@@ -6,6 +6,7 @@ import { StudentQuestion } from 'app/entities/student-question.model';
 import { StudentQuestionAnswer } from 'app/entities/student-question-answer.model';
 import { StudentQuestionService } from 'app/overview/student-questions/student-question.service';
 import { StudentQuestionAnswerService } from 'app/overview/student-questions/student-question-answer.service';
+import { EditorMode } from 'app/shared/markdown-editor/markdown-editor.component';
 
 export interface StudentQuestionAction {
     name: QuestionActionName;
@@ -30,13 +31,14 @@ export class StudentQuestionRowComponent implements OnInit, OnDestroy {
     isExpanded = true;
     isAnswerMode: boolean;
     isEditMode: boolean;
-    isQuestionAuthor: boolean;
+    isQuestionAuthor = false;
     showOtherAnswers = false;
     selectedQuestionAnswer: StudentQuestionAnswer | null;
     questionAnswerText: string | null;
     studentQuestionText: string | null;
     sortedQuestionAnswers: StudentQuestionAnswer[];
     approvedQuestionAnswers: StudentQuestionAnswer[];
+    EditorMode = EditorMode;
 
     constructor(private studentQuestionAnswerService: StudentQuestionAnswerService, private studentQuestionService: StudentQuestionService) {}
 
@@ -81,10 +83,36 @@ export class StudentQuestionRowComponent implements OnInit, OnDestroy {
         this.isEditMode = !this.isEditMode;
     }
 
+    /**
+     * Takes a studentQuestionAnswer and toggles the edit field for it
+     * If a studentQuestionAnswer is already selected it closes the edit field for the old one and opens it for the new one
+     * @param   {StudentQuestionAnswer} questionAnswer
+     */
     toggleAnswerMode(questionAnswer: StudentQuestionAnswer | null): void {
-        this.isAnswerMode = !this.isAnswerMode;
-        this.questionAnswerText = questionAnswer ? questionAnswer.answerText : '';
-        this.selectedQuestionAnswer = questionAnswer;
+        if (questionAnswer) {
+            if (this.selectedQuestionAnswer && questionAnswer.id === this.selectedQuestionAnswer.id) {
+                this.isAnswerMode = false;
+                this.questionAnswerText = '';
+                this.selectedQuestionAnswer = null;
+            } else {
+                this.isAnswerMode = true;
+                this.questionAnswerText = questionAnswer.answerText;
+                this.selectedQuestionAnswer = questionAnswer;
+            }
+        } else {
+            this.isAnswerMode = false;
+            this.questionAnswerText = '';
+            this.selectedQuestionAnswer = questionAnswer;
+        }
+    }
+
+    /**
+     * Toggles the field for a new Answer
+     */
+    toggleAnswerModeForNewAnswer(): void {
+        this.isAnswerMode = true;
+        this.questionAnswerText = '';
+        this.selectedQuestionAnswer = null;
     }
 
     /**
@@ -92,7 +120,7 @@ export class StudentQuestionRowComponent implements OnInit, OnDestroy {
      */
     saveQuestion(): void {
         this.studentQuestion.questionText = this.studentQuestionText;
-        this.studentQuestionService.update(this.studentQuestion).subscribe((studentQuestionResponse: HttpResponse<StudentQuestion>) => {
+        this.studentQuestionService.update(this.studentQuestion).subscribe(() => {
             this.studentQuestionText = null;
             this.isEditMode = false;
         });
@@ -102,7 +130,7 @@ export class StudentQuestionRowComponent implements OnInit, OnDestroy {
      * deletes the studentQuestion
      */
     deleteQuestion(): void {
-        this.studentQuestionService.delete(this.studentQuestion.id).subscribe((res: HttpResponse<any>) => {
+        this.studentQuestionService.delete(this.studentQuestion.id).subscribe(() => {
             this.interactQuestion.emit({
                 name: QuestionActionName.DELETE,
                 studentQuestion: this.studentQuestion,
@@ -137,7 +165,7 @@ export class StudentQuestionRowComponent implements OnInit, OnDestroy {
      */
     saveAnswer(): void {
         this.selectedQuestionAnswer!.answerText = this.questionAnswerText;
-        this.studentQuestionAnswerService.update(this.selectedQuestionAnswer!).subscribe((studentAnswerResponse: HttpResponse<StudentQuestionAnswer>) => {
+        this.studentQuestionAnswerService.update(this.selectedQuestionAnswer!).subscribe(() => {
             this.questionAnswerText = null;
             this.selectedQuestionAnswer = null;
             this.isAnswerMode = false;
@@ -146,10 +174,10 @@ export class StudentQuestionRowComponent implements OnInit, OnDestroy {
 
     /**
      * Takes a studentAnswer and deletes it
-     * @param   {studentQuestionAnswer} studentAnswer
+     * @param   {StudentQuestionAnswer} studentAnswer
      */
     deleteAnswer(studentAnswer: StudentQuestionAnswer): void {
-        this.studentQuestionAnswerService.delete(studentAnswer.id).subscribe((res: HttpResponse<any>) => {
+        this.studentQuestionAnswerService.delete(studentAnswer.id).subscribe(() => {
             this.studentQuestion.answers = this.studentQuestion.answers.filter((el) => el.id !== studentAnswer.id);
             this.sortQuestionAnswers();
         });
@@ -157,12 +185,25 @@ export class StudentQuestionRowComponent implements OnInit, OnDestroy {
 
     /**
      * Takes a studentAnswer and toggles the tutorApproved field
-     * @param   {studentQuestionAnswer} studentAnswer
+     * @param   {StudentQuestionAnswer} studentAnswer
      */
     toggleAnswerTutorApproved(studentAnswer: StudentQuestionAnswer): void {
         studentAnswer.tutorApproved = !studentAnswer.tutorApproved;
-        this.studentQuestionAnswerService.update(studentAnswer).subscribe((studentAnswerResponse: HttpResponse<StudentQuestionAnswer>) => {
+        this.studentQuestionAnswerService.update(studentAnswer).subscribe(() => {
             this.sortQuestionAnswers();
         });
+    }
+
+    /**
+     * Takes a studentQuestionAnswer and determines if the user is the author of it
+     * @param {StudentQuestionAnswer} studentQuestionAnswer
+     * @returns {boolean}
+     */
+    isAuthorOfAnswer(studentQuestionAnswer: StudentQuestionAnswer): boolean {
+        if (this.user) {
+            return studentQuestionAnswer.author.id === this.user.id;
+        } else {
+            return false;
+        }
     }
 }
