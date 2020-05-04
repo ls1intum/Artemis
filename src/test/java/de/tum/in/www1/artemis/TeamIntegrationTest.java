@@ -4,6 +4,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.ZonedDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -12,11 +14,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.Exercise;
-import de.tum.in.www1.artemis.domain.Team;
-import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
+import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
+import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.TeamRepository;
@@ -67,11 +68,15 @@ public class TeamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     }
 
     private String resourceUrlExistsTeamByShortName(String shortName) {
-        return resourceUrl() + "/exists?shortName=" + shortName;
+        return "/api/courses/" + course.getId() + "/teams/exists?shortName=" + shortName;
     }
 
     private String resourceUrlSearchUsersInCourse(String loginOrName) {
         return "/api/courses/" + course.getId() + "/exercises/" + exercise.getId() + "/team-search-users?loginOrName=" + loginOrName;
+    }
+
+    private String resourceUrlCourseWithExercisesAndParticipationsForTeam(Course course, Team team) {
+        return "/api/courses/" + course.getId() + "/teams/" + team.getShortName() + "/with-exercises-and-participations";
     }
 
     @BeforeEach
@@ -412,5 +417,66 @@ public class TeamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
      */
     private int getCountOfStudentsInTeams(List<Team> teams) {
         return teams.stream().map(Team::getStudents).map(Set::size).reduce(0, Integer::sum);
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void getCourseWithExercisesAndParticipationsForTeam_AsTutor() throws Exception {
+        List<Course> courses = database.createCoursesWithExercisesAndLectures(false);
+        Course course = courses.get(0);
+
+        ProgrammingExercise programmingExercise = (ProgrammingExercise) course.getExercises().stream().filter(exercise -> exercise instanceof ProgrammingExercise).findAny()
+                .orElseThrow();
+        TextExercise textExercise = (TextExercise) course.getExercises().stream().filter(exercise -> exercise instanceof TextExercise).findAny().orElseThrow();
+        ModelingExercise modelingExercise = (ModelingExercise) course.getExercises().stream().filter(exercise -> exercise instanceof ModelingExercise).findAny().orElseThrow();
+
+        // make exercises team-based
+        Stream.of(programmingExercise, textExercise, modelingExercise).forEach(exercise -> exerciseRepo.save(exercise.mode(ExerciseMode.TEAM)));
+
+        String shortNamePrefix1 = "team";
+        String shortNamePrefix2 = "otherTeam";
+
+        Team team1a = database.addTeamsForExercise(programmingExercise, shortNamePrefix1, "team1astudent", 1, null).get(0);
+        Team team1b = database.addTeamsForExercise(textExercise, shortNamePrefix1, "team1bstudent", 1, null).get(0);
+        Team team1c = database.addTeamsForExercise(modelingExercise, shortNamePrefix1, "team1cstudent", 1, null).get(0);
+
+        Team team2a = database.addTeamsForExercise(programmingExercise, shortNamePrefix2, "team2astudent", 1, null).get(0);
+        Team team2b = database.addTeamsForExercise(textExercise, shortNamePrefix2, "team2bstudent", 1, null).get(0);
+
+        assertThat(List.of(team1a, team1b, team1c).stream().map(Team::getShortName).distinct()).as("Teams 1 need the same short name for this test").hasSize(1);
+        assertThat(List.of(team2a, team2b).stream().map(Team::getShortName).distinct()).as("Teams 2 need the same short name for this test").hasSize(1);
+        assertThat(List.of(team1a, team1b, team1c, team2a, team2b).stream().map(Team::getShortName).distinct()).as("Teams 1 and Teams 2 need different short names").hasSize(2);
+
+        database.addTeamParticipationForExercise(programmingExercise, team1a.getId());
+        database.addTeamParticipationForExercise(textExercise, team1b.getId());
+
+        database.addTeamParticipationForExercise(programmingExercise, team2a.getId());
+        database.addTeamParticipationForExercise(textExercise, team2b.getId());
+
+        Course course1 = request.get(resourceUrlCourseWithExercisesAndParticipationsForTeam(course, team1a), HttpStatus.OK, Course.class);
+        assertThat(course1.getExercises()).as("All exercises of team 1 in course were returned").hasSize(3);
+        assertThat(course1.getExercises().stream().map(Exercise::getTeams).collect(Collectors.toSet())).as("All team instances of team 1 in course were returned").hasSize(3);
+        assertThat(course1.getExercises().stream().flatMap(exercise -> exercise.getStudentParticipations().stream()).collect(Collectors.toSet()))
+                .as("All participations of team 1 in course were returned").hasSize(2);
+
+        Course course2 = request.get(resourceUrlCourseWithExercisesAndParticipationsForTeam(course, team2a), HttpStatus.OK, Course.class);
+        assertThat(course2.getExercises()).as("All exercises of team 2 in course were returned").hasSize(2);
+
+        StudentParticipation studentParticipation = course2.getExercises().iterator().next().getStudentParticipations().iterator().next();
+        assertThat(studentParticipation.getSubmissionCount()).as("Participation includes submission count").isNotNull();
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void getCourseWithExercisesAndParticipationsForTeam_AsStudentInTeam_Allowed() throws Exception {
+        Team team = teamRepo.save(new Team().name("Team").shortName("team").exercise(exercise).students(userRepo.findOneByLogin("student1").map(Set::of).orElseThrow()));
+        request.get(resourceUrlCourseWithExercisesAndParticipationsForTeam(course, team), HttpStatus.OK, Course.class);
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void getCourseWithExercisesAndParticipationsForTeam_AsStudentNotInTeam_Forbidden() throws Exception {
+        Team team = database.addTeamsForExercise(exercise, "team", "otherStudent", 1, tutor).get(0);
+        request.get(resourceUrlCourseWithExercisesAndParticipationsForTeam(course, team), HttpStatus.FORBIDDEN, Course.class);
     }
 }

@@ -10,6 +10,7 @@ import { StudentQuestion } from 'app/entities/student-question.model';
 import { TeamAssignmentConfig } from 'app/entities/team-assignment-config.model';
 import { ExerciseHint } from 'app/entities/exercise-hint.model';
 import { GradingCriterion } from 'app/exercises/shared/structured-grading-criterion/grading-criterion.model';
+import { Team } from 'app/entities/team.model';
 
 export const enum DifficultyLevel {
     EASY = 'EASY',
@@ -70,6 +71,7 @@ export abstract class Exercise implements BaseEntity {
     public categories: string[];
     public type: ExerciseType;
 
+    public teams: Team[];
     public studentParticipations: StudentParticipation[];
     public tutorParticipations: TutorParticipation[];
     public course: Course | null;
