@@ -45,6 +45,7 @@
             "dueDateError": "Due Date must be after Release Date. Please check your selection again",
             "assessmentDueDate": "Assessment Due Date",
             "assessmentDueDateError": "Assessment Due Date must be after Release and Due Date. Please check your selection again",
+            "dateNotSet": "No date set",
             "maxScore": "Max Score",
             "difficulty": "Difficulty",
             "noLevel": "No Level",

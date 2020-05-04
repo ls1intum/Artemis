@@ -140,15 +140,18 @@
                 "practice": "Practice",
                 "faq": {
                     "header": "Questions and Answers",
+                    "show": "Show answers",
+                    "hide": "Hide answers",
                     "noQuestions": "No questions have been asked yet.",
-                    "addNewQuestion": "+ Add a new question",
+                    "addNewQuestion": "Add a new question",
                     "newQuestionLabel": "New question",
+                    "newAnswerLabel": "New answer",
                     "answerLabel": "Answer",
                     "questionLabel": "Question",
                     "approvedLabel": "Approved by a tutor",
                     "answerNow": "Answer now",
                     "noAnswers": "This question was not yet answered.",
-                    "answerCount": "Answers: {{count}}",
+                    "answerCount": "Show Answers ({{count}})",
                     "yourQuestion": "Your Question",
                     "cancel": "Cancel",
                     "addQuestion": "Add question",
@@ -162,6 +165,7 @@
                     "confirmDeleteAnswer": "Please confirm that you want to delete your answer!",
                     "editAnswer": "Edit answer",
                     "approveAnswer": "Approve answer",
+                    "unapproveAnswer": "Unapprove answer",
                     "hideAnswers": "Show less answers",
                     "showAnswers": "Show more answers ({{count}})"
                 }
