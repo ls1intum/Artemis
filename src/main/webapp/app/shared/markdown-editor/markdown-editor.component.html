@@ -13,6 +13,8 @@
                         (textChange)="markdownChange.emit($event)"
                         class="form-control markdown-editor__content"
                     ></ace-editor>
+                    <!-- manual input for file upload -->
+                    <input type="file" [multiple]="false" />
                     <!-- Required for resizing; don't remove empty span -->
                     <fa-icon *ngIf="enableResize" [icon]="'grip-lines'" class="rg-bottom text-lightgrey"><span></span></fa-icon>
                 </div>
