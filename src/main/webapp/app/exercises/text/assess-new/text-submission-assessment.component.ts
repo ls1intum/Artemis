@@ -88,8 +88,8 @@ export class TextSubmissionAssessmentComponent implements OnInit {
 
     private setPropertiesFromServerResponse(studentParticipation: StudentParticipation) {
         if (studentParticipation === null) {
+            // Show "No New Submission" banner on .../submissions/new/assessment route
             this.noNewSubmissions = this.isNewAssessmentRoute;
-            this.isLoading = false;
             return;
         }
 
