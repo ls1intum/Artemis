@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { map, shareReplay } from 'rxjs/operators';
+import { map, shareReplay, filter } from 'rxjs/operators';
 import * as moment from 'moment';
 
 import { SERVER_API_URL } from 'app/app.constants';
@@ -10,6 +10,8 @@ import { Exercise } from 'app/entities/exercise.model';
 import { Course } from 'app/entities/course.model';
 import { TeamSearchUser } from 'app/entities/team-search-user.model';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { User } from 'app/core/user/user.model';
+import { AccountService } from 'app/core/auth/account.service';
 
 export type TeamResponse = HttpResponse<Team>;
 export type TeamArrayResponse = HttpResponse<Team[]>;
@@ -38,7 +40,7 @@ export interface ITeamService {
 export class TeamService implements ITeamService {
     private teamAssignmentUpdates$: Observable<TeamAssignmentPayload>;
 
-    constructor(protected http: HttpClient, private websocketService: JhiWebsocketService) {}
+    constructor(protected http: HttpClient, private websocketService: JhiWebsocketService, private accountService: AccountService) {}
 
     private static resourceUrl(exerciseId: number) {
         return `${SERVER_API_URL}api/exercises/${exerciseId}/teams`;
@@ -91,12 +93,44 @@ export class TeamService implements ITeamService {
         );
     }
 
-    get teamAssignmentUpdates(): Observable<TeamAssignmentPayload> {
+    /**
+     * Returns a promise of an observable that emits team assignment updates
+     *
+     * 1. If there is already an update stream, return it
+     * 2. If there is no update stream yet but the websocket client is connected, return a new stream
+     * 3. If the websocket client is not yet connected, wait for the user to log in and for the websocket client
+     *    to connect, then return a new stream
+     */
+    get teamAssignmentUpdates(): Promise<Observable<TeamAssignmentPayload>> {
+        return new Promise((resolve) => {
+            if (this.teamAssignmentUpdates$) {
+                resolve(this.teamAssignmentUpdates$);
+            } else if (this.websocketService.stompClient?.connected) {
+                resolve(this.newTeamAssignmentUpdates$);
+            } else {
+                this.accountService
+                    .getAuthenticationState()
+                    .pipe(filter((user: User | null) => Boolean(user)))
+                    .subscribe(() => {
+                        setTimeout(() => {
+                            this.websocketService.bind('connect', () => {
+                                resolve(this.newTeamAssignmentUpdates$);
+                            });
+                        }, 500);
+                    });
+            }
+        });
+    }
+
+    /**
+     * Subscribes to the team assignment updates websocket topic and stores the stream in teamAssignmentUpdates$
+     */
+    private get newTeamAssignmentUpdates$(): Observable<TeamAssignmentPayload> {
         if (this.teamAssignmentUpdates$) {
-            return this.teamAssignmentUpdates$;
+            this.websocketService.unsubscribe(teamAssignmentUpdatesWebsocketTopic);
         }
         this.websocketService.subscribe(teamAssignmentUpdatesWebsocketTopic);
-        this.teamAssignmentUpdates$ = this.websocketService.receive(teamAssignmentUpdatesWebsocketTopic).pipe(shareReplay(64));
+        this.teamAssignmentUpdates$ = this.websocketService.receive(teamAssignmentUpdatesWebsocketTopic).pipe(shareReplay(16));
         return this.teamAssignmentUpdates$;
     }
 

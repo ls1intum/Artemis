@@ -32,9 +32,9 @@ export class CoursesComponent implements OnInit {
         private teamService: TeamService,
     ) {}
 
-    ngOnInit(): void {
+    async ngOnInit() {
         this.loadAndFilterCourses();
-        this.teamService.teamAssignmentUpdates.subscribe();
+        (await this.teamService.teamAssignmentUpdates).subscribe();
     }
 
     loadAndFilterCourses() {

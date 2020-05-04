@@ -37,7 +37,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy {
         private teamService: TeamService,
     ) {}
 
-    ngOnInit() {
+    async ngOnInit() {
         this.subscription = this.route.params.subscribe((params) => {
             this.courseId = parseInt(params['courseId'], 10);
         });
@@ -51,7 +51,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy {
             });
         }
         this.adjustCourseDescription();
-        this.subscribeToTeamAssignmentUpdates();
+        await this.subscribeToTeamAssignmentUpdates();
     }
 
     ngOnDestroy() {
@@ -85,8 +85,8 @@ export class CourseOverviewComponent implements OnInit, OnDestroy {
     /**
      * Receives team assignment changes and updates related attributes of the affected exercise
      */
-    subscribeToTeamAssignmentUpdates() {
-        this.teamAssignmentUpdateListener = this.teamService.teamAssignmentUpdates.subscribe((teamAssignment: TeamAssignmentPayload) => {
+    async subscribeToTeamAssignmentUpdates() {
+        this.teamAssignmentUpdateListener = (await this.teamService.teamAssignmentUpdates).subscribe((teamAssignment: TeamAssignmentPayload) => {
             const exercise = this.course!.exercises.find((courseExercise) => courseExercise.id === teamAssignment.exerciseId);
             if (exercise) {
                 exercise.studentAssignedTeamId = teamAssignment.teamId;

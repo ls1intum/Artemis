@@ -250,8 +250,8 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     /**
      * Receives team assignment changes and applies them if they belong to this exercise
      */
-    subscribeToTeamAssignmentUpdates() {
-        this.teamAssignmentUpdateListener = this.teamService.teamAssignmentUpdates
+    async subscribeToTeamAssignmentUpdates() {
+        this.teamAssignmentUpdateListener = (await this.teamService.teamAssignmentUpdates)
             .pipe(filter(({ exerciseId }: TeamAssignmentPayload) => exerciseId === this.exercise?.id))
             .subscribe((teamAssignment) => {
                 this.exercise!.studentAssignedTeamId = teamAssignment.teamId;
