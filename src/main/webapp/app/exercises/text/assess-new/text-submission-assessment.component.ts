@@ -199,7 +199,7 @@ export class TextSubmissionAssessmentComponent implements OnInit {
     }
 
     validateFeedback(): void {
-        const hasReferencedFeedback = this.referencedFeedback.filter((f) => !Feedback.isEmpty(f)).length > 0;
+        const hasReferencedFeedback = this.referencedFeedback.filter(Feedback.isPresent).length > 0;
         const hasGeneralFeedback = Feedback.hasDetailText(this.generalFeedback);
 
         this.assessmentsAreValid = hasReferencedFeedback || hasGeneralFeedback;
