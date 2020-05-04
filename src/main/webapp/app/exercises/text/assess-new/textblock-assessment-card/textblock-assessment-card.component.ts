@@ -16,7 +16,9 @@ export class TextblockAssessmentCardComponent {
     @Output() didSelect = new EventEmitter<OptionalTextBlockRef>();
     @Output() didChange = new EventEmitter<TextBlockRef>();
     @ViewChild(TextblockFeedbackEditorComponent) feedbackEditor: TextblockFeedbackEditorComponent;
+
     constructor(public structuredGradingCriterionService: StructuredGradingCriterionService) {}
+
     select(autofocus = true): void {
         this.didSelect.emit(this.textBlockRef);
         this.textBlockRef.initFeedback();
@@ -35,6 +37,7 @@ export class TextblockAssessmentCardComponent {
     feedbackDidChange(): void {
         this.didChange.emit(this.textBlockRef);
     }
+
     connectStructuredGradingInstructionsWithTextBlock(event: Event) {
         this.select();
         if (this.textBlockRef.feedback) {
