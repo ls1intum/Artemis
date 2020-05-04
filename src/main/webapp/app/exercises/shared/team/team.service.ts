@@ -49,11 +49,11 @@ export interface ITeamService {
     delete(exercise: Exercise, teamId: number): Observable<HttpResponse<any>>;
 
     /**
-     * Check if a given short team name exists in an exercise
-     * @param {Exercise} exercise - Exercise to search through
+     * Check if a given team short name exists in a course
+     * @param {Course} course - Course in which to search
      * @param {string} shortName - Short name to search for
      */
-    existsByShortName(exercise: Exercise, shortName: string): Observable<HttpResponse<boolean>>;
+    existsByShortName(course: Course, shortName: string): Observable<HttpResponse<boolean>>;
 
     /**
      * Find the team of a login/name in a given exercise and course
@@ -65,11 +65,13 @@ export interface ITeamService {
 
     /**
      * Import the teams of an existing source exercise
-     * @param {Exercise} exercise - Exercise the teams should be transferred to
-     * @param {Exercise} sourceExercise - Exercise the teams should be transferred from
+     * @param {Exercise} exercise - Exercise the teams should be imported into
+     * @param {Exercise} sourceExercise - Exercise the teams should be imported from
      * @param {TeamImportStrategyType} importStrategyType - Strategy to use for the import
      */
-    importTeamsFromSourceExercise(exercise: Exercise, sourceExercise: Exercise, importStrategy: TeamImportStrategyType): Observable<HttpResponse<Team[]>>;
+    importTeamsFromSourceExercise(exercise: Exercise, sourceExercise: Exercise, importStrategyType: TeamImportStrategyType): Observable<HttpResponse<Team[]>>;
+
+    findCourseWithExercisesAndParticipationsForTeam(course: Course, team: Team): Observable<HttpResponse<Course>>;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -135,12 +137,12 @@ export class TeamService implements ITeamService {
     }
 
     /**
-     * Check if a given short team name exists in an exercise
-     * @param {Exercise} exercise - Exercise to search through
+     * Check if a given team short name exists in a course
+     * @param {Course} course - Course in which to search
      * @param {string} shortName - Short name to search for
      */
-    existsByShortName(exercise: Exercise, shortName: string): Observable<HttpResponse<boolean>> {
-        return this.http.get<boolean>(`${TeamService.resourceUrl(exercise.id)}/exists?shortName=${shortName}`, { observe: 'response' });
+    existsByShortName(course: Course, shortName: string): Observable<HttpResponse<boolean>> {
+        return this.http.get<boolean>(`${SERVER_API_URL}api/courses/${course.id}/teams/exists?shortName=${shortName}`, { observe: 'response' });
     }
 
     /**
@@ -156,8 +158,8 @@ export class TeamService implements ITeamService {
 
     /**
      * Import the teams of an existing source exercise
-     * @param {Exercise} exercise - Exercise the teams should be transferred to
-     * @param {Exercise} sourceExercise - Exercise the teams should be transferred from
+     * @param {Exercise} exercise - Exercise the teams should be imported into
+     * @param {Exercise} sourceExercise - Exercise the teams should be imported from
      * @param {TeamImportStrategyType} importStrategyType - Strategy to use for the import
      */
     importTeamsFromSourceExercise(exercise: Exercise, sourceExercise: Exercise, importStrategyType: TeamImportStrategyType) {
@@ -166,6 +168,10 @@ export class TeamService implements ITeamService {
             {},
             { observe: 'response' },
         );
+    }
+
+    findCourseWithExercisesAndParticipationsForTeam(course: Course, team: Team): Observable<HttpResponse<Course>> {
+        return this.http.get<Course>(`${SERVER_API_URL}api/courses/${course.id}/teams/${team.shortName}/with-exercises-and-participations`, { observe: 'response' });
     }
 
     /**

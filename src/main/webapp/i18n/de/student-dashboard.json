@@ -138,15 +138,18 @@
                 "practice": "Übung",
                 "faq": {
                     "header": "Fragen und Antworten",
+                    "show": "Antworten anzeigen",
+                    "hide": "Antworten einklappen",
                     "noQuestions": "Es wurden noch keine Fragen gestellt.",
-                    "addNewQuestion": "+ Eine neue Frage stellen",
+                    "addNewQuestion": "Eine neue Frage stellen",
                     "newQuestionLabel": "Neue Frage",
+                    "newAnswerLabel": "Neue Frage",
                     "answerLabel": "Antwort",
                     "questionLabel": "Frage",
                     "approvedLabel": "Von einem Tutor bestätigt",
                     "answerNow": "Jetzt beantworten",
                     "noAnswers": "Diese Frage wurde noch nicht beantwortet.",
-                    "answerCount": "Antworten: {{count}}",
+                    "answerCount": "Zeige Antworten ({{count}})",
                     "yourQuestion": "Deine Frage",
                     "cancel": "Abbrechen",
                     "addQuestion": "Frage hinzufügen",
@@ -160,6 +163,7 @@
                     "confirmDeleteAnswer": "Bitte bestätige, dass du deine Antwort löschen möchtest!",
                     "editAnswer": "Antwort bearbeiten",
                     "approveAnswer": "Antwort bestätigen",
+                    "unapproveAnswer": "Antwort nicht bestätigen",
                     "hideAnswers": "Weniger Anworten anzeigen",
                     "showAnswers": "Weitere Anworten anzeigen ({{count}})"
                 }
