@@ -45,6 +45,7 @@
             "dueDateError": "Abgabedatum muss nach dem Veröffentlichungsdatum sein. Bitte überprüfe deine Auswahl nochmal",
             "assessmentDueDate": "Abgabedatum der Bewertung",
             "assessmentDateError": "Abgabedatum der Bewertung muss nach dem Veröffentlichungs- und Abgabedatum sein. Bitte überprüfe deine Auswahl nochmal",
+            "dateNotSet": "Kein Datum gesetzt",
             "maxScore": "Maximale Punktzahl",
             "difficulty": "Schwierigkeit",
             "noLevel": "Keine Angabe",
