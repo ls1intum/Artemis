@@ -14,7 +14,14 @@
     (onAdd)="onItemAdded($event)"
     (onRemove)="onItemRemove($event)"
 >
-    <tag-input-dropdown [focusFirstElement]="true" identifyBy="category" displayBy="category" [zIndex]="10000" [autocompleteItems]="uniqueCategories"></tag-input-dropdown>
+    <tag-input-dropdown
+        [focusFirstElement]="true"
+        [showDropdownIfEmpty]="true"
+        identifyBy="category"
+        displayBy="category"
+        [zIndex]="10000"
+        [autocompleteItems]="uniqueCategories"
+    ></tag-input-dropdown>
     <ng-template let-item="item" let-index="index">
         <div class="custom-tag" [ngStyle]="{ backgroundColor: item.color }">
             <span (click)="openColorSelector($event, item)">
