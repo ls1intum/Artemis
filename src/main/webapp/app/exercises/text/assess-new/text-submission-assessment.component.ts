@@ -118,10 +118,6 @@ export class TextSubmissionAssessmentComponent implements OnInit {
         return this.activatedRoute.routeConfig?.path === NEW_ASSESSMENT_PATH;
     }
 
-    navigateBack(): void {
-        history.back();
-    }
-
     save(): void {
         if (!this.assessmentsAreValid) {
             this.jhiAlertService.error('artemisApp.textAssessment.error.invalidAssessments');
