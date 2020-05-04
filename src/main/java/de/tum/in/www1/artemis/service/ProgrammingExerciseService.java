@@ -95,7 +95,6 @@ public class ProgrammingExerciseService {
         this.groupNotificationService = groupNotificationService;
     }
 
-    // TODO We too many many generic throws Exception declarations.
     /**
      * Setups the context of a new programming exercise. This includes:
      * <ul>
