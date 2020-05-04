@@ -300,7 +300,7 @@ function createCorrectMappings(dragItems: Map<string, DragItem>, dropLocations: 
         if (!dragElement || !dragElement.name) {
             continue;
         }
-        for (const [dropLocationElementId, _] of dropLocations.entries()) {
+        for (const [dropLocationElementId] of dropLocations.entries()) {
             const dropElement = textualElements.find((element) => element.id === dropLocationElementId);
             if (!dropElement || dropElement.id === dragElement.id || dropElement.owner === dragElement.owner || dropElement.name !== dragElement.name) {
                 continue;

@@ -61,7 +61,7 @@ export class ExerciseHintUpdateComponent implements OnInit, OnDestroy {
                             return of(null);
                         }),
                     )
-                    .subscribe((res: Exercise) => {
+                    .subscribe(() => {
                         this.isLoading = false;
                     });
             } else {

@@ -120,7 +120,7 @@ export class StudentQuestionRowComponent implements OnInit, OnDestroy {
      */
     saveQuestion(): void {
         this.studentQuestion.questionText = this.studentQuestionText;
-        this.studentQuestionService.update(this.studentQuestion).subscribe((studentQuestionResponse: HttpResponse<StudentQuestion>) => {
+        this.studentQuestionService.update(this.studentQuestion).subscribe(() => {
             this.studentQuestionText = null;
             this.isEditMode = false;
         });
@@ -130,7 +130,7 @@ export class StudentQuestionRowComponent implements OnInit, OnDestroy {
      * deletes the studentQuestion
      */
     deleteQuestion(): void {
-        this.studentQuestionService.delete(this.studentQuestion.id).subscribe((res: HttpResponse<any>) => {
+        this.studentQuestionService.delete(this.studentQuestion.id).subscribe(() => {
             this.interactQuestion.emit({
                 name: QuestionActionName.DELETE,
                 studentQuestion: this.studentQuestion,
@@ -165,7 +165,7 @@ export class StudentQuestionRowComponent implements OnInit, OnDestroy {
      */
     saveAnswer(): void {
         this.selectedQuestionAnswer!.answerText = this.questionAnswerText;
-        this.studentQuestionAnswerService.update(this.selectedQuestionAnswer!).subscribe((studentAnswerResponse: HttpResponse<StudentQuestionAnswer>) => {
+        this.studentQuestionAnswerService.update(this.selectedQuestionAnswer!).subscribe(() => {
             this.questionAnswerText = null;
             this.selectedQuestionAnswer = null;
             this.isAnswerMode = false;
@@ -174,10 +174,10 @@ export class StudentQuestionRowComponent implements OnInit, OnDestroy {
 
     /**
      * Takes a studentAnswer and deletes it
-     * @param   {studentQuestionAnswer} studentAnswer
+     * @param   {StudentQuestionAnswer} studentAnswer
      */
     deleteAnswer(studentAnswer: StudentQuestionAnswer): void {
-        this.studentQuestionAnswerService.delete(studentAnswer.id).subscribe((res: HttpResponse<any>) => {
+        this.studentQuestionAnswerService.delete(studentAnswer.id).subscribe(() => {
             this.studentQuestion.answers = this.studentQuestion.answers.filter((el) => el.id !== studentAnswer.id);
             this.sortQuestionAnswers();
         });
@@ -185,11 +185,11 @@ export class StudentQuestionRowComponent implements OnInit, OnDestroy {
 
     /**
      * Takes a studentAnswer and toggles the tutorApproved field
-     * @param   {studentQuestionAnswer} studentAnswer
+     * @param   {StudentQuestionAnswer} studentAnswer
      */
     toggleAnswerTutorApproved(studentAnswer: StudentQuestionAnswer): void {
         studentAnswer.tutorApproved = !studentAnswer.tutorApproved;
-        this.studentQuestionAnswerService.update(studentAnswer).subscribe((studentAnswerResponse: HttpResponse<StudentQuestionAnswer>) => {
+        this.studentQuestionAnswerService.update(studentAnswer).subscribe(() => {
             this.sortQuestionAnswers();
         });
     }

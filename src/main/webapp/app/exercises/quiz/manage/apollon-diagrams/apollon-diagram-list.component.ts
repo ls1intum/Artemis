@@ -36,7 +36,7 @@ export class ApollonDiagramListComponent implements OnInit {
             (response) => {
                 this.apollonDiagrams = response.body!;
             },
-            (response) => {
+            () => {
                 this.jhiAlertService.error('artemisApp.apollonDiagram.home.error.loading');
             },
         );
@@ -58,13 +58,13 @@ export class ApollonDiagramListComponent implements OnInit {
      */
     delete(apollonDiagram: ApollonDiagram) {
         this.apollonDiagramsService.delete(apollonDiagram.id).subscribe(
-            (response) => {
+            () => {
                 this.jhiAlertService.success('artemisApp.apollonDiagram.delete.success', { title: apollonDiagram.title });
                 this.apollonDiagrams = this.apollonDiagrams.filter((diagram) => {
                     return diagram.id !== apollonDiagram.id;
                 });
             },
-            (response) => {
+            () => {
                 this.jhiAlertService.error('artemisApp.apollonDiagram.delete.error', { title: apollonDiagram.title });
             },
         );

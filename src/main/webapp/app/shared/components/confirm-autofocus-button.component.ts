@@ -48,10 +48,10 @@ export class ConfirmAutofocusButtonComponent {
         modalRef.componentInstance.text = this.confirmationText;
         modalRef.componentInstance.title = this.confirmationTitle;
         modalRef.result.then(
-            (result) => {
+            () => {
                 this.onConfirm.emit();
             },
-            (reason) => {
+            () => {
                 this.onCancel.emit();
             },
         );

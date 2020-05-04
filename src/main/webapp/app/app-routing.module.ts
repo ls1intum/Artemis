@@ -28,8 +28,7 @@ const LAYOUT_ROUTES: Routes = [navbarRoute, ...errorRoute];
                     loadChildren: () => import('./exercises/programming/manage/code-editor/code-editor-management.module').then((m) => m.ArtemisCodeEditorManagementModule),
                 },
                 {
-                    // TODO:  Remove '-new' when migrating to Text Assessment V2
-                    path: 'course-management/:courseId/text-exercises/:exerciseId/submissions-new',
+                    path: 'course-management/:courseId/text-exercises/:exerciseId/submissions',
                     loadChildren: () => import('./exercises/text/assess-new/text-submission-assessment.module').then((m) => m.ArtemisTextSubmissionAssessmentModule),
                 },
                 // ===== COURSES =====

@@ -4,7 +4,7 @@ import { take, tap } from 'rxjs/internal/operators';
 import { Direction, Orientation, OverlayPosition, UserInteractionEvent } from './guided-tour.constants';
 import { GuidedTourService } from './guided-tour.service';
 import { AccountService } from 'app/core/auth/account.service';
-import { ImageTourStep, TextTourStep, TourStep, VideoTourStep } from 'app/guided-tour/guided-tour-step.model';
+import { ImageTourStep, TextTourStep, VideoTourStep } from 'app/guided-tour/guided-tour-step.model';
 import { cancelTour, completedTour } from 'app/guided-tour/tours/general-tour';
 import { calculateLeftOffset, calculateTopOffset, isElementInViewPortHorizontally } from 'app/guided-tour/guided-tour.utils';
 
@@ -682,7 +682,7 @@ export class GuidedTourComponent implements AfterViewInit, OnDestroy {
             this.guidedTourService
                 .observeMutations(alertElement, { childList: true })
                 .pipe(take(1))
-                .subscribe((mutation) => {
+                .subscribe(() => {
                     if (this.getSelectedElement()) {
                         this.scrollToAndSetElement();
                     }

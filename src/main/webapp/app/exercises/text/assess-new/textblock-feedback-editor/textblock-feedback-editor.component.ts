@@ -1,7 +1,8 @@
-import { Component, AfterViewInit, HostBinding, Input, Output, EventEmitter, ViewChild, ElementRef, HostListener } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, EventEmitter, HostBinding, Input, Output, ViewChild } from '@angular/core';
 import { TextBlock } from 'app/entities/text-block.model';
-import { Feedback } from 'app/entities/feedback.model';
+import { Feedback, FeedbackType } from 'app/entities/feedback.model';
 import { ConfirmIconComponent } from 'app/shared/confirm-icon/confirm-icon.component';
+import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
 
 @Component({
     selector: 'jhi-textblock-feedback-editor',
@@ -9,6 +10,8 @@ import { ConfirmIconComponent } from 'app/shared/confirm-icon/confirm-icon.compo
     styleUrls: ['./textblock-feedback-editor.component.scss'],
 })
 export class TextblockFeedbackEditorComponent implements AfterViewInit {
+    readonly FeedbackType = FeedbackType;
+
     @Input() textBlock: TextBlock;
     @Input() feedback: Feedback = new Feedback();
     @Output() feedbackChange = new EventEmitter<Feedback>();
@@ -19,15 +22,20 @@ export class TextblockFeedbackEditorComponent implements AfterViewInit {
     private textareaElement: HTMLTextAreaElement;
 
     @HostBinding('class.alert') @HostBinding('class.alert-dismissible') readonly classes = true;
+
     @HostBinding('class.alert-secondary') get setNeutralFeedbackClass(): boolean {
         return this.feedback.credits === 0;
     }
+
     @HostBinding('class.alert-success') get setPositiveFeedbackClass(): boolean {
         return this.feedback.credits > 0;
     }
+
     @HostBinding('class.alert-danger') get setNegativeFeedbackClass(): boolean {
         return this.feedback.credits < 0;
     }
+
+    constructor(public structuredGradingCriterionService: StructuredGradingCriterionService) {}
 
     ngAfterViewInit(): void {
         this.textareaElement = this.textareaRef.nativeElement as HTMLTextAreaElement;
@@ -67,6 +75,7 @@ export class TextblockFeedbackEditorComponent implements AfterViewInit {
     }
 
     didChange(): void {
+        Feedback.updateFeedbackTypeOnChange(this.feedback);
         this.feedbackChange.emit(this.feedback);
     }
 }
