@@ -9,6 +9,7 @@ import java.util.Optional;
 
 import javax.validation.constraints.NotNull;
 
+import de.tum.in.www1.artemis.service.scheduled.TextClusteringScheduleService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -54,9 +55,11 @@ public class TextSubmissionResource {
 
     private final GradingCriterionService gradingCriterionService;
 
+    private final Optional<TextClusteringScheduleService> textClusteringScheduleService;
+
     public TextSubmissionResource(TextSubmissionRepository textSubmissionRepository, ExerciseService exerciseService, TextExerciseService textExerciseService,
             CourseService courseService, AuthorizationCheckService authorizationCheckService, TextSubmissionService textSubmissionService, UserService userService,
-            GradingCriterionService gradingCriterionService) {
+            GradingCriterionService gradingCriterionService, Optional<TextClusteringScheduleService> textClusteringScheduleService) {
         this.textSubmissionRepository = textSubmissionRepository;
         this.exerciseService = exerciseService;
         this.textExerciseService = textExerciseService;
@@ -65,6 +68,7 @@ public class TextSubmissionResource {
         this.textSubmissionService = textSubmissionService;
         this.userService = userService;
         this.gradingCriterionService = gradingCriterionService;
+        this.textClusteringScheduleService = textClusteringScheduleService;
     }
 
     /**
@@ -192,12 +196,15 @@ public class TextSubmissionResource {
      * GET /text-submission-without-assessment : get one textSubmission without assessment.
      *
      * @param exerciseId exerciseID  for which a submission should be returned
+     * TODO: Replace ?head=true with HTTP HEAD request
+     * @param skipAssessmentOrderOptimization optional value to define if the assessment queue should be skipped. Use if only checking for needed assessments.
      * @param lockSubmission optional value to define if the submission should be locked and has the value of false if not set manually
      * @return the ResponseEntity with status 200 (OK) and the list of textSubmissions in body
      */
     @GetMapping(value = "/exercises/{exerciseId}/text-submission-without-assessment")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<TextSubmission> getTextSubmissionWithoutAssessment(@PathVariable Long exerciseId,
+            @RequestParam(value = "head", defaultValue = "false") boolean skipAssessmentOrderOptimization,
             @RequestParam(value = "lock", defaultValue = "false") boolean lockSubmission) {
         log.debug("REST request to get a text submission without assessment");
         Exercise exercise = exerciseService.findOneWithAdditionalElements(exerciseId);
@@ -215,6 +222,11 @@ public class TextSubmissionResource {
             return notFound();
         }
 
+        // Tutors cannot start assessing submissions if Athene is currently processing
+        if (textClusteringScheduleService.isPresent() && textClusteringScheduleService.get().currentlyProcessing((TextExercise) exercise)) {
+            return notFound();
+        }
+
         // Check if the limit of simultaneously locked submissions has been reached
         textSubmissionService.checkSubmissionLockLimit(exercise.getCourse().getId());
 
@@ -223,7 +235,13 @@ public class TextSubmissionResource {
             textSubmission = textSubmissionService.findAndLockTextSubmissionToBeAssessed((TextExercise) exercise);
         }
         else {
-            final Optional<TextSubmission> optionalTextSubmission = this.textSubmissionService.getTextSubmissionWithoutManualResult((TextExercise) exercise);
+            Optional<TextSubmission> optionalTextSubmission;
+            if (skipAssessmentOrderOptimization) {
+                optionalTextSubmission = textSubmissionService.getTextSubmissionWithoutManualResult((TextExercise) exercise, true);
+            }
+            else {
+                optionalTextSubmission = this.textSubmissionService.getTextSubmissionWithoutManualResult((TextExercise) exercise);
+            }
             if (optionalTextSubmission.isEmpty()) {
                 return notFound();
             }

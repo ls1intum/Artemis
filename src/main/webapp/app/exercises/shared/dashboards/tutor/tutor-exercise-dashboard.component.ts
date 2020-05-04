@@ -289,7 +289,7 @@ export class TutorExerciseDashboardComponent implements OnInit, AfterViewInit {
         let submissionObservable: Observable<Submission> = of();
         switch (this.exercise.type) {
             case ExerciseType.TEXT:
-                submissionObservable = this.textSubmissionService.getTextSubmissionForExerciseWithoutAssessment(this.exerciseId);
+                submissionObservable = this.textSubmissionService.getTextSubmissionForExerciseWithoutAssessment(this.exerciseId, 'head');
                 break;
             case ExerciseType.MODELING:
                 submissionObservable = this.modelingSubmissionService.getModelingSubmissionForExerciseWithoutAssessment(this.exerciseId);
@@ -397,7 +397,7 @@ export class TutorExerciseDashboardComponent implements OnInit, AfterViewInit {
         if (this.exercise.type === ExerciseType.PROGRAMMING) {
             this.openManualResultDialog(complaint.result);
         } else {
-            this.openAssessmentEditor(complaint.result.submission!.id, false);
+            this.openAssessmentEditorForSubmission(complaint.result.submission!);
         }
     }
 
