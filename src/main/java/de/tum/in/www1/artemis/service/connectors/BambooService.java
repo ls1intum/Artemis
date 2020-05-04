@@ -106,7 +106,7 @@ public class BambooService implements ContinuousIntegrationService {
      * @return The repository slug
      */
     public String getRepositorySlugFromUrl(URL repositoryUrl) {
-        // https://ga42xab@repobruegge.in.tum.de/scm/EIST2016RME/RMEXERCISE-ga42xab.git
+        // https://ga42xab@bitbucket.ase.in.tum.de/scm/EIST2016RME/RMEXERCISE-ga42xab.git
         String[] urlParts = repositoryUrl.getFile().split("/");
         String repositorySlug = urlParts[urlParts.length - 1];
         if (repositorySlug.endsWith(".git")) {
@@ -127,7 +127,7 @@ public class BambooService implements ContinuousIntegrationService {
      */
     //TODO: this method has moved to BitbucketService, but missed the toUpperCase() there, so we reactivated it here
     private String getProjectKeyFromUrl(URL repositoryUrl) {
-        // https://ga42xab@repobruegge.in.tum.de/scm/EIST2016RME/RMEXERCISE-ga42xab.git
+        // https://ga42xab@bitbucket.ase.in.tum.de/scm/EIST2016RME/RMEXERCISE-ga42xab.git
         return repositoryUrl.getFile().split("/")[2].toUpperCase();
     }
 
