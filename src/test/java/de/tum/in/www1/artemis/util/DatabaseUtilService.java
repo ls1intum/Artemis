@@ -509,6 +509,28 @@ public class DatabaseUtilService {
         return studentParticipationRepo.findWithEagerSubmissionsAndResultsAssessorsById(storedParticipation.get().getId()).get();
     }
 
+    /**
+     * Stores participation of the team with the given id for the given exercise
+     *
+     * @param exercise the exercise for which the participation will be created
+     * @param teamId   id of the team
+     * @return eagerly loaded representation of the participation object stored in the database
+     */
+    public StudentParticipation addTeamParticipationForExercise(Exercise exercise, long teamId) {
+        Optional<StudentParticipation> storedParticipation = studentParticipationRepo.findByExerciseIdAndTeamId(exercise.getId(), teamId);
+        if (storedParticipation.isEmpty()) {
+            Team team = teamRepo.findById(teamId).orElseThrow();
+            StudentParticipation participation = new StudentParticipation();
+            participation.setInitializationDate(ZonedDateTime.now());
+            participation.setParticipant(team);
+            participation.setExercise(exercise);
+            studentParticipationRepo.save(participation);
+            storedParticipation = studentParticipationRepo.findByExerciseIdAndTeamId(exercise.getId(), teamId);
+            assertThat(storedParticipation).isPresent();
+        }
+        return studentParticipationRepo.findWithEagerSubmissionsAndResultsAssessorsById(storedParticipation.get().getId()).get();
+    }
+
     public ProgrammingExerciseStudentParticipation addStudentParticipationForProgrammingExercise(ProgrammingExercise exercise, String login) {
 
         final var existingParticipation = programmingExerciseStudentParticipationRepo.findByExerciseIdAndStudentLogin(exercise.getId(), login);

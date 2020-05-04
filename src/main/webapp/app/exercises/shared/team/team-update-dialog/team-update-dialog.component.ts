@@ -229,7 +229,7 @@ export class TeamUpdateDialogComponent implements OnInit {
         shortName$
             .pipe(
                 debounceTime(500),
-                switchMap((shortName) => this.teamService.existsByShortName(this.exercise, shortName)),
+                switchMap((shortName) => this.teamService.existsByShortName(this.exercise.course!, shortName)),
             )
             .subscribe(
                 (alreadyTakenResponse) => {
