@@ -21,8 +21,10 @@
                         <fa-icon [icon]="controls.iconForSortPropField('title')"></fa-icon>
                     </span>
                 </ng-template>
-                <ng-template ngx-datatable-cell-template let-value="value">
-                    {{ value }}
+                <ng-template ngx-datatable-cell-template let-value="row">
+                    <a [routerLink]="['/courses', course.id, 'exercises', value.id]">
+                        {{ value.title }}
+                    </a>
                 </ng-template>
             </ngx-datatable-column>
 
@@ -33,6 +35,20 @@
                             Release Date
                         </span>
                         <fa-icon [icon]="controls.iconForSortPropField('releaseDate')"></fa-icon>
+                    </span>
+                </ng-template>
+                <ng-template ngx-datatable-cell-template let-value="value" class="mr-5">
+                    {{ value ? (moment(value) | date: 'dd.MM.yyyy') : ('artemisApp.exercise.dateNotSet' | translate) }}
+                </ng-template>
+            </ngx-datatable-column>
+
+            <ngx-datatable-column prop="dueDate" [minWidth]="160" [width]="160" [maxWidth]="160" [frozenLeft]="true">
+                <ng-template ngx-datatable-header-template>
+                    <span class="datatable-header-cell-wrapper" (click)="controls.onSort('dueDate')">
+                        <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.exercise.dueDate">
+                            Due Date
+                        </span>
+                        <fa-icon [icon]="controls.iconForSortPropField('dueDate')"></fa-icon>
                     </span>
                 </ng-template>
                 <ng-template ngx-datatable-cell-template let-value="value" class="mr-5">
@@ -71,9 +87,9 @@
                 <ng-template ngx-datatable-cell-template let-value="row">
                     <ng-container *ngIf="value.participation; else participationIdUnavailable">
                         <div *ngIf="exercise.isAtLeastInstructor; else displayId">
-                            <a [routerLink]="['/course-management', course.id, 'exercises', value.id, 'participations', value.participation.id, 'submissions']">{{
-                                value.participation.id
-                            }}</a>
+                            <a [routerLink]="['/course-management', course.id, 'exercises', value.id, 'participations', value.participation.id, 'submissions']">
+                                {{ value.participation.id }}
+                            </a>
                         </div>
                         <ng-template #displayId>
                             {{ value.participation.id }}

@@ -343,7 +343,7 @@ public class TeamResource {
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Course> getCourseWithExercisesAndParticipationsForTeam(@PathVariable Long courseId, @PathVariable String teamShortName) {
         log.debug("REST request to get Course {} with exercises and participations for Team with short name {}", courseId, teamShortName);
-        Course course = courseService.findOneWithExercises(courseId);
+        Course course = courseService.findOneWithTeamExercises(courseId);
         User user = userService.getUserWithGroupsAndAuthorities();
         if (!(authCheckService.isAtLeastTeachingAssistantInCourse(course, user) || authCheckService.isStudentInTeam(course, teamShortName, user))) {
             throw new AccessForbiddenException("You are not allowed to access this resource");

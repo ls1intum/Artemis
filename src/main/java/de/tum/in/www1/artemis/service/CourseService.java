@@ -144,6 +144,17 @@ public class CourseService {
         return courseRepository.findWithEagerExercisesById(courseId);
     }
 
+    /**
+     * Get one course by id with all its team-based exercises.
+     *
+     * @param courseId the id of the entity
+     * @return the entity
+     */
+    public Course findOneWithTeamExercises(long courseId) {
+        log.debug("Request to get Course : {}", courseId);
+        return courseRepository.findWithEagerTeamExercisesById(courseId);
+    }
+
     public Course findOneWithExercisesAndLectures(long courseId) {
         log.debug("Request to get Course : {}", courseId);
         return courseRepository.findWithEagerExercisesAndLecturesById(courseId);
