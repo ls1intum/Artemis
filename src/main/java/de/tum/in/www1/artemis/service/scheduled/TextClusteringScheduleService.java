@@ -129,7 +129,9 @@ public class TextClusteringScheduleService {
      */
     public boolean currentlyProcessing(TextExercise exercise) {
         final ScheduledFuture future = scheduledClusteringTasks.get(exercise.getId());
-        if (future == null) return false;
+        if (future == null) {
+            return false;
+        }
 
         final long delay = future.getDelay(TimeUnit.NANOSECONDS);
         final boolean done = future.isDone();
