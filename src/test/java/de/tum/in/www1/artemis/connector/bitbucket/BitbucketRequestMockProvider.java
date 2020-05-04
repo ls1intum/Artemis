@@ -178,7 +178,7 @@ public class BitbucketRequestMockProvider {
      * @return The repository slug
      */
     public String getRepositorySlugFromUrl(URL repositoryUrl) {
-        // https://ga42xab@repobruegge.in.tum.de/scm/EIST2016RME/RMEXERCISE-ga42xab.git
+        // https://ga42xab@bitbucket.ase.in.tum.de/scm/EIST2016RME/RMEXERCISE-ga42xab.git
         String[] urlParts = repositoryUrl.getFile().split("/");
         String repositorySlug = urlParts[urlParts.length - 1];
         if (repositorySlug.endsWith(".git")) {

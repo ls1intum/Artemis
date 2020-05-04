@@ -283,14 +283,14 @@ public class BitbucketService extends AbstractVersionControlService {
      *
      * TODO: rework this!
      *
-     * Example: https://ga42xab@repobruegge.in.tum.de/scm/EIST2016RME/RMEXERCISE-ga42xab.git will return EIST2016RME
+     * Example: https://ga42xab@bitbucket.ase.in.tum.de/scm/EIST2016RME/RMEXERCISE-ga42xab.git will return EIST2016RME
      *
      * @param repositoryUrl The complete repository-url (including protocol, host and the complete path)
      * @return The project key
      * @throws BitbucketException if the URL is invalid and no project key could be extracted
      */
     public String getProjectKeyFromUrl(URL repositoryUrl) throws BitbucketException {
-        // https://ga42xab@repobruegge.in.tum.de/scm/EIST2016RME/RMEXERCISE-ga42xab.git
+        // https://ga42xab@bitbucket.ase.in.tum.de/scm/EIST2016RME/RMEXERCISE-ga42xab.git
         String[] urlParts = repositoryUrl.getFile().split("/");
         if (urlParts.length > 2) {
             return urlParts[2];
@@ -304,7 +304,7 @@ public class BitbucketService extends AbstractVersionControlService {
      * TODO: this is duplicated code from BambooService. Think about how to reuse it while being able to test and mock it properly
      *
      * Gets the repository slug from the given URL.
-     * Example: https://ga42xab@repobruegge.in.tum.de/scm/EIST2016RME/RMEXERCISE-ga42xab.git will return RMEXERCISE-ga42xab
+     * Example: https://ga42xab@bitbucket.ase.in.tum.de/scm/EIST2016RME/RMEXERCISE-ga42xab.git will return RMEXERCISE-ga42xab
      *
      * @param repositoryUrl The complete repository-url (including protocol, host and the complete path)
      * @return The repository slug
