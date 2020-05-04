@@ -1,0 +1,206 @@
+<!-- unexpanded answers -->
+<div class="row mb-2 clickable question-row" *ngIf="!isExpanded">
+    <div class="col-12">
+        <jhi-student-question
+            [studentQuestion]="studentQuestion"
+            [user]="user"
+            [isAtLeastTutorInCourse]="isAtLeastTutorInCourse"
+            (interactQuestion)="interactQuestion($event)"
+        ></jhi-student-question>
+    </div>
+    <div class="col-12">
+        <div class="row">
+            <div class="col-auto answers-line p-0"></div>
+            <div class="col" *ngIf="studentQuestion.answers && studentQuestion.answers.length !== 0">
+                <div class="row clickable mb-1" [ngbTooltip]="'artemisApp.courseOverview.exerciseDetails.faq.show' | translate" (click)="isExpanded = true">
+                    <div class="col-auto pl-0">
+                        <span class="question-subtitle">{{
+                            'artemisApp.courseOverview.exerciseDetails.faq.answerCount' | translate: { count: studentQuestion.answers ? studentQuestion.answers.length : 0 }
+                        }}</span>
+                    </div>
+                    <div class="col px-0 line"></div>
+                    <div class="col-auto">
+                        <fa-icon class="clickable" [icon]="'angle-down'"></fa-icon>
+                    </div>
+                    <div class="col pl-0 line"></div>
+                </div>
+                <!-- new answer -->
+                <div class="row my-2" *ngIf="!isAnswerMode">
+                    <div class="col-12 px-0">
+                        <button class="btn btn-sm btn-outline-secondary" (click)="isAnswerMode = true">
+                            {{ 'artemisApp.courseOverview.exerciseDetails.faq.answerNow' | translate }}
+                        </button>
+                    </div>
+                </div>
+                <ng-container *ngIf="isAnswerMode">
+                    <div class="row mb-2">
+                        <div class="col-12">
+                            <div class="row pl-2 mb-1">
+                                <div class="col-auto px-0">
+                                    <fa-icon [icon]="'comment'"></fa-icon>
+                                </div>
+                                <div class="col">
+                                    <span class="form-control-label question-subtitle">{{ 'artemisApp.courseOverview.exerciseDetails.faq.newAnswerLabel' | translate }}</span>
+                                </div>
+                            </div>
+                            <div class="row px-0">
+                                <jhi-markdown-editor
+                                    class="markdown-editor background-editor-color w-100"
+                                    [(markdown)]="questionAnswerText"
+                                    [editorMode]="EditorMode.LATEX"
+                                    [enableResize]="true"
+                                    [metaCommands]="[]"
+                                ></jhi-markdown-editor>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-12 d-flex justify-content-between">
+                        <button class="btn btn-sm btn-outline-secondary" (click)="isAnswerMode = false">
+                            {{ 'artemisApp.courseOverview.exerciseDetails.faq.cancel' | translate }}
+                        </button>
+                        <button class="btn btn-sm btn-outline-secondary" (click)="addAnswer()">{{ 'artemisApp.courseOverview.exerciseDetails.faq.addAnswer' | translate }}</button>
+                    </div>
+                </ng-container>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- expanded answers -->
+<div class="row mb-2">
+    <div class="col-12 question-row">
+        <jhi-student-question
+            *ngIf="isExpanded"
+            [studentQuestion]="studentQuestion"
+            [user]="user"
+            [isAtLeastTutorInCourse]="isAtLeastTutorInCourse"
+            (interactQuestion)="interactQuestion($event)"
+        ></jhi-student-question>
+        <div class="row">
+            <div class="col-auto answers-line p-0"></div>
+            <div class="col">
+                <!-- hide answers -->
+                <div
+                    class="row clickable mb-1"
+                    *ngIf="isExpanded && studentQuestion.answers && studentQuestion.answers.length !== 0"
+                    [ngbTooltip]="'artemisApp.courseOverview.exerciseDetails.faq.hide' | translate"
+                    (click)="isExpanded = false"
+                >
+                    <div class="col-auto pl-0">
+                        <span class="question-subtitle">{{ 'artemisApp.courseOverview.exerciseDetails.faq.hide' | translate }}</span>
+                    </div>
+                    <div class="col px-0 line"></div>
+                    <div class="col-auto">
+                        <fa-icon class="clickable" [icon]="'angle-up'"></fa-icon>
+                    </div>
+                    <div class="col pl-0 line"></div>
+                </div>
+                <div class="row m-0">
+                    <div class="col-12 px-0">
+                        <!-- approved answers -->
+                        <ng-container *ngIf="isExpanded">
+                            <jhi-student-question-answer
+                                *ngFor="let questionAnswer of approvedQuestionAnswers"
+                                [studentQuestionAnswer]="questionAnswer"
+                                [user]="user"
+                                [isAtLeastTutorInCourse]="isAtLeastTutorInCourse"
+                                (interactAnswer)="interactAnswer($event)"
+                            ></jhi-student-question-answer>
+                        </ng-container>
+                        <!-- show more answers -->
+                        <div
+                            class="row mb-1 clickable"
+                            *ngIf="isExpanded && approvedQuestionAnswers.length !== 0 && sortedQuestionAnswers.length !== 0 && !showOtherAnswers"
+                            [ngbTooltip]="'artemisApp.courseOverview.exerciseDetails.faq.showAnswers' | translate: { count: sortedQuestionAnswers.length }"
+                            (click)="showOtherAnswers = !showOtherAnswers"
+                        >
+                            <div class="col-auto overflow-parent pl-0">
+                                <div class="overflow-ellipsis question-subtitle">
+                                    {{ 'artemisApp.courseOverview.exerciseDetails.faq.showAnswers' | translate: { count: sortedQuestionAnswers.length } }}
+                                </div>
+                            </div>
+                            <div class="col px-0 line"></div>
+                            <div class="col-auto">
+                                <fa-icon [icon]="'angle-down'"></fa-icon>
+                            </div>
+                            <div class="col pl-0 line"></div>
+                        </div>
+                        <!-- show less answers -->
+                        <ng-container *ngIf="isExpanded && (approvedQuestionAnswers.length === 0 || showOtherAnswers)">
+                            <ng-container *ngIf="approvedQuestionAnswers.length !== 0 && sortedQuestionAnswers.length !== 0 && showOtherAnswers">
+                                <div
+                                    class="row mb-1 clickable"
+                                    [ngbTooltip]="'artemisApp.courseOverview.exerciseDetails.faq.hideAnswers' | translate"
+                                    (click)="showOtherAnswers = !showOtherAnswers"
+                                >
+                                    <div class="col-auto overflow-parent pl-0">
+                                        <div class="overflow-ellipsis question-subtitle">{{ 'artemisApp.courseOverview.exerciseDetails.faq.hideAnswers' | translate }}</div>
+                                    </div>
+                                    <div class="col px-0 line"></div>
+                                    <div class="col-auto">
+                                        <fa-icon [icon]="'angle-up'"></fa-icon>
+                                    </div>
+                                    <div class="col pl-0 line"></div>
+                                </div>
+                            </ng-container>
+                            <!-- unapproved answers -->
+                            <jhi-student-question-answer
+                                *ngFor="let questionAnswer of sortedQuestionAnswers"
+                                [studentQuestionAnswer]="questionAnswer"
+                                [user]="user"
+                                [isAtLeastTutorInCourse]="isAtLeastTutorInCourse"
+                                (interactAnswer)="interactAnswer($event)"
+                            ></jhi-student-question-answer>
+                        </ng-container>
+                        <!-- no answers -->
+                        <div class="row mb-3" *ngIf="!studentQuestion.answers || studentQuestion.answers.length === 0">
+                            <div class="col-12">
+                                <span>{{ 'artemisApp.courseOverview.exerciseDetails.faq.noAnswers' | translate }}</span>
+                            </div>
+                        </div>
+                        <!-- new answer -->
+                        <div class="row my-2" *ngIf="isExpanded && !isAnswerMode">
+                            <div class="col-12 px-0">
+                                <button class="btn btn-sm btn-outline-secondary" (click)="isAnswerMode = true">
+                                    {{ 'artemisApp.courseOverview.exerciseDetails.faq.answerNow' | translate }}
+                                </button>
+                            </div>
+                        </div>
+                        <ng-container *ngIf="isExpanded && isAnswerMode">
+                            <div class="row mb-2">
+                                <div class="col-12">
+                                    <div class="row pl-2 mb-1">
+                                        <div class="col-auto px-0">
+                                            <fa-icon [icon]="'comment'"></fa-icon>
+                                        </div>
+                                        <div class="col">
+                                            <span class="form-control-label question-subtitle">{{
+                                                'artemisApp.courseOverview.exerciseDetails.faq.newAnswerLabel' | translate
+                                            }}</span>
+                                        </div>
+                                    </div>
+                                    <div class="row px-0">
+                                        <jhi-markdown-editor
+                                            class="markdown-editor background-editor-color w-100"
+                                            [(markdown)]="questionAnswerText"
+                                            [editorMode]="EditorMode.LATEX"
+                                            [enableResize]="true"
+                                            [metaCommands]="[]"
+                                        ></jhi-markdown-editor>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-12 d-flex justify-content-between">
+                                <button class="btn btn-sm btn-outline-secondary" (click)="isAnswerMode = false">
+                                    {{ 'artemisApp.courseOverview.exerciseDetails.faq.cancel' | translate }}
+                                </button>
+                                <button class="btn btn-sm btn-outline-secondary" (click)="addAnswer()">
+                                    {{ 'artemisApp.courseOverview.exerciseDetails.faq.addAnswer' | translate }}
+                                </button>
+                            </div>
+                        </ng-container>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
