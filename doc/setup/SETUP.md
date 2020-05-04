@@ -10,7 +10,7 @@ Before you can build Artemis, you must install and configure the following depen
 1. [Java JDK](https://www.oracle.com/java/technologies/javase-downloads.html): We use Java (>= JDK 14) to develop and run the Artemis application server which is based on [Spring Boot](http://projects.spring.io/spring-boot).
 2. [MySQL Database Server 8](https://dev.mysql.com/downloads/mysql): Artemis uses Hibernate to store entities in a MySQL database. Download and install the MySQL Community Server (8.0.x) and configure the 'root' user with an empty password. (In case you want to use a different password, make sure to change the value in application-dev.yml and in liquibase.gradle). The required Artemis scheme will be created / updated automatically at startup time of the server application. Alternatively, you can run the MySQL Database Server inside a Docker container using e.g. ```docker-compose -f src/main/docker/mysql.yml up```
 3. [Node.js](https://nodejs.org): We use Node (>=13.12.0) to compile and run the client Angular application. Depending on your system, you can install Node either from source or as a pre-packaged bundle.
-4. [Yarn](https://yarnpkg.com): We use Yarn 1.x (>=1.22.0) to manage client side Node dependencies.
+4. [Yarn](https://classic.yarnpkg.com): We use Yarn 1.x (>=1.22.0) to manage client side Node dependencies.
 Depending on your system, you can install Yarn either from source or as a pre-packaged bundle.
 
 ### Server Setup
