@@ -164,9 +164,9 @@ export class TextSubmissionAssessmentComponent implements OnInit {
         }
     }
 
-    nextSubmission(): void {
+    async nextSubmission(): Promise<void> {
         this.busy = true;
-        this.router.navigate(['course-management', this.exercise?.course?.id, 'text-exercises', this.exercise?.id, 'submissions', 'new', 'assessment']);
+        await this.router.navigate(['/course-management', this.exercise?.course?.id, 'text-exercises', this.exercise?.id, 'submissions', 'new', 'assessment']);
     }
 
     /**
