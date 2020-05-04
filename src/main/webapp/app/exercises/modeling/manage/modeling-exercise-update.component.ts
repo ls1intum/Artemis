@@ -1,11 +1,11 @@
-import { Component, OnInit, Input } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs/Observable';
 import { JhiEventManager } from 'ng-jhipster';
-import { ModelingExercise } from '../../../entities/modeling-exercise.model';
+import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { ModelingExerciseService } from './modeling-exercise.service';
-import { CourseManagementService } from '../../../course/manage/course-management.service';
+import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ExampleSubmissionService } from 'app/exercises/shared/example-submission/example-submission.service';
 import { MAX_SCORE_PATTERN } from 'app/app.constants';
 import { WindowRef } from 'app/core/websocket/window.service';
@@ -126,12 +126,12 @@ export class ModelingExerciseUpdateComponent implements OnInit {
 
     private subscribeToSaveResponse(result: Observable<HttpResponse<ModelingExercise>>): void {
         result.subscribe(
-            (res: HttpResponse<ModelingExercise>) => this.onSaveSuccess(res.body!),
-            (res: HttpErrorResponse) => this.onSaveError(),
+            () => this.onSaveSuccess(),
+            () => this.onSaveError(),
         );
     }
 
-    private onSaveSuccess(result: ModelingExercise): void {
+    private onSaveSuccess(): void {
         this.eventManager.broadcast({ name: 'modelingExerciseListModification', content: 'OK' });
         this.isSaving = false;
         this.previousState();

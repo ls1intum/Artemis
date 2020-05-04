@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, EventEmitter, Input, Output, OnChanges } from '@angular/core';
 import { TextSubmission } from 'app/entities/text-submission.model';
 import { TextBlockRef } from 'app/entities/text-block-ref.model';
 import { TextBlock } from 'app/entities/text-block.model';
@@ -28,7 +28,7 @@ export class TextAssessmentAreaComponent implements OnChanges {
     @Output() textBlockRefsChange = new EventEmitter<TextBlockRef[]>();
     selectedRef: TextBlockRef | null = null;
 
-    ngOnChanges(changes: SimpleChanges): void {
+    ngOnChanges(): void {
         this.textBlockRefs.sort((a, b) => a.block.startIndex - b.block.startIndex);
     }
 

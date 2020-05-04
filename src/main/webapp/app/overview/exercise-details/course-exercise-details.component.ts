@@ -61,7 +61,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
      * variables are only for testing purposes(noVersionControlAndContinuousIntegrationAvailable)
      */
     public inProductionEnvironment: boolean;
-    public noVersionControlAndContinuousIntegrationServerAvailable: boolean;
+    public noVersionControlAndContinuousIntegrationServerAvailable = false;
     public wasSubmissionSimulated = false;
 
     constructor(
@@ -138,9 +138,12 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         this.exercise.participationStatus = participationStatus(this.exercise);
         this.isAfterAssessmentDueDate = !this.exercise.assessmentDueDate || moment().isAfter(this.exercise.assessmentDueDate);
         this.exerciseCategories = this.exerciseService.convertExerciseCategoriesFromServer(this.exercise);
-        if (this.exercise.type === ExerciseType.PROGRAMMING) {
-            this.getProgrammingExerciseAndChecksIfTheSetupHasVCSandCIConnection();
+
+        // This is only needed in the local environment
+        if (!this.inProductionEnvironment && this.exercise.type === ExerciseType.PROGRAMMING && (<ProgrammingExercise>this.exercise).isLocalSimulation) {
+            this.noVersionControlAndContinuousIntegrationServerAvailable = true;
         }
+
         this.subscribeForNewResults();
     }
 
@@ -316,18 +319,6 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     }
 
     // ################## ONLY FOR LOCAL TESTING PURPOSE -- START ##################
-
-    /**
-     * asks the server for the programming exercise with the provided exercise ID
-     * This functionality is only for testing purposes(noVersionControlAndContinuousIntegrationAvailable)
-     */
-    getProgrammingExerciseAndChecksIfTheSetupHasVCSandCIConnection() {
-        this.courseExerciseSubmissionResultSimulationService.getProgrammingExercise(this.exerciseId).subscribe((programmingExercise) => {
-            this.noVersionControlAndContinuousIntegrationServerAvailable = this.programmingExerciseSimulationUtils.noVersionControlAndContinuousIntegrationAvailableCheck(
-                programmingExercise.testRepositoryUrl,
-            );
-        });
-    }
 
     /**
      * triggers the simulation of a participation and submission for the currently logged in user

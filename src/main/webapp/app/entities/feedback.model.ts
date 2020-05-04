@@ -68,4 +68,10 @@ export class Feedback implements BaseEntity {
     public static fromServerResponse(response: Feedback): Feedback {
         return Object.assign(new Feedback(), response);
     }
+
+    public static updateFeedbackTypeOnChange(feedback: Feedback) {
+        if (feedback.type === FeedbackType.AUTOMATIC) {
+            feedback.type = FeedbackType.AUTOMATIC_ADAPTED;
+        }
+    }
 }
