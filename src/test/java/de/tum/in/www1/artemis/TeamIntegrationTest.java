@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -428,6 +429,9 @@ public class TeamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
                 .orElseThrow();
         TextExercise textExercise = (TextExercise) course.getExercises().stream().filter(exercise -> exercise instanceof TextExercise).findAny().orElseThrow();
         ModelingExercise modelingExercise = (ModelingExercise) course.getExercises().stream().filter(exercise -> exercise instanceof ModelingExercise).findAny().orElseThrow();
+
+        // make exercises team-based
+        Stream.of(programmingExercise, textExercise, modelingExercise).forEach(exercise -> exerciseRepo.save(exercise.mode(ExerciseMode.TEAM)));
 
         String shortNamePrefix1 = "team";
         String shortNamePrefix2 = "otherTeam";
