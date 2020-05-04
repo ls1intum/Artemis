@@ -56,5 +56,6 @@ export class TextblockAssessmentCardComponent {
         if (this.textBlockRef.feedback) {
             this.structuredGradingCriterionService.updateFeedbackWithStructuredGradingInstructionEvent(this.textBlockRef.feedback, event);
         }
+        this.feedbackDidChange();
     }
 }
