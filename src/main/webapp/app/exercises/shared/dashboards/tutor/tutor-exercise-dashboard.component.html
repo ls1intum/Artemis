@@ -236,7 +236,7 @@
                                 <ng-container *ngIf="exercise.type !== ExerciseType.PROGRAMMING; else programmingAssessment">
                                     <button
                                         *ngIf="submission !== null && calculateStatus(submission) === 'DRAFT'; else continueButton"
-                                        (click)="openAssessmentEditor(submission.id)"
+                                        (click)="openAssessmentEditorForSubmission(submission)"
                                         class="btn btn-warning btn-sm"
                                     >
                                         <fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>&nbsp;{{ 'artemisApp.tutorExerciseDashboard.continueAssessment' | translate }}
@@ -274,12 +274,12 @@
                                 <button
                                     *ngIf="exercise.type !== ExerciseType.PROGRAMMING; else programmingAssessment"
                                     class="btn btn-success btn-sm"
-                                    (click)="openAssessmentEditor(unassessedSubmission.id, true)"
-                                    [disabled]="exercise === exerciseForGuidedTour || openingAssessmentEditor"
+                                    (click)="openAssessmentEditorForNewSubmission()"
+                                    [disabled]="exercise === exerciseForGuidedTour || openingAssessmentEditorForNewSubmission"
                                     [class.guided-tour]="exercise === exerciseForGuidedTour"
                                     [ngStyle]="exercise === exerciseForGuidedTour && { cursor: 'not-allowed' }"
                                 >
-                                    <fa-icon *ngIf="openingAssessmentEditor" [icon]="'spinner'" [spin]="true"></fa-icon>
+                                    <fa-icon *ngIf="openingAssessmentEditorForNewSubmission" [icon]="'spinner'" [spin]="true"></fa-icon>
                                     <fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>
                                     {{ 'artemisApp.tutorExerciseDashboard.startAssessment' | translate }}
                                 </button>

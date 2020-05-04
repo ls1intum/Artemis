@@ -77,7 +77,7 @@ export class TutorExerciseDashboardComponent implements OnInit, AfterViewInit {
     complaints: Complaint[] = [];
     moreFeedbackRequests: Complaint[] = [];
     submissionLockLimitReached = false;
-    openingAssessmentEditor = false;
+    openingAssessmentEditorForNewSubmission = false;
 
     formattedGradingInstructions: SafeHtml | null;
     formattedProblemStatement: SafeHtml | null;
@@ -361,15 +361,19 @@ export class TutorExerciseDashboardComponent implements OnInit, AfterViewInit {
         this.router.navigate([route], { queryParams });
     }
 
-    async openAssessmentEditor(submissionId: number, isNewAssessment = false): Promise<void> {
-        if (!this.exercise || !this.exercise.type || !submissionId) {
+    openAssessmentEditorForNewSubmission = () => this.openAssessmentEditor('new');
+
+    openAssessmentEditorForSubmission = (submission: Submission) => this.openAssessmentEditor(submission.id.toString());
+
+    private async openAssessmentEditor(submissionUrlParam: string): Promise<void> {
+        if (!this.exercise || !this.exercise.type || !submissionUrlParam) {
             return;
         }
 
-        this.openingAssessmentEditor = true;
-        const submission = isNewAssessment ? 'new' : submissionId.toString();
-        const route = `/course-management/${this.courseId}/${this.exercise.type}-exercises/${this.exercise.id}/submissions/${submission}/assessment`;
+        this.openingAssessmentEditorForNewSubmission = true;
+        const route = `/course-management/${this.courseId}/${this.exercise.type}-exercises/${this.exercise.id}/submissions/${submissionUrlParam}/assessment`;
         await this.router.navigate([route]);
+        this.openingAssessmentEditorForNewSubmission = false;
     }
 
     private openManualResultDialog(result: Result) {
