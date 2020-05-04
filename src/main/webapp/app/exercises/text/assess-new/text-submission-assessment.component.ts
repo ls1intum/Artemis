@@ -87,8 +87,11 @@ export class TextSubmissionAssessmentComponent implements OnInit {
     }
 
     private setPropertiesFromServerResponse(studentParticipation: StudentParticipation) {
-        // Update noNewSubmissions
-        this.noNewSubmissions = this.isNewAssessmentRoute ? studentParticipation === null : false;
+        if (studentParticipation === null) {
+            this.noNewSubmissions = this.isNewAssessmentRoute;
+            this.isLoading = false;
+            return;
+        }
 
         this.participation = studentParticipation;
         this.submission = this.participation?.submissions[0] as TextSubmission;
