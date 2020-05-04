@@ -1172,6 +1172,43 @@ public class DatabaseUtilService {
         return ModelFactory.generateExampleSubmission(submission, exercise, usedForTutorial);
     }
 
+    /**
+     * Generates a submitted answer for a given question.
+     * @param question given question, the answer is for
+     * @param correct boolean whether the answer should be correct or not
+     * @return created SubmittedAnswer
+     */
+    public SubmittedAnswer generateSubmittedAnswerFor(QuizQuestion question, boolean correct) {
+        if (question instanceof MultipleChoiceQuestion) {
+            var submittedAnswer = new MultipleChoiceSubmittedAnswer();
+            for (var answerOption : ((MultipleChoiceQuestion) question).getAnswerOptions()) {
+                if (answerOption.isIsCorrect().equals(correct)) {
+                    submittedAnswer.addSelectedOptions(answerOption);
+                }
+            }
+            return submittedAnswer;
+        }
+        else if (question instanceof DragAndDropQuestion) {
+            var submittedAnswer = new DragAndDropSubmittedAnswer();
+            return submittedAnswer;
+        }
+        else if (question instanceof ShortAnswerQuestion) {
+            var submittedAnswer = new ShortAnswerSubmittedAnswer();
+            for(var spot : ((ShortAnswerQuestion) question).getSpots()) {
+                ShortAnswerSubmittedText submittedText = new ShortAnswerSubmittedText();
+                submittedText.setSpot(spot);
+                if(correct){
+                    submittedText.setText(((ShortAnswerQuestion) question).getCorrectSolutionForSpot(spot).iterator().next().getText());
+                } else {
+                    submittedText.setText("wrong short answer");
+                }
+                submittedAnswer.addSubmittedTexts(submittedText);
+            }
+            return submittedAnswer;
+        }
+        return null;
+    }
+
     @NotNull
     public QuizExercise createQuiz(Course course, ZonedDateTime releaseDate, ZonedDateTime dueDate) {
         QuizExercise quizExercise = ModelFactory.generateQuizExercise(releaseDate, dueDate, course);

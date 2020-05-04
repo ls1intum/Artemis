@@ -97,7 +97,7 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
             QuizSubmission quizSubmission = new QuizSubmission();
             for (var question : quizExercise.getQuizQuestions()) {
                 for (int j = 1; j <= 10; j++) {
-                    quizSubmission.addSubmittedAnswers(submittedAnswerFor(question, j % 2 == 0));
+                    quizSubmission.addSubmittedAnswers(database.generateSubmittedAnswerFor(question, j % 2 == 0));
                 }
             }
             final var username = "student" + i;
@@ -110,7 +110,7 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         for (int i = 1; i <= numberOfParticipants; i++) {
             QuizSubmission quizSubmission = new QuizSubmission();
             for (var question : quizExercise.getQuizQuestions()) {
-                quizSubmission.addSubmittedAnswers(submittedAnswerFor(question, false));
+                quizSubmission.addSubmittedAnswers(database.generateSubmittedAnswerFor(question, false));
             }
             quizSubmission.setSubmitted(true);
             final var username = "student" + i;
@@ -149,8 +149,9 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         for (var question : quizExerciseWithStatistic.getQuizQuestions()) {
             assertThat(question.getQuizQuestionStatistic().getRatedCorrectCounter()).isEqualTo(0);
             assertThat(question.getQuizQuestionStatistic().getUnRatedCorrectCounter()).isEqualTo(0);
+            assertThat(question.getQuizQuestionStatistic().getParticipantsRated()).isEqualTo(numberOfParticipants);
+            assertThat(question.getQuizQuestionStatistic().getParticipantsUnrated()).isEqualTo(0);
         }
-        // TODO: check more statistics (e.g. for each question)
     }
 
     @Test
@@ -171,16 +172,20 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
 
         var numberOfParticipants = 10;
         QuizSubmission quizSubmission = new QuizSubmission();
-        for (var question : quizExercise.getQuizQuestions()) {
-            quizSubmission.addSubmittedAnswers(submittedAnswerFor(question, true));
+        for (int i = 0; i < quizExercise.getQuizQuestions().size()-1; i++) {
+            SubmittedAnswer submittedAnswer = database.generateSubmittedAnswerFor(quizExercise.getQuizQuestions().get(i), i % 2 == 0);
+            submittedAnswer.setScoreInPoints(10.0);
+            quizSubmission.addSubmittedAnswers(submittedAnswer);
         }
         quizSubmission.setSubmitted(true);
 
         // submit 10 times for 10 different students
         for (int i = 1; i <= numberOfParticipants; i++) {
             database.changeUser("student" + i);
-            request.postWithResponseBody("/api/exercises/" + quizExercise.getId() + "/submissions/practice", quizSubmission, Result.class, HttpStatus.OK);
-            // TODO: check the result
+            QuizSubmission receivedSubmission = request.postWithResponseBody("/api/exercises/" + quizExercise.getId() + "/submissions/practice", quizSubmission, QuizSubmission.class, HttpStatus.OK);
+            assertThat(receivedSubmission.getSubmittedAnswers().size()).isEqualTo(quizSubmission.getSubmittedAnswers().size());
+            assertThat(receivedSubmission.getScoreInPoints()).isEqualTo(quizSubmission.getScoreInPoints());
+            assertThat(receivedSubmission.getId()).isEqualTo(quizSubmission.getId());
         }
 
         // after the quiz has ended, all submission are saved to the database
@@ -211,6 +216,8 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         for (var question : quizExerciseWithStatistic.getQuizQuestions()) {
             assertThat(question.getQuizQuestionStatistic().getRatedCorrectCounter()).isEqualTo(0);
             assertThat(question.getQuizQuestionStatistic().getUnRatedCorrectCounter()).isEqualTo(0);
+            assertThat(question.getQuizQuestionStatistic().getParticipantsRated()).isEqualTo(numberOfParticipants);
+            assertThat(question.getQuizQuestionStatistic().getParticipantsUnrated()).isEqualTo(0);
         }
         // TODO: check more statistics (e.g. for each question)
     }
@@ -233,7 +240,7 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         QuizSubmission quizSubmission = new QuizSubmission();
         for (var question : quizExerciseServer.getQuizQuestions()) {
             for (int i = 1; i <= 10; i++) {
-                quizSubmission.addSubmittedAnswers(submittedAnswerFor(question, i % 2 == 0));
+                quizSubmission.addSubmittedAnswers(database.generateSubmittedAnswerFor(question, i % 2 == 0));
             }
         }
         quizSubmission.setSubmitted(true);
@@ -323,7 +330,7 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         QuizSubmission quizSubmission = new QuizSubmission();
         for (var question : quizExercise.getQuizQuestions()) {
             for (int i = 1; i <= 10; i++) {
-                quizSubmission.addSubmittedAnswers(submittedAnswerFor(question, i % 2 == 0));
+                quizSubmission.addSubmittedAnswers(database.generateSubmittedAnswerFor(question, i % 2 == 0));
             }
         }
 
@@ -361,37 +368,4 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         // TODO: check more statistics (e.g. for each question)
     }
 
-    private SubmittedAnswer submittedAnswerFor(QuizQuestion question, boolean correct) {
-        if (question instanceof MultipleChoiceQuestion) {
-            var submittedAnswer = new MultipleChoiceSubmittedAnswer();
-            submittedAnswer.setQuizQuestion(question);
-            for (var answerOption : ((MultipleChoiceQuestion) question).getAnswerOptions()) {
-                if (answerOption.isIsCorrect().equals(correct)) {
-                    submittedAnswer.addSelectedOptions(answerOption);
-                }
-            }
-            return submittedAnswer;
-        }
-        else if (question instanceof DragAndDropQuestion) {
-            var submittedAnswer = new DragAndDropSubmittedAnswer();
-            submittedAnswer.setQuizQuestion(question);
-            return submittedAnswer;
-        }
-        else if (question instanceof ShortAnswerQuestion) {
-            var submittedAnswer = new ShortAnswerSubmittedAnswer();
-            submittedAnswer.setQuizQuestion(question);
-            for(var spot : ((ShortAnswerQuestion) question).getSpots()) {
-                ShortAnswerSubmittedText submittedText = new ShortAnswerSubmittedText();
-                submittedText.setSpot(spot);
-                if(correct){
-                    submittedText.setText(((ShortAnswerQuestion) question).getCorrectSolutionForSpot(spot).iterator().next().getText());
-                } else {
-                    submittedText.setText("wrong short answer");
-                }
-                submittedAnswer.addSubmittedTexts(submittedText);
-            }
-            return submittedAnswer;
-        }
-        return null;
-    }
 }
