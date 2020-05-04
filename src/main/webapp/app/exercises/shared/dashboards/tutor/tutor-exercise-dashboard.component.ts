@@ -77,6 +77,7 @@ export class TutorExerciseDashboardComponent implements OnInit, AfterViewInit {
     complaints: Complaint[] = [];
     moreFeedbackRequests: Complaint[] = [];
     submissionLockLimitReached = false;
+    openingAssessmentEditor = false;
 
     formattedGradingInstructions: SafeHtml | null;
     formattedProblemStatement: SafeHtml | null;
@@ -360,14 +361,15 @@ export class TutorExerciseDashboardComponent implements OnInit, AfterViewInit {
         this.router.navigate([route], { queryParams });
     }
 
-    openAssessmentEditor(submissionId: number, isNewAssessment = false) {
+    async openAssessmentEditor(submissionId: number, isNewAssessment = false): Promise<void> {
         if (!this.exercise || !this.exercise.type || !submissionId) {
             return;
         }
 
+        this.openingAssessmentEditor = true;
         const submission = isNewAssessment ? 'new' : submissionId.toString();
         const route = `/course-management/${this.courseId}/${this.exercise.type}-exercises/${this.exercise.id}/submissions/${submission}/assessment`;
-        this.router.navigate([route]);
+        await this.router.navigate([route]);
     }
 
     private openManualResultDialog(result: Result) {
