@@ -93,6 +93,8 @@ public class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegra
         programmingExerciseRepository.save(exercise);
         var files = request.getMap(testRepoBaseUrl + exercise.getId() + "/files", HttpStatus.OK, String.class, FileType.class);
         assertThat(files).isNotEmpty();
+
+        // Check if all files exist
         for (String key : files.keySet()) {
             assertThat(Files.exists(Paths.get(testRepo.localRepoFile + "/" + key))).isTrue();
         }
@@ -106,6 +108,7 @@ public class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegra
         params.add("file", currentLocalFileName);
         var file = request.get(testRepoBaseUrl + exercise.getId() + "/file", HttpStatus.OK, byte[].class, params);
         assertThat(file).isNotEmpty();
+        assertThat(Files.exists(Paths.get(testRepo.localRepoFile + "/" + currentLocalFileName))).isTrue();
         assertThat(new String(file)).isEqualTo(currentLocalFileContent);
     }
 
@@ -188,7 +191,33 @@ public class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegra
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void shouldPullChanges() throws Exception {
         programmingExerciseRepository.save(exercise);
+        String fileName = "remoteFile";
+
+        // Create a commit for the local and the remote repository
+        request.postWithoutLocation(testRepoBaseUrl + exercise.getId() + "/commit", null, HttpStatus.OK, null);
+        var remote = gitService.getRepositoryByLocalPath(testRepo.originRepoFile.toPath());
+
+        // Create file in the remote repository
+        Path filePath = Paths.get(testRepo.originRepoFile + "/" + fileName);
+        Files.createFile(filePath).toFile();
+
+        // Check if the file exists in the remote repository and that it doesn't yet exists in the local repository
+        assertThat(Files.exists(Paths.get(testRepo.originRepoFile + "/" + fileName))).isTrue();
+        assertThat(Files.exists(Paths.get(testRepo.localRepoFile + "/" + fileName))).isFalse();
+
+        // Stage all changes and make a second commit in the remote repository
+        gitService.stageAllChanges(remote);
+        testRepo.originGit.commit().setMessage("TestCommit").setAllowEmpty(true).setCommitter("testname", "test@email").call();
+
+        // Checks if the current commit is not equal on the local and the remote repository
+        assertThat(LocalRepository.getAllCommits(testRepo.localGit).get(0)).isNotEqualTo(LocalRepository.getAllCommits(testRepo.originGit).get(0));
+
+        // Execute the Rest call
         request.get(testRepoBaseUrl + exercise.getId() + "/pull", HttpStatus.OK, Void.class);
+
+        // Check if the current commit is the same on the local and the remote repository and if the file exists on the local repository
+        assertThat(LocalRepository.getAllCommits(testRepo.localGit).get(0)).isEqualTo(LocalRepository.getAllCommits(testRepo.originGit).get(0));
+        assertThat(Files.exists(Paths.get(testRepo.localRepoFile + "/" + fileName))).isTrue();
     }
 
     @Test
@@ -205,9 +234,8 @@ public class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegra
         request.postWithoutLocation(testRepoBaseUrl + exercise.getId() + "/commit", null, HttpStatus.OK, null);
         var localRepo = gitService.getRepositoryByLocalPath(testRepo.localRepoFile.toPath());
 
-        // Create a second commit for the local repository
+        // Stage all files
         gitService.stageAllChanges(localRepo);
-        testRepo.localGit.commit().setMessage("TestCommit").setAllowEmpty(true).setCommitter("testname", "test@email").call();
 
         // Check status of git after the commit
         var receivedStatusAfterCommit = request.get(testRepoBaseUrl + exercise.getId(), HttpStatus.OK, RepositoryStatusDTO.class);
@@ -230,7 +258,6 @@ public class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegra
 
         // Executes the reset Rest call
         request.postWithoutLocation(testRepoBaseUrl + exercise.getId() + "/reset", null, HttpStatus.OK, null);
-        ;
 
         // Checks if the file still exists after the reset
         assertThat(Files.exists(Paths.get(testRepo.localRepoFile + "/" + fileName))).isFalse();
