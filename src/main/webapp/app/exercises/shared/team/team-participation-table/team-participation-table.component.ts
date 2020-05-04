@@ -40,7 +40,7 @@ export class TeamParticipationTableComponent implements OnInit {
         this.isLoading = true;
         this.teamService.findCourseWithExercisesAndParticipationsForTeam(this.course, this.team).subscribe(
             (courseResponse) => {
-                this.exercises = this.transformExercisesFromServer(courseResponse.body!.exercises);
+                this.exercises = this.transformExercisesFromServer(courseResponse.body!.exercises || []);
                 this.isLoading = false;
             },
             (error) => {

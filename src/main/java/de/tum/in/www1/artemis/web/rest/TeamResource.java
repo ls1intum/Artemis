@@ -343,19 +343,19 @@ public class TeamResource {
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Course> getCourseWithExercisesAndParticipationsForTeam(@PathVariable Long courseId, @PathVariable String teamShortName) {
         log.debug("REST request to get Course {} with exercises and participations for Team with short name {}", courseId, teamShortName);
-        Course course = courseService.findOneWithTeamExercises(courseId);
+        Course course = courseService.findOne(courseId);
         User user = userService.getUserWithGroupsAndAuthorities();
         if (!(authCheckService.isAtLeastTeachingAssistantInCourse(course, user) || authCheckService.isStudentInTeam(course, teamShortName, user))) {
             throw new AccessForbiddenException("You are not allowed to access this resource");
         }
 
         // Get all team instances in course with the given team short name
+        Set<Exercise> exercises = exerciseService.findAllTeamExercisesForCourse(course);
         List<Team> teams = teamRepository.findAllByExerciseCourseIdAndShortName(course.getId(), teamShortName);
         Map<Long, Team> exerciseTeamMap = teams.stream().collect(Collectors.toMap(team -> team.getExercise().getId(), team -> team));
 
         // Filter course exercises by: 1. released, 2. team needs to exist for exercise
-        Set<Exercise> exercises = course.getExercises().stream().filter(exercise -> exercise.isVisibleToStudents() && exerciseTeamMap.containsKey(exercise.getId()))
-                .collect(Collectors.toSet());
+        exercises = exercises.stream().filter(exercise -> exercise.isVisibleToStudents() && exerciseTeamMap.containsKey(exercise.getId())).collect(Collectors.toSet());
 
         // Set teams on exercises
         exercises.forEach(exercise -> exercise.setTeams(Set.of(exerciseTeamMap.get(exercise.getId()))));
