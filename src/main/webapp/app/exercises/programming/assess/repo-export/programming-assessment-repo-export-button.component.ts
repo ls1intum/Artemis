@@ -31,6 +31,11 @@ export class ProgrammingAssessmentRepoExportButtonComponent {
 
     constructor(private modalService: NgbModal) {}
 
+    /**
+     * Stops the propagation of the mouse event and updates the component instance
+     * of the modalRef with this instance's values
+     * @param {MouseEvent} event - Mouse event
+     */
     openRepoExportDialog(event: MouseEvent) {
         event.stopPropagation();
         const modalRef = this.modalService.open(ProgrammingAssessmentRepoExportDialogComponent, { keyboard: true, size: 'lg' });

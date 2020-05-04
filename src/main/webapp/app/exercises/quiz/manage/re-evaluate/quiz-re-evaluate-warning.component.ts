@@ -39,6 +39,9 @@ export class QuizReEvaluateWarningComponent implements OnInit {
         private quizReEvaluateService: QuizReEvaluateService,
     ) {}
 
+    /**
+     * Reset saving status, load the quiz by id and back it up.
+     */
     ngOnInit(): void {
         this.isSaving = false;
         this.quizExerciseService.find(this.quizExercise.id).subscribe((res) => {
@@ -48,16 +51,14 @@ export class QuizReEvaluateWarningComponent implements OnInit {
     }
 
     /**
-     * @function clear
-     * @desc Closes the modal
+     * Closes the modal
      */
     clear(): void {
         this.activeModal.dismiss('cancel');
     }
 
     /**
-     * @function loadQuizSuccess
-     * @desc check if the changes affect the existing results
+     * check if the changes affect the existing results
      *  1. check if a question is deleted
      *  2. check for each question if:
      *          - it is set invalid
@@ -81,8 +82,6 @@ export class QuizReEvaluateWarningComponent implements OnInit {
     }
 
     /**
-     * @function checkQuestion
-     * @desc
      * 1. compare backUpQuestion and question
      * 2. set flags based on detected changes
      *
@@ -115,8 +114,6 @@ export class QuizReEvaluateWarningComponent implements OnInit {
     }
 
     /**
-     * @function checkMultipleChoiceQuestion
-     * @desc
      * 1. check MultipleChoiceQuestion-Elements
      * 2. set flags based on detected changes
      *
@@ -148,8 +145,6 @@ export class QuizReEvaluateWarningComponent implements OnInit {
     }
 
     /**
-     * @function checkDragAndDropQuestion
-     * @desc
      * 1. check DragAndDrop-Question-Elements
      * 2. set flags based on detected changes
      *
@@ -187,8 +182,6 @@ export class QuizReEvaluateWarningComponent implements OnInit {
     }
 
     /**
-     * @function checkShortAnswerQuestion
-     * @desc
      * 1. We check all ShortAnswer-Question-Elements in case a spot, solution or mapping has changed/was deleted
      * 2. Set flags based on detected changes to inform the instructor in the UI what his changes have for consequences.
      *
@@ -239,8 +232,7 @@ export class QuizReEvaluateWarningComponent implements OnInit {
     }
 
     /**
-     * @function confirmChange
-     * @desc Confirm changes
+     * Confirm changes
      *  => send changes to server and wait for result
      *  if saving failed -> show failed massage
      */
@@ -260,8 +252,7 @@ export class QuizReEvaluateWarningComponent implements OnInit {
     }
 
     /**
-     * @function close
-     * @desc Close modal
+     * Close modal
      */
     close(): void {
         this.activeModal.close();

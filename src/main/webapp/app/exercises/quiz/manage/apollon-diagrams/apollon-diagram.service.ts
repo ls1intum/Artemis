@@ -14,6 +14,10 @@ export class ApollonDiagramService {
 
     constructor(private http: HttpClient) {}
 
+    /**
+     * Creates diagram.
+     * @param apollonDiagram - apollonDiagram to be created.
+     */
     create(apollonDiagram: ApollonDiagram): Observable<EntityResponseType> {
         const copy = this.convert(apollonDiagram);
         return this.http
@@ -21,6 +25,10 @@ export class ApollonDiagramService {
             .map((res: EntityResponseType) => this.convertResponse(res));
     }
 
+    /**
+     * Updates diagram.
+     * @param apollonDiagram - apollonDiagram to be updated.
+     */
     update(apollonDiagram: ApollonDiagram): Observable<EntityResponseType> {
         const copy = this.convert(apollonDiagram);
         return this.http
@@ -28,12 +36,20 @@ export class ApollonDiagramService {
             .map((res: EntityResponseType) => this.convertResponse(res));
     }
 
+    /**
+     * Finds diagram.
+     * @param id - id of diagram to be found.
+     */
     find(id: number): Observable<EntityResponseType> {
         return this.http
             .get<ApollonDiagram>(`${this.resourceUrl}/${id}`, { observe: 'response' })
             .map((res: EntityResponseType) => this.convertResponse(res));
     }
 
+    /**
+     * Query for all diagrams with option req.
+     * @param req? - options of the query.
+     */
     query(req?: any): Observable<HttpResponse<ApollonDiagram[]>> {
         const options = createRequestOption(req);
         return this.http
@@ -41,6 +57,10 @@ export class ApollonDiagramService {
             .map((res: HttpResponse<ApollonDiagram[]>) => this.convertArrayResponse(res));
     }
 
+    /**
+     * Deletes diagram with that id.
+     * @param id - id of diagram to be deleted.
+     */
     delete(id: number): Observable<HttpResponse<void>> {
         return this.http.delete<void>(`${this.resourceUrl}/${id}`, { observe: 'response' });
     }

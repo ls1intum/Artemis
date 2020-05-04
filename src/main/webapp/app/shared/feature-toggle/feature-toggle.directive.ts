@@ -25,6 +25,9 @@ export class FeatureToggleDirective implements OnInit, OnDestroy {
 
     constructor(private featureToggleService: FeatureToggleService) {}
 
+    /**
+     * Life cycle hook called by Angular to indicate that Angular is done creating the component
+     */
     ngOnInit() {
         // If no feature is set for the toggle, the directive does nothing.
         if (this.feature) {
@@ -40,6 +43,9 @@ export class FeatureToggleDirective implements OnInit, OnDestroy {
         }
     }
 
+    /**
+     * Life cycle hook called by Angular for cleanup just before Angular destroys the component
+     */
     ngOnDestroy(): void {
         if (this.featureToggleActiveSubscription) {
             this.featureToggleActiveSubscription.unsubscribe();

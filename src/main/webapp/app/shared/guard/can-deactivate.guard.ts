@@ -9,6 +9,11 @@ import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
  */
 @Injectable({ providedIn: 'root' })
 export class CanDeactivateGuard implements CanDeactivate<ComponentCanDeactivate> {
+    /**
+     * Function which returns whether the component can be deactivated
+     * @param component
+     * @returns boolean | Observable<boolean>
+     */
     canDeactivate(component: ComponentCanDeactivate): boolean | Observable<boolean> {
         return component.canDeactivate();
     }

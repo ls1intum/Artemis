@@ -41,6 +41,9 @@ export class TeamComponent implements OnInit {
         });
     }
 
+    /**
+     * Fetches the exercise and team from the server
+     */
     ngOnInit() {
         this.route.params.subscribe((params) => {
             this.setLoadingState(true);
@@ -56,7 +59,7 @@ export class TeamComponent implements OnInit {
         }, this.onLoadError);
     }
 
-    setLoadingState(loading: boolean) {
+    private setLoadingState(loading: boolean) {
         if (this.exercise && this.team && !this.isLoading) {
             this.isTransitioning = loading;
         } else {
@@ -64,7 +67,7 @@ export class TeamComponent implements OnInit {
         }
     }
 
-    onLoadError(error: any) {
+    private onLoadError(error: any) {
         console.error(error);
         this.jhiAlertService.error(error.message);
         this.isLoading = false;

@@ -30,15 +30,25 @@ export class InstructorExerciseDashboardComponent implements OnInit {
         private router: Router,
     ) {}
 
+    /**
+     * Extracts the course and exercise ids from the route params and fetches the exercise from the server
+     */
     ngOnInit(): void {
         this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
         const exerciseId = Number(this.route.snapshot.paramMap.get('exerciseId'));
         this.loadExercise(exerciseId);
     }
 
+    /**
+     * Navigates back to the instructor dashboard where the user came from
+     */
     back() {
         this.router.navigate([`/course-management/${this.courseId}/instructor-dashboard`]);
     }
+
+    /**
+     * Computes the stats for the assessment charts
+     */
     public setStatistics() {
         if (this.stats.numberOfSubmissions > 0) {
             this.totalManualAssessmentPercentage = Math.round(
@@ -53,6 +63,7 @@ export class InstructorExerciseDashboardComponent implements OnInit {
             this.stats.numberOfAutomaticAssistedAssessments,
         ];
     }
+
     private loadExercise(exerciseId: number) {
         this.exerciseService.find(exerciseId).subscribe(
             (res: HttpResponse<Exercise>) => (this.exercise = res.body!),

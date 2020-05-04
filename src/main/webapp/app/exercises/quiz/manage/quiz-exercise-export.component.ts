@@ -35,6 +35,9 @@ export class QuizExerciseExportComponent implements OnInit {
         this.translateService = translateService;
     }
 
+    /**
+     * Load the quizzes of the course for export on init.
+     */
     ngOnInit() {
         this.route.params.subscribe((params) => {
             this.courseId = params['courseId'];
