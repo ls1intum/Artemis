@@ -1,6 +1,6 @@
 import { AfterViewInit, Component, ElementRef, EventEmitter, HostBinding, Input, Output, ViewChild } from '@angular/core';
 import { TextBlock } from 'app/entities/text-block.model';
-import { Feedback } from 'app/entities/feedback.model';
+import { Feedback, FeedbackType } from 'app/entities/feedback.model';
 import { ConfirmIconComponent } from 'app/shared/confirm-icon/confirm-icon.component';
 import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
 
@@ -10,6 +10,8 @@ import { StructuredGradingCriterionService } from 'app/exercises/shared/structur
     styleUrls: ['./textblock-feedback-editor.component.scss'],
 })
 export class TextblockFeedbackEditorComponent implements AfterViewInit {
+    readonly FeedbackType = FeedbackType;
+
     @Input() textBlock: TextBlock;
     @Input() feedback: Feedback = new Feedback();
     @Output() feedbackChange = new EventEmitter<Feedback>();
