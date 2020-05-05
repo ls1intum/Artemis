@@ -8,6 +8,14 @@ import { AlertService } from 'app/core/alert/alert.service';
 export class NotificationInterceptor implements HttpInterceptor {
     constructor(private alertService: AlertService) {}
 
+    /**
+     * Identifies and handles a given HTTP request. If the event is a HttpResponse and contains an alert, the alert
+     * and its parameters are broadcasted to the AlertService.
+     * @param request The outgoing request object to handle.
+     * @param next The next interceptor in the chain, or the backend
+     * if no interceptors remain in the chain.
+     * @returns An observable of the event stream.
+     */
     intercept(request: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
         return next.handle(request).pipe(
             tap((event: HttpEvent<any>) => {

@@ -1,5 +1,5 @@
 import { Component, Input, OnDestroy, OnInit } from '@angular/core';
-import { LangChangeEvent, TranslateService } from '@ngx-translate/core';
+import { TranslateService } from '@ngx-translate/core';
 import { Subscription } from 'rxjs/Subscription';
 import { DifficultyLevel, Exercise } from 'app/entities/exercise.model';
 
@@ -16,13 +16,19 @@ export class DifficultyBadgeComponent implements OnInit, OnDestroy {
 
     constructor(private translateService: TranslateService) {}
 
+    /**
+     * Sets the badge attributes based on the exercise difficulty
+     */
     ngOnInit(): void {
-        this.translateSubscription = this.translateService.onLangChange.subscribe((event: LangChangeEvent) => {
+        this.translateSubscription = this.translateService.onLangChange.subscribe(() => {
             this.setBadgeAttributes();
         });
         this.setBadgeAttributes();
     }
 
+    /**
+     * Cleans up the subscription to the translation service
+     */
     ngOnDestroy(): void {
         if (this.translateSubscription) {
             this.translateSubscription.unsubscribe();

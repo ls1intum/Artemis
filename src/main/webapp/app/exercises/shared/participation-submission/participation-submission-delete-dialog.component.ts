@@ -17,10 +17,17 @@ export class ParticipationSubmissionDeleteDialogComponent implements OnInit {
 
     constructor(private submissionService: SubmissionService, public activeModal: NgbActiveModal, private eventManager: JhiEventManager) {}
 
+    /**
+     * Close modal window.
+     */
     clear() {
         this.activeModal.dismiss('cancel');
     }
 
+    /**
+     * Delete submission and close modal window.
+     * @param { number } id - Id of submission that is deleted.
+     */
     confirmDelete(id: number) {
         this.submissionService.delete(id).subscribe(() => {
             this.eventManager.broadcast({
@@ -31,6 +38,9 @@ export class ParticipationSubmissionDeleteDialogComponent implements OnInit {
         });
     }
 
+    /**
+     * Empty initialization.
+     */
     ngOnInit(): void {}
 }
 
@@ -43,12 +53,18 @@ export class ParticipationSubmissionDeletePopupComponent implements OnInit, OnDe
     routeSub: Subscription;
     constructor(private route: ActivatedRoute, private participationSubmissionPopupService: ParticipationSubmissionPopupService) {}
 
+    /**
+     * Subscribe to route.params and open new popup window with participationId and submissionId
+     */
     ngOnInit() {
         this.routeSub = this.route.params.subscribe((params) => {
             this.participationSubmissionPopupService.open(ParticipationSubmissionDeleteDialogComponent as Component, params['participationId'], params['submissionId']);
         });
     }
 
+    /**
+     * Unsubscribe from all subscriptions.
+     */
     ngOnDestroy() {
         this.routeSub.unsubscribe();
     }

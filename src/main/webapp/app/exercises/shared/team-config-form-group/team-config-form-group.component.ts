@@ -16,6 +16,9 @@ export class TeamConfigFormGroupComponent implements OnInit {
 
     config: TeamAssignmentConfig;
 
+    /**
+     * Life cycle hook to indicate component creation is done
+     */
     ngOnInit() {
         this.config = this.exercise.teamAssignmentConfig || new TeamAssignmentConfig();
     }
@@ -24,6 +27,10 @@ export class TeamConfigFormGroupComponent implements OnInit {
         return Boolean(this.exercise.id);
     }
 
+    /**
+     * Hook to indicate that exercise mode changed
+     * @param {ExerciseMode} mode - Exercise mode
+     */
     onExerciseModeChange(mode: ExerciseMode) {
         if (mode === ExerciseMode.TEAM) {
             this.applyCurrentConfig();
@@ -32,11 +39,19 @@ export class TeamConfigFormGroupComponent implements OnInit {
         }
     }
 
+    /**
+     * Update minimum number of team members
+     * @param {number} minTeamSize - minimum number of team members
+     */
     updateMinTeamSize(minTeamSize: number) {
         this.config.maxTeamSize = Math.max(this.config.maxTeamSize, minTeamSize);
         this.applyCurrentConfig();
     }
 
+    /**
+     * Update maximum number of team members
+     * @param {number} maxTeamSize - maximum number of team members
+     */
     updateMaxTeamSize(maxTeamSize: number) {
         this.config.minTeamSize = Math.min(this.config.minTeamSize, maxTeamSize);
         this.applyCurrentConfig();

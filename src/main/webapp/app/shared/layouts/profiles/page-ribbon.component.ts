@@ -28,7 +28,7 @@ export class PageRibbonComponent implements OnInit {
                     }
                 }
             },
-            (reason) => {},
+            () => {},
         );
     }
 }

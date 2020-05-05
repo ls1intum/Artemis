@@ -128,12 +128,12 @@ export class TextExerciseUpdateComponent implements OnInit {
 
     private subscribeToSaveResponse(result: Observable<HttpResponse<TextExercise>>) {
         result.subscribe(
-            (res: HttpResponse<TextExercise>) => this.onSaveSuccess(res.body!),
+            () => this.onSaveSuccess(),
             (res: HttpErrorResponse) => this.onSaveError(res),
         );
     }
 
-    private onSaveSuccess(result: TextExercise) {
+    private onSaveSuccess() {
         this.eventManager.broadcast({ name: 'textExerciseListModification', content: 'OK' });
         this.isSaving = false;
         this.previousState();

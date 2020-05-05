@@ -18,6 +18,9 @@ export class ExerciseHintDetailComponent implements OnInit, OnDestroy {
 
     constructor(protected route: ActivatedRoute) {}
 
+    /**
+     * Extracts the course and exercise id and the exercise hint from the route params
+     */
     ngOnInit() {
         this.paramSub = this.route.params.subscribe((params) => {
             this.courseId = params['courseId'];
@@ -28,12 +31,18 @@ export class ExerciseHintDetailComponent implements OnInit, OnDestroy {
         });
     }
 
+    /**
+     * Unsubscribes from the param subscription
+     */
     ngOnDestroy(): void {
         if (this.paramSub) {
             this.paramSub.unsubscribe();
         }
     }
 
+    /**
+     * Navigates back one step in the browser history
+     */
     previousState() {
         window.history.back();
     }

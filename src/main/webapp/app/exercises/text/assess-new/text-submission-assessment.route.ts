@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { Routes, Resolve, ActivatedRouteSnapshot, RouterStateSnapshot } from '@angular/router';
+import { Routes, Resolve, ActivatedRouteSnapshot } from '@angular/router';
 import { Location } from '@angular/common';
 import { Observable } from 'rxjs';
 
@@ -16,9 +16,8 @@ export class StudentParticipationResolver implements Resolve<StudentParticipatio
     /**
      * Resolves the needed StudentParticipations for the TextSubmissionAssessmentComponent using the TextAssessmentsService.
      * @param route
-     * @param state
      */
-    resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot) {
+    resolve(route: ActivatedRouteSnapshot) {
         const submissionId = Number(route.paramMap.get('submissionId'));
 
         if (submissionId) {
@@ -35,14 +34,13 @@ export class NewStudentParticipationResolver implements Resolve<StudentParticipa
     /**
      * Resolves the needed StudentParticipations for the TextSubmissionAssessmentComponent using the TextAssessmentsService.
      * @param route
-     * @param state
      */
-    resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot) {
+    resolve(route: ActivatedRouteSnapshot) {
         const exerciseId = Number(route.paramMap.get('exerciseId'));
 
         if (exerciseId) {
             return this.textSubmissionService
-                .getTextSubmissionForExerciseWithoutAssessment(exerciseId, true)
+                .getTextSubmissionForExerciseWithoutAssessment(exerciseId, 'lock')
                 .map((submission) => <StudentParticipation>submission.participation)
                 .catch(() => Observable.of(null));
         }
@@ -62,6 +60,7 @@ export const textSubmissionAssessmentRoutes: Routes = [
         resolve: {
             studentParticipation: NewStudentParticipationResolver,
         },
+        runGuardsAndResolvers: 'always',
         canActivate: [UserRouteAccessService],
     },
     {
@@ -74,6 +73,7 @@ export const textSubmissionAssessmentRoutes: Routes = [
         resolve: {
             studentParticipation: StudentParticipationResolver,
         },
+        runGuardsAndResolvers: 'paramsChange',
         canActivate: [UserRouteAccessService],
     },
 ];

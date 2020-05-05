@@ -8,7 +8,7 @@ chai.use(sinonChai);
 const expect = chai.expect;
 
 describe('Markdown Service', () => {
-    let artemisMarkdown = new ArtemisMarkdownService();
+    const artemisMarkdown = new ArtemisMarkdownService();
     const hintText = 'Add an explanation here (only visible in feedback after quiz has ended)';
     const markdownHint = '[hint] ' + hintText;
     const explanationText = 'Add an explanation here (only visible in feedback after quiz has ended)';

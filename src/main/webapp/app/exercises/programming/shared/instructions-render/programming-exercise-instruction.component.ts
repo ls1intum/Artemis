@@ -237,9 +237,9 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
     }
 
     /**
-     * @function loadResultDetails
-     * @desc Fetches details for the result (if we received one) and attach them to the result.
+     * Fetches details for the result (if we received one) and attach them to the result.
      * Mutates the input parameter result.
+     * @param result - result to which instructions will be attached.
      */
     loadAndAttachResultDetails(result: Result): Observable<Result> {
         return this.resultService.getFeedbackDetailsForResult(result.id).pipe(
@@ -253,8 +253,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
     }
 
     /**
-     * @function loadInstructions
-     * @desc Loads the instructions for the programming exercise.
+     * Loads the instructions for the programming exercise.
      * We added the problemStatement later, historically the instructions where a file in the student's repository
      * This is why we now prefer the problemStatement and if it doesn't exist try to load the readme.
      */
@@ -273,6 +272,9 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
         }
     }
 
+    /**
+     * Unsubscribes from all subscriptions.
+     */
     ngOnDestroy() {
         if (this.participationSubscription) {
             this.participationSubscription.unsubscribe();

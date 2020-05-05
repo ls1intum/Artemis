@@ -1,4 +1,4 @@
-import { ActivatedRouteSnapshot, Resolve, RouterModule, RouterStateSnapshot, Routes } from '@angular/router';
+import { ActivatedRouteSnapshot, Resolve, RouterModule, Routes } from '@angular/router';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { Injectable, NgModule } from '@angular/core';
 import { ProgrammingExerciseDetailComponent } from 'app/exercises/programming/manage/programming-exercise-detail.component';
@@ -15,7 +15,7 @@ import { Observable } from 'rxjs/Observable';
 export class ProgrammingExerciseResolve implements Resolve<ProgrammingExercise> {
     constructor(private service: ProgrammingExerciseService) {}
 
-    resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot) {
+    resolve(route: ActivatedRouteSnapshot) {
         const id = route.params['id'] ? route.params['id'] : null;
         if (id) {
             return this.service.find(id).pipe(map((programmingExercise: HttpResponse<ProgrammingExercise>) => programmingExercise.body!));
@@ -24,7 +24,7 @@ export class ProgrammingExerciseResolve implements Resolve<ProgrammingExercise> 
     }
 }
 
-const routes: Routes = [
+export const routes: Routes = [
     {
         path: ':courseId/programming-exercises/new',
         component: ProgrammingExerciseUpdateComponent,

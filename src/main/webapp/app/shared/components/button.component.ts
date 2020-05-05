@@ -1,6 +1,10 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 
+/**
+ * enum for button types
+ * @enum {string}
+ */
 export enum ButtonType {
     PRIMARY = 'btn-primary',
     SECONDARY = 'btn-secondary',
@@ -10,6 +14,10 @@ export enum ButtonType {
     INFO = 'btn-info',
 }
 
+/**
+ * enum for button sizes
+ * @enum {string}
+ */
 export enum ButtonSize {
     SMALL = 'btn-sm',
     MEDIUM = 'btn-md',

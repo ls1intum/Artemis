@@ -21,6 +21,10 @@ export class ProgrammingExerciseInstructionStepWizardComponent implements OnChan
 
     constructor(private modalService: NgbModal, private instructionService: ProgrammingExerciseInstructionService) {}
 
+    /**
+     * Life cycle hook called by Angular to indicate that changes are detected.
+     * @param changes - change that is detected.
+     */
     ngOnChanges(changes: SimpleChanges): void {
         if ((changes.tasks && this.tasks) || (this.tasks && changes.latestResult)) {
             this.steps = this.tasks.map(({ taskName, tests }) => ({
@@ -32,10 +36,8 @@ export class ProgrammingExerciseInstructionStepWizardComponent implements OnChan
     }
 
     /**
-     * @function showDetailsForTests
-     * @desc Opens the ResultDetailComponent as popup; displays test results
-     * @param result {Result} Result object, mostly latestResult
-     * @param tests {string} Identifies the testcase
+     * Opens the ResultDetailComponent as popup; displays test results
+     * @param {string[]} tests - Identifies the testcase
      */
     public showDetailsForTests(tests: string[]) {
         if (!this.latestResult || !this.latestResult.feedbacks) {

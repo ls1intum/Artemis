@@ -24,6 +24,10 @@ export class ExternalSubmissionButtonComponent {
 
     constructor(private modalService: NgbModal) {}
 
+    /**
+     * Opens modal window for external exercise submission.
+     * @param { MouseEvent } event
+     */
     openExternalSubmissionDialog(event: MouseEvent) {
         event.stopPropagation();
         const modalRef: NgbModalRef = this.modalService.open(ExternalSubmissionDialogComponent, { keyboard: true, size: 'lg', backdrop: 'static' });
