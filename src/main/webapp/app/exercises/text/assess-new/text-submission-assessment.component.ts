@@ -28,6 +28,7 @@ import { NEW_ASSESSMENT_PATH } from 'app/exercises/text/assess-new/text-submissi
 })
 export class TextSubmissionAssessmentComponent implements OnInit {
     private userId: number | null;
+    exerciseId: number;
     participation: StudentParticipation | null = null;
     submission: TextSubmission | null = null;
     exercise: TextExercise | null = null;
@@ -89,6 +90,7 @@ export class TextSubmissionAssessmentComponent implements OnInit {
 
         this.isAtLeastInstructor = this.accountService.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR']);
 
+        this.activatedRoute.paramMap.subscribe((paramMap) => this.exerciseId = Number(paramMap.get('exerciseId')));
         this.activatedRoute.data.subscribe(({ studentParticipation }) => this.setPropertiesFromServerResponse(studentParticipation));
     }
 
