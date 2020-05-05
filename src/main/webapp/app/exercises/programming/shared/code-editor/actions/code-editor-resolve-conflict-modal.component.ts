@@ -25,6 +25,9 @@ export class CodeEditorResolveConflictModalComponent {
         });
     }
 
+    /**
+     * Dismisses the active modal
+     */
     closeModal() {
         this.activeModal.dismiss('cancel');
     }
