@@ -83,8 +83,7 @@ export abstract class CodeEditorContainer implements ComponentCanDeactivate {
     };
 
     /**
-     * @function onFileChange
-     * @desc A file has changed (create, rename, delete), so we have uncommitted changes.
+     * A file has changed (create, rename, delete), so we have uncommitted changes.
      * Also all references to a file need to be updated in case of rename,
      * in case of delete make sure to also remove all sub entities (files in folder).
      */
@@ -164,7 +163,9 @@ export abstract class CodeEditorContainer implements ComponentCanDeactivate {
         return _isEmpty(this.unsavedFiles);
     }
 
-    // displays the alert for confirming refreshing or closing the page if there are unsaved changes
+    /**
+     * Displays the alert for confirming refreshing or closing the page if there are unsaved changes
+     */
     @HostListener('window:beforeunload', ['$event'])
     unloadNotification($event: any) {
         if (!this.canDeactivate()) {
@@ -172,6 +173,14 @@ export abstract class CodeEditorContainer implements ComponentCanDeactivate {
         }
     }
 
+    /**
+     * Toggles the view between collapsed and normal view
+     * @param event
+     * @param horizontal
+     * @param interactable
+     * @param resizableMinWidth
+     * @param resizableMinHeight
+     */
     onToggleCollapse({
         event,
         horizontal,
