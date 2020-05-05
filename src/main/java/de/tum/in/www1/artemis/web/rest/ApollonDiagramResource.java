@@ -89,7 +89,7 @@ public class ApollonDiagramResource {
     }
 
     /**
-     * GET /apollon-diagrams : get all the apollonDiagrams for current course.
+     * GET /apollon-diagrams/list/{courseId} : get all the apollonDiagrams for current course.
      *
      * @param courseId id of current course
      * @return the ResponseEntity with status 200 (OK) and the list of apollonDiagrams in body
@@ -98,7 +98,10 @@ public class ApollonDiagramResource {
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public List<ApollonDiagram> getDiagramsByCourse(@PathVariable Long courseId) {
         log.debug("REST request to get ApollonDiagrams matching current course");
-        return apollonDiagramRepository.findDiagramsByCourse(courseId);
+        List<ApollonDiagram> result = apollonDiagramRepository.findDiagramsByCourseId(courseId);
+        //addAll(findDiagramsByCourseId(null)) because older diagrams have no course and might belong to this course; can  be deleted in the future
+        result.addAll(apollonDiagramRepository.findDiagramsByCourseId(null));
+        return result;
     }
 
     /**
