@@ -142,6 +142,15 @@ public class ExerciseService {
     }
 
     /**
+     * Finds all team-based exercises for a course
+     * @param course Course for which to return all team-based exercises
+     * @return set of exercises
+     */
+    public Set<Exercise> findAllTeamExercisesForCourse(Course course) {
+        return exerciseRepository.findAllTeamExercisesByCourseId(course.getId());
+    }
+
+    /**
      * Get one exercise by exerciseId with additional details such as quiz questions and statistics or template / solution participation
      * NOTE: prefer #findOne if you don't need these additional details
      *

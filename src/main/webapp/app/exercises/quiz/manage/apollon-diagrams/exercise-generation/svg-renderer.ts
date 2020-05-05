@@ -1,5 +1,8 @@
 import { SVG } from '@ls1intum/apollon';
 
+/**
+ * Converts svg to png.
+ */
 export function convertRenderedSVGToPNG(renderedSVG: SVG): Promise<Blob> {
     return new Promise((resolve, reject) => {
         const { width, height } = renderedSVG.clip;
@@ -39,6 +42,9 @@ export function convertRenderedSVGToPNG(renderedSVG: SVG): Promise<Blob> {
     });
 }
 
+/**
+ * Fallback for HTMLCanvasElement.toBlob().
+ */
 // Some browsers (such as IE or Edge) don't support the HTMLCanvasElement.toBlob() method,
 // so we use the (much more inefficient) toDataURL() method as a fallback
 function toPNGBlob(canvas: HTMLCanvasElement, callback: (blob: Blob) => void) {

@@ -79,7 +79,7 @@ export class MockTeamService implements ITeamService {
         return MockTeamService.response({});
     }
 
-    existsByShortName(exercise: Exercise, shortName: string) {
+    existsByShortName(course: Course, shortName: string) {
         return MockTeamService.response(shortName === mockShortNames.existing);
     }
 
@@ -89,6 +89,10 @@ export class MockTeamService implements ITeamService {
 
     importTeamsFromSourceExercise(exercise: Exercise, sourceExercise: Exercise, importStrategy: TeamImportStrategyType) {
         return MockTeamService.response(mockTeams);
+    }
+
+    findCourseWithExercisesAndParticipationsForTeam(course: Course, team: Team): Observable<HttpResponse<Course>> {
+        return MockTeamService.response({ ...mockCourse, exercises: [{ ...(mockExercise as Exercise), teams: [mockTeam] }] } as Course);
     }
 
     // helper method

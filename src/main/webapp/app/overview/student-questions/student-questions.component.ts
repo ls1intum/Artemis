@@ -34,7 +34,7 @@ export class StudentQuestionsComponent implements OnInit, AfterViewInit {
     constructor(private accountService: AccountService, private studentQuestionService: StudentQuestionService, private exerciseService: ExerciseService) {}
 
     /**
-     * get user and check if he is at least tutor
+     * get the current user and check if he is at least a tutor for this course
      */
     ngOnInit(): void {
         this.accountService.identity().then((user: User) => {

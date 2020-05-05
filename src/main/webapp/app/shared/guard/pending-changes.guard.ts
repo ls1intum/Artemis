@@ -8,6 +8,12 @@ import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 export class PendingChangesGuard implements CanDeactivate<ComponentCanDeactivate> {
     constructor(private translateService: TranslateService) {}
 
+    /**
+     * Function which returns whether a component can be deactivated
+     * @param component
+     *
+     * @returns boolean | Observable<boolean>
+     */
     canDeactivate(component: ComponentCanDeactivate): boolean | Observable<boolean> {
         const warning = this.translateService.instant('pendingChanges');
         return component.canDeactivate() ? true : confirm(warning);

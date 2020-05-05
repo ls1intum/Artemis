@@ -10,13 +10,26 @@ export class StructuredGradingInstructionsAssessmentLayoutComponent implements O
     @Input() public criteria: GradingCriterion[];
     @Input() readonly: boolean;
     allowDrop: boolean;
+
+    /**
+     * OnInit set the allowDrop property to allow drop of SGI if not in readOnly mode
+     */
     ngOnInit(): void {
         this.allowDrop = !this.readonly;
     }
 
+    /**
+     * Set the tooltip of the draggable grading instruction to be equal to the feedback detail text
+     * @param {GradingInstruction} instr - the instruction object from which the feedback detail text is retrieved
+     */
     setTooltip(instr: GradingInstruction) {
         return 'Feedback: ' + instr.feedback;
     }
+
+    /**
+     * Set the color of the draggable grading instruction based on the credits of the instruction
+     *  @param {GradingInstruction} instr - the instruction object we set its color based on its credits
+     */
     setInstrColour(instr: GradingInstruction) {
         let colour;
         if (instr.credits === 0) {

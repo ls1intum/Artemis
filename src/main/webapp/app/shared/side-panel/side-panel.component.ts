@@ -10,5 +10,8 @@ export class SidePanelComponent implements OnInit {
 
     constructor() {}
 
+    /**
+     * Do nothing on initialization.
+     */
     ngOnInit() {}
 }

@@ -21,6 +21,9 @@ export class ExerciseHintStudentDialogComponent {
 
     constructor(public activeModal: NgbActiveModal) {}
 
+    /**
+     * Dismisses the modal
+     */
     clear() {
         this.activeModal.dismiss('cancel');
     }
@@ -49,6 +52,9 @@ export class ExerciseHintStudentComponent implements OnInit, OnDestroy {
 
     constructor(protected exerciseHintService: ExerciseHintService, protected activatedRoute: ActivatedRoute, protected router: Router, protected modalService: NgbModal) {}
 
+    /**
+     * Fetches all exercise hints for an exercise from the server
+     */
     ngOnInit() {
         this.exerciseHintService
             .findByExerciseId(this.exerciseId)
@@ -76,6 +82,9 @@ export class ExerciseHintStudentComponent implements OnInit, OnDestroy {
         );
     }
 
+    /**
+     * Resets the modal ref
+     */
     ngOnDestroy() {
         this.ngbModalRef = null;
     }

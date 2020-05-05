@@ -19,6 +19,10 @@ export class SystemNotificationService {
 
     constructor(private router: Router, private http: HttpClient, private accountService: AccountService, private notificationService: NotificationService) {}
 
+    /**
+     * Create a notification on the server using a POST request.
+     * @param notification The notification to create.
+     */
     create(notification: SystemNotification): Observable<EntityResponseType> {
         const copy = this.convertDateFromClient(notification);
         return this.http
@@ -26,6 +30,10 @@ export class SystemNotificationService {
             .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
     }
 
+    /**
+     * Update a notification on the server using a PUT request.
+     * @param notification The notification to update.
+     */
     update(notification: SystemNotification): Observable<EntityResponseType> {
         const copy = this.convertDateFromClient(notification);
         return this.http
@@ -33,6 +41,10 @@ export class SystemNotificationService {
             .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
     }
 
+    /**
+     * Find a notification on the server using a GET request.
+     * @param id The id of the notification to get.
+     */
     find(id: number): Observable<EntityResponseType> {
         return this.http
             .get<SystemNotification>(`${this.resourceUrl}/${id}`, { observe: 'response' })
@@ -46,12 +58,18 @@ export class SystemNotificationService {
             .pipe(map((res: EntityArrayResponseType) => this.convertDateArrayFromServer(res)));
     }
 
+    /**
+     * Delete a notification on the server using a DELETE request.
+     * @param id The id of the notification to delete.
+     */
     delete(id: number): Observable<HttpResponse<any>> {
         return this.http.delete<any>(`${this.resourceUrl}/${id}`, { observe: 'response' });
     }
 
+    /**
+     * If the user is not authenticated we do an explicit request for an active system notification. Otherwise get recent system notifications.
+     */
     getActiveNotification(): Observable<SystemNotification | null> {
-        // If the user is not authenticated we do an explicit request for an active system notification.
         if (!this.accountService.isAuthenticated()) {
             return this.http
                 .get<SystemNotification>(`${this.resourceUrl}/active-notification`, { observe: 'response' })
@@ -61,6 +79,11 @@ export class SystemNotificationService {
         return this.notificationService.getRecentSystemNotification();
     }
 
+    /**
+     * Convert notification dates from client format to ISO format.
+     * @param {SystemNotification} notification The notification to format.
+     * @return {SystemNotification} A copy of notification with formatted dates.
+     */
     protected convertDateFromClient(notification: SystemNotification): SystemNotification {
         const copy: SystemNotification = Object.assign({}, notification, {
             notificationDate:
@@ -70,6 +93,11 @@ export class SystemNotificationService {
         return copy;
     }
 
+    /**
+     * Convert server response dates from server format to ISO format.
+     * @param {EntityResponseType} res The server response to format.
+     * @return {EntityResponseType} The server response with formatted dates.
+     */
     convertDateFromServer(res: EntityResponseType): EntityResponseType {
         if (res.body) {
             res.body.notificationDate = res.body.notificationDate != null ? moment(res.body.notificationDate) : null;
@@ -78,6 +106,11 @@ export class SystemNotificationService {
         return res;
     }
 
+    /**
+     * Convert server response dates from server format to ISO format for an array of responses.
+     * @param {EntityResponseType} res The array of server responses to format.
+     * @return {EntityResponseType} The array of server responses with formatted dates.
+     */
     convertDateArrayFromServer(res: EntityArrayResponseType): EntityArrayResponseType {
         if (res.body) {
             res.body.forEach((notification: SystemNotification) => {

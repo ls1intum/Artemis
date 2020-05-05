@@ -30,6 +30,9 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
 
     constructor(private jhiWebsocketService: JhiWebsocketService, private participationService: ParticipationService) {}
 
+    /**
+     * remove all local participations
+     */
     public resetLocalCache() {
         const participations = this.getAllParticipations();
         participations.forEach((participation) => {

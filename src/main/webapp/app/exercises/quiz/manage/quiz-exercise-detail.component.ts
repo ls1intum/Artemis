@@ -116,6 +116,9 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
         private changeDetector: ChangeDetectorRef,
     ) {}
 
+    /**
+     * Initialize variables and load course and quiz from server.
+     */
     ngOnInit(): void {
         /** Initialize local constants **/
         this.showExistingQuestions = false;
@@ -153,8 +156,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
     }
 
     /**
-     * @function init
-     * @desc Initializes local constants and prepares the QuizExercise entity
+     * Initializes local constants and prepares the QuizExercise entity
      */
     init(): void {
         if (this.quizExercise) {
@@ -188,20 +190,27 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
         this.cacheValidation();
     }
 
+    /**
+     * Apply updates for changed course and quizExercise
+     * @param changes the changes to apply
+     */
     ngOnChanges(changes: SimpleChanges): void {
         if (changes.course || changes.quizExercise) {
             this.init();
         }
     }
 
+    /**
+     * Update the categories and overwrite the cache, overwrites existing categories
+     * @param categories the new categories
+     */
     updateCategories(categories: ExerciseCategory[]) {
         this.quizExercise.categories = categories.map((el) => JSON.stringify(el));
         this.cacheValidation();
     }
 
     /**
-     * @function showDropdown
-     * @desc Determine which dropdown to display depending on the relationship between start time, end time, and current time
+     * Determine which dropdown to display depending on the relationship between start time, end time, and current time
      * @returns {string} Name of the dropdown to show
      */
     get showDropdown(): string {
@@ -217,11 +226,16 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
         return 'isVisibleBeforeStart';
     }
 
+    /**
+     * Returns whether pending changes are present, preventing a deactivation.
+     */
     canDeactivate(): Observable<boolean> | boolean {
         return !this.pendingChangesCache;
     }
 
-    // displays the alert for confirming refreshing or closing the page if there are unsaved changes
+    /**
+     * displays the alert for confirming refreshing or closing the page if there are unsaved changes
+     */
     @HostListener('window:beforeunload', ['$event'])
     unloadNotification($event: any) {
         if (!this.canDeactivate()) {
@@ -242,8 +256,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
             .isBefore(moment());
 
     /**
-     * @function addMultipleChoiceQuestion
-     * @desc Add an empty multiple choice question to the quiz
+     * Add an empty multiple choice question to the quiz
      */
     addMultipleChoiceQuestion() {
         if (typeof this.quizExercise === 'undefined') {
@@ -274,8 +287,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
     }
 
     /**
-     * @function addDragAndDropQuestion
-     * @desc Add an empty drag and drop question to the quiz
+     * Add an empty drag and drop question to the quiz
      */
     addDragAndDropQuestion(): void {
         if (typeof this.quizExercise === 'undefined') {
@@ -297,8 +309,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
     }
 
     /**
-     * @function addDShortAnswerQuestion
-     * @desc Add an empty short answer question to the quiz
+     * Add an empty short answer question to the quiz
      */
     addShortAnswerQuestion(): void {
         if (typeof this.quizExercise === 'undefined') {
@@ -326,8 +337,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
     }
 
     /**
-     * @function calculateMaxExerciseScore
-     * @desc Iterates over the questions of the quizExercise and calculates the sum of all question scores
+     * Iterates over the questions of the quizExercise and calculates the sum of all question scores
      */
     calculateMaxExerciseScore(): number {
         let scoreSum = 0;
@@ -336,8 +346,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
     }
 
     /**
-     * @function showHideExistingQuestions
-     * @desc Toggles existing questions view
+     * Toggles existing questions view
      */
     showHideExistingQuestions(): void {
         if (this.quizExercise == null) {
@@ -357,9 +366,8 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
     }
 
     /**
-     * @function onCourseSelect
-     * @desc Callback function for when a user selected a Course from the Dropdown list from 'Add existing questions'
-     *       Populates list of quiz exercises for the selected course
+     * Callback function for when a user selected a Course from the Dropdown list from 'Add existing questions'
+     * Populates list of quiz exercises for the selected course
      */
     onCourseSelect(): void {
         this.allExistingQuestions = this.existingQuestions = [];
@@ -401,8 +409,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
     }
 
     /**
-     * @function applyFilter
-     * @desc Applies filter on questions shown in add existing questions view.
+     * Applies filter on questions shown in add existing questions view.
      */
     applyFilter(): void {
         this.existingQuestions = [];
@@ -428,8 +435,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
     }
 
     /**
-     * @function setImportFile
-     * @desc Assigns the uploaded import file
+     * Assigns the uploaded import file
      * @param $event object containing the uploaded file
      */
     setImportFile($event: any): void {
@@ -442,8 +448,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
     }
 
     /**
-     * @function addExistingQuestions
-     * @desc Adds selected quizzes to current quiz exercise
+     * Adds selected quizzes to current quiz exercise
      */
     addExistingQuestions(): void {
         const questions: QuizQuestion[] = [];
@@ -460,10 +465,9 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
     }
 
     /**
-     * @function cacheValidation
-     * @desc 1. Check whether the inputs in the quiz are valid
-     *       2. Check if warning are needed for the inputs
-     *       3. Display the warnings/invalid reasons in the html file if needed
+     * 1. Check whether the inputs in the quiz are valid
+     * 2. Check if warning are needed for the inputs
+     * 3. Display the warnings/invalid reasons in the html file if needed
      */
     cacheValidation(): void {
         this.warningQuizCache = this.computeInvalidWarnings().length > 0;
@@ -475,8 +479,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
     }
 
     /**
-     * @function deleteQuestion
-     * @desc Remove question from the quiz
+     * Remove question from the quiz
      * @param questionToDelete {QuizQuestion} the question to remove
      */
     deleteQuestion(questionToDelete: QuizQuestion): void {
@@ -485,8 +488,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
     }
 
     /**
-     * @function onQuestionUpdated
-     * @desc Handles the change of a question by replacing the array with a copy (allows for shallow comparison)
+     * Handles the change of a question by replacing the array with a copy (allows for shallow comparison)
      */
     onQuestionUpdated(): void {
         this.cacheValidation();
@@ -494,8 +496,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
     }
 
     /**
-     * @function pendingChanges
-     * @desc Determine if there are any changes waiting to be saved
+     * Determine if there are any changes waiting to be saved
      * @returns {boolean} true if there are any pending changes, false otherwise
      */
     pendingChanges(): boolean {
@@ -513,6 +514,12 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
         );
     }
 
+    /**
+     * Checks whether the used and saved categories are the same.
+     * @param categoriesUsed the categories currently used
+     * @param categoriesSaved the categories that are saved
+     * @returns {boolean} true if the used and saved categories are identical.
+     */
     areCategoriesIdentical(categoriesUsed: string[], categoriesSaved: string[]): boolean {
         if (!categoriesUsed) {
             categoriesUsed = [];
@@ -524,8 +531,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
     }
 
     /**
-     * @function areQuizExerciseEntityQuestionsIdentical
-     * @desc Compares the provided question array objects
+     * Compares the provided question array objects
      * @param QA1 {QuizQuestion[]} First question array to compare
      * @param QA2 {QuizQuestion[]} Second question array to compare against
      * @return {boolean} true if the provided Question[] objects are identical, false otherwise
@@ -535,8 +541,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
     }
 
     /**
-     * @function areDatesIdentical
-     * @desc This function compares the provided dates with help of the moment library
+     * This function compares the provided dates with help of the moment library
      * Since we might be receiving an string instead of a moment object (e.g. when receiving it from the backend)
      * we wrap both dates in a moment object. If it's already a moment object, this will just be ignored.
      * @param date1 {string|Moment} First date to compare
@@ -548,8 +553,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
     }
 
     /**
-     * @function validQuiz
-     * @desc Check if the current inputs are valid
+     * Check if the current inputs are valid
      * @returns {boolean} true if valid, false otherwise
      */
     private validQuiz(): boolean {
@@ -611,8 +615,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
     }
 
     /**
-     * @function computeInvalidWarnings
-     * @desc Get the reasons, why the quiz needs warnings
+     * Get the reasons, why the quiz needs warnings
      * @returns {Array} array of objects with fields 'translateKey' and 'translateValues'
      */
     computeInvalidWarnings(): Warning[] {
@@ -633,8 +636,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
     }
 
     /**
-     * @function invalidReasons
-     * @desc Get the reasons, why the quiz is invalid
+     * Get the reasons, why the quiz is invalid
      * @returns {Array} array of objects with fields 'translateKey' and 'translateValues'
      */
     computeInvalidReasons(): Reason[] {
@@ -789,8 +791,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
     }
 
     /**
-     * @function invalidReasonsHTML
-     * @desc Get the reasons, why the quiz is invalid as an HTML string
+     * Get the reasons, why the quiz is invalid as an HTML string
      * @return {string} the reasons in HTML
      */
     invalidReasonsHTML(): string {
@@ -805,8 +806,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
     }
 
     /**
-     * @function importQuiz
-     * @desc Imports a json quiz file and adds questions to current quiz exercise.
+     * Imports a json quiz file and adds questions to current quiz exercise.
      */
     async importQuiz() {
         if (this.importFile === null || this.importFile === undefined) {
@@ -832,8 +832,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
     }
 
     /**
-     * @function addQuestions
-     * @desc Adds given questions to current quiz exercise.
+     * Adds given questions to current quiz exercise.
      * Ids are removed from new questions so that new id is assigned upon saving the quiz exercise.
      * Images are duplicated for drag and drop questions.
      * @param questions list of questions
@@ -922,7 +921,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
     }
 
     /**
-     * @function triggers the parsing of the editor content in the designated edit component
+     * triggers the parsing of the editor content in the designated edit component
      */
     parseAllQuestions(): void {
         const editQuestionComponents: QuizQuestionEdit[] = [
@@ -934,8 +933,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
     }
 
     /**
-     * @function save
-     * @desc Save the quiz to the server and invoke callback functions depending of result
+     * Save the quiz to the server and invoke callback functions depending of result
      */
     save(): void {
         if (this.hasSavedQuizStarted || !this.pendingChangesCache || !this.quizIsValid) {
@@ -976,8 +974,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
     }
 
     /**
-     * @function onSaveSuccess
-     * @desc Callback function for when the save succeeds
+     * Callback function for when the save succeeds
      * Terminates the saving process and assign the returned quizExercise to the local entities
      * @param {QuizExercise} quizExercise: Saved quizExercise entity
      */
@@ -990,8 +987,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
     }
 
     /**
-     * @function onSaveError
-     * @desc Callback function for when the save fails
+     * Callback function for when the save fails
      */
     private onSaveError = (): void => {
         console.error('Saving Quiz Failed! Please try again later.');
@@ -1001,8 +997,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
     };
 
     /**
-     * @function prepareEntity
-     * @desc Makes sure the entity is well formed and its fields are of the correct types
+     * Makes sure the entity is well formed and its fields are of the correct types
      * @param quizExercise {QuizExercise} exercise which will be prepared
      */
     prepareEntity(quizExercise: QuizExercise): void {
@@ -1012,8 +1007,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
     }
 
     /**
-     * @function onDurationChange
-     * @desc Reach to changes of duration inputs by updating model and ui
+     * Reach to changes of duration inputs by updating model and ui
      */
     onDurationChange(): void {
         const duration = moment.duration(this.duration);
@@ -1023,8 +1017,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
     }
 
     /**
-     * @function updateDuration
-     * @desc Update ui to current value of duration
+     * Update ui to current value of duration
      */
     updateDuration(): void {
         const duration = moment.duration(this.quizExercise.duration, 'seconds');
@@ -1033,22 +1026,23 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
     }
 
     /**
-     * @function cancel
-     * @desc Navigate back
+     * Navigate back
      */
     cancel(): void {
         this.router.navigate(['/course-management', this.quizExercise.course!.id, 'quiz-exercise']);
     }
 
     /**
-     * @function hasSavedQuizStarted
-     * @desc Check if the saved quiz has started
+     * Check if the saved quiz has started
      * @return {boolean} true if the saved quiz has started, otherwise false
      */
     get hasSavedQuizStarted(): boolean {
         return !!(this.savedEntity && this.savedEntity.isPlannedToStart && moment(this.savedEntity.releaseDate!).isBefore(moment()));
     }
 
+    /**
+     * Navigate back
+     */
     back(): void {
         this.location.back();
     }

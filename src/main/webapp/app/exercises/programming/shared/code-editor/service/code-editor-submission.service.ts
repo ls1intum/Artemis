@@ -24,6 +24,9 @@ export class CodeEditorSubmissionService extends DomainDependentService implemen
         this.initDomainSubscription();
     }
 
+    /**
+     * Completes building subject. If there are subscriptions unsubscribe form them.
+     */
     ngOnDestroy() {
         if (this.submissionSubscription) {
             this.submissionSubscription.unsubscribe();
@@ -31,6 +34,10 @@ export class CodeEditorSubmissionService extends DomainDependentService implemen
         this.isBuildingSubject.complete();
     }
 
+    /**
+     * Calls setDomain of super and updates according to parameter.
+     * @param domain - defines new domain of super and variables of current service.
+     */
     setDomain(domain: DomainChange) {
         super.setDomain(domain);
         const [domainType, domainValue] = domain;
@@ -56,10 +63,16 @@ export class CodeEditorSubmissionService extends DomainDependentService implemen
         }
     }
 
+    /**
+     * Call an error if there is one.
+     */
     onError() {
         this.alertService.error('artemisApp.submission.resultTimeout');
     }
 
+    /**
+     * Returns building state of tis service.
+     */
     getBuildingState() {
         return this.isBuildingSubject.asObservable();
     }
