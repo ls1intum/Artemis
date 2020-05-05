@@ -38,6 +38,10 @@ export class Feedback implements BaseEntity {
         return that.credits === 0 && !Feedback.hasDetailText(that);
     }
 
+    public static isPresent(that: Feedback): boolean {
+        return !Feedback.isEmpty(that);
+    }
+
     public static forModeling(credits: number, text?: string, referenceId?: string, referenceType?: string): Feedback {
         const that = new Feedback();
         that.referenceId = referenceId || null;
