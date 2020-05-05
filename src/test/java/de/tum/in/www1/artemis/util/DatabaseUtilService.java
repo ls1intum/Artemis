@@ -414,7 +414,7 @@ public class DatabaseUtilService {
                 exampleSubmissionRepo.save(exampleSubmission);
             }
 
-            User user = (userRepo.findByLogin("student1")).get();
+            User user = (userRepo.findOneByLogin("student1")).get();
             StudentParticipation participation1 = ModelFactory.generateStudentParticipation(InitializationState.INITIALIZED, modelingExercise, user);
             StudentParticipation participation2 = ModelFactory.generateStudentParticipation(InitializationState.FINISHED, textExercise, user);
             StudentParticipation participation3 = ModelFactory.generateStudentParticipation(InitializationState.UNINITIALIZED, modelingExercise, user);
@@ -504,6 +504,28 @@ public class DatabaseUtilService {
             participation.setExercise(exercise);
             studentParticipationRepo.save(participation);
             storedParticipation = studentParticipationRepo.findByExerciseIdAndStudentLogin(exercise.getId(), login);
+            assertThat(storedParticipation).isPresent();
+        }
+        return studentParticipationRepo.findWithEagerSubmissionsAndResultsAssessorsById(storedParticipation.get().getId()).get();
+    }
+
+    /**
+     * Stores participation of the team with the given id for the given exercise
+     *
+     * @param exercise the exercise for which the participation will be created
+     * @param teamId   id of the team
+     * @return eagerly loaded representation of the participation object stored in the database
+     */
+    public StudentParticipation addTeamParticipationForExercise(Exercise exercise, long teamId) {
+        Optional<StudentParticipation> storedParticipation = studentParticipationRepo.findByExerciseIdAndTeamId(exercise.getId(), teamId);
+        if (storedParticipation.isEmpty()) {
+            Team team = teamRepo.findById(teamId).orElseThrow();
+            StudentParticipation participation = new StudentParticipation();
+            participation.setInitializationDate(ZonedDateTime.now());
+            participation.setParticipant(team);
+            participation.setExercise(exercise);
+            studentParticipationRepo.save(participation);
+            storedParticipation = studentParticipationRepo.findByExerciseIdAndTeamId(exercise.getId(), teamId);
             assertThat(storedParticipation).isPresent();
         }
         return studentParticipationRepo.findWithEagerSubmissionsAndResultsAssessorsById(storedParticipation.get().getId()).get();
@@ -635,7 +657,7 @@ public class DatabaseUtilService {
         course.addExercises(textExercise);
         courseRepo.save(course);
         exerciseRepo.save(textExercise);
-        List<Course> courseRepoContent = courseRepo.findAllActiveWithEagerExercisesAndLectures();
+        List<Course> courseRepoContent = courseRepo.findAllActiveWithEagerExercisesAndLectures(ZonedDateTime.now());
         List<Exercise> exerciseRepoContent = exerciseRepo.findAll();
         assertThat(exerciseRepoContent.size()).as("one exercise got stored").isEqualTo(1);
         assertThat(courseRepoContent.size()).as("a course got stored").isEqualTo(1);
@@ -651,7 +673,7 @@ public class DatabaseUtilService {
         courseRepo.save(course);
         exerciseRepo.save(modelingExercise);
         exerciseRepo.save(textExercise);
-        List<Course> courseRepoContent = courseRepo.findAllActiveWithEagerExercisesAndLectures();
+        List<Course> courseRepoContent = courseRepo.findAllActiveWithEagerExercisesAndLectures(ZonedDateTime.now());
         List<Exercise> exerciseRepoContent = exerciseRepo.findAll();
         assertThat(exerciseRepoContent.size()).as("two exercises got stored").isEqualTo(2);
         assertThat(courseRepoContent.size()).as("a course got stored").isEqualTo(1);
@@ -676,7 +698,7 @@ public class DatabaseUtilService {
         exerciseRepo.save(objectExercise);
         exerciseRepo.save(useCaseExercise);
         exerciseRepo.save(afterDueDateExercise);
-        List<Course> courseRepoContent = courseRepo.findAllActiveWithEagerExercisesAndLectures();
+        List<Course> courseRepoContent = courseRepo.findAllActiveWithEagerExercisesAndLectures(ZonedDateTime.now());
         List<Exercise> exerciseRepoContent = exerciseRepo.findAll();
         assertThat(exerciseRepoContent.size()).as("four exercises got stored").isEqualTo(5);
         assertThat(courseRepoContent.size()).as("a course got stored").isEqualTo(1);
@@ -784,7 +806,7 @@ public class DatabaseUtilService {
         course.addExercises(afterDueDateFileUploadExercise);
         course.addExercises(afterAssessmentDateFileUploadExercise);
         courseRepo.save(course);
-        List<Course> courseRepoContent = courseRepo.findAllActiveWithEagerExercisesAndLectures();
+        List<Course> courseRepoContent = courseRepo.findAllActiveWithEagerExercisesAndLectures(ZonedDateTime.now());
         assertThat(courseRepoContent.size()).as("a course got stored").isEqualTo(1);
 
         var fileUploadExercises = new ArrayList<FileUploadExercise>();
@@ -799,7 +821,7 @@ public class DatabaseUtilService {
         exerciseRepo.save(fileUploadExercises.get(0));
         exerciseRepo.save(fileUploadExercises.get(1));
         exerciseRepo.save(fileUploadExercises.get(2));
-        List<Course> courseRepoContent = courseRepo.findAllActiveWithEagerExercisesAndLectures();
+        List<Course> courseRepoContent = courseRepo.findAllActiveWithEagerExercisesAndLectures(ZonedDateTime.now());
         List<Exercise> exerciseRepoContent = exerciseRepo.findAll();
         assertThat(exerciseRepoContent.size()).as("one exercise got stored").isEqualTo(3);
         assertThat(courseRepoContent.size()).as("a course got stored").isEqualTo(1);
@@ -1076,7 +1098,7 @@ public class DatabaseUtilService {
     }
 
     public User getUserByLogin(String login) {
-        return userRepo.findWithAuthoritiesByLogin(login).orElseThrow(() -> new IllegalArgumentException("Provided login " + login + " does not exist in database"));
+        return userRepo.findOneWithAuthoritiesByLogin(login).orElseThrow(() -> new IllegalArgumentException("Provided login " + login + " does not exist in database"));
     }
 
     public void updateExerciseDueDate(long exerciseId, ZonedDateTime newDueDate) {

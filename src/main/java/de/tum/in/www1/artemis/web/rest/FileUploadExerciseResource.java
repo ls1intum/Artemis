@@ -163,7 +163,7 @@ public class FileUploadExerciseResource {
         if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
             return forbidden();
         }
-        List<FileUploadExercise> exercises = fileUploadExerciseRepository.findAllByCourseId(courseId);
+        List<FileUploadExercise> exercises = fileUploadExerciseRepository.findByCourseId(courseId);
         for (Exercise exercise : exercises) {
             // not required in the returned json body
             exercise.setStudentParticipations(null);
@@ -182,7 +182,7 @@ public class FileUploadExerciseResource {
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<FileUploadExercise> getFileUploadExercise(@PathVariable Long exerciseId) {
         log.debug("REST request to get FileUploadExercise : {}", exerciseId);
-        Optional<FileUploadExercise> fileUploadExercise = fileUploadExerciseRepository.findById(exerciseId);
+        Optional<FileUploadExercise> fileUploadExercise = fileUploadExerciseRepository.findWithEagerTeamAssignmentConfigAndCategoriesById(exerciseId);
         List<GradingCriterion> gradingCriteria = gradingCriterionService.findByExerciseIdWithEagerGradingCriteria(exerciseId);
         fileUploadExercise.ifPresent(exercise -> exercise.setGradingCriteria(gradingCriteria));
         Course course = fileUploadExercise.get().getCourse();

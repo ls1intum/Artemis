@@ -17,6 +17,9 @@ export class JhiLanguageHelper {
         this.init();
     }
 
+    /**
+     * Get all supported ISO_639-1 language codes.
+     */
     getAll(): string[] {
         return LANGUAGES;
     }

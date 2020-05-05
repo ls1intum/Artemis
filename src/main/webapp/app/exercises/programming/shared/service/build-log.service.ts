@@ -17,10 +17,18 @@ export class BuildLogService implements IBuildLogService {
 
     constructor(private http: HttpClient) {}
 
+    /**
+     * Returns build logs that match the parameter.
+     * @param participationId.
+     */
     getBuildLogs(participationId: number): Observable<BuildLogEntry[]> {
         return this.http.get<BuildLogEntry[]>(`${this.assignmentResourceUrl}/${participationId}/buildlogs`);
     }
 
+    /**
+     * Returns test repository build logs that match the parameter.
+     * @param participationId.
+     */
     getTestRepositoryBuildLogs(participationId: number) {
         return this.http.get<BuildLogEntry[]>(`${this.testRepositoryResourceUrl}/${participationId}/buildlogs`);
     }

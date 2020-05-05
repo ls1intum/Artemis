@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges, ViewChild, ViewEncapsulation } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, Output, ViewChild, ViewEncapsulation } from '@angular/core';
 import { ExerciseCategory } from 'app/entities/exercise.model';
 import { ColorSelectorComponent } from 'app/shared/color-selector/color-selector.component';
 
@@ -19,11 +19,15 @@ export class CategorySelectorComponent implements OnChanges {
     @Output() selectedCategories = new EventEmitter<ExerciseCategory[]>();
     uniqueCategories: ExerciseCategory[] = [];
 
-    ngOnChanges(changes: SimpleChanges) {
+    /**
+     * set unique categories on changes
+     */
+    ngOnChanges() {
         if (!this.existingCategories) {
             return;
         }
         this.existingCategories.forEach((category) => {
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
             const categoryIsInArray = (el: ExerciseCategory, index: number, categories: ExerciseCategory[]): boolean => {
                 return el.category === category.category;
             };
@@ -33,11 +37,20 @@ export class CategorySelectorComponent implements OnChanges {
         });
     }
 
+    /**
+     * open colorSelector for tagItem
+     * @param {MouseEvent} event
+     * @param {ExerciseCategory} tagItem
+     */
     openColorSelector(event: MouseEvent, tagItem: ExerciseCategory) {
         this.selectedCategory = tagItem;
         this.colorSelector.openColorSelector(event);
     }
 
+    /**
+     * set color of selected category
+     * @param {string} selectedColor
+     */
     onSelectedColor(selectedColor: string) {
         this.selectedCategory.color = selectedColor;
         this.exerciseCategories = this.exerciseCategories.map((el) => {
@@ -49,6 +62,10 @@ export class CategorySelectorComponent implements OnChanges {
         this.selectedCategories.emit(this.exerciseCategories);
     }
 
+    /**
+     * set color if not selected and add exerciseCategory
+     * @param {ExerciseCategory} exerciseCategory
+     */
     onItemAdded(exerciseCategory: ExerciseCategory) {
         if (!exerciseCategory.color) {
             const randomIndex = Math.floor(Math.random() * this.categoryColors.length);
@@ -58,6 +75,10 @@ export class CategorySelectorComponent implements OnChanges {
         this.selectedCategories.emit(this.exerciseCategories);
     }
 
+    /**
+     * cancel colorSelector and remove exerciseCategory
+     * @param {ExerciseCategory} tagItem
+     */
     onItemRemove(tagItem: ExerciseCategory) {
         this.colorSelector.cancelColorSelector();
         this.exerciseCategories = this.exerciseCategories.filter((el) => el !== tagItem);

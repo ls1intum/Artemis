@@ -88,7 +88,7 @@ public class TeamImportIntegrationTest extends AbstractSpringIntegrationBambooBi
         destinationExercise = exerciseRepo.save(destinationExercise.mode(ExerciseMode.TEAM));
 
         // Select a tutor for the teams
-        tutor = userRepo.findByLogin("tutor1").orElseThrow();
+        tutor = userRepo.findOneByLogin("tutor1").orElseThrow();
     }
 
     @AfterEach

@@ -129,7 +129,7 @@ public class AssessmentService {
      */
     @Transactional // NOTE: As we use delete methods with underscores, we need a transactional context here!
     public void cancelAssessmentOfSubmission(Submission submission) {
-        StudentParticipation participation = studentParticipationRepository.findWithEagerResultsById(submission.getParticipation().getId())
+        StudentParticipation participation = studentParticipationRepository.findByIdWithEagerResults(submission.getParticipation().getId())
                 .orElseThrow(() -> new BadRequestAlertException("Participation could not be found", "participation", "notfound"));
         Result result = submission.getResult();
         participation.removeResult(result);

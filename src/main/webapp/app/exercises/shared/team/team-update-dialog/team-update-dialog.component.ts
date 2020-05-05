@@ -47,6 +47,9 @@ export class TeamUpdateDialogComponent implements OnInit {
 
     constructor(private participationService: ParticipationService, private teamService: TeamService, private activeModal: NgbActiveModal, private datePipe: DatePipe) {}
 
+    /**
+     * Life cycle hook to indicate component creation is done
+     */
     ngOnInit(): void {
         this.initPendingTeam();
         this.shortNameValidation(this.shortNameValidator);
@@ -56,6 +59,10 @@ export class TeamUpdateDialogComponent implements OnInit {
         this.pendingTeam = cloneDeep(this.team);
     }
 
+    /**
+     * Hook to indicate a short team name change
+     * @param {string} shortName - new short name of the team
+     */
     onTeamShortNameChanged(shortName: string) {
         // automatically convert shortName to lowercase characters
         this.pendingTeam.shortName = shortName.toLowerCase();
@@ -64,6 +71,10 @@ export class TeamUpdateDialogComponent implements OnInit {
         this.shortNameValidator.next(this.pendingTeam.shortName);
     }
 
+    /**
+     * Hook to indicate a team name change
+     * @param {string} name - new team name
+     */
     onTeamNameChanged(name: string) {
         if (!this.shortNameReadOnly) {
             // automatically set the shortName based on the name (stripping all non-alphanumeric characters)
@@ -98,10 +109,18 @@ export class TeamUpdateDialogComponent implements OnInit {
         return pendingTeamSize >= this.config.minTeamSize && pendingTeamSize <= this.config.maxTeamSize;
     }
 
+    /**
+     * Check if a given user has a conflicting team
+     * @param {User} student - User to search for
+     */
     hasConflictingTeam(student: User): boolean {
         return this.findStudentTeamConflict(student) !== undefined;
     }
 
+    /**
+     * Get conflicting team of a given user
+     * @param {User} student - User to search for
+     */
     getConflictingTeam(student: User): string | null {
         const conflict = this.findStudentTeamConflict(student);
         return conflict ? conflict['teamId'] : null;
@@ -119,25 +138,43 @@ export class TeamUpdateDialogComponent implements OnInit {
         return this.pendingTeam.students.find((s) => s.id === student.id) !== undefined;
     }
 
+    /**
+     * Hook to indicate a student was added to a team
+     * @param {User} student - Added user
+     */
     onAddStudent(student: User) {
         if (!this.isStudentAlreadyInPendingTeam(student)) {
             this.pendingTeam.students.push(student);
         }
     }
 
+    /**
+     * Hook to indicate a student was removed of a team
+     * @param {User} student - removed user
+     */
     onRemoveStudent(student: User) {
         this.pendingTeam.students = this.pendingTeam.students.filter((user) => user.id !== student.id);
         this.resetStudentTeamConflict(student); // conflict might no longer exist when the student is added again
     }
 
+    /**
+     * Hook to indicate the team owner was selected
+     * @param {User} owner - User to select as owner
+     */
     onSelectOwner(owner: User) {
         this.pendingTeam.owner = owner;
     }
 
+    /**
+     * Cancel the update-dialog
+     */
     clear() {
         this.activeModal.dismiss('cancel');
     }
 
+    /**
+     * Save changes made to the team
+     */
     save() {
         if (this.teamSizeViolationUnconfirmed) {
             return;
@@ -160,11 +197,19 @@ export class TeamUpdateDialogComponent implements OnInit {
         );
     }
 
+    /**
+     * Hook to indicate the saving was successful
+     * @param {HttpResponse<Team>}team - The successful updated team
+     */
     onSaveSuccess(team: HttpResponse<Team>) {
         this.activeModal.close(team.body);
         this.isSaving = false;
     }
 
+    /**
+     * Hook to indicate a save error occurred
+     * @param {HttpErrorResponse} httpErrorResponse - The occurred error
+     */
     onSaveError(httpErrorResponse: HttpErrorResponse) {
         this.isSaving = false;
 
@@ -184,7 +229,7 @@ export class TeamUpdateDialogComponent implements OnInit {
         shortName$
             .pipe(
                 debounceTime(500),
-                switchMap((shortName) => this.teamService.existsByShortName(this.exercise, shortName)),
+                switchMap((shortName) => this.teamService.existsByShortName(this.exercise.course!, shortName)),
             )
             .subscribe(
                 (alreadyTakenResponse) => {

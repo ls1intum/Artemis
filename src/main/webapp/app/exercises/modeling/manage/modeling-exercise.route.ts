@@ -1,5 +1,5 @@
 import { Injectable, NgModule } from '@angular/core';
-import { ActivatedRouteSnapshot, Resolve, RouterModule, RouterStateSnapshot, Routes } from '@angular/router';
+import { ActivatedRouteSnapshot, Resolve, RouterModule, Routes } from '@angular/router';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { ModelingExerciseComponent } from './modeling-exercise.component';
 import { ModelingExerciseDetailComponent } from './modeling-exercise-detail.component';
@@ -15,7 +15,7 @@ import { Course } from 'app/entities/course.model';
 @Injectable({ providedIn: 'root' })
 export class ModelingExerciseResolver implements Resolve<ModelingExercise> {
     constructor(private modelingExerciseService: ModelingExerciseService, private courseService: CourseManagementService) {}
-    resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot) {
+    resolve(route: ActivatedRouteSnapshot) {
         if (route.params['exerciseId']) {
             return this.modelingExerciseService.find(route.params['exerciseId']).pipe(
                 filter((res) => !!res.body),
@@ -31,7 +31,7 @@ export class ModelingExerciseResolver implements Resolve<ModelingExercise> {
     }
 }
 
-const routes: Routes = [
+export const routes: Routes = [
     {
         path: ':courseId/modeling-exercises/new',
         component: ModelingExerciseUpdateComponent,

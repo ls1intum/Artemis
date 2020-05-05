@@ -15,6 +15,9 @@ export class ProgrammingExerciseLifecycleComponent implements OnInit {
 
     constructor(private translator: TranslateService) {}
 
+    /**
+     * If the programming exercise does not have an id, set the assessment Type to AUTOMATIC
+     */
     ngOnInit(): void {
         if (!this.exercise.id) {
             this.exercise.assessmentType = AssessmentType.AUTOMATIC;
@@ -31,26 +34,28 @@ export class ProgrammingExerciseLifecycleComponent implements OnInit {
     }
 
     /**
-     * Sets the new release date and updates teh due and after due date if the release date if they are before the
-     * release date now.
+     * Sets the new release date and updates "due date" and "after due date" if the release date is after the due date
      *
-     * @param releaseDate The new release date
+     * @param newReleaseDate The new release date
      */
-    updateReleaseDate(releaseDate: moment.Moment | null) {
-        if (this.exercise.dueDate && releaseDate && releaseDate.isAfter(this.exercise.dueDate)) {
-            this.updateDueDate(releaseDate);
+    updateReleaseDate(newReleaseDate: moment.Moment | null) {
+        if (this.exercise.dueDate && newReleaseDate && moment(newReleaseDate).isAfter(this.exercise.dueDate)) {
+            this.updateDueDate(newReleaseDate);
         }
-
-        this.exercise.releaseDate = releaseDate;
+        this.exercise.releaseDate = newReleaseDate;
     }
 
+    /**
+     * Updates the due Date of the programming exercise
+     * @param dueDate the new dueDate
+     */
     private updateDueDate(dueDate: moment.Moment) {
-        const afterDue = this.exercise.buildAndTestStudentSubmissionsAfterDueDate;
         alert(this.translator.instant('artemisApp.programmingExercise.timeline.alertNewDueDate'));
         this.exercise.dueDate = dueDate;
 
         // If the new due date is after the "After Due Date", then we have to set the "After Due Date" to the new due date
-        if (afterDue && this.exercise.dueDate.isAfter(afterDue)) {
+        const afterDue = this.exercise.buildAndTestStudentSubmissionsAfterDueDate;
+        if (afterDue && moment(dueDate).isAfter(afterDue)) {
             this.exercise.buildAndTestStudentSubmissionsAfterDueDate = dueDate;
             alert(this.translator.instant('artemisApp.programmingExercise.timeline.alertNewAfterDueDate'));
         }

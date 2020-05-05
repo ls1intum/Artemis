@@ -13,6 +13,11 @@ export class ResultHistoryComponent {
     @Input() maxScore: number;
     @Input() showPreviousDivider = false;
 
+    /**
+     * get string for icon if score bigger than 75
+     * @param {Result} result
+     * @return {string} icon
+     */
     resultIcon(result: Result): string {
         if (result.score >= 75) {
             return 'check';
@@ -21,6 +26,11 @@ export class ResultHistoryComponent {
         }
     }
 
+    /**
+     * get colour class depending on score
+     * @param {Result} result
+     * @return {string}
+     */
     resultClass(result: Result): string {
         if (result.score >= MIN_POINTS_GREEN) {
             return 'success';
@@ -31,8 +41,13 @@ export class ResultHistoryComponent {
         }
     }
 
-    // TODO: document the implementation of this method --> it is not really obvious
-    // TODO: save the return value of this method in the result object (as temp variable) to avoid that this method is invoked all the time
+    /**
+     * return number of points from resultString
+     * @param {Result} result
+     * @return {number | null}
+     * // TODO: document the implementation of this method --> it is not really obvious
+     * // TODO: save the return value of this method in the result object (as temp variable) to avoid that this method is invoked all the time
+     */
     absoluteResult(result: Result): number | null {
         if (!result.resultString) {
             return 0;

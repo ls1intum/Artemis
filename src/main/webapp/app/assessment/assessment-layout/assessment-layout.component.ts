@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output, HostBinding } from '@angular/core';
 import { Result } from 'app/entities/result.model';
 import { ComplaintResponse } from 'app/entities/complaint-response.model';
 import { Complaint, ComplaintType } from 'app/entities/complaint.model';
@@ -16,6 +16,8 @@ import { Conflict } from 'app/exercises/modeling/assess/modeling-assessment-edit
     styleUrls: ['./assessment-layout.component.scss'],
 })
 export class AssessmentLayoutComponent {
+    @HostBinding('class.assessment-container') readonly assessmentContainerClass = true;
+
     @Input() hideBackButton = false;
     @Output() navigateBack = new EventEmitter<void>();
 

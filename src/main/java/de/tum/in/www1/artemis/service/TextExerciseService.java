@@ -40,6 +40,6 @@ public class TextExerciseService {
      * @return List of Text Exercises
      */
     public List<TextExercise> findAllAutomaticAssessmentTextExercisesWithFutureDueDate() {
-        return textExerciseRepository.findAllByAssessmentTypeAndDueDateIsAfter(AssessmentType.SEMI_AUTOMATIC, ZonedDateTime.now());
+        return textExerciseRepository.findByAssessmentTypeAndDueDateIsAfter(AssessmentType.SEMI_AUTOMATIC, ZonedDateTime.now());
     }
 }

@@ -136,11 +136,11 @@ public class AccountResource {
     @PostMapping("/account")
     public void saveAccount(@Valid @RequestBody UserDTO userDTO) {
         final String userLogin = SecurityUtils.getCurrentUserLogin().orElseThrow(() -> new InternalServerErrorException("Current user login not found"));
-        Optional<User> existingUser = userRepository.findByEmailIgnoreCase(userDTO.getEmail());
+        Optional<User> existingUser = userRepository.findOneByEmailIgnoreCase(userDTO.getEmail());
         if (existingUser.isPresent() && (!existingUser.get().getLogin().equalsIgnoreCase(userLogin))) {
             throw new EmailAlreadyUsedException();
         }
-        Optional<User> user = userRepository.findByLogin(userLogin);
+        Optional<User> user = userRepository.findOneByLogin(userLogin);
         if (user.isEmpty()) {
             throw new InternalServerErrorException("User could not be found");
         }

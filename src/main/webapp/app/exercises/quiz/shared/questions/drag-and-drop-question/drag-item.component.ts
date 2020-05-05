@@ -18,6 +18,9 @@ export class DragItemComponent implements OnInit {
 
     constructor(private deviceService: DeviceDetectorService) {}
 
+    /**
+     * Initializes device information and whether the device is a mobile device
+     */
     ngOnInit(): void {
         this.deviceInfo = this.deviceService.getDeviceInfo();
         this.isMobile = this.deviceService.isMobile();

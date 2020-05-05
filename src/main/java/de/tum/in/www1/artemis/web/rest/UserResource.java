@@ -98,10 +98,10 @@ public class UserResource {
             throw new BadRequestAlertException("A new user cannot already have an ID", "userManagement", "idexists");
             // Lowercase the user login before comparing with database
         }
-        else if (userRepository.findByLogin(managedUserVM.getLogin().toLowerCase()).isPresent()) {
+        else if (userRepository.findOneByLogin(managedUserVM.getLogin().toLowerCase()).isPresent()) {
             throw new LoginAlreadyUsedException();
         }
-        else if (userRepository.findByEmailIgnoreCase(managedUserVM.getEmail()).isPresent()) {
+        else if (userRepository.findOneByEmailIgnoreCase(managedUserVM.getEmail()).isPresent()) {
             throw new EmailAlreadyUsedException();
         }
         else if (managedUserVM.getGroups().stream().anyMatch(group -> !artemisAuthenticationProvider.isGroupAvailable(group))) {
@@ -129,11 +129,11 @@ public class UserResource {
     @PreAuthorize("hasAnyRole('ADMIN')")
     public ResponseEntity<UserDTO> updateUser(@Valid @RequestBody ManagedUserVM managedUserVM) {
         log.debug("REST request to update User : {}", managedUserVM);
-        Optional<User> existingUser = userRepository.findByEmailIgnoreCase(managedUserVM.getEmail());
+        Optional<User> existingUser = userRepository.findOneByEmailIgnoreCase(managedUserVM.getEmail());
         if (existingUser.isPresent() && (!existingUser.get().getId().equals(managedUserVM.getId()))) {
             throw new EmailAlreadyUsedException();
         }
-        existingUser = userRepository.findWithGroupsAndAuthoritiesByLogin(managedUserVM.getLogin().toLowerCase());
+        existingUser = userRepository.findOneWithGroupsAndAuthoritiesByLogin(managedUserVM.getLogin().toLowerCase());
         if (existingUser.isPresent() && (!existingUser.get().getId().equals(managedUserVM.getId()))) {
             throw new LoginAlreadyUsedException();
         }

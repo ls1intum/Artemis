@@ -241,7 +241,6 @@ public class ProgrammingExerciseResource {
         if (errorMessageCI != null) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, errorMessageCI, "ciProjectExists")).body(null);
         }
-
         try {
             ProgrammingExercise newProgrammingExercise = programmingExerciseService.setupProgrammingExercise(programmingExercise); // Setup all repositories etc
             return ResponseEntity.created(new URI("/api/programming-exercises" + newProgrammingExercise.getId()))
@@ -448,7 +447,7 @@ public class ProgrammingExerciseResource {
             if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
                 return forbidden();
             }
-            Optional<StudentParticipation> assignmentParticipation = studentParticipationRepository.findWithLatestResultByExerciseIdAndStudentId(programmingExercise.getId(),
+            Optional<StudentParticipation> assignmentParticipation = studentParticipationRepository.findByExerciseIdAndStudentIdWithLatestResult(programmingExercise.getId(),
                     user.getId());
             Set<StudentParticipation> participations = new HashSet<>();
             assignmentParticipation.ifPresent(participations::add);

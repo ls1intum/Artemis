@@ -32,7 +32,7 @@ export class CourseLectureRowComponent implements OnInit {
         }
     }
 
-    showDetails(event: any) {
+    showDetails() {
         const lectureToAttach = {
             ...this.lecture,
             startDate: this.lecture.startDate ? this.lecture.startDate.valueOf() : null,

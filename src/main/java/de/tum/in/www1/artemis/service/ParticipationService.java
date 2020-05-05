@@ -616,7 +616,7 @@ public class ParticipationService {
      */
     public StudentParticipation findOneWithEagerResults(Long participationId) {
         log.debug("Request to get Participation : {}", participationId);
-        Optional<StudentParticipation> participation = studentParticipationRepository.findWithEagerResultsById(participationId);
+        Optional<StudentParticipation> participation = studentParticipationRepository.findByIdWithEagerResults(participationId);
         if (participation.isEmpty()) {
             throw new EntityNotFoundException("Participation with " + participationId + " was not found!");
         }
@@ -750,7 +750,7 @@ public class ParticipationService {
      * @return the list of programming exercise participations belonging to exercise
      */
     public List<StudentParticipation> findByExerciseId(Long exerciseId) {
-        return studentParticipationRepository.findAllByExerciseId(exerciseId);
+        return studentParticipationRepository.findByExerciseId(exerciseId);
     }
 
     /**
@@ -760,7 +760,7 @@ public class ParticipationService {
      * @return the list of programming exercise participations belonging to team
      */
     public List<StudentParticipation> findByTeamId(Long teamId) {
-        return studentParticipationRepository.findAllByTeamId(teamId);
+        return studentParticipationRepository.findByTeamId(teamId);
     }
 
     /**
@@ -770,7 +770,7 @@ public class ParticipationService {
      * @return the list of programming exercise participations belonging to exercise
      */
     public List<StudentParticipation> findByExerciseIdWithLatestResult(Long exerciseId) {
-        return studentParticipationRepository.findAllWithLatestResultByExerciseId(exerciseId);
+        return studentParticipationRepository.findByExerciseIdWithLatestResult(exerciseId);
     }
 
     /**
@@ -780,7 +780,7 @@ public class ParticipationService {
      * @return the list of programming exercise participations belonging to exercise
      */
     public List<StudentParticipation> findByExerciseIdWithEagerSubmissionsResult(Long exerciseId) {
-        return studentParticipationRepository.findAllWithEagerSubmissionsResultByExerciseId(exerciseId);
+        return studentParticipationRepository.findByExerciseIdWithEagerSubmissionsResult(exerciseId);
     }
 
     /**
@@ -790,7 +790,7 @@ public class ParticipationService {
      * @return the list of programming exercise participations belonging to exercise
      */
     public List<StudentParticipation> findByExerciseIdWithEagerSubmissionsResultAssessor(Long exerciseId) {
-        return studentParticipationRepository.findAllWithEagerSubmissionsResultAssessorByExerciseId(exerciseId);
+        return studentParticipationRepository.findByExerciseIdWithEagerSubmissionsResultAssessor(exerciseId);
     }
 
     /**
@@ -803,10 +803,10 @@ public class ParticipationService {
     public List<StudentParticipation> findByExerciseAndStudentIdWithEagerResultsAndSubmissions(Exercise exercise, Long studentId) {
         if (exercise.isTeamMode()) {
             Optional<Team> optionalTeam = teamRepository.findOneByExerciseIdAndUserId(exercise.getId(), studentId);
-            return optionalTeam.map(team -> studentParticipationRepository.findAllWithEagerResultsAndSubmissionsByExerciseIdAndTeamId(exercise.getId(), team.getId()))
+            return optionalTeam.map(team -> studentParticipationRepository.findByExerciseIdAndTeamIdWithEagerResultsAndSubmissions(exercise.getId(), team.getId()))
                     .orElse(List.of());
         }
-        return studentParticipationRepository.findAllWithEagerResultsAndSubmissionsByExerciseIdAndStudentId(exercise.getId(), studentId);
+        return studentParticipationRepository.findByExerciseIdAndStudentIdWithEagerResultsAndSubmissions(exercise.getId(), studentId);
     }
 
     /**
@@ -817,7 +817,7 @@ public class ParticipationService {
      * @return a list of participations including their submitted submissions that do not have a manual result
      */
     public List<StudentParticipation> findByExerciseIdWithLatestSubmissionWithoutManualResults(Long exerciseId) {
-        return studentParticipationRepository.findAllWithLatestSubmissionWithoutManualResultsByExerciseId(exerciseId);
+        return studentParticipationRepository.findByExerciseIdWithLatestSubmissionWithoutManualResults(exerciseId);
     }
 
     /**
@@ -827,7 +827,7 @@ public class ParticipationService {
      * @return list of participations belonging to course
      */
     public List<StudentParticipation> findByCourseIdWithRelevantResult(Long courseId) {
-        List<StudentParticipation> participations = studentParticipationRepository.findAllWithEagerRatedResultsByCourseId(courseId);
+        List<StudentParticipation> participations = studentParticipationRepository.findByCourseIdWithEagerRatedResults(courseId);
 
         return participations.stream()
 
@@ -862,6 +862,17 @@ public class ParticipationService {
                     }
                     participation.setResults(new HashSet<>(relevantResults));
                 }).collect(Collectors.toList());
+    }
+
+    /**
+     * Get all exercise participations of a team in a course
+     *
+     * @param courseId the id of the course
+     * @param teamShortName the team short name (all teams with this short name in the course are seen as the same team)
+     * @return the list of exercise participations for the team in the course
+     */
+    public List<StudentParticipation> findAllByCourseIdAndTeamShortName(Long courseId, String teamShortName) {
+        return studentParticipationRepository.findAllByCourseIdAndTeamShortName(courseId, teamShortName);
     }
 
     /**
@@ -1026,7 +1037,7 @@ public class ParticipationService {
      * @return participation with eager course
      */
     public StudentParticipation findOneWithEagerCourse(Long participationId) {
-        return studentParticipationRepository.findWithEagerExerciseAndEagerCourseById(participationId);
+        return studentParticipationRepository.findOneByIdWithEagerExerciseAndEagerCourse(participationId);
     }
 
     /**
@@ -1036,7 +1047,7 @@ public class ParticipationService {
      * @return participation with eager course
      */
     public StudentParticipation findOneWithEagerResultsAndCourse(Long participationId) {
-        return studentParticipationRepository.findWithEagerResultsAndExerciseAndEagerCourseById(participationId);
+        return studentParticipationRepository.findOneByIdWithEagerResultsAndExerciseAndEagerCourse(participationId);
     }
 
     /**
@@ -1086,14 +1097,25 @@ public class ParticipationService {
     }
 
     /**
-     * Get all participations (including those for team-based exercises) for the given student and exercises combined with their submissions with a result
+     * Get all participations for the given student and individual-mode exercises combined with their submissions with a result
      *
      * @param studentId the id of the student for which the participations should be found
-     * @param exercises the exercises for which participations should be found
+     * @param exercises the individual-mode exercises for which participations should be found
      * @return student's participations
      */
-    public List<StudentParticipation> findWithSubmissionsWithResultByStudentIdAndExercise(Long studentId, Set<Exercise> exercises) {
-        return studentParticipationRepository.findAllWithEagerSubmissionsResultByStudentIdAndExercise(studentId, exercises);
+    public List<StudentParticipation> findByStudentIdAndIndividualExercisesWithEagerSubmissionsResult(Long studentId, List<Exercise> exercises) {
+        return studentParticipationRepository.findByStudentIdAndIndividualExercisesWithEagerSubmissionsResult(studentId, exercises);
+    }
+
+    /**
+     * Get all participations for the given student and team-mode exercises combined with their submissions with a result
+     *
+     * @param studentId the id of the student for which the participations should be found
+     * @param exercises the team-mode exercises for which participations should be found
+     * @return student's team participations
+     */
+    public List<StudentParticipation> findByStudentIdAndTeamExercisesWithEagerSubmissionsResult(Long studentId, List<Exercise> exercises) {
+        return studentParticipationRepository.findByStudentIdAndTeamExercisesWithEagerSubmissionsResult(studentId, exercises);
     }
 
     /**
@@ -1103,8 +1125,28 @@ public class ParticipationService {
      * @return the number of submissions per participation in the given exercise
      */
     public Map<Long, Integer> countSubmissionsPerParticipationByExerciseId(long exerciseId) {
-        List<long[]> participationIdAndSubmissionCountPairs = studentParticipationRepository.countSubmissionsPerParticipationByExerciseId(exerciseId);
-        // convert List<[participationId, submissionCount]> into Map<participationId -> submissionCount>
+        return convertListOfCountsIntoMap(studentParticipationRepository.countSubmissionsPerParticipationByExerciseId(exerciseId));
+    }
+
+    /**
+     * Get a mapping of participation ids to the number of submission for each participation.
+     *
+     * @param courseId the id of the course for which to consider participations
+     * @param teamShortName the short name of the team for which to consider participations
+     * @return the number of submissions per participation in the given course for the team
+     */
+    public Map<Long, Integer> countSubmissionsPerParticipationByCourseIdAndTeamShortName(long courseId, String teamShortName) {
+        return convertListOfCountsIntoMap(studentParticipationRepository.countSubmissionsPerParticipationByCourseIdAndTeamShortName(courseId, teamShortName));
+    }
+
+    /**
+     * Converts List<[participationId, submissionCount]> into Map<participationId -> submissionCount>
+     *
+     * @param participationIdAndSubmissionCountPairs list of pairs (participationId, submissionCount)
+     * @return map of participation id to submission count
+     */
+    private Map<Long, Integer> convertListOfCountsIntoMap(List<long[]> participationIdAndSubmissionCountPairs) {
+
         return participationIdAndSubmissionCountPairs.stream().collect(Collectors.toMap(participationIdAndSubmissionCountPair -> participationIdAndSubmissionCountPair[0], // participationId
                 participationIdAndSubmissionCountPair -> Math.toIntExact(participationIdAndSubmissionCountPair[1]) // submissionCount
         ));

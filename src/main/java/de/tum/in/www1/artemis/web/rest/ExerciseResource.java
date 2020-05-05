@@ -102,8 +102,9 @@ public class ExerciseResource {
         log.debug("REST request to get Exercise : {}", exerciseId);
 
         User user = userService.getUserWithGroupsAndAuthorities();
-        Exercise exercise = exerciseService.findOneWithCategories(exerciseId);
-
+        Exercise exercise = exerciseService.findOneWithCategoriesAndTeamAssignmentConfig(exerciseId);
+        List<GradingCriterion> gradingCriteria = gradingCriterionService.findByExerciseIdWithEagerGradingCriteria(exerciseId);
+        exercise.setGradingCriteria(gradingCriteria);
         if (!authCheckService.isAllowedToSeeExercise(exercise, user)) {
             return forbidden();
         }
@@ -141,6 +142,9 @@ public class ExerciseResource {
         // Do not provide example submissions without any assessment
         exampleSubmissions.removeIf(exampleSubmission -> exampleSubmission.getSubmission().getResult() == null);
         exercise.setExampleSubmissions(new HashSet<>(exampleSubmissions));
+
+        List<GradingCriterion> gradingCriteria = gradingCriterionService.findByExerciseIdWithEagerGradingCriteria(exerciseId);
+        exercise.setGradingCriteria(gradingCriteria);
 
         TutorParticipation tutorParticipation = tutorParticipationService.findByExerciseAndTutor(exercise, user);
         if (exampleSubmissions.size() == 0 && tutorParticipation.getStatus().equals(TutorParticipationStatus.REVIEWED_INSTRUCTIONS)) {
@@ -317,6 +321,7 @@ public class ExerciseResource {
                 exercise.addParticipation(participation);
             }
 
+            this.programmingExerciseService.checksAndSetsIfProgrammingExerciseIsLocalSimulation(exercise);
             // TODO: we should also check that the submissions do not contain sensitive data
 
             // remove sensitive information for students

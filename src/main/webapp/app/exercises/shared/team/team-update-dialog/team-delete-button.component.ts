@@ -38,6 +38,9 @@ export class TeamDeleteButtonComponent implements OnDestroy {
 
     constructor(private jhiAlertService: JhiAlertService, private teamService: TeamService) {}
 
+    /**
+     * Life cycle hook to indicate component creation is done
+     */
     ngOnDestroy(): void {
         this.dialogErrorSource.unsubscribe();
     }
@@ -47,6 +50,7 @@ export class TeamDeleteButtonComponent implements OnDestroy {
      *
      * @param additionalChecksValues Not used here
      */
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     removeTeam = (additionalChecksValues: { [key: string]: boolean }) => {
         this.teamService.delete(this.exercise, this.team.id).subscribe(
             () => {

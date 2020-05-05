@@ -29,7 +29,7 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
     @Query("SELECT DISTINCT pe FROM ProgrammingExercise pe LEFT JOIN FETCH pe.templateParticipation tp LEFT JOIN FETCH pe.solutionParticipation sp LEFT JOIN FETCH tp.results as tpr LEFT JOIN FETCH sp.results AS spr WHERE pe.course.id = :#{#courseId} AND (tpr.id = (SELECT MAX(id) FROM tp.results) OR tpr.id = NULL) AND (spr.id = (SELECT MAX(id) FROM sp.results) OR spr.id = NULL)")
     List<ProgrammingExercise> findAllWithLatestResultForTemplateSolutionParticipationsByCourseId(@Param("courseId") Long courseId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "templateParticipation", "solutionParticipation" })
+    @EntityGraph(type = LOAD, attributePaths = { "templateParticipation", "solutionParticipation", "teamAssignmentConfig", "categories" })
     Optional<ProgrammingExercise> findWithTemplateParticipationAndSolutionParticipationById(Long exerciseId);
 
     @EntityGraph(type = LOAD, attributePaths = "testCases")

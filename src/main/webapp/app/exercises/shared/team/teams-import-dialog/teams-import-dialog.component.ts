@@ -1,7 +1,7 @@
 import { Component, Input, ViewChild, OnInit, OnDestroy, ViewEncapsulation } from '@angular/core';
 import { NgForm } from '@angular/forms';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/alert/alert.service';
 import { HttpResponse } from '@angular/common/http';
 import { Subject } from 'rxjs';
 import { TeamService } from 'app/exercises/shared/team/team.service';
@@ -49,16 +49,26 @@ export class TeamsImportDialogComponent implements OnInit, OnDestroy {
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
 
-    constructor(private teamService: TeamService, private activeModal: NgbActiveModal, private jhiAlertService: JhiAlertService) {}
+    constructor(private teamService: TeamService, private activeModal: NgbActiveModal, private jhiAlertService: AlertService) {}
 
+    /**
+     * Life cycle hook to indicate component creation is done
+     */
     ngOnInit() {
         this.computePotentialConflictsBasedOnExistingTeams();
     }
 
+    /**
+     * Life cycle hook to indicate component destruction is done
+     */
     ngOnDestroy(): void {
         this.dialogErrorSource.unsubscribe();
     }
 
+    /**
+     * Load teams from source exercise
+     * @param {Exercise} sourceExercise - Source exercise to load teams from
+     */
     loadSourceTeams(sourceExercise: Exercise) {
         this.sourceTeams = null;
         this.loadingSourceTeams = true;
@@ -185,6 +195,10 @@ export class TeamsImportDialogComponent implements OnInit, OnDestroy {
         return this.sourceExercise && this.sourceTeams!?.length > 0 && this.teams.length > 0;
     }
 
+    /**
+     * Update the strategy to use for importing
+     * @param {ImportStrategy} importStrategy - Strategy to use
+     */
     updateImportStrategy(importStrategy: ImportStrategy) {
         this.importStrategy = importStrategy;
     }
@@ -209,6 +223,9 @@ export class TeamsImportDialogComponent implements OnInit, OnDestroy {
         return this.isImporting || !this.sourceExercise || !this.sourceTeams || !this.importStrategy || !this.numberOfTeamsToBeImported;
     }
 
+    /**
+     * Cancel the import dialog
+     */
     clear() {
         this.activeModal.dismiss('cancel');
     }
@@ -235,11 +252,22 @@ export class TeamsImportDialogComponent implements OnInit, OnDestroy {
         );
     }
 
+    /**
+     * Hook to indicate a success on save
+     * @param {HttpResponse<Team[]>} teams - Successfully updated teams
+     */
     onSaveSuccess(teams: HttpResponse<Team[]>) {
         this.activeModal.close(teams.body);
         this.isImporting = false;
+
+        setTimeout(() => {
+            this.jhiAlertService.success('artemisApp.team.importSuccess', { numberOfImportedTeams: this.numberOfTeamsToBeImported });
+        }, 500);
     }
 
+    /**
+     * Hook to indicate an error on save
+     */
     onSaveError() {
         this.jhiAlertService.error('artemisApp.team.importError');
         this.isImporting = false;

@@ -1,6 +1,9 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { Submission } from 'app/entities/submission.model';
 
+/**
+ * filters for all or only locked submissions
+ */
 enum FilterProp {
     ALL = 'all',
     LOCKED = 'locked',
@@ -19,6 +22,10 @@ export class AssessmentFiltersComponent {
 
     @Output() filterChange = new EventEmitter<Submission[]>();
 
+    /**
+     * Updates filter to either filtering for locked or all assessments
+     * @param {FilterProp} filterProp - filter type
+     */
     public updateFilter(filterProp: FilterProp) {
         this.filterProp = filterProp;
         this.updateFilteredSubmissions();

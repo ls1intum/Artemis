@@ -1,4 +1,13 @@
-<div class="form-row">
+<span class="badge badge-primary" title="{{ 'artemisApp.assessment.automaticGenerated' | translate }}" *ngIf="feedback.type === FeedbackType.AUTOMATIC">
+    <fa-icon [icon]="'robot'"></fa-icon>
+    <span [jhiTranslate]="'artemisApp.AssessmentType.' + feedback.type"></span>
+</span>
+
+<div
+    class="form-row"
+    (drop)="structuredGradingCriterionService.updateFeedbackWithStructuredGradingInstructionEvent(feedback, $event); didChange()"
+    (dragover)="$event.preventDefault()"
+>
     <div class="form-group col-10">
         <label jhiTranslate="artemisApp.assessment.detail.feedback" [for]="'detailText-' + textBlock.id"></label>
         <textarea

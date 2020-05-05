@@ -108,17 +108,17 @@ public class ExerciseService {
     public List<Exercise> findAllForCourse(Course course, User user) {
         List<Exercise> exercises = null;
         if (authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
-            // user can see this exercise
-            exercises = exerciseRepository.findAllByCourseId(course.getId());
+            // user can see all exercises of the course
+            exercises = exerciseRepository.findByCourseIdWithCategories(course.getId());
         }
         else if (authCheckService.isStudentInCourse(course, user)) {
 
             if (course.isOnlineCourse()) {
                 // students in online courses can only see exercises where the lti outcome url exists, otherwise the result cannot be reported later on
-                exercises = exerciseRepository.findAllByCourseIdWhereLtiOutcomeUrlExists(course.getId(), user.getLogin());
+                exercises = exerciseRepository.findByCourseIdWhereLtiOutcomeUrlExists(course.getId(), user.getLogin());
             }
             else {
-                exercises = exerciseRepository.findAllByCourseId(course.getId());
+                exercises = exerciseRepository.findByCourseIdWithCategories(course.getId());
             }
 
             // user is student for this course and might not have the right to see it so we have to filter
@@ -139,6 +139,15 @@ public class ExerciseService {
         }
 
         return exercises;
+    }
+
+    /**
+     * Finds all team-based exercises for a course
+     * @param course Course for which to return all team-based exercises
+     * @return set of exercises
+     */
+    public Set<Exercise> findAllTeamExercisesForCourse(Course course) {
+        return exerciseRepository.findAllTeamExercisesByCourseId(course.getId());
     }
 
     /**
@@ -187,13 +196,13 @@ public class ExerciseService {
     }
 
     /**
-     * Get one exercise by exerciseId with its categories
+     * Get one exercise by exerciseId with its categories and its team assignment config
      *
      * @param exerciseId the exerciseId of the entity
      * @return the entity
      */
-    public Exercise findOneWithCategories(Long exerciseId) {
-        Optional<Exercise> exercise = exerciseRepository.findByIdWithEagerCategories(exerciseId);
+    public Exercise findOneWithCategoriesAndTeamAssignmentConfig(Long exerciseId) {
+        Optional<Exercise> exercise = exerciseRepository.findWithEagerCategoriesAndTeamAssignmentConfigById(exerciseId);
         if (exercise.isEmpty()) {
             throw new EntityNotFoundException("Exercise with exerciseId " + exerciseId + " does not exist!");
         }

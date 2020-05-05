@@ -18,9 +18,8 @@ export class ProgrammingExercisePlantUmlService {
     }
 
     /**
-     * @function getPlantUmlImage
-     * @param plantUml definition obtained by parsing the README markdown file
-     * @desc Requests the plantuml png file as arraybuffer and converts it to base64
+     * Requests the plantuml png file as arraybuffer and converts it to base64.
+     * @param plantUml - definition obtained by parsing the README markdown file.
      *
      * TODO provide a rationale about the cache configuration
      *
@@ -41,9 +40,8 @@ export class ProgrammingExercisePlantUmlService {
     }
 
     /**
-     * @function getPlantUmlSvg
-     * @param plantUml definition obtained by parsing the README markdown file
-     * @desc Requests the plantuml svg as string
+     * Requests the plantuml svg as string.
+     * @param plantUml - definition obtained by parsing the README markdown file.
      *
      * TODO provide a rationale about the cache configuration
      *
@@ -71,18 +69,34 @@ export class ProgrammingExercisePlantUmlService {
  * @desc Custom HttpParamEncoder implementation which defaults to using encodeURIComponent to encode params
  */
 export class HttpUrlCustomEncoder implements HttpParameterCodec {
+    /**
+     * Encodes key.
+     * @param k - key to be encoded.
+     */
     encodeKey(k: string): string {
         return encodeURIComponent(k);
     }
 
+    /**
+     * Encodes value.
+     * @param v - value to be encoded.
+     */
     encodeValue(v: string): string {
         return encodeURIComponent(v);
     }
 
+    /**
+     * Decodes key.
+     * @param k - key to be decoded.
+     */
     decodeKey(k: string): string {
         return decodeURIComponent(k);
     }
 
+    /**
+     * Decodes value.
+     * @param v - value to be decoded.
+     */
     decodeValue(v: string) {
         return decodeURIComponent(v);
     }

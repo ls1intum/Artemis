@@ -54,8 +54,15 @@ export class GradingInstructionsDetailsComponent implements OnInit {
         let markdownText = '';
         if (this.criteria === undefined || this.criteria.length === 0) {
             this.criteria = [];
-            const newCriteria = new GradingCriterion();
-            this.criteria.push(newCriteria);
+            const dummyCriterion = new GradingCriterion();
+            const exampleCriterion = new GradingCriterion();
+            exampleCriterion.title = 'This is an Example criterion';
+            const exampleInstr = new GradingInstruction();
+            exampleCriterion.structuredGradingInstructions = [];
+            exampleCriterion.structuredGradingInstructions.push(exampleInstr);
+            exampleCriterion.structuredGradingInstructions.push(exampleInstr); // to showcase that a criterion consists of multiple instructions
+            this.criteria.push(dummyCriterion);
+            this.criteria.push(exampleCriterion);
         }
         for (const criterion of this.criteria) {
             if (criterion.title === null || criterion.title === undefined) {
@@ -149,7 +156,7 @@ export class GradingInstructionsDetailsComponent implements OnInit {
     }
 
     hasCriterionCommand(domainCommands: [string, DomainCommand][]): boolean {
-        return domainCommands.some(([text, command]) => command instanceof GradingCriterionCommand);
+        return domainCommands.some(([, command]) => command instanceof GradingCriterionCommand);
     }
 
     /**
@@ -167,7 +174,7 @@ export class GradingInstructionsDetailsComponent implements OnInit {
         if (this.hasCriterionCommand(domainCommands) === false) {
             this.setParentForInstructionsWithNoCriterion(domainCommands);
         } else {
-            for (const [text, command] of domainCommands) {
+            for (const [, command] of domainCommands) {
                 endOfInstructionsCommand++;
                 if (command instanceof GradingCriterionCommand) {
                     instructionCommands = domainCommands.slice(0, endOfInstructionsCommand - 1);
@@ -191,7 +198,7 @@ export class GradingInstructionsDetailsComponent implements OnInit {
      * @param domainCommands containing tuples of [text, domainCommandIdentifiers]
      */
     setParentForInstructionsWithNoCriterion(domainCommands: [string, DomainCommand][]): void {
-        for (const [text, command] of domainCommands) {
+        for (const [, command] of domainCommands) {
             if (command instanceof GradingInstructionCommand) {
                 const dummyCriterion = new GradingCriterion();
                 const newInstruction = new GradingInstruction();
@@ -212,6 +219,7 @@ export class GradingInstructionsDetailsComponent implements OnInit {
      * @param domainCommands containing tuples of [text, domainCommandIdentifiers]
      */
     groupInstructionsToCriteria(domainCommands: [string, DomainCommand][]): void {
+        const initialCriteriaCommands = domainCommands;
         if (this.exercise.gradingCriteria === undefined) {
             this.exercise.gradingCriteria = [];
         }
@@ -222,19 +230,22 @@ export class GradingInstructionsDetailsComponent implements OnInit {
                 this.exercise.gradingCriteria.push(newCriterion);
                 newCriterion.structuredGradingInstructions = [];
                 const modifiedArray = domainCommands.slice(1); // remove GradingCriterionCommandIdentifier after creating its criterion object
-                for (const [instrText, instrCommand] of modifiedArray) {
+                let endOfCriterion = 0;
+                for (const [, instrCommand] of modifiedArray) {
+                    endOfCriterion++;
                     if (instrCommand instanceof GradingInstructionCommand) {
                         const newInstruction = new GradingInstruction(); // create instruction objects that belong to the above created criterion
                         newCriterion.structuredGradingInstructions.push(newInstruction);
                         this.instructions.push(newInstruction);
                     }
                     if (instrCommand instanceof GradingCriterionCommand) {
+                        domainCommands = domainCommands.slice(endOfCriterion, domainCommands.length);
                         break;
                     }
                 }
             }
         }
-        this.setInstructionParameters(domainCommands.filter(([text, command]) => command instanceof GradingCriterionCommand === false));
+        this.setInstructionParameters(initialCriteriaCommands.filter(([, command]) => command instanceof GradingCriterionCommand === false));
     }
 
     /**
@@ -273,6 +284,5 @@ export class GradingInstructionsDetailsComponent implements OnInit {
         this.criteria = [];
         this.exercise.gradingCriteria = [];
         this.createSubInstructionCommands(domainCommands);
-        console.log(this.exercise.gradingCriteria);
     }
 }

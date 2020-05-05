@@ -139,7 +139,7 @@ public class AccountResourceIntegrationTest extends AbstractSpringIntegrationBam
         request.postWithoutLocation("/api/account", new UserDTO(createdUser), HttpStatus.OK, null);
 
         // check if update successful
-        User updatedUser = userRepo.findByLogin("authenticateduser").get();
+        User updatedUser = userRepo.findOneByLogin("authenticateduser").get();
         assertThat(updatedUser.getFirstName()).isEqualTo(updatedFirstName);
     }
 
@@ -157,7 +157,7 @@ public class AccountResourceIntegrationTest extends AbstractSpringIntegrationBam
         request.postWithoutLocation("/api/account/change-password", pwChange, HttpStatus.OK, null);
 
         // check if update successful
-        User updatedUser = userRepo.findByLogin("authenticateduser").get();
+        User updatedUser = userRepo.findOneByLogin("authenticateduser").get();
         assertThat(userService.encryptor().decrypt(updatedUser.getPassword())).isEqualTo(updatedPassword);
     }
 
@@ -184,7 +184,7 @@ public class AccountResourceIntegrationTest extends AbstractSpringIntegrationBam
         request.postWithoutLocation("/api/account/reset-password/init", createdUser.getEmail(), HttpStatus.OK, null);
 
         // check user data
-        User userPasswordResetInit = userRepo.findByLogin("authenticateduser").get();
+        User userPasswordResetInit = userRepo.findOneByLogin("authenticateduser").get();
         String resetKey = userPasswordResetInit.getResetKey();
 
         // finish password reset
@@ -197,7 +197,7 @@ public class AccountResourceIntegrationTest extends AbstractSpringIntegrationBam
         request.postWithoutLocation("/api/account/reset-password/finish", finishResetData, HttpStatus.OK, null);
 
         // get updated user
-        User userPasswordResetFinished = userRepo.findByLogin("authenticateduser").get();
+        User userPasswordResetFinished = userRepo.findOneByLogin("authenticateduser").get();
         assertThat(userService.encryptor().decrypt(userPasswordResetFinished.getPassword())).isEqualTo(newPassword);
     }
 

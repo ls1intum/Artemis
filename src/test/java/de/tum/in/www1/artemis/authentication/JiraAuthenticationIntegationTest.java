@@ -147,7 +147,7 @@ public class JiraAuthenticationIntegationTest extends AbstractSpringIntegrationB
         assertThat(ltiOutcome.getUrl()).isEqualTo(ltiLaunchRequest.getLis_outcome_service_url());
         assertThat(ltiOutcome.getSourcedId()).isEqualTo(ltiLaunchRequest.getLis_result_sourcedid());
 
-        final var mrrobotUser = userRepository.findWithGroupsAndAuthoritiesByLogin(username).get();
+        final var mrrobotUser = userRepository.findOneWithGroupsAndAuthoritiesByLogin(username).get();
         assertThat(mrrobotUser.getEmail()).isEqualTo(email);
         assertThat(mrrobotUser.getFirstName()).isEqualTo(firstName);
         assertThat(mrrobotUser.getGroups()).containsAll(groups);

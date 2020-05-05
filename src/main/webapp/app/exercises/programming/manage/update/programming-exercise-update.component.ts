@@ -16,6 +16,8 @@ import { AssessmentType } from 'app/entities/assessment-type.model';
 import { ExerciseCategory } from 'app/entities/exercise.model';
 import { EditorMode } from 'app/shared/markdown-editor/markdown-editor.component';
 import { KatexCommand } from 'app/shared/markdown-editor/commands/katex.command';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { ProgrammingExerciseSimulationService } from 'app/exercises/programming/manage/services/programming-exercise-simulation.service';
 
 @Component({
     selector: 'jhi-programming-exercise-update',
@@ -52,6 +54,8 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     exerciseCategories: ExerciseCategory[];
     existingCategories: ExerciseCategory[];
 
+    public inProductionEnvironment: boolean;
+
     constructor(
         private programmingExerciseService: ProgrammingExerciseService,
         private courseService: CourseManagementService,
@@ -60,6 +64,8 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         private fileService: FileService,
         private activatedRoute: ActivatedRoute,
         private translateService: TranslateService,
+        private profileService: ProfileService,
+        private programmingExerciseSimulationService: ProgrammingExerciseSimulationService,
     ) {}
 
     /**
@@ -81,6 +87,9 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         return this.selectedProgrammingLanguageValue;
     }
 
+    /**
+     * Sets the values for the creation/update of a programming exercise
+     */
     ngOnInit() {
         this.isSaving = false;
         this.notificationText = null;
@@ -139,16 +148,33 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         if (this.programmingExercise.id !== undefined) {
             this.problemStatementLoaded = true;
         }
+
+        // Checks if the current environment is production
+        this.profileService.getProfileInfo().subscribe((profileInfo) => {
+            if (profileInfo) {
+                this.inProductionEnvironment = profileInfo.inProduction;
+            }
+        });
     }
 
+    /**
+     * If an user clicks on the back button the previous page should be loaded
+     */
     previousState() {
         window.history.back();
     }
 
+    /**
+     * Updates the categories
+     * @param categories which should be set
+     */
     updateCategories(categories: ExerciseCategory[]) {
         this.programmingExercise.categories = categories.map((el) => JSON.stringify(el));
     }
 
+    /**
+     * Saves the programming exercise with the provided input
+     */
     save() {
         // If no release date is set, we warn the user.
         if (!this.programmingExercise.releaseDate) {
@@ -166,6 +192,9 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
                 requestOptions.notificationText = this.notificationText;
             }
             this.subscribeToSaveResponse(this.programmingExerciseService.update(this.programmingExercise, requestOptions));
+        } else if (this.programmingExercise.noVersionControlAndContinuousIntegrationAvailable) {
+            // only for testing purposes(noVersionControlAndContinuousIntegrationAvailable)
+            this.subscribeToSaveResponse(this.programmingExerciseSimulationService.automaticSetupWithoutConnectionToVCSandCI(this.programmingExercise));
         } else {
             this.subscribeToSaveResponse(this.programmingExerciseService.automaticSetup(this.programmingExercise));
         }
@@ -173,7 +202,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
 
     private subscribeToSaveResponse(result: Observable<HttpResponse<ProgrammingExercise>>) {
         result.subscribe(
-            (res: HttpResponse<ProgrammingExercise>) => this.onSaveSuccess(),
+            () => this.onSaveSuccess(),
             (res: HttpErrorResponse) => this.onSaveError(res),
         );
     }

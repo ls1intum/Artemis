@@ -552,7 +552,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
      * @return a list of programming submissions
      */
     public List<ProgrammingSubmission> getAllProgrammingSubmissionsByTutorForExercise(long exerciseId, long tutorId) {
-        List<StudentParticipation> participations = this.studentParticipationRepository.findAllWithLatestSubmissionByExerciseIdAndAssessorId(exerciseId, tutorId);
+        List<StudentParticipation> participations = this.studentParticipationRepository.findWithLatestSubmissionByExerciseAndAssessor(exerciseId, tutorId);
         return participations.stream().map(Participation::findLatestSubmission).filter(Optional::isPresent).map(submission -> (ProgrammingSubmission) submission.get())
                 .collect(Collectors.toList());
     }

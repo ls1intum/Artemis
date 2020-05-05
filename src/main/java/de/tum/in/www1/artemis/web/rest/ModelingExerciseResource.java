@@ -161,7 +161,7 @@ public class ModelingExerciseResource {
         if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
             return forbidden();
         }
-        List<ModelingExercise> exercises = modelingExerciseRepository.findAllByCourseId(courseId);
+        List<ModelingExercise> exercises = modelingExerciseRepository.findByCourseId(courseId);
         for (Exercise exercise : exercises) {
             // not required in the returned json body
             exercise.setStudentParticipations(null);
@@ -220,7 +220,7 @@ public class ModelingExerciseResource {
     public ResponseEntity<ModelingExercise> getModelingExercise(@PathVariable Long exerciseId) {
         log.debug("REST request to get ModelingExercise : {}", exerciseId);
         // TODO CZ: provide separate endpoint GET /modeling-exercises/{id}/withExampleSubmissions and load exercise without example submissions here
-        Optional<ModelingExercise> modelingExercise = modelingExerciseRepository.findByIdWithEagerExampleSubmissions(exerciseId);
+        Optional<ModelingExercise> modelingExercise = modelingExerciseRepository.findWithEagerExampleSubmissionsById(exerciseId);
         List<GradingCriterion> gradingCriteria = gradingCriterionService.findByExerciseIdWithEagerGradingCriteria(exerciseId);
         modelingExercise.ifPresent(exercise -> exercise.setGradingCriteria(gradingCriteria));
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(modelingExercise)) {

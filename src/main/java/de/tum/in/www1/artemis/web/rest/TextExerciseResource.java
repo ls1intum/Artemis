@@ -189,7 +189,7 @@ public class TextExerciseResource {
         if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, null)) {
             return forbidden();
         }
-        List<TextExercise> exercises = textExerciseRepository.findAllByCourseId(courseId);
+        List<TextExercise> exercises = textExerciseRepository.findByCourseId(courseId);
         for (Exercise exercise : exercises) {
             // not required in the returned json body
             exercise.setStudentParticipations(null);
@@ -212,7 +212,7 @@ public class TextExerciseResource {
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<TextExercise> getTextExercise(@PathVariable Long exerciseId) {
         log.debug("REST request to get TextExercise : {}", exerciseId);
-        Optional<TextExercise> optionalTextExercise = textExerciseRepository.findById(exerciseId);
+        Optional<TextExercise> optionalTextExercise = textExerciseRepository.findWithEagerTeamAssignmentConfigAndCategoriesById(exerciseId);
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(optionalTextExercise)) {
             return forbidden();
         }

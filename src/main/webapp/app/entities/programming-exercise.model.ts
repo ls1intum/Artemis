@@ -25,6 +25,15 @@ export class ProgrammingExercise extends Exercise {
     public buildAndTestStudentSubmissionsAfterDueDate: Moment | null;
     public testCasesChanged: boolean;
 
+    // helper attributes
+    /**
+     * This attribute is used to generate a programming exercise with no connection to
+     * the VCS and CI
+     * This functionality is only for testing purposes
+     */
+    public noVersionControlAndContinuousIntegrationAvailable = false; // default value
+    public isLocalSimulation?: boolean;
+
     constructor(course?: Course) {
         super(ExerciseType.PROGRAMMING);
         this.course = course || null;

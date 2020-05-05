@@ -379,7 +379,7 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
         }
     }
 
-    updateAssessment(assessment: Feedback) {
+    updateAssessment() {
         this.validateAssessment();
     }
 
@@ -467,7 +467,7 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
                     this.jhiAlertService.clear();
                     this.jhiAlertService.success('artemisApp.assessment.messages.updateAfterComplaintSuccessful');
                 },
-                (error: HttpErrorResponse) => {
+                () => {
                     this.jhiAlertService.clear();
                     this.jhiAlertService.error('artemisApp.assessment.messages.updateAfterComplaintFailed');
                 },

@@ -17,16 +17,9 @@ public class NotificationService {
 
     private GroupNotificationRepository groupNotificationRepository;
 
-    private SingleUserNotificationService singleUserNotificationService;
-
-    private GroupNotificationService groupNotificationService;
-
-    public NotificationService(NotificationRepository notificationRepository, GroupNotificationRepository groupNotificationRepository,
-            SingleUserNotificationService singleUserNotificationService, GroupNotificationService groupNotificationService) {
+    public NotificationService(NotificationRepository notificationRepository, GroupNotificationRepository groupNotificationRepository) {
         this.notificationRepository = notificationRepository;
         this.groupNotificationRepository = groupNotificationRepository;
-        this.singleUserNotificationService = singleUserNotificationService;
-        this.groupNotificationService = groupNotificationService;
     }
 
     public Page<Notification> findAllExceptSystem(User currentUser, Pageable pageable) {
@@ -34,10 +27,7 @@ public class NotificationService {
     }
 
     public List<Notification> findAllRecentExceptSystem(User currentUser) {
-        List<Notification> groupNotifications = groupNotificationService.findAllRecentNewNotificationsForCurrentUser(currentUser);
-        List<Notification> userNotifications = singleUserNotificationService.findAllRecentNewNotificationsForRecipientWithLogin(currentUser.getLogin());
-        groupNotifications.addAll(userNotifications);
-        return groupNotifications;
+        return notificationRepository.findAllRecentNotificationsForRecipientWithLogin(currentUser.getGroups(), currentUser.getLogin(), currentUser.getLastNotificationRead());
     }
 
     public List<GroupNotification> findAllNotificationsForCourse(Course course) {

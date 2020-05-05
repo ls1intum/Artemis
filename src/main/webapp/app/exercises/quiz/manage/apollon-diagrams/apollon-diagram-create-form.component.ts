@@ -36,7 +36,7 @@ export class ApollonDiagramCreateFormComponent implements AfterViewInit {
                 this.dismiss();
                 this.router.navigate(['course-management', 'apollon-diagrams', newDiagram.id]);
             },
-            (response) => {
+            () => {
                 this.jhiAlertService.error('artemisApp.apollonDiagram.create.error');
             },
         );

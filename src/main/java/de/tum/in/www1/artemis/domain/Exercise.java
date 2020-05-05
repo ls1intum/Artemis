@@ -98,7 +98,7 @@ public abstract class Exercise implements Serializable {
     @Column(name = "mode")
     private ExerciseMode mode;
 
-    @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
     @JsonIgnoreProperties("exercise")
     private TeamAssignmentConfig teamAssignmentConfig;

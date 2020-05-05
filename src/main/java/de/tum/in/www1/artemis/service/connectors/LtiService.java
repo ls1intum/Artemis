@@ -233,7 +233,7 @@ public class LtiService {
 
     @NotNull
     private Optional<Authentication> createNewUserFromLaunchRequest(LtiLaunchRequestDTO launchRequest, String email, String username, String fullname) {
-        final var user = userRepository.findByLogin(username).orElseGet(() -> {
+        final var user = userRepository.findOneByLogin(username).orElseGet(() -> {
             final User newUser;
             final var groups = new HashSet<String>();
             if (TUMX.equals(launchRequest.getContext_label())) {

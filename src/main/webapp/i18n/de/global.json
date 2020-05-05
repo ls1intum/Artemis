@@ -97,6 +97,7 @@
             "startTutorial": "Tutorial starten",
             "restartTutorial": "Tutorial wiederholen",
             "continueTutorial": "Tutorial fortsetzen",
+            "notifications": "Mitteilungen",
             "noNotifications": "Keine Mitteilungen verfügbar",
             "showAllNotifications": "Alle Mitteilungen anzeigen"
         },
@@ -173,7 +174,6 @@
             "editInEditor": "In Editor bearbeiten",
             "editInIntelliJ": "In IntelliJ bearbeiten",
             "editEntity": "{{entity}} bearbeiten",
-            "editLink": "Link bearbeiten",
             "generate": "Generieren",
             "open": "Öffnen",
             "save": "Speichern",

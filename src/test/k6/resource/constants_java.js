@@ -1,4 +1,5 @@
-export const programmingExerciseProblemStatementJava = '# Sorting with the Strategy Pattern\n' +
+export const programmingExerciseProblemStatementJava =
+    '# Sorting with the Strategy Pattern\n' +
     '\n' +
     'In this exercise, we want to implement sorting algorithms and choose them based on runtime specific variables.\n' +
     '\n' +
@@ -87,41 +88,42 @@ export const programmingExerciseProblemStatementJava = '# Sorting with the Strat
 
 export const buildErrorContentJava = {
     newFiles: [],
-    content: [{
-        fileName: 'src/de/test/BubbleSort.java',
-        fileContent: 'a'
-    }]
+    content: [
+        {
+            fileName: 'src/de/test/BubbleSort.java',
+            fileContent: 'a',
+        },
+    ],
 };
 
 export const testErrorContentJava = {
     newFiles: [],
-    content: [{
-        fileName: 'src/de/test/BubbleSort.java',
-        fileContent: 'package de.test;\n' +
-            '\n' +
-            'import java.util.*;\n' +
-            '\n' +
-            'public class BubbleSort {\n' +
-            '\n' +
-            '    public void performSort(List<Date> input) {}\n' +
-            '}'
-    }]
+    content: [
+        {
+            fileName: 'src/de/test/BubbleSort.java',
+            fileContent:
+                'package de.test;\n' + '\n' + 'import java.util.*;\n' + '\n' + 'public class BubbleSort {\n' + '\n' + '    public void performSort(List<Date> input) {}\n' + '}',
+        },
+    ],
 };
 
 export const someSuccessfulErrorContentJava = {
     newFiles: ['src/de/test/SortStrategy.java'],
-    content: [{
-        fileName: 'src/de/test/SortStrategy.java',
-        fileContent: 'package de.test;\n' +
-            '\n' +
-            'import java.util.Date;\n' +
-            'import java.util.List;\n' +
-            '\n' +
-            'public interface SortStrategy {\n' +
-            '\n' +
-            '\tpublic void performSort(List<Date> input);\n' +
-            '}'
-    }]
+    content: [
+        {
+            fileName: 'src/de/test/SortStrategy.java',
+            fileContent:
+                'package de.test;\n' +
+                '\n' +
+                'import java.util.Date;\n' +
+                'import java.util.List;\n' +
+                '\n' +
+                'public interface SortStrategy {\n' +
+                '\n' +
+                '\tpublic void performSort(List<Date> input);\n' +
+                '}',
+        },
+    ],
 };
 
 export const allSuccessfulContentJava = {
@@ -129,7 +131,8 @@ export const allSuccessfulContentJava = {
     content: [
         {
             fileName: 'src/de/test/Context.java',
-            fileContent: 'package de.test;\n' +
+            fileContent:
+                'package de.test;\n' +
                 '\n' +
                 'import java.util.Date;\n' +
                 'import java.util.List;\n' +
@@ -163,7 +166,8 @@ export const allSuccessfulContentJava = {
         },
         {
             fileName: 'src/de/test/BubbleSort.java',
-            fileContent: 'package de.test;\n' +
+            fileContent:
+                'package de.test;\n' +
                 '\n' +
                 'import java.util.*;\n' +
                 '\n' +
@@ -182,11 +186,12 @@ export const allSuccessfulContentJava = {
                 '\t\t}\n' +
                 '\n' +
                 '\t}\n' +
-                '}'
+                '}',
         },
         {
-            fileName: "src/de/test/Client.java",
-            fileContent: 'package de.test;\n' +
+            fileName: 'src/de/test/Client.java',
+            fileContent:
+                'package de.test;\n' +
                 '\n' +
                 'import java.text.*;\n' +
                 'import java.util.*;\n' +
@@ -267,11 +272,12 @@ export const allSuccessfulContentJava = {
                 '    private static void printDateList(List<Date> list) {\n' +
                 '        System.out.println(list.toString());\n' +
                 '    }\n' +
-                '}'
+                '}',
         },
         {
-            fileName: "src/de/test/MergeSort.java",
-            fileContent: 'package de.test;\n' +
+            fileName: 'src/de/test/MergeSort.java',
+            fileContent:
+                'package de.test;\n' +
                 '\n' +
                 'import java.util.*;\n' +
                 '\n' +
@@ -323,11 +329,12 @@ export const allSuccessfulContentJava = {
                 '            input.set(wholeIndex + low, temp[wholeIndex]);\n' +
                 '        }\n' +
                 '    }\n' +
-                '}'
+                '}',
         },
         {
             fileName: 'src/de/test/Policy.java',
-            fileContent: 'package de.test;\n' +
+            fileContent:
+                'package de.test;\n' +
                 '\n' +
                 'public class Policy {\n' +
                 '\t\n' +
@@ -346,7 +353,7 @@ export const allSuccessfulContentJava = {
                 '\t\t\tthis.context.setSortAlgorithm(new BubbleSort());\n' +
                 '\t\t}\n' +
                 '\t}\n' +
-                '}'
-        }
-    ]
+                '}',
+        },
+    ],
 };

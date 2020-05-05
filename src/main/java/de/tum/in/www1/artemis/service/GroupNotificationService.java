@@ -1,9 +1,6 @@
 package de.tum.in.www1.artemis.service;
 
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
 
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
@@ -225,19 +222,5 @@ public class GroupNotificationService {
     private void saveAndSendGroupNotification(GroupNotification groupNotification) {
         groupNotificationRepository.save(groupNotification);
         messagingTemplate.convertAndSend(groupNotification.getTopic(), groupNotification);
-    }
-
-    /**
-     * Find all recent new notifications for the current user
-     *
-     * @param currentUser currently logged in user
-     * @return list of notifications for the current user
-     */
-    public List<Notification> findAllRecentNewNotificationsForCurrentUser(User currentUser) {
-        Set<String> userGroups = currentUser.getGroups();
-        if (userGroups.size() == 0) {
-            return new ArrayList<>();
-        }
-        return this.groupNotificationRepository.findAllRecentNewNotificationsForCurrentUser(userGroups, currentUser.getLastNotificationRead());
     }
 }

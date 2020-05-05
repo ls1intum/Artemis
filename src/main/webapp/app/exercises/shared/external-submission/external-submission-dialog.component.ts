@@ -38,18 +38,30 @@ export class ExternalSubmissionDialogComponent implements OnInit {
         private eventManager: JhiEventManager,
     ) {}
 
+    /**
+     * Initialize Component by calling a helper that generates an initial manual result.
+     */
     ngOnInit() {
         this.initializeForResultCreation();
     }
 
+    /**
+     * Initialize result with initial manual result.
+     */
     initializeForResultCreation() {
         this.result = this.externalSubmissionService.generateInitialManualResult();
     }
 
+    /**
+     * Close modal window.
+     */
     clear() {
         this.activeModal.dismiss('cancel');
     }
 
+    /**
+     * Add manual feedbacks to the result and create external submission.
+     */
     save() {
         this.result.feedbacks = this.feedbacks;
         this.isSaving = true;
@@ -59,6 +71,10 @@ export class ExternalSubmissionDialogComponent implements OnInit {
         this.subscribeToSaveResponse(this.externalSubmissionService.create(this.exercise, this.student, this.result));
     }
 
+    /**
+     * If http request is successful, pass it to onSaveSuccess, otherwise call onSaveError.
+     * @param { Observable<HttpResponse<Result>> } result - Observable of Http request
+     */
     private subscribeToSaveResponse(result: Observable<HttpResponse<Result>>) {
         result.subscribe(
             (res) => this.onSaveSuccess(res),
@@ -66,20 +82,33 @@ export class ExternalSubmissionDialogComponent implements OnInit {
         );
     }
 
+    /**
+     * Close modal window, indicate saving is done and broadcast that manual result is added.
+     * @param { HttpResponse<Result> } result - Result of successful http request
+     */
     onSaveSuccess(result: HttpResponse<Result>) {
         this.activeModal.close(result.body);
         this.isSaving = false;
         this.eventManager.broadcast({ name: 'resultListModification', content: 'Added a manual result' });
     }
 
+    /**
+     * Indicate that saving didn't work by setting isSaving to false.
+     */
     onSaveError() {
         this.isSaving = false;
     }
 
+    /**
+     * Add new feedback to feedbacks
+     */
     pushFeedback() {
         this.feedbacks.push(new Feedback());
     }
 
+    /**
+     * Remove last added feedback if there is one.
+     */
     popFeedback() {
         if (this.feedbacks.length > 0) {
             this.feedbacks.pop();

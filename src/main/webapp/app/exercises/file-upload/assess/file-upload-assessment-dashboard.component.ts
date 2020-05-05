@@ -88,7 +88,11 @@ export class FileUploadAssessmentDashboardComponent implements OnInit {
                 .subscribe((submissions: FileUploadSubmission[]) => {
                     this.submissions = submissions;
                     this.filteredSubmissions = submissions;
-                    submissions.length > 0 ? resolve() : reject();
+                    if (submissions.length > 0) {
+                        resolve();
+                    } else {
+                        reject();
+                    }
                 });
         });
     }

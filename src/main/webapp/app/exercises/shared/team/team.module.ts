@@ -1,7 +1,6 @@
 import { NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { NgxDatatableModule } from '@swimlane/ngx-datatable';
-import { AngularStickyThingsModule } from '@w11k/angular-sticky-things';
 import { TeamsComponent } from 'app/exercises/shared/team/teams.component';
 import { teamRoute } from 'app/exercises/shared/team/team.route';
 import { ArtemisDataTableModule } from 'app/shared/data-table/data-table.module';
@@ -19,11 +18,12 @@ import { TeamParticipateInfoBoxComponent } from 'app/exercises/shared/team/team-
 import { TeamsImportButtonComponent } from 'app/exercises/shared/team/teams-import-dialog/teams-import-button.component';
 import { TeamsImportDialogComponent } from 'app/exercises/shared/team/teams-import-dialog/teams-import-dialog.component';
 import { TeamExerciseSearchComponent } from 'app/exercises/shared/team/team-exercise-search/team-exercise-search.component';
+import { TeamParticipationTableComponent } from 'app/exercises/shared/team/team-participation-table/team-participation-table.component';
 
 const ENTITY_STATES = [...teamRoute];
 
 @NgModule({
-    imports: [RouterModule.forChild(ENTITY_STATES), ArtemisSharedModule, NgxDatatableModule, AngularStickyThingsModule, ArtemisDataTableModule, ArtemisSharedComponentModule],
+    imports: [RouterModule.forChild(ENTITY_STATES), ArtemisSharedModule, NgxDatatableModule, ArtemisDataTableModule, ArtemisSharedComponentModule],
     declarations: [
         TeamsComponent,
         TeamUpdateButtonComponent,
@@ -37,6 +37,7 @@ const ENTITY_STATES = [...teamRoute];
         TeamStudentsListComponent,
         TeamStudentsOnlineListComponent,
         TeamParticipateInfoBoxComponent,
+        TeamParticipationTableComponent,
         TeamComponent,
     ],
     exports: [TeamUpdateButtonComponent, TeamsImportButtonComponent, TeamStudentsListComponent, TeamParticipateInfoBoxComponent],

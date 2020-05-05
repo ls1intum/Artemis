@@ -118,6 +118,13 @@ public class TestRepositoryResource extends RepositoryResource {
     }
 
     @Override
+    @PostMapping(value = "/test-repository/{exerciseId}/reset", produces = MediaType.APPLICATION_JSON_VALUE)
+    @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
+    public ResponseEntity<Void> resetToLastCommit(@PathVariable Long exerciseId) {
+        return super.resetToLastCommit(exerciseId);
+    }
+
+    @Override
     @GetMapping(value = "/test-repository/{exerciseId}", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<RepositoryStatusDTO> getStatus(@PathVariable Long exerciseId) throws IOException, GitAPIException, InterruptedException {
         return super.getStatus(exerciseId);

@@ -57,7 +57,7 @@ public class QuizStatisticService {
         }
 
         // add the Results in every participation of the given quizExercise to the statistics
-        for (Participation participation : studentParticipationRepository.findAllByExerciseId(quizExercise.getId())) {
+        for (Participation participation : studentParticipationRepository.findByExerciseId(quizExercise.getId())) {
 
             Result latestRatedResult = null;
             Result latestUnratedResult = null;

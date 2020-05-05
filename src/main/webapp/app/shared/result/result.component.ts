@@ -18,11 +18,16 @@ import { ExerciseType } from 'app/entities/exercise.model';
 import { ResultDetailComponent } from 'app/shared/result/result-detail.component';
 import { Result } from 'app/entities/result.model';
 
+/**
+ * Enumeration object representing the possible options that
+ * the status of the result's template can be in.
+ */
 enum ResultTemplateStatus {
     IS_BUILDING = 'IS_BUILDING',
     HAS_RESULT = 'HAS_RESULT',
     NO_RESULT = 'NO_RESULT',
-    SUBMITTED = 'SUBMITTED', // submitted, not yet graded
+    SUBMITTED = 'SUBMITTED', // submitted and can still continue to submit
+    SUBMITTED_WAITING_FOR_GRADING = 'SUBMITTED_WAITING_FOR_GRADING', // submitted and can no longer submit, not yet graded
     LATE_NO_FEEDBACK = 'LATE_NO_FEEDBACK', // started, submitted too late, not graded
     LATE = 'LATE', // submitted too late, graded
 }
@@ -30,6 +35,7 @@ enum ResultTemplateStatus {
 @Component({
     selector: 'jhi-result',
     templateUrl: './result.component.html',
+    styles: ['span { display: inline-block; line-height: 1.25 }'],
     providers: [ResultService],
 })
 
@@ -67,6 +73,10 @@ export class ResultComponent implements OnInit, OnChanges {
         private modalService: NgbModal,
     ) {}
 
+    /**
+     * Executed on initialization. It retrieves the results of a given
+     * participation and displays the corresponding message.
+     */
     ngOnInit(): void {
         if (!this.result && this.participation && this.participation.id) {
             const exercise = getExercise(this.participation);
@@ -101,6 +111,10 @@ export class ResultComponent implements OnInit, OnChanges {
         this.evaluate();
     }
 
+    /**
+     * Executed when changes happen sets the corresponding template status to display a message.
+     * @param changes The hashtable of the occurred changes as SimpleChanges object.
+     */
     ngOnChanges(changes: SimpleChanges) {
         if (changes.participation || changes.result) {
             this.ngOnInit();
@@ -113,6 +127,9 @@ export class ResultComponent implements OnInit, OnChanges {
         }
     }
 
+    /**
+     * Sets the corresponding icon, styling and message to display results.
+     */
     evaluate() {
         this.templateStatus = this.evaluateTemplateStatus();
 
@@ -145,15 +162,30 @@ export class ResultComponent implements OnInit, OnChanges {
         if (isModelingOrTextOrFileUpload(this.participation)) {
             // Based on its submission we test if the participation is in due time of the given exercise.
             const inDueTime = isParticipationInDueTime(this.participation, getExercise(this.participation));
+            const dueDate = this.dateAsMoment(getExercise(this.participation).dueDate);
             const assessmentDueDate = this.dateAsMoment(getExercise(this.participation).assessmentDueDate);
 
-            // Submission is in due time of exercise and has a result with score.
             if (inDueTime && initializedResultWithScore(this.result)) {
-                // Prevent that the result is shown before assessment due date
-                return !assessmentDueDate || assessmentDueDate.isBefore() ? ResultTemplateStatus.HAS_RESULT : ResultTemplateStatus.NO_RESULT;
+                // Submission is in due time of exercise and has a result with score
+                if (!assessmentDueDate || assessmentDueDate.isBefore()) {
+                    // the assessment due date has passed (or there was none)
+                    return ResultTemplateStatus.HAS_RESULT;
+                } else {
+                    // the assessment period is still active
+                    return ResultTemplateStatus.SUBMITTED_WAITING_FOR_GRADING;
+                }
             } else if (inDueTime && !initializedResultWithScore(this.result)) {
                 // Submission is in due time of exercise and doesn't have a result with score.
-                return ResultTemplateStatus.SUBMITTED;
+                if (!dueDate || dueDate.isSameOrAfter()) {
+                    // the due date is in the future (or there is none) => the exercise is still ongoing
+                    return ResultTemplateStatus.SUBMITTED;
+                } else if (!assessmentDueDate || assessmentDueDate.isSameOrAfter()) {
+                    // the due date is over, further submissions are no longer possible, waiting for grading
+                    return ResultTemplateStatus.SUBMITTED_WAITING_FOR_GRADING;
+                } else {
+                    // the due date is over, further submissions are no longer possible, no result after assessment due date
+                    return ResultTemplateStatus.NO_RESULT;
+                }
             } else if (initializedResultWithScore(this.result) && (!assessmentDueDate || assessmentDueDate.isBefore())) {
                 // Submission is not in due time of exercise, has a result with score and there is no assessmentDueDate for the exercise or it lies in the past.
                 // TODO handle external submissions with new status "External"
@@ -185,6 +217,9 @@ export class ResultComponent implements OnInit, OnChanges {
         return moment.isMoment(date) ? date : moment(date);
     }
 
+    /**
+     * Gets the build result string.
+     */
     buildResultString() {
         if (this.submission && this.submission.submissionExerciseType === SubmissionExerciseType.PROGRAMMING && (this.submission as ProgrammingSubmission).buildFailed) {
             return this.translate.instant('artemisApp.editor.buildFailed');
@@ -200,8 +235,10 @@ export class ResultComponent implements OnInit, OnChanges {
         return this.result!.resultString;
     }
 
+    /**
+     * Only show the 'preliminary' tooltip for programming student participation results and if the buildAndTestAfterDueDate has not passed.
+     */
     buildResultTooltip() {
-        // Only show the 'preliminary' tooltip for programming student participation results and if the buildAndTestAfterDueDate has not passed.
         if (
             this.participation &&
             isProgrammingExerciseStudentParticipation(this.participation) &&
@@ -211,6 +248,9 @@ export class ResultComponent implements OnInit, OnChanges {
         }
     }
 
+    /**
+     * Checks if there is feedback or not for a build result.
+     */
     getHasFeedback() {
         if (this.submission && this.submission.submissionExerciseType === SubmissionExerciseType.PROGRAMMING && (this.submission as ProgrammingSubmission).buildFailed) {
             return true;
@@ -224,6 +264,10 @@ export class ResultComponent implements OnInit, OnChanges {
         return this.participation && this.participation.results && this.participation.results.length > 0;
     }
 
+    /**
+     * Show details of a result.
+     * @param result Result object whose details will be displayed.
+     */
     showDetails(result: Result) {
         if (!result.participation) {
             result.participation = this.participation;
@@ -237,15 +281,21 @@ export class ResultComponent implements OnInit, OnChanges {
         }
     }
 
+    /**
+     * Checks whether a build artifact exists for a submission.
+     */
     hasBuildArtifact() {
         if (this.result && this.submission instanceof ProgrammingSubmission) {
             const submission = this.submission as ProgrammingSubmission;
             return submission.buildArtifact;
         }
-
         return false;
     }
 
+    /**
+     * Download the build results of a specific participation.
+     * @param participationId The identifier of the participation.
+     */
     downloadBuildResult(participationId: number) {
         this.participationService.downloadArtifact(participationId).subscribe((artifact) => {
             const fileURL = URL.createObjectURL(artifact);

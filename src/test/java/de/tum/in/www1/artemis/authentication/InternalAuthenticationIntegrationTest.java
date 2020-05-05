@@ -97,7 +97,7 @@ public class InternalAuthenticationIntegrationTest extends AbstractSpringIntegra
         final var taAuthority = new Authority(AuthoritiesConstants.TEACHING_ASSISTANT);
         authorityRepository.saveAll(List.of(userAuthority, instructorAuthority, adminAuthority, taAuthority));
 
-        student = userRepository.findWithGroupsAndAuthoritiesByLogin(USERNAME).get();
+        student = userRepository.findOneWithGroupsAndAuthoritiesByLogin(USERNAME).get();
         final var encrPassword = userService.passwordEncoder().encode(USER_PASSWORD);
         student.setPassword(encrPassword);
         userRepository.save(student);
@@ -124,7 +124,7 @@ public class InternalAuthenticationIntegrationTest extends AbstractSpringIntegra
         assertThat(ltiOutcome.getUrl()).isEqualTo(ltiLaunchRequest.getLis_outcome_service_url());
         assertThat(ltiOutcome.getSourcedId()).isEqualTo(ltiLaunchRequest.getLis_result_sourcedid());
 
-        final var updatedStudent = userRepository.findWithGroupsAndAuthoritiesByLogin(USERNAME).get();
+        final var updatedStudent = userRepository.findOneWithGroupsAndAuthoritiesByLogin(USERNAME).get();
         assertThat(student).isEqualTo(updatedStudent);
     }
 
@@ -165,7 +165,7 @@ public class InternalAuthenticationIntegrationTest extends AbstractSpringIntegra
         final var managedUserVM = new ManagedUserVM(student);
 
         final var response = request.putWithResponseBody("/api/users", managedUserVM, User.class, HttpStatus.OK);
-        final var updatedUserIndDB = userRepository.findWithGroupsAndAuthoritiesByLogin(student.getLogin()).get();
+        final var updatedUserIndDB = userRepository.findOneWithGroupsAndAuthoritiesByLogin(student.getLogin()).get();
         updatedUserIndDB.setPassword(userService.decryptPasswordByLogin(updatedUserIndDB.getLogin()).get());
 
         assertThat(response).isNotNull();
