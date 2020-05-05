@@ -60,6 +60,7 @@ export const textSubmissionAssessmentRoutes: Routes = [
         resolve: {
             studentParticipation: NewStudentParticipationResolver,
         },
+        runGuardsAndResolvers: 'always',
         canActivate: [UserRouteAccessService],
     },
     {
@@ -72,6 +73,7 @@ export const textSubmissionAssessmentRoutes: Routes = [
         resolve: {
             studentParticipation: StudentParticipationResolver,
         },
+        runGuardsAndResolvers: 'paramsChange',
         canActivate: [UserRouteAccessService],
     },
 ];
