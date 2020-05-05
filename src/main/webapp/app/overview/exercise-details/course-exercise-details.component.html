@@ -57,7 +57,7 @@
         </div>
     </div>
     <div class="row">
-        <div class="col px-0 flex-grow-1">
+        <div class="col pr-0 flex-grow-1">
             <!-- EXERCISE ACTIONS END -->
             <!-- PROBLEM STATEMENT START -->
             <div *ngIf="exercise.type === PROGRAMMING; else exerciseTemplate" class="mb-4">
@@ -170,6 +170,6 @@
             >
             </jhi-complaint-interactions>
         </div>
-        <jhi-student-questions *ngIf="exercise.course && exercise.course.studentQuestionsEnabled" [exercise]="exercise"></jhi-student-questions>
+        <jhi-student-questions *ngIf="exercise.course && exercise.course.studentQuestionsEnabled" class="ml-3" [exercise]="exercise"></jhi-student-questions>
     </div>
 </div>
