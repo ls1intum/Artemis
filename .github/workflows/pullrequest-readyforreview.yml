@@ -1,7 +1,7 @@
 name: Pull Request Ready for Review
 on:
     pull_request:
-        types: [edited]
+        types: [opened, ready_for_review]
 
 jobs:
   addToProject:
