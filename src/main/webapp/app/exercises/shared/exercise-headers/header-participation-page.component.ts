@@ -25,11 +25,17 @@ export class HeaderParticipationPageComponent implements OnInit, OnChanges {
 
     constructor(private exerciseService: ExerciseService) {}
 
+    /**
+     * Sets the status badge and categories of the exercise on init
+     */
     ngOnInit(): void {
         this.setExerciseStatusBadge();
         this.exerciseCategories = this.exerciseService.convertExerciseCategoriesFromServer(this.exercise);
     }
 
+    /**
+     * Sets the status badge and categories of the exercise on changes
+     */
     ngOnChanges(): void {
         this.setExerciseStatusBadge();
         this.exerciseCategories = this.exerciseService.convertExerciseCategoriesFromServer(this.exercise);

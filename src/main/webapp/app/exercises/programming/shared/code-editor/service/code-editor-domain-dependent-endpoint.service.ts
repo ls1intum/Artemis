@@ -20,6 +20,10 @@ export abstract class DomainDependentEndpointService extends DomainDependentServ
         this.initDomainSubscription();
     }
 
+    /**
+     * Sets resourceUrls according to the parameter.
+     * @param domain - enum that defines the type of the domain.
+     */
     setDomain(domain: DomainChange) {
         super.setDomain(domain);
         const [domainType, domainValue] = this.domain;

@@ -69,11 +69,17 @@ export class ParticipationComponent implements OnInit, OnDestroy {
         };
     }
 
+    /**
+     * Initialize component by calling loadAll and registerChangeInParticipation
+     */
     ngOnInit() {
         this.loadAll();
         this.registerChangeInParticipations();
     }
 
+    /**
+     * Unsubscribe from all subscriptions and destroy eventSubscriber
+     */
     ngOnDestroy() {
         this.programmingSubmissionService.unsubscribeAllWebsocketTopics(this.exercise);
         this.eventManager.destroy(this.eventSubscriber);

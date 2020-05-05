@@ -75,6 +75,9 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
         });
     }
 
+    /**
+     * On init fetch the course, all released exercises and all participations with result for the course from the server.
+     */
     ngOnInit() {
         this.paramSub = this.route.params.subscribe((params) => {
             this.courseService.findWithExercises(params['courseId']).subscribe((res) => {
@@ -103,6 +106,10 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
         });
     }
 
+    /**
+     * Fetch all participations with result for a course from the server.
+     * @param courseId Id of the course
+     */
     getParticipationsWithResults(courseId: number) {
         this.courseService.findAllParticipationsWithResults(courseId).subscribe((participations) => {
             this.participations = participations;
@@ -111,6 +118,9 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
         });
     }
 
+    /**
+     * Group the exercises by type and gather statistics for each type (titles, maxScore, accumulated max Score).
+     */
     groupExercises() {
         for (const exerciseType of this.exerciseTypes) {
             const exercisesPerType = this.exercises.filter((exercise) => exercise.type === exerciseType);
@@ -131,7 +141,9 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
         this.maxNumberOfOverallPoints = this.exercises.reduce((total, exercise) => total + (exercise.maxScore ? exercise.maxScore : 0), 0);
     }
 
-    // creates students and calculates the points for each exercise and exercise type
+    /**
+     * Creates students and calculates the points for each exercise and exercise type.
+     */
     calculatePointsPerStudent() {
         const studentsMap = new Map<number, Student>();
 
@@ -232,9 +244,10 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
         this.exportReady = true;
     }
 
+    /**
+     * Method for exporting the csv with the needed data
+     */
     exportResults() {
-        // method for exporting the csv with the needed data
-
         if (this.exportReady && this.students.length > 0) {
             const rows = [];
             const keys = [NAME_KEY, USERNAME_KEY, EMAIL_KEY, REGISTRATION_NUMBER_KEY];
@@ -390,6 +403,10 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
         }
     }
 
+    /**
+     * Return an empty line in csv-format with an empty row for each exercise type.
+     * @param firstValue The first value/name key of the line
+     */
     private emptyLine(firstValue: string) {
         const emptyLine = {};
         emptyLine[NAME_KEY] = firstValue;
@@ -419,12 +436,22 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
         return emptyLine;
     }
 
+    /**
+     * Empty callback function.
+     */
     callback() {}
 
+    /**
+     * On destroy unsubscribe.
+     */
     ngOnDestroy() {
         this.paramSub.unsubscribe();
     }
 
+    /**
+     * Convert a number value to a locale string.
+     * @param value
+     */
     toLocaleString(value: number) {
         if (isNaN(value)) {
             return '-';
@@ -433,6 +460,10 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
         }
     }
 
+    /**
+     * Convert a number value to a locale string with a % added at the end.
+     * @param value
+     */
     toLocalePercentageString(value: number) {
         if (isNaN(value)) {
             return '-';
@@ -465,10 +496,17 @@ class Student {
     }
 }
 
+/**
+ * Capitalize the first letter of a string.
+ * @param string
+ */
 function capitalizeFirstLetter(string: String) {
     return string.charAt(0).toUpperCase() + string.slice(1);
 }
 
+/**
+ * Get the language set by the user.
+ */
 function getLang() {
     if (navigator.languages !== undefined) {
         return navigator.languages[0];

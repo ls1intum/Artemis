@@ -38,6 +38,9 @@ export class TeamOwnerSearchComponent implements OnInit {
 
     constructor(private courseService: CourseManagementService) {}
 
+    /**
+     * Life cycle hook to indicate component creation is done
+     */
     ngOnInit() {
         if (this.team.owner) {
             this.owner = cloneDeep(this.team.owner);
@@ -59,6 +62,11 @@ export class TeamOwnerSearchComponent implements OnInit {
         return `${name} (${login})`;
     };
 
+    /**
+     * Check if a given login/name is included in a given user
+     * @param {string} loginOrName - login/name to search for
+     * @param {User} user - User to search through
+     */
     searchMatchesUser(loginOrName: string, user: User) {
         return [user.login, user.name].some((field) => {
             return (field || '').toLowerCase().includes(loginOrName.toLowerCase());
@@ -95,6 +103,9 @@ export class TeamOwnerSearchComponent implements OnInit {
         );
     };
 
+    /**
+     * Load options of team owner
+     */
     loadOwnerOptions() {
         return this.courseService
             .getAllUsersInCourseGroup(this.course.id, CourseGroup.TUTORS)

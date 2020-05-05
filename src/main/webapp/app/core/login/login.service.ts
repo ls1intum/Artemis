@@ -20,6 +20,11 @@ export class LoginService {
         private notificationService: NotificationService,
     ) {}
 
+    /**
+     * Login the user with the given credentials.
+     * @param credentials {Credentials} Credentials of the user to login.
+     * @param callback The callback function to use (optional)
+     */
     login(credentials: Credentials, callback?: any) {
         const cb = callback || function () {};
 
@@ -41,6 +46,11 @@ export class LoginService {
         });
     }
 
+    /**
+     * Login with JWT token.
+     * @param jwt {string} The JWT token.
+     * @param rememberMe {boolean} True to save JWT in localStorage, false to save it in sessionStorage.
+     */
     loginWithToken(jwt: string, rememberMe: boolean) {
         return this.authServerProvider.loginWithToken(jwt, rememberMe);
     }

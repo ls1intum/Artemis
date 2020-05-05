@@ -101,6 +101,9 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Quiz
         private changeDetector: ChangeDetectorRef,
     ) {}
 
+    /**
+     * Actions when initializing component.
+     */
     ngOnInit(): void {
         /** Create question backup for resets **/
         this.backupQuestion = JSON.parse(JSON.stringify(this.question));
@@ -120,8 +123,7 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Quiz
     }
 
     /**
-     * @function ngOnChanges
-     * @desc Watch for any changes to the question model and notify listener
+     * Watch for any changes to the question model and notify listener
      * @param changes {SimpleChanges}
      */
     ngOnChanges(changes: SimpleChanges): void {
@@ -136,6 +138,9 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Quiz
         }
     }
 
+    /**
+     * Action when resizing the window.
+     */
     @HostListener('window:resize') onResize() {
         resizeImage();
     }
@@ -162,8 +167,7 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Quiz
     }
 
     /**
-     * @function setBackgroundFile
-     * @param $event {object} Event object which contains the uploaded file
+     * $event {object} Event object which contains the uploaded file
      */
     setBackgroundFile($event: any): void {
         if ($event.target.files.length) {
@@ -174,8 +178,7 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Quiz
     }
 
     /**
-     * @function uploadBackground
-     * @desc Upload the selected file (from "Upload Background") and use it for the question's backgroundFilePath
+     * Upload the selected file (from "Upload Background") and use it for the question's backgroundFilePath
      */
     uploadBackground(): void {
         const file = this.backgroundFile!;
@@ -199,8 +202,7 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Quiz
     }
 
     /**
-     * @function mouseMove
-     * @desc React to mousemove events on the entire page to update:
+     * React to mousemove events on the entire page to update:
      * - mouse object (always)
      * - current drop location (only while dragging)
      * @param e {object} Mouse move event
@@ -258,8 +260,7 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Quiz
     }
 
     /**
-     * @function mouseUp
-     * @desc React to mouseup events to finish dragging operations
+     * React to mouseup events to finish dragging operations
      */
     mouseUp(): void {
         if (this.draggingState !== DragState.NONE) {
@@ -291,8 +292,7 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Quiz
     }
 
     /**
-     * @function backgroundMouseDown
-     * @desc React to mouse down events on the background to start dragging
+     * React to mouse down events on the background to start dragging
      */
     backgroundMouseDown(): void {
         if (this.question.backgroundFilePath && this.draggingState === DragState.NONE) {
@@ -319,8 +319,7 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Quiz
     }
 
     /**
-     * @function dropLocationMouseDown
-     * @desc React to mousedown events on a drop location to start moving it
+     * React to mousedown events on a drop location to start moving it
      * @param dropLocation {object} the drop location to move
      */
     dropLocationMouseDown(dropLocation: DropLocation): void {
@@ -343,8 +342,7 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Quiz
     }
 
     /**
-     * @function deleteDropLocation
-     * @desc Delete the given drop location
+     * Delete the given drop location
      * @param dropLocationToDelete {object} the drop location to delete
      */
     deleteDropLocation(dropLocationToDelete: DropLocation): void {
@@ -353,8 +351,7 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Quiz
     }
 
     /**
-     * @function duplicateDropLocation
-     * @desc Add an identical drop location to the question
+     * Add an identical drop location to the question
      * @param dropLocation {object} the drop location to duplicate
      */
     duplicateDropLocation(dropLocation: DropLocation): void {
@@ -367,8 +364,7 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Quiz
     }
 
     /**
-     * @function resizeMouseDown
-     * @desc React to mousedown events on the resize handles to start resizing the drop location
+     * React to mousedown events on the resize handles to start resizing the drop location
      * @param dropLocation {object} the drop location that will be resized
      * @param resizeLocationY {string} 'top', 'middle' or 'bottom'
      * @param resizeLocationX {string} 'left', 'center' or 'right'
@@ -415,8 +411,7 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Quiz
     }
 
     /**
-     * @function addTextDragItem
-     * @desc Add an empty Text Drag Item to the question
+     * Add an empty Text Drag Item to the question
      */
     addTextDragItem(): void {
         // Add drag item to question
@@ -430,7 +425,7 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Quiz
     }
 
     /**
-     * @function setDragItemFile
+     * Sets drag item file.
      * @param $event {object} Event object which contains the uploaded file
      */
     setDragItemFile($event: any): void {
@@ -442,8 +437,7 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Quiz
     }
 
     /**
-     * @function uploadDragItem
-     * @desc Add a Picture Drag Item with the selected file as its picture to the question
+     * Add a Picture Drag Item with the selected file as its picture to the question
      */
     uploadDragItem(): void {
         const file = this.dragItemFile!;
@@ -473,8 +467,7 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Quiz
     }
 
     /**
-     * @function uploadPictureForDragItemChange
-     * @desc Upload a Picture for Drag Item Change with the selected file as its picture
+     * Upload a Picture for Drag Item Change with the selected file as its picture
      */
     uploadPictureForDragItemChange(): void {
         const file = this.dragItemFile!;
@@ -496,8 +489,7 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Quiz
     }
 
     /**
-     * @function deleteDragItem
-     * @desc Delete the drag item from the question
+     * Delete the drag item from the question
      * @param dragItemToDelete {object} the drag item that should be deleted
      */
     deleteDragItem(dragItemToDelete: DragItem): void {
@@ -506,8 +498,7 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Quiz
     }
 
     /**
-     * @function onDragDrop
-     * @desc React to a drag item being dropped on a drop location
+     * React to a drag item being dropped on a drop location
      * @param dropLocation {object} the drop location involved
      * @param dragEvent {object} the drag item involved (may be a copy at this point)
      */
@@ -543,8 +534,7 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Quiz
     }
 
     /**
-     * @function getMappingIndex
-     * @desc Get the mapping index for the given mapping
+     * Get the mapping index for the given mapping
      * @param mapping {object} the mapping we want to get an index for
      * @return {number} the index of the mapping (starting with 1), or 0 if unassigned
      */
@@ -571,8 +561,7 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Quiz
     }
 
     /**
-     * @function getMappingsForDropLocation
-     * @desc Get all mappings that involve the given drop location
+     * Get all mappings that involve the given drop location
      * @param dropLocation {object} the drop location for which we want to get all mappings
      * @return {Array} all mappings that belong to the given drop location
      */
@@ -584,8 +573,7 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Quiz
     }
 
     /**
-     * @function getMappingsForDragItem
-     * @desc Get all mappings that involve the given drag item
+     * Get all mappings that involve the given drag item
      * @param dragItem {object} the drag item for which we want to get all mappings
      * @return {Array} all mappings that belong to the given drag item
      */
@@ -602,8 +590,7 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Quiz
     }
 
     /**
-     * @function deleteMappingsForDropLocation
-     * @desc Delete all mappings for the given drop location
+     * Delete all mappings for the given drop location
      * @param dropLocation {object} the drop location for which we want to delete all mappings
      */
     deleteMappingsForDropLocation(dropLocation: DropLocation): void {
@@ -614,8 +601,7 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Quiz
     }
 
     /**
-     * @function deleteMappingsForDragItem
-     * @desc Delete all mappings for the given drag item
+     * Delete all mappings for the given drag item
      * @param dragItem {object} the drag item for which we want to delete all mappings
      */
     deleteMappingsForDragItem(dragItem: DragItem): void {
@@ -626,8 +612,7 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Quiz
     }
 
     /**
-     * @function deleteMapping
-     * @desc Delete the given mapping from the question
+     * Delete the given mapping from the question
      * @param mappingToDelete {object} the mapping to delete
      */
     deleteMapping(mappingToDelete: DragAndDropMapping): void {
@@ -638,32 +623,28 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Quiz
     }
 
     /**
-     * @function moveUpQuestion
-     * @desc Move this question one position up
+     * Move this question one position up
      */
     moveUpQuestion(): void {
         this.questionMoveUp.emit();
     }
 
     /**
-     * @function moveDownQuestion
-     * @desc Move this question one position down
+     * Move this question one position down
      */
     moveDownQuestion(): void {
         this.questionMoveDown.emit();
     }
 
     /**
-     * @function deleteQuestion
-     * @desc Delete this question from the quiz
+     * Delete this question from the quiz
      */
     deleteQuestion(): void {
         this.questionDeleted.emit();
     }
 
     /**
-     * @function changeToTextDragItem
-     * @desc Change Picture-Drag-Item to Text-Drag-Item with text: 'Text'
+     * Change Picture-Drag-Item to Text-Drag-Item with text: 'Text'
      * @param dragItem {dragItem} the dragItem, which will be changed
      */
     changeToTextDragItem(dragItem: DragItem): void {
@@ -672,8 +653,7 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Quiz
     }
 
     /**
-     * @function changeToPictureDragItem
-     * @desc Change Text-Drag-Item to Picture-Drag-Item with PictureFile: this.dragItemFile
+     * Change Text-Drag-Item to Picture-Drag-Item with PictureFile: this.dragItemFile
      * @param dragItem {dragItem} the dragItem, which will be changed
      */
     changeToPictureDragItem(dragItem: DragItem): void {
@@ -699,16 +679,14 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Quiz
     }
 
     /**
-     * @function resetQuestionTitle
-     * @desc Resets the question title
+     * Resets the question title
      */
     resetQuestionTitle(): void {
         this.question.title = this.backupQuestion.title;
     }
 
     /**
-     * @function resetQuestionText
-     * @desc Resets the question text
+     * Resets the question text
      */
     resetQuestionText(): void {
         this.question.text = this.backupQuestion.text;
@@ -718,8 +696,7 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Quiz
     }
 
     /**
-     * @function resetQuestion
-     * @desc Resets the whole question
+     * Resets the whole question
      */
     resetQuestion(): void {
         this.question.title = this.backupQuestion.title;
@@ -734,8 +711,7 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Quiz
     }
 
     /**
-     * @function resetBackground
-     * @desc Resets background-picture
+     * Resets background-picture
      */
     resetBackground(): void {
         this.question.backgroundFilePath = this.backupQuestion.backgroundFilePath;
@@ -744,8 +720,7 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Quiz
     }
 
     /**
-     * @function resetDropLocation
-     * @desc Resets the dropLocation
+     * Resets the dropLocation
      * @param dropLocation {dropLocation} the dropLocation, which will be reset
      */
     resetDropLocation(dropLocation: DropLocation): void {
@@ -759,8 +734,7 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Quiz
     }
 
     /**
-     * @function resetDragItem
-     * @desc Resets the dragItem
+     * Resets the dragItem
      * @param dragItem {dragItem} the dragItem, which will be reset
      */
     resetDragItem(dragItem: DragItem): void {
@@ -774,8 +748,7 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Quiz
     }
 
     /**
-     * @function togglePreview
-     * @desc Toggles the preview in the template
+     * Toggles the preview in the template
      */
     togglePreview(): void {
         this.showPreview = !this.showPreview;
@@ -784,10 +757,9 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Quiz
     }
 
     /**
-     * @function changesInMarkdown
-     * @desc Detect of text changes in the markdown editor
-     *      1. Notify the parent component to check the validity of the text
-     *      2. Parse the text in the editor to get the newest values
+     * Detect of text changes in the markdown editor
+     * 1. Notify the parent component to check the validity of the text
+     * 2. Parse the text in the editor to get the newest values
      */
     changesInMarkdown(): void {
         this.questionUpdated.emit();
@@ -796,11 +768,10 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Quiz
     }
 
     /**
-     * @function domainCommandsFound
-     * @desc 1. Gets the {array} containing the text with the domainCommandIdentifier and creates a new drag and drop problem statement
-     *       by assigning the text according to the domainCommandIdentifiers to the drag and drop attributes.
-     *       (question text, explanation, hint)
-     * @param {array} containing markdownText with the corresponding domainCommand {DomainCommand} identifier
+     * 1. Gets the {array} containing the text with the domainCommandIdentifier and creates a new drag and drop problem statement
+     * by assigning the text according to the domainCommandIdentifiers to the drag and drop attributes.
+     * (question text, explanation, hint)
+     * @param domainCommands - containing markdownText with the corresponding domainCommand {DomainCommand} identifier
      */
     domainCommandsFound(domainCommands: [string, DomainCommand][]): void {
         this.cleanupQuestion();
@@ -827,9 +798,8 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Quiz
     }
 
     /**
-     * @function prepareForSave
-     * @desc triggers the saving process by cleaning up the question and calling the markdown parse function
-     *       to get the newest values in the editor to update the question attributes
+     * Triggers the saving process by cleaning up the question and calling the markdown parse function
+     * to get the newest values in the editor to update the question attributes
      */
     prepareForSave(): void {
         this.cleanupQuestion();
