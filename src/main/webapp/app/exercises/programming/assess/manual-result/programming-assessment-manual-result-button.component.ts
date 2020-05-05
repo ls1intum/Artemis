@@ -69,12 +69,20 @@ export class ProgrammingAssessmentManualResultButtonComponent implements OnChang
         }
     }
 
+    /**
+     * Unsubscribes this instance, if it is the latest result submission
+     */
     ngOnDestroy(): void {
         if (this.latestResultSubscription) {
             this.latestResultSubscription.unsubscribe();
         }
     }
 
+    /**
+     * Stops the propagation of the mouse event, updates the component instance of the modalRef with
+     * this instance's values and emits the result if it is modified
+     * @param {MouseEvent} event - Mouse event
+     */
     openManualResultDialog(event: MouseEvent) {
         event.stopPropagation();
         const modalRef: NgbModalRef = this.modalService.open(ProgrammingAssessmentManualResultDialogComponent, { keyboard: true, size: 'lg', backdrop: 'static' });

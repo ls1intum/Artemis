@@ -12,35 +12,71 @@ export class UserService {
 
     constructor(private http: HttpClient) {}
 
+    /**
+     * Create a user on the server.
+     * @param user The user to create.
+     * @return Observable<HttpResponse<User>> with the created user as body.
+     */
     create(user: User): Observable<HttpResponse<User>> {
         return this.http.post<User>(this.resourceUrl, user, { observe: 'response' });
     }
 
+    /**
+     * Update a user on the server.
+     * @param user The user to update.
+     * @return Observable<HttpResponse<User>> with the updated user as body.
+     */
     update(user: User): Observable<HttpResponse<User>> {
         return this.http.put<User>(this.resourceUrl, user, { observe: 'response' });
     }
 
+    /**
+     * Find a user on the server.
+     * @param login The login of the user to find.
+     * @return Observable<HttpResponse<User>> with the found user as body.
+     */
     find(login: string): Observable<HttpResponse<User>> {
         return this.http.get<User>(`${this.resourceUrl}/${login}`, { observe: 'response' });
     }
 
+    /**
+     * Submit a query for a given request.
+     * @param req The query request
+     * @return Observable<HttpResponse<User[]>> with the list of users that match the query as body.
+     */
     query(req?: any): Observable<HttpResponse<User[]>> {
         const options = createRequestOption(req);
         return this.http.get<User[]>(this.resourceUrl, { params: options, observe: 'response' });
     }
 
+    /**
+     * Search for a user on the server by login or name.
+     * @param loginOrName The login or name to search for.
+     * @return Observable<HttpResponse<User[]>> with the list of found users as body.
+     */
     search(loginOrName: string): Observable<HttpResponse<User[]>> {
         return this.http.get<User[]>(`${this.resourceUrl}/search?loginOrName=${loginOrName}`, { observe: 'response' });
     }
 
+    /**
+     * Delete a user on the server.
+     * @param login The login of the user to delete.
+     * @return Observable<HttpResponse<void>>
+     */
     delete(login: string): Observable<HttpResponse<void>> {
         return this.http.delete<void>(`${this.resourceUrl}/${login}`, { observe: 'response' });
     }
 
+    /**
+     * Update the user notification date.
+     */
     updateUserNotificationDate(): Observable<HttpResponse<User>> {
         return this.http.put<User>(`${this.resourceUrl}/notification-date`, null, { observe: 'response' });
     }
 
+    /**
+     * Get the authorities.
+     */
     authorities(): Observable<string[]> {
         return this.http.get<string[]>(SERVER_API_URL + 'api/users/authorities');
     }

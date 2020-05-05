@@ -2,6 +2,9 @@ import { Injectable } from '@angular/core';
 import { Result } from 'app/entities/result.model';
 import { isLegacyResult } from 'app/exercises/programming/shared/utils/programming-exercise.utils';
 
+/**
+ * Enumeration defining state of the test case.
+ */
 export enum TestCaseState {
     NOT_EXECUTED = 'NOT_EXECUTED',
     SUCCESS = 'SUCCESS',

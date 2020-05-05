@@ -112,7 +112,13 @@ For development purposes, the following program arguments can be used to enable 
 
     --spring.profiles.active=dev,bamboo,bitbucket,jira,artemis
 
-If you use IntelliJ, add the following entry to the section `Active Profiles` (within `Spring Boot`) in the server run configuration:
+
+If you use IntelliJ (Community or Ultimate) you can set the active profiles by
+* Choosing ```Run | Edit Configurations...```
+* Going to the ```Configuration Tab```
+* Expanding the ```Environment``` section to reveal ```VM Options``` and setting them to ```-Dspring.profiles.active=dev,bamboo,bitbucket,jira,artemis```
+
+If you use IntelliJ Ultimate, add the following entry to the section `Active Profiles` (within `Spring Boot`) in the server run configuration:
 
     dev,bamboo,bitbucket,jira,artemis
 

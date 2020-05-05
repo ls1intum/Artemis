@@ -17,6 +17,10 @@ export class TextExerciseService {
 
     constructor(private http: HttpClient, private exerciseService: ExerciseService) {}
 
+    /**
+     * Store a new text exercise on the server.
+     * @param textExercise that should be stored of type {TextExercise}
+     */
     create(textExercise: TextExercise): Observable<EntityResponseType> {
         const copy = this.exerciseService.convertDateFromClient(textExercise);
         return this.http
@@ -24,6 +28,11 @@ export class TextExerciseService {
             .pipe(map((res: EntityResponseType) => this.exerciseService.convertDateFromServer(res)));
     }
 
+    /**
+     * Updates an existing text exercise.
+     * @param textExercise that should be updated of type {TextExercise}
+     * @param req optional request options
+     */
     update(textExercise: TextExercise, req?: any): Observable<EntityResponseType> {
         const options = createRequestOption(req);
         const copy = this.exerciseService.convertDateFromClient(textExercise);
@@ -32,12 +41,20 @@ export class TextExerciseService {
             .pipe(map((res: EntityResponseType) => this.exerciseService.convertDateFromServer(res)));
     }
 
+    /**
+     * Finds the text exercise of the given id.
+     * @param id of text exercise of type {number}
+     */
     find(id: number): Observable<EntityResponseType> {
         return this.http
             .get<TextExercise>(`${this.resourceUrl}/${id}`, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.exerciseService.convertDateFromServer(res)));
     }
 
+    /**
+     * Queries all text exercises for the given request options.
+     * @param req optional request options
+     */
     query(req?: any): Observable<EntityArrayResponseType> {
         const options = createRequestOption(req);
         return this.http
@@ -45,6 +62,10 @@ export class TextExerciseService {
             .pipe(map((res: EntityArrayResponseType) => this.exerciseService.convertDateArrayFromServer(res)));
     }
 
+    /**
+     * Deletes the text exercise with the given id.
+     * @param id of the text exercise of type {number}
+     */
     delete(id: number): Observable<HttpResponse<{}>> {
         return this.http.delete(`${this.resourceUrl}/${id}`, { observe: 'response' });
     }

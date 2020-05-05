@@ -71,6 +71,9 @@ export class QuizScoringInfoStudentModalComponent implements AfterViewInit {
 
     constructor(private modalService: NgbModal, private translateService: TranslateService) {}
 
+    /**
+     * Count the variables depending on the quiz question type
+     */
     ngAfterViewInit() {
         this.checkForSingleOrPluralPoints();
         switch (this.question.type) {

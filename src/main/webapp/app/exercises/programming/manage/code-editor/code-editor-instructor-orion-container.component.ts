@@ -52,6 +52,10 @@ export class CodeEditorInstructorOrionContainerComponent extends CodeEditorInstr
         );
     }
 
+    /**
+     * Calls ngOnInit of its superclass and initialize the subscription to
+     * the Orion connector service, on component initialization
+     */
     ngOnInit(): void {
         super.ngOnInit();
         this.javaBridge.state().subscribe((state) => (this.orionState = state));
@@ -62,18 +66,30 @@ export class CodeEditorInstructorOrionContainerComponent extends CodeEditorInstr
         this.javaBridge.selectRepository(this.selectedRepository);
     }
 
+    /**
+     * Select the solution participation repository and navigate to it
+     */
     selectSolutionParticipation() {
         this.router.navigate(['..', this.exercise.solutionParticipation.id], { relativeTo: this.route });
     }
 
+    /**
+     * Select the template participation repository and navigate to it
+     */
     selectTemplateParticipation() {
         this.router.navigate(['..', this.exercise.templateParticipation.id], { relativeTo: this.route });
     }
 
+    /**
+     * Select the assignment participation repository and navigate to it
+     */
     selectAssignmentParticipation() {
         this.router.navigate(['..', this.exercise.studentParticipations[0].id], { relativeTo: this.route });
     }
 
+    /**
+     * Select the test repository and navigate to it
+     */
     selectTestRepository() {
         this.router.navigate(['..', 'test'], { relativeTo: this.route });
     }

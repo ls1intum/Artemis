@@ -748,6 +748,17 @@ public class UserService {
     }
 
     /**
+     * Get all users in a given team
+     *
+     * @param course The course to which the team belongs (acts as a scope for the team short name)
+     * @param teamShortName The short name of the team for which to get all students
+     * @return A set of all users that belong to the team
+     */
+    public Set<User> findAllUsersInTeam(Course course, String teamShortName) {
+        return userRepository.findAllInTeam(course.getId(), teamShortName);
+    }
+
+    /**
      * Update the guided tour settings of the currently logged in user
      * @param guidedTourSettings the updated set of guided tour settings
      * @return the updated user object with the changed guided tour settings

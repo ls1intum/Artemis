@@ -50,10 +50,17 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     _onChange = (val: Moment) => {};
 
+    /**
+     * Emits the value change from component.
+     */
     valueChanged() {
         this.valueChange.emit();
     }
 
+    /**
+     * Function that writes the value safely.
+     * @param value as moment or date
+     */
     writeValue(value: any) {
         // convert moment to date, because owl-date-time only works correctly with date objects
         if (isMoment(value)) {
@@ -62,11 +69,26 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
             this.value = value;
         }
     }
+
+    /**
+     * Registers a callback function is called by the forms API on initialization to update the form model on blur.
+     * @param fn
+     */
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     registerOnTouched(fn: any) {}
+
+    /**
+     *
+     * @param fn
+     */
     registerOnChange(fn: any) {
         this._onChange = fn;
     }
+
+    /**
+     *
+     * @param newValue
+     */
     updateField(newValue: Moment) {
         this.value = newValue;
         this._onChange(moment(this.value));

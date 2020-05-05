@@ -4,6 +4,11 @@ import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { distinctUntilChanged, map, tap } from 'rxjs/operators';
 import { HttpClient } from '@angular/common/http';
 
+/**
+ * FeatureToggle, currently only supports PROGRAMMING_EXERCISES
+ * @readonly
+ * @enum {string}
+ */
 export enum FeatureToggle {
     PROGRAMMING_EXERCISES = 'PROGRAMMING_EXERCISES',
 }
@@ -59,10 +64,16 @@ export class FeatureToggleService {
         this.notifySubscribers(activeFeatures);
     }
 
+    /**
+     * Getter method for the feature toggles as an observable.
+     */
     getFeatureToggles() {
         return this.subject.asObservable().pipe(distinctUntilChanged());
     }
 
+    /**
+     * Getter method for the active feature toggles as an observable.
+     */
     getFeatureToggleActive(feature: FeatureToggle) {
         return this.subject.asObservable().pipe(
             map((activeFeatures) => activeFeatures.includes(feature)),
@@ -70,6 +81,9 @@ export class FeatureToggleService {
         );
     }
 
+    /**
+     * Setter method for the state of a feature toggle.
+     */
     setFeatureToggleState(featureToggle: FeatureToggle, active: boolean) {
         const url = '/api/management/feature-toggle';
         const toggleParam = { [featureToggle]: active };
