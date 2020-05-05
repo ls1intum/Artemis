@@ -52,10 +52,16 @@ export class NotificationComponent implements OnInit, OnDestroy {
         });
     }
 
+    /**
+     * subscribe to changes for notificationListModification
+     */
     registerChangeInUsers() {
         this.eventManager.subscribe('notificationListModification', () => this.loadAll());
     }
 
+    /**
+     * load all notifications for this page
+     */
     loadAll() {
         this.notificationService
             .query({
@@ -69,14 +75,28 @@ export class NotificationComponent implements OnInit, OnDestroy {
             );
     }
 
+    /**
+     * get id of the item
+     * @param {number} index
+     * @param {User} item
+     * @return id of item
+     */
     trackIdentity(index: number, item: User) {
         return item.id;
     }
 
+    /**
+     * if systemNotification is active
+     * @param {SystemNotification} systemNotification
+     * @return {boolean}
+     */
     isNotificationActive(systemNotification: SystemNotification) {
         return systemNotification.notificationDate!.isBefore(moment()) && systemNotification.expireDate!.isAfter(moment());
     }
 
+    /**
+     * sort by id either ascending or descending depending on reverse attribute
+     */
     sort() {
         const result = [this.predicate + ',' + (this.reverse ? 'asc' : 'desc')];
         if (this.predicate !== 'id') {
@@ -85,6 +105,10 @@ export class NotificationComponent implements OnInit, OnDestroy {
         return result;
     }
 
+    /**
+     * navigate to page
+     * @param {number} page
+     */
     loadPage(page: number) {
         if (page !== this.previousPage) {
             this.previousPage = page;
@@ -102,6 +126,11 @@ export class NotificationComponent implements OnInit, OnDestroy {
         this.alertService.error(error.error, error.message, undefined);
     }
 
+    /**
+     * set courseId form route
+     * get current account
+     * subscribe to lecture changes
+     */
     ngOnInit() {
         this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
         this.loadAll();
@@ -111,11 +140,17 @@ export class NotificationComponent implements OnInit, OnDestroy {
         this.registerChangeInLectures();
     }
 
+    /**
+     * unsubscribe from all listener on destroy
+     */
     ngOnDestroy() {
         this.routeData.unsubscribe();
         this.eventManager.destroy(this.eventSubscriber);
     }
 
+    /**
+     * navigate to /notifications
+     */
     transition() {
         this.router.navigate(['/notifications'], {
             queryParams: {
@@ -126,14 +161,27 @@ export class NotificationComponent implements OnInit, OnDestroy {
         this.loadAll();
     }
 
+    /**
+     * return id of lecture
+     * @param {number} index
+     * @param {Lecture} item
+     */
     trackId(index: number, item: Lecture) {
         return item.id;
     }
 
+    /**
+     * subscribe to changes in lectures
+     */
     registerChangeInLectures() {
         this.eventSubscriber = this.eventManager.subscribe('lectureListModification', () => this.loadAll());
     }
 
+    /**
+     * return message from target if present
+     * @param {string} target
+     * @return {string | null}
+     */
     getTargetMessage(target: string): string | null {
         if (!target) {
             return null;

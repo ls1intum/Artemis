@@ -53,13 +53,15 @@ export class MultipleChoiceQuestionEditComponent implements OnInit, QuizQuestion
 
     constructor(private artemisMarkdown: ArtemisMarkdownService, private modalService: NgbModal, private changeDetector: ChangeDetectorRef) {}
 
+    /**
+     * Init the question editor text by parsing the markdown.
+     */
     ngOnInit(): void {
         this.questionEditorText = this.generateMarkdown();
     }
 
     /**
-     * @function generateMarkdown
-     * @desc Generate the markdown text for this question
+     * Generate the markdown text for this question
      * 1. First the question text, hint, and explanation are added using ArtemisMarkdown
      * 2. After an empty line, the answer options are added
      * 3. For each answer option: text, hint and explanation are added using ArtemisMarkdown
@@ -75,8 +77,7 @@ export class MultipleChoiceQuestionEditComponent implements OnInit, QuizQuestion
     }
 
     /**
-     * @function open
-     * @desc open the modal for the help dialog
+     * open the modal for the help dialog
      * @param content
      */
     open(content: any) {
@@ -84,10 +85,9 @@ export class MultipleChoiceQuestionEditComponent implements OnInit, QuizQuestion
     }
 
     /**
-     * @function prepareForSave
-     * @desc 1. Triggers the saving process by cleaning up the question and calling the markdown parse function
-     *       to get the newest values in the editor to update the question attributes
-     *       2. Notify parent component about changes to check the validity of new values of the question attributes
+     * 1. Triggers the saving process by cleaning up the question and calling the markdown parse function
+     *    to get the newest values in the editor to update the question attributes
+     * 2. Notify parent component about changes to check the validity of new values of the question attributes
      */
     prepareForSave(): void {
         this.cleanupQuestion();
@@ -109,13 +109,12 @@ export class MultipleChoiceQuestionEditComponent implements OnInit, QuizQuestion
     }
 
     /**
-     * @function domainCommandsFound
-     * @desc 1. Gets a tuple of text and domainCommandIdentifiers and assigns text values according to the domainCommandIdentifiers a
-     *          multiple choice question the to the multiple choice question attributes.
-     *          (question text, explanation, hint, answerOption (correct/wrong)
-     *       2. The tupple order is the same as the order of the commands in the markdown text inserted by the user
-     *       3. resetMultipleChoicePreview() is triggered to notify the parent component
-     *       about the changes within the question and to cacheValidation() since the assigned values have changed
+     * 1. Gets a tuple of text and domainCommandIdentifiers and assigns text values according to the domainCommandIdentifiers a
+     *    multiple choice question the to the multiple choice question attributes.
+     *   (question text, explanation, hint, answerOption (correct/wrong)
+     * 2. The tupple order is the same as the order of the commands in the markdown text inserted by the user
+     * 3. resetMultipleChoicePreview() is triggered to notify the parent component
+     *    about the changes within the question and to cacheValidation() since the assigned values have changed
      * @param domainCommands containing tuples of [text, domainCommandIdentifiers]
      */
     domainCommandsFound(domainCommands: [string, DomainCommand][]): void {
@@ -166,8 +165,7 @@ export class MultipleChoiceQuestionEditComponent implements OnInit, QuizQuestion
     }
 
     /**
-     * @function deleteQuestion
-     * @desc Delete this question from the quiz
+     * Delete this question from the quiz
      */
     deleteQuestion(): void {
         this.questionDeleted.emit();

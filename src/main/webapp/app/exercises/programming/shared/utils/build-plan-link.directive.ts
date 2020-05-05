@@ -30,6 +30,9 @@ export class BuildPlanLinkDirective implements OnInit {
 
     constructor(private profileService: ProfileService) {}
 
+    /**
+     * Life cycle hook called by Angular to indicate that Angular is done creating the component
+     */
     ngOnInit(): void {
         this.profileService
             .getProfileInfo()
@@ -55,6 +58,9 @@ export class BuildPlanLinkDirective implements OnInit {
         this.linkToBuildPlan = createBuildPlanUrl(this.templateLink, this.exerciseProjectKey, this.participationBuildPlanId);
     }
 
+    /**
+     * Opens build plan link window.
+     */
     @HostListener('click', ['$event'])
     openBuildPlanLink($event: any) {
         $event.preventDefault();

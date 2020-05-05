@@ -22,6 +22,7 @@
                 },
                 "noOwner": "No tutor"
             },
+            "team": "Team",
             "name": {
                 "label": "Name",
                 "minlength": "The name must be at least 3 characters long."

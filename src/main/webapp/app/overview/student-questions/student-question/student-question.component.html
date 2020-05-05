@@ -1,0 +1,85 @@
+<!-- question not in edit mode -->
+<ng-container *ngIf="!isEditMode">
+    <div class="row pl-2 mb-1">
+        <div class="col-auto px-0">
+            <fa-icon [icon]="'comment'"></fa-icon>
+        </div>
+        <div class="col">
+            <span class="question-subtitle">{{ 'artemisApp.courseOverview.exerciseDetails.faq.questionLabel' | translate }}</span>
+        </div>
+        <div class="col-auto px-0">
+            <fa-icon
+                class="clickable mr-1"
+                *ngIf="isQuestionAuthor || isAtLeastTutorInCourse"
+                [ngbTooltip]="'artemisApp.courseOverview.exerciseDetails.faq.editQuestion' | translate"
+                container="body"
+                [icon]="'pencil-alt'"
+                (click)="toggleEditMode()"
+            ></fa-icon>
+            <jhi-confirm-icon
+                class="clickable mr-1"
+                *ngIf="isQuestionAuthor || isAtLeastTutorInCourse"
+                (confirmEvent)="deleteQuestion()"
+                [ngClass]="'mr-1'"
+                [initialTooltip]="'artemisApp.courseOverview.exerciseDetails.faq.deleteQuestion' | translate"
+                [confirmTooltip]="'artemisApp.courseOverview.exerciseDetails.faq.confirmDeleteQuestion' | translate"
+            ></jhi-confirm-icon>
+        </div>
+    </div>
+    <div class="row pl-2">
+        <div class="col question-text markdown-preview" [innerHTML]="studentQuestion.questionText ? (studentQuestion.questionText | htmlForMarkdown) : ''"></div>
+    </div>
+    <div class="row pl-2 mb-2">
+        <span class="text-black-50 question-subtitle">{{ studentQuestion.author.name }} - {{ studentQuestion.creationDate | date: 'dd.MM.yy HH:mm' }}</span>
+    </div>
+</ng-container>
+<!-- question in edit mode -->
+<ng-container *ngIf="isEditMode">
+    <div class="row mb-2">
+        <div class="col-12">
+            <div class="row pl-2 mb-1">
+                <div class="col-auto px-0">
+                    <fa-icon [icon]="'comment'"></fa-icon>
+                </div>
+                <div class="col">
+                    <span class="form-control-label question-subtitle">{{ 'artemisApp.courseOverview.exerciseDetails.faq.editQuestion' | translate }}</span>
+                </div>
+                <div class="col-auto px-0">
+                    <fa-icon
+                        class="clickable mr-1"
+                        *ngIf="isQuestionAuthor || isAtLeastTutorInCourse"
+                        [ngbTooltip]="'artemisApp.courseOverview.exerciseDetails.faq.editQuestion' | translate"
+                        container="body"
+                        [icon]="'pencil-alt'"
+                        (click)="toggleEditMode()"
+                    ></fa-icon>
+                    <jhi-confirm-icon
+                        class="clickable mr-1"
+                        *ngIf="isQuestionAuthor || isAtLeastTutorInCourse"
+                        (confirmEvent)="deleteQuestion()"
+                        [ngClass]="'mr-1'"
+                        [initialTooltip]="'artemisApp.courseOverview.exerciseDetails.faq.deleteQuestion' | translate"
+                        [confirmTooltip]="'artemisApp.courseOverview.exerciseDetails.faq.confirmDeleteQuestion' | translate"
+                    ></jhi-confirm-icon>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 px-0">
+            <jhi-markdown-editor
+                class="markdown-editor background-editor-color w-100"
+                [(markdown)]="editText"
+                [editorMode]="EditorMode.LATEX"
+                [enableResize]="true"
+                [metaCommands]="[]"
+            ></jhi-markdown-editor>
+        </div>
+        <div class="col-12 d-flex justify-content-around">
+            <button class="btn btn-sm btn-outline-secondary" (click)="toggleEditMode()">
+                {{ 'artemisApp.courseOverview.exerciseDetails.faq.cancel' | translate }}
+            </button>
+            <button class="btn btn-sm btn-outline-secondary" (click)="saveQuestion()">
+                {{ 'artemisApp.courseOverview.exerciseDetails.faq.saveQuestion' | translate }}
+            </button>
+        </div>
+    </div>
+</ng-container>

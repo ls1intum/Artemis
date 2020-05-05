@@ -37,6 +37,9 @@ export class TextAssessmentDashboardComponent implements OnInit {
         translateService.get('artemisApp.textAssessment.confirmCancel').subscribe((text) => (this.cancelConfirmationText = text));
     }
 
+    /**
+     * Life cycle hook to indicate component creation is done
+     */
     async ngOnInit() {
         this.busy = true;
         const exerciseId = Number(this.route.snapshot.paramMap.get('exerciseId'));
@@ -77,14 +80,27 @@ export class TextAssessmentDashboardComponent implements OnInit {
             });
     }
 
+    /**
+     * Update the submission filter for assessments
+     * @param {Submission[]} filteredSubmissions - Submissions to be filtered for
+     */
     updateFilteredSubmissions(filteredSubmissions: Submission[]) {
         this.filteredSubmissions = filteredSubmissions as TextSubmission[];
     }
 
+    /**
+     * Form a duration string for an assessment
+     * @param {Date} completionDate - Completion date of the assessment
+     * @param {Date} initializationDate - Initialization date of the assessment
+     */
     public durationString(completionDate: Date, initializationDate: Date) {
         return this.momentDiff.transform(completionDate, initializationDate, 'minutes');
     }
 
+    /**
+     * Get the assessment type of a result
+     * @param {Result} result - Result to get the assessment type for
+     */
     public assessmentTypeTranslationKey(result?: Result): string {
         if (result) {
             return `artemisApp.AssessmentType.${result.assessmentType}`;

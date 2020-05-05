@@ -99,13 +99,13 @@ public class TextSegmentationService {
             // The addBlocks method also sets the submission in the textBlock
             submissionsMap.get(textBlock.getId()).addBlock(textBlock);
 
-            // compute correct ID for each textBlock
-            textBlock.computeId();
-
             textBlock.automatic();
 
             // Use start/end index to compute text of segment for easy access.
-            textBlock.setText(textBlock.getSubmission().getText().substring(textBlock.getStartIndex(), textBlock.getEndIndex()));
+            textBlock.setTextFromSubmission();
+
+            // compute correct ID for each textBlock
+            textBlock.computeId();
         }
 
         log.info("Segmentation finished. " + response.textBlocks.size() + " TextBlocks calculated.");

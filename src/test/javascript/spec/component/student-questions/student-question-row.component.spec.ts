@@ -2,7 +2,7 @@ import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateModule } from '@ngx-translate/core';
-import { StudentQuestionRowComponent } from 'app/overview/student-questions/student-question-row.component';
+import { StudentQuestionRowComponent } from 'app/overview/student-questions/student-question-row/student-question-row.component';
 import { StudentQuestionAnswer } from 'app/entities/student-question-answer.model';
 import { StudentQuestion } from 'app/entities/student-question.model';
 import { User } from 'app/core/user/user.model';
@@ -68,71 +68,25 @@ describe('StudentQuestionRowComponent', () => {
         expect(component.sortedQuestionAnswers).to.deep.equal([unApprovedStudentQuestionAnswer]);
     });
 
-    it('should toggle answer mode and set question', () => {
+    it('should delete studentQuestionAnswer from list', () => {
         component.studentQuestion = studentQuestion;
         componentFixture.detectChanges();
-        component.toggleAnswerMode(approvedStudentQuestionAnswer);
+        component.ngOnInit();
         componentFixture.detectChanges();
-        expect(component.isAnswerMode).to.be.true;
-        expect(component.questionAnswerText).to.deep.equal(approvedStudentQuestionAnswer.answerText);
-        expect(component.selectedQuestionAnswer).to.deep.equal(approvedStudentQuestionAnswer);
+        component.deleteAnswerFromList(unApprovedStudentQuestionAnswer);
+        componentFixture.detectChanges();
+        expect(component.studentQuestion.answers).to.deep.equal([approvedStudentQuestionAnswer]);
     });
 
-    it('should toggle answer mode and set question to null', () => {
+    it('should add studentQuestionAnswer to list', () => {
         component.studentQuestion = studentQuestion;
         componentFixture.detectChanges();
-        component.toggleAnswerMode(approvedStudentQuestionAnswer);
+        component.ngOnInit();
         componentFixture.detectChanges();
-        component.toggleAnswerMode(approvedStudentQuestionAnswer);
+        component.studentQuestion.answers = [approvedStudentQuestionAnswer];
         componentFixture.detectChanges();
-        expect(component.isAnswerMode).to.be.false;
-        expect(component.questionAnswerText).to.deep.equal('');
-        expect(component.selectedQuestionAnswer).to.deep.equal(null);
-    });
-
-    it('should keep answer mode for different question', () => {
-        component.studentQuestion = studentQuestion;
+        component.addAnswerToList(unApprovedStudentQuestionAnswer);
         componentFixture.detectChanges();
-        component.toggleAnswerMode(approvedStudentQuestionAnswer);
-        componentFixture.detectChanges();
-        component.toggleAnswerMode(unApprovedStudentQuestionAnswer);
-        componentFixture.detectChanges();
-        expect(component.isAnswerMode).to.be.true;
-        expect(component.questionAnswerText).to.deep.equal(unApprovedStudentQuestionAnswer.answerText);
-        expect(component.selectedQuestionAnswer).to.deep.equal(unApprovedStudentQuestionAnswer);
-    });
-
-    it('should toggle answer mode for new answer', () => {
-        component.studentQuestion = studentQuestion;
-        componentFixture.detectChanges();
-        component.toggleAnswerModeForNewAnswer();
-        componentFixture.detectChanges();
-        expect(component.isAnswerMode).to.be.true;
-        expect(component.questionAnswerText).to.deep.equal('');
-        expect(component.selectedQuestionAnswer).to.deep.equal(null);
-    });
-
-    it('should toggle question edit mode', () => {
-        component.studentQuestion = studentQuestion;
-        componentFixture.detectChanges();
-        component.toggleQuestionEditMode();
-        componentFixture.detectChanges();
-        expect(component.isEditMode).to.be.true;
-    });
-
-    it('should return true for user to be author of answer', () => {
-        component.studentQuestion = studentQuestion;
-        componentFixture.detectChanges();
-        component.user = user1;
-        componentFixture.detectChanges();
-        expect(component.isAuthorOfAnswer(unApprovedStudentQuestionAnswer)).to.be.true;
-    });
-
-    it('should return false for user to be author of answer', () => {
-        component.studentQuestion = studentQuestion;
-        componentFixture.detectChanges();
-        component.user = user1;
-        componentFixture.detectChanges();
-        expect(component.isAuthorOfAnswer(approvedStudentQuestionAnswer)).to.be.false;
+        expect(component.studentQuestion.answers).to.deep.equal([approvedStudentQuestionAnswer, unApprovedStudentQuestionAnswer]);
     });
 });

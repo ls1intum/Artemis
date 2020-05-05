@@ -17,6 +17,9 @@ export class TableEditableCheckboxComponent {
     @Input() disabled: boolean;
     @Output() onValueUpdate = new EventEmitter();
 
+    /**
+     * Triggers and update of the checkbox value when the model changes (e.g. click on the checkbox).
+     */
     sendValueUpdate() {
         this.onValueUpdate.emit();
     }

@@ -3,12 +3,19 @@ import { BehaviorSubject, Observable } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 
+/**
+ * Describes the build run state
+ */
 export enum BuildRunState {
     RUNNING = 'RUNNING',
     COMPLETED = 'COMPLETED',
 }
 
 export interface IProgrammingBuildRunService {
+    /**
+     * Subscribe for updates on running build runs. Atm we assume that only build run is running for the whole exercise.
+     * @param programmingExerciseId
+     */
     getBuildRunUpdates(programmingExerciseId: number): Observable<BuildRunState>;
 }
 
@@ -25,6 +32,9 @@ export class ProgrammingBuildRunService implements OnDestroy {
 
     constructor(private websocketService: JhiWebsocketService) {}
 
+    /**
+     * Unsubscribe all buildRunSubjects
+     */
     ngOnDestroy(): void {
         Object.values(this.buildRunSubjects).forEach((subject) => subject.unsubscribe());
     }

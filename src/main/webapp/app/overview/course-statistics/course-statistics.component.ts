@@ -2,10 +2,10 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs/Subscription';
 import { HttpResponse } from '@angular/common/http';
-import { LangChangeEvent, TranslateService } from '@ngx-translate/core';
+import { TranslateService } from '@ngx-translate/core';
 import { sortBy } from 'lodash';
 import { Course } from 'app/entities/course.model';
-import { CourseManagementService } from '../../course/manage/course-management.service';
+import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { Result } from 'app/entities/result.model';
 import * as moment from 'moment';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
@@ -206,7 +206,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
             this.groupExercisesByType();
         }
 
-        this.translationSubscription = this.translateService.onLangChange.subscribe((event: LangChangeEvent) => {
+        this.translationSubscription = this.translateService.onLangChange.subscribe(() => {
             this.exerciseTitles = {
                 quiz: {
                     name: this.translateService.instant('artemisApp.course.quizExercises'),

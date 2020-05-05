@@ -7,6 +7,12 @@ import { DifferencePipe } from 'ngx-moment';
 export class SortByPipe implements PipeTransform {
     constructor(private momentDiff: DifferencePipe) {}
 
+    /**
+     * Sorts the quizzes depending on their status or duration.
+     * @param array The array of quiz exercises.
+     * @param predicate The attribute to consider for sorting.
+     * @param reverse Whether should be sorted in reverse.
+     */
     transform(array: any[], predicate: string, reverse: boolean): any[] {
         array.sort((a: any, b: any) => {
             let tempA = a;
@@ -42,6 +48,11 @@ export class SortByPipe implements PipeTransform {
         return array;
     }
 
+    /**
+     * Returns the status of the quiz represented as numbers, whether the quiz is
+     * open for practice or is it visible before it starts.
+     * @param quizExercise The quizExercise object.
+     */
     statusForQuiz(quizExercise: any) {
         if (quizExercise.isPlannedToStart && quizExercise.remainingTime != null) {
             if (quizExercise.remainingTime <= 0) {
@@ -53,8 +64,12 @@ export class SortByPipe implements PipeTransform {
         return quizExercise.isVisibleBeforeStart ? 3 : 4;
     }
 
-    // TODO: How does this work? An exercise does not have a completion date.
+    /**
+     * Gets the duration of the exercise in minutes.
+     * @param exercise The exercise object.
+     */
     durationForExercise(exercise: any) {
+        // TODO: How does this work? An exercise does not have a completion date.
         return this.momentDiff.transform(exercise.completionDate, exercise.participations[0].initializationDate, 'minutes');
     }
 }

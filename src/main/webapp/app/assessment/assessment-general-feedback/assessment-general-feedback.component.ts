@@ -17,6 +17,9 @@ export class AssessmentGeneralFeedbackComponent {
 
     @Output() feedbackChange = new EventEmitter<Feedback>();
 
+    /**
+     * Emits the change of the general feedback detail text to the parent component
+     */
     public onTextChange(text: string): void {
         const trimmedText = text.trim();
         this.feedbackClone.detailText = trimmedText.length > 0 ? trimmedText : null;

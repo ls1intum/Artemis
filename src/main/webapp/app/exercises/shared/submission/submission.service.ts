@@ -20,11 +20,20 @@ export class SubmissionService {
 
     constructor(private http: HttpClient) {}
 
+    /**
+     * Delete an existing submission
+     * @param {number} submissionId - The id of the submission to be deleted
+     * @param {any} req - A request with additional options in it
+     */
     delete(submissionId: number, req?: any): Observable<HttpResponse<any>> {
         const options = createRequestOption(req);
         return this.http.delete<void>(`${this.resourceUrl}/${submissionId}`, { params: options, observe: 'response' });
     }
 
+    /**
+     * Find all submissions of a given participation
+     * @param {number} participationId - The id of the participation to be searched for
+     */
     findAllSubmissionsOfParticipation(participationId: number): Observable<EntityArrayResponseType> {
         return this.http
             .get<Submission[]>(`${this.resourceUrlParticipation}/${participationId}/submissions`, { observe: 'response' })

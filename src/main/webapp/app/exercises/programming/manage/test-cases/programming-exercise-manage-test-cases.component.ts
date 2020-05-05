@@ -1,7 +1,6 @@
 import { Component, OnDestroy, OnInit, ViewEncapsulation } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute } from '@angular/router';
-import { HttpErrorResponse } from '@angular/common/http';
 import { of, Subscription, zip } from 'rxjs';
 import { catchError, distinctUntilChanged, map, take, tap } from 'rxjs/operators';
 import { differenceBy as _differenceBy, differenceWith as _differenceWith, intersectionWith as _intersectionWith, unionBy as _unionBy } from 'lodash';
@@ -13,6 +12,9 @@ import { ProgrammingExerciseService } from 'app/exercises/programming/manage/ser
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ProgrammingExerciseTestCaseService } from 'app/exercises/programming/manage/services/programming-exercise-test-case.service';
 
+/**
+ * Describes the editableField
+ */
 export enum EditableField {
     WEIGHT = 'weight',
 }
@@ -45,19 +47,33 @@ export class ProgrammingExerciseManageTestCasesComponent implements OnInit, OnDe
     // This flag means that the test cases were edited, but no submission run was triggered yet.
     hasUpdatedTestCases = false;
 
+    /**
+     * Returns the value of testcases
+     */
     get testCases() {
         return this.testCasesValue;
     }
 
+    /**
+     * Sets value of the testcases
+     * @param testCases the test cases which should be set
+     */
     set testCases(testCases: ProgrammingExerciseTestCase[]) {
         this.testCasesValue = testCases;
         this.updateTestCaseFilter();
     }
 
+    /**
+     * Returns the value of showInactive
+     */
     get showInactive() {
         return this.showInactiveValue;
     }
 
+    /**
+     * Sets the value of showInactive
+     * @param showInactive the value which should be set
+     */
     set showInactive(showInactive: boolean) {
         this.editing = null;
         this.showInactiveValue = showInactive;
@@ -119,6 +135,9 @@ export class ProgrammingExerciseManageTestCasesComponent implements OnInit, OnDe
         });
     }
 
+    /**
+     * If there is an existing subscription, unsubscribe
+     */
     ngOnDestroy(): void {
         if (this.testCaseSubscription) {
             this.testCaseSubscription.unsubscribe();
@@ -131,6 +150,10 @@ export class ProgrammingExerciseManageTestCasesComponent implements OnInit, OnDe
         }
     }
 
+    /**
+     *  Subscribes to test case updates
+     *  updates the list of test cases
+     */
     private subscribeForTestCaseUpdates() {
         if (this.testCaseSubscription) {
             this.testCaseSubscription.unsubscribe();
@@ -145,6 +168,10 @@ export class ProgrammingExerciseManageTestCasesComponent implements OnInit, OnDe
             .subscribe();
     }
 
+    /**
+     *  Subscribes to test case changes
+     *  checks if the test cases have changed
+     */
     private subscribeForExerciseTestCasesChangedUpdates() {
         if (this.testCaseChangedSubscription) {
             this.testCaseChangedSubscription.unsubscribe();
@@ -232,7 +259,7 @@ export class ProgrammingExerciseManageTestCasesComponent implements OnInit, OnDe
                         this.alertService.success(`artemisApp.programmingExercise.manageTestCases.testCasesUpdated`);
                     }
                 }),
-                catchError((err: HttpErrorResponse) => {
+                catchError(() => {
                     this.alertService.error(`artemisApp.programmingExercise.manageTestCases.testCasesCouldNotBeUpdated`, { testCases: testCasesToUpdate });
                     return of(null);
                 }),
@@ -261,6 +288,7 @@ export class ProgrammingExerciseManageTestCasesComponent implements OnInit, OnDe
         const existsUnchangedWithCustomWeight = this.testCases.filter(({ id }) => !this.changedTestCaseIds.includes(id)).some(({ weight }) => weight > 1);
         // If the updated weights are unsaved, we can just reset them locally in the browser without contacting the server.
         if (!existsUnchangedWithCustomWeight) {
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
             this.testCases = this.testCases.map(({ weight, ...rest }) => ({ weight: 1, ...rest }));
             return;
         }
@@ -272,7 +300,7 @@ export class ProgrammingExerciseManageTestCasesComponent implements OnInit, OnDe
                     this.alertService.success(`artemisApp.programmingExercise.manageTestCases.weightsReset`);
                     this.testCaseService.notifyTestCases(this.exercise.id, testCases);
                 }),
-                catchError((err: HttpErrorResponse) => {
+                catchError(() => {
                     this.alertService.error(`artemisApp.programmingExercise.manageTestCases.weightsResetFailed`);
                     return of(null);
                 }),
