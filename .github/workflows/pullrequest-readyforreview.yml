@@ -8,7 +8,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Move to "Ready for review" column
-        if: github.event.label.name == 'ready for review'
+        if: github.event.pull_request.draft == false
         uses: alex-page/github-project-automation-plus@v0.1.1
         with:
           project: Artemis Development
@@ -23,5 +23,5 @@ jobs:
         with:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           teams: "@ls1intum/artemis"
-          include-draft: true
+          include-draft: false
           skip-with-manual-reviewers: 5
