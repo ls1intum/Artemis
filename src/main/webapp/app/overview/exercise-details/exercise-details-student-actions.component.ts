@@ -206,7 +206,7 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
      *
      * @return {assignedTeamId}
      */
-    get assignedTeamId(): number | undefined | null {
+    get assignedTeamId(): number | undefined {
         const participation = this.exercise.studentParticipations[0];
         return participation ? participation.team?.id : this.exercise.studentAssignedTeamId;
     }

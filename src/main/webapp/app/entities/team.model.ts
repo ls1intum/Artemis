@@ -16,7 +16,7 @@ export class OnlineTeamStudent {
 
 export class TeamAssignmentPayload {
     public exerciseId: number;
-    public teamId: number | null;
+    public teamId?: number;
     public studentParticipations: StudentParticipation[];
 }
 

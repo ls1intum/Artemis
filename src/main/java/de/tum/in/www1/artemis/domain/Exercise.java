@@ -170,10 +170,10 @@ public abstract class Exercise implements Serializable {
     private Long numberOfOpenMoreFeedbackRequestsTransient;
 
     @Transient
-    // id of the team that the logged-in user is assigned to (only relevant if team mode is enabled)
-    private Long studentAssignedTeamIdTransient = ASSIGNED_TEAM_ID_NOT_SET;
+    private Long studentAssignedTeamIdTransient; // id of the team that the logged-in user is assigned to (only relevant if team mode is enabled)
 
-    private static final long ASSIGNED_TEAM_ID_NOT_SET = 0L;
+    @Transient
+    private boolean studentAssignedTeamIdComputedTransient = false; // set to true if studentAssignedTeamIdTransient was computed for the exercise
 
     // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
     public Long getId() {
@@ -865,22 +865,20 @@ public abstract class Exercise implements Serializable {
         return releaseDate == null || releaseDate.isBefore(ZonedDateTime.now());
     }
 
-    /**
-     * If the transient attribute has not been set, do not include it in the payload.
-     * If it has been set, include it in the payload, even if it has been set to null (i.e. the user is not assigned to any team).
-     *
-     * @return the id of the team that the current user is assigned to for this exercise
-     */
-    @JsonInclude(JsonInclude.Include.NON_NULL)
-    public Optional<Long> getStudentAssignedTeamId() {
-        if (studentAssignedTeamIdTransient != null && studentAssignedTeamIdTransient == ASSIGNED_TEAM_ID_NOT_SET) {
-            return null;
-        }
-        return Optional.ofNullable(studentAssignedTeamIdTransient);
+    public Long getStudentAssignedTeamId() {
+        return studentAssignedTeamIdTransient;
     }
 
     public void setStudentAssignedTeamId(Long studentAssignedTeamIdTransient) {
         this.studentAssignedTeamIdTransient = studentAssignedTeamIdTransient;
+    }
+
+    public boolean isStudentAssignedTeamIdComputed() {
+        return studentAssignedTeamIdComputedTransient;
+    }
+
+    public void setStudentAssignedTeamIdComputed(boolean studentAssignedTeamIdComputedTransient) {
+        this.studentAssignedTeamIdComputedTransient = studentAssignedTeamIdComputedTransient;
     }
 
     public Boolean getPresentationScoreEnabled() {

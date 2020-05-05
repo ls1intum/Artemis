@@ -378,6 +378,7 @@ public class ExerciseService {
         if (exercise.isTeamMode()) {
             Optional<Team> team = teamService.findOneByExerciseAndUser(exercise, user);
             exercise.setStudentAssignedTeamId(team.map(Team::getId).orElse(null));
+            exercise.setStudentAssignedTeamIdComputed(true);
         }
     }
 }
