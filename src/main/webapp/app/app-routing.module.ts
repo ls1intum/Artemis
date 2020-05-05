@@ -53,7 +53,7 @@ const LAYOUT_ROUTES: Routes = [navbarRoute, ...errorRoute];
                     loadChildren: () => import('./exercises/file-upload/participate/file-upload-participation.module').then((m) => m.ArtemisFileUploadParticipationModule),
                 },
             ],
-            { useHash: true, enableTracing: false },
+            { useHash: true, enableTracing: false, onSameUrlNavigation: 'reload' },
         ),
     ],
     exports: [RouterModule],
