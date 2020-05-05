@@ -5,6 +5,7 @@ import static java.time.Instant.now;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 
 import javax.annotation.PostConstruct;
 import javax.validation.constraints.NotNull;
@@ -54,13 +55,13 @@ public class TextClusteringScheduleService {
 
     @PostConstruct
     private void scheduleRunningExercisesOnStartup() {
-        Collection<String> activeProfiles = Arrays.asList(env.getActiveProfiles());
+        final Collection<String> activeProfiles = Arrays.asList(env.getActiveProfiles());
         if (activeProfiles.contains(JHipsterConstants.SPRING_PROFILE_DEVELOPMENT)) {
             // only execute this on production server, i.e. when the prod profile is active
             // NOTE: if you want to test this locally, please comment it out, but do not commit the changes
             return;
         }
-        List<TextExercise> runningTextExercises = textExerciseService.findAllAutomaticAssessmentTextExercisesWithFutureDueDate();
+        final List<TextExercise> runningTextExercises = textExerciseService.findAllAutomaticAssessmentTextExercisesWithFutureDueDate();
         runningTextExercises.forEach(this::scheduleExerciseForClustering);
         log.info("Scheduled text clustering for " + runningTextExercises.size() + " text exercises with future due dates.");
     }
@@ -86,7 +87,7 @@ public class TextClusteringScheduleService {
         // no exercise should be scheduled for clustering more than once.
         cancelScheduledClustering(exercise);
 
-        ScheduledFuture future = exerciseLifecycleService.scheduleTask(exercise, ExerciseLifecycle.DUE, clusteringRunnableForExercise(exercise));
+        final ScheduledFuture future = exerciseLifecycleService.scheduleTask(exercise, ExerciseLifecycle.DUE, clusteringRunnableForExercise(exercise));
 
         scheduledClusteringTasks.put(exercise.getId(), future);
         log.debug("Scheduled Clustering for Text Exercise \"" + exercise.getTitle() + "\" (#" + exercise.getId() + ") for " + exercise.getDueDate() + ".");
@@ -114,11 +115,29 @@ public class TextClusteringScheduleService {
      * @param exercise exercise for which a potential clustering task is canceled
      */
     public void cancelScheduledClustering(TextExercise exercise) {
-        ScheduledFuture future = scheduledClusteringTasks.get(exercise.getId());
+        final ScheduledFuture future = scheduledClusteringTasks.get(exercise.getId());
         if (future != null) {
             future.cancel(false);
             scheduledClusteringTasks.remove(exercise.getId());
         }
+    }
+
+    /**
+     * Checks if Athene is currently proccessing submissions of given exercise.
+     * @param exercise Exercise to check state
+     * @return currently computing clusters?
+     */
+    public boolean currentlyProcessing(TextExercise exercise) {
+        final ScheduledFuture future = scheduledClusteringTasks.get(exercise.getId());
+        if (future == null) {
+            return false;
+        }
+
+        final long delay = future.getDelay(TimeUnit.NANOSECONDS);
+        final boolean done = future.isDone();
+        final boolean cancelled = future.isCancelled();
+
+        return (!done && !cancelled && delay <= 0);
     }
 
 }

@@ -26,7 +26,7 @@ export class TextResultComponent {
         }
 
         this.submission = result.submission as TextSubmission;
-        this.submissionText = this.submission.text;
+        this.submissionText = this.submission.text || '';
         this.convertTextToResultBlocks(result.feedbacks);
     }
 
