@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
-import { Observable } from 'rxjs';
-import { map, shareReplay, filter } from 'rxjs/operators';
+import { Observable, Subscription } from 'rxjs';
+import { map, shareReplay } from 'rxjs/operators';
 import * as moment from 'moment';
 
 import { SERVER_API_URL } from 'app/app.constants';
@@ -81,7 +81,9 @@ export interface ITeamService {
 
 @Injectable({ providedIn: 'root' })
 export class TeamService implements ITeamService {
-    private teamAssignmentUpdates$: Observable<TeamAssignmentPayload>;
+    private teamAssignmentUpdates$: Observable<TeamAssignmentPayload> | null;
+    private resolveTeamAssignmentUpdates$: () => void;
+    private subscriber: Subscription;
 
     constructor(protected http: HttpClient, private websocketService: JhiWebsocketService, private accountService: AccountService) {}
 
@@ -196,16 +198,19 @@ export class TeamService implements ITeamService {
             } else if (this.websocketService.stompClient?.connected) {
                 resolve(this.newTeamAssignmentUpdates$);
             } else {
-                this.accountService
-                    .getAuthenticationState()
-                    .pipe(filter((user: User | null) => Boolean(user)))
-                    .subscribe(() => {
-                        setTimeout(() => {
-                            this.websocketService.bind('connect', () => {
-                                resolve(this.newTeamAssignmentUpdates$);
-                            });
-                        }, 500);
-                    });
+                this.subscriber = this.accountService.getAuthenticationState().subscribe((user: User | null) => {
+                    setTimeout(() => {
+                        if (user) {
+                            this.resolveTeamAssignmentUpdates$ = () => resolve(this.newTeamAssignmentUpdates$);
+                            this.websocketService.bind('connect', this.resolveTeamAssignmentUpdates$);
+                        } else {
+                            this.websocketService.unsubscribe(teamAssignmentUpdatesWebsocketTopic);
+                            this.websocketService.unbind('connect', this.resolveTeamAssignmentUpdates$);
+                            this.teamAssignmentUpdates$ = null;
+                            this.subscriber.unsubscribe();
+                        }
+                    }, 500);
+                });
             }
         });
     }
@@ -214,9 +219,6 @@ export class TeamService implements ITeamService {
      * Subscribes to the team assignment updates websocket topic and stores the stream in teamAssignmentUpdates$
      */
     private get newTeamAssignmentUpdates$(): Observable<TeamAssignmentPayload> {
-        if (this.teamAssignmentUpdates$) {
-            this.websocketService.unsubscribe(teamAssignmentUpdatesWebsocketTopic);
-        }
         this.websocketService.subscribe(teamAssignmentUpdatesWebsocketTopic);
         this.teamAssignmentUpdates$ = this.websocketService.receive(teamAssignmentUpdatesWebsocketTopic).pipe(shareReplay(16));
         return this.teamAssignmentUpdates$;
