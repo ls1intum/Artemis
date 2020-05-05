@@ -35,7 +35,11 @@ export class Feedback implements BaseEntity {
     }
 
     public static isEmpty(that: Feedback): boolean {
-        return that.credits === 0 && Feedback.hasDetailText(that);
+        return that.credits === 0 && !Feedback.hasDetailText(that);
+    }
+
+    public static isPresent(that: Feedback): boolean {
+        return !Feedback.isEmpty(that);
     }
 
     public static forModeling(credits: number, text?: string, referenceId?: string, referenceType?: string): Feedback {
