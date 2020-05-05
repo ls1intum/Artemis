@@ -12,7 +12,7 @@
 
 <jhi-expandable-section headerKey="assessmentInstructions.sampleSolution">
     <jhi-modeling-editor *ngIf="sampleSolutionModel" [readOnly]="true" [diagramType]="sampleSolutionDiagramType!" [umlModel]="sampleSolutionModel!"> </jhi-modeling-editor>
-    <p class="markdown-preview" *ngIf="sampleSolution" [innerHTML]="sampleSolution!"></p>
+    <p class="markdown-preview" *ngIf="sampleSolutionExplanation" [innerHTML]="sampleSolutionExplanation!"></p>
 </jhi-expandable-section>
 
 <jhi-expandable-section headerKey="assessmentInstructions.gradingCriteria">
