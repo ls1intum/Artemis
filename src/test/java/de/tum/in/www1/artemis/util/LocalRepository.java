@@ -33,23 +33,27 @@ public class LocalRepository {
         this.localGit.remoteAdd().setName("origin").setUri(new URIish(String.valueOf(this.originRepoFile))).call();
     }
 
-    public static void resetLocalRepo(LocalRepository localRepo) throws IOException {
-        if (localRepo.localRepoFile != null && localRepo.localRepoFile.exists()) {
-            FileUtils.deleteDirectory(localRepo.localRepoFile);
+    public void resetLocalRepo() throws IOException {
+        if (this.localRepoFile != null && this.localRepoFile.exists()) {
+            FileUtils.deleteDirectory(this.localRepoFile);
         }
-        if (localRepo.localGit != null) {
-            localRepo.localGit.close();
+        if (this.localGit != null) {
+            this.localGit.close();
         }
 
-        if (localRepo.originRepoFile != null && localRepo.originRepoFile.exists()) {
-            FileUtils.deleteDirectory(localRepo.originRepoFile);
+        if (this.originRepoFile != null && this.originRepoFile.exists()) {
+            FileUtils.deleteDirectory(this.originRepoFile);
         }
-        if (localRepo.originGit != null) {
-            localRepo.originGit.close();
+        if (this.originGit != null) {
+            this.originGit.close();
         }
     }
 
-    public static List<RevCommit> getAllCommits(Git gitRepo) throws Exception {
-        return StreamSupport.stream(gitRepo.log().call().spliterator(), false).collect(Collectors.toList());
+    public List<RevCommit> getAllLocalCommits() throws Exception {
+        return StreamSupport.stream(this.localGit.log().call().spliterator(), false).collect(Collectors.toList());
+    }
+
+    public List<RevCommit> getAllOriginCommits() throws Exception {
+        return StreamSupport.stream(this.originGit.log().call().spliterator(), false).collect(Collectors.toList());
     }
 }

@@ -89,7 +89,7 @@ public class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegra
     public void tearDown() throws IOException {
         database.resetDatabase();
         reset(gitService);
-        LocalRepository.resetLocalRepo(testRepo);
+        testRepo.resetLocalRepo();
     }
 
     @Test
@@ -187,7 +187,7 @@ public class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegra
         request.postWithoutLocation(testRepoBaseUrl + programmingExercise.getId() + "/commit", null, HttpStatus.OK, null);
         var receivedStatusAfterCommit = request.get(testRepoBaseUrl + programmingExercise.getId(), HttpStatus.OK, RepositoryStatusDTO.class);
         assertThat(receivedStatusAfterCommit.repositoryStatus.toString()).isEqualTo("CLEAN");
-        var testRepoCommits = LocalRepository.getAllCommits(testRepo.localGit);
+        var testRepoCommits = testRepo.getAllLocalCommits();
         assertThat(testRepoCommits.size() == 1).isTrue();
         assertThat(database.getUserByLogin("instructor1").getName()).isEqualTo(testRepoCommits.get(0).getAuthorIdent().getName());
     }
@@ -215,13 +215,13 @@ public class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegra
         testRepo.originGit.commit().setMessage("TestCommit").setAllowEmpty(true).setCommitter("testname", "test@email").call();
 
         // Checks if the current commit is not equal on the local and the remote repository
-        assertThat(LocalRepository.getAllCommits(testRepo.localGit).get(0)).isNotEqualTo(LocalRepository.getAllCommits(testRepo.originGit).get(0));
+        assertThat(testRepo.getAllLocalCommits().get(0)).isNotEqualTo(testRepo.getAllOriginCommits().get(0));
 
         // Execute the Rest call
         request.get(testRepoBaseUrl + programmingExercise.getId() + "/pull", HttpStatus.OK, Void.class);
 
         // Check if the current commit is the same on the local and the remote repository and if the file exists on the local repository
-        assertThat(LocalRepository.getAllCommits(testRepo.localGit).get(0)).isEqualTo(LocalRepository.getAllCommits(testRepo.originGit).get(0));
+        assertThat(testRepo.getAllLocalCommits().get(0)).isEqualTo(testRepo.getAllOriginCommits().get(0));
         assertThat(Files.exists(Paths.get(testRepo.localRepoFile + "/" + fileName))).isTrue();
     }
 
@@ -274,7 +274,7 @@ public class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegra
         // Check the git status after the reset
         status = testRepo.localGit.status().call();
         assertThat(status.getConflicting().size() == 0).isTrue();
-        assertThat(LocalRepository.getAllCommits(testRepo.localGit).get(0)).isEqualTo(LocalRepository.getAllCommits(testRepo.originGit).get(0));
+        assertThat(testRepo.getAllLocalCommits().get(0)).isEqualTo(testRepo.getAllOriginCommits().get(0));
         var receivedStatusAfterReset = request.get(testRepoBaseUrl + programmingExercise.getId(), HttpStatus.OK, RepositoryStatusDTO.class);
         assertThat(receivedStatusAfterReset.repositoryStatus.toString()).isEqualTo("CLEAN");
     }

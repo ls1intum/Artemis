@@ -153,9 +153,9 @@ public class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractS
         reset(bambooServer);
         bitbucketRequestMockProvider.reset();
         bambooRequestMockProvider.reset();
-        LocalRepository.resetLocalRepo(exerciseRepo);
-        LocalRepository.resetLocalRepo(testRepo);
-        LocalRepository.resetLocalRepo(solutionRepo);
+        exerciseRepo.resetLocalRepo();
+        testRepo.resetLocalRepo();
+        solutionRepo.resetLocalRepo();
     }
 
     @ParameterizedTest
@@ -180,7 +180,7 @@ public class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractS
                 HttpStatus.OK);
         assertThat(response).startsWith("Successfully generated the structure oracle");
 
-        List<RevCommit> testRepoCommits = LocalRepository.getAllCommits(testRepo.localGit);
+        List<RevCommit> testRepoCommits = testRepo.getAllLocalCommits();
         assertThat(testRepoCommits.size()).isEqualTo(2);
 
         assertThat(testRepoCommits.get(0).getFullMessage()).isEqualTo("Update the structure oracle file.");
