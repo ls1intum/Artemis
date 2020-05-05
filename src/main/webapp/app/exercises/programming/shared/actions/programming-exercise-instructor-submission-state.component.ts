@@ -38,6 +38,9 @@ export class ProgrammingExerciseInstructorSubmissionStateComponent implements On
 
     constructor(private programmingSubmissionService: ProgrammingSubmissionService) {}
 
+    /**
+     * Subscribes to the estimated time of arrival result on init
+     */
     ngOnInit(): void {
         this.resultEtaSubscription = this.programmingSubmissionService.getResultEtaInMs().subscribe((resultEta) => (this.resultEtaInMs = resultEta));
     }
