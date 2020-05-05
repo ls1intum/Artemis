@@ -29,25 +29,25 @@ import { NEW_ASSESSMENT_PATH } from 'app/exercises/text/assess-new/text-submissi
 export class TextSubmissionAssessmentComponent implements OnInit {
     private userId: number | null;
     exerciseId: number;
-    participation: StudentParticipation | null = null;
-    submission: TextSubmission | null = null;
-    exercise: TextExercise | null = null;
-    result: Result | null = null;
+    participation: StudentParticipation | null;
+    submission: TextSubmission | null;
+    exercise: TextExercise | null;
+    result: Result | null;
     generalFeedback: Feedback;
-    textBlockRefs: TextBlockRef[] = [];
-    totalScore = 0;
+    textBlockRefs: TextBlockRef[];
+    complaint: Complaint | null;
+    totalScore: number;
 
-    isLoading = true;
+    isLoading: boolean;
     saveBusy: boolean;
     submitBusy: boolean;
     cancelBusy: boolean;
     nextSubmissionBusy: boolean;
-    isAssessor = false;
-    isAtLeastInstructor = false;
-    canOverride = false;
-    assessmentsAreValid = false;
-    complaint: Complaint;
-    noNewSubmissions = false;
+    isAssessor: boolean;
+    isAtLeastInstructor: boolean;
+    canOverride: boolean;
+    assessmentsAreValid: boolean;
+    noNewSubmissions: boolean;
 
     private cancelConfirmationText: string;
 
@@ -78,6 +78,28 @@ export class TextSubmissionAssessmentComponent implements OnInit {
         translateService: TranslateService,
     ) {
         translateService.get('artemisApp.textAssessment.confirmCancel').subscribe((text) => (this.cancelConfirmationText = text));
+        this.resetComponent();
+    }
+
+    private resetComponent(): void {
+        this.participation = null;
+        this.submission = null;
+        this.exercise = null;
+        this.result = null;
+        this.generalFeedback = new Feedback();
+        this.textBlockRefs = [];
+        this.complaint = null;
+        this.totalScore = 0;
+        this.isLoading = true;
+        this.saveBusy = false;
+        this.submitBusy = false;
+        this.cancelBusy = false;
+        this.nextSubmissionBusy = false;
+        this.isAssessor = false;
+        this.isAtLeastInstructor = false;
+        this.canOverride = false;
+        this.assessmentsAreValid = false;
+        this.noNewSubmissions = false;
     }
 
     /**
@@ -95,14 +117,11 @@ export class TextSubmissionAssessmentComponent implements OnInit {
     }
 
     private setPropertiesFromServerResponse(studentParticipation: StudentParticipation) {
+        this.resetComponent();
+
         if (studentParticipation === null) {
             // Show "No New Submission" banner on .../submissions/new/assessment route
             this.noNewSubmissions = this.isNewAssessmentRoute;
-            this.participation = null;
-            this.submission = null;
-            this.exercise = null;
-            this.result = null;
-            this.textBlockRefs = [];
             return;
         }
 
