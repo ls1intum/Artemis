@@ -18,6 +18,10 @@ export class LectureService {
 
     constructor(protected http: HttpClient, private accountService: AccountService) {}
 
+    /**
+     * create a lecture using a POST request
+     * @param lecture - the lecture that is going to be created on the server
+     */
     create(lecture: Lecture): Observable<EntityResponseType> {
         const copy = this.convertDateFromClient(lecture);
         return this.http
@@ -25,6 +29,10 @@ export class LectureService {
             .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
     }
 
+    /**
+     * update a lecture using a PUT request
+     * @param lecture - the lecture to be updated
+     */
     update(lecture: Lecture): Observable<EntityResponseType> {
         const copy = this.convertDateFromClient(lecture);
         return this.http
@@ -32,6 +40,10 @@ export class LectureService {
             .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
     }
 
+    /**
+     * find the lecture with the provided unique identifier
+     * @param lectureId - the id of the lecture to be found
+     */
     find(lectureId: number): Observable<EntityResponseType> {
         return this.http
             .get<Lecture>(`${this.resourceUrl}/${lectureId}`, { observe: 'response' })
@@ -47,6 +59,10 @@ export class LectureService {
             .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
     }
 
+    /**
+     * get Lectures with the given HTTP params
+     * @param req - to set HTTP params
+     */
     query(req?: any): Observable<EntityArrayResponseType> {
         const options = createRequestOption(req);
         return this.http
@@ -54,6 +70,10 @@ export class LectureService {
             .pipe(map((res: EntityArrayResponseType) => this.convertDateArrayFromServer(res)));
     }
 
+    /**
+     * find all lectures for given course id using a GET request
+     * @param courseId - the id of the course
+     */
     findAllByCourseId(courseId: number): Observable<EntityArrayResponseType> {
         return this.http
             .get<Lecture[]>(`api/courses/${courseId}/lectures`, { observe: 'response' })
@@ -63,10 +83,18 @@ export class LectureService {
             );
     }
 
+    /**
+     * delete the lecture corresponding to the given unique identifier using a DELETE request
+     * @param lectureId - the id of the lecture to be deleted
+     */
     delete(lectureId: number): Observable<HttpResponse<any>> {
         return this.http.delete<any>(`${this.resourceUrl}/${lectureId}`, { observe: 'response' });
     }
 
+    /**
+     * converts lecture start and end dates coming from the client for the server
+     * @param lecture - the lecture to convert its date values
+     */
     protected convertDateFromClient(lecture: Lecture): Lecture {
         const copy: Lecture = Object.assign({}, lecture, {
             startDate: lecture.startDate != null && lecture.startDate.isValid() ? lecture.startDate.toJSON() : null,
@@ -79,6 +107,10 @@ export class LectureService {
         return copy;
     }
 
+    /**
+     * converts lecture start and end dates coming from the server using moment
+     * @param res - server response object
+     */
     protected convertDateFromServer(res: EntityResponseType): EntityResponseType {
         if (res.body) {
             res.body.startDate = res.body.startDate != null ? moment(res.body.startDate) : null;
@@ -87,6 +119,10 @@ export class LectureService {
         return res;
     }
 
+    /**
+     * converts the array of lecture start and end dates coming from the server
+     * @param res - server response array object
+     */
     protected convertDateArrayFromServer(res: EntityArrayResponseType): EntityArrayResponseType {
         if (res.body) {
             res.body.map((lecture: Lecture) => {
@@ -96,6 +132,10 @@ export class LectureService {
         return res;
     }
 
+    /**
+     * checks if the user is at least instructor for the course
+     * @param res - server response array object
+     */
     private checkPermission<ERT extends EntityArrayResponseType>(res: ERT): ERT {
         if (res.body) {
             res.body.forEach((lecture: Lecture) => {
@@ -107,12 +147,20 @@ export class LectureService {
         return res;
     }
 
+    /**
+     * converts lecture start and end dates coming from the server using moment
+     * @param lecture - the lecture to convert its date values
+     */
     public convertDatesForLectureFromServer(lecture: Lecture): Lecture {
         lecture.startDate = lecture.startDate ? moment(lecture.startDate) : null;
         lecture.endDate = lecture.endDate ? moment(lecture.endDate) : null;
         return lecture;
     }
 
+    /**
+     * converts lecture start and end dates coming from the server
+     * @param lectures - the array of lectures to convert their date values
+     */
     public convertDatesForLecturesFromServer(lectures: Lecture[]): Lecture[] {
         if (!lectures) {
             return lectures;

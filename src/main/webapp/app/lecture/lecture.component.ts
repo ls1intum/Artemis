@@ -32,6 +32,9 @@ export class LectureComponent implements OnInit, OnDestroy {
         protected accountService: AccountService,
     ) {}
 
+    /**
+     * loads all lectures with the given course id from the lecture service
+     */
     loadAll() {
         this.lectureService
             .findAllByCourseId(this.courseId)
@@ -47,6 +50,10 @@ export class LectureComponent implements OnInit, OnDestroy {
             );
     }
 
+    /**
+     * On init get the course id for the relevant course and the user identity from the account service
+     * Initialize component by calling loadAll and registerChangeInLectures
+     */
     ngOnInit() {
         this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
         this.loadAll();
@@ -56,15 +63,26 @@ export class LectureComponent implements OnInit, OnDestroy {
         this.registerChangeInLectures();
     }
 
+    /**
+     * On destroy unsubscribe the subscriptions
+     */
     ngOnDestroy() {
         this.eventManager.destroy(this.eventSubscriber);
         this.dialogErrorSource.unsubscribe();
     }
 
+    /**
+     * Return id of the passed lecture object
+     * @param index - not used
+     * @param item - the Lecture object
+     */
     trackId(index: number, item: Lecture) {
         return item.id;
     }
 
+    /**
+     * Subscribes to the changes of 'lectureListModification' event and load all lectures if it is broadcast
+     */
     registerChangeInLectures() {
         this.eventSubscriber = this.eventManager.subscribe('lectureListModification', () => this.loadAll());
     }
