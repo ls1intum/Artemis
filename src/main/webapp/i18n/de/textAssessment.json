@@ -40,7 +40,7 @@
             "dashboard": {
                 "heading": "Einreichungen und Bewertungen der Textaufgabe \"{{exerciseTitle}}\""
             },
-            "notFound": "Wir haben keine neue Textvorlage ohne Bewertung gefunden, bitte gehe zurück.",
+            "notFound": "Wir haben keine neue Textvorlage ohne Bewertung gefunden, bitte gehe zurück zum Dashboard.",
             "updateAfterComplaintSuccessful": "Die Bewertung wurde erfolgreich aktualisiert.",
             "updateAfterComplaintFailed": "Das Aktualisieren der Bewertung ist fehlgeschlagen.",
             "cancel": "Bewertung abbrechen",
