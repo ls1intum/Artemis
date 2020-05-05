@@ -52,7 +52,7 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
         type: ExerciseType.PROGRAMMING,
         mode: ExerciseMode.TEAM,
         teamMode: true,
-        studentAssignedTeamId: null,
+        studentAssignedTeamIdComputed: true,
         studentParticipations: [],
     } as unknown) as ProgrammingExercise;
     const teamExerciseWithTeamAssigned = { ...teamExerciseWithoutTeamAssigned, studentAssignedTeamId: team.id } as ProgrammingExercise;
