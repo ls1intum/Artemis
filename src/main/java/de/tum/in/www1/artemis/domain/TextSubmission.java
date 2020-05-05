@@ -48,6 +48,9 @@ public class TextSubmission extends Submission implements Serializable {
      */
     @JsonIgnore()
     public String getExcerpt() {
+        if (getText() == null) {
+            return "";
+        }
         if (getText().length() > MAX_EXCERPT_LENGTH) {
             return getText().substring(0, MAX_EXCERPT_LENGTH) + " ...";
         }

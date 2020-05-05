@@ -251,7 +251,7 @@ export class TextSubmissionAssessmentComponent implements OnInit {
         const sortedRefs = TextAssessmentsService.matchBlocksWithFeedbacks(this.submission?.blocks || [], feedbacks).sort((a, b) => a.block.startIndex - b.block.startIndex);
 
         let previousIndex = 0;
-        const lastIndex = this.submission?.text.length || 0;
+        const lastIndex = this.submission?.text?.length || 0;
         for (let i = 0; i <= sortedRefs.length; i++) {
             const ref: TextBlockRef | undefined = sortedRefs[i];
             const nextIndex = ref ? ref.block.startIndex : lastIndex;
