@@ -142,6 +142,13 @@ export class MarkdownEditorComponent implements AfterViewInit {
     resizableMinHeight = MarkdownEditorHeight.SMALL;
     interactResizable: Interactable;
 
+    /** {enableFileUpload}
+     * whether to show the file upload field and enable the drag and drop functionality
+     * enabled by default
+     */
+    @Input()
+    enableFileUpload = true;
+
     constructor(private artemisMarkdown: ArtemisMarkdownService, private $window: WindowRef) {}
 
     /** {boolean} true when the plane html view is needed, false when the preview content is needed from the parent */

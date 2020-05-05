@@ -39,6 +39,25 @@
             overflow: auto;
         }
 
+        &__file-input {
+            // cannot be set to 'display: false' or similar
+            // input value would not be sent
+            width: 0.1px;
+            height: 0.1px;
+            opacity: 0;
+            overflow: hidden;
+            position: absolute;
+            z-index: -1;
+        }
+
+        &__file-label {
+            cursor: pointer;
+            width: 100%;
+            height: 25px;
+            border: 1px solid #ced4da;
+            border-radius: 0.15em;
+        }
+
         &__markdown {
             height: inherit;
             overflow: auto;

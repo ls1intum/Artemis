@@ -14,7 +14,13 @@
                         class="form-control markdown-editor__content"
                     ></ace-editor>
                     <!-- manual input for file upload -->
-                    <input type="file" [multiple]="false" />
+                    <ng-container *ngIf="enableFileUpload">
+                        <input id="file-upload" class="markdown-editor__file-input" type="file" [multiple]="false" />
+                        <label for="file-upload" class="markdown-editor__file-label d-inline">
+                            <span>Click here to upload</span>
+                            <fa-icon [icon]="'question-circle'" ></fa-icon>
+                        </label>
+                    </ng-container>
                     <!-- Required for resizing; don't remove empty span -->
                     <fa-icon *ngIf="enableResize" [icon]="'grip-lines'" class="rg-bottom text-lightgrey"><span></span></fa-icon>
                 </div>
