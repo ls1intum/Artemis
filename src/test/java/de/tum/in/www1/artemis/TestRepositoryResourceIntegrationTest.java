@@ -94,7 +94,7 @@ public class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegra
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void shouldGetFiles() throws Exception {
+    public void testGetFiles() throws Exception {
         programmingExerciseRepository.save(programmingExercise);
         var files = request.getMap(testRepoBaseUrl + programmingExercise.getId() + "/files", HttpStatus.OK, String.class, FileType.class);
         assertThat(files).isNotEmpty();
@@ -107,7 +107,7 @@ public class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegra
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void shouldGetFile() throws Exception {
+    public void testGetFile() throws Exception {
         programmingExerciseRepository.save(programmingExercise);
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("file", currentLocalFileName);
@@ -119,7 +119,7 @@ public class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegra
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void shouldCreateFile() throws Exception {
+    public void testCreateFile() throws Exception {
         programmingExerciseRepository.save(programmingExercise);
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         assertThat(Files.exists(Paths.get(testRepo.localRepoFile + "/newFile"))).isFalse();
@@ -130,7 +130,7 @@ public class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegra
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void shouldCreateFolder() throws Exception {
+    public void testCreateFolder() throws Exception {
         programmingExerciseRepository.save(programmingExercise);
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         assertThat(Files.exists(Paths.get(testRepo.localRepoFile + "/newFolder"))).isFalse();
@@ -141,7 +141,7 @@ public class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegra
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void shouldRenameFile() throws Exception {
+    public void testRenameFile() throws Exception {
         programmingExerciseRepository.save(programmingExercise);
         assertThat(Files.exists(Paths.get(testRepo.localRepoFile + "/" + currentLocalFileName))).isTrue();
         assertThat(Files.exists(Paths.get(testRepo.localRepoFile + "/" + newLocalFileName))).isFalse();
@@ -155,7 +155,7 @@ public class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegra
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void shouldRenameFolder() throws Exception {
+    public void testRenameFolder() throws Exception {
         programmingExerciseRepository.save(programmingExercise);
         assertThat(Files.exists(Paths.get(testRepo.localRepoFile + "/" + currentLocalFolderName))).isTrue();
         assertThat(Files.exists(Paths.get(testRepo.localRepoFile + "/" + newLocalFolderName))).isFalse();
@@ -169,7 +169,7 @@ public class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegra
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void shouldDeleteFile() throws Exception {
+    public void testDeleteFile() throws Exception {
         programmingExerciseRepository.save(programmingExercise);
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         assertThat(Files.exists(Paths.get(testRepo.localRepoFile + "/" + currentLocalFileName))).isTrue();
@@ -180,7 +180,7 @@ public class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegra
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void shouldCommitChanges() throws Exception {
+    public void testCommitChanges() throws Exception {
         programmingExerciseRepository.save(programmingExercise);
         var receivedStatusBeforeCommit = request.get(testRepoBaseUrl + programmingExercise.getId(), HttpStatus.OK, RepositoryStatusDTO.class);
         assertThat(receivedStatusBeforeCommit.repositoryStatus.toString()).isEqualTo("UNCOMMITTED_CHANGES");
@@ -194,7 +194,7 @@ public class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegra
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void shouldPullChanges() throws Exception {
+    public void testPullChanges() throws Exception {
         programmingExerciseRepository.save(programmingExercise);
         String fileName = "remoteFile";
 
@@ -227,7 +227,7 @@ public class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegra
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void shouldResetToLastCommit() throws Exception {
+    public void testResetToLastCommit() throws Exception {
         programmingExerciseRepository.save(programmingExercise);
         String fileName = "testFile";
         var localRepo = gitService.getRepositoryByLocalPath(testRepo.localRepoFile.toPath());
@@ -281,9 +281,18 @@ public class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegra
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void shouldGetStatus() throws Exception {
+    public void testGetStatus() throws Exception {
         programmingExerciseRepository.save(programmingExercise);
-        var receivedStatus = request.get(testRepoBaseUrl + programmingExercise.getId(), HttpStatus.OK, RepositoryStatusDTO.class);
-        assertThat(receivedStatus).isNotNull();
+        var receivedStatusBeforeCommit = request.get(testRepoBaseUrl + programmingExercise.getId(), HttpStatus.OK, RepositoryStatusDTO.class);
+
+        // The current status is "uncommited changes", since we added files and folders, but we didn't commit yet
+        assertThat(receivedStatusBeforeCommit.repositoryStatus.toString()).isEqualTo("UNCOMMITTED_CHANGES");
+
+        // Perform a commit to check if the status changes
+        request.postWithoutLocation(testRepoBaseUrl + programmingExercise.getId() + "/commit", null, HttpStatus.OK, null);
+
+        // Check if the status of git is "clean" after the commit
+        var receivedStatusAfterCommit = request.get(testRepoBaseUrl + programmingExercise.getId(), HttpStatus.OK, RepositoryStatusDTO.class);
+        assertThat(receivedStatusAfterCommit.repositoryStatus.toString()).isEqualTo("CLEAN");
     }
 }
