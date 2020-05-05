@@ -19,7 +19,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Request Reviews from @ls1intum/artemis Team
-        uses: rowi1de/auto-assign-review-teams@699242e
+        uses: rowi1de/auto-assign-review-teams@v0.0.6
         with:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           teams: "@ls1intum/artemis"
