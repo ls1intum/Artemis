@@ -9,6 +9,10 @@ export interface StudentQuestionAnswerAction {
     studentQuestionAnswer: StudentQuestionAnswer;
 }
 
+/**
+ * Enum for answer actions
+ * @enum {number}
+ */
 export enum QuestionAnswerActionName {
     DELETE,
     ADD,

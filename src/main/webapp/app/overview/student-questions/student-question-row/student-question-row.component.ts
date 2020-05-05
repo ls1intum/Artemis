@@ -15,6 +15,10 @@ export interface StudentQuestionRowAction {
     studentQuestion: StudentQuestion;
 }
 
+/**
+ * Enum if Question is deleted
+ * @enum {number}
+ */
 export enum QuestionRowActionName {
     DELETE,
 }
