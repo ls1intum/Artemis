@@ -95,28 +95,27 @@ public class ApollonDiagramResourceIntegrationTest extends AbstractSpringIntegra
     public void testGetDiagramsByCourse() throws Exception {
         apollonDiagram.setCourseId((long) 1);
         apollonDiagramRepository.save(apollonDiagram);
-        List<ApollonDiagram> response = request.get("/api/apollon-diagrams/list/1", HttpStatus.OK, List.class);
-        assertThat(response.isEmpty()).as("response is not empty").isFalse();
-        assertThat(response.size()).as("response has length 1 ").isEqualTo(1);
+        List<ApollonDiagram> responseCourse1 = request.get("/api/apollon-diagrams/list/1", HttpStatus.OK, List.class);
+        assertThat(responseCourse1.isEmpty()).as("response is not empty").isFalse();
+        assertThat(responseCourse1.size()).as("response has length 1 ").isEqualTo(1);
 
-        ApollonDiagram newApollonDiagram = ModelFactory.generateApollonDiagram(DiagramType.ClassDiagram, "new title");
-        newApollonDiagram.setCourseId((long) 1);
-        apollonDiagramRepository.save(newApollonDiagram);
-        List<ApollonDiagram> updatedResponse = request.get("/api/apollon-diagrams/list/1", HttpStatus.OK, List.class);
-        assertThat(updatedResponse.isEmpty()).as("updated response is not empty").isFalse();
-        assertThat(updatedResponse.size()).as("updated response has length 2").isEqualTo(2);
+        ApollonDiagram newDiagramCourse1 = ModelFactory.generateApollonDiagram(DiagramType.ClassDiagram, "new title");
+        newDiagramCourse1.setCourseId((long) 1);
+        apollonDiagramRepository.save(newDiagramCourse1);
+        List<ApollonDiagram> updatedResponseCourse1 = request.get("/api/apollon-diagrams/list/1", HttpStatus.OK, List.class);
+        assertThat(updatedResponseCourse1.isEmpty()).as("updated response is not empty").isFalse();
+        assertThat(updatedResponseCourse1.size()).as("updated response has length 2").isEqualTo(2);
 
-        ApollonDiagram newerApollonDiagram = ModelFactory.generateApollonDiagram(DiagramType.ClassDiagram, "newer title");
-        newerApollonDiagram.setCourseId((long) 2);
-        apollonDiagramRepository.save(newerApollonDiagram);
-        updatedResponse = request.get("/api/apollon-diagrams/list/1", HttpStatus.OK, List.class);
-        assertThat(updatedResponse.isEmpty()).as("updateder response is not empty").isFalse();
-        assertThat(updatedResponse.size()).as("updateder response has length 2").isEqualTo(2);
+        ApollonDiagram newDiagramCourse2 = ModelFactory.generateApollonDiagram(DiagramType.ClassDiagram, "newer title");
+        newDiagramCourse2.setCourseId((long) 2);
+        apollonDiagramRepository.save(newDiagramCourse2);
+        updatedResponseCourse1 = request.get("/api/apollon-diagrams/list/1", HttpStatus.OK, List.class);
+        assertThat(updatedResponseCourse1.isEmpty()).as("updated response is not empty").isFalse();
+        assertThat(updatedResponseCourse1.size()).as("updated response has length 2").isEqualTo(2);
 
-        updatedResponse = request.get("/api/apollon-diagrams/list/2", HttpStatus.OK, List.class);
-        assertThat(updatedResponse.isEmpty()).as("updateder response is not empty").isFalse();
-        assertThat(updatedResponse.size()).as("updateder response has length 1").isEqualTo(1);
-
+        List<ApollonDiagram> responseCourse2 = request.get("/api/apollon-diagrams/list/2", HttpStatus.OK, List.class);
+        assertThat(responseCourse2.isEmpty()).as("updated response is not empty").isFalse();
+        assertThat(responseCourse2.size()).as("updated response has length 1").isEqualTo(1);
     }
 
     @Test
