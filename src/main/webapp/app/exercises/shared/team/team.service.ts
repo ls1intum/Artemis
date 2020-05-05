@@ -81,9 +81,10 @@ export interface ITeamService {
 
 @Injectable({ providedIn: 'root' })
 export class TeamService implements ITeamService {
+    // Team Assignment Update Stream
     private teamAssignmentUpdates$: Observable<TeamAssignmentPayload> | null;
-    private resolveTeamAssignmentUpdates$: () => void;
-    private subscriber: Subscription;
+    private teamAssignmentUpdatesResolver: () => void;
+    private authenticationStateSubscriber: Subscription;
 
     constructor(protected http: HttpClient, private websocketService: JhiWebsocketService, private accountService: AccountService) {}
 
@@ -187,31 +188,26 @@ export class TeamService implements ITeamService {
      * Returns a promise of an observable that emits team assignment updates
      *
      * 1. If there is already an update stream, return it
-     * 2. If there is no update stream yet but the websocket client is connected, return a new stream
-     * 3. If the websocket client is not yet connected, wait for the user to log in and for the websocket client
-     *    to connect, then return a new stream
+     * 2. If there is no update stream yet, wait for the user to log in and create a new update stream
      */
     get teamAssignmentUpdates(): Promise<Observable<TeamAssignmentPayload>> {
         return new Promise((resolve) => {
             if (this.teamAssignmentUpdates$) {
-                resolve(this.teamAssignmentUpdates$);
-            } else if (this.websocketService.stompClient?.connected) {
-                resolve(this.newTeamAssignmentUpdates$);
-            } else {
-                this.subscriber = this.accountService.getAuthenticationState().subscribe((user: User | null) => {
-                    setTimeout(() => {
-                        if (user) {
-                            this.resolveTeamAssignmentUpdates$ = () => resolve(this.newTeamAssignmentUpdates$);
-                            this.websocketService.bind('connect', this.resolveTeamAssignmentUpdates$);
-                        } else {
-                            this.websocketService.unsubscribe(teamAssignmentUpdatesWebsocketTopic);
-                            this.websocketService.unbind('connect', this.resolveTeamAssignmentUpdates$);
-                            this.teamAssignmentUpdates$ = null;
-                            this.subscriber.unsubscribe();
-                        }
-                    }, 500);
-                });
+                return resolve(this.teamAssignmentUpdates$);
             }
+            this.authenticationStateSubscriber = this.accountService.getAuthenticationState().subscribe((user: User | null) => {
+                setTimeout(() => {
+                    if (user) {
+                        this.teamAssignmentUpdatesResolver = () => resolve(this.newTeamAssignmentUpdates$);
+                        this.websocketService.bind('connect', this.teamAssignmentUpdatesResolver);
+                    } else {
+                        this.websocketService.unsubscribe(teamAssignmentUpdatesWebsocketTopic);
+                        this.websocketService.unbind('connect', this.teamAssignmentUpdatesResolver);
+                        this.teamAssignmentUpdates$ = null;
+                        this.authenticationStateSubscriber.unsubscribe();
+                    }
+                }, 500);
+            });
         });
     }
 
