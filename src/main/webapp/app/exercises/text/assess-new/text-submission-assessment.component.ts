@@ -37,7 +37,10 @@ export class TextSubmissionAssessmentComponent implements OnInit {
     totalScore = 0;
 
     isLoading = true;
-    busy = false;
+    saveBusy: boolean;
+    submitBusy: boolean;
+    cancelBusy: boolean;
+    nextSubmissionBusy: boolean;
     isAssessor = false;
     isAtLeastInstructor = false;
     canOverride = false;
@@ -93,6 +96,11 @@ export class TextSubmissionAssessmentComponent implements OnInit {
         if (studentParticipation === null) {
             // Show "No New Submission" banner on .../submissions/new/assessment route
             this.noNewSubmissions = this.isNewAssessmentRoute;
+            this.participation = null;
+            this.submission = null;
+            this.exercise = null;
+            this.result = null;
+            this.textBlockRefs = [];
             return;
         }
 
@@ -133,7 +141,7 @@ export class TextSubmissionAssessmentComponent implements OnInit {
             return;
         }
 
-        this.busy = true;
+        this.saveBusy = true;
         this.assessmentsService.save(this.exercise!.id, this.result!.id, this.assessments, this.textBlocks).subscribe(
             (response) => this.handleSaveOrSubmitSuccessWithAlert(response, 'artemisApp.textAssessment.saveSuccessful'),
             (error: HttpErrorResponse) => this.handleError(error),
@@ -153,7 +161,7 @@ export class TextSubmissionAssessmentComponent implements OnInit {
             return;
         }
 
-        this.busy = true;
+        this.submitBusy = true;
         this.assessmentsService.submit(this.exercise!.id, this.result!.id, this.assessments, this.textBlocks).subscribe(
             (response) => this.handleSaveOrSubmitSuccessWithAlert(response, 'artemisApp.textAssessment.submitSuccessful'),
             (error: HttpErrorResponse) => this.handleError(error),
@@ -163,7 +171,7 @@ export class TextSubmissionAssessmentComponent implements OnInit {
     private handleSaveOrSubmitSuccessWithAlert(response: HttpResponse<Result>, translationKey: string): void {
         this.participation!.results[0] = this.result = response.body!;
         this.jhiAlertService.success(translationKey);
-        this.busy = false;
+        this.saveBusy = this.submitBusy = false;
     }
 
     /**
@@ -171,7 +179,7 @@ export class TextSubmissionAssessmentComponent implements OnInit {
      */
     cancel(): void {
         const confirmCancel = window.confirm(this.cancelConfirmationText);
-        this.busy = true;
+        this.cancelBusy = true;
         if (confirmCancel && this.exercise && this.submission) {
             this.assessmentsService
                 .cancelAssessment(this.exercise.id, this.submission.id)
@@ -183,7 +191,7 @@ export class TextSubmissionAssessmentComponent implements OnInit {
      * Go to next submission
      */
     async nextSubmission(): Promise<void> {
-        this.busy = true;
+        this.nextSubmissionBusy = true;
         await this.router.navigate(['/course-management', this.exercise?.course?.id, 'text-exercises', this.exercise?.id, 'submissions', 'new', 'assessment']);
     }
 
@@ -206,7 +214,6 @@ export class TextSubmissionAssessmentComponent implements OnInit {
                 console.error(error);
                 this.jhiAlertService.clear();
                 this.jhiAlertService.error('artemisApp.textAssessment.updateAfterComplaintFailed');
-                this.busy = false;
             },
         );
     }
@@ -277,14 +284,14 @@ export class TextSubmissionAssessmentComponent implements OnInit {
             return;
         }
 
-        this.busy = true;
+        this.isLoading = true;
         this.complaintService.findByResultId(this.result.id).subscribe(
             (res) => {
                 if (!res.body) {
                     return;
                 }
                 this.complaint = res.body;
-                this.busy = false;
+                this.isLoading = false;
             },
             (err: HttpErrorResponse) => {
                 this.handleError(err.error);
@@ -302,6 +309,6 @@ export class TextSubmissionAssessmentComponent implements OnInit {
     private handleError(error: HttpErrorResponse): void {
         const errorMessage = error.headers?.get('X-artemisApp-message') || error.message;
         this.jhiAlertService.error(errorMessage, null, undefined);
-        this.busy = false;
+        this.saveBusy = this.submitBusy = false;
     }
 }
