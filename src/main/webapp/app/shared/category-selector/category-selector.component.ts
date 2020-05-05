@@ -35,7 +35,8 @@ export class CategorySelectorComponent implements OnChanges {
 
     openColorSelector(event: MouseEvent, tagItem: ExerciseCategory) {
         this.selectedCategory = tagItem;
-        this.colorSelector.openColorSelector(event);
+        const height = 110;
+        this.colorSelector.openColorSelector(event, undefined, height);
     }
 
     onSelectedColor(selectedColor: string) {
