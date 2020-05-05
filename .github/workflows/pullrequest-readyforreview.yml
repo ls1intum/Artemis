@@ -1,5 +1,7 @@
 name: Pull Request Ready for Review
-on: pull_request
+on:
+    pull_request:
+        types: [edited]
 
 jobs:
   addToProject:
