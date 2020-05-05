@@ -31,7 +31,7 @@ plugins {
     id "net.ltgt.apt-idea"
     id "net.ltgt.apt"
     //jhipster-needle-gradle-plugins - JHipster will add additional gradle plugins here
-    id "com.diffplug.gradle.spotless" version "3.28.1"
+    id "com.diffplug.gradle.spotless" version "3.29.0"
 }
 
 group = "de.tum.in.www1.artemis"
@@ -79,6 +79,7 @@ spotless {
         }
         importOrderFile "artemis-spotless.importorder"
         removeUnusedImports()
+
         eclipse().configFile "artemis-spotless-style.xml"
     }
 }
