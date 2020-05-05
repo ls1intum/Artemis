@@ -29,7 +29,7 @@
             </ng-template>
         </ng-container>
         <!-- commands -->
-        <ng-container ngbNavItem>
+        <ng-container ngbNavItem *ngIf="!previewMode">
             <div class="markdown-editor__commands">
                 <div class="markdown-editor__commands-default">
                     <!--default commands (e.g. bold)-->
