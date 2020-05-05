@@ -12,6 +12,9 @@ import { ProgrammingSubmission } from 'app/entities/programming-submission.model
 import { SubmissionType } from 'app/entities/submission.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 
+/**
+ * Describes the state of the programming submission
+ */
 export enum ProgrammingSubmissionState {
     // The last submission of participation has a result.
     HAS_NO_PENDING_SUBMISSION = 'HAS_NO_PENDING_SUBMISSION',
@@ -71,6 +74,9 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
 
     constructor(private websocketService: JhiWebsocketService, private http: HttpClient, private participationWebsocketService: ParticipationWebsocketService) {}
 
+    /**
+     * Removes the subscriptions on destroy
+     */
     ngOnDestroy(): void {
         Object.values(this.resultSubscriptions).forEach((sub) => sub.unsubscribe());
         Object.values(this.resultTimerSubscriptions).forEach((sub) => sub.unsubscribe());
@@ -408,19 +414,38 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
         return this.resultEtaSubject.asObservable().pipe(distinctUntilChanged());
     };
 
+    /**
+     * Triggers the CI build of the given participation.
+     * @param participationId of the participation
+     * @param submissionType will be used for the newly created submission.
+     */
     public triggerBuild(participationId: number, submissionType = SubmissionType.MANUAL) {
         return this.http.post(this.SUBMISSION_RESOURCE_URL + participationId + `/trigger-build?submissionType=${submissionType}`, {});
     }
 
+    /**
+     * Triggers the CI build for the latest submission of a given participation, if it did not receive a result.
+     * @param participationId to which the submission belongs.
+     * @param lastGraded indicates if the most recent submission was graded
+     */
     public triggerFailedBuild(participationId: number, lastGraded: boolean) {
         const params = new HttpParams().set('lastGraded', lastGraded.toString());
         return this.http.post(this.SUBMISSION_RESOURCE_URL + participationId + '/trigger-failed-build', {}, { params, observe: 'response' });
     }
 
+    /**
+     * Triggers the CI of all participations of the given exercise.
+     * @param exerciseId to identify the programming exercise.
+     */
     public triggerInstructorBuildForAllParticipationsOfExercise(exerciseId: number) {
         return this.http.post<void>(this.PROGRAMMING_EXERCISE_RESOURCE_URL + exerciseId + '/trigger-instructor-build-all', {});
     }
 
+    /**
+     * Triggers the CI of the provided participations of the given exercise.
+     * @param exerciseId to identify the programming exercise
+     * @param participationIds array of participation ids
+     */
     public triggerInstructorBuildForParticipationsOfExercise(exerciseId: number, participationIds: number[]) {
         return this.http.post<void>(this.PROGRAMMING_EXERCISE_RESOURCE_URL + exerciseId + '/trigger-instructor-build', participationIds);
     }
