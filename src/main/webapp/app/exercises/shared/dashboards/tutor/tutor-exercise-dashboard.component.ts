@@ -386,22 +386,18 @@ export class TutorExerciseDashboardComponent implements OnInit, AfterViewInit {
         this.router.navigate([route], { queryParams });
     }
 
-    openAssessmentEditorForNewSubmission = () => this.openAssessmentEditor('new');
-
-    openAssessmentEditorForSubmission = (submission: Submission) => this.openAssessmentEditor(submission.id.toString());
-
     /**
-     * Uses the router to navigate to the assessment editor for a given submission
-     * @param submissionId Id of the submission
-     * @param isNewAssessment Flag whether this is a new assessment or not
+     * Uses the router to navigate to the assessment editor for a given/new submission
+     * @param submission Either submission or 'new'.
      */
-    private async openAssessmentEditor(submissionUrlParam: string): Promise<void> {
-        if (!this.exercise || !this.exercise.type || !submissionUrlParam) {
+    async openAssessmentEditor(submission: Submission | 'new'): Promise<void> {
+        if (!this.exercise || !this.exercise.type || !submission) {
             return;
         }
 
         this.openingAssessmentEditorForNewSubmission = true;
-        const route = `/course-management/${this.courseId}/${this.exercise.type}-exercises/${this.exercise.id}/submissions/${submissionUrlParam}/assessment`;
+        const submissionUrlParameter: number | 'new' = submission === 'new' ? 'new' : submission.id;
+        const route = `/course-management/${this.courseId}/${this.exercise.type}-exercises/${this.exercise.id}/submissions/${submissionUrlParameter}/assessment`;
         await this.router.navigate([route]);
         this.openingAssessmentEditorForNewSubmission = false;
     }
@@ -427,7 +423,7 @@ export class TutorExerciseDashboardComponent implements OnInit, AfterViewInit {
         if (this.exercise.type === ExerciseType.PROGRAMMING) {
             this.openManualResultDialog(complaint.result);
         } else {
-            this.openAssessmentEditorForSubmission(complaint.result.submission!);
+            this.openAssessmentEditor(complaint.result.submission!);
         }
     }
 
