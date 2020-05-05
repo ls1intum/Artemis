@@ -76,6 +76,9 @@ export class TextSubmissionAssessmentComponent implements OnInit {
         translateService.get('artemisApp.textAssessment.confirmCancel').subscribe((text) => (this.cancelConfirmationText = text));
     }
 
+    /**
+     * Life cycle hook to indicate component creation is done
+     */
     async ngOnInit() {
         // Used to check if the assessor is the current user
         const identity = await this.accountService.identity();
@@ -121,6 +124,9 @@ export class TextSubmissionAssessmentComponent implements OnInit {
         return this.activatedRoute.routeConfig?.path === NEW_ASSESSMENT_PATH;
     }
 
+    /**
+     * Save the assessment
+     */
     save(): void {
         if (!this.assessmentsAreValid) {
             this.jhiAlertService.error('artemisApp.textAssessment.error.invalidAssessments');
@@ -134,6 +140,9 @@ export class TextSubmissionAssessmentComponent implements OnInit {
         );
     }
 
+    /**
+     * Submit the assessment
+     */
     submit(): void {
         if (!this.result?.id) {
             return; // We need to have saved the result before
@@ -157,6 +166,9 @@ export class TextSubmissionAssessmentComponent implements OnInit {
         this.busy = false;
     }
 
+    /**
+     * Cancel the assessment
+     */
     cancel(): void {
         const confirmCancel = window.confirm(this.cancelConfirmationText);
         this.busy = true;
@@ -167,6 +179,9 @@ export class TextSubmissionAssessmentComponent implements OnInit {
         }
     }
 
+    /**
+     * Go to next submission
+     */
     async nextSubmission(): Promise<void> {
         this.busy = true;
         await this.router.navigate(['/course-management', this.exercise?.course?.id, 'text-exercises', this.exercise?.id, 'submissions', 'new', 'assessment']);
@@ -201,6 +216,9 @@ export class TextSubmissionAssessmentComponent implements OnInit {
         this.totalScore = credits.reduce((a, b) => a + b, 0);
     }
 
+    /**
+     * Validate the feedback of the assessment
+     */
     validateFeedback(): void {
         const hasReferencedFeedback = this.referencedFeedback.filter(Feedback.isPresent).length > 0;
         const hasGeneralFeedback = Feedback.hasDetailText(this.generalFeedback);

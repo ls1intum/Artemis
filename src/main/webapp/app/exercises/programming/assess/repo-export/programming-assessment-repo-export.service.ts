@@ -20,6 +20,12 @@ export class ProgrammingAssessmentRepoExportService {
 
     constructor(private http: HttpClient) {}
 
+    /**
+     * Exports repositories to the server by their participant identifiers
+     * @param {number} exerciseId - Id of the exercise
+     * @param {string[]} participantIdentifiers - Identifiers of participants
+     * @param {RepositoryExportOptions} repositoryExportOptions
+     */
     exportReposByParticipantIdentifiers(exerciseId: number, participantIdentifiers: string[], repositoryExportOptions: RepositoryExportOptions): Observable<HttpResponse<Blob>> {
         return this.http.post(`${this.resourceUrl}/${exerciseId}/export-repos-by-participant-identifiers/${participantIdentifiers}`, repositoryExportOptions, {
             observe: 'response',
@@ -27,6 +33,12 @@ export class ProgrammingAssessmentRepoExportService {
         });
     }
 
+    /**
+     * Exports repositories to the server by their participation ids
+     * @param {number} exerciseId - Id of the exercise
+     * @param {number[]} participationIds - Ids of participations
+     * @param {RepositoryExportOptions} repositoryExportOptions
+     */
     exportReposByParticipations(exerciseId: number, participationIds: number[], repositoryExportOptions: RepositoryExportOptions): Observable<HttpResponse<Blob>> {
         return this.http.post(`${this.resourceUrl}/${exerciseId}/export-repos-by-participation-ids/${participationIds}`, repositoryExportOptions, {
             observe: 'response',

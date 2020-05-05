@@ -74,6 +74,9 @@ export class ExampleTextSubmissionComponent implements OnInit, AfterViewInit {
         private guidedTourService: GuidedTourService,
     ) {}
 
+    /**
+     * Reads route params and loads the example submission on init.
+     */
     ngOnInit(): void {
         // (+) converts string 'id' to a number
         this.exerciseId = Number(this.route.snapshot.paramMap.get('exerciseId'));
@@ -90,6 +93,9 @@ export class ExampleTextSubmissionComponent implements OnInit, AfterViewInit {
         this.loadAll();
     }
 
+    /**
+     * Sets the size of resizable elements after initialization.
+     */
     ngAfterViewInit(): void {
         this.resizableMinWidth = this.$window.nativeWindow.screen.width / 6;
         this.resizableMinHeight = this.$window.nativeWindow.screen.height / 7;
@@ -177,6 +183,10 @@ export class ExampleTextSubmissionComponent implements OnInit, AfterViewInit {
         this.guidedTourService.componentPageLoaded();
     }
 
+    /**
+     * Loads the exercise.
+     * Also loads the example submission if the new parameter is not set.
+     */
     loadAll() {
         this.exerciseService.find(this.exerciseId).subscribe((exerciseResponse: HttpResponse<TextExercise>) => {
             this.exercise = exerciseResponse.body!;
@@ -207,6 +217,9 @@ export class ExampleTextSubmissionComponent implements OnInit, AfterViewInit {
         });
     }
 
+    /**
+     * Creates or updates the example submission.
+     */
     createUpdateExampleTextSubmission() {
         this.textSubmission.exampleSubmission = true;
         if (this.isNewSubmission) {
@@ -216,6 +229,11 @@ export class ExampleTextSubmissionComponent implements OnInit, AfterViewInit {
         }
     }
 
+    /**
+     * Collapse/open instructions.
+     * @param $event used to evaluate the target element
+     * @param resizable determines if the resizable element is an assessment or submission of type {string}
+     */
     toggleCollapse($event: any, resizable: string) {
         const target = $event.toElement || $event.relatedTarget || $event.target;
         target.blur();
@@ -277,6 +295,10 @@ export class ExampleTextSubmissionComponent implements OnInit, AfterViewInit {
         }, this.onError);
     }
 
+    /**
+     * Adds a feedback item.
+     * @param assessmentText text of feedback that should be added as assessment of type {string}
+     */
     public addAssessment(assessmentText: string): void {
         const assessment = new Feedback();
         assessment.reference = assessmentText;
@@ -284,6 +306,10 @@ export class ExampleTextSubmissionComponent implements OnInit, AfterViewInit {
         this.checkScoreBoundaries();
     }
 
+    /**
+     * Delete a feedback item from all feedback items.
+     * @param assessmentToDelete feedback that should be deleted of type {Feedback}
+     */
     public deleteAssessment(assessmentToDelete: Feedback): void {
         this.assessments = this.assessments.filter((elem) => elem !== assessmentToDelete);
         this.checkScoreBoundaries();
@@ -317,6 +343,9 @@ export class ExampleTextSubmissionComponent implements OnInit, AfterViewInit {
         }
     }
 
+    /**
+     * Checks if the score boundaries have been respected and save the assessment.
+     */
     public saveAssessments(): void {
         this.checkScoreBoundaries();
         if (!this.assessmentsAreValid) {
@@ -331,6 +360,10 @@ export class ExampleTextSubmissionComponent implements OnInit, AfterViewInit {
         });
     }
 
+    /**
+     * Redirects back to the tutor dashboard if route param readOnly or toComplete is set.
+     * Otherwise redirects back to the exercise's edit view.
+     */
     async back() {
         const courseId = this.exercise.course!.id;
 
@@ -342,6 +375,10 @@ export class ExampleTextSubmissionComponent implements OnInit, AfterViewInit {
         }
     }
 
+    /**
+     * Checks the assessment of the tutor to the example submission tutorial.
+     * The tutor is informed if the given points of the assessment are fine, too low or too high.
+     */
     checkAssessment() {
         this.checkScoreBoundaries();
         if (!this.assessmentsAreValid) {
@@ -371,6 +408,10 @@ export class ExampleTextSubmissionComponent implements OnInit, AfterViewInit {
         );
     }
 
+    /**
+     * After the tutor declared that he read and understood the example submission a corresponding submission will be added to the
+     * tutor participation of the exercise. Then a success alert is invoked and the user gets redirected back.
+     */
     readAndUnderstood() {
         this.tutorParticipationService.assessExampleSubmission(this.exampleSubmission, this.exerciseId).subscribe(() => {
             this.jhiAlertService.success('artemisApp.exampleSubmission.readSuccessfully');

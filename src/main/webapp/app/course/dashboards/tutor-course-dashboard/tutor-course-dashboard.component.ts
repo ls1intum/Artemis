@@ -56,16 +56,25 @@ export class TutorCourseDashboardComponent implements OnInit, AfterViewInit {
         private guidedTourService: GuidedTourService,
     ) {}
 
+    /**
+     * On init set the courseID, load all exercises and statistics for tutors and set the identity for the AccountService.
+     */
     ngOnInit(): void {
         this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
         this.loadAll();
         this.accountService.identity().then((user) => (this.tutor = user!));
     }
 
+    /**
+     * After the page has fully loaded, notify the GuidedTourService about it.
+     */
     ngAfterViewInit(): void {
         this.guidedTourService.componentPageLoaded();
     }
 
+    /**
+     * Load all exercises and statistics for tutors of this course.
+     */
     loadAll() {
         this.courseService.getForTutors(this.courseId).subscribe(
             (res: HttpResponse<Course>) => {
@@ -119,6 +128,9 @@ export class TutorCourseDashboardComponent implements OnInit, AfterViewInit {
         );
     }
 
+    /**
+     * Toggle the option to show finished exercises.
+     */
     triggerFinishedExercises() {
         this.showFinishedExercises = !this.showFinishedExercises;
 
@@ -129,14 +141,24 @@ export class TutorCourseDashboardComponent implements OnInit, AfterViewInit {
         }
     }
 
+    /**
+     * Pass on an error to the browser console and the jhiAlertService.
+     * @param error
+     */
     private onError(error: string) {
         console.error(error);
         this.jhiAlertService.error(error, null, undefined);
     }
 
+    /**
+     * Navigate back to the course management page.
+     */
     back() {
         this.router.navigate(['course-management']);
     }
 
+    /**
+     * Empty callback function.
+     */
     callback() {}
 }

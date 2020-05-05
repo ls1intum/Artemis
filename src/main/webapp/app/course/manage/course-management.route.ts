@@ -16,6 +16,11 @@ import { CourseGroupComponent } from 'app/course/manage/course-group.component';
 export class CourseResolve implements Resolve<Course> {
     constructor(private service: CourseManagementService) {}
 
+    /**
+     * Resolves the route by extracting the courseId and returns the course with that Id if it exists
+     * and creates a new course otherwise
+     * @param route - contains the information about the route to be resolved
+     */
     resolve(route: ActivatedRouteSnapshot): Observable<Course> {
         const id = route.params['courseId'] ? route.params['courseId'] : null;
         if (id) {

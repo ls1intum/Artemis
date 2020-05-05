@@ -67,6 +67,10 @@ export class DeleteButtonDirective implements OnInit {
         this.deleteDialogService.openDeleteDialog(deleteDialogData);
     }
 
+    /**
+     * Function is executed when a MouseEvent is registered. Opens the delete Dialog
+     * @param event
+     */
     @HostListener('click', ['$event'])
     onClick(event: MouseEvent) {
         event.preventDefault();

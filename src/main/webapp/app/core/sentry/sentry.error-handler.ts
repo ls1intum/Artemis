@@ -22,6 +22,10 @@ export class SentryErrorHandler extends ErrorHandler {
         }
     }
 
+    /**
+     * Initialize Sentry with profile information.
+     * @param profileInfo
+     */
     public async initSentry(profileInfo: ProfileInfo): Promise<void> {
         if (!profileInfo || !profileInfo.sentry) {
             return;
@@ -38,8 +42,11 @@ export class SentryErrorHandler extends ErrorHandler {
         super();
     }
 
+    /**
+     * Send an HttpError to Sentry. Only if it's not in the range 400-499.
+     * @param error
+     */
     handleError(error: any): void {
-        // We do not send to Sentry HttpError in the range 400-499
         if (error.name === 'HttpErrorResponse' && error.status < 500 && error.status >= 400) {
             super.handleError(error);
             return;

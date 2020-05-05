@@ -19,6 +19,10 @@ export class TextblockAssessmentCardComponent {
 
     constructor(public structuredGradingCriterionService: StructuredGradingCriterionService) {}
 
+    /**
+     * Select a text block
+     * @param {boolean} autofocus - Enable autofocus (defaults to true)
+     */
     select(autofocus = true): void {
         this.didSelect.emit(this.textBlockRef);
         this.textBlockRef.initFeedback();
@@ -28,16 +32,26 @@ export class TextblockAssessmentCardComponent {
         }
     }
 
+    /**
+     * Unselect a text block
+     */
     unselect(): void {
         this.didSelect.emit(null);
         delete this.textBlockRef.feedback;
         this.feedbackDidChange();
     }
 
+    /**
+     * Hook to indicate that feedback did change
+     */
     feedbackDidChange(): void {
         this.didChange.emit(this.textBlockRef);
     }
 
+    /**
+     * Connects the structured grading instructions with the feedback of a text block
+     * @param {Event} event - The drop event
+     */
     connectStructuredGradingInstructionsWithTextBlock(event: Event) {
         this.select();
         if (this.textBlockRef.feedback) {
