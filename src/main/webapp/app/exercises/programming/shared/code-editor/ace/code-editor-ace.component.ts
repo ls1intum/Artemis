@@ -66,8 +66,7 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
     constructor(private repositoryFileService: CodeEditorRepositoryFileService, private fileService: CodeEditorFileService, private codeEditorGridService: CodeEditorGridService) {}
 
     /**
-     * @function ngAfterViewInit
-     * @desc Sets the theme and other editor options
+     * Sets the theme and other editor options
      */
     ngAfterViewInit(): void {
         this.editor.setTheme('dreamweaver');
@@ -82,12 +81,11 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
     }
 
     /**
-     * @function ngOnChanges
-     * @desc New participation     => reset the file update subscriptions
-     *       File has happened     => update internal variables to reflect change
-     *       New selectedFile      => load the file from the repository and open it in the editor
-     *       New buildLogErrors    => update the ui with the annotations
-     * @param {SimpleChanges} changes
+     * New participation            => reset the file update subscriptions
+     * File change has happened     => update internal variables to reflect change
+     * New selectedFile             => load the file from the repository and open it in the editor
+     * New buildLogErrors           => update the ui with the annotations
+     * @param changes
      */
     ngOnChanges(changes: SimpleChanges): void {
         if (changes.commitState && changes.commitState.previousValue !== CommitState.UNDEFINED && this.commitState === CommitState.UNDEFINED) {
@@ -173,10 +171,9 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
     }
 
     /**
-     * @function onFileTextChanged
-     * @desc Callback function for text changes in the Ace Editor.
+     * Callback function for text changes in the Ace Editor.
      * Is used for updating the error annotations in the editor and giving the touched file the unsaved flag.
-     * @param code {string} Current editor code
+     * @param code Current editor code
      */
     onFileTextChanged(code: string) {
         /** Is the code different to what we have on our session? This prevents us from saving when a file is loaded **/
@@ -197,6 +194,9 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
         }
     }
 
+    /**
+     * Removes on destroy the subscription of annotationChange and resize
+     */
     ngOnDestroy() {
         if (this.annotationChange) {
             this.annotationChange.unsubscribe();
