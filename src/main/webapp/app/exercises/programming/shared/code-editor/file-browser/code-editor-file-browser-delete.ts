@@ -20,16 +20,14 @@ export class CodeEditorFileBrowserDeleteComponent implements OnInit {
     constructor(public activeModal: NgbActiveModal, private repositoryFileService: CodeEditorRepositoryFileService) {}
 
     /**
-     * @function ngOnInit
-     * @desc Initializes variables
+     * Initializes variables
      */
     ngOnInit(): void {
         this.isLoading = false;
     }
 
     /**
-     * @function deleteFile
-     * @desc Reads the provided fileName and deletes the matching file in the repository
+     * Reads the provided fileName and deletes the matching file in the repository
      */
     deleteFile() {
         this.isLoading = true;
@@ -49,8 +47,7 @@ export class CodeEditorFileBrowserDeleteComponent implements OnInit {
     }
 
     /**
-     * @function closeModal
-     * @desc Dismisses the currently active modal (popup)
+     * Dismisses the currently active modal (popup)
      */
     closeModal() {
         this.activeModal.dismiss('cancel');
