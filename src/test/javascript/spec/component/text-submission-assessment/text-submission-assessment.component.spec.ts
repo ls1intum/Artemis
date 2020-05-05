@@ -68,7 +68,15 @@ describe('TextSubmissionAssessmentComponent', () => {
 
     beforeEach(async () => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, ArtemisSharedModule, ArtemisAssessmentSharedModule, AssessmentInstructionsModule, TranslateModule.forRoot(), ArtemisConfirmIconModule, RouterModule],
+            imports: [
+                ArtemisTestModule,
+                ArtemisSharedModule,
+                ArtemisAssessmentSharedModule,
+                AssessmentInstructionsModule,
+                TranslateModule.forRoot(),
+                ArtemisConfirmIconModule,
+                RouterModule,
+            ],
             declarations: [TextSubmissionAssessmentComponent, TextAssessmentAreaComponent, TextblockAssessmentCardComponent, TextblockFeedbackEditorComponent],
             providers: [{ provide: ActivatedRoute, useValue: route }],
         })
