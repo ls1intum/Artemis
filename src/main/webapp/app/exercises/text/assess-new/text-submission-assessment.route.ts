@@ -40,7 +40,7 @@ export class NewStudentParticipationResolver implements Resolve<StudentParticipa
 
         if (exerciseId) {
             return this.textSubmissionService
-                .getTextSubmissionForExerciseWithoutAssessment(exerciseId, true)
+                .getTextSubmissionForExerciseWithoutAssessment(exerciseId, 'lock')
                 .map((submission) => <StudentParticipation>submission.participation)
                 .catch(() => Observable.of(null));
         }
@@ -60,6 +60,7 @@ export const textSubmissionAssessmentRoutes: Routes = [
         resolve: {
             studentParticipation: NewStudentParticipationResolver,
         },
+        runGuardsAndResolvers: 'always',
         canActivate: [UserRouteAccessService],
     },
     {
@@ -72,6 +73,7 @@ export const textSubmissionAssessmentRoutes: Routes = [
         resolve: {
             studentParticipation: StudentParticipationResolver,
         },
+        runGuardsAndResolvers: 'paramsChange',
         canActivate: [UserRouteAccessService],
     },
 ];
