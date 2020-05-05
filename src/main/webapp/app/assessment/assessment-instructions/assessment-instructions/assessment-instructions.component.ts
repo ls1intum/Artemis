@@ -18,7 +18,7 @@ export class AssessmentInstructionsComponent {
     programmingExercise?: ProgrammingExercise;
     problemStatement: SafeHtml;
     gradingInstructions: SafeHtml;
-    sampleSolution?: SafeHtml;
+    sampleSolutionExplanation?: SafeHtml;
     sampleSolutionModel?: UMLModel;
     sampleSolutionDiagramType?: UMLDiagramType;
     criteria: GradingCriterion[];
@@ -56,7 +56,7 @@ export class AssessmentInstructionsComponent {
                 this.programmingExercise = exercise as ProgrammingExercise;
         }
         if (sampleSolutionMarkdown) {
-            this.sampleSolution = this.markdownService.safeHtmlForMarkdown(sampleSolutionMarkdown);
+            this.sampleSolutionExplanation = this.markdownService.safeHtmlForMarkdown(sampleSolutionMarkdown);
         }
     }
 }
