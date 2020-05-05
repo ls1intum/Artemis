@@ -58,7 +58,11 @@ export class QuizExerciseComponent extends ExerciseComponent {
         );
     }
 
-    trackId(index: number, item: QuizExercise) {
+    /**
+     * Get the id of the quiz exercise
+     * @param item the quiz exercise of which the id should be returned
+     */
+    trackId(item: QuizExercise) {
         return item.id;
     }
 
@@ -111,6 +115,9 @@ export class QuizExerciseComponent extends ExerciseComponent {
         );
     }
 
+    /**
+     * Set the quiz exercise status for all quiz exercises.
+     */
     setQuizExercisesStatus() {
         this.quizExercises.forEach((quizExercise) => (quizExercise.status = this.quizExerciseService.statusForQuiz(quizExercise)));
     }
@@ -218,5 +225,8 @@ export class QuizExerciseComponent extends ExerciseComponent {
         );
     }
 
+    /**
+     * Do nothing
+     */
     callback() {}
 }

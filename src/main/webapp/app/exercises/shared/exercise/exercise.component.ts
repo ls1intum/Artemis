@@ -32,6 +32,9 @@ export abstract class ExerciseComponent implements OnInit, OnDestroy {
         this.reverse = true;
     }
 
+    /**
+     * Fetches an exercise from the server (and if needed the course as well)
+     */
     ngOnInit(): void {
         this.showAlertHeading = !this.embedded;
         this.showHeading = this.embedded;
@@ -39,6 +42,9 @@ export abstract class ExerciseComponent implements OnInit, OnDestroy {
         this.registerChangeInExercises();
     }
 
+    /**
+     * Unsubscribes from all subscriptions
+     */
     ngOnDestroy() {
         this.eventManager.destroy(this.eventSubscriber);
         this.dialogErrorSource.unsubscribe();
@@ -61,6 +67,10 @@ export abstract class ExerciseComponent implements OnInit, OnDestroy {
         });
     }
 
+    /**
+     * Returns the number of exercises given as a string
+     * @param exercises Exercises which to count
+     */
     public getAmountOfExercisesString<T>(exercises: Array<T>): string {
         if (exercises.length === 0) {
             return this.translateService.instant('artemisApp.createExercise.noExercises');

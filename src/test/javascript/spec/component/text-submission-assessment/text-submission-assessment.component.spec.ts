@@ -22,7 +22,7 @@ import { TextSubmission } from 'app/entities/text-submission.model';
 import { Result } from 'app/entities/result.model';
 import moment = require('moment');
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, RouterModule } from '@angular/router';
 import { ArtemisConfirmIconModule } from 'app/shared/confirm-icon/confirm-icon.module';
 import { Course } from 'app/entities/course.model';
 
@@ -68,7 +68,15 @@ describe('TextSubmissionAssessmentComponent', () => {
 
     beforeEach(async () => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, ArtemisSharedModule, ArtemisAssessmentSharedModule, AssessmentInstructionsModule, TranslateModule.forRoot(), ArtemisConfirmIconModule],
+            imports: [
+                ArtemisTestModule,
+                ArtemisSharedModule,
+                ArtemisAssessmentSharedModule,
+                AssessmentInstructionsModule,
+                TranslateModule.forRoot(),
+                ArtemisConfirmIconModule,
+                RouterModule,
+            ],
             declarations: [TextSubmissionAssessmentComponent, TextAssessmentAreaComponent, TextblockAssessmentCardComponent, TextblockFeedbackEditorComponent],
             providers: [{ provide: ActivatedRoute, useValue: route }],
         })

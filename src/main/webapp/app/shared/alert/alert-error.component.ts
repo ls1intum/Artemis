@@ -85,6 +85,11 @@ export class AlertErrorComponent implements OnDestroy {
         });
     }
 
+    /**
+     * set classes for alert
+     * @param {JhiAlert} alert
+     * @return {{ [key: string]: boolean }}
+     */
     setClasses(alert: JhiAlert): { [key: string]: boolean } {
         const classes = { 'jhi-toast': Boolean(alert.toast) };
         if (alert.position) {
@@ -93,6 +98,9 @@ export class AlertErrorComponent implements OnDestroy {
         return classes;
     }
 
+    /**
+     * remove listeners on destroy
+     */
     ngOnDestroy(): void {
         if (this.errorListener) {
             this.eventManager.destroy(this.errorListener);
@@ -102,6 +110,12 @@ export class AlertErrorComponent implements OnDestroy {
         }
     }
 
+    /**
+     * add a new alert
+     * @param {string} message
+     * @param {string} key?
+     * @param {any} data?
+     */
     addErrorAlert(message: string, key?: string, data?: any): void {
         message = key && key !== null ? key : message;
 

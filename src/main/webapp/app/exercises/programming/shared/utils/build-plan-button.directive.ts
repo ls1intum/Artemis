@@ -16,6 +16,9 @@ export class BuildPlanButtonDirective implements OnInit {
 
     constructor(private profileService: ProfileService) {}
 
+    /**
+     * Life cycle hook called by Angular to indicate that Angular is done creating the component
+     */
     ngOnInit(): void {
         this.profileService
             .getProfileInfo()
@@ -29,6 +32,9 @@ export class BuildPlanButtonDirective implements OnInit {
             .subscribe();
     }
 
+    /**
+     * Action on click.
+     */
     @HostListener('click')
     onClick() {
         window.open(this.buildPlanLink!);

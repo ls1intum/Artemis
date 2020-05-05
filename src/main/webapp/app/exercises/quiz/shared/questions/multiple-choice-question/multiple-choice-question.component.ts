@@ -50,8 +50,10 @@ export class MultipleChoiceQuestionComponent {
 
     constructor(private artemisMarkdown: ArtemisMarkdownService) {}
 
+    /**
+     * Update html for text, hint and explanation for the question and every answer option
+     */
     watchCollection(): void {
-        // update html for text, hint and explanation for the question and every answer option
         const artemisMarkdown = this.artemisMarkdown;
         this.renderedQuestion = new RenderedQuizQuestionMarkDownElement();
         this.renderedQuestion.text = artemisMarkdown.safeHtmlForMarkdown(this.question.text);
@@ -66,6 +68,10 @@ export class MultipleChoiceQuestionComponent {
         });
     }
 
+    /**
+     * Toggles the selection state of a multiple choice answer option
+     * @param answerOption The answer option to toggle
+     */
     toggleSelection(answerOption: AnswerOption): void {
         if (this.clickDisabled) {
             // Do nothing
@@ -83,6 +89,10 @@ export class MultipleChoiceQuestionComponent {
         }
     }
 
+    /**
+     * Getter whether the given answer option is selected
+     * @param answerOption Answer option to be checked for selection state
+     */
     isAnswerOptionSelected(answerOption: AnswerOption): boolean {
         return (
             this.selectedAnswerOptions != null &&

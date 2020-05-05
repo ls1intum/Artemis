@@ -15,6 +15,11 @@ export class StudentQuestionService {
 
     constructor(protected http: HttpClient) {}
 
+    /**
+     * create a studentQuestion
+     * @param {StudentQuestion} studentQuestion
+     * @return {Observable<EntityResponseType>}
+     */
     create(studentQuestion: StudentQuestion): Observable<EntityResponseType> {
         const copy = this.convertDateFromClient(studentQuestion);
         return this.http
@@ -22,6 +27,11 @@ export class StudentQuestionService {
             .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
     }
 
+    /**
+     * update the studentQuestion
+     * @param {StudentQuestion} studentQuestion
+     * @return {Observable<EntityResponseType>}
+     */
     update(studentQuestion: StudentQuestion): Observable<EntityResponseType> {
         const copy = this.convertDateFromClient(studentQuestion);
         return this.http
@@ -29,18 +39,33 @@ export class StudentQuestionService {
             .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
     }
 
+    /**
+     * find all questions for id of exercise
+     * @param {number} exerciseId
+     * @return {Observable<EntityArrayResponseType>}
+     */
     findQuestionsForExercise(exerciseId: number): Observable<EntityArrayResponseType> {
         return this.http
             .get<StudentQuestion[]>(`api/exercises/${exerciseId}/student-questions`, { observe: 'response' })
             .pipe(map((res: EntityArrayResponseType) => this.convertDateArrayFromServer(res)));
     }
 
+    /**
+     * find all questions for id of lecture
+     * @param {number} lectureId
+     * @return {Observable<EntityArrayResponseType>}
+     */
     findQuestionsForLecture(lectureId: number): Observable<EntityArrayResponseType> {
         return this.http
             .get<StudentQuestion[]>(`api/lectures/${lectureId}/student-questions`, { observe: 'response' })
             .pipe(map((res: EntityArrayResponseType) => this.convertDateArrayFromServer(res)));
     }
 
+    /**
+     * delete studentQuestion by id
+     * @param {number} studentQuestionId
+     * @return {Observable<HttpResponse<any>>}
+     */
     delete(studentQuestionId: number): Observable<HttpResponse<any>> {
         return this.http.delete<any>(`${this.resourceUrl}/${studentQuestionId}`, { observe: 'response' });
     }

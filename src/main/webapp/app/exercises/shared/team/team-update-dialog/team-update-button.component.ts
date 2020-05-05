@@ -29,6 +29,10 @@ export class TeamUpdateButtonComponent {
 
     constructor(private modalService: NgbModal) {}
 
+    /**
+     * Open the dialog for team creation
+     * @param {MouseEvent} event - Occurred Mouse Event
+     */
     openTeamCreateDialog(event: MouseEvent) {
         event.stopPropagation();
         const modalRef: NgbModalRef = this.modalService.open(TeamUpdateDialogComponent, { keyboard: true, size: 'lg', backdrop: 'static' });

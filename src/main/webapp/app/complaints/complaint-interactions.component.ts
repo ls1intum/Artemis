@@ -27,6 +27,9 @@ export class ComplaintInteractionsComponent implements OnInit {
 
     constructor(private complaintService: ComplaintService) {}
 
+    /**
+     * Loads the number of allowed complaints and feedback requests
+     */
     ngOnInit(): void {
         if (this.exercise.course) {
             if (this.exercise.course.complaintsEnabled) {
@@ -69,12 +72,16 @@ export class ComplaintInteractionsComponent implements OnInit {
             return false;
         }
     }
-
+    /**
+     * toggles between showing the complaint form
+     */
     toggleComplaintForm() {
         this.showRequestMoreFeedbackForm = false;
         this.showComplaintForm = !this.showComplaintForm;
     }
-
+    /**
+     * toggles between showing the feedback request form
+     */
     toggleRequestMoreFeedbackForm() {
         this.showComplaintForm = false;
         this.showRequestMoreFeedbackForm = !this.showRequestMoreFeedbackForm;

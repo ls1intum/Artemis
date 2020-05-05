@@ -42,6 +42,9 @@ export class CourseManagementComponent implements OnInit, OnDestroy, AfterViewIn
         this.reverse = false;
     }
 
+    /**
+     * loads all courses from courseService
+     */
     loadAll() {
         this.courseService.getWithUserStats({ onlyActive: this.showOnlyActive }).subscribe(
             (res: HttpResponse<Course[]>) => {
@@ -52,24 +55,42 @@ export class CourseManagementComponent implements OnInit, OnDestroy, AfterViewIn
         );
     }
 
+    /**
+     * loads all courses and subscribes to courseListModification
+     */
     ngOnInit() {
         this.loadAll();
         this.registerChangeInCourses();
     }
 
+    /**
+     * notifies the guided-tour service that the current component has
+     * been fully loaded
+     */
     ngAfterViewInit(): void {
         this.guidedTourService.componentPageLoaded();
     }
 
+    /**
+     * unsubscribe on component destruction
+     */
     ngOnDestroy() {
         this.eventManager.destroy(this.eventSubscriber);
         this.dialogErrorSource.unsubscribe();
     }
 
+    /**
+     * Returns the unique identifier for items in the collection
+     * @param index - Index of a course in the collection
+     * @param item - Current course
+     */
     trackId(index: number, item: Course) {
         return item.id;
     }
 
+    /**
+     * subscribes to courseListModification event
+     */
     registerChangeInCourses() {
         this.eventSubscriber = this.eventManager.subscribe('courseListModification', () => this.loadAll());
     }
@@ -91,12 +112,21 @@ export class CourseManagementComponent implements OnInit, OnDestroy, AfterViewIn
         );
     }
 
+    /**
+     * @callback empty callback
+     */
     callback() {}
 
+    /**
+     * returns the current Date
+     */
     get today(): Date {
         return new Date();
     }
 
+    /**
+     * toggles the attribute showOnlyActive and reloads all courses
+     */
     toggleShowOnlyActive() {
         this.showOnlyActive = !this.showOnlyActive;
         this.loadAll();

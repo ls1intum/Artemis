@@ -199,6 +199,9 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
         }, 0);
     }
 
+    /**
+     * Revert to the previous state, equivalent with pressing the back button on your browser
+     */
     previousState() {
         window.history.back();
     }

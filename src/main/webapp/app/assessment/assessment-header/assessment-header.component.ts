@@ -17,7 +17,10 @@ export class AssessmentHeaderComponent {
     @Output() navigateBack = new EventEmitter<void>();
 
     @Input() isLoading: boolean;
-    @Input() busy: boolean;
+    @Input() saveBusy: boolean;
+    @Input() submitBusy: boolean;
+    @Input() cancelBusy: boolean;
+    @Input() nextSubmissionBusy: boolean;
 
     @Input() isAssessor: boolean;
     @Input() isAtLeastInstructor: boolean;

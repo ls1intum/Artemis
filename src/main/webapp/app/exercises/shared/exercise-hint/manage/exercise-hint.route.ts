@@ -14,6 +14,10 @@ import { ExerciseHint } from 'app/entities/exercise-hint.model';
 export class ExerciseHintResolve implements Resolve<ExerciseHint | null> {
     constructor(private service: ExerciseHintService) {}
 
+    /**
+     * Resolves the route into an exercise hint id and fetches it from the server
+     * @param route Route which to resolve
+     */
     resolve(route: ActivatedRouteSnapshot): Observable<ExerciseHint | null> {
         const id = route.params['hintId'] ? route.params['hintId'] : null;
         if (id) {
