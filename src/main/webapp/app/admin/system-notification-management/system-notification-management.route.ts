@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { ActivatedRouteSnapshot, Resolve, Route } from '@angular/router';
+import { ActivatedRouteSnapshot, Resolve, Route, Routes } from '@angular/router';
 import { JhiResolvePagingParams } from 'ng-jhipster';
 import { SystemNotificationManagementUpdateComponent } from 'app/admin/system-notification-management/system-notification-management-update.component';
 import { SystemNotification } from 'app/entities/system-notification.model';
@@ -24,47 +24,46 @@ export class SystemNotificationManagementResolve implements Resolve<any> {
     }
 }
 
-export const systemNotificationManagementRoutes1: Route = {
-    path: 'system-notification-management',
-    component: SystemNotificationManagementComponent,
-    resolve: {
-        pagingParams: JhiResolvePagingParams,
+export const systemNotificationManagementRoute: Routes = [
+    {
+        path: 'system-notification-management',
+        component: SystemNotificationManagementComponent,
+        resolve: {
+            pagingParams: JhiResolvePagingParams,
+        },
+        data: {
+            pageTitle: 'artemisApp.systemNotification.systemNotifications',
+            defaultSort: 'id,asc',
+        },
     },
-    data: {
-        pageTitle: 'artemisApp.systemNotification.systemNotifications',
-        defaultSort: 'id,asc',
+    {
+        path: 'system-notification-management/:id/view',
+        component: SystemNotificationManagementDetailComponent,
+        resolve: {
+            notification: SystemNotificationManagementResolve,
+        },
+        data: {
+            pageTitle: 'artemisApp.systemNotification.systemNotifications',
+        },
     },
-};
-
-export const systemNotificationManagementRoutes2: Route = {
-    path: 'system-notification-management/:id/view',
-    component: SystemNotificationManagementDetailComponent,
-    resolve: {
-        notification: SystemNotificationManagementResolve,
+    {
+        path: 'system-notification-management/new',
+        component: SystemNotificationManagementUpdateComponent,
+        resolve: {
+            notification: SystemNotificationManagementResolve,
+        },
+        data: {
+            pageTitle: 'artemisApp.systemNotification.systemNotifications',
+        },
     },
-    data: {
-        pageTitle: 'artemisApp.systemNotification.systemNotifications',
+    {
+        path: 'system-notification-management/:id/edit',
+        component: SystemNotificationManagementUpdateComponent,
+        resolve: {
+            notification: SystemNotificationManagementResolve,
+        },
+        data: {
+            pageTitle: 'artemisApp.systemNotification.systemNotifications',
+        },
     },
-};
-
-export const systemNotificationManagementRoutes3: Route = {
-    path: 'system-notification-management/new',
-    component: SystemNotificationManagementUpdateComponent,
-    resolve: {
-        notification: SystemNotificationManagementResolve,
-    },
-    data: {
-        pageTitle: 'artemisApp.systemNotification.systemNotifications',
-    },
-};
-
-export const systemNotificationManagementRoutes4: Route = {
-    path: 'system-notification-management/:id/edit',
-    component: SystemNotificationManagementUpdateComponent,
-    resolve: {
-        notification: SystemNotificationManagementResolve,
-    },
-    data: {
-        pageTitle: 'artemisApp.systemNotification.systemNotifications',
-    },
-};
+];

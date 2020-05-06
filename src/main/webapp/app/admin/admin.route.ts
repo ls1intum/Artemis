@@ -6,12 +6,7 @@ import { auditsRoute } from 'app/admin/audits/audits.route';
 import { configurationRoute } from 'app/admin/configuration/configuration.route';
 import { featureRoute } from 'app/admin/features/features.route';
 import { userMgmtRoute1, userMgmtRoute2, userMgmtRoute3, userMgmtRoute4 } from 'app/admin/user-management/user-management.route';
-import {
-    systemNotificationManagementRoutes1,
-    systemNotificationManagementRoutes2,
-    systemNotificationManagementRoutes3,
-    systemNotificationManagementRoutes4,
-} from 'app/admin/system-notification-management/system-notification-management.route';
+import { systemNotificationManagementRoute } from 'app/admin/system-notification-management/system-notification-management.route';
 import { healthRoute } from 'app/admin/health/health.route';
 import { metricsRoute } from 'app/admin/metrics/metrics.route';
 
@@ -26,11 +21,8 @@ const ADMIN_ROUTES = [
     userMgmtRoute3,
     userMgmtRoute4,
     metricsRoute,
-    systemNotificationManagementRoutes1,
-    systemNotificationManagementRoutes2,
-    systemNotificationManagementRoutes3,
-    systemNotificationManagementRoutes4,
     featureRoute,
+    ...systemNotificationManagementRoute,
 ];
 
 export const adminState: Routes = [
