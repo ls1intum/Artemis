@@ -91,8 +91,7 @@ public class GroupNotificationService {
      * @param notificationText that should be displayed  TODO: can be removed in the future as notification's text attribute is not used in the client
      */
     public void notifyInstructorGroupAboutExerciseUpdate(Exercise exercise, String notificationText) {
-        // TODO: why null for author?
-        saveAndSend(GroupNotificationFactory.createNotification(exercise, null, GroupNotificationType.INSTRUCTOR, NotificationType.EXERCISE_UPDATED));
+        saveAndSend(GroupNotificationFactory.createNotification(exercise, userService.getUser(), GroupNotificationType.INSTRUCTOR, NotificationType.EXERCISE_UPDATED));
     }
 
     /**
