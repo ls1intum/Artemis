@@ -45,6 +45,7 @@ public class Team extends AbstractAuditingEntity implements Serializable, Partic
     @JsonIgnore
     private Exercise exercise;
 
+    @OrderColumn
     @ManyToMany(fetch = FetchType.EAGER)
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonInclude(JsonInclude.Include.NON_NULL)
