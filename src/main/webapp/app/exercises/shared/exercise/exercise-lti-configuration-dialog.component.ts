@@ -1,6 +1,6 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { Exercise } from '../../../entities/exercise.model';
+import { Exercise } from 'app/entities/exercise.model';
 import { ActivatedRoute } from '@angular/router';
 import { ExercisePopupService } from './exercise-popup.service';
 
@@ -11,14 +11,15 @@ import { LtiConfiguration } from 'app/entities/lti-configuration.model';
     selector: 'jhi-exercise-lti-configuration-dialog',
     templateUrl: './exercise-lti-configuration-dialog.component.html',
 })
-export class ExerciseLtiConfigurationDialogComponent implements OnInit {
+export class ExerciseLtiConfigurationDialogComponent {
     exercise: Exercise;
     ltiConfiguration: LtiConfiguration;
 
     constructor(public activeModal: NgbActiveModal) {}
 
-    ngOnInit() {}
-
+    /**
+     * Dismisses the modal
+     */
     clear() {
         this.activeModal.dismiss('cancel');
     }
@@ -33,12 +34,18 @@ export class ExerciseLtiConfigurationPopupComponent implements OnInit, OnDestroy
 
     constructor(private route: ActivatedRoute, private exercisePopupService: ExercisePopupService) {}
 
+    /**
+     * Opens the configuration popup for the exercise encoded in the route
+     */
     ngOnInit() {
         this.routeSub = this.route.params.subscribe((params) => {
             this.exercisePopupService.open(ExerciseLtiConfigurationDialogComponent as Component, params['id'], true);
         });
     }
 
+    /**
+     * Unsubscribes from the route subscription
+     */
     ngOnDestroy() {
         this.routeSub.unsubscribe();
     }

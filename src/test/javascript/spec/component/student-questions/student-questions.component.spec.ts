@@ -76,14 +76,6 @@ describe('StudentQuestionRowComponent', () => {
         expect(component.studentQuestions).to.deep.equal([studentQuestion1, studentQuestion2]);
     });
 
-    it('should toggle edit mode', () => {
-        component.lecture = lectureDefault;
-        componentFixture.detectChanges();
-        component.toggleEditMode();
-        componentFixture.detectChanges();
-        expect(component.isEditMode).to.be.true;
-    });
-
     it('should delete studentQuestion from list', () => {
         component.lecture = lectureDefault;
         componentFixture.detectChanges();

@@ -17,6 +17,13 @@ export class UserRouteAccessService implements CanActivate {
         private orionVersionValidator: OrionVersionValidator,
     ) {}
 
+    /**
+     * Check if the client can activate a route.
+     * @param route {ActivatedRouteSnapshot} The ActivatedRouteSnapshot of the route to activate.
+     * @param state {RouterStateSnapshot} The current RouterStateSnapshot.
+     * @return {(boolean | Promise<boolean>)} True if Orion version is valid or the connected client is a regular browser and
+     * user is logged in, false otherwise.
+     */
     canActivate(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): boolean | Promise<boolean> {
         // save the jwt token from get parameter for lti launch requests for online course users
         // Note: The following URL has to match the redirect URL in LtiResource.java in the method launch(...) shortly before the return
@@ -50,6 +57,12 @@ export class UserRouteAccessService implements CanActivate {
         );
     }
 
+    /**
+     * Check whether user is logged in and has the required authorities.
+     * @param {string[]}authorities List of required authorities.
+     * @param {string} url Current url.
+     * @return {Promise<boolean>} True if authorities are empty or null, False if user not logged in or does not have required authorities.
+     */
     checkLogin(authorities: string[], url: string): Promise<boolean> {
         const accountService = this.accountService;
         return Promise.resolve(

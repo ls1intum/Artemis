@@ -37,6 +37,9 @@ export class ExerciseHintUpdateComponent implements OnInit, OnDestroy {
         protected exerciseService: ExerciseService,
     ) {}
 
+    /**
+     * Fetches the exercise from the server and assigns it on the exercise hint
+     */
     ngOnInit() {
         this.isLoading = true;
         this.paramSub = this.route.params.subscribe((params) => {
@@ -70,20 +73,33 @@ export class ExerciseHintUpdateComponent implements OnInit, OnDestroy {
         });
     }
 
+    /**
+     * Unsubscribes from the param subscription
+     */
     ngOnDestroy(): void {
         if (this.paramSub) {
             this.paramSub.unsubscribe();
         }
     }
 
+    /**
+     * Setter to update the exercise hint content
+     * @param newContent New value to set
+     */
     updateHintContent(newContent: string) {
         this.exerciseHint.content = newContent;
     }
 
+    /**
+     * Navigates back one step in the browser history
+     */
     previousState() {
         window.history.back();
     }
 
+    /**
+     * Saves the exercise hint by creating or updating it on the server
+     */
     save() {
         this.isSaving = true;
         if (this.exerciseHint.id !== undefined) {

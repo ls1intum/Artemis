@@ -18,7 +18,7 @@
     <!-- HEADER INFORMATION END -->
     <!-- LECTURE START -->
     <div class="row mt-2">
-        <div class="col-sm-12 col-md-10 col-lg-8">
+        <div class="col pr-0 flex-grow-1">
             <div class="row mb-2 mt-2 align-items-baseline">
                 <div class="col-auto">
                     <h3>{{ 'artemisApp.courseOverview.lectureDetails.description' | translate }}</h3>
@@ -63,8 +63,6 @@
             </div>
         </div>
         <!-- LECTURE END -->
-        <div class="col-sm-12 col-md-4 col-lg-4" *ngIf="lecture && lecture.course.studentQuestionsEnabled">
-            <jhi-student-questions [lecture]="lecture!"></jhi-student-questions>
-        </div>
+        <jhi-student-questions *ngIf="lecture && lecture.course.studentQuestionsEnabled" class="ml-3" [lecture]="lecture!"></jhi-student-questions>
     </div>
 </div>

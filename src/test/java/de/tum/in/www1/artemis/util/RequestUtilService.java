@@ -95,6 +95,10 @@ public class RequestUtilService {
         mvc.perform(request.with(csrf())).andExpect(status().is(expectedStatus.value())).andReturn();
     }
 
+    public void postWithoutResponseBody(String path, HttpStatus expectedStatus, MultiValueMap<String, String> params) throws Exception {
+        mvc.perform(MockMvcRequestBuilders.post(new URI(path)).params(params).with(csrf())).andExpect(status().is(expectedStatus.value())).andReturn();
+    }
+
     public <T, R> R postWithResponseBody(String path, T body, Class<R> responseType, HttpStatus expectedStatus, @Nullable HttpHeaders httpHeaders) throws Exception {
         return postWithResponseBody(path, body, responseType, expectedStatus, httpHeaders, null);
     }
@@ -261,6 +265,12 @@ public class RequestUtilService {
         }
         if (responseType == Boolean.class) {
             return (T) Boolean.valueOf(contentAsString);
+        }
+        if (responseType == byte[].class) {
+            return (T) res.getResponse().getContentAsByteArray();
+        }
+        if (responseType == Void.class && contentAsString.isEmpty()) {
+            return (T) "";
         }
         return mapper.readValue(contentAsString, responseType);
     }

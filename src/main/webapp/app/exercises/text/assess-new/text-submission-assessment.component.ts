@@ -28,22 +28,26 @@ import { NEW_ASSESSMENT_PATH } from 'app/exercises/text/assess-new/text-submissi
 })
 export class TextSubmissionAssessmentComponent implements OnInit {
     private userId: number | null;
-    participation: StudentParticipation | null = null;
-    submission: TextSubmission | null = null;
-    exercise: TextExercise | null = null;
-    result: Result | null = null;
+    exerciseId: number;
+    participation: StudentParticipation | null;
+    submission: TextSubmission | null;
+    exercise: TextExercise | null;
+    result: Result | null;
     generalFeedback: Feedback;
-    textBlockRefs: TextBlockRef[] = [];
-    totalScore = 0;
+    textBlockRefs: TextBlockRef[];
+    complaint: Complaint | null;
+    totalScore: number;
 
-    isLoading = true;
-    busy = false;
-    isAssessor = false;
-    isAtLeastInstructor = false;
-    canOverride = false;
-    assessmentsAreValid = false;
-    complaint: Complaint;
-    noNewSubmissions = false;
+    isLoading: boolean;
+    saveBusy: boolean;
+    submitBusy: boolean;
+    cancelBusy: boolean;
+    nextSubmissionBusy: boolean;
+    isAssessor: boolean;
+    isAtLeastInstructor: boolean;
+    canOverride: boolean;
+    assessmentsAreValid: boolean;
+    noNewSubmissions: boolean;
 
     private cancelConfirmationText: string;
 
@@ -74,8 +78,33 @@ export class TextSubmissionAssessmentComponent implements OnInit {
         translateService: TranslateService,
     ) {
         translateService.get('artemisApp.textAssessment.confirmCancel').subscribe((text) => (this.cancelConfirmationText = text));
+        this.resetComponent();
     }
 
+    private resetComponent(): void {
+        this.participation = null;
+        this.submission = null;
+        this.exercise = null;
+        this.result = null;
+        this.generalFeedback = new Feedback();
+        this.textBlockRefs = [];
+        this.complaint = null;
+        this.totalScore = 0;
+        this.isLoading = true;
+        this.saveBusy = false;
+        this.submitBusy = false;
+        this.cancelBusy = false;
+        this.nextSubmissionBusy = false;
+        this.isAssessor = false;
+        this.isAtLeastInstructor = false;
+        this.canOverride = false;
+        this.assessmentsAreValid = false;
+        this.noNewSubmissions = false;
+    }
+
+    /**
+     * Life cycle hook to indicate component creation is done
+     */
     async ngOnInit() {
         // Used to check if the assessor is the current user
         const identity = await this.accountService.identity();
@@ -83,12 +112,18 @@ export class TextSubmissionAssessmentComponent implements OnInit {
 
         this.isAtLeastInstructor = this.accountService.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR']);
 
+        this.activatedRoute.paramMap.subscribe((paramMap) => (this.exerciseId = Number(paramMap.get('exerciseId'))));
         this.activatedRoute.data.subscribe(({ studentParticipation }) => this.setPropertiesFromServerResponse(studentParticipation));
     }
 
     private setPropertiesFromServerResponse(studentParticipation: StudentParticipation) {
-        // Update noNewSubmissions
-        this.noNewSubmissions = this.isNewAssessmentRoute ? studentParticipation === null : false;
+        this.resetComponent();
+
+        if (studentParticipation === null) {
+            // Show "No New Submission" banner on .../submissions/new/assessment route
+            this.noNewSubmissions = this.isNewAssessmentRoute;
+            return;
+        }
 
         this.participation = studentParticipation;
         this.submission = this.participation?.submissions[0] as TextSubmission;
@@ -118,23 +153,25 @@ export class TextSubmissionAssessmentComponent implements OnInit {
         return this.activatedRoute.routeConfig?.path === NEW_ASSESSMENT_PATH;
     }
 
-    navigateBack(): void {
-        history.back();
-    }
-
+    /**
+     * Save the assessment
+     */
     save(): void {
         if (!this.assessmentsAreValid) {
             this.jhiAlertService.error('artemisApp.textAssessment.error.invalidAssessments');
             return;
         }
 
-        this.busy = true;
+        this.saveBusy = true;
         this.assessmentsService.save(this.exercise!.id, this.result!.id, this.assessments, this.textBlocks).subscribe(
             (response) => this.handleSaveOrSubmitSuccessWithAlert(response, 'artemisApp.textAssessment.saveSuccessful'),
             (error: HttpErrorResponse) => this.handleError(error),
         );
     }
 
+    /**
+     * Submit the assessment
+     */
     submit(): void {
         if (!this.result?.id) {
             return; // We need to have saved the result before
@@ -145,7 +182,7 @@ export class TextSubmissionAssessmentComponent implements OnInit {
             return;
         }
 
-        this.busy = true;
+        this.submitBusy = true;
         this.assessmentsService.submit(this.exercise!.id, this.result!.id, this.assessments, this.textBlocks).subscribe(
             (response) => this.handleSaveOrSubmitSuccessWithAlert(response, 'artemisApp.textAssessment.submitSuccessful'),
             (error: HttpErrorResponse) => this.handleError(error),
@@ -155,12 +192,15 @@ export class TextSubmissionAssessmentComponent implements OnInit {
     private handleSaveOrSubmitSuccessWithAlert(response: HttpResponse<Result>, translationKey: string): void {
         this.participation!.results[0] = this.result = response.body!;
         this.jhiAlertService.success(translationKey);
-        this.busy = false;
+        this.saveBusy = this.submitBusy = false;
     }
 
+    /**
+     * Cancel the assessment
+     */
     cancel(): void {
         const confirmCancel = window.confirm(this.cancelConfirmationText);
-        this.busy = true;
+        this.cancelBusy = true;
         if (confirmCancel && this.exercise && this.submission) {
             this.assessmentsService
                 .cancelAssessment(this.exercise.id, this.submission.id)
@@ -168,9 +208,12 @@ export class TextSubmissionAssessmentComponent implements OnInit {
         }
     }
 
-    nextSubmission(): void {
-        this.busy = true;
-        this.router.navigate(['course-management', this.exercise?.course?.id, 'text-exercises', this.exercise?.id, 'submissions', 'new', 'assessment']);
+    /**
+     * Go to next submission
+     */
+    async nextSubmission(): Promise<void> {
+        this.nextSubmissionBusy = true;
+        await this.router.navigate(['/course-management', this.exercise?.course?.id, 'text-exercises', this.exercise?.id, 'submissions', 'new', 'assessment']);
     }
 
     /**
@@ -192,7 +235,6 @@ export class TextSubmissionAssessmentComponent implements OnInit {
                 console.error(error);
                 this.jhiAlertService.clear();
                 this.jhiAlertService.error('artemisApp.textAssessment.updateAfterComplaintFailed');
-                this.busy = false;
             },
         );
     }
@@ -202,8 +244,11 @@ export class TextSubmissionAssessmentComponent implements OnInit {
         this.totalScore = credits.reduce((a, b) => a + b, 0);
     }
 
+    /**
+     * Validate the feedback of the assessment
+     */
     validateFeedback(): void {
-        const hasReferencedFeedback = this.referencedFeedback.filter((f) => !Feedback.isEmpty(f)).length > 0;
+        const hasReferencedFeedback = this.referencedFeedback.filter(Feedback.isPresent).length > 0;
         const hasGeneralFeedback = Feedback.hasDetailText(this.generalFeedback);
 
         this.assessmentsAreValid = hasReferencedFeedback || hasGeneralFeedback;
@@ -227,7 +272,7 @@ export class TextSubmissionAssessmentComponent implements OnInit {
         const sortedRefs = TextAssessmentsService.matchBlocksWithFeedbacks(this.submission?.blocks || [], feedbacks).sort((a, b) => a.block.startIndex - b.block.startIndex);
 
         let previousIndex = 0;
-        const lastIndex = this.submission?.text.length || 0;
+        const lastIndex = this.submission?.text?.length || 0;
         for (let i = 0; i <= sortedRefs.length; i++) {
             const ref: TextBlockRef | undefined = sortedRefs[i];
             const nextIndex = ref ? ref.block.startIndex : lastIndex;
@@ -260,14 +305,14 @@ export class TextSubmissionAssessmentComponent implements OnInit {
             return;
         }
 
-        this.busy = true;
+        this.isLoading = true;
         this.complaintService.findByResultId(this.result.id).subscribe(
             (res) => {
                 if (!res.body) {
                     return;
                 }
                 this.complaint = res.body;
-                this.busy = false;
+                this.isLoading = false;
             },
             (err: HttpErrorResponse) => {
                 this.handleError(err.error);
@@ -285,6 +330,6 @@ export class TextSubmissionAssessmentComponent implements OnInit {
     private handleError(error: HttpErrorResponse): void {
         const errorMessage = error.headers?.get('X-artemisApp-message') || error.message;
         this.jhiAlertService.error(errorMessage, null, undefined);
-        this.busy = false;
+        this.saveBusy = this.submitBusy = false;
     }
 }

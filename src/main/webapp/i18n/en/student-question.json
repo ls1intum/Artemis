@@ -1,14 +1,14 @@
 {
     "artemisApp": {
         "studentQuestion": {
-            "created": "A new question is created with identifier {{ param }}",
-            "updated": "A question is updated with identifier {{ param }}",
-            "deleted": "A question is deleted with identifier {{ param }}"
+            "created": "New question successfully created",
+            "updated": "Question successfully updated",
+            "deleted": "Question successfully deleted"
         },
         "questionAnswer": {
-            "created": "A new answer is created with identifier {{ param }}",
-            "updated": "A answer is updated with identifier {{ param }}",
-            "deleted": "A answer is deleted with identifier {{ param }}"
+            "created": "New answer successfully created",
+            "updated": "Answer successfully updated",
+            "deleted": "Answer successfully deleted"
         }
     }
 }
