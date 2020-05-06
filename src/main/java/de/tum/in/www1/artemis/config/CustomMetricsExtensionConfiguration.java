@@ -13,6 +13,10 @@ import de.tum.in.www1.artemis.web.rest.CustomMetricsExtension;
 import io.github.jhipster.config.metric.JHipsterMetricsEndpoint;
 import io.micrometer.core.annotation.Timed;
 
+/**
+ * CustomMetricsExtensionConfiguration.
+ * Configuration for custom ArTEMiS metrics.
+ */
 public class CustomMetricsExtensionConfiguration {
 
     @Configuration
@@ -20,6 +24,12 @@ public class CustomMetricsExtensionConfiguration {
     @AutoConfigureAfter(JHipsterMetricsEndpointConfiguration.class)
     public class JHipsterMetricsEndpointConfiguration {
 
+        /**
+         * customMetricsExtension.
+         * @param jHipsterMetricsEndpoint Default JHI Metrics
+         * @param simpUserRegistry Registry used to retrieve the number of active users.
+         * @return CustomMetricsExtension object.
+         */
         @Bean
         @ConditionalOnBean({ JHipsterMetricsEndpoint.class, SimpUserRegistry.class })
         @ConditionalOnMissingBean

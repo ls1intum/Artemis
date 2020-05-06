@@ -10,6 +10,10 @@ import org.springframework.stereotype.Component;
 
 import io.github.jhipster.config.metric.JHipsterMetricsEndpoint;
 
+/**
+ * CustomMetricsExtension.
+ * Extends the default JHI Metrics with custom metrics for ArTEMiS.
+ */
 @Component
 @EndpointWebExtension(endpoint = JHipsterMetricsEndpoint.class)
 public class CustomMetricsExtension {
@@ -23,6 +27,10 @@ public class CustomMetricsExtension {
         this.simpUserRegistry = simpUserRegistry;
     }
 
+    /**
+     * Expands the jhimetrics call with number of active users.
+     * @return extended jhimetrics
+     */
     @ReadOperation
     public Map<String, Map> getMetrics() {
         Map<String, Map> metrics = this.delegate.allMetrics();
