@@ -17,7 +17,7 @@ import { SystemNotificationService } from 'app/core/system-notification/system-n
 import { AlertService } from 'app/core/alert/alert.service';
 
 @Component({
-    selector: 'jhi-notification-mgmt',
+    selector: 'jhi-system-notification-management',
     templateUrl: './system-notification-management.component.html',
 })
 export class SystemNotificationMgmtComponent implements OnInit, OnDestroy {
