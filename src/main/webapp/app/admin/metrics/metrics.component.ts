@@ -32,10 +32,7 @@ export class JhiMetricsMonitoringComponent implements OnInit {
             this.metrics = metrics;
             this.metricsService.threadDump().subscribe((data) => {
                 this.threadData = data.threads;
-                this.metricsService.getUserMetrics().subscribe((numberOfUsers) => {
-                    this.metrics.processMetrics.activeUsers = numberOfUsers;
-                    this.updatingMetrics = false;
-                });
+                this.updatingMetrics = false;
             });
         });
     }

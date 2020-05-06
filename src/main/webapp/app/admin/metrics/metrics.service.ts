@@ -21,11 +21,4 @@ export class JhiMetricsService {
     threadDump(): Observable<any> {
         return this.http.get(SERVER_API_URL + 'management/threaddump');
     }
-
-    /**
-     * Send GET request to retrieve user metrics (number of active users)
-     */
-    getUserMetrics(): Observable<any> {
-        return this.http.get(SERVER_API_URL + 'api/management/usermetrics');
-    }
 }
