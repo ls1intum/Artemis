@@ -23,5 +23,5 @@ jobs:
         with:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           teams: "@ls1intum/artemis"
-          include-draft: false
+          include-draft: true
           skip-with-manual-reviewers: 5
