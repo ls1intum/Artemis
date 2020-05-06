@@ -18,8 +18,15 @@ export class CourseLectureRowComponent implements OnInit {
 
     constructor(private router: Router, private route: ActivatedRoute) {}
 
+    /**
+     * Life cycle hook called by Angular to indicate that Angular is done creating the component
+     */
     ngOnInit() {}
 
+    /**
+     * check if the remaining days for lecture is less than a week
+     * @param date - passed date
+     */
     getUrgentClass(date: Moment): string {
         if (!date) {
             return '';
@@ -32,6 +39,9 @@ export class CourseLectureRowComponent implements OnInit {
         }
     }
 
+    /**
+     * Shows details of the lecture
+     */
     showDetails() {
         const lectureToAttach = {
             ...this.lecture,

@@ -37,6 +37,9 @@ export class CourseLecturesComponent implements OnInit, OnDestroy {
         private route: ActivatedRoute,
     ) {}
 
+    /**
+     * On init, gets the course and group its lectures
+     */
     ngOnInit() {
         this.exerciseCountMap = new Map<string, number>();
         this.paramSubscription = this.route.parent!.params.subscribe((params) => {
@@ -59,6 +62,9 @@ export class CourseLecturesComponent implements OnInit, OnDestroy {
         this.totalAttachmentCount = this.getAttachmentCount();
     }
 
+    /**
+     * On destroy, unsubscribe from observables
+     */
     ngOnDestroy(): void {
         if (this.translateService) {
             this.translateSubscription.unsubscribe();
@@ -68,6 +74,10 @@ export class CourseLecturesComponent implements OnInit, OnDestroy {
         }
     }
 
+    /**
+     * Sorts and groups lectures based on their date value
+     * @param selectedOrder - sorting order for the lectures
+     */
     public groupLectures(selectedOrder: number): void {
         this.weeklyLecturesGrouped = {};
         this.weeklyIndexKeys = [];
