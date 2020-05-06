@@ -4,7 +4,6 @@ import static org.assertj.core.api.Assertions.*;
 
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
-import java.util.HashSet;
 import java.util.List;
 
 import org.junit.jupiter.api.AfterEach;
@@ -23,7 +22,6 @@ import de.tum.in.www1.artemis.service.QuizExerciseService;
 import de.tum.in.www1.artemis.service.scheduled.QuizScheduleService;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.RequestUtilService;
-import de.tum.in.www1.artemis.web.websocket.QuizSubmissionWebsocketService;
 
 public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -358,19 +356,11 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         var now = ZonedDateTime.now();
 
         for (int i = 1; i <= 10; i++) {
+            //generate some mixed submissions for each student
             QuizSubmission quizSubmission = new QuizSubmission();
-
-            MultipleChoiceSubmittedAnswer submittedMC = new MultipleChoiceSubmittedAnswer();
-            submittedMC.setScoreInPoints(10.0);
-            quizSubmission.addSubmittedAnswers(submittedMC);
-
-            ShortAnswerSubmittedAnswer submittedSA = new ShortAnswerSubmittedAnswer();
-            submittedSA.setScoreInPoints(10.0);
-            quizSubmission.addSubmittedAnswers(submittedSA);
-
-            DragAndDropSubmittedAnswer submittedDD = new DragAndDropSubmittedAnswer();
-            submittedDD.setScoreInPoints(10.0);
-            quizSubmission.addSubmittedAnswers(submittedDD);
+            quizSubmission.addSubmittedAnswers(database.generateSubmittedAnswerFor(quizExercise.getQuizQuestions().get(0), i % 2 != 0));
+            quizSubmission.addSubmittedAnswers(database.generateSubmittedAnswerFor(quizExercise.getQuizQuestions().get(1), i % 2 == 0));
+            quizSubmission.addSubmittedAnswers(database.generateSubmittedAnswerFor(quizExercise.getQuizQuestions().get(2), i % 2 == 0));
 
             quizSubmission.submitted(true);
             quizSubmission.submissionDate(now.minusHours(3));

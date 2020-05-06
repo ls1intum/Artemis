@@ -104,10 +104,11 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         }
 
         for (int i = 1; i <= numberOfParticipants; i++) {
+            //generate some mixed submissions for each student
             QuizSubmission quizSubmission = new QuizSubmission();
-            for (int j = 0; j < quizExercise.getQuizQuestions().size(); j++) {
-                quizSubmission.addSubmittedAnswers(database.generateSubmittedAnswerFor(quizExercise.getQuizQuestions().get(j), (i + j) % 2 == 0));
-            }
+            quizSubmission.addSubmittedAnswers(database.generateSubmittedAnswerFor(quizExercise.getQuizQuestions().get(0), i % 2 != 0));
+            quizSubmission.addSubmittedAnswers(database.generateSubmittedAnswerFor(quizExercise.getQuizQuestions().get(1), i % 2 == 0));
+            quizSubmission.addSubmittedAnswers(database.generateSubmittedAnswerFor(quizExercise.getQuizQuestions().get(2), i % 2 == 0));
 
             quizSubmission.setSubmitted(true);
             final var username = "student" + i;
@@ -134,11 +135,11 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         assertThat(quizExerciseWithStatistic.getQuizPointStatistic().getPointCounters().size()).isEqualTo(questionScore + 1);
         for (var pointCounter : quizExerciseWithStatistic.getQuizPointStatistic().getPointCounters()) {
 
-            if (pointCounter.getPoints() == 0.0) {
+            if (pointCounter.getPoints() == 3.0) {
                 assertThat(pointCounter.getRatedCounter()).isEqualTo(5);
                 assertThat(pointCounter.getUnRatedCounter()).isEqualTo(0);
             }
-            else if (pointCounter.getPoints() == 7.0) {
+            else if (pointCounter.getPoints() == 4.0) {
                 assertThat(pointCounter.getRatedCounter()).isEqualTo(5);
                 assertThat(pointCounter.getUnRatedCounter()).isEqualTo(0);
             }
