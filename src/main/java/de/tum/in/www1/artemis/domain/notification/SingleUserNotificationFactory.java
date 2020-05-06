@@ -28,6 +28,6 @@ public class SingleUserNotificationFactory {
             }
             return notification;
         }
-        throw new UnsupportedOperationException("Unsupported NotificationType.");
+        throw new UnsupportedOperationException("Unsupported NotificationType: " + notificationType);
     }
 }

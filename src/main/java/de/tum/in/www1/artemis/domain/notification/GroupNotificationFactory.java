@@ -22,7 +22,7 @@ public class GroupNotificationFactory {
             text = "Attachment \"" + attachment.getName() + "\" updated.";
         }
         else {
-            throw new UnsupportedOperationException("Unsupported NotificationType.");
+            throw new UnsupportedOperationException("Unsupported NotificationType: " + notificationType);
         }
 
         Course course = attachment.getLecture().getCourse();
@@ -62,7 +62,7 @@ public class GroupNotificationFactory {
             text = "Exercise \"" + exercise.getTitle() + "\" updated.";
         }
         else {
-            throw new UnsupportedOperationException("Unsupported NotificationType.");
+            throw new UnsupportedOperationException("Unsupported NotificationType: " + notificationType);
         }
 
         GroupNotification notification = new GroupNotification(exercise.getCourse(), title, text, author, groupNotificationType);
@@ -103,7 +103,7 @@ public class GroupNotificationFactory {
             course = lecture.getCourse();
         }
         else {
-            throw new UnsupportedOperationException("Unsupported NotificationType.");
+            throw new UnsupportedOperationException("Unsupported NotificationType: " + notificationType);
         }
 
         GroupNotification notification = new GroupNotification(course, title, text, author, groupNotificationType);
@@ -144,7 +144,7 @@ public class GroupNotificationFactory {
             course = lecture.getCourse();
         }
         else {
-            throw new UnsupportedOperationException("Unsupported NotificationType.");
+            throw new UnsupportedOperationException("Unsupported NotificationType: " + notificationType);
         }
 
         GroupNotification notification = new GroupNotification(course, title, text, author, groupNotificationType);
