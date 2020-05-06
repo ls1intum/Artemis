@@ -103,7 +103,10 @@ public class TeamResource {
         if (!exercise.isTeamMode()) {
             throw new BadRequestAlertException("A team cannot be created for an exercise that is not team-based.", ENTITY_NAME, "exerciseNotTeamBased");
         }
-        team.setOwner(user); // the TA (or above) who creates the team, is the owner of the team
+        // Tutors can only create teams for themselves while instructors can select any tutor as the team owner
+        if (!authCheckService.isAtLeastInstructorForExercise(exercise, user)) {
+            team.setOwner(user);
+        }
         Team savedTeam = teamService.save(exercise, team);
         savedTeam.filterSensitiveInformation();
         teamWebsocketService.sendTeamAssignmentUpdate(exercise, null, savedTeam);
