@@ -1,14 +1,14 @@
 import { Injectable } from '@angular/core';
 import { ActivatedRouteSnapshot, Resolve, Route } from '@angular/router';
 import { JhiResolvePagingParams } from 'ng-jhipster';
-import { SystemNotificationMgmtUpdateComponent } from 'app/admin/system-notification-management/system-notification-management-update.component';
+import { SystemNotificationManagementUpdateComponent } from 'app/admin/system-notification-management/system-notification-management-update.component';
 import { SystemNotification } from 'app/entities/system-notification.model';
 import { SystemNotificationService } from 'app/core/system-notification/system-notification.service';
-import { SystemNotificationMgmtComponent } from 'app/admin/system-notification-management/system-notification-management.component';
-import { SystemNotificationMgmtDetailComponent } from 'app/admin/system-notification-management/system-notification-management-detail.component';
+import { SystemNotificationManagementComponent } from 'app/admin/system-notification-management/system-notification-management.component';
+import { SystemNotificationManagementDetailComponent } from 'app/admin/system-notification-management/system-notification-management-detail.component';
 
 @Injectable({ providedIn: 'root' })
-export class SystemNotificationMgmtResolve implements Resolve<any> {
+export class SystemNotificationManagementResolve implements Resolve<any> {
     constructor(private service: SystemNotificationService) {}
 
     /**
@@ -24,9 +24,9 @@ export class SystemNotificationMgmtResolve implements Resolve<any> {
     }
 }
 
-export const systemNotificationMgmtRoutes1: Route = {
+export const systemNotificationManagementRoutes1: Route = {
     path: 'system-notification-management',
-    component: SystemNotificationMgmtComponent,
+    component: SystemNotificationManagementComponent,
     resolve: {
         pagingParams: JhiResolvePagingParams,
     },
@@ -36,33 +36,33 @@ export const systemNotificationMgmtRoutes1: Route = {
     },
 };
 
-export const systemNotificationMgmtRoutes2: Route = {
+export const systemNotificationManagementRoutes2: Route = {
     path: 'system-notification-management/:id/view',
-    component: SystemNotificationMgmtDetailComponent,
+    component: SystemNotificationManagementDetailComponent,
     resolve: {
-        notification: SystemNotificationMgmtResolve,
+        notification: SystemNotificationManagementResolve,
     },
     data: {
         pageTitle: 'artemisApp.systemNotification.systemNotifications',
     },
 };
 
-export const systemNotificationMgmtRoutes3: Route = {
+export const systemNotificationManagementRoutes3: Route = {
     path: 'system-notification-management/new',
-    component: SystemNotificationMgmtUpdateComponent,
+    component: SystemNotificationManagementUpdateComponent,
     resolve: {
-        notification: SystemNotificationMgmtResolve,
+        notification: SystemNotificationManagementResolve,
     },
     data: {
         pageTitle: 'artemisApp.systemNotification.systemNotifications',
     },
 };
 
-export const systemNotificationMgmtRoutes4: Route = {
+export const systemNotificationManagementRoutes4: Route = {
     path: 'system-notification-management/:id/edit',
-    component: SystemNotificationMgmtUpdateComponent,
+    component: SystemNotificationManagementUpdateComponent,
     resolve: {
-        notification: SystemNotificationMgmtResolve,
+        notification: SystemNotificationManagementResolve,
     },
     data: {
         pageTitle: 'artemisApp.systemNotification.systemNotifications',
