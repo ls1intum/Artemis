@@ -17,16 +17,25 @@ import { CourseScoreCalculationService } from 'app/overview/course-score-calcula
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 
+/**
+ * enumerator for filtering exercise
+ */
 enum ExerciseFilter {
     OVERDUE = 'OVERDUE',
     NEEDS_WORK = 'NEEDS_WORK',
 }
 
+/**
+ * enumerator for sorting exercise
+ */
 enum ExerciseSortingOrder {
     DUE_DATE_ASC = 1,
     DUE_DATE_DESC = -1,
 }
 
+/**
+ * enumerator for sort and filter storage keys
+ */
 enum SortFilterStorageKey {
     FILTER = 'artemis.course.exercises.filter',
     ORDER = 'artemis.course.exercises.order',
@@ -68,6 +77,9 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
         private localStorage: LocalStorageService,
     ) {}
 
+    /**
+     * On init, gets the course and applies sorts and filters for exercises
+     */
     ngOnInit() {
         this.exerciseCountMap = new Map<string, number>();
         this.numberOfExercises = 0;
@@ -105,11 +117,17 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
         this.exerciseForGuidedTour = this.guidedTourService.enableTourForCourseExerciseComponent(this.course, courseExerciseOverviewTour, true);
     }
 
+    /**
+     * On destroy, unsubscribe from observables
+     */
     ngOnDestroy(): void {
         this.translateSubscription.unsubscribe();
         this.paramSubscription.unsubscribe();
     }
 
+    /**
+     * calculate the number of exercises
+     */
     private calcNumberOfExercises() {
         this.numberOfExercises = sum(Array.from(this.exerciseCountMap.values()));
     }
