@@ -13,9 +13,11 @@ public class GroupNotificationFactory {
      * @param author of the notification
      * @param groupNotificationType user group type the notification should target
      * @param notificationType type of the notification that should be created
+     * @param notificationText custom notification text
      * @return an instance of GroupNotification
      */
-    public static GroupNotification createNotification(Attachment attachment, User author, GroupNotificationType groupNotificationType, NotificationType notificationType) {
+    public static GroupNotification createNotification(Attachment attachment, User author, GroupNotificationType groupNotificationType, NotificationType notificationType,
+            String notificationText) {
         String title, text;
         if (notificationType == NotificationType.ATTACHMENT_CHANGE) {
             title = "Attachment updated";
@@ -23,6 +25,10 @@ public class GroupNotificationFactory {
         }
         else {
             throw new UnsupportedOperationException("Unsupported NotificationType: " + notificationType);
+        }
+
+        if (notificationText != null) {
+            text = notificationText;
         }
 
         Course course = attachment.getLecture().getCourse();
@@ -40,9 +46,11 @@ public class GroupNotificationFactory {
      * @param author of the notification
      * @param groupNotificationType user group type the notification should target
      * @param notificationType type of the notification that should be created
+     * @param notificationText custom notification text
      * @return an instance of GroupNotification
      */
-    public static GroupNotification createNotification(Exercise exercise, User author, GroupNotificationType groupNotificationType, NotificationType notificationType) {
+    public static GroupNotification createNotification(Exercise exercise, User author, GroupNotificationType groupNotificationType, NotificationType notificationType,
+            String notificationText) {
         String title, text;
         if (notificationType == NotificationType.EXERCISE_CREATED) {
             title = "Exercise created";
@@ -62,6 +70,10 @@ public class GroupNotificationFactory {
         }
         else {
             throw new UnsupportedOperationException("Unsupported NotificationType: " + notificationType);
+        }
+
+        if (notificationText != null) {
+            text = notificationText;
         }
 
         GroupNotification notification = new GroupNotification(exercise.getCourse(), title, text, author, groupNotificationType);

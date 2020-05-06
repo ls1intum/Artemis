@@ -32,7 +32,7 @@ public class GroupNotificationService {
      * Notify student groups about an attachment change.
      *
      * @param attachment that has been changed
-     * @param notificationText that should be displayed  TODO: can be removed in the future as notification's text attribute is not used in the client
+     * @param notificationText that should be displayed
      */
     public void notifyStudentGroupAboutAttachmentChange(Attachment attachment, String notificationText) {
         // Do not send a notification before the release date of the attachment.
@@ -40,7 +40,7 @@ public class GroupNotificationService {
             return;
         }
         // Create and send the notification.
-        saveAndSend(createNotification(attachment, userService.getUser(), GroupNotificationType.STUDENT, NotificationType.ATTACHMENT_CHANGE));
+        saveAndSend(createNotification(attachment, userService.getUser(), GroupNotificationType.STUDENT, NotificationType.ATTACHMENT_CHANGE, notificationText));
     }
 
     /**
@@ -49,7 +49,7 @@ public class GroupNotificationService {
      * @param exercise that has been opened for practice
      */
     public void notifyStudentGroupAboutExercisePractice(Exercise exercise) {
-        saveAndSend(createNotification(exercise, userService.getUser(), GroupNotificationType.STUDENT, NotificationType.EXERCISE_PRACTICE));
+        saveAndSend(createNotification(exercise, userService.getUser(), GroupNotificationType.STUDENT, NotificationType.EXERCISE_PRACTICE, null));
     }
 
     /**
@@ -58,14 +58,14 @@ public class GroupNotificationService {
      * @param exercise that has been started
      */
     public void notifyStudentGroupAboutExerciseStart(Exercise exercise) {
-        saveAndSend(createNotification(exercise, userService.getUser(), GroupNotificationType.STUDENT, NotificationType.EXERCISE_STARTED));
+        saveAndSend(createNotification(exercise, userService.getUser(), GroupNotificationType.STUDENT, NotificationType.EXERCISE_STARTED, null));
     }
 
     /**
      * Notify student groups about an exercise update.
      *
      * @param exercise that has been updated
-     * @param notificationText that should be displayed  TODO: can be removed in the future as notification's text attribute is not used in the client
+     * @param notificationText that should be displayed
      */
     public void notifyStudentGroupAboutExerciseUpdate(Exercise exercise, String notificationText) {
         // Do not send a notification before the release date of the exercise.
@@ -73,7 +73,7 @@ public class GroupNotificationService {
             return;
         }
         // Create and send the notification.
-        saveAndSend(createNotification(exercise, userService.getUser(), GroupNotificationType.STUDENT, NotificationType.EXERCISE_UPDATED));
+        saveAndSend(createNotification(exercise, userService.getUser(), GroupNotificationType.STUDENT, NotificationType.EXERCISE_UPDATED, notificationText));
     }
 
     /**
@@ -82,17 +82,17 @@ public class GroupNotificationService {
      * @param exercise that has been created
      */
     public void notifyTutorGroupAboutExerciseCreated(Exercise exercise) {
-        saveAndSend(createNotification(exercise, userService.getUser(), GroupNotificationType.TA, NotificationType.EXERCISE_CREATED));
+        saveAndSend(createNotification(exercise, userService.getUser(), GroupNotificationType.TA, NotificationType.EXERCISE_CREATED, null));
     }
 
     /**
      * Notify instructor groups about an exercise update.
      *
      * @param exercise that has been updated
-     * @param notificationText that should be displayed  TODO: can be removed in the future as notification's text attribute is not used in the client
+     * @param notificationText that should be displayed
      */
     public void notifyInstructorGroupAboutExerciseUpdate(Exercise exercise, String notificationText) {
-        saveAndSend(createNotification(exercise, userService.getUser(), GroupNotificationType.INSTRUCTOR, NotificationType.EXERCISE_UPDATED));
+        saveAndSend(createNotification(exercise, userService.getUser(), GroupNotificationType.INSTRUCTOR, NotificationType.EXERCISE_UPDATED, notificationText));
     }
 
     /**
