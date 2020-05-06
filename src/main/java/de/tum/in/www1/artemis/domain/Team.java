@@ -45,9 +45,8 @@ public class Team extends AbstractAuditingEntity implements Serializable, Partic
     @JsonIgnore
     private Exercise exercise;
 
-    @OrderColumn
     @ManyToMany(fetch = FetchType.EAGER)
-    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+    @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
     @JsonInclude(JsonInclude.Include.NON_NULL)
     @JoinTable(name = "team_student", joinColumns = @JoinColumn(name = "team_id", referencedColumnName = "id"), inverseJoinColumns = @JoinColumn(name = "student_id", referencedColumnName = "id"))
     private Set<User> students = new HashSet<>();
