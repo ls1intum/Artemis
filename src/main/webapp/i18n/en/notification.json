@@ -21,7 +21,7 @@
             "title": "Title",
             "text": "Text",
             "type": "Type",
-            "expireDate": "Expire Date",
+            "expireDate": "Expiration Date",
             "notificationDate": "Notification Date",
             "active": "Active",
             "notActive": "Not Active",
