@@ -28,7 +28,6 @@ public class GroupNotificationFactory {
         Course course = attachment.getLecture().getCourse();
         GroupNotification notification = new GroupNotification(course, title, text, author, groupNotificationType);
 
-        // Set target
         notification.setTarget(notification.getAttachmentUpdated(attachment.getLecture()));
 
         return notification;
@@ -67,7 +66,6 @@ public class GroupNotificationFactory {
 
         GroupNotification notification = new GroupNotification(exercise.getCourse(), title, text, author, groupNotificationType);
 
-        // Set the target
         if (notificationType == NotificationType.EXERCISE_CREATED) {
             notification.setTarget(notification.getExerciseCreatedTarget(exercise));
         }
@@ -108,7 +106,6 @@ public class GroupNotificationFactory {
 
         GroupNotification notification = new GroupNotification(course, title, text, author, groupNotificationType);
 
-        // Set target
         if (notificationType == NotificationType.NEW_QUESTION_FOR_EXERCISE) {
             notification.setTarget(notification.getExerciseQuestionTarget(question.getExercise()));
         }
@@ -149,7 +146,6 @@ public class GroupNotificationFactory {
 
         GroupNotification notification = new GroupNotification(course, title, text, author, groupNotificationType);
 
-        // Set target
         if (notificationType == NotificationType.NEW_ANSWER_FOR_EXERCISE) {
             notification.setTarget(notification.getExerciseAnswerTarget(answer.getQuestion().getExercise()));
         }
