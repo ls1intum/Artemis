@@ -35,7 +35,7 @@ public class GroupNotificationService {
      */
     public void notifyStudentGroupAboutAttachmentChange(Attachment attachment, String notificationText) {
         // Do not send a notification before the release date of the attachment.
-        if (attachment.getReleaseDate() != null && !attachment.getReleaseDate().isBefore(ZonedDateTime.now())) {
+        if (attachment.getReleaseDate() != null && attachment.getReleaseDate().isAfter(ZonedDateTime.now())) {
             return;
         }
         // Create and send the notification.
