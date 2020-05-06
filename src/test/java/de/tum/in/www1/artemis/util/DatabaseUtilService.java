@@ -1181,6 +1181,8 @@ public class DatabaseUtilService {
     public SubmittedAnswer generateSubmittedAnswerFor(QuizQuestion question, boolean correct) {
         if (question instanceof MultipleChoiceQuestion) {
             var submittedAnswer = new MultipleChoiceSubmittedAnswer();
+            submittedAnswer.setQuizQuestion(question);
+
             for (var answerOption : ((MultipleChoiceQuestion) question).getAnswerOptions()) {
                 if (answerOption.isIsCorrect().equals(correct)) {
                     submittedAnswer.addSelectedOptions(answerOption);
@@ -1190,10 +1192,13 @@ public class DatabaseUtilService {
         }
         else if (question instanceof DragAndDropQuestion) {
             var submittedAnswer = new DragAndDropSubmittedAnswer();
+            submittedAnswer.setQuizQuestion(question);
             return submittedAnswer;
         }
         else if (question instanceof ShortAnswerQuestion) {
             var submittedAnswer = new ShortAnswerSubmittedAnswer();
+            submittedAnswer.setQuizQuestion(question);
+
             for(var spot : ((ShortAnswerQuestion) question).getSpots()) {
                 ShortAnswerSubmittedText submittedText = new ShortAnswerSubmittedText();
                 submittedText.setSpot(spot);
@@ -1223,7 +1228,7 @@ public class DatabaseUtilService {
 
     @NotNull
     public ShortAnswerQuestion createShortAnswerQuestion() {
-        ShortAnswerQuestion sa = (ShortAnswerQuestion) new ShortAnswerQuestion().title("SA").score(2).text("This is a long answer text");
+        ShortAnswerQuestion sa = (ShortAnswerQuestion) new ShortAnswerQuestion().title("SA").score(3).text("This is a long answer text");
         sa.setScoringType(ScoringType.ALL_OR_NOTHING);
         var shortAnswerSpot1 = new ShortAnswerSpot().spotNr(0).width(1);
         shortAnswerSpot1.setTempID(generateTempId());
@@ -1271,7 +1276,7 @@ public class DatabaseUtilService {
 
     @NotNull
     public MultipleChoiceQuestion createMultipleChoiceQuestion() {
-        MultipleChoiceQuestion mc = (MultipleChoiceQuestion) new MultipleChoiceQuestion().title("MC").score(1).text("Q1");
+        MultipleChoiceQuestion mc = (MultipleChoiceQuestion) new MultipleChoiceQuestion().title("MC").score(4).text("Q1");
         mc.setScoringType(ScoringType.ALL_OR_NOTHING);
         mc.getAnswerOptions().add(new AnswerOption().text("A").hint("H1").explanation("E1").isCorrect(true));
         mc.getAnswerOptions().add(new AnswerOption().text("B").hint("H2").explanation("E2").isCorrect(false));

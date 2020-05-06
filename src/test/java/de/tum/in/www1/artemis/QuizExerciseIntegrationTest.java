@@ -86,7 +86,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
                 assertThat(multipleChoiceQuestion.getAnswerOptions().size()).as("Multiple choice question answer options were saved").isEqualTo(2);
                 assertThat(multipleChoiceQuestion.getTitle()).as("Multiple choice question title is correct").isEqualTo("MC");
                 assertThat(multipleChoiceQuestion.getText()).as("Multiple choice question text is correct").isEqualTo("Q1");
-                assertThat(multipleChoiceQuestion.getScore()).as("Multiple choice question score is correct").isEqualTo(1);
+                assertThat(multipleChoiceQuestion.getScore()).as("Multiple choice question score is correct").isEqualTo(4);
 
                 List<AnswerOption> answerOptions = multipleChoiceQuestion.getAnswerOptions();
                 assertThat(answerOptions.get(0).getText()).as("Text for answer option is correct").isEqualTo("A");
@@ -126,7 +126,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
                 assertThat(shortAnswerQuestion.getSolutions().size()).as("Short answer question solutions were saved").isEqualTo(2);
                 assertThat(shortAnswerQuestion.getTitle()).as("Short answer question title is correct").isEqualTo("SA");
                 assertThat(shortAnswerQuestion.getText()).as("Short answer question text is correct").isEqualTo("This is a long answer text");
-                assertThat(shortAnswerQuestion.getScore()).as("Short answer question score is correct").isEqualTo(2);
+                assertThat(shortAnswerQuestion.getScore()).as("Short answer question score is correct").isEqualTo(3);
 
                 List<ShortAnswerSpot> spots = shortAnswerQuestion.getSpots();
                 assertThat(spots.get(0).getSpotNr()).as("Spot nr for spot is correct").isEqualTo(0);
@@ -169,7 +169,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
                 assertThat(multipleChoiceQuestion.getAnswerOptions().size()).as("Multiple choice question answer options were saved").isEqualTo(3);
                 assertThat(multipleChoiceQuestion.getTitle()).as("Multiple choice question title is correct").isEqualTo("MC");
                 assertThat(multipleChoiceQuestion.getText()).as("Multiple choice question text is correct").isEqualTo("Q1");
-                assertThat(multipleChoiceQuestion.getScore()).as("Multiple choice question score is correct").isEqualTo(1);
+                assertThat(multipleChoiceQuestion.getScore()).as("Multiple choice question score is correct").isEqualTo(4);
 
                 List<AnswerOption> answerOptions = multipleChoiceQuestion.getAnswerOptions();
                 assertThat(answerOptions.get(0).getText()).as("Text for answer option is correct").isEqualTo("B");
@@ -208,7 +208,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
                 assertThat(shortAnswerQuestion.getSolutions().size()).as("Short answer question solutions were saved").isEqualTo(1);
                 assertThat(shortAnswerQuestion.getTitle()).as("Short answer question title is correct").isEqualTo("SA");
                 assertThat(shortAnswerQuestion.getText()).as("Short answer question text is correct").isEqualTo("This is a long answer text");
-                assertThat(shortAnswerQuestion.getScore()).as("Short answer question score is correct").isEqualTo(2);
+                assertThat(shortAnswerQuestion.getScore()).as("Short answer question score is correct").isEqualTo(3);
 
                 List<ShortAnswerSpot> spots = shortAnswerQuestion.getSpots();
                 assertThat(spots.get(0).getSpotNr()).as("Spot nr for spot is correct").isEqualTo(2);
@@ -359,7 +359,6 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
 
         for (int i = 1; i <= 10; i++) {
             QuizSubmission quizSubmission = new QuizSubmission();
-            MultipleChoiceQuestion mc = (MultipleChoiceQuestion) quizExercise.getQuizQuestions().get(0);
 
             MultipleChoiceSubmittedAnswer submittedMC = new MultipleChoiceSubmittedAnswer();
             submittedMC.setScoreInPoints(10.0);
