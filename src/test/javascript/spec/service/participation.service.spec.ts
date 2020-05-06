@@ -2,7 +2,6 @@ import { getTestBed, TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { map, take } from 'rxjs/operators';
 import * as moment from 'moment';
-import { DATE_TIME_FORMAT } from 'app/shared/constants/input.constants';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import { Participation } from 'app/entities/participation/participation.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
@@ -29,7 +28,7 @@ describe('Participation Service', () => {
         it('should find an element', async () => {
             const returnedFromService = Object.assign(
                 {
-                    initializationDate: currentDate.format(DATE_TIME_FORMAT),
+                    initializationDate: currentDate.toDate(),
                 },
                 elemDefault,
             );
@@ -48,7 +47,7 @@ describe('Participation Service', () => {
                     repositoryUrl: 'BBBBBB',
                     buildPlanId: 'BBBBBB',
                     initializationState: 'BBBBBB',
-                    initializationDate: currentDate.format(DATE_TIME_FORMAT),
+                    initializationDate: currentDate.toDate(),
                     presentationScore: 1,
                 },
                 elemDefault,
@@ -74,7 +73,7 @@ describe('Participation Service', () => {
                     repositoryUrl: 'BBBBBB',
                     buildPlanId: 'BBBBBB',
                     initializationState: 'BBBBBB',
-                    initializationDate: currentDate.format(DATE_TIME_FORMAT),
+                    initializationDate: currentDate.toDate(),
                     presentationScore: 1,
                 },
                 elemDefault,
