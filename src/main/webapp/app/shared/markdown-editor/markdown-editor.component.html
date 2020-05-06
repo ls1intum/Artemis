@@ -17,8 +17,10 @@
                     <ng-container *ngIf="enableFileUpload">
                         <input id="file-upload" class="markdown-editor__file-input" type="file" [multiple]="false" />
                         <label for="file-upload" class="markdown-editor__file-label d-inline">
-                            <span>Click here to upload</span>
-                            <fa-icon [icon]="'question-circle'" ></fa-icon>
+                            <span>{{ 'artemisApp.markdownEditor.fileUpload' | translate }}</span>
+                            <a href="https://guides.github.com/features/mastering-markdown/">
+                                <fa-icon [icon]="'question-circle'" [ngbTooltip]="'artemisApp.markdownEditor.guide' | translate"></fa-icon>
+                            </a>
                         </label>
                     </ng-container>
                     <!-- Required for resizing; don't remove empty span -->

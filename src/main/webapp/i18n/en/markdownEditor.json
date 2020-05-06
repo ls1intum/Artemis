@@ -4,7 +4,9 @@
             "commands": {
                 "katex": "Formula",
                 "fullscreen": "Fullscreen"
-            }
+            },
+            "fileUpload": "Attach files by dragging & dropping or selecting them.",
+            "guide": "Styling with Markdown is supported"
         }
     }
 }
