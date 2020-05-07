@@ -15,8 +15,9 @@ input.form-control:focus {
 
 textarea {
     resize: none;
-    overflow-y: scroll;
+    overflow-y: auto;
     overflow-x: hidden;
+    max-height: 55px;
 }
 
 input {
