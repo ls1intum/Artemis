@@ -94,7 +94,10 @@ public class TeamResource {
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user)) {
             return forbidden();
         }
-        team.setOwner(user); // the TA (or above) who creates the team, is the owner of the team
+        // Tutors can only create teams for themselves while instructors can select any tutor as the team owner
+        if (!authCheckService.isAtLeastInstructorForExercise(exercise, user)) {
+            team.setOwner(user);
+        }
         Team result = teamService.save(exercise, team);
         result.filterSensitiveInformation();
         return ResponseEntity.created(new URI("/api/teams/" + result.getId()))
