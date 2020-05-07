@@ -10,9 +10,9 @@
     <p class="markdown-preview" [innerHTML]="problemStatement" *ngSwitchDefault></p>
 </jhi-expandable-section>
 
-<jhi-expandable-section headerKey="assessmentInstructions.sampleSolution" *ngIf="sampleSolution">
+<jhi-expandable-section headerKey="assessmentInstructions.sampleSolution">
     <jhi-modeling-editor *ngIf="sampleSolutionModel" [readOnly]="true" [diagramType]="sampleSolutionDiagramType!" [umlModel]="sampleSolutionModel!"> </jhi-modeling-editor>
-    <p class="markdown-preview" [innerHTML]="sampleSolution!"></p>
+    <p class="markdown-preview" *ngIf="sampleSolutionExplanation" [innerHTML]="sampleSolutionExplanation!"></p>
 </jhi-expandable-section>
 
 <jhi-expandable-section headerKey="assessmentInstructions.gradingCriteria">
