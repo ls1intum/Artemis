@@ -13,9 +13,9 @@ import de.tum.in.www1.artemis.repository.NotificationRepository;
 @Service
 public class NotificationService {
 
-    private NotificationRepository notificationRepository;
+    private final NotificationRepository notificationRepository;
 
-    private GroupNotificationRepository groupNotificationRepository;
+    private final GroupNotificationRepository groupNotificationRepository;
 
     public NotificationService(NotificationRepository notificationRepository, GroupNotificationRepository groupNotificationRepository) {
         this.notificationRepository = notificationRepository;
@@ -23,7 +23,7 @@ public class NotificationService {
     }
 
     public Page<Notification> findAllExceptSystem(User currentUser, Pageable pageable) {
-        return notificationRepository.findAllNotificationsForRecipientWithLogin(currentUser.getGroups(), pageable, currentUser.getLogin());
+        return notificationRepository.findAllNotificationsForRecipientWithLogin(currentUser.getGroups(), currentUser.getLogin(), pageable);
     }
 
     public List<Notification> findAllRecentExceptSystem(User currentUser) {
