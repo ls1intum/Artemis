@@ -107,6 +107,7 @@ export class CodeEditorBuildLogService extends DomainDependentEndpointService {
         if (domainType === DomainType.PARTICIPATION) {
             return this.buildLogService.getBuildLogs(domainValue.id);
         }
+        return of([]);
     };
 }
 
