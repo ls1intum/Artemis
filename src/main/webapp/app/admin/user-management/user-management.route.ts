@@ -52,6 +52,9 @@ export const userMgmtRoute3: Route = {
     resolve: {
         user: UserMgmtResolve,
     },
+    data: {
+        pageTitle: 'userManagement.home.createLabel',
+    },
 };
 
 export const userMgmtRoute4: Route = {
@@ -59,5 +62,8 @@ export const userMgmtRoute4: Route = {
     component: UserManagementUpdateComponent,
     resolve: {
         user: UserMgmtResolve,
+    },
+    data: {
+        pageTitle: 'userManagement.home.createOrEditLabel',
     },
 };
