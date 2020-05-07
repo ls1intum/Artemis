@@ -89,7 +89,9 @@ artemis:
         secret: null
 ```
 Change all entries with ```<...>``` with proper values, e.g. your TUM Online account credentials to connect to the given instances of JIRA, Bitbucket and Bamboo. Alternatively, you can connect to your local JIRA, Bitbucket and Bamboo instances.
-Be careful that you don't commit changes in this file. Best practice is to specify that your local git repository ignores this file or assumes that this file is unchanged. Also note that except for the credentials and a random encryption-password, other fields like `ldap` can be left blank.
+It's not necessary to fill all the fields, most of them can be left blank.
+Note that there is additional information about the setup for programming exercises provided, either with [Jenkins and GitLab](https://github.com/ls1intum/Artemis/blob/develop/doc/jenkins-gitlab/JENKINS_AND_GITLAB_SETUP.md) or [Bamboo, Bitbucket and Jira](https://github.com/ls1intum/Artemis/blob/develop/doc/bamboo-bitbucket-jira/BAMBOO_BITBUCKET_JIRA_SETUP.md). 
+Be careful that you don't commit changes in this file. Best practice is to specify that your local git repository ignores this file or assumes that this file is unchanged.
 
 The Artemis server should startup by running the main class ```de.tum.in.www1.artemis.ArtemisApp``` using Spring Boot.
 
