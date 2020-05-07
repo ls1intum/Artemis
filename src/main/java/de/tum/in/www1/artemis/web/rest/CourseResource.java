@@ -548,6 +548,9 @@ public class CourseResource {
         final long numberOfComplaints = complaintService.countComplaintsByCourseId(courseId);
         stats.setNumberOfComplaints(numberOfComplaints);
 
+        final long numberOfAssessmentLocks = submissionService.submissionLockCount(courseId);
+        stats.setNumberOfAssessmentLocks(numberOfAssessmentLocks);
+
         List<TutorLeaderboardDTO> leaderboardEntries = tutorLeaderboardService.getCourseLeaderboard(course);
         stats.setTutorLeaderboardEntries(leaderboardEntries);
 

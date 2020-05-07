@@ -53,6 +53,17 @@
                     "showAll": "Show all",
                     "showLocked": "Show locked"
                 }
+            },
+            "locks": {
+                "home": {
+                    "title": "Locked Assessments"
+                },
+                "title": "Assessments locked by you",
+                "modelingSubmissions": "Submissions and assessments of modeling exercises",
+                "textSubmissions": "Submissions and assessments of text exercises",
+                "fileUploadSubmissions": "Submissions and assessments of file upload exercises",
+                "exercise": "Exercise",
+                "empty": "No assessments locked by you!"
             }
         }
     }

@@ -1,0 +1,192 @@
+<div class="course-info-bar">
+    <div class="row justify-content-between">
+        <div class="col-8">
+            <h2>
+                <fa-icon [icon]="'arrow-left'" (click)="back()" class="back-button mr-2"></fa-icon>
+                <span>{{ 'artemisApp.assessment.locks.title' | translate }}</span>
+            </h2>
+        </div>
+    </div>
+</div>
+
+<div *ngIf="modelingSubmissions.length > 0">
+    <h4 style="margin-top: 10px;">
+        {{ 'artemisApp.assessment.locks.modelingSubmissions' | translate }}
+    </h4>
+
+    <div class="table-responsive">
+        <table class="table table-striped exercise-table">
+            <thead>
+                <tr>
+                    <th class="th-link">#</th>
+                    <th class="th-link">Id</th>
+                    <th class="th-link" jhiTranslate="artemisApp.assessment.locks.exercise">Exercise</th>
+                    <th class="th-link" jhiTranslate="artemisApp.assessment.dashboard.columns.submissionDate">Submission date</th>
+                    <th class="th-link" jhiTranslate="artemisApp.assessment.dashboard.columns.submissionCount">Submission count</th>
+                    <th class="th-link" jhiTranslate="artemisApp.assessment.dashboard.columns.score">Score</th>
+                    <th class="th-link" jhiTranslate="artemisApp.assessment.dashboard.columns.action">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr *ngFor="let modelingSubmission of modelingSubmissions; let i = index">
+                    <td>{{ i + 1 }}</td>
+                    <td>{{ modelingSubmission.id }}</td>
+                    <td>{{ getExerciseName(modelingSubmission.exerciseId) }}</td>
+                    <td>{{ modelingSubmission.submissionDate | date: 'MMM d, y HH:mm:ss' }}</td>
+                    <td>{{ modelingSubmission.participation.submissions.length }}</td>
+                    <td>
+                        <span *ngIf="modelingSubmission.result && modelingSubmission.result.score != null">{{ modelingSubmission.result.score }}%</span>
+                    </td>
+                    <td>
+                        <span *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA']">
+                            <button
+                                *ngIf="modelingSubmission && modelingSubmission.result"
+                                [routerLink]="[
+                                    '/course-management',
+                                    courseId,
+                                    'modeling-exercises',
+                                    modelingSubmission.exerciseId,
+                                    'submissions',
+                                    modelingSubmission.id,
+                                    'assessment'
+                                ]"
+                                class="btn btn-outline-secondary btn-sm mb-1"
+                            >
+                                <fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>&nbsp;{{ 'artemisApp.assessment.dashboard.actions.open' | translate }}
+                            </button>
+                        </span>
+                        <span>
+                            <button
+                                *ngIf="modelingSubmission && modelingSubmission.result && !modelingSubmission.result.completionDate"
+                                (click)="cancelModelingAssessment(modelingSubmission)"
+                                class="btn btn-outline-secondary btn-sm mb-1"
+                            >
+                                <fa-icon [icon]="'ban'" [fixedWidth]="true"></fa-icon>&nbsp;{{ 'artemisApp.assessment.dashboard.actions.cancel' | translate }}
+                            </button>
+                        </span>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div *ngIf="textSubmissions.length > 0">
+    <h4 style="margin-top: 10px;">
+        {{ 'artemisApp.assessment.locks.textSubmissions' | translate }}
+    </h4>
+    <div class="table-responsive">
+        <table class="table table-striped exercise-table">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Id</th>
+                    <th jhiTranslate="artemisApp.assessment.locks.exercise">Exercise</th>
+                    <th jhiTranslate="artemisApp.assessment.dashboard.columns.submissionDate">Submission date</th>
+                    <th jhiTranslate="artemisApp.assessment.dashboard.columns.submissionCount">Submission count</th>
+                    <th jhiTranslate="artemisApp.assessment.dashboard.columns.score">Score</th>
+                    <th jhiTranslate="artemisApp.tutorExerciseDashboard.language">Language</th>
+                    <th jhiTranslate="artemisApp.assessment.dashboard.columns.action">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr *ngFor="let textSubmission of textSubmissions; let i = index">
+                    <td>{{ i + 1 }}</td>
+                    <td>{{ textSubmission.id }}</td>
+                    <td>{{ getExerciseName(textSubmission.exerciseId) }}</td>
+                    <td>{{ textSubmission.submissionDate | date: 'MMM d, y HH:mm:ss' }}</td>
+                    <td>{{ textSubmission.participation.submissions.length }}</td>
+                    <td>
+                        <span *ngIf="textSubmission.result && textSubmission.result.score != null">{{ textSubmission.result.score }} %</span>
+                    </td>
+                    <td>{{ 'artemisApp.tutorExerciseDashboard.languages.' + (textSubmission.language || 'UNKNOWN') | translate }}</td>
+                    <td>
+                        <span *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA']">
+                            <button
+                                *ngIf="textSubmission && textSubmission.result"
+                                [routerLink]="['/course-management', courseId, 'text-exercises', textSubmission.exerciseId, 'submissions', textSubmission.id, 'assessment']"
+                                class="btn btn-outline-secondary btn-sm mb-1"
+                            >
+                                <fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>&nbsp;{{ 'artemisApp.assessment.dashboard.actions.open' | translate }}
+                            </button>
+                        </span>
+                        <span>
+                            <button
+                                *ngIf="textSubmission && textSubmission.result && !textSubmission.result.completionDate"
+                                (click)="cancelTextAssessment(textSubmission)"
+                                class="btn btn-outline-secondary btn-sm mb-1"
+                            >
+                                <fa-icon [icon]="'ban'" [fixedWidth]="true"></fa-icon>&nbsp;{{ 'artemisApp.assessment.dashboard.actions.cancel' | translate }}
+                            </button>
+                        </span>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div *ngIf="fileUploadSubmissions.length > 0">
+    <h4 style="margin-top: 10px;">
+        {{ 'artemisApp.assessment.locks.fileUploadSubmissions' | translate }}
+    </h4>
+    <div class="table-responsive">
+        <table class="table table-striped exercise-table">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Id</th>
+                    <th jhiTranslate="artemisApp.assessment.locks.exercise">Exercise</th>
+                    <th jhiTranslate="artemisApp.assessment.dashboard.columns.submissionDate">Submission date</th>
+                    <th jhiTranslate="artemisApp.assessment.dashboard.columns.submissionCount">Submission count</th>
+                    <th jhiTranslate="artemisApp.assessment.dashboard.columns.score">Score</th>
+                    <th jhiTranslate="artemisApp.assessment.dashboard.columns.action">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr *ngFor="let fileUploadSubmission of fileUploadSubmissions; let i = index">
+                    <td>{{ i + 1 }}</td>
+                    <td>{{ fileUploadSubmission.id }}</td>
+                    <td>{{ getExerciseName(fileUploadSubmission.exerciseId) }}</td>
+                    <td>{{ fileUploadSubmission.submissionDate | date: 'MMM d, y HH:mm:ss' }}</td>
+                    <td>{{ fileUploadSubmission.participation.submissions.length }}</td>
+                    <td>
+                        <span *ngIf="fileUploadSubmission.result && fileUploadSubmission.result.score != null">{{ fileUploadSubmission.result.score }} %</span>
+                    </td>
+                    <td>
+                        <span *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA']">
+                            <button
+                                *ngIf="fileUploadSubmission && fileUploadSubmission.result"
+                                [routerLink]="[
+                                    '/course-management',
+                                    courseId,
+                                    'file-upload-exercises',
+                                    fileUploadSubmission.exerciseId,
+                                    'submissions',
+                                    fileUploadSubmission.id,
+                                    'assessment'
+                                ]"
+                                class="btn btn-outline-secondary btn-sm mb-1"
+                            >
+                                <fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>&nbsp;{{ 'artemisApp.assessment.dashboard.actions.open' | translate }}
+                            </button>
+                        </span>
+                        <span>
+                            <button
+                                *ngIf="fileUploadSubmission && fileUploadSubmission.result && !fileUploadSubmission.result.completionDate"
+                                (click)="cancelFileUploadAssessment(fileUploadSubmission)"
+                                class="btn btn-outline-secondary btn-sm mb-1"
+                            >
+                                <fa-icon [icon]="'ban'" [fixedWidth]="true"></fa-icon>&nbsp;{{ 'artemisApp.assessment.dashboard.actions.cancel' | translate }}
+                            </button>
+                        </span>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div style="margin-top: 10px;" *ngIf="modelingSubmissions.length === 0 && textSubmissions.length === 0 && fileUploadSubmissions.length === 0">
+    <p jhiTranslate="artemisApp.assessment.locks.empty">No Assessments locked by you!</p>
+</div>

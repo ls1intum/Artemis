@@ -53,6 +53,15 @@
                 <p class="h3">{{ numberOfMoreFeedbackRequests }}</p>
             </div>
         </div>
+        <div class="row justify-content-around">
+            <div class="col-4 text-center">
+                <a [routerLink]="['/course-management', course.id, 'assessment-locks']" [queryParams]="{ tutorId: tutor.id }">
+                    <p class="font-weight-bold">{{ 'artemisApp.tutorCourseDashboard.yourAssessmentLocks' | translate }}:</p>
+                    <p class="h3">{{ numberOfAssessmentLocks }}</p>
+                </a>
+            </div>
+            <div class="col-4 text-center"></div>
+        </div>
     </div>
 
     <div class="table-responsive">
@@ -130,6 +139,27 @@
                             [class.guided-tour]="exercise === exerciseForGuidedTour"
                         >
                             <span class="d-none d-md-inline" jhiTranslate="entity.action.exerciseDashboard">Exercise dashboard</span>
+                        </button>
+                        <button
+                            *ngIf="exercise.type === MODELING"
+                            class="btn btn-primary btn-sm mr-1"
+                            [routerLink]="['/course-management', course.id, 'modeling-exercises', exercise.id, 'assessment']"
+                        >
+                            <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.submissions">Submissions</span>
+                        </button>
+                        <button
+                            *ngIf="exercise.type === TEXT"
+                            class="btn btn-primary btn-sm mr-1"
+                            [routerLink]="['/course-management', course.id, 'text-exercises', exercise.id, 'assessment']"
+                        >
+                            <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.submissions">Submissions</span>
+                        </button>
+                        <button
+                            *ngIf="exercise.type === FILE_UPLOAD"
+                            class="btn btn-primary btn-sm mr-1"
+                            [routerLink]="['/course-management', course.id, 'file-upload-exercises', exercise.id, 'assessment']"
+                        >
+                            <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.submissions">Submissions</span>
                         </button>
                     </td>
                 </tr>

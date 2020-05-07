@@ -6,7 +6,7 @@ import { AlertService } from 'app/core/alert/alert.service';
 import { User } from 'app/core/user/user.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { HttpResponse } from '@angular/common/http';
-import { Exercise, getIcon, getIconTooltip } from 'app/entities/exercise.model';
+import { Exercise, getIcon, getIconTooltip, ExerciseType } from 'app/entities/exercise.model';
 import { StatsForDashboard } from 'app/course/dashboards/instructor-course-dashboard/stats-for-dashboard.model';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { tutorAssessmentTour } from 'app/guided-tour/tours/tutor-assessment-tour';
@@ -32,6 +32,7 @@ export class TutorCourseDashboardComponent implements OnInit, AfterViewInit {
     numberOfMoreFeedbackRequests = 0;
     numberOfOpenMoreFeedbackRequests = 0;
     numberOfTutorMoreFeedbackRequests = 0;
+    numberOfAssessmentLocks = 0;
     totalAssessmentPercentage = 0;
     showFinishedExercises = false;
 
@@ -46,6 +47,10 @@ export class TutorCourseDashboardComponent implements OnInit, AfterViewInit {
     tutor: User;
 
     exerciseForGuidedTour: Exercise | null;
+
+    readonly TEXT = ExerciseType.TEXT;
+    readonly MODELING = ExerciseType.MODELING;
+    readonly FILE_UPLOAD = ExerciseType.FILE_UPLOAD;
 
     constructor(
         private courseService: CourseManagementService,
@@ -109,6 +114,8 @@ export class TutorCourseDashboardComponent implements OnInit, AfterViewInit {
                 this.numberOfOpenComplaints = this.stats.numberOfOpenComplaints;
                 this.numberOfMoreFeedbackRequests = this.stats.numberOfMoreFeedbackRequests;
                 this.numberOfOpenMoreFeedbackRequests = this.stats.numberOfOpenMoreFeedbackRequests;
+                this.numberOfAssessmentLocks = this.stats.numberOfAssessmentLocks;
+                console.log('locks', this.stats.numberOfAssessmentLocks);
                 const tutorLeaderboardEntry = this.stats.tutorLeaderboardEntries.find((entry) => entry.userId === this.tutor.id);
                 if (tutorLeaderboardEntry) {
                     this.numberOfTutorAssessments = tutorLeaderboardEntry.numberOfAssessments;
