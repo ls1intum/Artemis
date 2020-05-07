@@ -45,8 +45,12 @@ public class Team extends AbstractAuditingEntity implements Serializable, Partic
     @JsonIgnore
     private Exercise exercise;
 
+    /**
+     * The cache concurrency strategy needs to be READ_WRITE (and not NONSTRICT_READ_WRITE) since the non-strict mode will cause an SQLIntegrityConstraintViolationException to
+     * occur when trying to persist the entity for the first time after changes have been made to the related entities of the ManyToMany relationship (users in this case).
+     */
     @ManyToMany(fetch = FetchType.EAGER)
-    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+    @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
     @JsonInclude(JsonInclude.Include.NON_NULL)
     @JoinTable(name = "team_student", joinColumns = @JoinColumn(name = "team_id", referencedColumnName = "id"), inverseJoinColumns = @JoinColumn(name = "student_id", referencedColumnName = "id"))
     private Set<User> students = new HashSet<>();

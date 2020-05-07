@@ -87,9 +87,6 @@ artemis:
         clustering-url: http://localhost:8000/cluster
         segmentation-url: http://localhost:8080/segment
         secret: null
-info:
-    contact: artemis.in@tum.de
-    imprint: https://ase.in.tum.de/lehrstuhl_1/component/content/article/179-imprint
 ```
 Change all entries with ```<...>``` with proper values, e.g. your TUM Online account credentials to connect to the given instances of JIRA, Bitbucket and Bamboo. Alternatively, you can connect to your local JIRA, Bitbucket and Bamboo instances.
 Be careful that you don't commit changes in this file. Best practice is to specify that your local git repository ignores this file or assumes that this file is unchanged.
@@ -157,8 +154,8 @@ You can define the following custom assets for Artemis to be used instead of the
 * The logo next to the "Artemis" heading on the navbar &#8594; `${artemisRunDirectory}/public/images/logo.png`
 * The favicon &#8594; `${artemisRunDirectory}/public/images/favicon.ico`
 * The privacy statement HTML &#8594; `${artemisRunDirectory}/public/content/privacy_statement.html`
-* The contact email address in the `application-{prod,artemis}.yml` configuration file under the key `info.contact`
-* The imprint link in the `application-{prod,artemis}.yml` configuration file under the key `info.imprint`
+* The contact email address in the `application-{dev,prod}.yml` configuration file under the key `info.contact`
+* The imprint link in the `application-{dev,prod}.yml` configuration file under the key `info.imprint`
 
 ### Alternative: Using docker-compose
 
