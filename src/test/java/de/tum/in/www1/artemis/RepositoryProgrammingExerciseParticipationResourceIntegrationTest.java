@@ -110,7 +110,7 @@ public class RepositoryProgrammingExerciseParticipationResourceIntegrationTest e
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void shouldGetFiles() throws Exception {
+    public void testGetFiles() throws Exception {
         StudentParticipation participation = studentParticipationRepository.findAll().get(0);
         var files = request.getMap(studentRepoBaseUrl + participation.getId() + "/files", HttpStatus.OK, String.class, FileType.class);
         assertThat(files).isNotEmpty();
@@ -123,7 +123,7 @@ public class RepositoryProgrammingExerciseParticipationResourceIntegrationTest e
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void shouldGetFile() throws Exception {
+    public void testGetFile() throws Exception {
         StudentParticipation participation = studentParticipationRepository.findAll().get(0);
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("file", currentLocalFileName);
@@ -134,7 +134,7 @@ public class RepositoryProgrammingExerciseParticipationResourceIntegrationTest e
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void shouldCreateFile() throws Exception {
+    public void testCreateFile() throws Exception {
         StudentParticipation participation = studentParticipationRepository.findAll().get(0);
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("file", "newFile");
@@ -145,7 +145,7 @@ public class RepositoryProgrammingExerciseParticipationResourceIntegrationTest e
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void shouldCreateFolder() throws Exception {
+    public void testCreateFolder() throws Exception {
         StudentParticipation participation = studentParticipationRepository.findAll().get(0);
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("folder", "newFolder");
@@ -156,7 +156,7 @@ public class RepositoryProgrammingExerciseParticipationResourceIntegrationTest e
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void shouldRenameFile() throws Exception {
+    public void testRenameFile() throws Exception {
         StudentParticipation participation = studentParticipationRepository.findAll().get(0);
         assertThat(Files.exists(Paths.get(studentRepository.localRepoFile + "/" + currentLocalFileName))).isTrue();
         assertThat(Files.exists(Paths.get(studentRepository.localRepoFile + "/" + newLocalFileName))).isFalse();
@@ -170,7 +170,7 @@ public class RepositoryProgrammingExerciseParticipationResourceIntegrationTest e
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void shouldRenameFolder() throws Exception {
+    public void testRenameFolder() throws Exception {
         StudentParticipation participation = studentParticipationRepository.findAll().get(0);
         assertThat(Files.exists(Paths.get(studentRepository.localRepoFile + "/" + currentLocalFolderName))).isTrue();
         assertThat(Files.exists(Paths.get(studentRepository.localRepoFile + "/" + newLocalFolderName))).isFalse();
@@ -184,7 +184,7 @@ public class RepositoryProgrammingExerciseParticipationResourceIntegrationTest e
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void shouldDeleteFile() throws Exception {
+    public void testDeleteFile() throws Exception {
         StudentParticipation participation = studentParticipationRepository.findAll().get(0);
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("file", currentLocalFileName);
@@ -195,7 +195,7 @@ public class RepositoryProgrammingExerciseParticipationResourceIntegrationTest e
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void shouldCommitChanges() throws Exception {
+    public void testCommitChanges() throws Exception {
         StudentParticipation participation = studentParticipationRepository.findAll().get(0);
         var receivedStatusBeforeCommit = request.get(studentRepoBaseUrl + participation.getId(), HttpStatus.OK, RepositoryStatusDTO.class);
         assertThat(receivedStatusBeforeCommit.repositoryStatus.toString()).isEqualTo("UNCOMMITTED_CHANGES");
@@ -209,7 +209,7 @@ public class RepositoryProgrammingExerciseParticipationResourceIntegrationTest e
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void shouldPullChanges() throws Exception {
+    public void testPullChanges() throws Exception {
         StudentParticipation participation = studentParticipationRepository.findAll().get(0);
 
         String fileName = "remoteFile";
@@ -244,7 +244,7 @@ public class RepositoryProgrammingExerciseParticipationResourceIntegrationTest e
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void shouldResetToLastCommit() throws Exception {
+    public void testResetToLastCommit() throws Exception {
         StudentParticipation participation = studentParticipationRepository.findAll().get(0);
         String fileName = "change";
 
@@ -291,7 +291,7 @@ public class RepositoryProgrammingExerciseParticipationResourceIntegrationTest e
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void shouldGetStatus() throws Exception {
+    public void testGetStatus() throws Exception {
         StudentParticipation participation = studentParticipationRepository.findAll().get(0);
         var receivedStatus = request.get(studentRepoBaseUrl + participation.getId(), HttpStatus.OK, RepositoryStatusDTO.class);
         assertThat(receivedStatus).isNotNull();
@@ -299,7 +299,7 @@ public class RepositoryProgrammingExerciseParticipationResourceIntegrationTest e
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void shouldGetResultDetails() throws Exception {
+    public void testGetResultDetails() throws Exception {
         StudentParticipation participation = studentParticipationRepository.findAll().get(0);
         var receivedLogs = request.get(studentRepoBaseUrl + participation.getId() + "/buildlogs", HttpStatus.OK, List.class);
         assertThat(receivedLogs).isNotNull();
