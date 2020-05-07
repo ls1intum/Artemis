@@ -21,17 +21,17 @@ import de.tum.in.www1.artemis.domain.Notification;
 public interface NotificationRepository extends JpaRepository<Notification, Long> {
 
     @Query("select notification from Notification notification left join notification.course left join notification.recipient "
-            + "where (notification.class = GroupNotification and ((notification.course.instructorGroupName in :#{#currentGroups} AND notification.type = 'INSTRUCTOR') "
-            + "or (notification.course.teachingAssistantGroupName in :#{#currentGroups} AND notification.type = 'TA') "
-            + "or (notification.course.studentGroupName in :#{#currentGroups} AND notification.type = 'STUDENT')))"
+            + "where (notification.class = GroupNotification and ((notification.course.instructorGroupName in :#{#currentGroups} and notification.type = 'INSTRUCTOR') "
+            + "or (notification.course.teachingAssistantGroupName in :#{#currentGroups} and notification.type = 'TA') "
+            + "or (notification.course.studentGroupName in :#{#currentGroups} and notification.type = 'STUDENT')))"
             + "or notification.class = SingleUserNotification and notification.recipient.login = :#{#login}")
     Page<Notification> findAllNotificationsForRecipientWithLogin(@Param("currentGroups") Set<String> currentUserGroups, @Param("login") String login, Pageable pageable);
 
     @Query("select notification from Notification notification left join notification.course left join notification.recipient "
-            + "where (:#{#lastNotificationRead} is null or notification.notificationDate > :#{#lastNotificationRead}) AND "
-            + "((notification.class = GroupNotification and ((notification.course.instructorGroupName in :#{#currentGroups} AND notification.type = 'INSTRUCTOR') "
-            + "or (notification.course.teachingAssistantGroupName in :#{#currentGroups} AND notification.type = 'TA') "
-            + "or (notification.course.studentGroupName in :#{#currentGroups} AND notification.type = 'STUDENT')))"
+            + "where (:#{#lastNotificationRead} is null or notification.notificationDate > :#{#lastNotificationRead}) and "
+            + "((notification.class = GroupNotification and ((notification.course.instructorGroupName in :#{#currentGroups} and notification.type = 'INSTRUCTOR') "
+            + "or (notification.course.teachingAssistantGroupName in :#{#currentGroups} and notification.type = 'TA') "
+            + "or (notification.course.studentGroupName in :#{#currentGroups} and notification.type = 'STUDENT')))"
             + "or notification.class = SingleUserNotification and notification.recipient.login = :#{#login})")
     List<Notification> findAllRecentNotificationsForRecipientWithLogin(@Param("currentGroups") Set<String> currentUserGroups, @Param("login") String login,
             @Param("lastNotificationRead") ZonedDateTime lastNotificationRead);
