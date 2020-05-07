@@ -8,15 +8,20 @@
     displayBy="category"
     [maxItems]="2"
     id="field_categories"
-    [secondaryPlaceholder]="'artemisApp.exercise.tagPlaceholder' | translate"
+    [placeholder]="'artemisApp.exercise.tagPlaceholder' | translate"
+    [secondaryPlaceholder]="'artemisApp.exercise.tagSecondaryPlaceholder' | translate"
+    [addOnBlur]="true"
     (onAdd)="onItemAdded($event)"
     (onRemove)="onItemRemove($event)"
 >
-    <!--
-        [clearOnBlur]="true" 
-        (focusout)="onItemAdded($event)"
-    -->
-    <tag-input-dropdown [focusFirstElement]="true" identifyBy="category" displayBy="category" [zIndex]="10000" [autocompleteItems]="uniqueCategories"></tag-input-dropdown>
+    <tag-input-dropdown
+        [focusFirstElement]="true"
+        [showDropdownIfEmpty]="true"
+        identifyBy="category"
+        displayBy="category"
+        [zIndex]="10000"
+        [autocompleteItems]="uniqueCategories"
+    ></tag-input-dropdown>
     <ng-template let-item="item" let-index="index">
         <div class="custom-tag" [ngStyle]="{ backgroundColor: item.color }">
             <span class="category-name" (click)="openColorSelector($event, item)">
