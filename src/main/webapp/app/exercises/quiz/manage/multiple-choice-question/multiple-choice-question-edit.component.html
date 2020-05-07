@@ -66,7 +66,13 @@
                 >
                     <!-- Preview -->
                     <ng-container #preview>
-                        <jhi-multiple-choice-question *ngIf="showMultipleChoiceQuestionPreview" [question]="question" [selectedAnswerOptions]="[]" [questionIndex]="questionIndex">
+                        <jhi-multiple-choice-question
+                            *ngIf="showMultipleChoiceQuestionPreview"
+                            [question]="question"
+                            [selectedAnswerOptions]="[]"
+                            [questionIndex]="questionIndex"
+                            class="overflow-auto"
+                        >
                         </jhi-multiple-choice-question>
                         <hr />
                     </ng-container>
