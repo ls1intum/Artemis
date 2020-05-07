@@ -30,6 +30,9 @@ export class CoursesComponent implements OnInit {
         private guidedTourService: GuidedTourService,
     ) {}
 
+    /**
+     * Loads all courses from server
+     */
     loadAndFilterCourses() {
         this.courseService.findAll().subscribe(
             (res: HttpResponse<Course[]>) => {
@@ -41,6 +44,9 @@ export class CoursesComponent implements OnInit {
         );
     }
 
+    /**
+     * Life cycle hook called by Angular to indicate that Angular is done creating the component
+     */
     ngOnInit(): void {
         this.loadAndFilterCourses();
     }
