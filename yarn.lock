@@ -1340,10 +1340,10 @@
     "@types/yargs" "^15.0.0"
     chalk "^4.0.0"
 
-"@ls1intum/apollon@2.0.12":
-  version "2.0.12"
-  resolved "https://registry.yarnpkg.com/@ls1intum/apollon/-/apollon-2.0.12.tgz#5870640753b99b42536a0d541da3edae49097116"
-  integrity sha512-sZJnm2Nkayg0v8v0k+yaxSodRPIJOTJlvLu6JSxTKyrig7p+bZhLkNun9iyny3f+8DB6mSixbiS+OHx+guwA4w==
+"@ls1intum/apollon@2.0.13":
+  version "2.0.13"
+  resolved "https://registry.yarnpkg.com/@ls1intum/apollon/-/apollon-2.0.13.tgz#4831b7e3b7739a5fed3617649454b0aff16f532d"
+  integrity sha512-j/as10+NHHLN8vb7rnilcdkSg+zIt9Vy72C+5suVczmzV/zT5mmZVV4UXNYLmckGv10Ndtc2TYW7fyO45GxTrA==
   dependencies:
     pepjs "0.5.2"
     react "16.13.1"
