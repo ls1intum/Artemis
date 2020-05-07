@@ -1,3 +1,8 @@
+#IGNORE CONFIG FILE -tessa
+/src/main/resources/config/application-artemis.yml
+/src/main/resources/config/application-dev.yml
+/gradle/liquibase.gradle
+
 ######################
 # Project Specific
 ######################
