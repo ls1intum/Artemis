@@ -19,9 +19,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Request Reviews from @ls1intum/artemis Team
-        uses: rowi1de/auto-assign-review-teams@v0.0.6
+        uses: rowi1de/auto-assign-review-teams@v1.0.0
         with:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           teams: "@ls1intum/artemis"
-          include-draft: true
           skip-with-manual-reviewers: 5
