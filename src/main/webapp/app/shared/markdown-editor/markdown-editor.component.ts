@@ -374,12 +374,16 @@ export class MarkdownEditorComponent implements AfterViewInit {
         if ($event.target.files.length >= 1) {
             const aceEditor = this.aceEditorContainer.getEditor();
             const file = $event.target.files[0];
+            const loadingText = `![uploading ${file.name}]()`;
+            aceEditor.insert(loadingText);
             this.fileUploaderService.uploadFile(file).then(
                 (res) => {
-                    const textToAdd = `![${file.name}](${res.path})`;
+                    aceEditor.undo();
+                    const textToAdd = `<img [src]="${res.path}" alt="${file.name}" >`;
                     aceEditor.insert(textToAdd);
                 },
                 (err) => {
+                    aceEditor.undo();
                     console.warn('error', err);
                 },
             );
