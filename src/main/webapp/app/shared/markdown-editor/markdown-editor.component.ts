@@ -9,6 +9,7 @@ import 'brace/ext/language_tools';
 import { Interactable } from '@interactjs/core/Interactable';
 import interact from 'interactjs';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
+import { FileUploaderService } from 'app/shared/http/file-uploader.service';
 import { ColorSelectorComponent } from 'app/shared/color-selector/color-selector.component';
 import { DomainTagCommand } from './domainCommands/domainTag.command';
 import { escapeStringForUseInRegex } from 'app/shared/util/global.utils';
@@ -149,7 +150,7 @@ export class MarkdownEditorComponent implements AfterViewInit {
     @Input()
     enableFileUpload = true;
 
-    constructor(private artemisMarkdown: ArtemisMarkdownService, private $window: WindowRef) {}
+    constructor(private artemisMarkdown: ArtemisMarkdownService, private $window: WindowRef, private fileUploaderService: FileUploaderService) {}
 
     /** {boolean} true when the plane html view is needed, false when the preview content is needed from the parent */
     get showDefaultPreview(): boolean {
@@ -361,6 +362,27 @@ export class MarkdownEditorComponent implements AfterViewInit {
         // The text must only be parsed when the active tab before event was edit, otherwise the text can't have changed.
         if (event.activeId === 'editor_edit') {
             this.parse();
+        }
+    }
+
+    /**
+     * @function onFileUpload
+     * @desc handle file upload and embed it in the editor
+     * @param {any} event
+     */
+    onFileUpload($event: any): void {
+        if ($event.target.files.length >= 1) {
+            const aceEditor = this.aceEditorContainer.getEditor();
+            const file = $event.target.files[0];
+            this.fileUploaderService.uploadFile(file).then(
+                (res) => {
+                    const textToAdd = `![${file.name}](${res.path})`;
+                    aceEditor.insert(textToAdd);
+                },
+                (err) => {
+                    console.warn('error', err);
+                },
+            );
         }
     }
 }

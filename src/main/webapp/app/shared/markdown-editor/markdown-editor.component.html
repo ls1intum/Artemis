@@ -16,7 +16,7 @@
                     ></ace-editor>
                     <!-- manual input for file upload -->
                     <ng-container *ngIf="enableFileUpload">
-                        <input id="file-upload" class="markdown-editor__file-input" type="file" [multiple]="false" />
+                        <input id="file-upload" class="markdown-editor__file-input" type="file" accept="image/*" [multiple]="false" (change)="onFileUpload($event)" />
                         <label for="file-upload" class="markdown-editor__file-label d-inline">
                             <div class="row mx-0 align-items-baseline">
                                 <span class="col upload-subtitle">{{ 'artemisApp.markdownEditor.fileUpload' | translate }}</span>
@@ -72,7 +72,6 @@
                         </div>
                         <jhi-color-selector [tagColors]="markdownColors" (selectedColor)="onSelectedColor($event)"></jhi-color-selector>
                     </div>
-
                     <!-- domain commands -->
                     <div class="markdown-editor__commands-domain" *ngIf="domainCommands && domainCommands.length != 0">
                         <ng-container *ngFor="let command of domainCommands | typeCheck: DomainTagCommand">
