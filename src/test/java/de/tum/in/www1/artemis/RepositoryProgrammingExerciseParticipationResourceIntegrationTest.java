@@ -13,6 +13,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.commons.io.FileUtils;
+import org.eclipse.jgit.api.ListBranchCommand;
+import org.eclipse.jgit.api.MergeResult;
+import org.eclipse.jgit.lib.Ref;
+import org.eclipse.jgit.merge.MergeStrategy;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -66,6 +70,8 @@ public class RepositoryProgrammingExerciseParticipationResourceIntegrationTest e
 
     BuildLogEntry buildLogEntry = new BuildLogEntry(ZonedDateTime.now(), "Checkout to revision e65aa77cc0380aeb9567ccceb78aca416d86085b has failed.");
 
+    StudentParticipation participation;
+
     @BeforeEach
     public void setup() throws Exception {
         database.addUsers(1, 0, 0);
@@ -88,7 +94,7 @@ public class RepositoryProgrammingExerciseParticipationResourceIntegrationTest e
 
         var localRepoUrl = new GitUtilService.MockFileRepositoryUrl(studentRepository.localRepoFile);
         database.addStudentParticipationForProgrammingExerciseForLocalRepo(programmingExercise, "student1", localRepoUrl.getURL());
-        StudentParticipation participation = studentParticipationRepository.findAll().get(0);
+        participation = studentParticipationRepository.findAll().get(0);
         programmingExercise.setTestRepositoryUrl(localRepoUrl.toString());
         doReturn(gitService.getRepositoryByLocalPath(studentRepository.localRepoFile.toPath())).when(gitService)
                 .getOrCheckoutRepository(((ProgrammingExerciseParticipation) participation).getRepositoryUrlAsUrl(), true);
@@ -111,7 +117,6 @@ public class RepositoryProgrammingExerciseParticipationResourceIntegrationTest e
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     public void testGetFiles() throws Exception {
-        StudentParticipation participation = studentParticipationRepository.findAll().get(0);
         var files = request.getMap(studentRepoBaseUrl + participation.getId() + "/files", HttpStatus.OK, String.class, FileType.class);
         assertThat(files).isNotEmpty();
 
@@ -124,7 +129,6 @@ public class RepositoryProgrammingExerciseParticipationResourceIntegrationTest e
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     public void testGetFile() throws Exception {
-        StudentParticipation participation = studentParticipationRepository.findAll().get(0);
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("file", currentLocalFileName);
         var file = request.get(studentRepoBaseUrl + participation.getId() + "/file", HttpStatus.OK, byte[].class, params);
@@ -135,7 +139,6 @@ public class RepositoryProgrammingExerciseParticipationResourceIntegrationTest e
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     public void testCreateFile() throws Exception {
-        StudentParticipation participation = studentParticipationRepository.findAll().get(0);
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("file", "newFile");
         assertThat(Files.exists(Paths.get(studentRepository.localRepoFile + "/newFile"))).isFalse();
@@ -146,7 +149,6 @@ public class RepositoryProgrammingExerciseParticipationResourceIntegrationTest e
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     public void testCreateFolder() throws Exception {
-        StudentParticipation participation = studentParticipationRepository.findAll().get(0);
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("folder", "newFolder");
         assertThat(Files.exists(Paths.get(studentRepository.localRepoFile + "/newFolder"))).isFalse();
@@ -157,7 +159,6 @@ public class RepositoryProgrammingExerciseParticipationResourceIntegrationTest e
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     public void testRenameFile() throws Exception {
-        StudentParticipation participation = studentParticipationRepository.findAll().get(0);
         assertThat(Files.exists(Paths.get(studentRepository.localRepoFile + "/" + currentLocalFileName))).isTrue();
         assertThat(Files.exists(Paths.get(studentRepository.localRepoFile + "/" + newLocalFileName))).isFalse();
         FileMove fileMove = new FileMove();
@@ -171,7 +172,6 @@ public class RepositoryProgrammingExerciseParticipationResourceIntegrationTest e
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     public void testRenameFolder() throws Exception {
-        StudentParticipation participation = studentParticipationRepository.findAll().get(0);
         assertThat(Files.exists(Paths.get(studentRepository.localRepoFile + "/" + currentLocalFolderName))).isTrue();
         assertThat(Files.exists(Paths.get(studentRepository.localRepoFile + "/" + newLocalFolderName))).isFalse();
         FileMove fileMove = new FileMove();
@@ -185,7 +185,6 @@ public class RepositoryProgrammingExerciseParticipationResourceIntegrationTest e
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     public void testDeleteFile() throws Exception {
-        StudentParticipation participation = studentParticipationRepository.findAll().get(0);
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("file", currentLocalFileName);
         assertThat(Files.exists(Paths.get(studentRepository.localRepoFile + "/" + currentLocalFileName))).isTrue();
@@ -196,7 +195,6 @@ public class RepositoryProgrammingExerciseParticipationResourceIntegrationTest e
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     public void testCommitChanges() throws Exception {
-        StudentParticipation participation = studentParticipationRepository.findAll().get(0);
         var receivedStatusBeforeCommit = request.get(studentRepoBaseUrl + participation.getId(), HttpStatus.OK, RepositoryStatusDTO.class);
         assertThat(receivedStatusBeforeCommit.repositoryStatus.toString()).isEqualTo("UNCOMMITTED_CHANGES");
         request.postWithoutLocation(studentRepoBaseUrl + participation.getId() + "/commit", null, HttpStatus.OK, null);
@@ -210,8 +208,6 @@ public class RepositoryProgrammingExerciseParticipationResourceIntegrationTest e
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     public void testPullChanges() throws Exception {
-        StudentParticipation participation = studentParticipationRepository.findAll().get(0);
-
         String fileName = "remoteFile";
 
         // Create a commit for the local and the remote repository
@@ -245,8 +241,9 @@ public class RepositoryProgrammingExerciseParticipationResourceIntegrationTest e
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     public void testResetToLastCommit() throws Exception {
-        StudentParticipation participation = studentParticipationRepository.findAll().get(0);
-        String fileName = "change";
+        String fileName = "testFile";
+        var localRepo = gitService.getRepositoryByLocalPath(studentRepository.localRepoFile.toPath());
+        var remoteRepo = gitService.getRepositoryByLocalPath(studentRepository.originRepoFile.toPath());
 
         // Check status of git before the commit
         var receivedStatusBeforeCommit = request.get(studentRepoBaseUrl + participation.getId(), HttpStatus.OK, RepositoryStatusDTO.class);
@@ -254,37 +251,42 @@ public class RepositoryProgrammingExerciseParticipationResourceIntegrationTest e
 
         // Create a commit for the local and the remote repository
         request.postWithoutLocation(studentRepoBaseUrl + participation.getId() + "/commit", null, HttpStatus.OK, null);
-        var localRepo = gitService.getRepositoryByLocalPath(studentRepository.localRepoFile.toPath());
-
-        // Stage all files
-        gitService.stageAllChanges(localRepo);
 
         // Check status of git after the commit
         var receivedStatusAfterCommit = request.get(studentRepoBaseUrl + participation.getId(), HttpStatus.OK, RepositoryStatusDTO.class);
         assertThat(receivedStatusAfterCommit.repositoryStatus.toString()).isEqualTo("CLEAN");
 
-        // Create a new file
-        LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
-        params.add("file", fileName);
-        request.postWithoutResponseBody(studentRepoBaseUrl + participation.getId() + "/file", HttpStatus.OK, params);
-
-        // Check if file exist
-        assertThat(Files.exists(Paths.get(studentRepository.localRepoFile + "/" + fileName))).isTrue();
-
-        // Checks status of git after the file creation and before the reset
-        var receivedStatusBeforeReset = request.get(studentRepoBaseUrl + participation.getId(), HttpStatus.OK, RepositoryStatusDTO.class);
-        assertThat(receivedStatusBeforeReset.repositoryStatus.toString()).isEqualTo("UNCOMMITTED_CHANGES");
-
-        // Stages the new file, otherwise the reset will not delete it
+        // Create file in the local repository and commit it
+        Path localFilePath = Paths.get(studentRepository.localRepoFile + "/" + fileName);
+        var localFile = Files.createFile(localFilePath).toFile();
+        // write content to the created file
+        FileUtils.write(localFile, "local");
         gitService.stageAllChanges(localRepo);
+        studentRepository.localGit.commit().setMessage("local").call();
 
-        // Executes the reset Rest call
+        // Create file in the remote repository and commit it
+        Path remoteFilePath = Paths.get(studentRepository.originRepoFile + "/" + fileName);
+        var remoteFile = Files.createFile(remoteFilePath).toFile();
+        // write content to the created file
+        FileUtils.write(remoteFile, "remote");
+        gitService.stageAllChanges(remoteRepo);
+        studentRepository.originGit.commit().setMessage("remote").call();
+
+        // Merge the two and a conflict will occur
+        studentRepository.localGit.fetch().setRemote("origin").call();
+        List<Ref> refs = studentRepository.localGit.branchList().setListMode(ListBranchCommand.ListMode.REMOTE).call();
+        var result = studentRepository.localGit.merge().include(refs.get(0).getObjectId()).setStrategy(MergeStrategy.RESOLVE).call();
+        var status = studentRepository.localGit.status().call();
+        assertThat(status.getConflicting().size() > 0).isTrue();
+        assertThat(MergeResult.MergeStatus.CONFLICTING).isEqualTo(result.getMergeStatus());
+
+        // Execute the reset Rest call
         request.postWithoutLocation(studentRepoBaseUrl + participation.getId() + "/reset", null, HttpStatus.OK, null);
 
-        // Checks if the file still exists after the reset
-        assertThat(Files.exists(Paths.get(studentRepository.localRepoFile + "/" + fileName))).isFalse();
-
-        // Checks the git status after the reset
+        // Check the git status after the reset
+        status = studentRepository.localGit.status().call();
+        assertThat(status.getConflicting().size() == 0).isTrue();
+        assertThat(studentRepository.getAllLocalCommits().get(0)).isEqualTo(studentRepository.getAllOriginCommits().get(0));
         var receivedStatusAfterReset = request.get(studentRepoBaseUrl + participation.getId(), HttpStatus.OK, RepositoryStatusDTO.class);
         assertThat(receivedStatusAfterReset.repositoryStatus.toString()).isEqualTo("CLEAN");
     }
@@ -292,15 +294,22 @@ public class RepositoryProgrammingExerciseParticipationResourceIntegrationTest e
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     public void testGetStatus() throws Exception {
-        StudentParticipation participation = studentParticipationRepository.findAll().get(0);
-        var receivedStatus = request.get(studentRepoBaseUrl + participation.getId(), HttpStatus.OK, RepositoryStatusDTO.class);
-        assertThat(receivedStatus).isNotNull();
+        var receivedStatusBeforeCommit = request.get(studentRepoBaseUrl + participation.getId(), HttpStatus.OK, RepositoryStatusDTO.class);
+
+        // The current status is "uncommited changes", since we added files and folders, but we didn't commit yet
+        assertThat(receivedStatusBeforeCommit.repositoryStatus.toString()).isEqualTo("UNCOMMITTED_CHANGES");
+
+        // Perform a commit to check if the status changes
+        request.postWithoutLocation(studentRepoBaseUrl + participation.getId() + "/commit", null, HttpStatus.OK, null);
+
+        // Check if the status of git is "clean" after the commit
+        var receivedStatusAfterCommit = request.get(studentRepoBaseUrl + participation.getId(), HttpStatus.OK, RepositoryStatusDTO.class);
+        assertThat(receivedStatusAfterCommit.repositoryStatus.toString()).isEqualTo("CLEAN");
     }
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     public void testGetResultDetails() throws Exception {
-        StudentParticipation participation = studentParticipationRepository.findAll().get(0);
         var receivedLogs = request.get(studentRepoBaseUrl + participation.getId() + "/buildlogs", HttpStatus.OK, List.class);
         assertThat(receivedLogs).isNotNull();
         assertThat(receivedLogs).hasSize(1);
