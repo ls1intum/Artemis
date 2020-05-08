@@ -4,27 +4,19 @@ import { Location } from '@angular/common';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
 import { FileUploadSubmission } from 'app/entities/file-upload-submission.model';
 import { AccountService } from 'app/core/auth/account.service';
-import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { FileUploadSubmissionService } from 'app/exercises/file-upload/participate/file-upload-submission.service';
 import { FileUploadAssessmentsService } from 'app/exercises/file-upload/assess/file-upload-assessment.service';
-import { DifferencePipe } from 'ngx-moment';
 import { TranslateService } from '@ngx-translate/core';
-import { FileUploadAssessmentDashboardComponent } from 'app/exercises/file-upload/assess/file-upload-assessment-dashboard.component';
 import { Submission } from 'app/entities/submission.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { HttpResponse } from '@angular/common/http';
 import { Course } from 'app/entities/course.model';
-import { partition } from 'lodash';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
-import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
-import { tutorAssessmentTour } from 'app/guided-tour/tours/tutor-assessment-tour';
 import { AlertService } from 'app/core/alert/alert.service';
 import { ModelingSubmissionService } from 'app/exercises/modeling/participate/modeling-submission.service';
-import { ModelingExercise, UMLDiagramType } from 'app/entities/modeling-exercise.model';
+import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { ModelingSubmission } from 'app/entities/modeling-submission.model';
 import { ModelingAssessmentService } from 'app/exercises/modeling/assess/modeling-assessment.service';
-import { ModelingAssessmentDashboardComponent } from 'app/exercises/modeling/assess/modeling-assessment-editor/modeling-assessment-dashboard.component';
-import { AssessmentType } from 'app/entities/assessment-type.model';
 import { TextSubmission } from 'app/entities/text-submission.model';
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { TextSubmissionService } from 'app/exercises/text/participate/text-submission.service';
@@ -56,7 +48,7 @@ export class AssessmentLocksComponent implements OnInit {
         private textAssessmentsService: TextAssessmentsService,
         private fileUploadSubmissionService: FileUploadSubmissionService,
         private fileUploadAssessmentsService: FileUploadAssessmentsService,
-        private translateService: TranslateService,
+        translateService: TranslateService,
         private location: Location,
         private courseService: CourseManagementService,
     ) {
@@ -118,9 +110,6 @@ export class AssessmentLocksComponent implements OnInit {
                     break;
             }
         }
-        console.log('fileUploadSubmissions', this.fileUploadSubmissions.length);
-        console.log('textSubmissions', this.textSubmissions.length);
-        console.log('modelingSubmissions', this.modelingSubmissions.length);
     }
 
     getModelingSubmissions(exercise: ModelingExercise) {
