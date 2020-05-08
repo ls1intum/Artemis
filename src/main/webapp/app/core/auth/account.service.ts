@@ -58,27 +58,31 @@ export class AccountService implements IAccountService {
             this.featureToggleService.unsubscribeFeatureToggleUpdates();
         }
     }
-
+    /** gets the user's account */
     fetch(): Observable<HttpResponse<User>> {
         return this.http.get<User>(SERVER_API_URL + 'api/account', { observe: 'response' });
     }
-
+    /** saves the user's account */
     save(account: any): Observable<HttpResponse<any>> {
         return this.http.post(SERVER_API_URL + 'api/account', account, { observe: 'response' });
     }
-
+    /** authenticates the user identity
+     * @param {User} identity - the user to authenticate
+     * */
     authenticate(identity: User | null) {
         this.userIdentity = identity;
     }
-
+    /** sync the user groups
+     * @param {User} identity - the user whose groups should be sync
+     * */
     syncGroups(identity: User) {
         this.userIdentity!.groups = identity.groups;
     }
-
+    /** checks the authority of the user */
     hasAnyAuthority(authorities: string[]): Promise<boolean> {
         return Promise.resolve(this.hasAnyAuthorityDirect(authorities));
     }
-
+    /** checks the authority direct of a user */
     hasAnyAuthorityDirect(authorities: string[]): boolean {
         if (!this.authenticated || !this.userIdentity || !this.userIdentity.authorities) {
             return false;
@@ -92,7 +96,9 @@ export class AccountService implements IAccountService {
 
         return false;
     }
-
+    /** checks if a user has a specific authority
+     * @param authority - the specific authority we check for
+     * */
     hasAuthority(authority: string): Promise<boolean> {
         if (!this.authenticated) {
             return Promise.resolve(false);
@@ -108,7 +114,9 @@ export class AccountService implements IAccountService {
             },
         );
     }
-
+    /** checks if the user has a group
+     * @param group - the group we check for
+     * */
     hasGroup(group: string): boolean {
         if (!this.authenticated || !this.userIdentity || !this.userIdentity.authorities || !this.userIdentity.groups) {
             return false;
@@ -116,7 +124,7 @@ export class AccountService implements IAccountService {
 
         return this.userIdentity.groups.some((userGroup: string) => userGroup === group);
     }
-
+    /** retrieves the user identity from the server if not already retrieved */
     identity(force?: boolean): Promise<User | null> {
         if (force === true) {
             this.userIdentity = null;
@@ -156,23 +164,27 @@ export class AccountService implements IAccountService {
             )
             .toPromise();
     }
-
+    /** checks if the user has tutor rights for the course
+     *  @param {Course} course - the course for which we check the authority of the user
+     * */
     isAtLeastTutorInCourse(course: Course): boolean {
         return this.hasGroup(course.instructorGroupName) || this.hasGroup(course.teachingAssistantGroupName) || this.hasAnyAuthorityDirect(['ROLE_ADMIN']);
     }
-
+    /** checks if the user has instructor rights for the course
+     * @param {Course} course - the course for which we check the authority of the user
+     * */
     isAtLeastInstructorInCourse(course: Course) {
         return this.hasGroup(course.instructorGroupName) || this.hasAnyAuthorityDirect(['ROLE_ADMIN']);
     }
-
+    /** Checks if the user has admin rights or not */
     isAdmin(): boolean {
         return this.hasAnyAuthorityDirect(['ROLE_ADMIN']);
     }
-
+    /** return a flag whether the user is authenticated or not */
     isAuthenticated(): boolean {
         return this.authenticated;
     }
-
+    /** return the authentication status if changed */
     getAuthenticationState(): Observable<User | null> {
         return this.authenticationState.asObservable().pipe(
             // We don't want to emit here e.g. [null, null] as it is still the same information [logged out, logged out].
