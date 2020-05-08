@@ -116,6 +116,41 @@ public class NotificationResource {
     }
 
     /**
+     * GET /notifications/sidebar : Get the active system notification, all recent notifications (after last read) for
+     * the current user and a batch of non-recent notifications if the page number is equal to 0. If the page number is
+     * greater than 0 only the corresponding paged batch of non-recent notifications will be returned.
+     *
+     * @param pageable Pagination information for fetching the notifications
+     * @return list of notifications
+     */
+    @GetMapping("/notifications/sidebar")
+    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<List<Notification>> getNotificationsNEW(@ApiParam Pageable pageable) {
+        List<Notification> notifications = new ArrayList<>();
+        HttpHeaders headers = null;
+        User currentUser = userService.getUserWithGroupsAndAuthorities();
+        // Retrieve active system notification and unread notifications only when first page is requested.
+        if (pageable.getPageNumber() == 0) {
+            // Get the active system notification.
+            SystemNotification activeSystemNotification = systemNotificationService.findActiveSystemNotification();
+            if (activeSystemNotification != null) {
+                notifications.add(activeSystemNotification);
+            }
+            // Get all notifications whose notification date is before the current user's lastNotificationRead.
+            if (currentUser != null) {
+                notifications.addAll(notificationService.findAllRecentExceptSystem(currentUser));
+            }
+        }
+        // Get batch of notifications whose notification date is after the current user's lastNotificationRead.
+        if (currentUser != null) {
+            final Page<Notification> page = notificationService.findAllNonRecentExceptSystem(currentUser, pageable);
+            headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
+            notifications.addAll(page.getContent());
+        }
+        return new ResponseEntity<>(notifications, headers, HttpStatus.OK);
+    }
+
+    /**
      * PUT /notifications : Updates an existing notification.
      *
      * @param notification the notification to update
