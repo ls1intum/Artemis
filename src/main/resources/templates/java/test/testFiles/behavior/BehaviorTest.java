@@ -174,7 +174,7 @@ public abstract class BehaviorTest {
      */
     protected Method getMethod(Class<?> declaringClass, String methodName, Class<?>... parameterTypes) {
         String failMessage = "Could not find the method '" + methodName + "' with the parameters: "
-            + getParameterTypesAsString(parameterTypes) + " from the " + declaringClass + " because";
+            + getParameterTypesAsString(parameterTypes) + " from the " + declaringClass.getSimpleName() + " because";
 
         if (parameterTypes == null || parameterTypes.length == 0) {
             failMessage = "Could not find the method '" + methodName + "' from the class " + declaringClass.getSimpleName() + " because";
@@ -267,7 +267,7 @@ public abstract class BehaviorTest {
                 + " from the class " + declaringClass.getSimpleName() + " because";
 
         if (parameterTypes == null || parameterTypes.length == 0) {
-            failMessage = "Could not find the constructor from the " + declaringClass + " because";
+            failMessage = "Could not find the constructor from the " + declaringClass.getSimpleName() + " because";
         }
 
         try {
