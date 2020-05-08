@@ -26,6 +26,12 @@ export class ProgrammingExerciseInstructionAnalysisComponent implements OnInit, 
 
     constructor(private analysisService: ProgrammingExerciseInstructionAnalysisService) {}
 
+    /**
+     * On component initialization, gets the singular analysis for test cases / hints
+     * and an accumulated analysis object from the analysis service. Updates the variables
+     * of this instance accordingly and sets the analysis subscription to the complete analysis.
+     * Also emits the analysis.
+     */
     ngOnInit(): void {
         this.analysisSubscription = this.delayedAnalysisSubject
             .pipe(
@@ -47,6 +53,12 @@ export class ProgrammingExerciseInstructionAnalysisComponent implements OnInit, 
             .subscribe();
     }
 
+    /**
+     * If the inputs of this components are initialized AND
+     * changes are made to the problem statement or test cases or hints
+     * calls analyze tasks
+     * @param {SimpleChanges} changes - Changes made
+     */
     ngOnChanges(changes: SimpleChanges): void {
         if (
             (changes.problemStatement || changes.exerciseTestCases || changes.exerciseHints) &&
@@ -59,6 +71,9 @@ export class ProgrammingExerciseInstructionAnalysisComponent implements OnInit, 
         }
     }
 
+    /**
+     * Ends the subscription on the analysisSubscription object on component destruction
+     */
     ngOnDestroy(): void {
         this.analysisSubscription.unsubscribe();
     }

@@ -9,9 +9,30 @@ import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise-t
 export type ProgrammingExerciseTestCaseUpdate = { id: number; weight: number; afterDueDate: boolean };
 
 export interface IProgrammingExerciseTestCaseService {
+    /**
+     * Subscribe to test case changes on the server.
+     * @param {number} exerciseId - Id of the exercise
+     */
     subscribeForTestCases(exerciseId: number): Observable<ProgrammingExerciseTestCase[] | null>;
+
+    /**
+     * Send new values for the test cases of an exercise to all subscribers.
+     * @param {number} exerciseId - Id of the exercise
+     * @param {ProgrammingExerciseTestCase[]} testCases - The test cases
+     */
     notifyTestCases(exerciseId: number, testCases: ProgrammingExerciseTestCase[]): void;
+
+    /**
+     * Update the weights with the provided values of the test cases.
+     * @param {number} exerciseId - Id of the exercise
+     * @param {ProgrammingExerciseTestCaseUpdate[]} testCaseUpdates - Test case updates
+     */
     updateTestCase(exerciseId: number, testCaseUpdates: ProgrammingExerciseTestCaseUpdate[]): Observable<ProgrammingExerciseTestCase[]>;
+
+    /**
+     * Use with care: Set all test case weights to 1.
+     * @param {number} exerciseId - Id of the exercise
+     */
     resetWeights(exerciseId: number): Observable<ProgrammingExerciseTestCase[]>;
 }
 

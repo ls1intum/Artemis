@@ -6,6 +6,9 @@ import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { PageableSearch, SearchResult, SortingOrder } from 'app/shared/table/pageable-table';
 import { ProgrammingExercisePagingService } from 'app/exercises/programming/manage/services/programming-exercise-paging.service';
 
+/**
+ * Enumeration specifying the names of the columns in the table
+ */
 enum TableColumn {
     ID = 'ID',
     TITLE = 'TITLE',
@@ -37,6 +40,9 @@ export class ProgrammingExerciseImportComponent implements OnInit {
 
     constructor(private pagingService: ProgrammingExercisePagingService, private activeModal: NgbActiveModal) {}
 
+    /**
+     * On component initialization, calls performSearch to set the content of the page
+     */
     ngOnInit() {
         this.content = { resultsOnPage: [], numberOfPages: 0 };
 

@@ -4,6 +4,9 @@ export type ProblemStatementAnalysis = Array<{
     invalidHints?: string[];
 }>;
 
+/**
+ * Enumeration specifying the problem statement issues
+ */
 export enum ProblemStatementIssue {
     INVALID_TEST_CASES = 'invalidTestCases',
     INVALID_HINTS = 'invalidHints',

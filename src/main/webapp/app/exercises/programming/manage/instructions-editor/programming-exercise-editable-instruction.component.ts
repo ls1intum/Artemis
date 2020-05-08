@@ -101,6 +101,12 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
         private exerciseHintService: ExerciseHintService,
     ) {}
 
+    /**
+     * If the exercise has changed, sets the test case subscription up
+     * Then, if the id of the exercise exists, loads the hints for that id,
+     * otherwise leaves the hints empty.
+     * @param {SimpleChanges} changes - Changes made
+     */
     ngOnChanges(changes: SimpleChanges): void {
         if (hasExerciseChanged(changes)) {
             this.setupTestCaseSubscription();
@@ -112,6 +118,10 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
         }
     }
 
+    /**
+     * Ends the subscriptions on both testCaseSubscription and forceRenderSubscription
+     * if they exist on component destruction
+     */
     ngOnDestroy(): void {
         if (this.testCaseSubscription) {
             this.testCaseSubscription.unsubscribe();
@@ -121,6 +131,11 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
         }
     }
 
+    /**
+     * Enables resizing on the editable instruction container and defines rules for it
+     * and if forceRender is set to true, generates the instruction HTML
+     * after view initialization.
+     */
     ngAfterViewInit() {
         this.interactResizable = interact('.editable-instruction-container')
             .resizable({
@@ -196,6 +211,11 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
             });
     }
 
+    /**
+     * Overwrites the problem statement of this exercise instance with the given
+     * function argument in case they are not the same. Sets unsavedChanges to true.
+     * @param {string} problemStatement - The problem statement text
+     */
     updateProblemStatement(problemStatement: string) {
         if (this.exercise.problemStatement !== problemStatement) {
             this.exercise = { ...this.exercise, problemStatement };

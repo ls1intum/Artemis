@@ -17,14 +17,26 @@ export class ProgrammingExerciseParticipationService implements IProgrammingExer
 
     constructor(private http: HttpClient) {}
 
+    /**
+     * Gets the latest result and feedback for the participation in this exercise from the HTTP client.
+     * @param {number} participationId - Id of the participation
+     */
     getLatestResultWithFeedback(participationId: number): Observable<Result | null> {
         return this.http.get<Result | null>(this.resourceUrl + participationId + '/latest-result-with-feedbacks');
     }
 
+    /**
+     * Gets the student participation with the latest result and feedback from the HTTP client.
+     * @param {number} participationId - Id of the participation
+     */
     getStudentParticipationWithLatestResult(participationId: number) {
         return this.http.get<ProgrammingExerciseStudentParticipation>(this.resourceUrl + participationId + '/student-participation-with-latest-result-and-feedbacks');
     }
 
+    /**
+     * Checks if the participation has a result
+     * @param {number} participationId - Id of the participation
+     */
     checkIfParticipationHasResult(participationId: number): Observable<boolean> {
         return this.http.get<boolean>(this.resourceUrl + participationId + '/has-result');
     }

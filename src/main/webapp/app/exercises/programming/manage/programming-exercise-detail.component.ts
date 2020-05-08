@@ -48,6 +48,14 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
         private artemisMarkdown: ArtemisMarkdownService,
     ) {}
 
+    /**
+     * On component initialization:
+     * - Gets the programming exercise from the route variable and overwrites the instance
+     * variable with the same name.
+     * - Sets the attributes of the programmingExercise variable
+     * and also the grading instructions.
+     * - Loads latest result and feedback for the template and solution participations.
+     */
     ngOnInit() {
         this.activatedRoute.data.subscribe(({ programmingExercise }) => {
             this.programmingExercise = programmingExercise;
@@ -69,6 +77,9 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
         });
     }
 
+    /**
+     * Ends the subscription on the dialog error source on component destruction.
+     */
     ngOnDestroy(): void {
         this.dialogErrorSource.unsubscribe();
     }
@@ -87,10 +98,16 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
         );
     }
 
+    /**
+     * Goes back to the previous page in the browser history.
+     */
     previousState() {
         window.history.back();
     }
 
+    /**
+     * Combines all commits of the template repository of this programming exercise to one
+     */
     combineTemplateCommits() {
         this.programmingExerciseService.combineTemplateRepositoryCommits(this.programmingExercise.id).subscribe(
             () => {
@@ -102,6 +119,9 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
         );
     }
 
+    /**
+     * Generates the structure oracle for this programming exercise
+     */
     generateStructureOracle() {
         this.programmingExerciseService.generateStructureOracle(this.programmingExercise.id).subscribe(
             (res) => {
