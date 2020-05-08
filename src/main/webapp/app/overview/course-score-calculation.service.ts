@@ -19,6 +19,10 @@ export class CourseScoreCalculationService {
 
     constructor() {}
 
+    /**
+     * Calculates total absolute, relative, max and presentation scores of exercises
+     * @param courseExercises - exercise array to calculate total score
+     */
     calculateTotalScores(courseExercises: Exercise[]): Map<string, number> {
         const scores = new Map<string, number>();
         let absoluteScore = 0.0;
@@ -74,14 +78,26 @@ export class CourseScoreCalculationService {
         return +(value[0] + 'e' + (value[1] ? +value[1] - exp : -exp));
     }
 
+    /**
+     * Setter for the courses
+     * @param courses - Course array to be set
+     */
     setCourses(courses: Course[]) {
         this.courses = courses;
     }
 
+    /**
+     * Returns the course with the passed id
+     * @param courseId - id of the course to be returned
+     */
     getCourse(courseId: number): Course | null {
         return this.courses.find((course) => course.id === courseId) || null;
     }
 
+    /**
+     * Returns participation for an exercise
+     * @param exercise - exercise to return its participation
+     */
     getParticipationForExercise(exercise: Exercise): Participation | null {
         if (exercise.studentParticipations != null && exercise.studentParticipations.length > 0) {
             const exerciseParticipation: StudentParticipation = exercise.studentParticipations[0];
@@ -91,6 +107,12 @@ export class CourseScoreCalculationService {
         }
     }
 
+    /**
+     * Gets the results for the participation, finds the first result that is before
+     * the due date and returns it if there is one
+     * @param participation - Participation to get results from
+     * @param dueDate - Due date to compare with the result completion date
+     */
     getResultForParticipation(participation: Participation, dueDate: Moment): Result | null {
         if (participation === null) {
             return null;

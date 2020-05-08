@@ -32,6 +32,9 @@ export class CourseOverviewComponent implements OnInit {
         private route: ActivatedRoute,
     ) {}
 
+    /**
+     * On init, gets the course and adjusts its description
+     */
     ngOnInit() {
         this.subscription = this.route.params.subscribe((params) => {
             this.courseId = parseInt(params['courseId'], 10);
@@ -48,6 +51,9 @@ export class CourseOverviewComponent implements OnInit {
         this.adjustCourseDescription();
     }
 
+    /**
+     * Adjusts shown course description according to description length
+     */
     adjustCourseDescription() {
         if (this.course && this.course.description) {
             this.enableShowMore = this.course.description.length > 50;
@@ -60,11 +66,17 @@ export class CourseOverviewComponent implements OnInit {
         }
     }
 
+    /**
+     * Shows long description of the course
+     */
     showLongDescription() {
         this.courseDescription = this.course!.description;
         this.longTextShown = true;
     }
 
+    /**
+     * Shows short description of the course
+     */
     showShortDescription() {
         this.courseDescription = this.course!.description.substr(0, 50) + '...';
         this.longTextShown = false;

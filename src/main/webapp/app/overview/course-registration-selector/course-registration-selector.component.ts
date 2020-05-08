@@ -21,20 +21,35 @@ export class CourseRegistrationSelectorComponent implements OnInit {
 
     constructor(private accountService: AccountService, private courseService: CourseManagementService, private jhiAlertService: AlertService) {}
 
+    /**
+     * On init, check the identity of the user whether he/she is TUM student or not
+     */
     ngOnInit(): void {
         this.accountService.identity().then((user) => {
             this.isTumStudent = !!user!.login!.match(TUM_USERNAME_REGEX);
         });
     }
 
+    /**
+     * Sends an error message
+     * @param error - error message to be shown
+     */
     private onError(error: string) {
         this.jhiAlertService.error(error, null, undefined);
     }
 
+    /**
+     * Returns tracked course id
+     * @param index - number
+     * @param item - Course to return its id
+     */
     trackCourseById(index: number, item: Course) {
         return item.id;
     }
 
+    /**
+     * Find all courses to be registered to and filter them
+     */
     loadAndFilterCourses() {
         return new Promise((resolve, reject) => {
             this.courseService.findAllToRegister().subscribe(
@@ -49,6 +64,9 @@ export class CourseRegistrationSelectorComponent implements OnInit {
         });
     }
 
+    /**
+     * Loads courses that can be registered to and starts the registration
+     */
     startRegistration() {
         this.loading = true;
         this.loadAndFilterCourses()
@@ -69,11 +87,17 @@ export class CourseRegistrationSelectorComponent implements OnInit {
             });
     }
 
+    /**
+     * Cancels registration
+     */
     cancelRegistration() {
         this.courseToRegister = undefined;
         this.showCourseSelection = false;
     }
 
+    /**
+     * Registers for the selected course
+     */
     registerForCourse() {
         if (this.courseToRegister) {
             this.showCourseSelection = false;

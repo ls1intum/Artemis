@@ -63,15 +63,17 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnInit, On
         private submissionService: CodeEditorSubmissionService,
     ) {}
 
+    /**
+     * Subscribes to the incoming submissions
+     */
     ngOnInit(): void {
         this.setupSubmissionWebsocket();
     }
 
     /**
-     * @function ngAfterViewInit
-     * @desc After the view was initialized, we create an interact.js resizable object,
-     *       designate the edges which can be used to resize the target element and set min and max values.
-     *       The 'resizemove' callback function processes the event values and sets new width and height values for the element.
+     * After the view was initialized, we create an interact.js resizable object,
+     * designate the edges which can be used to resize the target element and set min and max values.
+     * The 'resizemove' callback function processes the event values and sets new width and height values for the element.
      */
     ngAfterViewInit(): void {
         this.resizableMinHeight = this.$window.nativeWindow.screen.height / 6;
@@ -79,10 +81,10 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnInit, On
     }
 
     /**
-     * @function ngOnChanges
-     * @desc We need to update the participation results under certain conditions:
-     *       - Participation changed => reset websocket connection and load initial result
-     * @param {SimpleChanges} changes
+     *
+     * We need to update the participation results under certain conditions:
+     * - Participation changed => reset websocket connection and load initial result
+     * @param changes
      *
      */
     ngOnChanges(changes: SimpleChanges): void {
@@ -162,8 +164,7 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnInit, On
     }
 
     /**
-     * @function loadResultDetails
-     * @desc Fetches details for the result (if we received one) and attach them to the result.
+     * Fetches details for the result (if we received one) and attach them to the result.
      * Mutates the input parameter result.
      */
     loadAndAttachResultDetails(result: Result): Observable<Result> {
@@ -178,8 +179,7 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnInit, On
     }
 
     /**
-     * @function getBuildLogs
-     * @desc Gets the buildlogs for the current participation
+     * Gets the buildlogs for the current participation
      */
     getBuildLogs() {
         return this.buildLogService.getBuildLogs();
@@ -201,10 +201,8 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnInit, On
     }
 
     /**
-     * @function toggleEditorCollapse
-     * @desc Calls the parent (editorComponent) toggleCollapse method
+     * Calls the parent (editorComponent) toggleCollapse method
      * @param $event
-     * @param {boolean} horizontal
      */
     toggleEditorCollapse($event: any) {
         this.onToggleCollapse.emit({
@@ -217,13 +215,15 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnInit, On
     }
 
     /**
-     * @function loadSession
-     * @desc Gets the user's session data from localStorage to load editor settings
+     * Gets the user's session data from localStorage to load editor settings
      */
     loadSession() {
         return this.sessionService.loadSession();
     }
 
+    /**
+     * Removes on destroy the subscription
+     */
     ngOnDestroy() {
         if (this.resultSubscription) {
             this.resultSubscription.unsubscribe();

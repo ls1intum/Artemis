@@ -15,6 +15,10 @@ import { LectureAttachmentsComponent } from 'app/lecture/lecture-attachments.com
 export class LectureResolve implements Resolve<Lecture> {
     constructor(private service: LectureService) {}
 
+    /**
+     * resolves lecture data during navigation
+     * @param route Contains the information about a route associated with a component
+     */
     resolve(route: ActivatedRouteSnapshot): Observable<Lecture> {
         const id = route.params['id'] ? route.params['id'] : null;
         if (id) {

@@ -18,6 +18,11 @@ export class CodeEditorFileBrowserFolderComponent extends CodeEditorFileBrowserN
     @Input() disableActions: boolean;
     @Output() onSetCreatingNodeInFolder = new EventEmitter<{ item: TreeviewItem; fileType: FileType }>();
 
+    /**
+     * Creates file or folder depended on the provided fileType
+     * @param event
+     * @param fileType indicates if a file or folder should be created
+     */
     setCreatingNodeInFolder(event: any, fileType: FileType) {
         event.stopPropagation();
         this.onSetCreatingNodeInFolder.emit({ item: this.item, fileType });

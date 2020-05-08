@@ -84,6 +84,9 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         private programmingExerciseSimulationService: ProgrammingExerciseSimulationService,
     ) {}
 
+    /**
+     * On init, subscribes to get necessary route parameters and check if the environment is production
+     */
     ngOnInit() {
         this.subscription = this.route.params.subscribe((params) => {
             const didExerciseChange = this.exerciseId !== parseInt(params['exerciseId'], 10);
@@ -114,6 +117,9 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         });
     }
 
+    /**
+     * On destroy, unsubscribe from observables
+     */
     ngOnDestroy() {
         if (this.participationUpdateListener) {
             this.participationUpdateListener.unsubscribe();
@@ -123,6 +129,9 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         }
     }
 
+    /**
+     * Gets student participation for the exercise and exercise details
+     */
     loadExercise() {
         this.exercise = null;
         this.studentParticipation = this.participationWebsocketService.getParticipationForExercise(this.exerciseId);
@@ -131,6 +140,10 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         });
     }
 
+    /**
+     *  Handle newly loaded exercise
+     * @param newExercise - exercise that is loaded
+     */
     handleNewExercise(newExercise: Exercise) {
         this.exercise = newExercise;
         this.exercise.studentParticipations = this.filterParticipations(this.exercise.studentParticipations)!;
@@ -170,7 +183,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Sort the given participations so that FINISHED participations come first.
+     * Sort the given participation so that FINISHED participation come first.
      *
      * Note, that this function directly operates on the array passed as argument and does not return anything.
      */
@@ -180,6 +193,9 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         }
     }
 
+    /**
+     * Sorts student participation results based on the completion date
+     */
     sortResults() {
         if (this.studentParticipation && this.hasResults) {
             this.studentParticipation.results = this.studentParticipation.results.sort(this.resultSortFunction);
@@ -195,6 +211,9 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         return aValue - bValue;
     };
 
+    /**
+     * Merge student participation if the exercise has student participation
+     */
     mergeResultsAndSubmissionsForParticipations() {
         // if there are new student participation(s) from the server, we need to update this.studentParticipation
         if (this.exercise) {
@@ -212,6 +231,9 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         }
     }
 
+    /**
+     * Subscribe for new participation and participation changes, merge student participation if there is a change
+     */
     subscribeForNewResults() {
         if (this.exercise && this.exercise.studentParticipations && this.exercise.studentParticipations.length > 0) {
             this.exercise.studentParticipations.forEach((participation) => {
@@ -238,10 +260,17 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         });
     }
 
+    /**
+     * Navigates back to course page
+     */
     backToCourse() {
         this.$location.back();
     }
 
+    /**
+     * Returns a badge string if exercise result is rated
+     * @param result - exercise result to be checked
+     */
     exerciseRatedBadge(result: Result): string {
         return result.rated ? 'badge-success' : 'badge-info';
     }
@@ -297,10 +326,16 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         return latestResult;
     }
 
+    /**
+     * Returns true if the build plan URL is published for the programming exercise
+     */
     publishBuildPlanUrl(): boolean {
         return (this.exercise as ProgrammingExercise).publishBuildPlanUrl;
     }
 
+    /**
+     * Returns true if the build plan is active for the exercise
+     */
     buildPlanActive(): boolean {
         return (
             !!this.exercise &&
@@ -310,10 +345,17 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         );
     }
 
+    /**
+     * Returns the project key for the programming exercise
+     */
     projectKey(): string {
         return (this.exercise as ProgrammingExercise).projectKey!;
     }
 
+    /**
+     * Returns the build plan ID for the programming exercise student participation
+     * @param participation - Participation to return build plan ID
+     */
     buildPlanId(participation: Participation): string {
         return (participation! as ProgrammingExerciseStudentParticipation).buildPlanId;
     }

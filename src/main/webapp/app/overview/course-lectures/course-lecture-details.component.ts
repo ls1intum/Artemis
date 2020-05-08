@@ -45,6 +45,9 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
         }
     }
 
+    /**
+     * On init, fetch the lecture from lecture service
+     */
     ngOnInit(): void {
         this.subscription = this.route.params.subscribe((params) => {
             if (!this.lecture || this.lecture.id !== params.lectureId) {
@@ -56,20 +59,34 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
         });
     }
 
+    /**
+     * On destroy, unsubscribe from observables
+     */
     ngOnDestroy(): void {
         if (this.subscription) {
             this.subscription.unsubscribe();
         }
     }
 
+    /**
+     * Navigates back to course
+     */
     backToCourse(): void {
         this.$location.back();
     }
 
+    /**
+     * Return true if attachment is released otherwise false
+     * @param attachment - attachment to check if it is released
+     */
     attachmentNotReleased(attachment: Attachment): boolean {
         return attachment.releaseDate != null && !moment(attachment.releaseDate).isBefore(moment())!;
     }
 
+    /**
+     * Return attachment extension if there is one
+     * @param attachment - attachment to check its extension
+     */
     attachmentExtension(attachment: Attachment): string {
         if (!attachment.link) {
             return 'N/A';
@@ -78,6 +95,10 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
         return attachment.link.split('.').pop()!;
     }
 
+    /**
+     * Download the attachment
+     * @param downloadUrl - url of the attachment
+     */
     downloadAttachment(downloadUrl: string): void {
         if (!this.isDownloadingLink) {
             this.isDownloadingLink = downloadUrl;

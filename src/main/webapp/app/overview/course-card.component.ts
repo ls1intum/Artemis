@@ -23,8 +23,14 @@ export class CourseCardComponent implements OnInit {
         private exerciseService: ExerciseService,
     ) {}
 
+    /**
+     * Life cycle hook called by Angular to indicate that Angular is done creating the component
+     */
     ngOnInit() {}
 
+    /**
+     * Gets the relative total score for all exercises in a course and returns it
+     */
     displayTotalRelativeScore(): number {
         if (this.course.exercises.length > 0) {
             return this.courseScoreCalculationService.calculateTotalScores(this.course.exercises).get('relativeScore')!;
@@ -33,10 +39,17 @@ export class CourseCardComponent implements OnInit {
         }
     }
 
+    /**
+     * Gets next relevant exercise from exercise service and returns it
+     */
     get nextRelevantExercise(): Exercise {
         return this.exerciseService.getNextExerciseForDays(this.course.exercises);
     }
 
+    /**
+     * navigates through the exercise page for the given exercise and starts it
+     * @param exercise - exercise to be started
+     */
     startExercise(exercise: Exercise): void {
         this.router.navigate([this.course.id, 'exercises', exercise.id], { relativeTo: this.route });
     }

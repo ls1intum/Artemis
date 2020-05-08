@@ -435,6 +435,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
 
     /**
      * Triggers the CI of all participations of the given exercise.
+     * The build result will become rated regardless of the due date as the submission type is INSTRUCTOR.
      * @param exerciseId to identify the programming exercise.
      */
     public triggerInstructorBuildForAllParticipationsOfExercise(exerciseId: number) {
@@ -443,6 +444,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
 
     /**
      * Triggers the CI of the provided participations of the given exercise.
+     * The build result will become rated regardless of the due date as the submission type is INSTRUCTOR.
      * @param exerciseId to identify the programming exercise
      * @param participationIds array of participation ids
      */

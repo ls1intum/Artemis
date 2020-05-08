@@ -40,6 +40,9 @@ export class ProgrammingExerciseTriggerAllButtonComponent implements OnInit {
 
     constructor(private submissionService: ProgrammingSubmissionService, private programmingBuildRunService: ProgrammingBuildRunService, private modalService: NgbModal) {}
 
+    /**
+     * Subscribes to the build run updates on init
+     */
     ngOnInit() {
         // The info that the builds were triggered comes from a websocket channel.
         this.subscribeBuildRunUpdates();
@@ -110,10 +113,16 @@ export class ProgrammingExerciseInstructorTriggerAllDialogComponent {
 
     constructor(private activeModal: NgbActiveModal) {}
 
+    /**
+     * Dismisses the modal
+     */
     cancel() {
         this.activeModal.dismiss('cancel');
     }
 
+    /**
+     * Closes the active modal
+     */
     confirmTrigger() {
         this.activeModal.close();
     }

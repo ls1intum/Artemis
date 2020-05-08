@@ -179,6 +179,9 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
         private route: ActivatedRoute,
     ) {}
 
+    /**
+     * On init, finds the course, calculates exercise scores for each score type and groups exercises
+     */
     ngOnInit() {
         this.paramSubscription = this.route.parent!.params.subscribe((params) => {
             this.courseId = parseInt(params['courseId'], 10);
@@ -233,6 +236,9 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
         });
     }
 
+    /**
+     * On destroy, unsubscribe from observables
+     */
     ngOnDestroy() {
         if (this.paramSubscription) {
             this.paramSubscription.unsubscribe();
@@ -242,6 +248,9 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
         }
     }
 
+    /**
+     * Groups exercises by their types in an array
+     */
     groupExercisesByType() {
         let exercises = this.course!.exercises;
         const groupedExercises: any[] = [];
@@ -333,6 +342,13 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
         this.groupedExercises = groupedExercises;
     }
 
+    /**
+     * Adds attributes to chart element
+     * @param chartElement - chart element to be created
+     * @param exerciseTitle - title of the exercise
+     * @param tooltipMessage - tooltip message
+     * @param isNotGraded - if the exercise graded or not
+     */
     createPlaceholderChartElement(chartElement: any, exerciseTitle: string, tooltipMessage: string, isNotGraded: boolean) {
         const tooltip = this.translateService.instant(`artemisApp.courseOverview.statistics.${tooltipMessage}`, { exercise: exerciseTitle });
         chartElement.notGraded.data.push(isNotGraded ? 100 : 0);
@@ -352,6 +368,11 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
 
     // TODO: document the implementation of this method --> it is not really obvious
     // TODO: save the return value of this method in the result object (as temp variable) to avoid that this method is invoked all the time
+    /**
+     * Returns the result by parsing result string - it should include a point to return number
+     * otherwise returns null
+     * @param result - result to get points
+     */
     absoluteResult(result: Result): number | null {
         if (!result.resultString) {
             return 0;
@@ -374,6 +395,10 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
         return parseInt(result.resultString.slice(0, result.resultString.indexOf('of')), 10);
     }
 
+    /**
+     * Calculates absolute scores for each type of exercise, total absolute score
+     * And fills the doughnut chart data
+     */
     calculateAbsoluteScores(): void {
         const quizzesTotalScore = this.calculateScoreTypeForExerciseType(ExerciseType.QUIZ, ABSOLUTE_SCORE);
         const programmingExerciseTotalScore = this.calculateScoreTypeForExerciseType(ExerciseType.PROGRAMMING, ABSOLUTE_SCORE);
@@ -399,6 +424,9 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
         ];
     }
 
+    /**
+     * Calculates max scores for each type of exercise and total max score
+     */
     calculateMaxScores() {
         const quizzesTotalMaxScore = this.calculateScoreTypeForExerciseType(ExerciseType.QUIZ, MAX_SCORE);
         const programmingExerciseTotalMaxScore = this.calculateScoreTypeForExerciseType(ExerciseType.PROGRAMMING, MAX_SCORE);
@@ -415,6 +443,9 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
         this.totalMaxScore = this.calculateTotalScoreForTheCourse('maxScore');
     }
 
+    /**
+     * Calculates relative scores for each type of exercise and total relative score
+     */
     calculateRelativeScores(): void {
         const quizzesRelativeScore = this.calculateScoreTypeForExerciseType(ExerciseType.QUIZ, RELATIVE_SCORE);
         const programmingExerciseRelativeScore = this.calculateScoreTypeForExerciseType(ExerciseType.PROGRAMMING, RELATIVE_SCORE);
@@ -431,6 +462,9 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
         this.totalRelativeScore = this.calculateTotalScoreForTheCourse(RELATIVE_SCORE);
     }
 
+    /**
+     * Calculates presentation scores for each type of exercise and total presentation score
+     */
     calculatePresentationScores(): void {
         const programmingExercisePresentationScore = this.calculateScoreTypeForExerciseType(ExerciseType.PROGRAMMING, PRESENTATION_SCORE);
         const modelingExercisePresentationScore = this.calculateScoreTypeForExerciseType(ExerciseType.MODELING, PRESENTATION_SCORE);
@@ -446,6 +480,10 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
         this.totalPresentationScore = this.calculateTotalScoreForTheCourse(PRESENTATION_SCORE);
     }
 
+    /**
+     * Filters exercises for the given filter function and calculates score
+     * @param filterFunction - passed function to filter course exercises
+     */
     calculateScores(filterFunction: (courseExercise: Exercise) => boolean) {
         let courseExercises = this.courseExercises;
         if (filterFunction) {
@@ -454,6 +492,11 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
         return this.courseCalculationService.calculateTotalScores(courseExercises);
     }
 
+    /**
+     * Creates a filter function for the given exercise type and calculates score
+     * @param exerciseType - type of exercise to be used in filtering
+     * @param scoreType - Type of score (absolute, relative, max, presentation)
+     */
     calculateScoreTypeForExerciseType(exerciseType: ExerciseType, scoreType: string): number {
         if (exerciseType !== undefined && scoreType !== undefined) {
             const filterFunction = (courseExercise: Exercise) => courseExercise.type === exerciseType;
@@ -464,6 +507,10 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
         }
     }
 
+    /**
+     * Calculates total score for the course for the given score type
+     * @param scoreType - Type of score (absolute, relative, max, presentation)
+     */
     calculateTotalScoreForTheCourse(scoreType: string): number {
         const scores = this.courseCalculationService.calculateTotalScores(this.courseExercises);
         return scores.get(scoreType)!;

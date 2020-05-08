@@ -70,6 +70,10 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy {
         private submissionService: CodeEditorSubmissionService,
     ) {}
 
+    /**
+     * Checks the gitConflictState on init and sets the commitState according
+     * to the git ConflictState
+     */
     ngOnInit(): void {
         this.conflictStateSubscription = this.conflictService.subscribeConflictState().subscribe((gitConflictState: GitConflictState) => {
             // When the conflict is encountered when opening the code-editor, setting the commitState here could cause an uncheckedException.
@@ -88,12 +92,18 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy {
             .subscribe();
     }
 
+    /**
+     * Removes the subscription on destroy
+     */
     ngOnDestroy(): void {
         if (this.conflictStateSubscription) {
             this.conflictStateSubscription.unsubscribe();
         }
     }
 
+    /**
+     * Adds the subscription on save
+     */
     onSave() {
         this.saveChangedFiles()
             .pipe(catchError(() => of()))
@@ -101,8 +111,7 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * @function saveFiles
-     * @desc Saves all files that have unsaved changes in the editor.
+     * Saves all files that have unsaved changes in the editor.
      */
     saveChangedFiles(): Observable<any> {
         if (!_isEmpty(this.unsavedFiles)) {
@@ -122,8 +131,7 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * @function commit
-     * @desc Commits the current repository files.
+     * Commits the current repository files.
      * If there are unsaved changes, save them first before trying to commit again.
      */
     commit() {
@@ -155,6 +163,9 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy {
             );
     }
 
+    /**
+     * Resets repository to the last commit of the remote repository
+     */
     resetRepository() {
         this.modalService.open(CodeEditorResolveConflictModalComponent, { keyboard: true, size: 'lg' });
     }

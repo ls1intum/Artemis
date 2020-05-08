@@ -51,6 +51,10 @@ export class CourseExerciseRowComponent implements OnInit, OnDestroy {
         private participationWebsocketService: ParticipationWebsocketService,
     ) {}
 
+    /**
+     * On init, subscribe for participation changes, fetch all student participation, participation status,
+     * exercise assessment due date, exercise type and categories for the exercise
+     */
     ngOnInit() {
         const cachedParticipation = this.participationWebsocketService.getParticipationForExercise(this.exercise.id);
         if (cachedParticipation) {
@@ -84,12 +88,19 @@ export class CourseExerciseRowComponent implements OnInit, OnDestroy {
         this.exerciseCategories = this.exerciseService.convertExerciseCategoriesFromServer(this.exercise);
     }
 
+    /**
+     * On destroy, unsubscribe from observable
+     */
     ngOnDestroy() {
         if (this.participationUpdateListener) {
             this.participationUpdateListener.unsubscribe();
         }
     }
 
+    /**
+     * Check if remaining days for the class less than a week if so return danger
+     * @param date - current date
+     */
     getUrgentClass(date: Moment | null): string | null {
         if (!date) {
             return null;
@@ -102,14 +113,26 @@ export class CourseExerciseRowComponent implements OnInit, OnDestroy {
         }
     }
 
+    /**
+     * Cast an exercise to Programming exercise and return it
+     * @param exercise - exercise to be casted
+     */
     asProgrammingExercise(exercise: Exercise): ProgrammingExercise {
         return exercise as ProgrammingExercise;
     }
 
+    /**
+     * Cast an exercise to Quiz exercise and return it
+     * @param exercise - exercise to be casted
+     */
     asQuizExercise(exercise: Exercise): QuizExercise {
         return exercise as QuizExercise;
     }
 
+    /**
+     * check if quiz is active
+     * @param exercise - for the given exercise
+     */
     isActiveQuiz(exercise: Exercise) {
         return (
             exercise.participationStatus === ParticipationStatus.QUIZ_UNINITIALIZED ||
@@ -118,6 +141,10 @@ export class CourseExerciseRowComponent implements OnInit, OnDestroy {
         );
     }
 
+    /**
+     * Show exercise details for student actions or result based on the click event
+     * @param event - on click event
+     */
     showDetails(event: any) {
         const isClickOnAction = event.target.closest('jhi-exercise-details-student-actions') && event.target.closest('.btn');
         const isClickResult = event.target.closest('jhi-result') && event.target.closest('.result');
