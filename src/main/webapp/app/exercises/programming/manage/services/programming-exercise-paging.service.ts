@@ -14,6 +14,11 @@ export class ProgrammingExercisePagingService {
 
     constructor(private http: HttpClient) {}
 
+    /**
+     * Sets the HTTP parameters from the pageable object and returns the
+     * Observable of the search results for the exercises.
+     * @param {PageableSearch} pageable - Pageable search interface
+     */
     searchForExercises(pageable: PageableSearch): Observable<EntityResponseType> {
         const params = new HttpParams()
             .set('pageSize', String(pageable.pageSize))

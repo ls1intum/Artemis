@@ -15,6 +15,12 @@ import { Observable } from 'rxjs/Observable';
 export class ProgrammingExerciseResolve implements Resolve<ProgrammingExercise> {
     constructor(private service: ProgrammingExerciseService) {}
 
+    /**
+     * If the id of the route exists, returns an observable of the body of
+     * the programming exercise found from the programming exercise service.
+     * Otherwise returns an observable of a new programming exercise.
+     * @param {ActivatedRouteSnapshot} route
+     */
     resolve(route: ActivatedRouteSnapshot) {
         const id = route.params['id'] ? route.params['id'] : null;
         if (id) {
