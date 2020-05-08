@@ -4,7 +4,7 @@
         <ng-container ngbNavItem="editor_edit">
             <a ngbNavLink class="btn-sm text-dark">{{ 'entity.action.edit' | translate }}</a>
             <ng-template ngbNavContent>
-                <div class="height-100 border-0 markdown-editor d-flex flex-column">
+                <div class="height-100 border-0 markdown-editor d-flex flex-column" (drop)="onFileUpload($event)" >
                     <ace-editor
                         #aceEditor
                         [mode]="aceEditorOptions.mode"
