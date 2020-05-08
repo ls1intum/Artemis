@@ -60,8 +60,8 @@ public abstract class BehaviorTest {
      * @return The instance of this class.
      */
     protected Object newInstance(Class<?> clazz, Object... constructorArgs) {
-        Class<?>[] constructorArgTypes = getParameterTypes(constructorArgs);
         String failMessage = "Could not instantiate the class " + clazz.getSimpleName() + " because";
+        Class<?>[] constructorArgTypes = getParameterTypes(failMessage + " a fitting constructor could not be found because", constructorArgs);
 
         try {
             Constructor<?> constructor = clazz.getDeclaredConstructor(constructorArgTypes);
@@ -135,9 +135,9 @@ public abstract class BehaviorTest {
      * @return The instance of the attribute with the wanted value.
      */
     protected Object valueForAttribute(Object object, String attributeName) {
-        requireNonNull(object, "receiver must not be null");
+        requireNonNull(object, "Could not retrieve the value of attribute '" + attributeName + "' because the object was null.");
         String failMessage = "Could not retrieve the attribute '" + attributeName + "' from the class "
-                + object.getClass().getSimpleName() + " because";
+            + object.getClass().getSimpleName() + " because";
 
         try {
             return object.getClass().getDeclaredField(attributeName).get(object);
@@ -161,7 +161,7 @@ public abstract class BehaviorTest {
      * @return The wanted method.
      */
     protected Method getMethod(Object object, String methodName, Class<?>... parameterTypes) {
-        requireNonNull(object, "receiver must not be null");
+    	requireNonNull(object, "Could not find the method named '" + methodName + "' because the object was null.");
         return getMethod(object.getClass(), methodName, parameterTypes);
     }
 
@@ -250,7 +250,8 @@ public abstract class BehaviorTest {
      * @return The return value of the method.
      */
     protected Object invokeMethod(Object object, String methodName, Object... params) {
-        Class<?>[] parameterTypes = getParameterTypes(params);
+        String failMessage = "Could not find the method '" + methodName + "' because";
+        Class<?>[] parameterTypes = getParameterTypes(failMessage, params);
         Method method = getMethod(object, methodName, parameterTypes);
         return invokeMethod(object, method, params);
     }
@@ -288,9 +289,9 @@ public abstract class BehaviorTest {
      * @param params: The instances of the parameters.
      * @return The parameter types of the instances as an array.
      */
-    private Class<?>[] getParameterTypes(Object... params) {
+    private Class<?>[] getParameterTypes(String failMessage, Object... params) {
         return Arrays.stream(params)
-                .map(it -> requireNonNull(it, "parameters must not be null"))
+                .map(it -> requireNonNull(it, failMessage + " one of the supplied arguments was null.")) // TODO this is difficult to improve, since the process itself is fragile/flawed
                 .map(Object::getClass)
                 .toArray(Class<?>[]::new);
     }
@@ -306,5 +307,4 @@ public abstract class BehaviorTest {
         Arrays.stream(parameterTypes).map(Class::getSimpleName).forEach(joiner::add);
         return joiner.toString();
     }
-
 }
