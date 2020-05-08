@@ -239,9 +239,10 @@ public class QuizExerciseResource {
         if (!authCheckService.isAllowedToSeeExercise(quizExercise, null)) {
             return forbidden();
         }
-        //apply filter according to current state of the quiz
         quizExercise.applyAppropriateFilterForStudents();
 
+        // filter out information depending on quiz state
+        quizExercise.filterForStudentsDuringQuiz();
         return ResponseEntity.ok(quizExercise);
     }
 

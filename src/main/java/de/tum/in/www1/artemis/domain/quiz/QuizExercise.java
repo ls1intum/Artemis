@@ -343,7 +343,6 @@ public class QuizExercise extends Exercise implements Serializable {
         else if (shouldFilterForStudents()) {
             filterForStudentsDuringQuiz();
         }
-        super.filterSensitiveInformation();
     }
 
     /**
@@ -353,6 +352,7 @@ public class QuizExercise extends Exercise implements Serializable {
     public void filterSensitiveInformation() {
         setQuizPointStatistic(null);
         setQuizQuestions(new ArrayList<>());
+        super.filterSensitiveInformation();
     }
 
     /**
@@ -361,8 +361,6 @@ public class QuizExercise extends Exercise implements Serializable {
     public void filterForStudentsDuringQuiz() {
         // filter out statistics
         setQuizPointStatistic(null);
-        //filter out sensitive information
-        filterSensitiveInformation();
 
         // filter out statistics, explanations, and any information about correct answers
         // from all quizQuestions (so students can't find them in the JSON while answering the quiz)
