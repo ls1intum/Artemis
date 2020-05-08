@@ -31,7 +31,7 @@ export class ComplaintsComponent implements OnInit {
     loaded = true;
 
     constructor(private complaintService: ComplaintService, private jhiAlertService: AlertService, private complaintResponseService: ComplaintResponseService) {}
-
+    /** Retrieves all complaints of a result */
     ngOnInit(): void {
         this.complaintService
             .findByResultId(this.resultId)
@@ -53,7 +53,7 @@ export class ComplaintsComponent implements OnInit {
                 },
             );
     }
-
+    /** Allows user to create a complaint or a more feedback request in case the requests limit is not reached yet */
     createComplaint(): void {
         this.loaded = false;
         const complaint = new Complaint();
