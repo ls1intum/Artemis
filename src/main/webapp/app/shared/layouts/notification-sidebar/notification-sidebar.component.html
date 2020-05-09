@@ -27,10 +27,12 @@
     </div>
     <h3>{{ 'artemisApp.notification.notifications' | translate }}</h3>
     <div class="alert alert-danger mx-3" role="alert" *ngIf="error">
-        {{ 'error.unexpectedError' | translate: { error: error } }}
+        {{ 'artemisApp.notification.unexpectedError' | translate }}
     </div>
     <div class="text-right mx-3 mb-1">
-        <small class="text-muted">{{ sortedNotifications?.length || '0' }} of {{ totalNotifications }} notifications loaded</small>
+        <small class="text-muted">
+            {{ 'artemisApp.notification.loadedNotificationCount' | translate: { loaded: sortedNotifications?.length || '0', total: totalNotifications } }}
+        </small>
     </div>
     <div class="notification-item p-3" *ngFor="let notification of sortedNotifications" (click)="startNotification(notification)">
         <div>

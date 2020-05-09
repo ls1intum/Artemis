@@ -3,10 +3,11 @@
         "notification": {
             "notifications": "Mitteilungen",
             "noNotifications": "Keine Mitteilungen verfügbar",
-            "showAllNotifications": "Alle Mitteilungen anzeigen",
             "title": "Titel",
             "text": "Text",
             "notificationDate": "Mitteilungsdatum",
+            "unexpectedError": "Ein unerwarteter Fehler ist aufgetreten. Bitte aktualisiere die Seite.",
+            "loadedNotificationCount": "{{loaded}} von {{total}} Mitteilungen geladen",
             "target": {
                 "newAnswer": "Antwort ansehen",
                 "newQuestion": "Frage ansehen",
