@@ -491,12 +491,12 @@ class ProgrammingSubmissionAndResultIntegrationTest extends AbstractSpringIntegr
 
     private String getBuildPlanIdByParticipationType(IntegrationTestParticipationType participationType, int participationNumber) {
         switch (participationType) {
-        case TEMPLATE:
-            return "BASE";
-        case SOLUTION:
-            return "SOLUTION";
-        default:
-            return getStudentLoginFromParticipation(participationNumber);
+            case TEMPLATE:
+                return "BASE";
+            case SOLUTION:
+                return "SOLUTION";
+            default:
+                return getStudentLoginFromParticipation(participationNumber);
         }
     }
 
@@ -550,12 +550,12 @@ class ProgrammingSubmissionAndResultIntegrationTest extends AbstractSpringIntegr
 
     private Long getParticipationIdByType(IntegrationTestParticipationType participationType, int participationNumber) {
         switch (participationType) {
-        case SOLUTION:
-            return solutionParticipationId;
-        case TEMPLATE:
-            return templateParticipationId;
-        default:
-            return participationIds.get(participationNumber);
+            case SOLUTION:
+                return solutionParticipationId;
+            case TEMPLATE:
+                return templateParticipationId;
+            default:
+                return participationIds.get(participationNumber);
         }
     }
 

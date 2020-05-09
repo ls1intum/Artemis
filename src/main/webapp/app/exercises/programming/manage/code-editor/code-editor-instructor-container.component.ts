@@ -57,18 +57,30 @@ export class CodeEditorInstructorContainerComponent extends CodeEditorInstructor
         );
     }
 
+    /**
+     * Select the solution participation repository and navigate to it
+     */
     selectSolutionParticipation() {
         this.router.navigate(['..', this.exercise.solutionParticipation.id], { relativeTo: this.route });
     }
 
+    /**
+     * Select the template participation repository and navigate to it
+     */
     selectTemplateParticipation() {
         this.router.navigate(['..', this.exercise.templateParticipation.id], { relativeTo: this.route });
     }
 
+    /**
+     * Select the assignment participation repository and navigate to it
+     */
     selectAssignmentParticipation() {
         this.router.navigate(['..', this.exercise.studentParticipations[0].id], { relativeTo: this.route });
     }
 
+    /**
+     * Select the test repository and navigate to it
+     */
     selectTestRepository() {
         this.router.navigate(['..', 'test'], { relativeTo: this.route });
     }

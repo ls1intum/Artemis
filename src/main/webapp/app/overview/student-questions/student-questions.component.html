@@ -1,20 +1,41 @@
-<jhi-side-panel [panelHeader]="'artemisApp.courseOverview.exerciseDetails.faq.header' | translate">
-    <div>
-        <jhi-student-question-row
-            [studentQuestion]="studentQuestion"
-            [user]="currentUser"
-            [isAtLeastTutorInCourse]="isAtLeastTutorInCourse"
-            [selectedStudentQuestion]="selectedStudentQuestion"
-            (interactQuestion)="interactQuestion($event)"
-            *ngFor="let studentQuestion of studentQuestions"
-        ></jhi-student-question-row>
-        <div *ngIf="isEditMode">
-            <div class="row mb-1 mt-2">
-                <div class="col-12">
-                    <div class="form-group">
-                        <label class="form-control-label">{{ 'artemisApp.courseOverview.exerciseDetails.faq.newQuestionLabel' | translate }}</label>
+<!-- uncollapsed questions -->
+<div *ngIf="!collapsed; else collapsedQuestions" class="questions-container expanded-questions">
+    <div class="draggable-left"><fa-icon [icon]="'grip-lines-vertical'"></fa-icon></div>
+    <div class="card">
+        <!-- header -->
+        <div class="card-header text-white" [ngbTooltip]="'artemisApp.courseOverview.exerciseDetails.faq.hide' | translate" (click)="collapsed = true">
+            <div class="row flex-grow-1">
+                <div class="col">
+                    <h4 class="mb-0" jhiTranslate="artemisApp.courseOverview.exerciseDetails.faq.header">Q & A</h4>
+                </div>
+                <div class="col-auto">
+                    <fa-icon [icon]="'chevron-right'"></fa-icon>
+                </div>
+            </div>
+        </div>
+        <!-- body -->
+        <div class="card-body py-2">
+            <!-- questions with answers -->
+            <jhi-student-question-row
+                [studentQuestion]="studentQuestion"
+                [user]="currentUser"
+                [isAtLeastTutorInCourse]="isAtLeastTutorInCourse"
+                [selectedStudentQuestion]="selectedStudentQuestion"
+                (interactQuestionRow)="interactQuestion($event)"
+                *ngFor="let studentQuestion of studentQuestions"
+            ></jhi-student-question-row>
+            <!-- new question editor -->
+            <div *ngIf="isEditMode">
+                <div class="row pl-2">
+                    <div class="col-auto px-0">
+                        <fa-icon [icon]="'comment'"></fa-icon>
+                    </div>
+                    <div class="col">
+                        <span class="form-control-label question-subtitle">{{ 'artemisApp.courseOverview.exerciseDetails.faq.newQuestionLabel' | translate }}</span>
+                    </div>
+                    <div class="col-12 px-0">
                         <jhi-markdown-editor
-                            class="markdown-editor background-editor-color"
+                            class="markdown-editor background-editor-color w-100"
                             [domainCommands]="domainCommands"
                             [(markdown)]="studentQuestionText"
                             [editorMode]="EditorMode.LATEX"
@@ -22,22 +43,41 @@
                             [metaCommands]="[]"
                         ></jhi-markdown-editor>
                     </div>
+                    <div class="col-12 d-flex justify-content-around">
+                        <button class="btn btn-sm btn-outline-secondary" (click)="isEditMode = false">
+                            {{ 'artemisApp.courseOverview.exerciseDetails.faq.cancel' | translate }}
+                        </button>
+                        <button class="btn btn-sm btn-outline-secondary" *ngIf="!selectedStudentQuestion" (click)="addQuestion()">
+                            {{ 'artemisApp.courseOverview.exerciseDetails.faq.addQuestion' | translate }}
+                        </button>
+                    </div>
                 </div>
-                <div class="col-12 d-flex justify-content-between">
-                    <button class="btn btn-outline-primary" (click)="toggleEditMode()">{{ 'artemisApp.courseOverview.exerciseDetails.faq.cancel' | translate }}</button>
-                    <button class="btn btn-primary" *ngIf="!selectedStudentQuestion" (click)="addQuestion()">
-                        {{ 'artemisApp.courseOverview.exerciseDetails.faq.addQuestion' | translate }}
+            </div>
+            <!-- new question button -->
+            <div class="row" *ngIf="!isEditMode">
+                <div class="col-12">
+                    <button
+                        class="btn btn-sm btn-outline-secondary"
+                        [ngbTooltip]="'artemisApp.courseOverview.exerciseDetails.faq.addNewQuestion' | translate"
+                        (click)="isEditMode = true"
+                    >
+                        <fa-icon [icon]="'plus'"></fa-icon>
+                        <span class="d-none d-md-inline">{{ 'artemisApp.courseOverview.exerciseDetails.faq.addNewQuestion' | translate }}</span>
                     </button>
                 </div>
             </div>
-        </div>
-        <div class="row mb-1" *ngIf="!studentQuestions || studentQuestions.length === 0">
-            <div class="col-12">{{ 'artemisApp.courseOverview.exerciseDetails.faq.noQuestions' | translate }}</div>
-        </div>
-        <div class="row mb-1" *ngIf="!isEditMode">
-            <div class="col-12">
-                <a class="add-action" (click)="toggleEditMode()">{{ 'artemisApp.courseOverview.exerciseDetails.faq.addNewQuestion' | translate }}</a>
+            <!-- no questions -->
+            <div class="row mt-2" *ngIf="!studentQuestions || studentQuestions.length === 0">
+                <div class="col-12">{{ 'artemisApp.courseOverview.exerciseDetails.faq.noQuestions' | translate }}</div>
             </div>
         </div>
     </div>
-</jhi-side-panel>
+</div>
+<!-- collapsed questions -->
+<ng-template #collapsedQuestions>
+    <div class="questions-container collapsed-questions text-white" (click)="collapsed = false" [ngbTooltip]="'artemisApp.courseOverview.exerciseDetails.faq.show' | translate">
+        <fa-icon [icon]="'chevron-left'"></fa-icon>
+        <span jhiTranslate="artemisApp.courseOverview.exerciseDetails.faq.header">Q & A</span>
+        <fa-icon [icon]="'chevron-left'"></fa-icon>
+    </div>
+</ng-template>

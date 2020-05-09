@@ -2,18 +2,14 @@ import { AfterViewInit, Component, HostBinding, Input } from '@angular/core';
 import interact from 'interactjs';
 
 /**
- * Resizable Layout with collapsable panel on the right hand side.
- *
+ * Resizable Layout with collapsible panel on the right hand side.
  * Usage Example:
  * <jhi-resizeable-container>
- *
  *    <span left-header>Header Left</span>
  *    <p left-body>Body Left</p>
- *
  *    <fa-icon [icon]="'exclamation-triangle'" right-header></fa-icon>
  *    <span right-header>Header Right</span>
  *    <p right-body>Body Right</p>
- *
  *  </jhi-resizeable-container>
  */
 @Component({
@@ -25,6 +21,10 @@ export class ResizeableContainerComponent implements AfterViewInit {
     @HostBinding('class.flex-grow-1') flexGrow1 = true;
     @Input() collapsed = false;
 
+    /**
+     * Performed after full initialization of the view.
+     * Handles the resizable layout with collapsible panel on the right hand side.
+     */
     ngAfterViewInit() {
         interact('.expanded')
             .resizable({

@@ -42,10 +42,11 @@ export class TextSubmissionService {
             .pipe(map((res: HttpResponse<TextSubmission[]>) => TextSubmissionService.convertArrayResponse(res)));
     }
 
-    getTextSubmissionForExerciseWithoutAssessment(exerciseId: number, lock = false): Observable<TextSubmission> {
+    // option = 'head': Do not optimize assessment order. Only used to check if assessments available.
+    getTextSubmissionForExerciseWithoutAssessment(exerciseId: number, option?: 'lock' | 'head'): Observable<TextSubmission> {
         let url = `api/exercises/${exerciseId}/text-submission-without-assessment`;
-        if (lock) {
-            url += '?lock=true';
+        if (option) {
+            url += `?${option}=true`;
         }
         return this.http.get<TextSubmission>(url).pipe(
             tap((submission) => (submission.participation.submissions = [submission])),

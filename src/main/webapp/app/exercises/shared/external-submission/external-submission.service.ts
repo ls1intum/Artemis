@@ -13,6 +13,12 @@ export class ExternalSubmissionService {
     // TODO: It would be good to refactor the convertDate methods into a separate service, so that we don't have to import the result service here.
     constructor(private http: HttpClient, private resultService: ResultService) {}
 
+    /**
+     * Persist a new result for the provided exercise and student (a participation and an empty submission will also be created if they do not exist yet)
+     * @param { Exercise } exercise - Exercise for which a new result is created
+     * @param { User } student - Student for whom a result is created
+     * @param { Result } result - Result that is added
+     */
     create(exercise: Exercise, student: User, result: Result): Observable<EntityResponseType> {
         const copy = this.resultService.convertDateFromClient(result);
         return this.http
@@ -20,6 +26,9 @@ export class ExternalSubmissionService {
             .map((res: EntityResponseType) => this.resultService.convertDateFromServer(res));
     }
 
+    /**
+     * Generates an initial manual result with default values.
+     */
     generateInitialManualResult() {
         const newResult = new Result();
         newResult.completionDate = moment();

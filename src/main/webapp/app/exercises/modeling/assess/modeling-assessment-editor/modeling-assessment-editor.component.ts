@@ -40,7 +40,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     highlightMissingFeedback = false;
 
     assessmentsAreValid = false;
-    busy: boolean;
+    nextSubmissionBusy: boolean;
     courseId: number;
     userId: number;
     isAssessor = false;
@@ -359,10 +359,10 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     }
 
     assessNextOptimal() {
-        this.busy = true;
+        this.nextSubmissionBusy = true;
         this.modelingAssessmentService.getOptimalSubmissions(this.modelingExercise!.id).subscribe(
             (optimal: number[]) => {
-                this.busy = false;
+                this.nextSubmissionBusy = false;
                 if (optimal.length === 0) {
                     this.jhiAlertService.clear();
                     this.jhiAlertService.info('assessmentDashboard.noSubmissionFound');
@@ -380,7 +380,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
                 }
             },
             (error: HttpErrorResponse) => {
-                this.busy = false;
+                this.nextSubmissionBusy = false;
                 if (error.error && error.error.errorKey === 'lockedSubmissionsLimitReached') {
                     this.goToExerciseDashboard();
                 } else {

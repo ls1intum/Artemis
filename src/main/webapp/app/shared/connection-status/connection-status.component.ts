@@ -15,6 +15,9 @@ export class JhiConnectionStatusComponent implements OnInit, OnDestroy {
 
     constructor(private jhiWebsocketService: JhiWebsocketService) {}
 
+    /**
+     * Life cycle hook called by Angular to indicate that Angular is done creating the component
+     */
     ngOnInit() {
         // listen to connect / disconnect events
         this.onConnected = () => {
@@ -31,6 +34,9 @@ export class JhiConnectionStatusComponent implements OnInit, OnDestroy {
         });
     }
 
+    /**
+     * Life cycle hook called by Angular for cleanup just before Angular destroys the component
+     */
     ngOnDestroy() {
         if (this.onConnected) {
             this.jhiWebsocketService.unbind('connect', this.onConnected);

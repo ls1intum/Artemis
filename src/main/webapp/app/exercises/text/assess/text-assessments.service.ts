@@ -22,6 +22,13 @@ export class TextAssessmentsService {
 
     constructor(private http: HttpClient) {}
 
+    /**
+     * Saves the passed feedback items of the assessment.
+     * @param exerciseId id of the exercise the assessed submission was made to of type {number}
+     * @param resultId id of the corresponding result of type {number}
+     * @param feedbacks list of feedback made during assessment of type {Feedback[]}
+     * @param textBlocks list of text blocks of type {TextBlock[]}
+     */
     public save(exerciseId: number, resultId: number, feedbacks: Feedback[], textBlocks: TextBlock[]): Observable<EntityResponseType> {
         const body = TextAssessmentsService.prepareFeedbacksAndTextblocksForRequest(feedbacks, textBlocks);
         return this.http
@@ -29,6 +36,13 @@ export class TextAssessmentsService {
             .map((res: EntityResponseType) => TextAssessmentsService.convertResponse(res));
     }
 
+    /**
+     * Submits the passed feedback items of the assessment.
+     * @param exerciseId id of the exercise the assessed submission was made to of type {number}
+     * @param resultId id of the corresponding result of type {number}
+     * @param feedbacks list of feedback made during assessment of type {Feedback[]}
+     * @param textBlocks list of text blocks of type {TextBlock[]}
+     */
     public submit(exerciseId: number, resultId: number, feedbacks: Feedback[], textBlocks: TextBlock[]): Observable<EntityResponseType> {
         const body = TextAssessmentsService.prepareFeedbacksAndTextblocksForRequest(feedbacks, textBlocks);
         return this.http
@@ -36,6 +50,13 @@ export class TextAssessmentsService {
             .map((res: EntityResponseType) => TextAssessmentsService.convertResponse(res));
     }
 
+    /**
+     * Updates an assessment after a complaint.
+     * @param feedbacks list of feedback made during assessment of type {Feedback[]}
+     * @param textBlocks list of text blocks of type {TextBlock[]}
+     * @param complaintResponse response on the complaint of type {ComplaintResponse}
+     * @param submissionId id of corresponding submission of type {number}
+     */
     public updateAssessmentAfterComplaint(
         feedbacks: Feedback[],
         textBlocks: TextBlock[],
@@ -53,16 +74,29 @@ export class TextAssessmentsService {
             .map((res: EntityResponseType) => TextAssessmentsService.convertResponse(res));
     }
 
+    /**
+     * Cancels an assessment.
+     * @param exerciseId id of the exercise the assessed submission was made to of type {number}
+     * @param submissionId id of corresponding submission of type {number}
+     */
     public cancelAssessment(exerciseId: number, submissionId: number): Observable<void> {
         return this.http.put<void>(`${this.resourceUrl}/exercise/${exerciseId}/submission/${submissionId}/cancel-assessment`, null);
     }
 
+    /**
+     * Get a result with predefined text blocks.
+     * @param resultId id of the result that should be retrieved of type {number}
+     */
     public getResultWithPredefinedTextblocks(resultId: number): Observable<EntityResponseType> {
         return this.http
             .get<Result>(`${this.resourceUrl}/result/${resultId}/with-textblocks`, { observe: 'response' })
             .map((res: EntityResponseType) => TextAssessmentsService.convertResponse(res));
     }
 
+    /**
+     * Get all feedback items for a submission.
+     * @param submissionId id of the submission for which the feedback items should be retrieved of type {number}
+     */
     public getFeedbackDataForExerciseSubmission(submissionId: number): Observable<StudentParticipation> {
         return this.http.get<StudentParticipation>(`${this.resourceUrl}/submission/${submissionId}`).pipe(
             // Wire up Result and Submission
@@ -75,6 +109,11 @@ export class TextAssessmentsService {
         );
     }
 
+    /**
+     * Gets an example result for defined exercise and submission.
+     * @param exerciseId id of the exercise for which the example result should be retrieved of type {number}
+     * @param submissionId id of the submission for which the example result should be retrieved of type {number}
+     */
     public getExampleResult(exerciseId: number, submissionId: number): Observable<Result> {
         return this.http.get<Result>(`${this.resourceUrl}/exercise/${exerciseId}/submission/${submissionId}/example-result`);
     }
@@ -114,6 +153,11 @@ export class TextAssessmentsService {
         return Object.assign({}, result);
     }
 
+    /**
+     * Match given text blocks and feedback items by text block references.
+     * @param blocks list of text blocks of type {TextBlock[]}
+     * @param feedbacks list of feedback made during assessment of type {Feedback[]}
+     */
     public static matchBlocksWithFeedbacks(blocks: TextBlock[], feedbacks: Feedback[]): TextBlockRef[] {
         return blocks.map(
             (block: TextBlock) =>

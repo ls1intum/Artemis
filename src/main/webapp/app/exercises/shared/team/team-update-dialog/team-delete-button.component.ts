@@ -38,6 +38,9 @@ export class TeamDeleteButtonComponent implements OnDestroy {
 
     constructor(private jhiAlertService: JhiAlertService, private teamService: TeamService) {}
 
+    /**
+     * Life cycle hook to indicate component creation is done
+     */
     ngOnDestroy(): void {
         this.dialogErrorSource.unsubscribe();
     }

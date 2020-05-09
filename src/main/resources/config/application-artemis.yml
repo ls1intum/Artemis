@@ -74,7 +74,3 @@ artemis:
         embedding-chunk-size: 50
         clustering-url: http://localhost:8001/cluster
         secret: null
-
-info:
-    contact: artemis.in@tum.de
-    imprint: https://ase.in.tum.de/lehrstuhl_1/component/content/article/179-imprint
