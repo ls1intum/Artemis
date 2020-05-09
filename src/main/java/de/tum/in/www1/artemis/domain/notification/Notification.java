@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.domain;
+package de.tum.in.www1.artemis.domain.notification;
 
 import java.io.Serializable;
 import java.time.ZonedDateTime;
@@ -14,6 +14,9 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
+import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.enumeration.NotificationPriority;
+
 /**
  * A Notification.
  */
@@ -25,10 +28,10 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 @DiscriminatorOptions(force = true)
 // NOTE: Use strict cache to prevent lost updates
 @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
-@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "notificationType")
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "notificationType")
 // Annotation necessary to distinguish between concrete implementations of Notification when deserializing from JSON
 @JsonSubTypes({ @JsonSubTypes.Type(value = GroupNotification.class, name = "group"), @JsonSubTypes.Type(value = SingleUserNotification.class, name = "single"),
-        @JsonSubTypes.Type(value = SystemNotification.class, name = "system"), })
+        @JsonSubTypes.Type(value = SystemNotification.class, name = "system") })
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public abstract class Notification implements Serializable {
 
@@ -50,6 +53,13 @@ public abstract class Notification implements Serializable {
 
     @Column(name = "target")
     private String target;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "priority", columnDefinition = "varchar(15) default 'MEDIUM'")
+    private NotificationPriority priority = NotificationPriority.MEDIUM;
+
+    @Column(name = "outdated", columnDefinition = "boolean default false")
+    private boolean outdated = false;
 
     @ManyToOne
     private User author;
@@ -115,6 +125,32 @@ public abstract class Notification implements Serializable {
         this.target = target;
     }
 
+    public NotificationPriority getPriority() {
+        return priority;
+    }
+
+    public Notification priority(NotificationPriority priority) {
+        this.priority = priority;
+        return this;
+    }
+
+    public void setPriority(NotificationPriority priority) {
+        this.priority = priority;
+    }
+
+    public boolean isOutdated() {
+        return outdated;
+    }
+
+    public Notification outdated(boolean outdated) {
+        this.outdated = outdated;
+        return this;
+    }
+
+    public void setOutdated(boolean outdated) {
+        this.outdated = outdated;
+    }
+
     public User getAuthor() {
         return author;
     }
@@ -151,7 +187,7 @@ public abstract class Notification implements Serializable {
 
     @Override
     public String toString() {
-        return "Notification{" + "id=" + getId() + ", title='" + getTitle() + "'" + ", text='" + getText() + "'" + ", notificationDate='" + getNotificationDate() + "'"
-                + ", target='" + getTarget() + "'" + "}";
+        return "Notification{" + "id=" + id + ", title='" + title + '\'' + ", text='" + text + '\'' + ", notificationDate=" + notificationDate + ", target='" + target + '\''
+                + ", priority=" + priority + ", outdated=" + outdated + ", author=" + author + '}';
     }
 }
