@@ -22,7 +22,7 @@ export class NotificationSidebarComponent implements OnInit {
     page = 0;
     notificationsPerPage = 25;
     totalNotifications = 0;
-    error = false; // TODO: use
+    error: string | null = null;
 
     constructor(private notificationService: NotificationService, private userService: UserService, private accountService: AccountService) {}
 
@@ -48,7 +48,7 @@ export class NotificationSidebarComponent implements OnInit {
             })
             .subscribe(
                 (res: HttpResponse<Notification[]>) => this.onSuccess(res.body!, res.headers),
-                () => (this.error = true),
+                (res: HttpErrorResponse) => (this.error = res.message),
             );
         // Subscribe to notification updates that are sent via websocket.
         setTimeout(() => {

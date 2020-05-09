@@ -29,7 +29,10 @@
     <a routerLink="notifications">
         {{ 'global.menu.showAllNotifications' | translate }}
     </a>
-    <div class="notification-item" *ngFor="let notification of sortedNotifications" (click)="startNotification(notification)">
+    <div class="alert alert-danger mx-3" role="alert" *ngIf="error">
+        {{ 'error.unexpectedError' | translate: { error: error } }}
+    </div>
+    <div class="notification-item p-3" *ngFor="let notification of sortedNotifications" (click)="startNotification(notification)">
         <div>
             <h5>
                 {{ notification.title }}
