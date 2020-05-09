@@ -171,7 +171,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
                 assertThat(dragAndDropQuestion.getDragItems().size()).as("Drag and drop question drag items were saved").isEqualTo(1);
                 assertThat(dragAndDropQuestion.getTitle()).as("Drag and drop question title is correct").isEqualTo("DnD");
                 assertThat(dragAndDropQuestion.getText()).as("Drag and drop question text is correct").isEqualTo("Q2");
-                assertThat(dragAndDropQuestion.getScore()).as("Drag and drop question score is correct").isEqualTo(1);
+                assertThat(dragAndDropQuestion.getScore()).as("Drag and drop question score is correct").isEqualTo(3);
 
                 List<DropLocation> dropLocations = dragAndDropQuestion.getDropLocations();
                 assertThat(dropLocations.get(0).getPosX()).as("Pos X for drop location is correct").isEqualTo(20);
@@ -188,7 +188,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
                 assertThat(shortAnswerQuestion.getSolutions().size()).as("Short answer question solutions were saved").isEqualTo(1);
                 assertThat(shortAnswerQuestion.getTitle()).as("Short answer question title is correct").isEqualTo("SA");
                 assertThat(shortAnswerQuestion.getText()).as("Short answer question text is correct").isEqualTo("This is a long answer text");
-                assertThat(shortAnswerQuestion.getScore()).as("Short answer question score is correct").isEqualTo(3);
+                assertThat(shortAnswerQuestion.getScore()).as("Short answer question score is correct").isEqualTo(2);
 
                 List<ShortAnswerSpot> spots = shortAnswerQuestion.getSpots();
                 assertThat(spots.get(0).getSpotNr()).as("Spot nr for spot is correct").isEqualTo(2);
@@ -297,7 +297,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         assertThat(quizExercise.isStarted());
 
         QuizExercise quizExerciseForStudent_Started = request.get("/api/quiz-exercises/" + quizExercise.getId() + "/for-student", HttpStatus.OK, QuizExercise.class);
-        assertThat(quizExerciseForStudent_Started.getQuizPointStatistic().getPointCounters()).isEmpty();
+        assertThat(quizExerciseForStudent_Started.getQuizPointStatistic()).isNull();
         assertThat(quizExerciseForStudent_Started.getGradingInstructions()).isNull();
         assertThat(quizExerciseForStudent_Started.getGradingCriteria()).isEmpty();
         for (QuizQuestion question : quizExerciseForStudent_Started.getQuizQuestions()){

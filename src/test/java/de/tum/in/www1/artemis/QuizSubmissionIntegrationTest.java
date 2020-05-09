@@ -106,9 +106,9 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         for (int i = 1; i <= numberOfParticipants; i++) {
             //generate some mixed submissions for each student
             QuizSubmission quizSubmission = new QuizSubmission();
-            quizSubmission.addSubmittedAnswers(database.generateSubmittedAnswerFor(quizExercise.getQuizQuestions().get(0), i % 2 != 0));
-            quizSubmission.addSubmittedAnswers(database.generateSubmittedAnswerFor(quizExercise.getQuizQuestions().get(1), i % 2 == 0));
-            quizSubmission.addSubmittedAnswers(database.generateSubmittedAnswerFor(quizExercise.getQuizQuestions().get(2), i % 2 == 0));
+            quizSubmission.addSubmittedAnswers(database.generateSubmittedAnswerFor(quizExercise.getQuizQuestions().get(0), i % 2 == 0));
+            quizSubmission.addSubmittedAnswers(database.generateSubmittedAnswerFor(quizExercise.getQuizQuestions().get(1), i % 3 == 0));
+            quizSubmission.addSubmittedAnswers(database.generateSubmittedAnswerFor(quizExercise.getQuizQuestions().get(2), i % 4 == 0));
 
             quizSubmission.setSubmitted(true);
             final var username = "student" + i;
@@ -133,14 +133,18 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         int questionScore = quizExerciseWithStatistic.getQuizQuestions().stream().map(QuizQuestion::getScore).reduce(0, Integer::sum);
         assertThat(quizExerciseWithStatistic.getMaxScore()).isEqualTo(questionScore);
         assertThat(quizExerciseWithStatistic.getQuizPointStatistic().getPointCounters().size()).isEqualTo(questionScore + 1);
+        // check general statistics
         for (var pointCounter : quizExerciseWithStatistic.getQuizPointStatistic().getPointCounters()) {
-
-            if (pointCounter.getPoints() == 3.0) {
-                assertThat(pointCounter.getRatedCounter()).isEqualTo(5);
+            if (pointCounter.getPoints() == 0.0) {
+                assertThat(pointCounter.getRatedCounter()).isEqualTo(3);
                 assertThat(pointCounter.getUnRatedCounter()).isEqualTo(0);
             }
-            else if (pointCounter.getPoints() == 4.0) {
-                assertThat(pointCounter.getRatedCounter()).isEqualTo(5);
+            else if (pointCounter.getPoints() == 3.0 || pointCounter.getPoints() == 4.0 || pointCounter.getPoints() == 6.0) {
+                assertThat(pointCounter.getRatedCounter()).isEqualTo(2);
+                assertThat(pointCounter.getUnRatedCounter()).isEqualTo(0);
+            }
+            else if (pointCounter.getPoints() == 7.0) {
+                assertThat(pointCounter.getRatedCounter()).isEqualTo(1);
                 assertThat(pointCounter.getUnRatedCounter()).isEqualTo(0);
             }
             else {
@@ -148,11 +152,14 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
                 assertThat(pointCounter.getUnRatedCounter()).isEqualTo(0);
             }
         }
+        // check statistic for each question
         for (var question : quizExerciseWithStatistic.getQuizQuestions()) {
-            if (question instanceof DragAndDropQuestion) {
-                assertThat(question.getQuizQuestionStatistic().getRatedCorrectCounter()).isEqualTo(0);
-            } else {
+            if (question instanceof MultipleChoiceQuestion) {
                 assertThat(question.getQuizQuestionStatistic().getRatedCorrectCounter()).isEqualTo(5);
+            } else if (question instanceof DragAndDropQuestion) {
+                assertThat(question.getQuizQuestionStatistic().getRatedCorrectCounter()).isEqualTo(3);
+            } else {
+                assertThat(question.getQuizQuestionStatistic().getRatedCorrectCounter()).isEqualTo(2);
             }
             assertThat(question.getQuizQuestionStatistic().getUnRatedCorrectCounter()).isEqualTo(0);
             assertThat(question.getQuizQuestionStatistic().getParticipantsRated()).isEqualTo(numberOfParticipants);
@@ -183,9 +190,9 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         for (int i = 1; i <= numberOfParticipants; i++) {
             //generate some mixed submissions for each student
             QuizSubmission quizSubmission = new QuizSubmission();
-            quizSubmission.addSubmittedAnswers(database.generateSubmittedAnswerFor(quizExercise.getQuizQuestions().get(0), i % 2 != 0));
-            quizSubmission.addSubmittedAnswers(database.generateSubmittedAnswerFor(quizExercise.getQuizQuestions().get(1), i % 2 == 0));
-            quizSubmission.addSubmittedAnswers(database.generateSubmittedAnswerFor(quizExercise.getQuizQuestions().get(2), i % 2 == 0));
+            quizSubmission.addSubmittedAnswers(database.generateSubmittedAnswerFor(quizExercise.getQuizQuestions().get(0), i % 2 == 0));
+            quizSubmission.addSubmittedAnswers(database.generateSubmittedAnswerFor(quizExercise.getQuizQuestions().get(1), i % 3 == 0));
+            quizSubmission.addSubmittedAnswers(database.generateSubmittedAnswerFor(quizExercise.getQuizQuestions().get(2), i % 4 == 0));
 
             quizSubmission.setSubmitted(true);
             database.changeUser("student" + i);
@@ -207,29 +214,37 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         int questionScore = quizExerciseWithStatistic.getQuizQuestions().stream().map(QuizQuestion::getScore).reduce(0, Integer::sum);
         assertThat(quizExerciseWithStatistic.getMaxScore()).isEqualTo(questionScore);
         assertThat(quizExerciseWithStatistic.getQuizPointStatistic().getPointCounters().size()).isEqualTo(questionScore + 1);
+        // check general statistics
         for (var pointCounter : quizExerciseWithStatistic.getQuizPointStatistic().getPointCounters()) {
-            if (pointCounter.getPoints() == 3.0) {
+            if (pointCounter.getPoints() == 0.0) {
                 assertThat(pointCounter.getRatedCounter()).isEqualTo(0);
-                assertThat(pointCounter.getUnRatedCounter()).isEqualTo(5);
+                assertThat(pointCounter.getUnRatedCounter()).isEqualTo(3);
             }
-            else if (pointCounter.getPoints() == 4.0) {
+            else if (pointCounter.getPoints() == 3.0 || pointCounter.getPoints() == 4.0 || pointCounter.getPoints() == 6.0) {
                 assertThat(pointCounter.getRatedCounter()).isEqualTo(0);
-                assertThat(pointCounter.getUnRatedCounter()).isEqualTo(5);
+                assertThat(pointCounter.getUnRatedCounter()).isEqualTo(2);
+            }
+            else if (pointCounter.getPoints() == 7.0) {
+                assertThat(pointCounter.getRatedCounter()).isEqualTo(0);
+                assertThat(pointCounter.getUnRatedCounter()).isEqualTo(1);
             }
             else {
                 assertThat(pointCounter.getRatedCounter()).isEqualTo(0);
                 assertThat(pointCounter.getUnRatedCounter()).isEqualTo(0);
             }
         }
+        // check statistic for each question
         for (var question : quizExerciseWithStatistic.getQuizQuestions()) {
-            if (question instanceof DragAndDropQuestion) {
-                assertThat(question.getQuizQuestionStatistic().getUnRatedCorrectCounter()).isEqualTo(0);
-            } else {
+            if (question instanceof MultipleChoiceQuestion) {
                 assertThat(question.getQuizQuestionStatistic().getUnRatedCorrectCounter()).isEqualTo(5);
+            } else if (question instanceof DragAndDropQuestion) {
+                assertThat(question.getQuizQuestionStatistic().getUnRatedCorrectCounter()).isEqualTo(3);
+            } else {
+                assertThat(question.getQuizQuestionStatistic().getUnRatedCorrectCounter()).isEqualTo(2);
             }
             assertThat(question.getQuizQuestionStatistic().getRatedCorrectCounter()).isEqualTo(0);
-            assertThat(question.getQuizQuestionStatistic().getParticipantsRated()).isEqualTo(0);
             assertThat(question.getQuizQuestionStatistic().getParticipantsUnrated()).isEqualTo(numberOfParticipants);
+            assertThat(question.getQuizQuestionStatistic().getParticipantsRated()).isEqualTo(0);
         }
     }
 
