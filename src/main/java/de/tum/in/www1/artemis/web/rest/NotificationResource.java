@@ -22,7 +22,6 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.notification.Notification;
 import de.tum.in.www1.artemis.repository.NotificationRepository;
 import de.tum.in.www1.artemis.service.NotificationService;
-import de.tum.in.www1.artemis.service.SystemNotificationService;
 import de.tum.in.www1.artemis.service.UserService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
@@ -48,15 +47,11 @@ public class NotificationResource {
 
     private final NotificationService notificationService;
 
-    private final SystemNotificationService systemNotificationService;
-
     private final UserService userService;
 
-    public NotificationResource(NotificationRepository notificationRepository, NotificationService notificationService, UserService userService,
-            SystemNotificationService systemNotificationService) {
+    public NotificationResource(NotificationRepository notificationRepository, NotificationService notificationService, UserService userService) {
         this.notificationRepository = notificationRepository;
         this.notificationService = notificationService;
-        this.systemNotificationService = systemNotificationService;
         this.userService = userService;
     }
 
@@ -107,7 +102,7 @@ public class NotificationResource {
     public ResponseEntity<List<Notification>> getNotificationsNEW(@ApiParam Pageable pageable) {
         List<Notification> notifications = new ArrayList<>();
         List<Notification> recentNotifications = new ArrayList<>();
-        List<Notification> nonRecentNotifications = new ArrayList<>();
+        int nonRecentNotificationsCount = 0;
         HttpHeaders headers = new HttpHeaders();
         User currentUser = userService.getUserWithGroupsAndAuthorities();
         // Get all notifications whose notification date is before the current user's lastNotificationRead when first page is requested.
@@ -119,11 +114,13 @@ public class NotificationResource {
         if (currentUser != null) {
             final Page<Notification> page = notificationService.findAllNonRecentExceptSystem(currentUser, pageable);
             headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
-            nonRecentNotifications = page.getContent();
-            notifications.addAll(nonRecentNotifications);
+            if (headers.getFirst("X-Total-Count") != null) {
+                nonRecentNotificationsCount = Integer.parseInt(headers.getFirst("X-Total-Count"));
+            }
+            notifications.addAll(page.getContent());
         }
         // Overwrite header `X-Total-Count` so that recent and non-recent notifications are included.
-        headers.set("X-Total-Count", String.valueOf(recentNotifications.size() + nonRecentNotifications.size()));
+        headers.set("X-Total-Count", String.valueOf(recentNotifications.size() + nonRecentNotificationsCount));
         return new ResponseEntity<>(notifications, headers, HttpStatus.OK);
     }
 
