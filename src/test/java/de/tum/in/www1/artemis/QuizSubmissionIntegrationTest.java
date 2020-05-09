@@ -8,7 +8,6 @@ import java.security.Principal;
 import java.time.ZonedDateTime;
 import java.util.List;
 
-import de.tum.in.www1.artemis.domain.SubmittedAnswer;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -104,7 +103,7 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         }
 
         for (int i = 1; i <= numberOfParticipants; i++) {
-            //generate some mixed submissions for each student
+            // generate some mixed submissions for each student
             QuizSubmission quizSubmission = new QuizSubmission();
             quizSubmission.addSubmittedAnswers(database.generateSubmittedAnswerFor(quizExercise.getQuizQuestions().get(0), i % 2 == 0));
             quizSubmission.addSubmittedAnswers(database.generateSubmittedAnswerFor(quizExercise.getQuizQuestions().get(1), i % 3 == 0));
@@ -156,9 +155,11 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         for (var question : quizExerciseWithStatistic.getQuizQuestions()) {
             if (question instanceof MultipleChoiceQuestion) {
                 assertThat(question.getQuizQuestionStatistic().getRatedCorrectCounter()).isEqualTo(5);
-            } else if (question instanceof DragAndDropQuestion) {
+            }
+            else if (question instanceof DragAndDropQuestion) {
                 assertThat(question.getQuizQuestionStatistic().getRatedCorrectCounter()).isEqualTo(3);
-            } else {
+            }
+            else {
                 assertThat(question.getQuizQuestionStatistic().getRatedCorrectCounter()).isEqualTo(2);
             }
             assertThat(question.getQuizQuestionStatistic().getUnRatedCorrectCounter()).isEqualTo(0);
@@ -185,10 +186,9 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
 
         var numberOfParticipants = 10;
 
-
         // submit 10 times for 10 different students
         for (int i = 1; i <= numberOfParticipants; i++) {
-            //generate some mixed submissions for each student
+            // generate some mixed submissions for each student
             QuizSubmission quizSubmission = new QuizSubmission();
             quizSubmission.addSubmittedAnswers(database.generateSubmittedAnswerFor(quizExercise.getQuizQuestions().get(0), i % 2 == 0));
             quizSubmission.addSubmittedAnswers(database.generateSubmittedAnswerFor(quizExercise.getQuizQuestions().get(1), i % 3 == 0));
@@ -237,9 +237,11 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         for (var question : quizExerciseWithStatistic.getQuizQuestions()) {
             if (question instanceof MultipleChoiceQuestion) {
                 assertThat(question.getQuizQuestionStatistic().getUnRatedCorrectCounter()).isEqualTo(5);
-            } else if (question instanceof DragAndDropQuestion) {
+            }
+            else if (question instanceof DragAndDropQuestion) {
                 assertThat(question.getQuizQuestionStatistic().getUnRatedCorrectCounter()).isEqualTo(3);
-            } else {
+            }
+            else {
                 assertThat(question.getQuizQuestionStatistic().getUnRatedCorrectCounter()).isEqualTo(2);
             }
             assertThat(question.getQuizQuestionStatistic().getRatedCorrectCounter()).isEqualTo(0);

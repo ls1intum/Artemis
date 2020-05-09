@@ -1204,10 +1204,11 @@ public class DatabaseUtilService {
             DropLocation dropLocation2 = ((DragAndDropQuestion) question).getDropLocations().get(1);
             dropLocation2.setQuestion((DragAndDropQuestion) question);
 
-            if(correct) {
+            if (correct) {
                 submittedAnswer.addMappings(new DragAndDropMapping().dragItem(dragItem1).dropLocation(dropLocation1));
                 submittedAnswer.addMappings(new DragAndDropMapping().dragItem(dragItem2).dropLocation(dropLocation2));
-            } else {
+            }
+            else {
                 submittedAnswer.addMappings(new DragAndDropMapping().dragItem(dragItem2).dropLocation(dropLocation1));
                 submittedAnswer.addMappings(new DragAndDropMapping().dragItem(dragItem1).dropLocation(dropLocation2));
             }
@@ -1218,12 +1219,13 @@ public class DatabaseUtilService {
             var submittedAnswer = new ShortAnswerSubmittedAnswer();
             submittedAnswer.setQuizQuestion(question);
 
-            for(var spot : ((ShortAnswerQuestion) question).getSpots()) {
+            for (var spot : ((ShortAnswerQuestion) question).getSpots()) {
                 ShortAnswerSubmittedText submittedText = new ShortAnswerSubmittedText();
                 submittedText.setSpot(spot);
-                if(correct){
+                if (correct) {
                     submittedText.setText(((ShortAnswerQuestion) question).getCorrectSolutionForSpot(spot).iterator().next().getText());
-                } else {
+                }
+                else {
                     submittedText.setText("wrong short answer");
                 }
                 submittedAnswer.addSubmittedTexts(submittedText);
@@ -1305,7 +1307,7 @@ public class DatabaseUtilService {
 
     @NotNull
     public List<GradingCriterion> createGradingCriteria(Exercise exercise) {
-        List <GradingCriterion> list = new ArrayList<>();
+        List<GradingCriterion> list = new ArrayList<>();
         list.add(new GradingCriterion().title("GC1").exercise(exercise));
         list.add(new GradingCriterion().title("GC2").exercise(exercise));
         return list;
