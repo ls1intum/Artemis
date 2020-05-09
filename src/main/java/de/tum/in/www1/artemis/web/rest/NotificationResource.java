@@ -19,7 +19,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import de.tum.in.www1.artemis.domain.Notification;
-import de.tum.in.www1.artemis.domain.SystemNotification;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.NotificationRepository;
 import de.tum.in.www1.artemis.service.NotificationService;
@@ -93,26 +92,6 @@ public class NotificationResource {
         final Page<Notification> page = notificationService.findAllExceptSystem(currentUser, pageable);
         HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
         return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
-    }
-
-    /**
-     * GET /notifications/recent-for-user : get recent notifications (after last read) for users including the active system notification.
-     *
-     * @return the list notifications
-     */
-    @GetMapping("/notifications/recent-for-user")
-    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<List<Notification>> getRecentNotificationsForCurrentUser() {
-        User currentUser = userService.getUserWithGroupsAndAuthorities();
-        List<Notification> notifications = new ArrayList<>();
-        SystemNotification activeSystemNotification = systemNotificationService.findActiveSystemNotification();
-        if (activeSystemNotification != null) {
-            notifications.add(activeSystemNotification);
-        }
-        if (currentUser != null) {
-            notifications.addAll(notificationService.findAllRecentExceptSystem(currentUser));
-        }
-        return new ResponseEntity<>(notifications, null, HttpStatus.OK);
     }
 
     /**

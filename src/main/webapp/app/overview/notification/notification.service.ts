@@ -97,27 +97,6 @@ export class NotificationService {
         return this.http.delete<any>(`${this.resourceUrl}/${id}`, { observe: 'response' });
     }
 
-    /**
-     * get recent notifications
-     * @return Observable<EntityArrayResponseType>
-     */
-    getRecentNotifications(): Observable<EntityArrayResponseType> {
-        if (!this.cachedNotifications) {
-            this.cachedNotifications = this.http
-                .get<Notification[]>(`${this.resourceUrl}/recent-for-user`, { observe: 'response' })
-                .pipe(map((res: EntityArrayResponseType) => this.convertDateArrayFromServer(res)));
-        }
-        return this.cachedNotifications;
-    }
-
-    /**
-     * get recent notifications for user
-     * @return Observable<Notification[]>
-     */
-    getRecentNotificationsForUser(): Observable<Notification[]> {
-        return this.getRecentNotifications().pipe(map((res: EntityArrayResponseType) => this.filterUserAndGroupNotifications(res)));
-    }
-
     protected convertDateFromClient(notification: Notification): Notification {
         return Object.assign({}, notification, {
             notificationDate: notification.notificationDate != null && notification.notificationDate.isValid() ? notification.notificationDate.toJSON() : null,
