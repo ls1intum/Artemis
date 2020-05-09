@@ -17,10 +17,10 @@ export class NotificationSidebarComponent implements OnInit {
     notifications: Notification[] = [];
     sortedNotifications: Notification[] = [];
     currentUser: User;
-    notificationCount = 0;
     showSidebar = false;
     page = 0;
     notificationsPerPage = 25;
+    notificationCount = 0;
     totalNotifications = 0;
     error: string | null = null;
 
@@ -84,10 +84,8 @@ export class NotificationSidebarComponent implements OnInit {
     updateNotificationCount(): void {
         if (!this.notifications) {
             this.notificationCount = 0;
-        } else if (!this.currentUser) {
-            this.notificationCount = this.notifications.length;
         } else {
-            this.notificationCount = this.notifications.filter((el: Notification) => el.notificationDate!.isAfter(this.currentUser.lastNotificationRead!)).length;
+            this.notificationCount = this.notifications.length;
         }
     }
 
@@ -96,7 +94,6 @@ export class NotificationSidebarComponent implements OnInit {
             res.body!.lastNotificationRead = moment();
             setTimeout(() => {
                 this.currentUser = res.body!;
-                this.updateNotifications();
             }, 1500);
         });
     }
