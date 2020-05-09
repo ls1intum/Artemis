@@ -1193,6 +1193,25 @@ public class DatabaseUtilService {
         else if (question instanceof DragAndDropQuestion) {
             var submittedAnswer = new DragAndDropSubmittedAnswer();
             submittedAnswer.setQuizQuestion(question);
+
+            DragItem dragItem1 = ((DragAndDropQuestion) question).getDragItems().get(0);
+            dragItem1.setQuestion((DragAndDropQuestion) question);
+            DragItem dragItem2 = ((DragAndDropQuestion) question).getDragItems().get(1);
+            dragItem2.setQuestion((DragAndDropQuestion) question);
+
+            DropLocation dropLocation1 = ((DragAndDropQuestion) question).getDropLocations().get(0);
+            dropLocation1.setQuestion((DragAndDropQuestion) question);
+            DropLocation dropLocation2 = ((DragAndDropQuestion) question).getDropLocations().get(1);
+            dropLocation2.setQuestion((DragAndDropQuestion) question);
+
+            if(correct) {
+                submittedAnswer.addMappings(new DragAndDropMapping().dragItem(dragItem1).dropLocation(dropLocation1));
+                submittedAnswer.addMappings(new DragAndDropMapping().dragItem(dragItem2).dropLocation(dropLocation2));
+            } else {
+                submittedAnswer.addMappings(new DragAndDropMapping().dragItem(dragItem2).dropLocation(dropLocation1));
+                submittedAnswer.addMappings(new DragAndDropMapping().dragItem(dragItem1).dropLocation(dropLocation2));
+            }
+
             return submittedAnswer;
         }
         else if (question instanceof ShortAnswerQuestion) {
@@ -1228,7 +1247,7 @@ public class DatabaseUtilService {
 
     @NotNull
     public ShortAnswerQuestion createShortAnswerQuestion() {
-        ShortAnswerQuestion sa = (ShortAnswerQuestion) new ShortAnswerQuestion().title("SA").score(3).text("This is a long answer text");
+        ShortAnswerQuestion sa = (ShortAnswerQuestion) new ShortAnswerQuestion().title("SA").score(2).text("This is a long answer text");
         sa.setScoringType(ScoringType.ALL_OR_NOTHING);
         var shortAnswerSpot1 = new ShortAnswerSpot().spotNr(0).width(1);
         shortAnswerSpot1.setTempID(generateTempId());
@@ -1250,7 +1269,7 @@ public class DatabaseUtilService {
 
     @NotNull
     public DragAndDropQuestion createDragAndDropQuestion() {
-        DragAndDropQuestion dnd = (DragAndDropQuestion) new DragAndDropQuestion().title("DnD").score(1).text("Q2");
+        DragAndDropQuestion dnd = (DragAndDropQuestion) new DragAndDropQuestion().title("DnD").score(3).text("Q2");
         dnd.setScoringType(ScoringType.PROPORTIONAL_WITH_PENALTY);
         var dropLocation1 = new DropLocation().posX(10d).posY(10d).height(10d).width(10d);
         dropLocation1.setTempID(generateTempId());
