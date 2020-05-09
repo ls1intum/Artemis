@@ -6,13 +6,15 @@
 
 <div *ngIf="exercise !== undefined">
     <div class="row my-3 justify-content-around">
-        <div class="col-4 text-center">
+        <div class="col-6 text-center">
             <p class="h3">{{ 'artemisApp.tutorExerciseDashboard.yourStatus' | translate }}:</p>
             <jhi-tutor-participation-graph
                 [exercise]="exercise"
                 [tutorParticipation]="tutorParticipation"
                 [numberOfParticipations]="numberOfInTimeSubmissions"
+                [numberOfLateSubmissions]="numberOfLateSubmissions"
                 [numberOfAssessments]="numberOfAssessments"
+                [numberOfLateAssessments]="numberOfLateAssessments"
                 [numberOfComplaints]="numberOfComplaints"
                 [numberOfOpenComplaints]="numberOfOpenComplaints"
                 [numberOfMoreFeedbackRequests]="numberOfMoreFeedbackRequests"

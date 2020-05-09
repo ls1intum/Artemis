@@ -13,7 +13,9 @@ import { TutorParticipation, TutorParticipationStatus } from 'app/entities/parti
 export class TutorParticipationGraphComponent implements OnInit, OnChanges {
     @Input() public tutorParticipation: TutorParticipation;
     @Input() public numberOfParticipations: number;
+    @Input() public numberOfLateSubmissions: number;
     @Input() public numberOfAssessments: number;
+    @Input() public numberOfLateAssessments: number;
     @Input() public numberOfComplaints: number;
     @Input() public numberOfOpenComplaints: number;
     @Input() public numberOfMoreFeedbackRequests: number;
@@ -29,6 +31,7 @@ export class TutorParticipationGraphComponent implements OnInit, OnChanges {
     COMPLETED = TutorParticipationStatus.COMPLETED;
 
     percentageAssessmentProgress = 0;
+    percentageLateAssessmentProgress = 0;
     percentageComplaintsProgress = 0;
 
     routerLink: string;
@@ -79,6 +82,9 @@ export class TutorParticipationGraphComponent implements OnInit, OnChanges {
     calculatePercentageAssessmentProgress() {
         if (this.numberOfParticipations !== 0) {
             this.percentageAssessmentProgress = Math.round((this.numberOfAssessments / this.numberOfParticipations) * 100);
+        }
+        if (this.numberOfLateSubmissions !== 0) {
+            this.percentageLateAssessmentProgress = Math.round((this.numberOfLateAssessments / this.numberOfLateSubmissions) * 100);
         }
     }
 

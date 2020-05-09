@@ -22,6 +22,7 @@
             "readGradingInstructions": "Read grading instructions",
             "trainOnExampleSubmissions": "Train on example submissions",
             "assessStudentsSubmissions": "Assess students' submissions",
+            "assessStudentsLateSubmissions": "Assess students' late submissions",
             "evaluateStudentsComplaints": "Evaluate students' complaints and feedback requests",
             "numberOfOpenComplaints": "Number of open complaints"
         }

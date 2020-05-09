@@ -3,6 +3,7 @@ jhi-tutor-participation-graph {
         padding-left: 0;
         z-index: 1;
         position: relative;
+        white-space: nowrap;
     }
 
     li {
@@ -75,7 +76,7 @@ jhi-tutor-participation-graph {
         background: orange !important;
     }
 
-    .orange ~ li::before {
+    .orange ~ li::before, .orange ~ li::after {
         background: orange !important;
     }
 
@@ -87,5 +88,73 @@ jhi-tutor-participation-graph {
 
     .progress-bar-li::before {
         top: 0.5em;
+    }
+
+    .stacked-li {
+        display: inline-flex;
+        flex-flow: column nowrap;
+        height: auto;
+        margin-bottom: 1em;
+
+        .stacked-item {
+
+            &:first-child {
+                margin-top: 0;
+
+                &::before {
+                    width: 4em;
+                    left: -4em;
+                }
+                &::after {
+                    width: 2em;
+                    right: -2em;
+                }
+            }
+
+            margin-top: 0.5em;
+            position: relative;
+
+            &::before, &::after {
+                content: '';
+                position: absolute;
+                top: 0.5em;
+                width: 1em;
+                height: 0.2em;
+                background: green;
+                z-index: -1;
+            }
+
+            &::before {
+                left: -1em;
+            }
+            &::after {
+                right: -1em;
+            }
+        }
+    }
+
+    .stacked-li::before {
+        width: 0.2em;
+        left: -1em;
+        height: calc(100% - 1em);
+    }
+
+    .stacked-li::after {
+        content: '';
+        position: absolute;
+        top: 0.5em;
+        width: 0.2em;
+        right: -1em;
+        height: calc(100% - 1em);
+        background: green;
+        z-index: -1;
+    }
+
+    .opaque::after, .opaque .stacked-item::before, .opaque .stacked-item::after {
+        background: darkred;
+    }
+
+    .orange ~ li .stacked-item::before, .orange ~ li .stacked-item::after, .orange::after, .orange .stacked-item::after {
+        background: orange !important;
     }
 }
