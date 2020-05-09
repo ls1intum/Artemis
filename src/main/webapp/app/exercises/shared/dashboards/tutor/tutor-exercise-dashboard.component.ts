@@ -55,7 +55,7 @@ export class TutorExerciseDashboardComponent implements OnInit, AfterViewInit {
 
     exerciseId: number;
     numberOfTutorAssessments = 0;
-    numberOfSubmissions = 0;
+    numberOfInTimeSubmissions = 0;
     numberOfLateSubmissions = 0;
     numberOfAssessments = 0;
     numberOfComplaints = 0;
@@ -213,7 +213,7 @@ export class TutorExerciseDashboardComponent implements OnInit, AfterViewInit {
         this.exerciseService.getStatsForTutors(this.exerciseId).subscribe(
             (res: HttpResponse<StatsForDashboard>) => {
                 this.statsForDashboard = res.body!;
-                this.numberOfSubmissions = this.statsForDashboard.numberOfSubmissions;
+                this.numberOfInTimeSubmissions = this.statsForDashboard.numberOfInTimeSubmissions;
                 this.numberOfLateSubmissions = this.statsForDashboard.numberOfLateSubmissions;
                 this.numberOfAssessments = this.statsForDashboard.numberOfAssessments;
                 this.numberOfComplaints = this.statsForDashboard.numberOfComplaints;
@@ -231,9 +231,9 @@ export class TutorExerciseDashboardComponent implements OnInit, AfterViewInit {
                     this.numberOfTutorMoreFeedbackRequests = 0;
                 }
 
-                if (this.numberOfSubmissions > 0) {
-                    this.totalAssessmentPercentage = Math.round((this.numberOfAssessments / this.numberOfSubmissions) * 100);
-                    this.tutorAssessmentPercentage = Math.round((this.numberOfTutorAssessments / this.numberOfSubmissions) * 100);
+                if (this.numberOfInTimeSubmissions > 0) {
+                    this.totalAssessmentPercentage = Math.round((this.numberOfAssessments / this.numberOfInTimeSubmissions) * 100);
+                    this.tutorAssessmentPercentage = Math.round((this.numberOfTutorAssessments / this.numberOfInTimeSubmissions) * 100);
                 }
             },
             (response: string) => this.onError(response),

@@ -102,7 +102,7 @@ public class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitb
         }
         StatsForInstructorDashboardDTO statsForInstructorDashboardDTO = request.get("/api/exercises/" + textExercise.getId() + "/stats-for-tutor-dashboard", HttpStatus.OK,
                 StatsForInstructorDashboardDTO.class);
-        assertThat(statsForInstructorDashboardDTO.getNumberOfSubmissions()).isEqualTo(submissions.size() + 1);
+        assertThat(statsForInstructorDashboardDTO.getNumberOfInTimeSubmissions()).isEqualTo(submissions.size() + 1);
         assertThat(statsForInstructorDashboardDTO.getNumberOfAssessments()).isEqualTo(3);
         assertThat(statsForInstructorDashboardDTO.getNumberOfAutomaticAssistedAssessments()).isEqualTo(1);
 
@@ -358,19 +358,19 @@ public class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitb
                 assertThat(stats.getNumberOfOpenMoreFeedbackRequests()).as("Number of open more feedback requests should be available to tutor").isNotNull();
 
                 if (exercise instanceof FileUploadExercise) {
-                    assertThat(stats.getNumberOfSubmissions()).as("Number of submissions for file upload exercise is correct").isEqualTo(0);
+                    assertThat(stats.getNumberOfInTimeSubmissions()).as("Number of submissions for file upload exercise is correct").isEqualTo(0);
                 }
                 if (exercise instanceof ModelingExercise) {
-                    assertThat(stats.getNumberOfSubmissions()).as("Number of submissions for modeling exercise is correct").isEqualTo(2);
+                    assertThat(stats.getNumberOfInTimeSubmissions()).as("Number of submissions for modeling exercise is correct").isEqualTo(2);
                 }
                 if (exercise instanceof ProgrammingExercise) {
-                    assertThat(stats.getNumberOfSubmissions()).as("Number of submissions for programming exercise is correct").isEqualTo(0);
+                    assertThat(stats.getNumberOfInTimeSubmissions()).as("Number of submissions for programming exercise is correct").isEqualTo(0);
                 }
                 if (exercise instanceof QuizExercise) {
-                    assertThat(stats.getNumberOfSubmissions()).as("Number of submissions for quiz exercise is correct").isEqualTo(0);
+                    assertThat(stats.getNumberOfInTimeSubmissions()).as("Number of submissions for quiz exercise is correct").isEqualTo(0);
                 }
                 if (exercise instanceof TextExercise) {
-                    assertThat(stats.getNumberOfSubmissions()).as("Number of submissions for text exercise is correct").isEqualTo(1);
+                    assertThat(stats.getNumberOfInTimeSubmissions()).as("Number of submissions for text exercise is correct").isEqualTo(1);
                 }
             }
         }
@@ -398,19 +398,19 @@ public class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitb
                 assertThat(stats.getNumberOfOpenMoreFeedbackRequests()).as("Number of open more feedback requests is zero").isZero();
 
                 if (exercise instanceof FileUploadExercise) {
-                    assertThat(stats.getNumberOfSubmissions()).as("Number of submissions for file upload exercise is correct").isEqualTo(0);
+                    assertThat(stats.getNumberOfInTimeSubmissions()).as("Number of submissions for file upload exercise is correct").isEqualTo(0);
                 }
                 if (exercise instanceof ModelingExercise) {
-                    assertThat(stats.getNumberOfSubmissions()).as("Number of submissions for modeling exercise is correct").isEqualTo(2);
+                    assertThat(stats.getNumberOfInTimeSubmissions()).as("Number of submissions for modeling exercise is correct").isEqualTo(2);
                 }
                 if (exercise instanceof ProgrammingExercise) {
-                    assertThat(stats.getNumberOfSubmissions()).as("Number of submissions for programming exercise is correct").isEqualTo(0);
+                    assertThat(stats.getNumberOfInTimeSubmissions()).as("Number of submissions for programming exercise is correct").isEqualTo(0);
                 }
                 if (exercise instanceof QuizExercise) {
-                    assertThat(stats.getNumberOfSubmissions()).as("Number of submissions for quiz exercise is correct").isEqualTo(0);
+                    assertThat(stats.getNumberOfInTimeSubmissions()).as("Number of submissions for quiz exercise is correct").isEqualTo(0);
                 }
                 if (exercise instanceof TextExercise) {
-                    assertThat(stats.getNumberOfSubmissions()).as("Number of submissions for text exercise is correct").isEqualTo(1);
+                    assertThat(stats.getNumberOfInTimeSubmissions()).as("Number of submissions for text exercise is correct").isEqualTo(1);
                 }
             }
         }

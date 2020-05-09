@@ -19,14 +19,14 @@
                                 <b>{{ 'artemisApp.instructorCourseDashboard.students' | translate }}:</b> {{ stats.numberOfStudents }}
                             </li>
                             <li>
-                                <b>{{ 'artemisApp.instructorCourseDashboard.submissions' | translate }}:</b> {{ stats.numberOfSubmissions }}
+                                <b>{{ 'artemisApp.instructorCourseDashboard.submissions' | translate }}:</b> {{ stats.numberOfInTimeSubmissions }}
                             </li>
                             <li>
                                 <b>{{ 'artemisApp.instructorCourseDashboard.tutors' | translate }}:</b> {{ stats.tutorLeaderboardEntries.length }}
                             </li>
                             <li>
                                 <b>{{ 'artemisApp.instructorCourseDashboard.assessments' | translate }}:</b> {{ stats.numberOfAssessments }} ({{
-                                    stats.numberOfSubmissions - stats.numberOfAssessments
+                                    stats.numberOfInTimeSubmissions - stats.numberOfAssessments
                                 }}
                                 {{ 'artemisApp.instructorCourseDashboard.open' | translate }})
                             </li>

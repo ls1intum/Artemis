@@ -187,18 +187,18 @@ public class ExerciseResource {
         final Long exerciseId = exercise.getId();
         StatsForInstructorDashboardDTO stats = new StatsForInstructorDashboardDTO();
 
-        long numberOfSubmissions, numberOfLateSubmissions;
+        long numberOfInTimeSubmissions, numberOfLateSubmissions;
 
         if (exercise instanceof ProgrammingExercise) {
-            numberOfSubmissions = programmingExerciseService.countSubmissionsByExerciseIdSubmitted(exerciseId);
-            numberOfLateSubmissions = 0;
+            numberOfInTimeSubmissions = programmingExerciseService.countSubmissionsByExerciseIdSubmitted(exerciseId);
+            numberOfLateSubmissions = 0; // programming exercises cant have late submissions
         }
         else {
-            numberOfSubmissions = submissionService.countSubmissionsForExercise(exerciseId);
+            numberOfInTimeSubmissions = submissionService.countInTimeSubmissionsForExercise(exerciseId);
             numberOfLateSubmissions = submissionService.countLateSubmissionsForExercise(exerciseId);
         }
 
-        stats.setNumberOfSubmissions(numberOfSubmissions);
+        stats.setNumberOfInTimeSubmissions(numberOfInTimeSubmissions);
         stats.setNumberOfLateSubmissions(numberOfLateSubmissions);
 
         final long numberOfAssessments = resultService.countNumberOfFinishedAssessmentsForExercise(exerciseId);

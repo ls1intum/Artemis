@@ -2,7 +2,7 @@ import { TutorLeaderboardElement } from 'app/shared/dashboards/tutor-leaderboard
 
 export class StatsForDashboard {
     public numberOfStudents = 0;
-    public numberOfSubmissions = 0;
+    public numberOfInTimeSubmissions = 0;
     public numberOfLateSubmissions = 0;
     public numberOfAssessments = 0;
     public numberOfAutomaticAssistedAssessments = 0;

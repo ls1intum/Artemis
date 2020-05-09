@@ -11,7 +11,7 @@
             <jhi-tutor-participation-graph
                 [exercise]="exercise"
                 [tutorParticipation]="tutorParticipation"
-                [numberOfParticipations]="numberOfSubmissions"
+                [numberOfParticipations]="numberOfInTimeSubmissions"
                 [numberOfAssessments]="numberOfAssessments"
                 [numberOfComplaints]="numberOfComplaints"
                 [numberOfOpenComplaints]="numberOfOpenComplaints"
@@ -23,8 +23,8 @@
         <div class="col-4">
             <jhi-side-panel [panelHeader]="'artemisApp.tutorExerciseDashboard.exerciseInformation' | translate">
                 <div class="row mb-1">
-                    <div class="col-8">{{ 'artemisApp.tutorExerciseDashboard.numberOfTotalSubmissions' | translate }}</div>
-                    <div class="col-4">{{ numberOfSubmissions }}</div>
+                    <div class="col-8">{{ 'artemisApp.tutorExerciseDashboard.numberOfInTimeSubmissions' | translate }}</div>
+                    <div class="col-4">{{ numberOfInTimeSubmissions }}</div>
                 </div>
                 <div class="row mb-1">
                     <div class="col-8">{{ 'artemisApp.tutorExerciseDashboard.numberOfLateSubmissions' | translate }}</div>
@@ -36,7 +36,7 @@
                 </div>
                 <div class="row mb-1">
                     <div class="col-8">{{ 'artemisApp.tutorExerciseDashboard.numberOfUnassessedSubmissions' | translate }}</div>
-                    <div class="col-4">{{ numberOfSubmissions - numberOfAssessments }} ({{ 100 - totalAssessmentPercentage }}%)</div>
+                    <div class="col-4">{{ numberOfInTimeSubmissions - numberOfAssessments }} ({{ 100 - totalAssessmentPercentage }}%)</div>
                 </div>
                 <div class="row mb-1">
                     <div class="col-8">{{ 'artemisApp.tutorExerciseDashboard.numberOfSubmissionsAssessedByYou' | translate }}</div>

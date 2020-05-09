@@ -78,7 +78,7 @@ public class SubmissionService {
      * @return the number of submissions belonging to the exercise id, which have the submitted flag set to true and the submission date before the exercise due date, or no
      *         exercise due date at all
      */
-    public long countSubmissionsForExercise(long exerciseId) {
+    public long countInTimeSubmissionsForExercise(long exerciseId) {
         return submissionRepository.countByExerciseIdSubmittedBeforeDueDate(exerciseId);
     }
 

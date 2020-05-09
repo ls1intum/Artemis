@@ -6,7 +6,7 @@ public class StatsForInstructorDashboardDTO {
 
     private Long numberOfStudents;
 
-    private Long numberOfSubmissions;
+    private Long numberOfInTimeSubmissions;
 
     private Long numberOfLateSubmissions;
 
@@ -35,12 +35,12 @@ public class StatsForInstructorDashboardDTO {
         this.numberOfStudents = numberOfStudents;
     }
 
-    public Long getNumberOfSubmissions() {
-        return numberOfSubmissions;
+    public Long getNumberOfInTimeSubmissions() {
+        return numberOfInTimeSubmissions;
     }
 
-    public void setNumberOfSubmissions(Long numberOfSubmissions) {
-        this.numberOfSubmissions = numberOfSubmissions;
+    public void setNumberOfInTimeSubmissions(Long numberOfInTimeSubmissions) {
+        this.numberOfInTimeSubmissions = numberOfInTimeSubmissions;
     }
 
     public Long getNumberOfLateSubmissions() {

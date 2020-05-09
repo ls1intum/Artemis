@@ -391,7 +391,7 @@ public class CourseIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
             StatsForInstructorDashboardDTO stats = request.get("/api/courses/" + testCourse.getId() + "/stats-for-tutor-dashboard", HttpStatus.OK,
                     StatsForInstructorDashboardDTO.class);
             long numberOfSubmissions = course.getId().equals(testCourses.get(0).getId()) ? 3 : 0; // course 1 has 3 submissions, course 2 has 0 submissions
-            assertThat(stats.getNumberOfSubmissions()).as("Number of submissions is correct").isEqualTo(numberOfSubmissions);
+            assertThat(stats.getNumberOfInTimeSubmissions()).as("Number of submissions is correct").isEqualTo(numberOfSubmissions);
             assertThat(stats.getNumberOfAssessments()).as("Number of assessments is correct").isEqualTo(0);
             assertThat(stats.getTutorLeaderboardEntries().size()).as("Number of tutor leaderboard entries is correct").isEqualTo(5);
 

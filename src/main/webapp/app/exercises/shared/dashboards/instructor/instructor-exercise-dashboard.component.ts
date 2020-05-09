@@ -50,15 +50,15 @@ export class InstructorExerciseDashboardComponent implements OnInit {
      * Computes the stats for the assessment charts
      */
     public setStatistics() {
-        if (this.stats.numberOfSubmissions > 0) {
+        if (this.stats.numberOfInTimeSubmissions > 0) {
             this.totalManualAssessmentPercentage = Math.round(
-                ((this.stats.numberOfAssessments - this.stats.numberOfAutomaticAssistedAssessments) / this.stats.numberOfSubmissions) * 100,
+                ((this.stats.numberOfAssessments - this.stats.numberOfAutomaticAssistedAssessments) / this.stats.numberOfInTimeSubmissions) * 100,
             );
-            this.totalAutomaticAssessmentPercentage = Math.round((this.stats.numberOfAutomaticAssistedAssessments / this.stats.numberOfSubmissions) * 100);
+            this.totalAutomaticAssessmentPercentage = Math.round((this.stats.numberOfAutomaticAssistedAssessments / this.stats.numberOfInTimeSubmissions) * 100);
         }
 
         this.dataForAssessmentPieChart = [
-            this.stats.numberOfSubmissions - this.stats.numberOfAssessments,
+            this.stats.numberOfInTimeSubmissions - this.stats.numberOfAssessments,
             this.stats.numberOfAssessments - this.stats.numberOfAutomaticAssistedAssessments,
             this.stats.numberOfAutomaticAssistedAssessments,
         ];
