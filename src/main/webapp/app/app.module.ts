@@ -6,7 +6,7 @@ import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { ArtemisSystemNotificationModule } from 'app/core/system-notification/system-notification.module';
 import { NavbarComponent } from 'app/shared/layouts/navbar/navbar.component';
 import { ArtemisNotificationModule } from 'app/overview/notification/notification.module';
-import { NotificationSidebarComponent } from 'app/shared/layouts/notification-sidebar/notification-sidebar.component';
+import { NotificationSidebarComponent } from 'app/shared/notification/notification-sidebar/notification-sidebar.component';
 import { PageRibbonComponent } from 'app/shared/layouts/profiles/page-ribbon.component';
 import { ArtemisHeaderExercisePageWithDetailsModule } from 'app/exercises/shared/exercise-headers/exercise-headers.module';
 import { SystemNotificationComponent } from 'app/shared/layouts/system-notification/system-notification.component';
