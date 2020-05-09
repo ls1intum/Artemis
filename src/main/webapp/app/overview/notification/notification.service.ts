@@ -119,27 +119,6 @@ export class NotificationService {
         return res;
     }
 
-    protected filterUserAndGroupNotifications(res: EntityArrayResponseType): Notification[] {
-        let notifications: Notification[] = [];
-        if (res.body) {
-            notifications = res.body.filter((notification: Notification) => {
-                return [NotificationType.GROUP, NotificationType.SINGLE].includes(notification.notificationType);
-            });
-        }
-        return notifications;
-    }
-
-    protected filterSystemNotification(res: EntityArrayResponseType): SystemNotification | null {
-        let systemNotification: SystemNotification | null = null;
-        if (res.body) {
-            const receivedSystemNotifications = res.body.filter((el) => el.notificationType === NotificationType.SYSTEM);
-            if (receivedSystemNotifications && receivedSystemNotifications.length > 0) {
-                systemNotification = receivedSystemNotifications[0] as SystemNotification;
-            }
-        }
-        return systemNotification;
-    }
-
     /**
      * subscribe to notifications for user
      * @return Promise<any>
