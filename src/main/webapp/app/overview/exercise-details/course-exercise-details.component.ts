@@ -343,7 +343,8 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     // ################## ONLY FOR LOCAL TESTING PURPOSE -- START ##################
 
     /**
-     * triggers the simulation of a participation and submission for the currently logged in user
+     * Triggers the simulation of a participation and submission for the currently logged in user
+     * This method will fail if used in production
      * This functionality is only for testing purposes(noVersionControlAndContinuousIntegrationAvailable)
      */
     simulateSubmission() {
@@ -360,7 +361,8 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * triggers the simulation of a result for the currently logged in user
+     * Triggers the simulation of a result for the currently logged in user
+     * This method will fail if used in production
      * This functionality is only for testing purposes(noVersionControlAndContinuousIntegrationAvailable)
      */
     simulateResult() {
