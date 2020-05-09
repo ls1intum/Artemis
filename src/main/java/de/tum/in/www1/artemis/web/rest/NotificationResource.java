@@ -106,18 +106,24 @@ public class NotificationResource {
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<List<Notification>> getNotificationsNEW(@ApiParam Pageable pageable) {
         List<Notification> notifications = new ArrayList<>();
-        HttpHeaders headers = null;
+        List<Notification> recentNotifications = new ArrayList<>();
+        List<Notification> nonRecentNotifications = new ArrayList<>();
+        HttpHeaders headers = new HttpHeaders();
         User currentUser = userService.getUserWithGroupsAndAuthorities();
         // Get all notifications whose notification date is before the current user's lastNotificationRead when first page is requested.
         if (pageable.getPageNumber() == 0 && currentUser != null) {
-            notifications.addAll(notificationService.findAllRecentExceptSystem(currentUser));
+            recentNotifications = notificationService.findAllRecentExceptSystem(currentUser);
+            notifications.addAll(recentNotifications);
         }
         // Get batch of notifications whose notification date is after the current user's lastNotificationRead.
         if (currentUser != null) {
             final Page<Notification> page = notificationService.findAllNonRecentExceptSystem(currentUser, pageable);
             headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
-            notifications.addAll(page.getContent());
+            nonRecentNotifications = page.getContent();
+            notifications.addAll(nonRecentNotifications);
         }
+        // Overwrite header `X-Total-Count` so that recent and non-recent notifications are included.
+        headers.set("X-Total-Count", String.valueOf(recentNotifications.size() + nonRecentNotifications.size()));
         return new ResponseEntity<>(notifications, headers, HttpStatus.OK);
     }
 
