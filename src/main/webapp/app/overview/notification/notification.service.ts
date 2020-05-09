@@ -11,8 +11,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { User } from 'app/core/user/user.model';
 import { GroupNotification, GroupNotificationType } from 'app/entities/group-notification.model';
-import { SystemNotification } from 'app/entities/system-notification.model';
-import { Notification, NotificationType } from 'app/entities/notification.model';
+import { Notification } from 'app/entities/notification.model';
 import { Course } from 'app/entities/course.model';
 
 type EntityResponseType = HttpResponse<Notification>;
@@ -78,7 +77,7 @@ export class NotificationService {
 
     /**
      * Query all notifications.
-     * @param {any} req
+     * @param req request options
      * @return Observable<EntityArrayResponseType>
      */
     queryNew(req?: any): Observable<EntityArrayResponseType> {

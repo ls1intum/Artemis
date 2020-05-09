@@ -1,8 +1,8 @@
 <li class="nav-item pointer">
     <button class="guided-tour-notification nav-link notification-button light-button" (click)="toggleSidebar(); updateNotificationDate()">
         <fa-icon [icon]="'bell'"></fa-icon>
-        <span class="badge badge-danger badge-pill" *ngIf="notificationCount > 0">
-            {{ notificationCount }}
+        <span class="badge badge-danger badge-pill" *ngIf="recentNotificationCount > 0">
+            {{ recentNotificationCount }}
         </span>
     </button>
 </li>
@@ -30,13 +30,13 @@
         {{ 'error.unexpectedError' | translate: { error: error } }}
     </div>
     <div class="text-right mx-3 mb-1">
-        <small class="text-muted">{{ notificationCount }} of {{ totalNotifications }} notifications loaded</small>
+        <small class="text-muted">{{ sortedNotifications?.length || '0' }} of {{ totalNotifications }} notifications loaded</small>
     </div>
     <div class="notification-item p-3" *ngFor="let notification of sortedNotifications" (click)="startNotification(notification)">
         <div>
             <h5>
                 {{ notification.title }}
-                <span class="badge ml-1 badge-primary" *ngIf="!currentUser || notification.notificationDate.isAfter(currentUser.lastNotificationRead)">
+                <span class="badge ml-1 badge-primary" *ngIf="lastNotificationRead && notification.notificationDate.isAfter(lastNotificationRead)">
                     new
                 </span>
             </h5>

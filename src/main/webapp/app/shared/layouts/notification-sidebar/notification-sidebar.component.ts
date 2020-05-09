@@ -3,6 +3,7 @@ import { HttpErrorResponse, HttpHeaders, HttpResponse } from '@angular/common/ht
 import { User } from 'app/core/user/user.model';
 import { UserService } from 'app/core/user/user.service';
 import * as moment from 'moment';
+import { Moment } from 'moment';
 import { GroupNotification } from 'app/entities/group-notification.model';
 import { Notification } from 'app/entities/notification.model';
 import { AccountService } from 'app/core/auth/account.service';
@@ -14,14 +15,14 @@ import { NotificationService } from 'app/overview/notification/notification.serv
     styleUrls: ['./notification-sidebar.scss'],
 })
 export class NotificationSidebarComponent implements OnInit {
+    showSidebar = false;
     notifications: Notification[] = [];
     sortedNotifications: Notification[] = [];
-    currentUser: User;
-    showSidebar = false;
+    recentNotificationCount = 0;
+    totalNotifications = 0;
+    lastNotificationRead: Moment | null = null;
     page = 0;
     notificationsPerPage = 25;
-    notificationCount = 0;
-    totalNotifications = 0;
     error: string | null = null;
 
     constructor(private notificationService: NotificationService, private userService: UserService, private accountService: AccountService) {}
@@ -33,13 +34,16 @@ export class NotificationSidebarComponent implements OnInit {
         }
         this.accountService.getAuthenticationState().subscribe((user: User | null) => {
             if (user) {
+                if (user.lastNotificationRead) {
+                    this.lastNotificationRead = user.lastNotificationRead;
+                }
                 this.loadNotifications();
             }
         });
     }
 
     private loadNotifications(): void {
-        // Query active system notification, recent and non-recent notifications.
+        // Query recent and non-recent notifications.
         this.notificationService
             .queryNew({
                 page: this.page - 1,
@@ -70,31 +74,35 @@ export class NotificationSidebarComponent implements OnInit {
         this.updateNotifications();
     }
 
-    startNotification(notification: Notification): void {
-        this.notificationService.interpretNotification(notification as GroupNotification);
-    }
-
-    updateNotifications(): void {
+    private updateNotifications(): void {
         this.sortedNotifications = this.notifications.sort((a: Notification, b: Notification) => {
             return moment(b.notificationDate!).valueOf() - moment(a.notificationDate!).valueOf();
         });
-        this.updateNotificationCount();
+        this.updateRecentNotificationCount();
     }
 
-    updateNotificationCount(): void {
+    private updateRecentNotificationCount(): void {
         if (!this.notifications) {
-            this.notificationCount = 0;
+            this.recentNotificationCount = 0;
+        } else if (this.lastNotificationRead) {
+            this.recentNotificationCount = this.notifications.filter((notification) => {
+                return notification.notificationDate && notification.notificationDate.isAfter(this.lastNotificationRead!);
+            }).length;
         } else {
-            this.notificationCount = this.notifications.length;
+            this.recentNotificationCount = this.notifications.length;
         }
+    }
+
+    startNotification(notification: Notification): void {
+        this.notificationService.interpretNotification(notification as GroupNotification);
     }
 
     updateNotificationDate(): void {
         this.userService.updateUserNotificationDate().subscribe((res: HttpResponse<User>) => {
             res.body!.lastNotificationRead = moment();
             setTimeout(() => {
-                this.currentUser = res.body!;
-            }, 1500);
+                this.lastNotificationRead = res.body!.lastNotificationRead;
+            }, 2000);
         });
     }
 
