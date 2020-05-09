@@ -109,8 +109,9 @@
     <ng-container *ngIf="exercise && team">
         <hr class="my-5" />
         <h4 class="d-flex align-items-baseline">
-            Participations in "{{ exercise.course!.title }}" for <code class="ml-2 team-short-name">{{ team.shortName }}</code>
+            {{ 'artemisApp.team.detail.participationsTable.title' | translate: { courseTitle: exercise.course!.title } }}
+            <code class="ml-2 team-short-name">{{ team.shortName }}</code>
         </h4>
-        <jhi-team-participation-table [team]="team" [course]="exercise.course" [exercise]="exercise" [isAdmin]="isAdmin"> </jhi-team-participation-table>
+        <jhi-team-participation-table [team]="team" [course]="exercise.course" [exercise]="exercise" [isAdmin]="isAdmin" [isTeamOwner]="isTeamOwner"></jhi-team-participation-table>
     </ng-container>
 </div>

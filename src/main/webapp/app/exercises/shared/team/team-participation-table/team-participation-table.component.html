@@ -156,7 +156,7 @@
                 </ng-template>
             </ngx-datatable-column>
 
-            <ngx-datatable-column prop="participation.initializationState" [minWidth]="100" [width]="200">
+            <ngx-datatable-column prop="participation.initializationState" [minWidth]="100" [width]="150">
                 <ng-template ngx-datatable-header-template>
                     <span class="datatable-header-cell-wrapper" (click)="controls.onSort('participation.initializationState')">
                         <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.participation.initializationState">
@@ -172,6 +172,19 @@
                     <ng-template #initializationState>
                         {{ 'artemisApp.InitializationState.UNINITIALIZED' | translate }}
                     </ng-template>
+                </ng-template>
+            </ngx-datatable-column>
+
+            <ngx-datatable-column *ngIf="isTeamOwner || exercise.isAtLeastInstructor" [minWidth]="200" [width]="200">
+                <ng-template ngx-datatable-header-template>
+                    <span class="datatable-header-cell-wrapper">
+                        <span class="datatable-header-cell-label bold" jhiTranslate="artemisApp.team.detail.participationsTable.columns.assess">
+                            Assess
+                        </span>
+                    </span>
+                </ng-template>
+                <ng-template ngx-datatable-cell-template let-value="row">
+                    Assess button
                 </ng-template>
             </ngx-datatable-column>
         </ngx-datatable>

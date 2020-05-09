@@ -30,6 +30,7 @@ export class TeamParticipationTableComponent implements OnInit {
     @Input() course: Course;
     @Input() exercise: Exercise;
     @Input() isAdmin = false;
+    @Input() isTeamOwner = false;
 
     exercises: ExerciseWithTeamAndOptionalParticipation[];
     isLoading: boolean;

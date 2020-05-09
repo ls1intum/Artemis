@@ -20,7 +20,13 @@
                     "name": "Name",
                     "email": "E-Mail"
                 },
-                "noOwner": "No tutor"
+                "noOwner": "No tutor",
+                "participationsTable": {
+                    "title": "Participations in \"{{ courseTitle }}\" for",
+                    "columns": {
+                        "assess": "Assess"
+                    }
+                }
             },
             "team": "Team",
             "name": {

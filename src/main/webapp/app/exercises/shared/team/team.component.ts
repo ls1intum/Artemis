@@ -26,6 +26,7 @@ export class TeamComponent implements OnInit {
 
     currentUser: User;
     isAdmin = false;
+    isTeamOwner = false;
 
     constructor(
         private route: ActivatedRoute,
@@ -38,6 +39,7 @@ export class TeamComponent implements OnInit {
         this.accountService.identity().then((user: User) => {
             this.currentUser = user;
             this.isAdmin = this.accountService.isAdmin();
+            this.isTeamOwner = user.id === this.team.owner?.id;
         });
     }
 

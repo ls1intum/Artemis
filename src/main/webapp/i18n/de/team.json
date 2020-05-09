@@ -20,7 +20,13 @@
                     "name": "Name",
                     "email": "Email"
                 },
-                "noOwner": "Kein Tutor"
+                "noOwner": "Kein Tutor",
+                "participationsTable": {
+                    "title": "Teilnahmen in \"{{ courseTitle }}\" für",
+                    "columns": {
+                        "assess": "Bewerten"
+                    }
+                }
             },
             "team": "Team",
             "name": {
