@@ -53,24 +53,24 @@ public class GroupNotificationFactory {
             String notificationText) {
         String title, text;
         switch (notificationType) {
-        case EXERCISE_CREATED:
-            title = "Exercise created";
-            text = "A new exercise \"" + exercise.getTitle() + "\" got created.";
-            break;
-        case EXERCISE_PRACTICE:
-            title = "Exercise open for practice";
-            text = "Exercise \"" + exercise.getTitle() + "\" is now open for practice.";
-            break;
-        case EXERCISE_STARTED:
-            title = "Exercise started";
-            text = "Exercise \"" + exercise.getTitle() + "\" just started.";
-            break;
-        case EXERCISE_UPDATED:
-            title = "Exercise updated";
-            text = "Exercise \"" + exercise.getTitle() + "\" updated.";
-            break;
-        default:
-            throw new UnsupportedOperationException("Unsupported NotificationType: " + notificationType);
+            case EXERCISE_CREATED:
+                title = "Exercise created";
+                text = "A new exercise \"" + exercise.getTitle() + "\" got created.";
+                break;
+            case EXERCISE_PRACTICE:
+                title = "Exercise open for practice";
+                text = "Exercise \"" + exercise.getTitle() + "\" is now open for practice.";
+                break;
+            case EXERCISE_STARTED:
+                title = "Exercise started";
+                text = "Exercise \"" + exercise.getTitle() + "\" just started.";
+                break;
+            case EXERCISE_UPDATED:
+                title = "Exercise updated";
+                text = "Exercise \"" + exercise.getTitle() + "\" updated.";
+                break;
+            default:
+                throw new UnsupportedOperationException("Unsupported NotificationType: " + notificationType);
         }
 
         if (notificationText != null) {
@@ -102,20 +102,20 @@ public class GroupNotificationFactory {
         String title, text;
         Course course;
         switch (notificationType) {
-        case NEW_QUESTION_FOR_EXERCISE:
-            Exercise exercise = question.getExercise();
-            title = "New Question";
-            text = "Exercise \"" + exercise.getTitle() + "\" got a new question.";
-            course = exercise.getCourse();
-            break;
-        case NEW_QUESTION_FOR_LECTURE:
-            Lecture lecture = question.getLecture();
-            title = "New Question";
-            text = "Lecture \"" + lecture.getTitle() + "\" got a new question.";
-            course = lecture.getCourse();
-            break;
-        default:
-            throw new UnsupportedOperationException("Unsupported NotificationType: " + notificationType);
+            case NEW_QUESTION_FOR_EXERCISE:
+                Exercise exercise = question.getExercise();
+                title = "New Question";
+                text = "Exercise \"" + exercise.getTitle() + "\" got a new question.";
+                course = exercise.getCourse();
+                break;
+            case NEW_QUESTION_FOR_LECTURE:
+                Lecture lecture = question.getLecture();
+                title = "New Question";
+                text = "Lecture \"" + lecture.getTitle() + "\" got a new question.";
+                course = lecture.getCourse();
+                break;
+            default:
+                throw new UnsupportedOperationException("Unsupported NotificationType: " + notificationType);
         }
 
         GroupNotification notification = new GroupNotification(course, title, text, author, groupNotificationType);
@@ -143,20 +143,20 @@ public class GroupNotificationFactory {
         String text, title;
         Course course;
         switch (notificationType) {
-        case NEW_ANSWER_FOR_EXERCISE:
-            Exercise exercise = answer.getQuestion().getExercise();
-            title = "New Answer";
-            text = "Exercise \"" + exercise.getTitle() + "\" got a new answer.";
-            course = exercise.getCourse();
-            break;
-        case NEW_ANSWER_FOR_LECTURE:
-            Lecture lecture = answer.getQuestion().getLecture();
-            title = "New Answer";
-            text = "Lecture \"" + lecture.getTitle() + "\" got a new answer.";
-            course = lecture.getCourse();
-            break;
-        default:
-            throw new UnsupportedOperationException("Unsupported NotificationType: " + notificationType);
+            case NEW_ANSWER_FOR_EXERCISE:
+                Exercise exercise = answer.getQuestion().getExercise();
+                title = "New Answer";
+                text = "Exercise \"" + exercise.getTitle() + "\" got a new answer.";
+                course = exercise.getCourse();
+                break;
+            case NEW_ANSWER_FOR_LECTURE:
+                Lecture lecture = answer.getQuestion().getLecture();
+                title = "New Answer";
+                text = "Lecture \"" + lecture.getTitle() + "\" got a new answer.";
+                course = lecture.getCourse();
+                break;
+            default:
+                throw new UnsupportedOperationException("Unsupported NotificationType: " + notificationType);
         }
 
         GroupNotification notification = new GroupNotification(course, title, text, author, groupNotificationType);
