@@ -84,7 +84,9 @@ export abstract class Exercise implements BaseEntity {
 
     // transient objects which might not be set
     public numberOfParticipations?: number;
+    public numberOfLateSubmissions?: number;
     public numberOfAssessments?: number;
+    public numberOfLateAssessments?: number;
     public numberOfComplaints?: number;
     public numberOfOpenComplaints?: number;
     public numberOfMoreFeedbackRequests?: number;

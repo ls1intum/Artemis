@@ -155,7 +155,13 @@ public abstract class Exercise implements Serializable {
     private Long numberOfParticipationsTransient;
 
     @Transient
+    private Long numberOfLateSubmissionsTransient;
+
+    @Transient
     private Long numberOfAssessmentsTransient;
+
+    @Transient
+    private Long numberOfLateAssessmentsTransient;
 
     @Transient
     private Long numberOfComplaintsTransient;
@@ -820,12 +826,28 @@ public abstract class Exercise implements Serializable {
         this.numberOfParticipationsTransient = numberOfParticipations;
     }
 
+    public Long getNumberOfLateSubmissions() {
+        return numberOfLateSubmissionsTransient;
+    }
+
+    public void setNumberOfLateSubmissions(Long numberOfLateSubmissions) {
+        this.numberOfLateSubmissionsTransient = numberOfLateSubmissions;
+    }
+
     public Long getNumberOfAssessments() {
         return numberOfAssessmentsTransient;
     }
 
     public void setNumberOfAssessments(Long numberOfAssessments) {
         this.numberOfAssessmentsTransient = numberOfAssessments;
+    }
+
+    public Long getNumberOfLateAssessments() {
+        return numberOfLateAssessmentsTransient;
+    }
+
+    public void setNumberOfLateAssessments(Long numberOfLateAssessments) {
+        this.numberOfLateAssessmentsTransient = numberOfLateAssessments;
     }
 
     public Long getNumberOfComplaints() {

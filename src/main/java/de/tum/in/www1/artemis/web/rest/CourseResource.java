@@ -486,19 +486,25 @@ public class CourseResource {
         List<TutorParticipation> tutorParticipations = tutorParticipationService.findAllByCourseAndTutor(course, user);
 
         for (Exercise exercise : interestingExercises) {
-            long numberOfSubmissions;
+            long numberOfInTimeSubmissions, numberOfLateSubmissions;
             if (exercise instanceof ProgrammingExercise) {
-                numberOfSubmissions = programmingExerciseService.countSubmissionsByExerciseIdSubmitted(exercise.getId());
+                numberOfInTimeSubmissions = programmingExerciseService.countSubmissionsByExerciseIdSubmitted(exercise.getId());
+                numberOfLateSubmissions = 0;
             }
             else {
-                numberOfSubmissions = submissionService.countInTimeSubmissionsForExercise(exercise.getId());
+                numberOfInTimeSubmissions = submissionService.countInTimeSubmissionsForExercise(exercise.getId());
+                numberOfLateSubmissions = submissionService.countLateSubmissionsForExercise(exercise.getId());
             }
+
             final long numberOfAssessments = resultService.countNumberOfFinishedAssessmentsForExercise(exercise.getId());
+            final long numberOfLateAssessments = resultService.countNumberOfFinishedLateAssessmentsForExercise(exercise.getId());
 
             exerciseService.calculateNrOfOpenComplaints(exercise);
 
-            exercise.setNumberOfParticipations(numberOfSubmissions);
+            exercise.setNumberOfParticipations(numberOfInTimeSubmissions);
+            exercise.setNumberOfLateSubmissions(numberOfLateSubmissions);
             exercise.setNumberOfAssessments(numberOfAssessments);
+            exercise.setNumberOfLateAssessments(numberOfLateAssessments);
 
             List<ExampleSubmission> exampleSubmissions = this.exampleSubmissionRepository.findAllByExerciseId(exercise.getId());
             // Do not provide example submissions without any assessment
@@ -536,8 +542,11 @@ public class CourseResource {
         }
         StatsForInstructorDashboardDTO stats = new StatsForInstructorDashboardDTO();
 
-        final long numberOfSubmissions = submissionService.countSubmissionsForCourse(courseId) + programmingExerciseService.countSubmissionsByCourseIdSubmitted(courseId);
-        stats.setNumberOfInTimeSubmissions(numberOfSubmissions);
+        final long numberOfInTimeSubmissions = submissionService.countInTimeSubmissionsForCourse(courseId) + programmingExerciseService.countSubmissionsByCourseIdSubmitted(courseId);
+        stats.setNumberOfInTimeSubmissions(numberOfInTimeSubmissions);
+
+        final long numberOfLateSubmissions = submissionService.countLateSubmissionsForCourse(courseId);
+        stats.setNumberOfLateSubmissions(numberOfLateSubmissions);
 
         final long numberOfAssessments = resultService.countNumberOfAssessments(courseId);
         stats.setNumberOfAssessments(numberOfAssessments);
@@ -614,18 +623,21 @@ public class CourseResource {
         course.setExercises(interestingExercises);
 
         for (Exercise exercise : interestingExercises) {
-            long numberOfSubmissions;
+            long numberOfInTimeSubmissions, numberOfLateSubmissions;
             if (exercise instanceof ProgrammingExercise) {
-                numberOfSubmissions = programmingExerciseService.countSubmissionsByExerciseIdSubmitted(exercise.getId());
+                numberOfInTimeSubmissions = programmingExerciseService.countSubmissionsByExerciseIdSubmitted(exercise.getId());
+                numberOfLateSubmissions = 0;
             }
             else {
-                numberOfSubmissions = submissionService.countInTimeSubmissionsForExercise(exercise.getId());
+                numberOfInTimeSubmissions = submissionService.countInTimeSubmissionsForExercise(exercise.getId());
+                numberOfLateSubmissions = submissionService.countLateSubmissionsForExercise(exercise.getId());
             }
             final long numberOfAssessments = resultService.countNumberOfFinishedAssessmentsForExercise(exercise.getId());
             final long numberOfMoreFeedbackRequests = complaintService.countMoreFeedbackRequestsByExerciseId(exercise.getId());
             final long numberOfComplaints = complaintService.countComplaintsByExerciseId(exercise.getId());
 
-            exercise.setNumberOfParticipations(numberOfSubmissions);
+            exercise.setNumberOfParticipations(numberOfInTimeSubmissions);
+            exercise.setNumberOfLateSubmissions(numberOfLateSubmissions);
             exercise.setNumberOfAssessments(numberOfAssessments);
             exercise.setNumberOfComplaints(numberOfComplaints);
             exercise.setNumberOfMoreFeedbackRequests(numberOfMoreFeedbackRequests);
@@ -672,7 +684,7 @@ public class CourseResource {
 
         stats.setNumberOfStudents(courseService.countNumberOfStudentsForCourse(course));
 
-        final long numberOfSubmissions = submissionService.countSubmissionsForCourse(courseId) + programmingExerciseService.countSubmissionsByCourseIdSubmitted(courseId);
+        final long numberOfSubmissions = submissionService.countInTimeSubmissionsForCourse(courseId) + programmingExerciseService.countSubmissionsByCourseIdSubmitted(courseId);
 
         stats.setNumberOfInTimeSubmissions(numberOfSubmissions);
         stats.setNumberOfAssessments(resultService.countNumberOfAssessments(courseId));

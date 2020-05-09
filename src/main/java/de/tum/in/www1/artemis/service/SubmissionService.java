@@ -63,13 +63,23 @@ public class SubmissionService {
     }
 
     /**
+     * Count number of in-time submissions for course. Only submissions for Text, Modeling and File Upload exercises are included.
+     * @param courseId the course id we are interested in
+     * @return the number of submissions belonging to the course id, which have the submitted flag set to true and the submission date before the exercise due date, or no exercise
+     *         due date at all
+     */
+    public long countInTimeSubmissionsForCourse(long courseId) {
+        return submissionRepository.countByCourseIdSubmittedBeforeDueDate(courseId);
+    }
+
+    /**
      * Count number of submissions for course. Only submissions for Text, Modeling and File Upload exercises are included.
      * @param courseId the course id we are interested in
      * @return the number of submissions belonging to the course id, which have the submitted flag set to true and the submission date before the exercise due date, or no exercise
      *         due date at all
      */
-    public long countSubmissionsForCourse(long courseId) {
-        return submissionRepository.countByCourseIdSubmittedBeforeDueDate(courseId);
+    public long countLateSubmissionsForCourse(long courseId) {
+        return submissionRepository.countByCourseIdSubmittedAfterDueDate(courseId);
     }
 
     /**

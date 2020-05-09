@@ -363,6 +363,16 @@ public class ResultService {
     }
 
     /**
+     * Given an exerciseId, return the number of assessments for that exerciseId that have been completed (e.g. no draft!)
+     *
+     * @param exerciseId - the exercise we are interested in
+     * @return a number of assessments for the exercise
+     */
+    public long countNumberOfFinishedLateAssessmentsForExercise(Long exerciseId) {
+        return resultRepository.countNumberOfFinishedLateAssessmentsForExercise(exerciseId);
+    }
+
+    /**
      * Given a exerciseId and a tutorId, return the number of assessments for that exercise written by that tutor that have been completed (e.g. no draft!)
      *
      * @param exerciseId - the exercise we are interested in

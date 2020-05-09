@@ -204,6 +204,9 @@ public class ExerciseResource {
         final long numberOfAssessments = resultService.countNumberOfFinishedAssessmentsForExercise(exerciseId);
         stats.setNumberOfAssessments(numberOfAssessments);
 
+        final long numberOfLateAssessments = resultService.countNumberOfFinishedLateAssessmentsForExercise(exerciseId);
+        stats.setNumberOfLateAssessments(numberOfLateAssessments);
+
         final long numberOfAutomaticAssistedAssessments = resultService.countNumberOfAutomaticAssistedAssessmentsForExercise(exerciseId);
         stats.setNumberOfAutomaticAssistedAssessments(numberOfAutomaticAssistedAssessments);
 
