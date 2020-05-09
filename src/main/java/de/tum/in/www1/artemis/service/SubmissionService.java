@@ -73,13 +73,22 @@ public class SubmissionService {
     }
 
     /**
-     * Count number of submissions for exercise.
+     * Count number of in-time submissions for exercise.
      * @param exerciseId the exercise id we are interested in
      * @return the number of submissions belonging to the exercise id, which have the submitted flag set to true and the submission date before the exercise due date, or no
      *         exercise due date at all
      */
     public long countSubmissionsForExercise(long exerciseId) {
         return submissionRepository.countByExerciseIdSubmittedBeforeDueDate(exerciseId);
+    }
+
+    /**
+     * Count number of late submissions for exercise.
+     * @param exerciseId the exercise id we are interested in
+     * @return the number of submissions belonging to the exercise id, which have the submitted flag set to true and the submission date after the exercise due date
+     */
+    public long countLateSubmissionsForExercise(long exerciseId) {
+        return submissionRepository.countByExerciseIdSubmittedAfterDueDate(exerciseId);
     }
 
     /**

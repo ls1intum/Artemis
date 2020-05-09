@@ -55,6 +55,7 @@
             "numberOfUnassessedSubmissions": "Unassessed submissions",
             "exerciseInformation": "Exercise information",
             "numberOfTotalSubmissions": "Total submissions",
+            "numberOfLateSubmissions": "Late submissions",
             "numberOfAssessedSubmissions": "Assessed submissions",
             "numberOfSubmissionsAssessedByYou": "Submissions assessed by you",
             "numberOfAutomaticAssistedSubmissions": "Assessed Submissions with automatic assistance",

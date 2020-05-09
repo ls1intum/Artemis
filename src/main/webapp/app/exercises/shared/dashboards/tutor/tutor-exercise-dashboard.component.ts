@@ -56,6 +56,7 @@ export class TutorExerciseDashboardComponent implements OnInit, AfterViewInit {
     exerciseId: number;
     numberOfTutorAssessments = 0;
     numberOfSubmissions = 0;
+    numberOfLateSubmissions = 0;
     numberOfAssessments = 0;
     numberOfComplaints = 0;
     numberOfOpenComplaints = 0;
@@ -213,6 +214,7 @@ export class TutorExerciseDashboardComponent implements OnInit, AfterViewInit {
             (res: HttpResponse<StatsForDashboard>) => {
                 this.statsForDashboard = res.body!;
                 this.numberOfSubmissions = this.statsForDashboard.numberOfSubmissions;
+                this.numberOfLateSubmissions = this.statsForDashboard.numberOfLateSubmissions;
                 this.numberOfAssessments = this.statsForDashboard.numberOfAssessments;
                 this.numberOfComplaints = this.statsForDashboard.numberOfComplaints;
                 this.numberOfOpenComplaints = this.statsForDashboard.numberOfOpenComplaints;
