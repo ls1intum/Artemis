@@ -139,3 +139,5 @@ info:
             - programming_exercise_fail_tour: 'tutorial'
             - programming_exercise_success_tour: 'tutorial'
             - tutor_assessment_tour: 'Patterns in Software Engineering'
+    contact: artemis.in@tum.de                                                                  #default value, can be overridden on the server
+    imprint: https://ase.in.tum.de/lehrstuhl_1/component/content/article/179-imprint            #default value, can be overridden on the server

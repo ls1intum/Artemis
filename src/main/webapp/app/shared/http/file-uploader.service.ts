@@ -13,6 +13,14 @@ export class FileUploaderService {
 
     constructor(private http: HttpClient) {}
 
+    /**
+     * Function which uploads a file. It checks for supported file extensions and file size.
+     * Options must be passed as a dictionary. E.g: { keepFileName: true }
+     * @async
+     * @param {Blob | File} file
+     * @param {string} fileName
+     * @param options
+     */
     uploadFile(file: Blob | File, fileName?: string, options?: any): Promise<FileUploadResponse> {
         /** Check file extension **/
         const fileExtension = fileName ? fileName.split('.').pop()!.toLocaleLowerCase() : file['name'].split('.').pop().toLocaleLowerCase();

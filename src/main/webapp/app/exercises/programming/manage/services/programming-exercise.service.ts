@@ -28,6 +28,10 @@ export class ProgrammingExerciseService {
 
     constructor(private http: HttpClient, private exerciseService: ExerciseService) {}
 
+    /**
+     * Sets a new programming exercise up
+     * @param programmingExercise which should be setup
+     */
     automaticSetup(programmingExercise: ProgrammingExercise): Observable<EntityResponseType> {
         const copy = this.convertDataFromClient(programmingExercise);
         return this.http
@@ -35,10 +39,18 @@ export class ProgrammingExerciseService {
             .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
     }
 
+    /**
+     * Generates the structure oracle
+     * @param exerciseId of the programming exercise for which the structure oracle should be created
+     */
     generateStructureOracle(exerciseId: number): Observable<string> {
         return this.http.put<string>(this.resourceUrl + '/' + exerciseId + '/generate-tests', { responseType: 'text' });
     }
 
+    /**
+     * Combines all commits of the template repository to one
+     * @param exerciseId of the particular programming exercise
+     */
     combineTemplateRepositoryCommits(exerciseId: number) {
         return this.http.put(this.resourceUrl + '/' + exerciseId + '/combine-template-commits', { responseType: 'text' });
     }
@@ -58,6 +70,11 @@ export class ProgrammingExerciseService {
             .pipe(map((res: EntityResponseType) => this.exerciseService.convertDateFromServer(res)));
     }
 
+    /**
+     * Updates an existing programming exercise
+     * @param programmingExercise which should be updated
+     * @param req optional request options
+     */
     update(programmingExercise: ProgrammingExercise, req?: any): Observable<EntityResponseType> {
         const options = createRequestOption(req);
         const copy = this.convertDataFromClient(programmingExercise);
@@ -66,6 +83,12 @@ export class ProgrammingExerciseService {
             .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
     }
 
+    /**
+     * Updates the problem statement
+     * @param programmingExerciseId of the programming exercise for which to change the problem statement
+     * @param problemStatement the new problem statement
+     * @param req optional request options
+     */
     updateProblemStatement(programmingExerciseId: number, problemStatement: string, req?: any) {
         const options = createRequestOption(req);
         return this.http
@@ -73,12 +96,20 @@ export class ProgrammingExerciseService {
             .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
     }
 
+    /**
+     * Finds the programming exercise for the given exerciseId
+     * @param programmingExerciseId of the programming exercise to retrieve
+     */
     find(programmingExerciseId: number): Observable<EntityResponseType> {
         return this.http
             .get<ProgrammingExercise>(`${this.resourceUrl}/${programmingExerciseId}`, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
     }
 
+    /**
+     * Finds the programming exercise for the given exerciseId with the corresponding participation's
+     * @param programmingExerciseId of the programming exercise to retrieve
+     */
     findWithTemplateAndSolutionParticipation(programmingExerciseId: number): Observable<EntityResponseType> {
         return this.http
             .get<ProgrammingExercise>(`${this.resourceUrl}/${programmingExerciseId}/with-participations`, { observe: 'response' })
@@ -94,6 +125,10 @@ export class ProgrammingExerciseService {
         return this.http.get<ProgrammingExerciseTestCaseStateDTO>(`${this.resourceUrl}/${exerciseId}/test-case-state`, { observe: 'response' });
     }
 
+    /**
+     * Receives all programming exercises for the particular query
+     * @param req optional request options
+     */
     query(req?: any): Observable<EntityArrayResponseType> {
         const options = createRequestOption(req);
         return this.http
@@ -101,6 +136,12 @@ export class ProgrammingExerciseService {
             .pipe(map((res: EntityArrayResponseType) => this.exerciseService.convertDateArrayFromServer(res)));
     }
 
+    /**
+     * Deletes the programming exercise with the corresponding programming exercise Id
+     * @param programmingExerciseId of the programming exercise to delete
+     * @param deleteStudentReposBuildPlans indicates if the StudentReposBuildPlans should be also deleted or not
+     * @param deleteBaseReposBuildPlans indicates if the BaseReposBuildPlans should be also deleted or not
+     */
     delete(programmingExerciseId: number, deleteStudentReposBuildPlans: boolean, deleteBaseReposBuildPlans: boolean): Observable<HttpResponse<{}>> {
         let params = new HttpParams();
         params = params.set('deleteStudentReposBuildPlans', deleteStudentReposBuildPlans.toString());
@@ -108,6 +149,11 @@ export class ProgrammingExerciseService {
         return this.http.delete(`${this.resourceUrl}/${programmingExerciseId}`, { params, observe: 'response' });
     }
 
+    /**
+     * Converts the data from the client
+     * if template & solution participation exist removes the exercise and results from them
+     * @param exercise for which the data should be converted
+     */
     convertDataFromClient(exercise: ProgrammingExercise) {
         const copy = {
             ...this.exerciseService.convertDateFromClient(exercise),

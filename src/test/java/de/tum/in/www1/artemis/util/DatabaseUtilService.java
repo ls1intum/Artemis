@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.util;
 import static com.google.gson.JsonParser.parseString;
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.net.URL;
 import java.nio.file.Files;
 import java.time.ZonedDateTime;
 import java.util.*;
@@ -509,26 +510,66 @@ public class DatabaseUtilService {
         return studentParticipationRepo.findWithEagerSubmissionsAndResultsAssessorsById(storedParticipation.get().getId()).get();
     }
 
+    /**
+     * Stores participation of the team with the given id for the given exercise
+     *
+     * @param exercise the exercise for which the participation will be created
+     * @param teamId   id of the team
+     * @return eagerly loaded representation of the participation object stored in the database
+     */
+    public StudentParticipation addTeamParticipationForExercise(Exercise exercise, long teamId) {
+        Optional<StudentParticipation> storedParticipation = studentParticipationRepo.findByExerciseIdAndTeamId(exercise.getId(), teamId);
+        if (storedParticipation.isEmpty()) {
+            Team team = teamRepo.findById(teamId).orElseThrow();
+            StudentParticipation participation = new StudentParticipation();
+            participation.setInitializationDate(ZonedDateTime.now());
+            participation.setParticipant(team);
+            participation.setExercise(exercise);
+            studentParticipationRepo.save(participation);
+            storedParticipation = studentParticipationRepo.findByExerciseIdAndTeamId(exercise.getId(), teamId);
+            assertThat(storedParticipation).isPresent();
+        }
+        return studentParticipationRepo.findWithEagerSubmissionsAndResultsAssessorsById(storedParticipation.get().getId()).get();
+    }
+
     public ProgrammingExerciseStudentParticipation addStudentParticipationForProgrammingExercise(ProgrammingExercise exercise, String login) {
 
         final var existingParticipation = programmingExerciseStudentParticipationRepo.findByExerciseIdAndStudentLogin(exercise.getId(), login);
         if (existingParticipation.isPresent()) {
             return existingParticipation.get();
         }
+        ProgrammingExerciseStudentParticipation participation = preconfigurationOfParticipation(exercise, login);
+        final var repoName = (exercise.getProjectKey() + "-" + login).toLowerCase();
+        participation.setRepositoryUrl(String.format("http://some.test.url/scm/%s/%s.git", exercise.getProjectKey(), repoName));
+        participation = programmingExerciseStudentParticipationRepo.save(participation);
 
+        return (ProgrammingExerciseStudentParticipation) studentParticipationRepo.findWithEagerSubmissionsAndResultsAssessorsById(participation.getId()).get();
+
+    }
+
+    public ProgrammingExerciseStudentParticipation addStudentParticipationForProgrammingExerciseForLocalRepo(ProgrammingExercise exercise, String login, URL localRepoPath) {
+        final var existingParticipation = programmingExerciseStudentParticipationRepo.findByExerciseIdAndStudentLogin(exercise.getId(), login);
+        if (existingParticipation.isPresent()) {
+            return existingParticipation.get();
+        }
+        ProgrammingExerciseStudentParticipation participation = preconfigurationOfParticipation(exercise, login);
+        final var repoName = (exercise.getProjectKey() + "-" + login).toLowerCase();
+        participation.setRepositoryUrl(String.format(localRepoPath.toString() + "%s/%s.git", exercise.getProjectKey(), repoName));
+        participation = programmingExerciseStudentParticipationRepo.save(participation);
+
+        return (ProgrammingExerciseStudentParticipation) studentParticipationRepo.findWithEagerSubmissionsAndResultsAssessorsById(participation.getId()).get();
+    }
+
+    private ProgrammingExerciseStudentParticipation preconfigurationOfParticipation(ProgrammingExercise exercise, String login) {
         final var user = getUserByLogin(login);
         var participation = new ProgrammingExerciseStudentParticipation();
         final var buildPlanId = exercise.getProjectKey().toUpperCase() + "-" + login.toUpperCase();
-        final var repoName = (exercise.getProjectKey() + "-" + login).toLowerCase();
         participation.setInitializationDate(ZonedDateTime.now());
         participation.setParticipant(user);
         participation.setBuildPlanId(buildPlanId);
         participation.setProgrammingExercise(exercise);
         participation.setInitializationState(InitializationState.INITIALIZED);
-        participation.setRepositoryUrl(String.format("http://some.test.url/scm/%s/%s.git", exercise.getProjectKey(), repoName));
-        participation = programmingExerciseStudentParticipationRepo.save(participation);
-
-        return (ProgrammingExerciseStudentParticipation) studentParticipationRepo.findWithEagerSubmissionsAndResultsAssessorsById(participation.getId()).get();
+        return participation;
     }
 
     public ProgrammingExercise addTemplateParticipationForProgrammingExercise(ProgrammingExercise exercise) {

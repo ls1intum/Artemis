@@ -5,7 +5,11 @@ import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,11 +25,14 @@ import org.springframework.web.server.ResponseStatusException;
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.TeamImportStrategyType;
+import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.TeamRepository;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.dto.TeamSearchUserDTO;
+import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
+import de.tum.in.www1.artemis.web.websocket.team.TeamWebsocketService;
 
 /**
  * REST controller for managing Teams.
@@ -45,6 +52,8 @@ public class TeamResource {
 
     private final TeamService teamService;
 
+    private final TeamWebsocketService teamWebsocketService;
+
     private final CourseService courseService;
 
     private final ExerciseService exerciseService;
@@ -57,10 +66,12 @@ public class TeamResource {
 
     private final AuditEventRepository auditEventRepository;
 
-    public TeamResource(TeamRepository teamRepository, TeamService teamService, CourseService courseService, ExerciseService exerciseService, UserService userService,
-            AuthorizationCheckService authCheckService, ParticipationService participationService, AuditEventRepository auditEventRepository) {
+    public TeamResource(TeamRepository teamRepository, TeamService teamService, TeamWebsocketService teamWebsocketService, CourseService courseService,
+            ExerciseService exerciseService, UserService userService, AuthorizationCheckService authCheckService, ParticipationService participationService,
+            AuditEventRepository auditEventRepository) {
         this.teamRepository = teamRepository;
         this.teamService = teamService;
+        this.teamWebsocketService = teamWebsocketService;
         this.courseService = courseService;
         this.exerciseService = exerciseService;
         this.userService = userService;
@@ -89,11 +100,18 @@ public class TeamResource {
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user)) {
             return forbidden();
         }
-        team.setOwner(user); // the TA (or above) who creates the team, is the owner of the team
-        Team result = teamService.save(exercise, team);
-        result.filterSensitiveInformation();
-        return ResponseEntity.created(new URI("/api/teams/" + result.getId()))
-                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);
+        if (!exercise.isTeamMode()) {
+            throw new BadRequestAlertException("A team cannot be created for an exercise that is not team-based.", ENTITY_NAME, "exerciseNotTeamBased");
+        }
+        // Tutors can only create teams for themselves while instructors can select any tutor as the team owner
+        if (!authCheckService.isAtLeastInstructorForExercise(exercise, user)) {
+            team.setOwner(user);
+        }
+        Team savedTeam = teamService.save(exercise, team);
+        savedTeam.filterSensitiveInformation();
+        teamWebsocketService.sendTeamAssignmentUpdate(exercise, null, savedTeam);
+        return ResponseEntity.created(new URI("/api/teams/" + savedTeam.getId()))
+                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, savedTeam.getId().toString())).body(savedTeam);
     }
 
     /**
@@ -145,15 +163,17 @@ public class TeamResource {
         }
 
         // Save team (includes check for conflicts that no student is assigned to multiple teams for an exercise)
-        Team result = teamService.save(exercise, team);
+        Team savedTeam = teamService.save(exercise, team);
 
         // For programming exercise teams with existing participation, the repository access needs to be updated according to the new team member set
         if (exercise instanceof ProgrammingExercise) {
-            teamService.updateRepositoryMembersIfNeeded(exerciseId, existingTeam.get(), team);
+            teamService.updateRepositoryMembersIfNeeded(exerciseId, existingTeam.get(), savedTeam);
         }
 
-        result.filterSensitiveInformation();
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, team.getId().toString())).body(result);
+        savedTeam.filterSensitiveInformation();
+        List<StudentParticipation> participationsOfSavedTeam = participationService.findByExerciseAndTeamWithEagerResultsAndSubmissions(exercise, savedTeam);
+        teamWebsocketService.sendTeamAssignmentUpdate(exercise, existingTeam.get(), savedTeam, participationsOfSavedTeam);
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, team.getId().toString())).body(savedTeam);
     }
 
     /**
@@ -235,26 +255,28 @@ public class TeamResource {
         // Delete all participations of the team first and then the team itself
         participationService.deleteAllByTeamId(id, false, false);
         teamRepository.delete(team);
+
+        teamWebsocketService.sendTeamAssignmentUpdate(exercise, team, null);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, Long.toString(id))).build();
     }
 
     /**
-     * GET /exercises/{exerciseId}/teams/exists?shortName={shortName} : get boolean flag whether team with shortName exists for exercise
+     * GET /courses/{courseId}/teams/exists?shortName={shortName} : get boolean flag whether team with shortName exists for course
      *
-     * @param exerciseId the id of the exercise for which to check teams
+     * @param courseId the id of the course for which to check teams
      * @param shortName the shortName of the team to check for existence
      * @return Response with status 200 (OK) and boolean flag in the body
      */
-    @GetMapping("/exercises/{exerciseId}/teams/exists")
+    @GetMapping("/courses/{courseId}/teams/exists")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Boolean> existsTeamByShortName(@PathVariable long exerciseId, @RequestParam("shortName") String shortName) {
-        log.debug("REST request to check Team existence for exercise with id {} for shortName : {}", exerciseId, shortName);
-        Exercise exercise = exerciseService.findOne(exerciseId);
+    public ResponseEntity<Boolean> existsTeamByShortName(@PathVariable long courseId, @RequestParam("shortName") String shortName) {
+        log.debug("REST request to check Team existence for course with id {} for shortName : {}", courseId, shortName);
+        Course course = courseService.findOne(courseId);
         User user = userService.getUserWithGroupsAndAuthorities();
-        if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user)) {
+        if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
             return forbidden();
         }
-        return ResponseEntity.ok().body(teamRepository.findOneByExerciseIdAndShortName(exerciseId, shortName).isPresent());
+        return ResponseEntity.ok().body(teamRepository.existsByExerciseCourseIdAndShortName(courseId, shortName));
     }
 
     /**
@@ -323,7 +345,63 @@ public class TeamResource {
         // Import teams and return the teams that now belong to the destination exercise
         List<Team> destinationTeams = teamService.importTeamsFromSourceExerciseIntoDestinationExerciseUsingStrategy(sourceExercise, destinationExercise, importStrategyType);
         destinationTeams.forEach(Team::filterSensitiveInformation);
+
+        // Send out team assignment update via websockets
+        Map<String, List<StudentParticipation>> participationsMap = participationService.findByExerciseIdWithEagerSubmissionsResult(destinationExercise.getId()).stream()
+                .collect(Collectors.toMap(StudentParticipation::getParticipantIdentifier, List::of, (a, b) -> Stream.concat(a.stream(), b.stream()).collect(Collectors.toList())));
+        destinationTeams.forEach(
+                team -> teamWebsocketService.sendTeamAssignmentUpdate(destinationExercise, null, team, participationsMap.getOrDefault(team.getParticipantIdentifier(), List.of())));
+
         return ResponseEntity.ok().body(destinationTeams);
     }
 
+    /**
+     * GET /courses/:courseId/teams/:teamShortName/with-exercises-and-participations : get course "id" with all released exercises in which the team "teamShortName" exists
+     * together with its participations for those exercises
+     *
+     * @param courseId id of the course
+     * @param teamShortName short name of the team (all teams with the short name in the course are seen as the same team)
+     * @return Course with exercises and participations for the team
+     */
+    @GetMapping(value = "/courses/{courseId}/teams/{teamShortName}/with-exercises-and-participations")
+    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<Course> getCourseWithExercisesAndParticipationsForTeam(@PathVariable Long courseId, @PathVariable String teamShortName) {
+        log.debug("REST request to get Course {} with exercises and participations for Team with short name {}", courseId, teamShortName);
+        Course course = courseService.findOne(courseId);
+        User user = userService.getUserWithGroupsAndAuthorities();
+        if (!(authCheckService.isAtLeastTeachingAssistantInCourse(course, user) || authCheckService.isStudentInTeam(course, teamShortName, user))) {
+            throw new AccessForbiddenException("You are not allowed to access this resource");
+        }
+
+        // Get all team instances in course with the given team short name
+        Set<Exercise> exercises = exerciseService.findAllTeamExercisesForCourse(course);
+        List<Team> teams = teamRepository.findAllByExerciseCourseIdAndShortName(course.getId(), teamShortName);
+        Map<Long, Team> exerciseTeamMap = teams.stream().collect(Collectors.toMap(team -> team.getExercise().getId(), team -> team));
+
+        // Filter course exercises by: 1. released, 2. team needs to exist for exercise
+        exercises = exercises.stream().filter(exercise -> exercise.isVisibleToStudents() && exerciseTeamMap.containsKey(exercise.getId())).collect(Collectors.toSet());
+
+        // Set teams on exercises
+        exercises.forEach(exercise -> exercise.setTeams(Set.of(exerciseTeamMap.get(exercise.getId()))));
+
+        // Fetch participations for team and set the submission count for each participation
+        List<StudentParticipation> participations = participationService.findAllByCourseIdAndTeamShortName(courseId, teamShortName);
+        Map<Long, Integer> submissionCountMap = participationService.countSubmissionsPerParticipationByCourseIdAndTeamShortName(courseId, teamShortName);
+        participations.forEach(participation -> participation.setSubmissionCount(submissionCountMap.get(participation.getId())));
+
+        // Set studentParticipations on all exercises
+        exercises.forEach(exercise -> {
+            Optional<StudentParticipation> studentParticipation = participations.stream().filter(participation -> participation.getExercise().equals(exercise)).findAny();
+            studentParticipation.ifPresent(participation -> {
+                participation.setResults(null);
+                exercise.setStudentParticipations(Set.of(participation));
+            });
+        });
+
+        // Filter sensitive information
+        exercises.forEach(Exercise::filterSensitiveInformation);
+
+        course.setExercises(exercises);
+        return ResponseEntity.ok(course);
+    }
 }

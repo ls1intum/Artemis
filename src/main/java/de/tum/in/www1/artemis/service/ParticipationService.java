@@ -810,6 +810,17 @@ public class ParticipationService {
     }
 
     /**
+     * Get all exercise participations belonging to exercise and team with eager results and submissions.
+     *
+     * @param exercise the exercise
+     * @param team     the team
+     * @return the list of exercise participations belonging to exercise and team
+     */
+    public List<StudentParticipation> findByExerciseAndTeamWithEagerResultsAndSubmissions(Exercise exercise, Team team) {
+        return studentParticipationRepository.findByExerciseIdAndTeamIdWithEagerResultsAndSubmissions(exercise.getId(), team.getId());
+    }
+
+    /**
      * Get all participations of submissions that are submitted and do not already have a manual result. No manual result means that no user has started an assessment for the
      * corresponding submission yet.
      *
@@ -862,6 +873,17 @@ public class ParticipationService {
                     }
                     participation.setResults(new HashSet<>(relevantResults));
                 }).collect(Collectors.toList());
+    }
+
+    /**
+     * Get all exercise participations of a team in a course
+     *
+     * @param courseId the id of the course
+     * @param teamShortName the team short name (all teams with this short name in the course are seen as the same team)
+     * @return the list of exercise participations for the team in the course
+     */
+    public List<StudentParticipation> findAllByCourseIdAndTeamShortName(Long courseId, String teamShortName) {
+        return studentParticipationRepository.findAllByCourseIdAndTeamShortName(courseId, teamShortName);
     }
 
     /**
@@ -1114,8 +1136,28 @@ public class ParticipationService {
      * @return the number of submissions per participation in the given exercise
      */
     public Map<Long, Integer> countSubmissionsPerParticipationByExerciseId(long exerciseId) {
-        List<long[]> participationIdAndSubmissionCountPairs = studentParticipationRepository.countSubmissionsPerParticipationByExerciseId(exerciseId);
-        // convert List<[participationId, submissionCount]> into Map<participationId -> submissionCount>
+        return convertListOfCountsIntoMap(studentParticipationRepository.countSubmissionsPerParticipationByExerciseId(exerciseId));
+    }
+
+    /**
+     * Get a mapping of participation ids to the number of submission for each participation.
+     *
+     * @param courseId the id of the course for which to consider participations
+     * @param teamShortName the short name of the team for which to consider participations
+     * @return the number of submissions per participation in the given course for the team
+     */
+    public Map<Long, Integer> countSubmissionsPerParticipationByCourseIdAndTeamShortName(long courseId, String teamShortName) {
+        return convertListOfCountsIntoMap(studentParticipationRepository.countSubmissionsPerParticipationByCourseIdAndTeamShortName(courseId, teamShortName));
+    }
+
+    /**
+     * Converts List<[participationId, submissionCount]> into Map<participationId -> submissionCount>
+     *
+     * @param participationIdAndSubmissionCountPairs list of pairs (participationId, submissionCount)
+     * @return map of participation id to submission count
+     */
+    private Map<Long, Integer> convertListOfCountsIntoMap(List<long[]> participationIdAndSubmissionCountPairs) {
+
         return participationIdAndSubmissionCountPairs.stream().collect(Collectors.toMap(participationIdAndSubmissionCountPair -> participationIdAndSubmissionCountPair[0], // participationId
                 participationIdAndSubmissionCountPair -> Math.toIntExact(participationIdAndSubmissionCountPair[1]) // submissionCount
         ));

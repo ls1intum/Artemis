@@ -211,7 +211,7 @@ describe('AssessmentHeaderComponent', () => {
         expect(nextSubmissionButtonSpan).toBeFalsy();
 
         component.hasComplaint = false;
-        component.busy = true;
+        component.nextSubmissionBusy = true;
         fixture.detectChanges();
         nextSubmissionButtonSpan = fixture.debugElement.query(By.css('[jhiTranslate$=nextSubmission]'));
         expect(nextSubmissionButtonSpan).toBeTruthy();
@@ -219,7 +219,7 @@ describe('AssessmentHeaderComponent', () => {
         expect(nextSubmissionButton).toBeTruthy();
         expect(nextSubmissionButton!.nativeElement.disabled).toBeTruthy();
 
-        component.busy = false;
+        component.nextSubmissionBusy = false;
         fixture.detectChanges();
         nextSubmissionButtonSpan = fixture.debugElement.query(By.css('[jhiTranslate$=nextSubmission]'));
         nextSubmissionButtonSpan.nativeElement.click();

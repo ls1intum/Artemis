@@ -9,8 +9,8 @@ Before you can build Artemis, you must install and configure the following depen
 
 1. [Java JDK](https://www.oracle.com/java/technologies/javase-downloads.html): We use Java (>= JDK 14) to develop and run the Artemis application server which is based on [Spring Boot](http://projects.spring.io/spring-boot).
 2. [MySQL Database Server 8](https://dev.mysql.com/downloads/mysql): Artemis uses Hibernate to store entities in a MySQL database. Download and install the MySQL Community Server (8.0.x) and configure the 'root' user with an empty password. (In case you want to use a different password, make sure to change the value in application-dev.yml and in liquibase.gradle). The required Artemis scheme will be created / updated automatically at startup time of the server application. Alternatively, you can run the MySQL Database Server inside a Docker container using e.g. ```docker-compose -f src/main/docker/mysql.yml up```
-3. [Node.js](https://nodejs.org): We use Node (>=12.8.0) to compile and run the client Angular application. Depending on your system, you can install Node either from source or as a pre-packaged bundle.
-4. [Yarn](https://yarnpkg.com): We use Yarn (>=1.17.3) to manage client side Node dependencies.
+3. [Node.js](https://nodejs.org): We use Node (>=13.12.0) to compile and run the client Angular application. Depending on your system, you can install Node either from source or as a pre-packaged bundle.
+4. [Yarn](https://classic.yarnpkg.com): We use Yarn 1.x (>=1.22.0) to manage client side Node dependencies.
 Depending on your system, you can install Yarn either from source or as a pre-packaged bundle.
 
 ### Server Setup
@@ -87,9 +87,6 @@ artemis:
         clustering-url: http://localhost:8000/cluster
         segmentation-url: http://localhost:8080/segment
         secret: null
-info:
-    contact: artemis.in@tum.de
-    imprint: https://ase.in.tum.de/lehrstuhl_1/component/content/article/179-imprint
 ```
 Change all entries with ```<...>``` with proper values, e.g. your TUM Online account credentials to connect to the given instances of JIRA, Bitbucket and Bamboo. Alternatively, you can connect to your local JIRA, Bitbucket and Bamboo instances.
 Be careful that you don't commit changes in this file. Best practice is to specify that your local git repository ignores this file or assumes that this file is unchanged.
@@ -112,7 +109,13 @@ For development purposes, the following program arguments can be used to enable 
 
     --spring.profiles.active=dev,bamboo,bitbucket,jira,artemis
 
-If you use IntelliJ, add the following entry to the section `Active Profiles` (within `Spring Boot`) in the server run configuration:
+
+If you use IntelliJ (Community or Ultimate) you can set the active profiles by
+* Choosing ```Run | Edit Configurations...```
+* Going to the ```Configuration Tab```
+* Expanding the ```Environment``` section to reveal ```VM Options``` and setting them to ```-Dspring.profiles.active=dev,bamboo,bitbucket,jira,artemis```
+
+If you use IntelliJ Ultimate, add the following entry to the section `Active Profiles` (within `Spring Boot`) in the server run configuration:
 
     dev,bamboo,bitbucket,jira,artemis
 
@@ -151,8 +154,8 @@ You can define the following custom assets for Artemis to be used instead of the
 * The logo next to the "Artemis" heading on the navbar &#8594; `${artemisRunDirectory}/public/images/logo.png`
 * The favicon &#8594; `${artemisRunDirectory}/public/images/favicon.ico`
 * The privacy statement HTML &#8594; `${artemisRunDirectory}/public/content/privacy_statement.html`
-* The contact email address in the `application-{prod,artemis}.yml` configuration file under the key `info.contact`
-* The imprint link in the `application-{prod,artemis}.yml` configuration file under the key `info.imprint`
+* The contact email address in the `application-{dev,prod}.yml` configuration file under the key `info.contact`
+* The imprint link in the `application-{dev,prod}.yml` configuration file under the key `info.imprint`
 
 ### Alternative: Using docker-compose
 

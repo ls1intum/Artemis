@@ -10,6 +10,10 @@ export class StaticHtmlContentService {
 
     constructor(private http: HttpClient) {}
 
+    /**
+     * Gets the content of the file as a safe html text.
+     * @param filename The name of the file as a string.
+     */
     getStaticHtmlFromArtemisServer(filename: string): Observable<SafeHtml> {
         return this.http.get(`${this.staticContentUrl}${filename}`, { responseType: 'text' });
     }

@@ -77,6 +77,7 @@ export class TutorExerciseDashboardComponent implements OnInit, AfterViewInit {
     complaints: Complaint[] = [];
     moreFeedbackRequests: Complaint[] = [];
     submissionLockLimitReached = false;
+    openingAssessmentEditorForNewSubmission = false;
 
     formattedGradingInstructions: SafeHtml | null;
     formattedProblemStatement: SafeHtml | null;
@@ -122,6 +123,9 @@ export class TutorExerciseDashboardComponent implements OnInit, AfterViewInit {
         private guidedTourService: GuidedTourService,
     ) {}
 
+    /**
+     * Extracts the course and exercise ids from the route params and fetches the exercise from the server
+     */
     ngOnInit(): void {
         this.exerciseId = Number(this.route.snapshot.paramMap.get('exerciseId'));
         this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
@@ -131,10 +135,16 @@ export class TutorExerciseDashboardComponent implements OnInit, AfterViewInit {
         this.accountService.identity().then((user: User) => (this.tutor = user));
     }
 
+    /**
+     * Notifies the guided tour service that this component has loaded
+     */
     ngAfterViewInit(): void {
         this.guidedTourService.componentPageLoaded();
     }
 
+    /**
+     * Loads all information from the server regarding this exercise that is needed for the tutor exercise dashboard
+     */
     loadAll() {
         this.exerciseService.getForTutors(this.exerciseId).subscribe(
             (res: HttpResponse<Exercise>) => {
@@ -288,7 +298,7 @@ export class TutorExerciseDashboardComponent implements OnInit, AfterViewInit {
         let submissionObservable: Observable<Submission> = of();
         switch (this.exercise.type) {
             case ExerciseType.TEXT:
-                submissionObservable = this.textSubmissionService.getTextSubmissionForExerciseWithoutAssessment(this.exerciseId);
+                submissionObservable = this.textSubmissionService.getTextSubmissionForExerciseWithoutAssessment(this.exerciseId, 'head');
                 break;
             case ExerciseType.MODELING:
                 submissionObservable = this.modelingSubmissionService.getModelingSubmissionForExerciseWithoutAssessment(this.exerciseId);
@@ -319,6 +329,9 @@ export class TutorExerciseDashboardComponent implements OnInit, AfterViewInit {
         );
     }
 
+    /**
+     * Called after the tutor has read the instructions and creates a new tutor participation
+     */
     readInstruction() {
         this.tutorParticipationService.create(this.tutorParticipation, this.exerciseId).subscribe((res: HttpResponse<TutorParticipation>) => {
             this.tutorParticipation = res.body!;
@@ -327,22 +340,35 @@ export class TutorExerciseDashboardComponent implements OnInit, AfterViewInit {
         }, this.onError);
     }
 
-    hasBeenCompletedByTutor(id: number) {
-        return this.exampleSubmissionsCompletedByTutor.filter((e) => e.id === id).length > 0;
+    /**
+     * Returns whether the example submission for the given id has already been completed
+     * @param exampleSubmissionId Id of the example submission which to check for completion
+     */
+    hasBeenCompletedByTutor(exampleSubmissionId: number) {
+        return this.exampleSubmissionsCompletedByTutor.filter((exampleSubmission) => exampleSubmission.id === exampleSubmissionId).length > 0;
     }
 
     private onError(error: string) {
         this.jhiAlertService.error(error, null, undefined);
     }
 
+    /**
+     * Calculates the status of a submission by inspecting the result
+     * @param submission Submission which to check
+     */
     calculateStatus(submission: Submission) {
         if (submission.result && submission.result.completionDate) {
             return 'DONE';
         }
-
         return 'DRAFT';
     }
 
+    /**
+     * Uses the router to navigate to a given example submission
+     * @param submissionId Id of submission where to navigate to
+     * @param readOnly Flag whether the view should be opened in read-only mode
+     * @param toComplete Flag whether the view should be opened in to-complete mode
+     */
     openExampleSubmission(submissionId: number, readOnly?: boolean, toComplete?: boolean) {
         if (!this.exercise || !this.exercise.type || !submissionId) {
             return;
@@ -360,14 +386,20 @@ export class TutorExerciseDashboardComponent implements OnInit, AfterViewInit {
         this.router.navigate([route], { queryParams });
     }
 
-    openAssessmentEditor(submissionId: number, isNewAssessment = false) {
-        if (!this.exercise || !this.exercise.type || !submissionId) {
+    /**
+     * Uses the router to navigate to the assessment editor for a given/new submission
+     * @param submission Either submission or 'new'.
+     */
+    async openAssessmentEditor(submission: Submission | 'new'): Promise<void> {
+        if (!this.exercise || !this.exercise.type || !submission) {
             return;
         }
 
-        const submission = isNewAssessment ? 'new' : submissionId.toString();
-        const route = `/course-management/${this.courseId}/${this.exercise.type}-exercises/${this.exercise.id}/submissions/${submission}/assessment`;
-        this.router.navigate([route]);
+        this.openingAssessmentEditorForNewSubmission = true;
+        const submissionUrlParameter: number | 'new' = submission === 'new' ? 'new' : submission.id;
+        const route = `/course-management/${this.courseId}/${this.exercise.type}-exercises/${this.exercise.id}/submissions/${submissionUrlParameter}/assessment`;
+        await this.router.navigate([route]);
+        this.openingAssessmentEditorForNewSubmission = false;
     }
 
     private openManualResultDialog(result: Result) {
@@ -391,14 +423,21 @@ export class TutorExerciseDashboardComponent implements OnInit, AfterViewInit {
         if (this.exercise.type === ExerciseType.PROGRAMMING) {
             this.openManualResultDialog(complaint.result);
         } else {
-            this.openAssessmentEditor(complaint.result.submission!.id, false);
+            this.openAssessmentEditor(complaint.result.submission!);
         }
     }
 
+    /**
+     * Casts an Exercise to a ProgrammingExercise
+     * @param exercise Exercise to cast
+     */
     asProgrammingExercise(exercise: Exercise) {
         return exercise as ProgrammingExercise;
     }
 
+    /**
+     * Navigates back to the tutor dashboard
+     */
     back() {
         this.router.navigate([`/course-management/${this.courseId}/tutor-dashboard`]);
     }

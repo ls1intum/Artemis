@@ -142,6 +142,15 @@ public class ExerciseService {
     }
 
     /**
+     * Finds all team-based exercises for a course
+     * @param course Course for which to return all team-based exercises
+     * @return set of exercises
+     */
+    public Set<Exercise> findAllTeamExercisesForCourse(Course course) {
+        return exerciseRepository.findAllTeamExercisesByCourseId(course.getId());
+    }
+
+    /**
      * Get one exercise by exerciseId with additional details such as quiz questions and statistics or template / solution participation
      * NOTE: prefer #findOne if you don't need these additional details
      *
@@ -367,9 +376,9 @@ public class ExerciseService {
     private void setAssignedTeamIdForExerciseAndUser(Exercise exercise, User user) {
         // if the exercise is not team-based, there is nothing to do here
         if (exercise.isTeamMode()) {
-            teamService.findOneByExerciseAndUser(exercise, user).ifPresent(team -> {
-                exercise.setStudentAssignedTeamId(team.getId());
-            });
+            Optional<Team> team = teamService.findOneByExerciseAndUser(exercise, user);
+            exercise.setStudentAssignedTeamId(team.map(Team::getId).orElse(null));
+            exercise.setStudentAssignedTeamIdComputed(true);
         }
     }
 }

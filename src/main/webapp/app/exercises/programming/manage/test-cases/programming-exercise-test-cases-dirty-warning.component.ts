@@ -61,10 +61,17 @@ export class ProgrammingExerciseTestCasesDirtyWarningComponent implements OnChan
         }
     }
 
+    /**
+     * Angular life cycle hook
+     * in this case if there is a subscription for the TestCaseState, unsubscribe
+     */
     ngOnDestroy(): void {
         this.unsubscribeSubscriptions();
     }
 
+    /**
+     * If there is an existing subscription, unsubscribe.
+     */
     private unsubscribeSubscriptions() {
         if (this.testCaseStateSubscription) {
             this.testCaseStateSubscription.unsubscribe();

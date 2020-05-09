@@ -2,7 +2,7 @@ import { Component, Injectable } from '@angular/core';
 import { Router } from '@angular/router';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { HttpResponse } from '@angular/common/http';
-import { Exercise } from '../../../entities/exercise.model';
+import { Exercise } from 'app/entities/exercise.model';
 import { ExerciseLtiConfigurationService, ExerciseService } from './exercise.service';
 import { LtiConfiguration } from 'app/entities/lti-configuration.model';
 
@@ -19,6 +19,12 @@ export class ExercisePopupService {
         this.ngbModalRef = null;
     }
 
+    /**
+     * Opens the exercise (LTI-) configuration popup
+     * @param component Dialog component which to use
+     * @param id Id of the exercise
+     * @param lti Boolean flag whether LTI or regular
+     */
     open(component: Component, id?: number | any, lti?: boolean | any): Promise<NgbModalRef> {
         return new Promise<NgbModalRef>((resolve) => {
             if (this.ngbModalRef != null) {
@@ -44,6 +50,12 @@ export class ExercisePopupService {
         });
     }
 
+    /**
+     * Returns a ref to an exercise modal
+     * @param component Dialog component which to use
+     * @param exercise Exercise for which to initiate the modal
+     * @param ltiConfiguration Optional LTI configuration
+     */
     exerciseModalRef(component: Component, exercise: Exercise, ltiConfiguration: LtiConfiguration | null): NgbModalRef {
         const modalRef: NgbModalRef = this.modalService.open(component, { size: 'lg', backdrop: 'static' });
         modalRef.componentInstance.exercise = exercise;

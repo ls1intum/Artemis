@@ -26,6 +26,9 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { SubmissionExerciseType } from 'app/entities/submission.model';
 import { formatTeamAsSearchResult } from 'app/exercises/shared/team/team.utils';
 
+/**
+ * Filter properties for a result
+ */
 enum FilterProp {
     ALL = 'all',
     SUCCESSFUL = 'successful',
@@ -79,6 +82,9 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
         this.filteredResultsSize = 0;
     }
 
+    /**
+     * Fetches the course and exercise from the server
+     */
     ngOnInit() {
         this.paramSub = this.route.params.subscribe((params) => {
             this.isLoading = true;
@@ -106,6 +112,9 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
         return of(null);
     }
 
+    /**
+     * Fetches all results for an exercise and assigns them to the results in this component
+     */
     getResults() {
         return this.resultService
             .getResultsForExercise(this.exercise.id, {
@@ -130,6 +139,10 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
             );
     }
 
+    /**
+     * Updates the criteria by which to filter results
+     * @param newValue New filter prop value
+     */
     updateResultFilter(newValue: FilterProp) {
         this.isLoading = true;
         setTimeout(() => {
@@ -138,6 +151,10 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
         });
     }
 
+    /**
+     * Predicate used to filter results by the current filter prop setting
+     * @param result Result for which to evaluate the predicate
+     */
     filterResultByProp = (result: Result) => {
         switch (this.resultCriteria.filterProp) {
             case FilterProp.SUCCESSFUL:
@@ -166,22 +183,36 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
         this.filteredResultsSize = filteredResultsSize;
     };
 
-    durationInMinutes(completionDate: Moment, initializationDate: Moment) {
+    private durationInMinutes(completionDate: Moment, initializationDate: Moment) {
         return this.momentDiff.transform(completionDate, initializationDate, 'minutes');
     }
 
+    /**
+     * Returns the build plan id for a result
+     * @param result Result for which to return the build plan id
+     */
     buildPlanId(result: Result): string {
         return (result.participation! as ProgrammingExerciseStudentParticipation).buildPlanId;
     }
 
+    /**
+     * Returns the project key of the exercise
+     */
     projectKey(): string {
         return (this.exercise as ProgrammingExercise).projectKey!;
     }
 
+    /**
+     * Opens the repository for a result
+     * @param result Result for which to open the repository
+     */
     goToRepository(result: Result) {
         window.open((result.participation! as ProgrammingExerciseStudentParticipation).repositoryUrl);
     }
 
+    /**
+     * Exports the names of exercise participants as a csv file
+     */
     exportNames() {
         if (this.results.length > 0) {
             const rows: string[] = [];
@@ -208,6 +239,9 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
         }
     }
 
+    /**
+     * Exports the exercise results as a csv file
+     */
     exportResults() {
         if (this.results.length > 0) {
             const rows: string[] = [];
@@ -268,12 +302,18 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
         return (result.participation as StudentParticipation).participantIdentifier || '';
     };
 
+    /**
+     * Triggers a re-fetch of the results from the server
+     */
     refresh() {
         this.isLoading = true;
         this.results = [];
         this.getResults().subscribe(() => (this.isLoading = false));
     }
 
+    /**
+     * Unsubscribes from all subscriptions
+     */
     ngOnDestroy() {
         this.paramSub.unsubscribe();
         this.programmingSubmissionService.unsubscribeAllWebsocketTopics(this.exercise);

@@ -149,9 +149,21 @@ public class TextSubmissionService extends SubmissionService {
      * @param textExercise the exercise for which we want to retrieve a submission without manual result
      * @return a textSubmission without any manual result or an empty Optional if no submission without manual result could be found
      */
-    @Transactional(readOnly = true)
     public Optional<TextSubmission> getTextSubmissionWithoutManualResult(TextExercise textExercise) {
-        if (textExercise.isAutomaticAssessmentEnabled() && textAssessmentQueueService.isPresent()) {
+        return getTextSubmissionWithoutManualResult(textExercise, false);
+    }
+
+    /**
+     * Given an exercise id, find a random text submission for that exercise which still doesn't have any manual result. No manual result means that no user has started an
+     * assessment for the corresponding submission yet.
+     *
+     * @param textExercise the exercise for which we want to retrieve a submission without manual result
+     * @param skipAssessmentQueue skip using the assessment queue and do NOT optimize the assessment order (default: false)
+     * @return a textSubmission without any manual result or an empty Optional if no submission without manual result could be found
+     */
+    @Transactional(readOnly = true)
+    public Optional<TextSubmission> getTextSubmissionWithoutManualResult(TextExercise textExercise, boolean skipAssessmentQueue) {
+        if (textExercise.isAutomaticAssessmentEnabled() && textAssessmentQueueService.isPresent() && !skipAssessmentQueue) {
             return textAssessmentQueueService.get().getProposedTextSubmission(textExercise);
         }
 
