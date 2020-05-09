@@ -22,7 +22,7 @@
                 >
                 </jhi-progress-bar>
             </div>
-            <div class="stacked-item">
+            <div class="stacked-item" *ngIf="numberOfLateSubmissions > 0">
                 <jhi-progress-bar
                     [tooltip]="'artemisApp.tutorCourseDashboard.assessStudentsLateSubmissions' | translate"
                     [percentage]="percentageLateAssessmentProgress"
