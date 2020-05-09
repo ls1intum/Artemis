@@ -347,7 +347,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
      * This functionality is only for testing purposes(noVersionControlAndContinuousIntegrationAvailable)
      */
     simulateSubmission() {
-        this.programmingExerciseSimulationService.failsIfInProduction();
+        this.programmingExerciseSimulationService.failsIfInProduction(this.inProductionEnvironment);
         this.courseExerciseSubmissionResultSimulationService.simulateSubmission(this.exerciseId).subscribe(
             () => {
                 this.wasSubmissionSimulated = true;
@@ -364,7 +364,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
      * This functionality is only for testing purposes(noVersionControlAndContinuousIntegrationAvailable)
      */
     simulateResult() {
-        this.programmingExerciseSimulationService.failsIfInProduction();
+        this.programmingExerciseSimulationService.failsIfInProduction(this.inProductionEnvironment);
         this.courseExerciseSubmissionResultSimulationService.simulateResult(this.exerciseId).subscribe(
             () => {
                 this.wasSubmissionSimulated = false;
