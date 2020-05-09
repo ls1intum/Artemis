@@ -70,13 +70,10 @@ export class SystemNotificationService {
      * If the user is not authenticated we do an explicit request for an active system notification. Otherwise get recent system notifications.
      */
     getActiveNotification(): Observable<SystemNotification | null> {
-        if (!this.accountService.isAuthenticated()) {
-            return this.http
-                .get<SystemNotification>(`${this.resourceUrl}/active-notification`, { observe: 'response' })
-                .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)))
-                .pipe(map((res) => res.body));
-        }
-        return this.notificationService.getRecentSystemNotification();
+        return this.http
+            .get<SystemNotification>(`${this.resourceUrl}/active-notification`, { observe: 'response' })
+            .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)))
+            .pipe(map((res) => res.body));
     }
 
     /**

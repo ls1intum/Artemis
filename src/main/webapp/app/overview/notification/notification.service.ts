@@ -77,7 +77,7 @@ export class NotificationService {
     }
 
     /**
-     * Query all notifications including active system notification.
+     * Query all notifications.
      * @param {any} req
      * @return Observable<EntityArrayResponseType>
      */
@@ -116,14 +116,6 @@ export class NotificationService {
      */
     getRecentNotificationsForUser(): Observable<Notification[]> {
         return this.getRecentNotifications().pipe(map((res: EntityArrayResponseType) => this.filterUserAndGroupNotifications(res)));
-    }
-
-    /**
-     * get recent system notifications
-     * @return Observable<SystemNotification>
-     */
-    getRecentSystemNotification(): Observable<SystemNotification> {
-        return this.getRecentNotifications().pipe(map((res: EntityArrayResponseType) => this.filterSystemNotification(res)!));
     }
 
     protected convertDateFromClient(notification: Notification): Notification {
