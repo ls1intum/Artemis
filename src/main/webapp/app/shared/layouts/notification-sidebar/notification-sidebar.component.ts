@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { HttpResponse } from '@angular/common/http';
+import { HttpErrorResponse, HttpHeaders, HttpResponse } from '@angular/common/http';
 import { User } from 'app/core/user/user.model';
 import { UserService } from 'app/core/user/user.service';
 import * as moment from 'moment';
@@ -19,10 +19,15 @@ export class NotificationSidebarComponent implements OnInit {
     currentUser: User;
     notificationCount = 0;
     showSidebar = false;
+    page = 0;
+    notificationsPerPage = 25;
+    totalNotifications = 0;
+    error = false; // TODO: use
 
     constructor(private notificationService: NotificationService, private userService: UserService, private accountService: AccountService) {}
 
     ngOnInit(): void {
+        // TODO: can we remove the first three lines here? Currently the service method is called twice.
         if (this.accountService.isAuthenticated()) {
             this.loadNotifications();
         }
@@ -34,10 +39,18 @@ export class NotificationSidebarComponent implements OnInit {
     }
 
     private loadNotifications(): void {
-        this.notificationService.getRecentNotificationsForUser().subscribe((notifications: Notification[]) => {
-            this.notifications = notifications;
-            this.updateNotifications();
-        });
+        // Query active system notification, recent and non-recent notifications.
+        this.notificationService
+            .queryNew({
+                page: this.page - 1,
+                size: this.notificationsPerPage,
+                sort: ['notificationDate,desc'],
+            })
+            .subscribe(
+                (res: HttpResponse<Notification[]>) => this.onSuccess(res.body!, res.headers),
+                () => (this.error = true),
+            );
+        // Subscribe to notification updates that are sent via websocket.
         setTimeout(() => {
             this.notificationService.subscribeUserNotifications();
         }, 500);
@@ -49,6 +62,12 @@ export class NotificationSidebarComponent implements OnInit {
                 this.updateNotifications();
             }
         });
+    }
+
+    private onSuccess(notifications: Notification[], headers: HttpHeaders) {
+        this.totalNotifications = Number(headers.get('X-Total-Count')!);
+        this.notifications = notifications;
+        this.updateNotifications();
     }
 
     startNotification(notification: Notification): void {

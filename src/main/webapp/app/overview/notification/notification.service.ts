@@ -77,6 +77,18 @@ export class NotificationService {
     }
 
     /**
+     * Query all notifications including active system notification.
+     * @param {any} req
+     * @return Observable<EntityArrayResponseType>
+     */
+    queryNew(req?: any): Observable<EntityArrayResponseType> {
+        const options = createRequestOption(req);
+        return this.http
+            .get<Notification[]>(`${this.resourceUrl}/sidebar`, { params: options, observe: 'response' })
+            .pipe(map((res: EntityArrayResponseType) => this.convertDateArrayFromServer(res)));
+    }
+
+    /**
      * delete by id
      * @param {number} id
      * @return Observable<HttpResponse<any>>
