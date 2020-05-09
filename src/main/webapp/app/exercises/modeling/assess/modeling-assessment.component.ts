@@ -170,7 +170,7 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
     }
 
     /**
-     * Removes feedback elements for which the corresponding model element does not exist in the model anymore.
+     * Removes feedback elements for which the corremosponding model element does not exist in the model anymore.
      * @param feedbacks the list of feedback to filter
      */
     private removeInvalidFeedback(feedbacks: Feedback[]): Feedback[] {
@@ -185,7 +185,9 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
         if (this.model.relationships) {
             availableIds = availableIds.concat(this.model.relationships.map((relationship) => relationship.id));
         }
-        return feedbacks.filter((feedback) => availableIds.includes(feedback.referenceId!));
+        //Hanya: we should not filter out feedback with no reference as we allow tutors to add unreferenced feedback
+        //return feedbacks.filter((feedback) => availableIds.includes(feedback.referenceId!));
+        return feedbacks;
     }
 
     /**

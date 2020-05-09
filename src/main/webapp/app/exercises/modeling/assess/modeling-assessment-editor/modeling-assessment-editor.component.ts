@@ -209,6 +209,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         }
 
         this.referencedFeedback = feedback;
+        this.unreferencedFeedback = feedback;
 
         this.hasAutomaticFeedback = feedback.some((feedbackItem) => feedbackItem.type === FeedbackType.AUTOMATIC);
         this.highlightAutomaticFeedback();
@@ -357,6 +358,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
 
     onFeedbackChanged(feedback: Feedback[]) {
         this.referencedFeedback = feedback;
+        this.unreferencedFeedback = feedback;
         this.validateFeedback();
     }
 
