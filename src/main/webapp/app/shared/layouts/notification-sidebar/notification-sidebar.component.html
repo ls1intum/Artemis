@@ -25,7 +25,7 @@
             </button>
         </div>
     </div>
-    <h3>{{ 'global.menu.notifications' | translate }}</h3>
+    <h3>{{ 'artemisApp.notification.notifications' | translate }}</h3>
     <div class="alert alert-danger mx-3" role="alert" *ngIf="error">
         {{ 'error.unexpectedError' | translate: { error: error } }}
     </div>
@@ -52,6 +52,6 @@
         </div>
     </div>
     <span class="no-notifications" *ngIf="notifications && notifications.length === 0">
-        {{ 'global.menu.noNotifications' | translate }}
+        {{ 'artemisApp.notification.noNotifications' | translate }}
     </span>
 </div>
