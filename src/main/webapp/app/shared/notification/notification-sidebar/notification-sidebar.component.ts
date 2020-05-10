@@ -7,7 +7,7 @@ import { Moment } from 'moment';
 import { GroupNotification } from 'app/entities/group-notification.model';
 import { Notification } from 'app/entities/notification.model';
 import { AccountService } from 'app/core/auth/account.service';
-import { NotificationService } from 'app/overview/notification/notification.service';
+import { NotificationService } from 'app/shared/notification/notification.service';
 
 @Component({
     selector: 'jhi-notification-sidebar',

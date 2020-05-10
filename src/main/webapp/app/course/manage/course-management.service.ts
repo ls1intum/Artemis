@@ -18,7 +18,7 @@ import { StatsForDashboard } from 'app/course/dashboards/instructor-course-dashb
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
-import { NotificationService } from 'app/overview/notification/notification.service';
+import { NotificationService } from 'app/shared/notification/notification.service';
 import { createRequestOption } from 'app/shared/util/request-util';
 
 export type EntityResponseType = HttpResponse<Course>;

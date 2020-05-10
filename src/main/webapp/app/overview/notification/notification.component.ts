@@ -6,7 +6,7 @@ import { AlertService } from 'app/core/alert/alert.service';
 import { User } from 'app/core/user/user.model';
 import { Lecture } from 'app/entities/lecture.model';
 import { ActivatedRoute, Router } from '@angular/router';
-import { NotificationService } from 'app/overview/notification/notification.service';
+import { NotificationService } from 'app/shared/notification/notification.service';
 import { Notification } from 'app/entities/notification.model';
 import * as moment from 'moment';
 import { AccountService } from 'app/core/auth/account.service';

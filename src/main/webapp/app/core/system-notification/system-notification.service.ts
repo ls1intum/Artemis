@@ -8,7 +8,7 @@ import { createRequestOption } from 'app/shared/util/request-util';
 import { Router } from '@angular/router';
 import { SystemNotification } from 'app/entities/system-notification.model';
 import { AccountService } from 'app/core/auth/account.service';
-import { NotificationService } from 'app/overview/notification/notification.service';
+import { NotificationService } from 'app/shared/notification/notification.service';
 
 type EntityResponseType = HttpResponse<SystemNotification>;
 type EntityArrayResponseType = HttpResponse<SystemNotification[]>;
