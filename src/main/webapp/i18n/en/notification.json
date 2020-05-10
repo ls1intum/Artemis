@@ -8,6 +8,7 @@
             "notificationDate": "Notification Date",
             "unexpectedError": "An unexpected error occurred. Please reload the page.",
             "loadedNotificationCount": "{{loaded}} of {{total}} notifications loaded",
+            "by": "by",
             "target": {
                 "newAnswer": "View answer",
                 "newQuestion": "View question",

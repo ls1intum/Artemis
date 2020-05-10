@@ -40,7 +40,9 @@
                         {{ notification.text }}
                     </div>
                     <div class="info text-muted text-right">
-                        {{ notification.notificationDate | date: 'dd.MM.yy HH:mm' }} by <span *ngIf="notification.author; else noAuthor">{{ notification.author.name }}</span>
+                        {{ notification.notificationDate | date: 'dd.MM.yy HH:mm' }}
+                        {{ 'artemisApp.notification.by' | translate }}
+                        <span *ngIf="notification.author; else noAuthor">{{ notification.author.name }}</span>
                         <ng-template #noAuthor>
                             <span jhiTranslate="global.title"></span>
                         </ng-template>
