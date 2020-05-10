@@ -130,10 +130,6 @@ public class NotificationResourceIntegrationTest extends AbstractSpringIntegrati
         List<Notification> notifications = request.getList("/api/notifications", HttpStatus.OK, Notification.class);
         assertThat(notifications).as("Notification with recipient equal to current user is returned").contains(notification1);
         assertThat(notifications).as("Notification with recipient not equal to current user is not returned").doesNotContain(notification2);
-
-        List<Notification> recentNotifications = request.getList("/api/notifications/recent-for-user", HttpStatus.OK, Notification.class);
-        assertThat(recentNotifications).as("Recent notification with recipient equal to current user is returned").contains(notification1);
-        assertThat(recentNotifications).as("Recent notification with recipient not equal to current user is not returned").doesNotContain(notification2);
     }
 
     @Test
@@ -154,10 +150,6 @@ public class NotificationResourceIntegrationTest extends AbstractSpringIntegrati
         List<Notification> notifications = request.getList("/api/notifications", HttpStatus.OK, Notification.class);
         assertThat(notifications).as("Notification with course the current user belongs to is returned").contains(notification1);
         assertThat(notifications).as("Notification with course the current user does not belong to is not returned").doesNotContain(notification2);
-
-        List<Notification> recentNotifications = request.getList("/api/notifications/recent-for-user", HttpStatus.OK, Notification.class);
-        assertThat(recentNotifications).as("Recent notification with course the current user belongs to is returned").contains(notification1);
-        assertThat(recentNotifications).as("Recent notification with course the current user does not belong to is not returned").doesNotContain(notification2);
     }
 
     @Test
@@ -175,11 +167,6 @@ public class NotificationResourceIntegrationTest extends AbstractSpringIntegrati
         assertThat(notifications).as("Notification with type student is returned").contains(notificationStudent);
         assertThat(notifications).as("Notification with type tutor is not returned").doesNotContain(notificationTutor);
         assertThat(notifications).as("Notification with type instructor is not returned").doesNotContain(notificationInstructor);
-
-        List<Notification> recentNotifications = request.getList("/api/notifications/recent-for-user", HttpStatus.OK, Notification.class);
-        assertThat(recentNotifications).as("Recent notification with type student is returned").contains(notificationStudent);
-        assertThat(recentNotifications).as("Recent notification with type tutor is not returned").doesNotContain(notificationTutor);
-        assertThat(recentNotifications).as("Recent notification with type instructor is not returned").doesNotContain(notificationInstructor);
     }
 
     @Test
@@ -197,11 +184,6 @@ public class NotificationResourceIntegrationTest extends AbstractSpringIntegrati
         assertThat(notifications).as("Notification with type student is not returned").doesNotContain(notificationStudent);
         assertThat(notifications).as("Notification with type tutor is returned").contains(notificationTutor);
         assertThat(notifications).as("Notification with type instructor is not returned").doesNotContain(notificationInstructor);
-
-        List<Notification> recentNotifications = request.getList("/api/notifications/recent-for-user", HttpStatus.OK, Notification.class);
-        assertThat(recentNotifications).as("Recent notification with type student is not returned").doesNotContain(notificationStudent);
-        assertThat(recentNotifications).as("Recent notification with type tutor is returned").contains(notificationTutor);
-        assertThat(recentNotifications).as("Recent notification with type instructor is not returned").doesNotContain(notificationInstructor);
     }
 
     @Test
@@ -219,11 +201,6 @@ public class NotificationResourceIntegrationTest extends AbstractSpringIntegrati
         assertThat(notifications).as("Notification with type student is not returned").doesNotContain(notificationStudent);
         assertThat(notifications).as("Notification with type tutor is not returned").doesNotContain(notificationTutor);
         assertThat(notifications).as("Notification with type instructor is returned").contains(notificationInstructor);
-
-        List<Notification> recentNotifications = request.getList("/api/notifications/recent-for-user", HttpStatus.OK, Notification.class);
-        assertThat(recentNotifications).as("Recent notification with type student is not returned").doesNotContain(notificationStudent);
-        assertThat(recentNotifications).as("Recent notification with type tutor is not returned").doesNotContain(notificationTutor);
-        assertThat(recentNotifications).as("Recent notification with type instructor is returned").contains(notificationInstructor);
     }
 
     @Test
