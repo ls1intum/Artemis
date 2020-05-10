@@ -70,6 +70,7 @@ export class NotificationSidebarComponent implements OnInit {
             const lastNotificationReadNow = moment();
             setTimeout(() => {
                 this.lastNotificationRead = lastNotificationReadNow;
+                this.updateRecentNotificationCount();
             }, 2000);
         });
     }
