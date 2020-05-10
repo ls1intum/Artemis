@@ -16,6 +16,7 @@ import { NotificationService } from 'app/shared/notification/notification.servic
 })
 export class NotificationSidebarComponent implements OnInit {
     showSidebar = false;
+    loading = false;
     notifications: Notification[] = [];
     sortedNotifications: Notification[] = [];
     recentNotificationCount = 0;
@@ -77,9 +78,8 @@ export class NotificationSidebarComponent implements OnInit {
      * TODO
      */
     onScroll(): void {
-        // TODO: will be called to often --> fix, increase threshold again to 350
         const container = document.getElementById('notificationSidebarContainer');
-        const threshold = 10;
+        const threshold = 350;
         if (container) {
             const height = container.scrollHeight - container.offsetHeight;
             if (height > threshold && container.scrollTop > height - threshold) {
@@ -91,7 +91,7 @@ export class NotificationSidebarComponent implements OnInit {
     }
 
     private loadNotifications(): void {
-        console.log('loadNotifications', this.page);
+        this.loading = true;
         this.notificationService
             .query({
                 page: this.page - 1,
@@ -99,15 +99,16 @@ export class NotificationSidebarComponent implements OnInit {
                 sort: ['notificationDate,desc'],
             })
             .subscribe(
-                (res: HttpResponse<Notification[]>) => this.onSuccess(res.body!, res.headers),
+                (res: HttpResponse<Notification[]>) => this.loadNotificationsSuccess(res.body!, res.headers),
                 (res: HttpErrorResponse) => (this.error = res.message),
             );
     }
 
-    private onSuccess(notifications: Notification[], headers: HttpHeaders): void {
+    private loadNotificationsSuccess(notifications: Notification[], headers: HttpHeaders): void {
         console.log(notifications);
         this.totalNotifications = Number(headers.get('X-Total-Count')!);
         this.addNotifications(notifications);
+        this.loading = false;
     }
 
     private subscribeToNotificationUpdates(): void {
