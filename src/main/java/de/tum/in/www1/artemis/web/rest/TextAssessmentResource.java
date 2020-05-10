@@ -316,7 +316,7 @@ public class TextAssessmentResource extends AssessmentResource {
         textSubmission.setResult(null);
 
         // If we did not call AutomaticTextFeedbackService::suggestFeedback, we need to fetch them now.
-        if (!computeFeedbackSuggestions) {
+        if (!result.getFeedbacks().isEmpty() || !computeFeedbackSuggestions) {
             final List<TextBlock> textBlocks = textBlockRepository.findAllBySubmissionId(textSubmission.getId());
             textSubmission.setBlocks(textBlocks);
         }
