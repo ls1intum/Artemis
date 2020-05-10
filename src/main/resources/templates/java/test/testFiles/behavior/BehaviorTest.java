@@ -301,7 +301,7 @@ public abstract class BehaviorTest {
      */
     private Class<?>[] getParameterTypes(String failMessage, Object... params) {
         return Arrays.stream(params)
-                .map(it -> requireNonNull(it, failMessage + " one of the supplied arguments was null.")) // TODO this is difficult to improve, since the process itself is fragile/flawed
+                .map(it -> requireNonNull(it, failMessage + " one of the supplied arguments was null."))
                 .map(Object::getClass)
                 .toArray(Class<?>[]::new);
     }
