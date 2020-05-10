@@ -26,7 +26,6 @@ export class UnreferencedFeedbackComponent {
      *   - Each reference feedback must have a score that is a valid number
      */
     validateFeedback() {
-        let credits = this.unreferencedFeedback.map((assessment) => assessment.credits);
         if (!this.unreferencedFeedback || this.unreferencedFeedback.length === 0) {
             this.assessmentsAreValid = false;
             return;
