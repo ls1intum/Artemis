@@ -110,10 +110,10 @@ export class NotificationSidebarComponent implements OnInit {
      * Update the user's lastNotificationRead setting.
      */
     updateNotificationDate(): void {
-        this.userService.updateUserNotificationDate().subscribe((res: HttpResponse<User>) => {
-            res.body!.lastNotificationRead = moment();
+        this.userService.updateUserNotificationDate().subscribe(() => {
+            const lastNotificationReadNow = moment();
             setTimeout(() => {
-                this.lastNotificationRead = res.body!.lastNotificationRead;
+                this.lastNotificationRead = lastNotificationReadNow;
             }, 2000);
         });
     }
