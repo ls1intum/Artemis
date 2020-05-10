@@ -31,10 +31,6 @@ export class NotificationSidebarComponent implements OnInit {
      * Load notifications when user is authenticated on component initialization.
      */
     ngOnInit(): void {
-        // TODO: can we remove the first three lines here? Currently the service method is called twice.
-        if (this.accountService.isAuthenticated()) {
-            this.loadNotifications();
-        }
         this.accountService.getAuthenticationState().subscribe((user: User | null) => {
             if (user) {
                 if (user.lastNotificationRead) {
