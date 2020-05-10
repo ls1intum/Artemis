@@ -1,6 +1,9 @@
 import { AnnotationArray } from 'app/entities/annotation.model';
 import { safeUnescape } from 'app/shared/util/security-util';
 
+/**
+ *defines different types of build log
+ */
 export enum BuildLogType {
     ERROR = 'ERROR',
     WARNING = 'WARNING',
