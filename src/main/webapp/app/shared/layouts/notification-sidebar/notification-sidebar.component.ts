@@ -22,6 +22,9 @@ export class NotificationSidebarComponent implements OnInit {
 
     constructor(private notificationService: NotificationService, private userService: UserService, private accountService: AccountService) {}
 
+    /**
+     * Lifecycle function which is called after the component is created.
+     */
     ngOnInit(): void {
         if (this.accountService.isAuthenticated()) {
             this.loadNotifications();
@@ -51,10 +54,19 @@ export class NotificationSidebarComponent implements OnInit {
         });
     }
 
+    /**
+     * @function startNotification
+     * Starts the notification
+     * @param notification { Notification }
+     */
     startNotification(notification: Notification): void {
         this.notificationService.interpretNotification(notification as GroupNotification);
     }
 
+    /**
+     * @function updateNotifications
+     * Updates the notification and triggers an notification count update
+     */
     updateNotifications(): void {
         this.sortedNotifications = this.notifications.sort((a: Notification, b: Notification) => {
             return moment(b.notificationDate!).valueOf() - moment(a.notificationDate!).valueOf();
@@ -62,6 +74,10 @@ export class NotificationSidebarComponent implements OnInit {
         this.updateNotificationCount();
     }
 
+    /**
+     * @function updateNotificationCount
+     * Updates the current notifications count
+     */
     updateNotificationCount(): void {
         if (!this.notifications) {
             this.notificationCount = 0;
@@ -72,6 +88,10 @@ export class NotificationSidebarComponent implements OnInit {
         }
     }
 
+    /**
+     * @function updateNotificationDate
+     * Function which updates the notification date for users
+     */
     updateNotificationDate(): void {
         this.userService.updateUserNotificationDate().subscribe((res: HttpResponse<User>) => {
             res.body!.lastNotificationRead = moment();
@@ -82,6 +102,10 @@ export class NotificationSidebarComponent implements OnInit {
         });
     }
 
+    /**
+     * @function toggleSidebar
+     * Function which toggles the sidebar from opened to collapsed and vice versa.
+     */
     toggleSidebar(): void {
         this.showSidebar = !this.showSidebar;
     }

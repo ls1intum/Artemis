@@ -10,8 +10,20 @@ import { SessionStorageStrategy } from 'app/shared/image/session-storage-strateg
 const logoutSubject = new Subject<void>();
 
 export interface ICacheableImageService {
+    /**
+     * Interface function to load the image and cache in in the Local Storage. Suitable for images that are smaller than 150KB.
+     * @param url
+     */
     loadCachedLocalStorage(url: string): Observable<any>;
+    /**
+     * Interface to function to load the image and cache in in the Session Storage. Do not overuse, spends user RAM.
+     * @param url
+     */
     loadCachedSessionStorage(url: string): Observable<any>;
+    /**
+     * Interface function to load the image without caching. Always triggers the endpoint.
+     * @param url
+     */
     loadWithoutCache(url: string): Observable<any>;
 }
 
@@ -37,6 +49,9 @@ export class CacheableImageService implements ICacheableImageService, OnDestroy 
             .subscribe();
     }
 
+    /**
+     * Lifecycle function that performs cleanup just before Angular destroys the component
+     */
     ngOnDestroy(): void {
         if (this.userChangeSubscription) {
             this.userChangeSubscription.unsubscribe();

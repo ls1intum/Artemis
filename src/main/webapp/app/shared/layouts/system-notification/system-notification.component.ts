@@ -26,6 +26,9 @@ export class SystemNotificationComponent implements OnInit {
         private systemNotificationService: SystemNotificationService,
     ) {}
 
+    /**
+     * Lifecycle function which is called after the component is created.
+     */
     ngOnInit() {
         this.accountService.getAuthenticationState().subscribe((user: User | null) => {
             this.loadActiveNotification();
@@ -40,6 +43,10 @@ export class SystemNotificationComponent implements OnInit {
         });
     }
 
+    /**
+     * @function loadActiveNotification
+     * Subscribes to the active notifications and triggers setAlertClass & setAlertIcon
+     */
     loadActiveNotification() {
         this.systemNotificationService.getActiveNotification().subscribe((notification: SystemNotification) => {
             this.notification = notification;
@@ -48,6 +55,10 @@ export class SystemNotificationComponent implements OnInit {
         });
     }
 
+    /**
+     * @function subscribeSocket
+     * Sets the websocket channel and subscribes to it for receiving system notifications. Before displaying the notifications, they are validated.
+     */
     subscribeSocket() {
         this.websocketChannel = '/topic/system-notification';
         this.jhiWebsocketService.subscribe(this.websocketChannel);
@@ -72,6 +83,11 @@ export class SystemNotificationComponent implements OnInit {
         });
     }
 
+    /**
+     * @function checkNotificationDates
+     * Checks whether the notifications are still valid before triggering setAlertClass and setAlertIcon. If they are not valid, loadActiveNotification is called.
+     * @param systemNotification { SystemNotification }
+     */
     checkNotificationDates(systemNotification: SystemNotification) {
         if (systemNotification.expireDate!.isAfter(moment()) && systemNotification.notificationDate!.isBefore(moment())) {
             this.notification = systemNotification;
@@ -83,6 +99,10 @@ export class SystemNotificationComponent implements OnInit {
         }
     }
 
+    /**
+     * @function setAlertClass
+     * Sets the alert class according to the notification type
+     */
     setAlertClass(): void {
         if (this.notification) {
             if (this.notification.type === SystemNotificationType.WARNING) {
@@ -93,6 +113,10 @@ export class SystemNotificationComponent implements OnInit {
         }
     }
 
+    /**
+     * @function setAlertIcon
+     * Sets the alert icon according to the notification type
+     */
     setAlertIcon(): void {
         if (this.notification) {
             if (this.notification.type === SystemNotificationType.WARNING) {

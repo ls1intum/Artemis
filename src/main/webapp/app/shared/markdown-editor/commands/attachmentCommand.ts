@@ -6,6 +6,7 @@ export class AttachmentCommand extends Command {
 
     /**
      * @function execute
+     *
      * @desc insert/remove the markdown command for uploading an attachment
      *       1. Check if the selected text includes ('![](http://)')
      *       2. If included reduce the selected text by this elements and replace the selected text by textToAdd

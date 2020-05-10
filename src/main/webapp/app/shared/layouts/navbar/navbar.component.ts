@@ -48,6 +48,9 @@ export class NavbarComponent implements OnInit, OnDestroy {
         this.isNavbarCollapsed = true;
     }
 
+    /**
+     * Lifecycle function which is called after the component is created.
+     */
     ngOnInit() {
         this.languages = this.languageHelper.getAll();
 
@@ -66,6 +69,9 @@ export class NavbarComponent implements OnInit, OnDestroy {
             .subscribe();
     }
 
+    /**
+     * Lifecycle function that performs cleanup just before Angular destroys the component
+     */
     ngOnDestroy(): void {
         if (this.authStateSubscription) {
             this.authStateSubscription.unsubscribe();
@@ -73,6 +79,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
     }
 
     /**
+     * @function subscribeForGuidedTourAvailability
      * Check if a guided tour is available for the current route to display the start tour button in the account menu
      */
     subscribeForGuidedTourAvailability(): void {
@@ -82,30 +89,55 @@ export class NavbarComponent implements OnInit, OnDestroy {
         });
     }
 
+    /**
+     * @function changeLanguage
+     * @param languageKey { string }
+     * Set the language as LanguageKey
+     */
     changeLanguage(languageKey: string) {
         this.sessionStorage.store('locale', languageKey);
         this.languageService.changeLanguage(languageKey);
         moment.locale(languageKey);
     }
 
+    /**
+     * @function collapseNavbar
+     * Function to collapse the navigation bar
+     */
     collapseNavbar() {
         this.isNavbarCollapsed = true;
     }
 
+    /**
+     * @function isAuthenticated { boolean }
+     * Function which returns true if this account is authenticated
+     */
     isAuthenticated() {
         return this.accountService.isAuthenticated();
     }
 
+    /**
+     * @function logout
+     * Function which performs a safe logout.
+     */
     logout() {
         this.participationWebsocketService.resetLocalCache();
         this.collapseNavbar();
         this.loginService.logout();
     }
 
+    /**
+     * @function toggleNavbar
+     * Function which toggles the navigation bar from collapsed to open and vice versa.
+     */
     toggleNavbar() {
         this.isNavbarCollapsed = !this.isNavbarCollapsed;
     }
 
+    /**
+     * @function getImageUrl { string | null }
+     * Function which returns the image url of the account
+     */
     getImageUrl(): string | null {
         return this.accountService.getImageUrl();
     }

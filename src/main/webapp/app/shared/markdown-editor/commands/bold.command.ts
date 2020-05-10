@@ -6,6 +6,7 @@ export class BoldCommand extends Command {
 
     /**
      * @function execute
+     *
      * @desc Make/Remove bold text
      *       1. Check if the selected text includes (**)
      *       2. If included reduce the selected text by these elements and replace the selected text by textToAdd

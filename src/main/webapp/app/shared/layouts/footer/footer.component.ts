@@ -19,6 +19,9 @@ export class FooterComponent implements OnInit {
 
     constructor(private profileService: ProfileService) {}
 
+    /**
+     * Lifecycle function which is called after the component is created.
+     */
     ngOnInit(): void {
         this.profileService
             .getProfileInfo()

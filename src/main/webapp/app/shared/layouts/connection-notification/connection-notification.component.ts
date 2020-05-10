@@ -15,6 +15,9 @@ export class ConnectionNotificationComponent implements OnInit, OnDestroy {
 
     constructor(private accountService: AccountService, private jhiWebsocketService: JhiWebsocketService) {}
 
+    /**
+     * Lifecycle function which is called after the component is created
+     */
     ngOnInit() {
         this.accountService.getAuthenticationState().subscribe((user: User | null) => {
             if (user) {
@@ -33,7 +36,9 @@ export class ConnectionNotificationComponent implements OnInit, OnDestroy {
             }
         });
     }
-
+    /**
+     * Lifecycle function that performs cleanup just before Angular destroys the component
+     */
     ngOnDestroy() {
         this.jhiWebsocketService.unbind('connect', this.onConnect);
         this.jhiWebsocketService.unbind('disconnect', this.onDisconnect);
@@ -43,7 +48,6 @@ export class ConnectionNotificationComponent implements OnInit, OnDestroy {
      * Only update on connect if there is not already an active connection.
      * This alert is temporary and disappears after 5 seconds.
      **/
-
     onConnect = () => {
         if (this.connected === false) {
             this.notification.type = ConnectionNotificationType.RECONNECTED;

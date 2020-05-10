@@ -17,6 +17,9 @@ export class PageRibbonComponent implements OnInit {
 
     constructor(private profileService: ProfileService) {}
 
+    /**
+     * Lifecycle function which is called after the component is created.
+     */
     ngOnInit() {
         this.profileService.getProfileInfo().subscribe(
             (profileInfo) => {

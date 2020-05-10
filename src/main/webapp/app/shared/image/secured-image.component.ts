@@ -5,13 +5,22 @@ import { DomSanitizer } from '@angular/platform-browser';
 import { CacheableImageService } from 'app/shared/image/cacheable-image.service';
 import { base64StringToBlob } from 'blob-util';
 
-// Status that is emitted to the client to describe the loading status of the picture
+/**
+ * @enum ImageLoadingStatus { string }
+ * @readonly
+ * Represents the status that is emitted to the client to describe to load status of the picture
+ */
 export const enum ImageLoadingStatus {
     SUCCESS = 'success',
     ERROR = 'error',
     LOADING = 'loading',
 }
 
+/**
+ * @enum ImageLoadingStatus { string }
+ * @readonly
+ * Represents the different daching strategies available.
+ */
 export enum CachingStrategy {
     LOCAL_STORAGE = 'LOCAL_STORAGE',
     SESSION_STORAGE = 'SESSION_STORAGE',
@@ -59,6 +68,10 @@ export class SecuredImageComponent implements OnChanges {
         switchMap((url) => this.loadImage(url)),
     );
 
+    /**
+     * Lifecycle function that
+     * A callback function that is invoked immediately after at least one data-bound property has changed.
+     */
     ngOnChanges(): void {
         this.src$.next(this.src);
     }
@@ -66,7 +79,11 @@ export class SecuredImageComponent implements OnChanges {
     // we need HttpClient to load the image and DomSanitizer to trust the url
     constructor(private domSanitizer: DomSanitizer, private cacheableImageService: CacheableImageService) {}
 
-    // triggers the reload of the picture when the user clicks on a button
+    //
+
+    /**
+     * Function which triggers the reload of the picture when the user clicks on a button
+     */
     retryLoadImage() {
         this.retryCounter = 0;
         this.endLoadingProcess.emit(ImageLoadingStatus.LOADING);

@@ -29,6 +29,9 @@ export class JhiMainComponent implements OnInit {
         return title;
     }
 
+    /**
+     * Lifecycle function which is called after the component is created.
+     */
     ngOnInit() {
         this.router.events.subscribe((event) => {
             if (event instanceof NavigationEnd) {

@@ -12,6 +12,9 @@ export class ErrorComponent implements OnInit {
 
     constructor(private route: ActivatedRoute) {}
 
+    /**
+     * Lifecycle function which is called after the component is created.
+     */
     ngOnInit() {
         this.route.data.subscribe((routeData) => {
             if (routeData.error403) {

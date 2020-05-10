@@ -15,6 +15,10 @@ export class ProfileService {
 
     constructor(private http: HttpClient, private featureToggleService: FeatureToggleService) {}
 
+    /**
+     * @function getProfileInfo { BehaviourSubject<ProfileInfo | null> }
+     * Function that gets the profile information and sets it to a local variable if it is not set already.
+     */
     getProfileInfo(): BehaviorSubject<ProfileInfo | null> {
         if (!this.profileInfo) {
             this.profileInfo = new BehaviorSubject(null);

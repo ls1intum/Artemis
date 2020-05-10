@@ -64,37 +64,68 @@ export class ProgrammingExerciseImportComponent implements OnInit {
             });
     }
 
+    /**
+     * Setter function for page
+     * @param page { number }
+     */
     set page(page: number) {
         page = page - 1;
         this.setSearchParam({ page });
     }
 
+    /**
+     * Getter function for page
+     * Get the current page
+     */
     get page(): number {
         return this.state.page + 1;
     }
 
+    /**
+     * Setter function for searchTerm
+     * Sets the search term.
+     * @param searchTerm { string }
+     */
     set searchTerm(searchTerm: string) {
         this.state.searchTerm = searchTerm;
         this.search.next();
     }
 
+    /**
+     * Getter for the SearchTerm { string }
+     * Get the current set searchTerm
+     */
     get searchTerm(): string {
         return this.state.searchTerm;
     }
 
+    /**
+     * Setter function for listSorting
+     * @param ascending { boolean }
+     */
     set listSorting(ascending: boolean) {
         const sortingOrder = ascending ? SortingOrder.ASCENDING : SortingOrder.DESCENDING;
         this.setSearchParam({ sortingOrder });
     }
 
+    /**
+     * Getter function for listSorting
+     */
     get listSorting(): boolean {
         return this.state.sortingOrder === SortingOrder.ASCENDING;
     }
 
+    /**
+     * Setter function for sortedColumn
+     * @param sortedColumn { string }
+     */
     set sortedColumn(sortedColumn: string) {
         this.setSearchParam({ sortedColumn });
     }
 
+    /**
+     * Getter function for sortedColumn
+     */
     get sortedColumn(): string {
         return this.state.sortedColumn;
     }
