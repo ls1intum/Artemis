@@ -284,7 +284,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
 
         // get not started exercise for students
         QuizExercise quizExerciseForStudent_notStarted = request.get("/api/quiz-exercises/" + quizExercise.getId() + "/for-student", HttpStatus.OK, QuizExercise.class);
-        assertThat(quizExerciseForStudent_notStarted.getQuizPointStatistic().getPointCounters()).isEmpty();
+        assertThat(quizExerciseForStudent_notStarted.getQuizPointStatistic()).isNull();
         assertThat(quizExerciseForStudent_notStarted.getQuizQuestions()).hasSize(0);
         assertThat(quizExerciseForStudent_notStarted.getGradingInstructions()).isNull();
         assertThat(quizExerciseForStudent_notStarted.getGradingCriteria()).isEmpty();
@@ -302,6 +302,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         assertThat(quizExerciseForStudent_Started.getGradingCriteria()).isEmpty();
         for (QuizQuestion question : quizExerciseForStudent_Started.getQuizQuestions()) {
             assertThat(question.getExplanation()).isNull();
+            assertThat(question.getQuizQuestionStatistic()).isNull();
         }
 
         // get finished exercise for students
@@ -313,11 +314,12 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         assertThat(quizExercise.isStarted());
 
         QuizExercise quizExerciseForStudent_Finished = request.get("/api/quiz-exercises/" + quizExercise.getId() + "/for-student", HttpStatus.OK, QuizExercise.class);
-        assertThat(quizExerciseForStudent_Finished.getQuizPointStatistic().getPointCounters()).isEmpty();
+        assertThat(quizExerciseForStudent_Finished.getQuizPointStatistic()).isNull();
         assertThat(quizExerciseForStudent_Finished.getGradingInstructions()).isNull();
         assertThat(quizExerciseForStudent_Finished.getGradingCriteria()).isEmpty();
         for (QuizQuestion question : quizExerciseForStudent_Finished.getQuizQuestions()) {
-            assertThat(question.getExplanation()).isNotNull();
+            assertThat(question.getExplanation()).isNull();
+            assertThat(question.getQuizQuestionStatistic()).isNull();
         }
 
         // get all exercises for a course
