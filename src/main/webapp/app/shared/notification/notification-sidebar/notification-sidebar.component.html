@@ -1,5 +1,5 @@
 <li class="nav-item pointer">
-    <button class="guided-tour-notification nav-link notification-button light-button" (click)="toggleSidebar(); updateNotificationDate()">
+    <button class="guided-tour-notification nav-link notification-button light-button" (click)="toggleSidebar(); updateLastNotificationRead()">
         <fa-icon [icon]="'bell'"></fa-icon>
         <span class="badge badge-danger badge-pill" *ngIf="recentNotificationCount > 0">
             {{ recentNotificationCount }}

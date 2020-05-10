@@ -107,9 +107,11 @@ export class NotificationSidebarComponent implements OnInit {
     }
 
     /**
-     * Update the user's lastNotificationRead setting.
+     * Update the user's lastNotificationRead setting. As this method will be executed when the user opens the sidebar, the
+     * component's lastNotificationRead attribute will be updated only after two seconds so that the notification `new` badges
+     * won't disappear immediately.
      */
-    updateNotificationDate(): void {
+    updateLastNotificationRead(): void {
         this.userService.updateUserNotificationDate().subscribe(() => {
             const lastNotificationReadNow = moment();
             setTimeout(() => {
