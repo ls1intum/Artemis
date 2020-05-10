@@ -11,7 +11,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.test.context.jdbc.Sql;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.GroupNotificationType;
@@ -118,7 +117,6 @@ public class NotificationResourceIntegrationTest extends AbstractSpringIntegrati
     }
 
     @Test
-    @Sql({ "/h2/custom-functions.sql" })
     @WithMockUser(username = "student1", roles = "USER")
     public void testGetNotifications_recipientEvaluation() throws Exception {
         User recipient = userService.getUser();
@@ -133,7 +131,6 @@ public class NotificationResourceIntegrationTest extends AbstractSpringIntegrati
     }
 
     @Test
-    @Sql({ "/h2/custom-functions.sql" })
     @WithMockUser(username = "student1", roles = "USER")
     public void testGetNotifications_courseEvaluation() throws Exception {
         // student1 is member of `testgroup` and `tumuser` per default
@@ -153,7 +150,6 @@ public class NotificationResourceIntegrationTest extends AbstractSpringIntegrati
     }
 
     @Test
-    @Sql({ "/h2/custom-functions.sql" })
     @WithMockUser(username = "student1", roles = "USER")
     public void testGetNotifications_groupNotificationTypeEvaluation_asStudent() throws Exception {
         GroupNotification notificationStudent = ModelFactory.generateGroupNotification(ZonedDateTime.now(), courseRepository.findAll().get(0), GroupNotificationType.STUDENT);
@@ -170,7 +166,6 @@ public class NotificationResourceIntegrationTest extends AbstractSpringIntegrati
     }
 
     @Test
-    @Sql({ "/h2/custom-functions.sql" })
     @WithMockUser(username = "tutor1", roles = "TA")
     public void testGetNotifications_groupNotificationTypeEvaluation_asTutor() throws Exception {
         GroupNotification notificationStudent = ModelFactory.generateGroupNotification(ZonedDateTime.now(), courseRepository.findAll().get(0), GroupNotificationType.STUDENT);
@@ -187,7 +182,6 @@ public class NotificationResourceIntegrationTest extends AbstractSpringIntegrati
     }
 
     @Test
-    @Sql({ "/h2/custom-functions.sql" })
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testGetNotifications_groupNotificationTypeEvaluation_asInstructor() throws Exception {
         GroupNotification notificationStudent = ModelFactory.generateGroupNotification(ZonedDateTime.now(), courseRepository.findAll().get(0), GroupNotificationType.STUDENT);
