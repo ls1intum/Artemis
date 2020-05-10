@@ -36,6 +36,9 @@ export class ApollonQuizExerciseGenerationComponent implements OnInit {
         });
     }
 
+    /**
+     * Parses the courseId.
+     */
     getCourseId() {
         // tslint:disable-next-line:radix
         return parseInt(location.toString().split('management/')[1].split('/')[0]);
