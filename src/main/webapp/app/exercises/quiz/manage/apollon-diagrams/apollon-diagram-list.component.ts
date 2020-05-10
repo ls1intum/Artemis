@@ -16,6 +16,7 @@ export class ApollonDiagramListComponent implements OnInit {
     apollonDiagrams: ApollonDiagram[] = [];
     predicate: string;
     reverse: boolean;
+    courseId: number;
 
     constructor(
         private apollonDiagramsService: ApollonDiagramService,
@@ -28,16 +29,12 @@ export class ApollonDiagramListComponent implements OnInit {
         this.reverse = true;
     }
 
-    getCourseId() {
-        // tslint:disable-next-line:radix
-        return parseInt(location.toString().split('management/')[1].split('/')[0]);
-    }
-
     /**
      * Initializes Apollon diagrams from the server
      */
     ngOnInit() {
-        this.apollonDiagramsService.getDiagramsByCourse(this.getCourseId()).subscribe(
+        this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
+        this.apollonDiagramsService.getDiagramsByCourse(this.courseId).subscribe(
             (response) => {
                 this.apollonDiagrams = response.body!;
             },

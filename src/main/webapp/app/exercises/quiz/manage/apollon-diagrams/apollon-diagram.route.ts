@@ -14,7 +14,7 @@ export const apollonDiagramsRoutes: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
-        path: 'apollon-diagrams/:id',
+        path: ':courseId/apollon-diagrams/:id',
         component: ApollonDiagramDetailComponent,
         data: {
             authorities: ['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'],

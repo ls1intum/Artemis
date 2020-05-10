@@ -9,7 +9,7 @@
         <button type="submit" (click)="previousState()" class="btn btn-info">
             <fa-icon [icon]="'arrow-left'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.back"> Back</span>
         </button>
-        <button (click)="openCreateDiagramDialog(getCourseId())" class="btn btn-primary">
+        <button (click)="openCreateDiagramDialog(courseId)" class="btn btn-primary">
             <fa-icon [icon]="'plus'"></fa-icon>
             <span jhiTranslate="artemisApp.apollonDiagram.home.createLabel">Create a New Apollon Diagram</span>
         </button>
@@ -30,7 +30,7 @@
         <tbody>
             <tr *ngFor="let apollonDiagram of apollonDiagrams | sortBy: predicate:reverse; trackBy: trackId">
                 <td>
-                    <a [routerLink]="['/course-management', 'apollon-diagrams', apollonDiagram.id]">{{ apollonDiagram.id }}</a>
+                    <a [routerLink]="['/course-management', courseId, 'apollon-diagrams', apollonDiagram.id]">{{ apollonDiagram.id }}</a>
                 </td>
                 <td>
                     <span *ngIf="apollonDiagram.courseId == null" jhiTranslate="artemisApp.apollonDiagram.noCourseSet"></span>
@@ -39,7 +39,7 @@
                 <td>{{ getTitleForApollonDiagram(apollonDiagram) }}</td>
                 <td jhiTranslate="{{ 'artemisApp.DiagramType.' + apollonDiagram.diagramType }}">{{ apollonDiagram.diagramType }}</td>
                 <td>
-                    <button class="btn btn-primary mr-1" [routerLink]="['/course-management', 'apollon-diagrams', apollonDiagram.id]" jhiTranslate="entity.action.open">
+                    <button class="btn btn-primary mr-1" [routerLink]="['/course-management', courseId, 'apollon-diagrams', apollonDiagram.id]" jhiTranslate="entity.action.open">
                         Open
                     </button>
                     <button
