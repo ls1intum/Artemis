@@ -1,0 +1,38 @@
+{
+    "artemisApp": {
+        "notification": {
+            "notifications": "Notifications",
+            "noNotifications": "No notifications available",
+            "showAllNotifications": "Show all notifications",
+            "title": "Title",
+            "text": "Text",
+            "notificationDate": "Notification Date",
+            "target": {
+                "newAnswer": "View answer",
+                "newQuestion": "View question",
+                "exerciseCreated": "View exercise",
+                "exerciseUpdated": "View exercise",
+                "attachmentUpdated": "View lecture"
+            }
+        },
+        "systemNotification": {
+            "systemNotification": "System notification",
+            "systemNotifications": "System notifications",
+            "title": "Title",
+            "text": "Text",
+            "type": "Type",
+            "expireDate": "Expiration Date",
+            "notificationDate": "Notification Date",
+            "active": "Active",
+            "notActive": "Not Active",
+            "createLabel": "Create a new system notification",
+            "createOrEditLabel": "Create or edit a system notification",
+            "delete": {
+                "question": "Are you sure you want to delete the system notification <strong>{{ title }}</strong>?"
+            },
+            "created": "A new system notification is created with identifier {{ param }}",
+            "updated": "A system notification is updated with identifier {{ param }}",
+            "deleted": "A system notification is deleted with identifier {{ param }}"
+        }
+    }
+}

@@ -33,7 +33,8 @@
         "createdDate": "Created date",
         "lastModifiedBy": "Modified by",
         "lastModifiedDate": "Modified date",
-        "search": "Search for User: ",
+        "searchForUser": "Search for User: ",
+        "search": "Search",
         "loading": "Loading...",
         "searchError": "Search term must be empty or at least 3 character."
     }
