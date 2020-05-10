@@ -29,7 +29,7 @@ export class NotificationService {
     }
 
     /**
-     * create new notification
+     * Create new notification.
      * @param {Notification} notification
      * @return Observable<EntityResponseType>
      */
@@ -41,7 +41,7 @@ export class NotificationService {
     }
 
     /**
-     * update notification
+     * Update existing notification.
      * @param {Notification} notification
      * @return Observable<EntityResponseType>
      */
@@ -53,7 +53,7 @@ export class NotificationService {
     }
 
     /**
-     * find by id
+     * Find notification by id.
      * @param {number} id
      * @return Observable<EntityResponseType>
      */
@@ -76,7 +76,7 @@ export class NotificationService {
     }
 
     /**
-     * delete by id
+     * Delete notification by id.
      * @param {number} id
      * @return Observable<HttpResponse<any>>
      */
@@ -164,7 +164,7 @@ export class NotificationService {
     }
 
     /**
-     * get the notificationObserver
+     * Get the notificationObserver.
      * @return {BehaviorSubject<Notification}
      */
     subscribeToSocketMessages(): BehaviorSubject<Notification | null> {
@@ -172,7 +172,7 @@ export class NotificationService {
     }
 
     /**
-     * navigate to notification target
+     * Navigate to notification target.
      * @param {GroupNotification} notification
      */
     interpretNotification(notification: GroupNotification): void {
@@ -182,14 +182,14 @@ export class NotificationService {
     }
 
     /**
-     * set new notification observer
+     * Set new notification observer.
      */
     private initNotificationObserver(): void {
         this.notificationObserver = new BehaviorSubject<Notification | null>(null);
     }
 
     /**
-     * init new observer for notifications and reset topics
+     * Init new observer for notifications and reset topics.
      */
     public cleanUp(): void {
         this.cachedNotifications = new Observable<EntityArrayResponseType>();
