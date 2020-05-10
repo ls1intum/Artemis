@@ -83,15 +83,13 @@ export class NotificationSidebarComponent implements OnInit {
         if (container) {
             const height = container.scrollHeight - container.offsetHeight;
             if (height > threshold && container.scrollTop > height - threshold) {
-                console.log('Load more');
-                this.page += 1;
                 this.loadNotifications();
             }
         }
     }
 
     private loadNotifications(): void {
-        if (this.totalNotifications === 0 || this.notifications.length < this.totalNotifications) {
+        if (!this.loading && (this.totalNotifications === 0 || this.notifications.length < this.totalNotifications)) {
             this.loading = true;
             this.notificationService
                 .query({
@@ -107,9 +105,9 @@ export class NotificationSidebarComponent implements OnInit {
     }
 
     private loadNotificationsSuccess(notifications: Notification[], headers: HttpHeaders): void {
-        console.log(notifications);
         this.totalNotifications = Number(headers.get('X-Total-Count')!);
         this.addNotifications(notifications);
+        this.page += 1;
         this.loading = false;
     }
 
