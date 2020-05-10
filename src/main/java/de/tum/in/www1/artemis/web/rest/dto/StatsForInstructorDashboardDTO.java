@@ -20,7 +20,7 @@ public class StatsForInstructorDashboardDTO {
 
     private Long numberOfOpenMoreFeedbackRequests;
 
-    private long numberOfAssessmentLocks;
+    private Long numberOfAssessmentLocks;
 
     private List<TutorLeaderboardDTO> tutorLeaderboardEntries;
 

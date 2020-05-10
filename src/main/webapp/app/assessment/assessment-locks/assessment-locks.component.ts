@@ -65,6 +65,9 @@ export class AssessmentLocksComponent implements OnInit {
         this.getExercises();
     }
 
+    /**
+     * Get exercises for course
+     */
     getExercises() {
         this.courseService.getForTutors(this.courseId).subscribe(
             (res: HttpResponse<Course>) => {
@@ -86,6 +89,10 @@ export class AssessmentLocksComponent implements OnInit {
         );
     }
 
+    /**
+     * Get submissions for exercise types modeling, text and file upload.
+     * @param reload tells whether to reload all submissions
+     */
     getAllSubmissions(reload?: boolean) {
         if (reload) {
             this.modelingSubmissions = [];
@@ -112,71 +119,78 @@ export class AssessmentLocksComponent implements OnInit {
         }
     }
 
+    /**
+     * Get submissions for modeling exercise
+     * @param exercise modeling exercise
+     */
     getModelingSubmissions(exercise: ModelingExercise) {
         this.modelingSubmissionService.getModelingSubmissionsForExercise(exercise.id, { submittedOnly: true }).subscribe((response: HttpResponse<ModelingSubmission[]>) => {
-            const tempSubmissions = response.body?.filter((submission) => submission.submitted);
-            tempSubmissions?.forEach((submission) => {
-                if (!submission.result || submission.result.assessor.id !== this.tutorId) {
-                    return;
-                }
-
-                if (submission.result) {
+            response.body
+                ?.filter((submission) => submission.submitted)
+                .map((submission) => {
+                    if (!submission.result || submission.result.assessor.id !== this.tutorId) {
+                        return;
+                    }
                     // reconnect some associations
                     submission.result.submission = submission;
                     submission.result.participation = submission.participation;
                     submission.participation.results = [submission.result];
-                }
-                submission.exerciseId = exercise.id;
+                    submission.exerciseId = exercise.id;
 
-                this.modelingSubmissions.push(submission);
-            });
+                    this.modelingSubmissions.push(submission);
+                });
         });
     }
 
+    /**
+     * Get submissions for text exercise
+     * @param exercise text exercise
+     */
     getTextSubmissions(exercise: TextExercise) {
         this.textSubmissionService.getTextSubmissionsForExercise(exercise.id, { submittedOnly: true }).subscribe((response: HttpResponse<TextSubmission[]>) => {
-            const tempSubmissions = response.body?.filter((submission) => submission.submitted);
-            tempSubmissions?.forEach((submission) => {
-                if (!submission.result || submission.result.assessor.id !== this.tutorId) {
-                    return;
-                }
-
-                if (submission.result) {
+            response.body
+                ?.filter((submission) => submission.submitted)
+                .map((submission) => {
+                    if (!submission.result || submission.result.assessor.id !== this.tutorId) {
+                        return;
+                    }
                     // reconnect some associations
                     submission.result.submission = submission;
                     submission.result.participation = submission.participation;
                     submission.participation.results = [submission.result];
-                }
-                submission.exerciseId = exercise.id;
+                    submission.exerciseId = exercise.id;
 
-                this.textSubmissions.push(submission);
-            });
+                    this.textSubmissions.push(submission);
+                });
         });
     }
 
+    /**
+     * Get submissions for file uplaod exercise
+     * @param exercise file upload exercise
+     */
     getFileUploadSubmissions(exercise: FileUploadExercise) {
         this.fileUploadSubmissionService.getFileUploadSubmissionsForExercise(exercise.id, { submittedOnly: true }).subscribe((response: HttpResponse<FileUploadSubmission[]>) => {
-            const tempSubmissions = response.body?.filter((submission) => submission.submitted);
-            tempSubmissions?.forEach((submission) => {
-                if (!submission.result || submission.result.assessor.id !== this.tutorId) {
-                    return;
-                }
-
-                if (submission.result) {
+            response.body
+                ?.filter((submission) => submission.submitted)
+                .map((submission) => {
+                    if (!submission.result || submission.result.assessor.id !== this.tutorId) {
+                        return;
+                    }
                     // reconnect some associations
                     submission.result.submission = submission;
                     submission.result.participation = submission.participation;
                     submission.participation.results = [submission.result];
-                }
-                submission.exerciseId = exercise.id;
+                    submission.exerciseId = exercise.id;
 
-                this.fileUploadSubmissions.push(submission);
-            });
+                    this.fileUploadSubmissions.push(submission);
+                });
         });
     }
 
     /**
      * Cancel the current assessment and reload the submissions to reflect the change.
+     * @param submission submission
      */
     cancelModelingAssessment(submission: Submission) {
         const confirmCancel = window.confirm(this.cancelConfirmationText);
@@ -189,6 +203,7 @@ export class AssessmentLocksComponent implements OnInit {
 
     /**
      * Cancel the current assessment and reload the submissions to reflect the change.
+     * @param submission submission
      */
     cancelTextAssessment(submission: Submission) {
         const confirmCancel = window.confirm(this.cancelConfirmationText);
@@ -201,6 +216,7 @@ export class AssessmentLocksComponent implements OnInit {
 
     /**
      * Cancel the current assessment and reload the submissions to reflect the change.
+     * @param submission submission
      */
     cancelFileUploadAssessment(submission: Submission) {
         const confirmCancel = window.confirm(this.cancelConfirmationText);
@@ -211,16 +227,18 @@ export class AssessmentLocksComponent implements OnInit {
         }
     }
 
+    /**
+     * Get the name of an exercise by id.
+     * @param id id of exercise
+     */
     getExerciseName(id: number) {
         const foundExercise = this.exercises.find((exercise) => exercise.id === id);
         return foundExercise?.title;
     }
 
-    getLockCount() {
-        this.getExercises();
-        return this.modelingSubmissions.length + this.textSubmissions.length + this.fileUploadSubmissions.length;
-    }
-
+    /**
+     * Navigates back in browser.
+     */
     back() {
         this.location.back();
     }

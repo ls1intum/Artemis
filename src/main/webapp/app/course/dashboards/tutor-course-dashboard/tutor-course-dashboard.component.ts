@@ -115,7 +115,6 @@ export class TutorCourseDashboardComponent implements OnInit, AfterViewInit {
                 this.numberOfMoreFeedbackRequests = this.stats.numberOfMoreFeedbackRequests;
                 this.numberOfOpenMoreFeedbackRequests = this.stats.numberOfOpenMoreFeedbackRequests;
                 this.numberOfAssessmentLocks = this.stats.numberOfAssessmentLocks;
-                console.log('locks', this.stats.numberOfAssessmentLocks);
                 const tutorLeaderboardEntry = this.stats.tutorLeaderboardEntries.find((entry) => entry.userId === this.tutor.id);
                 if (tutorLeaderboardEntry) {
                     this.numberOfTutorAssessments = tutorLeaderboardEntry.numberOfAssessments;

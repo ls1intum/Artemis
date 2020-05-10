@@ -54,9 +54,9 @@ public class SubmissionService {
      * Get the number of simultaneously locked submissions (i.e. unfinished assessments) for the current user in the given course.
      *
      * @param courseId the id of the course
-     * @return
+     * @return number of locked submissions for the current user in the given course
      */
-    public long submissionLockCount(long courseId) {
+    public long countSubmissionLocks(long courseId) {
         return submissionRepository.countLockedSubmissionsByUserIdAndCourseId(userService.getUserWithGroupsAndAuthorities().getId(), courseId);
     }
 
