@@ -41,7 +41,6 @@ export class UnreferencedFeedbackComponent {
     updateAssessment(feedback: Feedback) {
         const indexToUpdate = this.unreferencedFeedback.indexOf(feedback);
         this.unreferencedFeedback[indexToUpdate] = feedback;
-        this.unreferencedFeedback[indexToUpdate].text = feedback.text;
         this.validateFeedback();
         this.feedbacksChange.emit(this.unreferencedFeedback);
     }
@@ -49,7 +48,7 @@ export class UnreferencedFeedbackComponent {
         const feedback = new Feedback();
         feedback.credits = 0;
         feedback.referenceId = null;
-        feedback.type = FeedbackType.MANUAL;
+        feedback.type = FeedbackType.MANUAL_UNREFERENCED;
         this.unreferencedFeedback.push(feedback);
         this.validateFeedback();
         this.feedbacksChange.emit(this.unreferencedFeedback);
