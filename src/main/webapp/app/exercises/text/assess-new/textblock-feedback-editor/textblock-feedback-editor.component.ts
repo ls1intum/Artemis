@@ -50,7 +50,6 @@ export class TextblockFeedbackEditorComponent implements AfterViewInit {
      */
     textareaOnloadSize(): void {
         this.textareaElement.style.height = '0px';
-        this.textareaElement.style.height = `${this.textareaElement.scrollHeight}px`;
         this.textareaElement.style.height = this.textareaElement.scrollHeight > 55 ? '55px' : `${this.textareaElement.scrollHeight}px`;
     }
 
