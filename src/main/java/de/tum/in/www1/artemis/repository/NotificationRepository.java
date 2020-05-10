@@ -17,8 +17,8 @@ import de.tum.in.www1.artemis.domain.notification.Notification;
 @Repository
 public interface NotificationRepository extends JpaRepository<Notification, Long> {
 
-    @Query("select notification from Notification notification left join notification.course left join notification.recipient "
-            + "where (notification.class = GroupNotification and ((notification.course.instructorGroupName in :#{#currentGroups} and notification.type = 'INSTRUCTOR') "
+    @Query("select notification from Notification notification left join notification.course left join notification.recipient " + "where notification.notificationDate is not null "
+            + "and (notification.class = GroupNotification and ((notification.course.instructorGroupName in :#{#currentGroups} and notification.type = 'INSTRUCTOR') "
             + "or (notification.course.teachingAssistantGroupName in :#{#currentGroups} and notification.type = 'TA') "
             + "or (notification.course.studentGroupName in :#{#currentGroups} and notification.type = 'STUDENT')))"
             + "or notification.class = SingleUserNotification and notification.recipient.login = :#{#login}")

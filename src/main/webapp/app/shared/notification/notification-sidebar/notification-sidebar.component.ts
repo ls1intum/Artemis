@@ -117,8 +117,8 @@ export class NotificationSidebarComponent implements OnInit {
         }, 500);
         this.notificationService.subscribeToSocketMessages().subscribe((notification: Notification) => {
             // TODO: How can it happen that the same id comes twice through the channel?
-            if (notification) {
-                notification.notificationDate = notification.notificationDate ? moment(notification.notificationDate) : null;
+            if (notification && notification.notificationDate) {
+                notification.notificationDate = moment(notification.notificationDate);
                 this.addNotifications([notification]);
             }
         });
@@ -127,7 +127,7 @@ export class NotificationSidebarComponent implements OnInit {
     private addNotifications(notifications: Notification[]): void {
         if (notifications) {
             notifications.forEach((notification: Notification) => {
-                if (!this.notifications.some(({ id }) => id === notification.id)) {
+                if (!this.notifications.some(({ id }) => id === notification.id) && notification.notificationDate) {
                     this.notifications.push(notification);
                 }
             });
