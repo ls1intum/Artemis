@@ -32,7 +32,8 @@
                 "generate": "Erstellen",
                 "error": {
                     "loading": "Es ist ein Fehler beim Laden des Diagrams aufgetreten"
-                }
+                },
+                "quizExercise": "Erstelle eine Quizaufgabe für den Kurs {{ title }}."
             },
             "title": "Titel",
             "jsonRepresentation": "JSON-Repräsentation",

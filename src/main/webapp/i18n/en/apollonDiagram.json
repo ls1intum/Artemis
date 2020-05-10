@@ -32,7 +32,8 @@
                 "generate": "Generate",
                 "error": {
                     "loading": "Error while loading Apollon diagram"
-                }
+                },
+                "quizExercise": "Generate a quiz exercise for course {{ title }}."
             },
             "title": "Title",
             "jsonRepresentation": "JSON Representation",
