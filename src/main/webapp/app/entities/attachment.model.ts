@@ -3,6 +3,9 @@ import { BaseEntity } from 'app/shared/model/base-entity';
 import { Lecture } from 'app/entities/lecture.model';
 import { Exercise } from 'app/entities/exercise.model';
 
+/**
+ * defines different types of attachments
+ */
 export const enum AttachmentType {
     FILE = 'FILE',
     URL = 'URL',
