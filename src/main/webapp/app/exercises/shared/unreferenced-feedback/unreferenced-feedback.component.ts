@@ -1,5 +1,5 @@
 import { Component, Input, Output, EventEmitter } from '@angular/core';
-import { Feedback } from 'app/entities/feedback.model';
+import { Feedback, FeedbackType } from 'app/entities/feedback.model';
 
 @Component({
     selector: 'jhi-unreferenced-feedback',
@@ -50,7 +50,7 @@ export class UnreferencedFeedbackComponent {
         const feedback = new Feedback();
         feedback.credits = 0;
         feedback.referenceId = null;
-        feedback.type = null;
+        feedback.type = FeedbackType.MANUAL;
         this.unreferencedFeedback.push(feedback);
         this.validateFeedback();
         this.feedbacksChange.emit(this.unreferencedFeedback);

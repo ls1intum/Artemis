@@ -208,8 +208,8 @@ export class ModelingAssessmentEditorComponent implements OnInit {
             feedback.splice(generalFeedbackIndex, 1);
         }
 
-        this.referencedFeedback = feedback;
-        this.unreferencedFeedback = feedback;
+        this.referencedFeedback = feedback.filter((feedback) => feedback.reference != null);
+        this.unreferencedFeedback = feedback.filter((feedback) => feedback.reference == null);
 
         this.hasAutomaticFeedback = feedback.some((feedbackItem) => feedbackItem.type === FeedbackType.AUTOMATIC);
         this.highlightAutomaticFeedback();
@@ -357,8 +357,8 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     }
 
     onFeedbackChanged(feedback: Feedback[]) {
-        this.referencedFeedback = feedback;
-        this.unreferencedFeedback = feedback;
+        this.referencedFeedback = feedback.filter((feedback) => feedback.reference != null);
+        this.unreferencedFeedback = feedback.filter((feedback) => feedback.reference == null);
         this.validateFeedback();
     }
 
