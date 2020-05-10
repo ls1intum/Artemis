@@ -15,7 +15,7 @@ import { ComplaintResponse } from 'app/entities/complaint-response.model';
 import { ComplaintService } from 'app/complaints/complaint.service';
 import { TextAssessmentsService } from 'app/exercises/text/assess/text-assessments.service';
 import { TextBlockRef } from 'app/entities/text-block-ref.model';
-import { Feedback } from 'app/entities/feedback.model';
+import { Feedback, FeedbackType } from 'app/entities/feedback.model';
 import { notUndefined } from 'app/shared/util/global.utils';
 import { TextBlock } from 'app/entities/text-block.model';
 import { TranslateService } from '@ngx-translate/core';
@@ -263,7 +263,7 @@ export class TextSubmissionAssessmentComponent implements OnInit {
             return;
         }
         const feedbacks = this.result.feedbacks || [];
-        const generalFeedbackIndex = feedbacks.findIndex(({ reference }) => reference == null);
+        const generalFeedbackIndex = feedbacks.findIndex((feedbackElement) => feedbackElement.reference == null && feedbackElement.type !== FeedbackType.MANUAL_UNREFERENCED);
         if (generalFeedbackIndex !== -1) {
             this.generalFeedback = feedbacks[generalFeedbackIndex];
             feedbacks.splice(generalFeedbackIndex, 1);
