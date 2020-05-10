@@ -121,6 +121,10 @@ export class NotificationSidebarComponent implements OnInit {
             if (notification && notification.notificationDate) {
                 notification.notificationDate = moment(notification.notificationDate);
                 this.addNotifications([notification]);
+                // Increase total notifications count if the notification does not already exist.
+                if (!this.notifications.some(({ id }) => id === notification.id)) {
+                    this.totalNotifications += 1;
+                }
             }
         });
     }
