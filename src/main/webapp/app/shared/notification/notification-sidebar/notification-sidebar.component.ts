@@ -41,6 +41,52 @@ export class NotificationSidebarComponent implements OnInit {
         });
     }
 
+    /**
+     * Show the sidebar when it is not visible and hide the sidebar when it is visible.
+     */
+    toggleSidebar(): void {
+        this.showSidebar = !this.showSidebar;
+    }
+
+    /**
+     * Will be executed when a notification was clicked. The notification sidebar will be closed and the actual interpretation
+     * of what should happen after the notification was clicked will be handled in the notification service.
+     * @param notification that will be interpreted of type {Notification}
+     */
+    startNotification(notification: Notification): void {
+        this.showSidebar = false;
+        this.notificationService.interpretNotification(notification as GroupNotification);
+    }
+
+    /**
+     * Update the user's lastNotificationRead setting. As this method will be executed when the user opens the sidebar, the
+     * component's lastNotificationRead attribute will be updated only after two seconds so that the notification `new` badges
+     * won't disappear immediately.
+     */
+    updateLastNotificationRead(): void {
+        this.userService.updateLastNotificationRead().subscribe(() => {
+            const lastNotificationReadNow = moment();
+            setTimeout(() => {
+                this.lastNotificationRead = lastNotificationReadNow;
+            }, 2000);
+        });
+    }
+
+    /**
+     * TODO
+     */
+    onScroll(): void {
+        // TODO: will be called to often --> fix, increase threshold again to 350
+        const container = document.getElementById('notificationSidebarContainer');
+        const threshold = 50;
+        if (container) {
+            const height = container.scrollHeight - container.offsetHeight;
+            if (height > threshold && container.scrollTop > height - threshold) {
+                console.log('Load more');
+            }
+        }
+    }
+
     private loadNotifications(): void {
         // Query recent and first batch of non-recent notifications.
         this.notificationService
@@ -90,51 +136,5 @@ export class NotificationSidebarComponent implements OnInit {
         } else {
             this.recentNotificationCount = this.notifications.length;
         }
-    }
-
-    /**
-     * TODO
-     */
-    onScroll(): void {
-        // TODO: will be called to often --> fix, increase threshold again to 350
-        const container = document.getElementById('notificationSidebarContainer');
-        const threshold = 50;
-        if (container) {
-            const height = container.scrollHeight - container.offsetHeight;
-            if (height > threshold && container.scrollTop > height - threshold) {
-                console.log('Load more');
-            }
-        }
-    }
-
-    /**
-     * Will be executed when a notification was clicked. The notification sidebar will be closed and the actual interpretation
-     * of what should happen after the notification was clicked will be handled in the notification service.
-     * @param notification that will be interpreted of type {Notification}
-     */
-    startNotification(notification: Notification): void {
-        this.showSidebar = false;
-        this.notificationService.interpretNotification(notification as GroupNotification);
-    }
-
-    /**
-     * Update the user's lastNotificationRead setting. As this method will be executed when the user opens the sidebar, the
-     * component's lastNotificationRead attribute will be updated only after two seconds so that the notification `new` badges
-     * won't disappear immediately.
-     */
-    updateLastNotificationRead(): void {
-        this.userService.updateLastNotificationRead().subscribe(() => {
-            const lastNotificationReadNow = moment();
-            setTimeout(() => {
-                this.lastNotificationRead = lastNotificationReadNow;
-            }, 2000);
-        });
-    }
-
-    /**
-     * Show the sidebar when it is not visible and hide the sidebar when it is visible.
-     */
-    toggleSidebar(): void {
-        this.showSidebar = !this.showSidebar;
     }
 }
