@@ -9,6 +9,8 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { StatsForDashboard } from 'app/course/dashboards/instructor-course-dashboard/stats-for-dashboard.model';
 import { ResultService } from 'app/exercises/shared/result/result.service';
 import { getIcon, getIconTooltip, ExerciseType } from 'app/entities/exercise.model';
+import { User } from 'app/core/user/user.model';
+import { AccountService } from 'app/core/auth/account.service';
 
 @Component({
     selector: 'jhi-instructor-course-dashboard',
@@ -17,6 +19,7 @@ import { getIcon, getIconTooltip, ExerciseType } from 'app/entities/exercise.mod
 })
 export class InstructorCourseDashboardComponent implements OnInit {
     course: Course;
+    instructor: User;
 
     getIcon = getIcon;
     getIconTooltip = getIconTooltip;
@@ -35,7 +38,13 @@ export class InstructorCourseDashboardComponent implements OnInit {
     readonly MODELING = ExerciseType.MODELING;
     readonly FILE_UPLOAD = ExerciseType.FILE_UPLOAD;
 
-    constructor(private courseService: CourseManagementService, private resultService: ResultService, private route: ActivatedRoute, private jhiAlertService: AlertService) {}
+    constructor(
+        private courseService: CourseManagementService,
+        private resultService: ResultService,
+        private route: ActivatedRoute,
+        private jhiAlertService: AlertService,
+        private accountService: AccountService,
+    ) {}
 
     /**
      * On init fetch the course from the server.
@@ -43,6 +52,11 @@ export class InstructorCourseDashboardComponent implements OnInit {
     ngOnInit(): void {
         this.isLoading = true;
         this.loadCourse(Number(this.route.snapshot.paramMap.get('courseId')));
+        this.accountService.identity().then((user) => {
+            if (user) {
+                this.instructor = user;
+            }
+        });
     }
 
     /**
