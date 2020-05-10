@@ -94,6 +94,7 @@ export class NotificationSidebarComponent implements OnInit {
     }
 
     startNotification(notification: Notification): void {
+        this.showSidebar = false;
         this.notificationService.interpretNotification(notification as GroupNotification);
     }
 
