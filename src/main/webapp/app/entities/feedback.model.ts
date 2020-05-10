@@ -30,18 +30,37 @@ export class Feedback implements BaseEntity {
     public referenceType: string | null; // this string needs to follow UMLModelElementType in Apollon in typings.d.ts
     public referenceId: string | null;
 
+    /**
+     * returns true if the given feedback has a non-empty detailText
+     * @param that - the feedback
+     */
     public static hasDetailText(that: Feedback): boolean {
         return that.detailText != null && that.detailText.length > 0;
     }
 
+    /**
+     * returns true if the given Feedback is empty (it has zero credits and no detail text)
+     * @param that - the feedback
+     */
     public static isEmpty(that: Feedback): boolean {
         return that.credits === 0 && !Feedback.hasDetailText(that);
     }
 
+    /**
+     * returns true if tehgiven feedback is non-empty
+     * @param that - the feedback
+     */
     public static isPresent(that: Feedback): boolean {
         return !Feedback.isEmpty(that);
     }
 
+    /**
+     * creates feedback for a modeling exercise
+     * @param credits - number of credits
+     * @param text - feedback text
+     * @param referenceId - id of the model element
+     * @param referenceType - type of the model element
+     */
     public static forModeling(credits: number, text?: string, referenceId?: string, referenceType?: string): Feedback {
         const that = new Feedback();
         that.referenceId = referenceId || null;
@@ -54,6 +73,12 @@ export class Feedback implements BaseEntity {
         return that;
     }
 
+    /**
+     * creates Feedback for text exercise
+     * @param textBlock - the text block to give feedback on
+     * @param credits - number of credits
+     * @param detailText - detailed text of the feedback
+     */
     public static forText(textBlock: TextBlock, credits = 0, detailText?: string): Feedback {
         const that = new Feedback();
         that.reference = textBlock.id;
@@ -69,10 +94,18 @@ export class Feedback implements BaseEntity {
         return that;
     }
 
+    /**
+     * get feedback from server response
+     * @param response
+     */
     public static fromServerResponse(response: Feedback): Feedback {
         return Object.assign(new Feedback(), response);
     }
 
+    /**
+     * change feedback type for text exercise when automatic feedback is manually changed
+     * @param feedback
+     */
     public static updateFeedbackTypeOnChange(feedback: Feedback) {
         if (feedback.type === FeedbackType.AUTOMATIC) {
             feedback.type = FeedbackType.AUTOMATIC_ADAPTED;
