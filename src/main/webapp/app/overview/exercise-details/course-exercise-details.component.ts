@@ -17,7 +17,7 @@ import { SourceTreeService } from 'app/exercises/programming/shared/service/sour
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
 import { InitializationState, Participation } from 'app/entities/participation/participation.model';
-import { Exercise, ExerciseCategory, ExerciseType } from 'app/entities/exercise.model';
+import { Exercise, ExerciseCategory, ExerciseType, ParticipationStatus } from 'app/entities/exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { AssessmentType } from 'app/entities/assessment-type.model';
@@ -366,8 +366,16 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     simulateResult() {
         this.programmingExerciseSimulationService.failsIfInProduction();
         this.courseExerciseSubmissionResultSimulationService.simulateResult(this.exerciseId).subscribe(
-            () => {
+            (result) => {
+                //set the value to false to deactivate the result button
                 this.wasSubmissionSimulated = false;
+
+                //set this values in order to visualize the result on the exercise details page
+                this.exercise!.participationStatus = ParticipationStatus.EXERCISE_SUBMITTED;
+                this.studentParticipation = <StudentParticipation>result.body!.participation;
+                this.studentParticipation.results = [];
+                this.studentParticipation.results[0] = result.body!;
+
                 this.jhiAlertService.success('artemisApp.exercise.resultCreationSuccessful');
             },
             () => {
