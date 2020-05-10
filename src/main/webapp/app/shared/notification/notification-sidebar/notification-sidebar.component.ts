@@ -112,7 +112,7 @@ export class NotificationSidebarComponent implements OnInit {
      * won't disappear immediately.
      */
     updateLastNotificationRead(): void {
-        this.userService.updateUserNotificationDate().subscribe(() => {
+        this.userService.updateLastNotificationRead().subscribe(() => {
             const lastNotificationReadNow = moment();
             setTimeout(() => {
                 this.lastNotificationRead = lastNotificationReadNow;
