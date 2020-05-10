@@ -37,6 +37,7 @@ export class NotificationSidebarComponent implements OnInit {
                     this.lastNotificationRead = user.lastNotificationRead;
                 }
                 this.loadNotifications();
+                this.subscribeToNotificationUpdates();
             }
         });
     }
@@ -100,6 +101,9 @@ export class NotificationSidebarComponent implements OnInit {
                 (res: HttpErrorResponse) => (this.error = res.message),
             );
         // Subscribe to notification updates that are sent via websocket.
+    }
+
+    private subscribeToNotificationUpdates(): void {
         setTimeout(() => {
             this.notificationService.subscribeUserNotifications();
         }, 500);
