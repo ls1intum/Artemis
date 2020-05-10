@@ -51,6 +51,9 @@ export class CourseUpdateComponent implements OnInit {
         private profileService: ProfileService,
     ) {}
 
+    /**
+     * initialize parameters and subscribe course to active route
+     */
     ngOnInit() {
         this.isSaving = false;
         this.activatedRoute.data.subscribe(({ course }) => {
@@ -122,6 +125,9 @@ export class CourseUpdateComponent implements OnInit {
         this.presentationScoreEnabled = this.course.presentationScore !== 0;
     }
 
+    /**
+     * switches to the previous state
+     */
     previousState() {
         window.history.back();
     }
@@ -139,10 +145,18 @@ export class CourseUpdateComponent implements OnInit {
         }
     }
 
+    /**
+     * opens the button for selecting the color
+     * @param event
+     */
     openColorSelector(event: MouseEvent) {
         this.colorSelector.openColorSelector(event);
     }
 
+    /**
+     * changes the color to the selected value
+     * @param selectedColor
+     */
     onSelectedColor(selectedColor: string) {
         this.courseForm.patchValue({ color: selectedColor });
     }
@@ -186,6 +200,9 @@ export class CourseUpdateComponent implements OnInit {
         this.croppedImage = $event.base64;
     }
 
+    /**
+     * sets showCropper to true after the image is loaded
+     */
     imageLoaded() {
         this.showCropper = true;
     }
