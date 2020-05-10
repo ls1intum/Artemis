@@ -89,7 +89,6 @@ export class NotificationSidebarComponent implements OnInit {
     }
 
     private loadNotifications(): void {
-        // Query recent and first batch of non-recent notifications.
         this.notificationService
             .query({
                 page: this.page - 1,
@@ -100,7 +99,12 @@ export class NotificationSidebarComponent implements OnInit {
                 (res: HttpResponse<Notification[]>) => this.onSuccess(res.body!, res.headers),
                 (res: HttpErrorResponse) => (this.error = res.message),
             );
-        // Subscribe to notification updates that are sent via websocket.
+    }
+
+    private onSuccess(notifications: Notification[], headers: HttpHeaders): void {
+        this.totalNotifications = Number(headers.get('X-Total-Count')!);
+        this.addNotifications(notifications);
+        this.updateNotifications();
     }
 
     private subscribeToNotificationUpdates(): void {
@@ -117,10 +121,14 @@ export class NotificationSidebarComponent implements OnInit {
         });
     }
 
-    private onSuccess(notifications: Notification[], headers: HttpHeaders) {
-        this.totalNotifications = Number(headers.get('X-Total-Count')!);
-        this.notifications = notifications;
-        this.updateNotifications();
+    private addNotifications(notifications: Notification[]): void {
+        if (notifications) {
+            notifications.forEach((notification: Notification) => {
+                if (!this.notifications.some(({ id }) => id === notification.id)) {
+                    this.notifications.push(notification);
+                }
+            });
+        }
     }
 
     private updateNotifications(): void {
