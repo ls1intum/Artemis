@@ -18,7 +18,6 @@ import de.tum.in.www1.artemis.domain.enumeration.GroupNotificationType;
 import de.tum.in.www1.artemis.domain.notification.GroupNotification;
 import de.tum.in.www1.artemis.domain.notification.Notification;
 import de.tum.in.www1.artemis.domain.notification.SingleUserNotification;
-import de.tum.in.www1.artemis.domain.notification.SystemNotification;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
@@ -225,26 +224,6 @@ public class NotificationResourceIntegrationTest extends AbstractSpringIntegrati
         assertThat(recentNotifications).as("Recent notification with type student is not returned").doesNotContain(notificationStudent);
         assertThat(recentNotifications).as("Recent notification with type tutor is not returned").doesNotContain(notificationTutor);
         assertThat(recentNotifications).as("Recent notification with type instructor is returned").contains(notificationInstructor);
-    }
-
-    @Test
-    @Sql({ "/h2/custom-functions.sql" })
-    @WithMockUser(username = "student1", roles = "USER")
-    public void testGetRecentNotifications() throws Exception {
-        SingleUserNotification recentNotification = ModelFactory.generateSingleUserNotification(ZonedDateTime.now(), users.get(0));
-        notificationRepository.save(recentNotification);
-        SingleUserNotification notRecentNotification = ModelFactory.generateSingleUserNotification(ZonedDateTime.now().minusDays(2), users.get(0));
-        notificationRepository.save(notRecentNotification);
-        SystemNotification activeSystemNotification = ModelFactory.generateSystemNotification(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(1));
-        notificationRepository.save(activeSystemNotification);
-        SystemNotification notActiveSystemNotification = ModelFactory.generateSystemNotification(ZonedDateTime.now().minusDays(2), ZonedDateTime.now().minusDays(1));
-        notificationRepository.save(notActiveSystemNotification);
-
-        List<Notification> notifications = request.getList("/api/notifications/recent-for-user", HttpStatus.OK, Notification.class);
-        assertThat(notifications).as("Notification with notificationDate after current user's lastNotificationRead is returned").contains(recentNotification);
-        assertThat(notifications).as("Notification with notificationDate before current user's lastNotificationRead is not returned").doesNotContain(notRecentNotification);
-        assertThat(notifications).as("Active system notification is returned").contains(activeSystemNotification);
-        assertThat(notifications).as("Not active system notification is not returned").doesNotContain(notActiveSystemNotification);
     }
 
     @Test
