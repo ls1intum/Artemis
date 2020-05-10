@@ -202,7 +202,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
             return;
         }
 
-        const generalFeedbackIndex = feedback.findIndex((feedbackElement) => feedbackElement.reference == null && feedbackElement.type != FeedbackType.MANUAL_UNREFERENCED);
+        const generalFeedbackIndex = feedback.findIndex((feedbackElement) => feedbackElement.reference == null && feedbackElement.type !== FeedbackType.MANUAL_UNREFERENCED);
         if (generalFeedbackIndex >= 0) {
             this.generalFeedback = feedback[generalFeedbackIndex] || new Feedback();
             feedback.splice(generalFeedbackIndex, 1);
