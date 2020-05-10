@@ -93,6 +93,21 @@ export class NotificationSidebarComponent implements OnInit {
     }
 
     /**
+     * TODO
+     */
+    onScroll(): void {
+        // TODO: will be called to often --> fix, increase threshold again to 350
+        const container = document.getElementById('notificationSidebarContainer');
+        const threshold = 50;
+        if (container) {
+            const height = container.scrollHeight - container.offsetHeight;
+            if (height > threshold && container.scrollTop > height - threshold) {
+                console.log('Load more');
+            }
+        }
+    }
+
+    /**
      * Will be executed when a notification was clicked. The notification sidebar will be closed and the actual interpretation
      * of what should happen after the notification was clicked will be handled in the notification service.
      * @param notification that will be interpreted of type {Notification}

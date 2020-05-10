@@ -24,7 +24,7 @@
                 </small>
             </div>
         </div>
-        <div class="notifications">
+        <div id="notificationSidebarContainer" (scroll)="onScroll()">
             <div class="alert alert-danger mx-3" role="alert" *ngIf="error">
                 {{ 'artemisApp.notification.unexpectedError' | translate }}
             </div>

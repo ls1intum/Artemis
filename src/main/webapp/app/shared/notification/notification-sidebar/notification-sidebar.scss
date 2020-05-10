@@ -38,7 +38,7 @@
             right: 16px;
         }
     }
-    .notifications {
+    #notificationSidebarContainer {
         height: calc(100vh - 85px);
         overflow-y: auto;
         .notification-item {
