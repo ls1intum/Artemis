@@ -49,6 +49,9 @@
                     </div>
                 </div>
             </div>
+            <span *ngIf="notifications.length > 0 && notifications.length >= totalNotifications">
+                {{ 'artemisApp.notification.allLoaded' | translate }}
+            </span>
             <span class="no-notifications" *ngIf="notifications && notifications.length === 0">
                 {{ 'artemisApp.notification.noNotifications' | translate }}
             </span>

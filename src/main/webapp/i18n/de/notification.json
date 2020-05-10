@@ -9,6 +9,7 @@
             "unexpectedError": "Ein unerwarteter Fehler ist aufgetreten. Bitte aktualisiere die Seite.",
             "loadedNotificationCount": "{{loaded}} von {{total}} Mitteilungen geladen",
             "by": "von",
+            "allLoaded": "Keine weiteren Mitteilungen vorhanden.",
             "target": {
                 "newAnswer": "Antwort ansehen",
                 "newQuestion": "Frage ansehen",

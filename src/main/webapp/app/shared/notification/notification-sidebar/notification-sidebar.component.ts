@@ -91,7 +91,7 @@ export class NotificationSidebarComponent implements OnInit {
     }
 
     private loadNotifications(): void {
-        if (this.notifications.length < this.totalNotifications) {
+        if (this.totalNotifications === 0 || this.notifications.length < this.totalNotifications) {
             this.loading = true;
             this.notificationService
                 .query({
