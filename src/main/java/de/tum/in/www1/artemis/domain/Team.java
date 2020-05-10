@@ -75,6 +75,11 @@ public class Team extends AbstractAuditingEntity implements Serializable, Partic
     }
 
     // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
+    public Team id(Long id) {
+        this.id = id;
+        return this;
+    }
+
     public Long getId() {
         return id;
     }

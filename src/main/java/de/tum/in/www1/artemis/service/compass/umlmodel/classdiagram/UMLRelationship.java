@@ -26,22 +26,22 @@ public class UMLRelationship extends UMLElement {
          */
         public String toSymbol() {
             switch (this) {
-            case CLASS_DEPENDENCY:
-                return " ╌╌> ";
-            case CLASS_AGGREGATION:
-                return " --◇ ";
-            case CLASS_INHERITANCE:
-                return " --▷ ";
-            case CLASS_REALIZATION:
-                return " ╌╌▷ ";
-            case CLASS_COMPOSITION:
-                return " --◆ ";
-            case CLASS_UNIDIRECTIONAL:
-                return " --> ";
-            case CLASS_BIDIRECTIONAL:
-                return " <-> ";
-            default:
-                return " --- ";
+                case CLASS_DEPENDENCY:
+                    return " ╌╌> ";
+                case CLASS_AGGREGATION:
+                    return " --◇ ";
+                case CLASS_INHERITANCE:
+                    return " --▷ ";
+                case CLASS_REALIZATION:
+                    return " ╌╌▷ ";
+                case CLASS_COMPOSITION:
+                    return " --◆ ";
+                case CLASS_UNIDIRECTIONAL:
+                    return " --> ";
+                case CLASS_BIDIRECTIONAL:
+                    return " <-> ";
+                default:
+                    return " --- ";
             }
         }
     }
