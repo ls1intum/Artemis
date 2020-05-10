@@ -125,20 +125,18 @@ export class AssessmentLocksComponent implements OnInit {
      */
     getModelingSubmissions(exercise: ModelingExercise) {
         this.modelingSubmissionService.getModelingSubmissionsForExercise(exercise.id, { submittedOnly: true }).subscribe((response: HttpResponse<ModelingSubmission[]>) => {
-            response.body
-                ?.filter((submission) => submission.submitted)
-                .map((submission) => {
-                    if (!submission.result || submission.result.assessor.id !== this.tutorId) {
-                        return;
-                    }
-                    // reconnect some associations
-                    submission.result.submission = submission;
-                    submission.result.participation = submission.participation;
-                    submission.participation.results = [submission.result];
-                    submission.exerciseId = exercise.id;
+            response.body?.forEach((submission) => {
+                if (!submission.result || !submission.submitted || submission.result.assessor.id !== this.tutorId) {
+                    return;
+                }
+                // reconnect some associations
+                submission.result.submission = submission;
+                submission.result.participation = submission.participation;
+                submission.participation.results = [submission.result];
+                submission.exerciseId = exercise.id;
 
-                    this.modelingSubmissions.push(submission);
-                });
+                this.modelingSubmissions.push(submission);
+            });
         });
     }
 
@@ -148,20 +146,18 @@ export class AssessmentLocksComponent implements OnInit {
      */
     getTextSubmissions(exercise: TextExercise) {
         this.textSubmissionService.getTextSubmissionsForExercise(exercise.id, { submittedOnly: true }).subscribe((response: HttpResponse<TextSubmission[]>) => {
-            response.body
-                ?.filter((submission) => submission.submitted)
-                .map((submission) => {
-                    if (!submission.result || submission.result.assessor.id !== this.tutorId) {
-                        return;
-                    }
-                    // reconnect some associations
-                    submission.result.submission = submission;
-                    submission.result.participation = submission.participation;
-                    submission.participation.results = [submission.result];
-                    submission.exerciseId = exercise.id;
+            response.body?.forEach((submission) => {
+                if (!submission.result || !submission.submitted || submission.result.assessor.id !== this.tutorId) {
+                    return;
+                }
+                // reconnect some associations
+                submission.result.submission = submission;
+                submission.result.participation = submission.participation;
+                submission.participation.results = [submission.result];
+                submission.exerciseId = exercise.id;
 
-                    this.textSubmissions.push(submission);
-                });
+                this.textSubmissions.push(submission);
+            });
         });
     }
 
@@ -171,20 +167,18 @@ export class AssessmentLocksComponent implements OnInit {
      */
     getFileUploadSubmissions(exercise: FileUploadExercise) {
         this.fileUploadSubmissionService.getFileUploadSubmissionsForExercise(exercise.id, { submittedOnly: true }).subscribe((response: HttpResponse<FileUploadSubmission[]>) => {
-            response.body
-                ?.filter((submission) => submission.submitted)
-                .map((submission) => {
-                    if (!submission.result || submission.result.assessor.id !== this.tutorId) {
-                        return;
-                    }
-                    // reconnect some associations
-                    submission.result.submission = submission;
-                    submission.result.participation = submission.participation;
-                    submission.participation.results = [submission.result];
-                    submission.exerciseId = exercise.id;
+            response.body?.forEach((submission) => {
+                if (!submission.result || !submission.submitted || submission.result.assessor.id !== this.tutorId) {
+                    return;
+                }
+                // reconnect some associations
+                submission.result.submission = submission;
+                submission.result.participation = submission.participation;
+                submission.participation.results = [submission.result];
+                submission.exerciseId = exercise.id;
 
-                    this.fileUploadSubmissions.push(submission);
-                });
+                this.fileUploadSubmissions.push(submission);
+            });
         });
     }
 
