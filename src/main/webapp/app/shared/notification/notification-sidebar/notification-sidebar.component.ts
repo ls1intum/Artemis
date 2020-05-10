@@ -48,7 +48,7 @@ export class NotificationSidebarComponent implements OnInit {
     private loadNotifications(): void {
         // Query recent and first batch of non-recent notifications.
         this.notificationService
-            .queryNew({
+            .query({
                 page: this.page - 1,
                 size: this.notificationsPerPage,
                 sort: ['notificationDate,desc'],

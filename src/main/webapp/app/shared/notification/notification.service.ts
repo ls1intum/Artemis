@@ -64,23 +64,11 @@ export class NotificationService {
     }
 
     /**
-     * find notifications for query
-     * @param {any} req
-     * @return Observable<EntityArrayResponseType>
-     */
-    query(req?: any): Observable<EntityArrayResponseType> {
-        const options = createRequestOption(req);
-        return this.http
-            .get<Notification[]>(this.resourceUrl, { params: options, observe: 'response' })
-            .pipe(map((res: EntityArrayResponseType) => this.convertDateArrayFromServer(res)));
-    }
-
-    /**
      * Query all notifications.
      * @param req request options
      * @return Observable<EntityArrayResponseType>
      */
-    queryNew(req?: any): Observable<EntityArrayResponseType> {
+    query(req?: any): Observable<EntityArrayResponseType> {
         const options = createRequestOption(req);
         return this.http
             .get<Notification[]>(`${this.resourceUrl}/sidebar`, { params: options, observe: 'response' })
@@ -119,7 +107,7 @@ export class NotificationService {
     }
 
     /**
-     * subscribe to notifications for user
+     * Subscribe to notifications for user.
      * @return Promise<any>
      */
     subscribeUserNotifications(): Promise<any> {
@@ -146,7 +134,7 @@ export class NotificationService {
     }
 
     /**
-     * subscribe to websocket for course and role
+     * Subscribe to websocket for course and role.
      * @param {Course} course
      */
     public handleCourseNotifications(course: Course): void {
