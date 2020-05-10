@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.web.rest;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -75,38 +74,18 @@ public class NotificationResource {
     }
 
     /**
-     * GET /notifications : Get all recent notifications (after last read) for the current user and a batch of
-     * non-recent notifications if the page number is equal to 0. If the page number is greater than 0 only the
-     * corresponding paged batch of non-recent notifications will be returned.
+     * GET /notifications : Get all notifications by pages.
      *
-     * @param pageable Pagination information for fetching the notifications
-     * @return list of notifications
+     * @param pageable Pagination information for fetching the nofications
+     * @return the list notifications
      */
     @GetMapping("/notifications")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<List<Notification>> getNotificationsForCurrentUser(@ApiParam Pageable pageable) {
-        List<Notification> notifications = new ArrayList<>();
-        List<Notification> recentNotifications = new ArrayList<>();
-        int nonRecentNotificationsCount = 0;
-        HttpHeaders headers = new HttpHeaders();
+    public ResponseEntity<List<Notification>> getAllNotificationsForCurrentUser(@ApiParam Pageable pageable) {
         User currentUser = userService.getUserWithGroupsAndAuthorities();
-        // Get all notifications whose notification date is before the current user's lastNotificationRead when first page is requested.
-        if (pageable.getPageNumber() == 0 && currentUser != null) {
-            recentNotifications = notificationService.findAllRecentExceptSystem(currentUser);
-            notifications.addAll(recentNotifications);
-        }
-        // Get batch of notifications whose notification date is after the current user's lastNotificationRead.
-        if (currentUser != null) {
-            final Page<Notification> page = notificationService.findAllNonRecentExceptSystem(currentUser, pageable);
-            headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
-            if (headers.getFirst("X-Total-Count") != null) {
-                nonRecentNotificationsCount = Integer.parseInt(headers.getFirst("X-Total-Count"));
-            }
-            notifications.addAll(page.getContent());
-        }
-        // Overwrite header `X-Total-Count` so that recent and non-recent notifications are included.
-        headers.set("X-Total-Count", String.valueOf(recentNotifications.size() + nonRecentNotificationsCount));
-        return new ResponseEntity<>(notifications, headers, HttpStatus.OK);
+        final Page<Notification> page = notificationService.findAllExceptSystem(currentUser, pageable);
+        HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
+        return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
     }
 
     /**

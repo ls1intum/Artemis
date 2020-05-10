@@ -28,15 +28,6 @@ public class NotificationService {
         return notificationRepository.findAllNotificationsForRecipientWithLogin(currentUser.getGroups(), currentUser.getLogin(), pageable);
     }
 
-    public List<Notification> findAllRecentExceptSystem(User currentUser) {
-        return notificationRepository.findAllRecentNotificationsForRecipientWithLogin(currentUser.getGroups(), currentUser.getLogin(), currentUser.getLastNotificationRead());
-    }
-
-    public Page<Notification> findAllNonRecentExceptSystem(User currentUser, Pageable pageable) {
-        return notificationRepository.findAllNonRecentNotificationsForRecipientWithLogin(currentUser.getGroups(), currentUser.getLogin(), currentUser.getLastNotificationRead(),
-                pageable);
-    }
-
     public List<GroupNotification> findAllNotificationsForCourse(Course course) {
         return groupNotificationRepository.findAllByCourseId(course.getId());
     }
