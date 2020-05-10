@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.web.rest;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.actuate.endpoint.annotation.ReadOperation;
 import org.springframework.boot.actuate.endpoint.web.annotation.EndpointWebExtension;
 import org.springframework.messaging.simp.user.SimpUserRegistry;
@@ -18,12 +19,14 @@ import io.github.jhipster.config.metric.JHipsterMetricsEndpoint;
 @EndpointWebExtension(endpoint = JHipsterMetricsEndpoint.class)
 public class CustomMetricsExtension {
 
-    private final JHipsterMetricsEndpoint delegate;
+    @Autowired
+    private final JHipsterMetricsEndpoint jHipsterMetricsEndpoint;
 
+    @Autowired
     private final SimpUserRegistry simpUserRegistry;
 
-    public CustomMetricsExtension(JHipsterMetricsEndpoint delegate, SimpUserRegistry simpUserRegistry) {
-        this.delegate = delegate;
+    public CustomMetricsExtension(JHipsterMetricsEndpoint jHipsterMetricsEndpoint, SimpUserRegistry simpUserRegistry) {
+        this.jHipsterMetricsEndpoint = jHipsterMetricsEndpoint;
         this.simpUserRegistry = simpUserRegistry;
     }
 
@@ -33,7 +36,7 @@ public class CustomMetricsExtension {
      */
     @ReadOperation
     public Map<String, Map> getMetrics() {
-        Map<String, Map> metrics = this.delegate.allMetrics();
+        Map<String, Map> metrics = this.jHipsterMetricsEndpoint.allMetrics();
         HashMap<String, Integer> activeUsers = new HashMap<>();
         activeUsers.put("activeUsers", this.simpUserRegistry.getUserCount());
         metrics.put("customMetrics", new HashMap(activeUsers));
