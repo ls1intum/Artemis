@@ -5,10 +5,10 @@ import { SystemNotification } from 'app/entities/system-notification.model';
 import { SystemNotificationService } from 'app/core/system-notification/system-notification.service';
 
 @Component({
-    selector: 'jhi-notification-mgmt-detail',
-    templateUrl: './notification-management-detail.component.html',
+    selector: 'jhi-system-notification-management-detail',
+    templateUrl: './system-notification-management-detail.component.html',
 })
-export class NotificationMgmtDetailComponent implements OnInit, OnDestroy {
+export class SystemNotificationManagementDetailComponent implements OnInit, OnDestroy {
     notification: SystemNotification;
     private subscription: Subscription;
 
