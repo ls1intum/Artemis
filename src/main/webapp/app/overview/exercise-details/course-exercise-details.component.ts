@@ -367,10 +367,10 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         this.programmingExerciseSimulationService.failsIfInProduction();
         this.courseExerciseSubmissionResultSimulationService.simulateResult(this.exerciseId).subscribe(
             (result) => {
-                //set the value to false to deactivate the result button
+                // set the value to false in order to deactivate the result button
                 this.wasSubmissionSimulated = false;
 
-                //set this values in order to visualize the result on the exercise details page
+                // set these values in order to visualize the simulated result on the exercise details page
                 this.exercise!.participationStatus = ParticipationStatus.EXERCISE_SUBMITTED;
                 this.studentParticipation = <StudentParticipation>result.body!.participation;
                 this.studentParticipation.results = [];
