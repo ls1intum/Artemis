@@ -91,17 +91,19 @@ export class NotificationSidebarComponent implements OnInit {
     }
 
     private loadNotifications(): void {
-        this.loading = true;
-        this.notificationService
-            .query({
-                page: this.page,
-                size: this.notificationsPerPage,
-                sort: ['notificationDate,desc'],
-            })
-            .subscribe(
-                (res: HttpResponse<Notification[]>) => this.loadNotificationsSuccess(res.body!, res.headers),
-                (res: HttpErrorResponse) => (this.error = res.message),
-            );
+        if (this.notifications.length < this.totalNotifications) {
+            this.loading = true;
+            this.notificationService
+                .query({
+                    page: this.page,
+                    size: this.notificationsPerPage,
+                    sort: ['notificationDate,desc'],
+                })
+                .subscribe(
+                    (res: HttpResponse<Notification[]>) => this.loadNotificationsSuccess(res.body!, res.headers),
+                    (res: HttpErrorResponse) => (this.error = res.message),
+                );
+        }
     }
 
     private loadNotificationsSuccess(notifications: Notification[], headers: HttpHeaders): void {
