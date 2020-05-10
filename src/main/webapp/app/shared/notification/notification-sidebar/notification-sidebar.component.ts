@@ -27,6 +27,9 @@ export class NotificationSidebarComponent implements OnInit {
 
     constructor(private notificationService: NotificationService, private userService: UserService, private accountService: AccountService) {}
 
+    /**
+     * Load notifications when user is authenticated on component initialization.
+     */
     ngOnInit(): void {
         // TODO: can we remove the first three lines here? Currently the service method is called twice.
         if (this.accountService.isAuthenticated()) {
@@ -43,7 +46,7 @@ export class NotificationSidebarComponent implements OnInit {
     }
 
     private loadNotifications(): void {
-        // Query recent and non-recent notifications.
+        // Query recent and first batch of non-recent notifications.
         this.notificationService
             .queryNew({
                 page: this.page - 1,
@@ -93,11 +96,19 @@ export class NotificationSidebarComponent implements OnInit {
         }
     }
 
+    /**
+     * Will be executed when a notification was clicked. The notification sidebar will be closed and the actual interpretation
+     * of what should happen after the notification was clicked will be handled in the notification service.
+     * @param notification that will be interpreted of type {Notification}
+     */
     startNotification(notification: Notification): void {
         this.showSidebar = false;
         this.notificationService.interpretNotification(notification as GroupNotification);
     }
 
+    /**
+     * Update the user's lastNotificationRead setting.
+     */
     updateNotificationDate(): void {
         this.userService.updateUserNotificationDate().subscribe((res: HttpResponse<User>) => {
             res.body!.lastNotificationRead = moment();
@@ -107,6 +118,9 @@ export class NotificationSidebarComponent implements OnInit {
         });
     }
 
+    /**
+     * Show the sidebar when it is not visible and hide the sidebar when it is visible.
+     */
     toggleSidebar(): void {
         this.showSidebar = !this.showSidebar;
     }
