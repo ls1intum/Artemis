@@ -94,7 +94,7 @@ export class NotificationSidebarComponent implements OnInit {
         this.loading = true;
         this.notificationService
             .query({
-                page: this.page - 1,
+                page: this.page,
                 size: this.notificationsPerPage,
                 sort: ['notificationDate,desc'],
             })
