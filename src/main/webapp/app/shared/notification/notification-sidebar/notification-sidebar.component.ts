@@ -79,16 +79,19 @@ export class NotificationSidebarComponent implements OnInit {
     onScroll(): void {
         // TODO: will be called to often --> fix, increase threshold again to 350
         const container = document.getElementById('notificationSidebarContainer');
-        const threshold = 50;
+        const threshold = 10;
         if (container) {
             const height = container.scrollHeight - container.offsetHeight;
             if (height > threshold && container.scrollTop > height - threshold) {
                 console.log('Load more');
+                this.page += 1;
+                this.loadNotifications();
             }
         }
     }
 
     private loadNotifications(): void {
+        console.log('loadNotifications', this.page);
         this.notificationService
             .query({
                 page: this.page - 1,
@@ -102,9 +105,9 @@ export class NotificationSidebarComponent implements OnInit {
     }
 
     private onSuccess(notifications: Notification[], headers: HttpHeaders): void {
+        console.log(notifications);
         this.totalNotifications = Number(headers.get('X-Total-Count')!);
         this.addNotifications(notifications);
-        this.updateNotifications();
     }
 
     private subscribeToNotificationUpdates(): void {
@@ -116,7 +119,6 @@ export class NotificationSidebarComponent implements OnInit {
             if (notification) {
                 notification.notificationDate = notification.notificationDate ? moment(notification.notificationDate) : null;
                 this.addNotifications([notification]);
-                this.updateNotifications();
             }
         });
     }
@@ -128,6 +130,7 @@ export class NotificationSidebarComponent implements OnInit {
                     this.notifications.push(notification);
                 }
             });
+            this.updateNotifications();
         }
     }
 
