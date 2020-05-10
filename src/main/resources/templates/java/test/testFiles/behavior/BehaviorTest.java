@@ -10,7 +10,7 @@ import java.util.StringJoiner;
 
 /**
  * @author Stephan Krusche (krusche@in.tum.de)
- * @version 3.0 (25.09.2019)
+ * @version 3.1 (10.05.2020)
  * <br><br>
  *
  * This class serves as an API to Java Reflection to facilitate various operations that are performed
