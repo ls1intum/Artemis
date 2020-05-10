@@ -3,6 +3,9 @@ import { BaseEntity } from 'app/shared/model/base-entity';
 import { Exercise } from 'app/entities/exercise.model';
 import { ExampleSubmission } from 'app/entities/example-submission.model';
 
+/**
+ * defines different status for tutor participation
+ */
 export const enum TutorParticipationStatus {
     NOT_PARTICIPATED = 'NOT_PARTICIPATED',
     REVIEWED_INSTRUCTIONS = 'REVIEWED_INSTRUCTIONS',

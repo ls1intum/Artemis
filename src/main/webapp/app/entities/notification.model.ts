@@ -2,6 +2,9 @@ import { Moment } from 'moment';
 import { BaseEntity } from 'app/shared/model/base-entity';
 import { User } from 'app/core/user/user.model';
 
+/**
+ * defines different Notification types
+ */
 export enum NotificationType {
     SYSTEM = 'system',
     CONNECTION = 'connection',

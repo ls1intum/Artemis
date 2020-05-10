@@ -4,6 +4,9 @@ import { TemplateProgrammingExerciseParticipation } from 'app/entities/participa
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { Course } from 'app/entities/course.model';
 
+/**
+ * defines different possible programming languages for a programming exercise
+ */
 export const enum ProgrammingLanguage {
     JAVA = 'JAVA',
     PYTHON = 'PYTHON',

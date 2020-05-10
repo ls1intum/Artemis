@@ -1,6 +1,9 @@
 import { Notification, NotificationType } from 'app/entities/notification.model';
 import { Course } from 'app/entities/course.model';
 
+/**
+ * defines different types of group notification
+ */
 export const enum GroupNotificationType {
     INSTRUCTOR = 'INSTRUCTOR',
     TA = 'TA',

@@ -8,6 +8,9 @@ import { TemplateProgrammingExerciseParticipation } from 'app/entities/participa
 import { Submission } from 'app/entities/submission.model';
 import { Result } from 'app/entities/result.model';
 
+/**
+ * defines different initialization statesof the participation
+ */
 export const enum InitializationState {
     UNINITIALIZED = 'UNINITIALIZED',
     REPO_COPIED = 'REPO_COPIED',
@@ -19,7 +22,10 @@ export const enum InitializationState {
     INACTIVE = 'INACTIVE',
 }
 
-// IMPORTANT NOTICE: The following strings have to be consistent with the ones defined in Participation.java
+/**
+ * defines different participation types
+ * IMPORTANT NOTICE: The following strings have to be consistent with the ones defined in Participation.java
+ */
 export enum ParticipationType {
     STUDENT = 'student',
     PROGRAMMING = 'programming',
