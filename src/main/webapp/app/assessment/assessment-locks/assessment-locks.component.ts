@@ -125,7 +125,7 @@ export class AssessmentLocksComponent implements OnInit {
      */
     getModelingSubmissions(exercise: ModelingExercise) {
         this.modelingSubmissionService.getModelingSubmissionsForExercise(exercise.id, { submittedOnly: true }).subscribe((response: HttpResponse<ModelingSubmission[]>) => {
-            response.body?.forEach((submission) => {
+            return response.body?.forEach((submission) => {
                 if (!submission.result || !submission.submitted || submission.result.assessor.id !== this.tutorId) {
                     return;
                 }
@@ -146,7 +146,7 @@ export class AssessmentLocksComponent implements OnInit {
      */
     getTextSubmissions(exercise: TextExercise) {
         this.textSubmissionService.getTextSubmissionsForExercise(exercise.id, { submittedOnly: true }).subscribe((response: HttpResponse<TextSubmission[]>) => {
-            response.body?.forEach((submission) => {
+            return response.body?.forEach((submission) => {
                 if (!submission.result || !submission.submitted || submission.result.assessor.id !== this.tutorId) {
                     return;
                 }
@@ -167,7 +167,7 @@ export class AssessmentLocksComponent implements OnInit {
      */
     getFileUploadSubmissions(exercise: FileUploadExercise) {
         this.fileUploadSubmissionService.getFileUploadSubmissionsForExercise(exercise.id, { submittedOnly: true }).subscribe((response: HttpResponse<FileUploadSubmission[]>) => {
-            response.body?.forEach((submission) => {
+            return response.body?.forEach((submission) => {
                 if (!submission.result || !submission.submitted || submission.result.assessor.id !== this.tutorId) {
                     return;
                 }
