@@ -75,31 +75,16 @@ public class NotificationResource {
     }
 
     /**
-     * GET /notifications : get all notifications by pages.
-     *
-     * @param pageable Pagination information for fetching the nofications
-     * @return the list notifications
-     */
-    @GetMapping("/notifications")
-    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<List<Notification>> getAllNotificationsForCurrentUser(@ApiParam Pageable pageable) {
-        User currentUser = userService.getUserWithGroupsAndAuthorities();
-        final Page<Notification> page = notificationService.findAllExceptSystem(currentUser, pageable);
-        HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
-        return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
-    }
-
-    /**
-     * GET /notifications/sidebar : Get all recent notifications (after last read) for the current user and a batch of
+     * GET /notifications : Get all recent notifications (after last read) for the current user and a batch of
      * non-recent notifications if the page number is equal to 0. If the page number is greater than 0 only the
      * corresponding paged batch of non-recent notifications will be returned.
      *
      * @param pageable Pagination information for fetching the notifications
      * @return list of notifications
      */
-    @GetMapping("/notifications/sidebar")
+    @GetMapping("/notifications")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<List<Notification>> getNotificationsNEW(@ApiParam Pageable pageable) {
+    public ResponseEntity<List<Notification>> getNotificationsForCurrentUser(@ApiParam Pageable pageable) {
         List<Notification> notifications = new ArrayList<>();
         List<Notification> recentNotifications = new ArrayList<>();
         int nonRecentNotificationsCount = 0;
