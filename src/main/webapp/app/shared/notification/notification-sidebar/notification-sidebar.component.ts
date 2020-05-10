@@ -75,7 +75,7 @@ export class NotificationSidebarComponent implements OnInit {
     }
 
     /**
-     * TODO
+     * Check scroll position and load more notifications if the user scrolled to the end.
      */
     onScroll(): void {
         const container = document.getElementById('notificationSidebarContainer');
