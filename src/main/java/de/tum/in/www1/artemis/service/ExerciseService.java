@@ -57,10 +57,12 @@ public class ExerciseService {
 
     private final ComplaintResponseRepository complaintResponseRepository;
 
+    private final TeamService teamService;
+
     public ExerciseService(ExerciseRepository exerciseRepository, ParticipationService participationService, AuthorizationCheckService authCheckService,
             ProgrammingExerciseService programmingExerciseService, QuizStatisticService quizStatisticService, QuizScheduleService quizScheduleService,
             TutorParticipationRepository tutorParticipationRepository, ExampleSubmissionService exampleSubmissionService, AuditEventRepository auditEventRepository,
-            ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository) {
+            ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository, TeamService teamService) {
         this.exerciseRepository = exerciseRepository;
         this.participationService = participationService;
         this.authCheckService = authCheckService;
@@ -72,6 +74,7 @@ public class ExerciseService {
         this.auditEventRepository = auditEventRepository;
         this.complaintRepository = complaintRepository;
         this.complaintResponseRepository = complaintResponseRepository;
+        this.teamService = teamService;
     }
 
     /**
@@ -105,8 +108,8 @@ public class ExerciseService {
     public List<Exercise> findAllForCourse(Course course, User user) {
         List<Exercise> exercises = null;
         if (authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
-            // user can see this exercise
-            exercises = exerciseRepository.findByCourseId(course.getId());
+            // user can see all exercises of the course
+            exercises = exerciseRepository.findByCourseIdWithCategories(course.getId());
         }
         else if (authCheckService.isStudentInCourse(course, user)) {
 
@@ -115,7 +118,7 @@ public class ExerciseService {
                 exercises = exerciseRepository.findByCourseIdWhereLtiOutcomeUrlExists(course.getId(), user.getLogin());
             }
             else {
-                exercises = exerciseRepository.findByCourseId(course.getId());
+                exercises = exerciseRepository.findByCourseIdWithCategories(course.getId());
             }
 
             // user is student for this course and might not have the right to see it so we have to filter
@@ -123,9 +126,11 @@ public class ExerciseService {
             exercises = exercises.stream().filter(Exercise::isVisibleToStudents).collect(Collectors.toList());
         }
 
-        // filter out questions and all statistical information about the quizPointStatistic from quizExercises (so users can't see which answer options are correct)
         if (exercises != null) {
             for (Exercise exercise : exercises) {
+                setAssignedTeamIdForExerciseAndUser(exercise, user);
+
+                // filter out questions and all statistical information about the quizPointStatistic from quizExercises (so users can't see which answer options are correct)
                 if (exercise instanceof QuizExercise) {
                     QuizExercise quizExercise = (QuizExercise) exercise;
                     quizExercise.filterSensitiveInformation();
@@ -134,6 +139,15 @@ public class ExerciseService {
         }
 
         return exercises;
+    }
+
+    /**
+     * Finds all team-based exercises for a course
+     * @param course Course for which to return all team-based exercises
+     * @return set of exercises
+     */
+    public Set<Exercise> findAllTeamExercisesForCourse(Course course) {
+        return exerciseRepository.findAllTeamExercisesByCourseId(course.getId());
     }
 
     /**
@@ -182,17 +196,33 @@ public class ExerciseService {
     }
 
     /**
-     * Get one exercise by exerciseId with its categories
+     * Get one exercise by exerciseId with its categories and its team assignment config
      *
      * @param exerciseId the exerciseId of the entity
      * @return the entity
      */
-    public Exercise findOneWithCategories(Long exerciseId) {
-        Optional<Exercise> exercise = exerciseRepository.findByIdWithEagerCategories(exerciseId);
+    public Exercise findOneWithCategoriesAndTeamAssignmentConfig(Long exerciseId) {
+        Optional<Exercise> exercise = exerciseRepository.findWithEagerCategoriesAndTeamAssignmentConfigById(exerciseId);
         if (exercise.isEmpty()) {
             throw new EntityNotFoundException("Exercise with exerciseId " + exerciseId + " does not exist!");
         }
         return exercise.get();
+    }
+
+    /**
+     * Get one exercise with all exercise hints and all student questions + answers and with all categories
+     * @param exerciseId the id of the exercise to find
+     * @param user the current user
+     * @return the exercise
+     */
+    public Exercise findOneWithDetailsForStudents(Long exerciseId, User user) {
+        Optional<Exercise> optionalExercise = exerciseRepository.findByIdWithDetailsForStudent(exerciseId);
+        if (optionalExercise.isEmpty()) {
+            throw new EntityNotFoundException("Exercise with exerciseId " + exerciseId + " does not exist!");
+        }
+        Exercise exercise = optionalExercise.get();
+        setAssignedTeamIdForExerciseAndUser(exercise, user);
+        return exercise;
     }
 
     /**
@@ -335,5 +365,20 @@ public class ExerciseService {
 
         exercise.setNumberOfOpenMoreFeedbackRequests(numberOfMoreFeedbackRequests - numberOfMoreFeedbackComplaintResponses);
         exercise.setNumberOfMoreFeedbackRequests(numberOfMoreFeedbackRequests);
+    }
+
+    /**
+     * Sets the transient attribute "studentAssignedTeamId" that contains the id of the team to which the user is assigned
+     *
+     * @param exercise the exercise for which to set the attribute
+     * @param user the user for which to check to which team (or no team) he belongs to
+     */
+    private void setAssignedTeamIdForExerciseAndUser(Exercise exercise, User user) {
+        // if the exercise is not team-based, there is nothing to do here
+        if (exercise.isTeamMode()) {
+            Optional<Team> team = teamService.findOneByExerciseAndUser(exercise, user);
+            exercise.setStudentAssignedTeamId(team.map(Team::getId).orElse(null));
+            exercise.setStudentAssignedTeamIdComputed(true);
+        }
     }
 }

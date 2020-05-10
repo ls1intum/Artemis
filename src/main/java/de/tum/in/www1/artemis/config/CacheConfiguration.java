@@ -17,6 +17,10 @@ import org.springframework.context.annotation.Configuration;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.modeling.*;
+import de.tum.in.www1.artemis.domain.notification.GroupNotification;
+import de.tum.in.www1.artemis.domain.notification.Notification;
+import de.tum.in.www1.artemis.domain.notification.SingleUserNotification;
+import de.tum.in.www1.artemis.domain.notification.SystemNotification;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
 import de.tum.in.www1.artemis.domain.quiz.*;
@@ -42,6 +46,9 @@ public class CacheConfiguration {
         return hibernateProperties -> hibernateProperties.put(ConfigSettings.CACHE_MANAGER, cacheManager);
     }
 
+    /**
+     * @return the initialized cache manager
+     */
     @Bean
     public JCacheManagerCustomizer cacheManagerCustomizer() {
         return cm -> {
@@ -160,6 +167,13 @@ public class CacheConfiguration {
             createIfNotExists(cm, ExerciseHint.class.getName(), jcacheConfiguration);
             createIfNotExists(cm, GuidedTourSetting.class.getName(), jcacheConfiguration);
             createIfNotExists(cm, User.class.getName() + ".guidedTourSettings", jcacheConfiguration);
+            createIfNotExists(cm, Exercise.class.getName() + ".teams", jcacheConfiguration);
+            createIfNotExists(cm, Team.class.getName(), jcacheConfiguration);
+            createIfNotExists(cm, Team.class.getName() + ".students", jcacheConfiguration);
+            createIfNotExists(cm, Exercise.class.getName() + ".gradingCriteria", jcacheConfiguration);
+            createIfNotExists(cm, GradingInstruction.class.getName(), jcacheConfiguration);
+            createIfNotExists(cm, GradingCriterion.class.getName(), jcacheConfiguration);
+            createIfNotExists(cm, GradingCriterion.class.getName() + ".structuredGradingInstructions", jcacheConfiguration);
             // jhipster-needle-ehcache-add-entry
             createIfNotExists(cm, "files", jcacheConfiguration);
         };

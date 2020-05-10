@@ -1,0 +1,64 @@
+<jhi-header-participation-page class="d-block mb-4" [exercise]="fileUploadExercise" [participation]="participation">
+    <span pagetitle>
+        {{ 'artemisApp.fileUploadSubmission.fileUpload' | translate }}: <span class="font-weight-normal">{{ fileUploadExercise?.title }}</span>
+    </span>
+    <jhi-button
+        submitbutton
+        [disabled]="(!isActive && !isLate) || !submission || !submissionFile || !!result"
+        [title]="!isLate ? 'entity.action.submit' : 'entity.action.submitDeadlineMissed'"
+        (onClick)="submitExercise()"
+        [btnType]="!isLate ? ButtonType.PRIMARY : ButtonType.WARNING"
+        [tooltip]="submitButtonTooltip"
+        [isLoading]="isSaving"
+    >
+    </jhi-button>
+</jhi-header-participation-page>
+
+<jhi-alert></jhi-alert>
+
+<div class="mt-4 px-2 pb-2">
+    <div class="row" *ngIf="fileUploadExercise">
+        <div class="col-12">
+            <p class="mb-3 markdown-preview" *ngIf="fileUploadExercise!.problemStatement">
+                <b><span jhiTranslate="artemisApp.exercise.problemStatement">Problem Statement</span>:</b>
+                <span [innerHTML]="fileUploadExercise!.problemStatement! | htmlForMarkdown"></span>
+            </p>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12 col-md-6" *ngIf="(isActive || isLate) && !result && fileUploadExercise && submission">
+            <div class="form-group">
+                <label class="form-control-label" jhiTranslate="artemisApp.fileUploadSubmission.selectFile">Please select </label>
+                <div class="input-group background-file">
+                    <div class="custom-file overflow-ellipsis">
+                        <input #fileInput id="fileUploadInput" type="file" class="custom-file-input" (change)="setFileSubmissionForExercise($event)" />
+                        <label class="custom-file-label overflow-ellipsis" for="fileUploadInput">{{ submissionFile ? submissionFile!.name : '' }}</label>
+                    </div>
+                </div>
+                <p class="d-inline-block" jhiTranslate="artemisApp.fileUploadExercise.supportedFileExtensions">Supported file extensions:</p>
+                <div class="d-inline-block" *ngFor="let extension of fileUploadExercise.filePattern.split(',')">
+                    <span class="ml-1 badge badge-info">
+                        {{ extension | uppercase }}
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div *ngIf="submittedFileName && submission?.filePath" class="card-text">
+        <h6>
+            {{ 'artemisApp.fileUploadSubmission.submittedFile' | translate: { filename: submittedFileName } }} <span> {{ submission!.submissionDate! | amTimeAgo }}</span>
+        </h6>
+        <a class="text-primary" (click)="downloadFile(submission!.filePath!)" jhiTranslate="artemisApp.fileUploadSubmission.download">Download file</a>
+        <span class="ml-2 badge badge-info" *ngIf="submittedFileExtension">
+            {{ submittedFileExtension | uppercase }}
+        </span>
+    </div>
+    <div *ngIf="result?.feedbacks && result.feedbacks.length > 0">
+        <br />
+        <h5><span jhiTranslate="artemisApp.fileUploadExercise.assessedSubmission">Your assessed submission</span>:</h5>
+        <jhi-file-upload-result [result]="result"></jhi-file-upload-result>
+    </div>
+    <jhi-complaint-interactions *ngIf="fileUploadExercise" [result]="result" [participation]="participation" [exercise]="fileUploadExercise"> </jhi-complaint-interactions>
+</div>

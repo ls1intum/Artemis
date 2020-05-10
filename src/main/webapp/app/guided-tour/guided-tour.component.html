@@ -7,7 +7,7 @@
     <div
         #tourStep
         *ngIf="currentTourStep"
-        class="tour-step tour-{{ currentTourStep.orientation }}"
+        class="tour-step tour-{{ orientation }}"
         [class.page-tour-step]="!currentTourStep.highlightSelector"
         [class.startFade]="startFade"
         [class.video-tour]="isVideoTourStep()"
@@ -28,9 +28,7 @@
                     *ngIf="guidedTourService.currentTour"
                     class="close"
                     (click)="
-                        guidedTourService.isCurrentTour(cancelTour) || guidedTourService.isCurrentTour(completedTour)
-                            ? guidedTourService.resetTour()
-                            : guidedTourService.skipTour(true, false)
+                        guidedTourService.isCurrentTour(cancelTour) || guidedTourService.isCurrentTour(completedTour) ? guidedTourService.resetTour() : guidedTourService.skipTour()
                     "
                 ></div>
             </div>
@@ -63,19 +61,27 @@
                     </div>
                     <ng-template #userInteractionIcons>
                         <div class="step-hint__icon">
-                            <fa-icon *ngIf="currentTourStep.userInteractionEvent === UserInteractionEvent.CLICK" icon="hand-point-up"></fa-icon>
-                            <fa-icon *ngIf="currentTourStep.userInteractionEvent === UserInteractionEvent.ACE_EDITOR" icon="i-cursor"></fa-icon>
-                            <fa-icon *ngIf="currentTourStep.userInteractionEvent === UserInteractionEvent.WAIT_FOR_SELECTOR" [spin]="true" icon="circle-notch"></fa-icon>
-                            <fa-icon *ngIf="currentTourStep.userInteractionEvent === UserInteractionEvent.MODELING && !currentTourStep.modelingTask" icon="arrows-alt"></fa-icon>
+                            <fa-icon *ngIf="currentTourStep.userInteractionEvent === UserInteractionEvent.CLICK" [icon]="'hand-point-up'"></fa-icon>
+                            <fa-icon *ngIf="currentTourStep.userInteractionEvent === UserInteractionEvent.ACE_EDITOR" [icon]="'i-cursor'"></fa-icon>
+                            <fa-icon *ngIf="currentTourStep.userInteractionEvent === UserInteractionEvent.WAIT_FOR_SELECTOR" [spin]="true" [icon]="'circle-notch'"></fa-icon>
+                            <fa-icon
+                                *ngIf="currentTourStep.userInteractionEvent === UserInteractionEvent.MODELING && !currentTourStep.modelingTask"
+                                [icon]="'arrows-alt'"
+                            ></fa-icon>
+                            <fa-icon *ngIf="currentTourStep.userInteractionEvent === UserInteractionEvent.ASSESS_SUBMISSION" [icon]="'edit'"></fa-icon>
                         </div>
                     </ng-template>
                     <div class="step-hint__label">
-                        <span *ngIf="currentTourStep.userInteractionEvent === UserInteractionEvent.CLICK" jhiTranslate="tour.clickHint.text"></span>
-                        <span *ngIf="currentTourStep.userInteractionEvent === UserInteractionEvent.ACE_EDITOR" jhiTranslate="tour.typeHint.text"></span>
-                        <span *ngIf="currentTourStep.userInteractionEvent === UserInteractionEvent.WAIT_FOR_SELECTOR" jhiTranslate="tour.waitHint.text"></span>
+                        <span *ngIf="currentTourStep.userInteractionEvent === UserInteractionEvent.CLICK" [jhiTranslate]="'tour.clickHint.text'"></span>
+                        <span *ngIf="currentTourStep.userInteractionEvent === UserInteractionEvent.ACE_EDITOR" [jhiTranslate]="'tour.typeHint.text'"></span>
+                        <span *ngIf="currentTourStep.userInteractionEvent === UserInteractionEvent.WAIT_FOR_SELECTOR" [jhiTranslate]="'tour.waitHint.text'"></span>
                         <span
                             *ngIf="currentTourStep.userInteractionEvent === UserInteractionEvent.MODELING && !currentTourStep.modelingTask"
-                            jhiTranslate="tour.modelingHint.text"
+                            [jhiTranslate]="'tour.modelingHint.text'"
+                        ></span>
+                        <span
+                            *ngIf="currentTourStep.userInteractionEvent === UserInteractionEvent.ASSESS_SUBMISSION"
+                            [jhiTranslate]="currentTourStep.assessmentTask.taskTranslateKey"
                         ></span>
                     </div>
                 </div>
@@ -112,25 +118,31 @@
                     [disabled]="guidedTourService.isOnFirstStep"
                     (click)="guidedTourService.backStep()"
                 >
-                    <fa-icon icon="chevron-left"></fa-icon>
+                    <fa-icon [icon]="'chevron-left'"></fa-icon>
                     <span jhiTranslate="tour.navigation.back"></span>
                 </button>
                 <button
                     *ngIf="guidedTourService.isCurrentTour(completedTour)"
                     class="restart-button"
-                    [disabled]="guidedTourService.isOnResizeMessage"
-                    (click)="guidedTourService.startTour()"
+                    [disabled]="guidedTourService.isOnResizeMessage || guidedTourService.restartIsLoading"
+                    (click)="guidedTourService.restartTour()"
                 >
-                    <fa-icon icon="play-circle"></fa-icon>
+                    <fa-icon *ngIf="!guidedTourService.restartIsLoading" [icon]="'play-circle'"></fa-icon>
+                    <fa-icon class="jhi-btn__loading" *ngIf="guidedTourService.restartIsLoading" [icon]="'circle-notch'" [spin]="true" size="sm"></fa-icon>
                     <span jhiTranslate="global.menu.restartTutorial"></span>
                 </button>
                 <div class="dotstyle dotstyle--scaleup" *ngIf="!guidedTourService.isOnResizeMessage">
-                    <ul *ngIf="guidedTourService.currentTour && guidedTourService.currentTour.steps.length > 1" [ngStyle]="{ transform: 'translateX(' + transformX + 'px)' }">
+                    <ul
+                        #dotNavigation
+                        *ngIf="guidedTourService.currentTour && guidedTourService.currentTour.steps.length > 1"
+                        [ngStyle]="{ transform: 'translateX(' + transformX + 'px)' }"
+                    >
                         <li
+                            #dotElements
                             class="dot-index-{{ guidedTourService.currentTour.steps.indexOf(i) }}"
                             [class.current]="guidedTourService.isCurrentStep(i)"
-                            [class.n-small]="guidedTourService.calculateNSmallDot(guidedTourService.currentTour.steps.indexOf(i) + 1)"
-                            [class.p-small]="guidedTourService.calculatePSmallDot(guidedTourService.currentTour.steps.indexOf(i) + 1)"
+                            [class.n-small]="calculateNSmallDot(guidedTourService.currentTour.steps.indexOf(i) + 1)"
+                            [class.p-small]="calculatePSmallDot(guidedTourService.currentTour.steps.indexOf(i) + 1)"
                             *ngFor="let i of guidedTourService.currentTour.steps"
                         >
                             <span>{{ guidedTourService.currentTour.steps.indexOf(i) }}</span>

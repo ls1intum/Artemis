@@ -6,7 +6,7 @@
             "automaticGenerated": "Automatisch erstelltes Feedback",
             "error": {
                 "moreThanOneGeneralFeedback": "Es kann nicht mehr als ein allgemeines Feedback pro Bewertung geben.",
-                "assessmentDueDateOver": "Das Fälligkeitsdatum der Bewertung für diese Aufgabe ist vorbei."
+                "assessmentDueDateOver": "Das Abgabedatum der Bewertung für diese Aufgabe ist vorbei."
             },
             "assessmentLocked": "Bewertung gesperrt von: {{otherUser}}",
             "assessmentLockedCurrentUser": "Diese Bewertung ist von dir gesperrt",
@@ -29,6 +29,7 @@
                 "updateAfterComplaintFailed": "Das Aktualisieren der Bewertung ist fehlgeschlagen."
             },
             "dashboard": {
+                "warning": "Achtung: der Abgabetermin ist noch nicht abgelaufen und Studenten dürfen noch ihre Einreichungen abgeben. Bitte noch nicht mit der Korrektur anfangen",
                 "empty": "Keine Abgabe für diese Aufgabe!",
                 "loading": "Laden..",
                 "columns": {

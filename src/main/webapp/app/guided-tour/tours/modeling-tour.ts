@@ -1,11 +1,11 @@
 import { GuidedTour } from 'app/guided-tour/guided-tour.model';
-import { ImageTourStep, ModelingTaskTourStep, TextTourStep } from 'app/guided-tour/guided-tour-step.model';
-import { Orientation, UserInteractionEvent } from 'app/guided-tour/guided-tour.constants';
+import { ImageTourStep, ModelingTaskTourStep, TextTourStep, UserInterActionTourStep } from 'app/guided-tour/guided-tour-step.model';
+import { Orientation, ResetParticipation, UserInteractionEvent } from 'app/guided-tour/guided-tour.constants';
 import { associationUML, GuidedTourModelingTask, personUML, studentUML } from 'app/guided-tour/guided-tour-task.model';
 
 export const modelingTour: GuidedTour = {
     settingsKey: 'modeling_tour',
-    resetUMLModel: true,
+    resetParticipation: ResetParticipation.EXERCISE_PARTICIPATION,
     steps: [
         new TextTourStep({
             headlineTranslateKey: 'tour.modelingExercise.editorArea.headline',
@@ -24,7 +24,7 @@ export const modelingTour: GuidedTour = {
             imageUrl: '/../../../content/images/guided-tour-images/apollon-add-association.gif',
         }),
         new ModelingTaskTourStep({
-            highlightSelector: 'jhi-modeling-editor .modeling-editor .modeling-editor',
+            highlightSelector: 'jhi-modeling-editor .guided-tour.modeling-editor .modeling-editor',
             headlineTranslateKey: 'tour.modelingExercise.executeTasks.headline',
             contentTranslateKey: 'tour.modelingExercise.executeTasks.content',
             highlightPadding: 5,
@@ -33,7 +33,7 @@ export const modelingTour: GuidedTour = {
             modelingTask: new GuidedTourModelingTask(personUML.name, 'tour.modelingExercise.executeTasks.personClass'),
         }),
         new ModelingTaskTourStep({
-            highlightSelector: 'jhi-modeling-editor .modeling-editor .modeling-editor',
+            highlightSelector: 'jhi-modeling-editor .guided-tour.modeling-editor .modeling-editor',
             headlineTranslateKey: 'tour.modelingExercise.executeTasks.headline',
             contentTranslateKey: 'tour.modelingExercise.executeTasks.content',
             orientation: Orientation.TOP,
@@ -41,15 +41,15 @@ export const modelingTour: GuidedTour = {
             modelingTask: new GuidedTourModelingTask(studentUML.name, 'tour.modelingExercise.executeTasks.studentClass'),
         }),
         new ModelingTaskTourStep({
-            highlightSelector: 'jhi-modeling-editor .modeling-editor .modeling-editor',
+            highlightSelector: 'jhi-modeling-editor .guided-tour.modeling-editor .modeling-editor',
             headlineTranslateKey: 'tour.modelingExercise.executeTasks.headline',
             contentTranslateKey: 'tour.modelingExercise.executeTasks.content',
             orientation: Orientation.TOP,
             userInteractionEvent: UserInteractionEvent.MODELING,
             modelingTask: new GuidedTourModelingTask(associationUML.name, 'tour.modelingExercise.executeTasks.association'),
         }),
-        new TextTourStep({
-            highlightSelector: 'jhi-modeling-submission .submission-button',
+        new UserInterActionTourStep({
+            highlightSelector: 'jhi-modeling-submission .guided-tour.submission-button',
             headlineTranslateKey: 'tour.modelingExercise.submit.headline',
             contentTranslateKey: 'tour.modelingExercise.submit.content',
             hintTranslateKey: 'tour.modelingExercise.submit.hint',

@@ -1,0 +1,94 @@
+<div class="guided-tour modeling-editor">
+    <ng-template #help let-c="close" let-d="dismiss">
+        <div class="modal-header">
+            <h4 class="modal-title" jhiTranslate="artemisApp.modelingEditor.helpModal.title">How to use the modeling editor</h4>
+            <button type="button" class="close" aria-label="Close" (click)="d()"><span aria-hidden="true">&times;</span></button>
+        </div>
+        <div class="modal-body">
+            <table class="table">
+                <tr>
+                    <th jhiTranslate="artemisApp.modelingEditor.helpModal.createElement.title">Add Class</th>
+                    <td jhiTranslate="artemisApp.modelingEditor.helpModal.createElement.text">
+                        To add a class, simply drag and drop one of the elements on the right side into the editor area on the left side.
+                    </td>
+                    <td><img width="300" src="/content/images/help-create-element.png" /></td>
+                </tr>
+                <tr>
+                    <th jhiTranslate="artemisApp.modelingEditor.helpModal.createRelationship.title">Add Association</th>
+                    <td jhiTranslate="artemisApp.modelingEditor.helpModal.createRelationship.text">
+                        To add an association, select the source class with a single click and you will see four blue circles. Those are the possible connection points for
+                        associations. Click and hold on one of those and drag it to another blue circle to create an association.
+                    </td>
+                    <td><img width="300" src="/content/images/help-create-relationship.jpg" /></td>
+                </tr>
+                <tr>
+                    <th jhiTranslate="artemisApp.modelingEditor.helpModal.updateElement.title">Edit Class</th>
+                    <td jhiTranslate="artemisApp.modelingEditor.helpModal.updateElement.text">
+                        To edit a class, double click it and a popup will open up, in which you can edit its components, e.g. name, attributes, methods, etc.
+                    </td>
+                    <td><img width="300" src="/content/images/help-update-element.jpg" /></td>
+                </tr>
+                <tr>
+                    <th jhiTranslate="artemisApp.modelingEditor.helpModal.deleteElement.title">Delete Class</th>
+                    <td jhiTranslate="artemisApp.modelingEditor.helpModal.deleteElement.text" colspan="2">
+                        To delete a class, select it with a single click and either press <code>Delete</code> or <code>Backspace</code> on your keyboard.
+                    </td>
+                </tr>
+                <tr>
+                    <th jhiTranslate="artemisApp.modelingEditor.helpModal.moveElement.title">Move Class</th>
+                    <td jhiTranslate="artemisApp.modelingEditor.helpModal.moveElement.text">
+                        To move a class, select it with a single click and either use your keyboard arrows or drag and drop it.
+                    </td>
+                    <td><img width="300" src="/content/images/help-move-element.jpg" /></td>
+                </tr>
+                <tr>
+                    <th jhiTranslate="artemisApp.modelingEditor.helpModal.resizeElement.title">Move Class</th>
+                    <td jhiTranslate="artemisApp.modelingEditor.helpModal.resizeElement.text">
+                        To move a class, select it with a single click and either use your keyboard arrows or drag and drop it.
+                    </td>
+                    <td><img width="300" src="/content/images/help-resize-element.jpg" /></td>
+                </tr>
+                <tr>
+                    <th jhiTranslate="artemisApp.modelingEditor.helpModal.reconnectRelationship.title">Move Class</th>
+                    <td jhiTranslate="artemisApp.modelingEditor.helpModal.reconnectRelationship.text">
+                        To move a class, select it with a single click and either use your keyboard arrows or drag and drop it.
+                    </td>
+                    <td><img width="300" src="/content/images/help-reconnect-relationship.jpg" /></td>
+                </tr>
+                <tr>
+                    <th jhiTranslate="artemisApp.modelingEditor.helpModal.select.title">Undo & Redo</th>
+                    <td jhiTranslate="artemisApp.modelingEditor.helpModal.select.text" colspan="2">
+                        With <code>Ctrl+Z</code> and <code>Ctrl+Y</code> you can undo and redo your changes.
+                    </td>
+                </tr>
+                <tr>
+                    <th jhiTranslate="artemisApp.modelingEditor.helpModal.duplicate.title">Undo & Redo</th>
+                    <td jhiTranslate="artemisApp.modelingEditor.helpModal.duplicate.text" colspan="2">
+                        With <code>Ctrl+Z</code> and <code>Ctrl+Y</code> you can undo and redo your changes.
+                    </td>
+                </tr>
+                <tr>
+                    <th jhiTranslate="artemisApp.modelingEditor.helpModal.undo.title">Undo & Redo</th>
+                    <td jhiTranslate="artemisApp.modelingEditor.helpModal.undo.text" colspan="2">
+                        With <code>Ctrl+Z</code> and <code>Ctrl+Y</code> you can undo and redo your changes.
+                    </td>
+                </tr>
+            </table>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-outline" (click)="c()" jhiTranslate="entity.action.close">Close</button>
+        </div>
+    </ng-template>
+
+    <button *ngIf="!readOnly" class="btn btn-warning mb-2 align-self-start" (click)="open(help)">
+        <fa-icon [icon]="['far', 'question-circle']"></fa-icon>&nbsp;
+        <span jhiTranslate="artemisApp.modelingEditor.helpModal.help">Help</span>
+    </button>
+
+    <div #resizeContainer class="modeling-editor" [class.resizable]="resizeOptions">
+        <div #editorContainer class="apollon-container"></div>
+        <div *ngIf="resizeOptions" class="draggable-right">
+            <fa-icon [icon]="'grip-lines-vertical'"></fa-icon>
+        </div>
+    </div>
+</div>

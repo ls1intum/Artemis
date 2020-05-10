@@ -1,0 +1,50 @@
+<div *ngIf="quizExercise">
+    <div class="row">
+        <div class="col-md-8 offset-md-2 text-center">
+            <h3>{{ quizExercise.title }}</h3>
+            <div class="row">
+                <div class="col-md-4 text-left">
+                    <h4 jhiTranslate="showStatistic.quizQuestions">Quiz questions</h4>
+                    <ol *ngIf="quizExercise.quizQuestions">
+                        <li style="font-size: 15px;" *ngFor="let question of quizExercise.quizQuestions">
+                            <p>
+                                <span
+                                    >{{ question.title }}&nbsp; <span style="color: red;" *ngIf="question.invalid" jhiTranslate="showStatistic.invalid"></span> &nbsp;({{
+                                        question.score
+                                    }}P)</span
+                                >
+                            </p>
+                        </li>
+                    </ol>
+                </div>
+                <div class="col-md-8 text-center">
+                    <p>&nbsp;</p>
+                    <div class="row">
+                        <div class="col-md-8 text-left">
+                            <p id="text" style="font-size: large;">
+                                <span *ngIf="rated" jhiTranslate="showStatistic.quizStatistic.titleRated"></span>
+                                <span *ngIf="!rated" jhiTranslate="showStatistic.quizStatistic.titleUnrated"></span>
+                            </p>
+                        </div>
+                        <div class="col-md-3 text-right">
+                            <p style="font-size: large;">
+                                <span>{{ participants }} </span><span jhiTranslate="showStatistic.participants"></span>
+                            </p>
+                        </div>
+                    </div>
+                    <canvas baseChart [datasets]="datasets" [labels]="labels" [options]="options" [chartType]="chartType" [colors]="colors"> </canvas>
+
+                    <div class="col-md-12 text-center">
+                        <button (click)="switchRated()" type="button" class="btn btn-primary">
+                            <fa-icon [icon]="'sync'"></fa-icon>&nbsp;
+                            <span *ngIf="rated" jhiTranslate="showStatistic.switchToUnrated"></span>
+                            <span *ngIf="!rated" jhiTranslate="showStatistic.switchToRated"></span>
+                        </button>
+                    </div>
+                    <p>&nbsp;</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    <jhi-quiz-statistics-footer [isQuizStatistic]="true"></jhi-quiz-statistics-footer>
+</div>

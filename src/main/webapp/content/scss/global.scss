@@ -173,7 +173,6 @@ Generic styles
 }
 
 .page-wrapper {
-    overflow-x: hidden;
     @media (min-width: 768px) {
         padding-bottom: 46px;
         min-height: 100vh;
@@ -691,6 +690,12 @@ Course Info Bar
     }
     .orange {
         color: #d86b1f;
+    }
+
+    blockquote {
+        padding: 0 1em;
+        color: #6a737d;
+        border-left: 0.25em solid #dfe2e5;
     }
 }
 

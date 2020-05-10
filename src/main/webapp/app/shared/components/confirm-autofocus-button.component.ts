@@ -27,9 +27,7 @@ export class ConfirmAutofocusModalComponent {
 
 @Component({
     selector: 'jhi-confirm-button',
-    template: `
-        <jhi-button [icon]="icon" [title]="title" [tooltip]="tooltip" [disabled]="disabled" [isLoading]="isLoading" (onClick)="onOpenConfirmationModal()"></jhi-button>
-    `,
+    template: ` <jhi-button [icon]="icon" [title]="title" [tooltip]="tooltip" [disabled]="disabled" [isLoading]="isLoading" (onClick)="onOpenConfirmationModal()"></jhi-button> `,
 })
 export class ConfirmAutofocusButtonComponent {
     @Input() icon: string;
@@ -45,15 +43,18 @@ export class ConfirmAutofocusButtonComponent {
 
     constructor(private modalService: NgbModal) {}
 
+    /**
+     * open confirmation modal with text and title
+     */
     onOpenConfirmationModal() {
         const modalRef: NgbModalRef = this.modalService.open(ConfirmAutofocusModalComponent as Component, { size: 'lg', backdrop: 'static' });
         modalRef.componentInstance.text = this.confirmationText;
         modalRef.componentInstance.title = this.confirmationTitle;
         modalRef.result.then(
-            result => {
+            () => {
                 this.onConfirm.emit();
             },
-            reason => {
+            () => {
                 this.onCancel.emit();
             },
         );

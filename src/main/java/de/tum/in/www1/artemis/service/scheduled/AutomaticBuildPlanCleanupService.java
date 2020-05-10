@@ -46,6 +46,7 @@ public class AutomaticBuildPlanCleanupService {
         Collection<String> activeProfiles = Arrays.asList(env.getActiveProfiles());
         if (!activeProfiles.contains(JHipsterConstants.SPRING_PROFILE_PRODUCTION)) {
             // only execute this on production server, i.e. when the prod profile is active
+            // NOTE: if you want to test this locally, please comment it out, but do not commit the changes
             return;
         }
 
@@ -66,8 +67,8 @@ public class AutomaticBuildPlanCleanupService {
                 // already cleaned up
                 continue;
             }
-            if (participation.getStudent() == null) {
-                // we only want to clean up build plans of students
+            if (participation.getParticipant() == null) {
+                // we only want to clean up build plans of students or teams (NOT template or solution build plans)
                 continue;
             }
 

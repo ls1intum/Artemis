@@ -271,46 +271,48 @@ public class QuizExerciseResource {
         }
 
         switch (action) {
-        case "start-now":
-            // check if quiz hasn't already started
-            if (quizExercise.isStarted()) {
-                return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, "quizExercise", "quizAlreadyStarted", "Quiz has already started."))
+            case "start-now":
+                // check if quiz hasn't already started
+                if (quizExercise.isStarted()) {
+                    return ResponseEntity.badRequest()
+                            .headers(HeaderUtil.createFailureAlert(applicationName, true, "quizExercise", "quizAlreadyStarted", "Quiz has already started.")).build();
+                }
+
+                // set release date to now
+                quizExercise.setReleaseDate(ZonedDateTime.now());
+                quizExercise.setIsPlannedToStart(true);
+                groupNotificationService.notifyStudentGroupAboutExerciseStart(quizExercise);
+                break;
+            case "set-visible":
+                // check if quiz is already visible
+                if (quizExercise.isVisibleToStudents()) {
+                    return ResponseEntity.badRequest()
+                            .headers(HeaderUtil.createFailureAlert(applicationName, true, "quizExercise", "quizAlreadyVisible", "Quiz is already visible to students.")).build();
+                }
+
+                // set quiz to visible
+                quizExercise.setIsVisibleBeforeStart(true);
+                break;
+            case "open-for-practice":
+                // check if quiz has ended
+                if (!quizExercise.isStarted() || quizExercise.getRemainingTime() > 0) {
+                    return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, "quizExercise", "quizNotEndedYet", "Quiz hasn't ended yet."))
+                            .build();
+                }
+                // check if quiz is already open for practice
+                if (quizExercise.isIsOpenForPractice()) {
+                    return ResponseEntity.badRequest()
+                            .headers(HeaderUtil.createFailureAlert(applicationName, true, "quizExercise", "quizAlreadyOpenForPractice", "Quiz is already open for practice."))
+                            .build();
+                }
+
+                // set quiz to open for practice
+                quizExercise.setIsOpenForPractice(true);
+                groupNotificationService.notifyStudentGroupAboutExercisePractice(quizExercise);
+                break;
+            default:
+                return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, "quizExercise", "unknownAction", "Unknown action: " + action))
                         .build();
-            }
-
-            // set release date to now
-            quizExercise.setReleaseDate(ZonedDateTime.now());
-            quizExercise.setIsPlannedToStart(true);
-            groupNotificationService.notifyStudentGroupAboutExerciseStart(quizExercise);
-            break;
-        case "set-visible":
-            // check if quiz is already visible
-            if (quizExercise.isVisibleToStudents()) {
-                return ResponseEntity.badRequest()
-                        .headers(HeaderUtil.createFailureAlert(applicationName, true, "quizExercise", "quizAlreadyVisible", "Quiz is already visible to students.")).build();
-            }
-
-            // set quiz to visible
-            quizExercise.setIsVisibleBeforeStart(true);
-            break;
-        case "open-for-practice":
-            // check if quiz has ended
-            if (!quizExercise.isStarted() || quizExercise.getRemainingTime() > 0) {
-                return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, "quizExercise", "quizNotEndedYet", "Quiz hasn't ended yet."))
-                        .build();
-            }
-            // check if quiz is already open for practice
-            if (quizExercise.isIsOpenForPractice()) {
-                return ResponseEntity.badRequest()
-                        .headers(HeaderUtil.createFailureAlert(applicationName, true, "quizExercise", "quizAlreadyOpenForPractice", "Quiz is already open for practice.")).build();
-            }
-
-            // set quiz to open for practice
-            quizExercise.setIsOpenForPractice(true);
-            groupNotificationService.notifyStudentGroupAboutExercisePractice(quizExercise);
-            break;
-        default:
-            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, "quizExercise", "unknownAction", "Unknown action: " + action)).build();
         }
 
         // save quiz exercise
@@ -378,7 +380,7 @@ public class QuizExerciseResource {
         }
 
         // fetch course from database to make sure client didn't change groups
-        Course course = courseService.findOne(quizExercise.getCourse().getId());
+        Course course = courseService.findOne(originalQuizExercise.getCourse().getId());
         if (!authCheckService.isAtLeastInstructorInCourse(course, null)) {
             return forbidden();
         }

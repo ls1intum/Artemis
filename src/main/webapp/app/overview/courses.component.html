@@ -1,0 +1,34 @@
+<div class="row mb-1" *ngIf="nextRelevantExercise">
+    <div class="col">
+        <h3>
+            {{
+                'artemisApp.studentDashboard.exerciseTitle'
+                    | translate
+                        : {
+                              date: nextRelevantExercise.dueDate | date: 'dd.MM.yy HH:mm',
+                              course: nextRelevantCourse.title
+                          }
+            }}
+        </h3>
+    </div>
+</div>
+<div class="row mb-3" *ngIf="nextRelevantExercise">
+    <div class="col-12 pl-4 pr-4">
+        <jhi-course-exercise-row class="pb-1" [exercise]="nextRelevantExercise" [course]="nextRelevantCourse" [extendedLink]="true"></jhi-course-exercise-row>
+    </div>
+</div>
+<div class="row mb-3 align-items-center">
+    <div class="col-12 col-sm">
+        <h3 jhiTranslate="artemisApp.studentDashboard.title">Your current courses</h3>
+    </div>
+    <jhi-course-registration-selector [courses]="courses" (courseRegistered)="loadAndFilterCourses()" class="col-12 col-sm-auto d-flex"></jhi-course-registration-selector>
+</div>
+<div class="row">
+    <jhi-overview-course-card
+        *ngFor="let course of courses"
+        class="col-12 col-md-6 col-lg-4 col-xl-3 pr-2 pl-2 mb-2"
+        [course]="course"
+        [hasGuidedTour]="course === courseForGuidedTour"
+    >
+    </jhi-overview-course-card>
+</div>

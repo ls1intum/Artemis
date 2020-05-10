@@ -5,12 +5,12 @@ import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
-import de.tum.in.www1.artemis.domain.leaderboard.tutor.TutorLeaderboardAcceptedComplaintsView;
+import de.tum.in.www1.artemis.domain.leaderboard.tutor.TutorLeaderboardComplaintsView;
 
 @Repository
-public interface TutorLeaderboardComplaintsViewRepository extends JpaRepository<TutorLeaderboardAcceptedComplaintsView, Long> {
+public interface TutorLeaderboardComplaintsViewRepository extends JpaRepository<TutorLeaderboardComplaintsView, Long> {
 
-    List<TutorLeaderboardAcceptedComplaintsView> findAllByCourseId(Long courseId);
+    List<TutorLeaderboardComplaintsView> findAllByCourseId(long courseId);
 
-    List<TutorLeaderboardAcceptedComplaintsView> findAllByLeaderboardId_ExerciseId(Long exerciseId);
+    List<TutorLeaderboardComplaintsView> findAllByLeaderboardId_ExerciseId(long exerciseId);
 }

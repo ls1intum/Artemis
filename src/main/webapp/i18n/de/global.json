@@ -9,9 +9,9 @@
         },
         "menu": {
             "home": "Startseite",
-            "overview": "Übersicht",
+            "overview": "Kurs Übersicht",
             "courses": "Kurse",
-            "course": "Kursadministration",
+            "course": "Kurs Verwaltung",
             "jhipster-needle-menu-add-element": "JHipster will add additional menu entries here (do not translate!)",
             "entities": {
                 "main": "Entitäten",
@@ -80,7 +80,7 @@
             "admin": {
                 "main": "Server-Administration",
                 "userManagement": "Benutzerverwaltung",
-                "notificationManagement": "Mitteilungsverwaltung",
+                "systemNotifications": "Systemmitteilungen",
                 "featureToggles": "Feature Toggles",
                 "tracker": "Benutzer Aktivitäten",
                 "metrics": "Metriken",
@@ -96,9 +96,7 @@
             "guidedTutorial": "Guided Tutorial",
             "startTutorial": "Tutorial starten",
             "restartTutorial": "Tutorial wiederholen",
-            "continueTutorial": "Tutorial fortsetzen",
-            "noNotifications": "Keine Mitteilungen verfügbar",
-            "showAllNotifications": "Alle Mitteilungen anzeigen"
+            "continueTutorial": "Tutorial fortsetzen"
         },
         "form": {
             "username": "Benutzername",
@@ -173,7 +171,6 @@
             "editInEditor": "In Editor bearbeiten",
             "editInIntelliJ": "In IntelliJ bearbeiten",
             "editEntity": "{{entity}} bearbeiten",
-            "editLink": "Link bearbeiten",
             "generate": "Generieren",
             "open": "Öffnen",
             "save": "Speichern",
@@ -182,6 +179,8 @@
             "reset": "Zurücksetzen",
             "preview": "Vorschau",
             "cleanup": "Aufräumen",
+            "remove": "Entfernen",
+            "purge": "Löschen",
             "archive": "Archivieren",
             "submit": "Absenden",
             "submitTooltip": "Du kannst mehrmals bis zur Deadline abgeben. Deine Bewertung ergibt sich immer aus der letzten Abgabe.",
@@ -195,6 +194,7 @@
             "re-evaluate": "Überarbeiten",
             "close": "Schließen",
             "import": "Import",
+            "to-import": "Importieren",
             "export": "Export",
             "lecture": "Vorlesung",
             "attachments": "Anhänge",
@@ -209,7 +209,8 @@
             "registerForCourse": "Für Kurs anmelden",
             "exercise": "Aufgaben",
             "scores": "Bewertungen",
-            "manageHints": "Verwalte Hinweise"
+            "manageHints": "Verwalte Hinweise",
+            "addExternalSubmission": "Externe Einreichung anlegen"
         },
         "detail": {
             "field": "Feld",
@@ -223,6 +224,9 @@
         },
         "cleanup": {
             "title": "Aufräumen bestätigen"
+        },
+        "remove": {
+            "title": "Entfernen bestätigen"
         },
         "archive": {
             "title": "Archivieren bestätigen"
@@ -271,5 +275,9 @@
         "exercise": "Aufgabendetails",
         "lectures": "Vorlesungen",
         "statistics": "Kursstatistiken"
+    },
+    "connectionStatus": {
+        "connected": "Verbunden",
+        "disconnected": "Verbindung getrennt"
     }
 }

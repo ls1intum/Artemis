@@ -182,7 +182,7 @@ public class RepositoryWebsocketResource {
      */
     private Map<String, String> saveFileSubmissions(List<FileSubmission> submissions, Repository repository) {
         // If updating the file fails due to an IOException, we send an error message for the specific file and try to update the rest
-        HashMap<String, String> fileSaveResult = new HashMap<>();
+        Map<String, String> fileSaveResult = new HashMap<>();
         submissions.forEach((submission) -> {
             try {
                 fetchAndUpdateFile(submission, repository);
@@ -201,7 +201,7 @@ public class RepositoryWebsocketResource {
      *
      * @param submission information about file update
      * @param repository repository in which to fetch and update the file
-     * @throws IOException
+     * @throws IOException exception when the file in the file submission parameter is empty
      */
     private void fetchAndUpdateFile(FileSubmission submission, Repository repository) throws IOException {
         Optional<File> file = gitService.getFileByName(repository, submission.getFileName());

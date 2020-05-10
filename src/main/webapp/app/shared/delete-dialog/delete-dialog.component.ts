@@ -1,9 +1,9 @@
-import { Component, OnInit, Output, EventEmitter, OnDestroy } from '@angular/core';
+import { Component, EventEmitter, OnDestroy, OnInit, Output } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { mapValues } from 'lodash';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { Observable, Subscription } from 'rxjs';
-import { JhiAlertService } from 'ng-jhipster';
+import { AlertService } from 'app/core/alert/alert.service';
 
 @Component({
     selector: 'jhi-delete-dialog',
@@ -26,8 +26,11 @@ export class DeleteDialogComponent implements OnInit, OnDestroy {
     // used by *ngFor in the template
     objectKeys = Object.keys;
 
-    constructor(private activeModal: NgbActiveModal, private jhiAlertService: JhiAlertService) {}
+    constructor(private activeModal: NgbActiveModal, private jhiAlertService: AlertService) {}
 
+    /**
+     * Life cycle hook called by Angular to indicate that Angular is done creating the component
+     */
     ngOnInit(): void {
         this.dialogErrorSubscription = this.dialogError.subscribe((errorMessage: string) => {
             if (errorMessage === '') {
@@ -42,6 +45,9 @@ export class DeleteDialogComponent implements OnInit, OnDestroy {
         }
     }
 
+    /**
+     * Life cycle hook called by Angular for cleanup just before Angular destroys the component
+     */
     ngOnDestroy(): void {
         if (this.dialogErrorSubscription) {
             this.dialogErrorSubscription.unsubscribe();

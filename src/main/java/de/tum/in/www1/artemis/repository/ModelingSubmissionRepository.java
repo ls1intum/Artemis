@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.repository;
 
+import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
+
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -32,7 +34,7 @@ public interface ModelingSubmissionRepository extends JpaRepository<ModelingSubm
      * @param submissionId the id of the modeling submission that should be loaded from the database
      * @return the modeling submission with its result, the feedback list of the result, the assessor of the result, its participation and all results of the participation
      */
-    @EntityGraph(attributePaths = { "result", "result.feedbacks", "result.assessor", "participation", "participation.results" })
+    @EntityGraph(type = LOAD, attributePaths = { "result", "result.feedbacks", "result.assessor", "participation", "participation.results" })
     Optional<ModelingSubmission> findWithEagerResultAndFeedbackAndAssessorAndParticipationResultsById(Long submissionId);
 
     /**
@@ -43,7 +45,7 @@ public interface ModelingSubmissionRepository extends JpaRepository<ModelingSubm
      * @return the list of modeling submissions with their results, the feedback list of the results, the assessor of the results, their participation and all results of the
      *         participations
      */
-    @EntityGraph(attributePaths = { "result", "result.feedbacks", "result.assessor", "participation", "participation.results" })
+    @EntityGraph(type = LOAD, attributePaths = { "result", "result.feedbacks", "result.assessor", "participation", "participation.results" })
     List<ModelingSubmission> findWithEagerResultAndFeedbackAndAssessorAndParticipationResultsByIdIn(Collection<Long> submissionIds);
 
     @Query("select distinct submission from ModelingSubmission submission left join fetch submission.result r left join fetch r.feedbacks where submission.participation.exercise.id = :#{#exerciseId} and submission.submitted = true")
@@ -58,20 +60,4 @@ public interface ModelingSubmissionRepository extends JpaRepository<ModelingSubm
      * @return number of submissions belonging to courseId with submitted status
      */
     long countByParticipation_Exercise_Course_IdAndSubmitted(Long courseId, boolean submitted);
-
-    /**
-     * @param courseId the course id we are interested in
-     * @return the number of submissions belonging to the course id, which have the submitted flag set to true and the submission date before the exercise due date, or no exercise
-     *         due date at all
-     */
-    @Query("SELECT COUNT (DISTINCT submission) FROM ModelingSubmission submission WHERE submission.participation.exercise.course.id = :#{#courseId} AND submission.submitted = TRUE AND (submission.submissionDate < submission.participation.exercise.dueDate OR submission.participation.exercise.dueDate IS NULL)")
-    long countByCourseIdSubmittedBeforeDueDate(@Param("courseId") Long courseId);
-
-    /**
-     * @param exerciseId the exercise id we are interested in
-     * @return the number of submissions belonging to the exercise id, which have the submitted flag set to true and the submission date before the exercise due date, or no
-     *         exercise due date at all
-     */
-    @Query("SELECT COUNT (DISTINCT submission) FROM ModelingSubmission submission WHERE submission.participation.exercise.id = :#{#exerciseId} AND submission.submitted = TRUE AND (submission.submissionDate < submission.participation.exercise.dueDate OR submission.participation.exercise.dueDate IS NULL)")
-    long countByExerciseIdSubmittedBeforeDueDate(@Param("exerciseId") Long exerciseId);
 }

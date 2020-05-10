@@ -26,16 +26,10 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.Repository;
-import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.participation.*;
-import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
-import de.tum.in.www1.artemis.repository.ResultRepository;
-import de.tum.in.www1.artemis.repository.SolutionProgrammingExerciseParticipationRepository;
-import de.tum.in.www1.artemis.repository.TemplateProgrammingExerciseParticipationRepository;
+import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.connectors.CIPermission;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
@@ -101,7 +95,6 @@ public class ProgrammingExerciseService {
         this.groupNotificationService = groupNotificationService;
     }
 
-    // TODO We too many many generic throws Exception declarations.
     /**
      * Setups the context of a new programming exercise. This includes:
      * <ul>
@@ -123,13 +116,16 @@ public class ProgrammingExerciseService {
      *
      * @param programmingExercise The programmingExercise that should be setup
      * @return The newly setup exercise
-     * @throws Exception If anything goes wrong
+     * @throws InterruptedException If something during the communication with the remote Git repository went wrong
+     * @throws GitAPIException If something during the communication with the remote Git repositroy went wrong
+     * @throws IOException If the template files couldn't be read
      */
     @Transactional
-    public ProgrammingExercise setupProgrammingExercise(ProgrammingExercise programmingExercise) throws Exception {
+    public ProgrammingExercise setupProgrammingExercise(ProgrammingExercise programmingExercise) throws InterruptedException, GitAPIException, IOException {
         programmingExercise.generateAndSetProjectKey();
         final var user = userService.getUser();
         final var projectKey = programmingExercise.getProjectKey();
+        // TODO: the following code is used quite often and should be done in only one place
         final var exerciseRepoName = projectKey.toLowerCase() + "-" + RepositoryType.TEMPLATE.getName();
         final var testRepoName = projectKey.toLowerCase() + "-" + RepositoryType.TESTS.getName();
         final var solutionRepoName = projectKey.toLowerCase() + "-" + RepositoryType.SOLUTION.getName();
@@ -174,7 +170,11 @@ public class ProgrammingExerciseService {
         giveCIProjectPermissions(programmingExercise);
     }
 
-    private void connectBaseParticipationsToExerciseAndSave(ProgrammingExercise programmingExercise) {
+    /**
+     *  This method connects the new programming exercise with the template and solution participation
+     * @param programmingExercise the new programming exercise
+     */
+    public void connectBaseParticipationsToExerciseAndSave(ProgrammingExercise programmingExercise) {
         final var templateParticipation = programmingExercise.getTemplateParticipation();
         final var solutionParticipation = programmingExercise.getSolutionParticipation();
         templateParticipation.setProgrammingExercise(programmingExercise);
@@ -198,7 +198,7 @@ public class ProgrammingExerciseService {
     }
 
     private void setupExerciseTemplate(ProgrammingExercise programmingExercise, User user, URL exerciseRepoUrl, URL testsRepoUrl, URL solutionRepoUrl)
-            throws IOException, InterruptedException, GitAPIException {
+            throws IOException, GitAPIException, InterruptedException {
         String programmingLanguage = programmingExercise.getProgrammingLanguage().toString().toLowerCase();
 
         String templatePath = "classpath:templates/" + programmingLanguage;
@@ -376,7 +376,6 @@ public class ProgrammingExerciseService {
 
     /**
      * Replace placeholders in repository files (e.g. ${placeholder}).
-     * 
      * @param programmingExercise The related programming exercise
      * @param repository The repository in which the placeholders should get replaced
      * @throws IOException If replacing the directory name, or file variables throws an exception
@@ -409,7 +408,6 @@ public class ProgrammingExerciseService {
 
     /**
      * Stage, commit and push.
-     * 
      * @param repository The repository to which the changes should get pushed
      * @param templateName The template name which should be put in the commit message
      * @throws GitAPIException If committing, or pushing to the repo throws an exception
@@ -443,7 +441,6 @@ public class ProgrammingExerciseService {
 
     /**
      * Find a programming exercise by its id.
-     * 
      * @param programmingExerciseId of the programming exercise.
      * @return The programming exercise related to the given id
      * @throws EntityNotFoundException the programming exercise could not be found.
@@ -516,21 +513,7 @@ public class ProgrammingExerciseService {
     }
 
     /**
-     * This method saves the template and solution participations of the programming exercise
-     *
-     * @param programmingExercise The programming exercise for which the participations should get saved
-     */
-    public void saveParticipations(ProgrammingExercise programmingExercise) {
-        SolutionProgrammingExerciseParticipation solutionParticipation = programmingExercise.getSolutionParticipation();
-        TemplateProgrammingExerciseParticipation templateParticipation = programmingExercise.getTemplateParticipation();
-
-        solutionProgrammingExerciseParticipationRepository.save(solutionParticipation);
-        templateProgrammingExerciseParticipationRepository.save(templateParticipation);
-    }
-
-    /**
      * Combine all commits of the given repository into one.
-     * 
      * @param repoUrl of the repository to combine.
      * @throws InterruptedException If the checkout fails
      * @throws GitAPIException If the checkout fails
@@ -601,11 +584,12 @@ public class ProgrammingExerciseService {
         Path structureOraclePath = Paths.get(testRepository.getLocalPath().toRealPath().toString(), testsPath, "test.json");
 
         String structureOracleJSON = OracleGenerator.generateStructureOracleJSON(solutionRepositoryPath, exerciseRepositoryPath);
+        return saveAndPushStructuralOracle(user, testRepository, structureOraclePath, structureOracleJSON);
+    }
 
-        // If the oracle file does not already exist, then save the generated string to
-        // the file.
-        // If it does, check if the contents of the existing file are the same as the
-        // generated one.
+    private boolean saveAndPushStructuralOracle(User user, Repository testRepository, Path structureOraclePath, String structureOracleJSON) throws IOException {
+        // If the oracle file does not already exist, then save the generated string to the file.
+        // If it does, check if the contents of the existing file are the same as the generated one.
         // If they are, do not push anything and inform the user about it.
         // If not, then update the oracle file by rewriting it and push the changes.
         if (!Files.exists(structureOraclePath)) {
@@ -737,6 +721,10 @@ public class ProgrammingExerciseService {
         return new SearchResultPageDTO<>(exercisePage.getContent(), exercisePage.getTotalPages());
     }
 
+    /**
+     * add project permissions to project of the build plans of the given exercise
+     * @param exercise the exercise whose build plans projects should be configured with permissions
+     */
     public void giveCIProjectPermissions(ProgrammingExercise exercise) {
         final var instructorGroup = exercise.getCourse().getInstructorGroupName();
         final var teachingAssistantGroup = exercise.getCourse().getTeachingAssistantGroupName();
@@ -768,16 +756,36 @@ public class ProgrammingExerciseService {
     /**
      * @param exerciseId the exercise we are interested in
      * @return the number of programming submissions which should be assessed
+     * We don't need to check for the submission date, because students cannot participate in programming exercises with manual assessment after their due date
      */
-    public long countSubmissions(Long exerciseId) {
-        return programmingExerciseRepository.countSubmissions(exerciseId);
+    public long countSubmissionsByExerciseIdSubmitted(Long exerciseId) {
+        long start = System.currentTimeMillis();
+        var count = programmingExerciseRepository.countSubmissionsByExerciseIdSubmitted(exerciseId);
+        log.debug("countSubmissionsByExerciseIdSubmitted took " + (System.currentTimeMillis() - start) + "ms");
+        return count;
     }
 
     /**
      * @param courseId the course we are interested in
-     * @return the number of programming submissions which should be assessed, so we ignore the ones after the exercise due date
+     * @return the number of programming submissions which should be assessed, so we ignore exercises with only automatic assessment
+     * We don't need to check for the submission date, because students cannot participate in programming exercises with manual assessment after their due date
      */
-    public long countSubmissionsToAssessByCourseId(Long courseId) {
-        return programmingExerciseRepository.countByCourseIdSubmittedBeforeDueDate(courseId);
+    public long countSubmissionsByCourseIdSubmitted(Long courseId) {
+        long start = System.currentTimeMillis();
+        var count = programmingExerciseRepository.countSubmissionsByCourseIdSubmitted(courseId);
+        log.debug("countSubmissionsByCourseIdSubmitted took " + (System.currentTimeMillis() - start) + "ms");
+        return count;
+    }
+
+    /**
+     * Sets the transient attribute "isLocalSimulation" if the exercises is a programming exercise
+     * and the testRepositoryUrl contains the String "artemislocalhost" which is the indicator that the programming exercise has
+     * no connection to a version control and continuous integration server
+     * @param exercise the exercise for which to set if it is a local simulation
+     */
+    public void checksAndSetsIfProgrammingExerciseIsLocalSimulation(Exercise exercise) {
+        if (exercise instanceof ProgrammingExercise && (((ProgrammingExercise) exercise).getTestRepositoryUrl()).contains("artemislocalhost")) {
+            ((ProgrammingExercise) exercise).setIsLocalSimulation(true);
+        }
     }
 }

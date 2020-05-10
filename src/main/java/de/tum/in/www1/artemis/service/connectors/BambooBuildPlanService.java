@@ -5,15 +5,14 @@ import static de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationSer
 
 import java.io.IOException;
 import java.net.URL;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import org.apache.commons.io.IOUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
+import org.springframework.core.env.Environment;
+import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.core.io.support.ResourcePatternUtils;
 import org.springframework.lang.Nullable;
@@ -22,6 +21,7 @@ import org.springframework.stereotype.Service;
 import com.atlassian.bamboo.specs.api.builders.AtlassianModule;
 import com.atlassian.bamboo.specs.api.builders.BambooKey;
 import com.atlassian.bamboo.specs.api.builders.applink.ApplicationLink;
+import com.atlassian.bamboo.specs.api.builders.docker.DockerConfiguration;
 import com.atlassian.bamboo.specs.api.builders.notification.AnyNotificationRecipient;
 import com.atlassian.bamboo.specs.api.builders.notification.Notification;
 import com.atlassian.bamboo.specs.api.builders.permission.PermissionType;
@@ -37,7 +37,6 @@ import com.atlassian.bamboo.specs.api.builders.plan.configuration.ConcurrentBuil
 import com.atlassian.bamboo.specs.api.builders.project.Project;
 import com.atlassian.bamboo.specs.api.builders.repository.VcsChangeDetection;
 import com.atlassian.bamboo.specs.api.builders.repository.VcsRepositoryIdentifier;
-import com.atlassian.bamboo.specs.api.builders.requirement.Requirement;
 import com.atlassian.bamboo.specs.api.builders.task.Task;
 import com.atlassian.bamboo.specs.builders.notification.PlanCompletedNotification;
 import com.atlassian.bamboo.specs.builders.repository.bitbucket.server.BitbucketServerRepository;
@@ -52,6 +51,7 @@ import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.enumeration.BuildPlanType;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.exception.ContinuousIntegrationBuildPlanException;
+import io.github.jhipster.config.JHipsterConstants;
 
 @Service
 @Profile("bamboo")
@@ -64,7 +64,7 @@ public class BambooBuildPlanService {
     private String ADMIN_GROUP_NAME;
 
     @Value("${server.url}")
-    private URL SERVER_URL;
+    private URL ARTEMIS_SERVER_URL;
 
     @Value("${artemis.continuous-integration.vcs-application-link-name}")
     private String VCS_APPLICATION_LINK_NAME;
@@ -73,9 +73,12 @@ public class BambooBuildPlanService {
 
     private final BambooServer bambooServer;
 
-    public BambooBuildPlanService(ResourceLoader resourceLoader, BambooServer bambooServer) {
+    private final Environment env;
+
+    public BambooBuildPlanService(ResourceLoader resourceLoader, BambooServer bambooServer, Environment env) {
         this.resourceLoader = resourceLoader;
         this.bambooServer = bambooServer;
+        this.env = env;
     }
 
     /**
@@ -114,29 +117,41 @@ public class BambooBuildPlanService {
         Stage defaultStage = new Stage("Default Stage");
         Job defaultJob = new Job("Default Job", new BambooKey("JOB1")).cleanWorkingDirectory(true);
 
-        switch (programmingLanguage) {
-        case JAVA: {
-            if (!sequentialBuildRuns) {
-                return defaultStage
-                        .jobs(defaultJob.tasks(checkoutTask, new MavenTask().goal("clean test").jdk("JDK 12").executableLabel("Maven 3").description("Tests").hasTests(true)));
-            }
-            else {
-                return defaultStage.jobs(defaultJob.tasks(checkoutTask,
-                        new MavenTask().goal("clean test").workingSubdirectory("structural").jdk("JDK 12").executableLabel("Maven 3").description("Structural tests")
-                                .hasTests(true),
-                        new MavenTask().goal("clean test").workingSubdirectory("behavior").jdk("JDK 12").executableLabel("Maven 3").description("Behavior tests").hasTests(true)));
-            }
-        }
-        case PYTHON:
-        case C: {
-            final var testParserTask = new TestParserTask(TestParserTaskProperties.TestType.JUNIT).resultDirectories("test-reports/*results.xml");
-            var tasks = readScriptTasksFromTemplate(programmingLanguage, sequentialBuildRuns == null ? false : sequentialBuildRuns);
-            tasks.add(0, checkoutTask);
+        /*
+         * We need the profiles to not run the jobs within Docker containers in the dev-setup as the Bamboo server itself runs in a Docker container when developing.
+         */
+        Collection<String> activeProfiles = Arrays.asList(env.getActiveProfiles());
 
-            return defaultStage.jobs(defaultJob.tasks(tasks.toArray(new Task[0])).requirements(new Requirement("Python3")).finalTasks(testParserTask));
-        }
-        default:
-            throw new IllegalArgumentException("No build stage setup for programming language " + programmingLanguage);
+        switch (programmingLanguage) {
+            case JAVA: {
+                // Do not run the builds in extra docker containers if the dev-profile is active
+                if (!activeProfiles.contains(JHipsterConstants.SPRING_PROFILE_DEVELOPMENT)) {
+                    defaultJob.dockerConfiguration(new DockerConfiguration().image("ls1tum/artemis-maven-template:latest"));
+                }
+                if (!sequentialBuildRuns) {
+                    return defaultStage
+                            .jobs(defaultJob.tasks(checkoutTask, new MavenTask().goal("clean test").jdk("JDK").executableLabel("Maven 3").description("Tests").hasTests(true)));
+                }
+                else {
+                    return defaultStage.jobs(defaultJob.tasks(checkoutTask,
+                            new MavenTask().goal("clean test").workingSubdirectory("structural").jdk("JDK").executableLabel("Maven 3").description("Structural tests")
+                                    .hasTests(true),
+                            new MavenTask().goal("clean test").workingSubdirectory("behavior").jdk("JDK").executableLabel("Maven 3").description("Behavior tests").hasTests(true)));
+                }
+            }
+            case PYTHON:
+            case C: {
+                // Do not run the builds in extra docker containers if the dev-profile is active
+                if (!activeProfiles.contains(JHipsterConstants.SPRING_PROFILE_DEVELOPMENT)) {
+                    defaultJob.dockerConfiguration(new DockerConfiguration().image("ls1tum/artemis-python-docker:latest"));
+                }
+                final var testParserTask = new TestParserTask(TestParserTaskProperties.TestType.JUNIT).resultDirectories("test-reports/*results.xml");
+                var tasks = readScriptTasksFromTemplate(programmingLanguage, sequentialBuildRuns == null ? false : sequentialBuildRuns);
+                tasks.add(0, checkoutTask);
+                return defaultStage.jobs(defaultJob.tasks(tasks.toArray(new Task[0])).finalTasks(testParserTask));
+            }
+            default:
+                throw new IllegalArgumentException("No build stage setup for programming language " + programmingLanguage);
         }
     }
 
@@ -169,8 +184,9 @@ public class BambooBuildPlanService {
     }
 
     private Notification createNotification() {
-        return new Notification().type(new PlanCompletedNotification()).recipients(
-                new AnyNotificationRecipient(new AtlassianModule("de.tum.in.www1.bamboo-server:recipient.server")).recipientString(SERVER_URL + NEW_RESULT_RESOURCE_API_PATH));
+        return new Notification().type(new PlanCompletedNotification())
+                .recipients(new AnyNotificationRecipient(new AtlassianModule("de.tum.in.www1.bamboo-server:recipient.server"))
+                        .recipientString(ARTEMIS_SERVER_URL + NEW_RESULT_RESOURCE_API_PATH));
     }
 
     private BitbucketServerRepository createBuildPlanRepository(String name, String vcsProjectKey, String repositorySlug) {
@@ -195,23 +211,21 @@ public class BambooBuildPlanService {
         final var directoryPattern = "classpath:templates/bamboo/" + programmingLanguage.name().toLowerCase() + (sequentialBuildRuns ? "/sequentialRuns/" : "/regularRuns/")
                 + "*.sh";
         try {
-            final var scriptResources = ResourcePatternUtils.getResourcePatternResolver(resourceLoader).getResources(directoryPattern);
-            // Have to use foreach because of possible IOException
-            // script name -> file contents
-            final var scriptContents = new HashMap<String, String>();
+            List<Task<?, ?>> tasks = new ArrayList<>();
+            final var scriptResources = Arrays.asList(ResourcePatternUtils.getResourcePatternResolver(resourceLoader).getResources(directoryPattern));
+            scriptResources.sort(Comparator.comparing(Resource::getFilename));
             for (final var resource : scriptResources) {
-
                 // 1_some_description.sh --> "some description"
                 final var descriptionElements = Arrays.stream((resource.getFilename().split("\\.")[0] // cut .sh suffix
                         .split("_"))).collect(Collectors.toList());
                 descriptionElements.remove(0);  // Remove the index prefix: 1 some description --> some description
                 final var scriptDescription = String.join(" ", descriptionElements);
-                try (final var is = resource.getInputStream()) {
-                    scriptContents.put(scriptDescription, IOUtils.toString(is));
+                try (final var inputStream = resource.getInputStream()) {
+                    tasks.add(new ScriptTask().description(scriptDescription).inlineBody(IOUtils.toString(inputStream)));
                 }
             }
 
-            return scriptContents.entrySet().stream().map(script -> new ScriptTask().description(script.getKey()).inlineBody(script.getValue())).collect(Collectors.toList());
+            return tasks;
         }
         catch (IOException e) {
             throw new ContinuousIntegrationBuildPlanException("Unable to load template build plans", e);

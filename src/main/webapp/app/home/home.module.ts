@@ -1,9 +1,8 @@
 import { NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
-
-import { ArtemisSharedModule } from '../shared';
 import { HOME_ROUTE } from './home.route';
-import { HomeComponent } from './';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
+import { HomeComponent } from 'app/home/home.component';
 
 @NgModule({
     imports: [ArtemisSharedModule, RouterModule.forChild([HOME_ROUTE])],

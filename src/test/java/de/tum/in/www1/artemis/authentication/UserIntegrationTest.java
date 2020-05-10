@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.authentication;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.verifyNoInteractions;
 
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -15,19 +16,21 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.CacheManager;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.util.LinkedMultiValueMap;
 
-import de.tum.in.www1.artemis.AbstractSpringIntegrationTest;
+import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.connector.jira.JiraRequestMockProvider;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.AuthorityRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.AuthoritiesConstants;
 import de.tum.in.www1.artemis.service.UserService;
+import de.tum.in.www1.artemis.service.dto.UserDTO;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.RequestUtilService;
 import de.tum.in.www1.artemis.web.rest.vm.ManagedUserVM;
 
-public class UserIntegrationTest extends AbstractSpringIntegrationTest {
+public class UserIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
     private DatabaseUtilService database;
@@ -54,9 +57,15 @@ public class UserIntegrationTest extends AbstractSpringIntegrationTest {
 
     private User student;
 
+    private final int numberOfStudents = 50;
+
+    private final int numberOfTutors = 1;
+
+    private final int numberOfInstructors = 1;
+
     @BeforeEach
     public void setUp() {
-        users = database.addUsers(1, 1, 1);
+        users = database.addUsers(numberOfStudents, numberOfTutors, numberOfInstructors);
         student = users.get(0);
         users.forEach(user -> cacheManager.getCache(UserRepository.USERS_CACHE).evict(user.getLogin()));
         jiraRequestMockProvider.enableMockingOfRequests();
@@ -197,5 +206,100 @@ public class UserIntegrationTest extends AbstractSpringIntegrationTest {
         request.delete("/api/users/" + student.getLogin(), HttpStatus.OK);
 
         verifyNoInteractions(versionControlService);
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    public void getUsers_asAdmin_isSuccessful() throws Exception {
+        final var params = new LinkedMultiValueMap<String, String>();
+        params.add("page", "0");
+        params.add("pageSize", "100");
+        params.add("searchTerm", "");
+        params.add("sortingOrder", "ASCENDING");
+        params.add("sortedColumn", "id");
+        List<UserDTO> users = request.getList("/api/users", HttpStatus.OK, UserDTO.class, params);
+        assertThat(users).hasSize(numberOfStudents + numberOfTutors + numberOfInstructors + 1); // +1 for admin user himself
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void searchUsers_asInstructor_isSuccessful() throws Exception {
+        final String loginOrName = "student1";
+        List<UserDTO> users = request.getList("/api/users/search?loginOrName=" + loginOrName, HttpStatus.OK, UserDTO.class);
+        assertThat(users).hasSize(11); // size([student1, student10, ... student19]) = 11
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    public void searchUsers_asAdmin_badRequest() throws Exception {
+        final String loginOrName = "ab"; // too short (needs at least 3 characters)
+        request.getList("/api/users/search?loginOrName=" + loginOrName, HttpStatus.BAD_REQUEST, UserDTO.class);
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void searchUsers_asTutor_forbidden() throws Exception {
+        final String loginOrName = "student";
+        request.getList("/api/users/search?loginOrName=" + loginOrName, HttpStatus.FORBIDDEN, UserDTO.class);
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    public void getUserViaFilter_asAdmin_isSuccessful() throws Exception {
+        final var params = new LinkedMultiValueMap<String, String>();
+        params.add("page", "0");
+        params.add("pageSize", "100");
+        params.add("searchTerm", "student1@test.de");
+        params.add("sortingOrder", "ASCENDING");
+        params.add("sortedColumn", "id");
+        List<User> users = request.getList("/api/users", HttpStatus.OK, User.class, params);
+        assertThat(users).hasSize(1);
+        assertThat(users.get(0).getEmail()).isEqualTo("student1@test.de");
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    public void getAuthorities_asAdmin_isSuccessful() throws Exception {
+        List<String> authorities = request.getList("/api/users/authorities", HttpStatus.OK, String.class);
+        assertThat(authorities).isEqualTo(List.of("ROLE_ADMIN", "ROLE_INSTRUCTOR", "ROLE_TA", "ROLE_USER"));
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void getUsersOrAuthorities_asInstructor_forbidden() throws Exception {
+        getUsersOrAuthorities_forbidden();
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void getUsersOrAuthorities_asTutor_forbidden() throws Exception {
+        getUsersOrAuthorities_forbidden();
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void getUsersOrAuthorities_asStudent_forbidden() throws Exception {
+        getUsersOrAuthorities_forbidden();
+    }
+
+    private void getUsersOrAuthorities_forbidden() throws Exception {
+        request.getList("/api/users", HttpStatus.FORBIDDEN, User.class);
+        request.getList("/api/users/authorities", HttpStatus.FORBIDDEN, String.class);
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    public void getUser_asAdmin_isSuccessful() throws Exception {
+        final String userLogin = "student1";
+        UserDTO userDTO = request.get("/api/users/" + userLogin, HttpStatus.OK, UserDTO.class);
+        assertThat(userDTO.getLogin()).isEqualTo(userLogin);
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void updateUserNotificationDate_asStudent_isSuccessful() throws Exception {
+        UserDTO userDTO = request.putWithResponseBody("/api/users/notification-date", null, UserDTO.class, HttpStatus.OK);
+        User userInDB = userRepository.findById(userDTO.getId()).get();
+        assertThat(userInDB.getLastNotificationRead()).isAfterOrEqualTo(ZonedDateTime.now().minusMinutes(1));
     }
 }

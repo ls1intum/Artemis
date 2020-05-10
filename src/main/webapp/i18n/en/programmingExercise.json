@@ -7,7 +7,6 @@
                 "editLabel": "Edit Programming Exercise",
                 "importLabel": "Import new Programming Exercise",
                 "linkLabel": "Link new Programming Exercise",
-                "editLinkLabel": "Edit linked Programming Exercise",
                 "generateLabel": "Generate new Programming Exercise",
                 "createOrEditLabel": "Create or edit a Programming Exercise"
             },
@@ -41,6 +40,7 @@
             "buildplans": "Build Plans",
             "publishBuildPlanUrl": "Publish Build Plan",
             "allowOnlineEditor": "Allow Online Editor",
+            "noVersionControlAndContinuousIntegrationAvailable": "Setup without connection to the VCS and CI",
             "sequentialTestRuns": {
                 "title": "Sequential Test Runs",
                 "description": "Activate to first run structural and then behavior test. This feature can help students to better concentrate on the immediate challenge at hand. If activated, you will be provided with more information in a readme file within the test repository. ATTENTION: Can not be changed after creation!"
@@ -111,9 +111,11 @@
             },
             "export": {
                 "downloadAllStudents": "Or download the repositories of all students",
+                "downloadAllTeams": "Or download the repositories of all teams",
                 "filterLateSubmissions": "Filter late submissions",
                 "filterLateSubmissionsDate": "Date for filter late submissions (defaults to exercise due date if not set)",
                 "addStudentName": "Add student name to project (allows to import multiple projects into Eclipse at the same time)",
+                "addTeamName": "Add team name to project (allows to import multiple projects into Eclipse at the same time)",
                 "combineStudentCommits": "Combine all student changes into one commit (to simplify the review)",
                 "normalizeCodeStyle": "Normalize code style (line endings, encoding)",
                 "successMessage": "Export of repos was successful. The exported zip file with all repositories is currently being downloaded."

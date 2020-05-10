@@ -10,6 +10,7 @@
             "statistics": "Quiz Statistiken",
             "startExercise": "Aufgabe starten",
             "resumeExercise": "Aufgabe fortführen",
+            "resumeExerciseError": "Fehler beim Versuch die Aufgabe forzuführen",
             "openCodeEditor": "Programmier-Editor öffnen",
             "openModelingEditor": "Modelierungs-Editor öffnen",
             "importIntoIntelliJ": "In IntelliJ öffnen",
@@ -23,7 +24,8 @@
             "openTextEditor": "Text-Editor öffnen",
             "copyUrl": "URL kopieren",
             "copiedUrl": "URL kopiert",
-            "uploadFile": "Datei hochladen"
+            "uploadFile": "Datei hochladen",
+            "viewTeam": "Team"
         }
     }
 }

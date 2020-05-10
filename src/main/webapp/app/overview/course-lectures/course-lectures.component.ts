@@ -1,14 +1,14 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { Course } from 'app/entities/course';
-import { CourseService } from 'app/entities/course/course.service';
+import { Course } from 'app/entities/course.model';
+import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs/Subscription';
-import { LangChangeEvent, TranslateService } from '@ngx-translate/core';
+import { TranslateService } from '@ngx-translate/core';
 import { HttpResponse } from '@angular/common/http';
 import * as moment from 'moment';
-import { ExerciseService } from 'app/entities/exercise';
-import { Lecture } from 'app/entities/lecture';
-import { CourseScoreCalculationService } from 'app/overview';
+import { Lecture } from 'app/entities/lecture.model';
+import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
+import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 
 @Component({
     selector: 'jhi-course-lectures',
@@ -29,9 +29,9 @@ export class CourseLecturesComponent implements OnInit, OnDestroy {
     public totalAttachmentCount: number;
 
     constructor(
-        private courseService: CourseService,
+        private courseService: CourseManagementService,
         private courseCalculationService: CourseScoreCalculationService,
-        private courseServer: CourseService,
+        private courseServer: CourseManagementService,
         private translateService: TranslateService,
         private exerciseService: ExerciseService,
         private route: ActivatedRoute,
@@ -39,7 +39,7 @@ export class CourseLecturesComponent implements OnInit, OnDestroy {
 
     ngOnInit() {
         this.exerciseCountMap = new Map<string, number>();
-        this.paramSubscription = this.route.parent!.params.subscribe(params => {
+        this.paramSubscription = this.route.parent!.params.subscribe((params) => {
             this.courseId = parseInt(params['courseId'], 10);
         });
 
@@ -52,7 +52,7 @@ export class CourseLecturesComponent implements OnInit, OnDestroy {
         }
         this.groupLectures(this.DUE_DATE_DESC);
 
-        this.translateSubscription = this.translateService.onLangChange.subscribe((event: LangChangeEvent) => {
+        this.translateSubscription = this.translateService.onLangChange.subscribe(() => {
             this.groupLectures(this.DUE_DATE_DESC);
         });
 
@@ -76,26 +76,18 @@ export class CourseLecturesComponent implements OnInit, OnDestroy {
         const courseLectures = this.course!.lectures ? [...this.course!.lectures] : [];
         const sortedLectures = this.sortLectures(courseLectures, selectedOrder);
         const notAssociatedLectures: Lecture[] = [];
-        sortedLectures.forEach(lecture => {
+        sortedLectures.forEach((lecture) => {
             const dateValue = lecture.startDate ? moment(lecture.startDate) : null;
             if (!dateValue) {
                 notAssociatedLectures.push(lecture);
                 return;
             }
-            const dateIndex = dateValue
-                ? moment(dateValue)
-                      .startOf('week')
-                      .format('YYYY-MM-DD')
-                : 'NoDate';
+            const dateIndex = dateValue ? moment(dateValue).startOf('week').format('YYYY-MM-DD') : 'NoDate';
             if (!groupedLectures[dateIndex]) {
                 indexKeys.push(dateIndex);
                 if (dateValue) {
                     groupedLectures[dateIndex] = {
-                        label: `<b>${moment(dateValue)
-                            .startOf('week')
-                            .format('DD/MM/YYYY')}</b> - <b>${moment(dateValue)
-                            .endOf('week')
-                            .format('DD/MM/YYYY')}</b>`,
+                        label: `<b>${moment(dateValue).startOf('week').format('DD/MM/YYYY')}</b> - <b>${moment(dateValue).endOf('week').format('DD/MM/YYYY')}</b>`,
                         isCollapsed: dateValue.isBefore(moment(), 'week'),
                         isCurrentWeek: dateValue.isSame(moment(), 'week'),
                         lectures: [],

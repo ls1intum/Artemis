@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
-
-import { Log, LogsService } from 'app/admin';
+import { Log } from 'app/admin/logs/log.model';
+import { LogsService } from 'app/admin/logs/logs.service';
 
 @Component({
     selector: 'jhi-logs',
@@ -22,7 +22,7 @@ export class LogsComponent implements OnInit {
      * Subscribe to the logsService to retrieve all logs
      */
     ngOnInit() {
-        this.logsService.findAll().subscribe(response => (this.loggers = response.body!));
+        this.logsService.findAll().subscribe((response) => (this.loggers = response.body!));
     }
 
     /**
@@ -34,7 +34,7 @@ export class LogsComponent implements OnInit {
     changeLevel(name: string, level: string) {
         const log = new Log(name, level);
         this.logsService.changeLevel(log).subscribe(() => {
-            this.logsService.findAll().subscribe(response => (this.loggers = response.body!));
+            this.logsService.findAll().subscribe((response) => (this.loggers = response.body!));
         });
     }
 }

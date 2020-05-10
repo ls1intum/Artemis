@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
 
@@ -15,11 +17,10 @@ import de.tum.in.www1.artemis.domain.quiz.QuizQuestionStatistic;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.repository.*;
 
-/**
- * Created by Moritz Issig on 22.11.17.
- */
 @Service
 public class QuizStatisticService {
+
+    private final Logger log = LoggerFactory.getLogger(QuizStatisticService.class);
 
     private final SimpMessageSendingOperations messagingTemplate;
 
@@ -97,10 +98,11 @@ public class QuizStatisticService {
     public void updateStatistics(Set<Result> results, QuizExercise quiz) {
 
         if (results != null && quiz != null && quiz.getQuizQuestions() != null) {
+            log.debug("update statistics with " + results.size() + " new results");
 
             for (Result result : results) {
                 // check if the result is rated
-                // NOTE: where is never an old Result if the new result is rated
+                // NOTE: there is never an old Result if the new result is rated
                 if (result.isRated() == Boolean.FALSE) {
                     removeResultFromAllStatistics(quiz, getPreviousResult(result));
                 }
@@ -116,11 +118,10 @@ public class QuizStatisticService {
             }
             quizQuestionStatisticRepository.saveAll(quizQuestionStatistics);
             // notify users via websocket about new results for the statistics.
-            // filters out solution-Informations
+            // filters out solution information
             quiz.filterForStatisticWebsocket();
             messagingTemplate.convertAndSend("/topic/statistic/" + quiz.getId(), quiz);
         }
-
     }
 
     /**
@@ -132,7 +133,8 @@ public class QuizStatisticService {
     private Result getPreviousResult(Result newResult) {
         Result oldResult = null;
 
-        for (Result result : resultRepository.findAllByParticipationIdOrderByCompletionDateDesc(newResult.getParticipation().getId())) {
+        List<Result> allResultsForParticipation = resultRepository.findAllByParticipationIdOrderByCompletionDateDesc(newResult.getParticipation().getId());
+        for (Result result : allResultsForParticipation) {
             // find the latest Result, which is presented in the Statistics
             if (result.isRated() == newResult.isRated() && result.getCompletionDate().isBefore(newResult.getCompletionDate()) && !result.equals(newResult)
                     && (oldResult == null || result.getCompletionDate().isAfter(oldResult.getCompletionDate()))) {
@@ -173,6 +175,7 @@ public class QuizStatisticService {
     private void removeResultFromAllStatistics(QuizExercise quizExercise, Result result) {
         // update QuizPointStatistic with the result
         if (result != null) {
+            log.debug("remove result from all statistics " + result);
             // check if result contains a quizSubmission if true -> a it's not necessary to fetch it from the database
             QuizSubmission quizSubmission = (QuizSubmission) result.getSubmission();
             quizExercise.getQuizPointStatistic().removeOldResult(result.getScore(), result.isRated());

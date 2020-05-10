@@ -1,23 +1,26 @@
 import { Component, HostBinding, Input, OnInit } from '@angular/core';
-import { Exercise, ExerciseType, isStartExerciseAvailable, ParticipationStatus, participationStatus } from 'app/entities/exercise';
-import { QuizExercise } from 'app/entities/quiz-exercise';
-import { InitializationState, Participation, ProgrammingExerciseStudentParticipation } from 'app/entities/participation';
 import * as moment from 'moment';
-import { CourseExerciseService } from 'app/entities/course/course.service';
+import { CourseExerciseService } from 'app/course/manage/course-management.service';
 import { Router } from '@angular/router';
-import { JhiAlertService } from 'ng-jhipster';
-import { ProgrammingExercise } from 'app/entities/programming-exercise';
+import { AlertService } from 'app/core/alert/alert.service';
 import { HttpClient } from '@angular/common/http';
 import { AccountService } from 'app/core/auth/account.service';
-import { SourceTreeService } from 'app/components/util/sourceTree.service';
-import { FeatureToggle } from 'app/feature-toggle';
-import { Result } from 'app/entities/result';
+import { SourceTreeService } from 'app/exercises/programming/shared/service/sourceTree.service';
+import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
+import { Participation } from 'app/entities/participation/participation.model';
+import { Exercise, ExerciseType, ParticipationStatus } from 'app/entities/exercise.model';
+import { isStartExerciseAvailable, participationStatus } from 'app/exercises/shared/exercise/exercise-utils';
+import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
+import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
+import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { User } from 'app/core/user/user.model';
 
 @Component({
     selector: 'jhi-exercise-details-student-actions',
     templateUrl: './exercise-details-student-actions.component.html',
     styleUrls: ['../course-overview.scss'],
-    providers: [JhiAlertService, SourceTreeService],
+    providers: [SourceTreeService],
 })
 export class ExerciseDetailsStudentActionsComponent implements OnInit {
     FeatureToggle = FeatureToggle;
@@ -37,8 +40,10 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
     public repositoryPassword: string;
     public wasCopied = false;
 
+    private user: User;
+
     constructor(
-        private jhiAlertService: JhiAlertService,
+        private jhiAlertService: AlertService,
         private courseExerciseService: CourseExerciseService,
         private httpClient: HttpClient,
         private accountService: AccountService,
@@ -46,8 +51,13 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
         private router: Router,
     ) {}
 
+    /**
+     * load password if user login starts with 'edx_' or 'u4i_'
+     */
     ngOnInit(): void {
-        this.accountService.identity().then(user => {
+        this.accountService.identity().then((user) => {
+            this.user = user!;
+
             // Only load password if current user login starts with 'edx_' or 'u4i_'
             if (user && user.login && (user.login.startsWith('edx_') || user.login.startsWith('u4i_'))) {
                 this.getRepositoryPassword();
@@ -55,10 +65,33 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
         });
     }
 
+    /**
+     * get repositoryUrl for participation
+     *
+     * @param {Participation} participation
+     */
     repositoryUrl(participation: Participation) {
-        return (participation as ProgrammingExerciseStudentParticipation).repositoryUrl;
+        const programmingParticipation = participation as ProgrammingExerciseStudentParticipation;
+        if (programmingParticipation.team) {
+            return this.repositoryUrlForTeam(programmingParticipation);
+        }
+        return programmingParticipation.repositoryUrl;
     }
 
+    /**
+     * The user info part of the repository url of a team participation has to be be added with the current user's login.
+     *
+     * @return repository url with username of current user inserted
+     */
+    private repositoryUrlForTeam(participation: ProgrammingExerciseStudentParticipation) {
+        // (https://)(bitbucket.ase.in.tum.de/...-team1.git)  =>  (https://)ga12abc@(bitbucket.ase.in.tum.de/...-team1.git)
+        return participation.repositoryUrl.replace(/^(\w*:\/\/)(.*)$/, `$1${this.user.login}@$2`);
+    }
+
+    /**
+     * check if practiceMode is available
+     * @return {boolean}
+     */
     isPracticeModeAvailable(): boolean {
         const quizExercise = this.exercise as QuizExercise;
         return quizExercise.isPlannedToStart && quizExercise.isOpenForPractice && moment(quizExercise.dueDate!).isBefore(moment());
@@ -71,14 +104,24 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
         return isStartExerciseAvailable(this.exercise as ProgrammingExercise);
     }
 
+    /**
+     * check if onlineEditor is allowed
+     * @return {boolean}
+     */
     isOnlineEditorAllowed(): boolean {
         return (this.exercise as ProgrammingExercise).allowOnlineEditor;
     }
 
+    /**
+     * console log if copy fails
+     */
     onCopyFailure() {
         console.log('copy fail!');
     }
 
+    /**
+     * set wasCopied for 3 seconds on success
+     */
     onCopySuccess() {
         this.wasCopied = true;
         setTimeout(() => {
@@ -86,10 +129,13 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
         }, 3000);
     }
 
+    /**
+     * start the exercise
+     */
     startExercise() {
         if (this.exercise.type === ExerciseType.QUIZ) {
             // Start the quiz
-            return this.router.navigate(['/quiz', this.exercise.id]);
+            return this.router.navigate(['/courses', this.courseId, 'quiz-exercises', this.exercise.id, 'live']);
         }
 
         this.exercise.loading = true;
@@ -97,7 +143,7 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
             .startExercise(this.courseId, this.exercise.id)
             .finally(() => (this.exercise.loading = false))
             .subscribe(
-                participation => {
+                (participation) => {
                     if (participation) {
                         this.exercise.studentParticipations = [participation];
                         this.exercise.participationStatus = participationStatus(this.exercise);
@@ -106,24 +152,32 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
                         this.jhiAlertService.success('artemisApp.exercise.personalRepository');
                     }
                 },
-                error => {
+                (error) => {
                     console.log('Error: ' + error);
                     this.jhiAlertService.warning('artemisApp.exercise.startError');
                 },
             );
     }
 
+    /**
+     * build the sourceTreeUrl from the cloneUrl
+     * @param {string} cloneUrl
+     * @return sourceTreeUrl
+     */
     buildSourceTreeUrl(cloneUrl: string): string {
         return this.sourceTreeService.buildSourceTreeUrl(cloneUrl);
     }
 
+    /**
+     * resume the programming exercise
+     */
     resumeProgrammingExercise() {
         this.exercise.loading = true;
         this.courseExerciseService
             .resumeProgrammingExercise(this.courseId, this.exercise.id)
             .finally(() => (this.exercise.loading = false))
             .subscribe(
-                participation => {
+                (participation: StudentParticipation) => {
                     if (participation) {
                         // Otherwise the client would think that all results are loaded, but there would not be any (=> no graded result).
                         participation.results = this.exercise.studentParticipations[0] ? this.exercise.studentParticipations[0].results : [];
@@ -131,7 +185,7 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
                         this.exercise.participationStatus = participationStatus(this.exercise);
                     }
                 },
-                error => {
+                (error) => {
                     console.log('Error: ' + error.status + ' ' + error.message);
                     this.jhiAlertService.error(`artemisApp.${error.error.entityName}.errors.${error.error.errorKey}`);
                 },
@@ -147,12 +201,28 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
         return participationStatus(this.exercise);
     }
 
-    startPractice() {
-        return this.router.navigate(['/quiz', this.exercise.id, 'practice']);
+    /**
+     * Returns the id of the team that the student is assigned to (only applicable to team-based exercises)
+     *
+     * @return {assignedTeamId}
+     */
+    get assignedTeamId(): number | undefined {
+        const participation = this.exercise.studentParticipations[0];
+        return participation ? participation.team?.id : this.exercise.studentAssignedTeamId;
     }
 
+    /**
+     * start practice
+     */
+    startPractice() {
+        return this.router.navigate(['/courses', this.exercise.course?.id, 'quiz-exercises', this.exercise.id, 'practice']);
+    }
+
+    /**
+     * get the repositoryPassword
+     */
     getRepositoryPassword() {
-        this.sourceTreeService.getRepositoryPassword().subscribe(res => {
+        this.sourceTreeService.getRepositoryPassword().subscribe((res) => {
             const password = res['password'];
             if (password) {
                 this.repositoryPassword = password;

@@ -2,7 +2,7 @@ package de.tum.in.www1.artemis.web.rest.repository;
 
 import java.io.IOException;
 import java.net.URL;
-import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 
 import javax.servlet.http.HttpServletRequest;
@@ -66,7 +66,7 @@ public class TestRepositoryResource extends RepositoryResource {
 
     @Override
     @GetMapping(value = "/test-repository/{exerciseId}/files", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<HashMap<String, FileType>> getFiles(@PathVariable Long exerciseId) {
+    public ResponseEntity<Map<String, FileType>> getFiles(@PathVariable Long exerciseId) {
         return super.getFiles(exerciseId);
     }
 
@@ -115,6 +115,13 @@ public class TestRepositoryResource extends RepositoryResource {
     @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
     public ResponseEntity<Void> commitChanges(@PathVariable Long exerciseId) {
         return super.commitChanges(exerciseId);
+    }
+
+    @Override
+    @PostMapping(value = "/test-repository/{exerciseId}/reset", produces = MediaType.APPLICATION_JSON_VALUE)
+    @FeatureToggle(Feature.PROGRAMMING_EXERCISES)
+    public ResponseEntity<Void> resetToLastCommit(@PathVariable Long exerciseId) {
+        return super.resetToLastCommit(exerciseId);
     }
 
     @Override

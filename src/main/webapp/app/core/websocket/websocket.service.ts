@@ -5,21 +5,69 @@ import { Observable, Observer, Subscription } from 'rxjs/Rx';
 import { AuthServerProvider } from 'app/core/auth/auth-jwt.service';
 import { CSRFService } from 'app/core/auth/csrf.service';
 
-import { Client, Subscription as StompSubscription, over, VERSIONS, ConnectionHeaders } from 'webstomp-client';
+import { Client, ConnectionHeaders, over, Subscription as StompSubscription } from 'webstomp-client';
 import { WindowRef } from 'app/core/websocket/window.service';
 import * as SockJS from 'sockjs-client';
 import { timer } from 'rxjs';
 
 export interface IWebsocketService {
+    /**
+     * Callback function managing the amount of failed connection attempts and the timeout until the next reconnect attempt.
+     */
     stompFailureCallback(): void;
+
+    /**
+     * Setup the websocket connection.
+     */
     connect(): void;
+
+    /**
+     * Close the connection to the websocket and unsubscribe als listeners.
+     */
     disconnect(): void;
+
+    /**
+     * Add a new listener.
+     * @param channel The channel the listener listens on
+     */
     receive(channel: string): Observable<any>;
+
+    /**
+     * Subscribe to a channel.
+     * @param channel
+     */
     subscribe(channel: string): void;
+
+    /**
+     * Unsubscribe a channel.
+     * @param channel
+     */
     unsubscribe(channel: string): void;
+
+    /**
+     * Bind the given callback function to the given event
+     *
+     * @param event {string} the event to be notified of
+     * @param callback {function} the function to call when the event is triggered
+     */
     bind(event: string, callback: () => void): void;
+
+    /**
+     * Unbind the given callback function from the given event
+     *
+     * @param event {string} the event to no longer be notified of
+     * @param callback {function} the function to no longer call when the event is triggered
+     */
     unbind(event: string, callback: () => void): void;
+
+    /**
+     * Enable automatic reconnect
+     */
     enableReconnect(): void;
+
+    /**
+     * Disable automatic reconnect
+     */
     disableReconnect(): void;
 }
 
@@ -45,20 +93,24 @@ export class JhiWebsocketService implements IWebsocketService, OnDestroy {
         this.connection = this.createConnection();
     }
 
+    /**
+     * Callback function managing the amount of failed connection attempts to the websocket and the timeout until the next reconnect attempt.
+     *
+     * Wait 5 seconds before reconnecting in case the connection does not work or the client is disconnected,
+     * after  2 failed attempts in row, increase the timeout to 10 seconds,
+     * after  4 failed attempts in row, increase the timeout to 20 seconds
+     * after  8 failed attempts in row, increase the timeout to 60 seconds
+     * after 12 failed attempts in row, increase the timeout to 120 seconds
+     * after 16 failed attempts in row, increase the timeout to 300 seconds
+     * after 20 failed attempts in row, increase the timeout to 600 seconds
+     */
     stompFailureCallback() {
         this.connecting = false;
         this.consecutiveFailedAttempts++;
-        this.disconnectListeners.forEach(listener => {
+        this.disconnectListeners.forEach((listener) => {
             listener();
         });
         if (this.shouldReconnect) {
-            // wait 5 seconds before reconnecting in case the connection does not work or the client is disconnected
-            // after  2 failed attempts in row, increase the timeout to 10 seconds,
-            // after  4 failed attempts in row, increase the timeout to 20 seconds
-            // after  8 failed attempts in row, increase the timeout to 60 seconds
-            // after 12 failed attempts in row, increase the timeout to 120 seconds
-            // after 16 failed attempts in row, increase the timeout to 300 seconds
-            // after 20 failed attempts in row, increase the timeout to 600 seconds
             let waitUntilReconnectAttempt;
             if (this.consecutiveFailedAttempts > 20) {
                 // NOTE: normally a user would reload here anyway
@@ -82,6 +134,9 @@ export class JhiWebsocketService implements IWebsocketService, OnDestroy {
         }
     }
 
+    /**
+     * Setup the websocket connection.
+     */
     connect() {
         if ((this.stompClient && this.stompClient.connected) || this.connecting) {
             return; // don't connect, if already connected or connecting
@@ -107,7 +162,7 @@ export class JhiWebsocketService implements IWebsocketService, OnDestroy {
         };
         this.stompClient = over(socket, options);
         // Note: at the moment, debugging is deactivated to prevent console log statements
-        this.stompClient.debug = function(str) {};
+        this.stompClient.debug = function () {};
         const headers = <ConnectionHeaders>{};
         headers['X-CSRF-TOKEN'] = this.csrfService.getCSRF();
 
@@ -116,7 +171,7 @@ export class JhiWebsocketService implements IWebsocketService, OnDestroy {
             () => {
                 this.connectedPromise('success');
                 this.connecting = false;
-                this.connectListeners.forEach(listener => {
+                this.connectListeners.forEach((listener) => {
                     listener();
                 });
                 this.consecutiveFailedAttempts = 0;
@@ -126,7 +181,7 @@ export class JhiWebsocketService implements IWebsocketService, OnDestroy {
                         this.myListeners.forEach((listener, channel) => {
                             this.subscribers.set(
                                 channel,
-                                this.stompClient!.subscribe(channel, data => {
+                                this.stompClient!.subscribe(channel, (data) => {
                                     if (this.listenerObservers.has(channel)) {
                                         this.listenerObservers.get(channel)!.next(JSON.parse(data.body));
                                     }
@@ -138,7 +193,7 @@ export class JhiWebsocketService implements IWebsocketService, OnDestroy {
                     this.alreadyConnectedOnce = true;
                 }
                 if (!this.subscription) {
-                    this.subscription = this.router.events.subscribe(event => {
+                    this.subscription = this.router.events.subscribe((event) => {
                         if (event instanceof NavigationEnd) {
                             this.sendActivity();
                         }
@@ -148,7 +203,7 @@ export class JhiWebsocketService implements IWebsocketService, OnDestroy {
 
                 // Setup periodic logs of websocket connection numbers
                 this.logTimers.push(
-                    timer(0, 10000).subscribe(x => {
+                    timer(0, 60000).subscribe(() => {
                         console.log('\n\n');
                         console.log(`${this.subscribers.size} websocket subscriptions: `, this.subscribers.keys());
                         // this.subscribers.forEach((sub, topic) => console.log(topic));
@@ -165,10 +220,13 @@ export class JhiWebsocketService implements IWebsocketService, OnDestroy {
         );
     }
 
+    /**
+     * Close the connection to the websocket and unsubscribe als listeners.
+     */
     disconnect() {
-        this.logTimers.forEach(logTimer => logTimer.unsubscribe());
+        this.logTimers.forEach((logTimer) => logTimer.unsubscribe());
         this.connection = this.createConnection();
-        Object.keys(this.myListeners).forEach(listener => this.unsubscribe(listener), this);
+        Object.keys(this.myListeners).forEach((listener) => this.unsubscribe(listener), this);
         if (this.stompClient) {
             this.stompClient.disconnect();
             this.stompClient = null;
@@ -180,6 +238,10 @@ export class JhiWebsocketService implements IWebsocketService, OnDestroy {
         this.alreadyConnectedOnce = false;
     }
 
+    /**
+     * Add a new listener.
+     * @param channel The channel the listener listens on
+     */
     receive(channel: string): Observable<any> {
         if (channel != null && (this.myListeners.size === 0 || !this.myListeners.has(channel))) {
             this.myListeners.set(channel, this.createListener(channel));
@@ -187,6 +249,9 @@ export class JhiWebsocketService implements IWebsocketService, OnDestroy {
         return this.myListeners.get(channel)!;
     }
 
+    /**
+     * Send a snapshot of the current routerState through the websocket connection.
+     */
     sendActivity() {
         // Note: this is temporarily deactivated for now to reduce server load on websocket connections
         // if (this.stompClient !== null && this.stompClient.connected) {
@@ -201,7 +266,7 @@ export class JhiWebsocketService implements IWebsocketService, OnDestroy {
     /**
      * Send data through the websocket connection
      * @param path {string} the path for the websocket connection
-     * @param data {object} the date to send through the websocket connection
+     * @param data {object} the data to send through the websocket connection
      */
     send(path: string, data: any) {
         if (this.stompClient !== null && this.stompClient.connected) {
@@ -209,6 +274,10 @@ export class JhiWebsocketService implements IWebsocketService, OnDestroy {
         }
     }
 
+    /**
+     * Subscribe to a channel.
+     * @param channel
+     */
     subscribe(channel: string) {
         this.connection.then(() => {
             if (channel != null && (this.myListeners.size === 0 || !this.myListeners.has(channel))) {
@@ -216,7 +285,7 @@ export class JhiWebsocketService implements IWebsocketService, OnDestroy {
             }
             this.subscribers.set(
                 channel,
-                this.stompClient!.subscribe(channel, data => {
+                this.stompClient!.subscribe(channel, (data) => {
                     if (this.listenerObservers.has(channel)) {
                         this.listenerObservers.get(channel)!.next(JSON.parse(data.body));
                     }
@@ -225,6 +294,10 @@ export class JhiWebsocketService implements IWebsocketService, OnDestroy {
         });
     }
 
+    /**
+     * Unsubscribe a channel.
+     * @param channel
+     */
     unsubscribe(channel: string) {
         if (this && this.subscribers && this.subscribers.has(channel)) {
             this.subscribers.get(channel)!.unsubscribe();
@@ -234,18 +307,25 @@ export class JhiWebsocketService implements IWebsocketService, OnDestroy {
         }
     }
 
+    /**
+     * Create a new listener.
+     * @param channel The channel to listen on.
+     */
     private createListener<T>(channel: string): Observable<T> {
         return new Observable((observer: Observer<T>) => {
             this.listenerObservers.set(channel, observer);
         });
     }
 
+    /**
+     * Create a new connection.
+     */
     private createConnection(): Promise<void> {
         return new Promise((resolve: Function) => (this.connectedPromise = resolve));
     }
 
     /**
-     * bind the given callback function to the given event
+     * Bind the given callback function to the given event
      *
      * @param event {string} the event to be notified of
      * @param callback {function} the function to call when the event is triggered
@@ -267,25 +347,25 @@ export class JhiWebsocketService implements IWebsocketService, OnDestroy {
     }
 
     /**
-     * unbind the given callback function from the given event
+     * Unbind the given callback function from the given event
      *
      * @param event {string} the event to no longer be notified of
      * @param callback {function} the function to no longer call when the event is triggered
      */
     unbind(event: string, callback: () => void) {
         if (event === 'connect') {
-            this.connectListeners = this.connectListeners.filter(listener => {
+            this.connectListeners = this.connectListeners.filter((listener) => {
                 return listener !== callback;
             });
         } else if (event === 'disconnect') {
-            this.disconnectListeners = this.disconnectListeners.filter(listener => {
+            this.disconnectListeners = this.disconnectListeners.filter((listener) => {
                 return listener !== callback;
             });
         }
     }
 
     /**
-     * enable automatic reconnect
+     * Enable automatic reconnect
      */
     enableReconnect() {
         if (this.stompClient && !this.stompClient.connected) {
@@ -295,12 +375,15 @@ export class JhiWebsocketService implements IWebsocketService, OnDestroy {
     }
 
     /**
-     * disable automatic reconnect
+     * Disable automatic reconnect
      */
     disableReconnect() {
         this.shouldReconnect = false;
     }
 
+    /**
+     * On destroy disconnect.
+     */
     ngOnDestroy(): void {
         this.disconnect();
     }

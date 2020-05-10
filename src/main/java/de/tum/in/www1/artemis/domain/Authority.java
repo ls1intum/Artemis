@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.domain;
 
 import java.io.Serializable;
+import java.util.Objects;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -11,6 +12,8 @@ import javax.validation.constraints.Size;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
+
+import de.tum.in.www1.artemis.security.AuthoritiesConstants;
 
 /**
  * An authority (a security role) used by Spring Security.
@@ -26,6 +29,8 @@ public class Authority implements Serializable {
     public Authority() {
         // empty constructor would not be available otherwise
     }
+
+    public static Authority ADMIN_AUTHORITY = new Authority(AuthoritiesConstants.ADMIN);
 
     public Authority(String name) {
         // we need this constructor because we use the UserDTO which maps a set of authorities to a set of strings
@@ -57,7 +62,7 @@ public class Authority implements Serializable {
 
         Authority authority = (Authority) o;
 
-        return !(name != null ? !name.equals(authority.name) : authority.name != null);
+        return Objects.equals(name, authority.name);
     }
 
     @Override

@@ -29,7 +29,7 @@ export class HasAnyAuthorityDirective {
     }
 
     private updateView(): void {
-        this.accountService.hasAnyAuthority(this.authorities).then(result => {
+        this.accountService.hasAnyAuthority(this.authorities).then((result) => {
             this.viewContainerRef.clear();
             if (result) {
                 this.viewContainerRef.createEmbeddedView(this.templateRef);

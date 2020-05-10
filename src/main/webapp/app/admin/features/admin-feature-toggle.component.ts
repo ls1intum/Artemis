@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { FeatureToggle, FeatureToggleService } from 'app/feature-toggle/feature-toggle.service';
+import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 import { tap } from 'rxjs/operators';
 
 type FeatureToggleState = {
@@ -39,7 +39,7 @@ export class AdminFeatureToggleComponent implements OnInit {
         this.featureToggleService
             .getFeatureToggles()
             .pipe(
-                tap(activeToggles => {
+                tap((activeToggles) => {
                     this.availableToggles = Object.values(FeatureToggle).map((name, index) => ({ name, index, isActive: activeToggles.includes(name) }));
                 }),
             )

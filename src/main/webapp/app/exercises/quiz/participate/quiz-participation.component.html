@@ -1,0 +1,191 @@
+<div class="quiz-header container" *ngIf="quizExercise">
+    <h2 [ngSwitch]="mode">
+        {{ quizExercise.course!.title }} - {{ quizExercise.title }}
+        <span *ngSwitchCase="'practice'" class="in-parentheses" jhiTranslate="artemisApp.quizExercise.practiceMode"></span>
+        <span *ngSwitchCase="'preview'" class="in-parentheses" jhiTranslate="artemisApp.quizExercise.previewMode"></span>
+        <span *ngSwitchCase="'solution'" class="in-parentheses" jhiTranslate="artemisApp.quizExercise.solution"></span>
+    </h2>
+    <p *ngIf="!waitingForQuizStart && !submission.submitted && !showingResult" jhiTranslate="artemisApp.quizExercise.quizInstructions.live"></p>
+    <p *ngIf="!waitingForQuizStart && submission.submitted && !showingResult" jhiTranslate="artemisApp.quizExercise.quizInstructions.wait"></p>
+    <p
+        *ngIf="!waitingForQuizStart && showingResult && mode !== 'solution'"
+        jhiTranslate="artemisApp.quizExercise.quizInstructions.result"
+        [translateValues]="{ userScore: userScore, maxScore: totalScore, percentage: result.score }"
+    ></p>
+</div>
+<div class="quiz-content container" *ngIf="quizExercise">
+    <div *ngFor="let question of quizExercise.quizQuestions; let i = index">
+        <jhi-multiple-choice-question
+            id="question{{ i }}"
+            *ngIf="question.type === MULTIPLE_CHOICE"
+            [question]="question"
+            [(selectedAnswerOptions)]="selectedAnswerOptions[question.id]"
+            [fnOnSelection]="onSelectionChanged.bind(this)"
+            [clickDisabled]="submission.submitted || remainingTimeSeconds < 0"
+            [showResult]="showingResult"
+            [submittedResult]="result"
+            [submittedQuizExercise]="quizExercise"
+            [forceSampleSolution]="mode === 'solution'"
+            [questionIndex]="i + 1"
+            [score]="questionScores[question.id]"
+        ></jhi-multiple-choice-question>
+        <jhi-drag-and-drop-question
+            id="question{{ i }}"
+            *ngIf="question.type === DRAG_AND_DROP"
+            [question]="question"
+            [(mappings)]="dragAndDropMappings[question.id]"
+            [fnOnMappingUpdate]="onSelectionChanged.bind(this)"
+            [clickDisabled]="submission.submitted || remainingTimeSeconds < 0"
+            [showResult]="showingResult"
+            [forceSampleSolution]="mode === 'solution'"
+            [questionIndex]="i + 1"
+            [score]="questionScores[question.id]"
+        ></jhi-drag-and-drop-question>
+        <jhi-short-answer-question
+            id="question{{ i }}"
+            *ngIf="question.type === SHORT_ANSWER"
+            [question]="question"
+            [(submittedTexts)]="shortAnswerSubmittedTexts[question.id]"
+            [fnOnSubmittedTextUpdate]="onSelectionChanged.bind(this)"
+            [clickDisabled]="submission.submitted || remainingTimeSeconds < 0"
+            [showResult]="showingResult"
+            [forceSampleSolution]="mode === 'solution'"
+            [questionIndex]="i + 1"
+            [score]="questionScores[question.id]"
+        ></jhi-short-answer-question>
+    </div>
+</div>
+<div class="quiz-footer" *ngIf="quizExercise">
+    <div class="container">
+        <div class="quiz-footer-content">
+            <div class="quiz-icons">
+                <div class="stepwizardquiz">
+                    <div *ngFor="let question of quizExercise.quizQuestions; let i = index" class="stepwizardquiz__step">
+                        <div
+                            *ngIf="question.type === DRAG_AND_DROP"
+                            class="btn btn-light btn-circle stepbutton stepwizardquiz-circle draganddropcolor-question"
+                            (click)="navigateToQuestion(i)"
+                            [ngbTooltip]="mode !== 'solution' ? (dragAndDropMappings[question.id]?.length ? tooltipExplanationTranslate : tooltipNotExplanationTranslate) : ''"
+                            [ngClass]="{ 'changed-question': dragAndDropMappings[question.id]?.length }"
+                        >
+                            <b class="fa">DD</b>
+                        </div>
+                        <span
+                            *ngIf="question.type === MULTIPLE_CHOICE"
+                            class="btn btn-light btn-circle stepbutton stepwizardquiz-circle multiplechoicecolor-question"
+                            (click)="navigateToQuestion(i)"
+                            [ngbTooltip]="mode !== 'solution' ? (selectedAnswerOptions[question.id]?.length ? tooltipExplanationTranslate : tooltipNotExplanationTranslate) : ''"
+                            [ngClass]="{ 'changed-question': selectedAnswerOptions[question.id]?.length }"
+                        >
+                            <b class="fa">MC</b>
+                        </span>
+                        <span
+                            *ngIf="question.type === SHORT_ANSWER"
+                            class="btn btn-light btn-circle stepbutton stepwizardquiz-circle shortanswercolor-question"
+                            (click)="navigateToQuestion(i)"
+                            [ngbTooltip]="
+                                mode !== 'solution' ? (shortAnswerSubmittedTexts[question.id]?.length ? tooltipExplanationTranslate : tooltipNotExplanationTranslate) : ''
+                            "
+                            [ngClass]="{ 'changed-question': shortAnswerSubmittedTexts[question.id]?.length }"
+                        >
+                            <b class="fa">SA</b>
+                        </span>
+                        <ng-template #tooltipExplanationTranslate>{{ 'artemisApp.quizExercise.explanationAnswered' | translate }}</ng-template>
+                        <ng-template #tooltipNotExplanationTranslate>{{ 'artemisApp.quizExercise.explanationNotAnswered' | translate }}</ng-template>
+                    </div>
+                </div>
+                <div *ngIf="quizExercise.quizQuestions && !this.isMobile()" class="align-text hide-mobile">
+                    {{ quizExercise.quizQuestions ? quizExercise.quizQuestions.length : 0 }} <span jhiTranslate="artemisApp.quizExercise.questions"></span>, {{ totalScore }}
+                    <span jhiTranslate="artemisApp.quizExercise.totalPoints"></span>
+                </div>
+                <div *ngIf="quizExercise.quizQuestions && this.isMobile()" class="align-text show-mobile">
+                    {{ quizExercise.quizQuestions ? quizExercise.quizQuestions.length : 0 }} Q / {{ totalScore }} P
+                </div>
+            </div>
+            <div *ngIf="!showingResult" id="remaining-time">
+                <div *ngIf="!waitingForQuizStart">
+                    <span jhiTranslate="artemisApp.quizExercise.remainingTime" class="colon-suffix"></span>
+                    <span
+                        id="remaining-time-value"
+                        [ngClass]="{
+                            'time-critical': remainingTimeSeconds < 60 || remainingTimeSeconds < quizExercise.duration / 4,
+                            'time-warning': remainingTimeSeconds < 120 || remainingTimeSeconds < quizExercise.duration / 2
+                        }"
+                    >
+                        {{ remainingTimeText }}
+                    </span>
+                </div>
+                <div *ngIf="mode === 'live' && waitingForQuizStart">
+                    <span jhiTranslate="artemisApp.quizExercise.waitingForStart"></span>
+                </div>
+                <div *ngIf="mode === 'live' && !waitingForQuizStart">
+                    <span *ngIf="isSaving" jhiTranslate="artemisApp.quizExercise.isSaving">Saving answers...</span>
+                    <span *ngIf="!isSaving && !isMobile()" ngbTooltip="{{ submission.adjustedSubmissionDate | date: 'MMM d, y HH:mm:ss' }}" placement="right">
+                        <span *ngIf="!submission.submitted" jhiTranslate="artemisApp.quizExercise.lastSaved" class="colon-suffix"></span>
+                        <span *ngIf="submission.submitted" jhiTranslate="artemisApp.quizExercise.submitted" class="colon-suffix"></span>
+                        <span *ngIf="justSaved" jhiTranslate="justNow"></span>
+                        <span *ngIf="!justSaved && lastSavedTimeText !== ''">{{ lastSavedTimeText }}</span>
+                        <span *ngIf="!justSaved && lastSavedTimeText === ''" jhiTranslate="artemisApp.quizExercise.lastSavedTimeNever"></span>
+                    </span>
+                    <!-- Only display save and submission hint without time stamps for mobile -->
+                    <span *ngIf="!isSaving && isMobile()" ngbTooltip="{{ submission.adjustedSubmissionDate | date: 'MMM d, y HH:mm:ss' }}" placement="right">
+                        <span *ngIf="!submission.submitted" jhiTranslate="artemisApp.quizExercise.lastSaved"></span>
+                        <span *ngIf="submission.submitted" jhiTranslate="artemisApp.quizExercise.submitted"></span>
+                    </span>
+                </div>
+                <jhi-connection-status *ngIf="mode === 'live'" class="connection-status-quiz">
+                    <span innerContent *ngIf="unsavedChanges" jhiTranslate="artemisApp.quizExercise.unsavedChanges" class="in-parentheses"></span>
+                </jhi-connection-status>
+                <div *ngIf="mode === 'practice'">
+                    <span jhiTranslate="artemisApp.quizExercise.practiceMode"></span>
+                </div>
+                <div *ngIf="mode === 'preview'">
+                    <span jhiTranslate="artemisApp.quizExercise.previewMode"></span>
+                </div>
+            </div>
+            <div *ngIf="showingResult && mode !== 'solution'" class="text-center">
+                <div id="quiz-score" [ngClass]="{ incorrect: userScore < totalScore }">
+                    <span class="colon-suffix" jhiTranslate="artemisApp.quizExercise.totalScore"></span>
+                    <span id="quiz-score-result">{{ userScore }}/{{ totalScore }} ({{ result.score }} %)</span>
+                </div>
+                <div *ngIf="mode === 'practice'">
+                    <span jhiTranslate="artemisApp.quizExercise.practiceMode"></span>
+                </div>
+                <div *ngIf="mode === 'preview'">
+                    <span jhiTranslate="artemisApp.quizExercise.previewMode"></span>
+                </div>
+            </div>
+            <div *ngIf="mode === 'solution'">
+                <span jhiTranslate="artemisApp.quizExercise.solution"></span>
+            </div>
+            <div class="submit-button">
+                <jhi-button
+                    *ngIf="!showingResult"
+                    id="submit-quiz"
+                    (click)="onSubmit()"
+                    [btnSize]="isMobile() ? ButtonSize.SMALL : ButtonSize.LARGE"
+                    [btnType]="ButtonType.SUCCESS"
+                    [title]="submission.submitted ? 'artemisApp.quizExercise.submitted' : 'entity.action.submit'"
+                    [disabled]="submission.submitted || isSubmitting || waitingForQuizStart || remainingTimeSeconds < 0"
+                ></jhi-button>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="quiz-is-over-overlay alert alert-info" *ngIf="!waitingForQuizStart && !showingResult && !submission.submitted && remainingTimeSeconds < 0">
+    <span *ngIf="submission.adjustedSubmissionDate" jhiTranslate="artemisApp.quizExercise.quizIsOverText"></span>
+    <span *ngIf="!submission.adjustedSubmissionDate" jhiTranslate="artemisApp.quizExercise.notParticipatedText"></span>
+</div>
+<div class="quiz-submitted-overlay alert alert-success" *ngIf="!waitingForQuizStart && submission.submitted && !showingResult">
+    <span jhiTranslate="artemisApp.quizExercise.successfullySubmittedText"></span>
+</div>
+<div class="quiz-waiting-for-start-overlay alert alert-info" *ngIf="waitingForQuizStart">
+    <span jhiTranslate="artemisApp.quizExercise.quizInstructions.waitForStart"></span>
+    <div *ngIf="quizExercise.adjustedReleaseDate">
+        <hr />
+        <span jhiTranslate="artemisApp.quizExercise.quizInstructions.timeUntilPlannedStart"></span>
+        <span class="text-bold">{{ timeUntilStart }}</span>
+        <br />
+        <span>({{ quizExercise.releaseDate!.format('LT') }})</span>
+    </div>
+</div>

@@ -5,10 +5,7 @@ import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.notFound;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,6 +19,7 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.ExampleSubmissionRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
+import de.tum.in.www1.artemis.repository.TextBlockRepository;
 import de.tum.in.www1.artemis.repository.TextExerciseRepository;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.scheduled.TextClusteringScheduleService;
@@ -42,6 +40,8 @@ public class TextExerciseResource {
     private String applicationName;
 
     private final TextAssessmentService textAssessmentService;
+
+    private final TextBlockRepository textBlockRepository;
 
     private final TextExerciseService textExerciseService;
 
@@ -65,11 +65,15 @@ public class TextExerciseResource {
 
     private final Optional<TextClusteringScheduleService> textClusteringScheduleService;
 
+    private final GradingCriterionService gradingCriterionService;
+
     public TextExerciseResource(TextExerciseRepository textExerciseRepository, TextExerciseService textExerciseService, TextAssessmentService textAssessmentService,
             UserService userService, AuthorizationCheckService authCheckService, CourseService courseService, ParticipationService participationService,
             ResultRepository resultRepository, GroupNotificationService groupNotificationService, ExampleSubmissionRepository exampleSubmissionRepository,
-            Optional<TextClusteringScheduleService> textClusteringScheduleService, ExerciseService exerciseService) {
+            Optional<TextClusteringScheduleService> textClusteringScheduleService, ExerciseService exerciseService, GradingCriterionService gradingCriterionService,
+            TextBlockRepository textBlockRepository) {
         this.textAssessmentService = textAssessmentService;
+        this.textBlockRepository = textBlockRepository;
         this.textExerciseService = textExerciseService;
         this.textExerciseRepository = textExerciseRepository;
         this.userService = userService;
@@ -81,6 +85,7 @@ public class TextExerciseResource {
         this.exampleSubmissionRepository = exampleSubmissionRepository;
         this.textClusteringScheduleService = textClusteringScheduleService;
         this.exerciseService = exerciseService;
+        this.gradingCriterionService = gradingCriterionService;
     }
 
     /**
@@ -154,6 +159,7 @@ public class TextExerciseResource {
         if (textExerciseBeforeUpdate.isAutomaticAssessmentEnabled() != textExercise.isAutomaticAssessmentEnabled() && !authCheckService.isAdmin()) {
             return forbidden();
         }
+
         TextExercise result = textExerciseRepository.save(textExercise);
         textClusteringScheduleService.ifPresent(service -> service.scheduleExerciseForClusteringIfRequired(result));
 
@@ -188,6 +194,9 @@ public class TextExerciseResource {
             // not required in the returned json body
             exercise.setStudentParticipations(null);
             exercise.setCourse(null);
+            List<GradingCriterion> gradingCriteria = gradingCriterionService.findByExerciseIdWithEagerGradingCriteria(exercise.getId());
+            exercise.setGradingCriteria(gradingCriteria);
+
         }
 
         return ResponseEntity.ok().body(exercises);
@@ -203,12 +212,14 @@ public class TextExerciseResource {
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<TextExercise> getTextExercise(@PathVariable Long exerciseId) {
         log.debug("REST request to get TextExercise : {}", exerciseId);
-        Optional<TextExercise> optionalTextExercise = textExerciseRepository.findById(exerciseId);
+        Optional<TextExercise> optionalTextExercise = textExerciseRepository.findWithEagerTeamAssignmentConfigAndCategoriesById(exerciseId);
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(optionalTextExercise)) {
             return forbidden();
         }
 
         Set<ExampleSubmission> exampleSubmissions = new HashSet<>(this.exampleSubmissionRepository.findAllByExerciseId(exerciseId));
+        List<GradingCriterion> gradingCriteria = gradingCriterionService.findByExerciseIdWithEagerGradingCriteria(exerciseId);
+        optionalTextExercise.ifPresent(textExercise -> textExercise.setGradingCriteria(gradingCriteria));
         optionalTextExercise.ifPresent(textExercise -> textExercise.setExampleSubmissions(exampleSubmissions));
 
         return ResponseUtil.wrapOrNotFound(optionalTextExercise);
@@ -267,8 +278,8 @@ public class TextExerciseResource {
             }
         }
         else {
-            return ResponseEntity.badRequest().headers(
-                    HeaderUtil.createFailureAlert(applicationName, true, "textExercise", "wrongExerciseType", "The exercise of the participation is not a modeling exercise."))
+            return ResponseEntity.badRequest()
+                    .headers(HeaderUtil.createFailureAlert(applicationName, true, "textExercise", "wrongExerciseType", "The exercise of the participation is not a text exercise."))
                     .body(null);
         }
 
@@ -296,20 +307,26 @@ public class TextExerciseResource {
             textSubmission.setParticipation(null);
 
             Result result = textSubmission.getResult();
-            if (textSubmission.isSubmitted() && result != null && result.getCompletionDate() != null) {
-                List<Feedback> assessments = textAssessmentService.getAssessmentsForResult(result);
-                result.setFeedbacks(assessments);
-            }
+            if (result != null) {
+                // Load TextBlocks for the Submission. They are needed to display the Feedback in the client.
+                final List<TextBlock> textBlocks = textBlockRepository.findAllBySubmissionId(textSubmission.getId());
+                textSubmission.setBlocks(textBlocks);
 
-            if (result != null && !authCheckService.isAtLeastInstructorForExercise(textExercise, user)) {
-                result.setAssessor(null);
+                if (textSubmission.isSubmitted() && result.getCompletionDate() != null) {
+                    List<Feedback> assessments = textAssessmentService.getAssessmentsForResult(result);
+                    result.setFeedbacks(assessments);
+                }
+
+                if (!authCheckService.isAtLeastInstructorForExercise(textExercise, user)) {
+                    result.setAssessor(null);
+                }
             }
 
             participation.addSubmissions(textSubmission);
         }
 
-        if (!authCheckService.isAtLeastInstructorForExercise(textExercise, user)) {
-            participation.setStudent(null);
+        if (!(authCheckService.isAtLeastInstructorForExercise(textExercise, user) || participation.isOwnedBy(user))) {
+            participation.setParticipant(null);
         }
 
         return ResponseEntity.ok(participation);

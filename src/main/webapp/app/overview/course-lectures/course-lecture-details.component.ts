@@ -4,11 +4,13 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { Subscription } from 'rxjs/Subscription';
 import { AuthServerProvider } from 'app/core/auth/auth-jwt.service';
 import { HttpResponse } from '@angular/common/http';
-import { Lecture, LectureService } from 'app/entities/lecture';
 import * as moment from 'moment';
-import { Attachment, AttachmentService } from 'app/entities/attachment';
-import { FileService } from 'app/shared';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { Lecture } from 'app/entities/lecture.model';
+import { FileService } from 'app/shared/http/file.service';
+import { Attachment } from 'app/entities/attachment.model';
+import { LectureService } from 'app/lecture/lecture.service';
+import { AttachmentService } from 'app/lecture/attachment.service';
 
 @Component({
     selector: 'jhi-course-lecture-details',
@@ -44,7 +46,7 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
     }
 
     ngOnInit(): void {
-        this.subscription = this.route.params.subscribe(params => {
+        this.subscription = this.route.params.subscribe((params) => {
             if (!this.lecture || this.lecture.id !== params.lectureId) {
                 this.lecture = null;
                 this.lectureService.find(params.lectureId).subscribe((lectureResponse: HttpResponse<Lecture>) => {
@@ -79,7 +81,7 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
     downloadAttachment(downloadUrl: string): void {
         if (!this.isDownloadingLink) {
             this.isDownloadingLink = downloadUrl;
-            this.fileService.downloadAttachment(downloadUrl);
+            this.fileService.downloadFileWithAccessToken(downloadUrl);
             this.isDownloadingLink = null;
         }
     }

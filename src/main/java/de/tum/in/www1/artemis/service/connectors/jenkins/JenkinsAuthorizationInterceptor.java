@@ -31,11 +31,16 @@ public class JenkinsAuthorizationInterceptor implements ClientHttpRequestInterce
     @Value("${artemis.continuous-integration.url}")
     private URL jenkinsURL;
 
+    @Value("${jenkins.use-crumb:#{true}}")
+    private boolean useCrumb;
+
     @NotNull
     @Override
     public ClientHttpResponse intercept(HttpRequest request, @NotNull byte[] body, ClientHttpRequestExecution execution) throws IOException {
         request.getHeaders().setBasicAuth(username, password);
-        setCrumb(request.getHeaders());
+        if (useCrumb) {
+            setCrumb(request.getHeaders());
+        }
 
         return execution.execute(request, body);
     }

@@ -86,6 +86,9 @@ public class ProgrammingExercise extends Exercise {
     @JsonIgnoreProperties("exercise")
     private Set<ProgrammingExerciseTestCase> testCases = new HashSet<>();
 
+    @Transient
+    private boolean isLocalSimulationTransient;
+
     /**
      * Convenience getter. The actual URL is stored in the {@link TemplateProgrammingExerciseParticipation}
      *
@@ -382,7 +385,7 @@ public class ProgrammingExercise extends Exercise {
 
     @JsonIgnore
     public String getProjectName() {
-        // this is the name used for Bitbucket and Bamboo
+        // this is the name used for VC service and CI service
         return this.getCourse().getShortName() + " " + this.getTitle();
     }
 
@@ -507,5 +510,13 @@ public class ProgrammingExercise extends Exercise {
         public String getMappedColumnName() {
             return mappedColumnName;
         }
+    }
+
+    public boolean getIsLocalSimulation() {
+        return this.isLocalSimulationTransient;
+    }
+
+    public void setIsLocalSimulation(Boolean isLocalSimulationTransient) {
+        this.isLocalSimulationTransient = isLocalSimulationTransient;
     }
 }

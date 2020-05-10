@@ -7,10 +7,10 @@ import { catchError, distinctUntilChanged, map } from 'rxjs/operators';
 
 import { SERVER_API_URL } from 'app/app.constants';
 
+import { Course } from 'app/entities/course.model';
 import { User } from 'app/core/user/user.model';
-import { Course } from 'app/entities/course/course.model';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
-import { FeatureToggleService } from 'app/feature-toggle/feature-toggle.service';
+import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 
 export interface IAccountService {
     fetch: () => Observable<HttpResponse<User>>;
@@ -99,7 +99,7 @@ export class AccountService implements IAccountService {
         }
 
         return this.identity().then(
-            id => {
+            (id) => {
                 const authorities = id!.authorities!;
                 return Promise.resolve(authorities && authorities.includes(authority));
             },
@@ -163,6 +163,10 @@ export class AccountService implements IAccountService {
 
     isAtLeastInstructorInCourse(course: Course) {
         return this.hasGroup(course.instructorGroupName) || this.hasAnyAuthorityDirect(['ROLE_ADMIN']);
+    }
+
+    isAdmin(): boolean {
+        return this.hasAnyAuthorityDirect(['ROLE_ADMIN']);
     }
 
     isAuthenticated(): boolean {

@@ -3,6 +3,7 @@
         "AssessmentType": {
             "null": "",
             "AUTOMATIC": "Automatic",
+            "SEMI_AUTOMATIC": "Semi-Automatic",
             "MANUAL": "Manual"
         }
     }

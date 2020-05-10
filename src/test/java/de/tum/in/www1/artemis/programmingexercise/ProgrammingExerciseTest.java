@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.programmingexercise;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.doReturn;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -11,14 +10,16 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import de.tum.in.www1.artemis.AbstractSpringIntegrationTest;
+import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.connector.bamboo.BambooRequestMockProvider;
+import de.tum.in.www1.artemis.connector.bitbucket.BitbucketRequestMockProvider;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.RequestUtilService;
 import de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResource;
 
-class ProgrammingExerciseTest extends AbstractSpringIntegrationTest {
+class ProgrammingExerciseTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
     DatabaseUtilService database;
@@ -28,6 +29,12 @@ class ProgrammingExerciseTest extends AbstractSpringIntegrationTest {
 
     @Autowired
     ProgrammingExerciseRepository programmingExerciseRepository;
+
+    @Autowired
+    private BambooRequestMockProvider bambooRequestMockProvider;
+
+    @Autowired
+    private BitbucketRequestMockProvider bitbucketRequestMockProvider;
 
     Long programmingExerciseId;
 
@@ -44,12 +51,15 @@ class ProgrammingExerciseTest extends AbstractSpringIntegrationTest {
     }
 
     void updateProgrammingExercise(ProgrammingExercise programmingExercise, String newProblem, String newTitle) throws Exception {
+        bambooRequestMockProvider.enableMockingOfRequests();
+        bitbucketRequestMockProvider.enableMockingOfRequests();
         programmingExercise.setProblemStatement(newProblem);
         programmingExercise.setTitle(newTitle);
-        doReturn(true).when(continuousIntegrationService).buildPlanIdIsValid(programmingExercise.getProjectKey(), programmingExercise.getTemplateBuildPlanId());
-        doReturn(true).when(versionControlService).repositoryUrlIsValid(programmingExercise.getTemplateRepositoryUrlAsUrl());
-        doReturn(true).when(continuousIntegrationService).buildPlanIdIsValid(programmingExercise.getProjectKey(), programmingExercise.getSolutionBuildPlanId());
-        doReturn(true).when(versionControlService).repositoryUrlIsValid(programmingExercise.getSolutionRepositoryUrlAsUrl());
+
+        bambooRequestMockProvider.mockBuildPlanIsValid(programmingExercise.getTemplateBuildPlanId(), true);
+        bambooRequestMockProvider.mockBuildPlanIsValid(programmingExercise.getSolutionBuildPlanId(), true);
+        bitbucketRequestMockProvider.mockRepositoryUrlIsValid(programmingExercise.getTemplateRepositoryUrlAsUrl(), programmingExercise.getProjectKey(), true);
+        bitbucketRequestMockProvider.mockRepositoryUrlIsValid(programmingExercise.getSolutionRepositoryUrlAsUrl(), programmingExercise.getProjectKey(), true);
 
         ProgrammingExercise updatedProgrammingExercise = request.putWithResponseBody("/api/programming-exercises", programmingExercise, ProgrammingExercise.class, HttpStatus.OK);
 

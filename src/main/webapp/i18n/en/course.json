@@ -23,15 +23,35 @@
             "color": "Color",
             "courseIcon": "Course Icon",
             "shortName": "Short Name",
-            "studentGroupName": "Student Group",
-            "teachingAssistantGroupName": "Tutor Group",
-            "instructorGroupName": "Instructor Group",
+            "maxComplaints": {
+                "title": "Maximum amount of Complaints",
+                "description": "Set the maximum amount of complaints allowed"
+            },
+            "maxComplaintTimeDays": {
+                "title": "Deadline for complaints in days after result date",
+                "description": "This number refers to days after the result is available (assessment due date or result date, depending on which one is later). Students will not be able to complain anymore after this deadline."
+            },
+            "studentQuestionsEnabled": {
+                "title": "Enable questions and answers by students",
+                "description": "Enable Questions and Answers section on lecture and exercise page."
+            },
+            "complaintsEnabled": {
+                "title": "Enable complaints",
+                "description": "Enabling this allows students to complain about results."
+            },
+            "customizeGroupNames": {
+                "title": "Customize group names",
+                "description": "Make sure that the groups exist in the external user management if you enable this option. The groups are not created automatically then."
+            },
+            "studentGroupName": "Students",
+            "teachingAssistantGroupName": "Tutors",
+            "instructorGroupName": "Instructors",
             "description": "Course Description",
             "startDate": "Start",
             "endDate": "End",
             "accessGroups": "Access Groups",
             "onlineCourse": "Online Course",
-            "registrationEnabled": "Registration Enabled",
+            "registrationEnabled": "Student Registration Enabled",
             "exercises": "Exercises",
             "programmingExercises": "Programming Exercises",
             "quizExercises": "Quiz Exercises",
@@ -43,6 +63,9 @@
             "students": "Students",
             "tutors": "Tutors",
             "instructors": "Instructors",
+            "student": "Student",
+            "tutor": "Tutor",
+            "instructor": "Instructor",
             "onlineCourseFalse": "No",
             "onlineCourseTrue": "Yes",
             "form": {
@@ -56,7 +79,20 @@
                 "title": "Presentation Score",
                 "description": "Activate this checkbox to define the amount of presentations a student has to hold to receive the grade bonus for the course. Afterwards you can define for every created exercise, if this feature should be activated."
             },
-            "presentationScore": "Required Presentation Score for Bonus"
+            "presentationScore": "Required Presentation Score for Bonus",
+            "courseGroup": {
+                "outOf": "out of",
+                "usersPerPage": "{{number}} users per page",
+                "showAllUsers": "Show all users",
+                "searchForUsers": "Add a user to this course group by searching for login or name",
+                "searchNoResults": "No users found",
+                "login": "Login",
+                "name": "Name",
+                "email": "Email",
+                "removeFromGroup": {
+                    "modalQuestion": "Are you sure you want to remove the user with login <strong>{{ title }}</strong> from this course group?"
+                }
+            }
         }
     }
 }

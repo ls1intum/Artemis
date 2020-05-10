@@ -1,5 +1,7 @@
+import { omit } from 'lodash';
+
 // Cartesian product helper function
-const cartesianConcatHelper = (a: any[], b: any[]): any[][] => ([] as any[][]).concat(...a.map(a2 => b.map(b2 => ([] as any[]).concat(a2, b2))));
+const cartesianConcatHelper = (a: any[], b: any[]): any[][] => ([] as any[][]).concat(...a.map((a2) => b.map((b2) => ([] as any[]).concat(a2, b2))));
 
 /**
  * Returns the cartesian product for all arrays provided to the function.
@@ -35,4 +37,14 @@ export const stringifyCircular = (val: any): string => {
         }
         return value;
     });
+};
+
+/**
+ * Stringifies an object ignoring certain top-level fields
+ *
+ * @param val Object to stringify
+ * @param ignoredFields Fields to omit from object before converting to string
+ */
+export const stringifyIgnoringFields = (val: any, ...ignoredFields: string[]): string => {
+    return JSON.stringify(omit(val, ignoredFields));
 };

@@ -1,14 +1,14 @@
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
-import { ArtemisMarkdown } from 'app/components/util/markdown.service';
-import { MultipleChoiceQuestion } from 'app/entities/multiple-choice-question';
-import { ShortAnswerQuestion } from 'app/entities/short-answer-question';
+import { ArtemisMarkdownService } from 'app/shared/markdown.service';
+import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-question.model';
+import { ShortAnswerQuestion } from 'app/entities/quiz/short-answer-question.model';
 
 chai.use(sinonChai);
 const expect = chai.expect;
 
 describe('Markdown Service', () => {
-    let artemisMarkdown = new ArtemisMarkdown();
+    const artemisMarkdown = new ArtemisMarkdownService();
     const hintText = 'Add an explanation here (only visible in feedback after quiz has ended)';
     const markdownHint = '[hint] ' + hintText;
     const explanationText = 'Add an explanation here (only visible in feedback after quiz has ended)';

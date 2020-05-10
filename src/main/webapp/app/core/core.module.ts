@@ -1,32 +1,30 @@
-import { LOCALE_ID, NgModule, ErrorHandler } from '@angular/core';
+import { ErrorHandler, LOCALE_ID, NgModule } from '@angular/core';
 import { DatePipe, registerLocaleData } from '@angular/common';
 import { HTTP_INTERCEPTORS, HttpClient, HttpClientModule } from '@angular/common/http';
 import { Title } from '@angular/platform-browser';
-import { RepositoryInterceptor } from 'app/entities/repository';
-import { AuthInterceptor } from 'app/blocks/interceptor/auth.interceptor';
-import { AuthExpiredInterceptor } from 'app/blocks/interceptor/auth-expired.interceptor';
-import { ErrorHandlerInterceptor } from 'app/blocks/interceptor/errorhandler.interceptor';
-import { NotificationInterceptor } from 'app/blocks/interceptor/notification.interceptor';
+import { AuthInterceptor } from 'app/core/interceptor/auth.interceptor';
+import { AuthExpiredInterceptor } from 'app/core/interceptor/auth-expired.interceptor';
+import { ErrorHandlerInterceptor } from 'app/core/interceptor/errorhandler.interceptor';
+import { NotificationInterceptor } from 'app/core/interceptor/notification.interceptor';
 import { JhiConfigService, JhiLanguageService, missingTranslationHandler, NgJhipsterModule, translatePartialLoader } from 'ng-jhipster';
 import { NgbDateAdapter, NgbDatepickerConfig } from '@ng-bootstrap/ng-bootstrap';
 import * as moment from 'moment';
 import { NgxWebstorageModule } from 'ngx-webstorage';
 import { DifferencePipe, MomentModule } from 'ngx-moment';
 import { DeviceDetectorModule } from 'ngx-device-detector';
-import { Angulartics2Module } from 'angulartics2';
 import { NgbDateMomentAdapter } from 'app/shared/util/datepicker-adapter';
 import { FaIconLibrary } from '@fortawesome/angular-fontawesome';
 import { fas } from '@fortawesome/free-solid-svg-icons';
 import locale from '@angular/common/locales/en';
 import { fontAwesomeIcons } from 'app/core/icons/font-awesome-icons';
 import { MissingTranslationHandler, TranslateLoader, TranslateModule } from '@ngx-translate/core';
-import { CookieModule } from 'ngx-cookie';
-import { SentryErrorHandler } from 'app/sentry/sentry.error-handler';
+import { SentryErrorHandler } from 'app/core/sentry/sentry.error-handler';
+import { RepositoryInterceptor } from 'app/shared/result/repository.service';
+import { CookieService } from 'ngx-cookie-service';
 
 @NgModule({
     imports: [
         HttpClientModule,
-        CookieModule.forRoot(),
         NgxWebstorageModule.forRoot({ prefix: 'jhi', separator: '-' }),
         DeviceDetectorModule,
         /**
@@ -40,10 +38,6 @@ import { SentryErrorHandler } from 'app/sentry/sentry.error-handler';
             i18nEnabled: true,
             defaultI18nLang: 'en',
         }),
-        /**
-         * @external Angulartics offers Vendor-agnostic analytics and integration with Matomo
-         */
-        Angulartics2Module.forRoot(),
         TranslateModule.forRoot({
             loader: {
                 provide: TranslateLoader,
@@ -67,6 +61,7 @@ import { SentryErrorHandler } from 'app/sentry/sentry.error-handler';
         { provide: ErrorHandler, useClass: SentryErrorHandler },
         DatePipe,
         DifferencePipe,
+        CookieService,
         /**
          * @description Interceptor declarations:
          * Interceptors are located at 'blocks/interceptor/.

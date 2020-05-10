@@ -7,6 +7,8 @@ import java.util.concurrent.ScheduledFuture;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.event.EventListener;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.stereotype.Service;
@@ -15,7 +17,6 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
-import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
@@ -49,16 +50,11 @@ public class QuizScheduleService {
     /**
      * quizExerciseId -> ScheduledFuture
      */
-    private static Map<Long, ScheduledFuture> quizStartSchedules = new ConcurrentHashMap<>();
+    private static Map<Long, ScheduledFuture<?>> quizStartSchedules = new ConcurrentHashMap<>();
 
-    private static ThreadPoolTaskScheduler threadPoolTaskScheduler = new ThreadPoolTaskScheduler();
-    static {
-        threadPoolTaskScheduler.setThreadNamePrefix("QuizScheduler");
-        threadPoolTaskScheduler.setPoolSize(1);
-        threadPoolTaskScheduler.initialize();
-    }
+    private static ThreadPoolTaskScheduler threadPoolTaskScheduler;
 
-    private ScheduledFuture scheduledFuture;
+    private ScheduledFuture<?> scheduledProcessQuizSubmissions;
 
     private final SimpMessageSendingOperations messagingTemplate;
 
@@ -85,6 +81,12 @@ public class QuizScheduleService {
         this.quizStatisticService = quizStatisticService;
     }
 
+    @EventListener(ApplicationReadyEvent.class)
+    public void applicationReady() {
+        // activate Quiz Schedule Service
+        startSchedule(3 * 1000);                          // every 3 seconds
+    }
+
     /**
      * add a quizSubmission to the submissionHashMap
      *
@@ -105,12 +107,13 @@ public class QuizScheduleService {
 
     /**
      * add a result to resultHashMap for a statistic-update
+     * this should only be invoked once, when the quiz was submitted
      *
      * @param quizExerciseId the quizExerciseId of the quiz the result belongs to (first Key)
      * @param result the result, which should be added
      */
     public static void addResultForStatisticUpdate(Long quizExerciseId, Result result) {
-
+        log.debug("add result for statistic update for quiz " + quizExerciseId + ": " + result);
         if (quizExerciseId != null && result != null) {
             // check if there is already a result with the same quiz
             if (!resultHashMap.containsKey(quizExerciseId)) {
@@ -133,7 +136,7 @@ public class QuizScheduleService {
             if (!participationHashMap.containsKey(quizExerciseId)) {
                 participationHashMap.put(quizExerciseId, new ConcurrentHashMap<>());
             }
-            participationHashMap.get(quizExerciseId).put(participation.getStudent().getLogin(), participation);
+            participationHashMap.get(quizExerciseId).put(participation.getParticipantIdentifier(), participation);
         }
 
     }
@@ -190,25 +193,45 @@ public class QuizScheduleService {
      * @param delayInMillis gap for which the QuizScheduleService should run repeatly
      */
     public void startSchedule(long delayInMillis) {
-        log.info("QuizScheduleService was started to run repeatedly with {} second delay.", delayInMillis / 1000.0);
-        scheduledFuture = threadPoolTaskScheduler.scheduleWithFixedDelay(this::run, delayInMillis);
+        if (threadPoolTaskScheduler == null) {
+            threadPoolTaskScheduler = new ThreadPoolTaskScheduler();
+            threadPoolTaskScheduler.setThreadNamePrefix("QuizScheduler");
+            threadPoolTaskScheduler.setPoolSize(1);
+            threadPoolTaskScheduler.initialize();
+            scheduledProcessQuizSubmissions = threadPoolTaskScheduler.scheduleWithFixedDelay(this::processCachedQuizSubmissions, delayInMillis);
+            log.info("QuizScheduleService was started to run repeatedly with {} second delay.", delayInMillis / 1000.0);
 
-        // schedule quiz start for all existing quizzes that are planned to start in the future
-        List<QuizExercise> quizExercises = quizExerciseService.findAllPlannedToStartInTheFutureWithQuestions();
-        for (QuizExercise quizExercise : quizExercises) {
-            scheduleQuizStart(quizExercise);
+            // schedule quiz start for all existing quizzes that are planned to start in the future
+            List<QuizExercise> quizExercises = quizExerciseService.findAllPlannedToStartInTheFutureWithQuestions();
+            for (QuizExercise quizExercise : quizExercises) {
+                scheduleQuizStart(quizExercise);
+            }
+        }
+        else {
+            log.debug("Cannot start quiz exercise schedule service, it is already RUNNING");
         }
     }
 
     /**
-     * stop scheduler (doesn't interrupt if running)
+     * stop scheduler (interrupts if running)
      */
     public void stopSchedule() {
-        if (scheduledFuture != null) {
-            scheduledFuture.cancel(false);
+        if (threadPoolTaskScheduler != null) {
+            log.info("Try to stop quiz schedule service");
+
+            if (scheduledProcessQuizSubmissions != null && !scheduledProcessQuizSubmissions.isCancelled()) {
+                boolean cancelSuccess = scheduledProcessQuizSubmissions.cancel(true);
+                log.info("Stop Quiz Schedule Service was successful: " + cancelSuccess);
+                scheduledProcessQuizSubmissions = null;
+            }
+            for (Long quizExerciseId : quizStartSchedules.keySet()) {
+                cancelScheduledQuizStart(quizExerciseId);
+            }
+            threadPoolTaskScheduler.shutdown();
+            threadPoolTaskScheduler = null;
         }
-        for (Long quizExerciseId : quizStartSchedules.keySet()) {
-            cancelScheduledQuizStart(quizExerciseId);
+        else {
+            log.debug("Cannot stop quiz exercise schedule service, it was already STOPPED");
         }
     }
 
@@ -223,7 +246,7 @@ public class QuizScheduleService {
 
         if (quizExercise.isIsPlannedToStart() && quizExercise.getReleaseDate().isAfter(ZonedDateTime.now())) {
             // schedule sending out filtered quiz over websocket
-            ScheduledFuture scheduledFuture = threadPoolTaskScheduler.schedule(() -> quizExerciseService.sendQuizExerciseToSubscribedClients(quizExercise),
+            ScheduledFuture<?> scheduledFuture = threadPoolTaskScheduler.schedule(() -> quizExerciseService.sendQuizExerciseToSubscribedClients(quizExercise),
                     Date.from(quizExercise.getReleaseDate().toInstant()));
 
             // save scheduled future in HashMap
@@ -231,11 +254,23 @@ public class QuizScheduleService {
         }
     }
 
+    /**
+     * cancels the quiz start for the given exercise id, e.g. because the quiz was deleted or the quiz start date was changed
+     *
+     * @param quizExerciseId the quiz exercise for which the quiz start should be canceled
+     */
     public void cancelScheduledQuizStart(Long quizExerciseId) {
-        ScheduledFuture scheduledFuture = quizStartSchedules.remove(quizExerciseId);
+        ScheduledFuture<?> scheduledFuture = quizStartSchedules.remove(quizExerciseId);
         if (scheduledFuture != null) {
-            scheduledFuture.cancel(false);
+            boolean cancelSuccess = scheduledFuture.cancel(true);
+            log.info("Stop scheduled quiz start for quiz " + quizExerciseId + " was successful: " + cancelSuccess);
         }
+    }
+
+    public void clearAllQuizData() {
+        participationHashMap.clear();
+        submissionHashMap.clear();
+        resultHashMap.clear();
     }
 
     public void clearQuizData(Long quizExerciseId) {
@@ -254,7 +289,8 @@ public class QuizScheduleService {
      * Result) from ParticipationHashMap via WebSocket to each user and remove them from ParticipationHashMap (WebSocket Send) 3. Update Statistics with Results from ResultHashMap
      * (DB Read and DB Write) and remove from ResultHashMap 4. Send out new Statistics over WebSocket (WebSocket Send)
      */
-    private void run() {
+    public void processCachedQuizSubmissions() {
+        log.debug("Process cached quiz submissions");
         // global try-catch for error logging
         try {
             long start = System.currentTimeMillis();
@@ -303,7 +339,7 @@ public class QuizScheduleService {
                     // and remove the participation from the ParticipationHashMap
                     int counter = 0;
                     for (StudentParticipation participation : participationHashMap.remove(quizExerciseId).values()) {
-                        if (participation.getStudent() == null || participation.getStudent().getLogin() == null) {
+                        if (participation.getParticipant() == null || participation.getParticipantIdentifier() == null) {
                             log.error("Participation is missing student (or student is missing username): {}", participation);
                             continue;
                         }
@@ -321,8 +357,9 @@ public class QuizScheduleService {
 
                 // get the Quiz with the statistic from the database
                 QuizExercise quizExercise = quizExerciseService.findOneWithQuestionsAndStatistics(quizExerciseId);
-                // check if quiz has been deleted
+                // check if quiz has been deleted (edge case), then do nothing!
                 if (quizExercise == null) {
+                    log.debug("Remove quiz " + quizExerciseId + " from resultHashMap");
                     resultHashMap.remove(quizExerciseId);
                     continue;
                 }
@@ -331,7 +368,8 @@ public class QuizScheduleService {
                 try {
                     Set<Result> newResultsForQuiz = resultHashMap.remove(quizExerciseId);
                     quizStatisticService.updateStatistics(newResultsForQuiz, quizExercise);
-                    log.debug("Updated statistics after {} ms for quiz {}", System.currentTimeMillis() - start, quizExercise.getTitle());
+                    log.debug("Updated statistics with {} new results after {} ms for quiz {}", newResultsForQuiz.size(), System.currentTimeMillis() - start,
+                            quizExercise.getTitle());
                 }
                 catch (Exception e) {
                     log.error("Exception in StatisticService.updateStatistics():\n{}", e.getMessage());
@@ -344,7 +382,7 @@ public class QuizScheduleService {
     }
 
     private void sendQuizResultToUser(long quizExerciseId, StudentParticipation participation) {
-        var user = participation.getStudent().getLogin();
+        var user = participation.getParticipantIdentifier();
         removeUnnecessaryObjectsBeforeSendingToClient(participation);
         // TODO: use a proper result here
         messagingTemplate.convertAndSendToUser(user, "/topic/exercise/" + quizExerciseId + "/participation", participation);
@@ -357,7 +395,7 @@ public class QuizScheduleService {
         }
         // submissions are part of results, so we do not need them twice
         participation.setSubmissions(null);
-        participation.setStudent(null);
+        participation.setParticipant(null);
         if (participation.getResults() != null && participation.getResults().size() > 0) {
             QuizSubmission quizSubmission = (QuizSubmission) participation.getResults().iterator().next().getSubmission();
             if (quizSubmission != null && quizSubmission.getSubmittedAnswers() != null) {
@@ -426,7 +464,7 @@ public class QuizScheduleService {
      * @param username       the user, who submitted the quizSubmission
      * @param quizSubmission the quizSubmission, which is used to calculate the Result
      */
-    private Participation createParticipationWithResultAndWriteItInHashMaps(QuizExercise quizExercise, String username, QuizSubmission quizSubmission) {
+    private void createParticipationWithResultAndWriteItInHashMaps(QuizExercise quizExercise, String username, QuizSubmission quizSubmission) {
 
         if (quizExercise != null && username != null && quizSubmission != null) {
 
@@ -435,7 +473,7 @@ public class QuizScheduleService {
             // TODO: when this is set earlier for the individual quiz start of a student, we don't need to set this here anymore
             participation.setInitializationDate(quizSubmission.getSubmissionDate());
             Optional<User> user = userService.getUserByLogin(username);
-            user.ifPresent(participation::setStudent);
+            user.ifPresent(participation::setParticipant);
             // add the quizExercise to the participation
             participation.setExercise(quizExercise);
 
@@ -460,16 +498,13 @@ public class QuizScheduleService {
 
             // save participation, result and quizSubmission
             participation = studentParticipationRepository.save(participation);
-            quizSubmission = quizSubmissionRepository.save(quizSubmission);
+            quizSubmissionRepository.save(quizSubmission);
             result = resultRepository.save(result);
 
             // add the participation to the participationHashMap for the send out at the end of the quiz
             addParticipation(quizExercise.getId(), participation);
             // add the result of the participation resultHashMap for the statistic-Update
             addResultForStatisticUpdate(quizExercise.getId(), result);
-
-            return participation;
         }
-        return null;
     }
 }

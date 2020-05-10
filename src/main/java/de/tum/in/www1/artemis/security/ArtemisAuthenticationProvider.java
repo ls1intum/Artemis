@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.security;
 
 import java.util.Optional;
+import java.util.Set;
 
 import org.springframework.lang.Nullable;
 import org.springframework.security.authentication.AuthenticationProvider;
@@ -8,6 +9,7 @@ import org.springframework.security.core.Authentication;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.service.connectors.ConnectorHealth;
 
 public interface ArtemisAuthenticationProvider extends AuthenticationProvider {
 
@@ -26,18 +28,28 @@ public interface ArtemisAuthenticationProvider extends AuthenticationProvider {
     /**
      * Adds a user to the specified group
      *
-     * @param username The login name of the user
+     * @param user the user
      * @param group The group the user should get added to
      */
-    void addUserToGroup(String username, String group);
+    void addUserToGroup(User user, String group);
+
+    /**
+     * Adds a user to the specified set of groups.
+     * NOTE: this method should only be invoked for newly created users!
+     * If you want to update an existing user, please use addUserToGroup(username, group)
+     *
+     * @param user the user who should be added to the given groups
+     * @param groups the groups in which the user should be added
+     */
+    void addUserToGroups(User user, @Nullable Set<String> groups);
 
     /**
      * Removes a user from the specified group
      *
-     * @param username The login of the user
+     * @param user the user
      * @param group The groupname the user should get added to
      */
-    void removeUserFromGroup(String username, String group);
+    void removeUserFromGroup(User user, String group);
 
     /**
      * Searches for a user with the given email address.
@@ -66,4 +78,26 @@ public interface ArtemisAuthenticationProvider extends AuthenticationProvider {
      */
     // TODO why is this in the authentication provider? I think we should move this to the course service.
     void registerUserForCourse(User user, Course course);
+
+    /**
+     * Checks if the underlying user management server is up and running and gives some additional information about the running
+     * services if available
+     *
+     * @return The health of the user management service containing if it is up and running and any additional data, or the throwing exception otherwise
+     */
+    ConnectorHealth health();
+
+    /**
+     * create a group with the given name
+     *
+     * @param groupName the name of the group which should be created
+     */
+    void createGroup(String groupName);
+
+    /**
+     * delete the group with the given name
+     *
+     * @param groupName the name of the group which should be deleted
+     */
+    void deleteGroup(String groupName);
 }

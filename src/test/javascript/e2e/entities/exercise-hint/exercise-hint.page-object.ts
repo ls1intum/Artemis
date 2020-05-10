@@ -5,11 +5,11 @@ export class ExerciseHintComponentsPage {
     deleteButtons = element.all(by.css('jhi-exercise-hint div table .btn-danger'));
     title = element.all(by.css('jhi-exercise-hint div h2#page-heading span')).first();
 
-    async clickOnCreateButton(timeout?: number) {
+    async clickOnCreateButton() {
         await this.createButton.click();
     }
 
-    async clickOnLastDeleteButton(timeout?: number) {
+    async clickOnLastDeleteButton() {
         await this.deleteButtons.last().click();
     }
 
@@ -50,11 +50,8 @@ export class ExerciseHintUpdatePage {
         return await this.contentInput.getAttribute('value');
     }
 
-    async exerciseSelectLastOption(timeout?: number) {
-        await this.exerciseSelect
-            .all(by.tagName('option'))
-            .last()
-            .click();
+    async exerciseSelectLastOption() {
+        await this.exerciseSelect.all(by.tagName('option')).last().click();
     }
 
     async exerciseSelectOption(option) {
@@ -69,11 +66,11 @@ export class ExerciseHintUpdatePage {
         return await this.exerciseSelect.element(by.css('option:checked')).getText();
     }
 
-    async save(timeout?: number) {
+    async save() {
         await this.saveButton.click();
     }
 
-    async cancel(timeout?: number) {
+    async cancel() {
         await this.cancelButton.click();
     }
 
@@ -90,7 +87,7 @@ export class ExerciseHintDeleteDialog {
         return this.dialogTitle.getAttribute('jhiTranslate');
     }
 
-    async clickOnConfirmButton(timeout?: number) {
+    async clickOnConfirmButton() {
         await this.confirmButton.click();
     }
 }

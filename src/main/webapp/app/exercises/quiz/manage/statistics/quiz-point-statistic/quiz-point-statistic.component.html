@@ -1,0 +1,39 @@
+<div class="row" *ngIf="quizExercise">
+    <div class="col-md-8 offset-md-2 text-center">
+        <h3>{{ quizExercise.title }}</h3>
+
+        <button *jhiHasAnyAuthority="['ROLE_TA', 'ROLE_ADMIN', 'ROLE_INSTRUCTOR']" class="btn btn-primary btn-sm float-right" (click)="recalculate()">
+            <fa-icon [icon]="'sync'" [fixedWidth]="true"></fa-icon>&nbsp;{{ 'showStatistic.recalculateStatistics' | translate }}
+        </button>
+
+        <div class="text-center">
+            <p class="text-left" style="font-size: large;">
+                <span jhiTranslate="showStatistic.quizPointStatistic.maxScore"></span><span>{{ maxScore }}</span>
+            </p>
+            <div class="row">
+                <div class="col-md-8 text-left">
+                    <p style="font-size: large;">
+                        <span *ngIf="rated" jhiTranslate="showStatistic.quizPointStatistic.titleRated"></span>
+                        <span *ngIf="!rated" jhiTranslate="showStatistic.quizPointStatistic.titleUnrated"></span>
+                    </p>
+                </div>
+                <div class="col-md-3 text-right">
+                    <p style="font-size: large;">
+                        <span>{{ participants }} </span><span jhiTranslate="showStatistic.participants"></span>
+                    </p>
+                </div>
+            </div>
+            <canvas baseChart [datasets]="datasets" [labels]="labels" [options]="options" [chartType]="chartType" [colors]="colors"> </canvas>
+
+            <div class="text-center">
+                <button (click)="switchRated()" type="button" class="btn btn-primary">
+                    <fa-icon [icon]="'sync'"></fa-icon>&nbsp;
+                    <span *ngIf="rated" jhiTranslate="showStatistic.switchToUnrated"></span>
+                    <span *ngIf="!rated" jhiTranslate="showStatistic.switchToRated"></span>
+                </button>
+                <p>&nbsp;</p>
+            </div>
+        </div>
+    </div>
+    <jhi-quiz-statistics-footer [isQuizPointStatistic]="true"></jhi-quiz-statistics-footer>
+</div>

@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 
-import { User } from '../../core';
+import { User } from 'app/core/user/user.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { PasswordService } from './password.service';
 
@@ -20,7 +20,7 @@ export class PasswordComponent implements OnInit {
     constructor(private passwordService: PasswordService, private accountService: AccountService) {}
 
     ngOnInit() {
-        this.accountService.identity().then(user => {
+        this.accountService.identity().then((user) => {
             this.user = user!;
         });
     }

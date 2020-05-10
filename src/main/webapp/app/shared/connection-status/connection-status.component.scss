@@ -1,0 +1,14 @@
+.connection-status {
+    font-size: 14px;
+    color: green;
+
+    &.disconnected {
+        color: red;
+    }
+
+    i {
+        font-size: 0.8em;
+        vertical-align: 10%;
+        margin-right: 2px;
+    }
+}

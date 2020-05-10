@@ -8,7 +8,6 @@
                 "generateLabel": "Neue Programmieraufgabe generieren",
                 "importLabel": "Neue Programmieraufgabe importieren",
                 "linkLabel": "Neue Programmieraufgabe verlinken",
-                "editLinkLabel": "Verlinkte Programmieraufgabe bearbeiten",
                 "createOrEditLabel": "Programmieraufgabe erstellen oder bearbeiten"
             },
             "created": "Programmieraufgabe erstellt mit Title {{ param }}",
@@ -41,6 +40,7 @@
             "buildplans": "Build Pläne",
             "publishBuildPlanUrl": "Build Plan veröffentlichen",
             "allowOnlineEditor": "Online Editor erlauben",
+            "noVersionControlAndContinuousIntegrationAvailable": "Setup ohne Verbindung zur VCS und CI",
             "sequentialTestRuns": {
                 "title": "Sequentielle Testläufe",
                 "description": "Aktiviere diese Checkbox um zuerst Struktur- und erst im Anschluss Verhaltenstests duchzuführen. Dieses Feature hilft Studenten dabei, sich auf die aktuell anliegende Herausforderung zu konzentrieren. Bei Aktivierung werden im Test Repository zusätzliche Informationen bereitgestellt. ACHTUNG: Kann nicht nachträglich geändert werden!"
@@ -111,9 +111,11 @@
             },
             "export": {
                 "downloadAllStudents": "Oder lade die Repositories aller Studenten herunter",
+                "downloadAllTeams": "Oder lade die Repositories aller Teams herunter",
                 "filterLateSubmissions": "Verspätete Abgaben herausfiltern",
                 "filterLateSubmissionsDate": "Datum zum Filtern verspäteter Abgaben (standardmäßig Abgabedatum der Aufgabe)",
-                "addStudentName": "Name der Studenten zum Projekt hinzufügen (erlaubt es mehrere Projekte gleichzeitig in Eclipse zu importieren)",
+                "addStudentName": "Namen der Studenten zum Projekt hinzufügen (erlaubt es mehrere Projekte gleichzeitig in Eclipse zu importieren)",
+                "addTeamName": "Namen der Teams zum Projekt hinzufügen (erlaubt es mehrere Projekte gleichzeitig in Eclipse zu importieren)",
                 "combineStudentCommits": "Alle Änderungen des Studenten in einem Commit zusammenfassen (um das Review zu vereinfachen)",
                 "normalizeCodeStyle": "Code-Style normalisieren (Zeilenumbrüche, Kodierung)",
                 "successMessage": "Die Repositories wurden erfolgreich exportiert. Die generierte Zip-Datei wird jetzt heruntergeladen."

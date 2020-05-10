@@ -1,0 +1,47 @@
+{
+    "plugins": [
+        "@typescript-eslint",
+        "@typescript-eslint/tslint",
+        "chai-friendly"
+    ],
+    "extends": [
+        "prettier/@typescript-eslint",
+        "plugin:prettier/recommended"
+    ],
+    "parser": "@typescript-eslint/parser",
+    "parserOptions": {
+        "ecmaVersion": 6,
+        "project": ["./tsconfig.json", "./tsconfig.app.json", "./tsconfig.spec.json"],
+        "sourceType": "module",
+        "ecmaFeatures": {
+            "modules": true
+        }
+    },
+    "rules": {
+        "@typescript-eslint/tslint/config": [
+            "error",
+            {
+                "lintFile": "./tslint.json",
+                "rules": {
+                    "no-unused-expressions": "off"
+                }
+            }
+        ],
+        "@typescript-eslint/no-unused-vars": [
+            "warn",
+            {
+                "vars": "all",
+                "args": "after-used",
+                "ignoreRestSiblings": false
+            }
+        ],
+        "@typescript-eslint/no-non-null-assertion": "off",
+        "chai-friendly/no-unused-expressions": 2
+    },
+    "overrides": [{
+        "files": ["mock-*.ts"],
+        "rules": {
+            "@typescript-eslint/no-unused-vars": "off"
+        }
+    }]
+}

@@ -1,9 +1,9 @@
 import { Component, OnInit } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { JhiParseLinks } from 'ng-jhipster';
-
-import { Audit, AuditsService } from 'app/admin';
-import { ITEMS_PER_PAGE } from 'app/shared';
+import { Audit } from 'app/admin/audits/audit.model';
+import { ITEMS_PER_PAGE } from 'app/shared/constants/pagination.constants';
+import { AuditsService } from 'app/admin/audits/audits.service';
 
 @Component({
     selector: 'jhi-audit',
@@ -45,7 +45,7 @@ export class AuditsComponent implements OnInit {
     }
 
     onChangeDate() {
-        this.auditsService.query({ page: this.page - 1, size: this.itemsPerPage, fromDate: this.fromDate, toDate: this.toDate }).subscribe(res => {
+        this.auditsService.query({ page: this.page - 1, size: this.itemsPerPage, fromDate: this.fromDate, toDate: this.toDate }).subscribe((res) => {
             this.audits = res.body!;
             this.links = this.parseLinks.parse(res.headers.get('link')!);
             this.totalItems = +res.headers.get('X-Total-Count')!;

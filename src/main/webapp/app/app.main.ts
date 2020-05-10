@@ -1,5 +1,6 @@
+import './polyfills';
 import { platformBrowserDynamic } from '@angular/platform-browser-dynamic';
-import { ProdConfig } from './blocks/config/prod.config';
+import { ProdConfig } from './core/config/prod.config';
 import { ArtemisAppModule } from './app.module';
 
 ProdConfig();
@@ -13,5 +14,5 @@ if (module['hot']) {
 
 platformBrowserDynamic()
     .bootstrapModule(ArtemisAppModule, { preserveWhitespaces: true })
-    .then(platformRef => {})
-    .catch(err => console.error(err));
+    .then(() => {})
+    .catch((err) => console.error(err));
