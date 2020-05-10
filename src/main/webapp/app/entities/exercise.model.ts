@@ -12,18 +12,27 @@ import { ExerciseHint } from 'app/entities/exercise-hint.model';
 import { GradingCriterion } from 'app/exercises/shared/structured-grading-criterion/grading-criterion.model';
 import { Team } from 'app/entities/team.model';
 
+/**
+ * defines different difficulty levels of an exercise
+ */
 export const enum DifficultyLevel {
     EASY = 'EASY',
     MEDIUM = 'MEDIUM',
     HARD = 'HARD',
 }
 
+/**
+ * defines different exercise modes
+ */
 export const enum ExerciseMode {
     INDIVIDUAL = 'INDIVIDUAL',
     TEAM = 'TEAM',
 }
 
-// IMPORTANT NOTICE: The following strings have to be consistent with the ones defined in Exercise.java
+/**
+ * defines all possible exercise types
+ * IMPORTANT NOTICE: The following strings have to be consistent with the ones defined in Exercise.java
+ */
 export enum ExerciseType {
     PROGRAMMING = 'programming',
     MODELING = 'modeling',
@@ -32,6 +41,9 @@ export enum ExerciseType {
     FILE_UPLOAD = 'file-upload',
 }
 
+/**
+ * defines different possible status for a participation to an exercise
+ */
 export enum ParticipationStatus {
     QUIZ_UNINITIALIZED = 'quiz-uninitialized',
     QUIZ_ACTIVE = 'quiz-active',
@@ -108,6 +120,10 @@ export abstract class Exercise implements BaseEntity {
     }
 }
 
+/**
+ * returns a string with the icon for the given exercise type
+ * @param exerciseType
+ */
 export function getIcon(exerciseType: ExerciseType): string {
     const icons = {
         [ExerciseType.PROGRAMMING]: 'keyboard',
@@ -120,6 +136,10 @@ export function getIcon(exerciseType: ExerciseType): string {
     return icons[exerciseType];
 }
 
+/**
+ * returns string with Tooltip for the given exercise type
+ * @param exerciseType
+ */
 export function getIconTooltip(exerciseType: ExerciseType): string {
     const tooltips = {
         [ExerciseType.PROGRAMMING]: 'artemisApp.exercise.isProgramming',

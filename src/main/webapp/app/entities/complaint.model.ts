@@ -3,6 +3,9 @@ import { User } from 'app/core/user/user.model';
 import { BaseEntity } from 'app/shared/model/base-entity';
 import { Result } from 'app/entities/result.model';
 
+/**
+ * defines different types of complaints
+ */
 export enum ComplaintType {
     COMPLAINT = 'COMPLAINT',
     MORE_FEEDBACK = 'MORE_FEEDBACK',

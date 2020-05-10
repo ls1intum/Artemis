@@ -43,6 +43,9 @@ export class Course implements BaseEntity {
     constructor() {}
 }
 
+/**
+ * defines different course groups
+ */
 export const enum CourseGroup {
     STUDENTS = 'students',
     TUTORS = 'tutors',
