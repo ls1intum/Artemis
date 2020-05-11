@@ -163,12 +163,12 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
     /**
      * Find "Unreferenced Feedback" item for Result, if it exists.
      */
-    get unreferencedFeedback(): Feedback | null {
+    get unreferencedFeedback(): Feedback[] | null {
         if (this.result && this.result.feedbacks && Array.isArray(this.result.feedbacks)) {
-            const feedbackWithoutReference = this.result.feedbacks.find((f) => f.reference == null && f.type === FeedbackType.MANUAL_UNREFERENCED) || null;
-            if (feedbackWithoutReference != null) {
-                return feedbackWithoutReference;
-            }
+            const feedbackWithoutReference = this.result.feedbacks.filter(
+                (feedbackElement) => feedbackElement.reference == null && feedbackElement.type === FeedbackType.MANUAL_UNREFERENCED,
+            );
+            return feedbackWithoutReference;
         }
 
         return null;

@@ -68,8 +68,10 @@
                         >:</b
                     >
                     <br />
-                    <span> {{ unreferencedFeedback.credits }} </span>
-                    <span> {{ unreferencedFeedback.detailText }} </span>
+                    <div *ngFor="let feedback of unreferencedFeedback">
+                        <span> {{ feedback.credits }} </span>
+                        <span> {{ feedback.detailText }} </span>
+                    </div>
                 </div>
                 <div class="col-md-12 col-lg-10 col-xl-8 feedback-text mt-5 alert alert-info" *ngIf="generalFeedback">
                     <b> <fa-icon [icon]="['far', 'comment-dots']"></fa-icon>&nbsp;<span jhiTranslate="artemisApp.assessment.generalFeedback">General Feedback</span>:</b>
