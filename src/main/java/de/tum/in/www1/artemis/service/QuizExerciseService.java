@@ -7,6 +7,7 @@ import java.util.stream.Stream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.messaging.support.MessageBuilder;
@@ -20,6 +21,7 @@ import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.*;
 import de.tum.in.www1.artemis.domain.view.QuizView;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.service.scheduled.QuizScheduleService;
 
 @Service
 public class QuizExerciseService {
@@ -46,6 +48,8 @@ public class QuizExerciseService {
 
     private final ObjectMapper objectMapper;
 
+    private QuizScheduleService quizScheduleService;
+
     public QuizExerciseService(UserService userService, QuizExerciseRepository quizExerciseRepository, DragAndDropMappingRepository dragAndDropMappingRepository,
             ShortAnswerMappingRepository shortAnswerMappingRepository, AuthorizationCheckService authCheckService, ResultRepository resultRepository,
             QuizSubmissionRepository quizSubmissionRepository, SimpMessageSendingOperations messagingTemplate, QuizStatisticService quizStatisticService,
@@ -62,6 +66,11 @@ public class QuizExerciseService {
         this.quizStatisticService = quizStatisticService;
     }
 
+    @Autowired
+    public void setQuizScheduleService(QuizScheduleService quizScheduleService) {
+        this.quizScheduleService = quizScheduleService;
+    }
+
     /**
      * Save the given quizExercise to the database and make sure that objects with references to one another are saved in the correct order to avoid PersistencyExceptions
      *
@@ -70,6 +79,8 @@ public class QuizExerciseService {
      */
     public QuizExercise save(QuizExercise quizExercise) {
         log.debug("Request to save QuizExercise : {}", quizExercise);
+
+        quizExercise.setMaxScore(quizExercise.getMaxTotalScore().doubleValue());
 
         // create a quizPointStatistic if it does not yet exist
         if (quizExercise.getQuizPointStatistic() == null) {
@@ -179,6 +190,8 @@ public class QuizExerciseService {
                 restoreCorrectMappingsFromIndicesShortAnswer(shortAnswerQuestion);
             }
         }
+
+        quizScheduleService.scheduleQuizStart(quizExercise);
 
         return quizExercise;
     }
@@ -516,5 +529,31 @@ public class QuizExerciseService {
             quizStatisticService.recalculateStatistics(quizExercise);
         }
         return quizExercise;
+    }
+
+    public void resetExercise(Long exerciseId) {
+        // refetch exercise to make sure we have an updated version
+        QuizExercise quizExercise = findOneWithQuestionsAndStatistics(exerciseId);
+
+        // for quizzes we need to delete the statistics and we need to reset the quiz to its original state
+        quizExercise.setIsVisibleBeforeStart(Boolean.FALSE);
+        quizExercise.setIsPlannedToStart(Boolean.FALSE);
+        quizExercise.setAllowedNumberOfAttempts(null);
+        quizExercise.setIsOpenForPractice(Boolean.FALSE);
+        quizExercise.setReleaseDate(null);
+
+        quizExercise = save(quizExercise);
+
+        // in case the quiz has not yet started or the quiz is currently running, we have to cleanup
+        quizScheduleService.cancelScheduledQuizStart(quizExercise.getId());
+        quizScheduleService.clearQuizData(quizExercise.getId());
+
+        // clean up the statistics
+        quizStatisticService.recalculateStatistics(quizExercise);
+    }
+
+    public void cancelScheduledQuiz(Long quizExerciseId) {
+        quizScheduleService.cancelScheduledQuizStart(quizExerciseId);
+        quizScheduleService.clearQuizData(quizExerciseId);
     }
 }
