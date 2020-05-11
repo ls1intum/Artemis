@@ -289,8 +289,8 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
 
         // get all exercises for a course
         List<QuizExercise> allQuizExercisesForCourse = request.getList("/api/courses/" + quizExercise.getCourse().getId() + "/quiz-exercises", HttpStatus.OK, QuizExercise.class);
-        assertThat(allQuizExercisesForCourse.size()).isEqualTo(2);
-        assertThat(allQuizExercisesForCourse.get(1)).isEqualTo(quizExercise);
+        assertThat(allQuizExercisesForCourse.size()).isEqualTo(1);
+        assertThat(allQuizExercisesForCourse.get(0)).isEqualTo(quizExercise);
     }
 
     @Test
@@ -378,7 +378,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         assertThat(quizExerciseWithRecalculatedStatistics.getQuizPointStatistic().getParticipantsRated()).isEqualTo(10);
 
         for (PointCounter pointCounter : quizExerciseWithRecalculatedStatistics.getQuizPointStatistic().getPointCounters()) {
-            if (pointCounter.getPoints() == 0.0 ) {
+            if (pointCounter.getPoints() == 0.0) {
                 assertThat(pointCounter.getRatedCounter()).isEqualTo(3);
             }
             else if (pointCounter.getPoints() == 3.0 || pointCounter.getPoints() == 4.0 || pointCounter.getPoints() == 6.0) {
@@ -410,17 +410,16 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
             database.addResultToSubmission(quizSubmission, AssessmentType.AUTOMATIC, null, quizExercise.getScoreForSubmission(quizSubmission), true);
         }
         // calculate statistics
-        quizExerciseWithRecalculatedStatistics = request.get("/api/quiz-exercises/" + quizExercise.getId() + "/recalculate-statistics", HttpStatus.OK,
-            QuizExercise.class);
+        quizExerciseWithRecalculatedStatistics = request.get("/api/quiz-exercises/" + quizExercise.getId() + "/recalculate-statistics", HttpStatus.OK, QuizExercise.class);
 
         assertThat(quizExerciseWithRecalculatedStatistics.getQuizPointStatistic().getPointCounters().size()).isEqualTo(10);
         assertThat(quizExerciseWithRecalculatedStatistics.getQuizPointStatistic().getParticipantsRated()).isEqualTo(14);
 
         for (PointCounter pointCounter : quizExerciseWithRecalculatedStatistics.getQuizPointStatistic().getPointCounters()) {
-            if (pointCounter.getPoints() == 0.0 ) {
+            if (pointCounter.getPoints() == 0.0) {
                 assertThat(pointCounter.getRatedCounter()).isEqualTo(5);
             }
-            else if (pointCounter.getPoints() == 4.0 ) {
+            else if (pointCounter.getPoints() == 4.0) {
                 assertThat(pointCounter.getRatedCounter()).isEqualTo(3);
             }
             else if (pointCounter.getPoints() == 3.0 || pointCounter.getPoints() == 6.0) {

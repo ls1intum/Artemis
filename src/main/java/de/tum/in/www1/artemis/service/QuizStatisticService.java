@@ -32,13 +32,17 @@ public class QuizStatisticService {
 
     private final QuizQuestionStatisticRepository quizQuestionStatisticRepository;
 
+    private final QuizExerciseRepository quizExerciseRepository;
+
     public QuizStatisticService(SimpMessageSendingOperations messagingTemplate, StudentParticipationRepository studentParticipationRepository, ResultRepository resultRepository,
-            QuizPointStatisticRepository quizPointStatisticRepository, QuizQuestionStatisticRepository quizQuestionStatisticRepository) {
+            QuizPointStatisticRepository quizPointStatisticRepository, QuizQuestionStatisticRepository quizQuestionStatisticRepository,
+            QuizExerciseRepository quizExerciseRepository) {
         this.messagingTemplate = messagingTemplate;
         this.studentParticipationRepository = studentParticipationRepository;
         this.resultRepository = resultRepository;
         this.quizPointStatisticRepository = quizPointStatisticRepository;
         this.quizQuestionStatisticRepository = quizQuestionStatisticRepository;
+        this.quizExerciseRepository = quizExerciseRepository;
     }
 
     /**
@@ -80,8 +84,8 @@ public class QuizStatisticService {
             // update statistics with latest rated und unrated Result
             this.addResultToAllStatistics(quizExercise, latestRatedResult);
             this.addResultToAllStatistics(quizExercise, latestUnratedResult);
-
         }
+
         // save changed Statistics
         quizPointStatisticRepository.save(quizExercise.getQuizPointStatistic());
         for (QuizQuestion quizQuestion : quizExercise.getQuizQuestions()) {

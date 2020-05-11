@@ -77,8 +77,10 @@ public class QuizExerciseService {
             quizExercise.setQuizPointStatistic(quizPointStatistic);
             quizPointStatistic.setQuiz(quizExercise);
         }
+        // make sure the pointers in the statistics are correct
+        quizExercise.recalculatePointCounters();
 
-        // fix references in all drag and drop and short answer questions (step 1/2)
+        // fix references in all questions (step 1/2)
         for (var quizQuestion : quizExercise.getQuizQuestions()) {
             if (quizQuestion instanceof MultipleChoiceQuestion) {
                 var multipleChoiceQuestion = (MultipleChoiceQuestion) quizQuestion;
@@ -162,7 +164,7 @@ public class QuizExerciseService {
 
         // Note: save will automatically remove deleted questions from the exercise and deleted answer options from the questions
         // and delete the now orphaned entries from the database
-        quizExercise = quizExerciseRepository.save(quizExercise);
+        quizExercise = quizExerciseRepository.saveAndFlush(quizExercise);
 
         // fix references in all drag and drop questions and short answer questions (step 2/2)
         for (QuizQuestion quizQuestion : quizExercise.getQuizQuestions()) {
@@ -495,6 +497,7 @@ public class QuizExerciseService {
      * @return the updated quiz exercise with the changed statistics
      */
     public QuizExercise reEvaluate(QuizExercise quizExercise, QuizExercise originalQuizExercise) {
+
         quizExercise.undoUnallowedChanges(originalQuizExercise);
         boolean updateOfResultsAndStatisticsNecessary = quizExercise.checkIfRecalculationIsNecessary(originalQuizExercise);
 
@@ -502,21 +505,14 @@ public class QuizExerciseService {
         quizExercise.setMaxScore(quizExercise.getMaxTotalScore().doubleValue());
         quizExercise.reconnectJSONIgnoreAttributes();
 
-        // adjust existing results if an answer or and question was deleted and recalculate them
+        // adjust existing results if an answer or a question was deleted and recalculate them
         adjustResultsOnQuizChanges(quizExercise);
 
         quizExercise = save(quizExercise);
 
         if (updateOfResultsAndStatisticsNecessary) {
-            // update Statistics
-            // copy the statistics of the original quiz exercise first, because we should not rely on data sent from the client, also saving might proxy some elements
-            quizExercise.setQuizPointStatistic(originalQuizExercise.getQuizPointStatistic());
-            for (QuizQuestion quizQuestion : quizExercise.getQuizQuestions()) {
-                QuizQuestion originalQuizQuestion = originalQuizExercise.findQuestionById(quizQuestion.getId());
-                if (originalQuizQuestion != null) {
-                    quizQuestion.setQuizQuestionStatistic(originalQuizQuestion.getQuizQuestionStatistic());
-                }
-            }
+            // make sure we have all objects available before updating the statistics to avoid lazy / proxy issues
+            quizExercise = quizExerciseRepository.findWithEagerQuestionsAndStatisticsById(quizExercise.getId()).get();
             quizStatisticService.recalculateStatistics(quizExercise);
         }
         return quizExercise;

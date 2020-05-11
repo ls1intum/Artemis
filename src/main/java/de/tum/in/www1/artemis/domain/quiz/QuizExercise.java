@@ -278,8 +278,6 @@ public class QuizExercise extends Exercise implements Serializable {
      */
     public QuizExercise questions(List<QuizQuestion> quizQuestions) {
         this.quizQuestions = quizQuestions;
-        // correct the associated quizPointStatistic implicitly
-        recalculatePointCounters();
         return this;
     }
 
@@ -292,8 +290,6 @@ public class QuizExercise extends Exercise implements Serializable {
     public QuizExercise addQuestions(QuizQuestion quizQuestion) {
         this.quizQuestions.add(quizQuestion);
         quizQuestion.setExercise(this);
-        // correct the associated quizPointStatistic implicitly
-        recalculatePointCounters();
         return this;
     }
 
@@ -307,8 +303,6 @@ public class QuizExercise extends Exercise implements Serializable {
     public QuizExercise removeQuestions(QuizQuestion quizQuestion) {
         this.quizQuestions.remove(quizQuestion);
         quizQuestion.setExercise(null);
-        // correct the associated quizPointStatistic implicitly
-        recalculatePointCounters();
         return this;
     }
 
@@ -319,9 +313,6 @@ public class QuizExercise extends Exercise implements Serializable {
      */
     public void setQuizQuestions(List<QuizQuestion> quizQuestions) {
         this.quizQuestions = quizQuestions;
-        if (quizQuestions != null) {
-            recalculatePointCounters();
-        }
     }
 
     @Override
@@ -621,9 +612,11 @@ public class QuizExercise extends Exercise implements Serializable {
     }
 
     /**
-     * correct the associated quizPointStatistic implicitly 1. add new PointCounters for new Scores 2. delete old PointCounters if the score is no longer contained
+     * correct the associated quizPointStatistic
+     * 1. add new PointCounters for new Scores
+     * 2. delete old PointCounters if the score is no longer contained
      */
-    private void recalculatePointCounters() {
+    public void recalculatePointCounters() {
         if (quizPointStatistic == null || !Hibernate.isInitialized(quizPointStatistic)) {
             return;
         }
