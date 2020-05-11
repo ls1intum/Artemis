@@ -8550,6 +8550,11 @@ ng-pick-datetime@7.0.0:
   resolved "https://registry.yarnpkg.com/ng-pick-datetime/-/ng-pick-datetime-7.0.0.tgz#c78d1cfaee183691a4a44cd4f39c98f9c1d1595f"
   integrity sha512-SbS+zKX6gOlYpgH8zDSx2EL32ak0Z0y1Ksu1ECP/FiwVBM2mHgbzdfyDYhMmKFB0GKn5yCwXTandR1FCQXe62w==
 
+ng-starrating@^1.0.20:
+  version "1.0.20"
+  resolved "https://registry.yarnpkg.com/ng-starrating/-/ng-starrating-1.0.20.tgz#4b304201358186b6e31dd652d6020cda9ceb3939"
+  integrity sha512-RQO9B/EVYHvu4oG8ZAR0sr91d1ouuyr4dzQDa4g1Bgi0tr4Ow6VGJKxrqhu2n8MgdLuaCWGvp9dhXWL1qxTw7Q==
+
 ng2-ace-editor@0.3.9:
   version "0.3.9"
   resolved "https://registry.yarnpkg.com/ng2-ace-editor/-/ng2-ace-editor-0.3.9.tgz#5ae68712e9ca49591eda31df8fe02eca1c3634e1"
