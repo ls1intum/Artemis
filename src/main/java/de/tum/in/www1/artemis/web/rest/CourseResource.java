@@ -1,5 +1,29 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import static de.tum.in.www1.artemis.config.Constants.SHORT_NAME_PATTERN;
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.notFound;
+import static java.time.ZonedDateTime.now;
+
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.time.ZonedDateTime;
+import java.util.*;
+import java.util.regex.Matcher;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import org.jetbrains.annotations.NotNull;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.actuate.audit.AuditEvent;
+import org.springframework.boot.actuate.audit.AuditEventRepository;
+import org.springframework.core.env.Environment;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.*;
+
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
@@ -26,29 +50,6 @@ import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import io.github.jhipster.config.JHipsterConstants;
 import io.github.jhipster.web.util.ResponseUtil;
-import org.jetbrains.annotations.NotNull;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.actuate.audit.AuditEvent;
-import org.springframework.boot.actuate.audit.AuditEventRepository;
-import org.springframework.core.env.Environment;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.*;
-
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.time.ZonedDateTime;
-import java.util.*;
-import java.util.regex.Matcher;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
-import static de.tum.in.www1.artemis.config.Constants.SHORT_NAME_PATTERN;
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.notFound;
-import static java.time.ZonedDateTime.now;
 
 /**
  * REST controller for managing Course.
@@ -114,11 +115,12 @@ public class CourseResource {
     private final Environment env;
 
     public CourseResource(UserService userService, CourseService courseService, ParticipationService participationService, CourseRepository courseRepository,
-                          ExerciseService exerciseService, AuthorizationCheckService authCheckService, TutorParticipationService tutorParticipationService, Environment env,
-                          ArtemisAuthenticationProvider artemisAuthenticationProvider, ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository,
-                          LectureService lectureService, NotificationService notificationService, SubmissionService submissionService, ResultService resultService,
-                          ComplaintService complaintService, TutorLeaderboardService tutorLeaderboardService, TextSubmissionService textSubmissionService, ExampleSubmissionRepository exampleSubmissionRepository,
-                          ProgrammingExerciseService programmingExerciseService, ModelingSubmissionService modelingSubmissionService, FileUploadSubmissionService fileUploadSubmissionService, AuditEventRepository auditEventRepository, Optional<VcsUserManagementService> vcsUserManagementService) {
+            ExerciseService exerciseService, AuthorizationCheckService authCheckService, TutorParticipationService tutorParticipationService, Environment env,
+            ArtemisAuthenticationProvider artemisAuthenticationProvider, ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository,
+            LectureService lectureService, NotificationService notificationService, SubmissionService submissionService, ResultService resultService,
+            ComplaintService complaintService, TutorLeaderboardService tutorLeaderboardService, TextSubmissionService textSubmissionService,
+            ExampleSubmissionRepository exampleSubmissionRepository, ProgrammingExerciseService programmingExerciseService, ModelingSubmissionService modelingSubmissionService,
+            FileUploadSubmissionService fileUploadSubmissionService, AuditEventRepository auditEventRepository, Optional<VcsUserManagementService> vcsUserManagementService) {
         this.userService = userService;
         this.courseService = courseService;
         this.participationService = participationService;
@@ -676,19 +678,21 @@ public class CourseResource {
         for (Exercise exercise : exercises) {
             if (exercise instanceof ModelingExercise) {
                 List<ModelingSubmission> modelingSubmissions = modelingSubmissionService.getModelingSubmissions(exercise.getId(), true);
-                for( ModelingSubmission modelingSubmission : modelingSubmissions){
+                for (ModelingSubmission modelingSubmission : modelingSubmissions) {
                     modelingSubmission.getParticipation().setExercise(exercise);
                 }
                 submissions.addAll(modelingSubmissions);
-            } else if (exercise instanceof TextExercise) {
+            }
+            else if (exercise instanceof TextExercise) {
                 List<TextSubmission> textSubmissions = textSubmissionService.getTextSubmissionsByExerciseId(exercise.getId(), true);
-                for( TextSubmission textSubmission : textSubmissions){
+                for (TextSubmission textSubmission : textSubmissions) {
                     textSubmission.getParticipation().setExercise(exercise);
                 }
                 submissions.addAll(textSubmissions);
-            } else if (exercise instanceof FileUploadExercise) {
+            }
+            else if (exercise instanceof FileUploadExercise) {
                 List<FileUploadSubmission> fileUploadSubmissions = fileUploadSubmissionService.getFileUploadSubmissions(exercise.getId(), true);
-                for( FileUploadSubmission fileUploadSubmission : fileUploadSubmissions){
+                for (FileUploadSubmission fileUploadSubmission : fileUploadSubmissions) {
                     fileUploadSubmission.getParticipation().setExercise(exercise);
                 }
                 submissions.addAll(fileUploadSubmissions);
