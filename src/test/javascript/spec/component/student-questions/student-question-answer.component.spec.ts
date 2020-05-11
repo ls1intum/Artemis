@@ -4,7 +4,6 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateModule } from '@ngx-translate/core';
 import { StudentQuestionAnswerComponent } from 'app/overview/student-questions/student-question-answer/student-question-answer.component';
 import { StudentQuestionAnswer } from 'app/entities/student-question-answer.model';
-import { StudentQuestion } from 'app/entities/student-question.model';
 import { User } from 'app/core/user/user.model';
 import { ArtemisTestModule } from '../../test.module';
 import { ArtemisSharedModule } from 'app/shared/shared.module';

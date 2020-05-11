@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,6 +32,7 @@ import de.tum.in.www1.artemis.service.dto.TeamSearchUserDTO;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
+import de.tum.in.www1.artemis.web.websocket.team.TeamWebsocketService;
 
 /**
  * REST controller for managing Teams.
@@ -50,6 +52,8 @@ public class TeamResource {
 
     private final TeamService teamService;
 
+    private final TeamWebsocketService teamWebsocketService;
+
     private final CourseService courseService;
 
     private final ExerciseService exerciseService;
@@ -62,10 +66,12 @@ public class TeamResource {
 
     private final AuditEventRepository auditEventRepository;
 
-    public TeamResource(TeamRepository teamRepository, TeamService teamService, CourseService courseService, ExerciseService exerciseService, UserService userService,
-            AuthorizationCheckService authCheckService, ParticipationService participationService, AuditEventRepository auditEventRepository) {
+    public TeamResource(TeamRepository teamRepository, TeamService teamService, TeamWebsocketService teamWebsocketService, CourseService courseService,
+            ExerciseService exerciseService, UserService userService, AuthorizationCheckService authCheckService, ParticipationService participationService,
+            AuditEventRepository auditEventRepository) {
         this.teamRepository = teamRepository;
         this.teamService = teamService;
+        this.teamWebsocketService = teamWebsocketService;
         this.courseService = courseService;
         this.exerciseService = exerciseService;
         this.userService = userService;
@@ -94,11 +100,18 @@ public class TeamResource {
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user)) {
             return forbidden();
         }
-        team.setOwner(user); // the TA (or above) who creates the team, is the owner of the team
-        Team result = teamService.save(exercise, team);
-        result.filterSensitiveInformation();
-        return ResponseEntity.created(new URI("/api/teams/" + result.getId()))
-                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);
+        if (!exercise.isTeamMode()) {
+            throw new BadRequestAlertException("A team cannot be created for an exercise that is not team-based.", ENTITY_NAME, "exerciseNotTeamBased");
+        }
+        // Tutors can only create teams for themselves while instructors can select any tutor as the team owner
+        if (!authCheckService.isAtLeastInstructorForExercise(exercise, user)) {
+            team.setOwner(user);
+        }
+        Team savedTeam = teamService.save(exercise, team);
+        savedTeam.filterSensitiveInformation();
+        teamWebsocketService.sendTeamAssignmentUpdate(exercise, null, savedTeam);
+        return ResponseEntity.created(new URI("/api/teams/" + savedTeam.getId()))
+                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, savedTeam.getId().toString())).body(savedTeam);
     }
 
     /**
@@ -150,15 +163,17 @@ public class TeamResource {
         }
 
         // Save team (includes check for conflicts that no student is assigned to multiple teams for an exercise)
-        Team result = teamService.save(exercise, team);
+        Team savedTeam = teamService.save(exercise, team);
 
         // For programming exercise teams with existing participation, the repository access needs to be updated according to the new team member set
         if (exercise instanceof ProgrammingExercise) {
-            teamService.updateRepositoryMembersIfNeeded(exerciseId, existingTeam.get(), team);
+            teamService.updateRepositoryMembersIfNeeded(exerciseId, existingTeam.get(), savedTeam);
         }
 
-        result.filterSensitiveInformation();
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, team.getId().toString())).body(result);
+        savedTeam.filterSensitiveInformation();
+        List<StudentParticipation> participationsOfSavedTeam = participationService.findByExerciseAndTeamWithEagerResultsAndSubmissions(exercise, savedTeam);
+        teamWebsocketService.sendTeamAssignmentUpdate(exercise, existingTeam.get(), savedTeam, participationsOfSavedTeam);
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, team.getId().toString())).body(savedTeam);
     }
 
     /**
@@ -240,6 +255,8 @@ public class TeamResource {
         // Delete all participations of the team first and then the team itself
         participationService.deleteAllByTeamId(id, false, false);
         teamRepository.delete(team);
+
+        teamWebsocketService.sendTeamAssignmentUpdate(exercise, team, null);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, Long.toString(id))).build();
     }
 
@@ -328,6 +345,13 @@ public class TeamResource {
         // Import teams and return the teams that now belong to the destination exercise
         List<Team> destinationTeams = teamService.importTeamsFromSourceExerciseIntoDestinationExerciseUsingStrategy(sourceExercise, destinationExercise, importStrategyType);
         destinationTeams.forEach(Team::filterSensitiveInformation);
+
+        // Send out team assignment update via websockets
+        Map<String, List<StudentParticipation>> participationsMap = participationService.findByExerciseIdWithEagerSubmissionsResult(destinationExercise.getId()).stream()
+                .collect(Collectors.toMap(StudentParticipation::getParticipantIdentifier, List::of, (a, b) -> Stream.concat(a.stream(), b.stream()).collect(Collectors.toList())));
+        destinationTeams.forEach(
+                team -> teamWebsocketService.sendTeamAssignmentUpdate(destinationExercise, null, team, participationsMap.getOrDefault(team.getParticipantIdentifier(), List.of())));
+
         return ResponseEntity.ok().body(destinationTeams);
     }
 

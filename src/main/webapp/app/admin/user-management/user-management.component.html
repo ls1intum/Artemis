@@ -9,18 +9,22 @@
     <div class="table-responsive" *ngIf="users">
         <form [formGroup]="userSearchForm">
             <div class="form-group form-inline">
-                <label for="field_searchTerm" class="form-control-label" jhiTranslate="userManagement.search">Search for User: </label>
+                <label for="field_searchTerm" class="form-control-label" jhiTranslate="userManagement.searchForUser">Search for User: </label>
                 <input
-                    class="form-control ml-2"
+                    class="form-control ml-3"
                     type="text"
                     name="searchTerm"
                     id="field_searchTerm"
                     formControlName="searchControl"
                     [(ngModel)]="searchTerm"
                     (focusout)="loadAll()"
+                    (keyup.enter)="loadAll()"
                 />
+                <button class="btn btn-primary ml-3" (click)="loadAll()">
+                    <span jhiTranslate="userManagement.search">Search</span>
+                </button>
                 <ng-container *ngIf="searchControl.invalid && (searchControl.dirty || searchControl.touched)">
-                    <div class="alert alert-danger">
+                    <div class="alert alert-danger ml-3 mb-0">
                         <div jhiTranslate="userManagement.searchError">Search term must be empty or at least 3 character.</div>
                     </div>
                 </ng-container>
