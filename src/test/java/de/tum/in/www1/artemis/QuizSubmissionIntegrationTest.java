@@ -261,6 +261,7 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         // quiz not open for practice --> bad request expected
         Result result = request.postWithResponseBody("/api/exercises/" + quizExerciseServer.getId() + "/submissions/practice", quizSubmission, Result.class,
                 HttpStatus.BAD_REQUEST);
+        assertThat(result).isNull();
     }
 
     @Test
@@ -341,15 +342,16 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         QuizExercise quizExercise = database.createQuiz(course, ZonedDateTime.now().minusSeconds(4), null);
         quizExerciseService.save(quizExercise);
 
+        int numberOfParticipants = 10;
         QuizSubmission quizSubmission = new QuizSubmission();
         for (var question : quizExercise.getQuizQuestions()) {
-            for (int i = 1; i <= 10; i++) {
+            for (int i = 1; i <= numberOfParticipants; i++) {
                 quizSubmission.addSubmittedAnswers(database.generateSubmittedAnswerFor(question, i % 2 == 0));
             }
         }
 
-        Result result = request.postWithResponseBody("/api/exercises/" + quizExercise.getId() + "/submissions/preview", quizSubmission, Result.class, HttpStatus.OK);
-        // TODO: check the result
+        Result receivedResult = request.postWithResponseBody("/api/exercises/" + quizExercise.getId() + "/submissions/preview", quizSubmission, Result.class, HttpStatus.OK);
+        assertThat(((QuizSubmission) receivedResult.getSubmission()).getSubmittedAnswers().size()).isEqualTo(quizSubmission.getSubmittedAnswers().size());
 
         // in the preview the submission will not be saved to the database
         assertThat(quizSubmissionRepository.findAll().size()).isEqualTo(0);
@@ -375,11 +377,14 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
                 assertThat(pointCounter.getUnRatedCounter()).isEqualTo(0);
             }
         }
+        // check statistic for each question
         for (var question : quizExerciseWithStatistic.getQuizQuestions()) {
-            assertThat(question.getQuizQuestionStatistic().getRatedCorrectCounter()).isEqualTo(0);
             assertThat(question.getQuizQuestionStatistic().getUnRatedCorrectCounter()).isEqualTo(0);
+            assertThat(question.getQuizQuestionStatistic().getUnRatedCorrectCounter()).isEqualTo(0);
+            assertThat(question.getQuizQuestionStatistic().getRatedCorrectCounter()).isEqualTo(0);
+            assertThat(question.getQuizQuestionStatistic().getParticipantsUnrated()).isEqualTo(0);
+            assertThat(question.getQuizQuestionStatistic().getParticipantsRated()).isEqualTo(0);
         }
-        // TODO: check more statistics (e.g. for each question)
     }
 
 }

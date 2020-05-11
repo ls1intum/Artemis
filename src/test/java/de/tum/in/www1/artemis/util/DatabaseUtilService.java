@@ -1381,7 +1381,7 @@ public class DatabaseUtilService {
      * @param submissionDate Submission date
      * @param selectEverything Boolean whether every answer option should be selected or none
      */
-    public void generateSpecialSubmission(QuizExercise quizExercise, int student, boolean submitted, ZonedDateTime submissionDate, boolean selectEverything) {
+    public QuizSubmission generateSpecialSubmissionWithResult(QuizExercise quizExercise, boolean submitted, ZonedDateTime submissionDate, boolean selectEverything) {
         QuizSubmission quizSubmission = new QuizSubmission();
 
         for (QuizQuestion question : quizExercise.getQuizQuestions()) {
@@ -1403,7 +1403,7 @@ public class DatabaseUtilService {
         }
         quizSubmission.submitted(submitted);
         quizSubmission.submissionDate(submissionDate);
-        addSubmission(quizExercise, quizSubmission, "student" + student);
-        addResultToSubmission(quizSubmission, AssessmentType.AUTOMATIC, null, quizExercise.getScoreForSubmission(quizSubmission), true);
+
+        return quizSubmission;
     }
 }
