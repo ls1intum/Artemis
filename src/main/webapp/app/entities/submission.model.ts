@@ -34,8 +34,6 @@ export abstract class Submission implements BaseEntity {
 
     public language: Language | null;
 
-    public exerciseId?: number;
-
     protected constructor(submissionExerciseType: SubmissionExerciseType) {
         this.submissionExerciseType = submissionExerciseType;
     }

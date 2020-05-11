@@ -1,24 +1,18 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { Location } from '@angular/common';
-import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
-import { FileUploadSubmission } from 'app/entities/file-upload-submission.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { FileUploadSubmissionService } from 'app/exercises/file-upload/participate/file-upload-submission.service';
 import { FileUploadAssessmentsService } from 'app/exercises/file-upload/assess/file-upload-assessment.service';
 import { TranslateService } from '@ngx-translate/core';
-import { Submission } from 'app/entities/submission.model';
+import { Submission, SubmissionExerciseType } from 'app/entities/submission.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { HttpResponse } from '@angular/common/http';
 import { Course } from 'app/entities/course.model';
-import { Exercise, ExerciseType } from 'app/entities/exercise.model';
+import { Exercise, getIcon, getIconTooltip } from 'app/entities/exercise.model';
 import { AlertService } from 'app/core/alert/alert.service';
 import { ModelingSubmissionService } from 'app/exercises/modeling/participate/modeling-submission.service';
-import { ModelingExercise } from 'app/entities/modeling-exercise.model';
-import { ModelingSubmission } from 'app/entities/modeling-submission.model';
 import { ModelingAssessmentService } from 'app/exercises/modeling/assess/modeling-assessment.service';
-import { TextSubmission } from 'app/entities/text-submission.model';
-import { TextExercise } from 'app/entities/text-exercise.model';
 import { TextSubmissionService } from 'app/exercises/text/participate/text-submission.service';
 import { TextAssessmentsService } from 'app/exercises/text/assess/text-assessments.service';
 
@@ -32,11 +26,12 @@ export class AssessmentLocksComponent implements OnInit {
     tutorId: number;
     exercises: Exercise[] = [];
 
-    modelingSubmissions: ModelingSubmission[] = [];
-    textSubmissions: TextSubmission[] = [];
-    fileUploadSubmissions: FileUploadSubmission[] = [];
+    submissions: Submission[] = [];
 
     private cancelConfirmationText: string;
+
+    getIcon = getIcon;
+    getIconTooltip = getIconTooltip;
 
     constructor(
         private route: ActivatedRoute,
@@ -91,143 +86,55 @@ export class AssessmentLocksComponent implements OnInit {
 
     /**
      * Get submissions for exercise types modeling, text and file upload.
-     * @param reload tells whether to reload all submissions
      */
-    getAllSubmissions(reload?: boolean) {
-        if (reload) {
-            this.modelingSubmissions = [];
-            this.textSubmissions = [];
-            this.fileUploadSubmissions = [];
-        }
-        for (const exercise of this.exercises) {
-            switch (exercise.type) {
-                case ExerciseType.MODELING:
-                    this.getModelingSubmissions(exercise as ModelingExercise);
-                    break;
+    getAllSubmissions() {
+        this.courseService
+            .findAllSubmissionsOfCourse(this.courseId)
+            .map((response: HttpResponse<Submission[]>) =>
+                response.body
+                    ?.filter((submission) => submission.result && submission.submitted && submission.result.assessor.id === this.tutorId)
+                    .map((submission: Submission) => {
+                        if (submission.result) {
+                            // reconnect some associations
+                            submission.result.submission = submission;
+                            submission.result.participation = submission.participation;
+                            submission.participation.results = [submission.result];
+                            // submission.participation.exercise = exercise;
+                        }
 
-                case ExerciseType.TEXT:
-                    this.getTextSubmissions(exercise as TextExercise);
-                    break;
+                        return submission;
+                    }),
+            )
+            .subscribe((loadedSubmissions: Submission[]) => {
+                this.submissions.push(...loadedSubmissions);
+            });
+    }
 
-                case ExerciseType.FILE_UPLOAD:
-                    this.getFileUploadSubmissions(exercise as FileUploadExercise);
+    /**
+     * Cancel the current assessment.
+     * @param canceledSubmission submission
+     */
+    cancelAssessment(canceledSubmission: Submission) {
+        console.log(canceledSubmission);
+        const confirmCancel = window.confirm(this.cancelConfirmationText);
+        if (confirmCancel) {
+            switch (canceledSubmission.submissionExerciseType) {
+                case SubmissionExerciseType.MODELING:
+                    this.modelingAssessmentService.cancelAssessment(canceledSubmission.id).subscribe();
                     break;
-
+                case SubmissionExerciseType.TEXT:
+                    if (canceledSubmission.participation.exercise?.id !== undefined) {
+                        this.textAssessmentsService.cancelAssessment(canceledSubmission.participation.exercise.id, canceledSubmission.id).subscribe();
+                    }
+                    break;
+                case SubmissionExerciseType.FILE_UPLOAD:
+                    this.fileUploadAssessmentsService.cancelAssessment(canceledSubmission.id).subscribe();
+                    break;
                 default:
                     break;
             }
+            this.submissions = this.submissions.filter((submission) => submission !== canceledSubmission);
         }
-    }
-
-    /**
-     * Get submissions for modeling exercise
-     * @param exercise modeling exercise
-     */
-    getModelingSubmissions(exercise: ModelingExercise) {
-        this.modelingSubmissionService.getModelingSubmissionsForExercise(exercise.id, { submittedOnly: true }).subscribe((response: HttpResponse<ModelingSubmission[]>) => {
-            return response.body?.forEach((submission) => {
-                if (!submission.result || !submission.submitted || submission.result.assessor.id !== this.tutorId) {
-                    return;
-                }
-                // reconnect some associations
-                submission.result.submission = submission;
-                submission.result.participation = submission.participation;
-                submission.participation.results = [submission.result];
-                submission.exerciseId = exercise.id;
-
-                this.modelingSubmissions.push(submission);
-            });
-        });
-    }
-
-    /**
-     * Get submissions for text exercise
-     * @param exercise text exercise
-     */
-    getTextSubmissions(exercise: TextExercise) {
-        this.textSubmissionService.getTextSubmissionsForExercise(exercise.id, { submittedOnly: true }).subscribe((response: HttpResponse<TextSubmission[]>) => {
-            return response.body?.forEach((submission) => {
-                if (!submission.result || !submission.submitted || submission.result.assessor.id !== this.tutorId) {
-                    return;
-                }
-                // reconnect some associations
-                submission.result.submission = submission;
-                submission.result.participation = submission.participation;
-                submission.participation.results = [submission.result];
-                submission.exerciseId = exercise.id;
-
-                this.textSubmissions.push(submission);
-            });
-        });
-    }
-
-    /**
-     * Get submissions for file uplaod exercise
-     * @param exercise file upload exercise
-     */
-    getFileUploadSubmissions(exercise: FileUploadExercise) {
-        this.fileUploadSubmissionService.getFileUploadSubmissionsForExercise(exercise.id, { submittedOnly: true }).subscribe((response: HttpResponse<FileUploadSubmission[]>) => {
-            return response.body?.forEach((submission) => {
-                if (!submission.result || !submission.submitted || submission.result.assessor.id !== this.tutorId) {
-                    return;
-                }
-                // reconnect some associations
-                submission.result.submission = submission;
-                submission.result.participation = submission.participation;
-                submission.participation.results = [submission.result];
-                submission.exerciseId = exercise.id;
-
-                this.fileUploadSubmissions.push(submission);
-            });
-        });
-    }
-
-    /**
-     * Cancel the current assessment and reload the submissions to reflect the change.
-     * @param submission submission
-     */
-    cancelModelingAssessment(submission: Submission) {
-        const confirmCancel = window.confirm(this.cancelConfirmationText);
-        if (confirmCancel) {
-            this.modelingAssessmentService.cancelAssessment(submission.id).subscribe(() => {
-                this.getAllSubmissions(true);
-            });
-        }
-    }
-
-    /**
-     * Cancel the current assessment and reload the submissions to reflect the change.
-     * @param submission submission
-     */
-    cancelTextAssessment(submission: Submission) {
-        const confirmCancel = window.confirm(this.cancelConfirmationText);
-        if (confirmCancel && submission.exerciseId) {
-            this.textAssessmentsService.cancelAssessment(submission.exerciseId, submission.id).subscribe(() => {
-                this.getAllSubmissions(true);
-            });
-        }
-    }
-
-    /**
-     * Cancel the current assessment and reload the submissions to reflect the change.
-     * @param submission submission
-     */
-    cancelFileUploadAssessment(submission: Submission) {
-        const confirmCancel = window.confirm(this.cancelConfirmationText);
-        if (confirmCancel) {
-            this.fileUploadAssessmentsService.cancelAssessment(submission.id).subscribe(() => {
-                this.getAllSubmissions(true);
-            });
-        }
-    }
-
-    /**
-     * Get the name of an exercise by id.
-     * @param id id of exercise
-     */
-    getExerciseName(id: number) {
-        const foundExercise = this.exercises.find((exercise) => exercise.id === id);
-        return foundExercise?.title;
     }
 
     /**

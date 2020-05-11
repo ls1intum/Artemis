@@ -37,7 +37,7 @@ import { ArtemisModelingExerciseModule } from 'app/exercises/modeling/manage/mod
 import { ArtemisTextExerciseModule } from 'app/exercises/text/manage/text-exercise/text-exercise.module';
 import { ArtemisProgrammingExerciseModule } from 'app/exercises/programming/shared/programming-exercise.module';
 import { ArtemisListOfComplaintsModule } from 'app/complaints/list-of-complaints/list-of-complaints.module';
-import { ArtemisAssessmentLocksModule } from 'app/assessment/assessment-locks/assessment-locks.module';
+import { ArtemisAssessmentSharedModule } from 'app/assessment/assessment-shared.module';
 
 @NgModule({
     imports: [
@@ -72,7 +72,7 @@ import { ArtemisAssessmentLocksModule } from 'app/assessment/assessment-locks/as
         ArtemisModelingAssessmentEditorModule,
         NgxDatatableModule,
         ArtemisDataTableModule,
-        ArtemisAssessmentLocksModule,
+        ArtemisAssessmentSharedModule,
     ],
     declarations: [CourseManagementComponent, CourseDetailComponent, CourseUpdateComponent, CourseExerciseCardComponent, CourseManagementExercisesComponent, CourseGroupComponent],
 })

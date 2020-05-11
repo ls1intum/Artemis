@@ -48,10 +48,6 @@ export class TutorCourseDashboardComponent implements OnInit, AfterViewInit {
 
     exerciseForGuidedTour: Exercise | null;
 
-    readonly TEXT = ExerciseType.TEXT;
-    readonly MODELING = ExerciseType.MODELING;
-    readonly FILE_UPLOAD = ExerciseType.FILE_UPLOAD;
-
     constructor(
         private courseService: CourseManagementService,
         private jhiAlertService: AlertService,

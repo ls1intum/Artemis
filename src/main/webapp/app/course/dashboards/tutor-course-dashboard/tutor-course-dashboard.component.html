@@ -140,25 +140,7 @@
                         >
                             <span class="d-none d-md-inline" jhiTranslate="entity.action.exerciseDashboard">Exercise dashboard</span>
                         </button>
-                        <button
-                            *ngIf="exercise.type === MODELING"
-                            class="btn btn-primary btn-sm mr-1"
-                            [routerLink]="['/course-management', course.id, 'modeling-exercises', exercise.id, 'assessment']"
-                        >
-                            <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.submissions">Submissions</span>
-                        </button>
-                        <button
-                            *ngIf="exercise.type === TEXT"
-                            class="btn btn-primary btn-sm mr-1"
-                            [routerLink]="['/course-management', course.id, 'text-exercises', exercise.id, 'assessment']"
-                        >
-                            <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.submissions">Submissions</span>
-                        </button>
-                        <button
-                            *ngIf="exercise.type === FILE_UPLOAD"
-                            class="btn btn-primary btn-sm mr-1"
-                            [routerLink]="['/course-management', course.id, 'file-upload-exercises', exercise.id, 'assessment']"
-                        >
+                        <button class="btn btn-primary btn-sm mr-1" [routerLink]="['/course-management', course.id, exercise.type + '-exercises', exercise.id, 'assessment']">
                             <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.submissions">Submissions</span>
                         </button>
                     </td>

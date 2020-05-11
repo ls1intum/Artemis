@@ -59,10 +59,8 @@
                     "title": "Gesperrte Bewertungen"
                 },
                 "title": "Von dir gesperrte Bewertungen",
-                "modelingSubmissions": "Einreichungen und Bewertungen der Modellierungsaufgaben",
-                "textSubmissions": "Einreichungen und Bewertungen der Textaufgaben",
-                "fileUploadSubmissions": "Einreichungen und Bewertungen der Datei Upload Aufgaben",
                 "exercise": "Aufgabe",
+                "type": "Aufgabentyp",
                 "empty": "Keine von dir gesperrten Bewertungen vorhanden!"
             }
         }

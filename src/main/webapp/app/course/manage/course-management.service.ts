@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import * as moment from 'moment';
-import { map } from 'rxjs/operators';
+import { map, filter, tap } from 'rxjs/operators';
 
 import { SERVER_API_URL } from 'app/app.constants';
 import { Course, CourseGroup } from 'app/entities/course.model';
@@ -20,6 +20,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import { NotificationService } from 'app/overview/notification/notification.service';
 import { createRequestOption } from 'app/shared/util/request-util';
+import { Submission } from 'app/entities/submission.model';
 
 export type EntityResponseType = HttpResponse<Course>;
 export type EntityArrayResponseType = HttpResponse<Course[]>;
@@ -220,6 +221,27 @@ export class CourseManagementService {
      */
     getAllUsersInCourseGroup(courseId: number, courseGroup: CourseGroup): Observable<HttpResponse<User[]>> {
         return this.http.get<User[]>(`${this.resourceUrl}/${courseId}/${courseGroup}`, { observe: 'response' });
+    }
+
+    /**
+     * Find all submissions of a given participation
+     * @param {number} courseId - The id of the participation to be searched for
+     */
+    findAllSubmissionsOfCourse(courseId: number): Observable<HttpResponse<Submission[]>> {
+        return this.http
+            .get<Submission[]>(`${this.resourceUrl}/${courseId}/submissions`, { observe: 'response' })
+            .pipe(
+                // map((res) => this.convertDateArrayFromServer(res)),
+                filter((res) => !!res.body),
+                tap((res) =>
+                    res.body!.forEach((submission: Submission) => {
+                        // reconnect results to submissions
+                        if (submission.result) {
+                            submission.result.submission = submission;
+                        }
+                    }),
+                ),
+            );
     }
 
     /**
