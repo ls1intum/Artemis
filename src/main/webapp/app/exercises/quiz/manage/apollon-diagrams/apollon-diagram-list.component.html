@@ -33,8 +33,7 @@
                     <a [routerLink]="['/course-management', courseId, 'apollon-diagrams', apollonDiagram.id]">{{ apollonDiagram.id }}</a>
                 </td>
                 <td>
-                    <span *ngIf="apollonDiagram.courseId == null" jhiTranslate="artemisApp.apollonDiagram.noCourseSet"></span>
-                    <span *ngIf="apollonDiagram.courseId != null">{{ apollonDiagram.courseId }}</span>
+                    <span>{{ apollonDiagram.courseId }}</span>
                 </td>
                 <td>{{ getTitleForApollonDiagram(apollonDiagram) }}</td>
                 <td jhiTranslate="{{ 'artemisApp.DiagramType.' + apollonDiagram.diagramType }}">{{ apollonDiagram.diagramType }}</td>

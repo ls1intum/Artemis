@@ -122,10 +122,7 @@ public class ApollonDiagramResource {
         }
 
         log.debug("REST request to get ApollonDiagrams matching current course");
-        List<ApollonDiagram> result = apollonDiagramRepository.findDiagramsByCourseId(courseId);
-        // addAll(findDiagramsByCourseId(null)) because older diagrams have no course and might belong to this course; can be deleted in the future
-        result.addAll(apollonDiagramRepository.findDiagramsByCourseId(null));
-        return result;
+        return apollonDiagramRepository.findDiagramsByCourseId(courseId);
     }
 
     /**
