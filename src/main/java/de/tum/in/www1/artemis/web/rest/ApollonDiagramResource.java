@@ -48,7 +48,7 @@ public class ApollonDiagramResource {
     private final CourseService courseService;
 
     public ApollonDiagramResource(ApollonDiagramRepository apollonDiagramRepository, AuthorizationCheckService authCheckService, UserService userService,
-                                  CourseService courseService) {
+            CourseService courseService) {
         this.apollonDiagramRepository = apollonDiagramRepository;
         this.authCheckService = authCheckService;
         this.userService = userService;
