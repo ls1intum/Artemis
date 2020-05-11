@@ -19,12 +19,8 @@ import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
-import de.tum.in.www1.artemis.repository.ComplaintRepository;
-import de.tum.in.www1.artemis.repository.ComplaintResponseRepository;
-import de.tum.in.www1.artemis.repository.ExerciseRepository;
-import de.tum.in.www1.artemis.repository.TutorParticipationRepository;
+import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.scheduled.QuizScheduleService;
-import de.tum.in.www1.artemis.service.util.HibernateUtils;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
@@ -49,6 +45,8 @@ public class ExerciseService {
 
     private final QuizScheduleService quizScheduleService;
 
+    private final QuizExerciseRepository quizExerciseRepository;
+
     private final ExampleSubmissionService exampleSubmissionService;
 
     private final AuditEventRepository auditEventRepository;
@@ -62,7 +60,8 @@ public class ExerciseService {
     public ExerciseService(ExerciseRepository exerciseRepository, ParticipationService participationService, AuthorizationCheckService authCheckService,
             ProgrammingExerciseService programmingExerciseService, QuizStatisticService quizStatisticService, QuizScheduleService quizScheduleService,
             TutorParticipationRepository tutorParticipationRepository, ExampleSubmissionService exampleSubmissionService, AuditEventRepository auditEventRepository,
-            ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository, TeamService teamService) {
+            ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository, TeamService teamService,
+            QuizExerciseRepository quizExerciseRepository) {
         this.exerciseRepository = exerciseRepository;
         this.participationService = participationService;
         this.authCheckService = authCheckService;
@@ -75,6 +74,7 @@ public class ExerciseService {
         this.complaintRepository = complaintRepository;
         this.complaintResponseRepository = complaintResponseRepository;
         this.teamService = teamService;
+        this.quizExerciseRepository = quizExerciseRepository;
     }
 
     /**
@@ -169,10 +169,12 @@ public class ExerciseService {
      * Get one exercise by exerciseId with additional details such as quiz questions and statistics or template / solution participation
      * NOTE: prefer #findOne if you don't need these additional details
      *
+     * DEPRECATED: Please use findOne() or write a custom method
+     *
      * @param exerciseId the exerciseId of the entity
      * @return the entity
      */
-    @Transactional(readOnly = true)
+    @Deprecated(forRemoval = true)
     // TODO: redesign this method, the caller should specify which exact elements should be loaded from the database
     public Exercise findOneWithAdditionalElements(Long exerciseId) {
         Optional<Exercise> optionalExercise = exerciseRepository.findById(exerciseId);
@@ -181,16 +183,12 @@ public class ExerciseService {
         }
         Exercise exercise = optionalExercise.get();
         if (exercise instanceof QuizExercise) {
-            QuizExercise quizExercise = (QuizExercise) exercise;
             // eagerly load questions and statistic
-            quizExercise.getQuizQuestions().size();
-            quizExercise.getQuizPointStatistic().getId();
+            exercise = quizExerciseRepository.findWithEagerQuestionsAndStatisticsById(exerciseId).get();
         }
         else if (exercise instanceof ProgrammingExercise) {
-            ProgrammingExercise programmingExercise = (ProgrammingExercise) exercise;
-            // eagerly load templateParticipation and solutionParticipation
-            programmingExercise.setTemplateParticipation(HibernateUtils.unproxy(programmingExercise.getTemplateParticipation()));
-            programmingExercise.setSolutionParticipation(HibernateUtils.unproxy(programmingExercise.getSolutionParticipation()));
+            // eagerly load template participation and solution participation
+            exercise = programmingExerciseService.findWithTemplateParticipationAndSolutionParticipationById(exerciseId);
         }
         return exercise;
     }
@@ -256,7 +254,7 @@ public class ExerciseService {
         if (exercise instanceof QuizExercise) {
 
             // refetch exercise to make sure we have an updated version
-            exercise = findOneWithAdditionalElements(exercise.getId());
+            exercise = quizExerciseRepository.findWithEagerQuestionsAndStatisticsById(exercise.getId()).get();
 
             // for quizzes we need to delete the statistics and we need to reset the quiz to its original state
             QuizExercise quizExercise = (QuizExercise) exercise;
