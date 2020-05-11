@@ -41,7 +41,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
 
     @BeforeEach
     public void init() throws Exception {
-        database.addUsers(10, 5, 1);
+        database.addUsers(15, 5, 1);
         quizScheduleService.startSchedule(3000);
     }
 
@@ -353,9 +353,95 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     public void testRecalculateStatistics() throws Exception {
         quizExercise = createQuizOnServer(ZonedDateTime.now().plusHours(5), null);
 
+        quizExercise.setReleaseDate(ZonedDateTime.now().minusHours(5));
+        quizExercise.setDueDate(ZonedDateTime.now().minusHours(2));
+        quizExercise = request.putWithResponseBody("/api/quiz-exercises", quizExercise, QuizExercise.class, HttpStatus.OK);
+
+        var now = ZonedDateTime.now();
+
+        for (int i = 1; i <= 10; i++) {
+            // generate some mixed submissions for each student
+            QuizSubmission quizSubmission = new QuizSubmission();
+            QuizQuestion quizQuestion1 = quizExercise.getQuizQuestions().get(0);
+            QuizQuestion quizQuestion2 = quizExercise.getQuizQuestions().get(1);
+            QuizQuestion quizQuestion3 = quizExercise.getQuizQuestions().get(2);
+
+            quizSubmission.addSubmittedAnswers(database.generateSubmittedAnswerFor(quizQuestion1, i % 2 == 0));
+            quizSubmission.addSubmittedAnswers(database.generateSubmittedAnswerFor(quizQuestion2, i % 3 == 0));
+            quizSubmission.addSubmittedAnswers(database.generateSubmittedAnswerFor(quizQuestion3, i % 4 == 0));
+
+            quizSubmission.submitted(true);
+            quizSubmission.submissionDate(now.minusHours(3));
+            database.addSubmission(quizExercise, quizSubmission, "student" + i);
+            database.addResultToSubmission(quizSubmission, AssessmentType.AUTOMATIC, null, quizExercise.getScoreForSubmission(quizSubmission), true);
+        }
+
+        // calculate statistics
         QuizExercise quizExerciseWithRecalculatedStatistics = request.get("/api/quiz-exercises/" + quizExercise.getId() + "/recalculate-statistics", HttpStatus.OK,
                 QuizExercise.class);
-        compareStatistics(quizExercise, quizExerciseWithRecalculatedStatistics);
+
+        assertThat(quizExerciseWithRecalculatedStatistics.getQuizPointStatistic().getPointCounters().size()).isEqualTo(10);
+        assertThat(quizExerciseWithRecalculatedStatistics.getQuizPointStatistic().getParticipantsRated()).isEqualTo(10);
+
+        for (PointCounter pointCounter : quizExerciseWithRecalculatedStatistics.getQuizPointStatistic().getPointCounters()) {
+            if (pointCounter.getPoints() == 0.0 ) {
+                assertThat(pointCounter.getRatedCounter()).isEqualTo(3);
+            }
+            else if (pointCounter.getPoints() == 3.0 || pointCounter.getPoints() == 4.0 || pointCounter.getPoints() == 6.0) {
+                assertThat(pointCounter.getRatedCounter()).isEqualTo(2);
+            }
+            else if (pointCounter.getPoints() == 7.0) {
+                assertThat(pointCounter.getRatedCounter()).isEqualTo(1);
+            }
+            else {
+                assertThat(pointCounter.getRatedCounter()).isEqualTo(0);
+            }
+        }
+
+        // add more submissions and recalculate
+        for (int i = 11; i <= 14; i++) {
+            // generate some mixed submissions for each student
+            QuizSubmission quizSubmission = new QuizSubmission();
+            QuizQuestion quizQuestion1 = quizExercise.getQuizQuestions().get(0);
+            QuizQuestion quizQuestion2 = quizExercise.getQuizQuestions().get(1);
+            QuizQuestion quizQuestion3 = quizExercise.getQuizQuestions().get(2);
+
+            quizSubmission.addSubmittedAnswers(database.generateSubmittedAnswerFor(quizQuestion1, i % 2 == 0));
+            quizSubmission.addSubmittedAnswers(database.generateSubmittedAnswerFor(quizQuestion2, i % 3 == 0));
+            quizSubmission.addSubmittedAnswers(database.generateSubmittedAnswerFor(quizQuestion3, i % 4 == 0));
+
+            quizSubmission.submitted(true);
+            quizSubmission.submissionDate(now.minusHours(3));
+            database.addSubmission(quizExercise, quizSubmission, "student" + i);
+            database.addResultToSubmission(quizSubmission, AssessmentType.AUTOMATIC, null, quizExercise.getScoreForSubmission(quizSubmission), true);
+        }
+        // calculate statistics
+        quizExerciseWithRecalculatedStatistics = request.get("/api/quiz-exercises/" + quizExercise.getId() + "/recalculate-statistics", HttpStatus.OK,
+            QuizExercise.class);
+
+        assertThat(quizExerciseWithRecalculatedStatistics.getQuizPointStatistic().getPointCounters().size()).isEqualTo(10);
+        assertThat(quizExerciseWithRecalculatedStatistics.getQuizPointStatistic().getParticipantsRated()).isEqualTo(14);
+
+        for (PointCounter pointCounter : quizExerciseWithRecalculatedStatistics.getQuizPointStatistic().getPointCounters()) {
+            if (pointCounter.getPoints() == 0.0 ) {
+                assertThat(pointCounter.getRatedCounter()).isEqualTo(5);
+            }
+            else if (pointCounter.getPoints() == 4.0 ) {
+                assertThat(pointCounter.getRatedCounter()).isEqualTo(3);
+            }
+            else if (pointCounter.getPoints() == 3.0 || pointCounter.getPoints() == 6.0) {
+                assertThat(pointCounter.getRatedCounter()).isEqualTo(2);
+            }
+            else if (pointCounter.getPoints() == 7.0) {
+                assertThat(pointCounter.getRatedCounter()).isEqualTo(1);
+            }
+            else if (pointCounter.getPoints() == 9.0) {
+                assertThat(pointCounter.getRatedCounter()).isEqualTo(1);
+            }
+            else {
+                assertThat(pointCounter.getRatedCounter()).isEqualTo(0);
+            }
+        }
     }
 
     @Test
