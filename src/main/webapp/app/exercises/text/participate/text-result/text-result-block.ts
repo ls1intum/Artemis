@@ -11,11 +11,9 @@ enum FeedbackType {
 
 export class TextResultBlock {
     public readonly text: string;
-    private rating: number;
 
-    constructor(public textBlock: TextBlock, public feedback?: Feedback, rating = 0) {
+    constructor(public textBlock: TextBlock, public feedback?: Feedback) {
         this.text = convertToHtmlLinebreaks(escapeString(textBlock.text));
-        this.rating = rating;
     }
 
     get length(): number {
@@ -73,13 +71,5 @@ export class TextResultBlock {
             default:
                 return '';
         }
-    }
-
-    getRating(): number {
-        return this.rating;
-    }
-
-    setRating(rating: number): void {
-        this.rating = rating;
     }
 }
