@@ -120,11 +120,11 @@ export class NotificationSidebarComponent implements OnInit {
             // TODO: How can it happen that the same id comes twice through the channel?
             if (notification && notification.notificationDate) {
                 notification.notificationDate = moment(notification.notificationDate);
-                this.addNotifications([notification]);
                 // Increase total notifications count if the notification does not already exist.
                 if (!this.notifications.some(({ id }) => id === notification.id)) {
                     this.totalNotifications += 1;
                 }
+                this.addNotifications([notification]);
             }
         });
     }
