@@ -1,7 +1,8 @@
 import * as chai from 'chai';
 import * as sinonChai from 'sinon-chai';
 import * as sinon from 'sinon';
-import { of } from 'rxjs';
+import * as moment from 'moment';
+import { BehaviorSubject, of } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import { HttpHeaders, HttpResponse } from '@angular/common/http';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
@@ -14,6 +15,11 @@ import { MockNotificationService } from '../../../helpers/mocks/service/mock-not
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { Notification } from 'app/entities/notification.model';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
+import { User } from 'app/core/user/user.model';
+import { MockUserService } from '../../../helpers/mocks/service/mock-user.service';
+import { UserService } from 'app/core/user/user.service';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -22,15 +28,21 @@ describe('Notification Sidebar Component', () => {
     let notificationSidebarComponent: NotificationSidebarComponent;
     let notificationSidebarComponentFixture: ComponentFixture<NotificationSidebarComponent>;
     let notificationService: NotificationService;
+    let accountService: AccountService;
+    let userService: UserService;
 
-    const notification1 = { id: 1 } as Notification;
-    const notifications = [notification1] as Notification[];
-    const queryResponse = {
-        body: notifications,
-        headers: new HttpHeaders({
-            'X-Total-Count': notifications.length.toString(),
-        }),
-    } as HttpResponse<Notification[]>;
+    const notificationNow = { id: 1, notificationDate: moment() } as Notification;
+    const notificationPast = { id: 2, notificationDate: moment().subtract(1, 'day') } as Notification;
+    const notifications = [notificationNow, notificationPast] as Notification[];
+
+    const generateQueryResponse = (ns: Notification[]) => {
+        return {
+            body: ns,
+            headers: new HttpHeaders({
+                'X-Total-Count': ns.length.toString(),
+            }),
+        } as HttpResponse<Notification[]>;
+    };
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -41,6 +53,8 @@ describe('Notification Sidebar Component', () => {
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: NotificationService, useClass: MockNotificationService },
                 { provide: TranslateService, useClass: MockTranslateService },
+                { provide: AccountService, useClass: MockAccountService },
+                { provide: UserService, useClass: MockUserService },
             ],
         })
             .overrideModule(ArtemisTestModule, { set: { declarations: [], exports: [] } })
@@ -48,11 +62,23 @@ describe('Notification Sidebar Component', () => {
             .then(() => {
                 notificationSidebarComponentFixture = TestBed.createComponent(NotificationSidebarComponent);
                 notificationSidebarComponent = notificationSidebarComponentFixture.componentInstance;
-                notificationService = notificationSidebarComponentFixture.debugElement.injector.get(NotificationService);
+                notificationService = TestBed.inject(NotificationService);
+                accountService = TestBed.inject(AccountService);
+                userService = TestBed.inject(UserService);
             });
     });
 
     describe('Initialization', () => {
+        it('should set last notification read', fakeAsync(() => {
+            const lastNotificationRead = moment();
+            const fake = sinon.fake.returns(of({ lastNotificationRead } as User));
+            sinon.replace(accountService, 'getAuthenticationState', fake);
+            notificationSidebarComponent.ngOnInit();
+            tick(500);
+            expect(accountService.getAuthenticationState).to.have.been.calledOnce;
+            expect(notificationSidebarComponent.lastNotificationRead).to.equal(lastNotificationRead);
+        }));
+
         it('should query notifications', fakeAsync(() => {
             sinon.spy(notificationService, 'query');
             notificationSidebarComponent.ngOnInit();
@@ -115,6 +141,121 @@ describe('Notification Sidebar Component', () => {
             const notification = notificationSidebarComponentFixture.debugElement.nativeElement.querySelector('.notification-item');
             notification.click();
             expect(notificationService.interpretNotification).to.be.calledOnce;
+        });
+    });
+
+    describe('Last notification read', () => {
+        it('should update users last notification read when user opens sidebar', fakeAsync(() => {
+            sinon.spy(notificationSidebarComponent, 'updateLastNotificationRead');
+            sinon.spy(userService, 'updateLastNotificationRead');
+            const bell = notificationSidebarComponentFixture.debugElement.nativeElement.querySelector('.notification-button');
+            bell.click();
+            tick(2000);
+            expect(notificationSidebarComponent.updateLastNotificationRead).to.have.been.calledOnce;
+            expect(userService.updateLastNotificationRead).to.have.been.calledOnce;
+        }));
+
+        it('should update components last notification read two seconds after the user opened the sidebar', fakeAsync(() => {
+            notificationSidebarComponent.lastNotificationRead = null;
+            const bell = notificationSidebarComponentFixture.debugElement.nativeElement.querySelector('.notification-button');
+            const lastNotificationReadNow = moment();
+            bell.click();
+            tick(2000);
+            expect(notificationSidebarComponent.lastNotificationRead).to.be.eql(lastNotificationReadNow);
+        }));
+    });
+
+    describe('Load notifications', () => {
+        const replaceSubscribeToSocketMessages = () => {
+            const fake = sinon.fake.returns(new BehaviorSubject(notificationNow));
+            sinon.replace(notificationService, 'subscribeToSocketMessages', fake);
+        };
+
+        it('should not add already existing notifications', fakeAsync(() => {
+            notificationSidebarComponent.notifications = [notificationNow];
+            const fake = sinon.fake.returns(of(generateQueryResponse(notifications)));
+            sinon.replace(notificationService, 'query', fake);
+            notificationSidebarComponent.ngOnInit();
+            tick(500);
+            expect(notificationSidebarComponent.notifications.length).to.be.equal(notifications.length);
+        }));
+
+        it('should update sorted notifications array after new notifications were loaded', fakeAsync(() => {
+            const fake = sinon.fake.returns(of(generateQueryResponse([notificationPast, notificationNow])));
+            sinon.replace(notificationService, 'query', fake);
+            notificationSidebarComponent.ngOnInit();
+            tick(500);
+            expect(notificationService.query).to.have.been.calledOnce;
+            expect(notificationSidebarComponent.sortedNotifications[0]).to.be.equal(notificationNow);
+            expect(notificationSidebarComponent.sortedNotifications[1]).to.be.equal(notificationPast);
+        }));
+
+        it('should set total notification count to received X-Total-Count header', fakeAsync(() => {
+            const fake = sinon.fake.returns(of(generateQueryResponse(notifications)));
+            sinon.replace(notificationService, 'query', fake);
+            notificationSidebarComponent.ngOnInit();
+            tick(500);
+            expect(notificationService.query).to.have.been.calledOnce;
+            expect(notificationSidebarComponent.totalNotifications).to.be.equal(notifications.length);
+        }));
+
+        it('should increase total notification count if a new notification is received via websocket', fakeAsync(() => {
+            replaceSubscribeToSocketMessages();
+            notificationSidebarComponent.ngOnInit();
+            tick(500);
+            notificationService.subscribeToSocketMessages();
+            expect(notificationSidebarComponent.notifications.length).to.be.equal(1);
+            expect(notificationSidebarComponent.totalNotifications).to.be.equal(1);
+        }));
+
+        it('should not add already existing notification received via websocket', fakeAsync(() => {
+            notificationSidebarComponent.notifications = [notificationNow];
+            notificationSidebarComponent.totalNotifications = 1;
+            replaceSubscribeToSocketMessages();
+            notificationSidebarComponent.ngOnInit();
+            tick(500);
+            notificationService.subscribeToSocketMessages();
+            expect(notificationSidebarComponent.notifications.length).to.be.equal(1);
+            expect(notificationSidebarComponent.totalNotifications).to.be.equal(1);
+        }));
+
+        it('should set loading attribute during notification call correctly', fakeAsync(() => {}));
+
+        it('should load more notifications only if not all are already loaded', fakeAsync(() => {}));
+    });
+
+    describe('Recent notifications', () => {
+        it('should evaluate recent notifications correctly', () => {});
+
+        it('should show plus sign in recent notification count badge if all loaded notifications are recent notifications', () => {});
+    });
+
+    describe('UI', () => {
+        it('should show no notifications message', () => {
+            const noNotificationsMessage = notificationSidebarComponentFixture.debugElement.nativeElement.querySelector('.no-notifications');
+            expect(noNotificationsMessage).to.be.null;
+        });
+
+        it('should show loading spinner when more notifications are loaded', () => {
+            notificationSidebarComponent.loading = true;
+            notificationSidebarComponentFixture.detectChanges();
+            const loadingSpinner = notificationSidebarComponentFixture.debugElement.nativeElement.querySelector('.loading-spinner');
+            expect(loadingSpinner).to.be.not.null;
+        });
+
+        it('should show all notifications loaded message when all notifications are loaded', () => {
+            notificationSidebarComponent.notifications = notifications;
+            notificationSidebarComponent.totalNotifications = 1;
+            notificationSidebarComponentFixture.detectChanges();
+            const allLoadedMessage = notificationSidebarComponentFixture.debugElement.nativeElement.querySelector('.all-loaded');
+            expect(allLoadedMessage).to.be.not.null;
+        });
+
+        it('should show error message when loading of notifications failed', () => {
+            notificationSidebarComponent.error = 'error';
+            notificationSidebarComponentFixture.detectChanges();
+            const errorMessage = notificationSidebarComponentFixture.debugElement.nativeElement.querySelector('.alert-danger');
+            expect(errorMessage).to.be.not.null;
         });
     });
 });
