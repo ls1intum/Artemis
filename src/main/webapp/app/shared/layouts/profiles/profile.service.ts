@@ -29,6 +29,7 @@ export class ProfileService {
 
                         this.mapGuidedTourConfig(data, profileInfo);
                         this.mapAllowedOrionVersions(data, profileInfo);
+                        this.mapTestServer(data, profileInfo);
 
                         if (profileInfo.activeProfiles) {
                             const ribbonProfiles = displayRibbonOnProfiles.filter((profile: string) => profileInfo.activeProfiles.includes(profile));
@@ -59,6 +60,10 @@ export class ProfileService {
 
     private mapAllowedOrionVersions(data: any, profileInfo: ProfileInfo) {
         profileInfo.allowedMinimumOrionVersion = data['allowed-minimum-orion-version'];
+    }
+
+    private mapTestServer(data: any, profileInfo: ProfileInfo) {
+        profileInfo.testServer = data['test-server'];
     }
 
     private mapGuidedTourConfig(data: any, profileInfo: ProfileInfo) {

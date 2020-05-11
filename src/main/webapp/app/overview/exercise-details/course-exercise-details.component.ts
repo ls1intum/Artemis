@@ -343,11 +343,12 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     // ################## ONLY FOR LOCAL TESTING PURPOSE -- START ##################
 
     /**
-     * triggers the simulation of a participation and submission for the currently logged in user
+     * Triggers the simulation of a participation and submission for the currently logged in user
+     * This method will fail if used in production
      * This functionality is only for testing purposes(noVersionControlAndContinuousIntegrationAvailable)
      */
     simulateSubmission() {
-        this.programmingExerciseSimulationService.failsIfInProduction();
+        this.programmingExerciseSimulationService.failsIfInProduction(this.inProductionEnvironment);
         this.courseExerciseSubmissionResultSimulationService.simulateSubmission(this.exerciseId).subscribe(
             () => {
                 this.wasSubmissionSimulated = true;
@@ -360,11 +361,12 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * triggers the simulation of a result for the currently logged in user
+     * Triggers the simulation of a result for the currently logged in user
+     * This method will fail if used in production
      * This functionality is only for testing purposes(noVersionControlAndContinuousIntegrationAvailable)
      */
     simulateResult() {
-        this.programmingExerciseSimulationService.failsIfInProduction();
+        this.programmingExerciseSimulationService.failsIfInProduction(this.inProductionEnvironment);
         this.courseExerciseSubmissionResultSimulationService.simulateResult(this.exerciseId).subscribe(
             (result) => {
                 // set the value to false in order to deactivate the result button
