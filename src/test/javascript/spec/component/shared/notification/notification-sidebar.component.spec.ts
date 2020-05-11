@@ -106,4 +106,15 @@ describe('Notification Sidebar Component', () => {
             expect(notificationSidebarComponent.showSidebar).to.be.false;
         });
     });
+
+    describe('Notification click', () => {
+        it('should interpret notification target when user clicks notification', () => {
+            sinon.spy(notificationService, 'interpretNotification');
+            notificationSidebarComponent.sortedNotifications = notifications;
+            notificationSidebarComponentFixture.detectChanges();
+            const notification = notificationSidebarComponentFixture.debugElement.nativeElement.querySelector('.notification-item');
+            notification.click();
+            expect(notificationService.interpretNotification).to.be.calledOnce;
+        });
+    });
 });
