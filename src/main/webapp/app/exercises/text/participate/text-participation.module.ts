@@ -12,7 +12,6 @@ import { TextResultComponent } from 'app/exercises/text/participate/text-result/
 import { ArtemisHeaderExercisePageWithDetailsModule } from 'app/exercises/shared/exercise-headers/exercise-headers.module';
 import { ArtemisTeamModule } from 'app/exercises/shared/team/team.module';
 import { ArtemisTeamSubmissionSyncModule } from 'app/exercises/shared/team-submission-sync/team-submission-sync.module';
-import { RatingModule } from 'ng-starrating';
 
 const ENTITY_STATES = [...textEditorRoute];
 
@@ -27,7 +26,6 @@ const ENTITY_STATES = [...textEditorRoute];
         ArtemisHeaderExercisePageWithDetailsModule,
         ArtemisTeamModule,
         ArtemisTeamSubmissionSyncModule,
-        RatingModule,
     ],
     declarations: [TextEditorComponent, TextEditorScoreCardComponent, TextResultComponent],
 })
