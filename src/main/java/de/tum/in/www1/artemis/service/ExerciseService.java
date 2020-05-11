@@ -20,7 +20,6 @@ import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentPar
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.service.scheduled.QuizScheduleService;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
@@ -41,11 +40,7 @@ public class ExerciseService {
 
     private final ProgrammingExerciseService programmingExerciseService;
 
-    private final QuizStatisticService quizStatisticService;
-
-    private final QuizScheduleService quizScheduleService;
-
-    private final QuizExerciseRepository quizExerciseRepository;
+    private final QuizExerciseService quizExerciseService;
 
     private final ExampleSubmissionService exampleSubmissionService;
 
@@ -58,23 +53,20 @@ public class ExerciseService {
     private final TeamService teamService;
 
     public ExerciseService(ExerciseRepository exerciseRepository, ParticipationService participationService, AuthorizationCheckService authCheckService,
-            ProgrammingExerciseService programmingExerciseService, QuizStatisticService quizStatisticService, QuizScheduleService quizScheduleService,
-            TutorParticipationRepository tutorParticipationRepository, ExampleSubmissionService exampleSubmissionService, AuditEventRepository auditEventRepository,
-            ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository, TeamService teamService,
-            QuizExerciseRepository quizExerciseRepository) {
+            ProgrammingExerciseService programmingExerciseService, QuizExerciseService quizExerciseService, TutorParticipationRepository tutorParticipationRepository,
+            ExampleSubmissionService exampleSubmissionService, AuditEventRepository auditEventRepository, ComplaintRepository complaintRepository,
+            ComplaintResponseRepository complaintResponseRepository, TeamService teamService) {
         this.exerciseRepository = exerciseRepository;
         this.participationService = participationService;
         this.authCheckService = authCheckService;
         this.programmingExerciseService = programmingExerciseService;
-        this.quizStatisticService = quizStatisticService;
-        this.quizScheduleService = quizScheduleService;
         this.tutorParticipationRepository = tutorParticipationRepository;
         this.exampleSubmissionService = exampleSubmissionService;
         this.auditEventRepository = auditEventRepository;
         this.complaintRepository = complaintRepository;
         this.complaintResponseRepository = complaintResponseRepository;
         this.teamService = teamService;
-        this.quizExerciseRepository = quizExerciseRepository;
+        this.quizExerciseService = quizExerciseService;
     }
 
     /**
@@ -184,7 +176,7 @@ public class ExerciseService {
         Exercise exercise = optionalExercise.get();
         if (exercise instanceof QuizExercise) {
             // eagerly load questions and statistic
-            exercise = quizExerciseRepository.findWithEagerQuestionsAndStatisticsById(exerciseId).get();
+            exercise = quizExerciseService.findOneWithQuestionsAndStatistics(exerciseId);
         }
         else if (exercise instanceof ProgrammingExercise) {
             // eagerly load template participation and solution participation
@@ -244,7 +236,6 @@ public class ExerciseService {
      *
      * @param exercise which should be resetted
      */
-    @Transactional
     public void reset(Exercise exercise) {
         log.debug("Request reset Exercise : {}", exercise.getId());
 
@@ -252,28 +243,7 @@ public class ExerciseService {
         participationService.deleteAllByExerciseId(exercise.getId(), true, true);
 
         if (exercise instanceof QuizExercise) {
-
-            // refetch exercise to make sure we have an updated version
-            exercise = quizExerciseRepository.findWithEagerQuestionsAndStatisticsById(exercise.getId()).get();
-
-            // for quizzes we need to delete the statistics and we need to reset the quiz to its original state
-            QuizExercise quizExercise = (QuizExercise) exercise;
-            quizExercise.setIsVisibleBeforeStart(Boolean.FALSE);
-            quizExercise.setIsPlannedToStart(Boolean.FALSE);
-            quizExercise.setAllowedNumberOfAttempts(null);
-            quizExercise.setIsOpenForPractice(Boolean.FALSE);
-            quizExercise.setReleaseDate(null);
-
-            // TODO: the dependencies to concrete exercise types here are not really nice. We should find a better way to structure this, e.g. having this call managed in the quiz
-            // exercise resource
-            // which delegates some functionality to the exercise service
-
-            // in case the quiz has not yet started or the quiz is currently running, we have to cleanup
-            quizScheduleService.cancelScheduledQuizStart(quizExercise.getId());
-            quizScheduleService.clearQuizData(quizExercise.getId());
-
-            // clean up the statistics
-            quizStatisticService.recalculateStatistics(quizExercise);
+            quizExerciseService.resetExercise(exercise.getId());
         }
     }
 

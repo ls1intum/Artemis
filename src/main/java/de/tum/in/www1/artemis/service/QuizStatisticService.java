@@ -11,10 +11,7 @@ import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.participation.Participation;
-import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
-import de.tum.in.www1.artemis.domain.quiz.QuizQuestion;
-import de.tum.in.www1.artemis.domain.quiz.QuizQuestionStatistic;
-import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
+import de.tum.in.www1.artemis.domain.quiz.*;
 import de.tum.in.www1.artemis.repository.*;
 
 @Service
@@ -32,17 +29,13 @@ public class QuizStatisticService {
 
     private final QuizQuestionStatisticRepository quizQuestionStatisticRepository;
 
-    private final QuizExerciseRepository quizExerciseRepository;
-
     public QuizStatisticService(SimpMessageSendingOperations messagingTemplate, StudentParticipationRepository studentParticipationRepository, ResultRepository resultRepository,
-            QuizPointStatisticRepository quizPointStatisticRepository, QuizQuestionStatisticRepository quizQuestionStatisticRepository,
-            QuizExerciseRepository quizExerciseRepository) {
+            QuizPointStatisticRepository quizPointStatisticRepository, QuizQuestionStatisticRepository quizQuestionStatisticRepository) {
         this.messagingTemplate = messagingTemplate;
         this.studentParticipationRepository = studentParticipationRepository;
         this.resultRepository = resultRepository;
         this.quizPointStatisticRepository = quizPointStatisticRepository;
         this.quizQuestionStatisticRepository = quizQuestionStatisticRepository;
-        this.quizExerciseRepository = quizExerciseRepository;
     }
 
     /**
@@ -56,6 +49,12 @@ public class QuizStatisticService {
         // reset all statistics
         if (quizExercise.getQuizPointStatistic() != null) {
             quizExercise.getQuizPointStatistic().resetStatistic();
+        }
+        else {
+            var quizPointStatistic = new QuizPointStatistic();
+            quizExercise.setQuizPointStatistic(quizPointStatistic);
+            quizPointStatistic.setQuiz(quizExercise);
+            quizExercise.recalculatePointCounters();
         }
         for (QuizQuestion quizQuestion : quizExercise.getQuizQuestions()) {
             if (quizQuestion.getQuizQuestionStatistic() != null) {
