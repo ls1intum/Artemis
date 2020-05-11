@@ -531,6 +531,10 @@ public class QuizExerciseService {
         return quizExercise;
     }
 
+    /**
+     * Reset a QuizExercise to its original state, delete statistics and cleanup the schedule service.
+     * @param exerciseId Id of the exercise to reset
+     */
     public void resetExercise(Long exerciseId) {
         // refetch exercise to make sure we have an updated version
         QuizExercise quizExercise = findOneWithQuestionsAndStatistics(exerciseId);

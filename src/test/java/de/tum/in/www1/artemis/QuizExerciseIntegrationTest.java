@@ -337,7 +337,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
 
         var now = ZonedDateTime.now();
 
-        //generate submissions for each student
+        // generate submissions for each student
         int numberOfParticipants = 10;
 
         for (int i = 1; i <= numberOfParticipants; i++) {
@@ -415,7 +415,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         quizExercise.setDueDate(now.minusHours(2));
         quizExercise = request.putWithResponseBody("/api/quiz-exercises", quizExercise, QuizExercise.class, HttpStatus.OK);
 
-        //generate rated and unrated submissions for each student
+        // generate rated and unrated submissions for each student
         int numberOfParticipants = 10;
 
         for (int i = 1; i <= numberOfParticipants; i++) {
@@ -429,9 +429,9 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
             database.addResultToSubmission(quizSubmissionPractice, AssessmentType.AUTOMATIC, null, quizExercise.getScoreForSubmission(quizSubmission), false);
         }
 
-        //submission with everything selected
-        QuizSubmission quizSubmission = database.generateSpecialSubmissionWithResult(quizExercise,true, now.minusHours(3), true);
-        QuizSubmission quizSubmissionPractice = database.generateSpecialSubmissionWithResult(quizExercise,true, now.minusHours(3), true);
+        // submission with everything selected
+        QuizSubmission quizSubmission = database.generateSpecialSubmissionWithResult(quizExercise, true, now.minusHours(3), true);
+        QuizSubmission quizSubmissionPractice = database.generateSpecialSubmissionWithResult(quizExercise, true, now.minusHours(3), true);
 
         database.addSubmission(quizExercise, quizSubmission, "student1");
         database.addSubmission(quizExercise, quizSubmissionPractice, "student1");
@@ -439,7 +439,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         database.addResultToSubmission(quizSubmission, AssessmentType.AUTOMATIC, null, quizExercise.getScoreForSubmission(quizSubmission), true);
         database.addResultToSubmission(quizSubmissionPractice, AssessmentType.AUTOMATIC, null, quizExercise.getScoreForSubmission(quizSubmission), false);
 
-        //submission with nothing selected
+        // submission with nothing selected
         quizSubmission = database.generateSpecialSubmissionWithResult(quizExercise, true, now.minusHours(3), false);
         quizSubmissionPractice = database.generateSpecialSubmissionWithResult(quizExercise, true, now.minusHours(3), false);
 
@@ -601,7 +601,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         assertThat(quizExercise.getQuizPointStatistic()).isNull();
         assertThat(quizExercise.getGradingInstructions()).isNull();
         assertThat(quizExercise.getGradingCriteria()).isEmpty();
-        if(quizExercise.isStarted()) {
+        if (quizExercise.isStarted()) {
             for (QuizQuestion question : quizExercise.getQuizQuestions()) {
                 assertThat(question.getExplanation()).isNull();
                 assertThat(question.getQuizQuestionStatistic()).isNull();

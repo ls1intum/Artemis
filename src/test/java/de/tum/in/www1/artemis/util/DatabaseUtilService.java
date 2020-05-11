@@ -1350,7 +1350,6 @@ public class DatabaseUtilService {
         return mc;
     }
 
-
     /**
      * Generate submissions for a set of students for an exercise. Results are mixed.
      * Student IDs start at firstStudent and are increased by 1 upto lastStudent.
@@ -1388,14 +1387,15 @@ public class DatabaseUtilService {
             if (question instanceof MultipleChoiceQuestion) {
                 var submittedAnswer = new MultipleChoiceSubmittedAnswer();
                 submittedAnswer.setQuizQuestion(question);
-                if(selectEverything) {
-                    for (var answerOption : ((MultipleChoiceQuestion)  question).getAnswerOptions()) {
+                if (selectEverything) {
+                    for (var answerOption : ((MultipleChoiceQuestion) question).getAnswerOptions()) {
                         submittedAnswer.addSelectedOptions(answerOption);
                     }
                 }
                 quizSubmission.addSubmittedAnswers(submittedAnswer);
 
-            } else {
+            }
+            else {
                 quizSubmission.addSubmittedAnswers(generateSubmittedAnswerFor(question, false));
             }
             quizSubmission.addSubmittedAnswers(generateSubmittedAnswerFor(question, false));
