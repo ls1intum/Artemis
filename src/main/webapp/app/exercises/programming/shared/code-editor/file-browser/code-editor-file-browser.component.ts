@@ -247,6 +247,9 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
         }
     }
 
+    /**
+     * Toggles the tree compress
+     */
     toggleTreeCompress() {
         this.compressFolders = !this.compressFolders;
         this.setupTreeview();
@@ -456,6 +459,10 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
         this.creatingFile = [folder, fileType];
     }
 
+    /**
+     * Creates the provided FileType in the root
+     * @param fileType indicates if an file or folder should be created
+     */
     setCreatingFileInRoot(fileType: FileType) {
         this.creatingFile = ['', fileType];
     }
