@@ -298,19 +298,6 @@ public class FileService {
             // cut the prefix (e.g. 'exercise', 'solution', 'test') from the actual path
             int index = fileUrl.indexOf(prefix);
             String targetFilePath = keepParentFolder ? fileUrl.substring(index + prefix.length()) : "/" + resource.getFilename();
-            // special case for '.git.ignore.file' file which would not be included in build otherwise
-            if (targetFilePath.endsWith("git.ignore.file")) {
-                targetFilePath = targetFilePath.replaceAll("git.ignore.file", ".gitignore");
-            }
-            // special case for '.gitattributes' file which would not be included in build otherwise
-            if (targetFilePath.endsWith("git.attributes.file")) {
-                targetFilePath = targetFilePath.replaceAll("git.attributes.file", ".gitattributes");
-            }
-            // special case for 'Makefile' files which would not be included in the build otherwise
-            if (targetFilePath.endsWith("Makefile.file")) {
-                targetFilePath = targetFilePath.replace("Makefile.file", "Makefile");
-            }
-
             Path copyPath = Paths.get(targetDirectoryPath + targetFilePath);
             File parentFolder = copyPath.toFile().getParentFile();
             if (!parentFolder.exists()) {
