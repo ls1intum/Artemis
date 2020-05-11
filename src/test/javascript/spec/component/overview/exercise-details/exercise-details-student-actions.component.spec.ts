@@ -47,7 +47,14 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
     let getProfileInfoSub: SinonStub;
 
     const team = { id: 1, students: [{ id: 99 } as User] } as Team;
-    const teamExerciseWithoutTeamAssigned = { id: 42, type: ExerciseType.PROGRAMMING, mode: ExerciseMode.TEAM, teamMode: true, studentParticipations: [] } as ProgrammingExercise;
+    const teamExerciseWithoutTeamAssigned = ({
+        id: 42,
+        type: ExerciseType.PROGRAMMING,
+        mode: ExerciseMode.TEAM,
+        teamMode: true,
+        studentAssignedTeamIdComputed: true,
+        studentParticipations: [],
+    } as unknown) as ProgrammingExercise;
     const teamExerciseWithTeamAssigned = { ...teamExerciseWithoutTeamAssigned, studentAssignedTeamId: team.id } as ProgrammingExercise;
 
     beforeEach(async () => {

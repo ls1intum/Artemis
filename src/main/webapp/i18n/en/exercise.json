@@ -105,7 +105,7 @@
             "resultCreationSuccessful": "The result was created successfully",
             "resultCreationUnsuccessful": "The result was created unsuccessfully",
             "presentationScoreEnabled": {
-                "title": "Presentation Score enabled",
+                "title": "Presentation",
                 "description": "If the presentation score is enabled, tutors can enter points for students on the \"Participations\" page of the exercise."
             },
             "errors": {

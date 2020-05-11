@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.domain;
+package de.tum.in.www1.artemis.domain.notification;
 
 import java.io.Serializable;
 import java.time.ZonedDateTime;
@@ -7,6 +7,9 @@ import java.util.Objects;
 import javax.persistence.*;
 
 import com.google.gson.JsonObject;
+
+import de.tum.in.www1.artemis.domain.StudentQuestionAnswer;
+import de.tum.in.www1.artemis.domain.User;
 
 /**
  * A SingleUserNotification.
