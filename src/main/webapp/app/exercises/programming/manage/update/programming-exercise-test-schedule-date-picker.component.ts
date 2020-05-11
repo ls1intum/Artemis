@@ -26,14 +26,28 @@ export class ProgrammingExerciseTestScheduleDatePickerComponent implements Contr
 
     _onChange: any = () => {};
 
+    /**
+     * not used at the moment only implemented to fulfill the interface requirement
+     * @param fn
+     */
     registerOnChange(fn: any): void {
         this._onChange = fn;
     }
 
+    /**
+     * not used at the moment only implemented to fulfill the interface requirement
+     */
     registerOnTouched(): void {}
 
+    /**
+     * not used at the moment only implemented to fulfill the interface requirement
+     */
     setDisabledState(): void {}
 
+    /**
+     * Checks the input and sets dependent of the check result the selected Date
+     * @param obj the user input
+     */
     writeValue(obj: any): void {
         if (obj !== undefined && this.selectedDate !== obj) {
             this.selectedDate = !obj ? null : isDate(obj) ? obj : obj.toDate();
