@@ -380,7 +380,7 @@ export class MarkdownEditorComponent implements AfterViewInit {
     /**
      * @function onFileDrop
      * @desc handle drop of files
-     * @param {DropEvent} $event
+     * @param {DragEvent} $event
      */
     onFileDrop($event: DragEvent): void {
         $event.preventDefault();
@@ -416,7 +416,7 @@ export class MarkdownEditorComponent implements AfterViewInit {
             this.fileUploaderService.uploadFile(file).then(
                 (res) => {
                     aceEditor.undo();
-                    const textToAdd = `<jhi-secured-image [src]="${res.path}" [alt]="${file.name}" > </jhi-secured-image> \n`;
+                    const textToAdd = `<img src="${res.path}" alt="${file.name}" > </img> \n`;
                     aceEditor.insert(textToAdd);
                 },
                 (err) => {
