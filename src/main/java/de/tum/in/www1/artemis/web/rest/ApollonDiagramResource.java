@@ -19,8 +19,8 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.modeling.ApollonDiagram;
 import de.tum.in.www1.artemis.repository.ApollonDiagramRepository;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.service.UserService;
 import de.tum.in.www1.artemis.service.CourseService;
+import de.tum.in.www1.artemis.service.UserService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import io.github.jhipster.web.util.ResponseUtil;
@@ -47,7 +47,8 @@ public class ApollonDiagramResource {
 
     private final CourseService courseService;
 
-    public ApollonDiagramResource(ApollonDiagramRepository apollonDiagramRepository, AuthorizationCheckService authCheckService, UserService userService, CourseService courseService) {
+    public ApollonDiagramResource(ApollonDiagramRepository apollonDiagramRepository, AuthorizationCheckService authCheckService, UserService userService,
+                                  CourseService courseService) {
         this.apollonDiagramRepository = apollonDiagramRepository;
         this.authCheckService = authCheckService;
         this.userService = userService;
@@ -71,7 +72,7 @@ public class ApollonDiagramResource {
     @PostMapping("/apollon-diagrams")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<ApollonDiagram> createApollonDiagram(@RequestBody ApollonDiagram apollonDiagram) throws URISyntaxException {
-        if(!hasAuthorties(apollonDiagram.getCourseId())) {
+        if (!hasAuthorties(apollonDiagram.getCourseId())) {
             return forbidden();
         }
 
@@ -95,7 +96,7 @@ public class ApollonDiagramResource {
     @PutMapping("/apollon-diagrams")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<ApollonDiagram> updateApollonDiagram(@RequestBody ApollonDiagram apollonDiagram) throws URISyntaxException {
-        if(!hasAuthorties(apollonDiagram.getCourseId())) {
+        if (!hasAuthorties(apollonDiagram.getCourseId())) {
             return forbidden();
         }
 
@@ -116,7 +117,7 @@ public class ApollonDiagramResource {
     @GetMapping("/apollon-diagrams/list/{courseId}")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public List<ApollonDiagram> getDiagramsByCourse(@PathVariable Long courseId) {
-        if(!hasAuthorties(courseId)) {
+        if (!hasAuthorties(courseId)) {
             return (List<ApollonDiagram>) forbidden();
         }
 
