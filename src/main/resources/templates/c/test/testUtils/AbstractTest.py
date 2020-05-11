@@ -23,11 +23,11 @@ class AbstractTest(ABC):
     5. Done
     """
 
-    name: str = ""
-    requirements: List[str] = list()
-    timeoutSec: int = -1
-    case: Optional[TestCase] = None
-    suite: Optional[TestSuite] = None
+    name: str
+    requirements: List[str]
+    timeoutSec: int
+    case: Optional[TestCase]
+    suite: Optional[TestSuite]
 
     def __init__(self, name: str, requirements: List[str] = None, timeoutSec: int = -1):
         """
@@ -37,7 +37,7 @@ class AbstractTest(ABC):
         requirements: List[str]
             A list of test cases names that have to finish successfully for this test to run.
             Usually an execution test should have the compile test as it's requirement.
-
+        
         timeoutSec: int
             The test case timeout in seconds,
         """
@@ -46,6 +46,9 @@ class AbstractTest(ABC):
         self.timeoutSec = timeoutSec
         self.requirements = list() if requirements is None else requirements
 
+        self.case: Optional[TestCase] = None
+        self.suite: Optional[TestSuite] = None
+    
     def start(self, testResults: Dict[str, Result], suite: TestSuite):
         """
         Starts the test run.
@@ -54,7 +57,7 @@ class AbstractTest(ABC):
 
         testResults: Dict[str, Result]
             All test results up to this point.
-
+        
         suite: TestSuite
             The test suite where this test should get added to.
         """
@@ -133,7 +136,7 @@ class AbstractTest(ABC):
     def __raiseTimeout(self, sigNum: int, frame):
         self._onTimeout()
         raise TimeoutError
-
+    
     def _failWith(self, msg: str):
         """
         Marks the current test as failed with the given message.
@@ -184,7 +187,7 @@ class AbstractTest(ABC):
         """
         filePath: str = self._getStdoutFilePath()
         return self.__loadFileContent(filePath)
-
+    
     def _loadFullStderr(self):
         """
         Returns the stderr output of the executable.
@@ -192,7 +195,7 @@ class AbstractTest(ABC):
 
         filePath: str = self._getStderrFilePath()
         return self.__loadFileContent(filePath)
-
+    
     def _initOutputDirectory(self):
         """
         Prepares the output directory for the stderr and stdout files.
@@ -201,7 +204,7 @@ class AbstractTest(ABC):
         if path.exists(outDir) and path.isdir(outDir):
             return
         makedirs(outDir)
-
+    
     def _getOutputPath(self):
         """
         Returns the output path for temporary stuff like the stderr and stdout files.
@@ -213,9 +216,9 @@ class AbstractTest(ABC):
         """
         Returns the path of the stdout cache file.
         """
-
+        
         return path.join(self._getOutputPath(), "stdout.txt")
-
+    
     def _getStderrFilePath(self):
         """
         Returns the path of the stderr cache file.
@@ -229,7 +232,7 @@ class AbstractTest(ABC):
         """
 
         return PWrap(cmd, self._getStdoutFilePath(), self._getStderrFilePath(), cwd=cwd)
-
+    
     def _startPWrap(self, pWrap: PWrap):
         """
         Starts the PWrap execution.
@@ -254,7 +257,7 @@ class AbstractTest(ABC):
         Implement your test run here.
         """
         pass
-
+    
     @abstractmethod
     def _onTimeout(self):
         """
@@ -262,7 +265,7 @@ class AbstractTest(ABC):
         Should cancel all outstanding actions and free all resources.
         """
         pass
-
+    
     @abstractmethod
     def _onFailed(self):
         """

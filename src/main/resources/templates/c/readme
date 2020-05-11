@@ -1,21 +1,21 @@
 ### Tests
 
 #### General Tasks
-1. [task][0 as Input](TestInput_0)
-2. [task][1 as Input](TestInput_1)
-3. [task][5 as Input](TestInput_5)
-4. [task][7 as Input](TestInput_7)
-5. [task][10 as Input](TestInput_10)
-6. [task][Random Inputs](TestInputRandom_0, TestInputRandom_1, TestInputRandom_2, TestInputRandom_3, TestInputRandom_4)
 
-#### Address Sanitizer
-1. [task][Address Sanitizer 1 as Input](TestInputASan_1)
-2. [task][Address Sanitizer 5 as Input](TestInputASan_5)
+1. [task][Compile](TestCompile)
+2. [task][Rot0 mit "aAbByYzZ123!%&/()Oau" als Eingabe](TestOutput_0)
+3. [task][Rot1 mit "aAbByYzZ123!%&/()Oau" als Eingabe](TestOutput_1)
+4. [task][Rot26 mit "aAbByYzZ123!%&/()Oau" als Eingabe](TestOutput_26)
+7. [task][Random Input](TestOutputRandom_0, TestOutputRandom_1, TestOutputRandom_2, TestOutputRandom_3, TestOutputRandom_4, TestOutputRandom_5, TestOutputRandom_6, TestOutputRandom_7, TestOutputRandom_8, TestOutputRandom_9)
+
+#### Adress Sanitizer
+1. [task][Adress Sanitizer Kompilieren](TestCompileASan)
+2. [task][Adress Sanitizer Rot27 mit "aAbByYzZ123!%&/()Oau" als Eingabe](TestOutputASan)
+
+#### Undefined Behavior Sanitizer
+1. [task][Undefined Behavior Sanitizer Kompilieren](TestCompileUBSan)
+2. [task][Undefined Behavior Sanitizer Rot27 mit "aAbByYzZ123!%&/()Oau" als Eingabe](TestOutputUBSan)
 
 #### Leak Sanitizer
-1. [task][Leak Sanitizer 1 as Input](TestInputLSan_1)
-2. [task][Leak Sanitizer 5 as Input](TestInputLSan_5)
-
-#### Behaviour Sanitizer
-1. [task][Undefined Behaviour Sanitizer 1 as Input](TestInputUBSan_1)
-2. [task][Undefined Behaviour Sanitizer 5 as Input](TestInputUBSan_5)
+1. [task][Leak Sanitizer Kompilieren](TestCompileLeak)
+2. [task][Leak Sanitizer Rot27 mit "aAbByYzZ123!%&/()Oau" als Eingabe](TestOutputLSan)
