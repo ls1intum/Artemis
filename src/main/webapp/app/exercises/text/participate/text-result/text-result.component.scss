@@ -1,7 +1,7 @@
 .text-with-feedback {
     text-decoration-line: underline;
     padding: 2px 4px;
-    border-radius: 4px;
+    border-radius: 8px;
 
     &.positive-feedback {
         text-decoration-style: double;
@@ -37,4 +37,25 @@
     &.negative-feedback {
         color: #ff4136;
     }
+}
+
+.rating-heading {
+    display: inline;
+    vertical-align: center;
+    float: left;
+    margin-right: 5px;
+}
+
+.rating-stars {
+    display: inline;
+    vertical-align: center;
+    float: right;
+}
+
+.innerdiv {
+    position: absolute;
+    bottom: 8px;
+    right: 2px;
+    padding-left: 10px;
+    padding-top: 10px;
 }

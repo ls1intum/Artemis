@@ -350,4 +350,17 @@ public class TextExerciseResource {
             return ResponseEntity.badRequest().build();
         }
     }
+
+    @GetMapping("text-editor/rating/")
+    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<List<Rating>> getRatingForFeedback(@RequestParam(value = "feedbackIds") String feedbackIdString) {
+        List<Rating> ratings = this.textExerciseService.findRatingByIds(feedbackIdString);
+        return ResponseEntity.ok(ratings);
+    }
+
+    @PostMapping("text-editor/{feedbackId}/rating/{newRating}")
+    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<Void> createRatingForTextexercise(@PathVariable Long feedbackId, Integer newRating) {
+        return ResponseEntity.ok().build();
+    }
 }

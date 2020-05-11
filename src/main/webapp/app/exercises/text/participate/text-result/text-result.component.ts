@@ -5,6 +5,9 @@ import { Result } from 'app/entities/result.model';
 import { TextResultBlock } from './text-result-block';
 import { TranslateService } from '@ngx-translate/core';
 import { TextBlock } from 'app/entities/text-block.model';
+import { StarRatingComponent } from 'ng-starrating';
+import { TextEditorService } from 'app/exercises/text/participate/text-editor.service';
+import { Rating } from 'app/entities/rating.model';
 
 @Component({
     selector: 'jhi-text-result',
@@ -16,6 +19,7 @@ export class TextResultComponent {
 
     public textResults: TextResultBlock[];
     private submission: TextSubmission;
+    private feedbackRating: Rating[] = [];
 
     private readonly sha1Regex = /^[a-f0-9]{40}$/i;
 
@@ -27,10 +31,16 @@ export class TextResultComponent {
 
         this.submission = result.submission as TextSubmission;
         this.submissionText = this.submission.text || '';
-        this.convertTextToResultBlocks(result.feedbacks);
+        const feedbackIds = result.feedbacks.map((feedback) => feedback.id);
+        this.textService.getRating(feedbackIds).subscribe((ratings) => {
+            for (const rating of ratings) {
+                this.feedbackRating.push(new Rating(rating.id, rating.feedback.id, rating.rating));
+            }
+            this.convertTextToResultBlocks(result.feedbacks);
+        });
     }
 
-    constructor(private translateService: TranslateService) {}
+    constructor(private translateService: TranslateService, private textService: TextEditorService) {}
 
     private convertTextToResultBlocks(feedbacks: Feedback[] = []): void {
         const [referenceBasedFeedback, blockBasedFeedback]: [Feedback[], Feedback[]] = feedbacks.reduce(
@@ -88,7 +98,12 @@ export class TextResultComponent {
         if (this.submission.blocks) {
             const result = this.submission.blocks.find((block) => block.id === feedback.reference);
             if (result) {
-                return new TextResultBlock(result, feedback);
+                const currentRating = this.feedbackRating.find((element) => element.feedback === feedback.id);
+                let rating = 0;
+                if (currentRating) {
+                    rating = currentRating.rating;
+                }
+                return new TextResultBlock(result, feedback, rating);
             }
         }
     }
@@ -106,5 +121,13 @@ export class TextResultComponent {
         const singular = Math.abs(textResultBlock.feedback!.credits || 0) === 1;
 
         return this.translateService.instant(`artemisApp.textAssessment.detail.credits.${singular ? 'one' : 'many'}`, { credits: textResultBlock.feedback!.credits });
+    }
+
+    onRate($event: { oldValue: number; newValue: number; starRating: StarRatingComponent }, block: TextResultBlock) {
+        // update feedback locally
+        block.setRating($event.newValue);
+
+        // update feedback on the server
+        this.textService.setRating(block.feedback!.id, $event.newValue);
     }
 }

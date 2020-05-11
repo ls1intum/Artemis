@@ -7,6 +7,13 @@
         <div class="feedback-text mt-1" [ngClass]="block.feedbackCssClass" *ngIf="block.feedback.detailText">
             <b><fa-icon [icon]="['far', block.icon + '-circle']"></fa-icon>&nbsp;<span jhiTranslate="artemisApp.assessment.detail.feedback">Feedback</span>:</b>
             {{ block.feedback.detailText }}
+            <div class="innerdiv">
+                <span class="rating-heading"><b>Useful?</b></span>
+                <span class="rating-stars">
+                    <star-rating checkedcolor="gold" uncheckedcolor="grey" [value]="block.rating" size="15" readonly="false" [totalstars]="5" (rate)="onRate($event, block)">
+                    </star-rating>
+                </span>
+            </div>
         </div>
     </ng-container>
 </ng-container>
