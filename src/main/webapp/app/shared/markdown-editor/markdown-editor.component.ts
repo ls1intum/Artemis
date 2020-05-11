@@ -368,30 +368,12 @@ export class MarkdownEditorComponent implements AfterViewInit {
 
     /**
      * @function onFileUpload
-     * @desc handle file upload and embed it in the editor
+     * @desc handle file upload for input
      * @param {any} $event
      */
     onFileUpload($event: any): void {
-        console.warn('EVENT', $event);
         if ($event.target.files.length >= 1) {
-            const aceEditor = this.aceEditorContainer.getEditor();
-            const files = $event.target.files[0];
-            files.forEach((file: File) => {
-                console.warn('FILE', file);
-                const loadingText = `![uploading ${file.name}]()`;
-                aceEditor.insert(loadingText);
-                this.fileUploaderService.uploadFile(file).then(
-                    (res) => {
-                        aceEditor.undo();
-                        const textToAdd = `<jhi-secured-image [src]="${res.path}" [alt]="${file.name}" > </jhi-secured-image>`;
-                        aceEditor.insert(textToAdd);
-                    },
-                    (err) => {
-                        aceEditor.undo();
-                        console.warn('error', err);
-                    },
-                );
-            });
+            this.embedFiles(Array.from($event.target.files));
         }
     }
 
@@ -401,6 +383,47 @@ export class MarkdownEditorComponent implements AfterViewInit {
      * @param {DropEvent} $event
      */
     onFileDrop($event: DragEvent): void {
-        console.warn('Drop', $event);
+        $event.preventDefault();
+        if ($event.dataTransfer?.items) {
+            // Use DataTransferItemList interface to access the file(s)
+            const files = [];
+            for (let i = 0; i < $event.dataTransfer.items.length; i++) {
+                // If dropped items aren't files, reject them
+                if ($event.dataTransfer.items[i].kind === 'file') {
+                    const file = $event.dataTransfer.items[i].getAsFile();
+                    if (file) {
+                        files.push(file);
+                    }
+                }
+            }
+            this.embedFiles(files);
+        } else if ($event.dataTransfer?.files) {
+            // Use DataTransfer interface to access the file(s)
+            this.embedFiles(Array.from($event.dataTransfer.files));
+        }
+    }
+
+    /**
+     * @function embedFiles
+     * @desc generate and embed markdown code for files
+     * @param {FileList} files
+     */
+    embedFiles(files: File[]): void {
+        const aceEditor = this.aceEditorContainer.getEditor();
+        files.forEach((file: File) => {
+            const loadingText = `![uploading ${file.name}]()\n`;
+            aceEditor.insert(loadingText);
+            this.fileUploaderService.uploadFile(file).then(
+                (res) => {
+                    aceEditor.undo();
+                    const textToAdd = `<jhi-secured-image [src]="${res.path}" [alt]="${file.name}" > </jhi-secured-image> \n`;
+                    aceEditor.insert(textToAdd);
+                },
+                (err) => {
+                    aceEditor.undo();
+                    console.warn('error', err);
+                },
+            );
+        });
     }
 }
