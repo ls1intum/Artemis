@@ -104,7 +104,6 @@ export class ArtemisMarkdownService {
             excludeTrailingPunctuationFromURLs: true,
             strikethrough: true,
             tables: true,
-            simpleLineBreaks: true,
             openLinksInNewWindow: true,
             backslashEscapesHTMLTags: true,
             extensions: [...extensions, showdownKatex()],
@@ -138,7 +137,6 @@ export class ArtemisMarkdownService {
             excludeTrailingPunctuationFromURLs: true,
             strikethrough: true,
             tables: true,
-            simpleLineBreaks: true,
             openLinksInNewWindow: true,
             backslashEscapesHTMLTags: true,
         });
