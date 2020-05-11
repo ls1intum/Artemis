@@ -87,13 +87,11 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         quizExerciseService.save(quizExercise);
 
         int numberOfParticipants = 10;
+        QuizSubmission quizSubmission = new QuizSubmission();
 
         for (int i = 1; i <= numberOfParticipants; i++) {
-            QuizSubmission quizSubmission = new QuizSubmission();
-            for (var question : quizExercise.getQuizQuestions()) {
-                for (int j = 1; j <= 10; j++) {
-                    quizSubmission.addSubmittedAnswers(database.generateSubmittedAnswerFor(question, j % 2 == 0));
-                }
+            for (int j = 1; j <= 10; j++) {
+                database.generateSubmission(quizExercise, i, false, null);
             }
             final var username = "student" + i;
             final Principal principal = () -> username;
@@ -103,13 +101,7 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         }
 
         for (int i = 1; i <= numberOfParticipants; i++) {
-            // generate some mixed submissions for each student
-            QuizSubmission quizSubmission = new QuizSubmission();
-            quizSubmission.addSubmittedAnswers(database.generateSubmittedAnswerFor(quizExercise.getQuizQuestions().get(0), i % 2 == 0));
-            quizSubmission.addSubmittedAnswers(database.generateSubmittedAnswerFor(quizExercise.getQuizQuestions().get(1), i % 3 == 0));
-            quizSubmission.addSubmittedAnswers(database.generateSubmittedAnswerFor(quizExercise.getQuizQuestions().get(2), i % 4 == 0));
-
-            quizSubmission.setSubmitted(true);
+            quizSubmission = database.generateSubmission(quizExercise, i, true, null);
             final var username = "student" + i;
             final Principal principal = () -> username;
             // submit
@@ -188,13 +180,7 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
 
         // submit 10 times for 10 different students
         for (int i = 1; i <= numberOfParticipants; i++) {
-            // generate some mixed submissions for each student
-            QuizSubmission quizSubmission = new QuizSubmission();
-            quizSubmission.addSubmittedAnswers(database.generateSubmittedAnswerFor(quizExercise.getQuizQuestions().get(0), i % 2 == 0));
-            quizSubmission.addSubmittedAnswers(database.generateSubmittedAnswerFor(quizExercise.getQuizQuestions().get(1), i % 3 == 0));
-            quizSubmission.addSubmittedAnswers(database.generateSubmittedAnswerFor(quizExercise.getQuizQuestions().get(2), i % 4 == 0));
-
-            quizSubmission.setSubmitted(true);
+            QuizSubmission quizSubmission = database.generateSubmission(quizExercise, i, true, null);
             database.changeUser("student" + i);
             Result receivedResult = request.postWithResponseBody("/api/exercises/" + quizExercise.getId() + "/submissions/practice", quizSubmission, Result.class, HttpStatus.OK);
             assertThat(((QuizSubmission) receivedResult.getSubmission()).getSubmittedAnswers().size()).isEqualTo(quizSubmission.getSubmittedAnswers().size());

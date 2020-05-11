@@ -17,7 +17,6 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.DifficultyLevel;
 import de.tum.in.www1.artemis.domain.quiz.*;
-import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.QuizExerciseService;
 import de.tum.in.www1.artemis.service.scheduled.QuizScheduleService;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
@@ -303,10 +302,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
 
         // get not started exercise for students
         QuizExercise quizExerciseForStudent_notStarted = request.get("/api/quiz-exercises/" + quizExercise.getId() + "/for-student", HttpStatus.OK, QuizExercise.class);
-        assertThat(quizExerciseForStudent_notStarted.getQuizPointStatistic()).isNull();
-        assertThat(quizExerciseForStudent_notStarted.getQuizQuestions()).hasSize(0);
-        assertThat(quizExerciseForStudent_notStarted.getGradingInstructions()).isNull();
-        assertThat(quizExerciseForStudent_notStarted.getGradingCriteria()).isEmpty();
+        checkQuizExerciseForStudent(quizExerciseForStudent_notStarted);
 
         // get started exercise for students
         quizExercise.setReleaseDate(ZonedDateTime.now().minusMinutes(5));
@@ -316,13 +312,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         assertThat(quizExercise.isStarted());
 
         QuizExercise quizExerciseForStudent_Started = request.get("/api/quiz-exercises/" + quizExercise.getId() + "/for-student", HttpStatus.OK, QuizExercise.class);
-        assertThat(quizExerciseForStudent_Started.getQuizPointStatistic()).isNull();
-        assertThat(quizExerciseForStudent_Started.getGradingInstructions()).isNull();
-        assertThat(quizExerciseForStudent_Started.getGradingCriteria()).isEmpty();
-        for (QuizQuestion question : quizExerciseForStudent_Started.getQuizQuestions()) {
-            assertThat(question.getExplanation()).isNull();
-            assertThat(question.getQuizQuestionStatistic()).isNull();
-        }
+        checkQuizExerciseForStudent(quizExerciseForStudent_Started);
 
         // get finished exercise for students
         quizExercise.setReleaseDate(ZonedDateTime.now().minusMinutes(5));
@@ -333,13 +323,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         assertThat(quizExercise.isStarted());
 
         QuizExercise quizExerciseForStudent_Finished = request.get("/api/quiz-exercises/" + quizExercise.getId() + "/for-student", HttpStatus.OK, QuizExercise.class);
-        assertThat(quizExerciseForStudent_Finished.getQuizPointStatistic()).isNull();
-        assertThat(quizExerciseForStudent_Finished.getGradingInstructions()).isNull();
-        assertThat(quizExerciseForStudent_Finished.getGradingCriteria()).isEmpty();
-        for (QuizQuestion question : quizExerciseForStudent_Finished.getQuizQuestions()) {
-            assertThat(question.getExplanation()).isNull();
-            assertThat(question.getQuizQuestionStatistic()).isNull();
-        }
+        checkQuizExerciseForStudent(quizExerciseForStudent_Finished);
     }
 
     @Test
@@ -353,19 +337,11 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
 
         var now = ZonedDateTime.now();
 
-        for (int i = 1; i <= 10; i++) {
-            // generate some mixed submissions for each student
-            QuizSubmission quizSubmission = new QuizSubmission();
-            QuizQuestion quizQuestion1 = quizExercise.getQuizQuestions().get(0);
-            QuizQuestion quizQuestion2 = quizExercise.getQuizQuestions().get(1);
-            QuizQuestion quizQuestion3 = quizExercise.getQuizQuestions().get(2);
+        //generate submissions for each student
+        int numberOfParticipants = 10;
 
-            quizSubmission.addSubmittedAnswers(database.generateSubmittedAnswerFor(quizQuestion1, i % 2 == 0));
-            quizSubmission.addSubmittedAnswers(database.generateSubmittedAnswerFor(quizQuestion2, i % 3 == 0));
-            quizSubmission.addSubmittedAnswers(database.generateSubmittedAnswerFor(quizQuestion3, i % 4 == 0));
-
-            quizSubmission.submitted(true);
-            quizSubmission.submissionDate(now.minusHours(3));
+        for (int i = 1; i <= numberOfParticipants; i++) {
+            QuizSubmission quizSubmission = database.generateSubmission(quizExercise, i, true, now.minusHours(3));
             database.addSubmission(quizExercise, quizSubmission, "student" + i);
             database.addResultToSubmission(quizSubmission, AssessmentType.AUTOMATIC, null, quizExercise.getScoreForSubmission(quizSubmission), true);
         }
@@ -375,7 +351,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
                 QuizExercise.class);
 
         assertThat(quizExerciseWithRecalculatedStatistics.getQuizPointStatistic().getPointCounters().size()).isEqualTo(10);
-        assertThat(quizExerciseWithRecalculatedStatistics.getQuizPointStatistic().getParticipantsRated()).isEqualTo(10);
+        assertThat(quizExerciseWithRecalculatedStatistics.getQuizPointStatistic().getParticipantsRated()).isEqualTo(numberOfParticipants);
 
         for (PointCounter pointCounter : quizExerciseWithRecalculatedStatistics.getQuizPointStatistic().getPointCounters()) {
             if (pointCounter.getPoints() == 0.0) {
@@ -393,27 +369,17 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         }
 
         // add more submissions and recalculate
-        for (int i = 11; i <= 14; i++) {
-            // generate some mixed submissions for each student
-            QuizSubmission quizSubmission = new QuizSubmission();
-            QuizQuestion quizQuestion1 = quizExercise.getQuizQuestions().get(0);
-            QuizQuestion quizQuestion2 = quizExercise.getQuizQuestions().get(1);
-            QuizQuestion quizQuestion3 = quizExercise.getQuizQuestions().get(2);
-
-            quizSubmission.addSubmittedAnswers(database.generateSubmittedAnswerFor(quizQuestion1, i % 2 == 0));
-            quizSubmission.addSubmittedAnswers(database.generateSubmittedAnswerFor(quizQuestion2, i % 3 == 0));
-            quizSubmission.addSubmittedAnswers(database.generateSubmittedAnswerFor(quizQuestion3, i % 4 == 0));
-
-            quizSubmission.submitted(true);
-            quizSubmission.submissionDate(now.minusHours(3));
+        for (int i = numberOfParticipants; i <= 14; i++) {
+            QuizSubmission quizSubmission = database.generateSubmission(quizExercise, i, true, now.minusHours(3));
             database.addSubmission(quizExercise, quizSubmission, "student" + i);
             database.addResultToSubmission(quizSubmission, AssessmentType.AUTOMATIC, null, quizExercise.getScoreForSubmission(quizSubmission), true);
         }
+
         // calculate statistics
         quizExerciseWithRecalculatedStatistics = request.get("/api/quiz-exercises/" + quizExercise.getId() + "/recalculate-statistics", HttpStatus.OK, QuizExercise.class);
 
         assertThat(quizExerciseWithRecalculatedStatistics.getQuizPointStatistic().getPointCounters().size()).isEqualTo(10);
-        assertThat(quizExerciseWithRecalculatedStatistics.getQuizPointStatistic().getParticipantsRated()).isEqualTo(14);
+        assertThat(quizExerciseWithRecalculatedStatistics.getQuizPointStatistic().getParticipantsRated()).isEqualTo(numberOfParticipants + 4);
 
         for (PointCounter pointCounter : quizExerciseWithRecalculatedStatistics.getQuizPointStatistic().getPointCounters()) {
             if (pointCounter.getPoints() == 0.0) {
@@ -441,55 +407,32 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void testReevaluateStatistics() throws Exception {
         quizExercise = createQuizOnServer(ZonedDateTime.now().plusHours(5), null);
+        var now = ZonedDateTime.now();
 
         // we expect a bad request because the quiz has not ended yet
         request.putWithResponseBody("/api/quiz-exercises-re-evaluate/", quizExercise, QuizExercise.class, HttpStatus.BAD_REQUEST);
-        quizExercise.setReleaseDate(ZonedDateTime.now().minusHours(5));
-        quizExercise.setDueDate(ZonedDateTime.now().minusHours(2));
+        quizExercise.setReleaseDate(now.minusHours(5));
+        quizExercise.setDueDate(now.minusHours(2));
         quizExercise = request.putWithResponseBody("/api/quiz-exercises", quizExercise, QuizExercise.class, HttpStatus.OK);
 
-        var now = ZonedDateTime.now();
+        //generate submissions for each student
+        int numberOfParticipants = 10;
 
-        for (int i = 1; i <= 10; i++) {
-            // generate some mixed submissions for each student
-            QuizSubmission quizSubmission = new QuizSubmission();
-            MultipleChoiceQuestion quizQuestion1 = (MultipleChoiceQuestion) quizExercise.getQuizQuestions().get(0);
-            QuizQuestion quizQuestion2 = quizExercise.getQuizQuestions().get(1);
-            QuizQuestion quizQuestion3 = quizExercise.getQuizQuestions().get(2);
-            if (i == 1) {
-                // answer with everything selected
-                var submittedAnswer = new MultipleChoiceSubmittedAnswer();
-                submittedAnswer.setQuizQuestion(quizQuestion1);
-                for (var answerOption : (quizQuestion1).getAnswerOptions()) {
-                    submittedAnswer.addSelectedOptions(answerOption);
-                }
-                quizSubmission.addSubmittedAnswers(submittedAnswer);
-            }
-            else if (i == 5) {
-                // answer with nothing selected
-                var submittedAnswer = new MultipleChoiceSubmittedAnswer();
-                submittedAnswer.setQuizQuestion(quizQuestion1);
-                quizSubmission.addSubmittedAnswers(submittedAnswer);
-            }
-            else {
-                quizSubmission.addSubmittedAnswers(database.generateSubmittedAnswerFor(quizQuestion1, i % 2 == 0));
-            }
-
-            quizSubmission.addSubmittedAnswers(database.generateSubmittedAnswerFor(quizQuestion2, i % 3 == 0));
-            quizSubmission.addSubmittedAnswers(database.generateSubmittedAnswerFor(quizQuestion3, i % 4 == 0));
-
-            quizSubmission.submitted(true);
-            quizSubmission.submissionDate(now.minusHours(3));
+        for (int i = 1; i <= numberOfParticipants; i++) {
+            QuizSubmission quizSubmission = database.generateSubmission(quizExercise, i, true, now.minusHours(3));
             database.addSubmission(quizExercise, quizSubmission, "student" + i);
             database.addResultToSubmission(quizSubmission, AssessmentType.AUTOMATIC, null, quizExercise.getScoreForSubmission(quizSubmission), true);
         }
+
+        database.generateSpecialSubmission(quizExercise, 1, true, now.minusHours(3), true);
+        database.generateSpecialSubmission(quizExercise, 5, true, now.minusHours(3), false);
 
         // calculate statistics
         quizExercise = request.get("/api/quiz-exercises/" + quizExercise.getId() + "/recalculate-statistics", HttpStatus.OK, QuizExercise.class);
 
         // reevaluate without changing anything and check if statistics are still correct
         QuizExercise quizExerciseWithReevaluatedStatistics = request.putWithResponseBody("/api/quiz-exercises-re-evaluate/", quizExercise, QuizExercise.class, HttpStatus.OK);
-        compareStatistics(quizExercise, quizExerciseWithReevaluatedStatistics);
+        checkStatistics(quizExercise, quizExerciseWithReevaluatedStatistics);
 
         // remove wrong answer option and reevaluate
         MultipleChoiceQuestion mc = (MultipleChoiceQuestion) quizExercise.getQuizQuestions().get(0);
@@ -589,16 +532,22 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         assertThat(updatedQuizExercise.isIsOpenForPractice()).isTrue();
     }
 
-    private void checkQuizExercises(QuizExercise quizExercise, QuizExercise quizExerciseServer) {
-        assertThat(quizExercise.getQuizQuestions()).as("Same amount of questions saved").hasSize(quizExerciseServer.getQuizQuestions().size());
-        assertThat(quizExercise.getTitle()).as("Title saved correctly").isEqualTo(quizExerciseServer.getTitle());
-        assertThat(quizExercise.getAllowedNumberOfAttempts()).as("Number of attempts saved correctly").isEqualTo(quizExerciseServer.getAllowedNumberOfAttempts());
-        assertThat(quizExercise.getMaxScore()).as("Max score saved correctly").isEqualTo(quizExerciseServer.getMaxScore());
-        assertThat(quizExercise.getDuration()).as("Duration saved correctly").isEqualTo(quizExerciseServer.getDuration());
-        assertThat(quizExercise.getType()).as("Type saved correctly").isEqualTo(quizExerciseServer.getType());
+    /**
+     * Check that the general information of two exercises is equal.
+     */
+    private void checkQuizExercises(QuizExercise quizExercise, QuizExercise quizExercise2) {
+        assertThat(quizExercise.getQuizQuestions()).as("Same amount of questions saved").hasSize(quizExercise2.getQuizQuestions().size());
+        assertThat(quizExercise.getTitle()).as("Title saved correctly").isEqualTo(quizExercise2.getTitle());
+        assertThat(quizExercise.getAllowedNumberOfAttempts()).as("Number of attempts saved correctly").isEqualTo(quizExercise2.getAllowedNumberOfAttempts());
+        assertThat(quizExercise.getMaxScore()).as("Max score saved correctly").isEqualTo(quizExercise2.getMaxScore());
+        assertThat(quizExercise.getDuration()).as("Duration saved correctly").isEqualTo(quizExercise2.getDuration());
+        assertThat(quizExercise.getType()).as("Type saved correctly").isEqualTo(quizExercise2.getType());
     }
 
-    private void compareStatistics(QuizExercise quizExercise, QuizExercise quizExercise2) {
+    /**
+     * Check that the general statistics of two exercises are equal.
+     */
+    private void checkStatistics(QuizExercise quizExercise, QuizExercise quizExercise2) {
         assertThat(quizExercise.getQuizPointStatistic().getPointCounters().size()).isEqualTo(quizExercise2.getQuizPointStatistic().getPointCounters().size());
         assertThat(quizExercise.getQuizPointStatistic().getParticipantsRated()).isEqualTo(quizExercise2.getQuizPointStatistic().getParticipantsRated());
         assertThat(quizExercise.getQuizPointStatistic().getParticipantsUnrated()).isEqualTo(quizExercise2.getQuizPointStatistic().getParticipantsUnrated());
@@ -613,4 +562,23 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         }
     }
 
+    /**
+     * Check if a QuizExercise contains the correct information for students.
+     * @param quizExercise QuizExercise to check
+     */
+    private void checkQuizExerciseForStudent(QuizExercise quizExercise) {
+        assertThat(quizExercise.getQuizPointStatistic()).isNull();
+        assertThat(quizExercise.getGradingInstructions()).isNull();
+        assertThat(quizExercise.getGradingCriteria()).isEmpty();
+        if(quizExercise.isStarted()) {
+            for (QuizQuestion question : quizExercise.getQuizQuestions()) {
+                assertThat(question.getExplanation()).isNull();
+                assertThat(question.getQuizQuestionStatistic()).isNull();
+            }
+        }
+        else {
+            assertThat(quizExercise.getQuizQuestions()).hasSize(0);
+        }
+
+    }
 }

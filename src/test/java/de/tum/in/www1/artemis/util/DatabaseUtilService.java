@@ -1349,4 +1349,61 @@ public class DatabaseUtilService {
         mc.setExplanation("Explanation");
         return mc;
     }
+
+
+    /**
+     * Generate submissions for a set of students for an exercise. Results are mixed.
+     * Student IDs start at firstStudent and are increased by 1 upto lastStudent.
+     * @param quizExercise QuizExercise th submissions are for
+     * @param studentID ID of the student
+     * @param submitted Boolean if it is submitted or not
+     * @param submissionDate Submission date
+     */
+    public QuizSubmission generateSubmission(QuizExercise quizExercise, int studentID, boolean submitted, ZonedDateTime submissionDate) {
+        QuizSubmission quizSubmission = new QuizSubmission();
+        QuizQuestion quizQuestion1 = quizExercise.getQuizQuestions().get(0);
+        QuizQuestion quizQuestion2 = quizExercise.getQuizQuestions().get(1);
+        QuizQuestion quizQuestion3 = quizExercise.getQuizQuestions().get(2);
+        quizSubmission.addSubmittedAnswers(generateSubmittedAnswerFor(quizQuestion1, studentID % 2 == 0));
+        quizSubmission.addSubmittedAnswers(generateSubmittedAnswerFor(quizQuestion2, studentID % 3 == 0));
+        quizSubmission.addSubmittedAnswers(generateSubmittedAnswerFor(quizQuestion3, studentID % 4 == 0));
+        quizSubmission.submitted(submitted);
+        quizSubmission.submissionDate(submissionDate);
+
+        return quizSubmission;
+    }
+
+    /**
+     * Generate a submission with all or none options of a MultipleChoiceQuestion selected, if there is one in the exercise
+     * @param quizExercise Exercise the submission is for
+     * @param student Student id
+     * @param submitted Boolean whether it is submitted or not
+     * @param submissionDate Submission date
+     * @param selectEverything Boolean whether every answer option should be selected or none
+     */
+    public void generateSpecialSubmission(QuizExercise quizExercise, int student, boolean submitted, ZonedDateTime submissionDate, boolean selectEverything) {
+        QuizSubmission quizSubmission = new QuizSubmission();
+
+        for (QuizQuestion question : quizExercise.getQuizQuestions()) {
+            if (question instanceof MultipleChoiceQuestion) {
+                var submittedAnswer = new MultipleChoiceSubmittedAnswer();
+                submittedAnswer.setQuizQuestion(question);
+                if(selectEverything) {
+                    for (var answerOption : ((MultipleChoiceQuestion)  question).getAnswerOptions()) {
+                        submittedAnswer.addSelectedOptions(answerOption);
+                    }
+                }
+                quizSubmission.addSubmittedAnswers(submittedAnswer);
+
+            } else {
+                quizSubmission.addSubmittedAnswers(generateSubmittedAnswerFor(question, false));
+            }
+            quizSubmission.addSubmittedAnswers(generateSubmittedAnswerFor(question, false));
+            quizSubmission.addSubmittedAnswers(generateSubmittedAnswerFor(question, false));
+        }
+        quizSubmission.submitted(submitted);
+        quizSubmission.submissionDate(submissionDate);
+        addSubmission(quizExercise, quizSubmission, "student" + student);
+        addResultToSubmission(quizSubmission, AssessmentType.AUTOMATIC, null, quizExercise.getScoreForSubmission(quizSubmission), true);
+    }
 }
