@@ -18,6 +18,9 @@ export class SlideToggleComponent {
 
     constructor() {}
 
+    /**
+     * Emit checked status via checkedEmitter
+     */
     getCheckedFlag() {
         this.checkedEmitter.emit(this.checked);
     }

@@ -31,18 +31,31 @@ export class ResultService implements IResultService {
 
     constructor(private http: HttpClient, private exerciseService: ExerciseService) {}
 
+    /**
+     * GET et the "id" result.
+     * @param resultId - Id of the result
+     */
     find(resultId: number): Observable<EntityResponseType> {
         return this.http
             .get<Result>(`${this.resultResourceUrl}/${resultId}`, { observe: 'response' })
             .map((res: EntityResponseType) => this.convertDateFromServer(res));
     }
 
+    /**
+     * Get the result for a submission id
+     * @param submissionId - Id of the submission
+     */
     findBySubmissionId(submissionId: number): Observable<EntityResponseType> {
         return this.http
             .get<Result>(`${this.resultResourceUrl}/submission/${submissionId}`, { observe: 'response' })
             .map((res: EntityResponseType) => this.convertDateFromServer(res));
     }
 
+    /**
+     * Get the successful results for an exercise, ordered ascending by build completion date.
+     * @param exerciseId - The id of the exercise for which to retrieve the results
+     * @param req - Request Options
+     */
     getResultsForExercise(exerciseId: number, req?: any): Observable<EntityArrayResponseType> {
         const options = createRequestOption(req);
         return this.http
@@ -53,14 +66,26 @@ export class ResultService implements IResultService {
             .map((res: EntityArrayResponseType) => this.convertArrayResponse(res));
     }
 
+    /**
+     * Get the build result details from CI service for the "id" result.
+     * @param resultId - Id of the result to retrieve
+     */
     getFeedbackDetailsForResult(resultId: number): Observable<HttpResponse<Feedback[]>> {
         return this.http.get<Feedback[]>(`${this.resultResourceUrl}/${resultId}/details`, { observe: 'response' });
     }
 
+    /**
+     * Get the latest result with feedbacks for the given participation.
+     * @param particpationId - Id of the participation for which to retrieve the latest result.
+     */
     getLatestResultWithFeedbacks(particpationId: number): Observable<HttpResponse<Result>> {
         return this.http.get<Result>(`${this.participationResourceUrl}/${particpationId}/latest-result`, { observe: 'response' });
     }
 
+    /**
+     * Delete the "id" result.
+     * @param resultId - Id of the result to delete
+     */
     delete(resultId: number): Observable<HttpResponse<void>> {
         return this.http.delete<void>(`${this.resultResourceUrl}/${resultId}`, { observe: 'response' });
     }
@@ -90,6 +115,10 @@ export class ResultService implements IResultService {
         return copy;
     }
 
+    /**
+     * Convert all dates inside of the Response Result Array
+     * @param res - Reply Body
+     */
     protected convertArrayResponse(res: EntityArrayResponseType): EntityArrayResponseType {
         if (res.body) {
             res.body.forEach((result: Result) => {
@@ -100,6 +129,10 @@ export class ResultService implements IResultService {
         return res;
     }
 
+    /**
+     * Create all Server-Times to Client Times
+     * @param res - Reply Body
+     */
     public convertDateFromServer(res: EntityResponseType): EntityResponseType {
         if (res.body) {
             res.body.completionDate = res.body.completionDate != null ? moment(res.body.completionDate) : null;
@@ -108,6 +141,10 @@ export class ResultService implements IResultService {
         return res;
     }
 
+    /**
+     * Convert participation date from server to client time.
+     * @param participation - Participation that contains the date
+     */
     convertParticipationDateFromServer(participation: StudentParticipation) {
         if (participation) {
             participation.initializationDate = participation.initializationDate != null ? moment(participation.initializationDate) : null;

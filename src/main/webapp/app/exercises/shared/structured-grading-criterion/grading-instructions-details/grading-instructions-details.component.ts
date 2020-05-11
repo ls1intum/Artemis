@@ -45,11 +45,17 @@ export class GradingInstructionsDetailsComponent implements OnInit {
 
     constructor() {}
 
+    /**
+     * Initialize criteria and questionEditorText
+     */
     ngOnInit() {
         this.criteria = this.exercise.gradingCriteria;
         this.questionEditorText = this.generateMarkdown();
     }
 
+    /**
+     * Generate markdown representation of criteria when criteria exists, else generate dummy markdown
+     */
     generateMarkdown(): string {
         let markdownText = '';
         if (this.criteria === undefined || this.criteria.length === 0) {
@@ -76,8 +82,8 @@ export class GradingInstructionsDetailsComponent implements OnInit {
     }
 
     /**
-     * @function generateMarkdown
-     * @desc Generate the markdown text for this grading instruction
+     * Generate the markdown text for this grading instruction
+     * @param criterion - Grading criterion that is used
      */
     generateInstructionsMarkdown(criterion: GradingCriterion): string {
         let markdownText = '';
@@ -111,6 +117,10 @@ export class GradingInstructionsDetailsComponent implements OnInit {
         return markdownText;
     }
 
+    /**
+     * Generate text for credits.
+     * @param instruction - Instruction that includes the credits
+     */
     generateCreditsText(instruction: GradingInstruction): string {
         if (instruction.credits === undefined) {
             instruction.credits = parseFloat(CreditsCommand.text);
@@ -119,6 +129,10 @@ export class GradingInstructionsDetailsComponent implements OnInit {
         return CreditsCommand.identifier + ' ' + instruction.credits;
     }
 
+    /**
+     * Generate text for grading scale
+     * @param instruction - Instruction that includes the grading scale
+     */
     generateGradingScaleText(instruction: GradingInstruction): string {
         if (instruction.gradingScale === undefined) {
             instruction.gradingScale = GradingScaleCommand.text;
@@ -127,6 +141,10 @@ export class GradingInstructionsDetailsComponent implements OnInit {
         return GradingScaleCommand.identifier + ' ' + instruction.gradingScale;
     }
 
+    /**
+     * Generate text for instruction description
+     * @param instruction - Instruction that includes the instruction description
+     */
     generateInstructionDescriptionText(instruction: GradingInstruction): string {
         if (instruction.instructionDescription === undefined) {
             instruction.instructionDescription = InstructionDescriptionCommand.text;
@@ -135,6 +153,10 @@ export class GradingInstructionsDetailsComponent implements OnInit {
         return InstructionDescriptionCommand.identifier + ' ' + instruction.instructionDescription;
     }
 
+    /**
+     * Generate text for instruction feedback
+     * @param instruction - Instruction that includes the feedback
+     */
     generateInstructionFeedback(instruction: GradingInstruction): string {
         if (instruction.feedback === undefined) {
             instruction.feedback = FeedbackCommand.text;
@@ -143,6 +165,10 @@ export class GradingInstructionsDetailsComponent implements OnInit {
         return FeedbackCommand.identifier + ' ' + instruction.feedback;
     }
 
+    /**
+     * Generate text for usage count
+     * @param instruction - Instruction that includes usage count
+     */
     generateUsageCount(instruction: GradingInstruction): string {
         if (instruction.usageCount === undefined) {
             instruction.usageCount = parseInt(UsageCountCommand.text, 10);
@@ -151,20 +177,27 @@ export class GradingInstructionsDetailsComponent implements OnInit {
         return UsageCountCommand.identifier + ' ' + instruction.usageCount;
     }
 
+    /**
+     * Parses markdown to generate a preview if the standard preview is used and/or searches for domain command identifiers.
+     * Will emit events for both the generated preview and domain commands.
+     */
     prepareForSave(): void {
         this.markdownEditor.parse();
     }
 
+    /**
+     * Check whether criterion command exists
+     * @param domainCommands - List that stores all commands
+     */
     hasCriterionCommand(domainCommands: [string, DomainCommand][]): boolean {
         return domainCommands.some(([, command]) => command instanceof GradingCriterionCommand);
     }
 
     /**
-     * @function createSubInstructionCommands
-     * @desc 1. divides the input: domainCommands in two subarrays:
-     *          instructionCommands, which consists of all stand-alone instructions
-     *          criteriaCommands, which consists of instructions that belong to a criterion
-     *       2. for each subarrray a method is called to create the criterion and instruction objects
+     * 1. divides the input: domainCommands in two subarrays:
+     *    instructionCommands, which consists of all stand-alone instructions
+     *    criteriaCommands, which consists of instructions that belong to a criterion
+     * 2. for each subarrray a method is called to create the criterion and instruction objects
      * @param domainCommands containing tuples of [text, domainCommandIdentifiers]
      */
     createSubInstructionCommands(domainCommands: [string, DomainCommand][]): void {
@@ -193,8 +226,7 @@ export class GradingInstructionsDetailsComponent implements OnInit {
     }
 
     /**
-     * @function setParentForInstructionsWithNoCriterion
-     * @desc 1. creates a dummy criterion object for each stand-alone instruction
+     * Creates a dummy criterion object for each stand-alone instruction
      * @param domainCommands containing tuples of [text, domainCommandIdentifiers]
      */
     setParentForInstructionsWithNoCriterion(domainCommands: [string, DomainCommand][]): void {
@@ -213,9 +245,8 @@ export class GradingInstructionsDetailsComponent implements OnInit {
     }
 
     /**
-     * @function groupInstructionsToCriteria
-     * @desc 1. creates a criterion for each GradingCriterionCommandIdentifier
-     *          and creates the instruction objects of this criterion then assigns them to their parent criterion
+     * Creates a criterion for each GradingCriterionCommandIdentifier and creates the instruction objects of this criterion
+     * then assigns them to their parent criterion
      * @param domainCommands containing tuples of [text, domainCommandIdentifiers]
      */
     groupInstructionsToCriteria(domainCommands: [string, DomainCommand][]): void {
@@ -249,10 +280,9 @@ export class GradingInstructionsDetailsComponent implements OnInit {
     }
 
     /**
-     * @function setInstructionParameters
-     * @desc 1. Gets a tuple of text and domainCommandIdentifiers not including GradingCriterionCommandIdentifiers and assigns text values according to the domainCommandIdentifiers
-     *       2. The tupple order is the same as the order of the commands in the markdown text inserted by the user
-     *       instruction objects must be created before the method gets triggered
+     * 1. Gets a tuple of text and domainCommandIdentifiers not including GradingCriterionCommandIdentifiers and assigns text values according to the domainCommandIdentifiers
+     * 2. The tupple order is the same as the order of the commands in the markdown text inserted by the user
+     *    instruction objects must be created before the method gets triggered
      * @param domainCommands containing tuples of [text, domainCommandIdentifiers]
      */
     setInstructionParameters(domainCommands: [string, DomainCommand][]): void {
@@ -274,9 +304,8 @@ export class GradingInstructionsDetailsComponent implements OnInit {
     }
 
     /**
-     * @function domainCommandsFound
-     * @desc 1. Gets a tuple of text and domainCommandIdentifiers and assigns text values according to the domainCommandIdentifiers
-     *       2. The tupple order is the same as the order of the commands in the markdown text inserted by the user
+     * 1. Gets a tuple of text and domainCommandIdentifiers and assigns text values according to the domainCommandIdentifiers
+     * 2. The tupple order is the same as the order of the commands in the markdown text inserted by the user
      * @param domainCommands containing tuples of [text, domainCommandIdentifiers]
      */
     domainCommandsFound(domainCommands: [string, DomainCommand][]): void {

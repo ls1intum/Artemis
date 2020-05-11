@@ -33,6 +33,9 @@ import { Exercise } from 'app/entities/exercise.model';
 export class PresentationScoreComponent {
     @Input() exercise: Exercise;
 
+    /**
+     * Check whether course exists and if it has a presentation score unequal to 0
+     */
     showPresentationScoreCheckbox(): boolean {
         return !!(this.exercise.course && this.exercise.course.presentationScore !== 0);
     }
