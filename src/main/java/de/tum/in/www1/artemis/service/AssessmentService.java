@@ -157,7 +157,7 @@ public class AssessmentService {
         final long generalFeedbackCount = assessment.stream().filter(feedback -> feedback.getReference() == null).count();
         // Hanya: this check is not relevant anymore as we allow unreferenced feedback for missing submission elements
         // if (generalFeedbackCount > 1) {
-        //    throw new BadRequestAlertException("There cannot be more than one general Feedback per Assessment", "assessment", "moreThanOneGeneralFeedback");
+        // throw new BadRequestAlertException("There cannot be more than one general Feedback per Assessment", "assessment", "moreThanOneGeneralFeedback");
         // }
     }
 

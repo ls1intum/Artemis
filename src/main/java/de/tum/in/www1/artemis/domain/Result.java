@@ -365,7 +365,8 @@ public class Result implements Serializable {
         if (this.feedbacks == null || this.feedbacks.size() == 0) {
             return false;
         }
-        return this.feedbacks.stream().anyMatch(sameFeedback -> !sameFeedback.getCredits().equals(feedback.getCredits()) || feedbackTextHasChanged(sameFeedback.getText(), feedback.getText()));
+        return this.feedbacks.stream()
+                .anyMatch(sameFeedback -> !sameFeedback.getCredits().equals(feedback.getCredits()) || feedbackTextHasChanged(sameFeedback.getText(), feedback.getText()));
     }
 
     /**
