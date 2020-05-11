@@ -69,6 +69,9 @@ export abstract class ProgrammingExerciseTriggerBuildButtonComponent implements 
         }
     }
 
+    /**
+     * Removes the subscriptions on destroy
+     */
     ngOnDestroy(): void {
         if (this.submissionSubscription) {
             this.submissionSubscription.unsubscribe();
@@ -127,13 +130,25 @@ export abstract class ProgrammingExerciseTriggerBuildButtonComponent implements 
             .subscribe();
     }
 
+    /**
+     * Abstract implementation of the triggerBuild method
+     * @param submissionType
+     */
     abstract triggerBuild(submissionType: SubmissionType): void;
 
+    /**
+     * Triggers the build with the provided submissionType
+     * @param submissionType
+     */
     triggerWithType(submissionType: SubmissionType) {
         this.isRetrievingBuildStatus = true;
         return this.submissionService.triggerBuild(this.participation.id, submissionType).pipe(tap(() => (this.isRetrievingBuildStatus = false)));
     }
 
+    /**
+     * Triggers the build for the latest submission, if it did not receive a result
+     * @param lastGraded
+     */
     triggerFailed(lastGraded = false) {
         this.isRetrievingBuildStatus = true;
         return this.submissionService.triggerFailedBuild(this.participation.id, lastGraded).pipe(tap(() => (this.isRetrievingBuildStatus = false)));
