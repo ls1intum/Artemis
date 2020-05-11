@@ -31,6 +31,9 @@
                     "hide": "Verstecken"
                 }
             },
+            "processMetricsCustom": {
+                "activeUsers": "Aktive Benutzer"
+            },
             "gc": {
                 "title": "Speicherbereinigung (GC)",
                 "marksweepcount": "Durchlaufmarkierungs (Mark Sweep) Anzahl",
