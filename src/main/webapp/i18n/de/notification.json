@@ -1,0 +1,38 @@
+{
+    "artemisApp": {
+        "notification": {
+            "notifications": "Mitteilungen",
+            "noNotifications": "Keine Mitteilungen verfügbar",
+            "showAllNotifications": "Alle Mitteilungen anzeigen",
+            "title": "Titel",
+            "text": "Text",
+            "notificationDate": "Mitteilungsdatum",
+            "target": {
+                "newAnswer": "Antwort ansehen",
+                "newQuestion": "Frage ansehen",
+                "exerciseCreated": "Übung ansehen",
+                "exerciseUpdated": "Übung ansehen",
+                "attachmentUpdated": "Vorlesung ansehen"
+            }
+        },
+        "systemNotification": {
+            "systemNotification": "Systemmitteilung",
+            "systemNotifications": "Systemmitteilungen",
+            "title": "Titel",
+            "text": "Text",
+            "type": "Typ",
+            "expireDate": "Gültig bis",
+            "notificationDate": "Mitteilungsdatum",
+            "active": "Aktiv",
+            "notActive": "Nicht Aktiv",
+            "createLabel": "Neue Systemmitteilung erstellen",
+            "createOrEditLabel": "Systemmitteilung erstellen oder bearbeiten",
+            "delete": {
+                "question": "Bist du sicher, dass du die Systemmitteilung <strong>{{ title }}</strong> löschen möchtest?"
+            },
+            "created": "Eine neue Mitteilung wurde mit ID {{ param }} erstellt",
+            "updated": "Eine Mitteilung mit ID {{ param }} wurde geändert",
+            "deleted": "Eine Mitteilung mit ID {{ param }} wurde gelöscht"
+        }
+    }
+}

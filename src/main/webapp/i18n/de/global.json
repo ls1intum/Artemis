@@ -80,7 +80,7 @@
             "admin": {
                 "main": "Server-Administration",
                 "userManagement": "Benutzerverwaltung",
-                "notificationManagement": "Mitteilungsverwaltung",
+                "systemNotifications": "Systemmitteilungen",
                 "featureToggles": "Feature Toggles",
                 "tracker": "Benutzer Aktivitäten",
                 "metrics": "Metriken",
@@ -96,10 +96,7 @@
             "guidedTutorial": "Guided Tutorial",
             "startTutorial": "Tutorial starten",
             "restartTutorial": "Tutorial wiederholen",
-            "continueTutorial": "Tutorial fortsetzen",
-            "notifications": "Mitteilungen",
-            "noNotifications": "Keine Mitteilungen verfügbar",
-            "showAllNotifications": "Alle Mitteilungen anzeigen"
+            "continueTutorial": "Tutorial fortsetzen"
         },
         "form": {
             "username": "Benutzername",
