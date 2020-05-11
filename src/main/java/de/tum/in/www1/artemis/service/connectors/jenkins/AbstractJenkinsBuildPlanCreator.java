@@ -23,6 +23,8 @@ public abstract class AbstractJenkinsBuildPlanCreator implements JenkinsXmlConfi
 
     protected static final String REPLACE_ASSIGNMENT_CHECKOUT_PATH = "#assignmentCheckoutPath";
 
+    protected static final String REPLACE_TESTS_CHECKOUT_PATH = "#testsCheckoutPath";
+
     protected static final String REPLACE_PUSH_TOKEN = "#secretPushToken";
 
     protected static final String REPLACE_ARTEMIS_NOTIFICATION_URL = "#notificationsUrl";
