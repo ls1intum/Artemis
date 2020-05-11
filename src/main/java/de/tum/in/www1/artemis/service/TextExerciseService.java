@@ -1,12 +1,15 @@
 package de.tum.in.www1.artemis.service;
 
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
+import de.tum.in.www1.artemis.domain.Rating;
 import de.tum.in.www1.artemis.domain.TextExercise;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.repository.TextExerciseRepository;
@@ -24,7 +27,7 @@ public class TextExerciseService {
     }
 
     /**
-     * Get one quiz exercise by id.
+     * Get one text exercise by id.
      *
      * @param exerciseId the id of the exercise
      * @return the entity
@@ -41,5 +44,15 @@ public class TextExerciseService {
      */
     public List<TextExercise> findAllAutomaticAssessmentTextExercisesWithFutureDueDate() {
         return textExerciseRepository.findByAssessmentTypeAndDueDateIsAfter(AssessmentType.SEMI_AUTOMATIC, ZonedDateTime.now());
+    }
+
+    public List<Rating> findRatingByIds(String feedbackIdString) {
+        long[] feedbackIds = Arrays.stream(feedbackIdString.split(", ")).mapToLong(Long::parseLong).toArray();
+        List<Long> feedbackIdList = new ArrayList<Long>();
+        for (long id : feedbackIds) {
+            feedbackIdList.add(id);
+        }
+
+        return textExerciseRepository.findRatingsById(feedbackIdList);
     }
 }
