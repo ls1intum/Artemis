@@ -334,6 +334,11 @@ public class DatabaseUtilService {
         return lecture;
     }
 
+    public Course createCourse() {
+        Course course = ModelFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "tumuser", "tutor", "instructor");
+        return courseRepo.save(course);
+    }
+
     public List<Course> createCoursesWithExercisesAndLectures(boolean withParticipations) throws Exception {
         ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(5);
         ZonedDateTime futureTimestamp = ZonedDateTime.now().plusDays(5);
@@ -1284,7 +1289,6 @@ public class DatabaseUtilService {
         quizExercise.addQuestions(createShortAnswerQuestion());
         quizExercise.setMaxScore(quizExercise.getMaxTotalScore().doubleValue());
         quizExercise.setGradingInstructions(null);
-        quizExercise.setGradingCriteria(null);
         return quizExercise;
     }
 
