@@ -24,14 +24,29 @@ public class NotificationService {
         this.groupNotificationRepository = groupNotificationRepository;
     }
 
+    /**
+     * Get all notifications for current user by pages.
+     * @param currentUser the current user with the groups he belongs to
+     * @param pageable Pagination information for fetching the notifications
+     * @return notification Page
+     */
     public Page<Notification> findAllExceptSystem(User currentUser, Pageable pageable) {
         return notificationRepository.findAllNotificationsForRecipientWithLogin(currentUser.getGroups(), currentUser.getLogin(), pageable);
     }
 
+    /**
+     * Get all notifications for a specific course.
+     * @param course the course for which notifications should be retrieved
+     * @return list of notifications
+     */
     public List<GroupNotification> findAllNotificationsForCourse(Course course) {
         return groupNotificationRepository.findAllByCourseId(course.getId());
     }
 
+    /**
+     * Delete the specified notification.
+     * @param notification group notification that should be deleted
+     */
     public void deleteNotification(GroupNotification notification) {
         notificationRepository.delete(notification);
     }

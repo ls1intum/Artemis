@@ -76,7 +76,7 @@ public class NotificationResource {
     /**
      * GET /notifications : Get all notifications by pages.
      *
-     * @param pageable Pagination information for fetching the nofications
+     * @param pageable Pagination information for fetching the notifications
      * @return the list notifications
      */
     @GetMapping("/notifications")
