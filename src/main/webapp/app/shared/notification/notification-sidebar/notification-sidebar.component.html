@@ -24,7 +24,7 @@
                 </small>
             </div>
         </div>
-        <div id="notificationSidebarContainer" (scroll)="onScroll()">
+        <div id="notification-sidebar-container" (scroll)="onScroll()">
             <div class="alert alert-danger mx-3" role="alert" *ngIf="error">
                 {{ 'artemisApp.notification.unexpectedError' | translate }}
             </div>
@@ -49,10 +49,10 @@
                     </div>
                 </div>
             </div>
-            <div class="text-center mx-3 my-2" style="font-size: large;" *ngIf="loading">
+            <div class="loading-spinner text-center mx-3 my-2" style="font-size: large;" *ngIf="loading">
                 <fa-icon [icon]="'circle-notch'" spin="true"></fa-icon>
             </div>
-            <small class="text-center d-block mx-3 my-2" *ngIf="notifications.length > 0 && notifications.length >= totalNotifications">
+            <small class="all-loaded text-center d-block mx-3 my-2" *ngIf="notifications.length > 0 && notifications.length >= totalNotifications">
                 {{ 'artemisApp.notification.allLoaded' | translate }}
             </small>
             <span class="no-notifications" *ngIf="notifications && notifications.length === 0">
