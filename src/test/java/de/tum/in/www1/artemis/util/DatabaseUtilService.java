@@ -1349,12 +1349,4 @@ public class DatabaseUtilService {
         mc.setExplanation("Explanation");
         return mc;
     }
-
-    @NotNull
-    public List<GradingCriterion> createGradingCriteria(Exercise exercise) {
-        List<GradingCriterion> list = new ArrayList<>();
-        list.add(new GradingCriterion().title("GC1").exercise(exercise));
-        list.add(new GradingCriterion().title("GC2").exercise(exercise));
-        return list;
-    }
 }
