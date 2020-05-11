@@ -244,7 +244,11 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
      */
     private updateApollonAssessments(feedbacks: Feedback[]) {
         const availableIds: string[] = this.model.elements.map((element) => element.id);
+        if (feedbacks == undefined) {
+            return;
+        }
         const filteredFeedbacks = feedbacks.filter((feedback) => availableIds.includes(feedback.referenceId!));
+
         if (!filteredFeedbacks) {
             return;
         }
