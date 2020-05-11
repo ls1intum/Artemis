@@ -296,8 +296,11 @@ export class TextSubmissionAssessmentComponent implements OnInit {
         newRef.block.startIndex = startIndex;
         newRef.block.endIndex = endIndex;
         newRef.block.setTextFromSubmission(this.submission!);
-        newRef.block.computeId();
-        this.textBlockRefs.push(newRef);
+        // Do not create empty textblocks (only spaces/newlines)
+        if (newRef.block.text.trim().length !== 0) {
+            newRef.block.computeId();
+            this.textBlockRefs.push(newRef);
+        }
     }
 
     private getComplaint(): void {
