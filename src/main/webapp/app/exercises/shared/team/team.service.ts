@@ -1,17 +1,22 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
-import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { Observable, Subscription } from 'rxjs';
+import { map, shareReplay } from 'rxjs/operators';
 import * as moment from 'moment';
 
 import { SERVER_API_URL } from 'app/app.constants';
-import { Team, TeamImportStrategyType } from 'app/entities/team.model';
+import { Team, TeamAssignmentPayload, TeamImportStrategyType } from 'app/entities/team.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { Course } from 'app/entities/course.model';
 import { TeamSearchUser } from 'app/entities/team-search-user.model';
+import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { User } from 'app/core/user/user.model';
+import { AccountService } from 'app/core/auth/account.service';
 
 export type TeamResponse = HttpResponse<Team>;
 export type TeamArrayResponse = HttpResponse<Team[]>;
+
+const teamAssignmentUpdatesWebsocketTopic = '/user/topic/team-assignments';
 
 export interface ITeamService {
     /**
@@ -76,7 +81,12 @@ export interface ITeamService {
 
 @Injectable({ providedIn: 'root' })
 export class TeamService implements ITeamService {
-    constructor(protected http: HttpClient) {}
+    // Team Assignment Update Stream
+    private teamAssignmentUpdates$: Observable<TeamAssignmentPayload> | null;
+    private teamAssignmentUpdatesResolver: () => void;
+    private authenticationStateSubscriber: Subscription;
+
+    constructor(protected http: HttpClient, private websocketService: JhiWebsocketService, private accountService: AccountService) {}
 
     private static resourceUrl(exerciseId: number) {
         return `${SERVER_API_URL}api/exercises/${exerciseId}/teams`;
@@ -172,6 +182,42 @@ export class TeamService implements ITeamService {
 
     findCourseWithExercisesAndParticipationsForTeam(course: Course, team: Team): Observable<HttpResponse<Course>> {
         return this.http.get<Course>(`${SERVER_API_URL}api/courses/${course.id}/teams/${team.shortName}/with-exercises-and-participations`, { observe: 'response' });
+    }
+
+    /**
+     * Returns a promise of an observable that emits team assignment updates
+     *
+     * 1. If there is already an update stream, return it
+     * 2. If there is no update stream yet, wait for the user to log in and create a new update stream
+     */
+    get teamAssignmentUpdates(): Promise<Observable<TeamAssignmentPayload>> {
+        return new Promise((resolve) => {
+            if (this.teamAssignmentUpdates$) {
+                return resolve(this.teamAssignmentUpdates$);
+            }
+            this.authenticationStateSubscriber = this.accountService.getAuthenticationState().subscribe((user: User | null) => {
+                setTimeout(() => {
+                    if (user) {
+                        this.teamAssignmentUpdatesResolver = () => resolve(this.newTeamAssignmentUpdates$);
+                        this.websocketService.bind('connect', this.teamAssignmentUpdatesResolver);
+                    } else {
+                        this.websocketService.unsubscribe(teamAssignmentUpdatesWebsocketTopic);
+                        this.websocketService.unbind('connect', this.teamAssignmentUpdatesResolver);
+                        this.teamAssignmentUpdates$ = null;
+                        this.authenticationStateSubscriber.unsubscribe();
+                    }
+                }, 500);
+            });
+        });
+    }
+
+    /**
+     * Subscribes to the team assignment updates websocket topic and stores the stream in teamAssignmentUpdates$
+     */
+    private get newTeamAssignmentUpdates$(): Observable<TeamAssignmentPayload> {
+        this.websocketService.subscribe(teamAssignmentUpdatesWebsocketTopic);
+        this.teamAssignmentUpdates$ = this.websocketService.receive(teamAssignmentUpdatesWebsocketTopic).pipe(shareReplay(16));
+        return this.teamAssignmentUpdates$;
     }
 
     /**

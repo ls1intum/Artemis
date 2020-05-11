@@ -810,6 +810,17 @@ public class ParticipationService {
     }
 
     /**
+     * Get all exercise participations belonging to exercise and team with eager results and submissions.
+     *
+     * @param exercise the exercise
+     * @param team     the team
+     * @return the list of exercise participations belonging to exercise and team
+     */
+    public List<StudentParticipation> findByExerciseAndTeamWithEagerResultsAndSubmissions(Exercise exercise, Team team) {
+        return studentParticipationRepository.findByExerciseIdAndTeamIdWithEagerResultsAndSubmissions(exercise.getId(), team.getId());
+    }
+
+    /**
      * Get all participations of submissions that are submitted and do not already have a manual result. No manual result means that no user has started an assessment for the
      * corresponding submission yet.
      *

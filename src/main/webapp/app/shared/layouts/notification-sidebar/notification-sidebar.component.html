@@ -25,9 +25,9 @@
             </button>
         </div>
     </div>
-    <h3>{{ 'global.menu.notifications' | translate }}</h3>
+    <h3>{{ 'artemisApp.notification.notifications' | translate }}</h3>
     <a routerLink="notifications">
-        {{ 'global.menu.showAllNotifications' | translate }}
+        {{ 'artemisApp.notification.showAllNotifications' | translate }}
     </a>
     <div class="notification-item" *ngFor="let notification of sortedNotifications" (click)="startNotification(notification)">
         <div>
@@ -49,6 +49,6 @@
         </div>
     </div>
     <span class="no-notifications" *ngIf="notifications && notifications.length === 0">
-        {{ 'global.menu.noNotifications' | translate }}
+        {{ 'artemisApp.notification.noNotifications' | translate }}
     </span>
 </div>

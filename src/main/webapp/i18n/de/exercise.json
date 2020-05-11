@@ -105,7 +105,7 @@
             "resultCreationSuccessful": "Das Ergebnis wurde erfolgreich erzeugt",
             "resultCreationUnsuccessful": "Das Ergebnis wurde nicht erzeugt",
             "presentationScoreEnabled": {
-                "title": "Präsentationsergebnis aktiviert",
+                "title": "Präsentation",
                 "description": "Wenn das Präsentationsergebnis aktiviert ist, dann können Tutoren auf der Seite \"Teilnahmen\" dieser Übung eine Punkt für Präsentation von Studenten eintragen."
             },
             "errors": {
