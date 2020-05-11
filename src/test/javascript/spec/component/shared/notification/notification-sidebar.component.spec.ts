@@ -6,6 +6,7 @@ import { BehaviorSubject, of } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import { HttpHeaders, HttpResponse } from '@angular/common/http';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { NotificationSidebarComponent } from 'app/shared/notification/notification-sidebar/notification-sidebar.component';
 import { NotificationService } from 'app/shared/notification/notification.service';
@@ -32,7 +33,7 @@ describe('Notification Sidebar Component', () => {
     let userService: UserService;
 
     const notificationNow = { id: 1, notificationDate: moment() } as Notification;
-    const notificationPast = { id: 2, notificationDate: moment().subtract(1, 'day') } as Notification;
+    const notificationPast = { id: 2, notificationDate: moment().subtract(2, 'day') } as Notification;
     const notifications = [notificationNow, notificationPast] as Notification[];
 
     const generateQueryResponse = (ns: Notification[]) => {
@@ -219,21 +220,42 @@ describe('Notification Sidebar Component', () => {
             expect(notificationSidebarComponent.totalNotifications).to.be.equal(1);
         }));
 
-        it('should set loading attribute during notification call correctly', fakeAsync(() => {}));
-
-        it('should load more notifications only if not all are already loaded', fakeAsync(() => {}));
+        it('should load more notifications only if not all are already loaded', fakeAsync(() => {
+            notificationSidebarComponent.notifications = notifications;
+            notificationSidebarComponent.totalNotifications = 2;
+            sinon.spy(notificationService, 'query');
+            notificationSidebarComponent.ngOnInit();
+            tick(500);
+            expect(notificationService.query).not.to.be.called;
+        }));
     });
 
     describe('Recent notifications', () => {
-        it('should evaluate recent notifications correctly', () => {});
+        it('should evaluate recent notifications correctly', fakeAsync(() => {
+            notificationSidebarComponent.lastNotificationRead = moment().subtract(1, 'day');
+            const fake = sinon.fake.returns(of(generateQueryResponse(notifications)));
+            sinon.replace(notificationService, 'query', fake);
+            notificationSidebarComponent.ngOnInit();
+            tick(500);
+            expect(notificationService.query).to.be.called;
+            expect(notificationSidebarComponent.recentNotificationCount).to.be.equal(1);
+        }));
 
-        it('should show plus sign in recent notification count badge if all loaded notifications are recent notifications', () => {});
+        it('should show plus sign in recent notification count badge if all loaded notifications are recent notifications', () => {
+            notificationSidebarComponent.notifications = notifications;
+            notificationSidebarComponent.recentNotificationCount = 2;
+            notificationSidebarComponentFixture.detectChanges();
+            const plus = notificationSidebarComponentFixture.debugElement.query(By.css('.badge-danger > span'));
+            expect(plus).to.be.not.null;
+        });
     });
 
     describe('UI', () => {
         it('should show no notifications message', () => {
+            notificationSidebarComponent.notifications = [];
+            notificationSidebarComponentFixture.detectChanges();
             const noNotificationsMessage = notificationSidebarComponentFixture.debugElement.nativeElement.querySelector('.no-notifications');
-            expect(noNotificationsMessage).to.be.null;
+            expect(noNotificationsMessage).to.be.not.null;
         });
 
         it('should show loading spinner when more notifications are loaded', () => {
