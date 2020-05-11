@@ -18,6 +18,10 @@ export class CodeEditorFileBrowserCreateNodeComponent implements AfterViewInit {
     @Output() onCreateFile = new EventEmitter<string>();
     @Output() onClearCreatingFile = new EventEmitter<void>();
 
+    /**
+     * Emits the created file
+     * @param event
+     */
     createFile(event: any) {
         if (!event.target.value) {
             this.onClearCreatingFile.emit();
@@ -26,6 +30,9 @@ export class CodeEditorFileBrowserCreateNodeComponent implements AfterViewInit {
         this.onCreateFile.emit(event.target.value);
     }
 
+    /**
+     * After the view is initially rendered the element will be focused
+     */
     ngAfterViewInit(): void {
         this.creatingInput.nativeElement.focus();
     }
