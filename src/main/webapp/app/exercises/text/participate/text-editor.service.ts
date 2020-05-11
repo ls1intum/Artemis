@@ -1,8 +1,12 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs/Observable';
 import { Franc, FrancLanguage } from './franc';
 import { Language } from 'app/entities/tutor-group.model';
+import { Rating } from 'app/entities/rating.model';
+import { Feedback } from 'app/entities/feedback.model';
+
+export type EntityArrayResponseType = HttpResponse<Rating[]>;
 
 @Injectable({ providedIn: 'root' })
 export class TextEditorService {
@@ -34,5 +38,22 @@ export class TextEditorService {
             default:
                 return null;
         }
+    }
+
+    /**
+     * Update the student rating for feedback on the server.
+     * @param feedbackId - Feedback that is rated by the student
+     * @param rating - Rating for The Feedback
+     */
+    setRating(feedbackId: number, newRating: number) {
+        return this.http.post(`api/text-editor/${feedbackId}/rating/${newRating}`, { responseType: 'json' });
+    }
+
+    /**
+     * Get rating for
+     * @param feedbackId
+     */
+    getRating(feedbackIds: number[]): Observable<[{ id: number; rating: number; feedback: Feedback }]> {
+        return this.http.get<[{ id: number; rating: number; feedback: Feedback }]>('api/text-editor/rating/', { params: { feedbackIds: feedbackIds.join(', ') } });
     }
 }

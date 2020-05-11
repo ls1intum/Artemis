@@ -12,6 +12,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import de.tum.in.www1.artemis.domain.Rating;
 import de.tum.in.www1.artemis.domain.TextExercise;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 
@@ -29,4 +30,7 @@ public interface TextExerciseRepository extends JpaRepository<TextExercise, Long
     Optional<TextExercise> findWithEagerTeamAssignmentConfigAndCategoriesById(Long exerciseId);
 
     List<TextExercise> findByAssessmentTypeAndDueDateIsAfter(AssessmentType assessmentType, ZonedDateTime dueDate);
+
+    @Query("SELECT r from Rating r WHERE r.feedback.id IN :#{#feedbackIds}")
+    List<Rating> findRatingsById(@Param("feedbackIds") List<Long> feedbackIds);
 }
