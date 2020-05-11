@@ -95,9 +95,13 @@ jhipster:
         cache: # Used by the CachingHttpHeadersFilter
             timeToLiveInDays: 1461
     cache: # Cache configuration
-        ehcache: # Ehcache configuration
-            time-to-live-seconds: 3600 # By default objects stay 1 hour in the cache
-            max-entries: 1000 # Number of objects in each cache entry
+        hazelcast: # Hazelcast distributed cache
+            time-to-live-seconds: 3600
+            backup-count: 1
+            management-center: # Full reference is available at: http://docs.hazelcast.org/docs/management-center/3.9/manual/html/Deploying_and_Starting.html
+                enabled: false
+                update-interval: 3
+                url:
     security:
         authentication:
             jwt:
@@ -141,3 +145,11 @@ info:
             - tutor_assessment_tour: 'Patterns in Software Engineering'
     contact: artemis.in@tum.de                                                                  #default value, can be overridden on the server
     imprint: https://ase.in.tum.de/lehrstuhl_1/component/content/article/179-imprint            #default value, can be overridden on the server
+
+# Eureka configuration
+eureka:
+    instance:
+        prefer-ip-address: true
+    client:
+        service-url:
+            defaultZone: http://admin:${jhipster.registry.password}@localhost:8761/eureka/

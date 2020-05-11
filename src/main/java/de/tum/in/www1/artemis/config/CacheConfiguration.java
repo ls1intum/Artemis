@@ -1,190 +1,149 @@
 package de.tum.in.www1.artemis.config;
 
-import java.time.Duration;
+import javax.annotation.PreDestroy;
 
-import javax.cache.CacheManager;
-
-import org.ehcache.config.builders.CacheConfigurationBuilder;
-import org.ehcache.config.builders.ExpiryPolicyBuilder;
-import org.ehcache.config.builders.ResourcePoolsBuilder;
-import org.ehcache.jsr107.Eh107Configuration;
-import org.hibernate.cache.jcache.ConfigSettings;
-import org.springframework.boot.autoconfigure.cache.JCacheManagerCustomizer;
-import org.springframework.boot.autoconfigure.orm.jpa.HibernatePropertiesCustomizer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.web.ServerProperties;
+import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.EnableCaching;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
+import org.springframework.cloud.client.ServiceInstance;
+import org.springframework.cloud.client.discovery.DiscoveryClient;
+import org.springframework.cloud.client.serviceregistry.Registration;
+import org.springframework.context.annotation.*;
+import org.springframework.core.env.Environment;
+import org.springframework.core.env.Profiles;
 
-import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.modeling.*;
-import de.tum.in.www1.artemis.domain.notification.GroupNotification;
-import de.tum.in.www1.artemis.domain.notification.Notification;
-import de.tum.in.www1.artemis.domain.notification.SingleUserNotification;
-import de.tum.in.www1.artemis.domain.notification.SystemNotification;
-import de.tum.in.www1.artemis.domain.participation.Participation;
-import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
-import de.tum.in.www1.artemis.domain.quiz.*;
-import de.tum.in.www1.artemis.repository.UserRepository;
+import com.hazelcast.config.*;
+import com.hazelcast.core.Hazelcast;
+import com.hazelcast.core.HazelcastInstance;
+
+import io.github.jhipster.config.JHipsterConstants;
 import io.github.jhipster.config.JHipsterProperties;
 
 @Configuration
 @EnableCaching
 public class CacheConfiguration {
 
-    private final javax.cache.configuration.Configuration<Object, Object> jcacheConfiguration;
+    private final Logger log = LoggerFactory.getLogger(CacheConfiguration.class);
 
-    public CacheConfiguration(JHipsterProperties jHipsterProperties) {
-        JHipsterProperties.Cache.Ehcache ehcache = jHipsterProperties.getCache().getEhcache();
+    private final Environment env;
 
-        jcacheConfiguration = Eh107Configuration.fromEhcacheCacheConfiguration(
-                CacheConfigurationBuilder.newCacheConfigurationBuilder(Object.class, Object.class, ResourcePoolsBuilder.heap(ehcache.getMaxEntries()))
-                        .withExpiry(ExpiryPolicyBuilder.timeToLiveExpiration(Duration.ofSeconds(ehcache.getTimeToLiveSeconds()))).build());
+    private final ServerProperties serverProperties;
+
+    private final DiscoveryClient discoveryClient;
+
+    private Registration registration;
+
+    public CacheConfiguration(Environment env, ServerProperties serverProperties, DiscoveryClient discoveryClient) {
+        this.env = env;
+        this.serverProperties = serverProperties;
+        this.discoveryClient = discoveryClient;
+    }
+
+    @Autowired(required = false)
+    public void setRegistration(Registration registration) {
+        this.registration = registration;
+    }
+
+    @PreDestroy
+    public void destroy() {
+        log.info("Closing Cache Manager");
+        Hazelcast.shutdownAll();
     }
 
     @Bean
-    public HibernatePropertiesCustomizer hibernatePropertiesCustomizer(javax.cache.CacheManager cacheManager) {
-        return hibernateProperties -> hibernateProperties.put(ConfigSettings.CACHE_MANAGER, cacheManager);
+    public CacheManager cacheManager(HazelcastInstance hazelcastInstance) {
+        log.debug("Starting HazelcastCacheManager");
+        return new com.hazelcast.spring.cache.HazelcastCacheManager(hazelcastInstance);
     }
 
-    /**
-     * @return the initialized cache manager
-     */
     @Bean
-    public JCacheManagerCustomizer cacheManagerCustomizer() {
-        return cm -> {
-            createIfNotExists(cm, UserRepository.USERS_CACHE, jcacheConfiguration);
-            createIfNotExists(cm, User.class.getName(), jcacheConfiguration);
-            createIfNotExists(cm, Authority.class.getName(), jcacheConfiguration);
-            createIfNotExists(cm, User.class.getName() + ".authorities", jcacheConfiguration);
-            createIfNotExists(cm, User.class.getName() + ".persistentTokens", jcacheConfiguration);
-            createIfNotExists(cm, Course.class.getName(), jcacheConfiguration);
-            createIfNotExists(cm, Course.class.getName() + ".exercises", jcacheConfiguration);
-            createIfNotExists(cm, Exercise.class.getName(), jcacheConfiguration);
-            createIfNotExists(cm, Exercise.class.getName() + ".studentParticipations", jcacheConfiguration);
-            createIfNotExists(cm, Exercise.class.getName() + ".exampleSubmissions", jcacheConfiguration);
-            createIfNotExists(cm, LtiOutcomeUrl.class.getName(), jcacheConfiguration);
-            createIfNotExists(cm, LtiUserId.class.getName(), jcacheConfiguration);
-            createIfNotExists(cm, Participation.class.getName(), jcacheConfiguration);
-            createIfNotExists(cm, Participation.class.getName() + ".results", jcacheConfiguration);
-            createIfNotExists(cm, Result.class.getName(), jcacheConfiguration);
-            createIfNotExists(cm, ProgrammingExercise.class.getName(), jcacheConfiguration);
-            createIfNotExists(cm, ModelingExercise.class.getName(), jcacheConfiguration);
-            createIfNotExists(cm, QuizExercise.class.getName(), jcacheConfiguration);
-            createIfNotExists(cm, QuizExercise.class.getName() + ".quizQuestions", jcacheConfiguration);
-            createIfNotExists(cm, SubmittedAnswer.class.getName(), jcacheConfiguration);
-            createIfNotExists(cm, QuizQuestion.class.getName(), jcacheConfiguration);
-            createIfNotExists(cm, MultipleChoiceQuestion.class.getName(), jcacheConfiguration);
-            createIfNotExists(cm, MultipleChoiceQuestion.class.getName() + ".answerOptions", jcacheConfiguration);
-            createIfNotExists(cm, AnswerOption.class.getName(), jcacheConfiguration);
-            createIfNotExists(cm, MultipleChoiceSubmittedAnswer.class.getName(), jcacheConfiguration);
-            createIfNotExists(cm, MultipleChoiceSubmittedAnswer.class.getName() + ".selectedOptions", jcacheConfiguration);
-            createIfNotExists(cm, DragAndDropQuestion.class.getName(), jcacheConfiguration);
-            createIfNotExists(cm, DragAndDropQuestion.class.getName() + ".dropLocations", jcacheConfiguration);
-            createIfNotExists(cm, DragAndDropQuestion.class.getName() + ".dragItems", jcacheConfiguration);
-            createIfNotExists(cm, DragAndDropQuestion.class.getName() + ".correctMappings", jcacheConfiguration);
-            createIfNotExists(cm, DropLocation.class.getName(), jcacheConfiguration);
-            createIfNotExists(cm, DragItem.class.getName(), jcacheConfiguration);
-            createIfNotExists(cm, Submission.class.getName(), jcacheConfiguration);
-            createIfNotExists(cm, ModelingSubmission.class.getName(), jcacheConfiguration);
-            createIfNotExists(cm, QuizSubmission.class.getName(), jcacheConfiguration);
-            createIfNotExists(cm, QuizSubmission.class.getName() + ".submittedAnswers", jcacheConfiguration);
-            createIfNotExists(cm, ProgrammingSubmission.class.getName(), jcacheConfiguration);
-            createIfNotExists(cm, TextSubmission.class.getName(), jcacheConfiguration);
-            createIfNotExists(cm, FileUploadSubmission.class.getName(), jcacheConfiguration);
-            createIfNotExists(cm, DragAndDropSubmittedAnswer.class.getName(), jcacheConfiguration);
-            createIfNotExists(cm, QuizQuestion.class.getName() + ".quizExercises", jcacheConfiguration);
-            createIfNotExists(cm, Result.class.getName() + ".feedbacks", jcacheConfiguration);
-            createIfNotExists(cm, Feedback.class.getName(), jcacheConfiguration);
-            createIfNotExists(cm, QuizStatistic.class.getName(), jcacheConfiguration);
-            createIfNotExists(cm, QuizPointStatistic.class.getName(), jcacheConfiguration);
-            createIfNotExists(cm, QuizQuestionStatistic.class.getName(), jcacheConfiguration);
-            createIfNotExists(cm, AnswerCounter.class.getName(), jcacheConfiguration);
-            createIfNotExists(cm, DropLocationCounter.class.getName(), jcacheConfiguration);
-            createIfNotExists(cm, QuizPointStatistic.class.getName() + ".ratedPointCounters", jcacheConfiguration);
-            createIfNotExists(cm, QuizPointStatistic.class.getName() + ".unRatedPointCounters", jcacheConfiguration);
-            createIfNotExists(cm, MultipleChoiceQuestionStatistic.class.getName(), jcacheConfiguration);
-            createIfNotExists(cm, MultipleChoiceQuestionStatistic.class.getName() + ".ratedAnswerCounters", jcacheConfiguration);
-            createIfNotExists(cm, MultipleChoiceQuestionStatistic.class.getName() + ".unRatedAnswerCounters", jcacheConfiguration);
-            createIfNotExists(cm, DragAndDropQuestionStatistic.class.getName(), jcacheConfiguration);
-            createIfNotExists(cm, DragAndDropQuestionStatistic.class.getName() + ".ratedDropLocationCounters", jcacheConfiguration);
-            createIfNotExists(cm, DragAndDropQuestionStatistic.class.getName() + ".unRatedDropLocationCounters", jcacheConfiguration);
-            createIfNotExists(cm, QuizStatisticCounter.class.getName(), jcacheConfiguration);
-            createIfNotExists(cm, PointCounter.class.getName(), jcacheConfiguration);
-            createIfNotExists(cm, QuizPointStatistic.class.getName() + ".pointCounters", jcacheConfiguration);
-            createIfNotExists(cm, MultipleChoiceQuestionStatistic.class.getName() + ".answerCounters", jcacheConfiguration);
-            createIfNotExists(cm, DragAndDropQuestionStatistic.class.getName() + ".dropLocationCounters", jcacheConfiguration);
-            createIfNotExists(cm, DragItem.class.getName() + ".mappings", jcacheConfiguration);
-            createIfNotExists(cm, DropLocation.class.getName() + ".mappings", jcacheConfiguration);
-            createIfNotExists(cm, DragAndDropSubmittedAnswer.class.getName() + ".mappings", jcacheConfiguration);
-            createIfNotExists(cm, DragAndDropMapping.class.getName(), jcacheConfiguration);
-            createIfNotExists(cm, ApollonDiagram.class.getName(), jcacheConfiguration);
-            createIfNotExists(cm, Participation.class.getName() + ".submissions", jcacheConfiguration);
-            createIfNotExists(cm, TextExercise.class.getName(), jcacheConfiguration);
-            createIfNotExists(cm, FileUploadExercise.class.getName(), jcacheConfiguration);
-            createIfNotExists(cm, ShortAnswerQuestionStatistic.class.getName(), jcacheConfiguration);
-            createIfNotExists(cm, ShortAnswerQuestionStatistic.class.getName() + ".shortAnswerSpotCounters", jcacheConfiguration);
-            createIfNotExists(cm, ShortAnswerSpotCounter.class.getName(), jcacheConfiguration);
-            createIfNotExists(cm, ShortAnswerQuestion.class.getName(), jcacheConfiguration);
-            createIfNotExists(cm, ShortAnswerQuestion.class.getName() + ".spots", jcacheConfiguration);
-            createIfNotExists(cm, ShortAnswerQuestion.class.getName() + ".solutions", jcacheConfiguration);
-            createIfNotExists(cm, ShortAnswerQuestion.class.getName() + ".correctMappings", jcacheConfiguration);
-            createIfNotExists(cm, ShortAnswerSpot.class.getName(), jcacheConfiguration);
-            createIfNotExists(cm, ShortAnswerSolution.class.getName(), jcacheConfiguration);
-            createIfNotExists(cm, ShortAnswerSubmittedAnswer.class.getName(), jcacheConfiguration);
-            createIfNotExists(cm, ShortAnswerSubmittedAnswer.class.getName() + ".submittedTexts", jcacheConfiguration);
-            createIfNotExists(cm, ShortAnswerSubmittedText.class.getName(), jcacheConfiguration);
-            createIfNotExists(cm, ShortAnswerMapping.class.getName(), jcacheConfiguration);
-            createIfNotExists(cm, ShortAnswerSpot.class.getName() + ".mappings", jcacheConfiguration);
-            createIfNotExists(cm, ShortAnswerSolution.class.getName() + ".mappings", jcacheConfiguration);
-            createIfNotExists(cm, Complaint.class.getName(), jcacheConfiguration);
-            createIfNotExists(cm, ComplaintResponse.class.getName(), jcacheConfiguration);
-            createIfNotExists(cm, TutorParticipation.class.getName(), jcacheConfiguration);
-            createIfNotExists(cm, TutorParticipation.class.getName() + ".trainedExampleSubmissions", jcacheConfiguration);
-            createIfNotExists(cm, ExampleSubmission.class.getName(), jcacheConfiguration);
-            createIfNotExists(cm, Exercise.class.getName() + ".tutorParticipations", jcacheConfiguration);
-            createIfNotExists(cm, Course.class.getName() + ".lectures", jcacheConfiguration);
-            createIfNotExists(cm, Course.class.getName() + ".tutorGroups", jcacheConfiguration);
-            createIfNotExists(cm, Exercise.class.getName() + ".attachments", jcacheConfiguration);
-            createIfNotExists(cm, StudentQuestion.class.getName(), jcacheConfiguration);
-            createIfNotExists(cm, StudentQuestion.class.getName() + ".answers", jcacheConfiguration);
-            createIfNotExists(cm, StudentQuestionAnswer.class.getName(), jcacheConfiguration);
-            createIfNotExists(cm, TutorGroup.class.getName(), jcacheConfiguration);
-            createIfNotExists(cm, TutorGroup.class.getName() + ".students", jcacheConfiguration);
-            createIfNotExists(cm, Notification.class.getName(), jcacheConfiguration);
-            createIfNotExists(cm, SystemNotification.class.getName(), jcacheConfiguration);
-            createIfNotExists(cm, GroupNotification.class.getName(), jcacheConfiguration);
-            createIfNotExists(cm, SingleUserNotification.class.getName(), jcacheConfiguration);
-            createIfNotExists(cm, Lecture.class.getName(), jcacheConfiguration);
-            createIfNotExists(cm, Lecture.class.getName() + ".attachments", jcacheConfiguration);
-            createIfNotExists(cm, Attachment.class.getName(), jcacheConfiguration);
-            createIfNotExists(cm, Exercise.class.getName() + ".studentQuestions", jcacheConfiguration);
-            createIfNotExists(cm, Lecture.class.getName() + ".studentQuestions", jcacheConfiguration);
-            createIfNotExists(cm, ModelAssessmentConflict.class.getName(), jcacheConfiguration);
-            createIfNotExists(cm, ModelAssessmentConflict.class.getName() + ".resultsInConflict", jcacheConfiguration);
-            createIfNotExists(cm, ConflictingResult.class.getName(), jcacheConfiguration);
-            createIfNotExists(cm, ExampleSubmission.class.getName() + ".tutorParticipations", jcacheConfiguration);
-            createIfNotExists(cm, ProgrammingExerciseTestCase.class.getName(), jcacheConfiguration);
-            createIfNotExists(cm, ExerciseHint.class.getName(), jcacheConfiguration);
-            createIfNotExists(cm, GuidedTourSetting.class.getName(), jcacheConfiguration);
-            createIfNotExists(cm, User.class.getName() + ".guidedTourSettings", jcacheConfiguration);
-            createIfNotExists(cm, Exercise.class.getName() + ".teams", jcacheConfiguration);
-            createIfNotExists(cm, Team.class.getName(), jcacheConfiguration);
-            createIfNotExists(cm, Team.class.getName() + ".students", jcacheConfiguration);
-            createIfNotExists(cm, Exercise.class.getName() + ".gradingCriteria", jcacheConfiguration);
-            createIfNotExists(cm, GradingInstruction.class.getName(), jcacheConfiguration);
-            createIfNotExists(cm, GradingCriterion.class.getName(), jcacheConfiguration);
-            createIfNotExists(cm, GradingCriterion.class.getName() + ".structuredGradingInstructions", jcacheConfiguration);
-            // jhipster-needle-ehcache-add-entry
-            createIfNotExists(cm, "files", jcacheConfiguration);
-        };
-    }
-
-    // This method is a hotfix for the issue described in: https://github.com/jhipster/generator-jhipster/issues/5354.
-    // During the execution of tests, spring boot will try to instantiate the same cache multiple times, leading to an error.
-    // This issue appears if e.g. a MockBean is used in a test.
-    private void createIfNotExists(CacheManager cacheManager, String cacheName, javax.cache.configuration.Configuration<Object, Object> cacheConfiguration) {
-        if (cacheManager.getCache(cacheName) == null) {
-            cacheManager.createCache(cacheName, cacheConfiguration);
+    public HazelcastInstance hazelcastInstance(JHipsterProperties jHipsterProperties) {
+        log.debug("Configuring Hazelcast");
+        HazelcastInstance hazelCastInstance = Hazelcast.getHazelcastInstanceByName("Artemis");
+        if (hazelCastInstance != null) {
+            log.debug("Hazelcast already initialized");
+            return hazelCastInstance;
         }
+        Config config = new Config();
+        config.setInstanceName("Artemis");
+        config.getNetworkConfig().getJoin().getMulticastConfig().setEnabled(false);
+        if (this.registration == null) {
+            log.warn("No discovery service is set up, Hazelcast cannot create a cluster.");
+        }
+        else {
+            // The serviceId is by default the application's name,
+            // see the "spring.application.name" standard Spring property
+            String serviceId = registration.getServiceId();
+            log.debug("Configuring Hazelcast clustering for instanceId: {}", serviceId);
+            // In development, everything goes through 127.0.0.1, with a different port
+            if (env.acceptsProfiles(Profiles.of(JHipsterConstants.SPRING_PROFILE_DEVELOPMENT))) {
+                log.debug("Application is running with the \"dev\" profile, Hazelcast " + "cluster will only work with localhost instances");
+
+                System.setProperty("hazelcast.local.localAddress", "127.0.0.1");
+                config.getNetworkConfig().setPort(serverProperties.getPort() + 5701);
+                config.getNetworkConfig().getJoin().getTcpIpConfig().setEnabled(true);
+                for (ServiceInstance instance : discoveryClient.getInstances(serviceId)) {
+                    String clusterMember = "127.0.0.1:" + (instance.getPort() + 5701);
+                    log.debug("Adding Hazelcast (dev) cluster member {}", clusterMember);
+                    config.getNetworkConfig().getJoin().getTcpIpConfig().addMember(clusterMember);
+                }
+            }
+            else { // Production configuration, one host per instance all using port 5701
+                config.getNetworkConfig().setPort(5701);
+                config.getNetworkConfig().getJoin().getTcpIpConfig().setEnabled(true);
+                for (ServiceInstance instance : discoveryClient.getInstances(serviceId)) {
+                    String clusterMember = instance.getHost() + ":5701";
+                    log.debug("Adding Hazelcast (prod) cluster member {}", clusterMember);
+                    config.getNetworkConfig().getJoin().getTcpIpConfig().addMember(clusterMember);
+                }
+            }
+        }
+        config.getMapConfigs().put("default", initializeDefaultMapConfig(jHipsterProperties));
+
+        // Full reference is available at: https://docs.hazelcast.org/docs/management-center/3.9/manual/html/Deploying_and_Starting.html
+        config.setManagementCenterConfig(initializeDefaultManagementCenterConfig(jHipsterProperties));
+        config.getMapConfigs().put("de.tum.in.www1.artemis.domain.*", initializeDomainMapConfig(jHipsterProperties));
+        return Hazelcast.newHazelcastInstance(config);
     }
+
+    private ManagementCenterConfig initializeDefaultManagementCenterConfig(JHipsterProperties jHipsterProperties) {
+        ManagementCenterConfig managementCenterConfig = new ManagementCenterConfig();
+        managementCenterConfig.setEnabled(jHipsterProperties.getCache().getHazelcast().getManagementCenter().isEnabled());
+        managementCenterConfig.setUrl(jHipsterProperties.getCache().getHazelcast().getManagementCenter().getUrl());
+        managementCenterConfig.setUpdateInterval(jHipsterProperties.getCache().getHazelcast().getManagementCenter().getUpdateInterval());
+        return managementCenterConfig;
+    }
+
+    private MapConfig initializeDefaultMapConfig(JHipsterProperties jHipsterProperties) {
+        MapConfig mapConfig = new MapConfig();
+
+        /*
+         * Number of backups. If 1 is set as the backup-count for example, then all entries of the map will be copied to another JVM for fail-safety. Valid numbers are 0 (no
+         * backup), 1, 2, 3.
+         */
+        mapConfig.setBackupCount(jHipsterProperties.getCache().getHazelcast().getBackupCount());
+
+        /*
+         * Valid values are: NONE (no eviction), LRU (Least Recently Used), LFU (Least Frequently Used). NONE is the default.
+         */
+        mapConfig.setEvictionPolicy(EvictionPolicy.LRU);
+
+        /*
+         * Maximum size of the map. When max size is reached, map is evicted based on the policy defined. Any integer between 0 and Integer.MAX_VALUE. 0 means Integer.MAX_VALUE.
+         * Default is 0.
+         */
+        mapConfig.setMaxSizeConfig(new MaxSizeConfig(0, MaxSizeConfig.MaxSizePolicy.USED_HEAP_SIZE));
+
+        return mapConfig;
+    }
+
+    private MapConfig initializeDomainMapConfig(JHipsterProperties jHipsterProperties) {
+        MapConfig mapConfig = new MapConfig();
+        mapConfig.setTimeToLiveSeconds(jHipsterProperties.getCache().getHazelcast().getTimeToLiveSeconds());
+        return mapConfig;
+    }
+
 }

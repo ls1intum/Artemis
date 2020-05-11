@@ -106,6 +106,10 @@ spring:
         open-in-view: false
         properties:
             hibernate.jdbc.time_zone: UTC
+            hibernate.cache.region.factory_class: com.hazelcast.hibernate.HazelcastCacheRegionFactory
+            hibernate.cache.use_minimal_puts: true
+            hibernate.cache.hazelcast.instance_name: Artemis
+            hibernate.cache.hazelcast.use_lite_member: true
         hibernate:
             ddl-auto: none
             naming:

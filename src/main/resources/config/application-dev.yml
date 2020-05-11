@@ -53,6 +53,10 @@ spring:
             hibernate.cache.use_second_level_cache: true
             hibernate.cache.use_query_cache: false
             hibernate.generate_statistics: false
+            hibernate.cache.region.factory_class: com.hazelcast.hibernate.HazelcastCacheRegionFactory
+            hibernate.cache.hazelcast.instance_name: Artemis
+            hibernate.cache.use_minimal_puts: true
+            hibernate.cache.hazelcast.use_lite_member: true
     liquibase:
         contexts: dev
     mail:
@@ -128,3 +132,12 @@ info:
             - tutor_assessment_tour: 'Patterns in Software Engineering'
     contact: artemis.in@tum.de                                                                  #default value, can be overridden if needed
     imprint: https://ase.in.tum.de/lehrstuhl_1/component/content/article/179-imprint            #default value, can be overridden if needed
+
+# Eureka configuration
+eureka:
+    instance:
+        prefer-ip-address: true
+    client:
+        enabled: true # By default, the JHipster Registry is not used in the "dev" profile
+        service-url:
+            defaultZone: http://admin:${jhipster.registry.password}@localhost:8761/eureka/
