@@ -4,7 +4,7 @@
         <ng-container ngbNavItem="editor_edit">
             <a ngbNavLink class="btn-sm text-dark">{{ 'entity.action.edit' | translate }}</a>
             <ng-template ngbNavContent>
-                <div class="height-100 border-0 markdown-editor d-flex flex-column" (drop)="onFileUpload($event)" >
+                <div class="height-100 border-0 markdown-editor d-flex flex-column">
                     <ace-editor
                         #aceEditor
                         [mode]="aceEditorOptions.mode"
@@ -13,6 +13,8 @@
                         (textChange)="markdownChange.emit($event)"
                         class="form-control markdown-editor__content"
                         [class.file-input]="enableFileUpload"
+                        (dragover)="$event.preventDefault()"
+                        (drop)="onFileDrop($event)"
                     ></ace-editor>
                     <!-- manual input for file upload -->
                     <ng-container *ngIf="enableFileUpload">

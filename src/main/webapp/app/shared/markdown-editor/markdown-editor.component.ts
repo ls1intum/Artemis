@@ -30,6 +30,7 @@ import { CodeCommand } from 'app/shared/markdown-editor/commands/code.command';
 import { DomainCommand } from 'app/shared/markdown-editor/domainCommands/domainCommand';
 import { UnorderedListCommand } from 'app/shared/markdown-editor/commands/unorderedListCommand';
 import { HeadingThreeCommand } from 'app/shared/markdown-editor/commands/headingThree.command';
+import { SecuredImageComponent } from 'app/shared/image/secured-image.component';
 
 export enum MarkdownEditorHeight {
     SMALL = 200,
@@ -368,27 +369,38 @@ export class MarkdownEditorComponent implements AfterViewInit {
     /**
      * @function onFileUpload
      * @desc handle file upload and embed it in the editor
-     * @param {any} event
+     * @param {any} $event
      */
     onFileUpload($event: any): void {
         console.warn('EVENT', $event);
         if ($event.target.files.length >= 1) {
             const aceEditor = this.aceEditorContainer.getEditor();
-            const file = $event.target.files[0];
-            console.warn('FILE', file);
-            const loadingText = `![uploading ${file.name}]()`;
-            aceEditor.insert(loadingText);
-            this.fileUploaderService.uploadFile(file).then(
-                (res) => {
-                    aceEditor.undo();
-                    const textToAdd = `<img src="${res.path}" alt="${file.name}" >`;
-                    aceEditor.insert(textToAdd);
-                },
-                (err) => {
-                    aceEditor.undo();
-                    console.warn('error', err);
-                },
-            );
+            const files = $event.target.files[0];
+            files.forEach((file: File) => {
+                console.warn('FILE', file);
+                const loadingText = `![uploading ${file.name}]()`;
+                aceEditor.insert(loadingText);
+                this.fileUploaderService.uploadFile(file).then(
+                    (res) => {
+                        aceEditor.undo();
+                        const textToAdd = `<jhi-secured-image [src]="${res.path}" [alt]="${file.name}" > </jhi-secured-image>`;
+                        aceEditor.insert(textToAdd);
+                    },
+                    (err) => {
+                        aceEditor.undo();
+                        console.warn('error', err);
+                    },
+                );
+            });
         }
+    }
+
+    /**
+     * @function onFileDrop
+     * @desc handle drop of files
+     * @param {DropEvent} $event
+     */
+    onFileDrop($event: DragEvent): void {
+        console.warn('Drop', $event);
     }
 }
