@@ -2,7 +2,7 @@ import { Injectable, NgModule, Pipe, PipeTransform } from '@angular/core';
 import { TranslateLoader, TranslateModule, TranslatePipe, TranslateService, LangChangeEvent } from '@ngx-translate/core';
 import { BehaviorSubject, Observable, of, Subject } from 'rxjs';
 
-export const TRANSLATED_STRING = 'i18n';
+export const TRANSLATED_STRING = '';
 
 export class MockTranslateService {
     onLangChangeSubject: Subject<LangChangeEvent> = new Subject();
