@@ -24,7 +24,13 @@ export interface ChartElement {
     chart: Chart;
 }
 
-// this code is reused in 4 different statistic components
+/**
+ * this code is reused in 4 different statistic components
+ * create options
+ * @export
+ * @param {DataSetProvider} dataSetProvider
+ * @returns {ChartOptions}
+ */
 export function createOptions(dataSetProvider: DataSetProvider): ChartOptions {
     return {
         layout: {
@@ -74,7 +80,13 @@ export function createOptions(dataSetProvider: DataSetProvider): ChartOptions {
     };
 }
 
-// this code is reused in 4 different statistic components
+/**
+ * this code is reused in 4 different statistic components
+ * create animation
+ * @export
+ * @param {DataSetProvider} dataSetProvider
+ * @returns {ChartOptions}
+ */
 export function createAnimation(dataSetProvider: DataSetProvider): ChartAnimationOptions {
     return {
         duration: 500,
@@ -132,7 +144,14 @@ export function createAnimation(dataSetProvider: DataSetProvider): ChartAnimatio
 }
 
 export interface DataSetProvider {
+    /**
+     * get data sets
+     */
     getDataSets(): DataSet[];
+
+    /**
+     * get participants
+     */
     getParticipants(): number;
 }
 
@@ -177,6 +196,9 @@ export class QuizStatisticComponent implements OnInit, OnDestroy, DataSetProvide
         this.options = createOptions(this);
     }
 
+    /**
+     * ngOnInit
+     */
     ngOnInit() {
         this.sub = this.route.params.subscribe((params) => {
             // use different REST-call if the User is a Student
@@ -209,14 +231,23 @@ export class QuizStatisticComponent implements OnInit, OnDestroy, DataSetProvide
         });
     }
 
+    /**
+     * ngOnDestroy
+     */
     ngOnDestroy() {
         this.jhiWebsocketService.unsubscribe(this.websocketChannelForData);
     }
 
+    /**
+     * get data sets
+     */
     getDataSets() {
         return this.datasets;
     }
 
+    /**
+     * get participants
+     */
     getParticipants() {
         return this.participants;
     }

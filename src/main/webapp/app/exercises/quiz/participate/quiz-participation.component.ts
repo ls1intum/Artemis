@@ -104,7 +104,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
      * debounced function to reset 'justSubmitted', so that time since last submission is displayed again when no submission has been made for at least 2 seconds
      * @type {Function}
      */
-    timeoutJustSaved = _.debounce(() => {
+    timeoutJustSaved: Function = _.debounce(() => {
         this.justSaved = false;
     }, 2000);
 
@@ -122,6 +122,9 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
         smoothscroll.polyfill();
     }
 
+    /**
+     * ngOnInit
+     */
     ngOnInit() {
         // set correct mode
         this.subscriptionData = this.route.data.subscribe((data) => {
@@ -151,6 +154,9 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
         }, 100);
     }
 
+    /**
+     * ngOnDestroy
+     */
     ngOnDestroy() {
         clearInterval(this.interval);
         /**
@@ -252,6 +258,9 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
         );
     }
 
+    /**
+     * Finds quiz by id and initialize the selections / mappings for each question with an empty array
+     */
     initShowSolution() {
         this.quizExerciseService.find(this.quizId).subscribe(
             (res: HttpResponse<QuizExercise>) => {
@@ -641,8 +650,9 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
         }
     }
 
-    /*
+    /**
      * This method only handles the update of the quiz after the quiz has ended
+     * @param participation StudentParticipation
      */
     showQuizResultAfterQuizEnd(participation: StudentParticipation) {
         const quizExercise = participation.exercise as QuizExercise;

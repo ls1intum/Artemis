@@ -52,6 +52,9 @@ export class QuizStatisticsFooterComponent implements OnInit, OnDestroy {
         private jhiWebsocketService: JhiWebsocketService,
     ) {}
 
+    /**
+     * ngOnInit
+     */
     ngOnInit() {
         this.sub = this.route.params.subscribe((params) => {
             this.questionIdParam = +params['questionId'];
@@ -108,6 +111,9 @@ export class QuizStatisticsFooterComponent implements OnInit, OnDestroy {
         }
     }
 
+    /**
+     * ngOnDestroy
+     */
     ngOnDestroy() {
         clearInterval(this.interval);
         this.jhiWebsocketService.unsubscribe(this.websocketChannelForData);

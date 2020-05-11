@@ -46,6 +46,9 @@ export class QuizReEvaluateComponent implements OnInit, OnChanges, OnDestroy {
         private location: Location,
     ) {}
 
+    /**
+     * ngOnInit
+     */
     ngOnInit(): void {
         this.subscription = this.route.params.subscribe((params) => {
             this.quizExerciseService.find(params['exerciseId']).subscribe((response: HttpResponse<QuizExercise>) => {
@@ -64,6 +67,10 @@ export class QuizReEvaluateComponent implements OnInit, OnChanges, OnDestroy {
         this.duration = new Duration(0, 0);
     }
 
+    /**
+     * ngOnChanges
+     * @param changes SimpleChanges
+     */
     ngOnChanges(changes: SimpleChanges): void {
         if (changes.quizExercise && changes.quizExercise.currentValue != null) {
             this.prepareEntity(this.quizExercise);
@@ -72,8 +79,7 @@ export class QuizReEvaluateComponent implements OnInit, OnChanges, OnDestroy {
     }
 
     /**
-     * @function deleteQuestion
-     * @desc Remove question from the quiz
+     * Remove question from the quiz
      * @param questionToBeDeleted {QuizQuestion} the question to remove
      */
     deleteQuestion(questionToBeDeleted: QuizQuestion): void {
@@ -81,8 +87,7 @@ export class QuizReEvaluateComponent implements OnInit, OnChanges, OnDestroy {
     }
 
     /**
-     * @function onQuestionUpdated
-     * @desc Handles the change of a question by replacing the array with a copy
+     * Handles the change of a question by replacing the array with a copy
      *                                      (allows for shallow comparison)
      */
     onQuestionUpdated(): void {
@@ -90,8 +95,7 @@ export class QuizReEvaluateComponent implements OnInit, OnChanges, OnDestroy {
     }
 
     /**
-     * @function pendingChanges
-     * @desc Determine if there are any changes waiting to be saved
+     * Determine if there are any changes waiting to be saved
      * @returns {boolean} true if there are any pending changes, false otherwise
      */
     pendingChanges(): boolean {
@@ -99,8 +103,7 @@ export class QuizReEvaluateComponent implements OnInit, OnChanges, OnDestroy {
     }
 
     /**
-     * @function
-     * @desc Check if the current inputs are valid
+     * Check if the current inputs are valid
      * @returns {boolean} true if valid, false otherwise
      */
     validQuiz(): boolean {
@@ -108,8 +111,7 @@ export class QuizReEvaluateComponent implements OnInit, OnChanges, OnDestroy {
     }
 
     /**
-     * @function save
-     * @desc Open Warning-Modal
+     * Open Warning-Modal
      *  -> if confirmed: send changed quiz to server (in Modal-controller)
      *                              and go back to parent-template
      *  -> if canceled: close Modal
@@ -119,16 +121,14 @@ export class QuizReEvaluateComponent implements OnInit, OnChanges, OnDestroy {
     }
 
     /**
-     * @function back
-     * @desc Navigate back to course
+     * Navigate back to course
      */
     back(): void {
         this.location.back();
     }
 
     /**
-     * @function prepareEntity
-     * @desc Makes sure the quizExercise is well formed and its fields are of the correct types
+     * Makes sure the quizExercise is well formed and its fields are of the correct types
      * @param quizExercise
      */
     prepareEntity(quizExercise: QuizExercise) {
@@ -138,8 +138,7 @@ export class QuizReEvaluateComponent implements OnInit, OnChanges, OnDestroy {
     }
 
     /**
-     * @function onDurationChange
-     * @desc Reach to changes of duration inputs by updating model and ui
+     * Reach to changes of duration inputs by updating model and ui
      */
     onDurationChange(): void {
         const duration = moment.duration(this.duration);
@@ -148,8 +147,7 @@ export class QuizReEvaluateComponent implements OnInit, OnChanges, OnDestroy {
     }
 
     /**
-     * @function updateDuration
-     * @desc Update ui to current value of duration
+     * Update ui to current value of duration
      */
     updateDuration(): void {
         const duration = moment.duration(this.quizExercise.duration, 'seconds');
@@ -158,9 +156,8 @@ export class QuizReEvaluateComponent implements OnInit, OnChanges, OnDestroy {
     }
 
     /**
-     * @function durationString
-     * @desc Gives the duration time in a String with this format: <minutes>:<seconds>
-     * @returns {String} the duration as String
+     * Gives the duration time in a string with this format: <minutes>:<seconds>
+     * @returns {string} the duration as string
      */
     durationString(): string {
         if (this.duration.seconds! <= 0) {
@@ -173,24 +170,21 @@ export class QuizReEvaluateComponent implements OnInit, OnChanges, OnDestroy {
     }
 
     /**
-     * @function resetAll
-     * @desc Resets the whole Quiz
+     * Resets the whole Quiz
      */
     resetAll(): void {
         this.quizExercise = JSON.parse(JSON.stringify(this.backupQuiz));
     }
 
     /**
-     * @function resetQuizTitle
-     * @desc Resets the quiz title
+     * Resets the quiz title
      */
     resetQuizTitle() {
         this.quizExercise.title = this.backupQuiz.title;
     }
 
     /**
-     * @function moveUp
-     * @desc Move the question one position up
+     * Move the question one position up
      * @param question {QuizQuestion} the question to move
      */
     moveUp(question: QuizQuestion): void {
@@ -209,8 +203,7 @@ export class QuizReEvaluateComponent implements OnInit, OnChanges, OnDestroy {
     }
 
     /**
-     * @function moveDown
-     * @desc Move the question one position down
+     * Move the question one position down
      * @param question {QuizQuestion} the question to move
      */
     moveDown(question: QuizQuestion): void {
@@ -228,6 +221,9 @@ export class QuizReEvaluateComponent implements OnInit, OnChanges, OnDestroy {
         this.quizExercise.quizQuestions.splice(index + 1, 0, questionToMove);
     }
 
+    /**
+     * ngOnInit
+     */
     ngOnDestroy(): void {
         this.subscription.unsubscribe();
     }

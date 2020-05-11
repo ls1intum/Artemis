@@ -83,6 +83,9 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
         private changeDetector: ChangeDetectorRef,
     ) {}
 
+    /**
+     * ngOnInit
+     */
     ngOnInit(): void {
         /** Create question backup for resets. We convert it first to JSON and then back to make sure we get a real copy of the object **/
         this.backupQuestion = JSON.parse(JSON.stringify(this.question));
@@ -102,8 +105,7 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
     }
 
     /**
-     * @function ngOnChanges
-     * @desc Watch for any changes to the question model and notify listener
+     * Watch for any changes to the question model and notify listener
      * @param changes {SimpleChanges}
      */
     ngOnChanges(changes: SimpleChanges): void {
@@ -114,8 +116,7 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
     }
 
     /**
-     * @function ngAfterViewInit
-     * @desc Setup the question editor
+     * Setup the question editor
      */
     ngAfterViewInit(): void {
         if (!this.reEvaluationInProgress) {
@@ -124,8 +125,7 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
     }
 
     /**
-     * @function setupQuestionEditor
-     * @desc Set up Question text editor
+     * Set up Question text editor
      */
     setupQuestionEditor(): void {
         // Sets the counter to the highest spotNr and generates solution options with their mapping (each spotNr)
@@ -157,8 +157,7 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
     }
 
     /**
-     * @function setOptionsWithID
-     * @desc Set up of all solution option with their mapping (spotNr)
+     * Set up of all solution option with their mapping (spotNr)
      */
     setOptionsWithID() {
         this.optionsWithID = [];
@@ -185,8 +184,7 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
     }
 
     /**
-     * @function generateMarkdown
-     * @desc Generate the markdown text for this question
+     * Generate the markdown text for this question
      * 1. First the question text, hint, and explanation are added using ArtemisMarkdown
      * 2. After an empty line, the solutions are added
      * 3. For each solution: text is added using ArtemisMarkdown
@@ -201,9 +199,7 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
     }
 
     /**
-     * @function parseMarkdown
-     * @param text {string} the markdown text to parse
-     * @desc Parse the markdown and apply the result to the question's data
+     * Parse the markdown and apply the result to the question's data
      * The markdown rules are as follows:
      *
      * 1. Text is split at [-option
@@ -215,6 +211,7 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
      *    4.b) Is used to create the mappings
      *
      * Note: Existing IDs for solutions and spots are reused in the original order.
+     * @param text {string} the markdown text to parse
      */
     parseMarkdown(text: string): void {
         // First split up by "[-option " tag and seperate first part of the split as text and second part as solutionParts
@@ -276,6 +273,8 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
     /**
      * This function creates the mapping. It differentiates 2 cases one solution To one spot (case 1) and
      * one solution to many spots.
+     * @param spots
+     * @param solution
      */
     private createMapping(spots: string, solution: ShortAnswerSolution) {
         const spotIds = spots.split(',').map(Number);
@@ -288,14 +287,14 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
 
     /**
      * This function opens the modal for the help dialog.
+     * @param content
      */
     open(content: any) {
         this.modalService.open(content, { size: 'lg' });
     }
 
     /**
-     * @function addSpotAtCursor
-     * @desc Add the markdown for a spot at the current cursor location and
+     * Add the markdown for a spot at the current cursor location and
      * an option connected to the spot below the last visible row
      */
     addSpotAtCursor(): void {
@@ -312,9 +311,11 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
     }
 
     /**
-     * add the markdown for a solution option below the last visible row, which is connected to a spot in the given editor
-     *
+     * Add the markdown for a solution option below the last visible row, which is connected to a spot in the given editor
      * @param editor {object} the editor into which the solution option markdown will be inserted
+     * @param numberOfSpot {number}
+     * @param optionText {string}
+     * @param firstPressed {number}
      */
     addOptionToSpot(editor: any, numberOfSpot: number, optionText: string, firstPressed: number) {
         let addedText: string;
@@ -329,8 +330,7 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
     }
 
     /**
-     * @function addOption
-     * @desc Add the markdown for a solution option below the last visible row
+     * Add the markdown for a solution option below the last visible row
      */
     addOption(): void {
         const editor = this.questionEditor.getEditor();
@@ -355,8 +355,7 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
      */
 
     /**
-     * @function addSpotAtCursorVisualMode
-     * @desc Add a input field on the current selected location and add the solution option accordingly
+     * Add an input field on the current selected location and add the solution option accordingly
      */
     addSpotAtCursorVisualMode(): void {
         // check if selection is on the correct div
@@ -420,8 +419,7 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
     }
 
     /**
-     * @function addTextSolution
-     * @desc Add an empty Text solution to the question
+     * Add an empty Text solution to the question
      */
     addTextSolution(): void {
         // Add solution to question
@@ -436,8 +434,7 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
     }
 
     /**
-     * @function deleteSolution
-     * @desc Delete the solution from the question
+     * Delete the solution from the question
      * @param solutionToDelete {object} the solution that should be deleted
      */
     deleteSolution(solutionToDelete: ShortAnswerSolution): void {
@@ -447,8 +444,7 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
     }
 
     /**
-     * @function onDragDrop
-     * @desc React to a solution being dropped on a spot
+     * React to a solution being dropped on a spot
      * @param spot {object} the spot involved
      * @param dragEvent {object} the solution involved (may be a copy at this point)
      */
@@ -485,8 +481,7 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
     }
 
     /**
-     * @function getMappingIndex
-     * @desc Get the mapping index for the given mapping
+     * Get the mapping index for the given mapping
      * @param mapping {object} the mapping we want to get an index for
      * @return {number} the index of the mapping (starting with 1), or 0 if unassigned
      */
@@ -513,8 +508,7 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
     }
 
     /**
-     * @function getMappingsForSolution
-     * @desc Get all mappings that involve the given solution
+     * Get all mappings that involve the given solution
      * @param solution {object} the solution for which we want to get all mappings
      * @return {Array} all mappings that belong to the given solution
      */
@@ -531,8 +525,7 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
     }
 
     /**
-     * @function deleteMappingsForSolution
-     * @desc Delete all mappings for the given solution
+     * Delete all mappings for the given solution
      * @param solution {object} the solution for which we want to delete all mappings
      */
     deleteMappingsForSolution(solution: ShortAnswerSolution): void {
@@ -543,8 +536,7 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
     }
 
     /**
-     * @function deleteMapping
-     * @desc Delete the given mapping from the question
+     * Delete the given mapping from the question
      * @param mappingToDelete {object} the mapping to delete
      */
     deleteMapping(mappingToDelete: ShortAnswerMapping): void {
@@ -556,16 +548,14 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
     }
 
     /**
-     * @function deleteQuestion
-     * @desc Delete this question from the quiz
+     * Delete this question from the quiz
      */
     deleteQuestion(): void {
         this.questionDeleted.emit();
     }
 
     /**
-     * @function togglePreview
-     * @desc Toggles the preview in the template
+     * Toggles the preview in the template
      */
     togglePreview(): void {
         this.showVisualMode = !this.showVisualMode;
@@ -581,32 +571,28 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
      */
 
     /**
-     * @function moveUp
-     * @desc Move this question one position up so that it is visible further up in the UI
+     * Move this question one position up so that it is visible further up in the UI
      */
     moveUp() {
         this.questionMoveUp.emit();
     }
 
     /**
-     * @function moveDown
-     * @desc Move this question one position down so that it is visible further down in the UI
+     * Move this question one position down so that it is visible further down in the UI
      */
     moveDown() {
         this.questionMoveDown.emit();
     }
 
     /**
-     * @function
-     * @desc Resets the question title by using the title of the backupQuestion (which has the original title of the question)
+     * Resets the question title by using the title of the backupQuestion (which has the original title of the question)
      */
     resetQuestionTitle() {
         this.question.title = this.backupQuestion.title;
     }
 
     /**
-     * @function resetQuestionText
-     * @desc Resets the question text by using the text of the backupQuestion (which has the original text of the question)
+     * Resets the question text by using the text of the backupQuestion (which has the original text of the question)
      */
     resetQuestionText() {
         this.question.text = this.backupQuestion.text;
@@ -619,8 +605,7 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
     }
 
     /**
-     * @function resetQuestion
-     * @desc Resets the whole question by using the backupQuestion (which is the original question)
+     * Resets the whole question by using the backupQuestion (which is the original question)
      */
     resetQuestion() {
         this.resetQuestionTitle();
@@ -634,8 +619,7 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
     }
 
     /**
-     * @function resetSpot
-     * @desc Resets the spot by using the spot of the backupQuestion (which has the original spot of the question)
+     * Resets the spot by using the spot of the backupQuestion (which has the original spot of the question)
      * @param spot {spot} the spot, which will be reset
      */
     resetSpot(spot: ShortAnswerSpot): void {
@@ -649,8 +633,7 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
     }
 
     /**
-     * @function deleteSpot
-     * @desc Delete the given spot by filtering every spot except the spot to be delete
+     * Delete the given spot by filtering every spot except the spot to be delete
      * @param spotToDelete {object} the spot to delete
      */
     deleteSpot(spotToDelete: ShortAnswerSpot): void {
@@ -667,8 +650,7 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
     }
 
     /**
-     * @function deleteMappingsForSpot
-     * @desc Delete all mappings for the given spot by filtering all mappings which do not include the spot
+     * Delete all mappings for the given spot by filtering all mappings which do not include the spot
      * @param spot {object} the spot for which we want to delete all mappings
      */
     deleteMappingsForSpot(spot: ShortAnswerSpot): void {
@@ -679,8 +661,7 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
     }
 
     /**
-     * @function setQuestionText
-     * @desc sets the new text as question.text and updates the UI (through textParts)
+     * Sets the new text as question.text and updates the UI (through textParts)
      * @param id
      */
     setQuestionText(id: string): void {
@@ -693,8 +674,7 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
     }
 
     /**
-     * @function prepareForSave
-     * @desc reset the question and calls the parsing method of the markdown editor
+     * Reset the question and calls the parsing method of the markdown editor
      */
     prepareForSave(): void {}
 }

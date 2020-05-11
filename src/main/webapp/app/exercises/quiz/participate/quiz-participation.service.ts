@@ -11,6 +11,13 @@ export type ResultResponseType = HttpResponse<Result>;
 export class QuizParticipationService {
     constructor(private http: HttpClient) {}
 
+    /**
+     * Submits quiz submission for practice
+     *
+     * @param {QuizSubmission} quizSubmission
+     * @param {number} exerciseId
+     * @returns {Observable<ResultResponseType>}
+     */
     submitForPractice(quizSubmission: QuizSubmission, exerciseId: number): Observable<ResultResponseType> {
         const copy = this.convert(quizSubmission);
         return this.http
@@ -18,6 +25,13 @@ export class QuizParticipationService {
             .map((res: ResultResponseType) => this.convertResponse(res));
     }
 
+    /**
+     * Submits quiz submission for preview
+     *
+     * @param {QuizSubmission} quizSubmission
+     * @param {number} exerciseId
+     * @returns {Observable<ResultResponseType>}
+     */
     submitForPreview(quizSubmission: QuizSubmission, exerciseId: number): Observable<ResultResponseType> {
         const copy = this.convert(quizSubmission);
         return this.http
@@ -25,11 +39,17 @@ export class QuizParticipationService {
             .map((res: ResultResponseType) => this.convertResponse(res));
     }
 
+    /**
+     * Convert HttpResponse.
+     */
     private convertResponse<T>(res: HttpResponse<T>): HttpResponse<T> {
         const body: T = this.convertItemFromServer(res.body!);
         return res.clone({ body });
     }
 
+    /**
+     * Convert Array HttpResponse.
+     */
     private convertArrayResponse(res: HttpResponse<QuizSubmission[]>): HttpResponse<QuizSubmission[]> {
         const jsonResponse: QuizSubmission[] = res.body!;
         const body: QuizSubmission[] = [];

@@ -77,16 +77,23 @@ export class DragAndDropQuestionComponent implements OnChanges {
 
     constructor(private artemisMarkdown: ArtemisMarkdownService, private dragAndDropQuestionUtil: DragAndDropQuestionUtil) {}
 
+    /**
+     * Resizes image on resize
+     */
     @HostListener('window:resize') onResize() {
         resizeImage();
     }
 
+    /**
+     * ngOnChanges
+     */
     ngOnChanges(): void {
         this.countCorrectMappings();
     }
-
+    /**
+     * Update html for text, hint and explanation for the question
+     */
     watchCollection() {
-        // update html for text, hint and explanation for the question
         this.renderedQuestion = new RenderedQuizQuestionMarkDownElement();
         this.renderedQuestion.text = this.artemisMarkdown.safeHtmlForMarkdown(this.question.text);
         this.renderedQuestion.hint = this.artemisMarkdown.safeHtmlForMarkdown(this.question.hint);
@@ -205,7 +212,12 @@ export class DragAndDropQuestionComponent implements OnChanges {
         }
         return null;
     }
-
+    /**
+     * Checks whether dragged item can be dropped on location
+     *
+     * @param {DropLocation} dropLocation
+     * @returns
+     */
     invalidDragItemForDropLocation(dropLocation: DropLocation) {
         const item = this.dragItemForDropLocation(dropLocation);
         return item ? item.invalid : false;

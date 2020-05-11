@@ -79,6 +79,9 @@ export class DragAndDropQuestionStatisticComponent implements OnInit, OnDestroy,
         this.options = createOptions(this);
     }
 
+    /**
+     * ngOnInit
+     */
     ngOnInit() {
         this.sub = this.route.params.subscribe((params) => {
             this.questionIdParam = +params['questionId'];
@@ -108,18 +111,30 @@ export class DragAndDropQuestionStatisticComponent implements OnInit, OnDestroy,
         });
     }
 
+    /**
+     * Unsubscribes on destroy
+     */
     ngOnDestroy() {
         this.jhiWebsocketService.unsubscribe(this.websocketChannelForData);
     }
 
+    /**
+     * Resizes image on resize
+     */
     @HostListener('window:resize') onResize() {
         resizeImage(true);
     }
 
+    /**
+     * Get data sets
+     */
     getDataSets() {
         return this.datasets;
     }
 
+    /**
+     * Get participants
+     */
     getParticipants() {
         return this.participants;
     }

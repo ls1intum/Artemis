@@ -66,6 +66,9 @@ export class MultipleChoiceQuestionStatisticComponent implements OnInit, OnDestr
         this.options = createOptions(this);
     }
 
+    /**
+     * ngOnInit
+     */
     ngOnInit() {
         this.sub = this.route.params.subscribe((params) => {
             this.questionIdParam = +params['questionId'];
@@ -95,14 +98,23 @@ export class MultipleChoiceQuestionStatisticComponent implements OnInit, OnDestr
         });
     }
 
+    /**
+     * Unsubscribes on destroy
+     */
     ngOnDestroy() {
         this.jhiWebsocketService.unsubscribe(this.websocketChannelForData);
     }
 
+    /**
+     * Get data sets
+     */
     getDataSets() {
         return this.datasets;
     }
 
+    /**
+     * Get participants
+     */
     getParticipants() {
         return this.participants;
     }

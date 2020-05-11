@@ -81,6 +81,9 @@ export class ShortAnswerQuestionStatisticComponent implements OnInit, OnDestroy,
         this.options = createOptions(this);
     }
 
+    /**
+     * ngOnInit
+     */
     ngOnInit() {
         this.sub = this.route.params.subscribe((params) => {
             this.questionIdParam = +params['questionId'];
@@ -110,14 +113,23 @@ export class ShortAnswerQuestionStatisticComponent implements OnInit, OnDestroy,
         });
     }
 
+    /**
+     * ngOnDestroy
+     */
     ngOnDestroy() {
         this.jhiWebsocketService.unsubscribe(this.websocketChannelForData);
     }
 
+    /**
+     * Get data sets
+     */
     getDataSets() {
         return this.datasets;
     }
 
+    /**
+     * Get participants
+     */
     getParticipants() {
         return this.participants;
     }
@@ -159,11 +171,17 @@ export class ShortAnswerQuestionStatisticComponent implements OnInit, OnDestroy,
         this.sampleSolutions = this.shortAnswerQuestionUtil.getSampleSolution(this.question);
     }
 
+    /**
+     * Generate short answer structure
+     */
     generateShortAnswerStructure() {
         const textParts = this.shortAnswerQuestionUtil.divideQuestionTextIntoTextParts(this.question.text!);
         this.textParts = this.shortAnswerQuestionUtil.transformTextPartsIntoHTML(textParts, this.artemisMarkdown);
     }
 
+    /**
+     * Generate letters for solutions
+     */
     generateLettersForSolutions() {
         for (const mapping of this.question.correctMappings) {
             for (const i in this.question.spots) {
@@ -175,6 +193,11 @@ export class ShortAnswerQuestionStatisticComponent implements OnInit, OnDestroy,
         }
     }
 
+    /**
+     * Get sample solution for spot
+     * @param {string} spotTag
+     * @returns {ShortAnswerSolution}
+     */
     getSampleSolutionForSpot(spotTag: string): ShortAnswerSolution {
         const index = this.question.spots.findIndex((spot) => spot.spotNr === this.shortAnswerQuestionUtil.getSpotNr(spotTag));
         return this.sampleSolutions[index];

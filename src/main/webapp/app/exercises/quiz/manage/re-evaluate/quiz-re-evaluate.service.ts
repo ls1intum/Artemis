@@ -9,6 +9,10 @@ export class QuizReEvaluateService {
 
     constructor(private http: HttpClient) {}
 
+    /**
+     * Update a QuizExercise.
+     * @param quizExercise quizExercise
+     */
     update(quizExercise: QuizExercise) {
         const copy = this.convert(quizExercise);
         return this.http.put<QuizExercise>(this.resourceUrl, copy, { observe: 'response' });
@@ -16,6 +20,7 @@ export class QuizReEvaluateService {
 
     /**
      * Convert a QuizExercise to a JSON which can be sent to the server.
+     * @param quizExercise quizExercise
      */
     private convert(quizExercise: QuizExercise): QuizExercise {
         const copy: QuizExercise = Object.assign({}, quizExercise);
