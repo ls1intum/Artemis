@@ -379,29 +379,13 @@ public class QuizExerciseResource {
                     "The quiz exercise has not ended yet. Re-evaluation is only allowed after a quiz has ended.")).build();
         }
 
-        // fetch course from database to make sure client didn't change groups
-        Course course = courseService.findOne(originalQuizExercise.getCourse().getId());
-        if (!authCheckService.isAtLeastInstructorInCourse(course, null)) {
+        if (!authCheckService.isAtLeastInstructorForExercise(originalQuizExercise, null)) {
             return forbidden();
         }
 
-        quizExercise.undoUnallowedChanges(originalQuizExercise);
-        boolean updateOfResultsAndStatisticsNecessary = quizExercise.checkIfRecalculationIsNecessary(originalQuizExercise);
-
-        // update QuizExercise
-        quizExercise.setMaxScore(quizExercise.getMaxTotalScore().doubleValue());
-        quizExercise.reconnectJSONIgnoreAttributes();
-
-        // adjust existing results if an answer or and question was deleted and recalculate them
-        quizExerciseService.adjustResultsOnQuizChanges(quizExercise);
-
-        quizExercise = quizExerciseService.save(quizExercise);
-
-        if (updateOfResultsAndStatisticsNecessary) {
-            // update Statistics
-            quizStatisticService.recalculateStatistics(quizExercise);
-        }
+        quizExercise = quizExerciseService.reEvaluate(quizExercise, originalQuizExercise);
 
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, quizExercise.getId().toString())).body(quizExercise);
     }
+
 }

@@ -42,14 +42,17 @@ public class QuizStatisticService {
     }
 
     /**
-     * 1. Go through all Results in the Participation and recalculate the score 2. recalculate the statistics of the given quizExercise
+     * 1. Go through all Results in the Participation and recalculate the score
+     * 2. Recalculate the statistics of the given quizExercise
      *
      * @param quizExercise the changed QuizExercise object which will be used to recalculate the existing Results and Statistics
      */
     public void recalculateStatistics(QuizExercise quizExercise) {
 
         // reset all statistics
-        quizExercise.getQuizPointStatistic().resetStatistic();
+        if (quizExercise.getQuizPointStatistic() != null) {
+            quizExercise.getQuizPointStatistic().resetStatistic();
+        }
         for (QuizQuestion quizQuestion : quizExercise.getQuizQuestions()) {
             if (quizQuestion.getQuizQuestionStatistic() != null) {
                 quizQuestion.getQuizQuestionStatistic().resetStatistic();

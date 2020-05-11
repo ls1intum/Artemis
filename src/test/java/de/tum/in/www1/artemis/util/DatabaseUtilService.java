@@ -1283,8 +1283,8 @@ public class DatabaseUtilService {
         quizExercise.addQuestions(createDragAndDropQuestion());
         quizExercise.addQuestions(createShortAnswerQuestion());
         quizExercise.setMaxScore(quizExercise.getMaxTotalScore().doubleValue());
-        quizExercise.setGradingInstructions("Grading Instructions");
-        quizExercise.setGradingCriteria(createGradingCriteria(quizExercise));
+        quizExercise.setGradingInstructions(null);
+        quizExercise.setGradingCriteria(null);
         return quizExercise;
     }
 

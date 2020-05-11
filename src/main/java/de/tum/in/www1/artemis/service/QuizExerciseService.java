@@ -26,6 +26,8 @@ public class QuizExerciseService {
 
     private final Logger log = LoggerFactory.getLogger(QuizExerciseService.class);
 
+    private final QuizStatisticService quizStatisticService;
+
     private final QuizExerciseRepository quizExerciseRepository;
 
     private final DragAndDropMappingRepository dragAndDropMappingRepository;
@@ -46,7 +48,7 @@ public class QuizExerciseService {
 
     public QuizExerciseService(UserService userService, QuizExerciseRepository quizExerciseRepository, DragAndDropMappingRepository dragAndDropMappingRepository,
             ShortAnswerMappingRepository shortAnswerMappingRepository, AuthorizationCheckService authCheckService, ResultRepository resultRepository,
-            QuizSubmissionRepository quizSubmissionRepository, SimpMessageSendingOperations messagingTemplate,
+            QuizSubmissionRepository quizSubmissionRepository, SimpMessageSendingOperations messagingTemplate, QuizStatisticService quizStatisticService,
             MappingJackson2HttpMessageConverter mappingJackson2HttpMessageConverter) {
         this.userService = userService;
         this.quizExerciseRepository = quizExerciseRepository;
@@ -57,6 +59,7 @@ public class QuizExerciseService {
         this.quizSubmissionRepository = quizSubmissionRepository;
         this.messagingTemplate = messagingTemplate;
         this.objectMapper = mappingJackson2HttpMessageConverter.getObjectMapper();
+        this.quizStatisticService = quizStatisticService;
     }
 
     /**
@@ -67,6 +70,13 @@ public class QuizExerciseService {
      */
     public QuizExercise save(QuizExercise quizExercise) {
         log.debug("Request to save QuizExercise : {}", quizExercise);
+
+        // create a quizPointStatistic if it does not yet exist
+        if (quizExercise.getQuizPointStatistic() == null) {
+            var quizPointStatistic = new QuizPointStatistic();
+            quizExercise.setQuizPointStatistic(quizPointStatistic);
+            quizPointStatistic.setQuiz(quizExercise);
+        }
 
         // fix references in all drag and drop and short answer questions (step 1/2)
         for (var quizQuestion : quizExercise.getQuizQuestions()) {
@@ -167,6 +177,7 @@ public class QuizExerciseService {
                 restoreCorrectMappingsFromIndicesShortAnswer(shortAnswerQuestion);
             }
         }
+
         return quizExercise;
     }
 
@@ -266,7 +277,7 @@ public class QuizExerciseService {
      *
      * @param quizExercise the changed quizExercise.
      */
-    public void adjustResultsOnQuizChanges(QuizExercise quizExercise) {
+    private void adjustResultsOnQuizChanges(QuizExercise quizExercise) {
         // change existing results if an answer or and question was deleted
         for (Result result : resultRepository.findByParticipationExerciseIdOrderByCompletionDateAsc(quizExercise.getId())) {
 
@@ -475,5 +486,39 @@ public class QuizExerciseService {
             // save mapping
             shortAnswerMappingRepository.save(mapping);
         }
+    }
+
+    /**
+     *
+     * @param quizExercise the changed quiz exercise from the client
+     * @param originalQuizExercise the original quiz exercise (with statistics)
+     * @return the updated quiz exercise with the changed statistics
+     */
+    public QuizExercise reEvaluate(QuizExercise quizExercise, QuizExercise originalQuizExercise) {
+        quizExercise.undoUnallowedChanges(originalQuizExercise);
+        boolean updateOfResultsAndStatisticsNecessary = quizExercise.checkIfRecalculationIsNecessary(originalQuizExercise);
+
+        // update QuizExercise
+        quizExercise.setMaxScore(quizExercise.getMaxTotalScore().doubleValue());
+        quizExercise.reconnectJSONIgnoreAttributes();
+
+        // adjust existing results if an answer or and question was deleted and recalculate them
+        adjustResultsOnQuizChanges(quizExercise);
+
+        quizExercise = save(quizExercise);
+
+        if (updateOfResultsAndStatisticsNecessary) {
+            // update Statistics
+            // copy the statistics of the original quiz exercise first, because we should not rely on data sent from the client, also saving might proxy some elements
+            quizExercise.setQuizPointStatistic(originalQuizExercise.getQuizPointStatistic());
+            for (QuizQuestion quizQuestion : quizExercise.getQuizQuestions()) {
+                QuizQuestion originalQuizQuestion = originalQuizExercise.findQuestionById(quizQuestion.getId());
+                if (originalQuizQuestion != null) {
+                    quizQuestion.setQuizQuestionStatistic(originalQuizQuestion.getQuizQuestionStatistic());
+                }
+            }
+            quizStatisticService.recalculateStatistics(quizExercise);
+        }
+        return quizExercise;
     }
 }

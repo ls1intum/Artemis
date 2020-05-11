@@ -309,7 +309,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         quizExercise.setReleaseDate(ZonedDateTime.now().minusMinutes(5));
         quizExercise.setDueDate(ZonedDateTime.now().minusMinutes(2));
         quizExercise.setDuration(2);
-        quizExercise = request.putWithResponseBody("/api/quiz-exercises", quizExercise, QuizExercise.class, HttpStatus.OK);
+        quizExercise = request.get("/api/quiz-exercises/" + quizExercise.getId() + "/for-student", HttpStatus.OK, QuizExercise.class);
         assertThat(!quizExercise.isSubmissionAllowed());
         assertThat(quizExercise.isStarted());
 
