@@ -14,15 +14,12 @@ import { GroupNotification, GroupNotificationType } from 'app/entities/group-not
 import { Notification } from 'app/entities/notification.model';
 import { Course } from 'app/entities/course.model';
 
-type EntityResponseType = HttpResponse<Notification>;
-type EntityArrayResponseType = HttpResponse<Notification[]>;
-
 @Injectable({ providedIn: 'root' })
 export class NotificationService {
     public resourceUrl = SERVER_API_URL + 'api/notifications';
     notificationObserver: BehaviorSubject<Notification | null>;
     subscribedTopics: string[] = [];
-    cachedNotifications: Observable<EntityArrayResponseType>;
+    cachedNotifications: Observable<HttpResponse<Notification[]>>;
 
     constructor(private jhiWebsocketService: JhiWebsocketService, private router: Router, private http: HttpClient, private accountService: AccountService) {
         this.initNotificationObserver();
@@ -31,48 +28,48 @@ export class NotificationService {
     /**
      * Create new notification.
      * @param {Notification} notification
-     * @return Observable<EntityResponseType>
+     * @return Observable<HttpResponse<Notification>>
      */
-    create(notification: Notification): Observable<EntityResponseType> {
+    create(notification: Notification): Observable<HttpResponse<Notification>> {
         const copy = this.convertDateFromClient(notification);
         return this.http
             .post<Notification>(this.resourceUrl, copy, { observe: 'response' })
-            .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
+            .pipe(map((res: HttpResponse<Notification>) => this.convertDateFromServer(res)));
     }
 
     /**
      * Update existing notification.
      * @param {Notification} notification
-     * @return Observable<EntityResponseType>
+     * @return Observable<HttpResponse<Notification>>
      */
-    update(notification: Notification): Observable<EntityResponseType> {
+    update(notification: Notification): Observable<HttpResponse<Notification>> {
         const copy = this.convertDateFromClient(notification);
         return this.http
             .put<Notification>(this.resourceUrl, copy, { observe: 'response' })
-            .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
+            .pipe(map((res: HttpResponse<Notification>) => this.convertDateFromServer(res)));
     }
 
     /**
      * Find notification by id.
      * @param {number} id
-     * @return Observable<EntityResponseType>
+     * @return Observable<HttpResponse<Notification>>
      */
-    find(id: number): Observable<EntityResponseType> {
+    find(id: number): Observable<HttpResponse<Notification>> {
         return this.http
             .get<Notification>(`${this.resourceUrl}/${id}`, { observe: 'response' })
-            .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
+            .pipe(map((res: HttpResponse<Notification>) => this.convertDateFromServer(res)));
     }
 
     /**
      * Query all notifications.
      * @param req request options
-     * @return Observable<EntityArrayResponseType>
+     * @return Observable<HttpResponse<Notification[]>>
      */
-    query(req?: any): Observable<EntityArrayResponseType> {
+    query(req?: any): Observable<HttpResponse<Notification[]>> {
         const options = createRequestOption(req);
         return this.http
             .get<Notification[]>(this.resourceUrl, { params: options, observe: 'response' })
-            .pipe(map((res: EntityArrayResponseType) => this.convertDateArrayFromServer(res)));
+            .pipe(map((res: HttpResponse<Notification[]>) => this.convertDateArrayFromServer(res)));
     }
 
     /**
@@ -90,14 +87,14 @@ export class NotificationService {
         });
     }
 
-    protected convertDateFromServer(res: EntityResponseType): EntityResponseType {
+    protected convertDateFromServer(res: HttpResponse<Notification>): HttpResponse<Notification> {
         if (res.body) {
             res.body.notificationDate = res.body.notificationDate != null ? moment(res.body.notificationDate) : null;
         }
         return res;
     }
 
-    protected convertDateArrayFromServer(res: EntityArrayResponseType): EntityArrayResponseType {
+    protected convertDateArrayFromServer(res: HttpResponse<Notification[]>): HttpResponse<Notification[]> {
         if (res.body) {
             res.body.forEach((notification: Notification) => {
                 notification.notificationDate = notification.notificationDate != null ? moment(notification.notificationDate) : null;
@@ -192,7 +189,7 @@ export class NotificationService {
      * Init new observer for notifications and reset topics.
      */
     public cleanUp(): void {
-        this.cachedNotifications = new Observable<EntityArrayResponseType>();
+        this.cachedNotifications = new Observable<HttpResponse<Notification[]>>();
         this.initNotificationObserver();
         this.subscribedTopics = [];
     }
