@@ -6,9 +6,6 @@ import { ApollonDiagramCreateFormComponent } from 'app/exercises/quiz/manage/apo
 import { ApollonDiagramService } from 'app/exercises/quiz/manage/apollon-diagrams/apollon-diagram.service';
 import { ApollonDiagram } from 'app/entities/apollon-diagram.model';
 import { UMLDiagramType } from 'app/entities/modeling-exercise.model';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { Course } from 'app/entities/course.model';
-import { AccountService } from 'app/core/auth/account.service';
 
 @Component({
     selector: 'jhi-apollon-diagram-list',
@@ -20,12 +17,9 @@ export class ApollonDiagramListComponent implements OnInit {
     predicate: string;
     reverse: boolean;
     courseId: number;
-    course: Course;
 
     constructor(
         private apollonDiagramsService: ApollonDiagramService,
-        private courseService: CourseManagementService,
-        private accountService: AccountService,
         private jhiAlertService: AlertService,
         private modalService: NgbModal,
         private route: ActivatedRoute,
@@ -40,28 +34,14 @@ export class ApollonDiagramListComponent implements OnInit {
      */
     ngOnInit() {
         this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
-        this.courseService.find(this.courseId).subscribe(
-            (courseResponse) => {
-                this.course = courseResponse.body!;
-                this.course.isAtLeastTutor = this.accountService.isAtLeastTutorInCourse(this.course);
-                this.course.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.course);
-
-                this.load();
-            }
+        this.apollonDiagramsService.getDiagramsByCourse(this.courseId).subscribe(
+            (response) => {
+                this.apollonDiagrams = response.body!;
+            },
+            () => {
+                this.jhiAlertService.error('artemisApp.apollonDiagram.home.error.loading');
+            },
         );
-    }
-
-    load() {
-        if (this.course.isAtLeastTutor || this.course.isAtLeastInstructor) {
-            this.apollonDiagramsService.getDiagramsByCourse(this.courseId).subscribe(
-                (response) => {
-                    this.apollonDiagrams = response.body!;
-                },
-                () => {
-                    this.jhiAlertService.error('artemisApp.apollonDiagram.home.error.loading');
-                },
-            );
-        }
     }
 
     /**
