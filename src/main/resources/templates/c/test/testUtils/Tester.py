@@ -4,6 +4,7 @@ from testUtils.Utils import printTester, getTesterOutput, clearTesterOutputCache
 from testUtils.junit.Junit import Junit
 from testUtils.junit.TestSuite import TestSuite
 from time import time
+from time import sleep
 
 class Tester:
     name: str
@@ -33,12 +34,14 @@ class Tester:
             else:
                 printTester("Running test case '{}' with no timeout...".format(name))
             
+            sleep(2)
             # Reset the tester output cache:
             resetStdoutLimit()
             setStdoutLimitEnabled(True)
             clearTesterOutputCache()
             
             test.start(testResults, self.suite)
+            
             
             setStdoutLimitEnabled(False)
             printTester("Finished test case '{}' in {} seconds.".format(name, test.case.time.total_seconds()))
