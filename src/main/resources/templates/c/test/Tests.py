@@ -30,7 +30,7 @@ def main():
     tester.addTest(TestOutput(makefileLocation, 26, "aAbByYzZ123!%&/()Oau", [testCompile.name], name="TestOutput_26"))
 
     # Random RotX tests:
-    for i in range(0,10):
+    for i in range(0,5):
         tester.addTest(TestOutput(makefileLocation, randint(26, 2626), __getRandomSting(randint(10, 20)), [testCompile.name], name="TestOutputRandom_" + str(i)))
 
     # Sanitizer:
