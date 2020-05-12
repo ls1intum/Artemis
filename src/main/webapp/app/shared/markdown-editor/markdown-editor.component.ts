@@ -30,6 +30,7 @@ import { CodeCommand } from 'app/shared/markdown-editor/commands/code.command';
 import { DomainCommand } from 'app/shared/markdown-editor/domainCommands/domainCommand';
 import { UnorderedListCommand } from 'app/shared/markdown-editor/commands/unorderedListCommand';
 import { HeadingThreeCommand } from 'app/shared/markdown-editor/commands/headingThree.command';
+import { AlertService } from 'app/core/alert/alert.service';
 
 export enum MarkdownEditorHeight {
     SMALL = 200,
@@ -150,7 +151,12 @@ export class MarkdownEditorComponent implements AfterViewInit {
     @Input()
     enableFileUpload = true;
 
-    constructor(private artemisMarkdown: ArtemisMarkdownService, private $window: WindowRef, private fileUploaderService: FileUploaderService) {}
+    constructor(
+        private artemisMarkdown: ArtemisMarkdownService,
+        private $window: WindowRef,
+        private fileUploaderService: FileUploaderService,
+        private jhiAlertService: AlertService,
+    ) {}
 
     /** {boolean} true when the plane html view is needed, false when the preview content is needed from the parent */
     get showDefaultPreview(): boolean {
@@ -412,10 +418,19 @@ export class MarkdownEditorComponent implements AfterViewInit {
         files.forEach((file: File) => {
             this.fileUploaderService.uploadFile(file).then(
                 (res) => {
-                    const textToAdd = `<img src="${res.path}" alt="${file.name}" > \n`;
+                    const extension = file.name.split('.').pop()!.toLocaleLowerCase();
+                    let textToAdd;
+                    if (extension === 'pdf' || extension === 'zip') {
+                        textToAdd = `![](${res.path})`;
+                    } else {
+                        textToAdd = `<img src="${res.path}" alt="${file.name}" > \n`;
+                    }
                     aceEditor.insert(textToAdd);
                 },
-                () => {},
+                (error: Error) => {
+                    const jhiAlert = this.jhiAlertService.error(error.message);
+                    jhiAlert.msg = error.message;
+                },
             );
         });
     }
