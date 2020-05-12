@@ -104,7 +104,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
      * debounced function to reset 'justSubmitted', so that time since last submission is displayed again when no submission has been made for at least 2 seconds
      * @type {Function}
      */
-    timeoutJustSaved: Function = _.debounce(() => {
+    timeoutJustSaved = _.debounce(() => {
         this.justSaved = false;
     }, 2000);
 
