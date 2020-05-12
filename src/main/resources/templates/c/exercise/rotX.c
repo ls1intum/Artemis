@@ -1,1 +1,1 @@
-// Do magic ╰( ͡° ͜ʖ ͡° )つ──☆*:・ﾟ and implement your "Rot X" programm here.
+// Do magic and implement your "Rot X" programm here.

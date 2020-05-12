@@ -153,7 +153,8 @@ exit 0</command>
           </logTexts>
           <EscalateStatus>false</EscalateStatus>
           <RunIfJobSuccessful>false</RunIfJobSuccessful>
-          <script>mv  &quot;test-reports&quot; results</script>
+          <script>sed -i 's///g' test-reports/tests-results.xml
+mv  "test-reports" results</script>
         </hudson.plugins.postbuildtask.TaskProperties>
       </tasks>
     </hudson.plugins.postbuildtask.PostbuildTask>
