@@ -44,6 +44,7 @@ export class ListOfComplaintsComponent implements OnInit {
         private location: Location,
         private modalService: NgbModal,
     ) {}
+
     /** Subscribes to params and triggers loadComplaints() */
     ngOnInit(): void {
         this.route.params.subscribe((params) => {
@@ -56,6 +57,7 @@ export class ListOfComplaintsComponent implements OnInit {
         this.route.data.subscribe((data) => (this.complaintType = data.complaintType));
         this.loadComplaints();
     }
+
     /** Loads the complaints list */
     loadComplaints() {
         let complaintResponse: Observable<HttpResponse<Complaint[]>>;
@@ -87,6 +89,7 @@ export class ListOfComplaintsComponent implements OnInit {
             () => (this.loading = false),
         );
     }
+
     /** opens the assessment editor of the corresponding exercise type */
     openAssessmentEditor(complaint: Complaint) {
         if (!complaint || !complaint.result || !complaint.result.participation || !complaint.result.submission) {
@@ -126,13 +129,15 @@ export class ListOfComplaintsComponent implements OnInit {
         console.error(error);
         this.jhiAlertService.error('error.http.400', null, undefined);
     }
-    /** navigation to the previous view*/
+
+    /** navigation to the previous view */
     back() {
         this.location.back();
     }
 
     callback() {}
-    /** toggle between showing addressed and open complaints*/
+
+    /** toggle between showing addressed and open complaints */
     triggerAddressedComplaints() {
         this.showAddressedComplaints = !this.showAddressedComplaints;
 
@@ -142,9 +147,10 @@ export class ListOfComplaintsComponent implements OnInit {
             this.complaintsToShow = this.complaints.filter((complaint) => complaint.accepted === undefined);
         }
     }
-    /** highlights complaints older than a week
+    /**
+     * highlights complaints older than a week
      * @param {Complaint} complaint - the complaint to be highlighted
-     * */
+     */
     shouldHighlightComplaint(complaint: Complaint) {
         // Reviewed complaints shouldn't be highlight
         if (complaint.accepted !== undefined) {
