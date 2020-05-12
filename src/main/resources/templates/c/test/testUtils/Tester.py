@@ -33,8 +33,7 @@ class Tester:
                 printTester("Running test case '{}' with a {} second timeout...".format(name, test.timeoutSec))
             else:
                 printTester("Running test case '{}' with no timeout...".format(name))
-            
-            sleep(2)
+
             # Reset the tester output cache:
             resetStdoutLimit()
             setStdoutLimitEnabled(True)
