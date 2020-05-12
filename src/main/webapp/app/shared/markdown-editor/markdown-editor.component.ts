@@ -10,6 +10,7 @@ import { Interactable } from '@interactjs/core/Interactable';
 import interact from 'interactjs';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { FileUploaderService } from 'app/shared/http/file-uploader.service';
+import { AlertService } from 'app/core/alert/alert.service';
 import { ColorSelectorComponent } from 'app/shared/color-selector/color-selector.component';
 import { DomainTagCommand } from './domainCommands/domainTag.command';
 import { escapeStringForUseInRegex } from 'app/shared/util/global.utils';
@@ -30,7 +31,6 @@ import { CodeCommand } from 'app/shared/markdown-editor/commands/code.command';
 import { DomainCommand } from 'app/shared/markdown-editor/domainCommands/domainCommand';
 import { UnorderedListCommand } from 'app/shared/markdown-editor/commands/unorderedListCommand';
 import { HeadingThreeCommand } from 'app/shared/markdown-editor/commands/headingThree.command';
-import { AlertService } from 'app/core/alert/alert.service';
 
 export enum MarkdownEditorHeight {
     SMALL = 200,
@@ -378,6 +378,7 @@ export class MarkdownEditorComponent implements AfterViewInit {
      * @param {any} $event
      */
     onFileUpload($event: any): void {
+        console.log($event);
         if ($event.target.files.length >= 1) {
             this.embedFiles(Array.from($event.target.files));
         }
@@ -410,6 +411,31 @@ export class MarkdownEditorComponent implements AfterViewInit {
     }
 
     /**
+     * @function onFilePaste
+     * @desc handle paste of files
+     * @param {ClipboardEvent} $event
+     */
+    onFilePaste($event: ClipboardEvent): void {
+        if ($event.clipboardData?.items) {
+            // Use DataTransferItemList interface to access the file(s)
+            const files = [];
+            for (let i = 0; i < $event.clipboardData.items.length; i++) {
+                // If dropped items aren't files, reject them
+                if ($event.clipboardData.items[i].kind === 'file') {
+                    const file = $event.clipboardData.items[i].getAsFile();
+                    if (file) {
+                        files.push(file);
+                    }
+                }
+            }
+            this.embedFiles(files);
+        } else if ($event.clipboardData?.files) {
+            // Use DataTransfer interface to access the file(s)
+            this.embedFiles(Array.from($event.clipboardData.files));
+        }
+    }
+
+    /**
      * @function embedFiles
      * @desc generate and embed markdown code for files
      * @param {FileList} files
@@ -422,7 +448,7 @@ export class MarkdownEditorComponent implements AfterViewInit {
                     const extension = file.name.split('.').pop()!.toLocaleLowerCase();
                     let textToAdd;
                     if (extension === 'pdf' || extension === 'zip') {
-                        textToAdd = `![](${res.path})`;
+                        textToAdd = `![${file.name}](${res.path}) \n`;
                     } else {
                         textToAdd = `<img src="${res.path}" alt="${file.name}" > \n`;
                     }

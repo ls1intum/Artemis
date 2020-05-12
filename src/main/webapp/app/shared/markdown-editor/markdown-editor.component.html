@@ -15,6 +15,7 @@
                         [class.file-input]="enableFileUpload"
                         (dragover)="enableFileUpload ? $event.preventDefault() : ''"
                         (drop)="enableFileUpload ? onFileDrop($event) : ''"
+                        (paste)="enableFileUpload ? onFilePaste($event): ''"
                     ></ace-editor>
                     <!-- manual input for file upload -->
                     <ng-container *ngIf="enableFileUpload">
