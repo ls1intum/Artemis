@@ -31,14 +31,14 @@ public class JenkinsBuildPlanCreatorProvider {
      */
     public JenkinsXmlConfigBuilder builderFor(ProgrammingLanguage programmingLanguage) {
         switch (programmingLanguage) {
-        case JAVA:
-            return javaJenkinsBuildPlanCreator;
-        case PYTHON:
-            return pythonJenkinsBuildPlanCreator;
-        case C:
-            return cJenkinsBuildPlanCreator;
-        default:
-            throw new IllegalArgumentException("Unsupported programming language for new Jenkins job!");
+            case JAVA:
+                return javaJenkinsBuildPlanCreator;
+            case PYTHON:
+                return pythonJenkinsBuildPlanCreator;
+            case C:
+                return cJenkinsBuildPlanCreator;
+            default:
+                throw new IllegalArgumentException("Unsupported programming language for new Jenkins job!");
         }
     }
 }
