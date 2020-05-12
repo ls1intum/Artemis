@@ -17,6 +17,9 @@ import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service'
 import { AlertService } from 'app/core/alert/alert.service';
 import { formatTeamAsSearchResult } from 'app/exercises/shared/team/team.utils';
 
+/**
+ * Property for filtering participations
+ */
 enum FilterProp {
     ALL = 'all',
     FAILED = 'failed',
@@ -86,6 +89,9 @@ export class ParticipationComponent implements OnInit, OnDestroy {
         this.dialogErrorSource.unsubscribe();
     }
 
+    /**
+     * Load all participations for exercise 'exerciseId' of route params
+     */
     loadAll() {
         this.paramSub = this.route.params.subscribe((params) => {
             this.isLoading = true;
@@ -112,6 +118,10 @@ export class ParticipationComponent implements OnInit, OnDestroy {
         });
     }
 
+    /**
+     * Update the filter for participations
+     * @param newValue - Value of new filter option
+     */
     updateParticipationFilter(newValue: FilterProp) {
         this.isLoading = true;
         setTimeout(() => {
@@ -120,6 +130,10 @@ export class ParticipationComponent implements OnInit, OnDestroy {
         });
     }
 
+    /**
+     * Return true if participation matches the filterProp, else false.
+     * @param participation - Participation that is checked for filterProp
+     */
     filterParticipationByProp = (participation: Participation) => {
         switch (this.participationCriteria.filterProp) {
             case FilterProp.FAILED:
@@ -132,6 +146,10 @@ export class ParticipationComponent implements OnInit, OnDestroy {
         }
     };
 
+    /**
+     * Return True if participation has a failed submission, else false
+     * @param participation - Participation that is checked for failed submissions
+     */
     private hasFailedSubmission(participation: Participation) {
         const submissionStateObj = this.exerciseSubmissionState[participation.id];
         if (submissionStateObj) {
@@ -141,14 +159,25 @@ export class ParticipationComponent implements OnInit, OnDestroy {
         return false;
     }
 
+    /**
+     * Return id of participation
+     * @param index - NOT USED
+     * @param item - Participation whos Id is returned
+     */
     trackId(index: number, item: Participation) {
         return item.id;
     }
 
+    /**
+     * Subscribe to eventManager and call loadAll on every update
+     */
     registerChangeInParticipations() {
         this.eventSubscriber = this.eventManager.subscribe('participationListModification', () => this.loadAll());
     }
 
+    /**
+     * Return true if presentationScore is enabled, unequal to zero and if isAtLeastTutor in exercise is true, else false
+     */
     checkPresentationScoreConfig(): boolean {
         if (!this.exercise.course) {
             return false;
@@ -156,6 +185,10 @@ export class ParticipationComponent implements OnInit, OnDestroy {
         return this.exercise.isAtLeastTutor && this.exercise.course.presentationScore !== 0 && this.exercise.presentationScoreEnabled;
     }
 
+    /**
+     * If the presentationScore is enabled, set the participation presentationScore to 1 and use the participationService to update the presentation score
+     * @param participation - Participation that holds the presentationScore that is updated
+     */
     addPresentation(participation: StudentParticipation) {
         if (!this.presentationScoreEnabled) {
             return;
@@ -169,6 +202,10 @@ export class ParticipationComponent implements OnInit, OnDestroy {
         );
     }
 
+    /**
+     * If the presentationScore is enabled, set the participation presentationScore to 0 and use the participationService to update the presentation score
+     * @param participation - Participation that holds the presentationScore that is updated
+     */
     removePresentation(participation: StudentParticipation) {
         if (!this.presentationScoreEnabled) {
             return;
@@ -201,6 +238,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
             (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
         );
     }
+
     /**
      * Cleans programming exercise participation
      * @param programmingExerciseParticipation the id of the participation that we want to delete

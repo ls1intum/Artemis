@@ -10,6 +10,12 @@ export class ParticipationSubmissionPopupService {
         this.ngbModalRef = null;
     }
 
+    /**
+     * Open Modal window if it already exists, otherwise create new one and open it
+     * @param component - Component that should be displayed inside of the modal
+     * @param participationId - Id of participation that is displayed
+     * @param submissionId - Id of submission that is displayed
+     */
     open(component: Component, participationId?: number | any, submissionId?: number | any): Promise<NgbModalRef> {
         return new Promise<NgbModalRef>((resolve) => {
             if (this.ngbModalRef != null) {
@@ -23,6 +29,13 @@ export class ParticipationSubmissionPopupService {
         });
     }
 
+    /**
+     * Create a new modal reference
+     * @param component - Component that should be displayed inside of the modal
+     * @param participationId - Id of participation that is displayed
+     * @param submissionId - Id of submission that is displayed
+     * @return created modal reference
+     */
     participationModalRef(component: Component, participationId: number, submissionId: number): NgbModalRef {
         const modalRef: NgbModalRef = this.modalService.open(component, { size: 'lg', backdrop: 'static' });
         modalRef.componentInstance.participationId = participationId;
