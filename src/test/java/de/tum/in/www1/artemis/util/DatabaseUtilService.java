@@ -1351,8 +1351,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Generate submissions for a set of students for an exercise. Results are mixed.
-     * Student IDs start at firstStudent and are increased by 1 upto lastStudent.
+     * Generate submissions for a student for an exercise. Results are mixed.
      * @param quizExercise QuizExercise th submissions are for
      * @param studentID ID of the student
      * @param submitted Boolean if it is submitted or not
@@ -1375,7 +1374,6 @@ public class DatabaseUtilService {
     /**
      * Generate a submission with all or none options of a MultipleChoiceQuestion selected, if there is one in the exercise
      * @param quizExercise Exercise the submission is for
-     * @param student Student id
      * @param submitted Boolean whether it is submitted or not
      * @param submissionDate Submission date
      * @param selectEverything Boolean whether every answer option should be selected or none
