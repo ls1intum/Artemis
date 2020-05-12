@@ -4,6 +4,7 @@ import { HttpResponse } from '@angular/common/http';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs/Subscription';
+import { filter } from 'rxjs/operators';
 import { Result } from 'app/entities/result.model';
 import * as moment from 'moment';
 import { User } from 'app/core/user/user.model';
@@ -16,7 +17,7 @@ import { SourceTreeService } from 'app/exercises/programming/shared/service/sour
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
 import { InitializationState, Participation } from 'app/entities/participation/participation.model';
-import { Exercise, ExerciseCategory, ExerciseType } from 'app/entities/exercise.model';
+import { Exercise, ExerciseCategory, ExerciseType, ParticipationStatus } from 'app/entities/exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { AssessmentType } from 'app/entities/assessment-type.model';
@@ -29,6 +30,8 @@ import { CourseExerciseSubmissionResultSimulationService } from 'app/course/mana
 import { ProgrammingExerciseSimulationUtils } from 'app/exercises/programming/shared/utils/programming-exercise-simulation-utils';
 import { AlertService } from 'app/core/alert/alert.service';
 import { ProgrammingExerciseSimulationService } from 'app/exercises/programming/manage/services/programming-exercise-simulation.service';
+import { TeamAssignmentPayload } from 'app/entities/team.model';
+import { TeamService } from 'app/exercises/shared/team/team.service';
 const MAX_RESULT_HISTORY_LENGTH = 5;
 
 @Component({
@@ -52,6 +55,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     public sortedHistoryResult: Result[]; // might be a subset of the actual results in combinedParticipation.results
     public exerciseCategories: ExerciseCategory[];
     private participationUpdateListener: Subscription;
+    private teamAssignmentUpdateListener: Subscription;
     studentParticipation: StudentParticipation | null;
     isAfterAssessmentDueDate: boolean;
     public gradingCriteria: GradingCriterion[];
@@ -82,6 +86,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         private programmingExerciseSimulationUtils: ProgrammingExerciseSimulationUtils,
         private jhiAlertService: AlertService,
         private programmingExerciseSimulationService: ProgrammingExerciseSimulationService,
+        private teamService: TeamService,
     ) {}
 
     ngOnInit() {
@@ -121,6 +126,9 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
                 this.participationWebsocketService.unsubscribeForLatestResultOfParticipation(this.studentParticipation.id, this.exercise!);
             }
         }
+        if (this.teamAssignmentUpdateListener) {
+            this.teamAssignmentUpdateListener.unsubscribe();
+        }
     }
 
     loadExercise() {
@@ -145,6 +153,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         }
 
         this.subscribeForNewResults();
+        this.subscribeToTeamAssignmentUpdates();
     }
 
     /**
@@ -238,6 +247,19 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         });
     }
 
+    /**
+     * Receives team assignment changes and applies them if they belong to this exercise
+     */
+    async subscribeToTeamAssignmentUpdates() {
+        this.teamAssignmentUpdateListener = (await this.teamService.teamAssignmentUpdates)
+            .pipe(filter(({ exerciseId }: TeamAssignmentPayload) => exerciseId === this.exercise?.id))
+            .subscribe((teamAssignment) => {
+                this.exercise!.studentAssignedTeamId = teamAssignment.teamId;
+                this.exercise!.studentParticipations = teamAssignment.studentParticipations;
+                this.exercise!.participationStatus = participationStatus(this.exercise!);
+            });
+    }
+
     backToCourse() {
         this.$location.back();
     }
@@ -321,11 +343,12 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     // ################## ONLY FOR LOCAL TESTING PURPOSE -- START ##################
 
     /**
-     * triggers the simulation of a participation and submission for the currently logged in user
+     * Triggers the simulation of a participation and submission for the currently logged in user
+     * This method will fail if used in production
      * This functionality is only for testing purposes(noVersionControlAndContinuousIntegrationAvailable)
      */
     simulateSubmission() {
-        this.programmingExerciseSimulationService.failsIfInProduction();
+        this.programmingExerciseSimulationService.failsIfInProduction(this.inProductionEnvironment);
         this.courseExerciseSubmissionResultSimulationService.simulateSubmission(this.exerciseId).subscribe(
             () => {
                 this.wasSubmissionSimulated = true;
@@ -338,14 +361,23 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * triggers the simulation of a result for the currently logged in user
+     * Triggers the simulation of a result for the currently logged in user
+     * This method will fail if used in production
      * This functionality is only for testing purposes(noVersionControlAndContinuousIntegrationAvailable)
      */
     simulateResult() {
-        this.programmingExerciseSimulationService.failsIfInProduction();
+        this.programmingExerciseSimulationService.failsIfInProduction(this.inProductionEnvironment);
         this.courseExerciseSubmissionResultSimulationService.simulateResult(this.exerciseId).subscribe(
-            () => {
+            (result) => {
+                // set the value to false in order to deactivate the result button
                 this.wasSubmissionSimulated = false;
+
+                // set these values in order to visualize the simulated result on the exercise details page
+                this.exercise!.participationStatus = ParticipationStatus.EXERCISE_SUBMITTED;
+                this.studentParticipation = <StudentParticipation>result.body!.participation;
+                this.studentParticipation.results = [];
+                this.studentParticipation.results[0] = result.body!;
+
                 this.jhiAlertService.success('artemisApp.exercise.resultCreationSuccessful');
             },
             () => {

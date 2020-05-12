@@ -131,17 +131,17 @@ public class ModelAssessmentConflictService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Conflict with id" + conflictId + "has already been resolved");
         }
         switch (storedConflict.getState()) {
-        case UNHANDLED:
-            // TODO Notify tutors
-            storedConflict.setState(EscalationState.ESCALATED_TO_TUTORS_IN_CONFLICT);
-            break;
-        case ESCALATED_TO_TUTORS_IN_CONFLICT:
-            // TODO Notify instructors
-            storedConflict.setState(EscalationState.ESCALATED_TO_INSTRUCTOR);
-            break;
-        default:
-            log.error("Escalating conflict {} with state {} failed .", conflictId, storedConflict.getState());
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Conflict: " + conflictId + " can´t be escalated");
+            case UNHANDLED:
+                // TODO Notify tutors
+                storedConflict.setState(EscalationState.ESCALATED_TO_TUTORS_IN_CONFLICT);
+                break;
+            case ESCALATED_TO_TUTORS_IN_CONFLICT:
+                // TODO Notify instructors
+                storedConflict.setState(EscalationState.ESCALATED_TO_INSTRUCTOR);
+                break;
+            default:
+                log.error("Escalating conflict {} with state {} failed .", conflictId, storedConflict.getState());
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Conflict: " + conflictId + " can´t be escalated");
         }
         modelAssessmentConflictRepository.save(storedConflict);
         return storedConflict;
@@ -201,12 +201,12 @@ public class ModelAssessmentConflictService {
             return true;
         }
         switch (conflict.getState()) {
-        case UNHANDLED:
-            return conflict.getCausingConflictingResult().getResult().getAssessor().equals(currentUser);
-        case ESCALATED_TO_TUTORS_IN_CONFLICT:
-            return conflict.getResultsInConflict().stream().anyMatch(conflictingResult -> conflictingResult.getResult().getAssessor().equals(currentUser));
-        default:
-            return false;
+            case UNHANDLED:
+                return conflict.getCausingConflictingResult().getResult().getAssessor().equals(currentUser);
+            case ESCALATED_TO_TUTORS_IN_CONFLICT:
+                return conflict.getResultsInConflict().stream().anyMatch(conflictingResult -> conflictingResult.getResult().getAssessor().equals(currentUser));
+            default:
+                return false;
         }
 
     }
@@ -231,21 +231,21 @@ public class ModelAssessmentConflictService {
      */
     private void resolveConflict(ModelAssessmentConflict conflict) {
         switch (conflict.getState()) {
-        case UNHANDLED:
-            conflict.setState(EscalationState.RESOLVED_BY_CAUSER);
-            conflict.setResolutionDate(ZonedDateTime.now());
-            break;
-        case ESCALATED_TO_TUTORS_IN_CONFLICT:
-            conflict.setState(EscalationState.RESOLVED_BY_OTHER_TUTORS);
-            conflict.setResolutionDate(ZonedDateTime.now());
-            break;
-        case ESCALATED_TO_INSTRUCTOR:
-            conflict.setState(EscalationState.RESOLVED_BY_INSTRUCTOR);
-            conflict.setResolutionDate(ZonedDateTime.now());
-            break;
-        default:
-            log.error("Tried to resolve already resolved conflict {}", conflict);
-            break;
+            case UNHANDLED:
+                conflict.setState(EscalationState.RESOLVED_BY_CAUSER);
+                conflict.setResolutionDate(ZonedDateTime.now());
+                break;
+            case ESCALATED_TO_TUTORS_IN_CONFLICT:
+                conflict.setState(EscalationState.RESOLVED_BY_OTHER_TUTORS);
+                conflict.setResolutionDate(ZonedDateTime.now());
+                break;
+            case ESCALATED_TO_INSTRUCTOR:
+                conflict.setState(EscalationState.RESOLVED_BY_INSTRUCTOR);
+                conflict.setResolutionDate(ZonedDateTime.now());
+                break;
+            default:
+                log.error("Tried to resolve already resolved conflict {}", conflict);
+                break;
         }
     }
 }

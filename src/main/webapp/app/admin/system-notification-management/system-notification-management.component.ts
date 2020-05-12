@@ -17,10 +17,10 @@ import { SystemNotificationService } from 'app/core/system-notification/system-n
 import { AlertService } from 'app/core/alert/alert.service';
 
 @Component({
-    selector: 'jhi-notification-mgmt',
-    templateUrl: './notification-management.component.html',
+    selector: 'jhi-system-notification-management',
+    templateUrl: './system-notification-management.component.html',
 })
-export class NotificationMgmtComponent implements OnInit, OnDestroy {
+export class SystemNotificationManagementComponent implements OnInit, OnDestroy {
     currentAccount: User;
     notifications: SystemNotification[];
     error: string;
@@ -158,7 +158,7 @@ export class NotificationMgmtComponent implements OnInit, OnDestroy {
      * Transitions to another page and/or sorting order
      */
     transition() {
-        this.router.navigate(['/admin/notification-management'], {
+        this.router.navigate(['/admin/system-notification-management'], {
             queryParams: {
                 page: this.page,
                 sort: this.predicate + ',' + (this.reverse ? 'asc' : 'desc'),

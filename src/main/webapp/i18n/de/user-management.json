@@ -33,7 +33,8 @@
         "createdDate": "Erstellt am",
         "lastModifiedBy": "Bearbeitet von",
         "lastModifiedDate": "Zuletzt bearbeitet",
-        "search": "Suche nach Nutzern: ",
+        "searchForUser": "Suche nach Nutzern: ",
+        "search": "Suche",
         "loading": "Laden...",
         "searchError": "Der Suchbegriff muss leer oder mindestens 3 Zeichen lang sein."
     }
