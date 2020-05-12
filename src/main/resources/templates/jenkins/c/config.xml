@@ -134,12 +134,10 @@ sed -i &quot;s~INCLUDEDIRS\s*=.*~${foundIncludeDirs}~; s~SOURCE\s*=.*~${foundSou
 # Actual build process:
 cd tests
 
-# Structural tests
 python3.6 Tests.py s
 rm Tests.py
 rm -rf ./tests
 
-# Behavior tests
 exit 0</command>
     </hudson.tasks.Shell>
   </builders>
