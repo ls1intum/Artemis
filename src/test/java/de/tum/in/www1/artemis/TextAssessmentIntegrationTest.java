@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis;
 
+import static java.util.Arrays.asList;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.ZonedDateTime;
@@ -18,6 +19,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
+import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
@@ -478,5 +480,43 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
         }
         var body = new TextAssessmentDTO(feedbacks);
         request.putWithResponseBodyAndParams(path, body, Result.class, httpStatus, params);
+    }
+
+    @Test
+    @WithMockUser(value = "tutor1", roles = "TA")
+    public void testTextBlocksAreConsistentWhenOpeningSameAssessmentTwiceWithAtheneEnabled() throws Exception {
+        TextSubmission textSubmission = ModelFactory.generateTextSubmission("This is Part 1, and this is Part 2. There is also Part 3.", Language.ENGLISH, true);
+        database.addTextSubmission(textExercise, textSubmission, "student1");
+        exerciseDueDatePassed();
+
+        var textBlock1 = new TextBlock().startIndex(0).endIndex(14).submission(textSubmission).automatic();
+        var textBlock2 = new TextBlock().startIndex(16).endIndex(34).submission(textSubmission).automatic();
+        var textBlock3 = new TextBlock().startIndex(36).endIndex(56).submission(textSubmission).automatic();
+        var blocks = asList(textBlock1, textBlock2, textBlock3);
+        blocks.forEach(b -> {
+            b.setTextFromSubmission();
+            b.computeId();
+        });
+        textBlockRepository.saveAll(blocks);
+
+        LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("lock", "true");
+
+        TextSubmission submission1stRequest = request.get("/api/exercises/" + textExercise.getId() + "/text-submission-without-assessment", HttpStatus.OK, TextSubmission.class,
+                params);
+
+        var blocksFrom1stRequest = submission1stRequest.getBlocks();
+        assertThat(blocksFrom1stRequest.toArray()).containsExactlyInAnyOrder(blocks.toArray());
+
+        final TextAssessmentDTO textAssessmentDTO = new TextAssessmentDTO();
+        textAssessmentDTO.setFeedbacks(asList(new Feedback().detailText("Test").credits(1d).reference(textBlock1.getId()).type(FeedbackType.MANUAL)));
+        textAssessmentDTO.setTextBlocks(blocksFrom1stRequest);
+        Result result = request.putWithResponseBody("/api/text-assessments/exercise/" + textExercise.getId() + "/result/" + submission1stRequest.getResult().getId() + "/submit",
+                textAssessmentDTO, Result.class, HttpStatus.OK);
+
+        Participation participation2ndRequest = request.get("/api/text-assessments/submission/" + textSubmission.getId(), HttpStatus.OK, Participation.class, params);
+        TextSubmission submission2ndRequest = (TextSubmission) (participation2ndRequest).getSubmissions().iterator().next();
+        var blocksFrom2ndRequest = submission2ndRequest.getBlocks();
+        assertThat(blocksFrom2ndRequest.toArray()).containsExactlyInAnyOrder(blocks.toArray());
     }
 }
