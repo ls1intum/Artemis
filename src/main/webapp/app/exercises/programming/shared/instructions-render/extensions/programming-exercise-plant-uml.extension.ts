@@ -16,10 +16,17 @@ export class ProgrammingExercisePlantUmlExtensionWrapper implements ArtemisShowd
 
     constructor(private programmingExerciseInstructionService: ProgrammingExerciseInstructionService, private plantUmlService: ProgrammingExercisePlantUmlService) {}
 
+    /**
+     * Sets latest result according to parameter.
+     * @param result - either a result or null.
+     */
     public setLatestResult(result: Result | null) {
         this.latestResult = result;
     }
 
+    /**
+     * Subscribes to injectableElementsFoundSubject.
+     */
     subscribeForInjectableElementsFound() {
         return this.injectableElementsFoundSubject.asObservable();
     }
@@ -45,6 +52,9 @@ export class ProgrammingExercisePlantUmlExtensionWrapper implements ArtemisShowd
         });
     }
 
+    /**
+     * Creates and returns an extension to current exercise.
+     */
     getExtension() {
         const extension: showdown.ShowdownExtension = {
             type: 'lang',

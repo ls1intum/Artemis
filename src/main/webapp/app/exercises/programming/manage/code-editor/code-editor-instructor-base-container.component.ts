@@ -21,6 +21,9 @@ import { ProgrammingExerciseStudentParticipation } from 'app/entities/participat
 import { SolutionProgrammingExerciseParticipation } from 'app/entities/participation/solution-programming-exercise-participation.model';
 import { DomainChange, DomainType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 
+/**
+ * Enumeration specifying the repository type
+ */
 export enum REPOSITORY {
     ASSIGNMENT = 'ASSIGNMENT',
     TEMPLATE = 'TEMPLATE',
@@ -28,6 +31,9 @@ export enum REPOSITORY {
     TEST = 'TEST',
 }
 
+/**
+ * Enumeration specifying the loading state
+ */
 export enum LOADING_STATE {
     CLEAR = 'CLEAR',
     INITIALIZING = 'INITIALIZING',
@@ -124,6 +130,9 @@ export abstract class CodeEditorInstructorBaseContainerComponent extends CodeEdi
         });
     }
 
+    /**
+     * Unsubscribe from paramSub and domainChangeSubscription if they are present, on component destruction
+     */
     ngOnDestroy() {
         if (this.domainChangeSubscription) {
             this.domainChangeSubscription.unsubscribe();
@@ -235,12 +244,24 @@ export abstract class CodeEditorInstructorBaseContainerComponent extends CodeEdi
         }
     }
 
+    /**
+     * Select the solution participation repository and navigate to it
+     */
     abstract selectSolutionParticipation(): void;
 
+    /**
+     * Select the template participation repository and navigate to it
+     */
     abstract selectTemplateParticipation(): void;
 
+    /**
+     * Select the assignment participation repository and navigate to it
+     */
     abstract selectAssignmentParticipation(): void;
 
+    /**
+     * Select the test repository and navigate to it
+     */
     abstract selectTestRepository(): void;
 
     /**

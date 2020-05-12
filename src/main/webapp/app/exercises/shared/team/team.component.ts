@@ -1,8 +1,5 @@
 import { Component, OnInit, ViewEncapsulation } from '@angular/core';
 import { Router } from '@angular/router';
-import { Subscription } from 'rxjs/Subscription';
-import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
-import { JhiAlertService, JhiEventManager } from 'ng-jhipster';
 import { ActivatedRoute } from '@angular/router';
 import { Team } from 'app/entities/team.model';
 import { TeamService } from 'app/exercises/shared/team/team.service';
@@ -11,11 +8,12 @@ import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service'
 import { User } from 'app/core/user/user.model';
 import { ButtonSize } from 'app/shared/components/button.component';
 import { AccountService } from 'app/core/auth/account.service';
+import { AlertService } from 'app/core/alert/alert.service';
 
 @Component({
     selector: 'jhi-team',
     templateUrl: './team.component.html',
-    styles: ['.date-tooltip { width: 115px !important }'],
+    styleUrls: ['./team.component.scss'],
     encapsulation: ViewEncapsulation.None,
 })
 export class TeamComponent implements OnInit {
@@ -23,20 +21,15 @@ export class TeamComponent implements OnInit {
 
     team: Team;
     exercise: Exercise;
-
-    filteredStudentsSize = 0;
-
-    paramSub: Subscription;
     isLoading: boolean;
+    isTransitioning: boolean;
 
     currentUser: User;
     isAdmin = false;
 
     constructor(
         private route: ActivatedRoute,
-        private participationService: ParticipationService,
-        private jhiAlertService: JhiAlertService,
-        private eventManager: JhiEventManager,
+        private jhiAlertService: AlertService,
         private exerciseService: ExerciseService,
         private teamService: TeamService,
         private accountService: AccountService,
@@ -48,21 +41,36 @@ export class TeamComponent implements OnInit {
         });
     }
 
+    /**
+     * Fetches the exercise and team from the server
+     */
     ngOnInit() {
-        this.load();
-    }
-
-    load() {
-        this.paramSub = this.route.params.subscribe((params) => {
-            this.isLoading = true;
+        this.route.params.subscribe((params) => {
+            this.setLoadingState(true);
             this.exerciseService.find(params['exerciseId']).subscribe((exerciseResponse) => {
                 this.exercise = exerciseResponse.body!;
+                this.exercise.isAtLeastTutor = this.accountService.isAtLeastTutorInCourse(this.exercise.course!);
+                this.exercise.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.exercise.course!);
                 this.teamService.find(this.exercise, params['teamId']).subscribe((teamResponse) => {
                     this.team = teamResponse.body!;
-                    this.isLoading = false;
-                });
-            });
-        });
+                    this.setLoadingState(false);
+                }, this.onLoadError);
+            }, this.onLoadError);
+        }, this.onLoadError);
+    }
+
+    private setLoadingState(loading: boolean) {
+        if (this.exercise && this.team && !this.isLoading) {
+            this.isTransitioning = loading;
+        } else {
+            this.isLoading = loading;
+        }
+    }
+
+    private onLoadError(error: any) {
+        console.error(error);
+        this.jhiAlertService.error(error.message);
+        this.isLoading = false;
     }
 
     /**
@@ -82,33 +90,4 @@ export class TeamComponent implements OnInit {
     onTeamDelete() {
         this.router.navigate(['/course-management', this.exercise.course?.id, 'exercises', this.exercise.id, 'teams']);
     }
-
-    /**
-     * Update the number of filtered students
-     *
-     * @param filteredStudentsSize Total number of students after filters have been applied
-     */
-    handleStudentsSizeChange = (filteredStudentsSize: number) => {
-        this.filteredStudentsSize = filteredStudentsSize;
-    };
-
-    /**
-     * Formats the results in the autocomplete overlay.
-     *
-     * @param student
-     */
-    searchResultFormatter = (student: User) => {
-        const { login, name } = student;
-        return `${name} (${login})`;
-    };
-
-    /**
-     * Converts a student object to a string that can be searched for. This is
-     * used by the autocomplete select inside the data table.
-     *
-     * @param student Student that was selected
-     */
-    searchTextFromStudent = (student: User): string => {
-        return student.login || '';
-    };
 }

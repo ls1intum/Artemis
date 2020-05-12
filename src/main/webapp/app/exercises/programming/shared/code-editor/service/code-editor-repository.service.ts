@@ -106,9 +106,8 @@ export class CodeEditorBuildLogService extends DomainDependentEndpointService {
         const [domainType, domainValue] = this.domain;
         if (domainType === DomainType.PARTICIPATION) {
             return this.buildLogService.getBuildLogs(domainValue.id);
-        } else {
-            return this.buildLogService.getTestRepositoryBuildLogs(domainValue.id);
         }
+        return of([]);
     };
 }
 
@@ -121,11 +120,18 @@ export class CodeEditorRepositoryFileService extends DomainDependentEndpointServ
         super(http, jhiWebsocketService, domainService);
     }
 
+    /**
+     * Calls ngOnDestroy of super and unsubscribes from current service.
+     */
     ngOnDestroy() {
         super.ngOnDestroy();
         this.jhiWebsocketService.unsubscribe(this.fileUpdateUrl);
     }
 
+    /**
+     * Calls setDomain of super and updates fileUpdateUrl. If this service is used at the time complete usage and unsubscribe.
+     * @param domain - defines new domain of super.
+     */
     setDomain(domain: DomainChange) {
         super.setDomain(domain);
         if (this.fileUpdateSubject) {

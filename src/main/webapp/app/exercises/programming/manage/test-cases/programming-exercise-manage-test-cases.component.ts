@@ -12,6 +12,9 @@ import { ProgrammingExerciseService } from 'app/exercises/programming/manage/ser
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ProgrammingExerciseTestCaseService } from 'app/exercises/programming/manage/services/programming-exercise-test-case.service';
 
+/**
+ * Describes the editableField
+ */
 export enum EditableField {
     WEIGHT = 'weight',
 }
@@ -44,19 +47,33 @@ export class ProgrammingExerciseManageTestCasesComponent implements OnInit, OnDe
     // This flag means that the test cases were edited, but no submission run was triggered yet.
     hasUpdatedTestCases = false;
 
+    /**
+     * Returns the value of testcases
+     */
     get testCases() {
         return this.testCasesValue;
     }
 
+    /**
+     * Sets value of the testcases
+     * @param testCases the test cases which should be set
+     */
     set testCases(testCases: ProgrammingExerciseTestCase[]) {
         this.testCasesValue = testCases;
         this.updateTestCaseFilter();
     }
 
+    /**
+     * Returns the value of showInactive
+     */
     get showInactive() {
         return this.showInactiveValue;
     }
 
+    /**
+     * Sets the value of showInactive
+     * @param showInactive the value which should be set
+     */
     set showInactive(showInactive: boolean) {
         this.editing = null;
         this.showInactiveValue = showInactive;
@@ -118,6 +135,9 @@ export class ProgrammingExerciseManageTestCasesComponent implements OnInit, OnDe
         });
     }
 
+    /**
+     * If there is an existing subscription, unsubscribe
+     */
     ngOnDestroy(): void {
         if (this.testCaseSubscription) {
             this.testCaseSubscription.unsubscribe();
@@ -130,6 +150,10 @@ export class ProgrammingExerciseManageTestCasesComponent implements OnInit, OnDe
         }
     }
 
+    /**
+     *  Subscribes to test case updates
+     *  updates the list of test cases
+     */
     private subscribeForTestCaseUpdates() {
         if (this.testCaseSubscription) {
             this.testCaseSubscription.unsubscribe();
@@ -144,6 +168,10 @@ export class ProgrammingExerciseManageTestCasesComponent implements OnInit, OnDe
             .subscribe();
     }
 
+    /**
+     *  Subscribes to test case changes
+     *  checks if the test cases have changed
+     */
     private subscribeForExerciseTestCasesChangedUpdates() {
         if (this.testCaseChangedSubscription) {
             this.testCaseChangedSubscription.unsubscribe();

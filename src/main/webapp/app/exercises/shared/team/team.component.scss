@@ -1,0 +1,14 @@
+@import 'src/main/webapp/content/scss/artemis-variables';
+
+.date-tooltip {
+    width: 115px !important;
+}
+
+.team-short-name {
+    padding: 0.3rem 0.6rem 0;
+    background: rgba(0, 0, 180, 0.05);
+    border-radius: 3px;
+    font-size: 100%;
+    line-height: 1.2;
+    color: #053d97;
+}

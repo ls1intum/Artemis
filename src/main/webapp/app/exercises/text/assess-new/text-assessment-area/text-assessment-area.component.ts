@@ -28,10 +28,16 @@ export class TextAssessmentAreaComponent implements OnChanges {
     @Output() textBlockRefsChange = new EventEmitter<TextBlockRef[]>();
     selectedRef: TextBlockRef | null = null;
 
+    /**
+     * Life cycle hook to indicate component change
+     */
     ngOnChanges(): void {
         this.textBlockRefs.sort((a, b) => a.block.startIndex - b.block.startIndex);
     }
 
+    /**
+     * Emit the reference change of text blocks
+     */
     textBlockRefsChangeEmit(): void {
         this.textBlockRefsChange.emit(this.textBlockRefs);
     }
