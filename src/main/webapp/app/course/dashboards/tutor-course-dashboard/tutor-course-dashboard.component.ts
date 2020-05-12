@@ -88,7 +88,7 @@ export class TutorCourseDashboardComponent implements OnInit, AfterViewInit {
                     const [finishedExercises, unfinishedExercises] = partition(
                         this.course.exercises,
                         (exercise) =>
-                            exercise.numberOfAssessments === exercise.numberOfParticipations &&
+                            exercise.numberOfAssessments === exercise.numberOfInTimeSubmissions &&
                             exercise.numberOfOpenComplaints === 0 &&
                             exercise.numberOfOpenMoreFeedbackRequests === 0,
                     );

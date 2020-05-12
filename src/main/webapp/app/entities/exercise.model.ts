@@ -83,7 +83,7 @@ export abstract class Exercise implements BaseEntity {
     public gradingCriteria: GradingCriterion[];
 
     // transient objects which might not be set
-    public numberOfParticipations?: number;
+    public numberOfInTimeSubmissions?: number;
     public numberOfLateSubmissions?: number;
     public numberOfAssessments?: number;
     public numberOfLateAssessments?: number;

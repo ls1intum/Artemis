@@ -502,7 +502,7 @@ public class CourseResource {
 
             exerciseService.calculateNrOfOpenComplaints(exercise);
 
-            exercise.setNumberOfParticipations(numberOfInTimeSubmissions);
+            exercise.setNumberOfInTimeSubmissions(numberOfInTimeSubmissions);
             exercise.setNumberOfLateSubmissions(numberOfLateSubmissions);
             exercise.setNumberOfAssessments(numberOfAssessments);
             exercise.setNumberOfLateAssessments(numberOfLateAssessments);
@@ -543,7 +543,8 @@ public class CourseResource {
         }
         StatsForInstructorDashboardDTO stats = new StatsForInstructorDashboardDTO();
 
-        final long numberOfInTimeSubmissions = submissionService.countInTimeSubmissionsForCourse(courseId) + programmingExerciseService.countSubmissionsByCourseIdSubmitted(courseId);
+        final long numberOfInTimeSubmissions = submissionService.countInTimeSubmissionsForCourse(courseId)
+                + programmingExerciseService.countSubmissionsByCourseIdSubmitted(courseId);
         stats.setNumberOfInTimeSubmissions(numberOfInTimeSubmissions);
 
         final long numberOfLateSubmissions = submissionService.countLateSubmissionsForCourse(courseId);
@@ -637,7 +638,7 @@ public class CourseResource {
             final long numberOfMoreFeedbackRequests = complaintService.countMoreFeedbackRequestsByExerciseId(exercise.getId());
             final long numberOfComplaints = complaintService.countComplaintsByExerciseId(exercise.getId());
 
-            exercise.setNumberOfParticipations(numberOfInTimeSubmissions);
+            exercise.setNumberOfInTimeSubmissions(numberOfInTimeSubmissions);
             exercise.setNumberOfLateSubmissions(numberOfLateSubmissions);
             exercise.setNumberOfAssessments(numberOfAssessments);
             exercise.setNumberOfComplaints(numberOfComplaints);
@@ -685,9 +686,10 @@ public class CourseResource {
 
         stats.setNumberOfStudents(courseService.countNumberOfStudentsForCourse(course));
 
-        final long numberOfSubmissions = submissionService.countInTimeSubmissionsForCourse(courseId) + programmingExerciseService.countSubmissionsByCourseIdSubmitted(courseId);
+        final long numberOfInTimeSubmissions = submissionService.countInTimeSubmissionsForCourse(courseId)
+                + programmingExerciseService.countSubmissionsByCourseIdSubmitted(courseId);
 
-        stats.setNumberOfInTimeSubmissions(numberOfSubmissions);
+        stats.setNumberOfInTimeSubmissions(numberOfInTimeSubmissions);
         stats.setNumberOfAssessments(resultService.countNumberOfAssessments(courseId));
 
         final long startT = System.currentTimeMillis();

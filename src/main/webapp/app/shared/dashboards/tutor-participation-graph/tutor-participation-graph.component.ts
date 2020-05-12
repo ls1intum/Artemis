@@ -12,7 +12,7 @@ import { TutorParticipation, TutorParticipationStatus } from 'app/entities/parti
 })
 export class TutorParticipationGraphComponent implements OnInit, OnChanges {
     @Input() public tutorParticipation: TutorParticipation;
-    @Input() public numberOfParticipations: number;
+    @Input() public numberOfInTimeSubmissions: number;
     @Input() public numberOfLateSubmissions: number;
     @Input() public numberOfAssessments: number;
     @Input() public numberOfLateAssessments: number;
@@ -80,8 +80,8 @@ export class TutorParticipationGraphComponent implements OnInit, OnChanges {
      * Function to calculate the percentage of the number of assessments divided by the number of participations
      */
     calculatePercentageAssessmentProgress() {
-        if (this.numberOfParticipations !== 0) {
-            this.percentageAssessmentProgress = Math.round((this.numberOfAssessments / this.numberOfParticipations) * 100);
+        if (this.numberOfInTimeSubmissions !== 0) {
+            this.percentageAssessmentProgress = Math.round((this.numberOfAssessments / this.numberOfInTimeSubmissions) * 100);
         }
         if (this.numberOfLateSubmissions !== 0) {
             this.percentageLateAssessmentProgress = Math.round((this.numberOfLateAssessments / this.numberOfLateSubmissions) * 100);
@@ -147,7 +147,7 @@ export class TutorParticipationGraphComponent implements OnInit, OnChanges {
 
         if (
             this.tutorParticipationStatus === this.COMPLETED ||
-            this.numberOfParticipations === this.numberOfAssessments ||
+            this.numberOfInTimeSubmissions === this.numberOfAssessments ||
             this.numberOfOpenComplaints + this.numberOfOpenMoreFeedbackRequests === 0
         ) {
             return 'active';

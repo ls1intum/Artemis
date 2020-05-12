@@ -99,7 +99,7 @@
                         <td>{{ exercise.title }}</td>
                         <td>{{ exercise.dueDate | date: 'medium' }}</td>
                         <td>{{ exercise.assessmentDueDate | date: 'medium' }}</td>
-                        <td>{{ exercise.numberOfParticipations }}</td>
+                        <td>{{ exercise.numberOfInTimeSubmissions }}</td>
                         <td>{{ exercise.numberOfComplaints }}</td>
                         <td>{{ exercise.numberOfMoreFeedbackRequests }}</td>
                         <td class="text-center">
@@ -107,15 +107,15 @@
                                 <div
                                     class="progress-bar"
                                     role="progressbar"
-                                    [ngClass]="calculateClass(exercise.numberOfAssessments, exercise.numberOfParticipations)"
-                                    [style.width]="calculatePercentage(exercise.numberOfAssessments, exercise.numberOfParticipations) + '%'"
-                                    attr.aria-valuenow="{{ calculatePercentage(exercise.numberOfAssessments, exercise.numberOfParticipations) }}"
+                                    [ngClass]="calculateClass(exercise.numberOfAssessments, exercise.numberOfInTimeSubmissions)"
+                                    [style.width]="calculatePercentage(exercise.numberOfAssessments, exercise.numberOfInTimeSubmissions) + '%'"
+                                    attr.aria-valuenow="{{ calculatePercentage(exercise.numberOfAssessments, exercise.numberOfInTimeSubmissions) }}"
                                     aria-valuemin="0"
                                     aria-valuemax="100"
                                 >
                                     <span class="justify-content-center d-flex position-absolute w-100 text-dark">
-                                        {{ exercise.numberOfAssessments }} / {{ exercise.numberOfParticipations }} ({{
-                                            calculatePercentage(exercise.numberOfAssessments, exercise.numberOfParticipations)
+                                        {{ exercise.numberOfAssessments }} / {{ exercise.numberOfInTimeSubmissions }} ({{
+                                            calculatePercentage(exercise.numberOfAssessments, exercise.numberOfInTimeSubmissions)
                                         }}%)
                                     </span>
                                 </div>

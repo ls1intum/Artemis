@@ -152,7 +152,7 @@ public abstract class Exercise implements Serializable {
 
     // NOTE: Helpers variable names must be different from Getter name, so that Jackson ignores the @Transient annotation, but Hibernate still respects it
     @Transient
-    private Long numberOfParticipationsTransient;
+    private Long numberOfInTimeSubmissionsTransient;
 
     @Transient
     private Long numberOfLateSubmissionsTransient;
@@ -818,12 +818,12 @@ public abstract class Exercise implements Serializable {
         this.tutorParticipations = tutorParticipations;
     }
 
-    public Long getNumberOfParticipations() {
-        return numberOfParticipationsTransient;
+    public Long getNumberOfInTimeSubmissions() {
+        return numberOfInTimeSubmissionsTransient;
     }
 
-    public void setNumberOfParticipations(Long numberOfParticipations) {
-        this.numberOfParticipationsTransient = numberOfParticipations;
+    public void setNumberOfInTimeSubmissions(Long numberOfnumberOfInTimeSubmissions) {
+        this.numberOfInTimeSubmissionsTransient = numberOfnumberOfInTimeSubmissions;
     }
 
     public Long getNumberOfLateSubmissions() {
