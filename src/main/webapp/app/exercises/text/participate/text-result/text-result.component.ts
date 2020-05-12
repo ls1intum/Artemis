@@ -93,6 +93,11 @@ export class TextResultComponent {
         }
     }
 
+    /**
+     * Returns an empty array if the feedback is empty or the credits of the feedback equal 0.
+     * Returns an array that is filled with 1 otherwise.
+     * @param textResultBlock of type {TextResultBlock}
+     */
     public repeatForEachCredit(textResultBlock: TextResultBlock): number[] {
         if (!textResultBlock.feedback || textResultBlock.feedback.credits === 0) {
             return [];
@@ -102,6 +107,10 @@ export class TextResultComponent {
         return new Array(value).fill(1);
     }
 
+    /**
+     * Creates translation string for each text result block's credit(s).
+     * @param textResultBlock of type {TextResultBlock}
+     */
     public creditsTranslationForTextResultBlock(textResultBlock: TextResultBlock): string {
         const singular = Math.abs(textResultBlock.feedback!.credits || 0) === 1;
 

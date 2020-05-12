@@ -13,6 +13,11 @@ export type EntityResponseType = HttpResponse<TextSubmission>;
 export class TextSubmissionService {
     constructor(private http: HttpClient) {}
 
+    /**
+     * Adds a text submission to the exercise with the given id.
+     * @param textSubmission of type {TextSubmission}
+     * @param exerciseId of type {number}
+     */
     create(textSubmission: TextSubmission, exerciseId: number): Observable<EntityResponseType> {
         const copy = TextSubmissionService.convert(textSubmission);
         return this.http
@@ -22,6 +27,11 @@ export class TextSubmissionService {
             .pipe(map((res: EntityResponseType) => TextSubmissionService.convertResponse(res)));
     }
 
+    /**
+     * Updates the given text submission for the exercise with the given id.
+     * @param textSubmission of type {TextSubmission}
+     * @param exerciseId of type {number}
+     */
     update(textSubmission: TextSubmission, exerciseId: number): Observable<EntityResponseType> {
         const copy = TextSubmissionService.convert(textSubmission);
         return this.http
@@ -32,6 +42,11 @@ export class TextSubmissionService {
             .pipe(map((res: EntityResponseType) => TextSubmissionService.convertResponse(res)));
     }
 
+    /**
+     * Get all text submissions for the exercise with the given id.
+     * @param exerciseId id of the exercise for which the submissions should be retrieved of type {number}
+     * @param req
+     */
     getTextSubmissionsForExercise(exerciseId: number, req: { submittedOnly?: boolean; assessedByTutor?: boolean }): Observable<HttpResponse<TextSubmission[]>> {
         const options = createRequestOption(req);
         return this.http
@@ -42,7 +57,12 @@ export class TextSubmissionService {
             .pipe(map((res: HttpResponse<TextSubmission[]>) => TextSubmissionService.convertArrayResponse(res)));
     }
 
-    // option = 'head': Do not optimize assessment order. Only used to check if assessments available.
+    /**
+     * Get the text submission for the exercise with the given id.
+     * option = 'head': Do not optimize assessment order. Only used to check if assessments available.
+     * @param exerciseId id of the exercise for that the text submission should be retrieved of type {number}
+     * @param option whether to optimize assessment order or not
+     */
     getTextSubmissionForExerciseWithoutAssessment(exerciseId: number, option?: 'lock' | 'head'): Observable<TextSubmission> {
         let url = `api/exercises/${exerciseId}/text-submission-without-assessment`;
         if (option) {

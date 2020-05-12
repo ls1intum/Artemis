@@ -5,7 +5,10 @@ export interface OrientationConfiguration {
     maximumSize?: number;
 }
 
-/* Orientation of the tour step position next to the highlighted element */
+/**
+ * Orientation of the tour step position next to the highlighted element.
+ * @enum {string}
+ */
 export enum Orientation {
     BOTTOM = 'bottom',
     BOTTOMLEFT = 'bottom-left',
@@ -17,11 +20,19 @@ export enum Orientation {
     TOPRIGHT = 'top-right',
 }
 
+/**
+ * State of the guided tour (started or finished)
+ * @enum {string}
+ */
 export enum GuidedTourState {
     STARTED,
     FINISHED,
 }
 
+/**
+ * Position of the overlay.
+ * @enum {string}
+ */
 export enum OverlayPosition {
     TOP = 'top',
     LEFT = 'left',
@@ -30,6 +41,10 @@ export enum OverlayPosition {
     ELEMENT = 'element',
 }
 
+/**
+ * Type of the required user interaction.
+ * @enum {string}
+ */
 export enum UserInteractionEvent {
     /** Listen for click events */
     CLICK = 'click',
@@ -42,11 +57,19 @@ export enum UserInteractionEvent {
     ASSESS_SUBMISSION = 'assess-submission',
 }
 
+/**
+ * Direction.
+ * @enum {string}
+ */
 export enum Direction {
     VERTICAL = 'vertical',
     HORIZONTAL = 'horizontal',
 }
 
+/**
+ * Type that defines what should be reset if the tour is restarted.
+ * @enum {string}
+ */
 export enum ResetParticipation {
     EXERCISE_PARTICIPATION = 'exercise-participation',
     TUTOR_ASSESSMENT = 'tutor-assessment',

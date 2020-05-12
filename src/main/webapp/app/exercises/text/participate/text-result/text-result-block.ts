@@ -2,6 +2,10 @@ import { Feedback } from 'app/entities/feedback.model';
 import { TextBlock } from 'app/entities/text-block.model';
 import { convertToHtmlLinebreaks, escapeString } from 'app/utils/text.utils';
 
+/**
+ * Feedback type that can be positive, negative, neutral and blank.
+ * @enum {string}
+ */
 enum FeedbackType {
     POSITIVE = 'positive',
     NEGATIVE = 'negative',

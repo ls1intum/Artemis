@@ -13,5 +13,8 @@ export class TextEditorScoreCardComponent implements OnInit {
 
     constructor() {}
 
+    /**
+     * Will be executed on component initialization.
+     */
     ngOnInit() {}
 }

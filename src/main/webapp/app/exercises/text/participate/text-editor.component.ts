@@ -63,6 +63,9 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
         this.isSaving = false;
     }
 
+    /**
+     * Loads the participation on component initialization.
+     */
     ngOnInit() {
         const participationId = Number(this.route.snapshot.paramMap.get('participationId'));
         if (Number.isNaN(participationId)) {
@@ -95,6 +98,9 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
         }
     }
 
+    /**
+     * Makes sure that answer in the text editor is submitted on component destruction.
+     */
     ngOnDestroy() {
         if (this.canDeactivate() && this.textExercise.id) {
             let newSubmission = new TextSubmission();
@@ -160,7 +166,10 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
         return null;
     }
 
-    // Displays the alert for confirming refreshing or closing the page if there are unsaved changes
+    /**
+     * Displays the alert for confirming refreshing or closing the page if there are unsaved changes.
+     * @param $event
+     */
     @HostListener('window:beforeunload', ['$event'])
     unloadNotification($event: any) {
         if (this.canDeactivate()) {
@@ -168,10 +177,17 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
         }
     }
 
+    /**
+     * Checks if the current answer in the text editor was not already submitted.
+     */
     canDeactivate(): Observable<boolean> | boolean {
         return this.submission.text !== this.answer;
     }
 
+    /**
+     * Submit a text submission created with this text editor. Will also make sure that
+     * the submission will be delivered with over the participation websocket service.
+     */
     submit() {
         if (this.isSaving) {
             return;
@@ -230,12 +246,21 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
         return { ...this.submission, text: answer, language: this.textService.predictLanguage(answer) };
     }
 
+    /**
+     * Callback for custom receiveSubmission event that is emitted if submission is synced for team.
+     * @param submission that is received of type {TextSubmission}
+     */
     onReceiveSubmissionFromTeam(submission: TextSubmission) {
         submission.participation.exercise = this.textExercise;
         submission.participation.submissions = [submission];
         this.updateParticipation(submission.participation as StudentParticipation);
     }
 
+    /**
+     * Callback for keydown event that is emitted if user enters a tab.
+     * @param editor text area html element of type {HTMLTextAreaElement}
+     * @param event emitted of type {KeyboardEvent}
+     */
     onTextEditorTab(editor: HTMLTextAreaElement, event: KeyboardEvent) {
         event.preventDefault();
         const value = editor.value;
@@ -246,6 +271,10 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
         editor.selectionStart = editor.selectionEnd = start + 1;
     }
 
+    /**
+     * Callback for input event on text editor.
+     * @param event emitted of type {Event}
+     */
     onTextEditorInput(event: Event) {
         this.textEditorInput.next((<HTMLTextAreaElement>event.target).value);
     }

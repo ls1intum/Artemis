@@ -10,6 +10,11 @@ export class TextEditorService {
 
     constructor(private http: HttpClient) {}
 
+    /**
+     * Gets the data needed for the text editor, which includes the participation, textSubmission with
+     * answer if existing and the assessments if the submission was already submitted.
+     * @param id the id of the participation for which to find the data for the text editor
+     */
     get(id: number): Observable<any> {
         return this.http.get(`api/text-editor/${id}`, { responseType: 'json' });
     }
