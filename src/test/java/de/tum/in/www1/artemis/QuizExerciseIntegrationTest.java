@@ -432,7 +432,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
 
         // submission with everything selected
         QuizSubmission quizSubmission = database.generateSpecialSubmissionWithResult(quizExercise, true, now.minusSeconds(3), true);
-        QuizSubmission quizSubmissionPractice = database.generateSpecialSubmissionWithResult(quizExercise, true, now.minusSeconds(3), true);
+        QuizSubmission quizSubmissionPractice = database.generateSpecialSubmissionWithResult(quizExercise, true, now, true);
 
         database.addSubmission(quizExercise, quizSubmission, "student1");
         database.addSubmission(quizExercise, quizSubmissionPractice, "student1");
@@ -442,7 +442,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
 
         // submission with nothing selected
         quizSubmission = database.generateSpecialSubmissionWithResult(quizExercise, true, now.minusSeconds(3), false);
-        quizSubmissionPractice = database.generateSpecialSubmissionWithResult(quizExercise, true, now.minusSeconds(3), false);
+        quizSubmissionPractice = database.generateSpecialSubmissionWithResult(quizExercise, true, now, false);
 
         database.addSubmission(quizExercise, quizSubmission, "student5");
         database.addSubmission(quizExercise, quizSubmissionPractice, "student5");
