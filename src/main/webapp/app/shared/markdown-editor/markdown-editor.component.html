@@ -13,8 +13,8 @@
                         (textChange)="markdownChange.emit($event)"
                         class="form-control markdown-editor__content"
                         [class.file-input]="enableFileUpload"
-                        (dragover)="$event.preventDefault()"
-                        (drop)="onFileDrop($event)"
+                        (dragover)="enableFileUpload ? $event.preventDefault(): ''"
+                        (drop)="enableFileUpload ? onFileDrop($event) : ''"
                     ></ace-editor>
                     <!-- manual input for file upload -->
                     <ng-container *ngIf="enableFileUpload">
