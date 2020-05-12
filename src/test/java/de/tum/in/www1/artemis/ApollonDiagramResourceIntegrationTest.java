@@ -14,7 +14,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.DiagramType;
 import de.tum.in.www1.artemis.domain.modeling.ApollonDiagram;
 import de.tum.in.www1.artemis.repository.ApollonDiagramRepository;
@@ -63,8 +62,8 @@ public class ApollonDiagramResourceIntegrationTest extends AbstractSpringIntegra
 
         apollonDiagram = ModelFactory.generateApollonDiagram(DiagramType.ActivityDiagram, "activityDiagram1");
 
-        course1 = ModelFactory.generateCourse(1L, ZonedDateTime.now(), ZonedDateTime.now(), new HashSet<>(), "tumuser", "tutor", "instructor");
-        course2 = ModelFactory.generateCourse(2L, ZonedDateTime.now(), ZonedDateTime.now(), new HashSet<>(), "tumuser", "tutor", "instructor");
+        course1 = ModelFactory.generateCourse(null, ZonedDateTime.now(), ZonedDateTime.now(), new HashSet<>(), "tumuser", "tutor", "instructor");
+        course2 = ModelFactory.generateCourse(null, ZonedDateTime.now(), ZonedDateTime.now(), new HashSet<>(), "tumuser", "tutor", "instructor");
         courseRepo.save(course1);
         courseRepo.save(course2);
     }
@@ -74,9 +73,6 @@ public class ApollonDiagramResourceIntegrationTest extends AbstractSpringIntegra
         database.resetDatabase();
         apollonDiagram = null;
         apollonDiagramRepository.deleteAll();
-        course1 = null;
-        course2 = null;
-        courseRepo.deleteAll();
     }
 
     @Test
@@ -105,7 +101,6 @@ public class ApollonDiagramResourceIntegrationTest extends AbstractSpringIntegra
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
     public void testUpdateApollonDiagram_OK() throws Exception {
-        // Geht nicht durch
         apollonDiagram = apollonDiagramRepository.save(apollonDiagram);
         apollonDiagram.setTitle("updated title");
         apollonDiagram.setDiagramType(DiagramType.ClassDiagram);
@@ -126,7 +121,6 @@ public class ApollonDiagramResourceIntegrationTest extends AbstractSpringIntegra
     @Test
     @WithMockUser(username = "tutor2", roles = "TA")
     public void testUpdateApollonDiagram_AccessForbidden() throws Exception {
-        // Geht durch
         apollonDiagram = apollonDiagramRepository.save(apollonDiagram);
         apollonDiagram.setTitle("updated title");
         apollonDiagram.setDiagramType(DiagramType.ClassDiagram);
@@ -182,8 +176,8 @@ public class ApollonDiagramResourceIntegrationTest extends AbstractSpringIntegra
     public void testGetDiagramsByCourse_AccessForbidden() throws Exception {
         apollonDiagram.setCourseId(course1.getId());
         apollonDiagramRepository.save(apollonDiagram);
-        request.get("/api/apollon-diagrams/list/1", HttpStatus.FORBIDDEN, List.class);
-        request.get("/api/apollon-diagrams/list/2", HttpStatus.FORBIDDEN, List.class);
+        request.get("/api/apollon-diagrams/list/" + course1.getId(), HttpStatus.FORBIDDEN, List.class);
+        request.get("/api/apollon-diagrams/list/" + course2.getId(), HttpStatus.FORBIDDEN, List.class);
     }
 
     @Test
