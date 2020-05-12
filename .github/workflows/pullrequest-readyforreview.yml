@@ -1,15 +1,15 @@
 name: Pull Request Ready for Review
 on:
   pull_request:
-    types: [labeled]
+    types: [ready_for_review]
 
 jobs:
-  addToProject:
+  moveToReadyForReview:
     runs-on: ubuntu-latest
     steps:
       - name: Move to "Ready for review" column
-        if: github.event.label.name == 'ready for review'
-        uses: alex-page/github-project-automation-plus@v0.1.1
+        if: github.event.pull_request.draft == false
+        uses: alex-page/github-project-automation-plus@v0.2.3
         with:
           project: Artemis Development
           column: Ready for review
@@ -19,9 +19,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Request Reviews from @ls1intum/artemis Team
-        uses: rowi1de/auto-assign-review-teams@699242e
+        uses: rowi1de/auto-assign-review-teams@v1.0.0
         with:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           teams: "@ls1intum/artemis"
-          include-draft: true
           skip-with-manual-reviewers: 5

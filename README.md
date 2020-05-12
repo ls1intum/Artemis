@@ -23,7 +23,7 @@ Find here a guide on [how to set up your local development environment](/doc/set
 
 ## Server Setup for Programming Exercises
 
-You can find the guide for setting up Artemis in conjunction with Jenkins and GitLab [here](doc/jenkins-gitlab/JENKINS_AND_GITLAB_SETUP.md)
+You can find the guide for setting up Artemis in conjunction with Jenkins and GitLab [here](doc/jenkins-gitlab/JENKINS_AND_GITLAB_SETUP.md) and Bamboo/Bitbucket/Jira [here](doc/bamboo-bitbucket-jira/BAMBOO_BITBUCKET_JIRA_SETUP.md)
 
 ## Contributing 
 
