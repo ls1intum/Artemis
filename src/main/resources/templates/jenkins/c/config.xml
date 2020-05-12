@@ -154,7 +154,9 @@ exit 0</command>
           <EscalateStatus>false</EscalateStatus>
           <RunIfJobSuccessful>false</RunIfJobSuccessful>
           <script>sed -i &apos;s/&#x1b;//g&apos; test-reports/tests-results.xml&#xd;
-mv  &quot;test-reports&quot; results</script>
+sed -i &apos;s/&lt;skipped/&lt;error/g&apos; test-reports/tests-results.xml&#xd;
+sed -i &apos;s/&lt;\/skipped&gt;/&lt;\/error&gt;/g&apos; test-reports/tests-results.xml&#xd;
+mv test-reports results</script>
         </hudson.plugins.postbuildtask.TaskProperties>
       </tasks>
     </hudson.plugins.postbuildtask.PostbuildTask>
