@@ -56,7 +56,8 @@
             z-index: -1;
         }
 
-        &__file-input:focus, &__file-label:focus {
+        &__file-input:focus,
+        &__file-label:focus {
             outline: 1px dotted #000;
             outline: -webkit-focus-ring-color auto 5px;
         }

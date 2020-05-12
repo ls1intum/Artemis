@@ -13,7 +13,7 @@
                         (textChange)="markdownChange.emit($event)"
                         class="form-control markdown-editor__content"
                         [class.file-input]="enableFileUpload"
-                        (dragover)="enableFileUpload ? $event.preventDefault(): ''"
+                        (dragover)="enableFileUpload ? $event.preventDefault() : ''"
                         (drop)="enableFileUpload ? onFileDrop($event) : ''"
                     ></ace-editor>
                     <!-- manual input for file upload -->
