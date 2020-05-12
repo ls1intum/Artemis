@@ -24,6 +24,7 @@ export class ComplaintsForTutorComponent implements OnInit {
     ComplaintType = ComplaintType;
 
     constructor(private complaintService: ComplaintService, private jhiAlertService: AlertService, private complaintResponseService: ComplaintResponseService) {}
+
     /** Finds handled complaints by id */
     ngOnInit(): void {
         this.complaintText = this.complaint.complaintText;
@@ -36,9 +37,10 @@ export class ComplaintsForTutorComponent implements OnInit {
             });
         }
     }
-    /** Allows user to respond to a complaint or a more feedback request if they have the required rights
+    /**
+     * Allows user to respond to a complaint or a more feedback request if they have the required rights
      * @param acceptComplaint - flag that tells if a complaint is accepted or not
-     * */
+     */
     respondToComplaint(acceptComplaint: boolean): void {
         if (!this.complaintResponse.responseText || this.complaintResponse.responseText.length <= 0) {
             this.jhiAlertService.error('artemisApp.complaintResponse.noText');
