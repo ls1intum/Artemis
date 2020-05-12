@@ -55,18 +55,19 @@ public class ApollonDiagramResource {
     }
 
     /**
-     * POST /apollon-diagrams : Create a new apollonDiagram.
+     * POST /course/{courseId}/apollon-diagrams : Create a new apollonDiagram.
      *
      * @param apollonDiagram the apollonDiagram to create
+     * @param courseId the id of the current course
      * @return the ResponseEntity with status 201 (Created) and with body the new apollonDiagram, or with status 400 (Bad Request) if the apollonDiagram has already an ID
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
-    @PostMapping("/apollon-diagrams")
+    @PostMapping("/course/{courseId}/apollon-diagrams")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<ApollonDiagram> createApollonDiagram(@RequestBody ApollonDiagram apollonDiagram) throws URISyntaxException {
+    public ResponseEntity<ApollonDiagram> createApollonDiagram(@RequestBody ApollonDiagram apollonDiagram, @PathVariable Long courseId) throws URISyntaxException {
         log.debug("REST request to save ApollonDiagram : {}", apollonDiagram);
 
-        Course course = courseService.findOne(apollonDiagram.getCourseId());
+        Course course = courseService.findOne(courseId);
         User user = userService.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
             throw new AccessForbiddenException("You are not allowed to access this resource");
@@ -82,26 +83,27 @@ public class ApollonDiagramResource {
     }
 
     /**
-     * PUT /apollon-diagrams : Updates an existing apollonDiagram.
+     * PUT /course/{courseId}/apollon-diagrams : Updates an existing apollonDiagram.
      *
      * @param apollonDiagram the apollonDiagram to update
+     * @param courseId the id of the current course
      * @return the ResponseEntity with status 200 (OK) and with body the updated apollonDiagram, or with status 201 (CREATED) if the apollonDiagram has not been created before, or with status
      *         500 (Internal Server Error) if the apollonDiagram couldn't be updated
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
-    @PutMapping("/apollon-diagrams")
+    @PutMapping("/course/{courseId}/apollon-diagrams")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<ApollonDiagram> updateApollonDiagram(@RequestBody ApollonDiagram apollonDiagram) throws URISyntaxException {
+    public ResponseEntity<ApollonDiagram> updateApollonDiagram(@RequestBody ApollonDiagram apollonDiagram, @PathVariable Long courseId) throws URISyntaxException {
         log.debug("REST request to update ApollonDiagram : {}", apollonDiagram);
 
-        Course course = courseService.findOne(apollonDiagram.getCourseId());
+        Course course = courseService.findOne(courseId);
         User user = userService.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
             throw new AccessForbiddenException("You are not allowed to access this resource");
         }
 
         if (apollonDiagram.getId() == null) {
-            return createApollonDiagram(apollonDiagram);
+            return createApollonDiagram(apollonDiagram, courseId);
         }
         ApollonDiagram result = apollonDiagramRepository.save(apollonDiagram);
 
@@ -121,12 +123,12 @@ public class ApollonDiagramResource {
     }
 
     /**
-     * GET /apollon-diagrams/list/{courseId} : get all the apollonDiagrams for current course.
+     * GET /course/{courseId}/apollon-diagrams : get all the apollonDiagrams for current course.
      *
      * @param courseId id of current course
      * @return the ResponseEntity with status 200 (OK) and the list of apollonDiagrams in body
      */
-    @GetMapping("/apollon-diagrams/list/{courseId}")
+    @GetMapping("/course/{courseId}/apollon-diagrams")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public List<ApollonDiagram> getDiagramsByCourse(@PathVariable Long courseId) {
         log.debug("REST request to get ApollonDiagrams matching current course");
@@ -136,23 +138,25 @@ public class ApollonDiagramResource {
         if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
             throw new AccessForbiddenException("You are not allowed to access this resource");
         }
+
         return apollonDiagramRepository.findDiagramsByCourseId(courseId);
     }
 
     /**
-     * GET /apollon-diagrams/:id : get the "id" apollonDiagram.
+     * GET /course/{courseId}/apollon-diagrams/:id : get the "id" apollonDiagram.
      *
      * @param id the id of the apollonDiagram to retrieve
+     * @param courseId the id of the current course
      * @return the ResponseEntity with status 200 (OK) and with body the apollonDiagram, or with status 404 (Not Found)
      */
-    @GetMapping("/apollon-diagrams/{id}")
+    @GetMapping("/course/{courseId}/apollon-diagrams/{id}")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<ApollonDiagram> getApollonDiagram(@PathVariable Long id) {
+    public ResponseEntity<ApollonDiagram> getApollonDiagram(@PathVariable Long id, @PathVariable Long courseId) {
         log.debug("REST request to get ApollonDiagram : {}", id);
         Optional<ApollonDiagram> apollonDiagram = apollonDiagramRepository.findById(id);
 
         if (apollonDiagram.isPresent()) {
-            Course course = courseService.findOne(apollonDiagram.get().getCourseId());
+            Course course = courseService.findOne(courseId);
             User user = userService.getUserWithGroupsAndAuthorities();
             if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
                 throw new AccessForbiddenException("You are not allowed to access this resource");
@@ -163,19 +167,20 @@ public class ApollonDiagramResource {
     }
 
     /**
-     * DELETE /apollon-diagrams/:id : delete the "id" apollonDiagram.
+     * DELETE /course/{courseId}/apollon-diagrams/:id : delete the "id" apollonDiagram.
      *
      * @param id the id of the apollonDiagram to delete
+     * @param courseId the id of the current course
      * @return the ResponseEntity with status 200 (OK)
      */
-    @DeleteMapping("/apollon-diagrams/{id}")
+    @DeleteMapping("/course/{courseId}/apollon-diagrams/{id}")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Void> deleteApollonDiagram(@PathVariable Long id) {
+    public ResponseEntity<Void> deleteApollonDiagram(@PathVariable Long id, @PathVariable Long courseId) {
         log.debug("REST request to delete ApollonDiagram : {}", id);
 
         Optional<ApollonDiagram> apollonDiagram = apollonDiagramRepository.findById(id);
 
-        Course course = courseService.findOne(apollonDiagram.get().getCourseId());
+        Course course = courseService.findOne(courseId);
         User user = userService.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAtLeastInstructorInCourse(course, user)) {
             throw new AccessForbiddenException("You are not allowed to access this resource");
