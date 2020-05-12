@@ -76,7 +76,8 @@ jhi-tutor-participation-graph {
         background: orange !important;
     }
 
-    .orange ~ li::before, .orange ~ li::after {
+    .orange ~ li::before,
+    .orange ~ li::after {
         background: orange !important;
     }
 
@@ -97,7 +98,6 @@ jhi-tutor-participation-graph {
         margin-bottom: 1em;
 
         .stacked-item {
-
             &:first-child {
                 margin-top: 0;
 
@@ -114,7 +114,8 @@ jhi-tutor-participation-graph {
             margin-top: 0.5em;
             position: relative;
 
-            &::before, &::after {
+            &::before,
+            &::after {
                 content: '';
                 position: absolute;
                 top: 0.5em;
@@ -150,11 +151,16 @@ jhi-tutor-participation-graph {
         z-index: -1;
     }
 
-    .opaque::after, .opaque .stacked-item::before, .opaque .stacked-item::after {
+    .opaque::after,
+    .opaque .stacked-item::before,
+    .opaque .stacked-item::after {
         background: darkred;
     }
 
-    .orange ~ li .stacked-item::before, .orange ~ li .stacked-item::after, .orange::after, .orange .stacked-item::after {
+    .orange ~ li .stacked-item::before,
+    .orange ~ li .stacked-item::after,
+    .orange::after,
+    .orange .stacked-item::after {
         background: orange !important;
     }
 }
