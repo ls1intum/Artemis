@@ -40,6 +40,13 @@ spring:
     sleuth:
         sampler:
             probability: 1 # report 100% of traces
+    cloud:
+        discovery:
+            enabled: false
+        config:
+            discovery:
+                enabled: false
+            enabled: false
 
 server:
     port: 8080
