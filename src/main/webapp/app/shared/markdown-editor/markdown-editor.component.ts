@@ -30,7 +30,6 @@ import { CodeCommand } from 'app/shared/markdown-editor/commands/code.command';
 import { DomainCommand } from 'app/shared/markdown-editor/domainCommands/domainCommand';
 import { UnorderedListCommand } from 'app/shared/markdown-editor/commands/unorderedListCommand';
 import { HeadingThreeCommand } from 'app/shared/markdown-editor/commands/headingThree.command';
-import { SecuredImageComponent } from 'app/shared/image/secured-image.component';
 
 export enum MarkdownEditorHeight {
     SMALL = 200,
@@ -411,18 +410,12 @@ export class MarkdownEditorComponent implements AfterViewInit {
     embedFiles(files: File[]): void {
         const aceEditor = this.aceEditorContainer.getEditor();
         files.forEach((file: File) => {
-            const loadingText = `![uploading ${file.name}]()\n`;
-            aceEditor.insert(loadingText);
             this.fileUploaderService.uploadFile(file).then(
                 (res) => {
-                    aceEditor.undo();
-                    const textToAdd = `<img src="${res.path}" alt="${file.name}" > </img> \n`;
+                    const textToAdd = `<img src="${res.path}" alt="${file.name}" > \n`;
                     aceEditor.insert(textToAdd);
                 },
-                (err) => {
-                    aceEditor.undo();
-                    console.warn('error', err);
-                },
+                () => {},
             );
         });
     }

@@ -109,9 +109,7 @@ export class ArtemisMarkdownService {
             extensions: [...extensions, showdownKatex()],
         });
         const html = converter.makeHtml(markdownText);
-        console.warn('PRE', markdownText);
-        const clean = DOMPurify.sanitize(html, { ADD_TAGS: ['jhi-secured-image'], ADD_ATTR: ['src', 'alt', 'ng-reflect-src', 'ng-refelect-caching-strategy'] });
-        console.warn('POST', clean);
+        const clean = DOMPurify.sanitize(html, { ADD_TAGS: ['img'], ADD_ATTR: ['src', 'alt'] });
         return clean;
     }
 
