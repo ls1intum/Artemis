@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Course } from 'app/entities/course.model';
 import { CourseManagementService } from '../course/manage/course-management.service';
 import { ActivatedRoute } from '@angular/router';
@@ -7,6 +7,9 @@ import { HttpResponse } from '@angular/common/http';
 import { isOrion } from 'app/shared/orion/orion';
 import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
 import { CachingStrategy } from 'app/shared/image/secured-image.component';
+import { TeamService } from 'app/exercises/shared/team/team.service';
+import { TeamAssignmentPayload } from 'app/entities/team.model';
+import { participationStatus } from 'app/exercises/shared/exercise/exercise-utils';
 
 const DESCRIPTION_READ = 'isDescriptionRead';
 
@@ -15,7 +18,7 @@ const DESCRIPTION_READ = 'isDescriptionRead';
     templateUrl: './course-overview.component.html',
     styleUrls: ['course-overview.scss'],
 })
-export class CourseOverviewComponent implements OnInit {
+export class CourseOverviewComponent implements OnInit, OnDestroy {
     readonly isOrion = isOrion;
     CachingStrategy = CachingStrategy;
     private courseId: number;
@@ -24,18 +27,20 @@ export class CourseOverviewComponent implements OnInit {
     public courseDescription: string;
     public enableShowMore: boolean;
     public longTextShown: boolean;
+    private teamAssignmentUpdateListener: Subscription;
 
     constructor(
         private courseService: CourseManagementService,
         private courseCalculationService: CourseScoreCalculationService,
         private courseServer: CourseManagementService,
         private route: ActivatedRoute,
+        private teamService: TeamService,
     ) {}
 
     /**
      * On init, gets the course and adjusts its description
      */
-    ngOnInit() {
+    async ngOnInit() {
         this.subscription = this.route.params.subscribe((params) => {
             this.courseId = parseInt(params['courseId'], 10);
         });
@@ -49,6 +54,13 @@ export class CourseOverviewComponent implements OnInit {
             });
         }
         this.adjustCourseDescription();
+        await this.subscribeToTeamAssignmentUpdates();
+    }
+
+    ngOnDestroy() {
+        if (this.teamAssignmentUpdateListener) {
+            this.teamAssignmentUpdateListener.unsubscribe();
+        }
     }
 
     /**
@@ -80,5 +92,19 @@ export class CourseOverviewComponent implements OnInit {
     showShortDescription() {
         this.courseDescription = this.course!.description.substr(0, 50) + '...';
         this.longTextShown = false;
+    }
+
+    /**
+     * Receives team assignment changes and updates related attributes of the affected exercise
+     */
+    async subscribeToTeamAssignmentUpdates() {
+        this.teamAssignmentUpdateListener = (await this.teamService.teamAssignmentUpdates).subscribe((teamAssignment: TeamAssignmentPayload) => {
+            const exercise = this.course!.exercises.find((courseExercise) => courseExercise.id === teamAssignment.exerciseId);
+            if (exercise) {
+                exercise.studentAssignedTeamId = teamAssignment.teamId;
+                exercise.studentParticipations = teamAssignment.studentParticipations;
+                exercise.participationStatus = participationStatus(exercise);
+            }
+        });
     }
 }

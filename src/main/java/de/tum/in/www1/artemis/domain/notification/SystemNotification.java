@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.domain;
+package de.tum.in.www1.artemis.domain.notification;
 
 import java.io.Serializable;
 import java.time.ZonedDateTime;

@@ -195,7 +195,6 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnInit, On
         if ((result && result.successful) || (result && !result.successful && result.feedbacks && result.feedbacks.length)) {
             return of([]);
         } else {
-            // If the build failed, find out why
             return this.getBuildLogs();
         }
     }

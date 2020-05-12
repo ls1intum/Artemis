@@ -1,5 +1,4 @@
 const webpack = require('webpack');
-const { BaseHrefWebpackPlugin } = require('base-href-webpack-plugin');
 const CopyWebpackPlugin = require('copy-webpack-plugin');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const AngularCompilerPlugin = require('@ngtools/webpack').AngularCompilerPlugin;
@@ -31,26 +30,23 @@ module.exports = (options) => ({
                 test: /\.html$/,
                 loader: 'html-loader',
                 options: {
-                    minimize: true,
-                    caseSensitive: true,
-                    removeAttributeQuotes: false,
-                    minifyJS: false,
-                    minifyCSS: false
+                    minimize: {
+                        caseSensitive: true,
+                        removeAttributeQuotes: false,
+                        minifyJS: false,
+                        minifyCSS: false
+                    }
                 },
                 exclude: '/src/main/webapp/index.html'
             },
             {
-                test: /\.(jpe?g|png|gif|svg|ttf|woff|woff2?)$/i,
+                test: /\.(jpe?g|png|gif|svg|woff2?|ttf|eot)$/i,
                 loader: 'file-loader',
                 options: {
                     digest: 'hex',
                     hash: 'sha512',
                     name: 'content/[hash].[ext]'
                 }
-            },
-            {
-                test: /\.(eot)$/,
-                use: ['url-loader?limit=100000']
             },
             {
                 test: /manifest.webapp$/,
@@ -98,9 +94,9 @@ module.exports = (options) => ({
             template: './src/main/webapp/index.html',
             chunks: ['polyfills', 'main', 'global'],
             chunksSortMode: 'manual',
-            inject: 'body'
+            inject: 'body',
+            'base': '/'
         }),
-        new BaseHrefWebpackPlugin({ baseHref: '/' }),
         new AngularCompilerPlugin({
             mainPath: utils.root('src/main/webapp/app/app.main.ts'),
             tsConfigPath: utils.root('tsconfig.app.json'),

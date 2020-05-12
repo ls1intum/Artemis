@@ -13,5 +13,6 @@ export class ProfileInfo {
     externalUserManagementName: string;
     imprint: string;
     contact: string;
+    testServer: boolean;
     allowedMinimumOrionVersion: string;
 }

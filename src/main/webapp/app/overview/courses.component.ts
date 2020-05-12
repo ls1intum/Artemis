@@ -9,6 +9,7 @@ import { courseOverviewTour } from 'app/guided-tour/tours/course-overview-tour';
 import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
 import { Exercise } from 'app/entities/exercise.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
+import { TeamService } from 'app/exercises/shared/team/team.service';
 
 @Component({
     selector: 'jhi-overview',
@@ -28,7 +29,16 @@ export class CoursesComponent implements OnInit {
         private accountService: AccountService,
         private courseScoreCalculationService: CourseScoreCalculationService,
         private guidedTourService: GuidedTourService,
+        private teamService: TeamService,
     ) {}
+
+    /**
+     * Life cycle hook called by Angular to indicate that Angular is done creating the component
+     */
+    async ngOnInit() {
+        this.loadAndFilterCourses();
+        (await this.teamService.teamAssignmentUpdates).subscribe();
+    }
 
     /**
      * Loads all courses from server
@@ -42,13 +52,6 @@ export class CoursesComponent implements OnInit {
             },
             (response: string) => this.onError(response),
         );
-    }
-
-    /**
-     * Life cycle hook called by Angular to indicate that Angular is done creating the component
-     */
-    ngOnInit(): void {
-        this.loadAndFilterCourses();
     }
 
     private onError(error: string) {
