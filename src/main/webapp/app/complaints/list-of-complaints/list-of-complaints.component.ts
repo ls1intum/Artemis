@@ -87,7 +87,7 @@ export class ListOfComplaintsComponent implements OnInit {
             () => (this.loading = false),
         );
     }
-    /** opens the assessment editor of the corresponding exercise type*/
+    /** opens the assessment editor of the corresponding exercise type */
     openAssessmentEditor(complaint: Complaint) {
         if (!complaint || !complaint.result || !complaint.result.participation || !complaint.result.submission) {
             return;
