@@ -18,6 +18,7 @@ export class UnreferencedFeedbackComponent {
     public deleteAssessment(assessmentToDelete: Feedback): void {
         const indexToDelete = this.unreferencedFeedback.indexOf(assessmentToDelete);
         this.unreferencedFeedback.splice(indexToDelete, 1);
+        this.feedbacksChange.emit(this.unreferencedFeedback);
         this.validateFeedback();
     }
     /**
