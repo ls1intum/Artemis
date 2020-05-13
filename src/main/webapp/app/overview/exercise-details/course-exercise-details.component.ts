@@ -17,7 +17,7 @@ import { SourceTreeService } from 'app/exercises/programming/shared/service/sour
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
 import { InitializationState, Participation } from 'app/entities/participation/participation.model';
-import { Exercise, ExerciseCategory, ExerciseType } from 'app/entities/exercise.model';
+import { Exercise, ExerciseCategory, ExerciseType, ParticipationStatus } from 'app/entities/exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { AssessmentType } from 'app/entities/assessment-type.model';
@@ -343,11 +343,12 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     // ################## ONLY FOR LOCAL TESTING PURPOSE -- START ##################
 
     /**
-     * triggers the simulation of a participation and submission for the currently logged in user
+     * Triggers the simulation of a participation and submission for the currently logged in user
+     * This method will fail if used in production
      * This functionality is only for testing purposes(noVersionControlAndContinuousIntegrationAvailable)
      */
     simulateSubmission() {
-        this.programmingExerciseSimulationService.failsIfInProduction();
+        this.programmingExerciseSimulationService.failsIfInProduction(this.inProductionEnvironment);
         this.courseExerciseSubmissionResultSimulationService.simulateSubmission(this.exerciseId).subscribe(
             () => {
                 this.wasSubmissionSimulated = true;
@@ -360,14 +361,23 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * triggers the simulation of a result for the currently logged in user
+     * Triggers the simulation of a result for the currently logged in user
+     * This method will fail if used in production
      * This functionality is only for testing purposes(noVersionControlAndContinuousIntegrationAvailable)
      */
     simulateResult() {
-        this.programmingExerciseSimulationService.failsIfInProduction();
+        this.programmingExerciseSimulationService.failsIfInProduction(this.inProductionEnvironment);
         this.courseExerciseSubmissionResultSimulationService.simulateResult(this.exerciseId).subscribe(
-            () => {
+            (result) => {
+                // set the value to false in order to deactivate the result button
                 this.wasSubmissionSimulated = false;
+
+                // set these values in order to visualize the simulated result on the exercise details page
+                this.exercise!.participationStatus = ParticipationStatus.EXERCISE_SUBMITTED;
+                this.studentParticipation = <StudentParticipation>result.body!.participation;
+                this.studentParticipation.results = [];
+                this.studentParticipation.results[0] = result.body!;
+
                 this.jhiAlertService.success('artemisApp.exercise.resultCreationSuccessful');
             },
             () => {

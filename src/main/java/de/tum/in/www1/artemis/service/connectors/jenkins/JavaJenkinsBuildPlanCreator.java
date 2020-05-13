@@ -4,11 +4,6 @@ import java.net.URL;
 import java.nio.file.Path;
 import java.util.Map;
 
-import javax.annotation.PostConstruct;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.core.io.support.ResourcePatternUtils;
@@ -20,47 +15,10 @@ import de.tum.in.www1.artemis.service.util.XmlFileUtils;
 
 @Profile("jenkins")
 @Component
-public class JavaJenkinsBuildPlanCreator implements JenkinsXmlConfigBuilder {
-
-    private static final Logger log = LoggerFactory.getLogger(JavaJenkinsBuildPlanCreator.class);
-
-    private static final String REPLACE_TEST_REPO = "#testRepository";
-
-    private static final String REPLACE_ASSIGNMENT_REPO = "#assignmentRepository";
-
-    private static final String REPLACE_GIT_CREDENTIALS = "#gitCredentials";
-
-    private static final String REPLACE_ASSIGNMENT_CHECKOUT_PATH = "#assignmentCheckoutPath";
-
-    private static final String REPLACE_PUSH_TOKEN = "#secretPushToken";
-
-    private static final String REPLACE_ARTEMIS_NOTIFICATION_URL = "#notificationsUrl";
-
-    private static final String REPLACE_NOTIFICATIONS_TOKEN = "#jenkinsNotificationToken";
-
-    private String artemisNotificationUrl;
-
-    @Value("${artemis.continuous-integration.secret-push-token}")
-    private String pushToken;
-
-    @Value("${artemis.continuous-integration.vcs-credentials}")
-    private String gitCredentialsKey;
-
-    @Value("${server.url}")
-    private String ARTEMIS_SERVER_URL;
-
-    @Value("${artemis.continuous-integration.artemis-authentication-token-key}")
-    private String ARTEMIS_AUTHENTICATION_TOKEN_KEY;
-
-    private final ResourceLoader resourceLoader;
+public class JavaJenkinsBuildPlanCreator extends AbstractJenkinsBuildPlanCreator {
 
     public JavaJenkinsBuildPlanCreator(ResourceLoader resourceLoader) {
-        this.resourceLoader = resourceLoader;
-    }
-
-    @PostConstruct
-    public void init() {
-        this.artemisNotificationUrl = ARTEMIS_SERVER_URL + "/api" + Constants.NEW_RESULT_RESOURCE_PATH;
+        super(resourceLoader);
     }
 
     @Override
