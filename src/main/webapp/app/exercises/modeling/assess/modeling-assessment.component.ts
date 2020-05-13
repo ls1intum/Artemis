@@ -174,7 +174,7 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
     }
 
     /**
-     * Removes feedback elements for which the corremosponding model element does not exist in the model anymore.
+     * Removes feedback elements for which the corresponding model element does not exist in the model anymore.
      * @param feedbacks the list of feedback to filter
      */
     private removeInvalidFeedback(feedbacks: Feedback[]): Feedback[] {
