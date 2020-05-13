@@ -28,13 +28,13 @@ instructor, Artemis and students:
 
 The following activity diagram shows this exercise workflow.
 
-.. figure:: ExerciseWorkflow.png
+.. figure:: programming/ExerciseWorkflow.png
    :alt: Exercise Workflow
    :align: center
 
    Exercise Workflow
 
-:download:`Tutorial: Create Programming Exercises <Artemis Tutorial Setup Programming Exercises.pdf>`
+:download:`Tutorial: Create Programming Exercises <programming/Artemis Tutorial Setup Programming Exercises.pdf>`
 
 
 Online Editor
@@ -48,7 +48,7 @@ associated with a task or diagram element pass. This allows the students
 to immediately recognize which tasks are already fulfilled and is
 particularly helpful for programming beginners.
 
-.. figure:: CodeEditor.png
+.. figure:: programming/CodeEditor.png
    :alt: Online Editor
    :align: center
 
@@ -62,7 +62,7 @@ Control Adapter that allows to connect to multiple Version Control
 Systems. The other adapters for Continuous Integration and User
 Management have a similar structure
 
-.. figure:: VersionControlAdapter.png
+.. figure:: programming/VersionControlAdapter.png
    :alt: Version Control Adapter
    :align: center
 

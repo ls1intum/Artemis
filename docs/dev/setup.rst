@@ -136,8 +136,8 @@ information about the setup for programming exercises provided:
 .. toctree::
    :maxdepth: 1
 
-   Bamboo, Bitbucket and Jira <bamboo-bitbucket-jira/readme>
-   Jenkins and Gitlab <jenkins-gitlab/readme>
+   Bamboo, Bitbucket and Jira <setup/bamboo-bitbucket-jira>
+   Jenkins and Gitlab <setup/jenkins-gitlab>
 
 
 .. note::
@@ -243,12 +243,9 @@ instead of the TUM defaults:
 
 * The logo next to the “Artemis” heading on the navbar → ``${artemisRunDirectory}/public/images/logo.png``
 * The favicon → ``${artemisRunDirectory}/public/images/favicon.ico``
-* The privacy statement HTML →
-``${artemisRunDirectory}/public/content/privacy_statement.html``
-* The contact email address in the ``application-{dev,prod}.yml``
-configuration file under the key ``info.contact``
-* The imprint link in the ``application-{dev,prod}.yml`` configuration file under the key
-``info.imprint``
+* The privacy statement HTML → ``${artemisRunDirectory}/public/content/privacy_statement.html``
+* The contact email address in the ``application-{dev,prod}.yml`` configuration file under the key ``info.contact``
+* The imprint link in the ``application-{dev,prod}.yml`` configuration file under the key ``info.imprint``
 
 Alternative: Using docker-compose
 ---------------------------------
@@ -256,10 +253,8 @@ Alternative: Using docker-compose
 A full functioning development environment can also be set up using
 docker-compose:
 
-1. Install `docker <https://docs.docker.com/install/>`__ and
-   `docker-compose <https://docs.docker.com/compose/install/>`__
-2. Configure the credentials in ``application-artemis.yml`` in the
-   folder ``src/main/resources/config`` as described above
+1. Install `docker <https://docs.docker.com/install/>`__ and `docker-compose <https://docs.docker.com/compose/install/>`__
+2. Configure the credentials in ``application-artemis.yml`` in the folder ``src/main/resources/config`` as described above
 3. Run ``docker-compose up``
 4. Go to http://localhost:9000
 

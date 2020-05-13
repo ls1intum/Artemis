@@ -24,10 +24,6 @@ author = 'Technical University of Munich, Chair for Applied Software Engineering
 
 # -- General configuration ---------------------------------------------------
 
-# The document name of the “master” document, that is, the document
-# that contains the root toctree directive.
-master_doc = "readme"
-
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.

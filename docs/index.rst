@@ -12,7 +12,7 @@ Main features
 
 Artemis supports the following exercises:
 
-#. :doc:`Programming exercises <user/exercises/programming/readme>` with version control and automatic assessment with test cases and continuous integration
+#. :doc:`Programming exercises <user/exercises/programming>` with version control and automatic assessment with test cases and continuous integration
 #. :doc:`Quiz exercises <user/exercises/quiz>` with multiple choice, drag and drop and short answer quiz questions 
 #. :doc:`Modeling exercises <user/exercises/modeling>` with semi-automatic assessment using machine learning concepts
 #. :doc:`Textual exercises <user/exercises/textual>` with manual (and experimental semi-automatic) assessment
@@ -25,8 +25,8 @@ All these exercises are supposed to be run either live in the lecture with insta
    :includehidden:
    :maxdepth: 3
 
-   user/readme
-   user/exercises/readme
+   user/introduction
+   user/exercises
 
 
 .. toctree::
@@ -34,6 +34,6 @@ All these exercises are supposed to be run either live in the lecture with insta
    :includehidden:
    :maxdepth: 3
 
-   dev/contributing/readme
-   Setup <dev/setup/readme>
-   Guided Tour <dev/guided-tour/readme>
+   dev/contributing
+   Setup <dev/setup>
+   Guided Tour <dev/guided-tour>

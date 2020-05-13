@@ -77,12 +77,12 @@ under ``localhost:7990``.
 
     **Bamboo:**
 
-    .. figure:: bamboo_bitbucket_applicationLink.png
+    .. figure:: bamboo-bitbucket-jira/bamboo_bitbucket_applicationLink.png
        :align: center
 
        Bamboo → Bitbucket
 
-    .. figure:: bamboo_jira_applicationLink.png
+    .. figure:: bamboo-bitbucket-jira/bamboo_jira_applicationLink.png
        :align: center
 
        Bamboo → Jira
@@ -90,24 +90,24 @@ under ``localhost:7990``.
 
     **Bitbucket:**
 
-    .. figure:: bitbucket_bamboo_applicationLink.png
+    .. figure:: bamboo-bitbucket-jira/bitbucket_bamboo_applicationLink.png
        :align: center
 
        Bitbucket → Bamboo
 
-    .. figure:: bitbucket_jira_applicationLink.png
+    .. figure:: bamboo-bitbucket-jira/bitbucket_jira_applicationLink.png
        :align: center
 
        Bitbucket → Jira
 
     **Jira:**
 
-    .. figure:: jira_bamboo_applicationLink.png
+    .. figure:: bamboo-bitbucket-jira/jira_bamboo_applicationLink.png
        :align: center
 
        Jira → Bamboo
 
-    .. figure:: jira_bitbucket_applicationLink.png
+    .. figure:: bamboo-bitbucket-jira/jira_bitbucket_applicationLink.png
        :align: center
 
        Jira → Bitbucket
@@ -128,7 +128,7 @@ under ``localhost:7990``.
    Create one application for bitbucket and one for bamboo → add the
    IP-address ``0.0.0.0/0`` to IP Addresses
 
-    .. figure:: jira_add_application.png
+    .. figure:: bamboo-bitbucket-jira/jira_add_application.png
        :align: center
 
 
@@ -139,7 +139,7 @@ under ``localhost:7990``.
    minutes). Press synchronise after adding the directory, the users and
    groups should now be available.
 
-    .. figure:: user_directories.png
+    .. figure:: bamboo-bitbucket-jira/user_directories.png
        :align: center
 
 6. In Bamboo create a global variable named
@@ -210,7 +210,7 @@ e.g.:
 
    --spring.profiles.active=dev,bamboo,bitbucket,jira,artemis
 
-Please read :doc:`../readme` for more details.
+Please read :doc:`../setup` for more details.
 
 How to verify the connection works?
 -----------------------------------

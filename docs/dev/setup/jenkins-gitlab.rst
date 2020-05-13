@@ -66,7 +66,7 @@ In addition, you have to start Artemis with the profiles ``gitlab`` and
 
    --spring.profiles.active=dev,jenkins,gitlab,artemis
 
-Please read `Development Setup <doc/setup/SETUP.md>`__ for more details.
+Please read :doc:`../setup` for more details.
 
 Make sure to change the ``server.url`` value in ``application-dev.yml``
 or ``application-prod.yml`` accordingly. This value will be used for the
@@ -176,7 +176,7 @@ Start Gitlab
 8. Login to GitLab using the Artemis admin account and go to the profile
    settings (upper right corned → *Settings*)
 
-   .. figure:: gitlab_setting_button.png
+   .. figure:: jenkins-gitlab/gitlab_setting_button.png
       :align: center
 
 Gitlab Access Token
@@ -184,12 +184,12 @@ Gitlab Access Token
 
 9.  Go to *Access Tokens*
 
-   .. figure:: gitlab_access_tokens_button.png
+   .. figure:: jenkins-gitlab/gitlab_access_tokens_button.png
       :align: center
 
 10. Create a new token named “Artemis” and give it **all** rights.
 
-   .. figure:: artemis_gitlab_access_token.png
+   .. figure:: jenkins-gitlab/artemis_gitlab_access_token.png
       :align: center
 
 11. Copy the generated token and insert it into the Artemis
@@ -426,7 +426,7 @@ Start Jenkins
     Use ``OpenJDK 14`` as Name and
     ``/usr/lib/jvm/java-14-openjdk-amd64`` as JAVA_HOME
 
-   .. figure:: jenkins_jdk_config.png
+   .. figure:: jenkins-gitlab/jenkins_jdk_config.png
       :align: center
 
 Required Jenkins Plugins
@@ -460,7 +460,7 @@ Timestamper configuration, use the following value for both formats:
 
        '<b>'yyyy-MM-dd'T'HH:mm:ssX'</b> '
 
-.. figure:: timestamper_config.png
+.. figure:: jenkins-gitlab/timestamper_config.png
    :align: center
 
 Server Notification Plugin
@@ -477,7 +477,7 @@ You can download the current release of the plugin
 Jenkins → Manage Plugins*) and install the downloaded file under the
 *Advanced* tab under *Upload Plugin*
 
-.. figure:: jenkins_custom_plugin.png
+.. figure:: jenkins-gitlab/jenkins_custom_plugin.png
    :align: center
 
 Jenkins Credentials
@@ -494,7 +494,7 @@ GitLab API Token
    instructions on how to create such a token follow `Gitlab Access
    Token <#Gitlab-Access-Token>`__.
 
-   .. figure:: gitlab_jenkins_token_rights.png
+   .. figure:: jenkins-gitlab/gitlab_jenkins_token_rights.png
       :align: center
 
 2. Copy the generated token and create new Jenkins credentials:
@@ -510,7 +510,7 @@ GitLab API Token
    dropdown. After you click on “Test Connection”, everything should
    work fine.
 
-   .. figure:: jenkins_gitlab_configuration.png
+   .. figure:: jenkins-gitlab/jenkins_gitlab_configuration.png
       :align: center
 
 Server Notification Token
@@ -592,7 +592,7 @@ the following steps:
 
 7.  Apply these change to the plan (i.e. click on *Apply*)
 
-   .. figure:: jenkins_test_project.png
+   .. figure:: jenkins-gitlab/jenkins_test_project.png
       :align: center
 
 8.  Perform a *GET* request to the following URL (e.g. with Postman)
@@ -610,7 +610,7 @@ the following steps:
 
         <secretToken>{$some-long-encrypted-value}</secretToken>
 
-   .. figure:: jenkins_project_config_xml.png
+   .. figure:: jenkins-gitlab/jenkins_project_config_xml.png
       :align: center
       
       Job configuration XML

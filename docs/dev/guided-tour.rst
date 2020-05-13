@@ -22,7 +22,7 @@ A tutorial can have different types of tutorial steps:
 TextTourStep with highlighted element
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. figure:: text-tour-step.png
+.. figure:: guided-tour/text-tour-step.png
     :align: center
     :alt: TextTourStep with highlighted element
 
@@ -32,7 +32,7 @@ TextTourStep with highlighted element
 TextTourStep with multiple markdown elements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. figure:: text-tour-step-2.png
+.. figure:: guided-tour/text-tour-step-2.png
     :align: center
     :alt: TextTourStep with multiple markdown elements
 
@@ -42,7 +42,7 @@ TextTourStep with multiple markdown elements
 ImageTourStep
 ^^^^^^^^^^^^^
 
-.. figure:: image-tour-step.png
+.. figure:: guided-tour/image-tour-step.png
     :align: center
     :alt: ImageTourStep
 
@@ -52,7 +52,7 @@ ImageTourStep
 VideoTourStep
 ^^^^^^^^^^^^^
 
-.. figure:: video-tour-step.png
+.. figure:: guided-tour/video-tour-step.png
     :align: center
     :alt: VideoTourStep
 
@@ -62,7 +62,7 @@ VideoTourStep
 UserInteractionTourStep
 ^^^^^^^^^^^^^^^^^^^^^^^
 
-.. figure:: user-interaction-step.png
+.. figure:: guided-tour/user-interaction-step.png
     :align: center
     :alt: UserInteractionTourStep
 
@@ -72,7 +72,7 @@ UserInteractionTourStep
 ModelingTaskTourStep
 ^^^^^^^^^^^^^^^^^^^^
 
-.. figure:: modeling-task-tour-step.png
+.. figure:: guided-tour/modeling-task-tour-step.png
     :align: center
     :alt: ModelingTaskTourStep
 
@@ -82,7 +82,7 @@ ModelingTaskTourStep
 AssessmentTaskTourStep
 ^^^^^^^^^^^^^^^^^^^^^^
 
-.. figure:: assessment-task-step.png
+.. figure:: guided-tour/assessment-task-step.png
     :align: center
     :alt: AssessmentTaskTourStep
 
@@ -93,7 +93,7 @@ Example implementation of a GuidedTour object
 ---------------------------------------------
 In this example, the ``GuidedTour`` object is created and assigned to the constant ``exampleTutorial``, which one can use to embed the tutorial to a component of choice.
 
-.. literalinclude:: exampleTutorial.ts
+.. literalinclude:: guided-tour/example-tutorial.ts
     :linenos:
     :language: typescript
 
