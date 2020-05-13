@@ -10,10 +10,10 @@ import { ArtemisTestModule } from '../../test.module';
 import { MockCacheableImageService } from '../../helpers/mocks/service/mock-cacheable-image.service';
 import { triggerChanges } from '../../helpers/utils/general.utils';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
-import { UpdatingResultComponent } from 'app/shared/result/updating-result.component';
+import { UpdatingResultComponent } from 'app/exercises/shared/result/updating-result.component';
 import { CachingStrategy, ImageLoadingStatus, SecuredImageComponent } from 'app/shared/image/secured-image.component';
 import { CacheableImageService } from 'app/shared/image/cacheable-image.service';
-import { ResultComponent } from 'app/shared/result/result.component';
+import { ResultComponent } from 'app/exercises/shared/result/result.component';
 
 chai.use(sinonChai);
 const expect = chai.expect;

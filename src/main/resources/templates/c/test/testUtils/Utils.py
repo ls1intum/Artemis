@@ -3,11 +3,11 @@ import signal
 from pty import openpty
 from subprocess import Popen
 from time import sleep
-from typing import List, Optional
+from typing import List, Optional, Tuple, Any
 from datetime import datetime
 from io import TextIOWrapper
 from threading import Thread
-from datetime import datetime
+from select import select
 
 
 def studSaveStrComp(ref: str, other: str, strip: bool = True, ignoreCase: bool = True, ignoreNonAlNum=True):
@@ -35,6 +35,50 @@ def studSaveStrComp(ref: str, other: str, strip: bool = True, ignoreCase: bool =
     return ref == other
 
 
+# Limit for stdout in chars.
+# Should prevent to much output on artemis if for example there is a loop in a tree.
+__stdoutCharsLeft: int = 15000
+# By default the stdout limit is disabled:
+__stdoutLimitEnabled: bool = False
+
+
+def resetStdoutLimit(limit: int = 15000):
+    """
+    Resets the stout limit to the given limit (default = 15.000 chars).
+    """
+    global stdoutCharsLeft # Required since we want to modify stdoutCharsLeft
+    stdoutCharsLeft = limit
+
+
+def setStdoutLimitEnabled(enabled: bool):
+    """
+    Enables or disables the stdout limit.
+    Does not restet the chars left!
+    """
+    global __stdoutLimitEnabled
+    __stdoutLimitEnabled = enabled
+
+
+def __printStdout(text: str):
+    """
+    Prints the given text to stdout.
+    Only if there are still enough chars in stdoutCharsLeft left.
+    Else will not print anything.
+    """
+    global stdoutCharsLeft # Required since we want to modify stdoutCharsLeft
+
+    if not __stdoutLimitEnabled:
+        print(text)
+    elif stdoutCharsLeft > 0:
+        if stdoutCharsLeft >= len(text):
+            print(text)
+        else:
+            print(text[:stdoutCharsLeft] + "...")
+        stdoutCharsLeft -= len(text)
+        if stdoutCharsLeft <= 0:
+            print("[STDOUT LIMIT REACHED]".center(50, "="))
+
+
 # A cache of all that the tester has been writing to stdout:
 testerOutputCache: List[str] = list()
 
@@ -60,26 +104,28 @@ def __getCurDateTimeStr():
     return datetime.now().strftime("%d.%m.%Y_%H:%M:%S")
 
 
-def printTester(text: str):
+def printTester(text: str, addToCache: bool=True):
     """
     Prints the given string with the '[TESTER]: ' tag in front.
     Should be used instead of print() to make it easier for students
     to determin what came from the tester and what from their programm.
     """
     msg: str = "[{}][TESTER]: {}".format(__getCurDateTimeStr(), text)
-    print(msg)
-    testerOutputCache.append(msg)
+    __printStdout(msg)
+    if addToCache:
+        testerOutputCache.append(msg)
 
 
-def printProg(text: str):
+def printProg(text: str, addToCache: bool=True):
     """
     Prints the given string with the '[PROG]: ' tag in front.
     Should be used instead of print() to make it easier for students
     to determin what came from the tester and what from their programm.
     """
     msg: str = "[{}][PROG]: {}".format(__getCurDateTimeStr(), text)
-    print(msg)
-    testerOutputCache.append(msg)
+    __printStdout(msg)
+    if addToCache:
+        testerOutputCache.append(msg)
 
 
 def shortenText(text: str, maxNumChars: int):
@@ -90,7 +136,13 @@ def shortenText(text: str, maxNumChars: int):
     """
 
     if len(text) > maxNumChars:
-        return "{}\n[And {} chars more...]".format(text[:maxNumChars], len(text) - maxNumChars)
+        s: str = "\n[And {} chars more...]".format(len(text) - maxNumChars)
+        l: int = maxNumChars - len(s)        
+        if l > 0:
+            return "{}{}".format(text[:l], s)
+        else:
+            printTester("Unable to limit output to {} chars! Not enough space.".format(maxNumChars), False)
+            return ""
     return text
 
 
@@ -127,6 +179,7 @@ class ReadCache(Thread):
             os.close(self.__outSlaveFd)
         except OSError as e:
             printTester("Closing stdout slave FD failed with: {}".format(e))
+        self.__shouldRun = False
         Thread.join(self)
 
     @staticmethod
@@ -139,16 +192,27 @@ class ReadCache(Thread):
 
     def run(self):
         self.__shouldRun = True
-        while self.__isFdValid(self.__outSlaveFd):
+        while self.__shouldRun and self.__isFdValid(self.__outSlaveFd):
             try:
-                data: bytes = os.read(self.__outSlaveFd, 4096)
+                # Wait with a timeout for self.__outSlaveFd to be ready to read from:
+                result: Tuple[List[Any], List[Any], List[Any]] = select([self.__outSlaveFd], list(), list(), 0)
+                if self.__outSlaveFd in result[0]:
+                    data: bytes = os.read(self.__outSlaveFd, 4096)
+                else:
+                    # Nothing to read:
+                    continue
             except OSError:
                 break
             if data is not None:
-                dataStr: str = data.decode()
-                self.__cacheFile.write(dataStr)
+                dataStr: str = data.decode("ascii", "replace")
+                try:
+                    self.__cacheFile.write(dataStr)
+                except UnicodeEncodeError:
+                    printTester("Invalid ASCII character read. Skipping line...")
+                    continue
                 self.__cacheFile.flush()
                 self.__cache(dataStr)
+                printProg(dataStr)
 
     def canReadLine(self):
         return len(self.__cacheList) > 0
@@ -176,6 +240,8 @@ class PWrap:
 
     __stdOutLineCache: ReadCache
     __stdErrLineCache: ReadCache
+    
+    __terminatedTime: Optional[datetime]
 
     def __init__(self, cmd: List[str], stdoutFilePath: str = "/tmp/stdout.txt", stderrFilePath: str = "/tmp/stderr.txt",
                  cwd: Optional[str] = None):
@@ -187,6 +253,8 @@ class PWrap:
 
         self.__stdOutLineCache = ReadCache(stdoutFilePath)
         self.__stdErrLineCache = ReadCache(stderrFilePath)
+        
+        self.__terminatedTime = None
 
     def __del__(self):
         try:
@@ -228,7 +296,6 @@ class PWrap:
                 sleep(0.1)
             else:
                 line: str = lineCache.readLine()
-                printProg(line)
                 return line
 
     def readLineStdout(self, blocking: bool = True):
@@ -276,7 +343,18 @@ class PWrap:
         """
         Returns whether the process has terminated.
         """
-        return self.prog is None or self.prog.poll() is not None
+        if self.prog is None:
+            return True
+        
+        # Make sure we wait 0.25 seconds after the process has terminated to
+        # make sure all the output arrived:
+        elif self.prog.poll() is not None:
+            if self.__terminatedTime:
+                if (datetime.now() - self.__terminatedTime).total_seconds() > 0.25:
+                    return True 
+            else:
+                self.__terminatedTime = datetime.now()
+        return False
 
     def getReturnCode(self):
         """
@@ -310,19 +388,27 @@ class PWrap:
         """
         Sends the given signal to the complet process group started by the process.
 
+        Returns True if the process existed and had to be killed. Else False.
+
         ---
 
         signal:
             The signal that should be sent to the process group started by the process.
         """
         # Send a signal to the complete process group:
-        os.killpg(os.getpgid(self.prog.pid), signal)
+        try:
+            os.killpg(os.getpgid(self.prog.pid), signal)
+            return True
+        except ProcessLookupError:
+            printTester("No need to kill process. Process does not exist any more.")
+        return False
 
     def cleanup(self):
         """
         Should be called once the execution has terminated.
         Will join the stdout and stderr reader threads.
         """
+
         self.__stdOutLineCache.join()
         self.__stdErrLineCache.join()
 
