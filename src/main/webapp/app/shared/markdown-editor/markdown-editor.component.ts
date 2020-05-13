@@ -150,6 +150,7 @@ export class MarkdownEditorComponent implements AfterViewInit {
      */
     @Input()
     enableFileUpload = true;
+    acceptedFileExtensions = 'png,jpg,jpeg,svg';
 
     constructor(
         private artemisMarkdown: ArtemisMarkdownService,
@@ -378,7 +379,6 @@ export class MarkdownEditorComponent implements AfterViewInit {
      * @param {any} $event
      */
     onFileUpload($event: any): void {
-        console.log($event);
         if ($event.target.files.length >= 1) {
             this.embedFiles(Array.from($event.target.files));
         }
@@ -417,21 +417,16 @@ export class MarkdownEditorComponent implements AfterViewInit {
      */
     onFilePaste($event: ClipboardEvent): void {
         if ($event.clipboardData?.items) {
-            // Use DataTransferItemList interface to access the file(s)
-            const files = [];
+            const images = [];
             for (let i = 0; i < $event.clipboardData.items.length; i++) {
-                // If dropped items aren't files, reject them
                 if ($event.clipboardData.items[i].kind === 'file') {
                     const file = $event.clipboardData.items[i].getAsFile();
                     if (file) {
-                        files.push(file);
+                        images.push(file);
                     }
                 }
             }
-            this.embedFiles(files);
-        } else if ($event.clipboardData?.files) {
-            // Use DataTransfer interface to access the file(s)
-            this.embedFiles(Array.from($event.clipboardData.files));
+            this.embedFiles(images);
         }
     }
 
@@ -443,22 +438,23 @@ export class MarkdownEditorComponent implements AfterViewInit {
     embedFiles(files: File[]): void {
         const aceEditor = this.aceEditorContainer.getEditor();
         files.forEach((file: File) => {
-            this.fileUploaderService.uploadFile(file).then(
-                (res) => {
-                    const extension = file.name.split('.').pop()!.toLocaleLowerCase();
-                    let textToAdd;
-                    if (extension === 'pdf' || extension === 'zip') {
-                        textToAdd = `![${file.name}](${res.path}) \n`;
-                    } else {
-                        textToAdd = `<img src="${res.path}" alt="${file.name}" > \n`;
-                    }
-                    aceEditor.insert(textToAdd);
-                },
-                (error: Error) => {
-                    const jhiAlert = this.jhiAlertService.error(error.message);
-                    jhiAlert.msg = error.message;
-                },
-            );
+            const extension = file.name.split('.').pop()!.toLocaleLowerCase();
+            if (this.acceptedFileExtensions.split(',').indexOf(extension) === -1) {
+                const errorMessage = `Unsupported file type! Only files of type ${this.acceptedFileExtensions} allowed.`;
+                const jhiAlert = this.jhiAlertService.error(errorMessage);
+                jhiAlert.msg = errorMessage;
+            } else {
+                this.fileUploaderService.uploadFile(file).then(
+                    (res) => {
+                        const textToAdd = `<img src="${res.path}" alt="${file.name}" > \n`;
+                        aceEditor.insert(textToAdd);
+                    },
+                    (error: Error) => {
+                        const jhiAlert = this.jhiAlertService.error(error.message);
+                        jhiAlert.msg = error.message;
+                    },
+                );
+            }
         });
     }
 }
