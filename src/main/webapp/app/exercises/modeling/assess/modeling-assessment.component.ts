@@ -36,8 +36,10 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
     constructor(private jhiAlertService: AlertService, private renderer: Renderer2) {}
 
     ngAfterViewInit(): void {
-        this.referencedFeedbacks = this.feedbacks.filter((feedbackElement) => feedbackElement.reference != null);
-        this.unreferencedFeedbacks = this.feedbacks.filter((feedbackElement) => feedbackElement.reference == null && feedbackElement.type === FeedbackType.MANUAL_UNREFERENCED);
+        if (this.feedbacks) {
+            this.referencedFeedbacks = this.feedbacks.filter((feedbackElement) => feedbackElement.reference != null);
+            this.unreferencedFeedbacks = this.feedbacks.filter((feedbackElement) => feedbackElement.reference == null && feedbackElement.type === FeedbackType.MANUAL_UNREFERENCED);
+        }
         this.initializeApollonEditor();
         if (this.highlightedElements) {
             this.updateHighlightedElements(this.highlightedElements);
@@ -166,7 +168,7 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
      * This method is called before initializing Apollon and when the feedback or model is updated.
      */
     private handleFeedback(): void {
-        this.referencedFeedbacks = this.removeInvalidFeedback(this.referencedFeedbacks);
+        this.referencedFeedbacks = this.removeInvalidFeedback(this.feedbacks);
         this.updateElementFeedbackMapping(this.referencedFeedbacks);
         this.updateApollonAssessments(this.referencedFeedbacks);
     }
