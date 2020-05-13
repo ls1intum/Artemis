@@ -1,6 +1,6 @@
 .PHONY: all run
 
-all: main
+all: rotX
 
 #############################################################
 # DON'T change the variable names of INCLUDEDIRS and SOURCE
@@ -8,7 +8,7 @@ all: main
 # A list of include directories
 INCLUDEDIRS =
 # A list of source files
-SOURCE = main.c
+SOURCE = rotX.c
 
 # Warning flags
 # For more information about gcc warnings: https://embeddedartistry.com/blog/2017/3/7/clang-weverything
@@ -27,7 +27,7 @@ WFLAGS = -Wall -Wextra -Wpedantic -g
 # -O0:			        Do not optimize the program
 # $(WFLAGS)             Warning flags
 
-main: FORCE
+rotX: FORCE
 	gcc $(SOURCE) $(INCLUDEDIRS:%=-I%) -o $@.out -std=c11 -O0 $(WFLAGS)
 
 # Compile with address sanitizer enabled
@@ -74,7 +74,7 @@ lsan: FORCE
 
 # Execute the compiled programm
 run:
-	./main.out
+	./rotX.out
 
 # Make sure we allways rebuild
 # Required for the tester
