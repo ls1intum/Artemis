@@ -11,18 +11,23 @@ const logoutSubject = new Subject<void>();
 
 export interface ICacheableImageService {
     /**
-     * Interface function to load the image and cache in in the Local Storage. Suitable for images that are smaller than 150KB.
-     * @param url
+     * Function to load the image and cache in in the Local Storage. Suitable for images that are smaller than 150KB.
+     * @method
+     * @param {string} url
+     * @returns {Observable}
      */
     loadCachedLocalStorage(url: string): Observable<any>;
     /**
-     * Interface to function to load the image and cache in in the Session Storage. Do not overuse, spends user RAM.
-     * @param url
+     * Function to load the image and cache in in the Session Storage. Do not overuse, spends user RAM.
+     * @method
+     * @param {string} url
+     * @returns {Observable}
      */
     loadCachedSessionStorage(url: string): Observable<any>;
-    /**
-     * Interface function to load the image without caching. Always triggers the endpoint.
-     * @param url
+    /**Function to load the image without caching. Always triggers the endpoint.
+     * @method
+     * @param {string} url
+     * @returns {Observable}
      */
     loadWithoutCache(url: string): Observable<any>;
 }
@@ -50,7 +55,8 @@ export class CacheableImageService implements ICacheableImageService, OnDestroy 
     }
 
     /**
-     * Lifecycle function that performs cleanup just before Angular destroys the component
+     * Lifecycle function that performs cleanup just before Angular destroys the component.
+     * It unsubscribes {@link userChangeSubscription}
      */
     ngOnDestroy(): void {
         if (this.userChangeSubscription) {

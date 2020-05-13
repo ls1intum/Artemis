@@ -14,12 +14,14 @@ export class FileUploaderService {
     constructor(private http: HttpClient) {}
 
     /**
-     * Function which uploads a file. It checks for supported file extensions and file size.
+     * Function which uploads a file. It checks for accepted file extensions {@link acceptedFileExtensions} and the maximum file size {@link MAX_FILE_SIZE}.
      * Options must be passed as a dictionary. E.g: { keepFileName: true }
+     * @method
      * @async
      * @param {Blob | File} file
      * @param {string} fileName
      * @param options
+     * @returns {Promise<FileUploadResponse>}
      */
     uploadFile(file: Blob | File, fileName?: string, options?: any): Promise<FileUploadResponse> {
         /** Check file extension **/

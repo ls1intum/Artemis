@@ -16,7 +16,10 @@ export class ConnectionNotificationComponent implements OnInit, OnDestroy {
     constructor(private accountService: AccountService, private jhiWebsocketService: JhiWebsocketService) {}
 
     /**
-     * Lifecycle function which is called after the component is created
+     * Lifecycle function which on initialisation. It subscribes to the user Authentication state, see {@link accountService~getAuthenticationState}.
+     * If the user is logged in it listens to {@link jhiWebsocketService~connect} and {@link jhiWebsocketService~disconnect} and binds the callback functions
+     * {@link onConnect} and {@link onDisconnect}.
+     * On logout, the component is reset, triggering {@link jhiWebsocketService~disableReconnect} and unbinding the callback functions {@link onConnect} and {@link onDisconnect}.
      */
     ngOnInit() {
         this.accountService.getAuthenticationState().subscribe((user: User | null) => {
@@ -37,16 +40,17 @@ export class ConnectionNotificationComponent implements OnInit, OnDestroy {
         });
     }
     /**
-     * Lifecycle function that performs cleanup just before Angular destroys the component
+     * Lifecycle function that performs cleanup just before Angular destroys the component.
+     * It unbinds the callback functions {@link onConnect} and {@link onDisconnect}.
      */
     ngOnDestroy() {
         this.jhiWebsocketService.unbind('connect', this.onConnect);
         this.jhiWebsocketService.unbind('disconnect', this.onDisconnect);
     }
 
-    /**
-     * Only update on connect if there is not already an active connection.
-     * This alert is temporary and disappears after 5 seconds.
+    /** Callback function to the {@link jhiWebsocketService~connect} Event. It displays an alert for 5 seconds of {@link ConnectionNotificationType} and calls {@link updateAlert}.
+     * It sets {@link connected} to true
+     * @callback
      **/
     onConnect = () => {
         if (this.connected === false) {
@@ -61,11 +65,10 @@ export class ConnectionNotificationComponent implements OnInit, OnDestroy {
         this.connected = true;
     };
 
-    /**
-     * Only update on disconnect if the connection was active before.
+    /** Callback to the {@link jhiWebsocketService~disconnect} Event. Only update the alert {@link updateAlert} on disconnect if the connection was active before.
      * This needs to be checked because the websocket service triggers a disconnect before the connect.
+     * @callback
      **/
-
     onDisconnect = () => {
         if (this.connected === true) {
             this.notification.type = ConnectionNotificationType.DISCONNECTED;
@@ -77,7 +80,6 @@ export class ConnectionNotificationComponent implements OnInit, OnDestroy {
     /**
      * Update the alert to fit the state of the notification.
      **/
-
     updateAlert(): void {
         if (this.notification) {
             if (this.notification.type === ConnectionNotificationType.DISCONNECTED) {

@@ -11,8 +11,9 @@ export class ProgressBarComponent {
     @Input() public denominator: number;
 
     /**
-     * Function to render the correct progress bar class
-     * @param percentage The completed percentage of the progress bar
+     * Identifies the correct progress bar class between 'bg-danger', 'bg-warning' and 'bg-success' using {@param percentage}.
+     * @method
+     * @param percentage The completed percentage of the progress bar.
      */
     calculateProgressBarClass(percentage: number): string {
         if (percentage < 50) {
@@ -25,8 +26,9 @@ export class ProgressBarComponent {
     }
 
     /**
-     * Function to change the text color to indicate a finished status
-     * @param percentage The completed percentage of the progress bar
+     * Sets the progress bar text color 'text-dark' if {@param percentage} is below 100, otherwise 'test-white'.
+     * @method
+     * @param percentage The completed percentage of the progress bar.
      */
     chooseProgressBarTextColor(percentage: number) {
         if (percentage < 100) {

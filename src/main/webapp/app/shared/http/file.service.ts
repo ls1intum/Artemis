@@ -11,10 +11,10 @@ export class FileService {
     constructor(private http: HttpClient) {}
 
     /**
-     * Fetches the template file for the given programming language
+     * Returns the template file for the given {@param language}
      * @param {string} filename
      * @param {ProgrammingLanguage} language
-     * @returns json test file
+     * @returns {json} json
      */
     getTemplateFile(filename: string, language?: ProgrammingLanguage) {
         const languagePrefix = !!language ? `${language}/` : '';

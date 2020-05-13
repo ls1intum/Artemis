@@ -36,7 +36,9 @@ export class TutorParticipationGraphComponent implements OnInit, OnChanges {
     constructor(private router: Router) {}
 
     /**
-     * Life cycle hook called by Angular to indicate that Angular is done creating the component
+     * Life cycle hook, called on initialisation.
+     * Sets the {@link tutorParticipationStatus} and creates the {@link routerLink} using the {@link trainedExampleSubmissions} exercise and course ID.
+     * It also triggers {@link calculatePercentageAssessmentProgress} and {@link calculatePercentageComplaintsProgress}.
      */
     ngOnInit() {
         this.tutorParticipationStatus = this.tutorParticipation.status;
@@ -51,7 +53,7 @@ export class TutorParticipationGraphComponent implements OnInit, OnChanges {
     }
 
     /**
-     * Function wrapping router.navigate safely by checking for null and empty string
+     * Wrapper function to {@link router}.navigate safely by checking for null and empty string
      */
     navigate() {
         if (this.routerLink && this.routerLink.length > 0) {
@@ -60,9 +62,10 @@ export class TutorParticipationGraphComponent implements OnInit, OnChanges {
     }
 
     /**
-     * A lifecycle hook called by Angular when any data-bound property of a component changes
+     * A lifecycle hook called by Angular when any data-bound property of a component changes.
+     * Sets {@link tutorParticipation} and {@link tutorParticipationStatus} to the new values.
      *
-     * @param changes Changes made
+     * @param changes Changes made.
      */
     ngOnChanges(changes: SimpleChanges): void {
         if (changes.tutorParticipation) {
@@ -74,7 +77,9 @@ export class TutorParticipationGraphComponent implements OnInit, OnChanges {
     }
 
     /**
-     * Function to calculate the percentage of the number of assessments divided by the number of participations
+     * Calculates the Assessment Progress percentage. {@link numberOfAssessments} divided by {@link numberOfParticipations}.
+     * Sets the value in {@link calculatePercentageAssessmentProgress}
+     * @method
      */
     calculatePercentageAssessmentProgress() {
         if (this.numberOfParticipations !== 0) {
@@ -83,8 +88,12 @@ export class TutorParticipationGraphComponent implements OnInit, OnChanges {
     }
 
     /**
-     * Function to calculate the percentage of responded complaints
-     * This is calculated adding the number of not evaluated complaints and feedback requests and dividing by the total number of complaints and feedbacks.
+     * Calculate the percentage of responded complaints.
+     * This is calculated adding the number of {@link numberOfOpenComplaints} and all feedback requests
+     * {@link numberOfMoreFeedbackRequests} + {@link numberOfOpenMoreFeedbackRequests}.
+     * That is divided by the total of {@link numberOfComplaints} and {@link numberOfMoreFeedbackRequests}.
+     * Sets the value in {@link percentageComplaintsProgress}.
+     * @method
      */
     calculatePercentageComplaintsProgress() {
         if (this.numberOfComplaints + this.numberOfMoreFeedbackRequests !== 0) {
@@ -132,7 +141,9 @@ export class TutorParticipationGraphComponent implements OnInit, OnChanges {
     }
 
     /**
-     * Returns a string representation of the progress bar class based on the current status
+     * Returns a string representation of the progress bar class based on the current status.
+     * @method
+     * @returns {string} 'opaque', 'active', 'orange'
      */
     calculateClassProgressBar() {
         if (this.tutorParticipationStatus !== this.TRAINED && this.tutorParticipationStatus !== this.COMPLETED) {
@@ -151,14 +162,18 @@ export class TutorParticipationGraphComponent implements OnInit, OnChanges {
     }
 
     /**
-     * Returns the total number of evaluated complaints and feedback requests
+     * Calculates the number of evaluated/closed complaints and evaluated/closed feedback requests.
+     * @method
+     * @returns {number}  Number of Evaluated Complaints and Feedback Requests
      */
     calculateComplaintsNumerator() {
         return this.numberOfComplaints - this.numberOfOpenComplaints + (this.numberOfMoreFeedbackRequests - this.numberOfOpenMoreFeedbackRequests);
     }
 
     /**
-     * Returns the total number of complaints and feedback requests
+     * Calculates the total of {@link numberOfComplaints} {@link numberOfMoreFeedbackRequests}
+     * @method
+     * @returns {number} Total number of Complaints and Feedback Requests
      */
     calculateComplaintsDenominator() {
         return this.numberOfComplaints + this.numberOfMoreFeedbackRequests;

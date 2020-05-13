@@ -21,7 +21,8 @@ export class TutorLeaderboardComponent implements OnInit {
     constructor(private accountService: AccountService) {}
 
     /**
-     * Life cycle hook called by Angular to indicate that Angular is done creating the component
+     * Life cycle hook called by Angular on initialisation. It sets {@link isAtLeastInstructor} if the user has instructor rights for the {@link course}.
+     * See {@link accountService~isAtLeastInstructorInCourse}.
      */
     ngOnInit(): void {
         if (this.course) {
@@ -33,7 +34,8 @@ export class TutorLeaderboardComponent implements OnInit {
     }
 
     /**
-     * @callback empty callback
+     * Empty callback
+     * @callback
      */
     callback() {}
 }

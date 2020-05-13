@@ -9,9 +9,9 @@ export class PendingChangesGuard implements CanDeactivate<ComponentCanDeactivate
     constructor(private translateService: TranslateService) {}
 
     /**
-     * Function which returns whether a component can be deactivated
-     * @param component
-     *
+     * Wrapper function for {@link ComponentCanDeactivate.canDeactivate} which returns whether the component can be deactivated safely.
+     * @method
+     * @param {ComponentCanDeactivate} component The component which should deactivate.
      * @returns boolean | Observable<boolean>
      */
     canDeactivate(component: ComponentCanDeactivate): boolean | Observable<boolean> {

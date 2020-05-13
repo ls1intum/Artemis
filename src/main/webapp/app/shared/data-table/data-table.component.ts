@@ -9,7 +9,7 @@ import { LocalStorageService } from 'ngx-webstorage';
 import { SortByPipe } from 'app/shared/pipes/sort-by.pipe';
 
 /**
- * Enum for ascending and descending order.
+ * Enum for the sort oder. 'asc' for ascending and 'desc' for descending order.
  * @readonly
  * @enum {string}
  */
@@ -19,7 +19,7 @@ enum SortOrder {
 }
 
 /**
- * Enum for the sort icon.
+ * Enum for the sort icon. 'sort' for no selection, 'sort-up' for ascending and 'sort-down' for descending order.
  * @readonly
  * @enum {string}
  */
@@ -143,7 +143,8 @@ export class DataTableComponent implements OnInit, OnChanges {
     }
 
     /**
-     * Life cycle hook called by Angular to indicate that Angular is done creating the component
+     * Life cycle hook called on initialisation. Sets the {@link pagingValue} by calling {@link getCachedEntitiesPerPage}.
+     * It binds the callbacks {@link onSort} and {@link iconForSortPropField} to their current context so that they can be used from child components.
      */
     ngOnInit() {
         this.pagingValue = this.getCachedEntitiesPerPage();
@@ -155,8 +156,8 @@ export class DataTableComponent implements OnInit, OnChanges {
     }
 
     /**
-     * Method is called when Inputs of this component have changed.
-     *
+     * Lifecycle hook that is called when Inputs of this component have changed.
+     * Calls {@link updateEntities} if necessary.
      * @param changes List of Inputs that were changed
      */
     ngOnChanges(changes: SimpleChanges) {

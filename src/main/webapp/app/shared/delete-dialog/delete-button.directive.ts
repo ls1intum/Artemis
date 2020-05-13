@@ -53,6 +53,7 @@ export class DeleteButtonDirective implements OnInit {
 
     /**
      * Opens delete dialog
+     * @method
      */
     openDeleteDialog() {
         const deleteDialogData: DeleteDialogData = {
@@ -68,8 +69,8 @@ export class DeleteButtonDirective implements OnInit {
     }
 
     /**
-     * Function is executed when a MouseEvent is registered. Opens the delete Dialog
-     * @param event
+     * Function is executed when a {@link MouseEvent} is registered. Opens the delete Dialog. See {@link openDeleteDialog}
+     * @param {MouseEvent} event
      */
     @HostListener('click', ['$event'])
     onClick(event: MouseEvent) {

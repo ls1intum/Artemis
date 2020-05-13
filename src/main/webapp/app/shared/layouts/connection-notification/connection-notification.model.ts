@@ -1,9 +1,8 @@
 import { Moment } from 'moment';
 import { Notification, NotificationType } from 'app/entities/notification.model';
 
-/**
- * @enum ConnectionNotificationType
- * Represents the connection notification types.
+/** Represents the connection notification types: {@link DISCONNECTED}, {@link RECONNECTED} and {@link CONNECTED}.
+ * @enum
  */
 export const enum ConnectionNotificationType {
     DISCONNECTED = 'DISCONNECTED',

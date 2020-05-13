@@ -5,7 +5,7 @@ import { distinctUntilChanged, map, tap } from 'rxjs/operators';
 import { HttpClient } from '@angular/common/http';
 
 /**
- * FeatureToggle, currently only supports PROGRAMMING_EXERCISES
+ * FeatureToggle, currently only supports 'PROGRAMMING_EXERCISES'
  * @readonly
  * @enum {string}
  */
@@ -65,14 +65,17 @@ export class FeatureToggleService {
     }
 
     /**
-     * Getter method for the feature toggles as an observable.
+     * Getter method for FeatureToggles. Returns a new {@link Observable} with {@link subject} as the source.
+     * @method
      */
     getFeatureToggles() {
         return this.subject.asObservable().pipe(distinctUntilChanged());
     }
 
     /**
-     * Getter method for the active feature toggles as an observable.
+     * Getter method for the active status of the FeatureToggle.
+     * @method
+     * @param {FeatureToggle} feature
      */
     getFeatureToggleActive(feature: FeatureToggle) {
         return this.subject.asObservable().pipe(
@@ -81,8 +84,10 @@ export class FeatureToggleService {
         );
     }
 
-    /**
-     * Setter method for the state of a feature toggle.
+    /** Sets the state of a {@link FeatureToggle} to {@param active}.
+     * @method
+     * @param {FeatureToggle} featureToggle
+     * @param {boolean} active
      */
     setFeatureToggleState(featureToggle: FeatureToggle, active: boolean) {
         const url = '/api/management/feature-toggle';

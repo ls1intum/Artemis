@@ -13,7 +13,8 @@ export class ErrorComponent implements OnInit {
     constructor(private route: ActivatedRoute) {}
 
     /**
-     * Lifecycle function which is called after the component is created.
+     * Lifecycle function which is called on initialisation.
+     * It subscribes to {@link route} and sets {@link errorMessage}, {@link error403} and {@link error404} when they are received.
      */
     ngOnInit() {
         this.route.data.subscribe((routeData) => {

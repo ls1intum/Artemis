@@ -5,10 +5,9 @@ import { DomSanitizer } from '@angular/platform-browser';
 import { CacheableImageService } from 'app/shared/image/cacheable-image.service';
 import { base64StringToBlob } from 'blob-util';
 
-/**
- * @enum ImageLoadingStatus { string }
+/** Represents the status that is emitted to the client to describe the loading status of the image.
+ * @enum ImageLoadingStatus {string}
  * @readonly
- * Represents the status that is emitted to the client to describe to load status of the picture
  */
 export const enum ImageLoadingStatus {
     SUCCESS = 'success',
@@ -16,10 +15,9 @@ export const enum ImageLoadingStatus {
     LOADING = 'loading',
 }
 
-/**
- * @enum ImageLoadingStatus { string }
+/** Represents the different daching strategies available.
+ * @enum ImageLoadingStatus {string}
  * @readonly
- * Represents the different daching strategies available.
  */
 export enum CachingStrategy {
     LOCAL_STORAGE = 'LOCAL_STORAGE',
@@ -69,8 +67,8 @@ export class SecuredImageComponent implements OnChanges {
     );
 
     /**
-     * Lifecycle function that
-     * A callback function that is invoked immediately after at least one data-bound property has changed.
+     * Lifecycle function that is invoked immediately after at least one data-bound property has changed.
+     * Updates to the next value of {@link src$}
      */
     ngOnChanges(): void {
         this.src$.next(this.src);
@@ -81,8 +79,8 @@ export class SecuredImageComponent implements OnChanges {
 
     //
 
-    /**
-     * Function which triggers the reload of the picture when the user clicks on a button
+    /** Function which triggers the reload of the picture when the user clicks on a button. It triggers {@link ngOnChanges}.
+     * @method
      */
     retryLoadImage() {
         this.retryCounter = 0;

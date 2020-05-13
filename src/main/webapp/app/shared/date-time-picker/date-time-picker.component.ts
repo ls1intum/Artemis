@@ -50,16 +50,18 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     _onChange = (val: Moment) => {};
 
-    /**
-     * Emits the value change from component.
+    /** Wrapper Function to emit the value change from component.
+     * @method
+     * @fires valueChange
      */
     valueChanged() {
         this.valueChange.emit();
     }
 
-    /**
-     * Function that writes the value safely.
-     * @param value as moment or date
+    /** Wrapper function to write {@param value} to {@link value} safely.
+     * Converts {@link Moment} to {@link Date}, because owl-date-time only works correctly with {@link Date} objects
+     * @method
+     * @param value as {@link Moment} or {@link Date}
      */
     writeValue(value: any) {
         // convert moment to date, because owl-date-time only works correctly with date objects
@@ -71,23 +73,23 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
     }
 
     /**
-     * Registers a callback function is called by the forms API on initialization to update the form model on blur.
-     * @param fn
+     * Registers a callback function {@param fn}. Is called by the forms API on initialization to update the form model on touch.
+     * @param fn The callback function to be registered.
      */
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     registerOnTouched(fn: any) {}
 
-    /**
-     *
-     * @param fn
+    /** Registers a callback function {@param fn}. Is called when the control's value changes in the UI.
+     * @param fn The callback function to be registered.
      */
     registerOnChange(fn: any) {
         this._onChange = fn;
     }
 
-    /**
-     *
-     * @param newValue
+    /** Wrapper function to update {@link value}.
+     * It triggers {@link _onChange} with {@param newValue} and {@link valueChanged}.
+     * @method
+     * @param {Moment} newValue  The new value.
      */
     updateField(newValue: Moment) {
         this.value = newValue;
