@@ -15,7 +15,7 @@ based on Bamboo, Bitbucket and Jira.
   container, but none of these approachs work quite well here as Bamboo
   uses mounted directories that cause issues.
 
-Therefor, a check is included within the BambooBuildPlanService that
+Therefore, a check is included within the BambooBuildPlanService that
 ensures that builds are not started in Docker agents if the development
 setup is present.
 

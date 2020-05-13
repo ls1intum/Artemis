@@ -1,5 +1,5 @@
-Setup Guide for Artemis
-=======================
+Setup Guide
+===========
 
 In this guide you learn how to setup the development environment of
 Artemis. Artemis is based on `JHipster <https://jhipster.github.io>`__,

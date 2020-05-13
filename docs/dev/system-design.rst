@@ -1,14 +1,14 @@
-.. _contributing:
+.. _system_design:
 
-Contributor's Guide
-===================
+System Design
+=============
 
 Top-Level Design
 ----------------
 
 The following diagram shows the top-level design of Artemis which is decomposed into an application client (running as Angular web app in the browser) and an application server (based on Spring Boot). For programming exercises, the application server connects to a version control system (VCS) and a continuous integration system (CIS). Authentication is handled by an external user management system (UMS).
 
-.. figure:: contributing/TopLevelDesign.png
+.. figure:: system-design/TopLevelDesign.png
     :align: center
     :alt: Top-Level Design
 
@@ -27,7 +27,7 @@ The following UML deployment diagram shows a typical deployment of Artemis appli
 
 The Continuous Integration Server typically delegates the build jobs to local build agents within the university infrastructure or to remote build agents, e.g. hosted in the Amazon Cloud (AWS).
 
-.. figure:: contributing/DeploymentOverview.svg
+.. figure:: system-design/DeploymentOverview.svg
     :align: center
     :alt: Deployment Overview
 
@@ -43,7 +43,7 @@ A student can submit multiple solutions by committing and pushing the source cod
 In addition, teaching assistants can assess student solutions and "manually" create results.
 The current data model is more complex and supports different types of exercises such as programming exercises, modeling exercises, quiz, and text exercises.
 
-.. figure:: contributing/DataModel.svg
+.. figure:: system-design/DataModel.svg
     :align: center
     :alt: Data Model
 
@@ -55,7 +55,7 @@ Server Architecture
 
 The following UML component diagram shows more details of the Artemis application server architecture and its REST interfaces to the application client.
 
-.. figure:: contributing/ServerArchitecture.png
+.. figure:: system-design/ServerArchitecture.png
     :align: center
     :alt: Server Architecture
 

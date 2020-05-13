@@ -4,6 +4,7 @@
    contain the root `toctree` directive.
 .. _artemis:
 
+======================================================
 Artemis: Interactive Learning with Individual Feedback
 ======================================================
 
@@ -34,6 +35,6 @@ All these exercises are supposed to be run either live in the lecture with insta
    :includehidden:
    :maxdepth: 3
 
-   dev/contributing
-   Setup <dev/setup>
+   dev/system-design
+   dev/setup
    Guided Tour <dev/guided-tour>
