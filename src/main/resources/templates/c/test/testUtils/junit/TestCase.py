@@ -10,19 +10,26 @@ class Result(Enum):
     SUCCESS = "success"
 
 class TestCase:
-    stdout: str = ""
-    stderr: str = ""
-    testerOutput: str = ""
+    stdout: str
+    stderr: str
+    testerOutput: str
 
-    name: str = ""
-    time: timedelta = timedelta()
-    result: Result = Result.SUCCESS
-    message: str = ""
-
+    name: str
+    time: timedelta
+    result: Result
+    message: str
+    
     def __init__(self, name: str):
         self.name = name
 
-    def toXml(self, suite: Et.Element, maxCharsPerOutput=2000):
+        self.stdout: str = ""
+        self.stderr: str = ""
+        self.testerOutput: str = ""
+        self.time: timedelta = timedelta()
+        self.result: Result = Result.SUCCESS
+        self.message: str = ""
+    
+    def toXml(self, suite: Et.Element, maxCharsPerOutput=2500):
         case: Et.Element = Et.SubElement(suite, "testcase")
         case.set("name", self.name)
         case.set("time", str(self.time.total_seconds()))
@@ -39,24 +46,27 @@ class TestCase:
             stderr: Et.Element = Et.SubElement(case, "system-err")
             stderr.text = shortenText(self.stderr, maxCharsPerOutput) + "\n"
 
-    def genErrFailureMessage(self, maxCharsPerOutput=2000):
-        msg: str = self.message
+    def genErrFailureMessage(self, maxChars=5000):
+        oneThird: int = int(maxChars / 3)
 
-        msg += "\n"+"stdout".center(50, "=")+"\n"
-        if self.stdout:
-            msg += shortenText(self.stdout, maxCharsPerOutput) + "\n"
-        else:
-            msg += "No output on stdout found!\n"
-
-        msg += "\n"+"stderr".center(50, "=")+"\n"
+        # Limit the stderr output to one third of the available chars:
+        stderrMsg: str = "\n"+"stderr".center(50, "=")+"\n"
         if self.stderr:
-            msg += shortenText(self.stderr, maxCharsPerOutput) + "\n"
+            stderrMsg += shortenText(self.stderr, oneThird) + "\n"
         else:
-            msg += "No output on stderr found!\n"
+            stderrMsg += "No output on stderr found!\n"
 
-        msg += "\n"+"Tester".center(50, "=")+"\n"
-        if self.testerOutput:
-            msg += shortenText(self.testerOutput, maxCharsPerOutput * 2) + "\n"
+        # Limit the stdout output to one third + the unused chars from the stderr output:
+        stdoutMsg: str = "\n"+"stdout".center(50, "=")+"\n"
+        if self.stdout:
+            stdoutMsg += shortenText(self.stdout, oneThird + (oneThird - len(stderrMsg))) + "\n"
         else:
-            msg += "No tester output found!\n"
-        return msg
+            stdoutMsg += "No output on stdout found!\n"
+
+        # Limit the tester output to one third + the left overs from stderr and stdout:
+        testerMsg: str = "\n"+"Tester".center(50, "=")+"\n"
+        if self.testerOutput:
+            testerMsg += shortenText(self.testerOutput, maxChars - len(testerMsg) - len(stderrMsg) - len(stdoutMsg)) + "\n"
+        else:
+            testerMsg += "No tester output found!\n"
+        return self.message + stdoutMsg + stderrMsg + testerMsg

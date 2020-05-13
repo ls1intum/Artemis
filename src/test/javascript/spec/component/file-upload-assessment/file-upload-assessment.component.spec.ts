@@ -25,7 +25,7 @@ import { TranslateModule } from '@ngx-translate/core';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
 import { FileUploadSubmissionService } from 'app/exercises/file-upload/participate/file-upload-submission.service';
 import { ComplaintsForTutorComponent } from 'app/complaints/complaints-for-tutor/complaints-for-tutor.component';
-import { UpdatingResultComponent } from 'app/shared/result/updating-result.component';
+import { UpdatingResultComponent } from 'app/exercises/shared/result/updating-result.component';
 import { FileUploadSubmission } from 'app/entities/file-upload-submission.model';
 import { SubmissionExerciseType, SubmissionType } from 'app/entities/submission.model';
 import { ExerciseType } from 'app/entities/exercise.model';
