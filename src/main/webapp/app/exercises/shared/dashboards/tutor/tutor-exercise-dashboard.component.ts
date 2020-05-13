@@ -34,6 +34,7 @@ import { tutorAssessmentTour } from 'app/guided-tour/tours/tutor-assessment-tour
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { TutorParticipation, TutorParticipationStatus } from 'app/entities/participation/tutor-participation.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
+import {DueDateStat} from "app/course/dashboards/instructor-course-dashboard/due-date-stat.model";
 
 export interface ExampleSubmissionQueryParams {
     readOnly?: boolean;
@@ -55,10 +56,8 @@ export class TutorExerciseDashboardComponent implements OnInit, AfterViewInit {
 
     exerciseId: number;
     numberOfTutorAssessments = 0;
-    numberOfInTimeSubmissions = 0;
-    numberOfLateSubmissions = 0;
-    numberOfAssessments = 0;
-    numberOfLateAssessments = 0;
+    numberOfSubmissions = new DueDateStat();
+    numberOfAssessments = new DueDateStat();
     numberOfComplaints = 0;
     numberOfOpenComplaints = 0;
     numberOfTutorComplaints = 0;
@@ -214,10 +213,8 @@ export class TutorExerciseDashboardComponent implements OnInit, AfterViewInit {
         this.exerciseService.getStatsForTutors(this.exerciseId).subscribe(
             (res: HttpResponse<StatsForDashboard>) => {
                 this.statsForDashboard = res.body!;
-                this.numberOfInTimeSubmissions = this.statsForDashboard.numberOfInTimeSubmissions;
-                this.numberOfLateSubmissions = this.statsForDashboard.numberOfLateSubmissions;
+                this.numberOfSubmissions = this.statsForDashboard.numberOfSubmissions;
                 this.numberOfAssessments = this.statsForDashboard.numberOfAssessments;
-                this.numberOfLateAssessments = this.statsForDashboard.numberOfLateAssessments;
                 this.numberOfComplaints = this.statsForDashboard.numberOfComplaints;
                 this.numberOfOpenComplaints = this.statsForDashboard.numberOfOpenComplaints;
                 this.numberOfMoreFeedbackRequests = this.statsForDashboard.numberOfMoreFeedbackRequests;
@@ -233,9 +230,9 @@ export class TutorExerciseDashboardComponent implements OnInit, AfterViewInit {
                     this.numberOfTutorMoreFeedbackRequests = 0;
                 }
 
-                if (this.numberOfInTimeSubmissions > 0) {
-                    this.totalAssessmentPercentage = Math.round((this.numberOfAssessments / this.numberOfInTimeSubmissions) * 100);
-                    this.tutorAssessmentPercentage = Math.round((this.numberOfTutorAssessments / this.numberOfInTimeSubmissions) * 100);
+                if (this.numberOfSubmissions.total > 0) {
+                    this.totalAssessmentPercentage = Math.round((this.numberOfAssessments.total / this.numberOfSubmissions.total) * 100);
+                    this.tutorAssessmentPercentage = Math.round((this.numberOfTutorAssessments / this.numberOfSubmissions.total) * 100);
                 }
             },
             (response: string) => this.onError(response),

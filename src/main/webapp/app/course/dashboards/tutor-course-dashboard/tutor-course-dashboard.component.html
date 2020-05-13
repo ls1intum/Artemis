@@ -24,7 +24,7 @@
             </div>
             <div class="col-4 text-center">
                 <p class="font-weight-bold">{{ 'artemisApp.tutorCourseDashboard.totalAssessments' | translate }}:</p>
-                <p class="h3">{{ numberOfAssessments }} / {{ numberOfInTimeSubmissions }} ({{ totalAssessmentPercentage }}%)</p>
+                <p class="h3">{{ numberOfAssessments.total }} / {{ numberOfSubmissions.total }} ({{ totalAssessmentPercentage }}%)</p>
             </div>
         </div>
 
@@ -103,10 +103,8 @@
                             [exercise]="exercise"
                             [class.guided-tour]="exercise === exerciseForGuidedTour"
                             [tutorParticipation]="exercise.tutorParticipations[0]"
-                            [numberOfInTimeSubmissions]="exercise.numberOfInTimeSubmissions"
-                            [numberOfLateSubmissions]="exercise.numberOfLateSubmissions"
+                            [numberOfSubmissions]="exercise.numberOfSubmissions"
                             [numberOfAssessments]="exercise.numberOfAssessments"
-                            [numberOfLateAssessments]="exercise.numberOfLateAssessments"
                             [numberOfComplaints]="exercise.numberOfComplaints"
                             [numberOfOpenComplaints]="exercise.numberOfOpenComplaints"
                             [numberOfMoreFeedbackRequests]="exercise.numberOfMoreFeedbackRequests"

@@ -19,14 +19,14 @@
                                 <b>{{ 'artemisApp.instructorCourseDashboard.students' | translate }}:</b> {{ stats.numberOfStudents }}
                             </li>
                             <li>
-                                <b>{{ 'artemisApp.instructorCourseDashboard.submissions' | translate }}:</b> {{ stats.numberOfInTimeSubmissions }}
+                                <b>{{ 'artemisApp.instructorCourseDashboard.submissions' | translate }}:</b> {{ stats.numberOfSubmissions.total }}
                             </li>
                             <li>
                                 <b>{{ 'artemisApp.instructorCourseDashboard.tutors' | translate }}:</b> {{ stats.tutorLeaderboardEntries.length }}
                             </li>
                             <li>
-                                <b>{{ 'artemisApp.instructorCourseDashboard.assessments' | translate }}:</b> {{ stats.numberOfAssessments }} ({{
-                                    stats.numberOfInTimeSubmissions - stats.numberOfAssessments
+                                <b>{{ 'artemisApp.instructorCourseDashboard.assessments' | translate }}:</b> {{ stats.numberOfAssessments.total }} ({{
+                                    stats.numberOfSubmissions.total - stats.numberOfAssessments.total
                                 }}
                                 {{ 'artemisApp.instructorCourseDashboard.open' | translate }})
                             </li>
@@ -99,7 +99,7 @@
                         <td>{{ exercise.title }}</td>
                         <td>{{ exercise.dueDate | date: 'medium' }}</td>
                         <td>{{ exercise.assessmentDueDate | date: 'medium' }}</td>
-                        <td>{{ exercise.numberOfInTimeSubmissions }}</td>
+                        <td>{{ exercise.numberOfSubmissions.total }}</td>
                         <td>{{ exercise.numberOfComplaints }}</td>
                         <td>{{ exercise.numberOfMoreFeedbackRequests }}</td>
                         <td class="text-center">
@@ -107,15 +107,15 @@
                                 <div
                                     class="progress-bar"
                                     role="progressbar"
-                                    [ngClass]="calculateClass(exercise.numberOfAssessments, exercise.numberOfInTimeSubmissions)"
-                                    [style.width]="calculatePercentage(exercise.numberOfAssessments, exercise.numberOfInTimeSubmissions) + '%'"
-                                    attr.aria-valuenow="{{ calculatePercentage(exercise.numberOfAssessments, exercise.numberOfInTimeSubmissions) }}"
+                                    [ngClass]="calculateClass(exercise.numberOfAssessments.total, exercise.numberOfSubmissions.total)"
+                                    [style.width]="calculatePercentage(exercise.numberOfAssessments.total, exercise.numberOfSubmissions.total) + '%'"
+                                    attr.aria-valuenow="{{ calculatePercentage(exercise.numberOfAssessments.total, exercise.numberOfSubmissions.total) }}"
                                     aria-valuemin="0"
                                     aria-valuemax="100"
                                 >
                                     <span class="justify-content-center d-flex position-absolute w-100 text-dark">
-                                        {{ exercise.numberOfAssessments }} / {{ exercise.numberOfInTimeSubmissions }} ({{
-                                            calculatePercentage(exercise.numberOfAssessments, exercise.numberOfInTimeSubmissions)
+                                        {{ exercise.numberOfAssessments.total }} / {{ exercise.numberOfSubmissions.total }} ({{
+                                            calculatePercentage(exercise.numberOfAssessments.total, exercise.numberOfSubmissions.total)
                                         }}%)
                                     </span>
                                 </div>

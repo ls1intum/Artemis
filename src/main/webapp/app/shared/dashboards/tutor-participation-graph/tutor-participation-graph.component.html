@@ -16,18 +16,18 @@
             <div class="stacked-item">
                 <jhi-progress-bar
                     [tooltip]="'artemisApp.tutorCourseDashboard.assessStudentsSubmissions' | translate"
-                    [percentage]="percentageAssessmentProgress"
-                    [numerator]="numberOfAssessments"
-                    [denominator]="numberOfInTimeSubmissions"
+                    [percentage]="percentageInTimeAssessmentProgress"
+                    [numerator]="numberOfAssessments.inTime"
+                    [denominator]="numberOfSubmissions.inTime"
                 >
                 </jhi-progress-bar>
             </div>
-            <div class="stacked-item" *ngIf="numberOfLateSubmissions > 0">
+            <div class="stacked-item" *ngIf="numberOfSubmissions.late > 0">
                 <jhi-progress-bar
                     [tooltip]="'artemisApp.tutorCourseDashboard.assessStudentsLateSubmissions' | translate"
                     [percentage]="percentageLateAssessmentProgress"
-                    [numerator]="numberOfLateAssessments"
-                    [denominator]="numberOfLateSubmissions"
+                    [numerator]="numberOfAssessments.late"
+                    [denominator]="numberOfSubmissions.late"
                 >
                 </jhi-progress-bar>
             </div>

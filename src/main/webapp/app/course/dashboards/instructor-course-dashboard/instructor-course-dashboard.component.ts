@@ -61,7 +61,7 @@ export class InstructorCourseDashboardComponent implements OnInit {
             map((res: HttpResponse<StatsForDashboard>) => Object.assign({}, this.stats, res.body)),
             tap((stats) => {
                 this.stats = stats;
-                this.dataForAssessmentPieChart = [this.stats.numberOfInTimeSubmissions - this.stats.numberOfAssessments, this.stats.numberOfAssessments];
+                this.dataForAssessmentPieChart = [this.stats.numberOfSubmissions.total - this.stats.numberOfAssessments.total, this.stats.numberOfAssessments.total];
             }),
             catchError((response: string) => {
                 this.onError(response);

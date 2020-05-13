@@ -11,6 +11,7 @@ import { StatsForDashboard } from 'app/course/dashboards/instructor-course-dashb
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { tutorAssessmentTour } from 'app/guided-tour/tours/tutor-assessment-tour';
 import { Course } from 'app/entities/course.model';
+import {DueDateStat} from "app/course/dashboards/instructor-course-dashboard/due-date-stat.model";
 
 @Component({
     selector: 'jhi-courses',
@@ -23,10 +24,8 @@ export class TutorCourseDashboardComponent implements OnInit, AfterViewInit {
     unfinishedExercises: Exercise[] = [];
     finishedExercises: Exercise[] = [];
     exercises: Exercise[] = [];
-    numberOfInTimeSubmissions = 0;
-    numberOfLateSubmissions = 0;
-    numberOfAssessments = 0;
-    numberOfLateAssessments = 0;
+    numberOfSubmissions = new DueDateStat();
+    numberOfAssessments = new DueDateStat();
     numberOfTutorAssessments = 0;
     numberOfComplaints = 0;
     numberOfOpenComplaints = 0;
@@ -88,7 +87,7 @@ export class TutorCourseDashboardComponent implements OnInit, AfterViewInit {
                     const [finishedExercises, unfinishedExercises] = partition(
                         this.course.exercises,
                         (exercise) =>
-                            exercise.numberOfAssessments === exercise.numberOfInTimeSubmissions &&
+                            exercise.numberOfAssessments?.total === exercise.numberOfSubmissions?.total &&
                             exercise.numberOfOpenComplaints === 0 &&
                             exercise.numberOfOpenMoreFeedbackRequests === 0,
                     );
@@ -105,10 +104,8 @@ export class TutorCourseDashboardComponent implements OnInit, AfterViewInit {
         this.courseService.getStatsForTutors(this.courseId).subscribe(
             (res: HttpResponse<StatsForDashboard>) => {
                 this.stats = res.body!;
-                this.numberOfInTimeSubmissions = this.stats.numberOfInTimeSubmissions;
-                this.numberOfLateSubmissions = this.stats.numberOfLateSubmissions;
+                this.numberOfSubmissions = this.stats.numberOfSubmissions;
                 this.numberOfAssessments = this.stats.numberOfAssessments;
-                this.numberOfLateAssessments = this.stats.numberOfLateAssessments;
                 this.numberOfComplaints = this.stats.numberOfComplaints;
                 this.numberOfOpenComplaints = this.stats.numberOfOpenComplaints;
                 this.numberOfMoreFeedbackRequests = this.stats.numberOfMoreFeedbackRequests;
@@ -124,8 +121,8 @@ export class TutorCourseDashboardComponent implements OnInit, AfterViewInit {
                     this.numberOfTutorMoreFeedbackRequests = 0;
                 }
 
-                if (this.numberOfInTimeSubmissions > 0) {
-                    this.totalAssessmentPercentage = Math.round((this.numberOfAssessments / this.numberOfInTimeSubmissions) * 100);
+                if (this.numberOfSubmissions.total > 0) {
+                    this.totalAssessmentPercentage = Math.round((this.numberOfAssessments.total / this.numberOfSubmissions.total) * 100);
                 }
             },
             (response: string) => this.onError(response),

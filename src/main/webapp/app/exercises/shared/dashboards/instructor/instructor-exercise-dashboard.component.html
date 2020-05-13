@@ -11,11 +11,11 @@
                 <jhi-side-panel [panelHeader]="'artemisApp.tutorExerciseDashboard.exerciseInformation' | translate">
                     <div class="row mb-1">
                         <div class="col-8">{{ 'artemisApp.tutorExerciseDashboard.numberOfInTimeSubmissions' | translate }}</div>
-                        <div class="col-4">{{ stats.numberOfInTimeSubmissions }}</div>
+                        <div class="col-4">{{ stats.numberOfSubmissions.inTime }}</div>
                     </div>
                     <div class="row mb-1">
                         <div class="col-8">{{ 'artemisApp.tutorExerciseDashboard.numberOfManualAssessedSubmissions' | translate }}</div>
-                        <div class="col-4">{{ stats.numberOfAssessments - stats.numberOfAutomaticAssistedAssessments }} ({{ totalManualAssessmentPercentage }}%)</div>
+                        <div class="col-4">{{ stats.numberOfAssessments.total - stats.numberOfAutomaticAssistedAssessments }} ({{ totalManualAssessmentPercentage }}%)</div>
                     </div>
                     <div class="row mb-1">
                         <div class="col-8">{{ 'artemisApp.tutorExerciseDashboard.numberOfAutomaticAssistedSubmissions' | translate }}</div>
@@ -24,7 +24,7 @@
                     <div class="row mb-1">
                         <div class="col-8">{{ 'artemisApp.tutorExerciseDashboard.numberOfUnassessedSubmissions' | translate }}</div>
                         <div class="col-4">
-                            {{ stats.numberOfInTimeSubmissions - stats.numberOfAssessments }} ({{ 100 - totalAutomaticAssessmentPercentage - totalManualAssessmentPercentage }}%)
+                            {{ stats.numberOfSubmissions.total - stats.numberOfAssessments.total }} ({{ 100 - totalAutomaticAssessmentPercentage - totalManualAssessmentPercentage }}%)
                         </div>
                     </div>
                     <div class="row mb-1">
@@ -42,7 +42,7 @@
                 </jhi-side-panel>
             </div>
 
-            <div class="col-md-4" *ngIf="stats.numberOfInTimeSubmissions > 0">
+            <div class="col-md-4" *ngIf="stats.numberOfSubmissions.total > 0">
                 <canvas baseChart [data]="dataForAssessmentPieChart" [labels]="['Open assessments', 'Manual assessments', 'Assessments with Automatic Assistance']" chartType="pie">
                 </canvas>
             </div>

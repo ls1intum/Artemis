@@ -3,6 +3,7 @@ import { Router } from '@angular/router';
 import { get } from 'lodash';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { TutorParticipation, TutorParticipationStatus } from 'app/entities/participation/tutor-participation.model';
+import {DueDateStat} from "app/course/dashboards/instructor-course-dashboard/due-date-stat.model";
 
 @Component({
     selector: 'jhi-tutor-participation-graph',
@@ -12,10 +13,8 @@ import { TutorParticipation, TutorParticipationStatus } from 'app/entities/parti
 })
 export class TutorParticipationGraphComponent implements OnInit, OnChanges {
     @Input() public tutorParticipation: TutorParticipation;
-    @Input() public numberOfInTimeSubmissions: number;
-    @Input() public numberOfLateSubmissions: number;
-    @Input() public numberOfAssessments: number;
-    @Input() public numberOfLateAssessments: number;
+    @Input() public numberOfSubmissions: DueDateStat;
+    @Input() public numberOfAssessments: DueDateStat;
     @Input() public numberOfComplaints: number;
     @Input() public numberOfOpenComplaints: number;
     @Input() public numberOfMoreFeedbackRequests: number;
@@ -30,7 +29,7 @@ export class TutorParticipationGraphComponent implements OnInit, OnChanges {
     TRAINED = TutorParticipationStatus.TRAINED;
     COMPLETED = TutorParticipationStatus.COMPLETED;
 
-    percentageAssessmentProgress = 0;
+    percentageInTimeAssessmentProgress = 0;
     percentageLateAssessmentProgress = 0;
     percentageComplaintsProgress = 0;
 
@@ -80,11 +79,11 @@ export class TutorParticipationGraphComponent implements OnInit, OnChanges {
      * Function to calculate the percentage of the number of assessments divided by the number of participations
      */
     calculatePercentageAssessmentProgress() {
-        if (this.numberOfInTimeSubmissions !== 0) {
-            this.percentageAssessmentProgress = Math.round((this.numberOfAssessments / this.numberOfInTimeSubmissions) * 100);
+        if (this.numberOfSubmissions?.inTime !== 0) {
+            this.percentageInTimeAssessmentProgress = Math.round((this.numberOfAssessments.inTime / this.numberOfSubmissions.inTime) * 100);
         }
-        if (this.numberOfLateSubmissions !== 0) {
-            this.percentageLateAssessmentProgress = Math.round((this.numberOfLateAssessments / this.numberOfLateSubmissions) * 100);
+        if (this.numberOfSubmissions?.late !== 0) {
+            this.percentageLateAssessmentProgress = Math.round((this.numberOfAssessments.late / this.numberOfSubmissions.late) * 100);
         }
     }
 
@@ -147,7 +146,7 @@ export class TutorParticipationGraphComponent implements OnInit, OnChanges {
 
         if (
             this.tutorParticipationStatus === this.COMPLETED ||
-            this.numberOfInTimeSubmissions === this.numberOfAssessments ||
+            this.numberOfSubmissions.total === this.numberOfAssessments.total ||
             this.numberOfOpenComplaints + this.numberOfOpenMoreFeedbackRequests === 0
         ) {
             return 'active';
