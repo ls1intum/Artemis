@@ -15,7 +15,7 @@ import { ExerciseHint } from 'app/entities/exercise-hint.model';
 import { Participation } from 'app/entities/participation/participation.model';
 import { Feedback } from 'app/entities/feedback.model';
 import { ResultService } from 'app/exercises/shared/result/result.service';
-import { RepositoryFileService } from 'app/shared/result/repository.service';
+import { RepositoryFileService } from 'app/exercises/shared/result/repository.service';
 import { problemStatementHasChanged } from 'app/exercises/shared/exercise/exercise-utils';
 import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
 import { hasParticipationChanged } from 'app/overview/participation-utils';
