@@ -13,6 +13,20 @@
                 <dd>
                     <span>{{ modelingExercise.title }}</span>
                 </dd>
+                <ng-container *ngIf="modelingExercise.categories">
+                    <dt><span jhiTranslate="artemisApp.exercise.categories">Difficulty</span></dt>
+                    <dd>
+                        <span class="custom-tag" *ngFor="let item of modelingExercise.categories" [ngStyle]="{ backgroundColor: item.color }">
+                            <span>{{ item.category }}</span>
+                        </span>
+                    </dd>
+                </ng-container>
+                <ng-container *ngIf="modelingExercise.difficulty">
+                    <dt><span jhiTranslate="artemisApp.exercise.difficulty">Difficulty</span></dt>
+                    <dd>
+                        <span>{{ modelingExercise.difficulty }}</span>
+                    </dd>
+                </ng-container>
                 <dt><span jhiTranslate="artemisApp.exercise.mode">Mode</span></dt>
                 <dd>
                     <span>{{ modelingExercise.mode }}</span>
