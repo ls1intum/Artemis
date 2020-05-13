@@ -38,8 +38,8 @@ describe('InstructorExerciseDashboardComponent', () => {
 
     it('Statistics are calculated correctly', () => {
         const stats = new StatsForDashboard();
-        stats.numberOfInTimeSubmissions = 420;
-        stats.numberOfAssessments = 333;
+        stats.numberOfSubmissions.inTime = 420;
+        stats.numberOfAssessments.inTime = 333;
         stats.numberOfAutomaticAssistedAssessments = 42;
         comp.stats = stats;
         comp.setStatistics();
