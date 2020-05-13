@@ -103,7 +103,7 @@ export class TutorCourseDashboardComponent implements OnInit, AfterViewInit {
 
         this.courseService.getStatsForTutors(this.courseId).subscribe(
             (res: HttpResponse<StatsForDashboard>) => {
-                this.stats = res.body!;
+                this.stats = StatsForDashboard.from(res.body!);
                 this.numberOfSubmissions = this.stats.numberOfSubmissions;
                 this.numberOfAssessments = this.stats.numberOfAssessments;
                 this.numberOfComplaints = this.stats.numberOfComplaints;

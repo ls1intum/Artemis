@@ -212,7 +212,7 @@ export class TutorExerciseDashboardComponent implements OnInit, AfterViewInit {
 
         this.exerciseService.getStatsForTutors(this.exerciseId).subscribe(
             (res: HttpResponse<StatsForDashboard>) => {
-                this.statsForDashboard = res.body!;
+                this.statsForDashboard = StatsForDashboard.from(res.body!);
                 this.numberOfSubmissions = this.statsForDashboard.numberOfSubmissions;
                 this.numberOfAssessments = this.statsForDashboard.numberOfAssessments;
                 this.numberOfComplaints = this.statsForDashboard.numberOfComplaints;

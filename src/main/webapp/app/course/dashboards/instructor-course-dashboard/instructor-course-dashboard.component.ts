@@ -60,7 +60,7 @@ export class InstructorCourseDashboardComponent implements OnInit {
         const loadStatsObservable = this.courseService.getStatsForInstructors(courseId).pipe(
             map((res: HttpResponse<StatsForDashboard>) => Object.assign({}, this.stats, res.body)),
             tap((stats) => {
-                this.stats = stats;
+                this.stats = StatsForDashboard.from(stats);
                 this.dataForAssessmentPieChart = [this.stats.numberOfSubmissions.total - this.stats.numberOfAssessments.total, this.stats.numberOfAssessments.total];
             }),
             catchError((response: string) => {

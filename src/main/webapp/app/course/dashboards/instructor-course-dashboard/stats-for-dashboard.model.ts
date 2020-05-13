@@ -14,4 +14,12 @@ export class StatsForDashboard {
     public tutorLeaderboardEntries: TutorLeaderboardElement[] = [];
 
     constructor() {}
+
+    static from(object: StatsForDashboard): StatsForDashboard {
+        let stats = Object.assign(new StatsForDashboard(), object);
+        stats.numberOfSubmissions = Object.assign(new DueDateStat(), stats.numberOfSubmissions);
+        stats.numberOfAssessments = Object.assign(new DueDateStat(), stats.numberOfAssessments);
+        return stats;
+    }
+
 }
