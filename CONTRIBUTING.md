@@ -20,11 +20,12 @@ Possible types are:
 The pull request template will provide additional information on the requirement for the integration of changes into Artemis.  
 Once the changes in your pull request are approved by one of our reviewers, they can be merged into develop.
 
-## Pull request guidelines:
+## Pull request (PR) guidelines:
 
 - **Merge fast**: PRs should only be open for a couple of days.
 - **Small packages**: PRs should be as small as possible and ideally concentrate on a single topic. Features should be split up into multiple PRs if it makes sense.
-- **Definition of done**: Before requesting a code review make sure that the PR is ready:
+- **Until the PR is _ready-for-review_, the PR should be a [Draft PR](https://help.github.com/en/github/collaborating-with-issues-and-pull-requests/about-pull-requests#draft-pull-requests)**
+- **Definition of done**: Before requesting a code review make sure that the PR is _ready-for-review_:
    - The PR template is filled out completely, containing as much information as needed to understand the feature.
    - All tasks from the template checklist are done and checked off (writing tests, adding screenshots, etc.).
    - The branch of the PR is up-to-date with develop.
