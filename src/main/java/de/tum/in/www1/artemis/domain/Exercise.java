@@ -8,6 +8,7 @@ import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import javax.persistence.*;
 
+import de.tum.in.www1.artemis.web.rest.dto.DueDateStat;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.hibernate.annotations.DiscriminatorOptions;
@@ -152,16 +153,10 @@ public abstract class Exercise implements Serializable {
 
     // NOTE: Helpers variable names must be different from Getter name, so that Jackson ignores the @Transient annotation, but Hibernate still respects it
     @Transient
-    private Long numberOfInTimeSubmissionsTransient;
+    private DueDateStat<Long> numberOfSubmissionsTransient;
 
     @Transient
-    private Long numberOfLateSubmissionsTransient;
-
-    @Transient
-    private Long numberOfAssessmentsTransient;
-
-    @Transient
-    private Long numberOfLateAssessmentsTransient;
+    private DueDateStat<Long> numberOfAssessmentsTransient;
 
     @Transient
     private Long numberOfComplaintsTransient;
@@ -818,36 +813,20 @@ public abstract class Exercise implements Serializable {
         this.tutorParticipations = tutorParticipations;
     }
 
-    public Long getNumberOfInTimeSubmissions() {
-        return numberOfInTimeSubmissionsTransient;
+    public DueDateStat<Long> getNumberOfSubmissions() {
+        return numberOfSubmissionsTransient;
     }
 
-    public void setNumberOfInTimeSubmissions(Long numberOfnumberOfInTimeSubmissions) {
-        this.numberOfInTimeSubmissionsTransient = numberOfnumberOfInTimeSubmissions;
+    public void setNumberOfSubmissions(DueDateStat<Long> numberOfnumberOfInTimeSubmissions) {
+        this.numberOfSubmissionsTransient = numberOfnumberOfInTimeSubmissions;
     }
 
-    public Long getNumberOfLateSubmissions() {
-        return numberOfLateSubmissionsTransient;
-    }
-
-    public void setNumberOfLateSubmissions(Long numberOfLateSubmissions) {
-        this.numberOfLateSubmissionsTransient = numberOfLateSubmissions;
-    }
-
-    public Long getNumberOfAssessments() {
+    public DueDateStat<Long> getNumberOfAssessments() {
         return numberOfAssessmentsTransient;
     }
 
-    public void setNumberOfAssessments(Long numberOfAssessments) {
+    public void setNumberOfAssessments(DueDateStat<Long> numberOfAssessments) {
         this.numberOfAssessmentsTransient = numberOfAssessments;
-    }
-
-    public Long getNumberOfLateAssessments() {
-        return numberOfLateAssessmentsTransient;
-    }
-
-    public void setNumberOfLateAssessments(Long numberOfLateAssessments) {
-        this.numberOfLateAssessmentsTransient = numberOfLateAssessments;
     }
 
     public Long getNumberOfComplaints() {

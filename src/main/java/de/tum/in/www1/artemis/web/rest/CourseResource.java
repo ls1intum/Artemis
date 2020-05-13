@@ -13,6 +13,7 @@ import java.util.regex.Matcher;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import de.tum.in.www1.artemis.web.rest.dto.DueDateStat;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -502,10 +503,8 @@ public class CourseResource {
 
             exerciseService.calculateNrOfOpenComplaints(exercise);
 
-            exercise.setNumberOfInTimeSubmissions(numberOfInTimeSubmissions);
-            exercise.setNumberOfLateSubmissions(numberOfLateSubmissions);
-            exercise.setNumberOfAssessments(numberOfAssessments);
-            exercise.setNumberOfLateAssessments(numberOfLateAssessments);
+            exercise.setNumberOfSubmissions(new DueDateStat<>(numberOfInTimeSubmissions, numberOfLateSubmissions));
+            exercise.setNumberOfAssessments(new DueDateStat<>(numberOfAssessments, numberOfLateAssessments));
 
             List<ExampleSubmission> exampleSubmissions = this.exampleSubmissionRepository.findAllByExerciseId(exercise.getId());
             // Do not provide example submissions without any assessment
@@ -545,12 +544,11 @@ public class CourseResource {
 
         final long numberOfInTimeSubmissions = submissionService.countInTimeSubmissionsForCourse(courseId)
                 + programmingExerciseService.countSubmissionsByCourseIdSubmitted(courseId);
-        stats.setNumberOfInTimeSubmissions(numberOfInTimeSubmissions);
-
         final long numberOfLateSubmissions = submissionService.countLateSubmissionsForCourse(courseId);
-        stats.setNumberOfLateSubmissions(numberOfLateSubmissions);
 
-        final long numberOfAssessments = resultService.countNumberOfAssessments(courseId);
+        stats.setNumberOfSubmissions(new DueDateStat<>(numberOfInTimeSubmissions, numberOfLateSubmissions));
+
+        final DueDateStat<Long> numberOfAssessments = resultService.countNumberOfAssessments(courseId);
         stats.setNumberOfAssessments(numberOfAssessments);
 
         final long numberOfMoreFeedbackRequests = complaintService.countMoreFeedbackRequestsByCourseId(courseId);
@@ -634,13 +632,15 @@ public class CourseResource {
                 numberOfInTimeSubmissions = submissionService.countInTimeSubmissionsForExercise(exercise.getId());
                 numberOfLateSubmissions = submissionService.countLateSubmissionsForExercise(exercise.getId());
             }
-            final long numberOfAssessments = resultService.countNumberOfFinishedAssessmentsForExercise(exercise.getId());
+            final long numberOfInTimeAssessments = resultService.countNumberOfFinishedAssessmentsForExercise(exercise.getId());
+            final long numberOfLateAssessments = resultService.countNumberOfFinishedLateAssessmentsForExercise(exercise.getId());
+
             final long numberOfMoreFeedbackRequests = complaintService.countMoreFeedbackRequestsByExerciseId(exercise.getId());
             final long numberOfComplaints = complaintService.countComplaintsByExerciseId(exercise.getId());
 
-            exercise.setNumberOfInTimeSubmissions(numberOfInTimeSubmissions);
-            exercise.setNumberOfLateSubmissions(numberOfLateSubmissions);
-            exercise.setNumberOfAssessments(numberOfAssessments);
+            exercise.setNumberOfSubmissions(new DueDateStat<>(numberOfInTimeSubmissions, numberOfLateSubmissions));
+            exercise.setNumberOfAssessments(new DueDateStat<>(numberOfInTimeAssessments, numberOfLateAssessments));
+
             exercise.setNumberOfComplaints(numberOfComplaints);
             exercise.setNumberOfMoreFeedbackRequests(numberOfMoreFeedbackRequests);
         }
@@ -688,8 +688,9 @@ public class CourseResource {
 
         final long numberOfInTimeSubmissions = submissionService.countInTimeSubmissionsForCourse(courseId)
                 + programmingExerciseService.countSubmissionsByCourseIdSubmitted(courseId);
+        final long numberOfLateSubmissions = submissionService.countLateSubmissionsForCourse(courseId);
 
-        stats.setNumberOfInTimeSubmissions(numberOfInTimeSubmissions);
+        stats.setNumberOfSubmissions(new DueDateStat<>(numberOfInTimeSubmissions, numberOfLateSubmissions));
         stats.setNumberOfAssessments(resultService.countNumberOfAssessments(courseId));
 
         final long startT = System.currentTimeMillis();

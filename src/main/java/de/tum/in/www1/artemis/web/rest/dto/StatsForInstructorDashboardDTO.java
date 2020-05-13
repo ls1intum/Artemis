@@ -6,13 +6,9 @@ public class StatsForInstructorDashboardDTO {
 
     private Long numberOfStudents;
 
-    private Long numberOfInTimeSubmissions;
+    private DueDateStat<Long> numberOfSubmissions;
 
-    private Long numberOfLateSubmissions;
-
-    private Long numberOfAssessments;
-
-    private Long numberOfLateAssessments;
+    private DueDateStat<Long> numberOfAssessments;
 
     private Long numberOfAutomaticAssistedAssessments;
 
@@ -37,36 +33,20 @@ public class StatsForInstructorDashboardDTO {
         this.numberOfStudents = numberOfStudents;
     }
 
-    public Long getNumberOfInTimeSubmissions() {
-        return numberOfInTimeSubmissions;
+    public DueDateStat<Long> getNumberOfSubmissions() {
+        return numberOfSubmissions;
     }
 
-    public void setNumberOfInTimeSubmissions(Long numberOfInTimeSubmissions) {
-        this.numberOfInTimeSubmissions = numberOfInTimeSubmissions;
+    public void setNumberOfSubmissions(DueDateStat<Long> numberOfSubmissions) {
+        this.numberOfSubmissions = numberOfSubmissions;
     }
 
-    public Long getNumberOfLateSubmissions() {
-        return numberOfLateSubmissions;
-    }
-
-    public void setNumberOfLateSubmissions(Long numberOfLateSubmissions) {
-        this.numberOfLateSubmissions = numberOfLateSubmissions;
-    }
-
-    public Long getNumberOfAssessments() {
+    public DueDateStat<Long> getNumberOfAssessments() {
         return numberOfAssessments;
     }
 
-    public void setNumberOfAssessments(Long numberOfAssessments) {
+    public void setNumberOfAssessments(DueDateStat<Long> numberOfAssessments) {
         this.numberOfAssessments = numberOfAssessments;
-    }
-
-    public Long getNumberOfLateAssessments() {
-        return numberOfLateAssessments;
-    }
-
-    public void setNumberOfLateAssessments(Long numberOfLateAssessments) {
-        this.numberOfLateAssessments = numberOfLateAssessments;
     }
 
     public Long getNumberOfAutomaticAssistedAssessments() {

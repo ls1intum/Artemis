@@ -5,6 +5,7 @@ import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 
 import java.util.*;
 
+import de.tum.in.www1.artemis.web.rest.dto.DueDateStat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -177,7 +178,7 @@ public class ExerciseResource {
     }
 
     /**
-     * Given an exercise exerciseId, it creates an object node with numberOfSubmissions, numberOfAssessments, numberOfComplaints and numberOfMoreFeedbackRequests, that are used by both
+     * Given an exercise exerciseId, it creates an object node with numberOfInTimeSubmissions, numberOfLateSubmissions, numberOfAssessments, numberOfLateAssessments, numberOfComplaints and numberOfMoreFeedbackRequests, that are used by both
      * stats for tutor dashboard and for instructor dashboard
      *
      * @param exercise - the exercise we are interested in
@@ -198,14 +199,12 @@ public class ExerciseResource {
             numberOfLateSubmissions = submissionService.countLateSubmissionsForExercise(exerciseId);
         }
 
-        stats.setNumberOfInTimeSubmissions(numberOfInTimeSubmissions);
-        stats.setNumberOfLateSubmissions(numberOfLateSubmissions);
+        stats.setNumberOfSubmissions(new DueDateStat<>(numberOfInTimeSubmissions, numberOfLateSubmissions));
 
-        final long numberOfAssessments = resultService.countNumberOfFinishedAssessmentsForExercise(exerciseId);
-        stats.setNumberOfAssessments(numberOfAssessments);
-
+        final long numberOfInTimeAssessments = resultService.countNumberOfFinishedAssessmentsForExercise(exerciseId);
         final long numberOfLateAssessments = resultService.countNumberOfFinishedLateAssessmentsForExercise(exerciseId);
-        stats.setNumberOfLateAssessments(numberOfLateAssessments);
+
+        stats.setNumberOfAssessments(new DueDateStat<>(numberOfInTimeAssessments, numberOfLateAssessments));
 
         final long numberOfAutomaticAssistedAssessments = resultService.countNumberOfAutomaticAssistedAssessmentsForExercise(exerciseId);
         stats.setNumberOfAutomaticAssistedAssessments(numberOfAutomaticAssistedAssessments);

@@ -9,6 +9,7 @@ import java.util.Set;
 
 import javax.validation.constraints.NotNull;
 
+import de.tum.in.www1.artemis.web.rest.dto.DueDateStat;
 import org.eclipse.jgit.lib.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -127,7 +128,7 @@ public class ResultService {
     /**
      * Sets the assessor field of the given result with the current user and stores these changes to the database. The User object set as assessor gets Groups and Authorities
      * eagerly loaded.
-     * 
+     *
      * @param result Result for which current user is set as an assessor
      */
     public void setAssessor(Result result) {
@@ -337,8 +338,11 @@ public class ResultService {
      * @param courseId - the course we are interested in
      * @return a number of assessments for the course
      */
-    public long countNumberOfAssessments(Long courseId) {
-        return resultRepository.countByAssessorIsNotNullAndParticipation_Exercise_CourseIdAndRatedAndCompletionDateIsNotNull(courseId, true);
+    public DueDateStat<Long> countNumberOfAssessments(Long courseId) {
+        return new DueDateStat<>(
+            resultRepository.countByAssessorIsNotNullAndParticipation_Exercise_CourseIdAndRatedAndCompletionDateIsNotNull(courseId, true),
+            resultRepository.countByAssessorIsNotNullAndParticipation_Exercise_CourseIdAndRatedAndCompletionDateIsNotNull(courseId, false)
+        );
     }
 
     /**
