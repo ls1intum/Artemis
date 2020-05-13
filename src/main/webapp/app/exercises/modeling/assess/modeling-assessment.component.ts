@@ -187,9 +187,7 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
         if (this.model.relationships) {
             availableIds = availableIds.concat(this.model.relationships.map((relationship) => relationship.id));
         }
-        // Hanya: we should not filter out feedback with no reference as we allow tutors to add unreferenced feedback
         return feedbacks.filter((feedback) => availableIds.includes(feedback.referenceId!));
-        //return feedbacks;
     }
 
     /**
