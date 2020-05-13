@@ -9,6 +9,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.test.context.support.WithAnonymousUser;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
@@ -107,6 +108,7 @@ public class AccountResourceIntegrationTest extends AbstractSpringIntegrationBam
     }
 
     @Test
+    @WithAnonymousUser
     public void getAccountWithoutLoggedInUser() throws Exception {
         UserDTO user = request.get("/api/account", HttpStatus.UNAUTHORIZED, UserDTO.class);
         assertThat(user).isNull();
