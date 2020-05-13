@@ -29,6 +29,7 @@ import { Conflict, ConflictingResult } from 'app/exercises/modeling/assess/model
     styleUrls: ['./modeling-assessment-editor.component.scss'],
 })
 export class ModelingAssessmentEditorComponent implements OnInit {
+    totalScore = 0;
     submission: ModelingSubmission | null;
     model: UMLModel | null;
     modelingExercise: ModelingExercise | null;
@@ -209,7 +210,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         }
 
         this.referencedFeedback = feedback.filter((feedbackElement) => feedbackElement.reference != null);
-        this.unreferencedFeedback = feedback.filter((feedbackElement) => feedbackElement.reference == null);
+        this.unreferencedFeedback = feedback.filter((feedbackElement) => feedbackElement.reference == null && feedbackElement.type === FeedbackType.MANUAL_UNREFERENCED);
 
         this.hasAutomaticFeedback = feedback.some((feedbackItem) => feedbackItem.type === FeedbackType.AUTOMATIC);
         this.highlightAutomaticFeedback();
@@ -358,7 +359,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
 
     onFeedbackChanged(feedback: Feedback[]) {
         this.referencedFeedback = feedback.filter((feedbackElement) => feedbackElement.reference != null);
-        this.unreferencedFeedback = feedback.filter((feedbackElement) => feedbackElement.reference == null);
+        //this.unreferencedFeedback = feedback.filter((feedbackElement) => feedbackElement.reference == null && feedbackElement.type === FeedbackType.MANUAL_UNREFERENCED);
         this.validateFeedback();
     }
 
@@ -410,6 +411,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
      *   - Each reference feedback must have a score that is a valid number
      */
     validateFeedback() {
+        this.calculateTotalScore();
         if (
             (!this.referencedFeedback || this.referencedFeedback.length === 0) &&
             (!this.unreferencedFeedback || this.unreferencedFeedback.length === 0) &&
@@ -484,5 +486,22 @@ export class ModelingAssessmentEditorComponent implements OnInit {
      */
     private removeHighlightedFeedbackOfColor(highlightedElements: Map<string, string>, color: string) {
         return new Map<string, string>([...highlightedElements].filter(([, value]) => value !== color));
+    }
+    /**
+     * Calculates the total score of the current assessment.
+     * This function originally checked whether the total score is negative
+     * or greater than the max. score, but we decided to remove the restriction
+     * and instead set the score boundaries on the server.
+     */
+    calculateTotalScore() {
+        if (!this.feedback || this.feedback.length === 0) {
+            this.totalScore = 0;
+            return;
+        }
+        let totalScore = 0;
+        for (const feedback of this.feedback) {
+            totalScore += feedback.credits!;
+        }
+        this.totalScore = totalScore;
     }
 }
