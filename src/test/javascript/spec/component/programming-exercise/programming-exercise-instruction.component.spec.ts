@@ -29,7 +29,7 @@ import { Participation } from 'app/entities/participation/participation.model';
 import { ExerciseHintService, IExerciseHintService } from 'app/exercises/shared/exercise-hint/manage/exercise-hint.service';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { ResultService } from 'app/exercises/shared/result/result.service';
-import { RepositoryFileService } from 'app/shared/result/repository.service';
+import { RepositoryFileService } from 'app/exercises/shared/result/repository.service';
 import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
 // eslint-disable-next-line @typescript-eslint/tslint/config
 import { ProgrammingExerciseInstructionTaskStatusComponent } from 'app/exercises/programming/shared/instructions-render/task/programming-exercise-instruction-task-status.component';
@@ -37,7 +37,7 @@ import { Result } from 'app/entities/result.model';
 import { Feedback } from 'app/entities/feedback.model';
 import { ProgrammingExerciseInstructionComponent } from 'app/exercises/programming/shared/instructions-render/programming-exercise-instruction.component';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
-import { ResultDetailComponent } from 'app/shared/result/result-detail.component';
+import { ResultDetailComponent } from 'app/exercises/shared/result/result-detail.component';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { MockParticipationWebsocketService } from '../../helpers/mocks/service/mock-participation-websocket.service';
 import { MockExerciseHintService } from '../../helpers/mocks/service/mock-exercise-hint.service';

@@ -16,7 +16,7 @@ import { CodeEditorFileService } from 'app/exercises/programming/shared/code-edi
 import { AnnotationArray } from 'app/entities/annotation.model';
 import { CodeEditorRepositoryFileService } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
 import { CodeEditorGridService } from 'app/exercises/programming/shared/code-editor/service/code-editor-grid.service';
-import { RepositoryFileService } from 'app/shared/result/repository.service';
+import { RepositoryFileService } from 'app/exercises/shared/result/repository.service';
 import { TextChange } from 'app/entities/text-change.model';
 
 @Component({
