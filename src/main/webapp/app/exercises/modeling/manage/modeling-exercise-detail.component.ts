@@ -13,6 +13,7 @@ import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 @Component({
     selector: 'jhi-modeling-exercise-detail',
     templateUrl: './modeling-exercise-detail.component.html',
+    styleUrls: ['./modeling-exercise-detail.component.scss'],
 })
 export class ModelingExerciseDetailComponent implements OnInit, OnDestroy {
     modelingExercise: ModelingExercise;
@@ -46,6 +47,7 @@ export class ModelingExerciseDetailComponent implements OnInit, OnDestroy {
             if (this.modelingExercise.sampleSolutionModel && this.modelingExercise.sampleSolutionModel !== '') {
                 this.sampleSolutionUML = JSON.parse(this.modelingExercise.sampleSolutionModel);
             }
+            this.modelingExercise.categories = this.modelingExercise.categories.map((category) => JSON.parse(category));
         });
     }
 
