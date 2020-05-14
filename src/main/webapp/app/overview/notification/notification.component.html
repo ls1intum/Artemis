@@ -25,7 +25,7 @@
                 <tr *ngFor="let notification of notifications; trackBy: trackId">
                     <td>{{ notification.title }}</td>
                     <td>{{ notification.text }}</td>
-                    <td>{{ notification.notificationDate | date: 'medium' }}</td>
+                    <td>{{ notification.notificationDate | artemisDate }}</td>
                     <td>
                         <button class="btn btn-block btn-primary" *ngIf="getTargetMessage(notification.target)" (click)="notificationService.interpretNotification(notification)">
                             {{ 'artemisApp.notification.target.' + getTargetMessage(notification.target) | translate }}
