@@ -9,7 +9,6 @@ import { convertRenderedSVGToPNG } from './exercise-generation/svg-renderer';
 import { ApollonDiagramService } from 'app/exercises/quiz/manage/apollon-diagrams/apollon-diagram.service';
 import { ApollonDiagram } from 'app/entities/apollon-diagram.model';
 import { AlertService } from 'app/core/alert/alert.service';
-import { courseExerciseOverviewTour } from 'app/guided-tour/tours/course-exercise-overview-tour';
 
 @Component({
     selector: 'jhi-apollon-diagram-detail',
