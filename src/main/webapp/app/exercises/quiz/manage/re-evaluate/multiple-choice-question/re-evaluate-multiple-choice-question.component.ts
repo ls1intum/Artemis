@@ -12,7 +12,7 @@ import { IncorrectOptionCommand } from 'app/shared/markdown-editor/domainCommand
     styleUrls: ['./re-evaluate-multiple-choice-question.component.scss', '../../../shared/quiz.scss'],
     providers: [ArtemisMarkdownService],
 })
-export class ReEvaluateMultipleChoiceQuestionComponent implements OnInit, AfterViewInit, OnChanges {
+export class ReEvaluateMultipleChoiceQuestionComponent implements OnInit, AfterViewInit {
     @ViewChild('questionEditor', { static: false })
     private questionEditor: AceEditorComponent;
 
@@ -35,6 +35,7 @@ export class ReEvaluateMultipleChoiceQuestionComponent implements OnInit, AfterV
 
     /** Ace Editor configuration constants **/
     questionEditorText = '';
+    answerEditorText = new Array<string>();
     editorMode = 'markdown';
     editorAutoUpdate = true;
 
@@ -57,79 +58,44 @@ export class ReEvaluateMultipleChoiceQuestionComponent implements OnInit, AfterV
      */
     ngAfterViewInit(): void {
         /** Setup editor **/
-        requestAnimationFrame(this.setupQuestionEditor.bind(this));
-        this.setupAnswerEditors();
+        this.backupQuestion = Object.assign({}, this.question);
+        this.setupQuestionEditor();
+        this.setQuestionText();
+        this.setAnswerTexts();
     }
 
-    /**
-     * Backup changed questions before applying changes.
-     * @param changes the changes that should be applied.
-     */
-    ngOnChanges(changes: SimpleChanges): void {
-        if (changes.question && changes.question.currentValue != null) {
-            this.backupQuestion = Object.assign({}, this.question);
-        }
+    setQuestionText(): void {
+        this.questionEditorText = this.artemisMarkdown.generateTextHintExplanation(this.question);
+    }
+
+    setAnswerTexts(): void {
+        this.question.answerOptions?.forEach((answerOption, index) => {
+            this.answerEditorText[index] = this.generateAnswerMarkdown(answerOption);
+        });
     }
 
     /**
      * Setup Question text editor
      */
     setupQuestionEditor() {
-        // Default editor settings for inline markup editor
-        this.questionEditor.setTheme('chrome');
-        this.questionEditor.getEditor().renderer.setShowGutter(false);
-        this.questionEditor.getEditor().renderer.setPadding(10);
-        this.questionEditor.getEditor().renderer.setScrollMargin(8, 8);
-        this.questionEditor.getEditor().setHighlightActiveLine(false);
-        this.questionEditor.getEditor().setShowPrintMargin(false);
-        this.questionEditorText = this.artemisMarkdown.generateTextHintExplanation(this.question);
-        this.questionEditor.getEditor().clearSelection();
+        this.aceEditorComponents.forEach((editor) => {
+            editor.setTheme('chrome');
+            editor.getEditor().renderer.setShowGutter(false);
+            editor.getEditor().renderer.setPadding(10);
+            editor.getEditor().renderer.setScrollMargin(8, 8);
+            editor.getEditor().setHighlightActiveLine(false);
+            editor.getEditor().setShowPrintMargin(false);
+            editor.getEditor().setOptions({
+                autoScrollEditorIntoView: true,
+            });
+            editor.getEditor().clearSelection();
 
-        // Register the onBlur listener
-        this.questionEditor.getEditor().on(
-            'blur',
-            () => {
-                // Parse the markdown in the editor and update question accordingly
-                this.parseQuestionMarkdown(this.questionEditorText);
-                this.questionUpdated.emit();
-            },
-            this,
-        );
-    }
-
-    /**
-     * Setup answerOption editors
-     */
-    setupAnswerEditors() {
-        /** Array with all answer option Ace Editors
-         *  Note: we filter out the question Editor (identified by his width)
-         **/
-        const answerEditors = this.aceEditorComponents.toArray().filter((editor) => editor.style.indexOf('width:90%') === -1);
-
-        this.question.answerOptions!.forEach((answer, index) => {
-            requestAnimationFrame(
-                function () {
-                    answerEditors[index].setTheme('chrome');
-                    answerEditors[index].getEditor().renderer.setShowGutter(false);
-                    answerEditors[index].getEditor().renderer.setPadding(10);
-                    answerEditors[index].getEditor().renderer.setScrollMargin(8, 8);
-                    answerEditors[index].getEditor().setHighlightActiveLine(false);
-                    answerEditors[index].getEditor().setShowPrintMargin(false);
-                    answerEditors[index].getEditor().setOptions({
-                        autoScrollEditorIntoView: true,
-                    });
-                    answerEditors[index].getEditor().setValue(this.generateAnswerMarkdown(answer));
-                    answerEditors[index].getEditor().clearSelection();
-
-                    answerEditors[index].getEditor().on(
-                        'blur',
-                        () => {
-                            this.parseAnswerMarkdown(answerEditors[index].getEditor().getValue(), answer);
-                            this.questionUpdated.emit();
-                        },
-                        this,
-                    );
-                }.bind(this),
+            editor.getEditor().on(
+                'blur',
+                () => {
+                    this.questionUpdated.emit();
+                },
+                this,
             );
         });
     }
@@ -234,7 +200,7 @@ export class ReEvaluateMultipleChoiceQuestionComponent implements OnInit, AfterV
         this.question.text = this.backupQuestion.text;
         this.question.explanation = this.backupQuestion.explanation;
         this.question.hint = this.backupQuestion.hint;
-        this.setupQuestionEditor();
+        this.setQuestionText();
     }
 
     /**
@@ -247,8 +213,8 @@ export class ReEvaluateMultipleChoiceQuestionComponent implements OnInit, AfterV
         this.question.scoringType = this.backupQuestion.scoringType;
         this.question.answerOptions = JSON.parse(JSON.stringify(this.backupQuestion.answerOptions));
         // Reset answer editors
-        this.setupAnswerEditors();
         this.resetQuestionText();
+        this.setAnswerTexts();
     }
 
     /**
@@ -263,6 +229,7 @@ export class ReEvaluateMultipleChoiceQuestionComponent implements OnInit, AfterV
         // Remove current answerOption at given index and insert the backup at the same position
         this.question.answerOptions!.splice(answerIndex, 1);
         this.question.answerOptions!.splice(answerIndex, 0, backupAnswer);
+        this.setAnswerTexts();
     }
 
     /**
