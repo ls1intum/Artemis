@@ -66,7 +66,8 @@ export class ArtemisDatePipe implements PipeTransform, OnDestroy {
     }
 
     private updateLocalizedDateTime(): void {
-        this.localizedDateTime = this.dateTime == null ? '' : this.dateTime.locale(this.locale).format(this.format());
+        this.dateTime.locale(this.locale);
+        this.localizedDateTime = this.dateTime == null ? '' : this.dateTime.format(this.format());
     }
 
     private format(): string {
