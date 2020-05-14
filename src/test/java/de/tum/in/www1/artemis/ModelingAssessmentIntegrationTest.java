@@ -680,16 +680,16 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
         modelingSubmission = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.one-element.json", "student1");
         ModelingSubmission modelingSubmission2 = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.one-element.json", "student2");
         ModelingSubmission modelingSubmission3 = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.one-element.json", "student3");
-        request.put(API_MODELING_SUBMISSIONS + modelingSubmission.getId() + "/assessment?submit=true&ignoreConflicts=true", Arrays.asList(originalFeedback,originalFeedbackWithoutReference),
-                HttpStatus.OK);
-        request.put(API_MODELING_SUBMISSIONS + modelingSubmission2.getId() + "/assessment?submit=true&ignoreConflicts=true", Arrays.asList(originalFeedback,originalFeedbackWithoutReference),
-                HttpStatus.OK);
+        request.put(API_MODELING_SUBMISSIONS + modelingSubmission.getId() + "/assessment?submit=true&ignoreConflicts=true",
+                Arrays.asList(originalFeedback, originalFeedbackWithoutReference), HttpStatus.OK);
+        request.put(API_MODELING_SUBMISSIONS + modelingSubmission2.getId() + "/assessment?submit=true&ignoreConflicts=true",
+                Arrays.asList(originalFeedback, originalFeedbackWithoutReference), HttpStatus.OK);
 
         Result originalResult = resultRepo.findDistinctWithFeedbackBySubmissionId(modelingSubmission.getId()).get();
         Feedback changedFeedback = originalResult.getFeedbacks().get(0).credits(2.0).text("another text");
         Feedback feedbackWithoutReference = new Feedback().credits(1.0).text("another feedback text again").reference(null).type(FeedbackType.MANUAL_UNREFERENCED);
-        request.put(API_MODELING_SUBMISSIONS + modelingSubmission.getId() + "/assessment?submit=true&ignoreConflicts=true", Arrays.asList(changedFeedback,feedbackWithoutReference),
-                HttpStatus.OK);
+        request.put(API_MODELING_SUBMISSIONS + modelingSubmission.getId() + "/assessment?submit=true&ignoreConflicts=true",
+                Arrays.asList(changedFeedback, feedbackWithoutReference), HttpStatus.OK);
 
         modelingAssessment = resultRepo.findDistinctWithFeedbackBySubmissionId(modelingSubmission.getId()).get();
         assertThat(modelingAssessment.getFeedbacks().size()).as("overridden assessment has correct amount of feedback").isEqualTo(2);
