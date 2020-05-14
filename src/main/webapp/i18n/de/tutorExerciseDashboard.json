@@ -39,14 +39,14 @@
             "new": "NEU",
             "noSubmissions": "Es gibt derzeit keine Abgaben, die du bewerten kannst.",
             "complaints": "Beschwerden",
-            "noComplaints": "Es gibt keine Beschwerde.",
+            "noComplaints": "Es gibt keine Beschwerden.",
             "noComplaintsDisplayed": "Es gibt keine Beschwerden (abgesehen von Beschwerden über deine Bewertungen)",
             "evaluateComplaint": "Auswertung der Beschwerde.",
             "showComplaint": "Beschwerde anzeigen",
             "complaintEvaluated": "Beschwerde wurde bereits bewertet",
             "complaintNotEvaluated": "Beschwerde muss noch bewertet werden",
-            "moreFeedback": "Weiteres Feedback anfragen",
-            "noMoreFeedbackRequests": "Es gibt keine Feedbackanfragen zu zeigen",
+            "moreFeedback": "Anfragen für weiteres Feedback",
+            "noMoreFeedbackRequests": "Es gibt keine Feedbackanfragen.",
             "noMoreFeedbackRequestsDisplayed": "Es gibt keine Feedbackanfragen (abgesehen von Feedbackanfragen über deine Bewertungen)",
             "evaluateMoreFeedbackRequest": "Auswertung der Feedbackanfragen",
             "moreFeedbackRequestEvaluated": "Die Feedbackanfragen wurden bereits ausgewertet",
@@ -69,7 +69,9 @@
                 "ENGLISH": "Englisch",
                 "GERMAN": "Deutsch",
                 "UNKNOWN": "Unbekannt"
-            }
+            },
+            "complaintHint": "Zeigt alle Beschwerden über Bewertungen mit Ausnahme deiner eigenen Beschwerden.",
+            "moreFeedbackRequestHint": "Zeigt alle Anfragen für weiteres Feedback zu Bewertungen an, die von dir bearbeitet wurden."
         }
     }
 }

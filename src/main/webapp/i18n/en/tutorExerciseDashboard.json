@@ -69,7 +69,9 @@
                 "ENGLISH": "English",
                 "GERMAN": "German",
                 "UNKNOWN": "Unknown"
-            }
+            },
+            "complaintHint": "Shows all Complaints about assessments except for your own complaints.",
+            "moreFeedbackRequestHint": "Shows all More Feedback Requests for assessments that you have created."
         }
     }
 }
