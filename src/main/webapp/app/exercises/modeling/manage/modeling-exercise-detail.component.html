@@ -33,11 +33,18 @@
                 </dd>
                 <dt><span jhiTranslate="artemisApp.exercise.releaseDate">Release Date</span></dt>
                 <dd>
-                    <span>{{ modelingExercise.releaseDate | date: 'medium' }}</span>
+                    <span *ngIf="modelingExercise.releaseDate">{{ modelingExercise.releaseDate | date: 'medium' }}</span>
+                    <span *ngIf="!modelingExercise.releaseDate" jhiTranslate="artemisApp.exercise.dateNotSet"></span>
                 </dd>
                 <dt><span jhiTranslate="artemisApp.exercise.dueDate">Due Date</span></dt>
                 <dd>
-                    <span>{{ modelingExercise.dueDate | date: 'medium' }}</span>
+                    <span *ngIf="modelingExercise.dueDate">{{ modelingExercise.dueDate | date: 'medium' }}</span>
+                    <span *ngIf="!modelingExercise.dueDate" jhiTranslate="artemisApp.exercise.dateNotSet"></span>
+                </dd>
+                <dt><span jhiTranslate="artemisApp.exercise.assessmentDueDate">Due Date</span></dt>
+                <dd>
+                    <span *ngIf="modelingExercise.assessmentDueDate">{{ modelingExercise.assessmentDueDate | date: 'medium' }}</span>
+                    <span *ngIf="!modelingExercise.assessmentDueDate" jhiTranslate="artemisApp.exercise.dateNotSet"></span>
                 </dd>
                 <dt><span jhiTranslate="artemisApp.exercise.maxScore">Max Score</span></dt>
                 <dd>

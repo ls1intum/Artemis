@@ -13,17 +13,32 @@
                 <dd>
                     <span>{{ textExercise.title }}</span>
                 </dd>
+                <ng-container *ngIf="textExercise.categories">
+                    <dt><span jhiTranslate="artemisApp.exercise.categories">Difficulty</span></dt>
+                    <dd>
+                        <span class="custom-tag" *ngFor="let item of textExercise.categories" [ngStyle]="{ backgroundColor: item.color }">
+                            <span>{{ item.category }}</span>
+                        </span>
+                    </dd>
+                </ng-container>
                 <dt><span jhiTranslate="artemisApp.exercise.mode">Mode</span></dt>
                 <dd>
                     <span>{{ textExercise.mode }}</span>
                 </dd>
                 <dt><span jhiTranslate="artemisApp.exercise.releaseDate">Release Date</span></dt>
                 <dd>
-                    <span>{{ textExercise.releaseDate | date: 'medium' }}</span>
+                    <span *ngIf="textExercise.releaseDate">{{ textExercise.releaseDate | date: 'medium' }}</span>
+                    <span *ngIf="!textExercise.releaseDate" jhiTranslate="artemisApp.exercise.dateNotSet"></span>
                 </dd>
                 <dt><span jhiTranslate="artemisApp.exercise.dueDate">Due Date</span></dt>
                 <dd>
-                    <span>{{ textExercise.dueDate | date: 'medium' }}</span>
+                    <span *ngIf="textExercise.dueDate">{{ textExercise.dueDate | date: 'medium' }}</span>
+                    <span *ngIf="!textExercise.dueDate" jhiTranslate="artemisApp.exercise.dateNotSet"></span>
+                </dd>
+                <dt><span jhiTranslate="artemisApp.exercise.assessmentDueDate">Due Date</span></dt>
+                <dd>
+                    <span *ngIf="textExercise.assessmentDueDate">{{ textExercise.assessmentDueDate | date: 'medium' }}</span>
+                    <span *ngIf="!textExercise.assessmentDueDate" jhiTranslate="artemisApp.exercise.dateNotSet"></span>
                 </dd>
                 <dt><span jhiTranslate="artemisApp.exercise.maxScore">Max Score</span></dt>
                 <dd>
