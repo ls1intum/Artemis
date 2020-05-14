@@ -40,6 +40,10 @@ export class ArtemisDatePipe implements PipeTransform, OnDestroy {
      */
     transform(dateTime: Date | moment.Moment | string | number, format: 'short' | 'long' = 'long', time = true, seconds = true): string {
         this.dateTime = moment(dateTime);
+        // Return empty string if given dateTime is not convertible to moment or equals null.
+        if (!this.dateTime.isValid()) {
+            return '';
+        }
         this.short = format === 'short';
         this.time = time;
         this.seconds = seconds;
@@ -67,7 +71,7 @@ export class ArtemisDatePipe implements PipeTransform, OnDestroy {
 
     private updateLocalizedDateTime(): void {
         this.dateTime.locale(this.locale);
-        this.localizedDateTime = this.dateTime == null ? '' : this.dateTime.format(this.format());
+        this.localizedDateTime = this.dateTime.format(this.format());
     }
 
     private format(): string {
