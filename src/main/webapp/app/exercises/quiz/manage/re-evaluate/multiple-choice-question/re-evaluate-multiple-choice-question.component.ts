@@ -80,26 +80,28 @@ export class ReEvaluateMultipleChoiceQuestionComponent implements OnInit, AfterV
      * Setup Question text editor
      */
     setupQuestionEditor() {
-        this.aceEditorComponents.forEach((editor) => {
-            editor.setTheme('chrome');
-            editor.getEditor().renderer.setShowGutter(false);
-            editor.getEditor().renderer.setPadding(10);
-            editor.getEditor().renderer.setScrollMargin(8, 8);
-            editor.getEditor().setHighlightActiveLine(false);
-            editor.getEditor().setShowPrintMargin(false);
-            editor.getEditor().setOptions({
-                autoScrollEditorIntoView: true,
-            });
-            editor.getEditor().clearSelection();
+        if (this.aceEditorComponents) {
+            this.aceEditorComponents.forEach((editor) => {
+                editor.setTheme('chrome');
+                editor.getEditor().renderer.setShowGutter(false);
+                editor.getEditor().renderer.setPadding(10);
+                editor.getEditor().renderer.setScrollMargin(8, 8);
+                editor.getEditor().setHighlightActiveLine(false);
+                editor.getEditor().setShowPrintMargin(false);
+                editor.getEditor().setOptions({
+                    autoScrollEditorIntoView: true,
+                });
+                editor.getEditor().clearSelection();
 
-            editor.getEditor().on(
-                'blur',
-                () => {
-                    this.questionUpdated.emit();
-                },
-                this,
-            );
-        });
+                editor.getEditor().on(
+                    'blur',
+                    () => {
+                        this.questionUpdated.emit();
+                    },
+                    this,
+                );
+            });
+        }
     }
 
     /**
