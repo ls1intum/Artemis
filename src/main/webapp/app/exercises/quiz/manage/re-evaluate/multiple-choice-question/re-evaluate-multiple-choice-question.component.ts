@@ -213,6 +213,7 @@ export class ReEvaluateMultipleChoiceQuestionComponent implements OnInit, AfterV
         this.question.scoringType = this.backupQuestion.scoringType;
         this.question.answerOptions = JSON.parse(JSON.stringify(this.backupQuestion.answerOptions));
         // Reset answer editors
+        this.setupQuestionEditor();
         this.resetQuestionText();
         this.setAnswerTexts();
     }
