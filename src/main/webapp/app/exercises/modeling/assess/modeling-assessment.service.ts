@@ -24,18 +24,38 @@ export class ModelingAssessmentService {
         this.localSubmissionConflictMap = new Map<number, Conflict[]>();
     }
 
+    /**
+     * Sets Conflicts in localSubmissionConflictMap
+     * @param submissionID Id of Submission and map key
+     * @param conflicts
+     */
     addLocalConflicts(submissionID: number, conflicts: Conflict[]) {
         return this.localSubmissionConflictMap.set(submissionID, conflicts);
     }
 
+    /**
+     * Gets Conflict for Submission
+     * @param submissionID
+     */
     getLocalConflicts(submissionID: number) {
         return this.localSubmissionConflictMap.get(submissionID);
     }
 
+    /**
+     * Escalates Conflicts
+     * @param conflicts
+     */
     escalateConflict(conflicts: Conflict[]): Observable<Conflict> {
         return this.http.put<Conflict>(`${this.resourceUrl}/model-assessment-conflicts/escalate`, conflicts);
     }
 
+    /**
+     * Saves or submits an assessment
+     * @param feedbacks part of Assessment
+     * @param submissionId Id of Submission
+     * @param submit whether to submit the Assessment (true) or just save it (false - default)
+     * @param ignoreConflicts whether to ignore conflicts (true) or not (false - default)
+     */
     saveAssessment(feedbacks: Feedback[], submissionId: number, submit = false, ignoreConflicts = false): Observable<Result> {
         let url = `${this.resourceUrl}/modeling-submissions/${submissionId}/assessment`;
         if (submit) {
@@ -47,11 +67,22 @@ export class ModelingAssessmentService {
         return this.http.put<Result>(url, feedbacks).map((res) => this.convertResult(res));
     }
 
+    /**
+     * Saves an example Assessment for given ExampleSubmission
+     * @param feedbacks Feedback to save in Assessment
+     * @param exampleSubmissionId Id of ExampleSubmission
+     */
     saveExampleAssessment(feedbacks: Feedback[], exampleSubmissionId: number): Observable<Result> {
         const url = `${this.resourceUrl}/modeling-submissions/${exampleSubmissionId}/example-assessment`;
         return this.http.put<Result>(url, feedbacks).map((res) => this.convertResult(res));
     }
 
+    /**
+     * Updates an Assessment after complaint
+     * @param feedbacks for assessment update
+     * @param complaintResponse for assessment update
+     * @param submissionId Id of Submission
+     */
     updateAssessmentAfterComplaint(feedbacks: Feedback[], complaintResponse: ComplaintResponse, submissionId: number): Observable<EntityResponseType> {
         const url = `${this.resourceUrl}/modeling-submissions/${submissionId}/assessment-after-complaint`;
         const assessmentUpdate = {
@@ -63,23 +94,45 @@ export class ModelingAssessmentService {
             .map((res: EntityResponseType) => this.convertResponse(res));
     }
 
+    /**
+     * Retrieve the result for an Submission
+     * @param submissionId Id of Submission
+     */
     getAssessment(submissionId: number): Observable<Result> {
         return this.http.get<Result>(`${this.resourceUrl}/modeling-submissions/${submissionId}/result`).map((res) => this.convertResult(res));
     }
 
+    /**
+     * Retrieve the result for an example submission
+     * @param exerciseId Id of Exercise
+     * @param submissionId Id of Submission
+     */
     getExampleAssessment(exerciseId: number, submissionId: number): Observable<Result> {
         const url = `${this.resourceUrl}/exercise/${exerciseId}/modeling-submissions/${submissionId}/example-assessment`;
         return this.http.get<Result>(url).map((res) => this.convertResult(res));
     }
 
+    /**
+     * get array of modeling submission id(s) without a manual result. If the diagram type is supported by Compass we get an array of
+     * ids of the next optimal submissions from Compass, otherwise random ids
+     * @param exerciseId
+     */
     getOptimalSubmissions(exerciseId: number): Observable<number[]> {
         return this.http.get<number[]>(`${this.resourceUrl}/exercises/${exerciseId}/optimal-model-submissions`);
     }
 
+    /**
+     * Reset models waiting for assessment by Compass by emptying the waiting list
+     * @param exerciseId
+     */
     resetOptimality(exerciseId: number): Observable<HttpResponse<void>> {
         return this.http.delete<void>(`${this.resourceUrl}/exercises/${exerciseId}/optimal-model-submissions`, { observe: 'response' });
     }
 
+    /**
+     * Assessment cancled, give back assessment lock and delete current assessment
+     * @param submissionId id of the submission
+     */
     cancelAssessment(submissionId: number): Observable<void> {
         return this.http.put<void>(`${this.resourceUrl}/modeling-submissions/${submissionId}/cancel-assessment`, null);
     }

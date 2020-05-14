@@ -15,6 +15,11 @@ import { Course } from 'app/entities/course.model';
 @Injectable({ providedIn: 'root' })
 export class ModelingExerciseResolver implements Resolve<ModelingExercise> {
     constructor(private modelingExerciseService: ModelingExerciseService, private courseService: CourseManagementService) {}
+
+    /**
+     * resolves route to decide which data to fetch from server. Gets ModelingExercise Object for different routes
+     * @param route Route to navigate to
+     */
     resolve(route: ActivatedRouteSnapshot) {
         if (route.params['exerciseId']) {
             return this.modelingExerciseService.find(route.params['exerciseId']).pipe(

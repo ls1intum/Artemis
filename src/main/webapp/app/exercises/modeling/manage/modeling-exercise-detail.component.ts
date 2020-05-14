@@ -30,6 +30,9 @@ export class ModelingExerciseDetailComponent implements OnInit, OnDestroy {
         private artemisMarkdown: ArtemisMarkdownService,
     ) {}
 
+    /**
+     * Angular lifecycle hook, gets params from route and registers ModelingExerciseChangeSubscriber
+     */
     ngOnInit() {
         this.subscription = this.route.params.subscribe((params) => {
             this.load(params['exerciseId']);
@@ -37,6 +40,11 @@ export class ModelingExerciseDetailComponent implements OnInit, OnDestroy {
         this.registerChangeInModelingExercises();
     }
 
+    /**
+     * loads ModelingExercise with given id
+     * sets problemsStatement, gradingInstructions and sampleSolution
+     * @param id ModelingExerciseId
+     */
     load(id: number) {
         this.modelingExerciseService.find(id).subscribe((modelingExerciseResponse: HttpResponse<ModelingExercise>) => {
             this.modelingExercise = modelingExerciseResponse.body!;
@@ -49,15 +57,24 @@ export class ModelingExerciseDetailComponent implements OnInit, OnDestroy {
         });
     }
 
+    /**
+     * Navigate back
+     */
     previousState() {
         window.history.back();
     }
 
+    /**
+     * Angular lifecycle hook, on destroy clean up resources
+     */
     ngOnDestroy() {
         this.subscription.unsubscribe();
         this.eventManager.destroy(this.eventSubscriber);
     }
 
+    /**
+     * registers event listener on modelingExerciseListModification events and reloads ModelingExercise when event is fired
+     */
     registerChangeInModelingExercises() {
         this.eventSubscriber = this.eventManager.subscribe('modelingExerciseListModification', () => this.load(this.modelingExercise.id));
     }

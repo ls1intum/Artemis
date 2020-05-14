@@ -61,6 +61,9 @@ export class ExampleModelingSubmissionComponent implements OnInit {
         private location: Location,
     ) {}
 
+    /**
+     * Angular lifecycle hook, initialized component attributes, gets initial data from server
+     */
     ngOnInit(): void {
         this.exerciseId = Number(this.route.snapshot.paramMap.get('exerciseId'));
         const exampleSubmissionId = this.route.snapshot.paramMap.get('exampleSubmissionId');
@@ -120,6 +123,9 @@ export class ExampleModelingSubmissionComponent implements OnInit {
         });
     }
 
+    /**
+     * create or update ExampleModelingSubmission
+     */
     upsertExampleModelingSubmission() {
         if (this.isNewSubmission) {
             this.createNewExampleModelingSubmission();
@@ -200,12 +206,19 @@ export class ExampleModelingSubmissionComponent implements OnInit {
         );
     }
 
+    /**
+     * Fired when feedback changed
+     * @param feedbacks new feedback
+     */
     onFeedbackChanged(feedbacks: Feedback[]) {
         this.feedbacks = feedbacks;
         this.feedbackChanged = true;
         this.checkScoreBoundaries();
     }
 
+    /**
+     * Shows ExampleAssessment saves current Submission and enables assessmentMode
+     */
     showAssessment() {
         if (this.modelChanged()) {
             this.updateExampleModelingSubmission();
@@ -217,6 +230,9 @@ export class ExampleModelingSubmissionComponent implements OnInit {
         return this.modelingEditor && JSON.stringify(this.umlModel) !== JSON.stringify(this.modelingEditor.getCurrentModel());
     }
 
+    /**
+     * Shows ExampleSubmission saves current Assessment if feedback has changed and disables assessmentMode
+     */
     showSubmission() {
         if (this.feedbackChanged) {
             this.saveExampleAssessment();
@@ -225,6 +241,9 @@ export class ExampleModelingSubmissionComponent implements OnInit {
         this.assessmentMode = false;
     }
 
+    /**
+     * save ExampleAssessment if Assessment is Valid
+     */
     public saveExampleAssessment(): void {
         this.checkScoreBoundaries();
         if (!this.assessmentsAreValid) {
@@ -289,6 +308,11 @@ export class ExampleModelingSubmissionComponent implements OnInit {
         this.invalidError = null;
     }
 
+    /**
+     * navigates back -> destination:
+     * /course-management/{courseId}/exercises/{}this.exerciseId}/tutor-dashboard
+     * /course-management/{courseId}/modeling-exercises/{this.exerciseId}/edit
+     */
     async back() {
         const courseId = this.exercise.course!.id;
 
@@ -299,6 +323,9 @@ export class ExampleModelingSubmissionComponent implements OnInit {
         }
     }
 
+    /**
+     * checks if Assessment is valid and adds ExampleSubmission to Exercise
+     */
     checkAssessment() {
         // scroll to top that the user definitely recognizes the response message (success OR score too low/high)
         window.scroll(0, 0);
@@ -331,6 +358,9 @@ export class ExampleModelingSubmissionComponent implements OnInit {
         );
     }
 
+    /**
+     * records that the tutor has read the ExampleSubmission
+     */
     readAndUnderstood() {
         this.tutorParticipationService.assessExampleSubmission(this.exampleSubmission, this.exerciseId).subscribe(() => {
             this.jhiAlertService.success('artemisApp.exampleSubmission.readSuccessfully');

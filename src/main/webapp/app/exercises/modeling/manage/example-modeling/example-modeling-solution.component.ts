@@ -34,6 +34,9 @@ export class ExampleModelingSolutionComponent implements OnInit {
         private artemisMarkdown: ArtemisMarkdownService,
     ) {}
 
+    /**
+     * Angular lifecycle hook, initializes component, gets data form server
+     */
     ngOnInit(): void {
         this.exerciseId = Number(this.route.snapshot.paramMap.get('exerciseId'));
 
@@ -47,6 +50,9 @@ export class ExampleModelingSolutionComponent implements OnInit {
         });
     }
 
+    /**
+     * Saves an example solution
+     */
     saveExampleSolution(): void {
         if (!this.exercise || !this.modelingEditor.getCurrentModel()) {
             return;
@@ -68,6 +74,9 @@ export class ExampleModelingSolutionComponent implements OnInit {
         );
     }
 
+    /**
+     * navigates back
+     */
     async back() {
         const courseId = this.exercise.course!.id;
         await this.router.navigate(['/course-management', courseId, 'modeling-exercises', this.exerciseId, 'edit']);

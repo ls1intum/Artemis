@@ -78,6 +78,9 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         return [this.generalFeedback, ...this.referencedFeedback];
     }
 
+    /**
+     * Angular lifecycle method, initialized component params and gets data from server
+     */
     ngOnInit() {
         // Used to check if the assessor is the current user
         this.accountService.identity().then((user) => {
@@ -227,6 +230,9 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         this.canOverride = (this.isAssessor && isBeforeAssessmentDueDate) || this.isAtLeastInstructor;
     }
 
+    /**
+     * error handling when it was not possible to load Submission
+     */
     onError(): void {
         this.isAtLeastInstructor = this.accountService.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR']);
         this.submission = null;
@@ -237,6 +243,9 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         this.jhiAlertService.error('modelingAssessmentEditor.messages.loadSubmissionFailed');
     }
 
+    /**
+     * Validates and saves Assessment
+     */
     onSaveAssessment() {
         if (!this.modelingAssessmentService.isFeedbackTextValid(this.feedback)) {
             this.jhiAlertService.error('modelingAssessmentEditor.messages.feedbackTextTooLong');
@@ -257,6 +266,9 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         );
     }
 
+    /**
+     * executed when submit button is clicked. Confimation for assessment is requested or elements with missing feedback are highlighted
+     */
     onSubmitAssessment() {
         if (this.referencedFeedback.length < this.model!.elements.length || !this.assessmentsAreValid) {
             const confirmationMessage = this.translateService.instant('modelingAssessmentEditor.messages.confirmSubmission');
@@ -335,6 +347,9 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         );
     }
 
+    /**
+     * navigates to conflict resolution view
+     */
     onShowConflictResolution() {
         this.modelingAssessmentService.addLocalConflicts(this.submission!.id, this.conflicts!);
         this.jhiAlertService.clear();
@@ -353,11 +368,19 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         }
     }
 
+    /**
+     * update referencedFeedback and validate
+     * @param feedback update for referencedFeedback
+     */
     onFeedbackChanged(feedback: Feedback[]) {
         this.referencedFeedback = feedback;
         this.validateFeedback();
     }
 
+    /**
+     * navigates to next submission which can be assessed automatically by compass.
+     * If compass is not supported navigate to random submission
+     */
     assessNextOptimal() {
         this.nextSubmissionBusy = true;
         this.modelingAssessmentService.getOptimalSubmissions(this.modelingExercise!.id).subscribe(
@@ -422,6 +445,9 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         this.assessmentsAreValid = true;
     }
 
+    /**
+     * navigate to exercise dashboard
+     */
     goToExerciseDashboard() {
         if (this.modelingExercise && this.modelingExercise.course) {
             this.router.navigateByUrl(`/course-management/${this.modelingExercise.course.id}/exercises/${this.modelingExercise.id}/tutor-dashboard`);

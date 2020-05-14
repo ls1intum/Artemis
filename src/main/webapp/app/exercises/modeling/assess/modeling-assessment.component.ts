@@ -33,6 +33,10 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
 
     constructor(private jhiAlertService: AlertService, private renderer: Renderer2) {}
 
+    /**
+     * Angular lifecycle hook, invoked after view initialized
+     * initialized ApollonEditor
+     */
     ngAfterViewInit(): void {
         this.initializeApollonEditor();
         if (this.highlightedElements) {
@@ -67,12 +71,19 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
         }
     }
 
+    /**
+     * Angular lifecylce hook, clean up apollon editor when component is destroyed
+     */
     ngOnDestroy() {
         if (this.apollonEditor !== null) {
             this.apollonEditor.destroy();
         }
     }
 
+    /**
+     * Angular lifecycle hook, called when any data-bound property of a directive changes
+     * @param changes of data-bound properties
+     */
     ngOnChanges(changes: SimpleChanges): void {
         if (changes.model && changes.model.currentValue && this.apollonEditor) {
             this.apollonEditor!.model = changes.model.currentValue;

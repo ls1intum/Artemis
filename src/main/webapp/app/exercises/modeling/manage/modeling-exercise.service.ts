@@ -20,6 +20,10 @@ export class ModelingExerciseService {
         this.exerciseService = exerciseService;
     }
 
+    /**
+     * creates a ModelingExercise similar to the modelingExercise parameter on the server
+     * @param modelingExercise
+     */
     create(modelingExercise: ModelingExercise): Observable<EntityResponseType> {
         const copy = this.exerciseService.convertDateFromClient(modelingExercise);
         return this.http
@@ -27,6 +31,11 @@ export class ModelingExerciseService {
             .pipe(map((res: EntityResponseType) => this.exerciseService.convertDateFromServer(res)));
     }
 
+    /**
+     * updates Modeling Exercise with given modelingExercise parameter
+     * @param modelingExercise
+     * @param req to copy request params from
+     */
     update(modelingExercise: ModelingExercise, req?: any): Observable<EntityResponseType> {
         const options = createRequestOption(req);
         const copy = this.exerciseService.convertDateFromClient(modelingExercise);
@@ -35,16 +44,28 @@ export class ModelingExerciseService {
             .pipe(map((res: EntityResponseType) => this.exerciseService.convertDateFromServer(res)));
     }
 
+    /**
+     * Find ModelingExercise for given modelingExerciseId
+     * @param modelingExerciseId
+     */
     find(modelingExerciseId: number): Observable<EntityResponseType> {
         return this.http
             .get<ModelingExercise>(`${this.resourceUrl}/${modelingExerciseId}`, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.exerciseService.convertDateFromServer(res)));
     }
 
+    /**
+     * Get Statistics about ModelingExercise
+     * @param modelingExerciseId
+     */
     getStatistics(modelingExerciseId: number): Observable<HttpResponse<ModelingStatistic>> {
         return this.http.get<ModelingStatistic>(`${this.resourceUrl}/${modelingExerciseId}/statistics`, { observe: 'response' });
     }
 
+    /**
+     * delete ModelingExercise
+     * @param modelingExerciseId
+     */
     delete(modelingExerciseId: number): Observable<HttpResponse<{}>> {
         return this.http.delete(`${this.resourceUrl}/${modelingExerciseId}`, { observe: 'response' });
     }
