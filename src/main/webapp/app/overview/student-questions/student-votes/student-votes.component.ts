@@ -22,5 +22,20 @@ export enum StudentVotesActionName {
 export class StudentVotesComponent {
     @Input() user: User;
     @Input() questionId: number;
+    @Input() votes: number;
     @Output() interactVotes = new EventEmitter<StudentVotesAction>();
+
+    /**
+     * toggle upvote
+     */
+    toggleUpVote(): void {
+        console.log('toggle upvote');
+    }
+
+    /**
+     * toggle downvote
+     */
+    toggleDownVote(): void {
+        console.log('toggleDownvote');
+    }
 }

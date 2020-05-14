@@ -40,6 +40,9 @@ public class StudentQuestion implements Serializable {
     @Column(name = "visible_for_students")
     private Boolean visibleForStudents;
 
+    @Column(name = "votes")
+    private Integer votes;
+
     @OneToMany(mappedBy = "question", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.EAGER)
     private Set<StudentQuestionAnswer> answers = new HashSet<>();
 
@@ -102,6 +105,15 @@ public class StudentQuestion implements Serializable {
     public void setVisibleForStudents(Boolean visibleForStudents) {
         this.visibleForStudents = visibleForStudents;
     }
+
+    public Integer getVotes() { return votes; }
+
+    public StudentQuestion votes(Integer votes ) {
+        this.votes = votes;
+        return this;
+    }
+
+    public void setVotes(Integer votes) { this.votes = votes; }
 
     public Set<StudentQuestionAnswer> getAnswers() {
         return answers;
@@ -205,6 +217,6 @@ public class StudentQuestion implements Serializable {
     @Override
     public String toString() {
         return "StudentQuestion{" + "id=" + getId() + ", questionText='" + getQuestionText() + "'" + ", creationDate='" + getCreationDate() + "'" + ", visibleForStudents='"
-                + isVisibleForStudents() + "'" + "}";
+                + isVisibleForStudents() + "'" + ", votes='" + getVotes() + "'" + "}";
     }
 }

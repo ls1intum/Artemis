@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, AfterViewInit } from '@angular/core';
+import { AfterViewInit, Component, Input, OnInit } from '@angular/core';
 import { User } from 'app/core/user/user.model';
 import * as moment from 'moment';
 import { HttpResponse } from '@angular/common/http';

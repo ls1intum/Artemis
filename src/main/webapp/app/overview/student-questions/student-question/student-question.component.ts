@@ -3,6 +3,7 @@ import { User } from 'app/core/user/user.model';
 import { StudentQuestion } from 'app/entities/student-question.model';
 import { StudentQuestionService } from 'app/overview/student-questions/student-question/student-question.service';
 import { EditorMode } from 'app/shared/markdown-editor/markdown-editor.component';
+import { StudentVotesAction, StudentVotesActionName } from 'app/overview/student-questions/student-votes/student-votes.component';
 
 export interface StudentQuestionAction {
     name: QuestionActionName;
@@ -69,5 +70,18 @@ export class StudentQuestionComponent implements OnInit {
     toggleEditMode(): void {
         this.isEditMode = !this.isEditMode;
         this.editText = this.studentQuestion.questionText;
+    }
+
+    interactVotes(action: StudentVotesAction): void {
+        switch (action.name) {
+            case StudentVotesActionName.VOTE_CHANGE:
+                this.updateVotes(action.value);
+                break;
+        }
+    }
+
+    updateVotes(votes: number): void {
+        this.studentQuestion.votes = votes;
+        this.studentQuestionService.update(this.studentQuestion).subscribe(() => {});
     }
 }
