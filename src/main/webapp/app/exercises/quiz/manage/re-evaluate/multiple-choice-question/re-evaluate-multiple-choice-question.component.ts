@@ -3,6 +3,8 @@ import { AceEditorComponent } from 'ng2-ace-editor';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { AnswerOption } from 'app/entities/quiz/answer-option.model';
 import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-question.model';
+import { CorrectOptionCommand } from 'app/shared/markdown-editor/domainCommands/correctOptionCommand';
+import { IncorrectOptionCommand } from 'app/shared/markdown-editor/domainCommands/incorrectOptionCommand';
 
 @Component({
     selector: 'jhi-re-evaluate-multiple-choice-question',
@@ -144,7 +146,7 @@ export class ReEvaluateMultipleChoiceQuestionComponent implements OnInit, AfterV
      * @param answer {AnswerOption}  is the AnswerOption, which the Markdown-field presents
      */
     generateAnswerMarkdown(answer: AnswerOption): string {
-        return (answer.isCorrect ? '[x]' : '[ ]') + ' ' + this.artemisMarkdown.generateTextHintExplanation(answer);
+        return (answer.isCorrect ? CorrectOptionCommand.identifier : IncorrectOptionCommand.identifier) + ' ' + this.artemisMarkdown.generateTextHintExplanation(answer);
     }
 
     /**
@@ -159,8 +161,7 @@ export class ReEvaluateMultipleChoiceQuestionComponent implements OnInit, AfterV
      * @param text {string} the markdown text to parse
      */
     parseQuestionMarkdown(text: string) {
-        // first split by [], [ ], [x] and [X]
-        const questionParts = text.split(/\[\]|\[ \]|\[x\]|\[X\]/g);
+        const questionParts = this.splitByCorrectIncorrectTag(text);
         const questionText = questionParts[0];
         this.artemisMarkdown.parseTextHintExplanation(questionText, this.question);
     }
@@ -178,9 +179,7 @@ export class ReEvaluateMultipleChoiceQuestionComponent implements OnInit, AfterV
      * @param answer {AnswerOption} the answer, where to save the result
      */
     parseAnswerMarkdown(text: string, answer: AnswerOption) {
-        text = text.trim();
-        // First split by [], [ ], [x] and [X]
-        const answerParts = text.split(/\[\]|\[ \]|\[x\]|\[X\]/g);
+        const answerParts = this.splitByCorrectIncorrectTag(text.trim());
         // Work on answer options
         // Find the box (text in-between the parts)
         const answerOptionText = answerParts[1];
@@ -189,6 +188,15 @@ export class ReEvaluateMultipleChoiceQuestionComponent implements OnInit, AfterV
         // Check if box says this answer option is correct or not
         answer.isCorrect = box === '[x]' || box === '[X]';
         this.artemisMarkdown.parseTextHintExplanation(answerOptionText, answer);
+    }
+
+    /**
+     * Split text by [correct] and [wrong]
+     * @param text
+     */
+    private splitByCorrectIncorrectTag(text: string): string[] {
+        const correctIncorrectRegex = new RegExp(CorrectOptionCommand.identifier + '|' + IncorrectOptionCommand.identifier);
+        return text.split(correctIncorrectRegex);
     }
 
     /**
