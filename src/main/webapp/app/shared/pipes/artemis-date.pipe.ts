@@ -38,12 +38,12 @@ export class ArtemisDatePipe implements PipeTransform, OnDestroy {
      * @param seconds Should seconds be displayed? Defaults to true.
      * @return string
      */
-    transform(dateTime: Date | moment.Moment | string | number, format: 'short' | 'long' = 'long', time = true, seconds = true): string {
-        this.dateTime = moment(dateTime);
+    transform(dateTime: Date | moment.Moment | string | number | null, format: 'short' | 'long' = 'long', time = true, seconds = true): string {
         // Return empty string if given dateTime is not convertible to moment or equals null.
-        if (!this.dateTime.isValid()) {
+        if (dateTime === null || !moment(dateTime).isValid()) {
             return '';
         }
+        this.dateTime = moment(dateTime);
         this.short = format === 'short';
         this.time = time;
         this.seconds = seconds;
