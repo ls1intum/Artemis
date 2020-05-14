@@ -14,6 +14,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
+import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.GradingCriterion;
 import de.tum.in.www1.artemis.domain.GradingInstruction;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
@@ -48,8 +49,8 @@ public class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBa
     @BeforeEach
     public void initTestCase() throws Exception {
         database.addUsers(1, 1, 1);
-        database.addCourseWithOneModelingExercise();
-        classExercise = (ModelingExercise) exerciseRepo.findAll().get(0);
+        Course course = database.addCourseWithOneModelingExercise();
+        classExercise = (ModelingExercise) course.getExercises().iterator().next();
 
         // Add users that are not in course
         userRepo.save(ModelFactory.generateActivatedUser("instructor2"));

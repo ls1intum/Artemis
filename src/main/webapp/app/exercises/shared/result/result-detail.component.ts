@@ -1,5 +1,5 @@
 import { Component, Input, OnInit } from '@angular/core';
-import { RepositoryService } from 'app/shared/result/repository.service';
+import { RepositoryService } from 'app/exercises/shared/result/repository.service';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { catchError, map, switchMap, tap } from 'rxjs/operators';
 import { of } from 'rxjs';
