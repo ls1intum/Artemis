@@ -20,13 +20,13 @@ import * as moment from 'moment';
     pure: false,
 })
 export class ArtemisDatePipe implements PipeTransform, OnDestroy {
-    dateTime: moment.Moment;
-    short = false;
-    time = true;
-    seconds = true;
-    locale: string;
-    localizedDateTime: string;
-    onLangChange: Subscription | undefined;
+    private dateTime: moment.Moment;
+    private short = false;
+    private time = true;
+    private seconds = true;
+    private locale: string;
+    private localizedDateTime: string;
+    private onLangChange: Subscription | undefined;
 
     constructor(private translateService: TranslateService) {}
 
