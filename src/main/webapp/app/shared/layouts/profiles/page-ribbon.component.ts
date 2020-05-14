@@ -18,7 +18,7 @@ export class PageRibbonComponent implements OnInit {
     constructor(private profileService: ProfileService) {}
 
     /**
-     * Lifecycle function which is called after the component is created.
+     * Lifecycle function which is called on initialisation. It sets the {@link profileInfo} and {@link ribbonEnv} using {@link profileService~getProfileInfo}.
      */
     ngOnInit() {
         this.profileService.getProfileInfo().subscribe(

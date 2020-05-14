@@ -20,7 +20,7 @@ export class FooterComponent implements OnInit {
     constructor(private profileService: ProfileService) {}
 
     /**
-     * Lifecycle function which is called after the component is created.
+     * Lifecycle hook which is called on initialisation. Sets the {@link contact} and {@link imprintUrl} by subscribing to {@link profileService~getProfileInfo}.
      */
     ngOnInit(): void {
         this.profileService

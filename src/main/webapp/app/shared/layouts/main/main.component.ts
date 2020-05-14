@@ -29,8 +29,10 @@ export class JhiMainComponent implements OnInit {
         return title;
     }
 
-    /**
-     * Lifecycle function which is called after the component is created.
+    /** Lifecycle hook which is called on initialisation. Subscribes to {@link router} events and handles {@link NavigationEnd}, {@link NavigationError} 404.
+     * When a {@link NavigationEnd} event is received it updates the window by calling {@link jhiLanguageHelper~updateTitle} with {@link getPageTitle}.
+     * In case of a {@link NavigationError} it navigates to '/404'.
+     * See {@link router~navigate}.
      */
     ngOnInit() {
         this.router.events.subscribe((event) => {

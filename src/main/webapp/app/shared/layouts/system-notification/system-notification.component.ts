@@ -27,7 +27,7 @@ export class SystemNotificationComponent implements OnInit {
     ) {}
 
     /**
-     * Lifecycle function which is called after the component is created.
+     * Lifecycle function which is called on initialisations. Calls {@link loadActiveNotification} when a user is connected.
      */
     ngOnInit() {
         this.accountService.getAuthenticationState().subscribe((user: User | null) => {
@@ -43,9 +43,9 @@ export class SystemNotificationComponent implements OnInit {
         });
     }
 
-    /**
-     * @function loadActiveNotification
-     * Subscribes to the active notifications and triggers setAlertClass & setAlertIcon
+    /** Subscribes to {@link systemNotificationService~getActiveNotification}.
+     * It sets the {@link notification} and triggers {@link setAlertClass} & {@link setAlertIcon} when a notification is received.
+     * @method
      */
     loadActiveNotification() {
         this.systemNotificationService.getActiveNotification().subscribe((notification: SystemNotification) => {
@@ -55,9 +55,10 @@ export class SystemNotificationComponent implements OnInit {
         });
     }
 
-    /**
-     * @function subscribeSocket
-     * Sets the websocket channel and subscribes to it for receiving system notifications. Before displaying the notifications, they are validated.
+    /** Sets the websocket channel and subscribes to it for receiving system notifications. See {@link jhiWebsocketService~subscribe}, {@link jhiWebsocketService~receive}.
+     * Before displaying a notification that is not null, the {@link SystemNotification~id} and {@link SystemNotification~notificationDate} are validated.
+     * {@link checkNotificationDates}.
+     * @method subscribeSocket
      */
     subscribeSocket() {
         this.websocketChannel = '/topic/system-notification';
@@ -83,10 +84,10 @@ export class SystemNotificationComponent implements OnInit {
         });
     }
 
-    /**
-     * @function checkNotificationDates
-     * Checks whether the notifications are still valid before triggering setAlertClass and setAlertIcon. If they are not valid, loadActiveNotification is called.
-     * @param systemNotification { SystemNotification }
+    /** Checks whether the notifications are still valid before triggering {@link setAlertClass} and {@link setAlertIcon} and setting it in {@link notification}.
+     * If they are not valid, {@link loadActiveNotification} is called.
+     * @method
+     * @param systemNotification {SystemNotification}
      */
     checkNotificationDates(systemNotification: SystemNotification) {
         if (systemNotification.expireDate!.isAfter(moment()) && systemNotification.notificationDate!.isBefore(moment())) {
@@ -99,9 +100,9 @@ export class SystemNotificationComponent implements OnInit {
         }
     }
 
-    /**
-     * @function setAlertClass
-     * Sets the alert class according to the notification type
+    /** Sets the {@link alertClass} according to the {@link SystemNotificationType}.
+     * For {@link SystemNotificationType~WARNING} {@link alertClass} is set to 'alert-warning', otherwise it is set to 'alert-info'.
+     * @method
      */
     setAlertClass(): void {
         if (this.notification) {
@@ -113,9 +114,9 @@ export class SystemNotificationComponent implements OnInit {
         }
     }
 
-    /**
-     * @function setAlertIcon
-     * Sets the alert icon according to the notification type
+    /** Sets the {@link alertIcon} according to the {@link SystemNotificationType}.
+     * For {@link SystemNotificationType~WARNING} {@link alertIcon} is set to 'exclamation-triangle', otherwise it is set to 'info-circle'.
+     * @method
      */
     setAlertIcon(): void {
         if (this.notification) {

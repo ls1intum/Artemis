@@ -49,7 +49,9 @@ export class NavbarComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Lifecycle function which is called after the component is created.
+     * Lifecycle function which is called on initialisation. Sets the {@link inProduction} flag using {@link profileService~getProfileInfo}.
+     * Triggers {@link subscribeForGuidedTourAvailability} to check if a guided tour is available. Finally it sets the {@link currAccount}..
+     * The current user account is needed to hide menu items for users who are not logged in.
      */
     ngOnInit() {
         this.languages = this.languageHelper.getAll();
@@ -70,7 +72,8 @@ export class NavbarComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Lifecycle function that performs cleanup just before Angular destroys the component
+     * Lifecycle function that performs cleanup.
+     * Unsubscribes from {@link authStateSubscription} from {@link accountService~getAuthenticationState} used to retrieve the current user.
      */
     ngOnDestroy(): void {
         if (this.authStateSubscription) {
@@ -78,9 +81,9 @@ export class NavbarComponent implements OnInit, OnDestroy {
         }
     }
 
-    /**
-     * @function subscribeForGuidedTourAvailability
-     * Check if a guided tour is available for the current route to display the start tour button in the account menu
+    /** Check if a guided tour is available for the current route to display the start tour button in the account menu.
+     * Sets the {@link isTourAvailable} flag.
+     * @method
      */
     subscribeForGuidedTourAvailability(): void {
         // Check availability after first subscribe call since the router event been triggered already
@@ -89,10 +92,10 @@ export class NavbarComponent implements OnInit, OnDestroy {
         });
     }
 
-    /**
-     * @function changeLanguage
-     * @param languageKey { string }
-     * Set the language as LanguageKey
+    /** Wrapper method to change the language to {@param languageKey}.
+     * Triggers {@link sessionStorage~store}, {@link languageService~changeLanguage} and {@link moment~locale}.
+     * @method
+     * @param languageKey {string}
      */
     changeLanguage(languageKey: string) {
         this.sessionStorage.store('locale', languageKey);
@@ -100,25 +103,24 @@ export class NavbarComponent implements OnInit, OnDestroy {
         moment.locale(languageKey);
     }
 
-    /**
-     * @function collapseNavbar
-     * Function to collapse the navigation bar
+    /** Collapse the navigation bar by setting the {@link isNavbarCollapsed} flag.
+     * @method
      */
     collapseNavbar() {
         this.isNavbarCollapsed = true;
     }
 
-    /**
-     * @function isAuthenticated { boolean }
-     * Function which returns true if this account is authenticated
+    /** Returns true if this account is authenticated. Wrapper function for {@link accountService~isAuthenticated}
+     * @method
+     * @returns boolean
      */
     isAuthenticated() {
         return this.accountService.isAuthenticated();
     }
 
-    /**
-     * @function logout
-     * Function which performs a safe logout.
+    /** Performs a safe logout. It resets the local cache {@link participationWebsocketService~resetLocalCache}, collapses the navigation bar {@link collapseNavbar} and
+     * performs the logout {@link loginService~logout}.
+     * @method
      */
     logout() {
         this.participationWebsocketService.resetLocalCache();
@@ -126,17 +128,16 @@ export class NavbarComponent implements OnInit, OnDestroy {
         this.loginService.logout();
     }
 
-    /**
-     * @function toggleNavbar
-     * Function which toggles the navigation bar from collapsed to open and vice versa.
+    /** Toggles the state of the navigation bar from collapsed to open and vice versa by setting the {@link isNavbarCollapsed} flag.
+     * @method
      */
     toggleNavbar() {
         this.isNavbarCollapsed = !this.isNavbarCollapsed;
     }
 
-    /**
-     * @function getImageUrl { string | null }
-     * Function which returns the image url of the account
+    /** Wrapper function for {@link accountService~getImageUrl}. Returns the image url of the account.
+     * @method
+     * @returns {string|null}
      */
     getImageUrl(): string | null {
         return this.accountService.getImageUrl();

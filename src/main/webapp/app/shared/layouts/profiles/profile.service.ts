@@ -16,8 +16,11 @@ export class ProfileService {
     constructor(private http: HttpClient, private featureToggleService: FeatureToggleService) {}
 
     /**
-     * @function getProfileInfo { BehaviourSubject<ProfileInfo | null> }
-     * Function that gets the profile information and sets it to a local variable if it is not set already.
+     * Function that gets the profile information and sets it to {@link profileInfo} and returns it.
+     * It maps guided tour configuration using the helper method {@link mapGuidedTourConfig}, allowed Orion versions using {@link mapAllowedOrionVersions} and
+     * the test server using {@link mapTestServer}. Also initialises the feature toggles for the profile. See {@link featureToggleService~initializeFeatureToggles}
+     * @async
+     * @returns {BehaviorSubject<ProfileInfo|null>}
      */
     getProfileInfo(): BehaviorSubject<ProfileInfo | null> {
         if (!this.profileInfo) {

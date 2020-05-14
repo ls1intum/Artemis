@@ -22,8 +22,8 @@ export class NotificationSidebarComponent implements OnInit {
 
     constructor(private notificationService: NotificationService, private userService: UserService, private accountService: AccountService) {}
 
-    /**
-     * Lifecycle function which is called after the component is created.
+    /** Lifecycle hook which is called on initialisation. It subscribes to the user authentication state and triggers {@link loadNotifications} if the user is authenticated.
+     * See {@link accountService~isAuthenticated}
      */
     ngOnInit(): void {
         if (this.accountService.isAuthenticated()) {
@@ -54,18 +54,17 @@ export class NotificationSidebarComponent implements OnInit {
         });
     }
 
-    /**
-     * @function startNotification
-     * Starts the notification
-     * @param notification { Notification }
+    /** Wrapper function for {@link notificationService~interpretNotification}. Starts the notification.
+     * @method
+     * @param notification {Notification}
      */
     startNotification(notification: Notification): void {
         this.notificationService.interpretNotification(notification as GroupNotification);
     }
 
-    /**
-     * @function updateNotifications
-     * Updates the notification and triggers an notification count update
+    /** Updates the notifications by sorting them and and triggers an notification count update.
+     * See {@link updateNotificationCount}
+     * @method
      */
     updateNotifications(): void {
         this.sortedNotifications = this.notifications.sort((a: Notification, b: Notification) => {
@@ -74,9 +73,8 @@ export class NotificationSidebarComponent implements OnInit {
         this.updateNotificationCount();
     }
 
-    /**
-     * @function updateNotificationCount
-     * Updates the current notifications count
+    /** Updates the current notifications count and sets it in {@link notificationCount}
+     * @method
      */
     updateNotificationCount(): void {
         if (!this.notifications) {
@@ -88,9 +86,10 @@ export class NotificationSidebarComponent implements OnInit {
         }
     }
 
-    /**
-     * @function updateNotificationDate
-     * Function which updates the notification date for users
+    /** Updates the notification date for users every 1,5 seconds.
+     * See {@link updateNotifications}
+     * @method
+     *
      */
     updateNotificationDate(): void {
         this.userService.updateUserNotificationDate().subscribe((res: HttpResponse<User>) => {
@@ -102,9 +101,8 @@ export class NotificationSidebarComponent implements OnInit {
         });
     }
 
-    /**
-     * @function toggleSidebar
-     * Function which toggles the sidebar from opened to collapsed and vice versa.
+    /** Toggles the sidebar from opened to collapsed and vice versa using the {@link showSidebar} flag.
+     * @method
      */
     toggleSidebar(): void {
         this.showSidebar = !this.showSidebar;
