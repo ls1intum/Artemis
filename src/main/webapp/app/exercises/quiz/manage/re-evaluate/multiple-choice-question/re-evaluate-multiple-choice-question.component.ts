@@ -51,7 +51,9 @@ export class ReEvaluateMultipleChoiceQuestionComponent implements OnInit, AfterV
     /**
      * Do nothing
      */
-    ngOnInit(): void {}
+    ngOnInit(): void {
+        this.setupQuestionEditor();
+    }
 
     /**
      * Setup editor after view init
@@ -227,9 +229,8 @@ export class ReEvaluateMultipleChoiceQuestionComponent implements OnInit, AfterV
         const backupAnswer = this.backupQuestion.answerOptions!.find((answerBackup) => answer.id === answerBackup.id)!;
         // Find current index of our AnswerOption
         const answerIndex = this.question.answerOptions!.indexOf(answer);
-        // Remove current answerOption at given index and insert the backup at the same position
-        this.question.answerOptions!.splice(answerIndex, 1);
-        this.question.answerOptions!.splice(answerIndex, 0, backupAnswer);
+        // Overwrite current answerOption at given index with the backup
+        this.question.answerOptions![answerIndex] = backupAnswer;
         this.setAnswerTexts();
     }
 
