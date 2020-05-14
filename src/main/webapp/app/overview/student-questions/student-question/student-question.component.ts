@@ -72,6 +72,10 @@ export class StudentQuestionComponent implements OnInit {
         this.editText = this.studentQuestion.questionText;
     }
 
+    /**
+     * interact with actions sent from studentVotes
+     * @param {StudentVotesAction} action
+     */
     interactVotes(action: StudentVotesAction): void {
         switch (action.name) {
             case StudentVotesActionName.VOTE_CHANGE:
@@ -80,6 +84,10 @@ export class StudentQuestionComponent implements OnInit {
         }
     }
 
+    /**
+     * update the number of votes for this studentQuestion
+     * @param {number} votes
+     */
     updateVotes(votes: number): void {
         this.studentQuestion.votes = votes;
         this.studentQuestionService.update(this.studentQuestion).subscribe(() => {});
