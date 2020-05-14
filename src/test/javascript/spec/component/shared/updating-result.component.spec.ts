@@ -19,8 +19,8 @@ import { ProgrammingSubmissionService, ProgrammingSubmissionState } from 'app/ex
 import { MockProgrammingSubmissionService } from '../../helpers/mocks/service/mock-programming-submission.service';
 import { triggerChanges } from '../../helpers/utils/general.utils';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
-import { UpdatingResultComponent } from 'app/shared/result/updating-result.component';
-import { ResultComponent } from 'app/shared/result/result.component';
+import { UpdatingResultComponent } from 'app/exercises/shared/result/updating-result.component';
+import { ResultComponent } from 'app/exercises/shared/result/result.component';
 import { CodeEditorFileService } from 'app/exercises/programming/shared/code-editor/service/code-editor-file.service';
 import { Result } from 'app/entities/result.model';
 import { MockParticipationWebsocketService } from '../../helpers/mocks/service/mock-participation-websocket.service';

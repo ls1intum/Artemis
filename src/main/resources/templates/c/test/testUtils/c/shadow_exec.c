@@ -3,6 +3,8 @@
  **/
 
 #include <stdio.h>
+#include <sys/types.h>
+#include <signal.h>
 
 void printWarning() {
   printf("Access denied! This will be reported.\n");
@@ -111,4 +113,14 @@ int execveat(int dirfd, const char *pathname, char *const argv[], char *const en
 
   printWarning();
   return -1;
+}
+
+int kill(pid_t pid, int sig) {
+    if (pid == 0 || pid ==-1) {
+        printf("You're not allowed to send signals to PID %i! This will be reported.\n", pid);
+        return -1;
+    } else {
+        return kill(pid, sig);
+    }
+
 }
