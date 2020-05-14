@@ -154,8 +154,8 @@ export class ReEvaluateMultipleChoiceQuestionComponent implements OnInit, AfterV
      *
      * The markdown rules are as follows:
      *
-     * 1. Text is split at [correct] and [wrong]
-     *    => The first part (any text before the first [correct] or [wrong]) is the question text
+     * 1. Text is split at [x] and [ ] (also accepts [X] and [])
+     *    => The first part (any text before the first [x] or [ ]) is the question text
      * 2. The question text is parsed with ArtemisMarkdown
      *
      * @param text {string} the markdown text to parse
@@ -171,8 +171,8 @@ export class ReEvaluateMultipleChoiceQuestionComponent implements OnInit, AfterV
      *
      * The markdown rules are as follows:
      *
-     * 1. Text starts with [correct] or [wrong]
-     *    => Answer options are marked as isCorrect depending on [wrong] or [correct]
+     * 1. Text starts with [x] or [ ] (also accepts [X] and [])
+     *    => Answer options are marked as isCorrect depending on [ ] or [x]
      * 2. The answer text is parsed with ArtemisMarkdown
      *
      * @param text {string} the markdown text to parse
@@ -186,7 +186,7 @@ export class ReEvaluateMultipleChoiceQuestionComponent implements OnInit, AfterV
         const startOfThisPart = text.indexOf(answerOptionText);
         const box = text.substring(0, startOfThisPart);
         // Check if box says this answer option is correct or not
-        answer.isCorrect = box === '[correct]';
+        answer.isCorrect = box === '[x]' || box === '[X]';
         this.artemisMarkdown.parseTextHintExplanation(answerOptionText, answer);
     }
 
