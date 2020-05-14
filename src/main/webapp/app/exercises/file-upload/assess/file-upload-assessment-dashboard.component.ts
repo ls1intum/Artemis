@@ -97,6 +97,10 @@ export class FileUploadAssessmentDashboardComponent implements OnInit {
         });
     }
 
+    /**
+     * Updates filered Submissions
+     * @param filteredSubmissions
+     */
     updateFilteredSubmissions(filteredSubmissions: Submission[]) {
         this.filteredSubmissions = filteredSubmissions as FileUploadSubmission[];
     }
@@ -147,6 +151,11 @@ export class FileUploadAssessmentDashboardComponent implements OnInit {
         this.exercise.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.exercise.course!);
     }
 
+    /**
+     * Calculates the duration in minutes and retuns as a string
+     * @param completionDate the date of completion
+     * @param initializationDate the date of initialization
+     */
     public durationString(completionDate: Date, initializationDate: Date) {
         return this.momentDiff.transform(completionDate, initializationDate, 'minutes');
     }

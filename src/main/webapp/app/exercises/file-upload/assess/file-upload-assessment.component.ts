@@ -90,6 +90,9 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
         return [this.generalFeedback, ...this.referencedFeedback];
     }
 
+    /**
+     * Angular lifecycle method, invoked when component is initialized
+     */
     public ngOnInit(): void {
         this.busy = true;
 
@@ -99,6 +102,7 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
         });
         this.isAtLeastInstructor = this.accountService.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR']);
 
+        // extract params from route
         this.route.params.subscribe((params) => {
             this.courseId = Number(params['courseId']);
             const exerciseId = Number(params['exerciseId']);
@@ -112,6 +116,10 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
         });
     }
 
+    /**
+     * extracts file extension from file path
+     * @param filePath path of which file extension is extracted
+     */
     attachmentExtension(filePath: string): string {
         if (!filePath) {
             return 'N/A';
@@ -187,10 +195,9 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
     }
 
     /**
-     * @function ngAfterViewInit
-     * @desc After the view was initialized, we create an interact.js resizable object,
-     *       designate the edges which can be used to resize the target element and set min and max values.
-     *       The 'resizemove' callback function processes the event values and sets new width and height values for the element.
+     * Angular lifecycle method, invoked after view was initialized. We create an interact.js resizable object,
+     * designate the edges which can be used to resize the target element and set min and max values.
+     * The 'resizemove' callback function processes the event values and sets new width and height values for the element.
      */
     ngAfterViewInit(): void {
         this.resizableMinWidth = this.$window.nativeWindow.screen.width / 6;
@@ -249,10 +256,16 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
             });
     }
 
+    /**
+     * Angular lifecycle method, invoked when component is destroyed
+     */
     public ngOnDestroy(): void {
         this.changeDetectorRef.detach();
     }
 
+    /**
+     * add a new feedback to referencedFeedback
+     */
     public addReferencedFeedback(): void {
         const referencedFeedback = new Feedback();
         referencedFeedback.credits = 0;
@@ -260,6 +273,10 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
         this.validateAssessment();
     }
 
+    /**
+     * deletes an Assessment
+     * @param assessmentToDelete
+     */
     public deleteAssessment(assessmentToDelete: Feedback): void {
         const indexToDelete = this.referencedFeedback.indexOf(assessmentToDelete);
         this.referencedFeedback.splice(indexToDelete, 1);
@@ -295,6 +312,9 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
         );
     }
 
+    /**
+     * Invoked when save button is clicked. Sends request to server to save the assessment for the submission
+     */
     onSaveAssessment() {
         this.isLoading = true;
         this.fileUploadAssessmentsService
@@ -313,6 +333,9 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
             );
     }
 
+    /**
+     * executed when submit is pressed
+     */
     onSubmitAssessment() {
         this.validateAssessment();
         if (!this.assessmentsAreValid) {
@@ -358,6 +381,9 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
         this.changeDetectorRef.detectChanges();
     }
 
+    /**
+     * gets complaint from server
+     */
     getComplaint(): void {
         this.complaintService.findByResultId(this.result.id).subscribe(
             (res) => {
@@ -371,6 +397,10 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
             },
         );
     }
+
+    /**
+     * navigates to exercise Dashboard
+     */
     goToExerciseDashboard() {
         if (this.exercise && this.exercise.course) {
             this.router.navigateByUrl(`/course-management/${this.exercise.course.id}/exercises/${this.exercise.id}/tutor-dashboard`);
@@ -379,6 +409,9 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
         }
     }
 
+    /**
+     * wrapper for validateAssessment
+     */
     updateAssessment() {
         this.validateAssessment();
     }
@@ -417,6 +450,10 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
         this.totalScore = credits.reduce((a, b) => a + b, 0);
     }
 
+    /**
+     * wrapper for fileService.downloadFileWithAccessToken
+     * @param filePath path of file to download
+     */
     downloadFile(filePath: string) {
         this.fileService.downloadFileWithAccessToken(filePath);
     }
@@ -428,6 +465,10 @@ export class FileUploadAssessmentComponent implements OnInit, AfterViewInit, OnD
         this.canOverride = (this.isAssessor && isBeforeAssessmentDueDate) || this.isAtLeastInstructor;
     }
 
+    /**
+     * toggles collapse of closest element with id='instruction'
+     * @param $event toggleEvent
+     */
     toggleCollapse($event: any) {
         const target = $event.toElement || $event.relatedTarget || $event.target;
         target.blur();

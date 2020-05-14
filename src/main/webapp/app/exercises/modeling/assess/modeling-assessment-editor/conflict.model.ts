@@ -19,6 +19,11 @@ export class ConflictingResult {
     }
 }
 
+/**
+ * Describes the state of a Conflict
+ *
+ * @type {{UNHANDLED: number, ESCALATED: number, RESOLVED: number}}
+ */
 export enum ConflictResolutionState {
     UNHANDLED,
     ESCALATED,

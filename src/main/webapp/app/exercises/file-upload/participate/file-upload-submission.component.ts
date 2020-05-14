@@ -190,6 +190,10 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
         this.submittedFileExtension = fileName[fileName.length - 1];
     }
 
+    /**
+     * wrapper for downloadFileWithAccessToken
+     * @param filePath path of file to download
+     */
     downloadFile(filePath: string) {
         this.fileService.downloadFileWithAccessToken(filePath);
     }

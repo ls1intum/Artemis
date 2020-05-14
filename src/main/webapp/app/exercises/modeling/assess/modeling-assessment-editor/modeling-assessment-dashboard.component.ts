@@ -78,6 +78,10 @@ export class ModelingAssessmentDashboardComponent implements OnInit, OnDestroy {
         translateService.get('modelingAssessmentEditor.messages.confirmCancel').subscribe((text) => (this.cancelConfirmationText = text));
     }
 
+    /**
+     * Angular lifecycle method, invoked on init
+     * gets required data from server
+     */
     ngOnInit() {
         this.accountService.identity().then((user) => {
             this.userId = user!.id!;
@@ -98,6 +102,9 @@ export class ModelingAssessmentDashboardComponent implements OnInit, OnDestroy {
         this.registerChangeInResults();
     }
 
+    /**
+     * add subscriber to resultListModification event, which updates submissions if event is fired
+     */
     registerChangeInResults() {
         this.eventSubscriber = this.eventManager.subscribe('resultListModification', () => this.getSubmissions(true));
     }
@@ -126,6 +133,10 @@ export class ModelingAssessmentDashboardComponent implements OnInit, OnDestroy {
         });
     }
 
+    /**
+     * updates the filteredSubmission to new filter selection
+     * @param filteredSubmissions filterdSubmission update
+     */
     updateFilteredSubmissions(filteredSubmissions: Submission[]) {
         this.filteredSubmissions = filteredSubmissions as ModelingSubmission[];
         this.applyFilter();
@@ -152,6 +163,10 @@ export class ModelingAssessmentDashboardComponent implements OnInit, OnDestroy {
         }
     }
 
+    /**
+     * return if Compass is active (semi automatic assessment)
+     * @param modelingExercise exercise to check if Compass is activated
+     */
     isCompassActive(modelingExercise: ModelingExercise) {
         return (
             modelingExercise.assessmentType === AssessmentType.SEMI_AUTOMATIC &&
@@ -177,10 +192,18 @@ export class ModelingAssessmentDashboardComponent implements OnInit, OnDestroy {
         });
     }
 
+    /**
+     * calculates editing time in minutes
+     * @param completionDate when completed
+     * @param initializationDate when initialized
+     */
     durationString(completionDate: Date, initializationDate: Date) {
         return this.momentDiff.transform(completionDate, initializationDate, 'minutes');
     }
 
+    /**
+     * refreshes current submissions
+     */
     refresh() {
         this.getSubmissions(true);
     }
@@ -196,6 +219,9 @@ export class ModelingAssessmentDashboardComponent implements OnInit, OnDestroy {
         }
     }
 
+    /**
+     * makes all submissions visible when not busy
+     */
     makeAllSubmissionsVisible() {
         if (!this.busy) {
             this.allSubmissionsVisible = true;
@@ -256,10 +282,16 @@ export class ModelingAssessmentDashboardComponent implements OnInit, OnDestroy {
         }
     }
 
+    /**
+     * Angular lifecycle method, clean up resources
+     */
     ngOnDestroy() {
         this.paramSub.unsubscribe();
         this.eventManager.destroy(this.eventSubscriber);
     }
 
+    /**
+     * Used in the template for jhiSort
+     */
     callback() {}
 }

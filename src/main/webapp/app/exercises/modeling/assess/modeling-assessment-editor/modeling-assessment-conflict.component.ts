@@ -46,6 +46,10 @@ export class ModelingAssessmentConflictComponent implements OnInit, AfterViewIni
         private accountService: AccountService,
     ) {}
 
+    /**
+     * Angular lifecycle method, invoked on init
+     * initializes class attributes and component
+     */
     ngOnInit() {
         this.route.params.subscribe((params) => {
             this.courseId = Number(params['courseId']);
@@ -65,10 +69,16 @@ export class ModelingAssessmentConflictComponent implements OnInit, AfterViewIni
         this.accountService.identity().then((value) => (this.user = value));
     }
 
+    /**
+     * Angular lifecycle method, invoked after init
+     */
     ngAfterViewInit() {
         this.setSameWidthOnModelingAssessments();
     }
 
+    /**
+     * initialized conflict component.
+     */
     initComponent() {
         this.mergedFeedbacks = [...this.conflicts![0].causingConflictingResult.result.feedbacks];
         this.currentFeedbacksCopy = [...this.conflicts![0].causingConflictingResult.result.feedbacks];
@@ -76,16 +86,25 @@ export class ModelingAssessmentConflictComponent implements OnInit, AfterViewIni
         this.updateSelectedConflict();
     }
 
+    /**
+     * selects nexxt conflict
+     */
     onNextConflict() {
         this.conflictIndex = this.conflictIndex < this.conflicts!.length - 1 ? ++this.conflictIndex : this.conflictIndex;
         this.updateSelectedConflict();
     }
 
+    /**
+     * selects prev conflict
+     */
     onPrevConflict() {
         this.conflictIndex = this.conflictIndex > 0 ? --this.conflictIndex : this.conflictIndex;
         this.updateSelectedConflict();
     }
 
+    /**
+     * accepts you feedback in feedback merge
+     */
     onKeepYours() {
         this.updateFeedbackInMergedFeedback(
             this.currentConflict.causingConflictingResult.modelElementId,
@@ -96,6 +115,9 @@ export class ModelingAssessmentConflictComponent implements OnInit, AfterViewIni
         this.updateCurrentState();
     }
 
+    /**
+     * accepts other feedback in feedback merge
+     */
     onAcceptOther() {
         this.updateFeedbackInMergedFeedback(
             this.currentConflict.causingConflictingResult.modelElementId,
@@ -106,6 +128,11 @@ export class ModelingAssessmentConflictComponent implements OnInit, AfterViewIni
         this.updateCurrentState();
     }
 
+    /**
+     * Invoked when Feedback is changed in ModelingAssessmentComponent
+     * updates mergedFeedback with feedbacks
+     * @param feedbacks new mergedFeedback
+     */
     onFeedbackChanged(feedbacks: Feedback[]) {
         const elementAssessmentUpdate = feedbacks.find((feedback) => feedback.referenceId === this.currentConflict.causingConflictingResult.modelElementId);
         const originalElementAssessment = this.currentConflict.causingConflictingResult.result.feedbacks.find(
@@ -117,6 +144,9 @@ export class ModelingAssessmentConflictComponent implements OnInit, AfterViewIni
         this.mergedFeedbacks = feedbacks;
     }
 
+    /**
+     * invoked on save. Validates and saves feedback
+     */
     onSave() {
         if (!this.modelingAssessmentService.isFeedbackTextValid(this.mergedFeedbacks)) {
             this.jhiAlertService.error('modelingAssessmentEditor.messages.feedbackTextTooLong');
@@ -131,6 +161,9 @@ export class ModelingAssessmentConflictComponent implements OnInit, AfterViewIni
         );
     }
 
+    /**
+     * invoked on submit, escalates conflict and saves assessments
+     */
     onSubmit() {
         if (!this.modelingAssessmentService.isFeedbackTextValid(this.mergedFeedbacks)) {
             this.jhiAlertService.error('modelingAssessmentEditor.messages.feedbackTextTooLong');
@@ -168,6 +201,12 @@ export class ModelingAssessmentConflictComponent implements OnInit, AfterViewIni
         });
     }
 
+    /**
+     * updates feedback in mergedFeedbacks
+     * @param elementIdToUpdate id of element which feedback to update
+     * @param elementIdToUpdateWith id of element which feedback is used to update the other feedback
+     * @param sourceFeedbacks list of feedback to select the feedback to update the other feedback from
+     */
     updateFeedbackInMergedFeedback(elementIdToUpdate: string, elementIdToUpdateWith: string, sourceFeedbacks: Feedback[]) {
         const feedbacks: Feedback[] = [];
         const feedbackToUse = sourceFeedbacks.find((feedback: Feedback) => feedback.referenceId === elementIdToUpdateWith);
@@ -184,6 +223,9 @@ export class ModelingAssessmentConflictComponent implements OnInit, AfterViewIni
         }
     }
 
+    /**
+     * sets the width of elements with .resizable class to the same value
+     */
     setSameWidthOnModelingAssessments() {
         const conflictEditorWidth = $('#conflictEditor').width();
         const instructionsWidth = $('#assessmentInstructions').width();

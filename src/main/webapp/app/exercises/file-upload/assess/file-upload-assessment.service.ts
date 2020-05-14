@@ -18,6 +18,12 @@ export class FileUploadAssessmentsService {
 
     constructor(private http: HttpClient) {}
 
+    /**
+     * saves an assessment
+     * @param feedbacks feedback included in assessment
+     * @param submissionId id of submission
+     * @param submit true when submitted as assessment, when false -> just saved
+     */
     saveAssessment(feedbacks: Feedback[], submissionId: number, submit = false): Observable<Result> {
         let url = `${this.resourceUrl}/file-upload-submissions/${submissionId}/feedback`;
         if (submit) {
@@ -26,6 +32,12 @@ export class FileUploadAssessmentsService {
         return this.http.put<Result>(url, feedbacks);
     }
 
+    /**
+     * creates the update for the assessment
+     * @param feedbacks the potentially updated feedbacks
+     * @param complaintResponse the response of the tutor to the complaint
+     * @param submissionId id of submission
+     */
     updateAssessmentAfterComplaint(feedbacks: Feedback[], complaintResponse: ComplaintResponse, submissionId: number): Observable<EntityResponseType> {
         const url = `${this.resourceUrl}/file-upload-submissions/${submissionId}/assessment-after-complaint`;
         const assessmentUpdate = {
@@ -37,10 +49,19 @@ export class FileUploadAssessmentsService {
             .map((res: EntityResponseType) => this.convertResponse(res));
     }
 
+    /**
+     * gets Result for a Submission
+     * @param submissionId identifies Submission
+     * @returns Observable<Result>
+     */
     getAssessment(submissionId: number): Observable<Result> {
         return this.http.get<Result>(`${this.resourceUrl}/file-upload-submissions/${submissionId}/result`);
     }
 
+    /**
+     * cancels a Assessment for a given submission, i.e. delete the corresponding result / release the lock
+     * @param submissionId identifies Submission
+     */
     cancelAssessment(submissionId: number): Observable<void> {
         return this.http.put<void>(`${this.resourceUrl}/file-upload-submissions/${submissionId}/cancel-assessment`, null);
     }
