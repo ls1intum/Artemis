@@ -15,7 +15,7 @@
     <div class="card-body build-output__content" *ngIf="!isBuilding && rawBuildLogs.length">
         <div class="buildoutput d-flex flex-column">
             <span *ngFor="let logEntry of rawBuildLogs" class="build-output__entry">
-                <span class="build-output__entry-date">{{ logEntry.time | date: 'yyyy-MM-dd HH:mm:ss' }}</span>
+                <span class="build-output__entry-date">{{ logEntry.time | artemisDate }}</span>
                 <span class="build-output__entry-text">{{ logEntry.log }}</span>
             </span>
         </div>
