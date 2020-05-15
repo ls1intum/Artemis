@@ -220,13 +220,11 @@ public class StudentQuestionIntegrationTest extends AbstractSpringIntegrationBam
     public void editStudentQuestionVotes_asInstructor() throws Exception {
         StudentQuestion studentQuestion = database.createCourseWithExerciseAndStudentQuestions().get(0);
 
-        studentQuestion.setVisibleForStudents(false);
         studentQuestion.setVotes(42);
 
         StudentQuestion updatedStudentQuestion = request.putWithResponseBody("/api/student-questions/" + studentQuestion.getId() + "/votes", 42, StudentQuestion.class,
                 HttpStatus.OK);
         assertThat(updatedStudentQuestion.getVotes().equals(42));
-        assertThat(updatedStudentQuestion.isVisibleForStudents()).isFalse();
     }
 
     @Test
@@ -234,13 +232,11 @@ public class StudentQuestionIntegrationTest extends AbstractSpringIntegrationBam
     public void editStudentQuestionVotes_asTA() throws Exception {
         StudentQuestion studentQuestion = database.createCourseWithExerciseAndStudentQuestions().get(0);
 
-        studentQuestion.setVisibleForStudents(false);
         studentQuestion.setVotes(42);
 
         StudentQuestion updatedStudentQuestion = request.putWithResponseBody("/api/student-questions/" + studentQuestion.getId() + "/votes", 42, StudentQuestion.class,
                 HttpStatus.OK);
         assertThat(updatedStudentQuestion.getVotes().equals(42));
-        assertThat(updatedStudentQuestion.isVisibleForStudents()).isFalse();
     }
 
     @Test
@@ -249,12 +245,10 @@ public class StudentQuestionIntegrationTest extends AbstractSpringIntegrationBam
         List<StudentQuestion> questions = database.createCourseWithExerciseAndStudentQuestions();
         StudentQuestion studentQuestion = questions.get(0);
 
-        studentQuestion.setVisibleForStudents(false);
         studentQuestion.setVotes(42);
 
         StudentQuestion updatedStudentQuestion = request.putWithResponseBody("/api/student-questions/" + studentQuestion.getId() + "/votes", 42, StudentQuestion.class,
                 HttpStatus.OK);
         assertThat(updatedStudentQuestion.getVotes().equals(42));
-        assertThat(updatedStudentQuestion.isVisibleForStudents()).isFalse();
     }
 }
