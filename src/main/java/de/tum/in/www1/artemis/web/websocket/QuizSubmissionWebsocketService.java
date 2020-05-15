@@ -55,14 +55,16 @@ public class QuizSubmissionWebsocketService {
         SecurityUtils.setAuthorizationObject();
 
         String username = principal.getName();
+        log.debug("Starting saving of submission for user {} in exercise {} (took {} ms to get Principal).", username, exerciseId, System.currentTimeMillis() - start);
         // check if submission is still allowed
         Optional<QuizExercise> quizExercise = quizExerciseService.findById(exerciseId);
         if (quizExercise.isEmpty()) {
+            log.debug("Could not save quiz exercise for user {} in quiz {} because the quizExercise could not be found.", username, principal);
             return;
         }
         if (!quizExercise.get().isSubmissionAllowed()) {
             // notify the user that submission was not saved because quiz is not active over payload and handle this case in the client
-            log.info("Quiz {} has ended. Cannot save submission for {}.", quizExercise.get().getTitle(), principal.getName());
+            log.debug("Quiz {} has ended. Cannot save submission for {}, took {} ms.", quizExercise.get().getTitle(), principal.getName(), System.currentTimeMillis() - start);
             messagingTemplate.convertAndSendToUser(username, "/topic/quizExercise/" + exerciseId + "/submission", "the quiz is not active");
             return;
         }
@@ -72,7 +74,9 @@ public class QuizSubmissionWebsocketService {
 
         // check if user already submitted for this quiz
         Participation participation = participationService.participationForQuizWithResult(quizExercise.get(), username);
+        log.debug("Received participation from database for user {} in quiz {} in {} ms.", username, exerciseId, System.currentTimeMillis() - start);
         if (!participation.getResults().isEmpty()) {
+            log.debug("Participation for user {} in quiz {} has results", username, exerciseId);
             // NOTE: At this point, there can only be one Result because we already checked
             // if the quiz is active, so there is no way the student could have already practiced
             Result result = (Result) participation.getResults().toArray()[0];
@@ -83,6 +87,7 @@ public class QuizSubmissionWebsocketService {
             }
         }
 
+        log.debug("Recreating pointers for submissions for user {} in quiz {} after {} ms.", username, exerciseId, System.currentTimeMillis() - start);
         // recreate pointers back to submission in each submitted answer
         for (SubmittedAnswer submittedAnswer : quizSubmission.getSubmittedAnswers()) {
             submittedAnswer.setSubmission(quizSubmission);
@@ -90,6 +95,8 @@ public class QuizSubmissionWebsocketService {
 
         // set submission date
         quizSubmission.setSubmissionDate(ZonedDateTime.now());
+
+        log.debug("Starting update of submission for user {} in quiz {} after {} ms", username, exerciseId, System.currentTimeMillis() - start);
 
         // save submission to HashMap
         QuizScheduleService.updateSubmission(exerciseId, username, quizSubmission);
