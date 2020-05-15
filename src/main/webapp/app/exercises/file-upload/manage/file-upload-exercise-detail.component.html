@@ -13,13 +13,18 @@
                 <dd>
                     <span>{{ fileUploadExercise.title }}</span>
                 </dd>
-                <dt><span jhiTranslate="artemisApp.exercise.categories">Categories</span></dt>
-                <dd>
-                    <span>{{ fileUploadExercise.categories }}</span>
-                </dd>
+                <ng-container *ngIf="fileUploadExercise.categories">
+                    <dt><span jhiTranslate="artemisApp.exercise.categories">Difficulty</span></dt>
+                    <dd>
+                        <span class="custom-tag" *ngFor="let item of fileUploadExercise.categories" [ngStyle]="{ backgroundColor: item.color }">
+                            <span>{{ item.category }}</span>
+                        </span>
+                    </dd>
+                </ng-container>
                 <dt><span jhiTranslate="artemisApp.exercise.difficulty">Difficulty</span></dt>
                 <dd>
-                    <span>{{ fileUploadExercise.difficulty }}</span>
+                    <span *ngIf="fileUploadExercise.difficulty">{{ fileUploadExercise.difficulty }}</span>
+                    <span *ngIf="!fileUploadExercise.difficulty" jhiTranslate="artemisApp.exercise.noLevel"></span>
                 </dd>
                 <dt><span jhiTranslate="artemisApp.exercise.mode">Mode</span></dt>
                 <dd>
@@ -27,11 +32,18 @@
                 </dd>
                 <dt><span jhiTranslate="artemisApp.exercise.releaseDate">Release Date</span></dt>
                 <dd>
-                    <span>{{ fileUploadExercise.releaseDate | date: 'medium' }}</span>
+                    <span *ngIf="fileUploadExercise.releaseDate">{{ fileUploadExercise.releaseDate | date: 'medium' }}</span>
+                    <span *ngIf="!fileUploadExercise.releaseDate" jhiTranslate="artemisApp.exercise.dateNotSet"></span>
                 </dd>
                 <dt><span jhiTranslate="artemisApp.exercise.dueDate">Due Date</span></dt>
                 <dd>
-                    <span>{{ fileUploadExercise.dueDate | date: 'medium' }}</span>
+                    <span *ngIf="fileUploadExercise.dueDate">{{ fileUploadExercise.dueDate | date: 'medium' }}</span>
+                    <span *ngIf="!fileUploadExercise.dueDate" jhiTranslate="artemisApp.exercise.dateNotSet"></span>
+                </dd>
+                <dt><span jhiTranslate="artemisApp.exercise.assessmentDueDate">Due Date</span></dt>
+                <dd>
+                    <span *ngIf="fileUploadExercise.assessmentDueDate">{{ fileUploadExercise.assessmentDueDate | date: 'medium' }}</span>
+                    <span *ngIf="!fileUploadExercise.assessmentDueDate" jhiTranslate="artemisApp.exercise.dateNotSet"></span>
                 </dd>
                 <dt><span jhiTranslate="artemisApp.exercise.maxScore">Max Score</span></dt>
                 <dd>

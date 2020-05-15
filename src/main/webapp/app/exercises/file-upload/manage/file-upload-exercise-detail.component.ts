@@ -12,6 +12,7 @@ import { AlertService } from 'app/core/alert/alert.service';
 @Component({
     selector: 'jhi-file-upload-exercise-detail',
     templateUrl: './file-upload-exercise-detail.component.html',
+    styleUrls: ['./file-upload-exercise-detail.component.scss'],
 })
 export class FileUploadExerciseDetailComponent implements OnInit, OnDestroy {
     fileUploadExercise: FileUploadExercise;
@@ -46,6 +47,9 @@ export class FileUploadExerciseDetailComponent implements OnInit, OnDestroy {
             .subscribe(
                 (fileUploadExerciseResponse: HttpResponse<FileUploadExercise>) => {
                     this.fileUploadExercise = fileUploadExerciseResponse.body!;
+                    if (this.fileUploadExercise.categories) {
+                        this.fileUploadExercise.categories = this.fileUploadExercise.categories.map((category) => JSON.parse(category));
+                    }
                 },
                 (res: HttpErrorResponse) => this.onError(res),
             );
