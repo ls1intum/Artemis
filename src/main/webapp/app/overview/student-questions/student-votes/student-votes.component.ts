@@ -1,9 +1,14 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, OnInit, EventEmitter, Input, Output } from '@angular/core';
+import { LocalStorageService } from 'ngx-webstorage';
 import { User } from 'app/core/user/user.model';
 
 export interface StudentVotesAction {
     name: StudentVotesActionName;
     value: number;
+}
+
+interface StudentVote {
+    isPositive: boolean;
 }
 
 /**
@@ -19,18 +24,44 @@ export enum StudentVotesActionName {
     templateUrl: './student-votes.component.html',
     styleUrls: ['./../student-questions.scss'],
 })
-export class StudentVotesComponent {
+export class StudentVotesComponent implements OnInit {
     @Input() user: User;
     @Input() questionId: number;
     @Input() votes: number;
     @Output() interactVotes = new EventEmitter<StudentVotesAction>();
 
+    private userVote: StudentVote | null;
+
+    constructor(private localStorage: LocalStorageService) {}
+
+    /**
+     * load user's vote
+     */
+    ngOnInit(): void {
+        if (this.questionId && this.user) {
+            this.userVote = this.localStorage.retrieve(`q${this.questionId}u${this.user.id}`);
+        }
+    }
+
     /**
      * toggle upvote
      */
     toggleUpVote(): void {
-        console.log('toggle upvote');
-        this.votes++;
+        if (this.userVote) {
+            if (this.userVote.isPositive) {
+                this.votes--;
+                this.userVote = null;
+                this.localStorage.clear(`q${this.questionId}u${this.user.id}`);
+            } else {
+                this.votes++;
+                this.userVote.isPositive = true;
+                this.localStorage.store(`q${this.questionId}u${this.user.id}`, this.userVote);
+            }
+        } else {
+            this.votes++;
+            this.userVote = { isPositive: true };
+            this.localStorage.store(`q${this.questionId}u${this.user.id}`, this.userVote);
+        }
         this.interactVotes.emit({
             name: StudentVotesActionName.VOTE_CHANGE,
             value: this.votes,
@@ -41,8 +72,21 @@ export class StudentVotesComponent {
      * toggle downvote
      */
     toggleDownVote(): void {
-        console.log('toggleDownvote');
-        this.votes--;
+        if (this.userVote) {
+            if (this.userVote.isPositive) {
+                this.votes--;
+                this.userVote.isPositive = false;
+                this.localStorage.store(`q${this.questionId}u${this.user.id}`, this.userVote);
+            } else {
+                this.votes++;
+                this.userVote = null;
+                this.localStorage.clear(`q${this.questionId}u${this.user.id}`);
+            }
+        } else {
+            this.votes--;
+            this.userVote = { isPositive: false };
+            this.localStorage.store(`q${this.questionId}u${this.user.id}`, this.userVote);
+        }
         this.interactVotes.emit({
             name: StudentVotesActionName.VOTE_CHANGE,
             value: this.votes,
