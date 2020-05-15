@@ -157,7 +157,7 @@ export class ReEvaluateMultipleChoiceQuestionComponent implements OnInit, AfterV
         const startOfThisPart = text.indexOf(answerOptionText);
         const box = text.substring(0, startOfThisPart);
         // Check if box says this answer option is correct or not
-        answer.isCorrect = box === '[correct]';
+        answer.isCorrect = box === CorrectOptionCommand.identifier;
         this.artemisMarkdown.parseTextHintExplanation(answerOptionText, answer);
     }
 
