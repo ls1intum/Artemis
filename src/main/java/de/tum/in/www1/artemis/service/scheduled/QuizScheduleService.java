@@ -2,8 +2,7 @@ package de.tum.in.www1.artemis.service.scheduled;
 
 import java.time.ZonedDateTime;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.*;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -51,6 +50,8 @@ public class QuizScheduleService {
      * quizExerciseId -> ScheduledFuture
      */
     private static Map<Long, ScheduledFuture<?>> quizStartSchedules = new ConcurrentHashMap<>();
+
+    private static Map<Long, QuizExercise> quizExerciseMap = new ConcurrentHashMap<>();
 
     private static ThreadPoolTaskScheduler threadPoolTaskScheduler;
 
@@ -187,10 +188,17 @@ public class QuizScheduleService {
         return null;
     }
 
+    public static QuizExercise getQuizExercise(Long quizExerciseId) {
+        if (quizExerciseId == null) {
+            return null;
+        }
+        return quizExerciseMap.get(quizExerciseId);
+    }
+
     /**
      * Start scheduler of quiz schedule service
      *
-     * @param delayInMillis gap for which the QuizScheduleService should run repeatly
+     * @param delayInMillis gap for which the QuizScheduleService should run repeatedly
      */
     public void startSchedule(long delayInMillis) {
         if (threadPoolTaskScheduler == null) {
@@ -243,6 +251,7 @@ public class QuizScheduleService {
     public void scheduleQuizStart(final QuizExercise quizExercise) {
         // first remove and cancel old scheduledFuture if it exists
         cancelScheduledQuizStart(quizExercise.getId());
+        quizExerciseMap.put(quizExercise.getId(), quizExercise);
 
         if (quizExercise.isIsPlannedToStart() && quizExercise.getReleaseDate().isAfter(ZonedDateTime.now())) {
             // schedule sending out filtered quiz over websocket
@@ -265,6 +274,7 @@ public class QuizScheduleService {
             boolean cancelSuccess = scheduledFuture.cancel(true);
             log.info("Stop scheduled quiz start for quiz " + quizExerciseId + " was successful: " + cancelSuccess);
         }
+        quizExerciseMap.remove(quizExerciseId);
     }
 
     public void clearAllQuizData() {
