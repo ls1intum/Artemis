@@ -66,6 +66,7 @@
                 "teamSizeTooltip": "Empfehlung für die Tutoren bezüglich minimaler und maximaler Anzahl Studenten pro Team."
             },
             "categories": "Kategorien",
+            "noCategory": "Keine Kategorie",
             "participations": "Teilnahmen",
             "teams": "Teams",
             "exportNames": "Namen exportieren",

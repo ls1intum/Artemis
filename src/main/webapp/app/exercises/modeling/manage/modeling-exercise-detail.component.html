@@ -13,14 +13,15 @@
                 <dd>
                     <span>{{ modelingExercise.title }}</span>
                 </dd>
-                <ng-container *ngIf="modelingExercise.categories">
-                    <dt><span jhiTranslate="artemisApp.exercise.categories">Difficulty</span></dt>
-                    <dd>
-                        <span class="custom-tag" *ngFor="let item of modelingExercise.categories" [ngStyle]="{ backgroundColor: item.color }">
-                            <span>{{ item.category }}</span>
-                        </span>
-                    </dd>
-                </ng-container>
+                <dt><span jhiTranslate="artemisApp.exercise.categories">Difficulty</span></dt>
+                <dd *ngIf="modelingExercise.categories">
+                    <span class="custom-tag" *ngFor="let item of modelingExercise.categories" [ngStyle]="{ backgroundColor: item.color }">
+                        <span>{{ item.category }}</span>
+                    </span>
+                </dd>
+                <dd *ngIf="!modelingExercise.categories">
+                    <span jhiTranslate="artemisApp.exercise.noCategory">No categories</span>
+                </dd>
                 <dt><span jhiTranslate="artemisApp.exercise.difficulty">Difficulty</span></dt>
                 <dd>
                     <span *ngIf="modelingExercise.difficulty">{{ modelingExercise.difficulty }}</span>

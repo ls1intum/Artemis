@@ -13,14 +13,15 @@
                 <dd>
                     <span>{{ fileUploadExercise.title }}</span>
                 </dd>
-                <ng-container *ngIf="fileUploadExercise.categories">
-                    <dt><span jhiTranslate="artemisApp.exercise.categories">Difficulty</span></dt>
-                    <dd>
-                        <span class="custom-tag" *ngFor="let item of fileUploadExercise.categories" [ngStyle]="{ backgroundColor: item.color }">
-                            <span>{{ item.category }}</span>
-                        </span>
-                    </dd>
-                </ng-container>
+                <dt><span jhiTranslate="artemisApp.exercise.categories">Difficulty</span></dt>
+                <dd *ngIf="fileUploadExercise.categories">
+                    <span class="custom-tag" *ngFor="let item of fileUploadExercise.categories" [ngStyle]="{ backgroundColor: item.color }">
+                        <span>{{ item.category }}</span>
+                    </span>
+                </dd>
+                <dd *ngIf="!fileUploadExercise.categories">
+                    <span jhiTranslate="artemisApp.exercise.noCategory">No categories</span>
+                </dd>
                 <dt><span jhiTranslate="artemisApp.exercise.difficulty">Difficulty</span></dt>
                 <dd>
                     <span *ngIf="fileUploadExercise.difficulty">{{ fileUploadExercise.difficulty }}</span>

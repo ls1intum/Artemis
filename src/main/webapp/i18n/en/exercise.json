@@ -55,8 +55,6 @@
             "mode": "Mode",
             "modeTooltip": "The solving mode of an exercise determines whether students work alone or in teams. NOTE: This cannot be changed later on!",
             "teamModeBetaLabel": "Beta",
-            "programmingLanguage": "Programming Language",
-            "packageName": "Package Name",
             "modes": {
                 "individual": "Individual",
                 "team": "Team"
@@ -66,6 +64,7 @@
                 "teamSizeTooltip": "Recommendation for tutors regarding the minimum and maximum number of students per team."
             },
             "categories": "Categories",
+            "noCategory": "No Category",
             "participations": "Participations",
             "teams": "Teams",
             "exportNames": "Export Names",

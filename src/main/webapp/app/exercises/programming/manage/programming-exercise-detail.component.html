@@ -43,29 +43,20 @@
                 <dd>
                     <span>{{ programmingExercise.shortName }}</span>
                 </dd>
-                <ng-container *ngIf="programmingExercise.categories">
-                    <dt><span jhiTranslate="artemisApp.exercise.categories">Difficulty</span></dt>
-                    <dd>
-                        <span class="custom-tag" *ngFor="let item of programmingExercise.categories" [ngStyle]="{ backgroundColor: item.color }">
-                            <span>{{ item.category }}</span>
-                        </span>
-                    </dd>
-                </ng-container>
+                <dt><span jhiTranslate="artemisApp.exercise.categories">Difficulty</span></dt>
+                <dd *ngIf="programmingExercise.categories">
+                    <span class="custom-tag" *ngFor="let item of programmingExercise.categories" [ngStyle]="{ backgroundColor: item.color }">
+                        <span>{{ item.category }}</span>
+                    </span>
+                </dd>
+                <dd *ngIf="!programmingExercise.categories">
+                    <span jhiTranslate="artemisApp.exercise.noCategory">No categories</span>
+                </dd>
                 <dt><span jhiTranslate="artemisApp.exercise.difficulty">Difficulty</span></dt>
                 <dd>
                     <span *ngIf="programmingExercise.difficulty">{{ programmingExercise.difficulty }}</span>
                     <span *ngIf="!programmingExercise.difficulty" jhiTranslate="artemisApp.exercise.noLevel"></span>
                 </dd>
-                <dt><span jhiTranslate="artemisApp.exercise.programmingLanguage">Mode</span></dt>
-                <dd>
-                    <span>{{ programmingExercise.programmingLanguage }}</span>
-                </dd>
-
-                <dt><span jhiTranslate="artemisApp.exercise.packageName">Mode</span></dt>
-                <dd>
-                    <span>{{ programmingExercise.packageName }}</span>
-                </dd>
-
                 <dt><span jhiTranslate="artemisApp.exercise.mode">Mode</span></dt>
                 <dd>
                     <span>{{ programmingExercise.mode }}</span>
