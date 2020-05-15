@@ -6,6 +6,8 @@ import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 
+import de.tum.in.www1.artemis.repository.ResultRepository;
+import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -35,6 +37,12 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
 
     @Autowired
     QuizExerciseService quizExerciseService;
+
+    @Autowired
+    StudentParticipationRepository studentParticipationRepository;
+
+    @Autowired
+    ResultRepository resultRepository;
 
     private QuizExercise quizExercise;
 
@@ -420,14 +428,16 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         int numberOfParticipants = 10;
 
         for (int i = 1; i <= numberOfParticipants; i++) {
-            QuizSubmission quizSubmission = database.generateSubmission(quizExercise, i, true, now.minusSeconds(3));
-            QuizSubmission quizSubmissionPractice = database.generateSubmission(quizExercise, i, true, now);
+            if (i != 1 && i != 5) {
+                QuizSubmission quizSubmission = database.generateSubmission(quizExercise, i, true, now.minusSeconds(3));
+                QuizSubmission quizSubmissionPractice = database.generateSubmission(quizExercise, i, true, now);
 
-            database.addSubmission(quizExercise, quizSubmission, "student" + i);
-            database.addSubmission(quizExercise, quizSubmissionPractice, "student" + i);
+                database.addSubmission(quizExercise, quizSubmission, "student" + i);
+                database.addSubmission(quizExercise, quizSubmissionPractice, "student" + i);
 
-            database.addResultToSubmission(quizSubmission, AssessmentType.AUTOMATIC, null, quizExercise.getScoreForSubmission(quizSubmission), true);
-            database.addResultToSubmission(quizSubmissionPractice, AssessmentType.AUTOMATIC, null, quizExercise.getScoreForSubmission(quizSubmission), false);
+                database.addResultToSubmission(quizSubmission, AssessmentType.AUTOMATIC, null, quizExercise.getScoreForSubmission(quizSubmission), true);
+                database.addResultToSubmission(quizSubmissionPractice, AssessmentType.AUTOMATIC, null, quizExercise.getScoreForSubmission(quizSubmission), false);
+            }
         }
 
         // submission with everything selected
@@ -449,6 +459,9 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
 
         database.addResultToSubmission(quizSubmission, AssessmentType.AUTOMATIC, null, quizExercise.getScoreForSubmission(quizSubmission), true);
         database.addResultToSubmission(quizSubmissionPractice, AssessmentType.AUTOMATIC, null, quizExercise.getScoreForSubmission(quizSubmission), false);
+
+        assertThat(studentParticipationRepository.findAll().size()).isEqualTo(10);
+        assertThat(resultRepository.findAll().size()).isEqualTo(20);
 
         // calculate statistics
         quizExercise = request.get("/api/quiz-exercises/" + quizExercise.getId() + "/recalculate-statistics", HttpStatus.OK, QuizExercise.class);
