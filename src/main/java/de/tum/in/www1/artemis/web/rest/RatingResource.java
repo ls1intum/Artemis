@@ -1,0 +1,64 @@
+package de.tum.in.www1.artemis.web.rest;
+
+import java.util.Optional;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import de.tum.in.www1.artemis.domain.Rating;
+import de.tum.in.www1.artemis.service.RatingService;
+
+/**
+ * REST controller for managing Rating.
+ */
+@RestController
+@RequestMapping("/api")
+public class RatingResource {
+
+    private final Logger log = LoggerFactory.getLogger(ResultResource.class);
+
+    private static final String ENTITY_NAME = "rating";
+
+    @Value("${jhipster.clientApp.name}")
+    private String applicationName;
+
+    @Value("${artemis.continuous-integration.artemis-authentication-token-value}")
+    private String ARTEMIS_AUTHENTICATION_TOKEN_VALUE = "";
+
+    private final RatingService ratingService;
+
+    public RatingResource(RatingService ratingService) {
+        this.ratingService = ratingService;
+    }
+
+    @GetMapping("/rating/result/{resultId}")
+    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<Optional<Rating>> getRatingForResult(@PathVariable Long resultId) {
+        Optional<Rating> rating = this.ratingService.findRatingByResultId(resultId);
+        return ResponseEntity.ok(rating);
+    }
+
+    @PostMapping("/rating")
+    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<Rating> createRatingForResult(@RequestBody Rating rating) {
+        Rating result = this.ratingService.saveRating(rating);
+        return ResponseEntity.ok(result);
+    }
+
+    @PutMapping("/rating")
+    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<Rating> updateRatingForResult(@RequestBody Rating rating) {
+        Rating result = this.ratingService.updateRating(rating);
+        return ResponseEntity.ok(result);
+    }
+}
