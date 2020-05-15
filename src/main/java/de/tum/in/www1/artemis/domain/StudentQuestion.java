@@ -106,14 +106,18 @@ public class StudentQuestion implements Serializable {
         this.visibleForStudents = visibleForStudents;
     }
 
-    public Integer getVotes() { return votes; }
+    public Integer getVotes() {
+        return votes;
+    }
 
-    public StudentQuestion votes(Integer votes ) {
+    public StudentQuestion votes(Integer votes) {
         this.votes = votes;
         return this;
     }
 
-    public void setVotes(Integer votes) { this.votes = votes; }
+    public void setVotes(Integer votes) {
+        this.votes = votes;
+    }
 
     public Set<StudentQuestionAnswer> getAnswers() {
         return answers;

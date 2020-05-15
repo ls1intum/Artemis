@@ -141,7 +141,8 @@ public class StudentQuestionResource {
             updatedStudentQuestion.setVotes(votes);
             StudentQuestion result = studentQuestionRepository.save(updatedStudentQuestion);
             return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, updatedStudentQuestion.getId().toString())).body(result);
-        } else {
+        }
+        else {
             return forbidden();
         }
     }
@@ -251,9 +252,11 @@ public class StudentQuestionResource {
         Exercise exercise = studentQuestion.getExercise();
         if (course != null) {
             return authorizationCheckService.isAtLeastStudentInCourse(course, user);
-        } else if (exercise != null) {
+        }
+        else if (exercise != null) {
             return authorizationCheckService.isAtLeastStudentForExercise(exercise, user);
-        } else {
+        }
+        else {
             return false;
         }
     }
