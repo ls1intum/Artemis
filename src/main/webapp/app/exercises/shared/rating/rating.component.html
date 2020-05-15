@@ -1,0 +1,6 @@
+<div>
+    <b>
+        <span jhiTranslate="artemisApp.rating.label"></span>
+    </b>
+    <star-rating checkedcolor="gold" uncheckedcolor="grey" [value]="rating?.rating" size="24" readonly="false" [totalstars]="5" (rate)="onRate($event)"> </star-rating>
+</div>
