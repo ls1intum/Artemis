@@ -21,12 +21,11 @@
                         </span>
                     </dd>
                 </ng-container>
-                <ng-container *ngIf="modelingExercise.difficulty">
-                    <dt><span jhiTranslate="artemisApp.exercise.difficulty">Difficulty</span></dt>
-                    <dd>
-                        <span>{{ modelingExercise.difficulty }}</span>
-                    </dd>
-                </ng-container>
+                <dt><span jhiTranslate="artemisApp.exercise.difficulty">Difficulty</span></dt>
+                <dd>
+                    <span *ngIf="modelingExercise.difficulty">{{ modelingExercise.difficulty }}</span>
+                    <span *ngIf="!modelingExercise.difficulty" jhiTranslate="artemisApp.exercise.noLevel"></span>
+                </dd>
                 <dt><span jhiTranslate="artemisApp.exercise.mode">Mode</span></dt>
                 <dd>
                     <span>{{ modelingExercise.mode }}</span>
