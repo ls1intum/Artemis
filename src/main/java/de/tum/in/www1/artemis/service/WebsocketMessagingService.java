@@ -5,6 +5,7 @@ import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.participation.Participation;
+import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 
 /**
  * This service sends out websocket messages.
@@ -40,7 +41,12 @@ public class WebsocketMessagingService {
         var originalParticipation = result.getParticipation();
         result.setParticipation(originalParticipation.copyParticipationId());
 
-        messagingTemplate.convertAndSend("/topic/participation/" + participation.getId() + "/newResults", result);
+        // TODO: Are there other cases that must be handled here?
+        if (participation instanceof StudentParticipation) {
+            StudentParticipation studentParticipation = (StudentParticipation) participation;
+            messagingTemplate.convertAndSend(
+                    "/topic/course/" + studentParticipation.getExercise().getCourse().getId() + "/user/" + studentParticipation.getParticipantIdentifier() + "/newResults", result);
+        }
 
         // recover the participation because we might want to use it again after this method
         result.setParticipation(originalParticipation);

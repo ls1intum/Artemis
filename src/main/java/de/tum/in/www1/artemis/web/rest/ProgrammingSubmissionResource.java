@@ -198,7 +198,7 @@ public class ProgrammingSubmissionResource {
         // the correct build for the given commit hash.
         Optional<Result> result = continuousIntegrationService.get().retrieveLatestBuildResult(programmingExerciseParticipation, submission.get());
         if (result.isPresent()) {
-            resultService.notifyUserAboutNewResult(result.get(), participationId);
+            resultService.notifyUserAboutNewResult(result.get(), result.get().getParticipation());
             return ResponseEntity.ok().build();
         }
         // If a build is already queued/running for the given participation, we just return. Note: We don't check that the running build belongs to the failed submission.
@@ -296,7 +296,7 @@ public class ProgrammingSubmissionResource {
      * We have removed this trigger for newly created exercises, but can't remove it from legacy ones.
      * This means that legacy exercises will trigger the repositories to be built, but we won't create submissions here anymore.
      * Therefore incoming build results will have to create new submissions with SubmissionType.OTHER.
-     * 
+     *
      * @param exerciseId the id of the programmingExercise where the test cases got changed
      * @param requestBody the body of the post request by the VCS.
      * @return the ResponseEntity with status 200 (OK)

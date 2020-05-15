@@ -156,11 +156,11 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
      * @param participationId
      * @private
      */
-    private openResultWebsocketSubscriptionIfNotExisting(participationId: number) {
-        if (!this.openWebsocketSubscriptions.get(`${RESULTS_WEBSOCKET}${participationId}`)) {
-            const participationResultTopic = `/topic/participation/${participationId}/newResults`;
+    private openResultWebsocketSubscriptionIfNotExisting(courseId: number, userId: string) {
+        if (!this.openWebsocketSubscriptions.get(`${RESULTS_WEBSOCKET}${courseId}`)) {
+            const participationResultTopic = `/topic/course/${courseId}/user/${userId}/newResults`;
             this.jhiWebsocketService.subscribe(participationResultTopic);
-            this.openWebsocketSubscriptions.set(`${RESULTS_WEBSOCKET}${participationId}`, participationResultTopic);
+            this.openWebsocketSubscriptions.set(`${RESULTS_WEBSOCKET}${courseId}`, participationResultTopic);
             this.jhiWebsocketService
                 .receive(participationResultTopic)
                 .pipe(tap(this.notifyResultSubscribers), switchMap(this.addResultToParticipation), tap(this.notifyParticipationSubscribers))
