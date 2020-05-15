@@ -89,7 +89,8 @@ export class StudentQuestionComponent implements OnInit {
      * @param {number} votes
      */
     updateVotes(votes: number): void {
-        this.studentQuestion.votes = votes;
-        this.studentQuestionService.update(this.studentQuestion).subscribe(() => {});
+        this.studentQuestionService.updateVotes(this.studentQuestion.id, votes).subscribe(() => {
+            this.studentQuestion.votes = votes;
+        });
     }
 }

@@ -40,6 +40,16 @@ export class StudentQuestionService {
     }
 
     /**
+     * update the votes of a studentQuestion
+     * @param {number} questionId
+     * @param {number} votes
+     * @return {Observable<EntityResponseType>}
+     */
+    updateVotes(questionId: number, votes: number): Observable<EntityResponseType> {
+        return this.http.put(`${this.resourceUrl}/${questionId}/votes`, votes, { observe: 'response' }).pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
+    }
+
+    /**
      * find all questions for id of exercise
      * @param {number} exerciseId
      * @return {Observable<EntityArrayResponseType>}

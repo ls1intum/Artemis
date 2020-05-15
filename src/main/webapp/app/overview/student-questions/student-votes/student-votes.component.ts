@@ -30,9 +30,10 @@ export class StudentVotesComponent {
      */
     toggleUpVote(): void {
         console.log('toggle upvote');
+        this.votes++;
         this.interactVotes.emit({
             name: StudentVotesActionName.VOTE_CHANGE,
-            value: this.votes++,
+            value: this.votes,
         });
     }
 
@@ -41,9 +42,10 @@ export class StudentVotesComponent {
      */
     toggleDownVote(): void {
         console.log('toggleDownvote');
+        this.votes--;
         this.interactVotes.emit({
             name: StudentVotesActionName.VOTE_CHANGE,
-            value: this.votes--,
+            value: this.votes,
         });
     }
 }
