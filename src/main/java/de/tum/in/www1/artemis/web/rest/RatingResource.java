@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.in.www1.artemis.domain.Rating;
 import de.tum.in.www1.artemis.service.RatingService;
+import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
 /**
  * REST controller for managing Rating.
@@ -61,6 +62,9 @@ public class RatingResource {
     @PostMapping("/rating")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Rating> createRatingForResult(@RequestBody Rating rating) {
+        if (rating.getId() != null) {
+            throw new BadRequestAlertException("A new rating cannot already have an ID", ENTITY_NAME, "idExists");
+        }
         Rating result = this.ratingService.saveRating(rating);
         return ResponseEntity.ok(result);
     }
@@ -73,6 +77,9 @@ public class RatingResource {
     @PutMapping("/rating")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Rating> updateRatingForResult(@RequestBody Rating rating) {
+        if (rating.getId() == null) {
+            throw new BadRequestAlertException("The rating must have an ID", ENTITY_NAME, "idDoesNotExist");
+        }
         Rating result = this.ratingService.updateRating(rating);
         return ResponseEntity.ok(result);
     }
