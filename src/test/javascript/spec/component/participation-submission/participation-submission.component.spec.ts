@@ -27,7 +27,7 @@ import { MockComplaintService } from '../../helpers/mocks/service/mock-complaint
 import { NgxDatatableModule } from '@swimlane/ngx-datatable';
 import { TranslateModule } from '@ngx-translate/core';
 import { ComplaintsForTutorComponent } from 'app/complaints/complaints-for-tutor/complaints-for-tutor.component';
-import { UpdatingResultComponent } from 'app/shared/result/updating-result.component';
+import { UpdatingResultComponent } from 'app/exercises/shared/result/updating-result.component';
 import { ArtemisResultModule } from 'app/exercises/shared/result/result.module';
 import { SubmissionExerciseType, SubmissionType } from 'app/entities/submission.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
