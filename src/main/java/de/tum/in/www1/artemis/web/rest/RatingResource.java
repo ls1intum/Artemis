@@ -41,6 +41,11 @@ public class RatingResource {
         this.ratingService = ratingService;
     }
 
+    /**
+     * Return Rating referencing resultId or null
+     * @param resultId - Id of result that is referenced with the rating
+     * @return Rating or null
+     */
     @GetMapping("/rating/result/{resultId}")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Optional<Rating>> getRatingForResult(@PathVariable Long resultId) {
@@ -48,6 +53,11 @@ public class RatingResource {
         return ResponseEntity.ok(rating);
     }
 
+    /**
+     * Persist a new Rating
+     * @param rating - Rating that should be persisted
+     * @return updated Rating
+     */
     @PostMapping("/rating")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Rating> createRatingForResult(@RequestBody Rating rating) {
@@ -55,6 +65,11 @@ public class RatingResource {
         return ResponseEntity.ok(result);
     }
 
+    /**
+     * Update a Rating
+     * @param rating - updated Rating
+     * @return updated Rating
+     */
     @PutMapping("/rating")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Rating> updateRatingForResult(@RequestBody Rating rating) {

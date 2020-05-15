@@ -15,6 +15,10 @@ export class RatingComponent {
     public rating: Rating;
     private _result: Result;
 
+    /**
+     * Result Input of the result that the rating is for
+     * @param result
+     */
     @Input()
     public set result(result: Result) {
         if (!result || !result.submission) {
@@ -33,6 +37,10 @@ export class RatingComponent {
 
     constructor(public ratingService: RatingService) {}
 
+    /**
+     * Update/Create new Rating for the result
+     * @param $event - starRating component that holds new rating value
+     */
     onRate($event: { oldValue: number; newValue: number; starRating: StarRatingComponent }) {
         // update feedback locally
         this.rating.rating = $event.newValue;

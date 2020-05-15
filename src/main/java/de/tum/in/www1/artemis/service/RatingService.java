@@ -30,10 +30,20 @@ public class RatingService {
         this.resultRepository = resultRepository;
     }
 
+    /**
+     * Return Rating that refers to Result with id resultId
+     * @param resultId - Id of Result that the rating refers to
+     * @return Rating if it exists else null
+     */
     public Optional<Rating> findRatingByResultId(Long resultId) {
         return ratingRepository.findRatingByResultId(resultId);
     }
 
+    /**
+     * Persist a new Rating
+     * @param rating - Rating that should be persisted
+     * @return persisted Rating
+     */
     @Transactional
     public Rating saveRating(Rating rating) {
         Rating serverRating = new Rating();
@@ -44,11 +54,15 @@ public class RatingService {
         return ratingRepository.save(serverRating);
     }
 
+    /**
+     * Update an existing Rating
+     * @param rating - Updated Rating that should be persisted
+     * @return updated rating
+     */
     @Transactional
     public Rating updateRating(Rating rating) {
         Rating update = this.ratingRepository.getOne(rating.getId());
         update.setRating(rating.getRating());
         return update;
     }
-
 }
