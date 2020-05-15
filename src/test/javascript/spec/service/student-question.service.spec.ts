@@ -63,6 +63,19 @@ describe('ExerciseHint Service', () => {
             req.flush({ status: 200 });
             expect(expectedResult).to.be.true;
         });
+
+        it('should update the votes of a StudentQuestion', async () => {
+            const returnedFromService = { ...elemDefault, votes: 42 };
+
+            const expected = { ...returnedFromService };
+            service
+                .updateVotes(expected.id, 42)
+                .pipe(take(1))
+                .subscribe((resp) => (expectedResult = resp));
+            const req = httpMock.expectOne({ method: 'PUT' });
+            req.flush(returnedFromService);
+            expect(expectedResult.body).to.deep.equal(expected);
+        });
     });
 
     afterEach(() => {
