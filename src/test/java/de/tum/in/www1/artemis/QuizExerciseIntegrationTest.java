@@ -6,8 +6,6 @@ import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 
-import de.tum.in.www1.artemis.repository.ResultRepository;
-import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -19,6 +17,8 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.DifficultyLevel;
 import de.tum.in.www1.artemis.domain.quiz.*;
+import de.tum.in.www1.artemis.repository.ResultRepository;
+import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.service.QuizExerciseService;
 import de.tum.in.www1.artemis.service.scheduled.QuizScheduleService;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
@@ -415,13 +415,13 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     public void testReevaluateStatistics() throws Exception {
         quizExercise = createQuizOnServer(ZonedDateTime.now().plusSeconds(5), null);
-        var now = ZonedDateTime.now();
+        // var now = ZonedDateTime.now();
 
         // we expect a bad request because the quiz has not ended yet
         request.putWithResponseBody("/api/quiz-exercises-re-evaluate/", quizExercise, QuizExercise.class, HttpStatus.BAD_REQUEST);
-        quizExercise.setReleaseDate(now.minusSeconds(5));
-        quizExercise.setDueDate(now.minusSeconds(1));
-        quizExercise.setDuration(3);
+        quizExercise.setReleaseDate(ZonedDateTime.now().minusHours(5));
+        quizExercise.setDueDate(ZonedDateTime.now().minusMinutes(1));
+        // quizExercise.setDuration(3600);
         quizExercise = request.putWithResponseBody("/api/quiz-exercises", quizExercise, QuizExercise.class, HttpStatus.OK);
 
         // generate rated and unrated submissions for each student
@@ -429,8 +429,8 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
 
         for (int i = 1; i <= numberOfParticipants; i++) {
             if (i != 1 && i != 5) {
-                QuizSubmission quizSubmission = database.generateSubmission(quizExercise, i, true, now.minusSeconds(3));
-                QuizSubmission quizSubmissionPractice = database.generateSubmission(quizExercise, i, true, now);
+                QuizSubmission quizSubmission = database.generateSubmission(quizExercise, i, true, ZonedDateTime.now().minusHours(1));
+                QuizSubmission quizSubmissionPractice = database.generateSubmission(quizExercise, i, true, ZonedDateTime.now());
 
                 database.addSubmission(quizExercise, quizSubmission, "student" + i);
                 database.addSubmission(quizExercise, quizSubmissionPractice, "student" + i);
@@ -441,8 +441,8 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         }
 
         // submission with everything selected
-        QuizSubmission quizSubmission = database.generateSpecialSubmissionWithResult(quizExercise, true, now.minusSeconds(3), true);
-        QuizSubmission quizSubmissionPractice = database.generateSpecialSubmissionWithResult(quizExercise, true, now, true);
+        QuizSubmission quizSubmission = database.generateSpecialSubmissionWithResult(quizExercise, true, ZonedDateTime.now().minusHours(1), true);
+        QuizSubmission quizSubmissionPractice = database.generateSpecialSubmissionWithResult(quizExercise, true, ZonedDateTime.now(), true);
 
         database.addSubmission(quizExercise, quizSubmission, "student1");
         database.addSubmission(quizExercise, quizSubmissionPractice, "student1");
@@ -451,8 +451,8 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         database.addResultToSubmission(quizSubmissionPractice, AssessmentType.AUTOMATIC, null, quizExercise.getScoreForSubmission(quizSubmission), false);
 
         // submission with nothing selected
-        quizSubmission = database.generateSpecialSubmissionWithResult(quizExercise, true, now.minusSeconds(3), false);
-        quizSubmissionPractice = database.generateSpecialSubmissionWithResult(quizExercise, true, now, false);
+        quizSubmission = database.generateSpecialSubmissionWithResult(quizExercise, true, ZonedDateTime.now().minusHours(1), false);
+        quizSubmissionPractice = database.generateSpecialSubmissionWithResult(quizExercise, true, ZonedDateTime.now(), false);
 
         database.addSubmission(quizExercise, quizSubmission, "student5");
         database.addSubmission(quizExercise, quizSubmissionPractice, "student5");
