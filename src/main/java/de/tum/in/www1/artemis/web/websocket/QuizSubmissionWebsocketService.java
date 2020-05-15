@@ -62,6 +62,8 @@ public class QuizSubmissionWebsocketService {
             log.debug("Could not save quiz exercise for user {} in quiz {} because the quizExercise could not be found.", username, principal);
             return;
         }
+        log.debug("Loaded quiz exercise after {} ms for user {} in quiz {}.", System.currentTimeMillis() - start, username, exerciseId);
+
         if (!quizExercise.get().isSubmissionAllowed()) {
             // notify the user that submission was not saved because quiz is not active over payload and handle this case in the client
             log.info("Quiz {} has ended. Cannot save submission for {}, took {} ms.", quizExercise.get().getTitle(), principal.getName(), System.currentTimeMillis() - start);
