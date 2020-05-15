@@ -55,6 +55,8 @@
             "mode": "Mode",
             "modeTooltip": "The solving mode of an exercise determines whether students work alone or in teams. NOTE: This cannot be changed later on!",
             "teamModeBetaLabel": "Beta",
+            "programmingLanguage": "Programming Language",
+            "packageName": "Package Name",
             "modes": {
                 "individual": "Individual",
                 "team": "Team"

@@ -55,6 +55,8 @@
             "mode": "Modus",
             "modeTooltip": "Der Bearbeitungsmodus einer Aufgabe bestimmt, ob Studenten alleine oder in Teams daran arbeiten. ACHTUNG: Dies kann später nicht mehr geändert werden!",
             "teamModeBetaLabel": "Beta",
+            "programmingLanguage": "Programmiersprache",
+            "packageName": "Package Name",
             "modes": {
                 "individual": "Individuell",
                 "team": "Team"

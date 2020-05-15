@@ -43,17 +43,43 @@
                 <dd>
                     <span>{{ programmingExercise.shortName }}</span>
                 </dd>
+                <ng-container *ngIf="programmingExercise.categories">
+                    <dt><span jhiTranslate="artemisApp.exercise.categories">Difficulty</span></dt>
+                    <dd>
+                        <span class="custom-tag" *ngFor="let item of programmingExercise.categories" [ngStyle]="{ backgroundColor: item.color }">
+                            <span>{{ item.category }}</span>
+                        </span>
+                    </dd>
+                </ng-container>
+                <dt><span jhiTranslate="artemisApp.exercise.difficulty">Difficulty</span></dt>
+                <dd>
+                    <span *ngIf="programmingExercise.difficulty">{{ programmingExercise.difficulty }}</span>
+                    <span *ngIf="!programmingExercise.difficulty" jhiTranslate="artemisApp.exercise.noLevel"></span>
+                </dd>
+                <dt><span jhiTranslate="artemisApp.exercise.programmingLanguage">Mode</span></dt>
+                <dd>
+                    <span>{{ programmingExercise.programmingLanguage }}</span>
+                </dd>
+
+                <dt><span jhiTranslate="artemisApp.exercise.packageName">Mode</span></dt>
+                <dd>
+                    <span>{{ programmingExercise.packageName }}</span>
+                </dd>
+
                 <dt><span jhiTranslate="artemisApp.exercise.mode">Mode</span></dt>
                 <dd>
                     <span>{{ programmingExercise.mode }}</span>
                 </dd>
+
                 <dt><span jhiTranslate="artemisApp.exercise.releaseDate">Release Date</span></dt>
                 <dd>
-                    <span>{{ programmingExercise.releaseDate | date: 'medium' }}</span>
+                    <span *ngIf="programmingExercise.releaseDate">{{ programmingExercise.releaseDate | date: 'medium' }}</span>
+                    <span *ngIf="!programmingExercise.releaseDate" jhiTranslate="artemisApp.exercise.dateNotSet"></span>
                 </dd>
                 <dt><span jhiTranslate="artemisApp.exercise.dueDate">Due Date</span></dt>
                 <dd>
-                    <span>{{ programmingExercise.dueDate | date: 'medium' }}</span>
+                    <span *ngIf="programmingExercise.dueDate">{{ programmingExercise.dueDate | date: 'medium' }}</span>
+                    <span *ngIf="!programmingExercise.dueDate" jhiTranslate="artemisApp.exercise.dateNotSet"></span>
                 </dd>
                 <ng-container *ngIf="programmingExercise.dueDate">
                     <dt><span jhiTranslate="artemisApp.programmingExercise.timeline.afterDueDate">Automatic Submission Run After Due Date</span></dt>
@@ -61,6 +87,11 @@
                         <span>{{ programmingExercise.buildAndTestStudentSubmissionsAfterDueDate | date: 'medium' }}</span>
                     </dd>
                 </ng-container>
+                <dt><span jhiTranslate="artemisApp.exercise.assessmentDueDate">Due Date</span></dt>
+                <dd>
+                    <span *ngIf="programmingExercise.assessmentDueDate">{{ programmingExercise.assessmentDueDate | date: 'medium' }}</span>
+                    <span *ngIf="!programmingExercise.assessmentDueDate" jhiTranslate="artemisApp.exercise.dateNotSet"></span>
+                </dd>
                 <dt><span jhiTranslate="artemisApp.exercise.maxScore">Max Score</span></dt>
                 <dd>
                     <span>{{ programmingExercise.maxScore }}</span>
