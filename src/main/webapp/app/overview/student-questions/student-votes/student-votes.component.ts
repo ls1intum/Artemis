@@ -1,4 +1,5 @@
 import { Component, OnInit, EventEmitter, Input, Output } from '@angular/core';
+import { AccountService } from 'app/core/auth/account.service';
 import { LocalStorageService } from 'ngx-webstorage';
 import { User } from 'app/core/user/user.model';
 
@@ -25,22 +26,23 @@ export enum StudentVotesActionName {
     styleUrls: ['./../student-questions.scss'],
 })
 export class StudentVotesComponent implements OnInit {
-    @Input() user: User;
     @Input() questionId: number;
     @Input() votes: number;
     @Output() interactVotes = new EventEmitter<StudentVotesAction>();
 
-    private userVote: StudentVote | null;
+    user: User;
+    userVote: StudentVote | null;
 
-    constructor(private localStorage: LocalStorageService) {}
+    constructor(private localStorage: LocalStorageService, private accountService: AccountService) {}
 
     /**
      * load user's vote
      */
     ngOnInit(): void {
-        if (this.questionId && this.user) {
+        this.accountService.identity().then((user: User) => {
+            this.user = user;
             this.userVote = this.localStorage.retrieve(`q${this.questionId}u${this.user.id}`);
-        }
+        });
     }
 
     /**
