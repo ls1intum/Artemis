@@ -40,8 +40,8 @@ public class StudentQuestion implements Serializable {
     @Column(name = "visible_for_students")
     private Boolean visibleForStudents;
 
-    @Column(name = "votes")
-    private Integer votes;
+    @Column(name = "votes", columnDefinition = "integer default 0")
+    private Integer votes = 0;
 
     @OneToMany(mappedBy = "question", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.EAGER)
     private Set<StudentQuestionAnswer> answers = new HashSet<>();
