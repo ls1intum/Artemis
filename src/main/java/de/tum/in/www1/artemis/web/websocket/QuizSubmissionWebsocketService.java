@@ -62,6 +62,7 @@ public class QuizSubmissionWebsocketService {
         }
         if (!quizExercise.get().isSubmissionAllowed()) {
             // notify the user that submission was not saved because quiz is not active over payload and handle this case in the client
+            log.info("Quiz {} has ended. Cannot save submission for {}.", quizExercise.get().getTitle(), principal.getName());
             messagingTemplate.convertAndSendToUser(username, "/topic/quizExercise/" + exerciseId + "/submission", "the quiz is not active");
             return;
         }
