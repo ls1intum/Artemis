@@ -49,6 +49,13 @@ public class TextEmbeddingService {
 
     private RemoteArtemisServiceConnector<Request, Response> connector = new RemoteArtemisServiceConnector<>(log, Response.class);
 
+    /**
+     * Calls the remote embedding service to embedd a List of textBlocks
+     * @param blocks a List of TextBlocks which should be embedded
+     * @param exercise the exercise from which the text blocks are extracted
+     * @return a List of TextEmbedding corresponding to the given TextBlocks
+     * @throws NetworkingError if the request isn't successful
+     */
     public List<TextEmbedding> embedTextBlocks(List<TextBlock> blocks, TextExercise exercise) throws NetworkingError {
         return embedTextBlocks(blocks, exercise, 1);
     }
@@ -56,7 +63,7 @@ public class TextEmbeddingService {
     /**
      * Calls the remote embedding service to embedd a List of textBlocks
      * @param blocks a List of TextBlocks which should be embedded
-     * @param exercise
+     * @param exercise the exercise from which the text blocks are extracted
      * @param maxRetries number of retries before the request will be canceled
      * @return a List of TextEmbedding corresponding to the given TextBlocks
      * @throws NetworkingError if the request isn't successful
