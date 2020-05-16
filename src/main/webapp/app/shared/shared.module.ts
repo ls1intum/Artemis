@@ -11,7 +11,6 @@ import { AlertComponent } from 'app/shared/alert/alert.component';
 import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
 import { FindLanguageFromKeyPipe } from 'app/shared/language/find-language-from-key.pipe';
 import { ArtemisSharedLibsModule } from 'app/shared/shared-libs.module';
-import { SlideToggleComponent } from 'app/exercises/shared/slide-toggle/slide-toggle.component';
 import { AlertErrorComponent } from 'app/shared/alert/alert-error.component';
 import { JhiConnectionStatusComponent } from 'app/shared/connection-status/connection-status.component';
 
@@ -24,7 +23,6 @@ import { JhiConnectionStatusComponent } from 'app/shared/connection-status/conne
         DeleteButtonDirective,
         ResizeableContainerComponent,
         SecureLinkDirective,
-        SlideToggleComponent,
         JhiConnectionStatusComponent,
     ],
     providers: [DatePipe],
@@ -42,7 +40,6 @@ import { JhiConnectionStatusComponent } from 'app/shared/connection-status/conne
         DeleteDialogComponent,
         ResizeableContainerComponent,
         SecureLinkDirective,
-        SlideToggleComponent,
         JhiConnectionStatusComponent,
     ],
 })
