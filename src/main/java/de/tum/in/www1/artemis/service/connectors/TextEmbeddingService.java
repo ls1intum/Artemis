@@ -4,6 +4,7 @@ import static de.tum.in.www1.artemis.service.connectors.RemoteArtemisServiceConn
 
 import java.util.List;
 
+import de.tum.in.www1.artemis.domain.TextExercise;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -24,9 +25,13 @@ public class TextEmbeddingService {
     private static class Request {
 
         public List<TextBlock> blocks;
+        public Long courseId;
+        public Long exerciseId;
 
-        Request(List<TextBlock> blocks) {
+        Request(List<TextBlock> blocks, Long courseId, long exerciseId) {
             this.blocks = blocks;
+            this.courseId = courseId;
+            this.exerciseId = exerciseId;
         }
     }
 
@@ -44,20 +49,21 @@ public class TextEmbeddingService {
 
     private RemoteArtemisServiceConnector<Request, Response> connector = new RemoteArtemisServiceConnector<>(log, Response.class);
 
-    public List<TextEmbedding> embedTextBlocks(List<TextBlock> blocks) throws NetworkingError {
-        return embedTextBlocks(blocks, 1);
+    public List<TextEmbedding> embedTextBlocks(List<TextBlock> blocks, TextExercise exercise) throws NetworkingError {
+        return embedTextBlocks(blocks, exercise, 1);
     }
 
     /**
      * Calls the remote embedding service to embedd a List of textBlocks
      * @param blocks a List of TextBlocks which should be embedded
+     * @param exercise
      * @param maxRetries number of retries before the request will be canceled
      * @return a List of TextEmbedding corresponding to the given TextBlocks
      * @throws NetworkingError if the request isn't successful
      */
-    public List<TextEmbedding> embedTextBlocks(List<TextBlock> blocks, int maxRetries) throws NetworkingError {
+    public List<TextEmbedding> embedTextBlocks(List<TextBlock> blocks, TextExercise exercise, int maxRetries) throws NetworkingError {
         log.info("Calling Remote Service to embed " + blocks.size() + " student text answer blocks.");
-        final Request request = new Request(blocks);
+        final Request request = new Request(blocks, exercise.getCourse().getId(), exercise.getId());
         final Response response = connector.invokeWithRetry(API_ENDPOINT, request, authenticationHeaderForSecret(API_SECRET), maxRetries);
 
         return response.embeddings;
