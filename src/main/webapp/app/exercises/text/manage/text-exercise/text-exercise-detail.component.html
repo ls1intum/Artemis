@@ -12,7 +12,7 @@
                 <dt><span jhiTranslate="artemisApp.exercise.course">Course</span></dt>
                 <dd>
                     <div *ngIf="textExercise.course">
-                        <a [routerLink]="['/course-management', textExercise.course?.id]">{{ textExercise.course?.title }}</a>
+                        <a [routerLink]="['/course-management', textExercise.course?.id, 'view']">{{ textExercise.course?.title }}</a>
                     </div>
                 </dd>
                 <dt><span jhiTranslate="artemisApp.exercise.title">Title</span></dt>
