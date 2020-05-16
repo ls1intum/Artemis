@@ -5,7 +5,7 @@ import * as moment from 'moment';
 
 /**
  * Format a given date time that must be convertible to a moment object to a localized date time
- * string based on the current language setting.
+ * string based on the current language setting. Always returns the short format on mobile devices.
  * This pipe is stateful (pure = false) so that it can adapt to changes of the current locale.
  * Usage:
  *   dateTime | artemisDate:format:seconds
@@ -28,6 +28,7 @@ export class ArtemisDatePipe implements PipeTransform, OnDestroy {
     private showDate = true;
     private showTime = true;
     private showSeconds = false;
+    private static mobileDeviceSize = 768;
 
     constructor(private translateService: TranslateService) {}
 
@@ -51,6 +52,9 @@ export class ArtemisDatePipe implements PipeTransform, OnDestroy {
         this.showDate = format !== 'short-time' && format !== 'long-time';
         this.showTime = format !== 'short-date' && format !== 'long-date';
         this.showSeconds = seconds;
+
+        // Evaluate the format length based on the current window width.
+        this.formatLengthBasedOnWindowWidth(window.innerWidth);
 
         // Set locale to current language.
         this.updateLocale(this.translateService.currentLang);
@@ -114,6 +118,12 @@ export class ArtemisDatePipe implements PipeTransform, OnDestroy {
             format = 'HH:mm';
         }
         return format;
+    }
+
+    private formatLengthBasedOnWindowWidth(windowWidth: number): void {
+        if (windowWidth <= ArtemisDatePipe.mobileDeviceSize) {
+            this.long = false;
+        }
     }
 
     private cleanUpSubscription(): void {
