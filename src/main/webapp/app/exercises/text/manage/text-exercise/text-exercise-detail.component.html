@@ -9,6 +9,12 @@
                 <jhi-external-submission [exercise]="textExercise"></jhi-external-submission>
             </div>
             <dl class="row-md jh-entity-details markdown-preview">
+                <dt><span jhiTranslate="artemisApp.exercise.course">Course</span></dt>
+                <dd>
+                    <div *ngIf="textExercise.course">
+                        <a [routerLink]="['/course-management', textExercise.course?.id]">{{ textExercise.course?.title }}</a>
+                    </div>
+                </dd>
                 <dt><span jhiTranslate="artemisApp.exercise.title">Title</span></dt>
                 <dd>
                     <span>{{ textExercise.title }}</span>
@@ -68,12 +74,6 @@
                 <dt><span jhiTranslate="artemisApp.textExercise.automaticAssessmentEnabled">Automatic Assessment Enabled</span></dt>
                 <dd>
                     <span>{{ (textExercise.assessmentType === AssessmentType.SEMI_AUTOMATIC ? 'global.generic.yes' : 'global.generic.no') | translate }}</span>
-                </dd>
-                <dt><span jhiTranslate="artemisApp.exercise.course">Course</span></dt>
-                <dd>
-                    <div *ngIf="textExercise.course">
-                        <a [routerLink]="['/course-management', textExercise.course?.id]">{{ textExercise.course?.title }}</a>
-                    </div>
                 </dd>
                 <dt><span jhiTranslate="artemisApp.exercise.problemStatement">Problem Statement</span></dt>
                 <dd class="editor-outline-background" [innerHTML]="formattedProblemStatement"></dd>

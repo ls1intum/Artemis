@@ -9,6 +9,12 @@
                 <jhi-external-submission [exercise]="fileUploadExercise"></jhi-external-submission>
             </div>
             <dl class="row-md jh-entity-details markdown-preview">
+                <dt><span jhiTranslate="artemisApp.exercise.course">Course</span></dt>
+                <dd>
+                    <div *ngIf="fileUploadExercise.course">
+                        <a [routerLink]="['/course-management', fileUploadExercise.course?.id]">{{ fileUploadExercise.course?.title }}</a>
+                    </div>
+                </dd>
                 <dt><span jhiTranslate="artemisApp.exercise.title">Title</span></dt>
                 <dd>
                     <span>{{ fileUploadExercise.title }}</span>
@@ -68,12 +74,6 @@
                 <dd>
                     <span *ngIf="fileUploadExercise.presentationScoreEnabled">{{ 'global.generic.yes' | translate }}</span>
                     <span *ngIf="!fileUploadExercise.presentationScoreEnabled">{{ 'global.generic.no' | translate }}</span>
-                </dd>
-                <dt><span jhiTranslate="artemisApp.exercise.course">Course</span></dt>
-                <dd>
-                    <div *ngIf="fileUploadExercise.course">
-                        <a [routerLink]="['/course-management', fileUploadExercise.course?.id]">{{ fileUploadExercise.course?.title }}</a>
-                    </div>
                 </dd>
                 <dt><span jhiTranslate="artemisApp.exercise.problemStatement">Problem Statement</span></dt>
                 <dd class="editor-outline-background" [innerHTML]="fileUploadExercise.problemStatement! | htmlForMarkdown"></dd>
