@@ -31,6 +31,16 @@
                 <dd>
                     <span>{{ textExercise.mode }}</span>
                 </dd>
+                <ng-container *ngIf="textExercise.teamAssignmentConfig">
+                    <dt><span jhiTranslate="artemisApp.exercise.teamAssignmentConfig.teamSize">Team Size</span></dt>
+                    <dd>
+                        <span>Min.</span>
+                        <span>{{ textExercise.teamAssignmentConfig.minTeamSize }}</span>
+                        <span>Max.</span>
+                        <span>{{ textExercise.teamAssignmentConfig.maxTeamSize }}</span>
+                        <span jhiTranslate="artemisApp.exercise.teamAssignmentConfig.participants">Participants</span>
+                    </dd>
+                </ng-container>
                 <dt><span jhiTranslate="artemisApp.exercise.releaseDate">Release Date</span></dt>
                 <dd>
                     <span *ngIf="textExercise.releaseDate">{{ textExercise.releaseDate | date: 'medium' }}</span>

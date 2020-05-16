@@ -31,6 +31,16 @@
                 <dd>
                     <span>{{ fileUploadExercise.mode }}</span>
                 </dd>
+                <ng-container *ngIf="fileUploadExercise.teamAssignmentConfig">
+                    <dt><span jhiTranslate="artemisApp.exercise.teamAssignmentConfig.teamSize">Team Size</span></dt>
+                    <dd>
+                        <span>Min.</span>
+                        <span>{{ fileUploadExercise.teamAssignmentConfig.minTeamSize }}</span>
+                        <span>Max.</span>
+                        <span>{{ fileUploadExercise.teamAssignmentConfig.maxTeamSize }}</span>
+                        <span jhiTranslate="artemisApp.exercise.teamAssignmentConfig.participants">Participants</span>
+                    </dd>
+                </ng-container>
                 <dt><span jhiTranslate="artemisApp.exercise.releaseDate">Release Date</span></dt>
                 <dd>
                     <span *ngIf="fileUploadExercise.releaseDate">{{ fileUploadExercise.releaseDate | date: 'medium' }}</span>
@@ -49,6 +59,10 @@
                 <dt><span jhiTranslate="artemisApp.exercise.maxScore">Max Score</span></dt>
                 <dd>
                     <span>{{ fileUploadExercise.maxScore }}</span>
+                </dd>
+                <dt><span jhiTranslate="artemisApp.fileUploadExercise.filePattern">File Pattern</span></dt>
+                <dd>
+                    <span>{{ fileUploadExercise.filePattern }}</span>
                 </dd>
                 <dt><span jhiTranslate="artemisApp.exercise.presentationScoreEnabled.title">Presentation Score enabled</span></dt>
                 <dd>
@@ -71,10 +85,6 @@
                     [readonly]="true"
                     [criteria]="fileUploadExercise.gradingCriteria"
                 ></jhi-structured-grading-instructions-assessment-layout>
-                <dt><span jhiTranslate="artemisApp.fileUploadExercise.filePattern">File Pattern</span></dt>
-                <dd>
-                    <span>{{ fileUploadExercise.filePattern }}</span>
-                </dd>
             </dl>
 
             <button type="submit" (click)="previousState()" class="btn btn-info">
