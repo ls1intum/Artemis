@@ -14,6 +14,12 @@ import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service'
 
 const currentExerciseRowClass = 'datatable-row-current-exercise';
 
+enum AssessmentAction {
+    START = 'start',
+    CONTINUE = 'continue',
+    OPEN = 'open',
+}
+
 class ExerciseForTeam extends Exercise {
     team: Team;
     participation?: StudentParticipation;
@@ -101,13 +107,13 @@ export class TeamParticipationTableComponent implements OnInit {
      * Returns the assessment action depending on the state of the result on the submission
      * @param submission Submission which to check
      */
-    assessmentAction(submission: Submission | null) {
+    assessmentAction(submission: Submission | null): AssessmentAction {
         if (!submission || !submission.result) {
-            return 'start';
+            return AssessmentAction.START;
         } else if (!submission.result.completionDate) {
-            return 'continue';
+            return AssessmentAction.CONTINUE;
         }
-        return 'open';
+        return AssessmentAction.OPEN;
     }
 
     /**
@@ -116,12 +122,12 @@ export class TeamParticipationTableComponent implements OnInit {
      * @param submission Submission for which to check
      */
     assessmentButtonDisabled(exercise: Exercise, submission: Submission | null) {
-        if (exercise.dueDate && exercise.dueDate.isSameOrAfter()) {
+        // there is no submission yet or the exercise has not ended yet
+        if (!submission || (exercise.dueDate && exercise.dueDate.isSameOrAfter())) {
             return true;
-        } else if (exercise.assessmentDueDate && exercise.assessmentDueDate.isBefore()) {
-            return true;
-        } else if (!submission) {
-            return true;
+        } else if (this.assessmentAction(submission) !== AssessmentAction.OPEN) {
+            // starting or continuing an assessment is not allowed after the assessment due date
+            return exercise.assessmentDueDate && exercise.assessmentDueDate.isBefore();
         }
         return false;
     }
