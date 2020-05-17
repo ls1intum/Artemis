@@ -388,13 +388,15 @@ public class TeamResource {
         // Set teams on exercises
         exercises.forEach(exercise -> exercise.setTeams(Set.of(exerciseTeamMap.get(exercise.getId()))));
 
-        // Fetch participations for team (including latest submissions if instructor or team tutor)
+        // Fetch participations for team
         List<StudentParticipation> participations;
         if (authCheckService.isAtLeastInstructorInCourse(course, user) || teams.stream().map(Team::getOwner).anyMatch(user::equals)) {
+            // fetch including submissions and results for team tutor and instructors
             participations = participationService.findAllByCourseIdAndTeamShortNameWithEagerSubmissionsResult(course.getId(), teamShortName);
             submissionService.reduceParticipationSubmissionsToLatest(participations, true);
         }
         else {
+            // for other tutors and for students: submissions not needed, hide results
             participations = participationService.findAllByCourseIdAndTeamShortName(course.getId(), teamShortName);
             participations.forEach(participation -> participation.setResults(null));
         }
