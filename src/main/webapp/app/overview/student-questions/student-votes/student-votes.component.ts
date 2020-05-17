@@ -55,7 +55,7 @@ export class StudentVotesComponent implements OnInit {
                 this.userVote = null;
                 this.localStorage.clear(`q${this.questionId}u${this.user.id}`);
             } else {
-                this.votes++;
+                this.votes += 2;
                 this.userVote.isPositive = true;
                 this.localStorage.store(`q${this.questionId}u${this.user.id}`, this.userVote);
             }
@@ -76,7 +76,7 @@ export class StudentVotesComponent implements OnInit {
     toggleDownVote(): void {
         if (this.userVote) {
             if (this.userVote.isPositive) {
-                this.votes--;
+                this.votes -= 2;
                 this.userVote.isPositive = false;
                 this.localStorage.store(`q${this.questionId}u${this.user.id}`, this.userVote);
             } else {
