@@ -76,6 +76,11 @@ export interface ITeamService {
      */
     importTeamsFromSourceExercise(exercise: Exercise, sourceExercise: Exercise, importStrategyType: TeamImportStrategyType): Observable<HttpResponse<Team[]>>;
 
+    /**
+     * Finds a course with all its team exercises and participations in which the given team exists
+     * @param {Course} course - Course which to find
+     * @param {Team} team - Team for which to find exercises and participations (by team short name)
+     */
     findCourseWithExercisesAndParticipationsForTeam(course: Course, team: Team): Observable<HttpResponse<Course>>;
 }
 
@@ -180,6 +185,11 @@ export class TeamService implements ITeamService {
         );
     }
 
+    /**
+     * Finds a course with all its team exercises and participations in which the given team exists
+     * @param {Course} course - Course which to find
+     * @param {Team} team - Team for which to find exercises and participations (by team short name)
+     */
     findCourseWithExercisesAndParticipationsForTeam(course: Course, team: Team): Observable<HttpResponse<Course>> {
         return this.http.get<Course>(`${SERVER_API_URL}api/courses/${course.id}/teams/${team.shortName}/with-exercises-and-participations`, { observe: 'response' });
     }

@@ -64,11 +64,13 @@ public class TeamResource {
 
     private final ParticipationService participationService;
 
+    private final SubmissionService submissionService;
+
     private final AuditEventRepository auditEventRepository;
 
     public TeamResource(TeamRepository teamRepository, TeamService teamService, TeamWebsocketService teamWebsocketService, CourseService courseService,
             ExerciseService exerciseService, UserService userService, AuthorizationCheckService authCheckService, ParticipationService participationService,
-            AuditEventRepository auditEventRepository) {
+            SubmissionService submissionService, AuditEventRepository auditEventRepository) {
         this.teamRepository = teamRepository;
         this.teamService = teamService;
         this.teamWebsocketService = teamWebsocketService;
@@ -77,6 +79,7 @@ public class TeamResource {
         this.userService = userService;
         this.authCheckService = authCheckService;
         this.participationService = participationService;
+        this.submissionService = submissionService;
         this.auditEventRepository = auditEventRepository;
     }
 
@@ -357,11 +360,11 @@ public class TeamResource {
 
     /**
      * GET /courses/:courseId/teams/:teamShortName/with-exercises-and-participations : get course "id" with all released exercises in which the team "teamShortName" exists
-     * together with its participations for those exercises
+     * together with its participations for those exercises (and the latest submission for those if the user is an instructor or the team tutor)
      *
      * @param courseId id of the course
      * @param teamShortName short name of the team (all teams with the short name in the course are seen as the same team)
-     * @return Course with exercises and participations for the team
+     * @return Course with exercises and participations (and latest submissions) for the team
      */
     @GetMapping(value = "/courses/{courseId}/teams/{teamShortName}/with-exercises-and-participations")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
@@ -384,14 +387,24 @@ public class TeamResource {
         // Set teams on exercises
         exercises.forEach(exercise -> exercise.setTeams(Set.of(exerciseTeamMap.get(exercise.getId()))));
 
-        // Fetch participations for team and set the submission count for each participation
-        List<StudentParticipation> participations = participationService.findAllByCourseIdAndTeamShortName(courseId, teamShortName);
+        // Fetch participations for team (including latest submissions if instructor or team tutor)
+        List<StudentParticipation> participations;
+        if (authCheckService.isAtLeastInstructorInCourse(course, user) || teams.stream().map(Team::getOwner).anyMatch(user::equals)) {
+            participations = participationService.findAllByCourseIdAndTeamShortNameWithEagerSubmissionsResult(course.getId(), teamShortName);
+            submissionService.reduceParticipationSubmissionsToLatest(participations, true);
+        }
+        else {
+            participations = participationService.findAllByCourseIdAndTeamShortName(course.getId(), teamShortName);
+        }
+
+        // Set the submission count for all participations
         Map<Long, Integer> submissionCountMap = participationService.countSubmissionsPerParticipationByCourseIdAndTeamShortName(courseId, teamShortName);
         participations.forEach(participation -> participation.setSubmissionCount(submissionCountMap.get(participation.getId())));
 
         // Set studentParticipations on all exercises
+        List<StudentParticipation> finalParticipations = participations;
         exercises.forEach(exercise -> {
-            Optional<StudentParticipation> studentParticipation = participations.stream().filter(participation -> participation.getExercise().equals(exercise)).findAny();
+            Optional<StudentParticipation> studentParticipation = finalParticipations.stream().filter(participation -> participation.getExercise().equals(exercise)).findAny();
             studentParticipation.ifPresent(participation -> {
                 participation.setResults(null);
                 exercise.setStudentParticipations(Set.of(participation));

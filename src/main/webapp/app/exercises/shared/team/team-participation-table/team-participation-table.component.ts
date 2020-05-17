@@ -7,12 +7,15 @@ import { AlertService } from 'app/core/alert/alert.service';
 import { TeamService } from 'app/exercises/shared/team/team.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { get } from 'lodash';
+import { HttpErrorResponse } from '@angular/common/http';
+import { Submission } from 'app/entities/submission.model';
 
 const currentExerciseRowClass = 'datatable-row-current-exercise';
 
-class ExerciseWithTeamAndOptionalParticipation extends Exercise {
+class ExerciseForTeam extends Exercise {
     team: Team;
     participation?: StudentParticipation;
+    submission?: Submission;
 }
 
 @Component({
@@ -32,30 +35,38 @@ export class TeamParticipationTableComponent implements OnInit {
     @Input() isAdmin = false;
     @Input() isTeamOwner = false;
 
-    exercises: ExerciseWithTeamAndOptionalParticipation[];
+    exercises: ExerciseForTeam[];
     isLoading: boolean;
 
     constructor(private teamService: TeamService, private jhiAlertService: AlertService) {}
 
+    /**
+     * Fetches the course with all the team exercises (and participations) in which this team is present
+     * For the team owner tutor or instructors, the participations also contains the latest submission (for assessment)
+     */
     ngOnInit(): void {
         this.isLoading = true;
-        this.teamService.findCourseWithExercisesAndParticipationsForTeam(this.course, this.team).subscribe(
-            (courseResponse) => {
-                this.exercises = this.transformExercisesFromServer(courseResponse.body!.exercises || []);
-                this.isLoading = false;
-            },
-            (error) => {
-                console.error(error);
-                this.jhiAlertService.error(error.message);
-                this.isLoading = false;
-            },
-        );
+        this.teamService.findCourseWithExercisesAndParticipationsForTeam(this.course, this.team).subscribe((courseResponse) => {
+            this.exercises = this.transformExercisesFromServer(courseResponse.body!.exercises || []);
+            this.isLoading = false;
+        }, this.onError);
     }
 
-    transformExercisesFromServer(exercises: Exercise[]): ExerciseWithTeamAndOptionalParticipation[] {
-        return exercises.map((exercise: ExerciseWithTeamAndOptionalParticipation) => {
+    private onError(error: HttpErrorResponse) {
+        console.error(error);
+        this.jhiAlertService.error(error.message);
+        this.isLoading = false;
+    }
+
+    /**
+     * Assigns this team, the participation and latest submission directly onto the exercise for easier access
+     * @param exercises Exercises from the server which to transform
+     */
+    transformExercisesFromServer(exercises: Exercise[]): ExerciseForTeam[] {
+        return exercises.map((exercise: ExerciseForTeam) => {
             exercise.team = exercise.teams[0];
             exercise.participation = get(exercise, 'studentParticipations[0]', null);
+            exercise.submission = get(exercise, 'participation.submissions[0]', null); // only exists for instructor and team tutor
             return exercise;
         });
     }
