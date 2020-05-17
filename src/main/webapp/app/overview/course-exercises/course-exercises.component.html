@@ -23,7 +23,7 @@
                         'artemisApp.courseOverview.exerciseList.currentExerciseGroupHeader'
                             | translate
                                 : {
-                                      date: nextRelevantExercise.dueDate | date: 'dd.MM.yy HH:mm'
+                                      date: nextRelevantExercise.dueDate | artemisDate
                                   }
                     }}
                 </h3>
@@ -83,17 +83,17 @@
             </div>
             <div class="row mb-1" *ngIf="course?.startDate">
                 <div class="col-8">{{ 'artemisApp.courseOverview.exerciseList.details.startDate' | translate }}</div>
-                <div class="col-4">{{ course?.startDate | date: 'dd.MM.yy' }}</div>
+                <div class="col-4">{{ course?.startDate | artemisDate }}</div>
             </div>
             <div class="row" *ngIf="course?.endDate">
                 <div class="col-8">{{ 'artemisApp.courseOverview.exerciseList.details.endDate' | translate }}</div>
-                <div class="col-4">{{ course?.endDate | date: 'dd.MM.yy' }}</div>
+                <div class="col-4">{{ course?.endDate | artemisDate }}</div>
             </div>
         </jhi-side-panel>
         <div class="guided-tour exercise-panel mt-3">
             <jhi-side-panel [panelHeader]="'artemisApp.courseOverview.exerciseList.details.upcomingDeadlines' | translate">
                 <div class="row mb-1 has-exercises align-items-center" *ngFor="let exercise of upcomingExercises" [routerLink]="[exercise.id]">
-                    <div class="col-5">{{ exercise.dueDate | date: 'dd.MM.yy HH:mm' }}</div>
+                    <div class="col-5">{{ exercise.dueDate | artemisDate }}</div>
                     <div class="col-5">{{ exercise.title }}</div>
                     <div class="col-2 icon">
                         <fa-icon [icon]="'play-circle'"></fa-icon>
