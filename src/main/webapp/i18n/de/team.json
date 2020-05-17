@@ -24,7 +24,7 @@
                 "participationsTable": {
                     "title": "Teilnahmen in \"{{ courseTitle }}\" für",
                     "columns": {
-                        "assess": "Bewerten"
+                        "assessment": "Bewertung"
                     }
                 }
             },

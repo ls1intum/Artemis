@@ -39,7 +39,7 @@ export class TeamComponent implements OnInit {
         this.accountService.identity().then((user: User) => {
             this.currentUser = user;
             this.isAdmin = this.accountService.isAdmin();
-            this.isTeamOwner = user.id === this.team.owner?.id;
+            this.setTeamOwnerFlag();
         });
     }
 
@@ -55,10 +55,17 @@ export class TeamComponent implements OnInit {
                 this.exercise.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.exercise.course!);
                 this.teamService.find(this.exercise, params['teamId']).subscribe((teamResponse) => {
                     this.team = teamResponse.body!;
+                    this.setTeamOwnerFlag();
                     this.setLoadingState(false);
                 }, this.onLoadError);
             }, this.onLoadError);
         }, this.onLoadError);
+    }
+
+    private setTeamOwnerFlag() {
+        if (this.currentUser && this.team) {
+            this.isTeamOwner = this.currentUser.id === this.team.owner?.id;
+        }
     }
 
     private setLoadingState(loading: boolean) {

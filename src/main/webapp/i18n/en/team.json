@@ -24,7 +24,7 @@
                 "participationsTable": {
                     "title": "Participations in \"{{ courseTitle }}\" for",
                     "columns": {
-                        "assess": "Assess"
+                        "assessment": "Assessment"
                     }
                 }
             },

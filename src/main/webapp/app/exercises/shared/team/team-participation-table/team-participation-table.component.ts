@@ -1,4 +1,5 @@
 import { Component, Input, OnInit, ViewEncapsulation } from '@angular/core';
+import { Router } from '@angular/router';
 import { Team } from 'app/entities/team.model';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import * as moment from 'moment';
@@ -38,24 +39,25 @@ export class TeamParticipationTableComponent implements OnInit {
     exercises: ExerciseForTeam[];
     isLoading: boolean;
 
-    constructor(private teamService: TeamService, private jhiAlertService: AlertService) {}
+    constructor(private teamService: TeamService, private jhiAlertService: AlertService, private router: Router) {}
+
+    /**
+     * Loads all needed data from the server for this component
+     */
+    ngOnInit(): void {
+        this.loadAll();
+    }
 
     /**
      * Fetches the course with all the team exercises (and participations) in which this team is present
      * For the team owner tutor or instructors, the participations also contains the latest submission (for assessment)
      */
-    ngOnInit(): void {
+    loadAll() {
         this.isLoading = true;
         this.teamService.findCourseWithExercisesAndParticipationsForTeam(this.course, this.team).subscribe((courseResponse) => {
             this.exercises = this.transformExercisesFromServer(courseResponse.body!.exercises || []);
             this.isLoading = false;
         }, this.onError);
-    }
-
-    private onError(error: HttpErrorResponse) {
-        console.error(error);
-        this.jhiAlertService.error(error.message);
-        this.isLoading = false;
     }
 
     /**
@@ -79,4 +81,32 @@ export class TeamParticipationTableComponent implements OnInit {
     rowClass = (exercise: Exercise) => (row: Exercise): string => {
         return exercise.id === row.id ? currentExerciseRowClass : '';
     };
+
+    /**
+     * Uses the router to navigate to the assessment editor for a given/new submission
+     * @param exercise Exercise to which the submission belongs
+     * @param submission Either submission or 'new'
+     */
+    async openAssessmentEditor(exercise: Exercise, submission: Submission | 'new'): Promise<void> {
+        const submissionUrlParameter: number | 'new' = submission === 'new' ? 'new' : submission.id;
+        const route = `/course-management/${this.course.id}/${exercise.type}-exercises/${exercise.id}/submissions/${submissionUrlParameter}/assessment`;
+        await this.router.navigate([route]);
+    }
+
+    /**
+     * Calculates the status of a submission by inspecting the result
+     * @param submission Submission which to check
+     */
+    calculateStatus(submission: Submission) {
+        if (submission.result && submission.result.completionDate) {
+            return 'DONE';
+        }
+        return 'DRAFT';
+    }
+
+    private onError(error: HttpErrorResponse) {
+        console.error(error);
+        this.jhiAlertService.error(error.message);
+        this.isLoading = false;
+    }
 }
