@@ -109,14 +109,6 @@
                     ></jhi-markdown-editor>
                 </div>
                 <div class="form-group" name="gradingInstructions" id="field_gradingInstructions">
-                    <label jhiTranslate="artemisApp.exercise.gradingInstructions"> Grading Instructions</label>
-                    <jhi-markdown-editor
-                        class="markdown-editor background-editor-color"
-                        [domainCommands]="domainCommandsGradingInstructions"
-                        [(markdown)]="fileUploadExercise.gradingInstructions"
-                        [editorMode]="EditorMode.LATEX"
-                    ></jhi-markdown-editor>
-                    <br />
                     <label jhiTranslate="artemisApp.exercise.structuredGradingInstructions"> Structured Grading Instructions</label>
                     <jhi-grading-instructions-details [exercise]="fileUploadExercise"></jhi-grading-instructions-details>
                 </div>

@@ -47,7 +47,11 @@ export class GradingInstructionsDetailsComponent implements OnInit {
 
     ngOnInit() {
         this.criteria = this.exercise.gradingCriteria;
-        this.questionEditorText = this.generateMarkdown();
+        if (this.exercise.gradingInstructions === null || this.exercise.gradingInstructions === undefined) {
+            this.questionEditorText = 'Insert free text grading instructions (not draggable) here above the structured grading criteria...\n' + this.generateMarkdown();
+        } else {
+            this.questionEditorText = this.exercise.gradingInstructions + '\n' + this.generateMarkdown();
+        }
     }
 
     generateMarkdown(): string {
@@ -280,6 +284,12 @@ export class GradingInstructionsDetailsComponent implements OnInit {
      * @param domainCommands containing tuples of [text, domainCommandIdentifiers]
      */
     domainCommandsFound(domainCommands: [string, DomainCommand][]): void {
+        for (const [text, command] of domainCommands) {
+            if (command === null) {
+                this.exercise.gradingInstructions = text;
+                break;
+            }
+        }
         this.instructions = [];
         this.criteria = [];
         this.exercise.gradingCriteria = [];
