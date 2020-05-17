@@ -55,7 +55,7 @@ describe('StudentVotesComponent', () => {
         componentFixture.detectChanges();
         component.toggleUpVote();
         componentFixture.detectChanges();
-        expect(component.votes).to.deep.equal(43);
+        expect(component.votes).to.deep.equal(44);
         expect(component.userVote!.isPositive).to.be.true;
     });
 
@@ -81,7 +81,7 @@ describe('StudentVotesComponent', () => {
         componentFixture.detectChanges();
         component.toggleDownVote();
         componentFixture.detectChanges();
-        expect(component.votes).to.deep.equal(41);
+        expect(component.votes).to.deep.equal(40);
         expect(component.userVote!.isPositive).to.be.false;
     });
 });
