@@ -211,18 +211,19 @@ public class TeamResource {
      * GET /exercises/:exerciseId/teams : get all the teams of an exercise for the exercise administration page
      *
      * @param exerciseId the exerciseId of the exercise for which all teams should be returned
+     * @param teamOwnerId the user id of the team owner for which to filter the teams by (optional)
      * @return the ResponseEntity with status 200 (OK) and the list of teams in body
      */
     @GetMapping("/exercises/{exerciseId}/teams")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<List<Team>> getTeamsForExercise(@PathVariable long exerciseId) {
+    public ResponseEntity<List<Team>> getTeamsForExercise(@PathVariable long exerciseId, @RequestParam(value = "teamOwnerId", required = false) Long teamOwnerId) {
         log.debug("REST request to get all Teams for the exercise with id : {}", exerciseId);
         User user = userService.getUserWithGroupsAndAuthorities();
         Exercise exercise = exerciseService.findOne(exerciseId);
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user)) {
             return forbidden();
         }
-        List<Team> teams = teamRepository.findAllByExerciseIdWithEagerStudents(exerciseId);
+        List<Team> teams = teamService.findAllByExerciseIdWithEagerStudents(exercise, teamOwnerId);
         teams.forEach(Team::filterSensitiveInformation);
         return ResponseEntity.ok().body(teams);
     }

@@ -68,12 +68,17 @@ export class TeamsComponent implements OnInit, OnDestroy {
             this.isLoading = true;
             this.exerciseService.find(params['exerciseId']).subscribe((exerciseResponse) => {
                 this.exercise = exerciseResponse.body!;
-                this.teamService.findAllByExerciseId(params['exerciseId']).subscribe((teamsResponse) => {
+                this.teamService.findAllByExerciseId(params['exerciseId'], this.teamOwnerId).subscribe((teamsResponse) => {
                     this.teams = teamsResponse.body!;
                     this.isLoading = false;
                 });
             });
         });
+    }
+
+    private get teamOwnerId() {
+        const queryParam = this.route.snapshot.queryParamMap.get('teamOwnerId');
+        return queryParam ? Number(queryParam) : undefined;
     }
 
     /**
