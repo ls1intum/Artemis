@@ -65,11 +65,11 @@
             </div>
             <div class="row mb-1" *ngIf="course?.startDate">
                 <div class="col-8">{{ 'artemisApp.courseOverview.exerciseList.details.startDate' | translate }}</div>
-                <div class="col-4">{{ course?.startDate | date: 'dd/MM/yy' }}</div>
+                <div class="col-4">{{ course?.startDate | artemisDate }}</div>
             </div>
             <div class="row" *ngIf="course?.endDate">
                 <div class="col-8">{{ 'artemisApp.courseOverview.exerciseList.details.endDate' | translate }}</div>
-                <div class="col-4">{{ course?.endDate | date: 'dd/MM/yy' }}</div>
+                <div class="col-4">{{ course?.endDate | artemisDate }}</div>
             </div>
         </jhi-side-panel>
     </div>
