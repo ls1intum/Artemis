@@ -10,6 +10,7 @@ import { StudentParticipation } from 'app/entities/participation/student-partici
 import { get } from 'lodash';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Submission } from 'app/entities/submission.model';
+import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 
 const currentExerciseRowClass = 'datatable-row-current-exercise';
 
@@ -39,7 +40,7 @@ export class TeamParticipationTableComponent implements OnInit {
     exercises: ExerciseForTeam[];
     isLoading: boolean;
 
-    constructor(private teamService: TeamService, private jhiAlertService: AlertService, private router: Router) {}
+    constructor(private teamService: TeamService, private exerciseService: ExerciseService, private jhiAlertService: AlertService, private router: Router) {}
 
     /**
      * Loads all needed data from the server for this component
@@ -65,10 +66,13 @@ export class TeamParticipationTableComponent implements OnInit {
      * @param exercises Exercises from the server which to transform
      */
     transformExercisesFromServer(exercises: Exercise[]): ExerciseForTeam[] {
-        return exercises.map((exercise: ExerciseForTeam) => {
+        return this.exerciseService.convertExercisesDateFromServer(exercises).map((exercise: ExerciseForTeam) => {
             exercise.team = exercise.teams[0];
             exercise.participation = get(exercise, 'studentParticipations[0]', null);
             exercise.submission = get(exercise, 'participation.submissions[0]', null); // only exists for instructor and team tutor
+            if (exercise.submission) {
+                exercise.submission.result = get(exercise, 'participation.results[0]', null);
+            }
             return exercise;
         });
     }
@@ -94,14 +98,32 @@ export class TeamParticipationTableComponent implements OnInit {
     }
 
     /**
-     * Calculates the status of a submission by inspecting the result
+     * Returns the assessment action depending on the state of the result on the submission
      * @param submission Submission which to check
      */
-    calculateStatus(submission: Submission) {
-        if (submission.result && submission.result.completionDate) {
-            return 'DONE';
+    assessmentAction(submission: Submission | null) {
+        if (!submission || !submission.result) {
+            return 'start';
+        } else if (!submission.result.completionDate) {
+            return 'continue';
         }
-        return 'DRAFT';
+        return 'open';
+    }
+
+    /**
+     * Returns whether the assessment button should be disabled
+     * @param exercise Exercise to which the submission belongs
+     * @param submission Submission for which to check
+     */
+    assessmentButtonDisabled(exercise: Exercise, submission: Submission | null) {
+        if (exercise.dueDate && exercise.dueDate.isSameOrAfter()) {
+            return true;
+        } else if (exercise.assessmentDueDate && exercise.assessmentDueDate.isBefore()) {
+            return true;
+        } else if (!submission) {
+            return true;
+        }
+        return false;
     }
 
     private onError(error: HttpErrorResponse) {

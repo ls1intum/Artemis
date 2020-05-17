@@ -161,10 +161,12 @@ public class SubmissionService {
      * @param submittedOnly Flag whether to only consider submitted submissions when finding the latest one
      */
     public void reduceParticipationSubmissionsToLatest(List<StudentParticipation> participations, boolean submittedOnly) {
-        participations.stream().peek(participation -> participation.getExercise().setStudentParticipations(null)).peek(participation -> {
+        participations.forEach(participation -> {
+            participation.getExercise().setStudentParticipations(null);
             Optional<Submission> optionalSubmission = participation.findLatestSubmission();
             if (optionalSubmission.isPresent() && (!submittedOnly || optionalSubmission.get().isSubmitted())) {
                 participation.setSubmissions(Set.of(optionalSubmission.get()));
+                Optional.ofNullable(optionalSubmission.get().getResult()).ifPresent(result -> participation.setResults(Set.of(result)));
             }
             else {
                 participation.setSubmissions(Set.of());

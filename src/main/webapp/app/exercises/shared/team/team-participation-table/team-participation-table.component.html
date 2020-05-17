@@ -184,30 +184,24 @@
                     </span>
                 </ng-template>
                 <ng-template ngx-datatable-cell-template let-value="row">
-                    <ng-container *ngIf="value.submission">
-                        <ng-container *ngIf="value.type !== ExerciseType.PROGRAMMING; else programmingAssessment">
-                            <button
-                                *ngIf="calculateStatus(value.submission) === 'DRAFT'; else continueButton"
-                                (click)="openAssessmentEditor(value, value.submission)"
-                                class="btn btn-warning btn-sm"
-                            >
-                                <fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>&nbsp;{{ 'artemisApp.tutorExerciseDashboard.continueAssessment' | translate }}
-                            </button>
-                            <ng-template #continueButton>
-                                <button *ngIf="value.submission.result !== null" (click)="openAssessmentEditor(value, value.submission)" class="btn btn-primary btn-sm">
-                                    <fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>&nbsp;{{ 'artemisApp.tutorExerciseDashboard.openAssessment' | translate }}
-                                </button>
-                            </ng-template>
-                        </ng-container>
-                        <ng-template #programmingAssessment>
-                            <jhi-programming-assessment-manual-result
-                                [participationId]="value.participation.id"
-                                [latestResult]="value.submission.result"
-                                [exercise]="value"
-                                (onResultModified)="loadAll()"
-                            ></jhi-programming-assessment-manual-result>
-                        </ng-template>
+                    <ng-container *ngIf="value.type !== ExerciseType.PROGRAMMING; else programmingAssessment">
+                        <button
+                            [disabled]="assessmentButtonDisabled(value, value.submission)"
+                            (click)="openAssessmentEditor(value, value.submission)"
+                            class="btn btn-warning btn-sm"
+                        >
+                            <fa-icon [icon]="'folder-open'" [fixedWidth]="true"></fa-icon>
+                            <span [jhiTranslate]="'artemisApp.tutorExerciseDashboard.' + assessmentAction(value.submission) + 'Assessment'"></span>
+                        </button>
                     </ng-container>
+                    <ng-template #programmingAssessment>
+                        <jhi-programming-assessment-manual-result
+                            [participationId]="value.participation.id"
+                            [latestResult]="value.submission?.result"
+                            [exercise]="value"
+                            (onResultModified)="loadAll()"
+                        ></jhi-programming-assessment-manual-result>
+                    </ng-template>
                 </ng-template>
             </ngx-datatable-column>
         </ngx-datatable>

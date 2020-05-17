@@ -396,6 +396,7 @@ public class TeamResource {
         }
         else {
             participations = participationService.findAllByCourseIdAndTeamShortName(course.getId(), teamShortName);
+            participations.forEach(participation -> participation.setResults(null));
         }
 
         // Set the submission count for all participations
@@ -406,10 +407,7 @@ public class TeamResource {
         List<StudentParticipation> finalParticipations = participations;
         exercises.forEach(exercise -> {
             Optional<StudentParticipation> studentParticipation = finalParticipations.stream().filter(participation -> participation.getExercise().equals(exercise)).findAny();
-            studentParticipation.ifPresent(participation -> {
-                participation.setResults(null);
-                exercise.setStudentParticipations(Set.of(participation));
-            });
+            studentParticipation.ifPresent(participation -> exercise.setStudentParticipations(Set.of(participation)));
         });
 
         // Filter sensitive information
