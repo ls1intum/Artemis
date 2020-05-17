@@ -36,6 +36,10 @@ export class ProgrammingAssessmentRepoExportDialogComponent implements OnInit {
         private jhiAlertService: AlertService,
     ) {}
 
+    /**
+     * On component initialization, sets the repository export options. Find this exercise in the exercise service
+     * and starts the subscription on it.
+     */
     ngOnInit() {
         this.isLoading = true;
         this.exportInProgress = false;
@@ -64,10 +68,18 @@ export class ProgrammingAssessmentRepoExportDialogComponent implements OnInit {
             });
     }
 
+    /**
+     * Dismisses the active modal.
+     */
     clear() {
         this.activeModal.dismiss('cancel');
     }
 
+    /**
+     * Exports repositories for this exercise. First checks if the participationIdList was instantiated and uses it if
+     * given, otherwise uses the participantIdentifierList. Performs preprocessing on it to convert it to a usable form.
+     * @param {number} exerciseId - Id of the exercise
+     */
     exportRepos(exerciseId: number) {
         this.exportInProgress = true;
         // The inputted participation ids take priority over the participant identifiers (student login or team names).

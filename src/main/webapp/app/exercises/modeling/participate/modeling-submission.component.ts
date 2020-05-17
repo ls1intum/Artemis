@@ -98,6 +98,10 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         this.isLoading = true;
     }
 
+    /**
+     * On component initialization, starts the subscription of this instance by getting the latest submission
+     * from the submission service and updating the submission of this instance.
+     */
     ngOnInit(): void {
         this.subscription = this.route.params.subscribe((params) => {
             if (params['participationId']) {
@@ -253,6 +257,10 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         }, 1000);
     }
 
+    /**
+     * Saves the model in the modeling submission service. If one already exists it will
+     * be updated, otherwise a new one will be created.
+     */
     saveDiagram(): void {
         if (this.isSaving) {
             // don't execute the function if it is already currently executing
@@ -289,6 +297,10 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         }
     }
 
+    /**
+     * Submits the model to the modeling submission service. If one already exists it will
+     * be updated, otherwise a new one will be created.
+     */
     submit(): void {
         if (this.isSaving) {
             // don't execute the function if it is already currently executing
@@ -369,6 +381,11 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         this.isSaving = false;
     }
 
+    /**
+     * On receiving a modeling submission from your team, update the submission of this
+     * instance with it.
+     * @param {ModelingSubmission} submission - The submission received
+     */
     onReceiveSubmissionFromTeam(submission: ModelingSubmission) {
         submission.participation.exercise = this.modelingExercise;
         submission.participation.submissions = [submission];
@@ -380,6 +397,10 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         return !umlModel || !umlModel.elements || umlModel.elements.length === 0;
     }
 
+    /**
+     * On component destruction, ends the subscription of this instance. Clears the autosave and team sync intervals.
+     * Also ends the subscriptions on the websocket channel and result update listener.
+     */
     ngOnDestroy(): void {
         this.subscription.unsubscribe();
         clearInterval(this.autoSaveInterval);
@@ -485,6 +506,12 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         }
     }
 
+    /**
+     * Returns true in any of the following cases:
+     * - Modeling editor of this instance is NOT instantiated
+     * - Apollon editor of the modeling editor is NOT mounted
+     * - Model of this instance does NOT have unsaved changes
+     */
     canDeactivate(): Observable<boolean> | boolean {
         if (!this.modelingEditor || !this.modelingEditor.isApollonEditorMounted) {
             return true;
@@ -508,7 +535,10 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         return false;
     }
 
-    // displays the alert for confirming leaving the page if there are unsaved changes
+    /**
+     * displays the alert for confirming leaving the page if there are unsaved changes
+     * @param {any} $event
+     */
     @HostListener('window:beforeunload', ['$event'])
     unloadNotification($event: any): void {
         if (!this.canDeactivate()) {
