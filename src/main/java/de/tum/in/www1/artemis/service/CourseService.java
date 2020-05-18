@@ -117,7 +117,13 @@ public class CourseService {
                 }).collect(Collectors.toList());
     }
 
-    public void fetchExercisesAndLecturesForCourse(User user, Course course) {
+    /**
+     * fetch exercises and lectures for one course
+     *
+     * @param user to determine which exercises and lectures the user can see
+     * @param course the course for which exercises and lectures should be fetched
+     */
+    private void fetchExercisesAndLecturesForCourse(User user, Course course) {
         // fetch visible lectures exercises for each course after filtering
         Set<Lecture> lectures = lectureService.findAllForCourse(course, user);
         List<Exercise> exercises = exerciseService.findAllForCourse(course, user);

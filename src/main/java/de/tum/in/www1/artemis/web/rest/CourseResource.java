@@ -398,7 +398,7 @@ public class CourseResource {
     }
 
     /**
-     * GET /courses : get all courses that the current user can register to. Decided by the start and end date and if the registrationEnabled flag is set correctly
+     * GET /courses/to-register : get all courses that the current user can register to. Decided by the start and end date and if the registrationEnabled flag is set correctly
      *
      * @return the list of courses which are active)
      */
@@ -409,6 +409,11 @@ public class CourseResource {
         return courseService.findAllCurrentlyActiveAndNotOnlineAndEnabled();
     }
 
+    /**
+     * GET /courses/{courseId}/for-dashboard
+     * @param courseId the courseId for which exercises and lectures should be fetched
+     * @return a course wich all exercises and lectures visible to the student
+     */
     @GetMapping("/courses/{courseId}/for-dashboard")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public Course getCourseForDashboard(@PathVariable long courseId) {
@@ -422,7 +427,8 @@ public class CourseResource {
 
     /**
      * Note: The number of courses should not change
-     * @param courses the courses for wich the participations should be fetched
+     * @param courses the courses for which the participations should be fetched
+     * @param user  the user for which the participations should be fetched
      * @param startTimeInMillis start time for logging purposes
      */
     public void fetchParticipationsWithSubmissionsAndResultsForCourses(List<Course> courses, User user, long startTimeInMillis) {
