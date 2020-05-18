@@ -4,20 +4,28 @@ from datetime import timedelta
 from xml.etree import ElementTree as Et
 
 class TestSuite:
-    __cases: Dict[str, TestCase] = dict()
+    __cases: Dict[str, TestCase]
 
-    name: str = ""
-    tests: int = 0
-    failures: int = 0
-    errors: int = 0
-    skipped: int = 0
-    successful: int = 0
-    time: timedelta = timedelta()
+    name: str
+    tests: int
+    failures: int
+    errors: int
+    skipped: int
+    successful: int
+    time: timedelta
 
 
     def __init__(self, name: str):
         self.name = name
 
+        self.__cases: Dict[str, TestCase] = dict()
+        self.tests: int = 0
+        self.failures: int = 0
+        self.errors: int = 0
+        self.skipped: int = 0
+        self.successful: int = 0
+        self.time: timedelta = timedelta()
+    
     def addCase(self, case: TestCase):
         self.__cases[case.name] = case
         self.tests += 1
@@ -31,7 +39,7 @@ class TestSuite:
             self.skipped += 1
         else:
             self.successful += 1
-
+    
     def toXml(self):
         suite: Et.Element = Et.Element("testsuite")
         suite.set("name", self.name)

@@ -2,6 +2,7 @@ import { addTextAtCursor } from 'app/shared/util/markdown-util';
 import { DomainTagCommand } from 'app/shared/markdown-editor/domainCommands/domainTag.command';
 
 export class CorrectOptionCommand extends DomainTagCommand {
+    public static readonly identifier = '[correct]';
     buttonTranslationString = 'artemisApp.multipleChoiceQuestion.editor.addCorrectAnswerOption';
 
     /**
@@ -18,7 +19,7 @@ export class CorrectOptionCommand extends DomainTagCommand {
      * @desc identify the start of the correct option
      */
     getOpeningIdentifier(): string {
-        return '[correct]';
+        return CorrectOptionCommand.identifier;
     }
 
     /**

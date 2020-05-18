@@ -24,7 +24,7 @@ import { AlertService } from 'app/core/alert/alert.service';
 import { MockComponent } from 'ng-mocks';
 import { ProgrammingAssessmentManualResultDialogComponent } from 'app/exercises/programming/assess/manual-result/programming-assessment-manual-result-dialog.component';
 import { ResultService } from 'app/exercises/shared/result/result.service';
-import { RepositoryFileService } from 'app/shared/result/repository.service';
+import { RepositoryFileService } from 'app/exercises/shared/result/repository.service';
 import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ProgrammingAssessmentRepoExportButtonComponent } from 'app/exercises/programming/assess/repo-export/programming-assessment-repo-export-button.component';

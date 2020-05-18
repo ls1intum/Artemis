@@ -15,7 +15,7 @@ import { Submission, SubmissionExerciseType } from 'app/entities/submission.mode
 import { isModelingOrTextOrFileUpload, isParticipationInDueTime, isProgrammingOrQuiz } from 'app/overview/participation-utils';
 import { ResultService } from 'app/exercises/shared/result/result.service';
 import { ExerciseType } from 'app/entities/exercise.model';
-import { ResultDetailComponent } from 'app/shared/result/result-detail.component';
+import { ResultDetailComponent } from 'app/exercises/shared/result/result-detail.component';
 import { Result } from 'app/entities/result.model';
 
 /**

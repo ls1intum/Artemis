@@ -19,7 +19,7 @@ import locale from '@angular/common/locales/en';
 import { fontAwesomeIcons } from 'app/core/icons/font-awesome-icons';
 import { MissingTranslationHandler, TranslateLoader, TranslateModule } from '@ngx-translate/core';
 import { SentryErrorHandler } from 'app/core/sentry/sentry.error-handler';
-import { RepositoryInterceptor } from 'app/shared/result/repository.service';
+import { RepositoryInterceptor } from 'app/exercises/shared/result/repository.service';
 import { CookieService } from 'ngx-cookie-service';
 
 @NgModule({
