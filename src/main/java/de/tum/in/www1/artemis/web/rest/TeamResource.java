@@ -398,7 +398,7 @@ public class TeamResource {
 
         // Fetch participations for team
         List<StudentParticipation> participations;
-        if (authCheckService.isAtLeastInstructorInCourse(course, user) || teams.stream().map(Team::getOwner).anyMatch(user::equals)) {
+        if (authCheckService.isAtLeastInstructorInCourse(course, user) || teams.stream().map(Team::getOwner).allMatch(user::equals)) {
             // fetch including submissions and results for team tutor and instructors
             participations = participationService.findAllByCourseIdAndTeamShortNameWithEagerSubmissionsResult(course.getId(), teamShortName);
             submissionService.reduceParticipationSubmissionsToLatest(participations, true);
