@@ -64,7 +64,7 @@ export class TutorExerciseDashboardComponent implements OnInit, AfterViewInit {
     numberOfMoreFeedbackRequests = 0;
     numberOfOpenMoreFeedbackRequests = 0;
     numberOfTutorMoreFeedbackRequests = 0;
-    totalAssessmentPercentage = 0;
+    totalAssessmentPercentage = new DueDateStat();
     tutorAssessmentPercentage = 0;
     tutorParticipationStatus: TutorParticipationStatus;
     submissions: Submission[] = [];
@@ -231,7 +231,8 @@ export class TutorExerciseDashboardComponent implements OnInit, AfterViewInit {
                 }
 
                 if (this.numberOfSubmissions.total > 0) {
-                    this.totalAssessmentPercentage = Math.round((this.numberOfAssessments.total / this.numberOfSubmissions.total) * 100);
+                    this.totalAssessmentPercentage.inTime = Math.round((this.numberOfAssessments.inTime / this.numberOfSubmissions.inTime) * 100);
+                    this.totalAssessmentPercentage.late = Math.round((this.numberOfAssessments.late / this.numberOfSubmissions.late) * 100);
                     this.tutorAssessmentPercentage = Math.round((this.numberOfTutorAssessments / this.numberOfSubmissions.total) * 100);
                 }
             },

@@ -54,8 +54,11 @@
             "showMoreFeedbackRequests": "Show the request",
             "numberOfUnassessedSubmissions": "Unassessed submissions",
             "exerciseInformation": "Exercise information",
-            "numberOfInTimeSubmissions": "In-time submissions",
-            "numberOfLateSubmissions": "Late submissions",
+            "stats": {
+                "intime": "In time",
+                "late": "Late"
+            },
+            "numberOfSubmissions": "Total submissions",
             "numberOfAssessedSubmissions": "Assessed submissions",
             "numberOfSubmissionsAssessedByYou": "Submissions assessed by you",
             "numberOfAutomaticAssistedSubmissions": "Assessed Submissions with automatic assistance",

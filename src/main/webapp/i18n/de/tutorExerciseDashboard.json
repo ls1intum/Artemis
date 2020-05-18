@@ -54,8 +54,11 @@
             "showMoreFeedbackRequests": "Feedbackanfragen anzeigen",
             "numberOfUnassessedSubmissions": "Nicht bewertete Beiträge",
             "exerciseInformation": "Übungsinformationen",
-            "numberOfInTimeSubmissions": "Zeitgerechte Abgaben",
-            "numberOfLateSubmissions": "Verspätete Abgaben",
+            "stats": {
+                "intime": "Zeitgerecht",
+                "late": "Verspätet"
+            },
+            "numberOfSubmissions": "Gesamte Abgaben",
             "numberOfAssessedSubmissions": "Bewertete Abgaben",
             "numberOfSubmissionsAssessedByYou": "Von dir bewertete Abgaben",
             "numberOfAutomaticAssistedSubmissions": "Bewertete Abgaben mit automatischer Assistenz",
