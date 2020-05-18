@@ -44,8 +44,8 @@ public class WebsocketMessagingService {
         // TODO: Are there other cases that must be handled here?
         if (participation instanceof StudentParticipation) {
             StudentParticipation studentParticipation = (StudentParticipation) participation;
-            messagingTemplate.convertAndSend(
-                    "/topic/course/" + studentParticipation.getExercise().getCourse().getId() + "/user/" + studentParticipation.getParticipantIdentifier() + "/newResults", result);
+            String participantIdentifier = studentParticipation.getParticipantIdentifier();
+            messagingTemplate.convertAndSendToUser(participantIdentifier, "/topic/newResults", result);
         }
 
         // recover the participation because we might want to use it again after this method

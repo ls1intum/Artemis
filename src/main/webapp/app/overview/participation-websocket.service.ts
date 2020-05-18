@@ -24,9 +24,11 @@ export interface IParticipationWebsocketService {
 @Injectable({ providedIn: 'root' })
 export class ParticipationWebsocketService implements IParticipationWebsocketService {
     cachedParticipations: Map<number /* ID of participation */, StudentParticipation> = new Map<number, StudentParticipation>();
-    openWebsocketSubscriptions: Map<string /* results_{participationId} OR participation_{exerciseId} */, string /* url of websocket connection */> = new Map<string, string>();
+    openResultWebsocketSubscription: string | null; /* url of websocket connection */
+    openParticipationWebsocketSubscription: string | null; /* url of websocket connection */
     resultObservables: Map<number /* ID of participation */, BehaviorSubject<Result | null>> = new Map<number, BehaviorSubject<Result>>();
-    participationObservable: BehaviorSubject<Participation | null> | null;
+    participationObservables: Map<number /* ID of participation */, BehaviorSubject<Participation | null>> = new Map<number, BehaviorSubject<Participation>>();
+    participationObservableAll: BehaviorSubject<Participation | null> | null;
 
     constructor(private jhiWebsocketService: JhiWebsocketService, private participationService: ParticipationService) {}
 
@@ -40,7 +42,8 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
         });
         this.cachedParticipations = new Map<number, StudentParticipation>();
         this.resultObservables = new Map<number, BehaviorSubject<Result>>();
-        this.participationObservable = null;
+        this.participationObservables = new Map<number, BehaviorSubject<Participation>>();
+        this.participationObservableAll = null;
     }
 
     /**
@@ -48,10 +51,10 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
      * @param participation
      */
     private notifyParticipationSubscribers = (participation: Participation) => {
-        if (!this.participationObservable) {
-            this.participationObservable = new BehaviorSubject(participation);
+        if (!this.participationObservableAll) {
+            this.participationObservableAll = new BehaviorSubject(participation);
         } else {
-            this.participationObservable.next(participation);
+            this.participationObservableAll.next(participation);
         }
     };
 
@@ -138,7 +141,7 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
     private removeParticipation(participationId: number, exerciseId?: number) {
         this.cachedParticipations.delete(participationId);
         // removing results observable
-        const participationResultTopic = this.openWebsocketSubscriptions.get(`${RESULTS_WEBSOCKET}${participationId}`)!;
+        /*const participationResultTopic = this.openWebsocketSubscriptions.get(`${RESULTS_WEBSOCKET}${participationId}`)!;
         this.jhiWebsocketService.unsubscribe(participationResultTopic);
         this.openWebsocketSubscriptions.delete(`${RESULTS_WEBSOCKET}${participationId}`);
         // removing exercise observable
@@ -146,21 +149,20 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
             const participationTopic = this.openWebsocketSubscriptions.get(`${PARTICIPATION_WEBSOCKET}${exerciseId}`)!;
             this.jhiWebsocketService.unsubscribe(participationTopic);
             this.openWebsocketSubscriptions.delete(`${PARTICIPATION_WEBSOCKET}${exerciseId}`);
-        }
+        }*/
     }
 
     /**
-     * Checks for the given participation if a websocket connection for new results to the server already exists.
+     * Checks if a websocket connection for new results to the server already exists.
      * If not a new one will be opened.
      *
-     * @param participationId
      * @private
      */
-    private openResultWebsocketSubscriptionIfNotExisting(courseId: number, userId: string) {
-        if (!this.openWebsocketSubscriptions.get(`${RESULTS_WEBSOCKET}${courseId}`)) {
-            const participationResultTopic = `/topic/course/${courseId}/user/${userId}/newResults`;
+    private openResultWebsocketSubscriptionIfNotExisting() {
+        if (!this.openResultWebsocketSubscription) {
+            const participationResultTopic = `/topic/newResults`;
             this.jhiWebsocketService.subscribe(participationResultTopic);
-            this.openWebsocketSubscriptions.set(`${RESULTS_WEBSOCKET}${courseId}`, participationResultTopic);
+            this.openResultWebsocketSubscription = participationResultTopic;
             this.jhiWebsocketService
                 .receive(participationResultTopic)
                 .pipe(tap(this.notifyResultSubscribers), switchMap(this.addResultToParticipation), tap(this.notifyParticipationSubscribers))
@@ -175,10 +177,10 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
      * If no observable exists a new one will be created.
      */
     public subscribeForParticipationChanges(): BehaviorSubject<Participation | null> {
-        if (!this.participationObservable) {
-            this.participationObservable = new BehaviorSubject<Participation | null>(null);
+        if (!this.participationObservableAll) {
+            this.participationObservableAll = new BehaviorSubject<Participation | null>(null);
         }
-        return this.participationObservable;
+        return this.participationObservableAll;
     }
 
     /**
@@ -190,7 +192,7 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
      * @param participationId Id of Participation of which result to subscribe to
      */
     public subscribeForLatestResultOfParticipation(participationId: number): BehaviorSubject<Result | null> {
-        this.openResultWebsocketSubscriptionIfNotExisting(participationId);
+        this.openResultWebsocketSubscriptionIfNotExisting();
         let resultObservable = this.resultObservables.get(participationId)!;
         if (!resultObservable) {
             resultObservable = new BehaviorSubject<Result | null>(null);
@@ -213,9 +215,9 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
                 !!programmingExercise.buildAndTestStudentSubmissionsAfterDueDate && moment(programmingExercise.buildAndTestStudentSubmissionsAfterDueDate).isBefore(moment());
         }
         if (isInactiveProgrammingExercise || (exercise.dueDate && moment(exercise.dueDate).isBefore(moment()))) {
-            const participationResultTopic = this.openWebsocketSubscriptions.get(`${RESULTS_WEBSOCKET}${participationId}`)!;
+            /*const participationResultTopic = this.openWebsocketSubscriptions.get(`${RESULTS_WEBSOCKET}${participationId}`)!;
             this.jhiWebsocketService.unsubscribe(participationResultTopic);
-            this.openWebsocketSubscriptions.delete(`${RESULTS_WEBSOCKET}${participationId}`);
+            this.openWebsocketSubscriptions.delete(`${RESULTS_WEBSOCKET}${participationId}`);*/
         }
     }
 }
