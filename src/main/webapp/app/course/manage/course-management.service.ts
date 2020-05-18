@@ -93,13 +93,20 @@ export class CourseManagementService {
     /**
      * finds all courses using a GET request
      */
-    findAll(): Observable<EntityArrayResponseType> {
+    findAllForDashboard(): Observable<EntityArrayResponseType> {
         return this.http
             .get<Course[]>(`${this.resourceUrl}/for-dashboard`, { observe: 'response' })
             .pipe(map((res: EntityArrayResponseType) => this.convertDateArrayFromServer(res)))
             .pipe(map((res: EntityArrayResponseType) => this.checkAccessRights(res)))
-            .pipe(map((res: EntityArrayResponseType) => this.reconnectObjects(res)))
             .pipe(map((res: EntityArrayResponseType) => this.subscribeToCourseNotifications(res)));
+    }
+
+    findOneForDashboard(courseId: number): Observable<EntityResponseType> {
+        return this.http
+            .get<Course>(`${this.resourceUrl}/${courseId}/for-dashboard`, { observe: 'response' })
+            .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)))
+            .pipe(map((res: EntityResponseType) => this.checkAccessRightsCourse(res)))
+            .pipe(map((res: EntityResponseType) => this.subscribeToCourseNotification(res)));
     }
 
     /**
@@ -279,20 +286,18 @@ export class CourseManagementService {
         return res;
     }
 
+    private subscribeToCourseNotification(res: EntityResponseType): EntityResponseType {
+        if (res.body) {
+            this.notificationService.handleCourseNotifications(res.body);
+        }
+        return res;
+    }
+
     private checkAccessRightsCourse(res: EntityResponseType): EntityResponseType {
         if (res.body) {
             res.body.isAtLeastTutor = this.accountService.isAtLeastTutorInCourse(res.body);
             res.body.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(res.body);
         }
-        return res;
-    }
-
-    private reconnectObjects(res: EntityArrayResponseType): EntityArrayResponseType {
-        /*if (res.body) {
-            res.body.forEach((course: Course) => {
-                // TODO: implement
-            });
-        }*/
         return res;
     }
 

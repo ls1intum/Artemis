@@ -38,7 +38,7 @@ export class CoursesComponent implements OnInit {
     }
 
     loadAndFilterCourses() {
-        this.courseService.findAll().subscribe(
+        this.courseService.findAllForDashboard().subscribe(
             (res: HttpResponse<Course[]>) => {
                 this.courses = res.body!;
                 this.courseScoreCalculationService.setCourses(this.courses);

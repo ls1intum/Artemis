@@ -32,7 +32,6 @@ export class CourseOverviewComponent implements OnInit, OnDestroy {
     constructor(
         private courseService: CourseManagementService,
         private courseCalculationService: CourseScoreCalculationService,
-        private courseServer: CourseManagementService,
         private route: ActivatedRoute,
         private teamService: TeamService,
     ) {}
@@ -44,8 +43,8 @@ export class CourseOverviewComponent implements OnInit, OnDestroy {
 
         this.course = this.courseCalculationService.getCourse(this.courseId);
         if (!this.course) {
-            this.courseService.findAll().subscribe((res: HttpResponse<Course[]>) => {
-                this.courseCalculationService.setCourses(res.body!);
+            this.courseService.findOneForDashboard(this.courseId).subscribe((res: HttpResponse<Course>) => {
+                this.courseCalculationService.updateCourse(res.body!);
                 this.course = this.courseCalculationService.getCourse(this.courseId);
                 this.adjustCourseDescription();
             });

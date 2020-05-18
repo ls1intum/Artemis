@@ -409,41 +409,40 @@ public class CourseResource {
         return courseService.findAllCurrentlyActiveAndNotOnlineAndEnabled();
     }
 
-    /**
-     * GET /courses/for-dashboard
-     *
-     * @return the list of courses (the user has access to) including all exercises with participation and result for the user
-     */
-    @GetMapping("/courses/for-dashboard")
+    @GetMapping("/courses/{courseId}/for-dashboard")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    public List<Course> getAllCoursesForDashboard() {
+    public Course getCourseForDashboard(@PathVariable long courseId) {
         long start = System.currentTimeMillis();
-        log.debug("REST request to get all Courses the user has access to with exercises, participations and results");
-        log.debug("/courses/for-dashboard.start");
         User user = userService.getUserWithGroupsAndAuthorities();
 
-        // get all courses with exercises for this user
-        List<Course> courses = courseService.findAllActiveWithExercisesAndLecturesForUser(user);
-        log.debug("          /courses/for-dashboard.findAllActiveWithExercisesAndLecturesForUser in " + (System.currentTimeMillis() - start) + "ms");
+        Course course = courseService.findOneWithExercisesAndLecturesForUser(courseId, user);
+        fetchParticipationsWithSubmissionsAndResultsForCourses(List.of(course), user, start);
+        return course;
+    }
 
+    /**
+     * Note: The number of courses should not change
+     * @param courses the courses for wich the participations should be fetched
+     * @param startTimeInMillis start time for logging purposes
+     */
+    public void fetchParticipationsWithSubmissionsAndResultsForCourses(List<Course> courses, User user, long startTimeInMillis) {
         Map<ExerciseMode, List<Exercise>> activeExercises = courses.stream().flatMap(course -> course.getExercises().stream()).collect(Collectors.groupingBy(Exercise::getMode));
         List<Exercise> activeIndividualExercises = Optional.ofNullable(activeExercises.get(ExerciseMode.INDIVIDUAL)).orElse(List.of());
         List<Exercise> activeTeamExercises = Optional.ofNullable(activeExercises.get(ExerciseMode.TEAM)).orElse(List.of());
 
         if (activeIndividualExercises.isEmpty() && activeTeamExercises.isEmpty()) {
-            return courses;
+            return;
         }
 
         // Note: we need two database calls here, because of performance reasons: the entity structure for team is significantly different and a combined database call
         // would lead to a SQL statement that cannot be optimized
+
         // 1st: fetch participations, submissions and results for individual exercises
         List<StudentParticipation> individualParticipations = participationService.findByStudentIdAndIndividualExercisesWithEagerSubmissionsResult(user.getId(),
                 activeIndividualExercises);
-        log.debug("          /courses/for-dashboard.findByStudentIdAndIndividualExercisesWithEagerSubmissionsResult in " + (System.currentTimeMillis() - start) + "ms");
 
         // 2nd: fetch participations, submissions and results for team exercises
         List<StudentParticipation> teamParticipations = participationService.findByStudentIdAndTeamExercisesWithEagerSubmissionsResult(user.getId(), activeTeamExercises);
-        log.debug("          /courses/for-dashboard.findByStudentIdAndTeamExercisesWithEagerSubmissionsResult in " + (System.currentTimeMillis() - start) + "ms");
 
         // 3rd: merge both into one list for further processing
         List<StudentParticipation> participations = Stream.concat(individualParticipations.stream(), teamParticipations.stream()).collect(Collectors.toList());
@@ -459,8 +458,26 @@ public class CourseResource {
                 }
             }
         }
-        log.info("/courses/for-dashboard.done in " + (System.currentTimeMillis() - start) + "ms for " + courses.size() + " courses with " + activeIndividualExercises.size()
-                + " individual exercises and " + activeTeamExercises.size() + " team exercises for user " + user.getLogin());
+        log.info("/courses/for-dashboard.done in " + (System.currentTimeMillis() - startTimeInMillis) + "ms for " + courses.size() + " courses with "
+                + activeIndividualExercises.size() + " individual exercises and " + activeTeamExercises.size() + " team exercises for user " + user.getLogin());
+    }
+
+    /**
+     * GET /courses/for-dashboard
+     *
+     * @return the list of courses (the user has access to) including all exercises with participation and result for the user
+     */
+    @GetMapping("/courses/for-dashboard")
+    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
+    public List<Course> getAllCoursesForDashboard() {
+        long start = System.currentTimeMillis();
+        log.debug("REST request to get all Courses the user has access to with exercises, participations and results");
+        User user = userService.getUserWithGroupsAndAuthorities();
+
+        // get all courses with exercises for this user
+        List<Course> courses = courseService.findAllActiveWithExercisesAndLecturesForUser(user);
+
+        fetchParticipationsWithSubmissionsAndResultsForCourses(courses, user, start);
 
         return courses;
     }

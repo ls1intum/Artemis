@@ -187,7 +187,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
         this.course = this.courseCalculationService.getCourse(this.courseId);
 
         if (this.course === undefined) {
-            this.courseService.findAll().subscribe((res: HttpResponse<Course[]>) => {
+            this.courseService.findAllForDashboard().subscribe((res: HttpResponse<Course[]>) => {
                 this.courseCalculationService.setCourses(res.body!);
                 this.course = this.courseCalculationService.getCourse(this.courseId);
                 this.courseExercises = this.course!.exercises;
