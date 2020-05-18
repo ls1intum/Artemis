@@ -180,7 +180,8 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
     ) {}
 
     /**
-     * On init, finds the course, calculates exercise scores for each score type and groups exercises
+     * On init, finds the course, calculates exercise scores for each score type (max, absolute, relative and presentation score)
+     * and groups exercises by their types (quiz, modeling, programming, text, file, upload) see {@link groupExercisesByType}
      */
     ngOnInit() {
         this.paramSubscription = this.route.parent!.params.subscribe((params) => {

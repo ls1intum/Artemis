@@ -38,7 +38,8 @@ export class CourseLecturesComponent implements OnInit, OnDestroy {
     ) {}
 
     /**
-     * On init, gets the course and group its lectures
+     * On init, gets the course and group its lectures based on the due date see {@link groupLectures}
+     * and gets the total attachment count see {@link getAttachmentCount}
      */
     ngOnInit() {
         this.exerciseCountMap = new Map<string, number>();

@@ -34,6 +34,7 @@ export class CoursesComponent implements OnInit {
 
     /**
      * Life cycle hook called by Angular to indicate that Angular is done creating the component
+     * First, it loads courses from server {@link loadAndFilterCourses} and subscribes for the team assignment updates {@see teamAssignmentUpdates}
      */
     async ngOnInit() {
         this.loadAndFilterCourses();
@@ -41,7 +42,8 @@ export class CoursesComponent implements OnInit {
     }
 
     /**
-     * Loads all courses from server
+     * Loads all courses from server, sets courses in CourseScoreCalculationService {@see setCourses} and
+     * enables tour for the course overview for the loaded courses {@see enableTourForCourseOverview}
      */
     loadAndFilterCourses() {
         this.courseService.findAll().subscribe(
