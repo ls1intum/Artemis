@@ -185,26 +185,13 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
         });
 
         this.course = this.courseCalculationService.getCourse(this.courseId);
+        this.onCourseLoad();
 
-        if (this.course === undefined) {
-            this.courseService.findAllForDashboard().subscribe((res: HttpResponse<Course[]>) => {
-                this.courseCalculationService.setCourses(res.body!);
-                this.course = this.courseCalculationService.getCourse(this.courseId);
-                this.courseExercises = this.course!.exercises;
-                this.calculateMaxScores();
-                this.calculateAbsoluteScores();
-                this.calculateRelativeScores();
-                this.calculatePresentationScores();
-                this.groupExercisesByType();
-            });
-        } else {
-            this.courseExercises = this.course!.exercises;
-            this.calculateMaxScores();
-            this.calculateAbsoluteScores();
-            this.calculateRelativeScores();
-            this.calculatePresentationScores();
-            this.groupExercisesByType();
-        }
+        this.courseService.getCourseUpdates(this.courseId).subscribe((res: HttpResponse<Course>) => {
+            this.courseCalculationService.updateCourse(res.body!);
+            this.course = this.courseCalculationService.getCourse(this.courseId);
+            this.onCourseLoad();
+        });
 
         this.translationSubscription = this.translateService.onLangChange.subscribe(() => {
             this.exerciseTitles = {
@@ -240,6 +227,15 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
         if (this.translationSubscription) {
             this.translationSubscription.unsubscribe();
         }
+    }
+
+    private onCourseLoad() {
+        this.courseExercises = this.course!.exercises;
+        this.calculateMaxScores();
+        this.calculateAbsoluteScores();
+        this.calculateRelativeScores();
+        this.calculatePresentationScores();
+        this.groupExercisesByType();
     }
 
     groupExercisesByType() {

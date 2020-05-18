@@ -2,8 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import * as moment from 'moment';
-import { map } from 'rxjs/operators';
-
+import { map, tap } from 'rxjs/operators';
 import { SERVER_API_URL } from 'app/app.constants';
 import { Course, CourseGroup } from 'app/entities/course.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
@@ -20,6 +19,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import { NotificationService } from 'app/overview/notification/notification.service';
 import { createRequestOption } from 'app/shared/util/request-util';
+import { SubjectObservablePair } from 'app/utils/rxjs.utils';
 
 export type EntityResponseType = HttpResponse<Course>;
 export type EntityArrayResponseType = HttpResponse<Course[]>;
@@ -27,6 +27,8 @@ export type EntityArrayResponseType = HttpResponse<Course[]>;
 @Injectable({ providedIn: 'root' })
 export class CourseManagementService {
     private resourceUrl = SERVER_API_URL + 'api/courses';
+
+    private readonly courses: Map<number, SubjectObservablePair<EntityResponseType>> = new Map();
 
     constructor(
         private http: HttpClient,
@@ -106,7 +108,15 @@ export class CourseManagementService {
             .get<Course>(`${this.resourceUrl}/${courseId}/for-dashboard`, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)))
             .pipe(map((res: EntityResponseType) => this.checkAccessRightsCourse(res)))
-            .pipe(map((res: EntityResponseType) => this.subscribeToCourseNotification(res)));
+            .pipe(map((res: EntityResponseType) => this.subscribeToCourseNotification(res)))
+            .pipe(tap((res: EntityResponseType) => this.courses.get(courseId)?.subject.next(res)));
+    }
+
+    getCourseUpdates(courseId: number): Observable<EntityResponseType> {
+        if (!this.courses.has(courseId)) {
+            this.courses.set(courseId, new SubjectObservablePair());
+        }
+        return this.courses.get(courseId)!.observable;
     }
 
     /**

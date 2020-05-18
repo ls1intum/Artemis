@@ -44,19 +44,17 @@ export class CourseLecturesComponent implements OnInit, OnDestroy {
         });
 
         this.course = this.courseCalculationService.getCourse(this.courseId);
-        if (this.course === undefined) {
-            this.courseService.findAllForDashboard().subscribe((res: HttpResponse<Course[]>) => {
-                this.courseCalculationService.setCourses(res.body!);
-                this.course = this.courseCalculationService.getCourse(this.courseId);
-            });
-        }
-        this.groupLectures(this.DUE_DATE_DESC);
+        this.onCourseLoad();
+
+        this.courseService.getCourseUpdates(this.courseId).subscribe((res: HttpResponse<Course>) => {
+            this.courseCalculationService.updateCourse(res.body!);
+            this.course = this.courseCalculationService.getCourse(this.courseId);
+            this.onCourseLoad();
+        });
 
         this.translateSubscription = this.translateService.onLangChange.subscribe(() => {
             this.groupLectures(this.DUE_DATE_DESC);
         });
-
-        this.totalAttachmentCount = this.getAttachmentCount();
     }
 
     ngOnDestroy(): void {
@@ -66,6 +64,11 @@ export class CourseLecturesComponent implements OnInit, OnDestroy {
         if (this.paramSubscription) {
             this.paramSubscription.unsubscribe();
         }
+    }
+
+    private onCourseLoad() {
+        this.groupLectures(this.DUE_DATE_DESC);
+        this.totalAttachmentCount = this.getAttachmentCount();
     }
 
     public groupLectures(selectedOrder: number): void {
