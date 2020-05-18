@@ -49,7 +49,9 @@ export class InstructorCourseDashboardComponent implements OnInit {
         // Load the course.
         const loadCourseObservable = this.courseService.findWithExercisesAndParticipations(courseId).pipe(
             map((res: HttpResponse<Course>) => res.body!),
-            tap((course: Course) => (this.course = course)),
+            tap((course: Course) => {
+                this.course = Course.from(course);
+            }),
             catchError((response: HttpErrorResponse) => {
                 this.onError(response.message);
                 return of(null);
