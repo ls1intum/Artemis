@@ -6,6 +6,7 @@ import { StatsForDashboard } from 'app/course/dashboards/instructor-course-dashb
 import { Exercise } from 'app/entities/exercise.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { ResultService } from 'app/exercises/shared/result/result.service';
+import {DueDateStat} from "app/course/dashboards/instructor-course-dashboard/due-date-stat.model";
 
 @Component({
     selector: 'jhi-instructor-exercise-dashboard',
@@ -19,8 +20,8 @@ export class InstructorExerciseDashboardComponent implements OnInit {
     stats = new StatsForDashboard();
 
     dataForAssessmentPieChart: number[];
-    totalManualAssessmentPercentage: number;
-    totalAutomaticAssessmentPercentage: number;
+    totalManualAssessmentPercentage = new DueDateStat();
+    totalAutomaticAssessmentPercentage = new DueDateStat();
 
     constructor(
         private exerciseService: ExerciseService,
@@ -51,16 +52,24 @@ export class InstructorExerciseDashboardComponent implements OnInit {
      */
     public setStatistics() {
         if (this.stats.numberOfSubmissions.total > 0) {
-            this.totalManualAssessmentPercentage = Math.round(
-                ((this.stats.numberOfAssessments.total - this.stats.numberOfAutomaticAssistedAssessments) / this.stats.numberOfSubmissions.total) * 100,
+            this.totalManualAssessmentPercentage.inTime = Math.round(
+                ((this.stats.numberOfAssessments.inTime - this.stats.numberOfAutomaticAssistedAssessments.inTime) / this.stats.numberOfSubmissions.inTime) * 100,
             );
-            this.totalAutomaticAssessmentPercentage = Math.round((this.stats.numberOfAutomaticAssistedAssessments / this.stats.numberOfSubmissions.total) * 100);
+            this.totalManualAssessmentPercentage.late = Math.round(
+                ((this.stats.numberOfAssessments.late - this.stats.numberOfAutomaticAssistedAssessments.late) / this.stats.numberOfSubmissions.late) * 100,
+            );
+            this.totalAutomaticAssessmentPercentage.inTime = Math.round(
+                (this.stats.numberOfAutomaticAssistedAssessments.inTime / this.stats.numberOfSubmissions.inTime) * 100
+            );
+            this.totalAutomaticAssessmentPercentage.late = Math.round(
+                (this.stats.numberOfAutomaticAssistedAssessments.late / this.stats.numberOfSubmissions.late) * 100
+            );
         }
 
         this.dataForAssessmentPieChart = [
             this.stats.numberOfSubmissions.total - this.stats.numberOfAssessments.total,
-            this.stats.numberOfAssessments.total - this.stats.numberOfAutomaticAssistedAssessments,
-            this.stats.numberOfAutomaticAssistedAssessments,
+            this.stats.numberOfAssessments.total - this.stats.numberOfAutomaticAssistedAssessments.total,
+            this.stats.numberOfAutomaticAssistedAssessments.total,
         ];
     }
 
@@ -72,7 +81,7 @@ export class InstructorExerciseDashboardComponent implements OnInit {
 
         this.exerciseService.getStatsForInstructors(exerciseId).subscribe(
             (res: HttpResponse<StatsForDashboard>) => {
-                this.stats = Object.assign({}, this.stats, res.body);
+                this.stats = StatsForDashboard.from(Object.assign({}, this.stats, res.body));
                 this.setStatistics();
             },
             (response: string) => this.onError(response),
