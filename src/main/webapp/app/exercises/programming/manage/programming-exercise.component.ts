@@ -49,6 +49,10 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
         this.programmingExercises = [];
     }
 
+    /**
+     * On component initialization, calls ngOnInit of its superclass. Also starts the subscription to the
+     * state of the Orion connector service.
+     */
     ngOnInit(): void {
         super.ngOnInit();
         this.javaBridge.state().subscribe((state) => (this.orionState = state));
@@ -70,6 +74,11 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
         );
     }
 
+    /**
+     * Returns the id of the programming exercise given as an argument.
+     * @param {number} index
+     * @param {ProgrammingExercise} item
+     */
     trackId(index: number, item: ProgrammingExercise) {
         return item.id;
     }
@@ -107,8 +116,14 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
         return 'programmingExerciseListModification';
     }
 
+    /**
+     * Empty body, does not do anything
+     */
     callback() {}
 
+    /**
+     * Opens the import modal of this programming exercise from the modal service, then navigates to it.
+     */
     openImportModal() {
         const modalRef = this.modalService.open(ProgrammingExerciseImportComponent, { size: 'lg', backdrop: 'static' });
         modalRef.result.then(
@@ -119,10 +134,18 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
         );
     }
 
+    /**
+     * Calls editExercise on the orion connector, which edits the given exercise in the IDE as an instructor
+     * @param {ProgrammingExercise} programmingExercise
+     */
     editInIDE(programmingExercise: ProgrammingExercise) {
         this.javaBridge.editExercise(programmingExercise);
     }
 
+    /**
+     * Navigates to the orion editor for the given exercise and logs any errors catch.
+     * @param {ProgrammingExercise} exercise
+     */
     openOrionEditor(exercise: ProgrammingExercise) {
         try {
             this.router.navigate(['code-editor', 'ide', exercise.id, 'admin', exercise.templateParticipation.id]);
