@@ -2,7 +2,6 @@ import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { Location } from '@angular/common';
 import { AccountService } from 'app/core/auth/account.service';
-import { FileUploadSubmissionService } from 'app/exercises/file-upload/participate/file-upload-submission.service';
 import { FileUploadAssessmentsService } from 'app/exercises/file-upload/assess/file-upload-assessment.service';
 import { TranslateService } from '@ngx-translate/core';
 import { Submission, SubmissionExerciseType } from 'app/entities/submission.model';
@@ -11,9 +10,7 @@ import { HttpResponse } from '@angular/common/http';
 import { Course } from 'app/entities/course.model';
 import { Exercise, getIcon, getIconTooltip } from 'app/entities/exercise.model';
 import { AlertService } from 'app/core/alert/alert.service';
-import { ModelingSubmissionService } from 'app/exercises/modeling/participate/modeling-submission.service';
 import { ModelingAssessmentService } from 'app/exercises/modeling/assess/modeling-assessment.service';
-import { TextSubmissionService } from 'app/exercises/text/participate/text-submission.service';
 import { TextAssessmentsService } from 'app/exercises/text/assess/text-assessments.service';
 
 @Component({
@@ -37,11 +34,8 @@ export class AssessmentLocksComponent implements OnInit {
         private route: ActivatedRoute,
         private accountService: AccountService,
         private jhiAlertService: AlertService,
-        private modelingSubmissionService: ModelingSubmissionService,
         private modelingAssessmentService: ModelingAssessmentService,
-        private textSubmissionService: TextSubmissionService,
         private textAssessmentsService: TextAssessmentsService,
-        private fileUploadSubmissionService: FileUploadSubmissionService,
         private fileUploadAssessmentsService: FileUploadAssessmentsService,
         translateService: TranslateService,
         private location: Location,
