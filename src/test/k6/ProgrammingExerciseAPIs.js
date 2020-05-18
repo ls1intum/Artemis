@@ -92,7 +92,7 @@ export default function (data) {
             someSuccessfulErrorContent = someSuccessfulErrorContentC;
             allSuccessfulContent = allSuccessfulContentC;
             buildErrorContent = buildErrorContentC;
-            somePassedString = '4 of 20 passed';
+            somePassedString = '1 of 4 passed';
             break;
     }
 
