@@ -63,8 +63,8 @@ export class TextSubmissionAssessmentComponent implements OnInit {
         }
     }
 
-    private get textBlocks(): TextBlock[] {
-        return this.textBlockRefs.map(({ block }) => block);
+    private get textBlocksWithFeedback(): TextBlock[] {
+        return this.textBlockRefs.filter(({ feedback }) => feedback !== undefined).map(({ block }) => block);
     }
 
     constructor(
@@ -163,7 +163,7 @@ export class TextSubmissionAssessmentComponent implements OnInit {
         }
 
         this.saveBusy = true;
-        this.assessmentsService.save(this.exercise!.id, this.result!.id, this.assessments, this.textBlocks).subscribe(
+        this.assessmentsService.save(this.exercise!.id, this.result!.id, this.assessments, this.textBlocksWithFeedback).subscribe(
             (response) => this.handleSaveOrSubmitSuccessWithAlert(response, 'artemisApp.textAssessment.saveSuccessful'),
             (error: HttpErrorResponse) => this.handleError(error),
         );
@@ -183,7 +183,7 @@ export class TextSubmissionAssessmentComponent implements OnInit {
         }
 
         this.submitBusy = true;
-        this.assessmentsService.submit(this.exercise!.id, this.result!.id, this.assessments, this.textBlocks).subscribe(
+        this.assessmentsService.submit(this.exercise!.id, this.result!.id, this.assessments, this.textBlocksWithFeedback).subscribe(
             (response) => this.handleSaveOrSubmitSuccessWithAlert(response, 'artemisApp.textAssessment.submitSuccessful'),
             (error: HttpErrorResponse) => this.handleError(error),
         );
@@ -229,7 +229,7 @@ export class TextSubmissionAssessmentComponent implements OnInit {
             return;
         }
 
-        this.assessmentsService.updateAssessmentAfterComplaint(this.assessments, this.textBlocks, complaintResponse, this.submission?.id!).subscribe(
+        this.assessmentsService.updateAssessmentAfterComplaint(this.assessments, this.textBlocksWithFeedback, complaintResponse, this.submission?.id!).subscribe(
             (response) => this.handleSaveOrSubmitSuccessWithAlert(response, 'artemisApp.textAssessment.updateAfterComplaintSuccessful'),
             (error: HttpErrorResponse) => {
                 console.error(error);
@@ -296,11 +296,8 @@ export class TextSubmissionAssessmentComponent implements OnInit {
         newRef.block.startIndex = startIndex;
         newRef.block.endIndex = endIndex;
         newRef.block.setTextFromSubmission(this.submission!);
-        // Do not create empty textblocks (only spaces/newlines)
-        if (newRef.block.text.trim().length !== 0) {
-            newRef.block.computeId();
-            this.textBlockRefs.push(newRef);
-        }
+        newRef.block.computeId();
+        this.textBlockRefs.push(newRef);
     }
 
     private getComplaint(): void {
