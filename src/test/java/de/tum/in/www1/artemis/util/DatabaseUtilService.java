@@ -699,7 +699,7 @@ public class DatabaseUtilService {
         assertThat(courseRepoContent.get(0).getExercises()).as("course contains the exercise").containsExactlyInAnyOrder(exerciseRepoContent.toArray(new Exercise[] {}));
     }
 
-    public void addCourseWithDifferentModelingExercises() {
+    public Course addCourseWithDifferentModelingExercises() {
         Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "instructor");
         ModelingExercise classExercise = ModelFactory.generateModelingExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, DiagramType.ClassDiagram, course);
         course.addExercises(classExercise);
@@ -711,18 +711,17 @@ public class DatabaseUtilService {
         course.addExercises(useCaseExercise);
         ModelingExercise afterDueDateExercise = ModelFactory.generateModelingExercise(pastTimestamp, pastTimestamp, futureTimestamp, DiagramType.ClassDiagram, course);
         course.addExercises(afterDueDateExercise);
-        courseRepo.save(course);
+        course = courseRepo.save(course);
         exerciseRepo.save(classExercise);
         exerciseRepo.save(activityExercise);
         exerciseRepo.save(objectExercise);
         exerciseRepo.save(useCaseExercise);
         exerciseRepo.save(afterDueDateExercise);
-        List<Course> courseRepoContent = courseRepo.findAllActiveWithEagerExercisesAndLectures(ZonedDateTime.now());
-        List<Exercise> exerciseRepoContent = exerciseRepo.findAll();
-        assertThat(exerciseRepoContent.size()).as("four exercises got stored").isEqualTo(5);
-        assertThat(courseRepoContent.size()).as("a course got stored").isEqualTo(1);
-        assertThat(courseRepoContent.get(0).getExercises().size()).as("Course contains exercise").isEqualTo(5);
-        assertThat(courseRepoContent.get(0).getExercises()).as("Contains all exercises").containsExactlyInAnyOrder(exerciseRepoContent.toArray(new Exercise[] {}));
+        Course storedCourse = courseRepo.findWithEagerExercisesAndLecturesById(course.getId());
+        Set<Exercise> exercises = storedCourse.getExercises();
+        assertThat(exercises.size()).as("five exercises got stored").isEqualTo(5);
+        assertThat(exercises).as("Contains all exercises").containsExactlyInAnyOrder(course.getExercises().toArray(new Exercise[] {}));
+        return course;
     }
 
     public Course addCourseWithOneProgrammingExercise() {
