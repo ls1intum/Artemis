@@ -47,14 +47,10 @@ export class RatingComponent {
 
         // set/update feedback on the server
         if (this.rating.id) {
-            console.log('ID IS NOT NULL');
-            console.log(this.rating.id);
             this.ratingService.updateRating(this.rating).subscribe((rating) => {
                 this.rating = rating;
             });
         } else {
-            console.log('ID IS NULL');
-            console.log('Rating:' + this.rating);
             this.ratingService.setRating(this.rating).subscribe((rating) => {
                 this.rating = rating;
             });

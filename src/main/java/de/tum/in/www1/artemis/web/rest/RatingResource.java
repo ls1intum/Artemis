@@ -26,9 +26,11 @@ import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 @RequestMapping("/api")
 public class RatingResource {
 
-    private final Logger log = LoggerFactory.getLogger(ResultResource.class);
-
     private static final String ENTITY_NAME = "rating";
+
+    private final Logger log = LoggerFactory.getLogger(RatingResource.class);
+
+    private final RatingService ratingService;
 
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
@@ -36,14 +38,13 @@ public class RatingResource {
     @Value("${artemis.continuous-integration.artemis-authentication-token-value}")
     private String ARTEMIS_AUTHENTICATION_TOKEN_VALUE = "";
 
-    private final RatingService ratingService;
-
     public RatingResource(RatingService ratingService) {
         this.ratingService = ratingService;
     }
 
     /**
      * Return Rating referencing resultId or null
+     *
      * @param resultId - Id of result that is referenced with the rating
      * @return Rating or null
      */
@@ -56,6 +57,7 @@ public class RatingResource {
 
     /**
      * Persist a new Rating
+     *
      * @param rating - Rating that should be persisted
      * @return updated Rating
      */
@@ -65,12 +67,14 @@ public class RatingResource {
         if (rating.getId() != null) {
             throw new BadRequestAlertException("A new rating cannot already have an ID", ENTITY_NAME, "idExists");
         }
+        // TODO: Check authorization
         Rating result = this.ratingService.saveRating(rating);
         return ResponseEntity.ok(result);
     }
 
     /**
      * Update a Rating
+     *
      * @param rating - updated Rating
      * @return updated Rating
      */
@@ -80,6 +84,7 @@ public class RatingResource {
         if (rating.getId() == null) {
             throw new BadRequestAlertException("The rating must have an ID", ENTITY_NAME, "idDoesNotExist");
         }
+        // TODO: Check authorization
         Rating result = this.ratingService.updateRating(rating);
         return ResponseEntity.ok(result);
     }

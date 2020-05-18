@@ -50,7 +50,6 @@ public class RatingService {
         serverRating.setRating(rating.getRating());
         Result result = resultRepository.getOne(rating.getResult().getId());
         serverRating.setResult(result);
-        log.debug("Rating: ", serverRating);
         return ratingRepository.save(serverRating);
     }
 
