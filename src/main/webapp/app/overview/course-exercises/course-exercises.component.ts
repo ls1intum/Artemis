@@ -19,6 +19,8 @@ import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service'
 
 /**
  * enumerator for filtering exercise
+ * @readonly
+ * @enum {string}
  */
 enum ExerciseFilter {
     OVERDUE = 'OVERDUE',
@@ -27,6 +29,8 @@ enum ExerciseFilter {
 
 /**
  * enumerator for sorting exercise
+ * @readonly
+ * @enum {number}
  */
 enum ExerciseSortingOrder {
     DUE_DATE_ASC = 1,
@@ -35,6 +39,8 @@ enum ExerciseSortingOrder {
 
 /**
  * enumerator for sort and filter storage keys
+ * @readonly
+ * @enum {string}
  */
 enum SortFilterStorageKey {
     FILTER = 'artemis.course.exercises.filter',
