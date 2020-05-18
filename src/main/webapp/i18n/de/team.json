@@ -47,6 +47,10 @@
             "image": "Bild",
             "students": "Studenten",
             "tutor": "Tutor",
+            "filters": {
+                "all": "Alle Teams",
+                "own": "Eigene Teams"
+            },
             "noStudentsAddedYet": "Noch keine Studenten hinzugefügt.",
             "addStudentToTeam": "Studenten zum Team hinzufügen (nach Login oder Name suchen)",
             "studentSearch": {
