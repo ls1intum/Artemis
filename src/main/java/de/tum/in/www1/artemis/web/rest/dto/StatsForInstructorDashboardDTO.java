@@ -10,7 +10,7 @@ public class StatsForInstructorDashboardDTO {
 
     private DueDateStat<Long> numberOfAssessments;
 
-    private Long numberOfAutomaticAssistedAssessments;
+    private DueDateStat<Long> numberOfAutomaticAssistedAssessments;
 
     private Long numberOfComplaints;
 
@@ -49,11 +49,11 @@ public class StatsForInstructorDashboardDTO {
         this.numberOfAssessments = numberOfAssessments;
     }
 
-    public Long getNumberOfAutomaticAssistedAssessments() {
+    public DueDateStat<Long> getNumberOfAutomaticAssistedAssessments() {
         return numberOfAutomaticAssistedAssessments;
     }
 
-    public void setNumberOfAutomaticAssistedAssessments(Long numberOfAutomaticAssistedAssessments) {
+    public void setNumberOfAutomaticAssistedAssessments(DueDateStat<Long> numberOfAutomaticAssistedAssessments) {
         this.numberOfAutomaticAssistedAssessments = numberOfAutomaticAssistedAssessments;
     }
 

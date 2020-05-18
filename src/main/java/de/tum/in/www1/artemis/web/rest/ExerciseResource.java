@@ -205,7 +205,7 @@ public class ExerciseResource {
         final DueDateStat numberOfAssessments = resultService.countNumberOfFinishedAssessmentsForExercise(exerciseId);
         stats.setNumberOfAssessments(numberOfAssessments);
 
-        final long numberOfAutomaticAssistedAssessments = resultService.countNumberOfAutomaticAssistedAssessmentsForExercise(exerciseId);
+        final DueDateStat<Long> numberOfAutomaticAssistedAssessments = resultService.countNumberOfAutomaticAssistedAssessmentsForExercise(exerciseId);
         stats.setNumberOfAutomaticAssistedAssessments(numberOfAutomaticAssistedAssessments);
 
         final long numberOfMoreFeedbackRequests = complaintRepository.countByResult_Participation_Exercise_IdAndComplaintType(exerciseId, ComplaintType.MORE_FEEDBACK);

@@ -386,9 +386,11 @@ public class ResultService {
      * @param exerciseId the exercise we are interested in
      * @return number of assessments for the exercise
      */
-    public Long countNumberOfAutomaticAssistedAssessmentsForExercise(Long exerciseId) {
-        return resultRepository.countByAssessorIsNotNullAndParticipation_ExerciseIdAndRatedAndAssessmentTypeInAndCompletionDateIsNotNull(exerciseId, true,
-                asList(AssessmentType.AUTOMATIC, AssessmentType.SEMI_AUTOMATIC));
+    public DueDateStat<Long> countNumberOfAutomaticAssistedAssessmentsForExercise(Long exerciseId) {
+        return new DueDateStat<>(
+            resultRepository.countNumberOfAssessmentsByTypeForExerciseBeforeDueDate(exerciseId, asList(AssessmentType.AUTOMATIC, AssessmentType.SEMI_AUTOMATIC)),
+            resultRepository.countNumberOfAssessmentsByTypeForExerciseAfterDueDate(exerciseId, asList(AssessmentType.AUTOMATIC, AssessmentType.SEMI_AUTOMATIC))
+        );
     }
 
     /**
