@@ -12,11 +12,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
 
-import de.tum.in.www1.artemis.domain.*;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.exception.NetworkingError;
 
 public class TextSimilarityClusteringServiceTest {
@@ -31,8 +31,8 @@ public class TextSimilarityClusteringServiceTest {
         ReflectionTestUtils.setField(service, "API_ENDPOINT", CLUSTERING_ENDPOINT);
 
         final List<TextBlock> blocks = Stream.of("foo", "bar").map(text -> new TextBlock().text(text).startIndex(0).endIndex(3)).peek(TextBlock::computeId).collect(toList());
-        final Course course = new Course() ;
-        course.setId(1L) ;
+        final Course course = new Course();
+        course.setId(1L);
         final TextExercise exercise = new TextExercise();
         exercise.setId(2L);
         exercise.setCourse(course);

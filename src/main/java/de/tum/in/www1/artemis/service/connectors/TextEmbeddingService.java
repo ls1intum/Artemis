@@ -4,7 +4,6 @@ import static de.tum.in.www1.artemis.service.connectors.RemoteArtemisServiceConn
 
 import java.util.List;
 
-import de.tum.in.www1.artemis.domain.TextExercise;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -13,6 +12,7 @@ import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.TextBlock;
 import de.tum.in.www1.artemis.domain.TextEmbedding;
+import de.tum.in.www1.artemis.domain.TextExercise;
 import de.tum.in.www1.artemis.exception.NetworkingError;
 
 @Service
@@ -25,7 +25,9 @@ public class TextEmbeddingService {
     private static class Request {
 
         public List<TextBlock> blocks;
+
         public Long courseId;
+
         public Long exerciseId;
 
         Request(List<TextBlock> blocks, Long courseId, long exerciseId) {
