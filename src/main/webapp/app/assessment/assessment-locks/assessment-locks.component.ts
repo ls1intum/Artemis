@@ -1,7 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { Location } from '@angular/common';
-import { AccountService } from 'app/core/auth/account.service';
 import { FileUploadAssessmentsService } from 'app/exercises/file-upload/assess/file-upload-assessment.service';
 import { TranslateService } from '@ngx-translate/core';
 import { Submission, SubmissionExerciseType } from 'app/entities/submission.model';
@@ -32,7 +31,6 @@ export class AssessmentLocksComponent implements OnInit {
 
     constructor(
         private route: ActivatedRoute,
-        private accountService: AccountService,
         private jhiAlertService: AlertService,
         private modelingAssessmentService: ModelingAssessmentService,
         private textAssessmentsService: TextAssessmentsService,
@@ -51,57 +49,20 @@ export class AssessmentLocksComponent implements OnInit {
         this.route.queryParams.subscribe((queryParams) => {
             this.tutorId = Number(queryParams['tutorId']);
         });
-        this.getExercises();
+        this.getAllLockedSubmissions();
+        console.log('submissions:', this.submissions);
     }
 
     /**
-     * Get exercises for course
+     * Get all locked submissions.
      */
-    getExercises() {
-        this.courseService.getForTutors(this.courseId).subscribe(
-            (res: HttpResponse<Course>) => {
-                if (!res.body) {
-                    return;
-                }
-
-                this.course = res.body;
-                this.course.isAtLeastTutor = this.accountService.isAtLeastTutorInCourse(this.course);
-                this.course.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.course);
-
-                if (this.course.exercises.length > 0) {
-                    this.exercises = this.course.exercises;
-                }
-
-                this.getAllSubmissions();
+    getAllLockedSubmissions() {
+        this.courseService.findAllLockedSubmissionsOfCourse(this.courseId).subscribe(
+            (response: HttpResponse<Submission[]>) => {
+                this.submissions.push(...(response.body ?? []));
             },
             (response: string) => this.onError(response),
         );
-    }
-
-    /**
-     * Get submissions for exercise types modeling, text and file upload.
-     */
-    getAllSubmissions() {
-        this.courseService
-            .findAllSubmissionsOfCourse(this.courseId)
-            .map((response: HttpResponse<Submission[]>) =>
-                response.body
-                    ?.filter((submission) => submission.result && submission.submitted && submission.result.assessor.id === this.tutorId)
-                    .map((submission: Submission) => {
-                        if (submission.result) {
-                            // reconnect some associations
-                            submission.result.submission = submission;
-                            submission.result.participation = submission.participation;
-                            submission.participation.results = [submission.result];
-                            // submission.participation.exercise = exercise;
-                        }
-
-                        return submission;
-                    }),
-            )
-            .subscribe((loadedSubmissions: Submission[]) => {
-                this.submissions.push(...loadedSubmissions);
-            });
     }
 
     /**

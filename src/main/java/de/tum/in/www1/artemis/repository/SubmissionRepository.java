@@ -41,6 +41,17 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
     long countLockedSubmissionsByUserIdAndCourseId(@Param("userId") Long userId, @Param("courseId") Long courseId);
 
     /**
+     * Get currently locked submissions for a specific user in the given course.
+     * These are all submissions for which the user started, but has not yet finished the assessment.
+     *
+     * @param userId   the id of the user
+     * @param courseId the id of the course
+     * @return currently locked submissions for a specific user in the given course
+     */
+    @Query("SELECT DISTINCT submission FROM Submission submission WHERE submission.result.assessor.id = :#{#userId} AND submission.result.completionDate is null AND submission.participation.exercise.course.id = :#{#courseId}")
+    List<Submission> getLockedSubmissionsByUserIdAndCourseId(@Param("userId") Long userId, @Param("courseId") Long courseId);
+
+    /**
      * Checks if a submission for the given participation exists.
      *
      * @param participationId the id of the participation to check

@@ -224,20 +224,22 @@ export class CourseManagementService {
     }
 
     /**
-     * Find all submissions of a given participation
-     * @param {number} courseId - The id of the participation to be searched for
+     * Find all locked submissions of a given course for user
+     * @param {number} courseId - The id of the course to be searched for
      */
-    findAllSubmissionsOfCourse(courseId: number): Observable<HttpResponse<Submission[]>> {
+    findAllLockedSubmissionsOfCourse(courseId: number): Observable<HttpResponse<Submission[]>> {
         return this.http
-            .get<Submission[]>(`${this.resourceUrl}/${courseId}/submissions`, { observe: 'response' })
+            .get<Submission[]>(`${this.resourceUrl}/${courseId}/lockedSubmissions`, { observe: 'response' })
             .pipe(
                 // map((res) => this.convertDateArrayFromServer(res)),
                 filter((res) => !!res.body),
                 tap((res) =>
                     res.body!.forEach((submission: Submission) => {
-                        // reconnect results to submissions
+                        // reconnect some associations
                         if (submission.result) {
                             submission.result.submission = submission;
+                            submission.result.participation = submission.participation;
+                            submission.participation.results = [submission.result];
                         }
                     }),
                 ),

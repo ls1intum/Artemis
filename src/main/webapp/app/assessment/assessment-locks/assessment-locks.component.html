@@ -36,7 +36,7 @@
                     </td>
                     <td>{{ submission.participation.exercise.title }}</td>
                     <td>{{ submission.submissionDate | date: 'MMM d, y HH:mm:ss' }}</td>
-                    <td>{{ submission.participation.submissions.length }}</td>
+                    <td>{{ submission.participation.submissions?.length }}</td>
                     <td>
                         <span *ngIf="submission.result.score != null">{{ submission.result.score }}%</span>
                     </td>
