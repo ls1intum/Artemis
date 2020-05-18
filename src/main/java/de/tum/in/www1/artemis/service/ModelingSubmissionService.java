@@ -119,7 +119,7 @@ public class ModelingSubmissionService extends SubmissionService {
     @Transactional
     public Optional<ModelingSubmission> getModelingSubmissionWithoutManualResult(ModelingExercise modelingExercise) {
         // if the diagram type is supported by Compass, ask Compass for optimal (i.e. most knowledge gain for automatic assessments) submissions to assess next
-        if (compassService.isSupported(modelingExercise.getDiagramType())) {
+        if (compassService.isSupported(modelingExercise)) {
             List<Long> modelsWaitingForAssessment = compassService.getModelsWaitingForAssessment(modelingExercise.getId());
 
             // shuffle the model list to prevent that the user gets the same submission again after canceling an assessment
@@ -241,7 +241,7 @@ public class ModelingSubmissionService extends SubmissionService {
      */
     private void lockSubmission(ModelingSubmission modelingSubmission, ModelingExercise modelingExercise) {
         var result = lockSubmission(modelingSubmission);
-        if (result.getAssessor() == null && compassService.isSupported(modelingExercise.getDiagramType())) {
+        if (result.getAssessor() == null && compassService.isSupported(modelingExercise)) {
             compassService.removeModelWaitingForAssessment(modelingExercise.getId(), modelingSubmission.getId());
         }
     }
@@ -281,7 +281,7 @@ public class ModelingSubmissionService extends SubmissionService {
      * @param modelingExercise   the exercise the submission belongs to
      */
     public void notifyCompass(ModelingSubmission modelingSubmission, ModelingExercise modelingExercise) {
-        if (compassService.isSupported(modelingExercise.getDiagramType())) {
+        if (compassService.isSupported(modelingExercise)) {
             this.compassService.addModel(modelingExercise.getId(), modelingSubmission.getId(), modelingSubmission.getModel());
         }
     }
