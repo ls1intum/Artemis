@@ -60,6 +60,7 @@
                     #markdownEditor
                     [markdown]="questionEditorText"
                     [showPreviewButton]="true"
+                    [enableResize]="true"
                     [domainCommands]="commandMultipleChoiceQuestions"
                     (markdownChange)="prepareForSave()"
                     (textWithDomainCommandsFound)="domainCommandsFound($event)"
