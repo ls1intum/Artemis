@@ -19,6 +19,8 @@
             "mail": "Email",
             "db": "Database",
             "ping": "Ping",
+            "livenessState": "Liveness",
+            "readinessState": "Readiness",
             "continuousIntegrationServer": "Continuous Integration Server",
             "versionControlServer": "Version Control Server",
             "userManagement": "User Management"
