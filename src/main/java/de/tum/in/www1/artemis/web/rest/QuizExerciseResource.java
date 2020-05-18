@@ -156,7 +156,7 @@ public class QuizExerciseResource {
         quizScheduleService.scheduleQuizStart(quizExercise);
 
         // notify websocket channel of changes to the quiz exercise
-        quizExerciseService.sendQuizExerciseToSubscribedClients(quizExercise);
+        quizExerciseService.sendQuizExerciseToSubscribedClients(quizExercise, "change");
 
         // NOTE: it does not make sense to notify students here!
         if (notificationText != null) {
@@ -320,7 +320,7 @@ public class QuizExerciseResource {
         quizScheduleService.scheduleQuizStart(quizExercise);
 
         // notify websocket channel of changes to the quiz exercise
-        quizExerciseService.sendQuizExerciseToSubscribedClients(quizExercise);
+        quizExerciseService.sendQuizExerciseToSubscribedClients(quizExercise, action);
         return new ResponseEntity<>(quizExercise, HttpStatus.OK);
     }
 

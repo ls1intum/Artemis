@@ -246,7 +246,7 @@ public class QuizScheduleService {
 
         if (quizExercise.isIsPlannedToStart() && quizExercise.getReleaseDate().isAfter(ZonedDateTime.now())) {
             // schedule sending out filtered quiz over websocket
-            ScheduledFuture<?> scheduledFuture = threadPoolTaskScheduler.schedule(() -> quizExerciseService.sendQuizExerciseToSubscribedClients(quizExercise),
+            ScheduledFuture<?> scheduledFuture = threadPoolTaskScheduler.schedule(() -> quizExerciseService.sendQuizExerciseToSubscribedClients(quizExercise, "start-now"),
                     Date.from(quizExercise.getReleaseDate().toInstant()));
 
             // save scheduled future in HashMap
