@@ -196,7 +196,8 @@
                     </ng-container>
                     <ng-template #programmingAssessment>
                         <jhi-programming-assessment-manual-result
-                            [participationId]="value.participation.id"
+                            *ngIf="value.participation"
+                            [participationId]="value.participation?.id"
                             [latestResult]="value.submission?.result"
                             [exercise]="value"
                             (onResultModified)="loadAll()"
