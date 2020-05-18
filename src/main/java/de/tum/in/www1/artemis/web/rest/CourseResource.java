@@ -98,12 +98,6 @@ public class CourseResource {
 
     private final ProgrammingExerciseService programmingExerciseService;
 
-    private final ModelingSubmissionService modelingSubmissionService;
-
-    private final TextSubmissionService textSubmissionService;
-
-    private final FileUploadSubmissionService fileUploadSubmissionService;
-
     private final ExampleSubmissionRepository exampleSubmissionRepository;
 
     private final AuditEventRepository auditEventRepository;
@@ -116,9 +110,8 @@ public class CourseResource {
             ExerciseService exerciseService, AuthorizationCheckService authCheckService, TutorParticipationService tutorParticipationService, Environment env,
             ArtemisAuthenticationProvider artemisAuthenticationProvider, ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository,
             LectureService lectureService, NotificationService notificationService, SubmissionService submissionService, ResultService resultService,
-            ComplaintService complaintService, TutorLeaderboardService tutorLeaderboardService, TextSubmissionService textSubmissionService,
-            ExampleSubmissionRepository exampleSubmissionRepository, ProgrammingExerciseService programmingExerciseService, ModelingSubmissionService modelingSubmissionService,
-            FileUploadSubmissionService fileUploadSubmissionService, AuditEventRepository auditEventRepository, Optional<VcsUserManagementService> vcsUserManagementService) {
+            ComplaintService complaintService, TutorLeaderboardService tutorLeaderboardService, ExampleSubmissionRepository exampleSubmissionRepository,
+            ProgrammingExerciseService programmingExerciseService, AuditEventRepository auditEventRepository, Optional<VcsUserManagementService> vcsUserManagementService) {
         this.userService = userService;
         this.courseService = courseService;
         this.participationService = participationService;
@@ -135,11 +128,8 @@ public class CourseResource {
         this.resultService = resultService;
         this.complaintService = complaintService;
         this.tutorLeaderboardService = tutorLeaderboardService;
-        this.textSubmissionService = textSubmissionService;
         this.programmingExerciseService = programmingExerciseService;
         this.exampleSubmissionRepository = exampleSubmissionRepository;
-        this.modelingSubmissionService = modelingSubmissionService;
-        this.fileUploadSubmissionService = fileUploadSubmissionService;
         this.vcsUserManagementService = vcsUserManagementService;
         this.auditEventRepository = auditEventRepository;
         this.env = env;
