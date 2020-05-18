@@ -45,6 +45,16 @@ server:
     port: 8080
     url: https://artemislocal.ase.in.tum.de
 
+management:
+    endpoints:
+        web:
+            base-path: /management
+            exposure:
+                include: ["jhimetrics"]
+    endpoint:
+        jhimetrics:
+            enabled: true
+
 # Properties to be exposed on the /info management endpoint
 info:
     # Comma separated list of profiles that will trigger the ribbon to show
