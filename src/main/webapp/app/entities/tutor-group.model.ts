@@ -2,6 +2,9 @@ import { BaseEntity } from 'app/shared/model/base-entity';
 import { User } from 'app/core/user/user.model';
 import { Course } from 'app/entities/course.model';
 
+/**
+ * defines different weekdays
+ */
 export const enum Weekday {
     MONDAY = 'MONDAY',
     TUESDAY = 'TUESDAY',
@@ -10,6 +13,9 @@ export const enum Weekday {
     FRIDAY = 'FRIDAY',
 }
 
+/**
+ * specifies different supported languages
+ */
 export const enum Language {
     ENGLISH = 'ENGLISH',
     GERMAN = 'GERMAN',

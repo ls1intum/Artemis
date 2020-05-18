@@ -1,6 +1,9 @@
 import { Moment } from 'moment';
 import { Notification, NotificationType } from 'app/entities/notification.model';
 
+/**
+ * defines different types of system notifications
+ */
 export const enum SystemNotificationType {
     WARNING = 'WARNING',
     INFO = 'INFO',

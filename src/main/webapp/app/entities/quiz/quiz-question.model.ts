@@ -3,13 +3,19 @@ import { SafeHtml } from '@angular/platform-browser';
 import { Exercise } from 'app/entities/exercise.model';
 import { QuizQuestionStatistic } from 'app/entities/quiz/quiz-question-statistic.model';
 
+/**
+ * defines different types of scoring for quiz questions
+ */
 export const enum ScoringType {
     ALL_OR_NOTHING = 'ALL_OR_NOTHING',
     PROPORTIONAL_WITH_PENALTY = 'PROPORTIONAL_WITH_PENALTY',
     TRUE_FALSE_NEUTRAL = 'TRUE_FALSE_NEUTRAL',
 }
 
-// IMPORTANT NOTICE: The following strings have to be consistent with the ones defined in Question.java
+/**
+ * defines different types of Quiz Questions
+ * IMPORTANT NOTICE: The following strings have to be consistent with the ones defined in Question.java
+ */
 export const enum QuizQuestionType {
     MULTIPLE_CHOICE = 'multiple-choice',
     DRAG_AND_DROP = 'drag-and-drop',

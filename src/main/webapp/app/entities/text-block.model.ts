@@ -17,6 +17,10 @@ export class TextBlock {
         this.id = sha1Hex(idString);
     }
 
+    /**
+     * extracts the text from a submission relevant for this text block (between start and end index)
+     * @param submission - an optional submission argument
+     */
     setTextFromSubmission(submission?: TextSubmission): void {
         this.submission = submission || this.submission;
         if (this.submission) {

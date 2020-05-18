@@ -4,6 +4,9 @@ import { Participation } from 'app/entities/participation/participation.model';
 import { Language } from 'app/entities/tutor-group.model';
 import { Result } from 'app/entities/result.model';
 
+/**
+ * defines different types of submissions
+ */
 export const enum SubmissionType {
     MANUAL = 'MANUAL',
     TIMEOUT = 'TIMEOUT',
@@ -12,7 +15,10 @@ export const enum SubmissionType {
     TEST = 'TEST',
 }
 
-// IMPORTANT NOTICE: The following strings have to be consistent with the ones defined in Submission.java
+/**
+ * defines different types of submission exercises
+ * IMPORTANT NOTICE: The following strings have to be consistent with the ones defined in Submission.java
+ */
 export const enum SubmissionExerciseType {
     PROGRAMMING = 'programming',
     MODELING = 'modeling',
