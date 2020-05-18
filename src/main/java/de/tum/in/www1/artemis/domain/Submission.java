@@ -2,6 +2,8 @@ package de.tum.in.www1.artemis.domain;
 
 import java.io.Serializable;
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
 import javax.persistence.*;
@@ -63,6 +65,11 @@ public abstract class Submission implements Serializable {
 
     @ManyToOne
     private Participation participation;
+
+    @OrderColumn
+    @OneToMany(mappedBy = "submission", cascade = CascadeType.REMOVE, orphanRemoval = true)
+    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+    private List<SubmissionVersion> versions = new ArrayList<>();
 
     /**
      * A submission can have a result and therefore, results are persisted and removed with a submission.

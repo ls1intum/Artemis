@@ -28,17 +28,20 @@ public class ModelingSubmissionService extends SubmissionService {
 
     private final CompassService compassService;
 
+    private final SubmissionVersionService submissionVersionService;
+
     private final ParticipationService participationService;
 
     private final StudentParticipationRepository studentParticipationRepository;
 
     public ModelingSubmissionService(ModelingSubmissionRepository modelingSubmissionRepository, SubmissionRepository submissionRepository, ResultRepository resultRepository,
-            CompassService compassService, ParticipationService participationService, UserService userService, StudentParticipationRepository studentParticipationRepository,
-            AuthorizationCheckService authCheckService) {
+            CompassService compassService, UserService userService, SubmissionVersionService submissionVersionService, ParticipationService participationService,
+            StudentParticipationRepository studentParticipationRepository, AuthorizationCheckService authCheckService) {
         super(submissionRepository, userService, authCheckService, resultRepository);
         this.modelingSubmissionRepository = modelingSubmissionRepository;
         this.resultRepository = resultRepository;
         this.compassService = compassService;
+        this.submissionVersionService = submissionVersionService;
         this.participationService = participationService;
         this.studentParticipationRepository = studentParticipationRepository;
     }
@@ -206,6 +209,7 @@ public class ModelingSubmissionService extends SubmissionService {
         modelingSubmission.setType(SubmissionType.MANUAL);
         modelingSubmission.setParticipation(participation);
         modelingSubmission = modelingSubmissionRepository.save(modelingSubmission);
+        submissionVersionService.save(modelingSubmission, username);
 
         participation.addSubmissions(modelingSubmission);
 

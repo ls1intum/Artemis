@@ -48,9 +48,11 @@ public class TextSubmissionService extends SubmissionService {
 
     private final Optional<TextAssessmentQueueService> textAssessmentQueueService;
 
+    private final SubmissionVersionService submissionVersionService;
+
     public TextSubmissionService(TextSubmissionRepository textSubmissionRepository, TextClusterRepository textClusterRepository, SubmissionRepository submissionRepository,
             StudentParticipationRepository studentParticipationRepository, ParticipationService participationService, ResultRepository resultRepository, UserService userService,
-            Optional<TextAssessmentQueueService> textAssessmentQueueService, AuthorizationCheckService authCheckService) {
+            Optional<TextAssessmentQueueService> textAssessmentQueueService, AuthorizationCheckService authCheckService, SubmissionVersionService submissionVersionService) {
         super(submissionRepository, userService, authCheckService, resultRepository);
         this.textSubmissionRepository = textSubmissionRepository;
         this.textClusterRepository = textClusterRepository;
@@ -58,6 +60,7 @@ public class TextSubmissionService extends SubmissionService {
         this.participationService = participationService;
         this.resultRepository = resultRepository;
         this.textAssessmentQueueService = textAssessmentQueueService;
+        this.submissionVersionService = submissionVersionService;
     }
 
     /**
@@ -85,7 +88,7 @@ public class TextSubmissionService extends SubmissionService {
             textSubmission = save(textSubmission);
         }
         else {
-            textSubmission = save(textSubmission, participation);
+            textSubmission = save(textSubmission, participation, principal);
         }
         return textSubmission;
     }
@@ -98,12 +101,13 @@ public class TextSubmissionService extends SubmissionService {
      * @return the textSubmission entity that was saved to the database
      */
     @Transactional(rollbackFor = Exception.class)
-    public TextSubmission save(TextSubmission textSubmission, StudentParticipation participation) {
+    public TextSubmission save(TextSubmission textSubmission, StudentParticipation participation, Principal principal) {
         // update submission properties
         textSubmission.setSubmissionDate(ZonedDateTime.now());
         textSubmission.setType(SubmissionType.MANUAL);
         textSubmission.setParticipation(participation);
         textSubmission = textSubmissionRepository.save(textSubmission);
+        submissionVersionService.save(textSubmission, principal.getName());
 
         participation.addSubmissions(textSubmission);
 
