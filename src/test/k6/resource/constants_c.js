@@ -35,7 +35,7 @@ export const allSuccessfulContentC = {
     newFiles: [],
     content: [
         {
-            fileName: 'main.c',
+            fileName: 'rotX.c',
             fileContent:
                 '#include <ctype.h> // isalpha(...), isupper(...)\n' +
                 '#include <stdlib.h> // size_t\n' +

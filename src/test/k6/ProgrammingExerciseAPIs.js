@@ -92,7 +92,13 @@ export default function (data) {
             someSuccessfulErrorContent = someSuccessfulErrorContentC;
             allSuccessfulContent = allSuccessfulContentC;
             buildErrorContent = buildErrorContentC;
-            somePassedString = '1 of 4 passed';
+            /*
+             * TODO: The C template currently only contains compile test cases that will never pass only partly,
+             *   so there can only be either a build failure or everything passes. This should be changed in the future,
+             *   but to make the simulation work again with the template, that's our solution here.
+             * */
+            // somePassedString = '1 of 4 passed';
+            somePassedString = '4 of 4 passed';
             break;
     }
 
