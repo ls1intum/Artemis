@@ -188,23 +188,22 @@ public class ExerciseResource {
         final Long exerciseId = exercise.getId();
         StatsForInstructorDashboardDTO stats = new StatsForInstructorDashboardDTO();
 
-        long numberOfInTimeSubmissions, numberOfLateSubmissions;
+        DueDateStat<Long> numberOfSubmissions;
 
         if (exercise instanceof ProgrammingExercise) {
-            numberOfInTimeSubmissions = programmingExerciseService.countSubmissionsByExerciseIdSubmitted(exerciseId);
-            numberOfLateSubmissions = 0; // programming exercises cant have late submissions
+            numberOfSubmissions = new DueDateStat(
+                programmingExerciseService.countSubmissionsByExerciseIdSubmitted(exerciseId),
+                0 // programming exercises cant have late submissions
+            );
         }
         else {
-            numberOfInTimeSubmissions = submissionService.countInTimeSubmissionsForExercise(exerciseId);
-            numberOfLateSubmissions = submissionService.countLateSubmissionsForExercise(exerciseId);
+            numberOfSubmissions = submissionService.countSubmissionsForExercise(exerciseId);
         }
 
-        stats.setNumberOfSubmissions(new DueDateStat<>(numberOfInTimeSubmissions, numberOfLateSubmissions));
+        stats.setNumberOfSubmissions(numberOfSubmissions);
 
-        final long numberOfInTimeAssessments = resultService.countNumberOfFinishedAssessmentsForExercise(exerciseId);
-        final long numberOfLateAssessments = resultService.countNumberOfFinishedLateAssessmentsForExercise(exerciseId);
-
-        stats.setNumberOfAssessments(new DueDateStat<>(numberOfInTimeAssessments, numberOfLateAssessments));
+        final DueDateStat numberOfAssessments = resultService.countNumberOfFinishedAssessmentsForExercise(exerciseId);
+        stats.setNumberOfAssessments(numberOfAssessments);
 
         final long numberOfAutomaticAssistedAssessments = resultService.countNumberOfAutomaticAssistedAssessmentsForExercise(exerciseId);
         stats.setNumberOfAutomaticAssistedAssessments(numberOfAutomaticAssistedAssessments);

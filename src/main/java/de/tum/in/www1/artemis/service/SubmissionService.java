@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.service;
 
 import static de.tum.in.www1.artemis.config.Constants.MAX_NUMBER_OF_LOCKED_SUBMISSIONS_PER_TUTOR;
 
+import de.tum.in.www1.artemis.web.rest.dto.DueDateStat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -83,22 +84,15 @@ public class SubmissionService {
     }
 
     /**
-     * Count number of in-time submissions for exercise.
+     * Count number of submissions for exercise.
      * @param exerciseId the exercise id we are interested in
-     * @return the number of submissions belonging to the exercise id, which have the submitted flag set to true and the submission date before the exercise due date, or no
-     *         exercise due date at all
+     * @return the number of submissions belonging to the exercise id, which have the submitted flag set to true, separated into before and after the due date
      */
-    public long countInTimeSubmissionsForExercise(long exerciseId) {
-        return submissionRepository.countByExerciseIdSubmittedBeforeDueDate(exerciseId);
-    }
-
-    /**
-     * Count number of late submissions for exercise.
-     * @param exerciseId the exercise id we are interested in
-     * @return the number of submissions belonging to the exercise id, which have the submitted flag set to true and the submission date after the exercise due date
-     */
-    public long countLateSubmissionsForExercise(long exerciseId) {
-        return submissionRepository.countByExerciseIdSubmittedAfterDueDate(exerciseId);
+    public DueDateStat<Long> countSubmissionsForExercise(long exerciseId) {
+        return new DueDateStat(
+            submissionRepository.countByExerciseIdSubmittedBeforeDueDate(exerciseId),
+            submissionRepository.countByExerciseIdSubmittedAfterDueDate(exerciseId)
+        );
     }
 
     /**

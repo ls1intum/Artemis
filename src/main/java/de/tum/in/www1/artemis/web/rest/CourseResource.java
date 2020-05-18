@@ -488,23 +488,23 @@ public class CourseResource {
         List<TutorParticipation> tutorParticipations = tutorParticipationService.findAllByCourseAndTutor(course, user);
 
         for (Exercise exercise : interestingExercises) {
-            long numberOfInTimeSubmissions, numberOfLateSubmissions;
+            DueDateStat numberOfSubmissions;
             if (exercise instanceof ProgrammingExercise) {
-                numberOfInTimeSubmissions = programmingExerciseService.countSubmissionsByExerciseIdSubmitted(exercise.getId());
-                numberOfLateSubmissions = 0;
+                numberOfSubmissions = new DueDateStat(
+                    programmingExerciseService.countSubmissionsByExerciseIdSubmitted(exercise.getId()),
+                0 // programming exercises cant have late submissions
+                );
             }
             else {
-                numberOfInTimeSubmissions = submissionService.countInTimeSubmissionsForExercise(exercise.getId());
-                numberOfLateSubmissions = submissionService.countLateSubmissionsForExercise(exercise.getId());
+                numberOfSubmissions = submissionService.countSubmissionsForExercise(exercise.getId());
             }
 
-            final long numberOfAssessments = resultService.countNumberOfFinishedAssessmentsForExercise(exercise.getId());
-            final long numberOfLateAssessments = resultService.countNumberOfFinishedLateAssessmentsForExercise(exercise.getId());
+            exercise.setNumberOfSubmissions(numberOfSubmissions);
+
+            final DueDateStat<Long> numberOfAssessments = resultService.countNumberOfFinishedAssessmentsForExercise(exercise.getId());
+            exercise.setNumberOfAssessments(numberOfAssessments);
 
             exerciseService.calculateNrOfOpenComplaints(exercise);
-
-            exercise.setNumberOfSubmissions(new DueDateStat<>(numberOfInTimeSubmissions, numberOfLateSubmissions));
-            exercise.setNumberOfAssessments(new DueDateStat<>(numberOfAssessments, numberOfLateAssessments));
 
             List<ExampleSubmission> exampleSubmissions = this.exampleSubmissionRepository.findAllByExerciseId(exercise.getId());
             // Do not provide example submissions without any assessment
@@ -623,23 +623,25 @@ public class CourseResource {
         course.setExercises(interestingExercises);
 
         for (Exercise exercise : interestingExercises) {
-            long numberOfInTimeSubmissions, numberOfLateSubmissions;
+
+            DueDateStat numberOfSubmissions;
             if (exercise instanceof ProgrammingExercise) {
-                numberOfInTimeSubmissions = programmingExerciseService.countSubmissionsByExerciseIdSubmitted(exercise.getId());
-                numberOfLateSubmissions = 0;
+                numberOfSubmissions = new DueDateStat(
+                    programmingExerciseService.countSubmissionsByExerciseIdSubmitted(exercise.getId()),
+                    0 // programming exercises cant have late submissions
+                );
             }
             else {
-                numberOfInTimeSubmissions = submissionService.countInTimeSubmissionsForExercise(exercise.getId());
-                numberOfLateSubmissions = submissionService.countLateSubmissionsForExercise(exercise.getId());
+                numberOfSubmissions = submissionService.countSubmissionsForExercise(exercise.getId());
             }
-            final long numberOfInTimeAssessments = resultService.countNumberOfFinishedAssessmentsForExercise(exercise.getId());
-            final long numberOfLateAssessments = resultService.countNumberOfFinishedLateAssessmentsForExercise(exercise.getId());
+
+            exercise.setNumberOfSubmissions(numberOfSubmissions);
+
+            final DueDateStat numberOfAssessments = resultService.countNumberOfFinishedAssessmentsForExercise(exercise.getId());
+            exercise.setNumberOfAssessments(numberOfAssessments);
 
             final long numberOfMoreFeedbackRequests = complaintService.countMoreFeedbackRequestsByExerciseId(exercise.getId());
             final long numberOfComplaints = complaintService.countComplaintsByExerciseId(exercise.getId());
-
-            exercise.setNumberOfSubmissions(new DueDateStat<>(numberOfInTimeSubmissions, numberOfLateSubmissions));
-            exercise.setNumberOfAssessments(new DueDateStat<>(numberOfInTimeAssessments, numberOfLateAssessments));
 
             exercise.setNumberOfComplaints(numberOfComplaints);
             exercise.setNumberOfMoreFeedbackRequests(numberOfMoreFeedbackRequests);

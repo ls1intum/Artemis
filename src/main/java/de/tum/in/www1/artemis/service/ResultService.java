@@ -362,18 +362,11 @@ public class ResultService {
      * @param exerciseId - the exercise we are interested in
      * @return a number of assessments for the exercise
      */
-    public long countNumberOfFinishedAssessmentsForExercise(Long exerciseId) {
-        return resultRepository.countNumberOfFinishedAssessmentsForExercise(exerciseId);
-    }
-
-    /**
-     * Given an exerciseId, return the number of assessments for that exerciseId that have been completed (e.g. no draft!)
-     *
-     * @param exerciseId - the exercise we are interested in
-     * @return a number of assessments for the exercise
-     */
-    public long countNumberOfFinishedLateAssessmentsForExercise(Long exerciseId) {
-        return resultRepository.countNumberOfFinishedLateAssessmentsForExercise(exerciseId);
+    public DueDateStat<Long> countNumberOfFinishedAssessmentsForExercise(Long exerciseId) {
+        return new DueDateStat<>(
+            resultRepository.countNumberOfFinishedAssessmentsForExercise(exerciseId),
+            resultRepository.countNumberOfFinishedLateAssessmentsForExercise(exerciseId)
+        );
     }
 
     /**
