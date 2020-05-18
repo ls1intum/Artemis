@@ -4,7 +4,6 @@ import { CourseManagementService } from 'app/course/manage/course-management.ser
 import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs/Subscription';
 import { TranslateService } from '@ngx-translate/core';
-import { HttpResponse } from '@angular/common/http';
 import * as moment from 'moment';
 import { AccountService } from 'app/core/auth/account.service';
 import { sum, flatten, maxBy } from 'lodash';

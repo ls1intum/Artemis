@@ -299,6 +299,7 @@ public class QuizExerciseService {
     /**
      * Sends a QuizExercise to all subscribed clients
      * @param quizExercise the QuizExercise which will be sent
+     * @param quizChange the change that was applied to the quiz, which decides to which topic subscriptions the quiz exercise is sent
      */
     public void sendQuizExerciseToSubscribedClients(QuizExercise quizExercise, String quizChange) {
         try {

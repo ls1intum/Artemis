@@ -88,7 +88,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy {
                         this.course.exercises.push(quizExercise);
                         this.courseService.courseWasUpdated(this.course);
                     }
-                    // TODO: display it at top
+                    // TODO: make sure to display the visible quiz exercise at the top
                 },
                 () => {},
             );

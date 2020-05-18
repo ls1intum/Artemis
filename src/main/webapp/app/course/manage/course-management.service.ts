@@ -109,17 +109,13 @@ export class CourseManagementService {
             .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)))
             .pipe(map((res: EntityResponseType) => this.checkAccessRightsCourse(res)))
             .pipe(map((res: EntityResponseType) => this.subscribeToCourseNotification(res)))
-            .pipe(
-                tap((res: EntityResponseType) => {
-                    if (res.body) {
-                        this.courses.get(courseId)?.subject.next(res.body);
-                    }
-                }),
-            );
+            .pipe(tap((res: EntityResponseType) => this.courseWasUpdated(res.body)));
     }
 
-    courseWasUpdated(course: Course): void {
-        this.courses.get(course.id)?.subject.next(course);
+    courseWasUpdated(course: Course | null): void {
+        if (course) {
+            return this.courses.get(course.id)?.subject.next(course);
+        }
     }
 
     getCourseUpdates(courseId: number): Observable<Course> {
