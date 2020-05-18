@@ -67,6 +67,7 @@
                 "failed": "Search failed. Please try again.",
                 "noResults": "No tutors found in course for search:"
             },
+            "ownerChangeWarning": "<strong>Important:</strong> This will change the tutor for team <strong>{{ shortName }}</strong> in the whole course!",
             "teamSizeNote": "Recommended team size:",
             "teamSizeUnit": "students",
             "ignoreTeamSizeRecommendation": "Proceed against recommendation",

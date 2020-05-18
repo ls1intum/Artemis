@@ -4,10 +4,7 @@ import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -106,6 +103,9 @@ public class TeamResource {
         if (!exercise.isTeamMode()) {
             throw new BadRequestAlertException("A team cannot be created for an exercise that is not team-based.", ENTITY_NAME, "exerciseNotTeamBased");
         }
+        if (teamRepository.existsByExerciseCourseIdAndShortName(exercise.getCourse().getId(), team.getShortName())) {
+            throw new BadRequestAlertException("A team with this short name already exists in the course.", ENTITY_NAME, "teamShortNameAlreadyExistsInCourse");
+        }
         // Tutors can only create teams for themselves while instructors can select any tutor as the team owner
         if (!authCheckService.isAtLeastInstructorForExercise(exercise, user)) {
             team.setOwner(user);
@@ -161,12 +161,20 @@ public class TeamResource {
         }
 
         // The team owner can only be changed by instructors
-        if (!isAtLeastInstructor && !existingTeam.get().getOwner().equals(team.getOwner())) {
+        final boolean ownerWasChanged = !Objects.equals(existingTeam.get().getOwner(), team.getOwner());
+        if (!isAtLeastInstructor && ownerWasChanged) {
             return forbidden();
         }
 
         // Save team (includes check for conflicts that no student is assigned to multiple teams for an exercise)
         Team savedTeam = teamService.save(exercise, team);
+
+        // Propagate team owner change to other instances of this team in the course
+        if (ownerWasChanged) {
+            List<Team> teamInstances = teamRepository.findAllByExerciseCourseIdAndShortName(exercise.getCourse().getId(), savedTeam.getShortName());
+            teamInstances.forEach(teamInstance -> teamInstance.setOwner(savedTeam.getOwner()));
+            teamRepository.saveAll(teamInstances);
+        }
 
         // For programming exercise teams with existing participation, the repository access needs to be updated according to the new team member set
         if (exercise instanceof ProgrammingExercise) {
